@@ -1301,11 +1301,25 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["textio"]:
         nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
+        nativepaddedfmrishape = (xsize, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
     else:
         if fileiscifti:
             nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
+            nativepaddedfmrishape = (
+                1,
+                1,
+                1,
+                2 * numpadtrs + np.shape(initial_fmri_x)[0],
+                numspatiallocs,
+            )
         else:
             nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
+            nativepaddedfmrishape = (
+                xsize,
+                ysize,
+                numslices,
+                2 * numpadtrs + np.shape(initial_fmri_x)[0],
+            )
 
     # prepare for fast resampling
     padtime = (
@@ -1325,13 +1339,6 @@ def rapidtide_main(argparsingfunc):
         numvalidspatiallocs,
         2 * numpadtrs + np.shape(initial_fmri_x)[0],
     )
-    nativepaddedfmrishape = (
-        xsize,
-        ysize,
-        numslices,
-        2 * numpadtrs + np.shape(initial_fmri_x)[0],
-    )
-
 
     if (
         optiondict["passes"] > 1
@@ -1341,21 +1348,13 @@ def rapidtide_main(argparsingfunc):
         if optiondict["sharedmem"]:
             shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
-            paddedshiftedtcs, dummy, dummy = allocshared(
-                internalvalidpaddedfmrishape, rt_floatset
-            )
-            paddedweights, dummy, dummy = allocshared(
-                internalvalidpaddedfmrishape, rt_floatset
-            )
+            paddedshiftedtcs, dummy, dummy = allocshared(internalvalidpaddedfmrishape, rt_floatset)
+            paddedweights, dummy, dummy = allocshared(internalvalidpaddedfmrishape, rt_floatset)
         else:
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-            paddedshiftedtcs, dummy, dummy = allocshared(
-                internalvalidpaddedfmrishape, rt_floatset
-            )
-            paddedweights, dummy, dummy = allocshared(
-                internalvalidpaddedfmrishape, rt_floatset
-            )
+            paddedshiftedtcs, dummy, dummy = allocshared(internalvalidpaddedfmrishape, rt_floatset)
+            paddedweights, dummy, dummy = allocshared(internalvalidpaddedfmrishape, rt_floatset)
         tide_util.logmem("after refinement array allocation")
     if optiondict["sharedmem"]:
         outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
@@ -1364,7 +1363,7 @@ def rapidtide_main(argparsingfunc):
         outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
         paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
 
-            # cycle over all voxels
+        # cycle over all voxels
     refine = True
     LGR.verbose(f"refine is set to {refine}")
     optiondict["edgebufferfrac"] = max(
@@ -2831,6 +2830,18 @@ def rapidtide_main(argparsingfunc):
         if optiondict["docvrmap"]:
             # if we are doing a cvr map, multiply the fitcoeff by 100, so we are in percent
             fitcoeff *= 100.0
+
+        # determine what was removed
+        removeddata = fmri_data_valid - filtereddata
+        noiseremoved = np.var(removeddata, axis=0)
+        tide_io.writebidstsv(
+            f"{outputname}_desc-lfoNoiseRemoved_timeseries",
+            noiseremoved,
+            1.0 / oversamptr,
+            starttime=0.0,
+            columns=[f"removedbyglm"],
+            append=True,
+        )
 
         # calculate the final bandlimited variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
