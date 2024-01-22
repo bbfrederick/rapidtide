@@ -3,7 +3,7 @@ name: Upload latest to DockerHub
 on:
   workflow_dispatch:
   push:
-    branches: [ main, dockermods, dev ]
+    branches: [ main, dev ]
 
 jobs:
   docker:

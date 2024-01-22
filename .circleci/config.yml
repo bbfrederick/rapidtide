@@ -305,11 +305,12 @@ jobs:
       - store_test_results:
           path: test-results
 
-
+  # to convert back, remove any line with "parallelism" or "TESTFILES" in it
   test_py310:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -327,12 +328,19 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob tests/**/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
             pytest  \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
+          path: test-results
+      - store_artifacts:
           path: test-results
 
 
