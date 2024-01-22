@@ -178,6 +178,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -197,9 +198,11 @@ jobs:
             popd
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p test-results
             shopt -u globstar
             pytest \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
@@ -213,6 +216,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -255,6 +259,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -274,9 +279,11 @@ jobs:
             popd
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p test-results
             shopt -u globstar
-            pytest  \
+            pytest \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
@@ -290,6 +297,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -309,9 +317,11 @@ jobs:
             popd
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p test-results
             shopt -u globstar
             pytest  \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
@@ -345,7 +355,8 @@ jobs:
             popd
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
-            TESTFILES=$(circleci tests glob tests/**/test*.py | circleci tests split --split-by=timings)
+            #TESTFILES=$(circleci tests glob tests/**/test*.py | circleci tests split --split-by=timings)
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p test-results
             shopt -u globstar
             pytest  \
@@ -363,6 +374,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -403,6 +415,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -422,9 +435,11 @@ jobs:
             popd
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p test-results
             shopt -u globstar
             pytest \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
@@ -438,6 +453,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -478,6 +494,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    #parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -497,9 +514,11 @@ jobs:
             popd
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p test-results
             shopt -u globstar
             pytest \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
