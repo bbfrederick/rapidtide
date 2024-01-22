@@ -55,8 +55,6 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "--bipolar",
         "--nolimitoutput",
         "--calccoherence",
-        "--simcalcrange",
-        "100 -1",
         "--dispersioncalc",
         "--nprocs",
         "1",

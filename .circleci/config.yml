@@ -335,7 +335,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    #parallelism: 4
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -361,8 +361,6 @@ jobs:
             shopt -u globstar
             pytest  \
                 $TESTFILES \
-                -W ignore \
-                --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
