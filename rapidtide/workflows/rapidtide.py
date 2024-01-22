@@ -1399,8 +1399,12 @@ def rapidtide_main(argparsingfunc):
     )
 
     validsimcalcstart, validsimcalcend = tide_util.startendcheck(
-        timepoints, optiondict["simcalcstartpoint"], optiondict["simcalcendpoint"]
+        timepoints,
+        optiondict["simcalcstartpoint"],
+        optiondict["simcalcendpoint"],
     )
+    osvalidsimcalcstart = validsimcalcstart * optiondict["oversampfactor"]
+    osvalidsimcalcend = validsimcalcend * optiondict["oversampfactor"]
 
     # Preprocessing - echo cancellation
     if optiondict["echocancel"]:
@@ -1413,7 +1417,7 @@ def rapidtide_main(argparsingfunc):
         )
 
         referencetc = tide_math.corrnormalize(
-            resampref_y[validsimcalcstart:validsimcalcend],
+            resampref_y[osvalidsimcalcstart:osvalidsimcalcend],
             detrendorder=optiondict["detrendorder"],
             windowfunc=optiondict["windowfunc"],
         )
@@ -1426,8 +1430,8 @@ def rapidtide_main(argparsingfunc):
             fmri_data_valid[:, validsimcalcstart:validsimcalcend],
             referencetc,
             theCorrelator,
-            initial_fmri_x,
-            os_fmri_x,
+            initial_fmri_x[validsimcalcstart:validsimcalcend],
+            os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend],
             lagmininpts,
             lagmaxinpts,
             corrout,
@@ -1494,7 +1498,7 @@ def rapidtide_main(argparsingfunc):
             LGR.info(f"Pass number {thepass}")
 
         referencetc = tide_math.corrnormalize(
-            resampref_y[validsimcalcstart:validsimcalcend],
+            resampref_y[osvalidsimcalcstart:osvalidsimcalcend],
             detrendorder=optiondict["detrendorder"],
             windowfunc=optiondict["windowfunc"],
         )
@@ -1509,7 +1513,7 @@ def rapidtide_main(argparsingfunc):
             resampref_y = resptracker.clean(resampref_y, 1.0 / oversamptr, thetimes, thefreqs)
             tide_io.writevec(resampref_y, f"{outputname}_respfilt_pass{thepass}.txt")
             referencetc = tide_math.corrnormalize(
-                resampref_y[validsimcalcstart:validsimcalcend],
+                resampref_y[osvalidsimcalcstart:osvalidsimcalcend],
                 detrendorder=optiondict["detrendorder"],
                 windowfunc=optiondict["windowfunc"],
             )
@@ -1571,7 +1575,9 @@ def rapidtide_main(argparsingfunc):
             acmaxinpts = lagmaxinpts + lagindpad
             theCorrelator.setreftc(referencetc)
             theCorrelator.setlimits(acmininpts, acmaxinpts)
-            thexcorr, accheckcorrscale, dummy = theCorrelator.run(resampref_y)
+            thexcorr, accheckcorrscale, dummy = theCorrelator.run(
+                resampref_y[osvalidsimcalcstart:osvalidsimcalcend]
+            )
             thefitter.setcorrtimeaxis(accheckcorrscale)
             (
                 maxindex,
@@ -1864,8 +1870,8 @@ def rapidtide_main(argparsingfunc):
                 fmri_data_valid[:, validsimcalcstart:validsimcalcend],
                 cleaned_referencetc,
                 theMutualInformationator,
-                initial_fmri_x,
-                os_fmri_x,
+                initial_fmri_x[validsimcalcstart:validsimcalcend],
+                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -1888,8 +1894,8 @@ def rapidtide_main(argparsingfunc):
                 fmri_data_valid[:, validsimcalcstart:validsimcalcend],
                 cleaned_referencetc,
                 theCorrelator,
-                initial_fmri_x,
-                os_fmri_x,
+                initial_fmri_x[validsimcalcstart:validsimcalcend],
+                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -1952,8 +1958,8 @@ def rapidtide_main(argparsingfunc):
             voxelsprocessed_pe, thepeakdict = peakevalpass_func(
                 fmri_data_valid[:, validsimcalcstart:validsimcalcend],
                 cleaned_referencetc,
-                initial_fmri_x,
-                os_fmri_x,
+                initial_fmri_x[validsimcalcstart:validsimcalcend],
+                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend],
                 theMutualInformationator,
                 trimmedcorrscale,
                 corrout,
