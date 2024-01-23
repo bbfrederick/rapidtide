@@ -1299,6 +1299,17 @@ def rapidtide_main(argparsingfunc):
         outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
     tide_util.logmem("after correlation array allocation")
 
+    # prepare for fast resampling
+    padtime = (
+        max((-optiondict["lagmin"], optiondict["lagmax"]))
+        + 30.0
+        + np.abs(optiondict["offsettime"])
+    )
+    LGR.info(f"setting up fast resampling with padtime = {padtime}")
+    numpadtrs = int(padtime // fmritr)
+    padtime = fmritr * numpadtrs
+    genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
+
     if optiondict["textio"]:
         nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
         nativepaddedfmrishape = (xsize, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
@@ -1320,17 +1331,6 @@ def rapidtide_main(argparsingfunc):
                 numslices,
                 2 * numpadtrs + np.shape(initial_fmri_x)[0],
             )
-
-    # prepare for fast resampling
-    padtime = (
-        max((-optiondict["lagmin"], optiondict["lagmax"]))
-        + 30.0
-        + np.abs(optiondict["offsettime"])
-    )
-    LGR.info(f"setting up fast resampling with padtime = {padtime}")
-    numpadtrs = int(padtime // fmritr)
-    padtime = fmritr * numpadtrs
-    genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
 
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
