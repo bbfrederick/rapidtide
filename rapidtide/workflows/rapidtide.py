@@ -439,7 +439,7 @@ def rapidtide_main(argparsingfunc):
         timepoints, optiondict["startpoint"], optiondict["endpoint"]
     )
     optiondict["validstart"] = validstart
-    optiondict["validstart"] = validend
+    optiondict["validend"] = validend
     if abs(optiondict["lagmin"]) > (validend - validstart + 1) * fmritr / 2.0:
         raise ValueError(
             f"magnitude of lagmin exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
@@ -1417,7 +1417,7 @@ def rapidtide_main(argparsingfunc):
         )
 
         referencetc = tide_math.corrnormalize(
-            resampref_y[osvalidsimcalcstart:osvalidsimcalcend],
+            resampref_y[osvalidsimcalcstart:osvalidsimcalcend + 1],
             detrendorder=optiondict["detrendorder"],
             windowfunc=optiondict["windowfunc"],
         )
@@ -1427,11 +1427,11 @@ def rapidtide_main(argparsingfunc):
             theglobalmaxlist,
             trimmedcorrscale,
         ) = calcsimilaritypass_func(
-            fmri_data_valid[:, validsimcalcstart:validsimcalcend],
+            fmri_data_valid[:, validsimcalcstart:validsimcalcend + 1],
             referencetc,
             theCorrelator,
-            initial_fmri_x[validsimcalcstart:validsimcalcend],
-            os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend],
+            initial_fmri_x[validsimcalcstart:validsimcalcend + 1],
+            os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend + 1],
             lagmininpts,
             lagmaxinpts,
             corrout,
@@ -1503,7 +1503,7 @@ def rapidtide_main(argparsingfunc):
             LGR.info(f"Pass number {thepass}")
 
         referencetc = tide_math.corrnormalize(
-            resampref_y[osvalidsimcalcstart:osvalidsimcalcend],
+            resampref_y[osvalidsimcalcstart:osvalidsimcalcend + 1],
             detrendorder=optiondict["detrendorder"],
             windowfunc=optiondict["windowfunc"],
         )
@@ -1518,7 +1518,7 @@ def rapidtide_main(argparsingfunc):
             resampref_y = resptracker.clean(resampref_y, 1.0 / oversamptr, thetimes, thefreqs)
             tide_io.writevec(resampref_y, f"{outputname}_respfilt_pass{thepass}.txt")
             referencetc = tide_math.corrnormalize(
-                resampref_y[osvalidsimcalcstart:osvalidsimcalcend],
+                resampref_y[osvalidsimcalcstart:osvalidsimcalcend + 1],
                 detrendorder=optiondict["detrendorder"],
                 windowfunc=optiondict["windowfunc"],
             )
@@ -1581,7 +1581,7 @@ def rapidtide_main(argparsingfunc):
             theCorrelator.setreftc(referencetc)
             theCorrelator.setlimits(acmininpts, acmaxinpts)
             thexcorr, accheckcorrscale, dummy = theCorrelator.run(
-                resampref_y[osvalidsimcalcstart:osvalidsimcalcend]
+                resampref_y[osvalidsimcalcstart:osvalidsimcalcend + 1]
             )
             thefitter.setcorrtimeaxis(accheckcorrscale)
             (
@@ -1894,11 +1894,11 @@ def rapidtide_main(argparsingfunc):
                 theglobalmaxlist,
                 trimmedcorrscale,
             ) = calcsimilaritypass_func(
-                fmri_data_valid[:, validsimcalcstart:validsimcalcend],
+                fmri_data_valid[:, validsimcalcstart:validsimcalcend + 1],
                 cleaned_referencetc,
                 theMutualInformationator,
-                initial_fmri_x[validsimcalcstart:validsimcalcend],
-                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend],
+                initial_fmri_x[validsimcalcstart:validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend + 1],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -1918,11 +1918,11 @@ def rapidtide_main(argparsingfunc):
                 theglobalmaxlist,
                 trimmedcorrscale,
             ) = calcsimilaritypass_func(
-                fmri_data_valid[:, validsimcalcstart:validsimcalcend],
+                fmri_data_valid[:, validsimcalcstart:validsimcalcend + 1],
                 cleaned_referencetc,
                 theCorrelator,
-                initial_fmri_x[validsimcalcstart:validsimcalcend],
-                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend],
+                initial_fmri_x[validsimcalcstart:validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend + 1],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -1983,10 +1983,10 @@ def rapidtide_main(argparsingfunc):
             )
 
             voxelsprocessed_pe, thepeakdict = peakevalpass_func(
-                fmri_data_valid[:, validsimcalcstart:validsimcalcend],
+                fmri_data_valid[:, validsimcalcstart:validsimcalcend + 1],
                 cleaned_referencetc,
-                initial_fmri_x[validsimcalcstart:validsimcalcend],
-                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend],
+                initial_fmri_x[validsimcalcstart:validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart:osvalidsimcalcend + 1],
                 theMutualInformationator,
                 trimmedcorrscale,
                 corrout,
