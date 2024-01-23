@@ -348,7 +348,7 @@ def fitcorr(
                 if thefitter.FML_FITFAIL & failreason:
                     fitfails += 1
 
-    print("\nCorrelation fitted in " + str(volumetotal) + " voxels")
+    print("\nSimilarity function fitted in " + str(volumetotal) + " voxels")
     print(
         "\tampfails:",
         ampfails,

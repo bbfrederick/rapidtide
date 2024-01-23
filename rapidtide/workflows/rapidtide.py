@@ -1757,17 +1757,19 @@ def rapidtide_main(argparsingfunc):
                 )
             theCorrelator.setlimits(lagmininpts, lagmaxinpts)
             theCorrelator.setreftc(cleaned_resampref_y)
-            print("MI norm factor:", theMutualInformationator.getnormfac())
             theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
             theMutualInformationator.setreftc(cleaned_resampref_y)
-            print("MI norm factor:", theMutualInformationator.getnormfac())
             dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
             thefitter.setcorrtimeaxis(trimmedcorrscale)
             # add parallel path for mutualinformationator BBF
-            corrdistdata = getNullDistributionData_func(
+            if optiondict["similaritymetric"] == "mutualinfo":
+                theSimFunc = theMutualInformationator
+            else:
+                theSimFunc = theCorrelator
+            simdistdata = getNullDistributionData_func(
                 cleaned_resampref_y,
                 oversampfreq,
-                theCorrelator,
+                theSimFunc,
                 thefitter,
                 numestreps=optiondict["numestreps"],
                 nprocs=optiondict["nprocs_getNullDist"],
@@ -1781,8 +1783,18 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype="float64",
             )
             tide_io.writebidstsv(
-                f"{outputname}_desc-corrdistdata_info",
-                corrdistdata,
+                f"{outputname}_desc-simdistdata_info",
+                simdistdata,
+                1.0,
+                columns=["pass" + str(thepass)],
+                append=(thepass > 1),
+            )
+            cleansimdistdata = tide_math.removeoutliers(
+                simdistdata, zerobad=True, outlierfac=optiondict["sigdistoutlierfac"]
+            )
+            tide_io.writebidstsv(
+                f"{outputname}_desc-cleansimdistdata_info",
+                cleansimdistdata,
                 1.0,
                 columns=["pass" + str(thepass)],
                 append=(thepass > 1),
@@ -1795,7 +1807,7 @@ def rapidtide_main(argparsingfunc):
                 thepvalnames.append("{:.3f}".format(1.0 - thispercentile).replace(".", "p"))
 
             pcts, pcts_fit, sigfit = tide_stats.sigFromDistributionData(
-                corrdistdata,
+                simdistdata,
                 optiondict["sighistlen"],
                 thepercentiles,
                 twotail=optiondict["bipolar"],
@@ -1830,7 +1842,7 @@ def rapidtide_main(argparsingfunc):
                         )
                         namesuffix = "_desc-nullsimfunc_hist"
                         tide_stats.makeandsavehistogram(
-                            corrdistdata,
+                            simdistdata,
                             optiondict["sighistlen"],
                             0,
                             outputname + namesuffix,
@@ -1844,7 +1856,7 @@ def rapidtide_main(argparsingfunc):
                 else:
                     LGR.info("leaving ampthresh unchanged")
 
-            del corrdistdata
+            del simdistdata
             TimingLGR.info(
                 f"Significance estimation end, pass {thepass}",
                 {
@@ -2053,15 +2065,15 @@ def rapidtide_main(argparsingfunc):
 
         # Step 2b - Correlation time despeckle
         if optiondict["despeckle_passes"] > 0:
-            LGR.info(f"\n\nCorrelation despeckling pass {thepass}")
+            LGR.info(f"\n\n{similaritytype} despeckling pass {thepass}")
             LGR.info(f"\tUsing despeckle_thresh = {optiondict['despeckle_thresh']:.3f}")
-            TimingLGR.info(f"Correlation despeckle start, pass {thepass}")
+            TimingLGR.info(f"{similaritytype} despeckle start, pass {thepass}")
 
             # find lags that are very different from their neighbors, and refit starting at the median lag for the point
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             for despecklepass in range(optiondict["despeckle_passes"]):
-                LGR.info(f"\n\nCorrelation despeckling subpass {despecklepass + 1}")
+                LGR.info(f"\n\n{similaritytype} despeckling subpass {despecklepass + 1}")
                 outmaparray *= 0.0
                 outmaparray[validvoxels] = eval("lagtimes")[:]
                 medianlags = ndimage.median_filter(
@@ -2163,7 +2175,7 @@ def rapidtide_main(argparsingfunc):
                 f"{optiondict['despeckle_passes']} passes"
             )
             TimingLGR.info(
-                f"Correlation despeckle end, pass {thepass}",
+                f"{similaritytype} despeckle end, pass {thepass}",
                 {
                     "message2": voxelsprocessed_fc_ds,
                     "message3": "voxels",

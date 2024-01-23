@@ -185,7 +185,7 @@ def correlationpass(
             )
             theglobalmaxlist.append(theglobalmax + 0)
             volumetotal += 1
-    LGR.info(f"\nCorrelation performed on {volumetotal} voxels")
+    LGR.info(f"\nSimilarity function calculated on {volumetotal} voxels")
 
     # garbage collect
     collected = gc.collect()
