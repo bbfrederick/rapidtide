@@ -23,6 +23,7 @@ import logging
 import multiprocessing as mp
 import os
 import platform
+import sys
 import warnings
 from pathlib import Path
 
@@ -244,6 +245,10 @@ def rapidtide_main(argparsingfunc):
         optiondict["dockermemfree"], optiondict["dockermemswap"] = tide_util.findavailablemem()
         if optiondict["dockermemfix"]:
             tide_util.setmemlimit(optiondict["dockermemfree"])
+
+    # write out the current version of the run options
+    optiondict["currentstage"] = "init"
+    tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
     # Set up loggers for workflow
     setup_logger(
@@ -1483,6 +1488,11 @@ def rapidtide_main(argparsingfunc):
         numpasses = optiondict["passes"]
     else:
         numpasses = np.max([optiondict["passes"], optiondict["maxpasses"]])
+
+    # write out the current version of the run options
+    optiondict["currentstage"] = "preprocessingdone"
+    tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
+
     for thepass in range(1, numpasses + 1):
         if stoprefining:
             break
@@ -1840,6 +1850,10 @@ def rapidtide_main(argparsingfunc):
                 },
             )
 
+        # write out the current version of the run options
+        optiondict["currentstage"] = f"precorrelation_pass{thepass}"
+        tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
+
         # Step 1 - Correlation step
         if optiondict["similaritymetric"] == "mutualinfo":
             similaritytype = "Mutual information"
@@ -1984,6 +1998,9 @@ def rapidtide_main(argparsingfunc):
             thepeakdict = None
 
         # Step 2 - similarity function fitting and time lag estimation
+        # write out the current version of the run options
+        optiondict["currentstage"] = f"presimfuncfit_pass{thepass}"
+        tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
         LGR.info(f"\n\nTime lag estimation pass {thepass}")
         TimingLGR.info(f"Time lag estimation start, pass {thepass}")
         fitcorr_func = addmemprofiling(
@@ -2154,6 +2171,9 @@ def rapidtide_main(argparsingfunc):
         timepercentile = 100.0 * order.argsort() / numvalidspatiallocs
 
         # Step 3 - regressor refinement for next pass
+        # write out the current version of the run options
+        optiondict["currentstage"] = f"prerefine_pass{thepass}"
+        tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
         if (
             thepass < optiondict["passes"]
             or optiondict["convergencethresh"] is not None
@@ -2228,6 +2248,7 @@ def rapidtide_main(argparsingfunc):
                 ampfails,
                 lagfails,
                 sigmafails,
+                numinmask,
             ) = tide_refine.makerefinemask(
                 lagstrengths,
                 lagtimes,
@@ -2244,6 +2265,10 @@ def rapidtide_main(argparsingfunc):
                 includemask=internalrefineincludemask_valid,
                 excludemask=thisinternalrefineexcludemask_valid,
             )
+
+            if numinmask == 0:
+                print("No voxels in refine mask - adjust thresholds or external masks")
+                sys.exit()
 
             # align timecourses to prepare for refinement
             alignvoxels_func = addmemprofiling(
@@ -2651,6 +2676,9 @@ def rapidtide_main(argparsingfunc):
         )
 
     # Post refinement step 1 - GLM fitting, either to remove moving signal, or to calculate delayed CVR
+    # write out the current version of the run options
+    optiondict["currentstage"] = "preglm"
+    tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         if optiondict["doglmfilt"]:
             TimingLGR.info("GLM filtering start")
@@ -2840,7 +2868,7 @@ def rapidtide_main(argparsingfunc):
             1.0 / oversamptr,
             starttime=0.0,
             columns=[f"removedbyglm"],
-            append=True,
+            append=False,
         )
 
         # calculate the final bandlimited variance
@@ -3368,6 +3396,7 @@ def rapidtide_main(argparsingfunc):
     )
 
     # do a final save of the options file
+    optiondict["currentstage"] = "done"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
     # delete the canary file
