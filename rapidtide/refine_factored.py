@@ -395,7 +395,7 @@ def makerefinemask(
             print(
                 "\nChange include/exclude masks or relax ampthresh, delaythresh, or sigmathresh - exiting"
             )
-        return 0, None, locationfails, ampfails, lagfails, sigmafails
+        return 0, None, locationfails, ampfails, lagfails, sigmafails, 0
 
     if cleanrefined:
         shiftmask = locationmask
@@ -417,8 +417,11 @@ def makerefinemask(
         sigmafails,
         " sigmafails",
     )
+    numinmask = np.sum(lagmask)
+    if numinmask is None:
+        numinmask = 0
 
-    return volumetotal, shiftmask, locationfails, ampfails, lagfails, sigmafails
+    return volumetotal, shiftmask, locationfails, ampfails, lagfails, sigmafails, numinmask
 
 
 def prenorm(
