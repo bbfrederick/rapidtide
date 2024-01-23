@@ -108,7 +108,7 @@ def printthresholds(pcts, thepercentiles, labeltext):
             "{:.3f}".format(pcts[i]),
         )
 
-def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False):
+def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False, debug=False):
     """
 
     Parameters
@@ -131,9 +131,31 @@ def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     zeroterm = thestore[1, 0]
     thestore[1, 0] = 0.0
 
-    # fit the gaussian function
-    params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
-    # print('Johnson SB fit parameters for pdf:', params)
+    # get starting values for the peak, ignoring first and last point of histogram
+    peakindex = np.argmax(thestore[1, 1:-2])
+    peaklag = thestore[0, peakindex + 1]
+    peakheight = thestore[1, peakindex + 1]
+    numbins = 1
+    while (peakindex + numbins < histlen - 1) and (
+        thestore[1, peakindex + numbins] > peakheight / 2.0
+    ):
+        numbins += 1
+    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
+    if debug:
+        print("Initial values:)
+        print(f"\tPeak height: {peakheight}")
+        print(f"\tPeak lag: {peaklag}")
+        print(f"\tPeak width: {peakwidth}")
+    peakheight, peaklag, peakwidth = tide_fit.gaussfit(
+        peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :]
+    )
+    if debug:
+        print("Refined values:)
+        print(f"\tPeak height: {peakheight}")
+        print(f"\tPeak lag: {peaklag}")
+        print(f"\tPeak width: {peakwidth}")
+
+    params = (peakheight, peaklag, peakwidth)
 
     # restore the zero term if needed
     # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
@@ -144,16 +166,16 @@ def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False):
         thestore[1, 0] = zeroterm
 
     # generate the johnsonsb function
-    johnsonsbvals = johnsonsb.pdf(thestore[0, :], params[0], params[1], params[2], params[3])
+    gaussvals = tide_fit.gauss_eval(thestore[0, :], params)
     corrfac = (1.0 - zeroterm) / (1.0 * histlen)
-    johnsonsbvals *= corrfac
-    johnsonsbvals[0] = zeroterm
+    gaussvals *= corrfac
+    gaussvals[0] = zeroterm
 
     if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title("fitgausspdf: histogram")
-        plt.plot(thestore[0, :], thestore[1, :], "b", thestore[0, :], johnsonsbvals, "r")
+        plt.plot(thestore[0, :], thestore[1, :], "b", thestore[0, :], gaussvals, "r")
         plt.legend(["histogram", "fit to gaussian"])
         plt.show()
     return np.append(params, np.array([zeroterm]))
@@ -236,6 +258,7 @@ def sigFromDistributionData(
     twotail=False,
     nozero=False,
     dosighistfit=True,
+    debug=False,
 ):
     """
 
@@ -263,11 +286,11 @@ def sigFromDistributionData(
     if dosighistfit:
         if similaritymetric == "mutualinfo":
             histfit = fitgausspdf(
-                thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero
+                thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero, debug=debug,
             )
         else:
             histfit = fitjsbpdf(
-                thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero
+                thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero, debug=debug,
             )
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles) / 2.0
