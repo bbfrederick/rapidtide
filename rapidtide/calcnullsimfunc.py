@@ -22,7 +22,9 @@
 #
 #
 #
+import os
 import sys
+import time
 
 import numpy as np
 from tqdm import tqdm
@@ -136,6 +138,7 @@ def getNullDistributionDatax(
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def nullCorrelation_consumer(inQ, outQ):
+            np.random.seed((os.getpid() * int(time.time())) % 123456789)
             while True:
                 try:
                     # get a new message
