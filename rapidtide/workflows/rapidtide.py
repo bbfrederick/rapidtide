@@ -1812,6 +1812,7 @@ def rapidtide_main(argparsingfunc):
                 cleansimdistdata,
                 optiondict["sighistlen"],
                 thepercentiles,
+                similaritymetric=optiondict["similaritymetric"],
                 twotail=optiondict["bipolar"],
                 nozero=optiondict["nohistzero"],
                 dosighistfit=optiondict["dosighistfit"],
@@ -2325,6 +2326,7 @@ def rapidtide_main(argparsingfunc):
                 R2,
                 optiondict["refineprenorm"],
                 optiondict["refineweighting"],
+                debug=optiondict["isatest"],
             )
 
             (

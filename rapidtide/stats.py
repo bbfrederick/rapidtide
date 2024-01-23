@@ -108,6 +108,56 @@ def printthresholds(pcts, thepercentiles, labeltext):
             "{:.3f}".format(pcts[i]),
         )
 
+def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False):
+    """
+
+    Parameters
+    ----------
+    thehist
+    histlen
+    thedata
+    displayplots
+    nozero
+
+    Returns
+    -------
+
+    """
+    thestore = np.zeros((2, histlen), dtype="float64")
+    thestore[0, :] = thehist[1][:-1]
+    thestore[1, :] = thehist[0][:] / (1.0 * len(thedata))
+
+    # store the zero term for later
+    zeroterm = thestore[1, 0]
+    thestore[1, 0] = 0.0
+
+    # fit the gaussian function
+    params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
+    # print('Johnson SB fit parameters for pdf:', params)
+
+    # restore the zero term if needed
+    # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
+    # histogram at zero from failed fits)
+    if nozero:
+        zeroterm = 0.0
+    else:
+        thestore[1, 0] = zeroterm
+
+    # generate the johnsonsb function
+    johnsonsbvals = johnsonsb.pdf(thestore[0, :], params[0], params[1], params[2], params[3])
+    corrfac = (1.0 - zeroterm) / (1.0 * histlen)
+    johnsonsbvals *= corrfac
+    johnsonsbvals[0] = zeroterm
+
+    if displayplots:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title("fitgausspdf: histogram")
+        plt.plot(thestore[0, :], thestore[1, :], "b", thestore[0, :], johnsonsbvals, "r")
+        plt.legend(["histogram", "fit to gaussian"])
+        plt.show()
+    return np.append(params, np.array([zeroterm]))
+
 
 def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
     """
@@ -181,6 +231,7 @@ def sigFromDistributionData(
     vallist,
     histlen,
     thepercentiles,
+    similaritymetric="correlation",
     displayplots=False,
     twotail=False,
     nozero=False,
@@ -210,9 +261,14 @@ def sigFromDistributionData(
         np.abs(vallist), histlen, therange=[0.0, 1.0]
     )
     if dosighistfit:
-        histfit = fitjsbpdf(
-            thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero
-        )
+        if similaritymetric == "mutualinfo":
+            histfit = fitgausspdf(
+                thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero
+            )
+        else:
+            histfit = fitjsbpdf(
+                thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero
+            )
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles) / 2.0
         print("thepercentiles adapted for two tailed distribution:", thepercentiles)
