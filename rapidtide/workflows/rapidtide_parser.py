@@ -59,7 +59,7 @@ DEFAULT_CORRWEIGHTING = "None"
 DEFAULT_CORRTYPE = "linear"
 DEFAULT_SIMILARITYMETRIC = "correlation"
 DEFAULT_PEAKFIT_TYPE = "gauss"
-DEFAULT_REFINE_PRENORM = "mean"
+DEFAULT_REFINE_PRENORM = "None"
 DEFAULT_REFINE_WEIGHTING = "R2"
 
 DEFAULT_DENOISING_LAGMIN = -10.0
@@ -1558,6 +1558,8 @@ def process_args(inputargs=None):
         raise (f"Similarity function range start point must be >= {args['startpoint']}.")
     if args["simcalcrange"][1] == -1:
         args["simcalcendpoint"] = np.min((100000000, args["endpoint"]))
+    elif args["simcalcrange"][1] <= args["endpoint"]:
+        args["simcalcendpoint"] = args["endpoint"]
     else:
         raise (f"Similarity function range end point must be <= {args['endpoint']}.")
 
