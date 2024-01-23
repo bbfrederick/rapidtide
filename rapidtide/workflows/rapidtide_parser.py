@@ -1479,6 +1479,8 @@ def process_args(inputargs=None):
     args["absminsigma"] = 0.05
     # search window width for noise regressor mutual information function
     args["noisesearchwindow"] = 30.0
+    # number of MADs away from the median to consider an outlier
+    args["sigdistoutlierfac"] = 10.0
 
     # correlation fitting
     # Peak value must be within specified range.
