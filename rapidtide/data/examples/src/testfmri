@@ -44,6 +44,7 @@ do
             --numnull 50000 \
             --nprocs -1 \
             --passes 3 \
+            --ampthresh 0.05 \
             --nofitfilt \
             --nolimitoutput \
             --despecklepasses 4 \

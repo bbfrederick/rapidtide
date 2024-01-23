@@ -237,6 +237,7 @@ class MutualInformationator(SimilarityFunctionator):
         self.sigma = sigma
         self.smoothingtime = smoothingtime
         self.smoothingfilter = tide_filt.NoncausalFilter(filtertype="arb")
+        self.mi_norm = 1.0
         if self.smoothingtime > 0.0:
             self.smoothingfilter.setfreqs(
                 0.0, 0.0, 1.0 / self.smoothingtime, 1.0 / self.smoothingtime
@@ -260,7 +261,7 @@ class MutualInformationator(SimilarityFunctionator):
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc, isreftc=True)
 
-        self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_mutual_info(
+        self.timeaxis, self.automi, self.similarityfuncorigin = tide_corr.cross_mutual_info(
             self.prepreftc,
             self.prepreftc,
             Fs=self.Fs,
@@ -274,9 +275,14 @@ class MutualInformationator(SimilarityFunctionator):
         self.similarityfunclen = len(self.timeaxis)
         self.timeaxisvalid = True
         self.datavalid = False
+        self.mi_norm = np.nan_to_num(1.0 / np.max(self.automi))
         if self.debug:
-            print("MutualInformationator setreftc:", len(self.timeaxis))
-            print("MutualInformationator setreftc:", self.timeaxis)
+            print(f"MutualInformationator setreftc: {len(self.timeaxis)=}")
+            print(f"MutualInformationator setreftc: {self.timeaxis}")
+            print(f"MutualInformationator setreftc: {self.mi_norm=}")
+
+    def getnormfac(self):
+        return self.mi_norm
 
     def run(self, thetc, locs=None, trim=True, gettimeaxis=True):
         if len(thetc) != len(self.reftc):
@@ -335,6 +341,9 @@ class MutualInformationator(SimilarityFunctionator):
             self.timeaxisvalid = True
         else:
             self.thesimfunc = retvals[0]
+
+        # normalize
+        self.thesimfunc *= self.mi_norm
 
         if locs is not None:
             return self.thesimfunc

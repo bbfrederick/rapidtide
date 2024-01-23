@@ -1757,10 +1757,13 @@ def rapidtide_main(argparsingfunc):
                 )
             theCorrelator.setlimits(lagmininpts, lagmaxinpts)
             theCorrelator.setreftc(cleaned_resampref_y)
+            print("MI norm factor:", theMutualInformationator.getnormfac())
             theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
             theMutualInformationator.setreftc(cleaned_resampref_y)
+            print("MI norm factor:", theMutualInformationator.getnormfac())
             dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
             thefitter.setcorrtimeaxis(trimmedcorrscale)
+            # add parallel path for mutualinformationator BBF
             corrdistdata = getNullDistributionData_func(
                 cleaned_resampref_y,
                 oversampfreq,
