@@ -142,7 +142,7 @@ def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False, deb
         numbins += 1
     peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
     if debug:
-        print("Initial values:)
+        print("Initial values:")
         print(f"\tPeak height: {peakheight}")
         print(f"\tPeak lag: {peaklag}")
         print(f"\tPeak width: {peakwidth}")
@@ -150,7 +150,7 @@ def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False, deb
         peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :]
     )
     if debug:
-        print("Refined values:)
+        print("Refined values:")
         print(f"\tPeak height: {peakheight}")
         print(f"\tPeak lag: {peaklag}")
         print(f"\tPeak width: {peakwidth}")

@@ -58,13 +58,12 @@ do
 #	    ../dst/sub-RAPIDTIDETEST_${fittype}_correlation
     rapidtide \
 	    --similaritymetric mutualinfo \
+            --isatest \
 	    --searchrange -10 15 \
 	    --spatialfilt 2 \
-	    --ampthresh 0.1 \
-	    --numnull 0 \
+	    --numnull 10000 \
 	    --nprocs -1 \
 	    --passes 5 \
-	    --ampthresh 0.05 \
 	    --nolimitoutput \
 	    --despecklepasses 4 \
 	    --acfix \
