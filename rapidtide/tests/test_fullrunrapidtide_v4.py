@@ -51,6 +51,7 @@ def test_fullrunrapidtide_v4(debug=False, displayplots=False):
         "invlag",
         "--refineweighting",
         "NIRS",
+        "--isatest",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 

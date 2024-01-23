@@ -1416,6 +1416,14 @@ def _get_parser():
         help=("Force single proc path for glm."),
         default=False,
     )
+    debugging.add_argument(
+        "--isatest",
+        dest="isatest",
+        action="store_true",
+        help=("This run of rapidtide is in a unit test."),
+        default=False,
+    )
+
 
     return parser
 

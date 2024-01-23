@@ -41,8 +41,8 @@ do
             --similaritymetric mutualinfo \
             --searchrange -10 15 \
 	    --spatialfilt 2 \
-            --numnull 50000 \
-            --nprocs -1 \
+            --ampthresh 0.1 \
+            --nprocs 1 \
             --passes 3 \
             --ampthresh 0.05 \
             --nolimitoutput \
@@ -52,6 +52,7 @@ do
             --corrweighting regressor \
             --corrtype linear \
             --peakfittype ${fittype} \
+            --isatest \
             sub-RAPIDTIDETEST.nii.gz \
             ../dst/sub-RAPIDTIDETEST_${fittype}_mutualinfo
 #    rapidtide \

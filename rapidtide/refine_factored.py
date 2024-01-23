@@ -433,19 +433,27 @@ def prenorm(
     R2vals,
     refineprenorm,
     refineweighting,
+    debug=False,
 ):
-    validlocs = np.where(refinemask > 0)
-    validtcs = shiftedtcs[validlocs, :]
+    if debug:
+        print(f"{shiftedtcs.shape=}"),
+        print(f"{refinemask.shape=}"),
+        print(f"{lagtimes.shape=}"),
+        print(f"{lagmaxthresh=}"),
+        print(f"{lagstrengths.shape=}"),
+        print(f"{R2vals.shape=}"),
+        print(f"{refineprenorm=}"),
+        print(f"{refineweighting=}"),
     if refineprenorm == "mean":
-        thedivisor = np.mean(validlocs, axis=1)
+        thedivisor = np.mean(shiftedtcs, axis=1)
     elif refineprenorm == "var":
-        thedivisor = np.var(validlocs, axis=1)
+        thedivisor = np.var(shiftedtcs, axis=1)
     elif refineprenorm == "std":
-        thedivisor = np.std(validlocs, axis=1)
+        thedivisor = np.std(shiftedtcs, axis=1)
     elif refineprenorm == "invlag":
         thedivisor = np.where(np.fabs(lagtimes) < lagmaxthresh, lagmaxthresh - lagtimes, 0.0)
     else:
-        thedivisor = validtcs[:, 0] * 0.0 + 1.0
+        thedivisor = shiftedtcs[:, 0] * 0.0 + 1.0
 
     normfac = np.where(thedivisor != 0.0, 1.0 / thedivisor, 0.0)
 
@@ -455,6 +463,12 @@ def prenorm(
         thisweight = R2vals
     else:
         thisweight = np.where(lagstrengths > 0.0, 1.0, -1.0)
+    thisweight *= refinemask
+
+    if debug:
+        print(f"{thedivisor.shape=}")
+        print(f"{normfac.shape=}")
+        print(f"{thisweight.shape=}")
 
     shiftedtcs *= (normfac * thisweight)[:, None]
 
