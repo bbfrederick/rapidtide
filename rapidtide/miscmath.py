@@ -275,6 +275,18 @@ def znormalize(vector):
     return stdnormalize(vector)
 
 
+def removeoutliers(vector, zerobad=True, outlierfac=3.0):
+    themedian = np.median(vector)
+    sigmad = mad(vector - themedian).astype(np.float64)
+    if zerobad:
+        subvalue = 0.0
+    else:
+        subvalue = themedian
+    cleaneddata = vector + 0.0
+    cleaneddata[np.where(np.fabs(cleaneddata) > outlierfac * sigmad)] = 0.0
+    return cleaneddata
+
+
 @conditionaljit()
 def madnormalize(vector, returnnormfac=False):
     """
