@@ -1789,9 +1789,11 @@ def rapidtide_main(argparsingfunc):
                 columns=["pass" + str(thepass)],
                 append=(thepass > 1),
             )
-            cleansimdistdata = tide_math.removeoutliers(
+            cleansimdistdata, nullmedian, nullmad = tide_math.removeoutliers(
                 simdistdata, zerobad=True, outlierfac=optiondict["sigdistoutlierfac"]
             )
+            optiondict[f"nullmedian_pass{thepass}"] = nullmedian + 0.0
+            optiondict[f"nullmad_pass{thepass}"] = nullmad + 0.0
             tide_io.writebidstsv(
                 f"{outputname}_desc-cleansimdistdata_info",
                 cleansimdistdata,
@@ -1807,7 +1809,7 @@ def rapidtide_main(argparsingfunc):
                 thepvalnames.append("{:.3f}".format(1.0 - thispercentile).replace(".", "p"))
 
             pcts, pcts_fit, sigfit = tide_stats.sigFromDistributionData(
-                simdistdata,
+                cleansimdistdata,
                 optiondict["sighistlen"],
                 thepercentiles,
                 twotail=optiondict["bipolar"],

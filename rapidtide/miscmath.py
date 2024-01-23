@@ -283,8 +283,8 @@ def removeoutliers(vector, zerobad=True, outlierfac=3.0):
     else:
         subvalue = themedian
     cleaneddata = vector + 0.0
-    cleaneddata[np.where(np.fabs(cleaneddata) > outlierfac * sigmad)] = 0.0
-    return cleaneddata
+    cleaneddata[np.where(np.fabs(cleaneddata - themedian) > outlierfac * sigmad)] = subvalue
+    return cleaneddata, themedian, sigmad
 
 
 @conditionaljit()

@@ -45,7 +45,6 @@ do
             --nprocs -1 \
             --passes 3 \
             --ampthresh 0.05 \
-            --nofitfilt \
             --nolimitoutput \
             --despecklepasses 4 \
             --acfix \
