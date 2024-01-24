@@ -32,7 +32,7 @@ def prepmask(inputmask):
     erodedmask = binary_erosion(inputmask)
     return erodedmask
 
-def checklag(themask, themap, histlen=101):
+def checklag(themask, themap, histlen=201):
     lagmetrics = {}
 
     theerodedmask = prepmask(themask)
@@ -49,9 +49,13 @@ def checklag(themask, themap, histlen=101):
         np.fabs(maskedgradient),
         histlen,
         refine=True,
+        therange=(0.0, 10.0),
         normalize=True,
     )
-    return lagmetrics, gradhist
+    lagmetrics["gradhistbincenters"] = ((gradhist[1][1:] + gradhist[1][0:-1]) / 2.0).tolist()
+    lagmetrics["gradhistvalues"] = (gradhist[0][-histlen:]).tolist()
+
+    return lagmetrics
 
 def checkstrength(themask, themap, histlen=101):
     strengthmetrics = {}
@@ -112,7 +116,7 @@ def qualitycheck(
 
 
 
-    outputdict["lagmetrics"], gradhist = checklag(themask, thelags)
+    outputdict["lagmetrics"] = checklag(themask, thelags)
     outputdict["strengthmetrics"] = checkstrength(themask, thestrengths)
     outputdict["regressormetrics"] = checkregressors(theregressors)
 
