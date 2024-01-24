@@ -21,17 +21,14 @@ import os
 import sys
 
 import numpy as np
-import pandas as pd
-import pyqtgraph as pg
-from nibabel.affines import apply_affine
-from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
-from statsmodels.robust.scale import mad
 
-import rapidtide.util as tide_util
-from rapidtide.Colortables import *
-from rapidtide.helper_classes import SimilarityFunctionFitter
-from rapidtide.OrthoImageItem import OrthoImageItem
+from scipy.ndimage import binary_erosion
+
 from rapidtide.RapidtideDataset import RapidtideDataset
+
+def prepmask(inputmask):
+    erodedmask = binary_erosion(inputmask)
+    return erodedmask
 
 def qualitycheck(
         datafileroot,
@@ -58,5 +55,12 @@ def qualitycheck(
         forcetr=forcetr,
         forceoffset=forceoffset,
         offsettime=offsettime,
-        verbose=args.verbose,
+        verbose=verbose,
+        init_LUT = False,
     )
+    themask = thedataset.overlays["lagmask"].data
+    thelags = thedataset.overlays["lagtimes"].data
+    thewidths = thedataset.overlays["lagsigma"].data
+    thestrengths = thedataset.overlays["lagstrengths"].data
+
+    theerodedmask = prepmask(themask)

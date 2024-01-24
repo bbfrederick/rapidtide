@@ -109,6 +109,7 @@ script_list = [
     "rapidtide/scripts/plethquality",
     "rapidtide/scripts/polyfitim",
     "rapidtide/scripts/proj2flow",
+    "rapidtide/scripts/runqualitycheck",
     "rapidtide/scripts/rankimage",
     "rapidtide/scripts/rapidtide",
     "rapidtide/scripts/rapidtide2std",
