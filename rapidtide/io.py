@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# $Author: frederic $
-# $Date: 2016/07/12 13:50:29 $
-# $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
 import copy
 import json
