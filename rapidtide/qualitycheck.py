@@ -25,10 +25,48 @@ import numpy as np
 from scipy.ndimage import binary_erosion
 
 from rapidtide.RapidtideDataset import RapidtideDataset
+import rapidtide.stats as tide_stats
+
 
 def prepmask(inputmask):
     erodedmask = binary_erosion(inputmask)
     return erodedmask
+
+def checklag(themask, themap, histlen=101):
+    lagmetrics = {}
+
+    theerodedmask = prepmask(themask)
+
+    lagmetrics["pct02"] = themap.robustmin
+    lagmetrics["pct25"] = themap.quartiles[0]
+    lagmetrics["pct50"] = themap.quartiles[1]
+    lagmetrics["pct75"] = themap.quartiles[2]
+    lagmetrics["pct98"] = themap.robustmax
+
+    thegradient = np.gradient(themap.data)
+    maskedgradient = theerodedmask * thegradient
+    gradhist, lagmetrics["gradhistpeakheight"], lagmetrics["gradhistpeakloc"], lagmetrics["gradhistpeakwidth"], lagmetrics["gradhistcenterofmass"] = tide_stats.makehistogram(
+        np.fabs(maskedgradient),
+        histlen,
+        refine=True,
+        normalize=True,
+    )
+    return lagmetrics, gradhist
+
+def checkstrength(themask, themap, histlen=101):
+    strengthmetrics = {}
+
+    strengthmetrics["pct02"] = themap.robustmin
+    strengthmetrics["pct25"] = themap.quartiles[0]
+    strengthmetrics["pct50"] = themap.quartiles[1]
+    strengthmetrics["pct75"] = themap.quartiles[2]
+    strengthmetrics["pct98"] = themap.robustmax
+
+    return strengthmetrics
+
+def checkregressors(theregressors):
+    regressormetrics = {}
+    return regressormetrics
 
 def qualitycheck(
         datafileroot,
@@ -46,7 +84,7 @@ def qualitycheck(
     # read in the dataset
     thedataset = RapidtideDataset(
         "main",
-        datafileroot,
+        datafileroot + "_",
         anatname=anatname,
         geommaskname=geommaskname,
         userise=userise,
@@ -58,9 +96,24 @@ def qualitycheck(
         verbose=verbose,
         init_LUT = False,
     )
-    themask = thedataset.overlays["lagmask"].data
-    thelags = thedataset.overlays["lagtimes"].data
-    thewidths = thedataset.overlays["lagsigma"].data
-    thestrengths = thedataset.overlays["lagstrengths"].data
 
-    theerodedmask = prepmask(themask)
+    outputdict = {}
+    themask = thedataset.overlays["lagmask"].data
+    thelags = thedataset.overlays["lagtimes"]
+    thelags.summarize()
+    thelags.setFuncMask(themask)
+    thelags.updateStats()
+    thewidths = thedataset.overlays["lagsigma"]
+    thestrengths = thedataset.overlays["lagstrengths"]
+    thestrengths.summarize()
+    thestrengths.setFuncMask(themask)
+    thestrengths.updateStats()
+    theregressors = thedataset.regressors
+
+
+
+    outputdict["lagmetrics"], gradhist = checklag(themask, thelags)
+    outputdict["strengthmetrics"] = checkstrength(themask, thestrengths)
+    outputdict["regressormetrics"] = checkregressors(theregressors)
+
+    return outputdict
