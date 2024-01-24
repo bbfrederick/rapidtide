@@ -108,6 +108,7 @@ def printthresholds(pcts, thepercentiles, labeltext):
             "{:.3f}".format(pcts[i]),
         )
 
+
 def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False, debug=False):
     """
 
@@ -181,7 +182,7 @@ def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False, deb
     return np.append(params, np.array([zeroterm]))
 
 
-def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
+def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False, debug=False):
     """
 
     Parameters
@@ -206,7 +207,8 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
 
     # fit the johnsonSB function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
-    # print('Johnson SB fit parameters for pdf:', params)
+    if debug:
+        print("Johnson SB fit parameters for pdf:", params)
 
     # restore the zero term if needed
     # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
@@ -286,11 +288,21 @@ def sigFromDistributionData(
     if dosighistfit:
         if similaritymetric == "mutualinfo":
             histfit = fitgausspdf(
-                thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero, debug=debug,
+                thehistogram,
+                histlen,
+                vallist,
+                displayplots=displayplots,
+                nozero=nozero,
+                debug=debug,
             )
         else:
             histfit = fitjsbpdf(
-                thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero, debug=debug,
+                thehistogram,
+                histlen,
+                vallist,
+                displayplots=displayplots,
+                nozero=nozero,
+                debug=debug,
             )
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles) / 2.0

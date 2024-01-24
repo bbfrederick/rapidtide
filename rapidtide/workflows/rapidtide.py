@@ -1816,7 +1816,6 @@ def rapidtide_main(argparsingfunc):
                 twotail=optiondict["bipolar"],
                 nozero=optiondict["nohistzero"],
                 dosighistfit=optiondict["dosighistfit"],
-                debug=optiondict["isatest"],
             )
             for i in range(len(thepvalnames)):
                 optiondict[
