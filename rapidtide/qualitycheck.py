@@ -19,10 +19,12 @@
 import argparse
 import os
 import sys
+from pprint import pprint
 
 import numpy as np
 from scipy.ndimage import binary_erosion
 
+import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 from rapidtide.RapidtideDataset import RapidtideDataset
 
@@ -35,7 +37,7 @@ def prepmask(inputmask):
 def checklag(themask, themap, histlen=201):
     lagmetrics = {}
 
-    theerodedmask = prepmask(themask)
+    theerodedmask = prepmask(themask.data)
 
     lagmetrics["pct02"] = themap.robustmin
     lagmetrics["pct25"] = themap.quartiles[0]
@@ -44,7 +46,12 @@ def checklag(themask, themap, histlen=201):
     lagmetrics["pct98"] = themap.robustmax
 
     thegradient = np.gradient(themap.data)
-    maskedgradient = theerodedmask * thegradient
+    thegradientamp = np.sqrt(
+        np.square(thegradient[0]) + np.square(thegradient[1]) + np.square(thegradient[2])
+    )
+    tide_io.savetonifti(thegradientamp, themap.header, "laggradient")
+    maskedgradient = theerodedmask * thegradientamp
+    tide_io.savetonifti(maskedgradient, themap.header, "maskedlaggradient")
     (
         gradhist,
         lagmetrics["gradhistpeakheight"],
@@ -52,7 +59,7 @@ def checklag(themask, themap, histlen=201):
         lagmetrics["gradhistpeakwidth"],
         lagmetrics["gradhistcenterofmass"],
     ) = tide_stats.makehistogram(
-        np.fabs(maskedgradient),
+        maskedgradient,
         histlen,
         refine=True,
         therange=(0.0, 10.0),
@@ -111,16 +118,18 @@ def qualitycheck(
     )
 
     outputdict = {}
-    themask = thedataset.overlays["lagmask"].data
+    themask = thedataset.overlays["lagmask"]
+
     thelags = thedataset.overlays["lagtimes"]
-    thelags.summarize()
-    thelags.setFuncMask(themask)
+    thelags.setFuncMask(themask.data)
     thelags.updateStats()
+
     thewidths = thedataset.overlays["lagsigma"]
+
     thestrengths = thedataset.overlays["lagstrengths"]
-    thestrengths.summarize()
-    thestrengths.setFuncMask(themask)
+    thestrengths.setFuncMask(themask.data)
     thestrengths.updateStats()
+
     theregressors = thedataset.regressors
 
     outputdict["lagmetrics"] = checklag(themask, thelags)
