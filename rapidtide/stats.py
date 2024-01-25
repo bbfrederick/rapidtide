@@ -568,7 +568,16 @@ def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False, p
     return peaklag, peakheight, peakwidth
 
 
-def makehistogram(indata, histlen, binsize=None, therange=None, refine=False, normalize=False):
+def makehistogram(
+    indata,
+    histlen,
+    binsize=None,
+    therange=None,
+    refine=False,
+    normalize=False,
+    ignorefirstpoint=False,
+    debug=False,
+):
     """
 
     Parameters
@@ -604,20 +613,38 @@ def makehistogram(indata, histlen, binsize=None, therange=None, refine=False, no
     thestore[1, :] = thehist[0][-histlen:]
 
     # get starting values for the peak, ignoring first and last point of histogram
-    peakindex = np.argmax(thestore[1, 1:-2])
-    peakloc = thestore[0, peakindex + 1]
-    peakheight = thestore[1, peakindex + 1]
+    if ignorefirstpoint:
+        xvals = thestore[0, 1:]
+        yvals = thestore[1, 1:]
+    else:
+        xvals = thestore[0, :]
+        yvals = thestore[1, :]
+    # peakindex = np.argmax(thestore[1, 1:-2])
+    peakindex = np.argmax(yvals[1:-2])
+    # peakloc = thestore[0, peakindex + 1]
+    peakloc = xvals[peakindex + 1]
+    # peakheight = thestore[1, peakindex + 1]
+    peakheight = yvals[peakindex + 1]
     numbins = 1
-    while (peakindex + numbins < histlen - 1) and (
-        thestore[1, peakindex + numbins] > peakheight / 2.0
-    ):
+    while (peakindex + numbins < histlen - 1) and (yvals[peakindex + numbins] > peakheight / 2.0):
         numbins += 1
-    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
+    # peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
+    peakwidth = (xvals[peakindex + numbins] - xvals[peakindex]) * 2.0
+    if debug:
+        print("Before refine")
+        print(f"{peakindex=}, {peakloc=}, {peakheight=}, {peakwidth=}")
     if refine:
+        # peakheight, peakloc, peakwidth = tide_fit.gaussfit(
+        #    peakheight, peakloc, peakwidth, thestore[0, :], thestore[1, :]
+        # )
         peakheight, peakloc, peakwidth = tide_fit.gaussfit(
-            peakheight, peakloc, peakwidth, thestore[0, :], thestore[1, :]
+            peakheight, peakloc, peakwidth, xvals, yvals
         )
-    centerofmass = np.sum(thestore[0, :] * thestore[1, :]) / np.sum(thestore[1, :])
+    if debug:
+        print("After refine")
+        print(f"{peakindex=}, {peakloc=}, {peakheight=}, {peakwidth=}")
+    # centerofmass = np.sum(thestore[0, :] * thestore[1, :]) / np.sum(thestore[1, :])
+    centerofmass = np.sum(xvals * yvals) / np.sum(yvals)
 
     return thehist, peakheight, peakloc, peakwidth, centerofmass
 
