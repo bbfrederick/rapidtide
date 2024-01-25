@@ -16,11 +16,7 @@
 #   limitations under the License.
 #
 #
-import argparse
-import os
-import sys
-from pprint import pprint
-
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import binary_erosion
 
@@ -34,7 +30,7 @@ def prepmask(inputmask):
     return erodedmask
 
 
-def checklag(themask, themap, histlen=201):
+def checklag(themask, themap, histlen=201, maxgrad=3.0, debug=False):
     lagmetrics = {}
 
     theerodedmask = prepmask(themask.data)
@@ -47,11 +43,14 @@ def checklag(themask, themap, histlen=201):
 
     thegradient = np.gradient(themap.data)
     thegradientamp = np.sqrt(
-        np.square(thegradient[0]) + np.square(thegradient[1]) + np.square(thegradient[2])
+        np.square(thegradient[0] / themap.xsize)
+        + np.square(thegradient[1] / themap.ysize)
+        + np.square(thegradient[2] / themap.zsize)
     )
-    tide_io.savetonifti(thegradientamp, themap.header, "laggradient")
     maskedgradient = theerodedmask * thegradientamp
-    tide_io.savetonifti(maskedgradient, themap.header, "maskedlaggradient")
+    if debug:
+        tide_io.savetonifti(thegradientamp, themap.header, "laggradient")
+        tide_io.savetonifti(maskedgradient, themap.header, "maskedlaggradient")
     (
         gradhist,
         lagmetrics["gradhistpeakheight"],
@@ -61,17 +60,25 @@ def checklag(themask, themap, histlen=201):
     ) = tide_stats.makehistogram(
         maskedgradient,
         histlen,
-        refine=True,
-        therange=(0.0, 10.0),
+        refine=False,
+        therange=(0.0, maxgrad),
         normalize=True,
+        ignorefirstpoint=True,
+        debug=True,
     )
+
     lagmetrics["gradhistbincenters"] = ((gradhist[1][1:] + gradhist[1][0:-1]) / 2.0).tolist()
     lagmetrics["gradhistvalues"] = (gradhist[0][-histlen:]).tolist()
-
+    if debug:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title("lag gradient magnitude histogram")
+        plt.plot((lagmetrics["gradhistbincenters"])[1:], (lagmetrics["gradhistvalues"])[1:])
+        plt.show()
     return lagmetrics
 
 
-def checkstrength(themask, themap, histlen=101):
+def checkstrength(themask, themap, histlen=101, debug=False):
     strengthmetrics = {}
 
     strengthmetrics["pct02"] = themap.robustmin
@@ -83,7 +90,7 @@ def checkstrength(themask, themap, histlen=101):
     return strengthmetrics
 
 
-def checkregressors(theregressors):
+def checkregressors(theregressors, debug=False):
     regressormetrics = {}
     return regressormetrics
 
@@ -123,17 +130,21 @@ def qualitycheck(
     thelags = thedataset.overlays["lagtimes"]
     thelags.setFuncMask(themask.data)
     thelags.updateStats()
+    if debug:
+        thelags.summarize()
 
     thewidths = thedataset.overlays["lagsigma"]
 
     thestrengths = thedataset.overlays["lagstrengths"]
     thestrengths.setFuncMask(themask.data)
     thestrengths.updateStats()
+    if debug:
+        thelags.summarize()
 
     theregressors = thedataset.regressors
 
-    outputdict["lagmetrics"] = checklag(themask, thelags)
-    outputdict["strengthmetrics"] = checkstrength(themask, thestrengths)
-    outputdict["regressormetrics"] = checkregressors(theregressors)
+    outputdict["lagmetrics"] = checklag(themask, thelags, debug=debug)
+    outputdict["strengthmetrics"] = checkstrength(themask, thestrengths, debug=debug)
+    outputdict["regressormetrics"] = checkregressors(theregressors, debug=debug)
 
     return outputdict

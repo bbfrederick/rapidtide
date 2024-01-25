@@ -61,8 +61,14 @@ def main():
         _get_parser().print_help()
         raise
 
-    resultsdict = tide_quality.qualitycheck(args.inputfileroot)
-    tide_io.writedicttojson(resultsdict, f"{args.inputfileroot}_desc-qualitymetrics_info.json")
+    resultsdict = tide_quality.qualitycheck(
+        args.inputfileroot,
+        debug=args.debug,
+    )
+    tide_io.writedicttojson(
+        resultsdict,
+        f"{args.inputfileroot}_desc-qualitymetrics_info.json",
+    )
 
 
 if __name__ == "__main__":
