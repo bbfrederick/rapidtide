@@ -20,8 +20,8 @@ import argparse
 
 import matplotlib as mpl
 import numpy as np
-import rapidtide.io as tide_io
 
+import rapidtide.io as tide_io
 import rapidtide.qualitycheck as tide_quality
 
 
@@ -36,7 +36,11 @@ def _get_parser():
     )
 
     # Required arguments
-    parser.add_argument("inputfileroot", type=str, help="The root of the rapidtide dataset name (without the underscore.")
+    parser.add_argument(
+        "inputfileroot",
+        type=str,
+        help="The root of the rapidtide dataset name (without the underscore.",
+    )
 
     # add optional arguments
     parser.add_argument(
@@ -48,6 +52,7 @@ def _get_parser():
 
     return parser
 
+
 def main():
     # read the arguments
     try:
@@ -58,6 +63,7 @@ def main():
 
     resultsdict = tide_quality.qualitycheck(args.inputfileroot)
     tide_io.writedicttojson(resultsdict, f"{args.inputfileroot}_desc-qualitymetrics_info.json")
+
 
 if __name__ == "__main__":
     main()

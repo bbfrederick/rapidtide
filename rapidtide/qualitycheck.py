@@ -21,16 +21,16 @@ import os
 import sys
 
 import numpy as np
-
 from scipy.ndimage import binary_erosion
 
-from rapidtide.RapidtideDataset import RapidtideDataset
 import rapidtide.stats as tide_stats
+from rapidtide.RapidtideDataset import RapidtideDataset
 
 
 def prepmask(inputmask):
     erodedmask = binary_erosion(inputmask)
     return erodedmask
+
 
 def checklag(themask, themap, histlen=201):
     lagmetrics = {}
@@ -45,7 +45,13 @@ def checklag(themask, themap, histlen=201):
 
     thegradient = np.gradient(themap.data)
     maskedgradient = theerodedmask * thegradient
-    gradhist, lagmetrics["gradhistpeakheight"], lagmetrics["gradhistpeakloc"], lagmetrics["gradhistpeakwidth"], lagmetrics["gradhistcenterofmass"] = tide_stats.makehistogram(
+    (
+        gradhist,
+        lagmetrics["gradhistpeakheight"],
+        lagmetrics["gradhistpeakloc"],
+        lagmetrics["gradhistpeakwidth"],
+        lagmetrics["gradhistcenterofmass"],
+    ) = tide_stats.makehistogram(
         np.fabs(maskedgradient),
         histlen,
         refine=True,
@@ -56,6 +62,7 @@ def checklag(themask, themap, histlen=201):
     lagmetrics["gradhistvalues"] = (gradhist[0][-histlen:]).tolist()
 
     return lagmetrics
+
 
 def checkstrength(themask, themap, histlen=101):
     strengthmetrics = {}
@@ -68,22 +75,24 @@ def checkstrength(themask, themap, histlen=101):
 
     return strengthmetrics
 
+
 def checkregressors(theregressors):
     regressormetrics = {}
     return regressormetrics
 
+
 def qualitycheck(
-        datafileroot,
-        anatname=None,
-        geommaskname=None,
-        userise=False,
-        usecorrout=False,
-        useatlas=False,
-        forcetr=False,
-        forceoffset=False,
-        offsettime=0.0,
-        verbose=False,
-        debug=False,
+    datafileroot,
+    anatname=None,
+    geommaskname=None,
+    userise=False,
+    usecorrout=False,
+    useatlas=False,
+    forcetr=False,
+    forceoffset=False,
+    offsettime=0.0,
+    verbose=False,
+    debug=False,
 ):
     # read in the dataset
     thedataset = RapidtideDataset(
@@ -98,7 +107,7 @@ def qualitycheck(
         forceoffset=forceoffset,
         offsettime=offsettime,
         verbose=verbose,
-        init_LUT = False,
+        init_LUT=False,
     )
 
     outputdict = {}
@@ -113,8 +122,6 @@ def qualitycheck(
     thestrengths.setFuncMask(themask)
     thestrengths.updateStats()
     theregressors = thedataset.regressors
-
-
 
     outputdict["lagmetrics"] = checklag(themask, thelags)
     outputdict["strengthmetrics"] = checkstrength(themask, thestrengths)
