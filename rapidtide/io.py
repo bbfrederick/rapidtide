@@ -154,6 +154,15 @@ def parseniftisizes(thesizes):
     return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
 
+def dumparraytonifti(thearray, filename):
+    outputaffine = np.zeros((4, 4), dtype=float)
+    for i in range(4):
+        outputaffine[i, i] = 1.0
+    outputheader = nib.nifti1Header
+    outputheader.set_affine(outputaffine)
+    savetonifti(thearray, outputheader, filename)
+
+
 def savetonifti(thearray, theheader, thename, debug=False):
     r"""Save a data array out to a nifti file
 
