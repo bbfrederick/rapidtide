@@ -64,7 +64,7 @@ def checklag(themask, themap, histlen=201, maxgrad=3.0, debug=False):
         therange=(0.0, maxgrad),
         normalize=True,
         ignorefirstpoint=True,
-        debug=True,
+        debug=debug,
     )
 
     lagmetrics["gradhistbincenters"] = ((gradhist[1][1:] + gradhist[1][0:-1]) / 2.0).tolist()

@@ -18,12 +18,9 @@
 #
 import argparse
 
-import matplotlib as mpl
-import numpy as np
 import pandas as pd
 
 import rapidtide.io as tide_io
-import rapidtide.qualitycheck as tide_quality
 
 
 def _get_parser():
@@ -90,26 +87,28 @@ def main():
             },
         }
 
-    thecolumns = []
+    thecolumns = ["datasource"]
+    thedatadict = {"datasource": []}
     for key in thekeydict.keys():
         for subkey in thekeydict[key]:
             thecolumns.append(key + "_" + str(subkey))
-    df = pd.DataFrame()
-    print(thecolumns)
-    df.columns = thecolumns
+            thedatadict[thecolumns[-1]] = []
+
+    if args.debug:
+        print(thecolumns)
 
     for theinput in args.input:
-        thedict = tide_io.readdictfromjson(theinput)
-        newrow = {}
-        for column in thecolumns:
+        inputdict = tide_io.readdictfromjson(theinput)
+        thedatadict["datasource"].append(theinput)
+        for column in thecolumns[1:]:
             keyparts = column.split("_")
             try:
-                newrow[column] = thedict[keyparts[0]][keyparts[1]]
+                thedataitem = inputdict[keyparts[0]][keyparts[1]]
             except KeyError:
-                newrow[column] = None
-        df.append(newrow)
-
-    print(df)
+                thedataitem = None
+            thedatadict[column].append(thedataitem)
+    df = pd.DataFrame(thedatadict, columns=thecolumns)
+    df.to_csv(args.outputfile)
 
 
 if __name__ == "__main__":
