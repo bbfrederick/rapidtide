@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#   Copyright 2024-2024 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
+import argparse
+
+import matplotlib as mpl
+import numpy as np
+import pandas as pd
+
+import rapidtide.io as tide_io
+import rapidtide.qualitycheck as tide_quality
+
+
+def _get_parser():
+    """
+    Argument parser for mergequality
+    """
+    parser = argparse.ArgumentParser(
+        prog="mergequality",
+        description=("Merge rapidtide quality check data from several runs."),
+        allow_abbrev=False,
+    )
+
+    # Required arguments
+    parser.add_argument("--input", action="store", type=str, nargs="*", required=True)
+    parser.add_argument("--outputfile", action="store", type=str, required=True)
+
+    # add optional
+    parser.add_argument("--keyfile", action="store", type=str, default=None)
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help=("Output additional debugging information."),
+        default=False,
+    )
+
+    return parser
+
+
+def main():
+    # read the arguments
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
+
+    if args.debug:
+        print(f"{args.input=}")
+        print(f"{args.outputfile=}")
+        print(f"{args.keyfile=}")
+
+    if args.keyfile is not None:
+        thekeydict = tide_io.readdictfromjson(args.keyfile)
+    else:
+        thekeydict = {
+            "lagmetrics": {
+                "gradhistcenterofmass": 0.0,
+                "gradhistpeakheight": 0.0,
+                "gradhistpeakloc": 0.0,
+                "gradhistpeakwidth": 0.0,
+                "pct02": 0.0,
+                "pct25": 0.0,
+                "pct50": 0.0,
+                "pct75": 0.0,
+                "pct98": 0.0,
+            },
+            "regressormetrics": {},
+            "strengthmetrics": {
+                "pct02": 0.0,
+                "pct25": 0.0,
+                "pct50": 0.0,
+                "pct75": 0.02,
+                "pct98": 0.0,
+            },
+        }
+
+    thecolumns = []
+    for key in thekeydict.keys():
+        for subkey in thekeydict[key]:
+            thecolumns.append(key + "_" + str(subkey))
+    df = pd.DataFrame()
+    print(thecolumns)
+    df.columns = thecolumns
+
+    for theinput in args.input:
+        thedict = tide_io.readdictfromjson(theinput)
+        newrow = {}
+        for column in thecolumns:
+            keyparts = column.split("_")
+            try:
+                newrow[column] = thedict[keyparts[0]][keyparts[1]]
+            except KeyError:
+                newrow[column] = None
+        df.append(newrow)
+
+    print(df)
+
+
+if __name__ == "__main__":
+    main()

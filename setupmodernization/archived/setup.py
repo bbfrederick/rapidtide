@@ -9,10 +9,10 @@ https://github.com/pypa/sampleproject
 from codecs import open
 from os import path
 
+import versioneer
+
 # Always prefer setuptools over distutils
 from setuptools import find_packages, setup
-
-import versioneer
 
 here = path.abspath(path.dirname(__file__))
 
