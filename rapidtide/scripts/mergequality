@@ -66,25 +66,62 @@ def main():
         thekeydict = tide_io.readdictfromjson(args.keyfile)
     else:
         thekeydict = {
+            "regressormetrics": {
+                "first_kurtosis": 2.537387476292494,
+                "first_kurtosis_p": 6.183462740419309e-34,
+                "first_kurtosis_z": 12.1438650905891,
+                "first_spectralflatness": 0.9488196863525793,
+                "last_kurtosis": 6.910158057761109,
+                "last_kurtosis_p": 2.964386400449096e-76,
+                "last_kurtosis_z": 18.480496898942274,
+                "last_spectralflatness": 0.9535900684764012
+            },
             "lagmetrics": {
-                "gradhistcenterofmass": 0.0,
-                "gradhistpeakheight": 0.0,
-                "gradhistpeakloc": 0.0,
-                "gradhistpeakwidth": 0.0,
+                "centerofmass": 0.3013670365563799,
+                "gradcenterofmass": 0.7145948623090327,
+                "gradpct02": 0.04245805314940407,
+                "gradpct25": 0.1601768346438284,
+                "gradpct50": 0.350119137512604,
+                "gradpct75": 1.6865165238166413,
+                "gradpct98": 4.493388554467473,
+                "gradpeakheight": 2.353895854165064,
+                "gradpeakloc": 0.10396039603960396,
+                "gradpeakpercentile": 13.389056843947651,
+                "gradpeakwidth": 0.4752475247524751,
+                "pct02": -6.247237430765624,
+                "pct25": -1.8274538423784459,
+                "pct50": -0.530521020240001,
+                "pct75": 0.18077034097490188,
+                "pct98": 8.433723194956478,
+                "peakheight": 0.4479834068401195,
+                "peakloc": -0.17326732673267342,
+                "peakpercentile": 63.616282460217185,
+                "peakwidth": 1.1881188118811883
+            },
+            "strengthmetrics": {
+                "centerofmass": 0.0,
                 "pct02": 0.0,
                 "pct25": 0.0,
                 "pct50": 0.0,
                 "pct75": 0.0,
                 "pct98": 0.0,
+                "peakheight": 0.0,
+                "peakloc": 0.0,
+                "peakpercentile": 0.0,
+                "peakwidth": 0.0,
             },
-            "regressormetrics": {},
-            "strengthmetrics": {
+            "MTTmetrics": {
+                "centerofmass": 0.0,
                 "pct02": 0.0,
                 "pct25": 0.0,
                 "pct50": 0.0,
-                "pct75": 0.02,
+                "pct75": 0.0,
                 "pct98": 0.0,
-            },
+                "peakheight": 0.0,
+                "peakloc": 0.0,
+                "peakpercentile": 0.0,
+                "peakwidth": 0.0,
+            }
         }
 
     thecolumns = ["datasource"]
