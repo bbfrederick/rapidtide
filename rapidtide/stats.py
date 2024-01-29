@@ -788,6 +788,19 @@ def makeandsavehistogram(
     else:
         thedict[varroot + "_centerofmass.txt"] = centerofmass
         thedict[varroot + "_peak.txt"] = peakloc
+    extraheaderinfo = {}
+    extraheaderinfo["centerofmass"] = centerofmass
+    extraheaderinfo["peakloc"] = peakloc
+    extraheaderinfo["peakwidth"] = peakwidth
+    extraheaderinfo["peakheight"] = peakheight
+    extraheaderinfo["peakpercentile"] = peakpercentile
+    (
+        extraheaderinfo["pct02"],
+        extraheaderinfo["pct25"],
+        extraheaderinfo["pct50"],
+        extraheaderinfo["pct75"],
+        extraheaderinfo["pct98"],
+    ) = tide_stats.getfracvals(indata, [0.02, 0.25, 0.5, 0.75, 0.98], debug=debug)
     tide_io.writebidstsv(
         outname,
         np.transpose(thestore[1, :]),
@@ -795,6 +808,7 @@ def makeandsavehistogram(
         starttime=thestore[0, 0],
         columns=[varroot],
         append=append,
+        extraheaderinfo=extraheaderinfo,
         debug=debug,
     )
     if displayplots:
