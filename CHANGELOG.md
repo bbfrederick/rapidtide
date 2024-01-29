@@ -1,10 +1,10 @@
 # Release history
 
-## Version 2.7.6 (1/24/24)
+## Version 2.7.6 (1/29/24)
 * (rapidtide) Added the ability to calcuate delays over a limited time range, but still GLM filter the entire timecourse.
 * (rapidtide) Fixed a very old bug in null significance distribution estimation.  Multiple worker processes all start with the same random seed (unless you explicitly fix that).  Who knew?
 * (rapidtide) Improved significance distribution model fitting for mutualinfo similarity metric.  The distribution is a Gaussian, not a Johnson distribution (as it is for selected correlation).
-* (runqualitycheck) Added the beginnings of an automated quality assessment tool.
+* (runqualitycheck) Added an automated quality assessment tool.  This will likely evolve quite a bit over time.
 * (rapidtide2std) Updated for new maps; also copied over timecourses and options so you can load a rapidtide2std dataset into tidepool.
 * (atlasaverage) Set output NIFTI size properly for 3D templates.
 * (testing) Parallelized tests on CircleCI for a significant speedup.
