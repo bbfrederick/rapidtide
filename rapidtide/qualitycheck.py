@@ -69,6 +69,7 @@ def checklag(
         tide_io.savetonifti(maskedgradient, themap.header, "maskedlaggradient")
 
     maskedgradientdata = np.ravel(thegradientamp[np.where(theerodedmask > 0.0)])
+    thedict["gradvoxelsincluded"] = len(maskedgradientdata)
     (
         lagmetrics["gradpct02"],
         lagmetrics["gradpct25"],
@@ -127,6 +128,7 @@ def gethistmetrics(
     dataforhist = np.ravel(themap.data[np.where(themask > 0.0)])
     if nozero:
         dataforhist = dataforhist[np.where(dataforhist != 0.0)]
+    thedict["voxelsincluded"] = len(dataforhist)
     (
         thehist,
         thedict["peakheight"],
