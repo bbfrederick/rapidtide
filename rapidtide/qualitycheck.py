@@ -234,6 +234,8 @@ def qualitycheck(
         datafileroot + "_",
         anatname=anatname,
         geommaskname=geommaskname,
+        graymaskspec=graymaskspec,
+        whitemaskspec=whitemaskspec,
         userise=userise,
         usecorrout=usecorrout,
         useatlas=useatlas,

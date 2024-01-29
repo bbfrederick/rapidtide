@@ -454,8 +454,8 @@ class RapidtideDataset:
         fileroot,
         anatname=None,
         geommaskname=None,
-        graymaskname=None,
-        whitemaskname=None,
+        graymaskspec=None,
+        whitemaskspec=None,
         userise=False,
         usecorrout=False,
         useatlas=False,
@@ -471,8 +471,8 @@ class RapidtideDataset:
         self.fileroot = fileroot
         self.anatname = anatname
         self.geommaskname = geommaskname
-        self.graymaskname = graymaskname
-        self.whitemaskname = whitemaskname
+        self.graymaskspec = graymaskspec
+        self.whitemaskspec = whitemaskspec
         self.userise = userise
         self.usecorrout = usecorrout
         self.useatlas = useatlas
@@ -633,34 +633,34 @@ class RapidtideDataset:
                     print("using ", self.geommaskname, " as geometric mask")
                 # allloadedmaps.append('geommask')
                 return True
-        if self.graymaskname is not None:
-            if os.path.isfile(self.graymaskname):
-                thepath, thebase = os.path.split(self.graymaskname)
+        if self.graymaskspec is not None:
+            if os.path.isfile(self.graymaskspec):
+                thepath, thebase = os.path.split(self.graymaskspec)
                 self.overlays["graymask"] = Overlay(
                     "graymask",
-                    self.graymaskname,
+                    self.graymaskspec,
                     thebase,
                     init_LUT=self.init_LUT,
                     isaMask=True,
                     verbose=self.verbose,
                 )
                 if self.verbose > 1:
-                    print("using ", self.graymaskname, " as gray matter mask")
+                    print("using ", self.graymaskspec, " as gray matter mask")
                 # allloadedmaps.append('geommask')
                 return True
-        if self.whitemaskname is not None:
-            if os.path.isfile(self.whitemaskname):
-                thepath, thebase = os.path.split(self.whitemaskname)
+        if self.whitemaskspec is not None:
+            if os.path.isfile(self.whitemaskspec):
+                thepath, thebase = os.path.split(self.whitemaskspec)
                 self.overlays["whitemask"] = Overlay(
                     "whitemask",
-                    self.whitemaskname,
+                    self.whitemaskspec,
                     thebase,
                     init_LUT=self.init_LUT,
                     isaMask=True,
                     verbose=self.verbose,
                 )
                 if self.verbose > 1:
-                    print("using ", self.whitemaskname, " as white matter mask")
+                    print("using ", self.whitemaskspec, " as white matter mask")
                 # allloadedmaps.append('geommask')
                 return True
         elif self.coordinatespace == "MNI152":
