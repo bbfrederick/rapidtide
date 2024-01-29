@@ -633,36 +633,6 @@ class RapidtideDataset:
                     print("using ", self.geommaskname, " as geometric mask")
                 # allloadedmaps.append('geommask')
                 return True
-        if self.graymaskspec is not None:
-            if os.path.isfile(self.graymaskspec):
-                thepath, thebase = os.path.split(self.graymaskspec)
-                self.overlays["graymask"] = Overlay(
-                    "graymask",
-                    self.graymaskspec,
-                    thebase,
-                    init_LUT=self.init_LUT,
-                    isaMask=True,
-                    verbose=self.verbose,
-                )
-                if self.verbose > 1:
-                    print("using ", self.graymaskspec, " as gray matter mask")
-                # allloadedmaps.append('geommask')
-                return True
-        if self.whitemaskspec is not None:
-            if os.path.isfile(self.whitemaskspec):
-                thepath, thebase = os.path.split(self.whitemaskspec)
-                self.overlays["whitemask"] = Overlay(
-                    "whitemask",
-                    self.whitemaskspec,
-                    thebase,
-                    init_LUT=self.init_LUT,
-                    isaMask=True,
-                    verbose=self.verbose,
-                )
-                if self.verbose > 1:
-                    print("using ", self.whitemaskspec, " as white matter mask")
-                # allloadedmaps.append('geommask')
-                return True
         elif self.coordinatespace == "MNI152":
             try:
                 fsldir = os.environ["FSLDIR"]
@@ -862,6 +832,47 @@ class RapidtideDataset:
                 print("no anatomic image loaded")
             return False
 
+    def _loadgraymask(self):
+        if self.graymaskspec is not None:
+            if os.path.isfile(self.graymaskspec):
+                thepath, thebase = os.path.split(self.graymaskspec)
+                self.overlays["graymask"] = Overlay(
+                    "graymask",
+                    self.graymaskspec,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    isaMask=True,
+                    verbose=self.verbose,
+                )
+                if self.verbose > 1:
+                    print("using ", self.graymaskspec, " as gray matter mask")
+                # allloadedmaps.append('geommask')
+                return True
+        else:
+            if self.verbose > 1:
+                print("no gray mask loaded")
+            return False
+
+    def _loadwhitemask(self):
+        if self.whitemaskspec is not None:
+            if os.path.isfile(self.whitemaskspec):
+                thepath, thebase = os.path.split(self.whitemaskspec)
+                self.overlays["whitemask"] = Overlay(
+                    "whitemask",
+                    self.whitemaskspec,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    isaMask=True,
+                    verbose=self.verbose,
+                )
+                if self.verbose > 1:
+                    print("using ", self.whitemaskspec, " as white matter mask")
+                # allloadedmaps.append('geommask')
+                return True
+        else:
+            if self.verbose > 1:
+                print("no white mask loaded")
+            return False
     def setupregressors(self):
         # load the regressors
         self.regressors = {}
@@ -1150,6 +1161,12 @@ class RapidtideDataset:
         # then the geometric masks
         if self._loadgeommask():
             self.allloadedmaps.append("geommask")
+
+        # then the tissue masks
+        if self._loadgraymask():
+            self.allloadedmaps.append("graymask")
+        if self._loadwhitemask():
+            self.allloadedmaps.append("whitemask")
 
         if self.useatlas and (
             (self.coordinatespace == "MNI152")
