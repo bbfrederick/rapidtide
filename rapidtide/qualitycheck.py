@@ -193,8 +193,14 @@ def checkMTT(themap, themask, histlen=101, minsMTT=0.0, maxMTT=10.0, savehist=Fa
     return MTTmetrics
 
 
-def checkregressors(theregressors, debug=False):
+def checkregressors(theregressors, numpasses, debug=False):
     regressormetrics = {}
+    firstregressor = theregressors["pass1"]
+    lastregressor = theregressors[f"pass{numpasses}"]
+    for label, regressor in [["first", firstregressor],["last", lastregressor]]:
+        regressormetrics[f"{label}_kurtosis"] = regressor.kurtosis
+        regressormetrics[f"{label}_kurtosis_z"] = regressor.kurtosis_z
+        regressormetrics[f"{label}_kurtosis_p"] = regressor.kurtosis_p
     return regressormetrics
 
 
@@ -230,6 +236,10 @@ def qualitycheck(
     )
 
     outputdict = {}
+
+    # put in some basic information
+    outputdict["passes"] = thedataset.numberofpasses
+
     themask = thedataset.overlays["lagmask"]
 
     thelags = thedataset.overlays["lagtimes"]
@@ -255,6 +265,6 @@ def qualitycheck(
     outputdict["lagmetrics"] = checklag(thelags, themask, debug=debug)
     outputdict["strengthmetrics"] = checkstrength(thestrengths, themask, debug=debug)
     outputdict["MTTmetrics"] = checkMTT(theMTTs, themask, debug=debug)
-    outputdict["regressormetrics"] = checkregressors(theregressors, debug=debug)
+    outputdict["regressormetrics"] = checkregressors(theregressors, outputdict["passes"], debug=debug)
 
     return outputdict
