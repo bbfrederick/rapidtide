@@ -21,6 +21,7 @@ import argparse
 import pandas as pd
 
 import rapidtide.io as tide_io
+import rapidtide.stats as tide_stats
 
 
 def _get_parser():
@@ -35,7 +36,7 @@ def _get_parser():
 
     # Required arguments
     parser.add_argument("--input", action="store", type=str, nargs="*", required=True)
-    parser.add_argument("--outputfile", action="store", type=str, required=True)
+    parser.add_argument("--outputroot", action="store", type=str, required=True)
 
     # add optional
     parser.add_argument("--keyfile", action="store", type=str, default=None)
@@ -145,7 +146,20 @@ def main():
                 thedataitem = None
             thedatadict[column].append(thedataitem)
     df = pd.DataFrame(thedatadict, columns=thecolumns)
-    df.to_csv(args.outputfile)
+    df.to_csv(args.outputroot + ".csv", index=False)
+
+    for column in thecolumns[1:]:
+        tide_stats.makeandsavehistogram(
+            df[column],
+            51,
+            0,
+            args.outputroot + "_" + column,
+            displaytitle=column,
+            displayplots=False,
+            normalize=True,
+            append=False,
+            debug=False,
+        )
 
 
 if __name__ == "__main__":
