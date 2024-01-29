@@ -800,7 +800,7 @@ def makeandsavehistogram(
         extraheaderinfo["pct50"],
         extraheaderinfo["pct75"],
         extraheaderinfo["pct98"],
-    ) = tide_stats.getfracvals(indata, [0.02, 0.25, 0.5, 0.75, 0.98], debug=debug)
+    ) = getfracvals(indata, [0.02, 0.25, 0.5, 0.75, 0.98], debug=debug)
     tide_io.writebidstsv(
         outname,
         np.transpose(thestore[1, :]),
