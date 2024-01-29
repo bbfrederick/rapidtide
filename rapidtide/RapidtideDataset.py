@@ -833,8 +833,10 @@ class RapidtideDataset:
             return False
 
     def _loadgraymask(self):
+        print(f"{self.graymaskspec=}")
         if self.graymaskspec is not None:
-            if os.path.isfile(self.graymaskspec):
+            filename, dummy = tide_io.parsefilespec(self.graymaskspec)
+            if os.path.isfile(filename):
                 thepath, thebase = os.path.split(self.graymaskspec)
                 self.overlays["graymask"] = Overlay(
                     "graymask",
@@ -855,7 +857,8 @@ class RapidtideDataset:
 
     def _loadwhitemask(self):
         if self.whitemaskspec is not None:
-            if os.path.isfile(self.whitemaskspec):
+            filename, dummy = tide_io.parsefilespec(self.whitemaskspec)
+            if os.path.isfile(filename):
                 thepath, thebase = os.path.split(self.whitemaskspec)
                 self.overlays["whitemask"] = Overlay(
                     "whitemask",
