@@ -274,7 +274,6 @@ class Overlay:
             else:
                 tempmask = (0 * self.data).astype("uint16")
                 for theval in self.filevals:
-                    print(f"looking for {theval}")
                     tempmask[np.where(self.data - theval == 0.0)] += 1
                 self.data = np.where(tempmask > 0, 1, 0)
         if self.verbose > 1:

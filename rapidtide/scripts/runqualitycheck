@@ -77,10 +77,6 @@ def main():
         _get_parser().print_help()
         raise
 
-    if args.debug:
-        verbose = 2
-    else:
-        verbose = 0
     resultsdict = tide_quality.qualitycheck(
         args.inputfileroot,
         graymaskspec=args.graymaskspec,

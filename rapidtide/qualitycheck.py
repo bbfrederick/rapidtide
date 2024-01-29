@@ -249,12 +249,12 @@ def qualitycheck(
     outputdict = {}
     if graymaskspec is not None:
         dograyonly = True
-        thegraymask = thedataset.overlays["graymask"]
+        thegraymask = (thedataset.overlays["graymask"]).data
     else:
         dograyonly = False
     if whitemaskspec is not None:
         dowhiteonly = True
-        thewhitemask = thedataset.overlays["whitemask"]
+        thewhitemask = (thedataset.overlays["whitemask"]).data
     else:
         dowhiteonly = False
 
