@@ -198,10 +198,10 @@ def checkregressors(theregressors, numpasses, filterlimits, debug=False):
     regressormetrics = {}
     firstregressor = theregressors["pass1"]
     lastregressor = theregressors[f"pass{numpasses}"]
+    lowerlimindex = np.argmax(firstregressor.specaxis >= filterlimits[0])
+    upperlimindex = np.argmin(firstregressor.specaxis <= filterlimits[1]) + 1
     if debug:
         print(f"{filterlimits=}")
-        lowerlimindex = np.argmax(firstregressor.specaxis >= filterlimits[0])
-        upperlimindex = np.argmin(firstregressor.specaxis <= filterlimits[1]) + 1
         print(f"{lowerlimindex=}, {upperlimindex=}")
         print(firstregressor.specaxis)
         print(firstregressor.specdata[lowerlimindex: upperlimindex])
@@ -215,8 +215,8 @@ def checkregressors(theregressors, numpasses, filterlimits, debug=False):
 
 def qualitycheck(
     datafileroot,
-    graymaskname=None,
-    whitemaskname=None,
+    graymaskspec=None,
+    whitemaskspec=None,
     anatname=None,
     geommaskname=None,
     userise=False,
