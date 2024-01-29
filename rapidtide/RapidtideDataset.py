@@ -1164,11 +1164,9 @@ class RapidtideDataset:
         if self._loadgeommask():
             self.allloadedmaps.append("geommask")
 
-        print("loading gray mask")
         # then the tissue masks
         if self._loadgraymask():
             self.allloadedmaps.append("graymask")
-        print("loading white mask")
         if self._loadwhitemask():
             self.allloadedmaps.append("whitemask")
 
