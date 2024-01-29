@@ -1187,6 +1187,7 @@ def writebidstsv(
     outputfileroot,
     data,
     samplerate,
+    extraheaderinfo=None,
     compressed=True,
     columns=None,
     starttime=0.0,
@@ -1306,6 +1307,9 @@ def writebidstsv(
             headerdict["Columns"] = columns
         else:
             headerdict["Columns"] = incolumns + columns
+    if extraheaderinfo is not None:
+        for key in extraheaderinfo:
+            headerdict[key] = extraheaderinfo[key]
 
     if not omitjson:
         with open(outputfileroot + ".json", "wb") as fp:
