@@ -81,7 +81,6 @@ def main():
         args.inputfileroot,
         graymaskspec=args.graymaskspec,
         whitemaskspec=args.whitemaskspec,
-        verbose=verbose,
         debug=args.debug,
     )
     tide_io.writedicttojson(
