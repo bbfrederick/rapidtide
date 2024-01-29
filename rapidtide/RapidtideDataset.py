@@ -144,7 +144,7 @@ class Overlay:
         else:
             self.label = label
         self.report = report
-        self.filename, self.filevals = tide_io.parsefilespec(filespec)
+        self.filename, self.filevals = tide_io.processnamespec(filespec, "Including voxels where ", "in mask")
         self.namebase = namebase
         if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
@@ -275,7 +275,7 @@ class Overlay:
                 tempmask = (0 * self.data).astype("uint16")
                 for theval in self.filevals:
                     print(f"looking for {theval}")
-                    tempmask[np.where(self.data - 1.0 * theval == 0.0)] += 1
+                    tempmask[np.where(self.data - theval == 0.0)] += 1
                 self.data = np.where(tempmask > 0, 1, 0)
         if self.verbose > 1:
             print("Overlay data range:", np.min(self.data), np.max(self.data))
