@@ -39,10 +39,24 @@ def _get_parser():
     parser.add_argument(
         "inputfileroot",
         type=str,
-        help="The root of the rapidtide dataset name (without the underscore.",
+        help="The root of the rapidtide dataset name (without the underscore.)",
     )
 
     # add optional arguments
+    parser.add_argument(
+        "--graymask",
+        metavar="MASKNAME",
+        type=str,
+        help="The name of a gray matter mask that matches the input dataset.",
+        default=None,
+    )
+    parser.add_argument(
+        "--whitemask",
+        metavar="MASKNAME",
+        type=str,
+        help="The name of a white matter mask that matches the input dataset.",
+        default=None,
+    )
     parser.add_argument(
         "--debug",
         action="store_true",
@@ -63,6 +77,8 @@ def main():
 
     resultsdict = tide_quality.qualitycheck(
         args.inputfileroot,
+        graymaskname=args.graymask,
+        whitemaskname=args.whitemask,
         debug=args.debug,
     )
     tide_io.writedicttojson(

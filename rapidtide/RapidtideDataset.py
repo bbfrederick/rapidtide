@@ -448,6 +448,8 @@ class RapidtideDataset:
         fileroot,
         anatname=None,
         geommaskname=None,
+        graymaskname=None,
+        whitemaskname=None,
         userise=False,
         usecorrout=False,
         useatlas=False,
@@ -463,6 +465,8 @@ class RapidtideDataset:
         self.fileroot = fileroot
         self.anatname = anatname
         self.geommaskname = geommaskname
+        self.graymaskname = graymaskname
+        self.whitemaskname = whitemaskname
         self.userise = userise
         self.usecorrout = usecorrout
         self.useatlas = useatlas
@@ -621,6 +625,36 @@ class RapidtideDataset:
                 )
                 if self.verbose > 1:
                     print("using ", self.geommaskname, " as geometric mask")
+                # allloadedmaps.append('geommask')
+                return True
+        if self.graymaskname is not None:
+            if os.path.isfile(self.graymaskname):
+                thepath, thebase = os.path.split(self.graymaskname)
+                self.overlays["graymask"] = Overlay(
+                    "graymask",
+                    self.graymaskname,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    isaMask=True,
+                    verbose=self.verbose,
+                )
+                if self.verbose > 1:
+                    print("using ", self.graymaskname, " as gray matter mask")
+                # allloadedmaps.append('geommask')
+                return True
+        if self.whitemaskname is not None:
+            if os.path.isfile(self.whitemaskname):
+                thepath, thebase = os.path.split(self.whitemaskname)
+                self.overlays["whitemask"] = Overlay(
+                    "whitemask",
+                    self.whitemaskname,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    isaMask=True,
+                    verbose=self.verbose,
+                )
+                if self.verbose > 1:
+                    print("using ", self.whitemaskname, " as white matter mask")
                 # allloadedmaps.append('geommask')
                 return True
         elif self.coordinatespace == "MNI152":

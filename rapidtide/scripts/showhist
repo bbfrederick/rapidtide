@@ -102,9 +102,14 @@ def main():
     if args.calcdist:
         histlen = 101
         inlist = tide_io.readvecs(args.infilename)
-        thehist, peakheight, peakloc, peakwidth, centerofmass = tide_stats.makehistogram(
-            inlist, histlen
-        )
+        (
+            thehist,
+            peakheight,
+            peakloc,
+            peakwidth,
+            centerofmass,
+            peakpercentile,
+        ) = tide_stats.makehistogram(inlist, histlen)
         indata = np.zeros((2, len(thehist[0])), dtype="float64")
         indata[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
         indata[1, :] = thehist[0][-histlen:]

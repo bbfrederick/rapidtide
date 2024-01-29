@@ -239,7 +239,14 @@ def main():
     )
     print(f"{peakloc=}, {peakheight=}, {peakwidth=}")
 
-    thehist, peakheight2, peakloc2, peakwidth2, centerofmass2 = tide_stats.makehistogram(
+    (
+        thehist,
+        peakheight2,
+        peakloc2,
+        peakwidth2,
+        centerofmass2,
+        peakpercentile2,
+    ) = tide_stats.makehistogram(
         theflatmap[np.where(theflatmask > 0.0)],
         args.histbins,
         binsize=None,

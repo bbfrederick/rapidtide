@@ -169,6 +169,7 @@ def test_nullsimfunc(debug=False, displayplots=False):
                 peakloc,
                 peakwidth,
                 centerofmass,
+                peakpercentile,
             ) = tide_stats.makehistogram(np.abs(corrlist), histlen, therange=[0.0, 1.0])
             histograms.append(thehist)
             thestore = np.zeros((2, len(thehist[0])), dtype="float64")
