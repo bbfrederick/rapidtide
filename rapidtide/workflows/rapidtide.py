@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import logging
 import multiprocessing as mp
 import os
 import platform
+import sys
 import warnings
 from pathlib import Path
 
@@ -46,8 +47,7 @@ import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.peakeval as tide_peakeval
-import rapidtide.refine as tide_refine
-import rapidtide.refine_factored as tide_refine2
+import rapidtide.refine_factored as tide_refine
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
@@ -246,6 +246,10 @@ def rapidtide_main(argparsingfunc):
         if optiondict["dockermemfix"]:
             tide_util.setmemlimit(optiondict["dockermemfree"])
 
+    # write out the current version of the run options
+    optiondict["currentstage"] = "init"
+    tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
+
     # Set up loggers for workflow
     setup_logger(
         logger_filename=f"{outputname}_log.txt",
@@ -434,6 +438,8 @@ def rapidtide_main(argparsingfunc):
     validstart, validend = tide_util.startendcheck(
         timepoints, optiondict["startpoint"], optiondict["endpoint"]
     )
+    optiondict["validstart"] = validstart
+    optiondict["validend"] = validend
     if abs(optiondict["lagmin"]) > (validend - validstart + 1) * fmritr / 2.0:
         raise ValueError(
             f"magnitude of lagmin exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
@@ -1298,14 +1304,6 @@ def rapidtide_main(argparsingfunc):
         outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
     tide_util.logmem("after correlation array allocation")
 
-    if optiondict["textio"]:
-        nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
-    else:
-        if fileiscifti:
-            nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
-        else:
-            nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
-
     # prepare for fast resampling
     padtime = (
         max((-optiondict["lagmin"], optiondict["lagmax"]))
@@ -1317,25 +1315,35 @@ def rapidtide_main(argparsingfunc):
     padtime = fmritr * numpadtrs
     genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
 
-    alternaterefine = False
+    if optiondict["textio"]:
+        nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
+        nativepaddedfmrishape = (xsize, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
+    else:
+        if fileiscifti:
+            nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
+            nativepaddedfmrishape = (
+                1,
+                1,
+                1,
+                2 * numpadtrs + np.shape(initial_fmri_x)[0],
+                numspatiallocs,
+            )
+        else:
+            nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
+            nativepaddedfmrishape = (
+                xsize,
+                ysize,
+                numslices,
+                2 * numpadtrs + np.shape(initial_fmri_x)[0],
+            )
 
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    if alternaterefine:
-        internalpaddedfmrishape = (numspatiallocs, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
-        internalvalidpaddedfmrishape = (
-            numvalidspatiallocs,
-            2 * numpadtrs + np.shape(initial_fmri_x)[0],
-        )
-        nativepaddedfmrishape = (
-            xsize,
-            ysize,
-            numslices,
-            2 * numpadtrs + np.shape(initial_fmri_x)[0],
-        )
-        print(f"{internalpaddedfmrishape=}")
-        print(f"{internalvalidpaddedfmrishape=}")
-        print(f"{nativepaddedfmrishape=}")
+    internalpaddedfmrishape = (numspatiallocs, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
+    internalvalidpaddedfmrishape = (
+        numvalidspatiallocs,
+        2 * numpadtrs + np.shape(initial_fmri_x)[0],
+    )
 
     if (
         optiondict["passes"] > 1
@@ -1345,34 +1353,22 @@ def rapidtide_main(argparsingfunc):
         if optiondict["sharedmem"]:
             shiftedtcs, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             weights, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
-            if alternaterefine:
-                paddedshiftedtcs, dummy, dummy = allocshared(
-                    internalvalidpaddedfmrishape, rt_floatset
-                )
-                paddedweights, dummy, dummy = allocshared(
-                    internalvalidpaddedfmrishape, rt_floatset
-                )
+            paddedshiftedtcs, dummy, dummy = allocshared(internalvalidpaddedfmrishape, rt_floatset)
+            paddedweights, dummy, dummy = allocshared(internalvalidpaddedfmrishape, rt_floatset)
         else:
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-            if alternaterefine:
-                paddedshiftedtcs, dummy, dummy = allocshared(
-                    internalvalidpaddedfmrishape, rt_floatset
-                )
-                paddedweights, dummy, dummy = allocshared(
-                    internalvalidpaddedfmrishape, rt_floatset
-                )
+            paddedshiftedtcs, dummy, dummy = allocshared(internalvalidpaddedfmrishape, rt_floatset)
+            paddedweights, dummy, dummy = allocshared(internalvalidpaddedfmrishape, rt_floatset)
         tide_util.logmem("after refinement array allocation")
     if optiondict["sharedmem"]:
         outfmriarray, dummy, dummy = allocshared(internalfmrishape, rt_floatset)
-        if alternaterefine:
-            paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
+        paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
     else:
         outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
-        if alternaterefine:
-            paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
+        paddedoutfmriarray, dummy, dummy = allocshared((internalpaddedfmrishape), rt_floatset)
 
-            # cycle over all voxels
+        # cycle over all voxels
     refine = True
     LGR.verbose(f"refine is set to {refine}")
     optiondict["edgebufferfrac"] = max(
@@ -1398,6 +1394,18 @@ def rapidtide_main(argparsingfunc):
         zerooutbadfit=optiondict["zerooutbadfit"],
     )
 
+    validsimcalcstart, validsimcalcend = tide_util.startendcheck(
+        timepoints,
+        optiondict["simcalcstartpoint"],
+        optiondict["simcalcendpoint"],
+    )
+    osvalidsimcalcstart = validsimcalcstart * optiondict["oversampfactor"]
+    osvalidsimcalcend = validsimcalcend * optiondict["oversampfactor"]
+    optiondict["validsimcalcstart"] = validsimcalcstart
+    optiondict["validsimcalcend"] = validsimcalcend
+    optiondict["osvalidsimcalcstart"] = osvalidsimcalcstart
+    optiondict["osvalidsimcalcend"] = osvalidsimcalcend
+
     # Preprocessing - echo cancellation
     if optiondict["echocancel"]:
         LGR.info("\n\nEcho cancellation")
@@ -1409,7 +1417,7 @@ def rapidtide_main(argparsingfunc):
         )
 
         referencetc = tide_math.corrnormalize(
-            resampref_y,
+            resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1],
             detrendorder=optiondict["detrendorder"],
             windowfunc=optiondict["windowfunc"],
         )
@@ -1419,11 +1427,11 @@ def rapidtide_main(argparsingfunc):
             theglobalmaxlist,
             trimmedcorrscale,
         ) = calcsimilaritypass_func(
-            fmri_data_valid[:, :],
+            fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             referencetc,
             theCorrelator,
-            initial_fmri_x,
-            os_fmri_x,
+            initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
             lagmininpts,
             lagmaxinpts,
             corrout,
@@ -1480,6 +1488,11 @@ def rapidtide_main(argparsingfunc):
         numpasses = optiondict["passes"]
     else:
         numpasses = np.max([optiondict["passes"], optiondict["maxpasses"]])
+
+    # write out the current version of the run options
+    optiondict["currentstage"] = "preprocessingdone"
+    tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
+
     for thepass in range(1, numpasses + 1):
         if stoprefining:
             break
@@ -1490,7 +1503,7 @@ def rapidtide_main(argparsingfunc):
             LGR.info(f"Pass number {thepass}")
 
         referencetc = tide_math.corrnormalize(
-            resampref_y,
+            resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1],
             detrendorder=optiondict["detrendorder"],
             windowfunc=optiondict["windowfunc"],
         )
@@ -1505,7 +1518,7 @@ def rapidtide_main(argparsingfunc):
             resampref_y = resptracker.clean(resampref_y, 1.0 / oversamptr, thetimes, thefreqs)
             tide_io.writevec(resampref_y, f"{outputname}_respfilt_pass{thepass}.txt")
             referencetc = tide_math.corrnormalize(
-                resampref_y,
+                resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1],
                 detrendorder=optiondict["detrendorder"],
                 windowfunc=optiondict["windowfunc"],
             )
@@ -1567,7 +1580,9 @@ def rapidtide_main(argparsingfunc):
             acmaxinpts = lagmaxinpts + lagindpad
             theCorrelator.setreftc(referencetc)
             theCorrelator.setlimits(acmininpts, acmaxinpts)
-            thexcorr, accheckcorrscale, dummy = theCorrelator.run(resampref_y)
+            thexcorr, accheckcorrscale, dummy = theCorrelator.run(
+                resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1]
+            )
             thefitter.setcorrtimeaxis(accheckcorrscale)
             (
                 maxindex,
@@ -1746,10 +1761,15 @@ def rapidtide_main(argparsingfunc):
             theMutualInformationator.setreftc(cleaned_resampref_y)
             dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
             thefitter.setcorrtimeaxis(trimmedcorrscale)
-            corrdistdata = getNullDistributionData_func(
+            # add parallel path for mutualinformationator BBF
+            if optiondict["similaritymetric"] == "mutualinfo":
+                theSimFunc = theMutualInformationator
+            else:
+                theSimFunc = theCorrelator
+            simdistdata = getNullDistributionData_func(
                 cleaned_resampref_y,
                 oversampfreq,
-                theCorrelator,
+                theSimFunc,
                 thefitter,
                 numestreps=optiondict["numestreps"],
                 nprocs=optiondict["nprocs_getNullDist"],
@@ -1763,8 +1783,20 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype="float64",
             )
             tide_io.writebidstsv(
-                f"{outputname}_desc-corrdistdata_info",
-                corrdistdata,
+                f"{outputname}_desc-simdistdata_info",
+                simdistdata,
+                1.0,
+                columns=["pass" + str(thepass)],
+                append=(thepass > 1),
+            )
+            cleansimdistdata, nullmedian, nullmad = tide_math.removeoutliers(
+                simdistdata, zerobad=True, outlierfac=optiondict["sigdistoutlierfac"]
+            )
+            optiondict[f"nullmedian_pass{thepass}"] = nullmedian + 0.0
+            optiondict[f"nullmad_pass{thepass}"] = nullmad + 0.0
+            tide_io.writebidstsv(
+                f"{outputname}_desc-cleansimdistdata_info",
+                cleansimdistdata,
                 1.0,
                 columns=["pass" + str(thepass)],
                 append=(thepass > 1),
@@ -1777,9 +1809,10 @@ def rapidtide_main(argparsingfunc):
                 thepvalnames.append("{:.3f}".format(1.0 - thispercentile).replace(".", "p"))
 
             pcts, pcts_fit, sigfit = tide_stats.sigFromDistributionData(
-                corrdistdata,
+                cleansimdistdata,
                 optiondict["sighistlen"],
                 thepercentiles,
+                similaritymetric=optiondict["similaritymetric"],
                 twotail=optiondict["bipolar"],
                 nozero=optiondict["nohistzero"],
                 dosighistfit=optiondict["dosighistfit"],
@@ -1812,7 +1845,7 @@ def rapidtide_main(argparsingfunc):
                         )
                         namesuffix = "_desc-nullsimfunc_hist"
                         tide_stats.makeandsavehistogram(
-                            corrdistdata,
+                            simdistdata,
                             optiondict["sighistlen"],
                             0,
                             outputname + namesuffix,
@@ -1826,7 +1859,7 @@ def rapidtide_main(argparsingfunc):
                 else:
                     LGR.info("leaving ampthresh unchanged")
 
-            del corrdistdata
+            del simdistdata
             TimingLGR.info(
                 f"Significance estimation end, pass {thepass}",
                 {
@@ -1834,6 +1867,10 @@ def rapidtide_main(argparsingfunc):
                     "message3": "repetitions",
                 },
             )
+
+        # write out the current version of the run options
+        optiondict["currentstage"] = f"precorrelation_pass{thepass}"
+        tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
         # Step 1 - Correlation step
         if optiondict["similaritymetric"] == "mutualinfo":
@@ -1857,11 +1894,11 @@ def rapidtide_main(argparsingfunc):
                 theglobalmaxlist,
                 trimmedcorrscale,
             ) = calcsimilaritypass_func(
-                fmri_data_valid[:, :],
+                fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 theMutualInformationator,
-                initial_fmri_x,
-                os_fmri_x,
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -1881,11 +1918,11 @@ def rapidtide_main(argparsingfunc):
                 theglobalmaxlist,
                 trimmedcorrscale,
             ) = calcsimilaritypass_func(
-                fmri_data_valid[:, :],
+                fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 theCorrelator,
-                initial_fmri_x,
-                os_fmri_x,
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -1946,10 +1983,10 @@ def rapidtide_main(argparsingfunc):
             )
 
             voxelsprocessed_pe, thepeakdict = peakevalpass_func(
-                fmri_data_valid[:, :],
+                fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
-                initial_fmri_x,
-                os_fmri_x,
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
                 theMutualInformationator,
                 trimmedcorrscale,
                 corrout,
@@ -1979,6 +2016,9 @@ def rapidtide_main(argparsingfunc):
             thepeakdict = None
 
         # Step 2 - similarity function fitting and time lag estimation
+        # write out the current version of the run options
+        optiondict["currentstage"] = f"presimfuncfit_pass{thepass}"
+        tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
         LGR.info(f"\n\nTime lag estimation pass {thepass}")
         TimingLGR.info(f"Time lag estimation start, pass {thepass}")
         fitcorr_func = addmemprofiling(
@@ -2028,15 +2068,15 @@ def rapidtide_main(argparsingfunc):
 
         # Step 2b - Correlation time despeckle
         if optiondict["despeckle_passes"] > 0:
-            LGR.info(f"\n\nCorrelation despeckling pass {thepass}")
+            LGR.info(f"\n\n{similaritytype} despeckling pass {thepass}")
             LGR.info(f"\tUsing despeckle_thresh = {optiondict['despeckle_thresh']:.3f}")
-            TimingLGR.info(f"Correlation despeckle start, pass {thepass}")
+            TimingLGR.info(f"{similaritytype} despeckle start, pass {thepass}")
 
             # find lags that are very different from their neighbors, and refit starting at the median lag for the point
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             for despecklepass in range(optiondict["despeckle_passes"]):
-                LGR.info(f"\n\nCorrelation despeckling subpass {despecklepass + 1}")
+                LGR.info(f"\n\n{similaritytype} despeckling subpass {despecklepass + 1}")
                 outmaparray *= 0.0
                 outmaparray[validvoxels] = eval("lagtimes")[:]
                 medianlags = ndimage.median_filter(
@@ -2138,7 +2178,7 @@ def rapidtide_main(argparsingfunc):
                 f"{optiondict['despeckle_passes']} passes"
             )
             TimingLGR.info(
-                f"Correlation despeckle end, pass {thepass}",
+                f"{similaritytype} despeckle end, pass {thepass}",
                 {
                     "message2": voxelsprocessed_fc_ds,
                     "message3": "voxels",
@@ -2149,6 +2189,9 @@ def rapidtide_main(argparsingfunc):
         timepercentile = 100.0 * order.argsort() / numvalidspatiallocs
 
         # Step 3 - regressor refinement for next pass
+        # write out the current version of the run options
+        optiondict["currentstage"] = f"prerefine_pass{thepass}"
+        tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
         if (
             thepass < optiondict["passes"]
             or optiondict["convergencethresh"] is not None
@@ -2214,161 +2257,127 @@ def rapidtide_main(argparsingfunc):
                     thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
 
             # regenerate regressor for next pass
-            if alternaterefine:
-                # create the refinement mask
-                print("making refine mask")
-                (
-                    voxelsprocessed_rrm,
-                    refinemask,
-                    locationfails,
-                    ampfails,
-                    lagfails,
-                    sigmafails,
-                ) = tide_refine2.makerefinemask(
-                    lagstrengths,
-                    lagtimes,
-                    lagsigma,
-                    fitmask,
-                    offsettime=optiondict["offsettime"],
-                    ampthresh=optiondict["ampthresh"],
-                    lagmaskside=optiondict["lagmaskside"],
-                    lagminthresh=optiondict["lagminthresh"],
-                    lagmaxthresh=optiondict["lagmaxthresh"],
-                    sigmathresh=optiondict["sigmathresh"],
-                    cleanrefined=optiondict["cleanrefined"],
-                    bipolar=optiondict["bipolar"],
-                    includemask=internalrefineincludemask_valid,
-                    excludemask=thisinternalrefineexcludemask_valid,
-                )
+            # create the refinement mask
+            print("making refine mask")
+            (
+                voxelsprocessed_rrm,
+                refinemask,
+                locationfails,
+                ampfails,
+                lagfails,
+                sigmafails,
+                numinmask,
+            ) = tide_refine.makerefinemask(
+                lagstrengths,
+                lagtimes,
+                lagsigma,
+                fitmask,
+                offsettime=optiondict["offsettime"],
+                ampthresh=optiondict["ampthresh"],
+                lagmaskside=optiondict["lagmaskside"],
+                lagminthresh=optiondict["lagminthresh"],
+                lagmaxthresh=optiondict["lagmaxthresh"],
+                sigmathresh=optiondict["sigmathresh"],
+                cleanrefined=optiondict["cleanrefined"],
+                bipolar=optiondict["bipolar"],
+                includemask=internalrefineincludemask_valid,
+                excludemask=thisinternalrefineexcludemask_valid,
+            )
 
-                # align timecourses to prepare for refinement
-                alignvoxels_func = addmemprofiling(
-                    tide_refine2.alignvoxels,
-                    optiondict["memprofile"],
-                    "before aligning voxel timecourses",
-                )
-                print("aligning timecourses")
-                voxelsprocessed_rra = alignvoxels_func(
-                    fmri_data_valid,
-                    fmritr,
-                    shiftedtcs,
-                    weights,
-                    paddedshiftedtcs,
-                    paddedweights,
-                    lagtimes,
-                    refinemask,
-                    nprocs=optiondict["nprocs_refine"],
-                    detrendorder=optiondict["detrendorder"],
-                    offsettime=optiondict["offsettime"],
-                    alwaysmultiproc=optiondict["alwaysmultiproc"],
-                    showprogressbar=optiondict["showprogressbar"],
-                    chunksize=optiondict["mp_chunksize"],
-                    padtrs=numpadtrs,
-                    rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
-                )
-                print(f"align complete: {voxelsprocessed_rra=}")
+            if numinmask == 0:
+                print("No voxels in refine mask - adjust thresholds or external masks")
+                sys.exit()
 
-                print("prenormalizing timecourses")
-                tide_refine2.prenorm(
-                    shiftedtcs,
-                    refinemask,
-                    lagtimes,
-                    optiondict["lagmaxthresh"],
-                    lagstrengths,
-                    R2,
-                    optiondict["refineprenorm"],
-                    optiondict["refineweighting"],
-                )
+            # align timecourses to prepare for refinement
+            alignvoxels_func = addmemprofiling(
+                tide_refine.alignvoxels,
+                optiondict["memprofile"],
+                "before aligning voxel timecourses",
+            )
+            print("aligning timecourses")
+            voxelsprocessed_rra = alignvoxels_func(
+                fmri_data_valid,
+                fmritr,
+                shiftedtcs,
+                weights,
+                paddedshiftedtcs,
+                paddedweights,
+                lagtimes,
+                refinemask,
+                nprocs=optiondict["nprocs_refine"],
+                detrendorder=optiondict["detrendorder"],
+                offsettime=optiondict["offsettime"],
+                alwaysmultiproc=optiondict["alwaysmultiproc"],
+                showprogressbar=optiondict["showprogressbar"],
+                chunksize=optiondict["mp_chunksize"],
+                padtrs=numpadtrs,
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+            )
+            print(f"align complete: {voxelsprocessed_rra=}")
 
-                (
-                    voxelsprocessed_rr,
-                    outputdata,
-                ) = tide_refine2.dorefine(
-                    shiftedtcs,
-                    refinemask,
-                    weights,
-                    theprefilter,
-                    fmritr,
-                    thepass,
-                    lagstrengths,
-                    lagtimes,
-                    optiondict["refinetype"],
-                    optiondict["fmrifreq"],
-                    optiondict["outputname"],
-                    detrendorder=optiondict["detrendorder"],
-                    pcacomponents=optiondict["pcacomponents"],
-                    dodispersioncalc=optiondict["dodispersioncalc"],
-                    dispersioncalc_lower=optiondict["dispersioncalc_lower"],
-                    dispersioncalc_upper=optiondict["dispersioncalc_upper"],
-                    dispersioncalc_step=optiondict["dispersioncalc_step"],
-                    windowfunc=optiondict["windowfunc"],
-                    cleanrefined=optiondict["cleanrefined"],
-                    bipolar=optiondict["bipolar"],
-                    debug=optiondict["debug"],
-                    rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
-                )
-                """theheader = copy.deepcopy(nim_hdr)
-                outfmriarray[validvoxels, :] = shiftedtcs[:, :]
-                savename = f"{outputname}_desc-alignvoxels_bold"
-                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-                outfmriarray[validvoxels, :] = weights[:, :]
-                savename = f"{outputname}_desc-alignweights_bold"
-                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-                thepaddedheader = copy.deepcopy(nim_hdr)
-                thepaddedheader["dim"][4] = theheader["dim"][4] + 2 * numpadtrs
-                paddedoutfmriarray[validvoxels, :] = paddedshiftedtcs[:, :]
-                savename = f"{outputname}_desc-paddedalignvoxels_bold"
-                tide_io.savetonifti(
-                    paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
-                )
-                paddedoutfmriarray[validvoxels, :] = paddedweights[:, :]
-                savename = f"{outputname}_desc-paddedalignweights_bold"
-                tide_io.savetonifti(
-                    paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
-                )
-                if optiondict["psdfilter"]:
-                    outputdata = tide_filt.transferfuncfilt(outputdata, psdsnrfilterfunc)"""
+            print("prenormalizing timecourses")
+            tide_refine.prenorm(
+                shiftedtcs,
+                refinemask,
+                lagtimes,
+                optiondict["lagmaxthresh"],
+                lagstrengths,
+                R2,
+                optiondict["refineprenorm"],
+                optiondict["refineweighting"],
+            )
 
-            else:
-                refineregressor_func = addmemprofiling(
-                    tide_refine.refineregressor,
-                    optiondict["memprofile"],
-                    "before refineregressor",
-                )
-                (
-                    voxelsprocessed_rr,
-                    outputdata,
-                    refinemask,
-                    locationfails,
-                    ampfails,
-                    lagfails,
-                    sigmafails,
-                ) = refineregressor_func(
-                    fmri_data_valid,
-                    fmritr,
-                    shiftedtcs,
-                    weights,
-                    thepass,
-                    lagstrengths,
-                    lagtimes,
-                    lagsigma,
-                    fitmask,
-                    R2,
-                    theprefilter,
-                    optiondict,
-                    nprocs=optiondict["nprocs_refine"],
-                    alwaysmultiproc=optiondict["alwaysmultiproc"],
-                    showprogressbar=optiondict["showprogressbar"],
-                    chunksize=optiondict["mp_chunksize"],
-                    bipolar=optiondict["bipolar"],
-                    padtrs=numpadtrs,
-                    includemask=internalrefineincludemask_valid,
-                    excludemask=thisinternalrefineexcludemask_valid,
-                    rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
-                )
+            (
+                voxelsprocessed_rr,
+                outputdata,
+            ) = tide_refine.dorefine(
+                shiftedtcs,
+                refinemask,
+                weights,
+                theprefilter,
+                fmritr,
+                thepass,
+                lagstrengths,
+                lagtimes,
+                optiondict["refinetype"],
+                optiondict["fmrifreq"],
+                optiondict["outputname"],
+                detrendorder=optiondict["detrendorder"],
+                pcacomponents=optiondict["pcacomponents"],
+                dodispersioncalc=optiondict["dodispersioncalc"],
+                dispersioncalc_lower=optiondict["dispersioncalc_lower"],
+                dispersioncalc_upper=optiondict["dispersioncalc_upper"],
+                dispersioncalc_step=optiondict["dispersioncalc_step"],
+                windowfunc=optiondict["windowfunc"],
+                cleanrefined=optiondict["cleanrefined"],
+                bipolar=optiondict["bipolar"],
+                debug=optiondict["debug"],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+            )
+            """theheader = copy.deepcopy(nim_hdr)
+            outfmriarray[validvoxels, :] = shiftedtcs[:, :]
+            savename = f"{outputname}_desc-alignvoxels_bold"
+            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+            outfmriarray[validvoxels, :] = weights[:, :]
+            savename = f"{outputname}_desc-alignweights_bold"
+            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+            thepaddedheader = copy.deepcopy(nim_hdr)
+            thepaddedheader["dim"][4] = theheader["dim"][4] + 2 * numpadtrs
+            paddedoutfmriarray[validvoxels, :] = paddedshiftedtcs[:, :]
+            savename = f"{outputname}_desc-paddedalignvoxels_bold"
+            tide_io.savetonifti(
+                paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
+            )
+            paddedoutfmriarray[validvoxels, :] = paddedweights[:, :]
+            savename = f"{outputname}_desc-paddedalignweights_bold"
+            tide_io.savetonifti(
+                paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
+            )
+            if optiondict["psdfilter"]:
+                outputdata = tide_filt.transferfuncfilt(outputdata, psdsnrfilterfunc)"""
+
             optiondict["refinemasksize_pass" + str(thepass)] = voxelsprocessed_rr
             optiondict["refinemaskpct_pass" + str(thepass)] = (
                 100.0 * voxelsprocessed_rr / optiondict["corrmasksize"]
@@ -2685,6 +2694,9 @@ def rapidtide_main(argparsingfunc):
         )
 
     # Post refinement step 1 - GLM fitting, either to remove moving signal, or to calculate delayed CVR
+    # write out the current version of the run options
+    optiondict["currentstage"] = "preglm"
+    tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         if optiondict["doglmfilt"]:
             TimingLGR.info("GLM filtering start")
@@ -2864,6 +2876,18 @@ def rapidtide_main(argparsingfunc):
         if optiondict["docvrmap"]:
             # if we are doing a cvr map, multiply the fitcoeff by 100, so we are in percent
             fitcoeff *= 100.0
+
+        # determine what was removed
+        removeddata = fmri_data_valid - filtereddata
+        noiseremoved = np.var(removeddata, axis=0)
+        tide_io.writebidstsv(
+            f"{outputname}_desc-lfoNoiseRemoved_timeseries",
+            noiseremoved,
+            1.0 / oversamptr,
+            starttime=0.0,
+            columns=[f"removedbyglm"],
+            append=False,
+        )
 
         # calculate the final bandlimited variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
@@ -3390,6 +3414,7 @@ def rapidtide_main(argparsingfunc):
     )
 
     # do a final save of the options file
+    optiondict["currentstage"] = "done"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
     # delete the canary file

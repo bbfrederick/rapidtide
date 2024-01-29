@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 #   limitations under the License.
 #
 #
-# $Author: frederic $
-# $Date: 2016/07/11 14:50:43 $
-# $Id: rapidtide,v 1.161 2016/07/11 14:50:43 frederic Exp $
-#
-#
-#
+import os
 import sys
+import time
 
 import numpy as np
 from tqdm import tqdm
@@ -136,6 +132,7 @@ def getNullDistributionDatax(
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def nullCorrelation_consumer(inQ, outQ):
+            np.random.seed((os.getpid() * int(time.time())) % 123456789)
             while True:
                 try:
                     # get a new message

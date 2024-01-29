@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#
+#
 
 # -----------------------------------------------------------------------------
 # Copyright (c) Vispy Development Team. All Rights Reserved.
@@ -115,7 +117,11 @@ clims = (datarobustmax * fracval, 2.0 * datarobustmax)
 for thevol in vollist:
     volumelist.append(
         scene.visuals.Volume(
-            thevol, parent=view.scene, threshold=0.2, emulate_texture=emulate_texture, clim=clims,
+            thevol,
+            parent=view.scene,
+            threshold=0.2,
+            emulate_texture=emulate_texture,
+            clim=clims,
         )
     )
     volumelist[-1].transform = scene.STTransform(translate=transfacs)

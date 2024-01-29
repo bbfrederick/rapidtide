@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#
-#
-# $Author: frederic $
-# $Date: 2016/07/11 14:50:43 $
-# $Id: rapidtide,v 1.161 2016/07/11 14:50:43 frederic Exp $
-#
 #
 #
 import bisect
@@ -348,7 +342,7 @@ def fitcorr(
                 if thefitter.FML_FITFAIL & failreason:
                     fitfails += 1
 
-    print("\nCorrelation fitted in " + str(volumetotal) + " voxels")
+    print("\nSimilarity function fitted in " + str(volumetotal) + " voxels")
     print(
         "\tampfails:",
         ampfails,

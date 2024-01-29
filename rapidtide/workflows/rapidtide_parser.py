@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ DEFAULT_CORRWEIGHTING = "None"
 DEFAULT_CORRTYPE = "linear"
 DEFAULT_SIMILARITYMETRIC = "correlation"
 DEFAULT_PEAKFIT_TYPE = "gauss"
-DEFAULT_REFINE_PRENORM = "mean"
+DEFAULT_REFINE_PRENORM = "None"
 DEFAULT_REFINE_WEIGHTING = "R2"
 
 DEFAULT_DENOISING_LAGMIN = -10.0
@@ -620,6 +620,21 @@ def _get_parser():
             "TAU <=0.0 disables smoothing."
         ),
         default=DEFAULT_MUTUALINFO_SMOOTHINGTIME,
+    )
+    corr.add_argument(
+        "--simcalcrange",
+        dest="simcalcrange",
+        action="store",
+        nargs=2,
+        type=int,
+        metavar=("START", "END"),
+        help=(
+            "Limit correlation caculation to data between timepoints "
+            "START and END in the fmri file. If END is set to -1, "
+            "analysis will go to the last timepoint.  Negative values "
+            "of START will be set to 0. Default is to use all timepoints."
+        ),
+        default=(-1, -1),
     )
 
     # Correlation fitting options
@@ -1276,7 +1291,7 @@ def _get_parser():
         action="store_true",
         help=(
             "Calculate the negative gradient of the fmri data after spectral filtering "
-            "so you can look for CSF flow à la https://www.biorxiv.org/content/10.1101/2021.03.29.437406v1.full. "
+            "so you can look for CSF flow Ã  la https://www.biorxiv.org/content/10.1101/2021.03.29.437406v1.full. "
         ),
         default=False,
     )
@@ -1401,6 +1416,13 @@ def _get_parser():
         help=("Force single proc path for glm."),
         default=False,
     )
+    debugging.add_argument(
+        "--isatest",
+        dest="isatest",
+        action="store_true",
+        help=("This run of rapidtide is in a unit test."),
+        default=False,
+    )
 
     return parser
 
@@ -1464,6 +1486,8 @@ def process_args(inputargs=None):
     args["absminsigma"] = 0.05
     # search window width for noise regressor mutual information function
     args["noisesearchwindow"] = 30.0
+    # number of MADs away from the median to consider an outlier
+    args["sigdistoutlierfac"] = 10.0
 
     # correlation fitting
     # Peak value must be within specified range.
@@ -1528,6 +1552,15 @@ def process_args(inputargs=None):
         args["endpoint"] = 100000000
     else:
         args["endpoint"] = args["timerange"][1]
+    args["simcalcstartpoint"] = args["simcalcrange"][0]
+    if args["simcalcstartpoint"] < args["startpoint"]:
+        raise (f"Similarity function range start point must be >= {args['startpoint']}.")
+    if args["simcalcrange"][1] == -1:
+        args["simcalcendpoint"] = np.min((100000000, args["endpoint"]))
+    elif args["simcalcrange"][1] <= args["endpoint"]:
+        args["simcalcendpoint"] = args["endpoint"]
+    else:
+        raise (f"Similarity function range end point must be <= {args['endpoint']}.")
 
     args["offsettime_total"] = args["offsettime"] + 0.0
 

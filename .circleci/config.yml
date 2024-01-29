@@ -178,6 +178,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -195,61 +196,27 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
             pytest \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
-
-
-  test_py37_with_coverage:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    resource_class: large
-    steps:
-      - checkout
-      - attach_workspace:  # get rapidtide
-          at: /tmp
-      - restore_cache:  # load environment
-          key: deps2-37-{{ checksum "setup.py" }}
-      - run:
-          name: Coverage
-          file: /tmp/src/rapidtide/coverage.xml
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py37_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cd rapidtide/tests
-            mkdir test-results
-            #COVERAGE_PROCESS_START=/tmp/src/rapidtide/rapidtide/tests/.coveragerc
-            #PYTHONPATH=.:${PYTHONPATH}
-            pytest \
-                -W ignore \
-                --ignore=/tmp/src/rapidtide/rapidtide/candidatetests \
-                --cov-report xml:/tmp/src/rapidtide/coverage.xml \
-                --cov=rapidtide \
-                --cov-config=/tmp/src/rapidtide/rapidtide/tests/.coveragerc \
-                --junitxml=/tmp/src/rapidtide/rapidtide/tests/test-results/junit.xml
-      - codecov/upload:
-          file: /tmp/src/rapidtide/coverage.xml
       - store_artifacts:
-          path: /tmp/src/rapidtide/coverage.xml
-          destination: artifact-file
-      - store_test_results:
-          path: /tmp/src/rapidtide/rapidtide/tests/test-results
-      
+          path: test-results
+
 
   test_py38:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -267,12 +234,19 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
-            pytest  \
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
+            pytest \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
+          path: test-results
+      - store_artifacts:
           path: test-results
 
 
@@ -280,6 +254,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -297,19 +272,26 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
             pytest  \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
-
+      - store_artifacts:
+          path: test-results
 
   test_py310:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -327,59 +309,25 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
             pytest  \
-                -W ignore \
-                --ignore=rapidtide/candidatetests \
+                $TESTFILES \
                 --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
-
-
-  test_py310_with_coverage:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    resource_class: large
-    steps:
-      - checkout
-      - attach_workspace:  # get rapidtide
-          at: /tmp
-      - restore_cache:  # load environment
-          key: deps2-310-{{ checksum "setup.py" }}
-      - run:
-          name: Coverage
-          file: /tmp/src/rapidtide/coverage.xml
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py310_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cd rapidtide/tests
-            mkdir test-results
-            pytest \
-                -W ignore \
-                --ignore=/tmp/src/rapidtide/rapidtide/candidatetests \
-                --cov-report xml:/tmp/src/rapidtide/coverage.xml \
-                --cov=rapidtide \
-                --cov-config=/tmp/src/rapidtide/rapidtide/tests/.coveragerc \
-                --junitxml=/tmp/src/rapidtide/rapidtide/tests/test-results/junit.xml
-      - codecov/upload:
-          file: /tmp/src/rapidtide/coverage.xml
       - store_artifacts:
-          path: /tmp/src/rapidtide/coverage.xml
-          destination: artifact-file
-      - store_test_results:
-          path: /tmp/src/rapidtide/rapidtide/tests/test-results
-      
+          path: test-results
+
 
   test_py311:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -397,12 +345,19 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
             pytest \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
+          path: test-results
+      - store_artifacts:
           path: test-results
 
 
@@ -410,6 +365,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -419,7 +375,7 @@ jobs:
           key: deps2-311-{{ checksum "setup.py" }}
       - run:
           name: Coverage
-          file: /tmp/src/rapidtide/coverage.xml
+          file: rapidtide/coverage.xml
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
@@ -428,28 +384,33 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            cd rapidtide/tests
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
             pytest \
+                $TESTFILES \
                 -W ignore \
-                --ignore=/tmp/src/rapidtide/rapidtide/candidatetests \
-                --cov-report xml:/tmp/src/rapidtide/coverage.xml \
+                --ignore=rapidtide/candidatetests \
+                --cov-report xml:rapidtide/coverage.xml \
                 --cov=rapidtide \
-                --cov-config=/tmp/src/rapidtide/rapidtide/tests/.coveragerc \
-                --junitxml=/tmp/src/rapidtide/rapidtide/tests/test-results/junit.xml
+                --cov-config=rapidtide/tests/.coveragerc \
+                --junitxml=rapidtide/tests/test-results/junit.xml
       - codecov/upload:
-          file: /tmp/src/rapidtide/coverage.xml
+          file: rapidtide/coverage.xml
       - store_artifacts:
-          path: /tmp/src/rapidtide/coverage.xml
+          path: rapidtide/coverage.xml
           destination: artifact-file
       - store_test_results:
-          path: /tmp/src/rapidtide/rapidtide/tests/test-results
+          path: rapidtide/tests/test-results
       
 
   test_py312:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     resource_class: large
     steps:
       - checkout
@@ -467,12 +428,19 @@ jobs:
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
-            mkdir test-results
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
             pytest \
+                $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --junitxml=test-results/junit.xml
       - store_test_results:
+          path: test-results
+      - store_artifacts:
           path: test-results
 
 

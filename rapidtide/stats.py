@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# $Author: frederic $
-# $Date: 2016/07/12 13:50:29 $
-# $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
 import warnings
 
@@ -109,7 +106,80 @@ def printthresholds(pcts, thepercentiles, labeltext):
         )
 
 
-def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
+def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False, debug=False):
+    """
+
+    Parameters
+    ----------
+    thehist
+    histlen
+    thedata
+    displayplots
+    nozero
+
+    Returns
+    -------
+
+    """
+    thestore = np.zeros((2, histlen), dtype="float64")
+    thestore[0, :] = thehist[1][:-1]
+    thestore[1, :] = thehist[0][:] / (1.0 * len(thedata))
+
+    # store the zero term for later
+    zeroterm = thestore[1, 0]
+    thestore[1, 0] = 0.0
+
+    # get starting values for the peak, ignoring first and last point of histogram
+    peakindex = np.argmax(thestore[1, 1:-2])
+    peaklag = thestore[0, peakindex + 1]
+    peakheight = thestore[1, peakindex + 1]
+    numbins = 1
+    while (peakindex + numbins < histlen - 1) and (
+        thestore[1, peakindex + numbins] > peakheight / 2.0
+    ):
+        numbins += 1
+    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
+    if debug:
+        print("Initial values:")
+        print(f"\tPeak height: {peakheight}")
+        print(f"\tPeak lag: {peaklag}")
+        print(f"\tPeak width: {peakwidth}")
+    peakheight, peaklag, peakwidth = tide_fit.gaussfit(
+        peakheight, peaklag, peakwidth, thestore[0, :], thestore[1, :]
+    )
+    if debug:
+        print("Refined values:")
+        print(f"\tPeak height: {peakheight}")
+        print(f"\tPeak lag: {peaklag}")
+        print(f"\tPeak width: {peakwidth}")
+
+    params = (peakheight, peaklag, peakwidth)
+
+    # restore the zero term if needed
+    # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
+    # histogram at zero from failed fits)
+    if nozero:
+        zeroterm = 0.0
+    else:
+        thestore[1, 0] = zeroterm
+
+    # generate the johnsonsb function
+    gaussvals = tide_fit.gauss_eval(thestore[0, :], params)
+    corrfac = (1.0 - zeroterm) / (1.0 * histlen)
+    gaussvals *= corrfac
+    gaussvals[0] = zeroterm
+
+    if displayplots:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title("fitgausspdf: histogram")
+        plt.plot(thestore[0, :], thestore[1, :], "b", thestore[0, :], gaussvals, "r")
+        plt.legend(["histogram", "fit to gaussian"])
+        plt.show()
+    return np.append(params, np.array([zeroterm]))
+
+
+def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False, debug=False):
     """
 
     Parameters
@@ -134,7 +204,8 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False):
 
     # fit the johnsonSB function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
-    # print('Johnson SB fit parameters for pdf:', params)
+    if debug:
+        print("Johnson SB fit parameters for pdf:", params)
 
     # restore the zero term if needed
     # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
@@ -181,10 +252,12 @@ def sigFromDistributionData(
     vallist,
     histlen,
     thepercentiles,
+    similaritymetric="correlation",
     displayplots=False,
     twotail=False,
     nozero=False,
     dosighistfit=True,
+    debug=False,
 ):
     """
 
@@ -206,13 +279,28 @@ def sigFromDistributionData(
     if len(np.where(vallist != 0.0)[0]) == 0:
         print("no nonzero values - skipping percentile calculation")
         return None, 0, 0
-    thehistogram, peakheight, peakloc, peakwidth, centerofmass = makehistogram(
+    thehistogram, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = makehistogram(
         np.abs(vallist), histlen, therange=[0.0, 1.0]
     )
     if dosighistfit:
-        histfit = fitjsbpdf(
-            thehistogram, histlen, vallist, displayplots=displayplots, nozero=nozero
-        )
+        if similaritymetric == "mutualinfo":
+            histfit = fitgausspdf(
+                thehistogram,
+                histlen,
+                vallist,
+                displayplots=displayplots,
+                nozero=nozero,
+                debug=debug,
+            )
+        else:
+            histfit = fitjsbpdf(
+                thehistogram,
+                histlen,
+                vallist,
+                displayplots=displayplots,
+                nozero=nozero,
+                debug=debug,
+            )
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles) / 2.0
         print("thepercentiles adapted for two tailed distribution:", thepercentiles)
@@ -426,7 +514,14 @@ def fast_ICC_rep_anova(Y, nocache=False, debug=False):
 
 
 # --------------------------- histogram functions -------------------------------------------------
-def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False, peakthresh=0.33):
+def gethistprops(
+    indata,
+    histlen,
+    refine=False,
+    therange=None,
+    pickleft=False,
+    peakthresh=0.33,
+):
     """
 
     Parameters
@@ -480,7 +575,86 @@ def gethistprops(indata, histlen, refine=False, therange=None, pickleft=False, p
     return peaklag, peakheight, peakwidth
 
 
-def makehistogram(indata, histlen, binsize=None, therange=None, refine=False, normalize=False):
+def prochistogram(
+    thehist,
+    refine=False,
+    pickleft=False,
+    peakthresh=0.33,
+    ignorefirstpoint=False,
+    debug=False,
+):
+    thestore = np.zeros((2, len(thehist[0])), dtype="float64")
+    histlen = len(thehist[1])
+    thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
+    thestore[1, :] = thehist[0][-histlen:]
+
+    # get starting values for the peak, ignoring first and last point of histogram
+    if ignorefirstpoint:
+        xvals = thestore[0, 1:]
+        yvals = thestore[1, 1:]
+    else:
+        xvals = thestore[0, :]
+        yvals = thestore[1, :]
+    if pickleft:
+        overallmax = np.max(yvals[1:-2])
+        peakindex = 1
+        i = 1
+        started = False
+        finished = False
+        while i < len(yvals - 2) and not finished:
+            if yvals[i] > peakthresh * overallmax:
+                started = True
+            if yvals[i] > yvals[peakindex]:
+                peakindex = i
+            if started and (yvals[i] < 0.75 * yvals[peakindex]):
+                finished = True
+            i += 1
+    else:
+        peakindex = np.argmax(yvals[1:-2])
+    peakloc = xvals[peakindex + 1]
+    peakheight = yvals[peakindex + 1]
+    numbins = 1
+    while (peakindex + numbins < histlen - 1) and (yvals[peakindex + numbins] > peakheight / 2.0):
+        numbins += 1
+    peakwidth = (xvals[peakindex + numbins] - xvals[peakindex]) * 2.0
+    if debug:
+        print(f"{xvals=}")
+        print(f"{yvals=}")
+        print("Before refine")
+        print(f"{peakindex=}, {peakloc=}, {peakheight=}, {peakwidth=}")
+    if refine:
+        peakheight, peakloc, peakwidth = tide_fit.gaussfit(
+            peakheight, peakloc, peakwidth, xvals, yvals
+        )
+    if debug:
+        print("After refine")
+        print(f"{peakindex=}, {peakloc=}, {peakheight=}, {peakwidth=}")
+    centerofmass = np.sum(xvals * yvals) / np.sum(yvals)
+    return peakheight, peakloc, peakwidth, centerofmass
+
+
+def percentilefromloc(indata, peakloc, nozero=False):
+    order = indata.argsort()
+    orderedvalues = indata[order]
+    if nozero:
+        orderedvalues = orderedvalues[np.where(orderedvalues != 0.0)]
+    peaklocindex = np.argmax(orderedvalues >= peakloc)
+    thepercentile = 100.0 * peaklocindex / len(orderedvalues)
+    return thepercentile
+
+
+def makehistogram(
+    indata,
+    histlen,
+    binsize=None,
+    therange=None,
+    pickleft=False,
+    peakthresh=0.33,
+    refine=False,
+    normalize=False,
+    ignorefirstpoint=False,
+    debug=False,
+):
     """
 
     Parameters
@@ -509,33 +683,23 @@ def makehistogram(indata, histlen, binsize=None, therange=None, refine=False, no
         )
     else:
         thebins = histlen
+
     thehist = np.histogram(indata, thebins, therange, density=normalize)
 
-    thestore = np.zeros((2, len(thehist[0])), dtype="float64")
-    thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
-    thestore[1, :] = thehist[0][-histlen:]
-
-    # get starting values for the peak, ignoring first and last point of histogram
-    peakindex = np.argmax(thestore[1, 1:-2])
-    peakloc = thestore[0, peakindex + 1]
-    peakheight = thestore[1, peakindex + 1]
-    numbins = 1
-    while (peakindex + numbins < histlen - 1) and (
-        thestore[1, peakindex + numbins] > peakheight / 2.0
-    ):
-        numbins += 1
-    peakwidth = (thestore[0, peakindex + numbins] - thestore[0, peakindex]) * 2.0
-    if refine:
-        peakheight, peakloc, peakwidth = tide_fit.gaussfit(
-            peakheight, peakloc, peakwidth, thestore[0, :], thestore[1, :]
-        )
-    centerofmass = np.sum(thestore[0, :] * thestore[1, :]) / np.sum(thestore[1, :])
-
-    return thehist, peakheight, peakloc, peakwidth, centerofmass
+    peakheight, peakloc, peakwidth, centerofmass = prochistogram(
+        thehist,
+        refine=refine,
+        pickleft=pickleft,
+        peakthresh=peakthresh,
+        ignorefirstpoint=ignorefirstpoint,
+        debug=debug,
+    )
+    peakpercentile = percentilefromloc(indata, peakloc, nozero=ignorefirstpoint)
+    return thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile
 
 
 def echoloc(indata, histlen, startoffset=5.0):
-    thehist, peakheight, peakloc, peakwidth, centerofmass = makehistogram(
+    thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = makehistogram(
         indata, histlen, refine=True
     )
     thestore = np.zeros((2, len(thehist[0])), dtype="float64")
@@ -600,7 +764,7 @@ def makeandsavehistogram(
     -------
 
     """
-    thehist, peakheight, peakloc, peakwidth, centerofmass = makehistogram(
+    thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = makehistogram(
         indata,
         histlen,
         binsize=binsize,

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# $Author: frederic $
-# $Date: 2016/07/12 13:50:29 $
-# $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
 """This module contains all the filtering operations for the rapidtide
 package.
@@ -1140,7 +1137,8 @@ def pspec(inputdata):
     S = fftpack.fft(inputdata)
     return np.sqrt(S * np.conj(S))
 
-
+def spectralflatness(spectrum):
+    return np.exp(np.mean(np.log(spectrum))) / np.mean(spectrum)
 def spectrum(inputdata, Fs=1.0, mode="power", trim=True):
     r"""Performs an FFT of the input data, and returns the frequency axis and spectrum
     of the input signal.

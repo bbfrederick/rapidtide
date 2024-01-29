@@ -1,5 +1,15 @@
 # Release history
 
+## Version 2.7.6 (1/29/24)
+* (rapidtide) Added the ability to calcuate delays over a limited time range, but still GLM filter the entire timecourse.
+* (rapidtide) Fixed a very old bug in null significance distribution estimation.  Multiple worker processes all start with the same random seed (unless you explicitly fix that).  Who knew?
+* (rapidtide) Improved significance distribution model fitting for mutualinfo similarity metric.  The distribution is a Gaussian, not a Johnson distribution (as it is for selected correlation).
+* (runqualitycheck) Added an automated quality assessment tool.  This will likely evolve quite a bit over time.
+* (rapidtide2std) Updated for new maps; also copied over timecourses and options so you can load a rapidtide2std dataset into tidepool.
+* (atlasaverage) Set output NIFTI size properly for 3D templates.
+* (testing) Parallelized tests on CircleCI for a significant speedup.
+* (package) Updated copyright messages, made headers more consistent, removed some old SCCS tags.
+
 ## Version 2.7.5 (1/13/24)
 * (rapidtide) Moved lagtc generation out of fitcorr into its own module.  This will help with implementation of new, secret evil plans.
 * (rapidtide) Altered voxel selection logic for multiproc correlation fitting.  Now singleproc and multiproc outputs are the same.

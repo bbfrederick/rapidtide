@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# $Author: frederic $
-# $Date: 2016/07/12 13:50:29 $
-# $Id: tide_funcs.py,v 1.4 2016/07/12 13:50:29 frederic Exp $
 #
 import sys
 import warnings
@@ -237,6 +234,7 @@ class MutualInformationator(SimilarityFunctionator):
         self.sigma = sigma
         self.smoothingtime = smoothingtime
         self.smoothingfilter = tide_filt.NoncausalFilter(filtertype="arb")
+        self.mi_norm = 1.0
         if self.smoothingtime > 0.0:
             self.smoothingfilter.setfreqs(
                 0.0, 0.0, 1.0 / self.smoothingtime, 1.0 / self.smoothingtime
@@ -260,7 +258,7 @@ class MutualInformationator(SimilarityFunctionator):
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc, isreftc=True)
 
-        self.timeaxis, dummy, self.similarityfuncorigin = tide_corr.cross_mutual_info(
+        self.timeaxis, self.automi, self.similarityfuncorigin = tide_corr.cross_mutual_info(
             self.prepreftc,
             self.prepreftc,
             Fs=self.Fs,
@@ -274,9 +272,14 @@ class MutualInformationator(SimilarityFunctionator):
         self.similarityfunclen = len(self.timeaxis)
         self.timeaxisvalid = True
         self.datavalid = False
+        self.mi_norm = np.nan_to_num(1.0 / np.max(self.automi))
         if self.debug:
-            print("MutualInformationator setreftc:", len(self.timeaxis))
-            print("MutualInformationator setreftc:", self.timeaxis)
+            print(f"MutualInformationator setreftc: {len(self.timeaxis)=}")
+            print(f"MutualInformationator setreftc: {self.timeaxis}")
+            print(f"MutualInformationator setreftc: {self.mi_norm=}")
+
+    def getnormfac(self):
+        return self.mi_norm
 
     def run(self, thetc, locs=None, trim=True, gettimeaxis=True):
         if len(thetc) != len(self.reftc):
@@ -335,6 +338,9 @@ class MutualInformationator(SimilarityFunctionator):
             self.timeaxisvalid = True
         else:
             self.thesimfunc = retvals[0]
+
+        # normalize
+        self.thesimfunc *= self.mi_norm
 
         if locs is not None:
             return self.thesimfunc

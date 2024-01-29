@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2021 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -62,6 +62,9 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "2",
         "--numnull",
         "0",
+        "--simcalcrange",
+        "100",
+        "-1",
         "--similaritymetric",
         "hybrid",
         "--globalsignalmethod",
