@@ -1137,7 +1137,8 @@ def pspec(inputdata):
     S = fftpack.fft(inputdata)
     return np.sqrt(S * np.conj(S))
 
-
+def spectralflatness(spectrum):
+    return np.exp(np.mean(np.log(spectrum))) / np.mean(spectrum)
 def spectrum(inputdata, Fs=1.0, mode="power", trim=True):
     r"""Performs an FFT of the input data, and returns the frequency axis and spectrum
     of the input signal.

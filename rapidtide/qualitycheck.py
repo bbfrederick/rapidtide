@@ -21,6 +21,7 @@ import numpy as np
 from scipy.ndimage import binary_erosion
 
 import rapidtide.io as tide_io
+import rapidtide.filter as tide_filt
 import rapidtide.stats as tide_stats
 from rapidtide.RapidtideDataset import RapidtideDataset
 
@@ -193,14 +194,22 @@ def checkMTT(themap, themask, histlen=101, minsMTT=0.0, maxMTT=10.0, savehist=Fa
     return MTTmetrics
 
 
-def checkregressors(theregressors, numpasses, debug=False):
+def checkregressors(theregressors, numpasses, filterlimits, debug=False):
     regressormetrics = {}
     firstregressor = theregressors["pass1"]
     lastregressor = theregressors[f"pass{numpasses}"]
+    if debug:
+        print(f"{filterlimits=}")
+        lowerlimindex = np.argmax(firstregressor.specaxis >= filterlimits[0])
+        upperlimindex = np.argmin(firstregressor.specaxis <= filterlimits[1]) + 1
+        print(f"{lowerlimindex=}, {upperlimindex=}")
+        print(firstregressor.specaxis)
+        print(firstregressor.specdata[lowerlimindex: upperlimindex])
     for label, regressor in [["first", firstregressor],["last", lastregressor]]:
         regressormetrics[f"{label}_kurtosis"] = regressor.kurtosis
         regressormetrics[f"{label}_kurtosis_z"] = regressor.kurtosis_z
         regressormetrics[f"{label}_kurtosis_p"] = regressor.kurtosis_p
+        regressormetrics[f"{label}_spectralflatness"] = tide_filt.spectralflatness(regressor.specdata[lowerlimindex: upperlimindex])
     return regressormetrics
 
 
@@ -239,6 +248,7 @@ def qualitycheck(
 
     # put in some basic information
     outputdict["passes"] = thedataset.numberofpasses
+    outputdict["filterlimits"] = thedataset.regressorfilterlimits
 
     themask = thedataset.overlays["lagmask"]
 
@@ -265,6 +275,6 @@ def qualitycheck(
     outputdict["lagmetrics"] = checklag(thelags, themask, debug=debug)
     outputdict["strengthmetrics"] = checkstrength(thestrengths, themask, debug=debug)
     outputdict["MTTmetrics"] = checkMTT(theMTTs, themask, debug=debug)
-    outputdict["regressormetrics"] = checkregressors(theregressors, outputdict["passes"], debug=debug)
+    outputdict["regressormetrics"] = checkregressors(theregressors, outputdict["passes"], outputdict["filterlimits"], debug=debug)
 
     return outputdict
