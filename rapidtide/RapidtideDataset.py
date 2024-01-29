@@ -123,7 +123,7 @@ class Overlay:
     def __init__(
         self,
         name,
-        filename,
+        filespec,
         namebase,
         funcmask=None,
         geommask=None,
@@ -144,7 +144,7 @@ class Overlay:
         else:
             self.label = label
         self.report = report
-        self.filename = filename
+        self.filename, self.filevals = tide_io.parsefilespec(filespec)
         self.namebase = namebase
         if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
@@ -268,8 +268,14 @@ class Overlay:
             self.filename
         )
         if isaMask:
-            self.data[np.where(self.data < 0.5)] = 0.0
-            self.data[np.where(self.data > 0.5)] = 1.0
+            if self.filevals is None:
+                self.data[np.where(self.data < 0.5)] = 0.0
+                self.data[np.where(self.data > 0.5)] = 1.0
+            else:
+                tempmask = (0 * self.data).astype("uint16")
+                for theval in self.filevals:
+                    tempmask[np.where(self.data - theval == 0)] += 1
+                self.data = np.where(tempmask > 0, 1, 0)
         if self.verbose > 1:
             print("Overlay data range:", np.min(self.data), np.max(self.data))
             print("header", self.header)
