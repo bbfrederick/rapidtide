@@ -140,7 +140,7 @@ def main():
         for column in thecolumns[1:]:
             keyparts = column.split("_")
             try:
-                thedataitem = inputdict[keyparts[0]][keyparts[1]]
+                thedataitem = inputdict[keyparts[0]]['_'.join(keyparts[1:])]
             except KeyError:
                 thedataitem = None
             thedatadict[column].append(thedataitem)
