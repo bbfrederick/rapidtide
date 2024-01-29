@@ -150,7 +150,7 @@ def main():
 
     for column in thecolumns[1:]:
         tide_stats.makeandsavehistogram(
-            df[column],
+            df[column].to_numpy(),
             51,
             0,
             args.outputroot + "_" + column,
