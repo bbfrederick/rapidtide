@@ -155,7 +155,7 @@ def main():
             0,
             args.outputroot + "_" + column,
             displaytitle=column,
-            displayplots=False,
+            displayplots=True,
             normalize=True,
             append=False,
             debug=False,
