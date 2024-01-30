@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.7.7 (1/30/24)
+* (runqualitycheck) Added new tests, and the ability to optionally do tests restricted to gray and/or white matter.
+* (package) The makeandsavehistogram routine now saves some useful histogram stats in the json file.
+* (package) Added the ability to specify APARC_WHITE and APARC_ALLBUTCSF macros to a mask specification if you have an aparc+aseg file.
+* (RapidtideDataset) You can now optionally include gray and white matter masks in the dataset.
+
 ## Version 2.7.6 (1/29/24)
 * (rapidtide) Added the ability to calculate delays over a limited time range, but still GLM filter the entire timecourse.
 * (rapidtide) Fixed a very old bug in null significance distribution estimation.  Multiple worker processes all start with the same random seed (unless you explicitly fix that).  Who knew?
