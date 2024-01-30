@@ -833,7 +833,7 @@ def makeandsavehistogram(
         ax.set_title(displaytitle)
         plt.plot(thestore[0, : (-1 - endtrim)], thestore[1, : (-1 - endtrim)])
         for thepct in ["pct02", "pct25", "pct50", "pct75", "pct98"]:
-            plt.axvline(extraheaderinfo[thepct], color="b", linestyles="solid", label=thepct)
+            plt.axvline(extraheaderinfo[thepct], color="b", linestyle="solid", label=thepct)
         plt.show()
 
 
