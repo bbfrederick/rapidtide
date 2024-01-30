@@ -291,16 +291,22 @@ def qualitycheck(
 
     theregressors = thedataset.regressors
 
-    outputdict["regressormetrics"] = checkregressors(theregressors, outputdict["passes"], outputdict["filterlimits"], debug=debug)
+    outputdict["regressormetrics"] = checkregressors(
+        theregressors, outputdict["passes"], outputdict["filterlimits"], debug=debug
+    )
     outputdict["lagmetrics"] = checklag(thelags, themask, debug=debug)
     outputdict["strengthmetrics"] = checkstrength(thestrengths, themask, debug=debug)
     outputdict["MTTmetrics"] = checkMTT(theMTTs, themask, debug=debug)
 
     if dograyonly:
         outputdict["grayonly-lagmetrics"] = checklag(thelags, themask * thegraymask, debug=debug)
-        outputdict["grayonly-strengthmetrics"] = checkstrength(thestrengths, themask * thegraymask, debug=debug)
+        outputdict["grayonly-strengthmetrics"] = checkstrength(
+            thestrengths, themask * thegraymask, debug=debug
+        )
     if dowhiteonly:
         outputdict["whiteonly-lagmetrics"] = checklag(thelags, themask * thewhitemask, debug=debug)
-        outputdict["whiteonly-strengthmetrics"] = checkstrength(thestrengths, themask * thewhitemask, debug=debug)
+        outputdict["whiteonly-strengthmetrics"] = checkstrength(
+            thestrengths, themask * thewhitemask, debug=debug
+        )
 
     return outputdict

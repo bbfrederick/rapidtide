@@ -1162,6 +1162,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["kurtosisz_reference_pass1"],
         optiondict["kurtosisp_reference_pass1"],
     ) = tide_stats.kurtosisstats(resampref_y)
+    (
         optiondict["skewness_reference_pass1"],
         optiondict["skewnessz_reference_pass1"],
         optiondict["skewnessp_reference_pass1"],
@@ -2481,10 +2482,11 @@ def rapidtide_main(argparsingfunc):
                     optiondict[f"kurtosisz_reference_pass{thepass + 1}"],
                     optiondict[f"kurtosisp_reference_pass{thepass + 1}"],
                 ) = tide_stats.kurtosisstats(resampref_y)
-                optiondict[f"skewness_reference_pass{thepass + 1}"],
-                optiondict[f"skewnessz_reference_pass{thepass + 1}"],
-                optiondict[f"skewnessp_reference_pass{thepass + 1}"],
-            ) = tide_stats.skewnessstats(resampref_y)
+                (
+                    optiondict[f"skewness_reference_pass{thepass + 1}"],
+                    optiondict[f"skewnessz_reference_pass{thepass + 1}"],
+                    optiondict[f"skewnessp_reference_pass{thepass + 1}"],
+                ) = tide_stats.skewnessstats(resampref_y)
                 if not stoprefining:
                     tide_io.writebidstsv(
                         f"{outputname}_desc-movingregressor_timeseries",
