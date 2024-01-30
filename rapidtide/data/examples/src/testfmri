@@ -1,10 +1,12 @@
 #!/bin/bash
 
-for fittype in None quad fastquad COM gauss fastgauss
+#for fittype in None quad fastquad COM gauss fastgauss
+for fittype in gauss
 do
-    for similaritymetric in hybrid mutualinfo correlation
+    #for similaritymetric in hybrid mutualinfo correlation
+    for similaritymetric in hybrid
     do
-	rapidtide \
+	echo rapidtide \
 	    --similaritymetric ${similaritymetric} \
             --isatest \
 	    --searchrange -10 15 \
