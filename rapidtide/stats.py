@@ -835,16 +835,16 @@ def makeandsavehistogram(
         for thepct in ["pct02", "pct98"]:
             plt.axvline(
                 extraheaderinfo[thepct],
-                color="#ffaaaa",
-                linewidth=0.5,
-                linestyle="solid",
+                color="#aaffaa",
+                linewidth=0.75,
+                linestyle=".",
                 label=thepct,
             )
         for thepct in ["pct25", "pct50", "pct75"]:
             plt.axvline(
                 extraheaderinfo[thepct],
-                color="#ff6666",
-                linewidth=0.5,
+                color="#66ff66",
+                linewidth=0.75,
                 linestyle="solid",
                 label=thepct,
             )
