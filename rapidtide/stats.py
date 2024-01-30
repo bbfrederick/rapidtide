@@ -26,7 +26,7 @@ with warnings.catch_warnings():
     import pyfftw
 
 import scipy as sp
-from scipy.stats import johnsonsb, kurtosis, kurtosistest
+from scipy.stats import johnsonsb, kurtosis, kurtosistest, skew, skewtest
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
@@ -411,6 +411,21 @@ def permute_phase(time_series):
     permuted_time_series = np.fft.irfft(freq_domain)
 
     return permuted_time_series
+
+
+def skewnessstats(timecourse):
+    """
+
+    Parameters
+    ----------
+    timecourse: array
+        The timecourse to test
+
+    :return:
+
+    """
+    testres = skewtest(timecourse)
+    return skew(timecourse), testres[0], testres[1]
 
 
 def kurtosisstats(timecourse):
@@ -913,7 +928,7 @@ def getfracvals(datamat, thefracs, nozero=False, debug=False):
 
     for thisfrac in thefracs:
         theindex = np.min([int(np.round(thisfrac * maxindex, 0)), len(maskmat) - 1])
-        thevals.append(maskmat[theindex])
+        thevals.append(float(maskmat[theindex]))
 
     if debug:
         print("getfracvals: input datamat shape", datamat.shape)

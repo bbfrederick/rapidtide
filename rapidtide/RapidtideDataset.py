@@ -92,6 +92,7 @@ class Timecourse:
             tide_math.corrnormalize(self.timedata), self.samplerate
         )
         self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(self.timedata)
+        self.skewness, self.skewness_z, self.skewness_p = tide_stats.skewnessstats(self.timedata)
 
         if self.verbose > 1:
             print("Timecourse data range:", np.min(self.timedata), np.max(self.timedata))
