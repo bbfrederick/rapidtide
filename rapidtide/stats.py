@@ -26,7 +26,7 @@ with warnings.catch_warnings():
     import pyfftw
 
 import scipy as sp
-from scipy.stats import johnsonsb, kurtosis, kurtosistest
+from scipy.stats import johnsonsb, kurtosis, kurtosistest, skew, skewtest
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
@@ -411,6 +411,21 @@ def permute_phase(time_series):
     permuted_time_series = np.fft.irfft(freq_domain)
 
     return permuted_time_series
+
+
+def skewnessstats(timecourse):
+    """
+
+    Parameters
+    ----------
+    timecourse: array
+        The timecourse to test
+
+    :return:
+
+    """
+    testres = skewtest(timecourse)
+    return skew(timecourse), testres[0], testres[1]
 
 
 def kurtosisstats(timecourse):

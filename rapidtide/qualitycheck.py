@@ -209,6 +209,9 @@ def checkregressors(theregressors, numpasses, filterlimits, debug=False):
         regressormetrics[f"{label}_kurtosis"] = regressor.kurtosis
         regressormetrics[f"{label}_kurtosis_z"] = regressor.kurtosis_z
         regressormetrics[f"{label}_kurtosis_p"] = regressor.kurtosis_p
+        regressormetrics[f"{label}_skewness"] = regressor.skewness
+        regressormetrics[f"{label}_skewness_z"] = regressor.skewness_z
+        regressormetrics[f"{label}_skewness_p"] = regressor.skewness_p
         regressormetrics[f"{label}_spectralflatness"] = tide_filt.spectralflatness(
             regressor.specdata[lowerlimindex:upperlimindex]
         )
