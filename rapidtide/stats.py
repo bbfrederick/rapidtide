@@ -928,7 +928,7 @@ def getfracvals(datamat, thefracs, nozero=False, debug=False):
 
     for thisfrac in thefracs:
         theindex = np.min([int(np.round(thisfrac * maxindex, 0)), len(maskmat) - 1])
-        thevals.append(maskmat[theindex])
+        thevals.append(float(maskmat[theindex]))
 
     if debug:
         print("getfracvals: input datamat shape", datamat.shape)
