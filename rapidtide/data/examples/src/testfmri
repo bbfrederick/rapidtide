@@ -6,7 +6,7 @@ do
     #for similaritymetric in hybrid mutualinfo correlation
     for similaritymetric in hybrid
     do
-	echo rapidtide \
+	rapidtide \
 	    --similaritymetric ${similaritymetric} \
             --isatest \
 	    --searchrange -10 15 \
