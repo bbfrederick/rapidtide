@@ -2473,9 +2473,9 @@ def rapidtide_main(argparsingfunc):
                     initial_fmri_x, normoutputdata, padtime=padtime
                 )
                 (
-                    optiondict["kurtosis_reference_pass" + str(thepass + 1)],
-                    optiondict["kurtosisz_reference_pass" + str(thepass + 1)],
-                    optiondict["kurtosisp_reference_pass" + str(thepass + 1)],
+                    optiondict[f"kurtosis_reference_pass{thepass + 1}"],
+                    optiondict[f"kurtosisz_reference_pass{thepass + 1}"],
+                    optiondict[f"kurtosisp_reference_pass{thepass + 1}"],
                 ) = tide_stats.kurtosisstats(resampref_y)
                 if not stoprefining:
                     tide_io.writebidstsv(
