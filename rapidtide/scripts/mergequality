@@ -41,6 +41,12 @@ def _get_parser():
     # add optional
     parser.add_argument("--keyfile", action="store", type=str, default=None)
     parser.add_argument(
+        "--showhists",
+        action="store_true",
+        help=("Display the histograms of the tracked quantities."),
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         help=("Output additional debugging information."),
@@ -200,7 +206,7 @@ def main():
             0,
             args.outputroot + "_" + column,
             displaytitle=column,
-            displayplots=True,
+            displayplots=args.showhists,
             normalize=True,
             append=False,
             debug=False,
