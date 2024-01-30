@@ -124,7 +124,7 @@ class Overlay:
     def __init__(
         self,
         name,
-        filename,
+        filespec,
         namebase,
         funcmask=None,
         geommask=None,
@@ -145,7 +145,7 @@ class Overlay:
         else:
             self.label = label
         self.report = report
-        self.filename = filename
+        self.filename, self.filevals = tide_io.processnamespec(filespec, "Including voxels where ", "in mask")
         self.namebase = namebase
         if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
@@ -269,8 +269,14 @@ class Overlay:
             self.filename
         )
         if isaMask:
-            self.data[np.where(self.data < 0.5)] = 0.0
-            self.data[np.where(self.data > 0.5)] = 1.0
+            if self.filevals is None:
+                self.data[np.where(self.data < 0.5)] = 0.0
+                self.data[np.where(self.data > 0.5)] = 1.0
+            else:
+                tempmask = (0 * self.data).astype("uint16")
+                for theval in self.filevals:
+                    tempmask[np.where(self.data - theval == 0.0)] += 1
+                self.data = np.where(tempmask > 0, 1, 0)
         if self.verbose > 1:
             print("Overlay data range:", np.min(self.data), np.max(self.data))
             print("header", self.header)
@@ -449,8 +455,8 @@ class RapidtideDataset:
         fileroot,
         anatname=None,
         geommaskname=None,
-        graymaskname=None,
-        whitemaskname=None,
+        graymaskspec=None,
+        whitemaskspec=None,
         userise=False,
         usecorrout=False,
         useatlas=False,
@@ -466,8 +472,8 @@ class RapidtideDataset:
         self.fileroot = fileroot
         self.anatname = anatname
         self.geommaskname = geommaskname
-        self.graymaskname = graymaskname
-        self.whitemaskname = whitemaskname
+        self.graymaskspec = graymaskspec
+        self.whitemaskspec = whitemaskspec
         self.userise = userise
         self.usecorrout = usecorrout
         self.useatlas = useatlas
@@ -626,36 +632,6 @@ class RapidtideDataset:
                 )
                 if self.verbose > 1:
                     print("using ", self.geommaskname, " as geometric mask")
-                # allloadedmaps.append('geommask')
-                return True
-        if self.graymaskname is not None:
-            if os.path.isfile(self.graymaskname):
-                thepath, thebase = os.path.split(self.graymaskname)
-                self.overlays["graymask"] = Overlay(
-                    "graymask",
-                    self.graymaskname,
-                    thebase,
-                    init_LUT=self.init_LUT,
-                    isaMask=True,
-                    verbose=self.verbose,
-                )
-                if self.verbose > 1:
-                    print("using ", self.graymaskname, " as gray matter mask")
-                # allloadedmaps.append('geommask')
-                return True
-        if self.whitemaskname is not None:
-            if os.path.isfile(self.whitemaskname):
-                thepath, thebase = os.path.split(self.whitemaskname)
-                self.overlays["whitemask"] = Overlay(
-                    "whitemask",
-                    self.whitemaskname,
-                    thebase,
-                    init_LUT=self.init_LUT,
-                    isaMask=True,
-                    verbose=self.verbose,
-                )
-                if self.verbose > 1:
-                    print("using ", self.whitemaskname, " as white matter mask")
                 # allloadedmaps.append('geommask')
                 return True
         elif self.coordinatespace == "MNI152":
@@ -857,6 +833,49 @@ class RapidtideDataset:
                 print("no anatomic image loaded")
             return False
 
+    def _loadgraymask(self):
+        if self.graymaskspec is not None:
+            filename, dummy = tide_io.parsefilespec(self.graymaskspec)
+            if os.path.isfile(filename):
+                thepath, thebase = os.path.split(self.graymaskspec)
+                self.overlays["graymask"] = Overlay(
+                    "graymask",
+                    self.graymaskspec,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    isaMask=True,
+                    verbose=self.verbose,
+                )
+                if self.verbose > 1:
+                    print("using ", self.graymaskspec, " as gray matter mask")
+                # allloadedmaps.append('geommask')
+                return True
+        else:
+            if self.verbose > 1:
+                print("no gray mask loaded")
+            return False
+
+    def _loadwhitemask(self):
+        if self.whitemaskspec is not None:
+            filename, dummy = tide_io.parsefilespec(self.whitemaskspec)
+            if os.path.isfile(filename):
+                thepath, thebase = os.path.split(self.whitemaskspec)
+                self.overlays["whitemask"] = Overlay(
+                    "whitemask",
+                    self.whitemaskspec,
+                    thebase,
+                    init_LUT=self.init_LUT,
+                    isaMask=True,
+                    verbose=self.verbose,
+                )
+                if self.verbose > 1:
+                    print("using ", self.whitemaskspec, " as white matter mask")
+                # allloadedmaps.append('geommask')
+                return True
+        else:
+            if self.verbose > 1:
+                print("no white mask loaded")
+            return False
     def setupregressors(self):
         # load the regressors
         self.regressors = {}
@@ -1145,6 +1164,12 @@ class RapidtideDataset:
         # then the geometric masks
         if self._loadgeommask():
             self.allloadedmaps.append("geommask")
+
+        # then the tissue masks
+        if self._loadgraymask():
+            self.allloadedmaps.append("graymask")
+        if self._loadwhitemask():
+            self.allloadedmaps.append("whitemask")
 
         if self.useatlas and (
             (self.coordinatespace == "MNI152")

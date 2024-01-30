@@ -1,7 +1,7 @@
 # Release history
 
 ## Version 2.7.6 (1/29/24)
-* (rapidtide) Added the ability to calcuate delays over a limited time range, but still GLM filter the entire timecourse.
+* (rapidtide) Added the ability to calculate delays over a limited time range, but still GLM filter the entire timecourse.
 * (rapidtide) Fixed a very old bug in null significance distribution estimation.  Multiple worker processes all start with the same random seed (unless you explicitly fix that).  Who knew?
 * (rapidtide) Improved significance distribution model fitting for mutualinfo similarity metric.  The distribution is a Gaussian, not a Johnson distribution (as it is for selected correlation).
 * (runqualitycheck) Added an automated quality assessment tool.  This will likely evolve quite a bit over time.

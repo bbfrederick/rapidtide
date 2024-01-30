@@ -44,17 +44,19 @@ def _get_parser():
 
     # add optional arguments
     parser.add_argument(
-        "--graymask",
-        metavar="MASKNAME",
+        "--graymaskspec",
+        metavar="MASK[:VALSPEC]",
         type=str,
-        help="The name of a gray matter mask that matches the input dataset.",
+        help="The name of a gray matter mask that matches the input dataset. If VALSPEC is given, only voxels "
+            "with integral values listed in VALSPEC are used.  If using an aparc+aseg file, set to APARC_GRAY.",
         default=None,
     )
     parser.add_argument(
-        "--whitemask",
-        metavar="MASKNAME",
+        "--whitemaskspec",
+        metavar="MASK[:VALSPEC]",
         type=str,
-        help="The name of a white matter mask that matches the input dataset.",
+        help="The name of a white matter mask that matches the input dataset. If VALSPEC is given, only voxels "
+            "with integral values listed in VALSPEC are used.  If using an aparc+aseg file, set to APARC_WHITE.",
         default=None,
     )
     parser.add_argument(
@@ -77,8 +79,8 @@ def main():
 
     resultsdict = tide_quality.qualitycheck(
         args.inputfileroot,
-        graymaskname=args.graymask,
-        whitemaskname=args.whitemask,
+        graymaskspec=args.graymaskspec,
+        whitemaskspec=args.whitemaskspec,
         debug=args.debug,
     )
     tide_io.writedicttojson(

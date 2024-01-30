@@ -1187,6 +1187,7 @@ def writebidstsv(
     outputfileroot,
     data,
     samplerate,
+    extraheaderinfo=None,
     compressed=True,
     columns=None,
     starttime=0.0,
@@ -1306,6 +1307,9 @@ def writebidstsv(
             headerdict["Columns"] = columns
         else:
             headerdict["Columns"] = incolumns + columns
+    if extraheaderinfo is not None:
+        for key in extraheaderinfo:
+            headerdict[key] = extraheaderinfo[key]
 
     if not omitjson:
         with open(outputfileroot + ".json", "wb") as fp:
@@ -1739,6 +1743,8 @@ def colspectolist(colspec, debug=False):
         ("APARC_SUBCORTGRAY", "8-13,17-20,26-28,47-56,58-60,96,97"),
         ("APARC_CORTGRAY", "1000-1035,2000-2035"),
         ("APARC_GRAY", "8-13,17-20,26-28,47-56,58-60,96,97,1000-1035,2000-2035"),
+        ("APARC_WHITE", "2,7,41,46,177,219"),
+        ("APARC_ALLBUTCSF", "2,7-13,17-20,26-28,41,46-56,58-60,96,97,177,219,1000-1035,2000-2035"),
     )
     preprocessedranges = []
     for thisrange in theranges:

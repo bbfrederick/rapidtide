@@ -45,7 +45,7 @@ def checklag(
 
     gethistmetrics(
         themap,
-        themask.data,
+        themask,
         lagmetrics,
         thehistlabel="lag time histogram",
         histlen=histlen,
@@ -56,7 +56,7 @@ def checklag(
         debug=debug,
     )
 
-    theerodedmask = prepmask(themask.data)
+    theerodedmask = prepmask(themask)
     thegradient = np.gradient(themap.data)
     thegradientamp = np.sqrt(
         np.square(thegradient[0] / themap.xsize)
@@ -69,6 +69,7 @@ def checklag(
         tide_io.savetonifti(maskedgradient, themap.header, "maskedlaggradient")
 
     maskedgradientdata = np.ravel(thegradientamp[np.where(theerodedmask > 0.0)])
+    lagmetrics["gradvoxelsincluded"] = len(maskedgradientdata)
     (
         lagmetrics["gradpct02"],
         lagmetrics["gradpct25"],
@@ -127,6 +128,7 @@ def gethistmetrics(
     dataforhist = np.ravel(themap.data[np.where(themask > 0.0)])
     if nozero:
         dataforhist = dataforhist[np.where(dataforhist != 0.0)]
+    thedict["voxelsincluded"] = len(dataforhist)
     (
         thehist,
         thedict["peakheight"],
@@ -163,7 +165,7 @@ def checkstrength(
 
     gethistmetrics(
         themap,
-        themask.data,
+        themask,
         strengthmetrics,
         thehistlabel="similarity metric histogram",
         histlen=histlen,
@@ -181,7 +183,7 @@ def checkMTT(themap, themask, histlen=101, minsMTT=0.0, maxMTT=10.0, savehist=Fa
 
     gethistmetrics(
         themap,
-        themask.data,
+        themask,
         MTTmetrics,
         thehistlabel="MTT histogram",
         histlen=histlen,
@@ -198,10 +200,10 @@ def checkregressors(theregressors, numpasses, filterlimits, debug=False):
     regressormetrics = {}
     firstregressor = theregressors["pass1"]
     lastregressor = theregressors[f"pass{numpasses}"]
+    lowerlimindex = np.argmax(firstregressor.specaxis >= filterlimits[0])
+    upperlimindex = np.argmin(firstregressor.specaxis <= filterlimits[1]) + 1
     if debug:
         print(f"{filterlimits=}")
-        lowerlimindex = np.argmax(firstregressor.specaxis >= filterlimits[0])
-        upperlimindex = np.argmin(firstregressor.specaxis <= filterlimits[1]) + 1
         print(f"{lowerlimindex=}, {upperlimindex=}")
         print(firstregressor.specaxis)
         print(firstregressor.specdata[lowerlimindex:upperlimindex])
@@ -220,8 +222,8 @@ def checkregressors(theregressors, numpasses, filterlimits, debug=False):
 
 def qualitycheck(
     datafileroot,
-    graymaskname=None,
-    whitemaskname=None,
+    graymaskspec=None,
+    whitemaskspec=None,
     anatname=None,
     geommaskname=None,
     userise=False,
@@ -239,6 +241,8 @@ def qualitycheck(
         datafileroot + "_",
         anatname=anatname,
         geommaskname=geommaskname,
+        graymaskspec=graymaskspec,
+        whitemaskspec=whitemaskspec,
         userise=userise,
         usecorrout=usecorrout,
         useatlas=useatlas,
@@ -250,38 +254,53 @@ def qualitycheck(
     )
 
     outputdict = {}
+    if graymaskspec is not None:
+        dograyonly = True
+        thegraymask = (thedataset.overlays["graymask"]).data
+    else:
+        dograyonly = False
+    if whitemaskspec is not None:
+        dowhiteonly = True
+        thewhitemask = (thedataset.overlays["whitemask"]).data
+    else:
+        dowhiteonly = False
 
     # put in some basic information
     outputdict["passes"] = thedataset.numberofpasses
     outputdict["filterlimits"] = thedataset.regressorfilterlimits
 
-    themask = thedataset.overlays["lagmask"]
+    themask = (thedataset.overlays["lagmask"]).data
 
     thelags = thedataset.overlays["lagtimes"]
-    thelags.setFuncMask(themask.data)
+    thelags.setFuncMask(themask)
     thelags.updateStats()
     if debug:
         thelags.summarize()
 
     theMTTs = thedataset.overlays["MTT"]
-    theMTTs.setFuncMask(themask.data)
+    theMTTs.setFuncMask(themask)
     theMTTs.updateStats()
     if debug:
         theMTTs.summarize()
 
     thestrengths = thedataset.overlays["lagstrengths"]
-    thestrengths.setFuncMask(themask.data)
+    thestrengths.setFuncMask(themask)
     thestrengths.updateStats()
     if debug:
         thestrengths.summarize()
 
     theregressors = thedataset.regressors
 
+    outputdict["regressormetrics"] = checkregressors(theregressors, outputdict["passes"], outputdict["filterlimits"], debug=debug)
     outputdict["lagmetrics"] = checklag(thelags, themask, debug=debug)
     outputdict["strengthmetrics"] = checkstrength(thestrengths, themask, debug=debug)
     outputdict["MTTmetrics"] = checkMTT(theMTTs, themask, debug=debug)
-    outputdict["regressormetrics"] = checkregressors(
-        theregressors, outputdict["passes"], outputdict["filterlimits"], debug=debug
-    )
+
+    if dograyonly:
+        outputdict["grayonly-lagmetrics"] = checklag(thelags, themask * thegraymask, debug=debug)
+        outputdict["grayonly-strengthmetrics"] = checkstrength(thestrengths, themask * thegraymask, debug=debug)
+    if dowhiteonly:
+        outputdict["whiteonly-lagmetrics"] = checklag(thelags, themask * thewhitemask, debug=debug)
+        outputdict["whiteonly-strengthmetrics"] = checkstrength(thestrengths, themask * thewhitemask, debug=debug)
 
     return outputdict
