@@ -144,7 +144,9 @@ class Overlay:
         else:
             self.label = label
         self.report = report
-        self.filename, self.filevals = tide_io.processnamespec(filespec, "Including voxels where ", "in mask")
+        self.filename, self.filevals = tide_io.processnamespec(
+            filespec, "Including voxels where ", "in mask"
+        )
         self.namebase = namebase
         if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
@@ -875,6 +877,7 @@ class RapidtideDataset:
             if self.verbose > 1:
                 print("no white mask loaded")
             return False
+
     def setupregressors(self):
         # load the regressors
         self.regressors = {}

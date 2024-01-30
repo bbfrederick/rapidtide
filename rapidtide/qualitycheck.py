@@ -20,8 +20,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import binary_erosion
 
-import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 from rapidtide.RapidtideDataset import RapidtideDataset
 
@@ -206,12 +206,14 @@ def checkregressors(theregressors, numpasses, filterlimits, debug=False):
         print(f"{filterlimits=}")
         print(f"{lowerlimindex=}, {upperlimindex=}")
         print(firstregressor.specaxis)
-        print(firstregressor.specdata[lowerlimindex: upperlimindex])
-    for label, regressor in [["first", firstregressor],["last", lastregressor]]:
+        print(firstregressor.specdata[lowerlimindex:upperlimindex])
+    for label, regressor in [["first", firstregressor], ["last", lastregressor]]:
         regressormetrics[f"{label}_kurtosis"] = regressor.kurtosis
         regressormetrics[f"{label}_kurtosis_z"] = regressor.kurtosis_z
         regressormetrics[f"{label}_kurtosis_p"] = regressor.kurtosis_p
-        regressormetrics[f"{label}_spectralflatness"] = tide_filt.spectralflatness(regressor.specdata[lowerlimindex: upperlimindex])
+        regressormetrics[f"{label}_spectralflatness"] = tide_filt.spectralflatness(
+            regressor.specdata[lowerlimindex:upperlimindex]
+        )
     return regressormetrics
 
 
@@ -286,16 +288,22 @@ def qualitycheck(
 
     theregressors = thedataset.regressors
 
-    outputdict["regressormetrics"] = checkregressors(theregressors, outputdict["passes"], outputdict["filterlimits"], debug=debug)
+    outputdict["regressormetrics"] = checkregressors(
+        theregressors, outputdict["passes"], outputdict["filterlimits"], debug=debug
+    )
     outputdict["lagmetrics"] = checklag(thelags, themask, debug=debug)
     outputdict["strengthmetrics"] = checkstrength(thestrengths, themask, debug=debug)
     outputdict["MTTmetrics"] = checkMTT(theMTTs, themask, debug=debug)
 
     if dograyonly:
         outputdict["grayonly-lagmetrics"] = checklag(thelags, themask * thegraymask, debug=debug)
-        outputdict["grayonly-strengthmetrics"] = checkstrength(thestrengths, themask * thegraymask, debug=debug)
+        outputdict["grayonly-strengthmetrics"] = checkstrength(
+            thestrengths, themask * thegraymask, debug=debug
+        )
     if dowhiteonly:
         outputdict["whiteonly-lagmetrics"] = checklag(thelags, themask * thewhitemask, debug=debug)
-        outputdict["whiteonly-strengthmetrics"] = checkstrength(thestrengths, themask * thewhitemask, debug=debug)
+        outputdict["whiteonly-strengthmetrics"] = checkstrength(
+            thestrengths, themask * thewhitemask, debug=debug
+        )
 
     return outputdict
