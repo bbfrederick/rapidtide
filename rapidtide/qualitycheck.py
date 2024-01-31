@@ -72,54 +72,80 @@ def gethistmetrics(
     debug=False,
 ):
     # mask and flatten the data
-    dataforhist = np.ravel(themap[np.where(themask > 0.0)])
-    if nozero:
-        dataforhist = dataforhist[np.where(dataforhist != 0.0)]
-
-    # get percentiles
-    (
-        thedict["pct02"],
-        thedict["pct25"],
-        thedict["pct50"],
-        thedict["pct75"],
-        thedict["pct98"],
-    ) = tide_stats.getfracvals(dataforhist, [0.02, 0.25, 0.5, 0.75, 0.98], debug=debug)
-    thedict["voxelsincluded"] = len(dataforhist)
-
-    # get moments
-    thedict["kurtosis"], thedict["kurtosis_z"], thedict["kurtosis_p"] = tide_stats.kurtosisstats(
-        dataforhist
-    )
-    thedict["skewness"], thedict["skewness_z"], thedict["skewness_p"] = tide_stats.skewnessstats(
-        dataforhist
-    )
-    (
-        thehist,
-        thedict["peakheight"],
-        thedict["peakloc"],
-        thedict["peakwidth"],
-        thedict["centerofmass"],
-        thedict["peakpercentile"],
-    ) = tide_stats.makehistogram(
-        dataforhist,
-        histlen,
-        refine=False,
-        therange=(rangemin, rangemax),
-        normalize=True,
-        ignorefirstpoint=True,
-        debug=debug,
-    )
-    histbincenters = ((thehist[1][1:] + thehist[1][0:-1]) / 2.0).tolist()
-    histvalues = (thehist[0][-histlen:]).tolist()
-    if savehist:
-        thedict["histbincenters"] = histbincenters
-        thedict["histvalues"] = histvalues
+    maskisempty = False
+    if len(np.where(themask > 0)) == 0:
+        maskisempty = False
     if debug:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title(thehistlabel)
-        plt.plot(histbincenters, histvalues)
-        plt.show()
+        print("num-nonzero in mask", len(np.where(themask > 0)[0]))
+    if not maskisempty:
+        dataforhist = np.ravel(themap[np.where(themask > 0.0)])
+        if nozero:
+            dataforhist = dataforhist[np.where(dataforhist != 0.0)]
+            if len(dataforhist) == 0:
+                maskisempty = True
+            if debug:
+                print("num-nonzero in dataforhist", len(dataforhist))
+    else:
+        maskisempty = True
+
+    if not maskisempty:
+        # get percentiles
+        (
+            thedict["pct02"],
+            thedict["pct25"],
+            thedict["pct50"],
+            thedict["pct75"],
+            thedict["pct98"],
+        ) = tide_stats.getfracvals(dataforhist, [0.02, 0.25, 0.5, 0.75, 0.98], debug=debug)
+        thedict["voxelsincluded"] = len(dataforhist)
+
+        # get moments
+        (
+            thedict["kurtosis"],
+            thedict["kurtosis_z"],
+            thedict["kurtosis_p"],
+        ) = tide_stats.kurtosisstats(dataforhist)
+        (
+            thedict["skewness"],
+            thedict["skewness_z"],
+            thedict["skewness_p"],
+        ) = tide_stats.skewnessstats(dataforhist)
+        (
+            thehist,
+            thedict["peakheight"],
+            thedict["peakloc"],
+            thedict["peakwidth"],
+            thedict["centerofmass"],
+            thedict["peakpercentile"],
+        ) = tide_stats.makehistogram(
+            dataforhist,
+            histlen,
+            refine=False,
+            therange=(rangemin, rangemax),
+            normalize=True,
+            ignorefirstpoint=True,
+            debug=debug,
+        )
+        histbincenters = ((thehist[1][1:] + thehist[1][0:-1]) / 2.0).tolist()
+        histvalues = (thehist[0][-histlen:]).tolist()
+        if savehist:
+            thedict["histbincenters"] = histbincenters
+            thedict["histvalues"] = histvalues
+        if debug:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.set_title(thehistlabel)
+            plt.plot(histbincenters, histvalues)
+            plt.show()
+    else:
+        thedict["voxelsincluded"] = 0
+        taglist = ["pct02", "pct25", "pct50", "pct75", "pct98"]
+        taglist += ["kurtosis", "kurtosis_z", "kurtosis_p", "skewness", "skewness_z", "skewness_p"]
+        taglist += ["peakheight", "peakloc", "peakwidth", "centerofmass", "peakpercentile"]
+        if savehist:
+            taglist += ["histbincenters", "histvalues"]
+        for tag in taglist:
+            thedict[tag] = None
 
 
 def checkmap(
