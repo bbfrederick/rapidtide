@@ -1,6 +1,6 @@
 # Release history
 
-## Version 2.7.7 (1/30/24)
+## Version 2.7.7 (1/31/24)
 * (runqualitycheck) Added new tests, and the ability to optionally do tests restricted to gray and/or white matter.
 * (package) The makeandsavehistogram routine now saves some useful histogram stats in the json file.
 * (package) Added the ability to specify APARC_WHITE and APARC_ALLBUTCSF macros to a mask specification if you have an aparc+aseg file.
