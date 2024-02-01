@@ -791,6 +791,20 @@ def postprocesstimerangeopts(args):
     return args
 
 
+def parserange(timerange, descriptor="timerange"):
+    if timerange[0] < 0:
+        startpoint = 0
+    else:
+        startpoint = timerange[0]
+    if timerange[1] < -1:
+        endpoint = 100000000
+    else:
+        endpoint = timerange[1]
+    if endpoint <= startpoint:
+        raise ValueError(f"{descriptor} startpoint must be < endpoint'].")
+    return startpoint, endpoint
+
+
 def addsimilarityopts(parser):
     parser.add_argument(
         "--mutualinfosmoothingtime",

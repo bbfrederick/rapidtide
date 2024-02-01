@@ -455,6 +455,19 @@ def _get_parser():
         default=0,
     )
     preproc.add_argument(
+        "--numtozero",
+        dest="numtozero",
+        action="store",
+        type=int,
+        metavar="NUMPOINTS",
+        help=(
+            "When calculating the moving regressor, set this number of points to zero at the beginning of the "
+            "voxel timecourses. This prevents initial points which may not be in equilibrium from contaminating the "
+            "calculated sLFO signal.  This may improve similarity fitting and GLM noise removal.  Default is 0."
+        ),
+        default=0,
+    )
+    preproc.add_argument(
         "--timerange",
         dest="timerange",
         action="store",
@@ -629,10 +642,12 @@ def _get_parser():
         type=int,
         metavar=("START", "END"),
         help=(
-            "Limit correlation caculation to data between timepoints "
+            "Limit correlation calculation to data between timepoints "
             "START and END in the fmri file. If END is set to -1, "
             "analysis will go to the last timepoint.  Negative values "
-            "of START will be set to 0. Default is to use all timepoints."
+            "of START will be set to 0. Default is to use all timepoints. "
+            "NOTE: these offsets are relative to the start of the "
+            "dataset AFTER any trimming done with '--timerange'."
         ),
         default=(-1, -1),
     )
@@ -1547,20 +1562,14 @@ def process_args(inputargs=None):
 
     args["lagmin"] = args["lag_extrema"][0]
     args["lagmax"] = args["lag_extrema"][1]
-    args["startpoint"] = args["timerange"][0]
-    if args["timerange"][1] == -1:
-        args["endpoint"] = 100000000
-    else:
-        args["endpoint"] = args["timerange"][1]
-    args["simcalcstartpoint"] = args["simcalcrange"][0]
-    if args["simcalcstartpoint"] < args["startpoint"]:
-        raise (f"Similarity function range start point must be >= {args['startpoint']}.")
-    if args["simcalcrange"][1] == -1:
-        args["simcalcendpoint"] = np.min((100000000, args["endpoint"]))
-    elif args["simcalcrange"][1] <= args["endpoint"]:
-        args["simcalcendpoint"] = args["endpoint"]
-    else:
-        raise (f"Similarity function range end point must be <= {args['endpoint']}.")
+
+    # set startpoint and endpoint
+    args["startpoint"], args["endpoint"] = pf.parserange(args["timerange"], descriptor="timerange")
+
+    # set simcalc startpoint and endpoint
+    args["simcalcstartpoint"], args["simcalcendpoint"] = pf.parserange(
+        args["simcalcrange"], descriptor="simcalcrange"
+    )
 
     args["offsettime_total"] = args["offsettime"] + 0.0
 

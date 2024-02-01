@@ -477,6 +477,9 @@ def rapidtide_main(argparsingfunc):
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
+    if optiondict["numtozero"] > 0:
+        themean = np.mean(fmri_data[:, optiondict["numtozero"] :], axis=1)
+        fmri_data[:, 0 : optiondict["numtozero"]] = themean[:, None]
     validtimepoints = validend - validstart + 1
 
     # detect zero mean data
@@ -1404,6 +1407,10 @@ def rapidtide_main(argparsingfunc):
         optiondict["simcalcstartpoint"],
         optiondict["simcalcendpoint"],
     )
+    print(
+        f"simcalcrangelimits: {timepoints=}, {optiondict['simcalcstartpoint']=}, {optiondict['simcalcendpoint']}"
+    )
+    print(f"simcalcrangelimits: {validsimcalcstart=}, {validsimcalcend=}")
     osvalidsimcalcstart = validsimcalcstart * optiondict["oversampfactor"]
     osvalidsimcalcend = validsimcalcend * optiondict["oversampfactor"]
     optiondict["validsimcalcstart"] = validsimcalcstart

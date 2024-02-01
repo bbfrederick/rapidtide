@@ -47,7 +47,7 @@ def _procOneVoxelTimeShift(
     if detrendorder > 0:
         normtc = tide_fit.detrend(fmritc, order=detrendorder, demean=True)
     else:
-        normtc = fmritc
+        normtc = fmritc + 0.0
     shifttr = -(-offsettime + lagtime) / fmritr  # lagtime is in seconds
     [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide_resample.timeshift(
         normtc, shifttr, padtrs
