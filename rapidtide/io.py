@@ -1781,13 +1781,13 @@ def colspectolist(colspec, debug=False):
     return unique(sorted(collist))
 
 
-def processnamespec(maskspec, spectext1, spectext2):
+def processnamespec(maskspec, spectext1, spectext2, debug=False):
     thename, colspec = parsefilespec(maskspec)
     if colspec is not None:
         thevals = colspectolist(colspec)
     else:
         thevals = None
-    if thevals is not None:
+    if (thevals is not None) and debug:
         print(spectext1, thename, " = ", thevals, spectext2)
     return thename, thevals
 

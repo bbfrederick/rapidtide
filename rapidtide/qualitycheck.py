@@ -208,6 +208,8 @@ def qualitycheck(
         init_LUT=False,
     )
 
+    if debug:
+        print(f"qualitycheck started on {datafileroot}")
     outputdict = {}
     if graymaskspec is not None:
         dograyonly = True
