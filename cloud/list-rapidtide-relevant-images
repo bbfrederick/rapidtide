@@ -19,14 +19,16 @@ def get_ABCD_files(
 
     subjsess_key = f"{participant}_ses-{session}"
     subjsess_df = df[df.associated_file.str.contains(subjsess_key)]
+    restscans_df = subjsess_df[subjsess_df.associated_file.str.contains("task-rest")]
     search_patterns = [
-        "*task-rest*desc-confounds_timeseries.tsv",
-        "*task-rest*space-MNI152NLin2009cAsym_res-2*",
+        "desc-confounds_timeseries.tsv",
+        "space-MNI152NLin2009cAsym_res-2",
     ]
     filestoget = []
     for thissearch_pattern in search_patterns:
-        pattern_match = subjsess_df["associated_file"].str.contains(thissearch_pattern)
-        filestoget.extend(subjsess_df.loc[pattern_match, "associated_file"].tolist())
+        print(f"matching {thissearch_pattern}")
+        pattern_match = restscans_df["associated_file"].str.contains(thissearch_pattern)
+        filestoget.extend(restscans_df.loc[pattern_match, "associated_file"].tolist())
 
     return filestoget
 
