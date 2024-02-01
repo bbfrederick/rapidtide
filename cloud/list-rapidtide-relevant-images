@@ -8,7 +8,26 @@ from pathlib import Path
 
 import pandas as pd
 
+# get the processed files from the ABCD dataset - this is the ABCC derivatives, package 1224084
+def get_ABCD_files(
+    participant,
+    session,
+    manifest,
+):
+    df = pd.read_csv(manifest, sep="\t", dtype=str)
 
+    subjsess_key = f"{participant}_ses-{session}"
+    subjsess_df = df[df.associated_file.str.contains(subjsess_key)]
+    search_patterns = ["*task-rest*desc-confounds_timeseries.tsv", "*task-rest*space-MNI152NLin2009cAsym_res-2*"]
+    filestoget = []
+    for thissearch_pattern in search_patterns:
+        pattern_match = subjsess_df["associated_file"].str.contains(thissearch_pattern)
+        filestoget.extend(subjsess_df.loc[pattern_match, "associated_file"].tolist())
+
+    return filestoget
+
+
+# get the files from the HCP Aging dataset
 def get_HCPA_files(
     participant,
     session,
