@@ -607,6 +607,7 @@ def prochistogram(
     if ignorefirstpoint:
         xvals = thestore[0, 1:]
         yvals = thestore[1, 1:]
+        histlen -= 1
     else:
         xvals = thestore[0, :]
         yvals = thestore[1, :]
