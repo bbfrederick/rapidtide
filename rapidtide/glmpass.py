@@ -228,6 +228,7 @@ def motionregress(
     position=True,
     deriv=True,
     derivdelayed=False,
+    showprogressbar=True,
     debug=False,
 ):
     print("regressing out motion")
@@ -265,7 +266,9 @@ def motionregress(
         )
 
     print("start motion filtering")
-    filtereddata = confoundglm(thedataarray, motionregressors, debug=debug)
+    filtereddata = confoundglm(
+        thedataarray, motionregressors, showprogressbar=showprogressbar, debug=debug
+    )
     print()
     print("motion filtering complete")
     return motionregressors, motionregressorlabels, filtereddata

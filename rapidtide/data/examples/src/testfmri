@@ -17,6 +17,8 @@ do
 	    --nolimitoutput \
 	    --despecklepasses 4 \
             --numtozero 4 \
+            --motionfile fakemotion.par \
+            --noprogressbar \
 	    --acfix \
 	    --filterband lfo \
 	    --corrweighting regressor \

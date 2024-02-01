@@ -679,6 +679,7 @@ def rapidtide_main(argparsingfunc):
             motend=validend + 1,
             position=optiondict["mot_pos"],
             deriv=optiondict["mot_deriv"],
+            showprogressbar=optiondict["showprogressbar"],
             derivdelayed=optiondict["mot_delayderiv"],
         )
 
