@@ -629,7 +629,7 @@ def prochistogram(
     peakloc = xvals[peakindex + 1]
     peakheight = yvals[peakindex + 1]
     numbins = 1
-    while (peakindex + numbins < histlen - 1) and (yvals[peakindex + numbins] > peakheight / 2.0):
+    while (peakindex + numbins < histlen - 2) and (yvals[peakindex + numbins] > peakheight / 2.0):
         numbins += 1
     peakwidth = (xvals[peakindex + numbins] - xvals[peakindex]) * 2.0
     if debug:
