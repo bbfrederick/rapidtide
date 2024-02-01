@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.7.8 (1/31/24)
+* (rapidtide) Added new feature - '--numtozero NUMPOINTS' allows you to specify how many points at the beginning of the data set to set to zero prior to processing.  This means that the sLFO fit does not get contaminated by synchronous noise at the beginning of the timecourse (such as T1 decay).  The initial timepoints are filled in from timecourses shifted forward in time.  This means better correlation of timecourses with the sLFO, and better noise removal with the GLM.
+* (rapidtide) Fixed a bug in how setting timerange and simcalc range interacted (and in range checking).  It all works now, and simcalc range is specified relative to the restricted time range.
+* (runqualitycheck) Fixed some masking bugs.
+
 ## Version 2.7.7 (1/31/24)
 * (runqualitycheck) Added new tests, and the ability to optionally do tests restricted to gray and/or white matter.
 * (package) The makeandsavehistogram routine now saves some useful histogram stats in the json file.

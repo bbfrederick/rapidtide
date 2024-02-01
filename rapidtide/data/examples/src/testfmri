@@ -14,9 +14,7 @@ do
 	    --numnull 50000 \
 	    --nprocs -1 \
 	    --passes 3 \
-            --timerange 100 -1 \
 	    --nolimitoutput \
-            --simcalcrange 0 -1 \
 	    --despecklepasses 4 \
             --numtozero 4 \
 	    --acfix \
@@ -25,7 +23,7 @@ do
 	    --corrtype linear \
 	    --peakfittype ${fittype} \
 	    sub-RAPIDTIDETEST.nii.gz \
-	    ../dst/sub-RAPIDTIDETEST_${fittype}_${similaritymetric}_full_zero04_limrange
+	    ../dst/sub-RAPIDTIDETEST_${fittype}_${similaritymetric}_zero04
     done
 done
 #    ../extrasrc/diffmaps \
