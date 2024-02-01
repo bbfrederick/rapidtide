@@ -69,6 +69,7 @@ def gethistmetrics(
     rangemax=1.0,
     nozero=False,
     savehist=False,
+    ignorefirstpoint=False,
     debug=False,
 ):
     # mask and flatten the data
@@ -123,7 +124,7 @@ def gethistmetrics(
             refine=False,
             therange=(rangemin, rangemax),
             normalize=True,
-            ignorefirstpoint=True,
+            ignorefirstpoint=ignorefirstpoint,
             debug=debug,
         )
         histbincenters = ((thehist[1][1:] + thehist[1][0:-1]) / 2.0).tolist()
@@ -155,6 +156,7 @@ def checkmap(
     rangemin=0.0,
     rangemax=1.0,
     histlabel="similarity metric histogram",
+    ignorefirstpoint=False,
     savehist=False,
     debug=False,
 ):
@@ -170,6 +172,7 @@ def checkmap(
         rangemax=rangemax,
         nozero=False,
         savehist=savehist,
+        ignorefirstpoint=ignorefirstpoint,
         debug=debug,
     )
     return themetrics
@@ -285,6 +288,7 @@ def qualitycheck(
         rangemin=0.0,
         rangemax=3.0,
         histlabel="lag gradient amplitude histogram",
+        ignorefirstpoint=True,
         debug=debug,
     )
 
