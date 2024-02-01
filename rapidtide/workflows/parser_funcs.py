@@ -791,17 +791,21 @@ def postprocesstimerangeopts(args):
     return args
 
 
-def parserange(timerange, descriptor="timerange"):
+def parserange(timerange, descriptor="timerange", debug=False):
     if timerange[0] < 0:
         startpoint = 0
     else:
         startpoint = timerange[0]
-    if timerange[1] < -1:
+    if timerange[1] < 0:
         endpoint = 100000000
     else:
         endpoint = timerange[1]
+    if debug:
+        print("startpoint:", startpoint)
+        print("endpoint:", endpoint)
+        print("timerange:", timerange)
     if endpoint <= startpoint:
-        raise ValueError(f"{descriptor} startpoint must be < endpoint'].")
+        raise ValueError(f"{descriptor} startpoint must be < endpoint")
     return startpoint, endpoint
 
 

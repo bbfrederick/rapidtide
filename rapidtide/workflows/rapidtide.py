@@ -1403,14 +1403,15 @@ def rapidtide_main(argparsingfunc):
     )
 
     validsimcalcstart, validsimcalcend = tide_util.startendcheck(
-        timepoints,
+        validtimepoints,
         optiondict["simcalcstartpoint"],
         optiondict["simcalcendpoint"],
     )
-    print(
-        f"simcalcrangelimits: {timepoints=}, {optiondict['simcalcstartpoint']=}, {optiondict['simcalcendpoint']}"
-    )
-    print(f"simcalcrangelimits: {validsimcalcstart=}, {validsimcalcend=}")
+    if optiondict["debug"]:
+        print(
+            f"simcalcrangelimits: {validtimepoints=}, {optiondict['simcalcstartpoint']=}, {optiondict['simcalcendpoint']}"
+        )
+        print(f"simcalcrangelimits: {validsimcalcstart=}, {validsimcalcend=}")
     osvalidsimcalcstart = validsimcalcstart * optiondict["oversampfactor"]
     osvalidsimcalcend = validsimcalcend * optiondict["oversampfactor"]
     optiondict["validsimcalcstart"] = validsimcalcstart
