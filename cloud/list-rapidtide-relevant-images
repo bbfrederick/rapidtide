@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
+
 # get the processed files from the ABCD dataset - this is the ABCC derivatives, package 1224084
 def get_ABCD_files(
     participant,
@@ -18,7 +19,10 @@ def get_ABCD_files(
 
     subjsess_key = f"{participant}_ses-{session}"
     subjsess_df = df[df.associated_file.str.contains(subjsess_key)]
-    search_patterns = ["*task-rest*desc-confounds_timeseries.tsv", "*task-rest*space-MNI152NLin2009cAsym_res-2*"]
+    search_patterns = [
+        "*task-rest*desc-confounds_timeseries.tsv",
+        "*task-rest*space-MNI152NLin2009cAsym_res-2*",
+    ]
     filestoget = []
     for thissearch_pattern in search_patterns:
         pattern_match = subjsess_df["associated_file"].str.contains(thissearch_pattern)
