@@ -324,7 +324,7 @@ def qualitycheck(
 
     if dograyonly:
         outputdict["grayonly-lag"] = checkmap(
-            thelags,
+            thelags.data,
             thelagmask * thegraymask,
             rangemin=-5.0,
             rangemax=10.0,
@@ -332,7 +332,7 @@ def qualitycheck(
             debug=debug,
         )
         outputdict["grayonly-laggrad"] = checkmap(
-            thelags,
+            thegradientamp,
             theerodedmask * thegraymask,
             rangemin=0.0,
             rangemax=3.0,
@@ -340,7 +340,7 @@ def qualitycheck(
             debug=debug,
         )
         outputdict["grayonly-strength"] = checkmap(
-            thestrengths,
+            thestrengths.data,
             thelagmask * thegraymask,
             rangemin=0.0,
             rangemax=1.0,
@@ -349,7 +349,7 @@ def qualitycheck(
         )
     if dowhiteonly:
         outputdict["whiteonly-lag"] = checkmap(
-            thelags,
+            thelags.data,
             thelagmask * thewhitemask,
             rangemin=-5.0,
             rangemax=10.0,
@@ -357,7 +357,7 @@ def qualitycheck(
             debug=debug,
         )
         outputdict["whiteonly-laggrad"] = checkmap(
-            thelags,
+            thegradientamp,
             theerodedmask * thewhitemask,
             rangemin=0.0,
             rangemax=3.0,
@@ -365,7 +365,7 @@ def qualitycheck(
             debug=debug,
         )
         outputdict["whiteonly-strength"] = checkmap(
-            thestrengths,
+            thestrengths.data,
             thelagmask * thewhitemask,
             rangemin=0.0,
             rangemax=1.0,
