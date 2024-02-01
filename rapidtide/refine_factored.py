@@ -522,6 +522,7 @@ def dorefine(
         fftlen -= fftlen % 2
         dispersioncalcspecmag = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
         dispersioncalcspecphase = np.zeros((np.shape(laglist)[0], fftlen), dtype=rt_floattype)
+        ###### BBF dispersioncalc fails when the number of timepoints is odd (or even - not sure).  Works the other way.
         for lagnum in range(0, np.shape(laglist)[0]):
             lower = laglist[lagnum] - dispersioncalc_step / 2.0
             upper = laglist[lagnum] + dispersioncalc_step / 2.0

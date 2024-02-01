@@ -1129,14 +1129,14 @@ def rapidtide_main(argparsingfunc):
         )
         # bidsify
         tide_io.writebidstsv(
-            f"{outputname}_desc-_temporalmask_timeseries",
+            f"{outputname}_desc-temporalmask_timeseries",
             tmask_y,
             1.0 / oversamptr,
             starttime=0.0,
             columns=["initial"],
             append=False,
         )
-        # tide_io.writenpvecs(tmask_y, f"{outputname}_temporalmask.txt")
+        # tide_io.writenpvecs(tmask_y, f"{outputname}temporalmask.txt")
         resampnonosref_y *= tmask_y
         thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
         resampnonosref_y -= thefit[0, 1] * tmask_y

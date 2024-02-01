@@ -20,6 +20,7 @@ import os
 
 import matplotlib as mpl
 
+import rapidtide.qualitycheck as rapidtide_quality
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
@@ -32,6 +33,8 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1"),
         "--spatialfilt",
         "2",
+        "--numtozero",
+        "4",
         "--nprocs",
         "-1",
         "--passes",
@@ -40,6 +43,7 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         "3",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+    rapidtide_quality.qualitycheck(os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1"))
 
 
 if __name__ == "__main__":
