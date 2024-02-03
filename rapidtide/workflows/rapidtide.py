@@ -1831,47 +1831,50 @@ def rapidtide_main(argparsingfunc):
                 nozero=optiondict["nohistzero"],
                 dosighistfit=optiondict["dosighistfit"],
             )
-            for i in range(len(thepvalnames)):
-                optiondict[
-                    "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_thresh.txt"
-                ] = pcts[i]
-                if optiondict["dosighistfit"]:
+            if pcts is not None:
+                for i in range(len(thepvalnames)):
                     optiondict[
-                        "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_fitthresh"
-                    ] = pcts_fit[i]
-                    optiondict["sigfit"] = sigfit
-            if optiondict["ampthreshfromsig"]:
-                if pcts is not None:
-                    LGR.info(
-                        f"setting ampthresh to the p < {1.0 - thepercentiles[0]:.3f} threshhold"
-                    )
-                    optiondict["ampthresh"] = pcts[0]
-                    tide_stats.printthresholds(
-                        pcts,
-                        thepercentiles,
-                        "Crosscorrelation significance thresholds from data:",
-                    )
+                        "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_thresh.txt"
+                    ] = pcts[i]
                     if optiondict["dosighistfit"]:
+                        optiondict[
+                            "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_fitthresh"
+                        ] = pcts_fit[i]
+                        optiondict["sigfit"] = sigfit
+                if optiondict["ampthreshfromsig"]:
+                    if pcts is not None:
+                        LGR.info(
+                            f"setting ampthresh to the p < {1.0 - thepercentiles[0]:.3f} threshhold"
+                        )
+                        optiondict["ampthresh"] = pcts[0]
                         tide_stats.printthresholds(
-                            pcts_fit,
+                            pcts,
                             thepercentiles,
-                            "Crosscorrelation significance thresholds from fit:",
+                            "Crosscorrelation significance thresholds from data:",
                         )
-                        namesuffix = "_desc-nullsimfunc_hist"
-                        tide_stats.makeandsavehistogram(
-                            simdistdata,
-                            optiondict["sighistlen"],
-                            0,
-                            outputname + namesuffix,
-                            displaytitle="Null correlation histogram, pass" + str(thepass),
-                            refine=False,
-                            dictvarname="nullsimfunchist_pass" + str(thepass),
-                            therange=(0.0, 1.0),
-                            append=(thepass > 1),
-                            thedict=optiondict,
-                        )
+                        if optiondict["dosighistfit"]:
+                            tide_stats.printthresholds(
+                                pcts_fit,
+                                thepercentiles,
+                                "Crosscorrelation significance thresholds from fit:",
+                            )
+                            namesuffix = "_desc-nullsimfunc_hist"
+                            tide_stats.makeandsavehistogram(
+                                simdistdata,
+                                optiondict["sighistlen"],
+                                0,
+                                outputname + namesuffix,
+                                displaytitle="Null correlation histogram, pass" + str(thepass),
+                                refine=False,
+                                dictvarname="nullsimfunchist_pass" + str(thepass),
+                                therange=(0.0, 1.0),
+                                append=(thepass > 1),
+                                thedict=optiondict,
+                            )
+                    else:
+                        LGR.info("leaving ampthresh unchanged")
                 else:
-                    LGR.info("leaving ampthresh unchanged")
+                    LGR.info("no nonzero values in pcts - leaving ampthresh unchanged")
 
             del simdistdata
             TimingLGR.info(
