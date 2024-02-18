@@ -199,6 +199,7 @@ setup(
         "numpy",
         "scipy",
         "pandas",
+        "pyarrow",
         "scikit-image",
         "scikit-learn",
         "nibabel",
