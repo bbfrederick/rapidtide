@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.8.0 (2/18/24)
+* (Docker) Set to basecontainer_plus:latest-release to simplify builds.
+
 ## Version 2.7.9 (2/18/24)
 * (runqualitycheck) Added new tests.
 * (reference) Added MNI152NLin2009cAsym versions of the HCP reference maps.
