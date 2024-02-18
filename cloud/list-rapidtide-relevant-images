@@ -28,7 +28,7 @@ def get_ABCD_files(
     ]
     filestoget = []
     for thissearch_pattern in search_patterns:
-        print(f"matching {thissearch_pattern}")
+        print(f"matching {thissearch_pattern}", file=sys.stderr)
         pattern_match = taskscans_df["associated_file"].str.contains(thissearch_pattern)
         filestoget.extend(taskscans_df.loc[pattern_match, "associated_file"].tolist())
 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
             Path(args.manifest) / "datastructure_manifest.txt",
         )
     else:
-        print("Invalid dataset")
+        print("Invalid dataset", file=sys.stderr)
         sys.exit()
 
     print("\n".join(onesubjonesess))
