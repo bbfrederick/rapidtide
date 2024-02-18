@@ -4,22 +4,24 @@
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
 import pandas as pd
+from pyarrow.dataset import dataset
 
 
 # get the processed files from the ABCD dataset - this is the ABCC derivatives, package 1224084
 def get_ABCD_files(
     participant,
     session,
+    thetask,
     manifest,
 ):
     df = pd.read_csv(manifest, sep="\t", dtype=str)
-
     subjsess_key = f"{participant}_ses-{session}"
     subjsess_df = df[df.associated_file.str.contains(subjsess_key)]
-    restscans_df = subjsess_df[subjsess_df.associated_file.str.contains("task-rest")]
+    taskscans_df = subjsess_df[subjsess_df.associated_file.str.contains(f"task-{thetask}")]
     search_patterns = [
         "desc-confounds_timeseries.tsv",
         "space-MNI152NLin2009cAsym_res-2",
@@ -27,8 +29,8 @@ def get_ABCD_files(
     filestoget = []
     for thissearch_pattern in search_patterns:
         print(f"matching {thissearch_pattern}")
-        pattern_match = restscans_df["associated_file"].str.contains(thissearch_pattern)
-        filestoget.extend(restscans_df.loc[pattern_match, "associated_file"].tolist())
+        pattern_match = taskscans_df["associated_file"].str.contains(thissearch_pattern)
+        filestoget.extend(taskscans_df.loc[pattern_match, "associated_file"].tolist())
 
     return filestoget
 
@@ -108,6 +110,9 @@ def get_HCPA_files(
 
 
 if __name__ == "__main__":
+    default_dataset = "HCPA"
+    default_task = "rest"
+
     if "NDA_PACKAGE" in os.environ:
         default_manifest_path = (
             Path.home() / f"NDA/nda-tools/downloadcmd/packages/{os.environ['NDA_PACKAGE']}"
@@ -126,17 +131,41 @@ if __name__ == "__main__":
     )
     parser.add_argument("--session", "-s", default="V1", help="Session. (Default: V1)")
     parser.add_argument(
+        "--task", "-t", default=default_task, help=f"Task identifier (default is {default_task})."
+    )
+    parser.add_argument(
         "--manifest",
         "-m",
         type=str,
         default=str(default_manifest_path),
         help=f"Path to datastructure_manifest.txt. (Default: {default_manifest_path})",
     )
+    parser.add_argument(
+        "--dataset",
+        "-d",
+        action="store",
+        type=str,
+        choices=["HCPA", "ABCD"],
+        default=str(default_dataset),
+        help=f"Path to datastructure_manifest.txt. (Default: {default_dataset})",
+    )
     args = parser.parse_args()
 
-    onesubjonesess = get_HCPA_files(
-        args.participant,
-        args.session,
-        Path(args.manifest) / "datastructure_manifest.txt",
-    )
+    if args.dataset == "HCPA":
+        onesubjonesess = get_HCPA_files(
+            args.participant,
+            args.session,
+            Path(args.manifest) / "datastructure_manifest.txt",
+        )
+    elif args.dataset == "ABCD":
+        onesubjonesess = get_ABCD_files(
+            args.participant,
+            args.session,
+            args.task,
+            Path(args.manifest) / "datastructure_manifest.txt",
+        )
+    else:
+        print("Invalid dataset")
+        sys.exit()
+
     print("\n".join(onesubjonesess))
