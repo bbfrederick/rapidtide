@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.8.1 (2/19/24)
+* (cloud) Now using an s3 working folder.
+
 ## Version 2.8.0 (2/18/24)
 * (Docker) Set to basecontainer_plus:latest-release to simplify builds.
 
