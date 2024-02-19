@@ -38,7 +38,11 @@ MOUNTS_TO_CHECK=("/data_out")
 # credentials injected from AWS Secrets in env variable
 
 if [[ $INPUT_BUCKET == "local" ]]; then
-    WORKDIR=/data_out/working/${HOSTNAME}
+    if [[ -z $AWS_BATCH_JOB_ID ]]; then
+        WORKDIR=/data_out/working/$HOSTNAME
+    else
+        WORKDIR=/data_out/working/${AWS_BATCH_JOB_ID}
+    fi
     mkdir -p $WORKDIR
     rmdir /data_in
     ln -s $WORKDIR /data_in
