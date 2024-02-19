@@ -32,18 +32,23 @@ else
 fi
 
 s3fs $S3FS_AUTH_METHOD $OUTPUT_BUCKET /data_out
+MOUNTS_TO_CHECK=("/data_out")
 
 # mount data input folder
 # credentials injected from AWS Secrets in env variable
 
-if [[ $INPUT_BUCKET == "s3-working" ]]; then
-    s3fs $S3FS_AUTH_METHOD $INPUT_BUCKET /data_in
+if [[ $INPUT_BUCKET == "local" ]]; then
+    WORKDIR=/data_out/working/${HOSTNAME}
+    mkdir -p $WORKDIR
+    rmdir /data_in
+    ln -s $WORKDIR /data_in
 else
     s3fs -o passwd_file=<( jq -r .IBS3SECRET <<< $INPUT_BUCKET_SECRET ) \
          $INPUT_BUCKET /data_in
+    MOUNTS_TO_CHECK+=("/data_in")
 fi
 
-for MOUNT in /data_in /data_out; do
+for MOUNT in "${MOUNTS_TO_CHECK[@]}"; do
     if ! findmnt -n -P -t fuse.s3fs $MOUNT ; then
         echo ERROR: $MOUNT is not correctly mounted
         exit 1
@@ -60,7 +65,7 @@ if [[ -n $AWS_BATCH_JOB_ARRAY_INDEX ]]; then
     echo Set PARTICIPANT_FROM_ARRAY=$PARTICIPANT_FROM_ARRAY
 fi
 
-if [[ $INPUT_BUCKET == "s3-working" ]]; then
+if [[ $INPUT_BUCKET == "local" ]]; then
     export NDA_PACKAGE=$(jq -r .NDA_PACKAGE <<< $INPUT_BUCKET_SECRET)
     export NDA_USERNAME=$(jq -r .NDA_USERNAME <<< $INPUT_BUCKET_SECRET)
     export NDA_PASSWORD=$(jq -r .NDA_PASSWORD <<< $INPUT_BUCKET_SECRET)
