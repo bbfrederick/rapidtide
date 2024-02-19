@@ -43,7 +43,7 @@ else
          $INPUT_BUCKET /data_in
 fi
 
-for MOUNT /data_in /data_out; do
+for MOUNT in /data_in /data_out; do
     if ! findmnt -n -P -t fuse.s3fs $MOUNT ; then
         echo ERROR: $MOUNT is not correctly mounted
         exit 1
