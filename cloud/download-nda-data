@@ -19,8 +19,8 @@ downloadcmd --username $NDA_USERNAME \
 downloadcmd --package $NDA_PACKAGE \
             --username $NDA_USERNAME \
             --txt /s3-files-requested \
-            --directory /data_in 
+            --directory /data_in/$HOSTNAME
 
 # fix filenames broken by NDA until https://github.com/NDAR/nda-tools/issues/88 resolved
-find /data_in -type f -name '*_1.*' | while read fname; do mv "$fname" "${fname/_1/}"; done
-find /data_in -type f -name '*_2.*' | while read fname; do mv "$fname" "${fname/_2/}"; done
+find /data_in/$HOSTNAME -type f -name '*_1.*' | while read fname; do mv "$fname" "${fname/_1/}"; done
+find /data_in/$HOSTNAME -type f -name '*_2.*' | while read fname; do mv "$fname" "${fname/_2/}"; done
