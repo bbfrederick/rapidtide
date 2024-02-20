@@ -125,6 +125,20 @@ def setmemlimit(memlimit):
     resource.setrlimit(resource.RLIMIT_AS, (memlimit, memlimit))
 
 
+def formatmemamt(meminbytes):
+    units = ["B", "kB", "MB", "GB", "TB"]
+    index = 0
+    unitnumber = np.uint64(1)
+    while True:
+        if meminbytes < np.uint64(1024) * unitnumber:
+            return f"{round(meminbytes/unitnumber, 3):.3f}{units[index]}"
+        unitnumber *= np.uint64(1024)
+        index += 1
+        if index >= len(units):
+            break
+    return f"{round(meminbytes/unitnumber, 3):.3f}{units[-1]}"
+
+
 def logmem(msg=None):
     """Log memory usage with a logging object.
 
@@ -164,25 +178,25 @@ def logmem(msg=None):
         else:
             rcusage = resource.getrusage(resource.RUSAGE_SELF)
             outvals = [msg]
-            outvals.append(str(rcusage.ru_maxrss))
-            outvals.append(str(rcusage.ru_maxrss - lastmaxrss_parent))
+            outvals.append(formatmemamt(rcusage.ru_maxrss))
+            outvals.append(formatmemamt(rcusage.ru_maxrss - lastmaxrss_parent))
             lastmaxrss_parent = rcusage.ru_maxrss
-            outvals.append(str(rcusage.ru_ixrss))
-            outvals.append(str(rcusage.ru_idrss))
-            outvals.append(str(rcusage.ru_isrss))
-            outvals.append(str(rcusage.ru_minflt))
-            outvals.append(str(rcusage.ru_majflt))
-            outvals.append(str(rcusage.ru_nswap))
+            outvals.append(formatmemamt(rcusage.ru_ixrss))
+            outvals.append(formatmemamt(rcusage.ru_idrss))
+            outvals.append(formatmemamt(rcusage.ru_isrss))
+            outvals.append(formatmemamt(rcusage.ru_minflt))
+            outvals.append(formatmemamt(rcusage.ru_majflt))
+            outvals.append(formatmemamt(rcusage.ru_nswap))
             rcusage = resource.getrusage(resource.RUSAGE_CHILDREN)
-            outvals.append(str(rcusage.ru_maxrss))
-            outvals.append(str(rcusage.ru_maxrss - lastmaxrss_child))
+            outvals.append(formatmemamt(rcusage.ru_maxrss))
+            outvals.append(formatmemamt(rcusage.ru_maxrss - lastmaxrss_child))
             lastmaxrss_child = rcusage.ru_maxrss
-            outvals.append(str(rcusage.ru_ixrss))
-            outvals.append(str(rcusage.ru_idrss))
-            outvals.append(str(rcusage.ru_isrss))
-            outvals.append(str(rcusage.ru_minflt))
-            outvals.append(str(rcusage.ru_majflt))
-            outvals.append(str(rcusage.ru_nswap))
+            outvals.append(formatmemamt(rcusage.ru_ixrss))
+            outvals.append(formatmemamt(rcusage.ru_idrss))
+            outvals.append(formatmemamt(rcusage.ru_isrss))
+            outvals.append(formatmemamt(rcusage.ru_minflt))
+            outvals.append(formatmemamt(rcusage.ru_majflt))
+            outvals.append(formatmemamt(rcusage.ru_nswap))
     else:
         outvals = ["Not available on Windows"]
 
