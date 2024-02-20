@@ -17,10 +17,10 @@
 #
 #
 import gc
+import logging
 import sys
 
 import numpy as np
-from scipy.signal import welch
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA, FastICA
 from tqdm import tqdm
@@ -31,6 +31,8 @@ import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
+
+LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelTimeShift(
@@ -222,14 +224,16 @@ def alignvoxels(
                 weights[retvals[0], :] = retvals[2]
                 paddedshiftedtcs[retvals[0], :] = retvals[3]
                 paddedweights[retvals[0], :] = retvals[4]
-        print()
-    print(
+    LGR.info(
         "Timeshift applied to " + str(int(volumetotal)) + " voxels",
     )
 
     # garbage collect
-    collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
+    uncollected = gc.collect()
+    if uncollected != 0:
+        LGR.info(f"garbage collected - unable to collect {uncollected} objects")
+    else:
+        LGR.info("garbage collected")
 
     return volumetotal
 
@@ -314,13 +318,7 @@ def makerefinemask(
             theampthresh = tide_stats.getfracval(np.fabs(lagstrengths), -ampthresh, nozero=True)
         else:
             theampthresh = tide_stats.getfracval(lagstrengths, -ampthresh, nozero=True)
-        print(
-            "setting ampthresh to the",
-            -100.0 * ampthresh,
-            "th percentile (",
-            theampthresh,
-            ")",
-        )
+        LGR.info(f"setting ampthresh to the {-100.0 * ampthresh}th percentile ({theampthresh})")
     else:
         theampthresh = ampthresh
     if bipolar:
@@ -359,7 +357,7 @@ def makerefinemask(
     if excludemask is not None:
         locationmask = locationmask * (1 - excludemask)
     locationmask = locationmask.astype(np.int16)
-    print("location mask created")
+    LGR.info("location mask created")
 
     # first generate the refine mask
     locationfails = np.sum(1 - locationmask)
@@ -396,20 +394,12 @@ def makerefinemask(
     else:
         shiftmask = refinemask
     volumetotal = np.sum(shiftmask)
-    print(
-        str(int(volumetotal)) + " voxels will be used for refinement:",
-        "\n	",
-        locationfails,
-        " locationfails",
-        "\n	",
-        ampfails,
-        " ampfails",
-        "\n	",
-        lagfails,
-        " lagfails",
-        "\n	",
-        sigmafails,
-        " sigmafails",
+    LGR.info(
+        f"{int(volumetotal)} voxels will be used for refinement:"
+        + f"\n	{locationfails} locationfails"
+        + f"\n	{ampfails} ampfails"
+        + f"\n	{lagfails} lagfails"
+        + f"\n	{sigmafails} sigmafails"
     )
     numinmask = np.sum(lagmask)
     if numinmask is None:
@@ -511,7 +501,7 @@ def dorefine(
         discardweightsum = np.sum(discardweights, axis=0) / volumetotal
         averagediscard = np.sum(discardvoxels, axis=0) / volumetotal
     if dodispersioncalc:
-        print("splitting regressors by time lag for phase delay estimation")
+        LGR.info("splitting regressors by time lag for phase delay estimation")
         laglist = np.arange(
             dispersioncalc_lower,
             dispersioncalc_upper,
@@ -531,13 +521,8 @@ def dorefine(
                 * np.where(lower < lagtimes, np.int16(1), np.int16(0))
                 * np.where(lagtimes < upper, np.int16(1), np.int16(0))
             )[0]
-            print(
-                "    summing",
-                np.shape(inlagrange)[0],
-                "regressors with lags from",
-                lower,
-                "to",
-                upper,
+            LGR.info(
+                f"\tsumming {np.shape(inlagrange)[0]} regressors with lags from {lower} to {upper}"
             )
             if np.shape(inlagrange)[0] > 0:
                 dispersioncalcout[lagnum, :] = tide_math.corrnormalize(
@@ -580,9 +565,9 @@ def dorefine(
     icacomponents = 1
 
     if refinetype == "ica":
-        print("performing ica refinement")
+        LGR.info("performing ica refinement")
         thefit = FastICA(n_components=icacomponents).fit(refinevoxels)  # Reconstruct signals
-        print("Using first of ", len(thefit.components_), " components")
+        LGR.info(f"Using first of {len(thefit.components_)} components")
         icadata = thefit.components_[0]
         filteredavg = tide_math.corrnormalize(
             theprefilter.apply(fmrifreq, averagedata),
@@ -593,7 +578,7 @@ def dorefine(
             detrendorder=detrendorder,
         )
         thepxcorr = pearsonr(filteredavg, filteredica)[0]
-        print("ica/avg correlation = ", thepxcorr)
+        LGR.info(f"ica/avg correlation = {thepxcorr}")
         if thepxcorr > 0.0:
             outputdata = 1.0 * icadata
         else:
@@ -601,23 +586,19 @@ def dorefine(
     elif refinetype == "pca":
         # use the method of "A novel perspective to calibrate temporal delays in cerebrovascular reactivity
         # using hypercapnic and hyperoxic respiratory challenges". NeuroImage 187, 154?165 (2019).
-        print("performing pca refinement with pcacomponents set to", pcacomponents)
+        LGR.info(f"performing pca refinement with pcacomponents set to {pcacomponents}")
         try:
             thefit = PCA(n_components=pcacomponents).fit(refinevoxels)
         except ValueError:
             if pcacomponents == "mle":
-                print("mle estimation failed - falling back to pcacomponents=0.8")
+                LGR.info("mle estimation failed - falling back to pcacomponents=0.8")
                 thefit = PCA(n_components=0.8).fit(refinevoxels)
             else:
                 print("unhandled math exception in PCA refinement - exiting")
                 sys.exit()
-        print(
-            "Using ",
-            len(thefit.components_),
-            " component(s), accounting for ",
-            "{:.2f}% of the variance".format(
-                100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
-            ),
+        LGR.info(
+            f"Using {len(thefit.components_)} component(s), accounting for "
+            + f"{100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]}% of the variance"
         )
         reduceddata = thefit.inverse_transform(thefit.transform(refinevoxels))
         if debug:
@@ -632,16 +613,16 @@ def dorefine(
             detrendorder=detrendorder,
         )
         thepxcorr = pearsonr(filteredavg, filteredpca)[0]
-        print("pca/avg correlation = ", thepxcorr)
+        LGR.info(f"pca/avg correlation = {thepxcorr}")
         if thepxcorr > 0.0:
             outputdata = 1.0 * pcadata
         else:
             outputdata = -1.0 * pcadata
     elif refinetype == "weighted_average":
-        print("performing weighted averaging refinement")
+        LGR.info("performing weighted averaging refinement")
         outputdata = np.nan_to_num(averagedata / weightsum)
     else:
-        print("performing unweighted averaging refinement")
+        LGR.info("performing unweighted averaging refinement")
         outputdata = averagedata
 
     if cleanrefined:
@@ -651,7 +632,10 @@ def dorefine(
         outputdata -= datatoremove
 
     # garbage collect
-    collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
+    uncollected = gc.collect()
+    if uncollected != 0:
+        LGR.info(f"garbage collected - unable to collect {uncollected} objects")
+    else:
+        LGR.info("garbage collected")
 
     return volumetotal, outputdata

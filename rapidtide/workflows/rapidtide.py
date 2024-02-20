@@ -235,6 +235,13 @@ def rapidtide_main(argparsingfunc):
     # create the canary file
     Path(f"{outputname}_ISRUNNING.txt").touch()
 
+    # check to make sure garbage collection is on
+    if gc.isenabled():
+        print("garbage collection is on")
+    else:
+        gc.enable()
+        print("turning on garbage collection")
+
     # if we are running in a Docker container, make sure we enforce memory limits properly
     try:
         testval = os.environ["IS_DOCKER_8395080871"]
@@ -739,7 +746,12 @@ def rapidtide_main(argparsingfunc):
 
     del fmri_data
     del nim_data
-    gc.collect()
+    uncollected = gc.collect()
+    if uncollected != 0:
+        print(f"garbage collected - unable to collect {uncollected} objects")
+    else:
+        print("garbage collected")
+
     tide_util.logmem("after purging full sized fmri data")
 
     # read in the timecourse to resample

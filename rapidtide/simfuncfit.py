@@ -18,12 +18,15 @@
 #
 import bisect
 import gc
+import logging
 
 import numpy as np
 from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
+
+LGR = logging.getLogger("GENERAL")
 
 
 def onesimfuncfit(
@@ -342,26 +345,22 @@ def fitcorr(
                 if thefitter.FML_FITFAIL & failreason:
                     fitfails += 1
 
-    print("\nSimilarity function fitted in " + str(volumetotal) + " voxels")
-    print(
-        "\tampfails:",
-        ampfails,
-        "\n\tlowlagfails:",
-        lowlagfails,
-        "\n\thighlagfails:",
-        highlagfails,
-        "\n\tlowwidthfails:",
-        lowwidthfails,
-        "\n\thighwidthfail:",
-        highwidthfails,
-        "\n\ttotal initfails:",
-        initfails,
-        "\n\ttotal fitfails:",
-        fitfails,
+    LGR.info(f"\nSimilarity function fitted in {volumetotal} voxels")
+    LGR.info(
+        f"\tampfails: {ampfails}"
+        + f"\n\tlowlagfails: {lowlagfails}"
+        + f"\n\thighlagfails: {highlagfails}"
+        + f"\n\tlowwidthfails: {lowwidthfails}"
+        + f"\n\thighwidthfail: {highwidthfails}"
+        + f"\n\ttotal initfails: {initfails}"
+        + f"\n\ttotal fitfails: {fitfails}"
     )
 
     # garbage collect
-    collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
+    uncollected = gc.collect()
+    if uncollected != 0:
+        LGR.info(f"garbage collected - unable to collect {uncollected} objects")
+    else:
+        LGR.info("garbage collected")
 
     return volumetotal
