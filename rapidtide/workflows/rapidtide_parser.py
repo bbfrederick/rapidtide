@@ -1383,6 +1383,13 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
+        "--singleproc_motionregress",
+        dest="singleproc_motionregress",
+        action="store_true",
+        help=("Force single proc path for motion regression."),
+        default=False,
+    )
+    debugging.add_argument(
         "--singleproc_getNullDist",
         dest="singleproc_getNullDist",
         action="store_true",
@@ -1429,6 +1436,13 @@ def _get_parser():
         dest="singleproc_glm",
         action="store_true",
         help=("Force single proc path for glm."),
+        default=False,
+    )
+    debugging.add_argument(
+        "--usemultiprocmotionglm",
+        dest="usemultiprocmotionglm",
+        action="store_true",
+        help=("Use the new multiprocessor glm."),
         default=False,
     )
     debugging.add_argument(

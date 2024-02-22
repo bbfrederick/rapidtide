@@ -25,7 +25,9 @@ import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
 
 
-def _procOneItemGLM(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
+def _procOneVoxelSpecificGLMItem(
+    vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"
+):
     thefit, R = tide_fit.mlregress(theevs, thedata)
     fitcoeff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoeff * theevs)
@@ -39,6 +41,23 @@ def _procOneItemGLM(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="
         fitcoeff,
         rt_floatset(thefit[0, 1] / thefit[0, 0]),
         datatoremove,
+        rt_floatset(thedata - datatoremove),
+    )
+
+
+def _procOneConfoundGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
+    thefit, R = tide_fit.mlregress(theevs, thedata)
+    fitcoeffs = rt_floatset(thefit[0, 1:])
+    datatoremove = theevs[0, :] * 0.0
+    for j in range(theevs.shape[0]):
+        datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * theevs[j, :])
+    if np.any(fitcoeffs) != 0.0:
+        pass
+    else:
+        R = 0.0
+    return (
+        vox,
+        rt_floatset(R * R),
         rt_floatset(thedata - datatoremove),
     )
 
@@ -57,6 +76,7 @@ def glmpass(
     filtereddata,
     nprocs=1,
     alwaysmultiproc=False,
+    confoundglm=False,
     procbyvoxel=True,
     showprogressbar=True,
     mp_chunksize=1000,
@@ -99,25 +119,47 @@ def glmpass(
 
                     # process and send the data
                     if procbyvoxel:
-                        outQ.put(
-                            _procOneItemGLM(
-                                val,
-                                theevs[val, :],
-                                fmri_data[val, :],
-                                rt_floatset=rt_floatset,
-                                rt_floattype=rt_floattype,
+                        if confoundglm:
+                            outQ.put(
+                                _procOneConfoundGLMItem(
+                                    val,
+                                    theevs,
+                                    fmri_data[val, :],
+                                    rt_floatset=rt_floatset,
+                                    rt_floattype=rt_floattype,
+                                )
                             )
-                        )
+                        else:
+                            outQ.put(
+                                _procOneVoxelSpecificGLMItem(
+                                    val,
+                                    theevs[val, :],
+                                    fmri_data[val, :],
+                                    rt_floatset=rt_floatset,
+                                    rt_floattype=rt_floattype,
+                                )
+                            )
                     else:
-                        outQ.put(
-                            _procOneItemGLM(
-                                val,
-                                theevs[:, val],
-                                fmri_data[:, val],
-                                rt_floatset=rt_floatset,
-                                rt_floattype=rt_floattype,
+                        if confoundglm:
+                            outQ.put(
+                                _procOneConfoundGLMItem(
+                                    val,
+                                    np.transpose(theevs),
+                                    fmri_data[:, val],
+                                    rt_floatset=rt_floatset,
+                                    rt_floattype=rt_floattype,
+                                )
                             )
-                        )
+                        else:
+                            outQ.put(
+                                _procOneVoxelSpecificGLMItem(
+                                    val,
+                                    theevs[:, val],
+                                    fmri_data[:, val],
+                                    rt_floatset=rt_floatset,
+                                    rt_floattype=rt_floattype,
+                                )
+                            )
 
                 except Exception as e:
                     print("error!", e)
@@ -136,25 +178,37 @@ def glmpass(
         # unpack the data
         itemstotal = 0
         if procbyvoxel:
-            for voxel in data_out:
-                meanvalue[voxel[0]] = voxel[1]
-                rvalue[voxel[0]] = voxel[2]
-                r2value[voxel[0]] = voxel[3]
-                fitcoeff[voxel[0]] = voxel[4]
-                fitNorm[voxel[0]] = voxel[5]
-                datatoremove[voxel[0], :] = voxel[6]
-                filtereddata[voxel[0], :] = voxel[7]
-                itemstotal += 1
+            if confoundglm:
+                for voxel in data_out:
+                    r2value[voxel[0]] = voxel[1]
+                    filtereddata[voxel[0], :] = voxel[2]
+                    itemstotal += 1
+            else:
+                for voxel in data_out:
+                    meanvalue[voxel[0]] = voxel[1]
+                    rvalue[voxel[0]] = voxel[2]
+                    r2value[voxel[0]] = voxel[3]
+                    fitcoeff[voxel[0]] = voxel[4]
+                    fitNorm[voxel[0]] = voxel[5]
+                    datatoremove[voxel[0], :] = voxel[6]
+                    filtereddata[voxel[0], :] = voxel[7]
+                    itemstotal += 1
         else:
-            for timepoint in data_out:
-                meanvalue[timepoint[0]] = timepoint[1]
-                rvalue[timepoint[0]] = timepoint[2]
-                r2value[timepoint[0]] = timepoint[3]
-                fitcoeff[timepoint[0]] = timepoint[4]
-                fitNorm[timepoint[0]] = timepoint[5]
-                datatoremove[:, timepoint[0]] = timepoint[6]
-                filtereddata[:, timepoint[0]] = timepoint[7]
-                itemstotal += 1
+            if confoundglm:
+                for timepoint in data_out:
+                    r2value[timepoint[0]] = timepoint[1]
+                    filtereddata[:, timepoint[0]] = timepoint[2]
+                    itemstotal += 1
+            else:
+                for timepoint in data_out:
+                    meanvalue[timepoint[0]] = timepoint[1]
+                    rvalue[timepoint[0]] = timepoint[2]
+                    r2value[timepoint[0]] = timepoint[3]
+                    fitcoeff[timepoint[0]] = timepoint[4]
+                    fitNorm[timepoint[0]] = timepoint[5]
+                    datatoremove[:, timepoint[0]] = timepoint[6]
+                    filtereddata[:, timepoint[0]] = timepoint[7]
+                    itemstotal += 1
 
         del data_out
     else:
@@ -168,22 +222,35 @@ def glmpass(
             ):
                 thedata = fmri_data[vox, :].copy()
                 if (themask is None) or (themask[vox] > 0):
-                    (
-                        dummy,
-                        meanvalue[vox],
-                        rvalue[vox],
-                        r2value[vox],
-                        fitcoeff[vox],
-                        fitNorm[vox],
-                        datatoremove[vox, :],
-                        filtereddata[vox, :],
-                    ) = _procOneItemGLM(
-                        vox,
-                        theevs[vox, :],
-                        thedata,
-                        rt_floatset=rt_floatset,
-                        rt_floattype=rt_floattype,
-                    )
+                    if confoundglm:
+                        (
+                            dummy,
+                            r2value[vox],
+                            filtereddata[vox, :],
+                        ) = _procOneConfoundGLMItem(
+                            vox,
+                            theevs,
+                            thedata,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
+                    else:
+                        (
+                            dummy,
+                            meanvalue[vox],
+                            rvalue[vox],
+                            r2value[vox],
+                            fitcoeff[vox],
+                            fitNorm[vox],
+                            datatoremove[vox, :],
+                            filtereddata[vox, :],
+                        ) = _procOneVoxelSpecificGLMItem(
+                            vox,
+                            theevs[vox, :],
+                            thedata,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
                     itemstotal += 1
         else:
             for timepoint in tqdm(
@@ -194,22 +261,35 @@ def glmpass(
             ):
                 thedata = fmri_data[:, timepoint].copy()
                 if (themask is None) or (themask[timepoint] > 0):
-                    (
-                        dummy,
-                        meanvalue[timepoint],
-                        rvalue[timepoint],
-                        r2value[timepoint],
-                        fitcoeff[timepoint],
-                        fitNorm[timepoint],
-                        datatoremove[:, timepoint],
-                        filtereddata[:, timepoint],
-                    ) = _procOneItemGLM(
-                        timepoint,
-                        theevs[:, timepoint],
-                        thedata,
-                        rt_floatset=rt_floatset,
-                        rt_floattype=rt_floattype,
-                    )
+                    if confoundglm:
+                        (
+                            dummy,
+                            r2value[timepoint],
+                            filtereddata[:, timepoint],
+                        ) = _procOneConfoundGLMItem(
+                            timepoint,
+                            np.transpose(theevs),
+                            thedata,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
+                    else:
+                        (
+                            dummy,
+                            meanvalue[timepoint],
+                            rvalue[timepoint],
+                            r2value[timepoint],
+                            fitcoeff[timepoint],
+                            fitNorm[timepoint],
+                            datatoremove[:, timepoint],
+                            filtereddata[:, timepoint],
+                        ) = _procOneVoxelSpecificGLMItem(
+                            timepoint,
+                            theevs[:, timepoint],
+                            thedata,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
                     itemstotal += 1
         if showprogressbar:
             print()
@@ -220,6 +300,7 @@ def motionregress(
     themotionfilename,
     thedataarray,
     tr,
+    nprocs=1,
     orthogonalize=True,
     motstart=0,
     motend=-1,
@@ -229,6 +310,7 @@ def motionregress(
     deriv=True,
     derivdelayed=False,
     showprogressbar=True,
+    usemultiprocglm=False,
     debug=False,
 ):
     print("regressing out motion")
@@ -266,12 +348,36 @@ def motionregress(
         )
 
     print("start motion filtering")
-    filtereddata = confoundglm(
-        thedataarray, motionregressors, showprogressbar=showprogressbar, debug=debug
-    )
+    if usemultiprocglm:
+        numprocitems = thedataarray.shape[0]
+        filtereddata = thedataarray * 0.0
+        r2value = np.zeros(numprocitems)
+        numfiltered = glmpass(
+            numprocitems,
+            thedataarray,
+            None,
+            motionregressors,
+            None,
+            None,
+            r2value,
+            None,
+            None,
+            None,
+            filtereddata,
+            confoundglm=True,
+            nprocs=nprocs,
+            showprogressbar=showprogressbar,
+            procbyvoxel=True,
+            debug=debug,
+        )
+    else:
+        filtereddata, r2value = confoundglm(
+            thedataarray, motionregressors, showprogressbar=showprogressbar, debug=debug
+        )
+
     print()
     print("motion filtering complete")
-    return motionregressors, motionregressorlabels, filtereddata
+    return motionregressors, motionregressorlabels, filtereddata, r2value
 
 
 def confoundglm(
@@ -303,6 +409,7 @@ def confoundglm(
         print("regressors shape:", regressors.shape)
     datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
     filtereddata = data * 0.0
+    r2value = data[:, 0] * 0.0
     for i in tqdm(
         range(data.shape[0]),
         desc="Voxel",
@@ -316,4 +423,5 @@ def confoundglm(
         for j in range(regressors.shape[0]):
             datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
         filtereddata[i, :] = data[i, :] - datatoremove
-    return filtereddata
+        r2value[i] = R * R
+    return filtereddata, r2value

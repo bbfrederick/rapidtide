@@ -318,6 +318,11 @@ def rapidtide_main(argparsingfunc):
     if optiondict["nprocs"] < 1:
         optiondict["nprocs"] = tide_multiproc.maxcpus(reservecpu=optiondict["reservecpu"])
 
+    if optiondict["singleproc_motionregress"]:
+        optiondict["nprocs_motionregress"] = 1
+    else:
+        optiondict["nprocs_motionregress"] = optiondict["nprocs"]
+
     if optiondict["singleproc_getNullDist"]:
         optiondict["nprocs_getNullDist"] = 1
     else:
@@ -678,13 +683,16 @@ def rapidtide_main(argparsingfunc):
             motionregressors,
             motionregressorlabels,
             fmri_data_valid,
+            motionr2,
         ) = tide_glmpass.motionregress(
             optiondict["motionfilename"],
             fmri_data_valid,
             fmritr,
+            nprocs=optiondict["nprocs_motionregress"],
             motstart=validstart,
             motend=validend + 1,
             position=optiondict["mot_pos"],
+            usemultiprocglm=optiondict["usemultiprocmotionglm"],
             deriv=optiondict["mot_deriv"],
             showprogressbar=optiondict["showprogressbar"],
             derivdelayed=optiondict["mot_delayderiv"],
@@ -697,6 +705,20 @@ def rapidtide_main(argparsingfunc):
                 "message3": "voxels",
             },
         )
+        outmotionr2 = np.zeros((numspatiallocs), dtype=rt_floattype)
+        outmotionr2[validvoxels] = motionr2[:]
+        if optiondict["textio"]:
+            tide_io.writenpvecs(
+                outmotionr2.reshape((numspatiallocs)),
+                f"{outputname}_motionr2.txt",
+            )
+        else:
+            savename = f"{outputname}_desc-motionr2"
+            tide_io.savetonifti(
+                outmotionr2.reshape((xsize, ysize, numslices)),
+                nim_hdr,
+                savename,
+            )
         tide_io.writebidstsv(
             f"{outputname}_desc-orthogonalizedmotion_timeseries",
             motionregressors,
