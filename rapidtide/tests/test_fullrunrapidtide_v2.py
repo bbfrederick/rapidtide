@@ -71,6 +71,8 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "meanscale",
         "--refineprenorm",
         "var",
+        "--motionfile",
+        os.path.join(get_examples_path(), "fakemotion.par"),
     ]
     if debug:
         print(inputargs)
