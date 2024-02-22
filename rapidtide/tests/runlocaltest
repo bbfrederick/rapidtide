@@ -24,7 +24,7 @@ popd
 
 # clean out old tests
 rm -rf coveragereport
-rm .coverage*
+rm .coverage
 rm .coverage\.*
 
 # run the tests
