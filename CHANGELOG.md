@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.8.2 (2/26/24)
+* (rapidtide) Added a lot more internal debugging resources, and fixed a bug where zero range time data that was included due to explicit masks would put NaN's in the maps.
+* (rapidtide) Implemented multiprocessing to speed up motion regression.
+
 ## Version 2.8.1 (2/19/24)
 * (cloud) Now using an s3 working folder.
 
