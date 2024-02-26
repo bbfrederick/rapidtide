@@ -217,6 +217,38 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
     return outputtimecourse, echofit, echoR
 
 
+def writeintermediatemaps(
+    thepass,
+    mapname,
+    mapsuffix,
+    optiondict,
+    outmaparray,
+    nativespaceshape,
+    outputname,
+    passsuffix,
+    bidsbasedict,
+    theheader,
+):
+    if optiondict["textio"]:
+        tide_io.writenpvecs(
+            outmaparray.reshape(nativespaceshape, 1),
+            f"{outputname}_{mapsuffix}{passsuffix}.txt",
+        )
+    else:
+        bidspasssuffix = f"_intermediatedata-pass{thepass}"
+        if mapname == "fitmask":
+            savename = f"{outputname}{bidspasssuffix}_desc-corrfit_mask"
+        elif mapname == "failreason":
+            savename = f"{outputname}{bidspasssuffix}_desc-corrfitfailreason_info"
+        else:
+            savename = f"{outputname}{bidspasssuffix}_desc-{mapsuffix}_map"
+        bidsdict = bidsbasedict.copy()
+        if mapname == "lagtimes" or mapname == "lagsigma":
+            bidsdict["Units"] = "second"
+        tide_io.writedicttojson(bidsdict, f"{savename}.json")
+        tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+
+
 def rapidtide_main(argparsingfunc):
     optiondict, theprefilter = argparsingfunc
 
@@ -561,6 +593,22 @@ def rapidtide_main(argparsingfunc):
         )
 
         corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
+
+        # last line sanity check - if data is 0 over all time in a voxel, force corrmask to zero.
+        datarange = np.max(fmri_data, axis=1) - np.min(fmri_data, axis=1)
+        if optiondict["textio"]:
+            tide_io.writenpvecs(
+                datarange.reshape((numspatiallocs)),
+                f"{outputname}_motionr2.txt",
+            )
+        else:
+            savename = f"{outputname}_desc-datarange"
+            tide_io.savetonifti(
+                datarange.reshape((xsize, ysize, numslices)),
+                nim_hdr,
+                savename,
+            )
+        corrmask[np.where(datarange == 0)] = 0.0
     else:
         # check to see if the data has been demeaned
         meanim = np.mean(fmri_data, axis=1)
@@ -2239,6 +2287,33 @@ def rapidtide_main(argparsingfunc):
         order = lagtimes.argsort()
         timepercentile = 100.0 * order.argsort() / numvalidspatiallocs
 
+        if optiondict["saveintermediatemaps"]:
+            maplist = [
+                ("lagtimes", "maxtime"),
+                ("timepercentile", "timepercentile"),
+                ("lagstrengths", "maxcorr"),
+                ("lagsigma", "maxwidth"),
+            ]
+            for mapname, mapsuffix in maplist:
+                if optiondict["memprofile"]:
+                    memcheckpoint(f"about to write {mapname} to {mapsuffix}")
+                else:
+                    tide_util.logmem(f"about to write {mapname} to {mapsuffix}")
+                outmaparray[:] = 0.0
+                outmaparray[validvoxels] = eval(mapname)[:]
+                writeintermediatemaps(
+                    thepass,
+                    mapname,
+                    mapsuffix,
+                    optiondict,
+                    outmaparray,
+                    nativespaceshape,
+                    outputname,
+                    passsuffix,
+                    bidsbasedict,
+                    theheader,
+                )
+
         # Step 3 - regressor refinement for next pass
         # write out the current version of the run options
         optiondict["currentstage"] = f"prerefine_pass{thepass}"
@@ -2562,10 +2637,6 @@ def rapidtide_main(argparsingfunc):
             )
         if optiondict["saveintermediatemaps"]:
             maplist = [
-                ("lagtimes", "maxtime"),
-                ("timepercentile", "timepercentile"),
-                ("lagstrengths", "maxcorr"),
-                ("lagsigma", "maxwidth"),
                 ("fitmask", "fitmask"),
                 ("failreason", "corrfitfailreason"),
             ]
@@ -2580,24 +2651,18 @@ def rapidtide_main(argparsingfunc):
                     tide_util.logmem(f"about to write {mapname} to {mapsuffix}")
                 outmaparray[:] = 0.0
                 outmaparray[validvoxels] = eval(mapname)[:]
-                if optiondict["textio"]:
-                    tide_io.writenpvecs(
-                        outmaparray.reshape(nativespaceshape, 1),
-                        f"{outputname}_{mapsuffix}{passsuffix}.txt",
-                    )
-                else:
-                    bidspasssuffix = f"_intermediatedata-pass{thepass}"
-                    if mapname == "fitmask":
-                        savename = f"{outputname}{bidspasssuffix}_desc-corrfit_mask"
-                    elif mapname == "failreason":
-                        savename = f"{outputname}{bidspasssuffix}_desc-corrfitfailreason_info"
-                    else:
-                        savename = f"{outputname}{bidspasssuffix}_desc-{mapsuffix}_map"
-                    bidsdict = bidsbasedict.copy()
-                    if mapname == "lagtimes" or mapname == "lagsigma":
-                        bidsdict["Units"] = "second"
-                    tide_io.writedicttojson(bidsdict, f"{savename}.json")
-                    tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
+                writeintermediatemaps(
+                    thepass,
+                    mapname,
+                    mapsuffix,
+                    optiondict,
+                    outmaparray,
+                    nativespaceshape,
+                    outputname,
+                    passsuffix,
+                    bidsbasedict,
+                    theheader,
+                )
     # We are done with refinement.
     if optiondict["convergencethresh"] is None:
         optiondict["actual_passes"] = optiondict["passes"]
