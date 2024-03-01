@@ -102,6 +102,7 @@ script_list = [
     "rapidtide/scripts/happywarp",
     "rapidtide/scripts/histnifti",
     "rapidtide/scripts/histtc",
+    "rapidtide/scripts/localflow",
     "rapidtide/scripts/mergequality",
     "rapidtide/scripts/pairwisemergenifti",
     "rapidtide/scripts/pairproc",
