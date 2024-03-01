@@ -1672,7 +1672,10 @@ def mlregress(x, y, intercept=True):
     # Computation of the coefficient of determination.
     Rx = np.atleast_2d(np.corrcoef(x, rowvar=1))
     c = np.corrcoef(x, y, rowvar=1)[-1, :p]
-    R2 = np.dot(np.dot(c, np.linalg.inv(Rx)), c.T)
+    try:
+        R2 = np.dot(np.dot(c, np.linalg.inv(Rx)), c.T)
+    except np.linalg.LinAlgError:
+        return None, None
     R = np.sqrt(R2)
 
     return np.atleast_1d(solution[0].T), R
