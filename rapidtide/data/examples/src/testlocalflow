@@ -1,0 +1,3 @@
+#!/bin/bash
+
+localflow sub-RAPIDTIDETEST.nii.gz ../dst/junk

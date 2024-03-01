@@ -22,9 +22,12 @@ import copy
 import numpy as np
 
 import rapidtide.filter as tide_filt
+import rapidtide.stats as tide_stats
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 
-
+DEFAULT_NUMSPACESTEPS = 1
+DEFAULT_NUMTIMESTEPS = 2
 def main():
     # set default variable values
     displayplots = False
@@ -46,16 +49,21 @@ def main():
         default=False,
     )
 
-    """parser.add_argument(
-        "lowestfreq",
-        type=float,
-        help="The low passband frequency limit in Hz (set less than zero to disable HPF).",
+    parser.add_argument(
+        "--numtimesteps",
+        dest="numtimesteps",
+        type=int,
+        help=f"The number of steps back in time to fit.  Default is {DEFAULT_NUMTIMESTEPS}",
+        default=DEFAULT_NUMTIMESTEPS,
     )
     parser.add_argument(
-        "highestfreq",
-        type=float,
-        help="The high passband frequency limit in Hz (set less than zero to disable LPF)",
-    )"""
+        "--numspacesteps",
+        dest="numspacesteps",
+        type=int,
+        help=f"The number of steps out from the voxel to fit.  Default is {DEFAULT_NUMSPACESTEPS}",
+        default=DEFAULT_NUMSPACESTEPS,
+    )
+
 
     # get the command line parameters
     try:
@@ -76,31 +84,41 @@ def main():
     Fs = 1.0 / tr
     print("tr from header =", tr, ", sample frequency is ", Fs)
 
-    numtimesteps= 2
-    numspacesteps = 2
-    numspacerange = 2 * numspacesteps + 1
+    numspacerange = 2 * args.numspacesteps + 1
     chunksize = numspacerange * numspacerange * numspacerange
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
     xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
-    coefficients = np.zeros((xsize - 2 * numspacesteps,ysize - 2 * numspacesteps, numslices - 2 * numspacesteps, numspacerange * numspacerange * numspacerange, numtimesteps), dtype="float32")
+    coefficients = np.zeros((xsize - 2 * args.numspacesteps,ysize - 2 * args.numspacesteps, numslices - 2 * args.numspacesteps, numspacerange * numspacerange * numspacerange, args.numtimesteps), dtype="float32")
     backwarddiffs = np.zeros((xsize - 2, ysize - 2, numslices - 2, 3, 3, 3), dtype="float32")
     velocities = np.zeros((xsize, ysize, numslices, timepoints, 3), dtype="float32")
     averagevelocity = np.zeros((xsize, ysize, numslices, 3), dtype="float32")
 
+    numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+
+    # make a mask
+    meanim = np.mean(input_data, axis=3)
+    themask = np.uint16(tide_stats.makemask(meanim, threshpct=0.1))
+
     # cycle over all timepoints
     print("now cycling over all timepoints")
 
-    evlist = range(chunksize).remove(chunksize // 2 + 1)
+    evlist = list(range(chunksize))
+    print(evlist)
+    evlist.remove(chunksize // 2 + 1)
     print(evlist)
 
-    for timestep in range(1, numtimesteps+1):
-        for z in range(numspacesteps, numslices -  numspacesteps):
-            for y in range(numspacesteps, ysize - numspacesteps):
-                for x in range(numspacesteps, xsize - numspacesteps):
-                    target = input_data[x, y, z, timestep:]
-                    chunk = input_data[x-numspacesteps:x+numspacesteps+1, y-numspacesteps:y+numspacesteps+1, z-numspacesteps:z+numspacesteps+1, :-timestep]
-                    reshapedchunk = (chunk.reshape((chunksize, timepoints - timestep)))[evlist, :]
-                    print(reshapedchunk.shape)
+    for timestep in range(1, args.numtimesteps+1):
+        print(f"timestep: {timestep}")
+        for z in range(args.numspacesteps, numslices -  args.numspacesteps):
+            print(f"fitting {z=}")
+            for y in range(args.numspacesteps, ysize - args.numspacesteps):
+                for x in range(args.numspacesteps, xsize - args.numspacesteps):
+                    if themask[x, y, z] > 0:
+                        target = input_data[x, y, z, timestep:]
+                        chunk = input_data[x-args.numspacesteps:x+args.numspacesteps+1, y-args.numspacesteps:y+args.numspacesteps+1, z-args.numspacesteps:z+args.numspacesteps+1, :-timestep]
+                        reshapedchunk = (chunk.reshape((chunksize, timepoints - timestep)))[evlist, :]
+                        thefit, R = tide_fit.mlregress(reshapedchunk, target, intercept=True)
+                        print(R)
 
 
 
