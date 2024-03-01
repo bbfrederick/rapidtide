@@ -19,14 +19,5 @@ include rapidtide/data/reference/ASPECTS*
 include rapidtide/data/reference/ATT*
 include rapidtide/data/reference/HCP1200*
 include rapidtide/data/reference/MNI152*
-#include rapidtide/data/examples/src/sub-RAPIDTIDETEST*
-#include rapidtide/data/examples/src/sub-NIRSRAPIDTIDETEST*
-#include rapidtide/data/examples/src/sub-HAPPYTEST*
-#include rapidtide/data/examples/src/timecourse1.txt
-#include rapidtide/data/examples/src/timecourse2.txt
-#include rapidtide/data/examples/src/tmask*txt
-#include rapidtide/data/examples/src/lt_rt.txt 
-#include rapidtide/data/examples/src/testfmri 
-#include rapidtide/data/examples/src/testhappy
 include versioneer.py
 include rapidtide/_version.py
