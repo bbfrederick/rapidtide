@@ -20,14 +20,81 @@ import argparse
 import copy
 
 import numpy as np
+from tqdm import tqdm
 
-import rapidtide.filter as tide_filt
-import rapidtide.stats as tide_stats
-import rapidtide.fit as tide_fit
+import rapidtide.correlate as tide_corr
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+import rapidtide.stats as tide_stats
+import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_NUMSPACESTEPS = 1
-DEFAULT_NUMTIMESTEPS = 2
+DEFAULT_NPASSES = 5
+DEFAULT_RADIUS = 7.0
+DEFAULT_WINDOW_TYPE = "hamming"
+DEFAULT_DETREND_ORDER = 3
+
+
+def getcorrloc(thedata, idx1, idx2, Fs, negsearch=10.0, possearch=10.0, padding=0, debug=False):
+    tc1 = thedata[idx1, :]
+    tc2 = thedata[idx2, :]
+    if np.any(tc1) != 0.0 and np.any(tc2) != 0.0:
+        if debug:
+            print(f"{idx1=}, {idx2=}")
+            print(f"{tc1=}")
+            print(f"{tc2=}")
+
+        thesimfunc = tide_corr.fastcorrelate(
+            tc1,
+            tc2,
+            zeropadding=padding,
+            usefft=True,
+            debug=debug,
+        )
+        similarityfunclen = len(thesimfunc)
+        similarityfuncorigin = similarityfunclen // 2 + 1
+
+        negpoints = int(negsearch / Fs)
+        pospoints = int(possearch / Fs)
+        trimsimfunc = thesimfunc[
+            similarityfuncorigin - negpoints : similarityfuncorigin + pospoints
+        ]
+        offset = 0.0
+        trimtimeaxis = (
+            (
+                np.arange(0.0, similarityfunclen) * (1.0 / Fs)
+                - ((similarityfunclen - 1) * (1.0 / Fs)) / 2.0
+            )
+            - offset
+        )[similarityfuncorigin - negpoints : similarityfuncorigin + pospoints]
+        maxtime = trimtimeaxis[np.argmax(trimsimfunc)]
+        maxval = np.max(trimsimfunc)
+        if debug:
+            print(f"{maxtime=}")
+            print(f"{maxval=}")
+            print(f"{negsearch=}")
+            print(f"{possearch=}")
+            print(f"{Fs=}")
+            print(f"{len(trimtimeaxis)=}")
+            print(trimsimfunc, trimtimeaxis)
+        return maxval, maxtime, 1
+    else:
+        return 0.0, 0.0, 0
+
+
+def xyz2index(x, y, z, ysize, zsize):
+    return int(z) + int(y) * int(zsize) + int(x) * int(zsize * ysize)
+
+
+def index2xyz(theindex, ysize, zsize):
+    x = theindex // int(zsize * ysize)
+    theindex -= int(x) * int(zsize * ysize)
+    y = theindex // int(zsize)
+    theindex -= int(y) * int(zsize)
+    z = theindex
+    return x, y, z
+
+
 def main():
     # set default variable values
     displayplots = False
@@ -42,19 +109,11 @@ def main():
     parser.add_argument("outputroot", type=str, help="The root name of the output nifti files.")
 
     parser.add_argument(
-        "--debug",
-        dest="debug",
-        action="store_true",
-        help="Turn on debugging information.",
-        default=False,
-    )
-
-    parser.add_argument(
-        "--numtimesteps",
-        dest="numtimesteps",
+        "--npasses",
+        dest="npasses",
         type=int,
-        help=f"The number of steps back in time to fit.  Default is {DEFAULT_NUMTIMESTEPS}",
-        default=DEFAULT_NUMTIMESTEPS,
+        help=f"The number of passes for reconstruction.  Default is {DEFAULT_NPASSES}",
+        default=DEFAULT_NPASSES,
     )
     parser.add_argument(
         "--numspacesteps",
@@ -63,7 +122,48 @@ def main():
         help=f"The number of steps out from the voxel to fit.  Default is {DEFAULT_NUMSPACESTEPS}",
         default=DEFAULT_NUMSPACESTEPS,
     )
+    parser.add_argument(
+        "--radius",
+        dest="radius",
+        type=float,
+        help=f"The radius around the voxel to check correlations.  Default is {DEFAULT_RADIUS}",
+        default=DEFAULT_RADIUS,
+    )
+    parser.add_argument(
+        "--detrendorder",
+        dest="detrendorder",
+        action="store",
+        type=int,
+        metavar="ORDER",
+        help=(f"Set order of trend removal (0 to disable). Default is {DEFAULT_DETREND_ORDER}."),
+        default=DEFAULT_DETREND_ORDER,
+    )
+    parser.add_argument(
+        "--nosphere",
+        dest="dosphere",
+        action="store_false",
+        help=("Use rectangular rather than spherical reconstruction kernel."),
+        default=True,
+    )
 
+    pf.addfilteropts(parser, filtertarget="data and regressors", details=True)
+    pf.addwindowopts(parser, windowtype=DEFAULT_WINDOW_TYPE)
+
+    misc = parser.add_argument_group("Miscellaneous options")
+    misc.add_argument(
+        "--noprogressbar",
+        dest="showprogressbar",
+        action="store_false",
+        help=("Will disable showing progress bars (helpful if stdout is going " "to a file)."),
+        default=True,
+    )
+    misc.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Turn on debugging information.",
+        default=False,
+    )
 
     # get the command line parameters
     try:
@@ -72,11 +172,14 @@ def main():
         parser.print_help()
         raise
 
+    # postprocess filter options
+    theobj, theprefilter = pf.postprocessfilteropts(args)
+
     # get the input TR
     inputtr_fromfile, numinputtrs = tide_io.fmritimeinfo(args.inputfilename)
     print("input data: ", numinputtrs, " timepoints, tr = ", inputtr_fromfile)
 
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfilename)
+    input_img, fmridata, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfilename)
     if input_hdr.get_xyzt_units()[1] == "msec":
         tr = thesizes[4] / 1000.0
     else:
@@ -84,64 +187,201 @@ def main():
     Fs = 1.0 / tr
     print("tr from header =", tr, ", sample frequency is ", Fs)
 
-    numspacerange = 2 * args.numspacesteps + 1
-    chunksize = numspacerange * numspacerange * numspacerange
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
     xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
-    coefficients = np.zeros((xsize - 2 * args.numspacesteps,ysize - 2 * args.numspacesteps, numslices - 2 * args.numspacesteps, numspacerange * numspacerange * numspacerange, args.numtimesteps), dtype="float32")
-    backwarddiffs = np.zeros((xsize - 2, ysize - 2, numslices - 2, 3, 3, 3), dtype="float32")
-    velocities = np.zeros((xsize, ysize, numslices, timepoints, 3), dtype="float32")
-    averagevelocity = np.zeros((xsize, ysize, numslices, 3), dtype="float32")
 
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+    fmridata_voxbytime = fmridata.reshape((numspatiallocs, timepoints))
+    if args.debug:
+        print(f"{fmridata.shape=}")
+        print(f"{fmridata_voxbytime.shape=}")
 
     # make a mask
-    meanim = np.mean(input_data, axis=3)
+    meanim = np.mean(fmridata, axis=3)
     themask = np.uint16(tide_stats.makemask(meanim, threshpct=0.1))
-
-    # cycle over all timepoints
-    print("now cycling over all timepoints")
-
-    evlist = list(range(chunksize))
-    print(evlist)
-    evlist.remove(chunksize // 2 + 1)
-    print(evlist)
-
-    for timestep in range(1, args.numtimesteps+1):
-        print(f"timestep: {timestep}")
-        for z in range(args.numspacesteps, numslices -  args.numspacesteps):
-            print(f"fitting {z=}")
-            for y in range(args.numspacesteps, ysize - args.numspacesteps):
-                for x in range(args.numspacesteps, xsize - args.numspacesteps):
-                    if themask[x, y, z] > 0:
-                        target = input_data[x, y, z, timestep:]
-                        chunk = input_data[x-args.numspacesteps:x+args.numspacesteps+1, y-args.numspacesteps:y+args.numspacesteps+1, z-args.numspacesteps:z+args.numspacesteps+1, :-timestep]
-                        reshapedchunk = (chunk.reshape((chunksize, timepoints - timestep)))[evlist, :]
-                        thefit, R = tide_fit.mlregress(reshapedchunk, target, intercept=True)
-                        print(R)
-
-
-
-        """# now do the ones with other numbers of time points
-        output_hdr = copy.deepcopy(input_hdr)
-        output_hdr.set_intent(2003)
-        output_hdr["dim"][0] = 4
-        output_hdr["dim"][4] = 3
-        output_hdr["dim"][5] = 1
-        output_hdr.datatype = 16
-        if args.debug:
-            print(f"{velocities.dtype=}")
-        tide_io.savetonifti(
-            velocities[:, :, :, timepoint, :].reshape((xsize, ysize, numslices, 3)),
-            output_hdr,
-            f"{args.outputroot}_{str(timepoint).zfill(2)}",
-            debug=args.debug,
-        )
-        averagevelocity += velocities[:, :, :, timepoint, :].reshape((xsize, ysize, numslices, 3))
+    numvalid = len(np.where(themask > 0)[0])
+    print(f"{numvalid} valid")
+    output_hdr = copy.deepcopy(input_hdr)
+    output_hdr["dim"][4] = 1
     tide_io.savetonifti(
-        averagevelocity[:, :, :, :] / timepoints,
+        themask,
         output_hdr,
-        f"{args.outputroot}_average",
+        f"{args.outputroot}_mask",
+        debug=args.debug,
+    )
+
+    # prepare the input data
+    print("Preparing data")
+    for thevoxel in tqdm(
+        range(0, numspatiallocs),
+        desc="Voxel",
+        unit="voxels",
+        disable=(not args.showprogressbar),
+    ):
+        fmridata_voxbytime[thevoxel, :] = tide_math.corrnormalize(
+            theprefilter.apply(Fs, fmridata_voxbytime[thevoxel, :]),
+            detrendorder=args.detrendorder,
+            windowfunc=args.windowfunc,
+        )
+    tide_io.savetonifti(
+        fmridata_voxbytime.reshape((xsize, ysize, numslices, timepoints)),
+        input_hdr,
+        f"{args.outputroot}_preprocdata",
+        debug=args.debug,
+    )
+
+    # make list of neighbors
+    args.dosphere = True
+    xsteps = int(np.ceil(args.radius / xdim))
+    ysteps = int(np.ceil(args.radius / ydim))
+    zsteps = int(np.ceil(args.radius / slicethickness))
+
+    neighborlist = []
+    for z in range(-zsteps, zsteps + 1):
+        for y in range(-ysteps, ysteps + 1):
+            for x in range(-xsteps, xsteps + 1):
+                if args.dosphere:
+                    distance = np.sqrt(
+                        np.square(x * xdim) + np.square(y * ydim) + np.square(z * slicethickness)
+                    )
+                    if (x != 0 or y != 0 or z != 0) and distance <= args.radius:
+                        neighborlist.append((x, y, z))
+                else:
+                    if x != 0 or y != 0 or z != 0:
+                        neighborlist.append((x, y, z))
+    neighborarray = np.asarray(neighborlist, dtype=int)
+    tide_io.writenpvecs(np.transpose(np.asarray(neighborlist)), f"{args.outputroot}_neighbors")
+    if args.debug:
+        print(f"{len(neighborlist)=}, {neighborlist=}")
+
+    corrcoeffs = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=float)
+    delays = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=float)
+    corrvalid = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=int)
+    corrcoeffs3d = np.zeros(
+        (2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=float
+    )
+    targetdelay = np.zeros((xsize, ysize, numslices, args.npasses), dtype=float)
+    delays3d = np.zeros((2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=float)
+    corrvalid3d = np.zeros((2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=int)
+    if args.debug:
+        print(f"{corrcoeffs.shape=}, {delays.shape=}, {corrvalid.shape=}")
+        printfirstdetails = True
+    else:
+        printfirstdetails = False
+
+    # calculate temporal relationships
+    indexlist = []
+    theindex = 0
+    for z in tqdm(
+        range(args.numspacesteps, numslices - args.numspacesteps),
+        desc="Slice",
+        unit="slices",
+        disable=(not args.showprogressbar),
+    ):
+        for y in range(args.numspacesteps, ysize - args.numspacesteps):
+            for x in range(args.numspacesteps, xsize - args.numspacesteps):
+                if themask[x, y, z] > 0:
+                    index1 = xyz2index(x, y, z, ysize, numslices)
+                    for idx, neighbor in enumerate(neighborlist):
+                        if themask[x + neighbor[0], y + neighbor[1], z + neighbor[2]] > 0:
+                            index2 = xyz2index(
+                                x + neighbor[0],
+                                y + neighbor[1],
+                                z + neighbor[2],
+                                ysize,
+                                numslices,
+                            )
+                            (
+                                corrcoeffs[x, y, z, idx],
+                                delays[x, y, z, idx],
+                                corrvalid[x, y, z, idx],
+                            ) = getcorrloc(
+                                fmridata_voxbytime, index1, index2, Fs, debug=printfirstdetails
+                            )
+                            corrcoeffs3d[
+                                neighbor[0] + xsteps,
+                                neighbor[1] + ysteps,
+                                neighbor[2] + zsteps,
+                                theindex,
+                            ] = corrcoeffs[x, y, z, idx]
+                            delays3d[
+                                neighbor[0] + xsteps,
+                                neighbor[1] + ysteps,
+                                neighbor[2] + zsteps,
+                                theindex,
+                            ] = delays[x, y, z, idx]
+                            corrvalid3d[
+                                neighbor[0] + xsteps,
+                                neighbor[1] + ysteps,
+                                neighbor[2] + zsteps,
+                                theindex,
+                            ] = corrvalid[x, y, z, idx]
+                        else:
+                            corrvalid[x, y, z, idx] = 0
+                    theindex += 1
+                    indexlist.append(index1)
+    tide_io.writenpvecs(np.transpose(np.asarray(indexlist)), f"{args.outputroot}_indexlist")
+
+    # now reproject
+    for thepass in range(args.npasses):
+        for theindex in indexlist:
+            x, y, z = index2xyz(theindex, ysize, numslices)
+            theseneighbors = neighborarray + np.array([x, y, z])
+            targetdelay[x, y, z, thepass] += np.sum(
+                targetdelay[*theseneighbors, thepass - 1]
+                - (corrcoeffs3d[*neighborarray, theindex] * delays3d[*neighborarray, theindex])
+                / np.sum(corrcoeffs3d[*neighborarray, theindex])
+            )
+    output_hdr = copy.deepcopy(input_hdr)
+    output_hdr["dim"][4] = args.npasses
+    tide_io.savetonifti(
+        targetdelay,
+        output_hdr,
+        f"{args.outputroot}_targetdelay",
+        debug=args.debug,
+    )
+
+    output_hdr = copy.deepcopy(input_hdr)
+    output_hdr["dim"][4] = len(neighborlist)
+    tide_io.savetonifti(
+        corrcoeffs,
+        output_hdr,
+        f"{args.outputroot}_corrcoeffs",
+        debug=args.debug,
+    )
+    tide_io.savetonifti(
+        delays,
+        output_hdr,
+        f"{args.outputroot}_delays",
+        debug=args.debug,
+    )
+    tide_io.savetonifti(
+        corrvalid,
+        output_hdr,
+        f"{args.outputroot}_corrvalid",
+        debug=args.debug,
+    )
+    """outputlim = 32767
+    output_hdr["dim"][1] = 2 * xsteps + 1
+    output_hdr["dim"][2] = 2 * ysteps + 1
+    output_hdr["dim"][3] = 2 * zsteps + 1
+    output_hdr["dim"][4] = outputlim
+    tide_io.savetonifti(
+        corrcoeffs3d[:, :, :, :outputlim],
+        output_hdr,
+        f"{args.outputroot}_corrcoeffs3d",
+        debug=args.debug,
+    )
+    tide_io.savetonifti(
+        delays3d[:, :, :, :outputlim],
+        output_hdr,
+        f"{args.outputroot}_delays3d",
+        debug=args.debug,
+    )
+    tide_io.savetonifti(
+        corrvalid3d[:, :, :, :outputlim],
+        output_hdr,
+        f"{args.outputroot}_corrvalid3d",
         debug=args.debug,
     )"""
 
