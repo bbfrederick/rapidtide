@@ -3096,15 +3096,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict["lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thetimepcts[i]
-        )
-        optiondict["lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thestrengthpcts[i]
-        )
-        optiondict["lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thesigmapcts[i]
-        )
+        optiondict[
+            "lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thetimepcts[i]
+        optiondict[
+            "lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thestrengthpcts[i]
+        optiondict[
+            "lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thesigmapcts[i]
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
