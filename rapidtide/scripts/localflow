@@ -36,6 +36,59 @@ DEFAULT_WINDOW_TYPE = "hamming"
 DEFAULT_DETREND_ORDER = 3
 
 
+def preprocdata(
+    fmridata,
+    themask,
+    theprefilter,
+    oversamplefactor,
+    Fs,
+    tr,
+    detrendorder=3,
+    windowfunc="hamming",
+    padseconds=0,
+    showprogressbar=True,
+):
+    numspatiallocs = fmridata.shape[0] * fmridata.shape[1] * fmridata.shape[2]
+    timepoints = fmridata.shape[3]
+
+    initial_fmri_x = np.arange(0.0, timepoints) * tr
+
+    oversamptr = tr / oversamplefactor
+    oversampFs = oversamplefactor * Fs
+    os_fmri_x = np.arange(0.0, timepoints * oversamplefactor - (oversamplefactor - 1))
+    os_fmri_x *= oversamptr
+    ostimepoints = len(os_fmri_x)
+    fmridata_byvox = fmridata.reshape((numspatiallocs, timepoints))
+    themask_byvox = themask.reshape((numspatiallocs))
+    osfmridata = np.zeros(
+        (fmridata.shape[0], fmridata.shape[1], fmridata.shape[2], ostimepoints), dtype=float
+    )
+    osfmridata_byvox = osfmridata.reshape((numspatiallocs, ostimepoints))
+    print("Preparing data")
+
+    for thevoxel in tqdm(
+        range(0, numspatiallocs),
+        desc="Voxel",
+        unit="voxels",
+        disable=(not showprogressbar),
+    ):
+        if themask_byvox[thevoxel] > 0:
+            osfmridata_byvox[thevoxel, :] = tide_math.corrnormalize(
+                theprefilter.apply(
+                    oversampFs,
+                    tide_resample.doresample(
+                        initial_fmri_x,
+                        fmridata_byvox[thevoxel, :],
+                        os_fmri_x,
+                        padlen=int(oversampFs * padseconds),
+                    ),
+                ),
+                detrendorder=detrendorder,
+                windowfunc=windowfunc,
+            )
+    return osfmridata_byvox, ostimepoints, oversamptr
+
+
 def getcorrloc(thedata, idx1, idx2, Fs, negsearch=10.0, possearch=10.0, padding=0, debug=False):
     tc1 = thedata[idx1, :]
     tc2 = thedata[idx2, :]
@@ -224,31 +277,18 @@ def main():
     else:
         oversamplefactor = args.oversampfactor
     print(f"using an oversample factor of {oversamplefactor}")
-    initial_fmri_x = np.arange(0.0, timepoints) * tr
-    oversamptr = tr / oversamplefactor
-    os_fmri_x = np.arange(0.0, timepoints * oversamplefactor - (oversamplefactor - 1))
-    os_fmri_x *= oversamptr
-    ostimepoints = len(os_fmri_x)
-    osfmridata = np.zeros((xsize, ysize, numslices, ostimepoints), dtype=float)
-    osfmridata_voxbytime = osfmridata.reshape((numspatiallocs, ostimepoints))
-    print("Preparing data")
-    for thevoxel in tqdm(
-        range(0, numspatiallocs),
-        desc="Voxel",
-        unit="voxels",
-        disable=(not args.showprogressbar),
-    ):
-        if themask_byvox[thevoxel] > 0:
-            osfmridata_voxbytime[thevoxel, :] = tide_resample.doresample(
-                initial_fmri_x,
-                tide_math.corrnormalize(
-                    theprefilter.apply(Fs, fmridata_voxbytime[thevoxel, :]),
-                    detrendorder=args.detrendorder,
-                    windowfunc=args.windowfunc,
-                ),
-                os_fmri_x,
-                padlen=int((1.0 / oversamptr) * args.padseconds),
-            )
+    osfmridata_voxbytime, ostimepoints, oversamptr = preprocdata(
+        fmridata,
+        themask,
+        theprefilter,
+        oversamplefactor,
+        Fs,
+        tr,
+        detrendorder=args.detrendorder,
+        windowfunc=args.windowfunc,
+        padseconds=args.padseconds,
+        showprogressbar=args.showprogressbar,
+    )
     output_hdr = copy.deepcopy(input_hdr)
     output_hdr["dim"][4] = ostimepoints
     output_hdr["pixdim"][4] = oversamptr
@@ -358,7 +398,7 @@ def main():
     tide_io.writenpvecs(np.transpose(np.asarray(indexlist)), f"{args.outputroot}_indexlist")
 
     # now reconstruct
-    gain = 1.0
+    gain = 0.95
     targetdelay[:, :, :, 0] = 10.0 * (np.random.random((xsize, ysize, numslices)) - 0.5)
     for thepass in tqdm(
         range(1, args.npasses), desc="Pass", unit="passes", disable=(not args.showprogressbar)
