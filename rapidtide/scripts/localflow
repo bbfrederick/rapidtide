@@ -237,6 +237,7 @@ def main():
     zsteps = int(np.ceil(args.radius / slicethickness))
 
     neighborlist = []
+    distancelist = []
     for z in range(-zsteps, zsteps + 1):
         for y in range(-ysteps, ysteps + 1):
             for x in range(-xsteps, xsteps + 1):
@@ -246,10 +247,13 @@ def main():
                     )
                     if (x != 0 or y != 0 or z != 0) and distance <= args.radius:
                         neighborlist.append((x, y, z))
+                        distancelist.append(distance)
                 else:
                     if x != 0 or y != 0 or z != 0:
                         neighborlist.append((x, y, z))
+    numneighbors = len(neighborlist)
     neighborarray = np.asarray(neighborlist, dtype=int)
+    print(f"{neighborarray.shape=}")
     tide_io.writenpvecs(np.transpose(np.asarray(neighborlist)), f"{args.outputroot}_neighbors")
     if args.debug:
         print(f"{len(neighborlist)=}, {neighborlist=}")
@@ -323,15 +327,32 @@ def main():
     tide_io.writenpvecs(np.transpose(np.asarray(indexlist)), f"{args.outputroot}_indexlist")
 
     # now reproject
-    for thepass in range(args.npasses):
-        for theindex in indexlist:
-            x, y, z = index2xyz(theindex, ysize, numslices)
+    for thepass in tqdm(
+        range(args.npasses), desc="Pass", unit="passes", disable=(not args.showprogressbar)
+    ):
+        for thearrayindex, thecoordindex in enumerate(indexlist):
+            x, y, z = index2xyz(thecoordindex, ysize, numslices)
             theseneighbors = neighborarray + np.array([x, y, z])
-            targetdelay[x, y, z, thepass] += np.sum(
-                targetdelay[*theseneighbors, thepass - 1]
-                - (corrcoeffs3d[*neighborarray, theindex] * delays3d[*neighborarray, theindex])
-                / np.sum(corrcoeffs3d[*neighborarray, theindex])
-            )
+            deltasum = 0.0
+            for whichneighbor in range(theseneighbors.shape[1]):
+                thediff = (
+                    delays3d[
+                        neighborarray[whichneighbor, 0],
+                        neighborarray[whichneighbor, 1],
+                        neighborarray[whichneighbor, 2],
+                        thearrayindex,
+                    ]
+                    - targetdelay[x, y, z, thepass - 1]
+                )
+                thenorm = corrcoeffs3d[
+                    neighborarray[whichneighbor, 0],
+                    neighborarray[whichneighbor, 1],
+                    neighborarray[whichneighbor, 2],
+                    thearrayindex,
+                ] / (distancelist[whichneighbor] * numneighbors)
+                deltasum += thediff * thenorm
+            targetdelay[x, y, z, thepass] = targetdelay[x, y, z, thepass - 1] + deltasum
+
     output_hdr = copy.deepcopy(input_hdr)
     output_hdr["dim"][4] = args.npasses
     tide_io.savetonifti(
