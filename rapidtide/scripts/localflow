@@ -23,6 +23,7 @@ import numpy as np
 from tqdm import tqdm
 
 import rapidtide.correlate as tide_corr
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
@@ -89,7 +90,20 @@ def preprocdata(
     return osfmridata_byvox, ostimepoints, oversamptr
 
 
-def getcorrloc(thedata, idx1, idx2, Fs, negsearch=10.0, possearch=10.0, padding=0, debug=False):
+def getcorrloc(
+    thedata,
+    idx1,
+    idx2,
+    Fs,
+    dofit=False,
+    lagmin=-8.0,
+    lagmax=8.0,
+    widthmax=100.0,
+    negsearch=10.0,
+    possearch=10.0,
+    padding=0,
+    debug=False,
+):
     tc1 = thedata[idx1, :]
     tc2 = thedata[idx2, :]
     if np.any(tc1) != 0.0 and np.any(tc2) != 0.0:
@@ -121,19 +135,56 @@ def getcorrloc(thedata, idx1, idx2, Fs, negsearch=10.0, possearch=10.0, padding=
             )
             - offset
         )[similarityfuncorigin - negpoints : similarityfuncorigin + pospoints]
-        maxtime = trimtimeaxis[np.argmax(trimsimfunc)]
-        maxval = np.max(trimsimfunc)
+        if dofit:
+            (
+                maxindex,
+                maxtime,
+                maxcorr,
+                maxsigma,
+                maskval,
+                failreason,
+                fitstart,
+                fitend,
+            ) = tide_fit.findmaxlag_gauss(
+                trimtimeaxis,
+                trimsimfunc,
+                lagmin,
+                lagmax,
+                widthmax,
+                edgebufferfrac=0.0,
+                threshval=0.0,
+                uthreshval=30.0,
+                debug=False,
+                tweaklims=True,
+                zerooutbadfit=True,
+                refine=False,
+                maxguess=0.0,
+                useguess=False,
+                searchfrac=0.5,
+                fastgauss=False,
+                lagmod=1000.0,
+                enforcethresh=True,
+                absmaxsigma=1000.0,
+                absminsigma=0.1,
+                displayplots=False,
+            )
+        else:
+            maxtime = trimtimeaxis[np.argmax(trimsimfunc)]
+            maxcorr = np.max(trimsimfunc)
+            maskval = 1
+            failreason = 0
         if debug:
             print(f"{maxtime=}")
-            print(f"{maxval=}")
+            print(f"{maxcorr=}")
+            print(f"{maskval=}")
             print(f"{negsearch=}")
             print(f"{possearch=}")
             print(f"{Fs=}")
             print(f"{len(trimtimeaxis)=}")
             print(trimsimfunc, trimtimeaxis)
-        return maxval, maxtime, 1
+        return maxcorr, maxtime, maskval, failreason, trimsimfunc
     else:
-        return 0.0, 0.0, 0
+        return 0.0, 0.0, 0, 0, None
 
 
 def xyz2index(x, y, z, ysize, zsize):
@@ -328,6 +379,7 @@ def main():
     corrcoeffs = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=float)
     delays = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=float)
     corrvalid = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=int)
+    failreason = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=int)
     corrcoeffs3d = np.zeros(
         (2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=float
     )
@@ -341,6 +393,7 @@ def main():
         printfirstdetails = False
 
     # calculate temporal relationships
+    initialized = False
     indexlist = []
     theindex = 0
     for z in tqdm(
@@ -353,6 +406,19 @@ def main():
             for x in range(xsteps, xsize - xsteps):
                 if themask[x, y, z] > 0:
                     index1 = xyz2index(x, y, z, ysize, numslices)
+                    if not initialized:
+                        dummy, dummy, dummy, dummy, onecorrfunc = getcorrloc(
+                            osfmridata_voxbytime,
+                            index1,
+                            index1,
+                            oversamplefactor * Fs,
+                            dofit=True,
+                            debug=printfirstdetails,
+                        )
+                        corrfunc = np.zeros(
+                            (xsize, ysize, numslices, len(onecorrfunc)), dtype=float
+                        )
+                        initialized = True
                     for idx, neighbor in enumerate(neighborlist):
                         if themask[x + neighbor[0], y + neighbor[1], z + neighbor[2]] > 0:
                             index2 = xyz2index(
@@ -366,13 +432,18 @@ def main():
                                 corrcoeffs[x, y, z, idx],
                                 delays[x, y, z, idx],
                                 corrvalid[x, y, z, idx],
+                                failreason[x, y, z, idx],
+                                onecorrfunc,
                             ) = getcorrloc(
                                 osfmridata_voxbytime,
                                 index1,
                                 index2,
                                 oversamplefactor * Fs,
+                                dofit=True,
                                 debug=printfirstdetails,
                             )
+                            if idx == 0 and onecorrfunc is not None:
+                                corrfunc[x, y, z, :] = onecorrfunc
                             corrcoeffs3d[
                                 neighbor[0] + xsteps,
                                 neighbor[1] + ysteps,
@@ -468,6 +539,21 @@ def main():
         corrvalid,
         output_hdr,
         f"{args.outputroot}_corrvalid",
+        debug=args.debug,
+    )
+    tide_io.savetonifti(
+        failreason,
+        output_hdr,
+        f"{args.outputroot}_failreason",
+        debug=args.debug,
+    )
+
+    output_hdr["dim"][4] = corrfunc.shape[3]
+    output_hdr["pixdim"][4] = oversamptr
+    tide_io.savetonifti(
+        corrfunc,
+        output_hdr,
+        f"{args.outputroot}_corrfunc",
         debug=args.debug,
     )
 
