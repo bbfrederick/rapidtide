@@ -3218,6 +3218,8 @@ def rapidtide_main(argparsingfunc):
             else:
                 savename = f"{outputname}_desc-" + mapsuffix + "_map"
                 bidsdict = bidsbasedict.copy()
+                if mapsuffix == "CVR":
+                    bidsdict["Units"] = "percent"
                 tide_io.writedicttojson(bidsdict, savename + ".json")
                 if not fileiscifti:
                     tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
@@ -3420,6 +3422,8 @@ def rapidtide_main(argparsingfunc):
         else:
             savename = f"{outputname}_desc-lfofilterEVs_bold"
             tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
+            bidsdict = bidsbasedict.copy()
+            tide_io.writedicttojson(bidsdict, savename + ".json")
             if not fileiscifti:
                 tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
             else:
@@ -3468,6 +3472,8 @@ def rapidtide_main(argparsingfunc):
                 )
             else:
                 savename = f"{outputname}_desc-lfofilterRemoved_bold"
+                bidsdict = bidsbasedict.copy()
+                tide_io.writedicttojson(bidsdict, savename + ".json")
                 if not fileiscifti:
                     tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
                 else:
@@ -3488,6 +3494,8 @@ def rapidtide_main(argparsingfunc):
             )
         else:
             savename = f"{outputname}_desc-lfofilterCleaned_bold"
+            bidsdict = bidsbasedict.copy()
+            tide_io.writedicttojson(bidsdict, savename + ".json")
             if not fileiscifti:
                 tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
             else:
