@@ -1,5 +1,13 @@
 # Release history
 
+## Version 2.8.3 (3/7/24)
+* (rapidtide) Fixed the logic for saving lagregressors - they only exist if you do GLM or CVR analysis, so if you set nolimitoutput, check for existance first (thanks to Laura Murray for finding this bug).
+* (rapidtide) Changed the name of the file containing the voxel specific EVs that are regressed out by the GLM from "lagregressors_bold" to "lfofilterEVs_bold" (thanks to Tianye Zhai for flagging this).
+* (localflow) Added a new program to test a hunch.
+* (fit) Gracefully handle singular matrices in mlregress.
+* (reference) Corrected the abbreviated name for the MLSR region in the JHU level 1 atlas xml file (oops!).
+* (docs) Added description of the lfofilterEVs_bold and shiftedtcs_bold output files to the usage section.
+
 ## Version 2.8.2 (2/26/24)
 * (rapidtide) Added a lot more internal debugging resources, and fixed a bug where zero range time data that was included due to explicit masks would put NaN's in the maps.
 * (rapidtide) Implemented multiprocessing to speed up motion regression.
