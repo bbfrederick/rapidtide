@@ -23,6 +23,7 @@ import numpy as np
 from tqdm import tqdm
 
 import rapidtide.correlate as tide_corr
+import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
@@ -35,6 +36,8 @@ DEFAULT_NPASSES = 20
 DEFAULT_RADIUS = 10.5
 DEFAULT_WINDOW_TYPE = "hamming"
 DEFAULT_DETREND_ORDER = 3
+DEFAULT_AMPTHRESH = 0.3
+DEFAULT_MINLAGDIFF = 0.0
 
 
 def preprocdata(
@@ -136,38 +139,6 @@ def getcorrloc(
             - offset
         )[similarityfuncorigin - negpoints : similarityfuncorigin + pospoints]
         if dofit:
-            """(
-                maxindex,
-                maxtime,
-                maxcorr,
-                maxsigma,
-                maskval,
-                failreason,
-                fitstart,
-                fitend,
-            ) = tide_fit.findmaxlag_gauss(
-                trimtimeaxis,
-                trimsimfunc,
-                lagmin,
-                lagmax,
-                widthmax,
-                edgebufferfrac=0.0,
-                threshval=0.0,
-                uthreshval=30.0,
-                debug=False,
-                tweaklims=True,
-                zerooutbadfit=False,
-                refine=True,
-                maxguess=0.0,
-                useguess=False,
-                searchfrac=0.5,
-                fastgauss=False,
-                lagmod=1000.0,
-                enforcethresh=True,
-                absmaxsigma=1000.0,
-                absminsigma=0.1,
-                displayplots=False,
-            )"""
             (
                 maxindex,
                 maxtime,
@@ -214,9 +185,9 @@ def getcorrloc(
             print(f"{Fs=}")
             print(f"{len(trimtimeaxis)=}")
             print(trimsimfunc, trimtimeaxis)
-        return maxcorr, maxtime, maskval, failreason, trimsimfunc
+        return maxcorr, maxtime, maskval, failreason
     else:
-        return 0.0, 0.0, 0, 0, None
+        return 0.0, 0.0, 0, 0
 
 
 def xyz2index(x, y, z, xsize, ysize, zsize):
@@ -261,6 +232,32 @@ def main():
         type=float,
         help=f"The radius around the voxel to check correlations.  Default is {DEFAULT_RADIUS}",
         default=DEFAULT_RADIUS,
+    )
+    parser.add_argument(
+        "--minlagdiff",
+        dest="minlagdiff",
+        type=float,
+        help=f"The minimum lagtime difference threshold to select which diffs to include in reconstruction.  Default is {DEFAULT_MINLAGDIFF}",
+        default=DEFAULT_MINLAGDIFF,
+    )
+    parser.add_argument(
+        "--ampthresh",
+        dest="ampthresh",
+        type=float,
+        help=f"The correlation threshold to select which diffs to include in reconstruction.  Default is {DEFAULT_AMPTHRESH}",
+        default=DEFAULT_AMPTHRESH,
+    )
+    parser.add_argument(
+        "--gausssigma",
+        dest="gausssigma",
+        type=float,
+        help=(
+            "Spatially filter fMRI data prior to analysis "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value)."
+        ),
+        default=0.0,
     )
     parser.add_argument(
         "--oversampfac",
@@ -363,6 +360,25 @@ def main():
         debug=args.debug,
     )
 
+    if args.gausssigma < 0.0:
+        # set gausssigma automatically
+        args.gausssigma = np.mean([xdim, ydim, slicethickness]) / 2.0
+    if args.gausssigma > 0.0:
+        print(f"applying gaussian spatial filter to fmri data " f" with sigma={args.gausssigma}")
+        for i in tqdm(
+            range(timepoints),
+            desc="Timepoint",
+            unit="timepoints",
+            disable=(not args.showprogressbar),
+        ):
+            fmridata[:, :, :, i] = tide_filt.ssmooth(
+                xdim,
+                ydim,
+                slicethickness,
+                args.gausssigma,
+                fmridata[:, :, :, i],
+            )
+
     # prepare the input data
     if args.oversampfactor == -1:
         oversamplefactor = int(np.max([np.ceil(tr / 0.5), 1]))
@@ -424,7 +440,6 @@ def main():
     corrcoeffs3d = np.zeros(
         (2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=float
     )
-    targetdelay = np.zeros((xsize, ysize, numslices, args.npasses), dtype=float)
     delays3d = np.zeros((2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=float)
     corrvalid3d = np.zeros((2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=int)
     if args.debug:
@@ -436,6 +451,8 @@ def main():
     corrcoeffs_byvox = corrcoeffs.reshape((numspatiallocs, len(neighborlist)))
     delays_byvox = delays.reshape((numspatiallocs, len(neighborlist)))
     corrvalid_byvox = corrvalid.reshape((numspatiallocs, len(neighborlist)))
+    failreason_byvox = failreason.reshape((numspatiallocs, len(neighborlist)))
+
     # calculate temporal relationships
     # initialized = False
     indexlist = []
@@ -451,19 +468,6 @@ def main():
             for x in range(xsize):
                 if themask[x, y, z] > 0:
                     index1 = xyz2index(x, y, z, xsize, ysize, numslices)
-                    """if not initialized:
-                        dummy, dummy, dummy, dummy, onecorrfunc = getcorrloc(
-                            osfmridata_voxbytime,
-                            index1,
-                            index1,
-                            oversamplefactor * Fs,
-                            dofit=args.dofit,
-                            debug=printfirstdetails,
-                        )
-                        corrfunc = np.zeros(
-                            (xsize, ysize, numslices, len(onecorrfunc)), dtype=float
-                        )
-                        initialized = True"""
                     for idx, neighbor in enumerate(neighborlist):
                         index2 = xyz2index(
                             x + neighbor[0],
@@ -474,14 +478,13 @@ def main():
                             numslices,
                         )
                         if index2 > 0:
-                            indexpairs.append((index1, index2))
                             if themask_byvox[index2] > 0:
-                                (
-                                    corrcoeffs[x, y, z, idx],
-                                    delays[x, y, z, idx],
-                                    corrvalid[x, y, z, idx],
-                                    failreason[x, y, z, idx],
-                                    onecorrfunc,
+                                indexpairs.append((index1, index2, idx, theindex + 0))
+                                """(
+                                    corrcoeffs_byvox[index1, idx],
+                                    delays_byvox[index1, idx],
+                                    corrvalid_byvox[index1, idx],
+                                    failreason_byvox[index1, idx],
                                 ) = getcorrloc(
                                     osfmridata_voxbytime,
                                     index1,
@@ -490,8 +493,6 @@ def main():
                                     dofit=args.dofit,
                                     debug=printfirstdetails,
                                 )
-                                """if idx == 0 and onecorrfunc is not None:
-                                    corrfunc[x, y, z, :] = onecorrfunc"""
                                 corrcoeffs3d[
                                     neighbor[0] + xsteps,
                                     neighbor[1] + ysteps,
@@ -511,11 +512,59 @@ def main():
                                     theindex,
                                 ] = corrvalid[x, y, z, idx]
                             else:
-                                corrvalid[x, y, z, idx] = 0
+                                corrvalid[x, y, z, idx] = 0"""
                     theindex += 1
                     indexlist.append(index1)
     tide_io.writenpvecs(np.transpose(np.asarray(indexlist)), f"{args.outputroot}_indexlist")
     print(f" there are {len(indexpairs)} correlations to perform")
+
+    # print(indexpairs)
+
+    for index1, index2, neighboridx, theindex in tqdm(
+        indexpairs,
+        desc="Correlation pair",
+        unit="pairs",
+        disable=(not args.showprogressbar),
+    ):
+        (
+            corrcoeffs_byvox[index1, neighboridx],
+            delays_byvox[index1, neighboridx],
+            corrvalid_byvox[index1, neighboridx],
+            failreason_byvox[index1, neighboridx],
+        ) = getcorrloc(
+            osfmridata_voxbytime,
+            index1,
+            index2,
+            oversamplefactor * Fs,
+            dofit=args.dofit,
+            debug=printfirstdetails,
+        )
+        neighborloc = (
+            (neighborlist[neighboridx])[0] + xsteps,
+            (neighborlist[neighboridx])[1] + ysteps,
+            (neighborlist[neighboridx])[2] + zsteps,
+        )
+        print(neighborlist[neighboridx], neighborloc)
+        corrcoeffs3d[
+            (neighborlist[neighboridx])[0] + xsteps,
+            (neighborlist[neighboridx])[1] + ysteps,
+            (neighborlist[neighboridx])[2] + zsteps,
+            theindex,
+        ] = corrcoeffs[x, y, z, idx]
+        delays3d[
+            (neighborlist[neighboridx])[0] + xsteps,
+            (neighborlist[neighboridx])[1] + ysteps,
+            (neighborlist[neighboridx])[2] + zsteps,
+            theindex,
+        ] = delays[x, y, z, idx]
+        corrvalid3d[
+            (neighborlist[neighboridx])[0] + xsteps,
+            (neighborlist[neighboridx])[1] + ysteps,
+            (neighborlist[neighboridx])[2] + zsteps,
+            theindex,
+        ] = corrvalid_byvox[index1, neighboridx]
+    else:
+        corrvalid_byvox[index1, neighboridx] = 0
 
     output_hdr = copy.deepcopy(input_hdr)
     output_hdr["dim"][4] = len(neighborlist)
@@ -544,19 +593,29 @@ def main():
         debug=args.debug,
     )
 
-    """output_hdr["dim"][4] = corrfunc.shape[3]
-    output_hdr["pixdim"][4] = oversamptr
+    # optionally dump out formatted lags
+    sizelimit = 32767
+    output_hdr = copy.deepcopy(input_hdr)
+    output_hdr["dim"][1] = xsteps
+    output_hdr["dim"][2] = ysteps
+    output_hdr["dim"][3] = zsteps
+    output_hdr["dim"][4] = sizelimit
     tide_io.savetonifti(
-        corrfunc,
+        delays3d[:, :, :, :sizelimit],
         output_hdr,
-        f"{args.outputroot}_corrfunc",
+        f"{args.outputroot}_delays3d",
         debug=args.debug,
-    )"""
+    )
 
     # now reconstruct
     gain = 0.95
+    targetdelay = np.zeros((xsize, ysize, numslices, args.npasses), dtype=float)
+    targetdelay_byvox = targetdelay.reshape((numspatiallocs, args.npasses))
+
     targetdelay[:, :, :, 0] = 0.0 * (np.random.random((xsize, ysize, numslices)) - 0.5)
+
     numneighbors = np.zeros((xsize, ysize, numslices), dtype=int)
+    numneighbors_byvox = numneighbors.reshape((numspatiallocs))
     # loop over passes
     for thepass in tqdm(
         range(1, args.npasses), desc="Pass", unit="passes", disable=(not args.showprogressbar)
@@ -576,6 +635,15 @@ def main():
                         thearrayindex,
                     ]
                     > 0
+                    and np.fabs(
+                        corrcoeffs3d[
+                            neighborarray[whichneighbor, 0] + xsteps,
+                            neighborarray[whichneighbor, 1] + ysteps,
+                            neighborarray[whichneighbor, 2] + zsteps,
+                            thearrayindex,
+                        ]
+                    )
+                    > args.ampthresh
                 ):
                     thediff = (
                         delays3d[
@@ -592,12 +660,13 @@ def main():
                         neighborarray[whichneighbor, 2] + zsteps,
                         thearrayindex,
                     ]
-                    numneighbors[x, y, z] += 1
+                    numneighbors_byvox[thecoordindex] += 1
                     # deltasum += thediff * thenorm * thenorm / distancelist[whichneighbor]
                     deltasum += thediff * thenorm
-                if numneighbors[x, y, z] > 0:
-                    targetdelay[x, y, z, thepass] = (
-                        gain * targetdelay[x, y, z, thepass - 1] + deltasum / numneighbors[x, y, z]
+                if numneighbors_byvox[thecoordindex] > 0:
+                    targetdelay_byvox[thecoordindex, thepass] = (
+                        gain * targetdelay_byvox[thecoordindex, thepass - 1]
+                        + deltasum / numneighbors_byvox[thecoordindex]
                     )
                     # print(f"{deltasum}")
 
