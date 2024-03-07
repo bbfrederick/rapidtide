@@ -3411,14 +3411,14 @@ def rapidtide_main(argparsingfunc):
             theheader["dim"][4] = np.shape(outfmriarray)[1]
             theheader["pixdim"][4] = fmritr
 
-    if optiondict["savelagregressors"]:
+    if optiondict["savelagregressors"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
         outfmriarray[validvoxels, :] = lagtc[:, :]
         if optiondict["textio"]:
             tide_io.writenpvecs(
                 outfmriarray.reshape(nativefmrishape), f"{outputname}_lagregressor.txt"
             )
         else:
-            savename = f"{outputname}_desc-lagregressor_bold"
+            savename = f"{outputname}_desc-lfofilterEVs_bold"
             tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
             if not fileiscifti:
                 tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
