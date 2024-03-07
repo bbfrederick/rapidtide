@@ -16,6 +16,7 @@
 #   limitations under the License.
 #
 #
+import sys
 import warnings
 
 import matplotlib.pyplot as plt
@@ -2030,3 +2031,492 @@ def phaseanalysis(firstharmonic, displayplots=False):
         plt.savefig("phaseanalysistest.jpg")
     instantaneous_phase = np.unwrap(instantaneous_phase)
     return instantaneous_phase, amplitude_envelope, analytic_signal
+
+
+FML_NOERROR = np.uint32(0x0000)
+
+FML_INITAMPLOW = np.uint32(0x0001)
+FML_INITAMPHIGH = np.uint32(0x0002)
+FML_INITWIDTHLOW = np.uint32(0x0004)
+FML_INITWIDTHHIGH = np.uint32(0x0008)
+FML_INITLAGLOW = np.uint32(0x0010)
+FML_INITLAGHIGH = np.uint32(0x0020)
+FML_INITFAIL = (
+    FML_INITAMPLOW
+    | FML_INITAMPHIGH
+    | FML_INITWIDTHLOW
+    | FML_INITWIDTHHIGH
+    | FML_INITLAGLOW
+    | FML_INITLAGHIGH
+)
+
+FML_FITAMPLOW = np.uint32(0x0100)
+FML_FITAMPHIGH = np.uint32(0x0200)
+FML_FITWIDTHLOW = np.uint32(0x0400)
+FML_FITWIDTHHIGH = np.uint32(0x0800)
+FML_FITLAGLOW = np.uint32(0x1000)
+FML_FITLAGHIGH = np.uint32(0x2000)
+FML_FITFAIL = (
+    FML_FITAMPLOW
+    | FML_FITAMPHIGH
+    | FML_FITWIDTHLOW
+    | FML_FITWIDTHHIGH
+    | FML_FITLAGLOW
+    | FML_FITLAGHIGH
+)
+
+
+def simfuncpeakfit(
+    incorrfunc,
+    corrtimeaxis,
+    useguess=False,
+    maxguess=0.0,
+    displayplots=False,
+    functype="correlation",
+    peakfittype="gauss",
+    searchfrac=0.5,
+    lagmod=1000.0,
+    enforcethresh=True,
+    allowhighfitamps=False,
+    lagmin=-30.0,
+    lagmax=30.0,
+    absmaxsigma=1000.0,
+    absminsigma=0.25,
+    hardlimit=True,
+    bipolar=False,
+    lthreshval=0.0,
+    uthreshval=1.0,
+    zerooutbadfit=True,
+    debug=False,
+):
+    # check to make sure xcorr_x and xcorr_y match
+    if corrtimeaxis is None:
+        print("Correlation time axis is not defined - exiting")
+        sys.exit()
+    if len(corrtimeaxis) != len(incorrfunc):
+        print(
+            "Correlation time axis and values do not match in length (",
+            len(corrtimeaxis),
+            "!=",
+            len(incorrfunc),
+            "- exiting",
+        )
+        sys.exit()
+    # set initial parameters
+    # absmaxsigma is in seconds
+    # maxsigma is in Hz
+    # maxlag is in seconds
+    warnings.filterwarnings("ignore", "Number*")
+    failreason = FML_NOERROR
+    maskval = np.uint16(1)  # start out assuming the fit will succeed
+    binwidth = corrtimeaxis[1] - corrtimeaxis[0]
+
+    # set the search range
+    lowerlim = 0
+    upperlim = len(corrtimeaxis) - 1
+    if debug:
+        print(
+            "initial search indices are",
+            lowerlim,
+            "to",
+            upperlim,
+            "(",
+            corrtimeaxis[lowerlim],
+            corrtimeaxis[upperlim],
+            ")",
+        )
+
+    # make an initial guess at the fit parameters for the gaussian
+    # start with finding the maximum value and its location
+    flipfac = 1.0
+    corrfunc = incorrfunc + 0.0
+    if useguess:
+        maxindex = tide_util.valtoindex(corrtimeaxis, maxguess)
+        if (corrfunc[maxindex] < 0.0) and bipolar:
+            flipfac = -1.0
+    else:
+        maxindex, flipfac = _maxindex_noedge(corrfunc, corrtimeaxis, bipolar=bipolar)
+    corrfunc *= flipfac
+    maxlag_init = (1.0 * corrtimeaxis[maxindex]).astype("float64")
+    maxval_init = corrfunc[maxindex].astype("float64")
+    if debug:
+        print(
+            "maxindex, maxlag_init, maxval_init:",
+            maxindex,
+            maxlag_init,
+            maxval_init,
+        )
+
+    # set the baseline and baselinedev levels
+    if (functype == "correlation") or (functype == "hybrid"):
+        baseline = 0.0
+        baselinedev = 0.0
+    else:
+        # for mutual information, there is a nonzero baseline, so we want the difference from that.
+        baseline = np.median(corrfunc)
+        baselinedev = mad(corrfunc)
+    if debug:
+        print("baseline, baselinedev:", baseline, baselinedev)
+
+    # then calculate the width of the peak
+    if peakfittype == "fastquad" or peakfittype == "COM":
+        peakstart = np.max([1, maxindex - 2])
+        peakend = np.min([len(corrtimeaxis) - 2, maxindex + 2])
+    else:
+        # come here for peakfittype of None, quad, gauss, fastgauss
+        thegrad = np.gradient(corrfunc).astype(
+            "float64"
+        )  # the gradient of the correlation function
+        if (functype == "correlation") or (functype == "hybrid"):
+            if peakfittype == "quad":
+                peakpoints = np.where(
+                    corrfunc > maxval_init - 0.05, 1, 0
+                )  # mask for places where correlation exceeds searchfrac*maxval_init
+            else:
+                peakpoints = np.where(
+                    corrfunc > (baseline + searchfrac * (maxval_init - baseline)), 1, 0
+                )  # mask for places where correlation exceeds searchfrac*maxval_init
+        else:
+            # for mutual information, there is a flattish, nonzero baseline, so we want the difference from that.
+            peakpoints = np.where(
+                corrfunc > (baseline + searchfrac * (maxval_init - baseline)),
+                1,
+                0,
+            )
+
+        peakpoints[0] = 0
+        peakpoints[-1] = 0
+        peakstart = np.max([1, maxindex - 1])
+        peakend = np.min([len(corrtimeaxis) - 2, maxindex + 1])
+        if debug:
+            print("initial peakstart, peakend:", peakstart, peakend)
+        if functype == "mutualinfo":
+            while peakpoints[peakend + 1] == 1:
+                peakend += 1
+            while peakpoints[peakstart - 1] == 1:
+                peakstart -= 1
+        else:
+            while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1:
+                peakend += 1
+            while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1:
+                peakstart -= 1
+        if debug:
+            print("final peakstart, peakend:", peakstart, peakend)
+
+        # deal with flat peak top
+        while peakend < (len(corrtimeaxis) - 3) and corrfunc[peakend] == corrfunc[peakend - 1]:
+            peakend += 1
+        while peakstart > 2 and corrfunc[peakstart] == corrfunc[peakstart + 1]:
+            peakstart -= 1
+        if debug:
+            print("peakstart, peakend after flattop correction:", peakstart, peakend)
+            print("\n")
+            for i in range(peakstart, peakend + 1):
+                print(corrtimeaxis[i], corrfunc[i])
+            print("\n")
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.set_title("Peak sent to fitting routine")
+            plt.plot(
+                corrtimeaxis[peakstart : peakend + 1],
+                corrfunc[peakstart : peakend + 1],
+                "r",
+            )
+            plt.show()
+
+        # This is calculated from first principles, but it's always big by a factor or ~1.4.
+        #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
+        maxsigma_init = np.float64(
+            ((peakend - peakstart + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac))))
+            / np.sqrt(2.0)
+        )
+        if debug:
+            print("maxsigma_init:", maxsigma_init)
+
+        # now check the values for errors
+        if hardlimit:
+            rangeextension = 0.0
+        else:
+            rangeextension = (lagmax - lagmin) * 0.75
+        if not (
+            (lagmin - rangeextension - binwidth)
+            <= maxlag_init
+            <= (lagmax + rangeextension + binwidth)
+        ):
+            if maxlag_init <= (lagmin - rangeextension - binwidth):
+                failreason |= FML_INITLAGLOW
+                maxlag_init = lagmin - rangeextension - binwidth
+            else:
+                failreason |= FML_INITLAGHIGH
+                maxlag_init = lagmax + rangeextension + binwidth
+            if debug:
+                print("bad initial")
+        if maxsigma_init > absmaxsigma:
+            failreason |= FML_INITWIDTHHIGH
+            maxsigma_init = absmaxsigma
+            if debug:
+                print("bad initial width - too high")
+        if peakend - peakstart < 2:
+            failreason |= FML_INITWIDTHLOW
+            maxsigma_init = np.float64(
+                ((2 + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0)
+            )
+            if debug:
+                print("bad initial width - too low")
+        if (functype == "correlation") or (functype == "hybrid"):
+            if not (lthreshval <= maxval_init <= uthreshval) and enforcethresh:
+                failreason |= FML_INITAMPLOW
+                if debug:
+                    print(
+                        "bad initial amp:",
+                        maxval_init,
+                        "is less than",
+                        lthreshval,
+                    )
+            if maxval_init < 0.0:
+                failreason |= FML_INITAMPLOW
+                maxval_init = 0.0
+                if debug:
+                    print("bad initial amp:", maxval_init, "is less than 0.0")
+            if maxval_init > 1.0:
+                failreason |= FML_INITAMPHIGH
+                maxval_init = 1.0
+                if debug:
+                    print("bad initial amp:", maxval_init, "is greater than 1.0")
+        else:
+            # somewhat different rules for mutual information peaks
+            if ((maxval_init - baseline) < lthreshval * baselinedev) or (maxval_init < baseline):
+                failreason |= FML_INITAMPLOW
+                maxval_init = 0.0
+                if debug:
+                    print("bad initial amp:", maxval_init, "is less than 0.0")
+        if (failreason != FML_NOERROR) and zerooutbadfit:
+            maxval = np.float64(0.0)
+            maxlag = np.float64(0.0)
+            maxsigma = np.float64(0.0)
+        else:
+            maxval = np.float64(maxval_init)
+            maxlag = np.float64(maxlag_init)
+            maxsigma = np.float64(maxsigma_init)
+
+    # refine if necessary
+    if peakfittype != "None":
+        if peakfittype == "COM":
+            X = corrtimeaxis[peakstart : peakend + 1] - baseline
+            data = corrfunc[peakstart : peakend + 1]
+            maxval = maxval_init
+            maxlag = np.sum(X * data) / np.sum(data)
+            maxsigma = 10.0
+        elif peakfittype == "gauss":
+            X = corrtimeaxis[peakstart : peakend + 1] - baseline
+            data = corrfunc[peakstart : peakend + 1]
+            # do a least squares fit over the top of the peak
+            # p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
+            p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype="float64")
+            if debug:
+                print("fit input array:", p0)
+            try:
+                plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0, args=(data, X), maxfev=5000)
+                maxval = plsq[0] + baseline
+                maxlag = np.fmod((1.0 * plsq[1]), lagmod)
+                maxsigma = plsq[2]
+            except:
+                maxval = np.float64(0.0)
+                maxlag = np.float64(0.0)
+                maxsigma = np.float64(0.0)
+            if debug:
+                print("fit output array:", [maxval, maxlag, maxsigma])
+        elif peakfittype == "fastgauss":
+            X = corrtimeaxis[peakstart : peakend + 1] - baseline
+            data = corrfunc[peakstart : peakend + 1]
+            # do a non-iterative fit over the top of the peak
+            # 6/12/2015  This is just broken.  Gives quantized maxima
+            maxlag = np.float64(1.0 * np.sum(X * data) / np.sum(data))
+            maxsigma = np.float64(np.sqrt(np.abs(np.sum((X - maxlag) ** 2 * data) / np.sum(data))))
+            maxval = np.float64(data.max()) + baseline
+        elif peakfittype == "fastquad":
+            maxlag, maxval, maxsigma, ismax, badfit = refinepeak_quad(
+                corrtimeaxis, corrfunc, maxindex
+            )
+        elif peakfittype == "quad":
+            X = corrtimeaxis[peakstart : peakend + 1]
+            data = corrfunc[peakstart : peakend + 1]
+            try:
+                thecoffs = np.polyfit(X, data, 2)
+                a = thecoffs[0]
+                b = thecoffs[1]
+                c = thecoffs[2]
+                maxlag = -b / (2.0 * a)
+                maxval = a * maxlag * maxlag + b * maxlag + c
+                maxsigma = 1.0 / np.fabs(a)
+                if debug:
+                    print("poly coffs:", a, b, c)
+                    print("maxlag, maxval, maxsigma:", maxlag, maxval, maxsigma)
+            except np.lib.polynomial.RankWarning:
+                maxlag = 0.0
+                maxval = 0.0
+                maxsigma = 0.0
+            if debug:
+                print("\n")
+                for i in range(len(X)):
+                    print(X[i], data[i])
+                print("\n")
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+                ax.set_title("Peak and fit")
+                plt.plot(X, data, "r")
+                plt.plot(X, c + b * X + a * X * X, "b")
+                plt.show()
+
+        else:
+            print("illegal peak refinement type")
+
+        # check for errors in fit
+        fitfail = False
+        if bipolar:
+            lowestcorrcoeff = -1.0
+        else:
+            lowestcorrcoeff = 0.0
+        if (functype == "correlation") or (functype == "hybrid"):
+            if maxval < lowestcorrcoeff:
+                failreason |= FML_FITAMPLOW
+                maxval = lowestcorrcoeff
+                if debug:
+                    print("bad fit amp: maxval is lower than lower limit")
+                fitfail = True
+            if np.abs(maxval) > 1.0:
+                if not allowhighfitamps:
+                    failreason |= FML_FITAMPHIGH
+                    if debug:
+                        print(
+                            "bad fit amp: magnitude of",
+                            maxval,
+                            "is greater than 1.0",
+                        )
+                    fitfail = True
+                maxval = 1.0 * np.sign(maxval)
+        else:
+            # different rules for mutual information peaks
+            if ((maxval - baseline) < lthreshval * baselinedev) or (maxval < baseline):
+                failreason |= FML_FITAMPLOW
+                if debug:
+                    if (maxval - baseline) < lthreshval * baselinedev:
+                        print(
+                            "FITAMPLOW: maxval - baseline:",
+                            maxval - baseline,
+                            " < lthreshval * baselinedev:",
+                            lthreshval * baselinedev,
+                        )
+                    if maxval < baseline:
+                        print("FITAMPLOW: maxval < baseline:", maxval, baseline)
+                maxval_init = 0.0
+                if debug:
+                    print("bad fit amp: maxval is lower than lower limit")
+        if (lagmin > maxlag) or (maxlag > lagmax):
+            if debug:
+                print("bad lag after refinement")
+            if lagmin > maxlag:
+                failreason |= FML_FITLAGLOW
+                maxlag = lagmin
+            else:
+                failreason |= FML_FITLAGHIGH
+                maxlag = lagmax
+            fitfail = True
+        if maxsigma > absmaxsigma:
+            failreason |= FML_FITWIDTHHIGH
+            if debug:
+                print("bad width after refinement:", maxsigma, ">", absmaxsigma)
+            maxsigma = absmaxsigma
+            fitfail = True
+        if maxsigma < absminsigma:
+            failreason |= FML_FITWIDTHLOW
+            if debug:
+                print("bad width after refinement:", maxsigma, "<", absminsigma)
+            maxsigma = absminsigma
+            fitfail = True
+        if fitfail:
+            if debug:
+                print("fit fail")
+            if zerooutbadfit:
+                maxval = np.float64(0.0)
+                maxlag = np.float64(0.0)
+                maxsigma = np.float64(0.0)
+            maskval = np.uint16(0)
+        # print(maxlag_init, maxlag, maxval_init, maxval, maxsigma_init, maxsigma, maskval, failreason, fitfail)
+    else:
+        maxval = np.float64(maxval_init)
+        maxlag = np.float64(np.fmod(maxlag_init, lagmod))
+        maxsigma = np.float64(maxsigma_init)
+        if failreason != FML_NOERROR:
+            maskval = np.uint16(0)
+
+    if debug or displayplots:
+        print(
+            "init to final: maxval",
+            maxval_init,
+            maxval,
+            ", maxlag:",
+            maxlag_init,
+            maxlag,
+            ", width:",
+            maxsigma_init,
+            maxsigma,
+        )
+    if displayplots and (peakfittype != "None") and (maskval != 0.0):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title("Data and fit")
+        hiresx = np.arange(X[0], X[-1], (X[1] - X[0]) / 10.0)
+        plt.plot(
+            X,
+            data,
+            "ro",
+            hiresx,
+            gauss_eval(hiresx, np.array([maxval, maxlag, maxsigma])),
+            "b-",
+        )
+        plt.show()
+    return (
+        maxindex,
+        maxlag,
+        flipfac * maxval,
+        maxsigma,
+        maskval,
+        failreason,
+        peakstart,
+        peakend,
+    )
+
+
+def _maxindex_noedge(corrfunc, corrtimeaxis, bipolar=False):
+    """
+
+    Parameters
+    ----------
+    corrfunc
+
+    Returns
+    -------
+
+    """
+    lowerlim = 0
+    upperlim = len(corrtimeaxis) - 1
+    done = False
+    while not done:
+        flipfac = 1.0
+        done = True
+        maxindex = (np.argmax(corrfunc[lowerlim:upperlim]) + lowerlim).astype("int32")
+        if bipolar:
+            minindex = (np.argmax(-corrfunc[lowerlim:upperlim]) + lowerlim).astype("int32")
+            if np.fabs(corrfunc[minindex]) > np.fabs(corrfunc[maxindex]):
+                maxindex = minindex
+                flipfac = -1.0
+        if upperlim == lowerlim:
+            done = True
+        if maxindex == 0:
+            lowerlim += 1
+            done = False
+        if maxindex == upperlim:
+            upperlim -= 1
+            done = False
+    return maxindex, flipfac
