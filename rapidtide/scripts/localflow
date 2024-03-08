@@ -546,21 +546,21 @@ def main():
         )
         print(neighborlist[neighboridx], neighborloc)
         corrcoeffs3d[
-            (neighborlist[neighboridx])[0] + xsteps,
-            (neighborlist[neighboridx])[1] + ysteps,
-            (neighborlist[neighboridx])[2] + zsteps,
+            neighborloc[0],
+            neighborloc[1],
+            neighborloc[2],
             theindex,
-        ] = corrcoeffs[x, y, z, idx]
+        ] = corrcoeffs_byvox[index1, idx]
         delays3d[
-            (neighborlist[neighboridx])[0] + xsteps,
-            (neighborlist[neighboridx])[1] + ysteps,
-            (neighborlist[neighboridx])[2] + zsteps,
+            neighborloc[0],
+            neighborloc[1],
+            neighborloc[2],
             theindex,
-        ] = delays[x, y, z, idx]
+        ] = delays_byvox[index1, idx]
         corrvalid3d[
-            (neighborlist[neighboridx])[0] + xsteps,
-            (neighborlist[neighboridx])[1] + ysteps,
-            (neighborlist[neighboridx])[2] + zsteps,
+            neighborloc[0],
+            neighborloc[1],
+            neighborloc[2],
             theindex,
         ] = corrvalid_byvox[index1, neighboridx]
     else:
