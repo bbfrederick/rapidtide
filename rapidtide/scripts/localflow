@@ -376,11 +376,11 @@ def main():
 
     lasttime = thistime
     thistime = time.time() - starttime
-    eventtimes.append(["Spatial filter start", thistime, thistime - lasttime, None, None])
     if args.gausssigma < 0.0:
         # set gausssigma automatically
         args.gausssigma = np.mean([xdim, ydim, slicethickness]) / 2.0
     if args.gausssigma > 0.0:
+        eventtimes.append(["Spatial filter start", thistime, thistime - lasttime, None, None])
         print(f"applying gaussian spatial filter to fmri data " f" with sigma={args.gausssigma}")
         for i in tqdm(
             range(timepoints),
@@ -395,9 +395,9 @@ def main():
                 args.gausssigma,
                 fmridata[:, :, :, i],
             )
-    lasttime = thistime
-    thistime = time.time() - starttime
-    eventtimes.append(["Spatial filter done", thistime, thistime - lasttime, timepoints, "timepoints"])
+        lasttime = thistime
+        thistime = time.time() - starttime
+        eventtimes.append(["Spatial filter done", thistime, thistime - lasttime, timepoints, "timepoints"])
 
     # prepare the input data
     lasttime = thistime
