@@ -98,12 +98,7 @@ def printthresholds(pcts, thepercentiles, labeltext):
     """
     print(labeltext)
     for i in range(0, len(pcts)):
-        print(
-            "\tp <",
-            "{:.3f}".format(1.0 - thepercentiles[i]),
-            ": ",
-            "{:.3f}".format(pcts[i]),
-        )
+        print(f"\tp <{1.0 - thepercentiles[i]:.3f}: {pcts[i]:.3f}")
 
 
 def fitgausspdf(thehist, histlen, thedata, displayplots=False, nozero=False, debug=False):
@@ -205,7 +200,7 @@ def fitjsbpdf(thehist, histlen, thedata, displayplots=False, nozero=False, debug
     # fit the johnsonSB function
     params = johnsonsb.fit(thedata[np.where(thedata > 0.0)])
     if debug:
-        print("Johnson SB fit parameters for pdf:", params)
+        print(f"Johnson SB fit parameters for pdf: {params}")
 
     # restore the zero term if needed
     # if nozero is True, assume that R=0 is not special (i.e. there is no spike in the
@@ -303,7 +298,7 @@ def sigFromDistributionData(
             )
     if twotail:
         thepercentiles = 1.0 - (1.0 - thepercentiles) / 2.0
-        print("thepercentiles adapted for two tailed distribution:", thepercentiles)
+        print(f"thepercentiles adapted for two tailed distribution: {thepercentiles}")
     pcts_data = getfracvals(vallist, thepercentiles, nozero=nozero)
     if dosighistfit:
         pcts_fit = getfracvalsfromfit(histfit, thepercentiles)
@@ -325,7 +320,7 @@ def rfromp(fitfile, thepercentiles):
 
     """
     thefit = np.array(tide_io.readvecs(fitfile)[0]).astype("float64")
-    print("thefit = ", thefit)
+    print(f"thefit = {thefit}")
     return getfracvalsfromfit(thefit, thepercentiles)
 
 
@@ -723,8 +718,8 @@ def echoloc(indata, histlen, startoffset=5.0):
     thestore[1, :] = thehist[0][-histlen:]
     timestep = thestore[0, 1] - thestore[0, 0]
     startpt = np.argmax(thestore[1, :]) + int(startoffset // timestep)
-    print("primary peak:", peakheight, peakloc, peakwidth)
-    print("startpt, startloc, timestep:", startpt, thestore[1, startpt], timestep)
+    print(f"primary peak: {peakheight:.2f}, {peakloc:.2f}, {peakwidth}")
+    print("startpt, startloc, timestep: {startpt}, {thestore[1, startpt]}, {timestep}")
     while (thestore[1, startpt] > thestore[1, startpt + 1]) and (startpt < len(thehist[0]) - 2):
         startpt += 1
     echopeakindex = np.argmax(thestore[1, startpt:-2]) + startpt
@@ -957,11 +952,11 @@ def getfracvals(datamat, thefracs, nozero=False, debug=False):
         thevals.append(float(maskmat[theindex]))
 
     if debug:
-        print("getfracvals: input datamat shape", datamat.shape)
-        print("getfracvals: maskmat shape", maskmat.shape)
-        print("getfracvals: thefracs", thefracs)
-        print("getfracvals: maxindex", maxindex)
-        print("getfracvals: thevals", thevals)
+        print(f"getfracvals: {datamat.shape=}")
+        print(f"getfracvals: {maskmat.shape=}")
+        print(f"getfracvals: {thefracs=}")
+        print(f"getfracvals: {maxindex=}")
+        print(f"getfracvals: {thevals=}")
 
     return thevals
 
@@ -1013,15 +1008,12 @@ def makemask(image, threshpct=25.0, verbose=False, nozero=False, noneg=False):
     else:
         pct2, pct98, pctthresh = getfracvals(image, [0.02, 0.98, threshpct], nozero=nozero)
     threshval = pct2 + (threshpct / 100.0) * (pct98 - pct2)
-    print("old style threshval:", threshval, "new style threshval:", pctthresh)
+    print(f"old style threshval: {threshval:.2f}, new style threshval: {pctthresh:.2f}")
     if verbose:
         print(
-            "fracval:",
-            pctthresh,
-            " threshpct:",
-            threshpct,
-            " mask threshhold:",
-            threshval,
+            f"fracval: {pctthresh:.2f}",
+            f"threshpct: {threshpct:.2f}",
+            f"mask threshhold: {threshval:.2f}",
         )
     themask = np.where(image > threshval, np.int16(1), np.int16(0))
     return themask
