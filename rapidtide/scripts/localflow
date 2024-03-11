@@ -487,7 +487,7 @@ def main():
     corrvalid_byvox = corrvalid.reshape((numspatiallocs, len(neighborlist)))
     failreason_byvox = failreason.reshape((numspatiallocs, len(neighborlist)))
 
-    # calculate temporal relationships
+    # Find every voxel's valid neighbors
     lasttime = thistime
     thistime = time.time() - starttime
     eventtimes.append(["Generate correlation list start", thistime, thistime - lasttime, None, None])
@@ -502,6 +502,7 @@ def main():
         disable=(not args.showprogressbar),
     ):
         if themask_byvox[index1] > 0:
+            # voxel is in the mask
             x, y, z = index2xyz(index1, ysize, numslices)
             for idx, neighbor in enumerate(neighborlist):
                 index2 = xyz2index(
@@ -513,7 +514,9 @@ def main():
                     numslices,
                 )
                 if index2 > 0:
+                    # neighbor location is valid
                     if themask_byvox[index2] > 0:
+                        # neighbor is in the mask
                         indexpairs.append((index1, index2, idx, theindex + 0))
             theindex += 1
             indexlist.append(index1)
