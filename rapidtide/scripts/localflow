@@ -681,12 +681,11 @@ def main():
                     numneighbors_byvox[thecoordindex] += 1
                     # deltasum += thediff * thenorm * thenorm / distancelist[whichneighbor]
                     deltasum += thediff * thenorm
-                if numneighbors_byvox[thecoordindex] > 0:
-                    targetdelay_byvox[thecoordindex, thepass] = (
-                        gain * targetdelay_byvox[thecoordindex, thepass - 1]
-                        + deltasum / numneighbors_byvox[thecoordindex]
-                    )
-                    # print(f"{deltasum}")
+            if numneighbors_byvox[thecoordindex] > 0:
+                targetdelay_byvox[thecoordindex, thepass] = (
+                    gain * targetdelay_byvox[thecoordindex, thepass - 1]
+                    + deltasum / numneighbors_byvox[thecoordindex]
+                )
     print("...done", flush=True)
     print("\n", flush=True)
 
