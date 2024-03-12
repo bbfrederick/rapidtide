@@ -471,11 +471,6 @@ def main():
     delays = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=float)
     corrvalid = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=int)
     failreason = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=int)
-    corrcoeffs3d = np.zeros(
-        (2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=float
-    )
-    delays3d = np.zeros((2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=float)
-    corrvalid3d = np.zeros((2 * xsteps + 1, 2 * ysteps + 1, 2 * zsteps + 1, numvalid), dtype=int)
     if args.debug:
         print(f"{corrcoeffs.shape=}, {delays.shape=}, {corrvalid.shape=}")
         printfirstdetails = True
@@ -525,64 +520,6 @@ def main():
     lasttime = thistime
     thistime = time.time() - starttime
     eventtimes.append(["Generate correlation list done", thistime, thistime - lasttime, len(indexpairs), "correlation pairs"])
-
-    '''for z in tqdm(
-        range(numslices),
-        desc="Slice",
-        unit="slices",
-        disable=(not args.showprogressbar),
-    ):
-        for y in range(ysize):
-            for x in range(xsize):
-                if themask[x, y, z] > 0:
-                    index1 = xyz2index(x, y, z, xsize, ysize, numslices)
-                    for idx, neighbor in enumerate(neighborlist):
-                        index2 = xyz2index(
-                            x + neighbor[0],
-                            y + neighbor[1],
-                            z + neighbor[2],
-                            xsize,
-                            ysize,
-                            numslices,
-                        )
-                        if index2 > 0:
-                            if themask_byvox[index2] > 0:
-                                indexpairs.append((index1, index2, idx, theindex + 0))
-                                """(
-                                    corrcoeffs_byvox[index1, idx],
-                                    delays_byvox[index1, idx],
-                                    corrvalid_byvox[index1, idx],
-                                    failreason_byvox[index1, idx],
-                                ) = getcorrloc(
-                                    osfmridata_voxbytime,
-                                    index1,
-                                    index2,
-                                    oversamplefactor * Fs,
-                                    dofit=args.dofit,
-                                    debug=printfirstdetails,
-                                )
-                                corrcoeffs3d[
-                                    neighbor[0] + xsteps,
-                                    neighbor[1] + ysteps,
-                                    neighbor[2] + zsteps,
-                                    theindex,
-                                ] = corrcoeffs[x, y, z, idx]
-                                delays3d[
-                                    neighbor[0] + xsteps,
-                                    neighbor[1] + ysteps,
-                                    neighbor[2] + zsteps,
-                                    theindex,
-                                ] = delays[x, y, z, idx]
-                                corrvalid3d[
-                                    neighbor[0] + xsteps,
-                                    neighbor[1] + ysteps,
-                                    neighbor[2] + zsteps,
-                                    theindex,
-                                ] = corrvalid[x, y, z, idx]
-                            else:
-                                corrvalid[x, y, z, idx] = 0"""
-                    theindex += 1
-                    indexlist.append(index1)'''
     tide_io.writenpvecs(np.transpose(np.asarray(indexlist)), f"{args.outputroot}_indexlist")
 
     # Do the correlations
@@ -616,24 +553,6 @@ def main():
             (neighborlist[neighboridx])[2] + zsteps,
         )
         # print(neighborlist[neighboridx], neighborloc)
-        corrcoeffs3d[
-            neighborloc[0],
-            neighborloc[1],
-            neighborloc[2],
-            theindex,
-        ] = corrcoeffs_byvox[index1, idx]
-        delays3d[
-            neighborloc[0],
-            neighborloc[1],
-            neighborloc[2],
-            theindex,
-        ] = delays_byvox[index1, idx]
-        corrvalid3d[
-            neighborloc[0],
-            neighborloc[1],
-            neighborloc[2],
-            theindex,
-        ] = corrvalid_byvox[index1, neighboridx]
     print("...done", flush=True)
     print("\n", flush=True)
     lasttime = thistime
@@ -667,20 +586,6 @@ def main():
         debug=args.debug,
     )
 
-    # optionally dump out formatted lags
-    sizelimit = 32767
-    output_hdr = copy.deepcopy(input_hdr)
-    output_hdr["dim"][1] = xsteps
-    output_hdr["dim"][2] = ysteps
-    output_hdr["dim"][3] = zsteps
-    output_hdr["dim"][4] = sizelimit
-    tide_io.savetonifti(
-        delays3d[:, :, :, :sizelimit],
-        output_hdr,
-        f"{args.outputroot}_delays3d",
-        debug=args.debug,
-    )
-
     # now reconstruct
     lasttime = thistime
     thistime = time.time() - starttime
@@ -705,13 +610,13 @@ def main():
             for whichneighbor in range(len(neighborlist)):
                 if (
                     corrvalid_byvox[
-                        thearrayindex,
+                        thecoordindex,
                         whichneighbor,
                     ]
                     > 0
                     and np.fabs(
                         corrcoeffs_byvox[
-                            thearrayindex,
+                            thecoordindex,
                             whichneighbor,
                         ]
                     )
@@ -719,13 +624,13 @@ def main():
                 ):
                     thediff = (
                         delays_byvox[
-                            thearrayindex,
+                            thecoordindex,
                             whichneighbor,
                         ]
                         - targetdelay_byvox[thecoordindex, thepass - 1]
                     )
                     thenorm = corrcoeffs_byvox[
-                        thearrayindex,
+                        thecoordindex,
                         whichneighbor,
                     ]
                     numneighbors_byvox[thecoordindex] += 1
