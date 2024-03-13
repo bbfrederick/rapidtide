@@ -1,0 +1,161 @@
+#!/usr/bin/env python
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import pearsonr
+
+import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
+import rapidtide.refine_factored as tide_refine
+
+
+def corrmat(thematrix):
+    numvoxels, numtimepoints = thematrix.shape
+    thecorrmat = np.zeros((numvoxels, numvoxels), dtype=float)
+    thepmat = np.zeros((numvoxels, numvoxels), dtype=float)
+    for i in range(numvoxels):
+        for j in range(numvoxels):
+            thecorrmat[i, j], thepmat[i, j] = pearsonr(thematrix[i, :], thematrix[j, :])
+
+    return thecorrmat, thepmat
+
+
+numvox = 500
+numtimepoints = 300
+tr = 2.0
+Fs = 1.0 / tr
+padtrs = 60
+
+thetcfilter = tide_filt.NoncausalFilter("lfo")
+timecourse = np.random.rand(numtimepoints)
+
+filteredtimecourse = thetcfilter.apply(Fs, timecourse)
+
+insamplerate, instarttime, incolumns, indata, incompressed, incolsource = tide_io.readbidstsv(
+    "laghist.json"
+)
+inpts = indata[0]
+numinputpts = len(inpts)
+totalsize = int((np.cumsum(inpts))[-1])
+print(f"there are {totalsize} voxels in the histogram")
+scaledarray = np.round(numvox * inpts / totalsize, 0).astype(int)
+print(scaledarray)
+print(np.cumsum(scaledarray)[-1])
+
+delays = np.zeros((numvox), dtype=float)
+startindex = 0
+for i in range(numinputpts):
+    # print(f"{scaledarray[i]=}")
+    if scaledarray[i] > 0:
+        thisdelay = instarttime + i / insamplerate
+        endindex = startindex + scaledarray[i]
+        delays[startindex:endindex] = thisdelay
+        # print(f"setting {startindex}:{endindex} to {thisdelay}")
+        startindex = endindex
+
+cutoff = 0.02
+thedelayfilter = tide_filt.NoncausalFilter("arb")
+thedelayfilter.setfreqs(0.0, 0.0, cutoff, 2 * cutoff)
+filtdelays = thedelayfilter.apply(1.0, delays)
+
+voxarray = np.zeros((numvox, numtimepoints), dtype=float)
+lagmask = np.ones((numvox), dtype=float)
+shiftedtcs = np.zeros((numvox, numtimepoints), dtype=float)
+weights = np.zeros((numvox, numtimepoints), dtype=float)
+paddedshiftedtcs = np.zeros((numvox, 2 * padtrs + numtimepoints), dtype=float)
+paddedweights = np.zeros((numvox, 2 * padtrs + numtimepoints), dtype=float)
+filteredtcs = np.zeros((numvox, numtimepoints), dtype=float)
+datatoremove = np.zeros((numvox, numtimepoints), dtype=float)
+R = np.zeros((numvox), dtype=float)
+
+for i in range(numvox):
+    voxarray[i, :] = filteredtimecourse
+
+voxelsprocessed = tide_refine.alignvoxels(
+    voxarray,
+    tr,
+    shiftedtcs,
+    weights,
+    paddedshiftedtcs,
+    paddedweights,
+    -1.0 * filtdelays,
+    lagmask,
+    nprocs=8,
+    padtrs=padtrs,
+)
+
+fig = plt.figure()
+shiftedtcsimg = plt.imshow(shiftedtcs, cmap="gray", aspect=0.25)
+plt.colorbar(shiftedtcsimg)
+plt.title("initial timecourses")
+
+initialcorrmat, initialpmat = corrmat(shiftedtcs)
+
+fig = plt.figure()
+initialcorrmatimg = plt.imshow(initialcorrmat, cmap="bwr", vmin=-1.0, vmax=1.0, aspect=1.0)
+plt.colorbar(initialcorrmatimg)
+plt.title("initial correlation matrix")
+
+# save the sLFO timecourse
+tide_io.writebidstsv("filteredtimecourse", filteredtimecourse, Fs)
+
+# calculate and save the GMS
+GMS = np.mean(shiftedtcs, axis=0)
+tide_io.writebidstsv("GMS", GMS, Fs)
+
+# calculate correlations
+thecorrs = np.zeros((numvox), dtype=float)
+for i in range(numvox):
+    thecorrs[i], p = pearsonr(GMS, shiftedtcs[i, :])
+tide_io.writebidstsv("correlations", thecorrs, 1.0)
+
+# regress out the GMS
+for i in range(numvox):
+    filteredtcs[i, :], datatoremove[i, :], R[i] = tide_fit.glmfilt(shiftedtcs[i, :], GMS)
+tide_io.writebidstsv("R", R, 1.0)
+
+fig = plt.figure()
+filteredcorrmat, filteredpmat = corrmat(filteredtcs)
+
+filteredcorrmatimg = plt.imshow(
+    filteredcorrmat,
+    cmap="bwr",
+    vmin=-1.0,
+    vmax=1.0,
+    aspect=1.0,
+)
+plt.colorbar(filteredcorrmatimg)
+plt.title = "correlation matrix after GMS regression"
+
+fig = plt.figure()
+filteredtcsimg = plt.imshow(filteredtcs, cmap="gray", aspect=0.25)
+plt.colorbar(filteredtcsimg)
+plt.title("filtered timecourses")
+
+fig = plt.figure()
+datatoremoveimg = plt.imshow(datatoremove, cmap="gray", aspect=0.25)
+plt.colorbar(datatoremoveimg)
+plt.title("removed timecourses")
+
+# save 2D files
+theheader = tide_io.niftihdrfromarray(shiftedtcs.reshape((numvox, 1, 1, numtimepoints)))
+theheader["pixdim"][4] = tr
+tide_io.savetonifti(
+    shiftedtcs.reshape((numvox, 1, 1, numtimepoints)),
+    theheader,
+    "shiftedtcs",
+)
+tide_io.savetonifti(
+    filteredtcs.reshape((numvox, 1, 1, numtimepoints)),
+    theheader,
+    "filteredtcs",
+)
+tide_io.savetonifti(
+    datatoremove.reshape((numvox, 1, 1, numtimepoints)),
+    theheader,
+    "datatoremove",
+)
+
+plt.show()

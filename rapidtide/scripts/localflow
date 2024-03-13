@@ -397,7 +397,9 @@ def main():
             )
         lasttime = thistime
         thistime = time.time() - starttime
-        eventtimes.append(["Spatial filter done", thistime, thistime - lasttime, timepoints, "timepoints"])
+        eventtimes.append(
+            ["Spatial filter done", thistime, thistime - lasttime, timepoints, "timepoints"]
+        )
 
     # prepare the input data
     lasttime = thistime
@@ -434,7 +436,9 @@ def main():
     )
     lasttime = thistime
     thistime = time.time() - starttime
-    eventtimes.append(["Prepare data done", thistime, thistime - lasttime, numvoxelsprocessed, "voxels"])
+    eventtimes.append(
+        ["Prepare data done", thistime, thistime - lasttime, numvoxelsprocessed, "voxels"]
+    )
 
     # make list of neighbors
     lasttime = thistime
@@ -465,7 +469,9 @@ def main():
         print(f"{len(neighborlist)=}, {neighborlist=}")
     lasttime = thistime
     thistime = time.time() - starttime
-    eventtimes.append(["Find neighbors done", thistime, thistime - lasttime, len(neighborlist), "voxels"])
+    eventtimes.append(
+        ["Find neighbors done", thistime, thistime - lasttime, len(neighborlist), "voxels"]
+    )
 
     corrcoeffs = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=float)
     delays = np.zeros((xsize, ysize, numslices, len(neighborlist)), dtype=float)
@@ -485,7 +491,9 @@ def main():
     # Find every voxel's valid neighbors
     lasttime = thistime
     thistime = time.time() - starttime
-    eventtimes.append(["Generate correlation list start", thistime, thistime - lasttime, None, None])
+    eventtimes.append(
+        ["Generate correlation list start", thistime, thistime - lasttime, None, None]
+    )
     print("Generate the correlation list", flush=True)
     indexlist = []
     indexpairs = []
@@ -519,7 +527,15 @@ def main():
     print("\n", flush=True)
     lasttime = thistime
     thistime = time.time() - starttime
-    eventtimes.append(["Generate correlation list done", thistime, thistime - lasttime, len(indexpairs), "correlation pairs"])
+    eventtimes.append(
+        [
+            "Generate correlation list done",
+            thistime,
+            thistime - lasttime,
+            len(indexpairs),
+            "correlation pairs",
+        ]
+    )
     tide_io.writenpvecs(np.transpose(np.asarray(indexlist)), f"{args.outputroot}_indexlist")
 
     # Do the correlations
@@ -557,7 +573,15 @@ def main():
     print("\n", flush=True)
     lasttime = thistime
     thistime = time.time() - starttime
-    eventtimes.append(["Do correlations done", thistime, thistime - lasttime, len(indexpairs), "correlation pairs"])
+    eventtimes.append(
+        [
+            "Do correlations done",
+            thistime,
+            thistime - lasttime,
+            len(indexpairs),
+            "correlation pairs",
+        ]
+    )
 
     output_hdr = copy.deepcopy(input_hdr)
     output_hdr["dim"][4] = len(neighborlist)
@@ -645,7 +669,9 @@ def main():
     print("\n", flush=True)
     lasttime = thistime
     thistime = time.time() - starttime
-    eventtimes.append(["Reconstruction done", thistime, thistime - lasttime, args.npasses - 1, "passes"])
+    eventtimes.append(
+        ["Reconstruction done", thistime, thistime - lasttime, args.npasses - 1, "passes"]
+    )
 
     output_hdr = copy.deepcopy(input_hdr)
     output_hdr["dim"][4] = args.npasses
@@ -672,7 +698,9 @@ def main():
     formattedtimings = []
     for eventtime in eventtimes:
         if eventtime[3] is not None:
-            formattedtimings.append(f"{eventtime[1]:.2f}\t{eventtime[2]:.2f}\t{eventtime[0]}\t{eventtime[3]/eventtime[2]:.2f} ({eventtime[4]}/sec)")
+            formattedtimings.append(
+                f"{eventtime[1]:.2f}\t{eventtime[2]:.2f}\t{eventtime[0]}\t{eventtime[3]/eventtime[2]:.2f} ({eventtime[4]}/sec)"
+            )
         else:
             formattedtimings.append(f"{eventtime[1]:.2f}\t{eventtime[2]:.2f}\t{eventtime[0]}")
         print(formattedtimings[-1])
