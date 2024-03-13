@@ -23,9 +23,9 @@ import warnings
 import numpy as np
 from tqdm import tqdm
 
-import rapidtide.multiproc as tide_multiproc
 import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
+import rapidtide.multiproc as tide_multiproc
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 LGR = logging.getLogger("GENERAL")
@@ -43,7 +43,8 @@ def _procOneVoxelCorrelation(
     negsearch=15.0,
     possearch=15.0,
     padding=0,
-    debug=False,):
+    debug=False,
+):
     tc1 = thedata[index, :]
     tc2 = thedata[neighborindex, :]
     if np.any(tc1) != 0.0 and np.any(tc2) != 0.0:
@@ -122,7 +123,6 @@ def _procOneVoxelCorrelation(
         return index, neighborindex, 0.0, 0.0, 0, 0
 
 
-
 def correlationpass(
     fmridata,
     referencetc,
@@ -198,7 +198,8 @@ def correlationpass(
                             negsearch=15.0,
                             possearch=15.0,
                             padding=0,
-                            debug=False, )
+                            debug=False,
+                        )
                     )
 
                 except Exception as e:
