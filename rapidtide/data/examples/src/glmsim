@@ -116,9 +116,10 @@ for i in range(numvox):
     filteredtcs[i, :], datatoremove[i, :], R[i] = tide_fit.glmfilt(shiftedtcs[i, :], GMS)
 tide_io.writebidstsv("R", R, 1.0)
 
-fig = plt.figure()
+
 filteredcorrmat, filteredpmat = corrmat(filteredtcs)
 
+fig = plt.figure()
 filteredcorrmatimg = plt.imshow(
     filteredcorrmat,
     cmap="bwr",
@@ -127,7 +128,7 @@ filteredcorrmatimg = plt.imshow(
     aspect=1.0,
 )
 plt.colorbar(filteredcorrmatimg)
-plt.title = "correlation matrix after GMS regression"
+plt.title("correlation matrix after GMS regression")
 
 fig = plt.figure()
 filteredtcsimg = plt.imshow(filteredtcs, cmap="gray", aspect=0.25)
