@@ -248,6 +248,14 @@ def savetonifti(thearray, theheader, thename, debug=False):
     output_nifti = None
 
 
+def niftifromarray(data):
+    return nib.Nifti1Image(data, affine=np.eye(4))
+
+
+def niftihdrfromarray(data):
+    return nib.Nifti1Image(data, affine=np.eye(4)).header.copy()
+
+
 def savetocifti(
     thearray,
     theciftiheader,
