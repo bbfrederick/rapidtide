@@ -41,7 +41,7 @@ alignedvec, maxdelay, maxval, failreason = tide_corr.aligntcwithref(
 )
 print(f"{maxdelay=}, {maxval=}, {failreason=}")
 
-filteredvec, datatoremove, R = tide_fit.glmfilt(fixedvec, alignedvec, debug=True)
+filteredvec, datatoremove, R, coffs = tide_fit.glmfilt(fixedvec, alignedvec, debug=True)
 
 offset = 0.0
 plt.plot(xaxis, fixedvec + offset)

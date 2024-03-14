@@ -1640,7 +1640,9 @@ def rapidtide_main(argparsingfunc):
             )
 
             # regress out
-            resampref_y, datatoremove, R = tide_fit.glmfilt(resampref_y, shiftednoise, debug=True)
+            resampref_y, datatoremove, R, coffs = tide_fit.glmfilt(
+                resampref_y, shiftednoise, debug=True
+            )
 
             # save
             tide_io.writebidstsv(

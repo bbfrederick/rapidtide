@@ -1682,6 +1682,59 @@ def mlregress(x, y, intercept=True):
     return np.atleast_1d(solution[0].T), R
 
 
+def derivativeglmfilt(thedata, theevs, nderivs=1, debug=False):
+    r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
+    its square, its cube, etc.).  Then perform a glm fit of thedata using the vectors
+    in thenewevs and return the result.
+
+    Parameters
+    ----------
+    thedata : 1D numpy array
+        Input data of length N to be filtered
+        :param thedata:
+
+    theevs : 2D numpy array
+        NxP array of explanatory variables to be fit
+        :param theevs:
+
+    nderivs : integer
+        Number of components to use for each ev.  Each successive component is a
+        higher power of the initial ev (initial, square, cube, etc.)
+        :param nderivs:
+
+    debug: bool
+        Flag to toggle debugging output
+        :param debug:
+    """
+    if debug:
+        print(f"{thedata.shape=}")
+        print(f"{theevs.shape=}")
+    if nderivs == 0:
+        thenewevs = theevs
+    else:
+        if theevs.ndim > 1:
+            thenewevs = np.zeros((theevs.shape[0], theevs.shape[1] * (nderivs + 1)), dtype=float)
+            for ev in range(0, theevs.shape[1] - 1):
+                thenewevs[:, nderivs * ev] = theevs[:, ev] * 1.0
+                for i in range(1, nderivs + 1):
+                    thenewevs[:, nderivs * (ev - 1) + i] = np.gradient(
+                        thenewevs[:, nderivs * (ev - 1) + i - 1]
+                    )
+        else:
+            thenewevs = np.zeros((theevs.shape[0], nderivs + 1), dtype=float)
+            thenewevs[:, 0] = theevs * 1.0
+            for i in range(1, nderivs + 1):
+                thenewevs[:, i] = np.gradient(thenewevs[:, i - 1])
+    if debug:
+        print(f"{nderivs=}")
+        print(f"{thenewevs.shape=}")
+    filtered, datatoremove, R, coffs = glmfilt(thedata, thenewevs, debug=debug)
+    if debug:
+        print(f"{R=}")
+
+    return filtered, thenewevs, datatoremove, R, coffs
+
+
 def expandedglmfilt(thedata, theevs, ncomps=1, debug=False):
     r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
     its square, its cube, etc.).  Then perform a glm fit of thedata using the vectors
@@ -1728,11 +1781,11 @@ def expandedglmfilt(thedata, theevs, ncomps=1, debug=False):
     if debug:
         print(f"{ncomps=}")
         print(f"{thenewevs.shape=}")
-    filtered, datatoremove, R = glmfilt(thedata, thenewevs, debug=debug)
+    filtered, datatoremove, R, coffs = glmfilt(thedata, thenewevs, debug=debug)
     if debug:
         print(f"{R=}")
 
-    return filtered, thenewevs, datatoremove, R
+    return filtered, thenewevs, datatoremove, R, coffs
 
 
 def glmfilt(thedata, theevs, debug=False):
@@ -1758,15 +1811,19 @@ def glmfilt(thedata, theevs, debug=False):
         print(f"{thedata.shape=}")
         print(f"{theevs.shape=}")
     thefit, R = mlregress(theevs, thedata)
+    retcoffs = np.zeros((thefit.shape[1] - 1), dtype=float)
     if debug:
         print(f"{thefit.shape=}")
         print(f"{thefit=}")
         print(f"{R=}")
+        print(f"{retcoffs.shape=}")
     datatoremove = thedata * 0.0
+
     if theevs.ndim > 1:
         for ev in range(1, thefit.shape[1]):
             if debug:
                 print(f"{ev=}")
+            retcoffs[ev - 1] = thefit[0, ev]
             datatoremove += thefit[0, ev] * theevs[:, ev - 1]
             if debug:
                 print(f"{ev=}")
@@ -1774,8 +1831,11 @@ def glmfilt(thedata, theevs, debug=False):
                 print(f"\tdatatoremove min max = {np.min(datatoremove)}, {np.max(datatoremove)}")
     else:
         datatoremove += thefit[0, 1] * theevs[:]
+        retcoffs[0] = thefit[0, 1]
     filtered = thedata - datatoremove
-    return filtered, datatoremove, R
+    if debug:
+        print(f"{retcoffs=}")
+    return filtered, datatoremove, R, retcoffs
 
 
 # --------------------------- Peak detection functions ----------------------------------------------
