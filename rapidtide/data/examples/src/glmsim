@@ -30,8 +30,8 @@ Fs = 1.0 / tr
 padtrs = 60
 docorrmats = False
 noiselevel = 0.5
-nderivs = 2
-inputfile = "laghist.json"
+nderivs = 3
+inputfile = "flat.json"
 
 thetcfilter = tide_filt.NoncausalFilter("lfo")
 timecourse = np.random.randn(numtimepoints)
