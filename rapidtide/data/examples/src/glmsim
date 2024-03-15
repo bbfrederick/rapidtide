@@ -30,7 +30,7 @@ Fs = 1.0 / tr
 padtrs = 60
 docorrmats = False
 noiselevel = 0.5
-nderivs = 3
+nderivs = 5
 inputfile = "flat.json"
 
 thetcfilter = tide_filt.NoncausalFilter("lfo")
@@ -119,6 +119,17 @@ for i in range(numvox):
     filteredtcs[i, :], datatoremove[i, :], R[i], coffs = tide_fit.glmfilt(shiftedtcs[i, :], GMS)
 tide_io.writebidstsv("R", R, 1.0)
 
+fig = plt.figure()
+filteredtcsimg = plt.imshow(filteredtcs, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
+plt.colorbar(filteredtcsimg)
+plt.title("GMS filtered timecourses")
+
+fig = plt.figure()
+datatoremoveimg = plt.imshow(datatoremove, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
+plt.colorbar(datatoremoveimg)
+plt.title("GMS removed timecourses")
+
+
 # regress out the GMS and derivatives
 print("regressing out GMS and derivatives")
 for i in range(numvox):
@@ -138,6 +149,46 @@ for i in range(numvox):
         derivcoffs[i, j] /= derivcoffs[i, 0]
     print(filtdelays[i], derivcoffs[i, 0], derivcoffs[i, 1], derivcoffs[i, 2])
 tide_io.writebidstsv("derivR", derivR, 1.0)
+
+fig = plt.figure()
+derivfilteredtcsimg = plt.imshow(derivfilteredtcs, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
+plt.colorbar(derivfilteredtcsimg)
+plt.title("GMS + derivs filtered timecourses")
+
+fig = plt.figure()
+derivdatatoremoveimg = plt.imshow(derivdatatoremove, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
+plt.colorbar(derivdatatoremoveimg)
+plt.title("GMS + derivs removed timecourses")
+
+# regress out the refined regressor and derivatives
+print("regressing out sLFO and derivatives")
+for i in range(numvox):
+    (
+        derivfilteredtcs[i, :],
+        dummy,
+        derivdatatoremove[i, :],
+        derivR[i],
+        derivcoffs[i, :],
+    ) = tide_fit.derivativeglmfilt(
+        shiftedtcs[i, :],
+        bandlimitedtc,
+        nderivs=nderivs,
+        debug=False,
+    )
+    for j in range(nderivs + 1):
+        derivcoffs[i, j] /= derivcoffs[i, 0]
+    print(filtdelays[i], derivcoffs[i, 0], derivcoffs[i, 1], derivcoffs[i, 2])
+tide_io.writebidstsv("derivR", derivR, 1.0)
+
+fig = plt.figure()
+derivfilteredtcsimg = plt.imshow(derivfilteredtcs, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
+plt.colorbar(derivfilteredtcsimg)
+plt.title("sLFO + derivs filtered timecourses")
+
+fig = plt.figure()
+derivdatatoremoveimg = plt.imshow(derivdatatoremove, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
+plt.colorbar(derivdatatoremoveimg)
+plt.title("sLFO + derivs removed timecourses")
 
 if docorrmats:
     print("calculating initial correlation matrix")
@@ -177,26 +228,6 @@ if docorrmats:
     )
     plt.colorbar(derivfilteredcorrmatimg)
     plt.title("correlation matrix after GMS + derivatives regression")
-
-fig = plt.figure()
-filteredtcsimg = plt.imshow(filteredtcs, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
-plt.colorbar(filteredtcsimg)
-plt.title("GMS filtered timecourses")
-
-fig = plt.figure()
-datatoremoveimg = plt.imshow(datatoremove, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
-plt.colorbar(datatoremoveimg)
-plt.title("GMS removed timecourses")
-
-fig = plt.figure()
-derivfilteredtcsimg = plt.imshow(derivfilteredtcs, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
-plt.colorbar(derivfilteredtcsimg)
-plt.title("GMS + derivs filtered timecourses")
-
-fig = plt.figure()
-derivdatatoremoveimg = plt.imshow(derivdatatoremove, cmap="gray", vmin=-2.5, vmax=2.5, aspect=0.25)
-plt.colorbar(derivdatatoremoveimg)
-plt.title("GMS + derivs removed timecourses")
 
 # save 2D files
 theheader = tide_io.niftihdrfromarray(shiftedtcs.reshape((numvox, 1, 1, numtimepoints)))
