@@ -58,7 +58,6 @@ Contents
    usage.rst
    legacy.rst
    api.rst
-   #auto_examples/index
    contributing.rst
 
 

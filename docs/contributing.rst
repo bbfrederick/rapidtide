@@ -1,5 +1,5 @@
 Contributing to rapidtide
-====================================
+=========================
 
 This document explains how to set up a development environment for contributing
 to rapidtide and code style conventions we follow within the project.
