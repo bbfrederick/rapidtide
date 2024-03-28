@@ -55,7 +55,7 @@ DEFAULT_INTERPTYPE = "univariate"
 DEFAULT_WINDOW_TYPE = "hamming"
 DEFAULT_GLOBALMASK_METHOD = "mean"
 DEFAULT_GLOBALSIGNAL_METHOD = "sum"
-DEFAULT_CORRWEIGHTING = "None"
+DEFAULT_CORRWEIGHTING = "regressor"
 DEFAULT_CORRTYPE = "linear"
 DEFAULT_SIMILARITYMETRIC = "correlation"
 DEFAULT_PEAKFIT_TYPE = "gauss"
@@ -568,6 +568,11 @@ def _get_parser():
         choices=["None", "phat", "liang", "eckart", "regressor"],
         help=(
             "Method to use for cross-correlation weighting. "
+            "'None' performs an unweighted correlation. "
+            "'phat' weights the correlation by the magnitude of the product of the timecourse's FFTs. "
+            "'liang' weights the correlation by the sum of the magnitudes of the timecourse's FFTs. "
+            "'eckart' weights the correlation by the product of the magnitudes of the timecourse's FFTs. "
+            "'regressor' weights the correlation by the magnitude of the sLFO regressor FFT. "
             f'Default is "{DEFAULT_CORRWEIGHTING}".'
         ),
         default=DEFAULT_CORRWEIGHTING,
