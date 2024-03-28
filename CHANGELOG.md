@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.8.4 (3/28/24)
+* (rapidtide) Output some .json sidecars that I had neglected.
+* (glmsim) New program to help develop instructional tools re: how rapidtide works. This is a WIP.
+* (docs) Major revisions to the rapidtide usage instructions.
+* (package) Accepted several dependabot changes.
+
 ## Version 2.8.3 (3/7/24)
 * (rapidtide) Fixed the logic for saving lagregressors - they only exist if you do GLM or CVR analysis, so if you set nolimitoutput, check for existance first (thanks to Laura Murray for finding this bug).
 * (rapidtide) Changed the name of the file containing the voxel specific EVs that are regressed out by the GLM from "lagregressors_bold" to "lfofilterEVs_bold" (thanks to Tianye Zhai for flagging this).
