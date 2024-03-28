@@ -142,7 +142,6 @@ Outputs:
 
 Outputs are space or space by time NIFTI or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  File formats and naming follow BIDS conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
 
-.. _bidsoutputs:
 BIDS Outputs:
 ^^^^^^^^^^^^^
 
@@ -250,7 +249,7 @@ This will do a the default analysis (but each and every particular can be change
 
             #. Applying an offset to the recenter the peak of the delay distribution of all voxels to zero, which should make datasets easier to compare.
 
-    #. After the three passes are complete, rapidtide will then use a GLM filter to remove a voxel specific lagged copy of the final probe regressor from the data - this denoised data will be in the file ``outputname_desc-lfofilterCleaned_bold.nii.gz``.  There will also a number of maps output with the prefix ``outputname_`` of delay, correlation strength and so on.  See the bidsoutputs_ table above for specifics.
+    #. After the three passes are complete, rapidtide will then use a GLM filter to remove a voxel specific lagged copy of the final probe regressor from the data - this denoised data will be in the file ``outputname_desc-lfofilterCleaned_bold.nii.gz``.  There will also a number of maps output with the prefix ``outputname_`` of delay, correlation strength and so on.  See the :ref:`BIDS Outputs` table above for specifics.
 
 
 Removing low frequency physiological noise from fMRI data that has been processed with FIX
