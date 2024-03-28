@@ -72,6 +72,8 @@ modules_list = [
     "rapidtide/workflows/rapidtide_parser",
     "rapidtide/workflows/roisummarize",
     "rapidtide/workflows/showtc",
+    "rapidtide/workflows/tcfrom2col",
+    "rapidtide/workflows/tcfrom3col",
     "rapidtide/workflows/tidepool",
     "rapidtide/workflows/utils",
     "rapidtide/tidepoolTemplate",
