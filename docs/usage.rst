@@ -251,6 +251,7 @@ This will do a the default analysis (but each and every particular can be change
 
     #. After the three passes are complete, rapidtide will then use a GLM filter to remove a voxel specific lagged copy of the final probe regressor from the data - this denoised data will be in the file ``outputname_desc-lfofilterCleaned_bold.nii.gz``.  There will also a number of maps output with the prefix ``outputname_`` of delay, correlation strength and so on.  See the :ref:`BIDS Outputs` table above for specifics.
 
+Please note that rapidtide plays happily with AROMA, so you don't need to do anything special to process data that's been run through AROMA.  While FIX and AROMA both use spatiotemporal analysis of independent components to determine what components to remove, AROMA only targets ICs related to motion, which are quite distinct from the sLFO signal, so they don't interfere with each other.  In contrast, FIX targets components that are "bad", for multiple definitions of the term, which includes some purely hemodynamic components near the back of the brain.  As a result, FIX denoising impedes the operation of rapidtide.  See below.
 
 Removing low frequency physiological noise from fMRI data that has been processed with FIX
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
