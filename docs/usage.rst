@@ -209,7 +209,12 @@ Examples:
 ^^^^^^^^^
 
 Rapidtide can do many things - as I've found more interesting things to do with time delay processing, it's gained new functions and options to support these new applications.  As a result, it can be a little hard to know what to use for a new experiment.  To help with that, I've decided to add this section to the manual to get you started.  It's broken up by type of data/analysis you might want to do.
-NB: To speed up the analysis, adding the argument ``--nprocs XX`` to any of the following commands will parallelize the analysis to XX CPUs - set XX to -1 to use all available CPUs.  This can result in a speedup approaching a factor of the number of CPUs used.
+
+NB: To speed up the analysis, adding the argument ``--nprocs XX`` to any of the following commands will parallelize the analysis to use XX CPUs - set XX to -1 to use all available CPUs.  This can result in a speedup approaching a factor of the number of CPUs used.
+
+Preprocessing
+"""""""""""""
+Rapidtide operates on data which has been subjected to all the "standard" preprocessing steps, most importantly motion correction and slice time correction.  Since rapidtide
 
 Removing low frequency physiological noise from fMRI data
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -239,13 +244,13 @@ This will do a the default analysis (but each and every particular can be change
 
         #. Generate a new estimate of the global noise signal by:
 
-            #. Aligning all of the timecourses in the data to bring the global signal into phase,
+            #. Aligning all of the voxel timecourses to bring the global signal into phase,
 
             #. Performing a PCA analysis,
 
-            #. Reconstructing each timecourse using the components accounting for 80% of the signal variance in all aligned voxel timecourses,
+            #. Reconstructing each timecourse using the PCA components accounting for 80% of the signal variance in the aligned voxel timecourses,
 
-            #. Averaging to produce a new probe regressor,
+            #. Averaging the reconstructed timecourses to produce a new probe regressor,
 
             #. Applying an offset to the recenter the peak of the delay distribution of all voxels to zero, which should make datasets easier to compare.
 
@@ -460,19 +465,11 @@ Outputs:
 Usage:
 ^^^^^^
 
-	::
+.. argparse::
+   :ref: rapidtide.scripts.rapidtide2std._get_parser
+   :prog: rapidtide2std
+   :func: _get_parser
 
-		usage: rapidtide2std INPUTFILEROOT OUTPUTDIR FEATDIRECTORY [--all] [--hires]
-
-		required arguments:
-		    INPUTFILEROOT      - The base name of the rapidtide maps up to but not including the underscore
-		    OUTPUTDIR          - The location for the output files
-		    FEADDIRECTORY      - A feat directory (x.feat) where registration to standard space has been performed
-
-		optional arguments:
-		    --all              - also transform the corrout file (warning - file may be huge)
-		    --hires            - transform to match the high resolution anatomic image rather than the standard
-		    --linear           - only do linear transformation, even if warpfile exists
 
 
 showxcorr_legacy
