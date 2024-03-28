@@ -24,6 +24,23 @@ import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 
 
+def _get_parser():
+    # get the command line parameters
+    parser = argparse.ArgumentParser(
+        prog="variabilityizer",
+        description="Transform a nifti fmri file into a temporal variability file.",
+        allow_abbrev=False,
+    )
+    parser.add_argument("inputfilename", type=str, help="The name of the input nifti file.")
+    parser.add_argument("outputfilename", type=str, help="The name of the output nifti file.")
+    parser.add_argument(
+        "windowlength",
+        type=float,
+        help="The size of the temporal window in seconds.",
+    )
+    return parser
+
+
 def cvttovariability(windowhalfwidth, data):
     themean = np.mean(data)
     if themean > 0.0:
@@ -43,24 +60,10 @@ def main():
     displayplots = False
 
     # get the command line parameters
-    parser = argparse.ArgumentParser(
-        prog="variabilityizer",
-        description="Transform a nifti fmri file into a temporal variability file.",
-        allow_abbrev=False,
-    )
-    parser.add_argument("inputfilename", type=str, help="The name of the input nifti file.")
-    parser.add_argument("outputfilename", type=str, help="The name of the output nifti file.")
-    parser.add_argument(
-        "windowlength",
-        type=float,
-        help="The size of the temporal window in seconds.",
-    )
-
-    # get the command line parameters
     try:
-        args = parser.parse_args()
+        args = _get_parser().parse_args()
     except SystemExit:
-        parser.print_help()
+        _get_parser().print_help()
         raise
 
     # get the input TR
