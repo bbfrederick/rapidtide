@@ -132,7 +132,6 @@ API
     rapidtide.fit.findrisetimefunc
     rapidtide.fit.findmaxlag_gauss
     rapidtide.fit.maxindex_noedge
-    rapidtide.fit.findmaxlag_gauss_rev
     rapidtide.fit.findmaxlag_quad
     rapidtide.fit.gaussfitsk
     rapidtide.fit.gaussfit
