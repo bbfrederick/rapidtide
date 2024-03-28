@@ -797,18 +797,13 @@ Outputs:
 Usage:
 ^^^^^^
 
-	::
+.. argparse::
+   :ref: rapidtide.workflows.resamplenifti._get_parser
+   :prog: resamplenifti
+   :func: _get_parser
 
-		usage: resamplenifti inputfile inputtr outputname outputtr [-a]
-
-		required arguments:
-			inputfile	- the name of the input nifti file
-			inputtr		- the tr of the input file in seconds
-			outputfile	- the name of the output nifti file
-			outputtr	- the tr of the output file in seconds
-
-		options:
-			-a		- disable antialiasing filter (only relevant if you are downsampling in time)
+   Debugging options : @skip
+      skip debugging options
 
 
 tcfrom3col
@@ -820,7 +815,7 @@ Description:
 
 Inputs:
 ^^^^^^^
-	A three column text file
+	An FSL style three column text file (start time, duration, value)
 
 Outputs:
 ^^^^^^^^
@@ -829,17 +824,42 @@ Outputs:
 Usage:
 ^^^^^^
 
-	::
+.. argparse::
+   :ref: rapidtide.workflows.tcfrom3col._get_parser
+   :prog: tcfrom3col
+   :func: _get_parser
 
-		tcfrom3col - convert a 3 column fsl style regressor into a one column timecourse
+   Debugging options : @skip
+      skip debugging options
 
-		usage: tcfrom3col infile timestep numpoints outfile
 
-		required arguments:
-			infile:      a text file containing triplets of start time, duration, and value
-			timestep:    the time step of the output time coures in seconds
-			numpoints:   the number of output time points
-			outfile:     the name of the output time course file
+
+tcfrom2col
+----------
+
+Description:
+^^^^^^^^^^^^
+	A  simple command line that takes an FSL style 2 column regressor file and generates a time course (waveform) file.  FSL 3 column files are text files containing one row per "event".  Each row has three columns: start time in seconds, duration in seconds, and waveform value.  The output waveform is zero everywhere that is not covered by an "event" in the file.
+
+Inputs:
+^^^^^^^
+	An FSL style two column text file (start time, duration)
+
+Outputs:
+^^^^^^^^
+	A single column text file containing the waveform
+
+Usage:
+^^^^^^
+
+.. argparse::
+   :ref: rapidtide.workflows.tcfrom2col._get_parser
+   :prog: tcfrom2col
+   :func: _get_parser
+
+   Debugging options : @skip
+      skip debugging options
+
 
 
 pixelcomp
@@ -904,6 +924,7 @@ Usage:
 					       5: right, 6: center left, 7: center right, 8: lower center, 9: upper center,
 					       10: center.  Default is 2.
 		    --debug                  - print debugging information
+
 
 glmfilt
 ---------
