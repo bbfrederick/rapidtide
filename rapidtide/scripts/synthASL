@@ -24,22 +24,7 @@ import rapidtide.io as tide_io
 from rapidtide.RapidtideDataset import RapidtideDataset
 
 
-def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841):
-    theaslimage = lags * 0.0
-
-    # convert rapidtide delays to time from tagging, and only keep positive delays after pld
-    offsets = lags + tagoffset
-    calcmask = mask * np.where(offsets < pld, 0.0, 1.0)
-
-    for imtime in np.linspace(pld, pld + TI, num=50, endpoint=True):
-        tagdecayfac = np.exp(-(offsets + imtime) / bloodT1) * calcmask
-        oxyfac = strengths * 0.0 + 1.0
-        cbvfac = np.fabs(strengths) * oxyfac
-        theaslimage += tagdecayfac * cbvfac
-    return theaslimage, tagdecayfac, oxyfac, cbvfac, calcmask, offsets
-
-
-def main():
+def _get_parser():
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="synthASL",
@@ -82,12 +67,30 @@ def main():
         help="The T1 of blood at this field strength (default is 1.841, for 3T).",
         default=1.841,
     )
+    return parser
 
+
+def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841):
+    theaslimage = lags * 0.0
+
+    # convert rapidtide delays to time from tagging, and only keep positive delays after pld
+    offsets = lags + tagoffset
+    calcmask = mask * np.where(offsets < pld, 0.0, 1.0)
+
+    for imtime in np.linspace(pld, pld + TI, num=50, endpoint=True):
+        tagdecayfac = np.exp(-(offsets + imtime) / bloodT1) * calcmask
+        oxyfac = strengths * 0.0 + 1.0
+        cbvfac = np.fabs(strengths) * oxyfac
+        theaslimage += tagdecayfac * cbvfac
+    return theaslimage, tagdecayfac, oxyfac, cbvfac, calcmask, offsets
+
+
+def main():
     # get the command line parameters
     try:
-        args = parser.parse_args()
+        args = _get_parser().parse_args()
     except SystemExit:
-        parser.print_help()
+        _get_parser().print_help()
         raise
 
     thedataset = RapidtideDataset("main", args.dataset, init_LUT=False)

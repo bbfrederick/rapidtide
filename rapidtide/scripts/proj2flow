@@ -25,10 +25,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 
 
-def main():
-    # set default variable values
-    displayplots = False
-
+def _get_parser():
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="proj2flow",
@@ -57,11 +54,18 @@ def main():
         help="The high passband frequency limit in Hz (set less than zero to disable LPF)",
     )"""
 
+    return parser
+
+
+def main():
+    # set default variable values
+    displayplots = False
+
     # get the command line parameters
     try:
-        args = parser.parse_args()
+        args = _get_parser().parse_args()
     except SystemExit:
-        parser.print_help()
+        _get_parser().print_help()
         raise
 
     # get the input TR
