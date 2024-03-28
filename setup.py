@@ -70,6 +70,7 @@ modules_list = [
     "rapidtide/workflows/parser_funcs",
     "rapidtide/workflows/polyfitim",
     "rapidtide/workflows/rapidtide",
+    "rapidtide/workflows/rapidtide2std",
     "rapidtide/workflows/rapidtide_parser",
     "rapidtide/workflows/roisummarize",
     "rapidtide/workflows/showarbcorr",
