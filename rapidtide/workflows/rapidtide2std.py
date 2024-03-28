@@ -23,15 +23,6 @@ import sys
 
 import rapidtide.externaltools as tide_exttools
 
-fsldir = os.environ.get("FSLDIR")
-if fsldir is not None:
-    fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
-    flirtcmd = os.path.join(fsldir, "bin", "flirt")
-    applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
-else:
-    print("FSL directory not found - aborting")
-    sys.exit()
-
 
 def _get_parser():
     # get the command line parameters
@@ -108,6 +99,15 @@ def _get_parser():
 def rapidtide2std(args):
     if args.debug:
         print(args)
+
+    fsldir = os.environ.get("FSLDIR")
+    if fsldir is not None:
+        fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
+        flirtcmd = os.path.join(fsldir, "bin", "flirt")
+        applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
+    else:
+        print("FSL directory not found - aborting")
+        sys.exit()
 
     # make sure the appropriate transformation matrix and targets exist
     if args.aligntohires:
