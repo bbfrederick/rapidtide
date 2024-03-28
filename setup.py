@@ -64,6 +64,7 @@ modules_list = [
     "rapidtide/workflows/happy",
     "rapidtide/workflows/happy_parser",
     "rapidtide/workflows/histnifti",
+    "rapidtide/workflows/localflow",
     "rapidtide/workflows/niftidecomp",
     "rapidtide/workflows/niftistats",
     "rapidtide/workflows/parser_funcs",
