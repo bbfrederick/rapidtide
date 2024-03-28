@@ -466,11 +466,12 @@ Usage:
 ^^^^^^
 
 .. argparse::
-   :ref: rapidtide.scripts.rapidtide2std._get_parser
+   :ref: rapidtide.workflows.rapidtide2std._get_parser
    :prog: rapidtide2std
    :func: _get_parser
 
-
+   Debugging options : @skip
+      skip debugging options
 
 showxcorr_legacy
 ----------------
