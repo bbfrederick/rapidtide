@@ -55,7 +55,10 @@ Contents
    :maxdepth: 2
    :caption: Usage:
 
-   usage.rst
+   usage_general.rst
+   usage_rapidtide.rst
+   usage_happy.rst
+   usage_rapidtide2std.rst
    legacy.rst
    api.rst
    contributing.rst
