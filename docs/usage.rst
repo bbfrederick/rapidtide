@@ -223,7 +223,8 @@ The base command you'd use would be:
 
 		rapidtide \
 		    inputfmrifile \
-		    outputname
+		    outputname \
+		    --denoising
 
 This will do a the default analysis (but each and every particular can be changed by adding command line options).  By default, rapidtide will:
 
@@ -235,7 +236,7 @@ This will do a the default analysis (but each and every particular can be change
 
         #. Perform a crosscorrelation of each voxel with the probe regressor using the "regressor" weighting.
 
-        #. Estimate the location and strength of the correlation peak using the correlation similarity metric.
+        #. Estimate the location and strength of the correlation peak using the correlation similarity metric within a range of +/-10 seconds around around the modal delay value.
 
         #. Generate a new estimate of the global noise signal by:
 
@@ -250,6 +251,20 @@ This will do a the default analysis (but each and every particular can be change
             #. Applying an offset to the recenter the peak of the delay distribution of all voxels to zero, which should make datasets easier to compare.
 
     #. After the three passes are complete, rapidtide will then use a GLM filter to remove a voxel specific lagged copy of the final probe regressor from the data - this denoised data will be in the file ``outputname_desc-lfofilterCleaned_bold.nii.gz``.  There will also a number of maps output with the prefix ``outputname_`` of delay, correlation strength and so on.  See the bidsoutputs_ table above for specifics.
+
+
+Removing low frequency physiological noise from fMRI data that has been processed with FIX
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+There is a special case if you are working on HCP data, which has both minimally processed and a fully processed (including FIX denoising) data files.  FIX denoising is a good thing, but it tends to distort the sLFO signals that rapidtide is looking for, so the selection and refinement of the sLFO can wander off into the thicket if applied to FIX processed data.  So ideally, you would run rapidtide, and THEN FIX.  However, since reprocessing the HCP data is kind of a pain, there's a hack that capitalizes on the fact that all of these operations are linear.  You run rapidtide on the minimmally processed data, to accurately assess the sLFO regressor and time delays in each voxel, but you apply the final GLM to the FIX processed data, to remove the data that has the other denoising already done.  This works very well!  To do this, you use the ``--glmsourcefile FILE`` option to specify the file you want to denoise.  The ``outputname_desc-lfofilterCleaned_bold.nii.gz`` file is the FIX file, with rapidtide denoising applied.
+
+	::
+
+		rapidtide \
+		    minimallyprocessedinputfmrifile \
+		    outputname \
+		    --denoising \
+		    --glmsourcefile FIXprocessedfile
 
 
 Mapping long time delays in response to a gas challenge experiment:
