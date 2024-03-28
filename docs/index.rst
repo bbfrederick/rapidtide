@@ -56,6 +56,7 @@ Contents
    :caption: Usage:
 
    usage.rst
+   legacy.rst
    api.rst
    #auto_examples/index
    contributing.rst
