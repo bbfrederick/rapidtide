@@ -20,4 +20,4 @@ import rapidtide.workflows.aligntcs as theworkflow
 import rapidtide.workflows.parser_funcs as pf
 
 if __name__ == "__main__":
-    pf.generic_init(theworkflow._get_parser, theworkflow.doaligntcs)
+    pf.generic_init(theworkflow._get_parser, theworkflow.aligntcs)
