@@ -64,11 +64,14 @@ DEFAULT_REFINE_WEIGHTING = "R2"
 
 DEFAULT_DENOISING_LAGMIN = -10.0
 DEFAULT_DENOISING_LAGMAX = 10.0
+DEFAULT_DENOISING_PASSES = 3
 DEFAULT_DENOISING_DESPECKLE_PASSES = 4
 DEFAULT_DENOISING_PEAKFITTYPE = "gauss"
+DEFAULT_DENOISING_SPATIALFILT = -1
 
 DEFAULT_DELAYMAPPING_LAGMIN = -10.0
 DEFAULT_DELAYMAPPING_LAGMAX = 30.0
+DEFAULT_DELAYMAPPING_PASSES = 3
 DEFAULT_DELAYMAPPING_DESPECKLE_PASSES = 4
 
 DEFAULT_CVRMAPPING_LAGMIN = -5.0
@@ -119,9 +122,10 @@ def _get_parser():
         action="store_true",
         help=(
             "Preset for hemodynamic denoising - this is a macro that "
-            f"sets lagmin={DEFAULT_DENOISING_LAGMIN}, lagmax={DEFAULT_DENOISING_LAGMAX}, "
-            f"passes=3, despeckle_passes={DEFAULT_DENOISING_DESPECKLE_PASSES}, "
-            f"refineoffset=True, peakfittype={DEFAULT_DENOISING_PEAKFITTYPE}, doglmfilt=True. "
+            f"sets searchrange={DEFAULT_DENOISING_LAGMIN}, {DEFAULT_DENOISING_LAGMAX}, "
+            f"passes={DEFAULT_DENOISING_PASSES}, despeckle_passes={DEFAULT_DENOISING_DESPECKLE_PASSES}, "
+            f"refineoffset=True, peakfittype={DEFAULT_DENOISING_PEAKFITTYPE}, "
+            f"spatialfilt={DEFAULT_DENOISING_SPATIALFILT}, doglmfilt=True. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
         ),
@@ -134,7 +138,7 @@ def _get_parser():
         help=(
             "Preset for delay mapping analysis - this is a macro that "
             f"sets lagmin={DEFAULT_DELAYMAPPING_LAGMIN}, lagmax={DEFAULT_DELAYMAPPING_LAGMAX}, "
-            f"passes=3, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
+            f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
             "refineoffset=True, pickleft=True, limitoutput=True, "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
@@ -1773,14 +1777,24 @@ def process_args(inputargs=None):
         args["despeckle_passes"] = 0
 
     if args["delaymapping"]:
+        pf.setifnotset(args, "passes", DEFAULT_DELAYMAPPING_PASSES)
         pf.setifnotset(args, "despeckle_passes", DEFAULT_DELAYMAPPING_DESPECKLE_PASSES)
         pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
-        args["passes"] = 3
         args["refineoffset"] = True
         args["pickleft"] = True
         args["limitoutput"] = True
         pf.setifnotset(args, "doglmfilt", False)
+
+    if args["denoising"]:
+        pf.setifnotset(args, "passes", DEFAULT_DENOISING_PASSES)
+        pf.setifnotset(args, "despeckle_passes", DEFAULT_DENOISING_DESPECKLE_PASSES)
+        pf.setifnotset(args, "lagmin", DEFAULT_DENOISING_LAGMIN)
+        pf.setifnotset(args, "lagmax", DEFAULT_DENOISING_LAGMAX)
+        pf.setifnotset(args, "peakfittype", DEFAULT_DENOISING_PEAKFITTYPE)
+        pf.setifnotset(args, "spatialfilt", DEFAULT_DENOISING_SPATIALFILT)
+        args["refineoffset"] = True
+        pf.setifnotset(args, "doglmfilt", True)
 
     if args["docvrmap"]:
         if args["regressorfile"] is None:
