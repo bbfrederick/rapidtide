@@ -46,7 +46,7 @@ def _get_parser():
     """
     parser = argparse.ArgumentParser(
         prog="showxcorrx",
-        description=("Calculate and display " "crosscorrelation between two " "timeseries."),
+        description=("Calculate and display crosscorrelation between two timeseries."),
         allow_abbrev=False,
     )
 
@@ -63,7 +63,8 @@ def _get_parser():
     )
 
     # add optional arguments
-    sampling = parser.add_mutually_exclusive_group()
+    general = parser.add_argument_group("General Options")
+    sampling = general.add_mutually_exclusive_group()
     sampling.add_argument(
         "--samplerate",
         dest="samplerate",
@@ -88,24 +89,19 @@ def _get_parser():
         ),
         default="auto",
     )
-    parser.add_argument(
-        "--nodisplay",
-        dest="display",
-        action="store_false",
-        help=("Do not plot the data (for noninteractive use)"),
-        default=True,
-    )
-    pf.addsearchrangeopts(parser, details=True)
-    pf.addtimerangeopts(parser)
-    parser.add_argument(
-        "--trimdata",
-        dest="trimdata",
-        action="store_true",
-        help=("Trimming data to match"),
-        default=False,
-    )
 
-    preproc = parser.add_argument_group()
+    pf.addsearchrangeopts(general, details=True)
+
+    pf.addtimerangeopts(general)
+
+    # add window options
+    pf.addwindowopts(parser)
+
+    # Filter arguments
+    pf.addfilteropts(parser, filtertarget="timecourses", details=True)
+
+    # Preprocessing options
+    preproc = parser.add_argument_group("Preprocessing options")
     preproc.add_argument(
         "--detrendorder",
         dest="detrendorder",
@@ -115,14 +111,13 @@ def _get_parser():
         help=("Set order of trend removal (0 to disable, default is 1 - linear). "),
         default=1,
     )
-    # add window options
-    pf.addwindowopts(parser)
-
-    # Filter arguments
-    pf.addfilteropts(parser, filtertarget="timecourses", details=True)
-
-    # Preprocessing options
-    preproc = parser.add_argument_group("Preprocessing options")
+    preproc.add_argument(
+        "--trimdata",
+        dest="trimdata",
+        action="store_true",
+        help=("Trimming data to match"),
+        default=False,
+    )
     preproc.add_argument(
         "--corrweighting",
         dest="corrweighting",
@@ -275,6 +270,13 @@ def _get_parser():
         default=True,
     )
     misc.add_argument(
+        "--nodisplay",
+        dest="display",
+        action="store_false",
+        help=("Do not plot the data (for noninteractive use)"),
+        default=True,
+    )
+    misc.add_argument(
         "--nonorm",
         dest="minorm",
         action="store_false",
@@ -296,7 +298,7 @@ def _get_parser():
     )
 
     # debugging options
-    debugging = parser.add_argument_group("Miscellaneous options")
+    debugging = parser.add_argument_group("Debugging options")
     debugging.add_argument(
         "--debug",
         dest="debug",
