@@ -109,8 +109,7 @@ def _get_parser():
     analysis_type = parser.add_argument_group(
         title="Analysis type",
         description=(
-            "Single arguments that change default values for many "
-            "arguments. "
+            "Single arguments that set several parameter values, tailored to particular analysis types. "
             "Any parameter set by an analysis type can be overridden "
             "by setting that parameter explicitly. "
             "Analysis types are mutually exclusive with one another."
@@ -122,10 +121,10 @@ def _get_parser():
         action="store_true",
         help=(
             "Preset for hemodynamic denoising - this is a macro that "
-            f"sets searchrange={DEFAULT_DENOISING_LAGMIN}, {DEFAULT_DENOISING_LAGMAX}, "
+            f"sets searchrange=({DEFAULT_DENOISING_LAGMIN}, {DEFAULT_DENOISING_LAGMAX}), "
             f"passes={DEFAULT_DENOISING_PASSES}, despeckle_passes={DEFAULT_DENOISING_DESPECKLE_PASSES}, "
             f"refineoffset=True, peakfittype={DEFAULT_DENOISING_PEAKFITTYPE}, "
-            f"spatialfilt={DEFAULT_DENOISING_SPATIALFILT}, doglmfilt=True. "
+            f"gausssigma={DEFAULT_DENOISING_SPATIALFILT}, nofitfilt=True, doglmfilt=True. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
         ),
@@ -137,7 +136,7 @@ def _get_parser():
         action="store_true",
         help=(
             "Preset for delay mapping analysis - this is a macro that "
-            f"sets lagmin={DEFAULT_DELAYMAPPING_LAGMIN}, lagmax={DEFAULT_DELAYMAPPING_LAGMAX}, "
+            f"sets searchrange=({DEFAULT_DELAYMAPPING_LAGMIN}, {DEFAULT_DELAYMAPPING_LAGMAX}), "
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
             "refineoffset=True, pickleft=True, limitoutput=True, "
             "doglmfilt=False. "
@@ -1759,25 +1758,6 @@ def process_args(inputargs=None):
     else:
         args["motionfilename"] = None
 
-    # process macros
-    if args["venousrefine"]:
-        LGR.warning('Using "venousrefine" macro. Overriding any affected arguments.')
-        args["lagminthresh"] = 2.5
-        args["lagmaxthresh"] = 6.0
-        args["ampthresh"] = 0.5
-        args["ampthreshfromsig"] = False
-        args["lagmaskside"] = "upper"
-
-    if args["nirs"]:
-        LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
-        args["nothresh"] = True
-        pf.setifnotset(args, "preservefiltering", False)
-        args["refineprenorm"] = "var"
-        args["ampthresh"] = 0.7
-        args["ampthreshfromsig"] = False
-        args["lagmaskthresh"] = 0.1
-        args["despeckle_passes"] = 0
-
     # process analysis modes
     if args["delaymapping"]:
         LGR.warning('Using "delaymapping" analysis mode. Overriding any affected arguments.')
@@ -1797,8 +1777,9 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "lagmin", DEFAULT_DENOISING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DENOISING_LAGMAX)
         pf.setifnotset(args, "peakfittype", DEFAULT_DENOISING_PEAKFITTYPE)
-        pf.setifnotset(args, "spatialfilt", DEFAULT_DENOISING_SPATIALFILT)
+        pf.setifnotset(args, "gausssigma", DEFAULT_DENOISING_SPATIALFILT)
         args["refineoffset"] = True
+        args["zerooutbadfit"] = False
         pf.setifnotset(args, "doglmfilt", True)
 
     if args["docvrmap"]:
@@ -1824,6 +1805,25 @@ def process_args(inputargs=None):
         args["limitoutput"] = True
         pf.setifnotset(args, "doglmfilt", False)
         args["saveintermediatemaps"] = False
+
+    # process macros
+    if args["venousrefine"]:
+        LGR.warning('Using "venousrefine" macro. Overriding any affected arguments.')
+        args["lagminthresh"] = 2.5
+        args["lagmaxthresh"] = 6.0
+        args["ampthresh"] = 0.5
+        args["ampthreshfromsig"] = False
+        args["lagmaskside"] = "upper"
+
+    if args["nirs"]:
+        LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
+        args["nothresh"] = True
+        pf.setifnotset(args, "preservefiltering", False)
+        args["refineprenorm"] = "var"
+        args["ampthresh"] = 0.7
+        args["ampthreshfromsig"] = False
+        args["lagmaskthresh"] = 0.1
+        args["despeckle_passes"] = 0
 
     # process limitoutput
     if args["limitoutput"]:
