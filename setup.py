@@ -58,6 +58,8 @@ modules_list = [
     "rapidtide/wiener",
     "rapidtide/_version",
     "rapidtide/workflows/aligntcs",
+    "rapidtide/workflows/atlasaverage",
+    "rapidtide/workflows/ccorrica",
     "rapidtide/workflows/fdica",
     "rapidtide/workflows/glmfilt",
     "rapidtide/workflows/gmscalc",
