@@ -83,7 +83,7 @@ While there may be nice, general graphing tools for BIDS timeseries files, I
 wrote "showtc" many years ago, a matplotlib based file viewer with lots of
 nice tweaks to make pretty and informative graphs of various rapidtide input
 and output files.  It's part of rapidtide, and pretty easy to learn.  Just
-type "showtc" with no arguments to get the options.
+type ``showtc --help`` to get the options.
 
 As an example, after running happy, if you want to see the derived cardiac
 waveform, you'd run:
