@@ -153,13 +153,24 @@ def _get_parser():
         help=(
             "Preset for calibrated CVR mapping.  Given an input regressor that represents some measured "
             "quantity over time (e.g. mmHg CO2 in the EtCO2 trace), rapidtide will calculate and output a map of percent "
-            "BOLD change in units of the input regressor.  To do this, this sets:"
+            "BOLD change in units of the input regressor.  To do this, this sets: "
             f"passes=1, despeckle_passes={DEFAULT_CVRMAPPING_DESPECKLE_PASSES}, "
             f"lagmin={DEFAULT_DELAYMAPPING_LAGMIN}, lagmax={DEFAULT_DELAYMAPPING_LAGMAX}, "
             "and calculates a voxelwise GLM using the optimally delayed "
             "input regressor and the percent normalized, demeaned BOLD data as inputs. This map is output as "
             "(XXX_desc-CVR_map.nii.gz).  If no input regressor is supplied, this will generate an error.  "
             "These options can be overridden with the appropriate additional arguments."
+        ),
+        default=False,
+    )
+    analysis_type.add_argument(
+        "--globalpreselect",
+        dest="globalpreselect",
+        action="store_true",
+        help=(
+            "Treat this run as an initial pass to locate good candidate voxels for global mean "
+            "regressor generation.  This sets: passes=1, pickleft=True, despecklepasses=0, "
+            "refinedespeckle=False, limitoutput=True, doglmfilt=False, saveintermediatemaps=False."
         ),
         default=False,
     )
@@ -335,16 +346,6 @@ def _get_parser():
             f'Default is "{DEFAULT_GLOBALMASK_METHOD}".'
         ),
         default=DEFAULT_GLOBALMASK_METHOD,
-    )
-    preproc.add_argument(
-        "--globalpreselect",
-        dest="globalpreselect",
-        action="store_true",
-        help=(
-            "Treat this run as an initial pass to locate good candidate voxels for global mean "
-            "regressor generation."
-        ),
-        default=False,
     )
     preproc.add_argument(
         "--globalmeaninclude",
@@ -1758,6 +1759,7 @@ def process_args(inputargs=None):
     else:
         args["motionfilename"] = None
 
+    # process macros
     if args["venousrefine"]:
         LGR.warning('Using "venousrefine" macro. Overriding any affected arguments.')
         args["lagminthresh"] = 2.5
@@ -1776,7 +1778,9 @@ def process_args(inputargs=None):
         args["lagmaskthresh"] = 0.1
         args["despeckle_passes"] = 0
 
+    # process analysis modes
     if args["delaymapping"]:
+        LGR.warning('Using "delaymapping" analysis mode. Overriding any affected arguments.')
         pf.setifnotset(args, "passes", DEFAULT_DELAYMAPPING_PASSES)
         pf.setifnotset(args, "despeckle_passes", DEFAULT_DELAYMAPPING_DESPECKLE_PASSES)
         pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
@@ -1787,6 +1791,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "doglmfilt", False)
 
     if args["denoising"]:
+        LGR.warning('Using "denoising" analysis mode. Overriding any affected arguments.')
         pf.setifnotset(args, "passes", DEFAULT_DENOISING_PASSES)
         pf.setifnotset(args, "despeckle_passes", DEFAULT_DENOISING_DESPECKLE_PASSES)
         pf.setifnotset(args, "lagmin", DEFAULT_DENOISING_LAGMIN)
@@ -1797,6 +1802,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "doglmfilt", True)
 
     if args["docvrmap"]:
+        LGR.warning('Using "CVR" analysis mode. Overriding any affected arguments.')
         if args["regressorfile"] is None:
             raise ValueError(
                 "CVR mapping requires an externally supplied regresssor file - terminating."
@@ -1810,6 +1816,7 @@ def process_args(inputargs=None):
         args["doglmfilt"] = False
 
     if args["globalpreselect"]:
+        LGR.warning('Using "globalpreselect" analysis mode. Overriding any affected arguments.')
         args["passes"] = 1
         args["pickleft"] = True
         args["despeckle_passes"] = 0
