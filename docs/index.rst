@@ -49,6 +49,7 @@ Contents
    :caption: Installation:
 
    installation.rst
+   support.rst
 
 
 .. toctree::
@@ -69,6 +70,8 @@ Contents
    usage_ccorrica.rst
    usage_tcfrom2col.rst
    usage_tcfrom3col.rst
+   usage_resamplenifti.rst
+   usage_pixelcomp.rst
    usage_other.rst
    legacy.rst
    api.rst

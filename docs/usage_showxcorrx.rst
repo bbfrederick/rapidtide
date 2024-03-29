@@ -30,3 +30,8 @@ Outputs:
 Usage:
 ^^^^^^
 
+.. argparse::
+   :ref: rapidtide.workflows.showxcorrx._get_parser
+   :prog: showxcorrx
+   :func: _get_parser
+
