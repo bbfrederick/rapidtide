@@ -6,15 +6,22 @@ Description:
 
 	This is a utility for registering happy output maps
 	to standard coordinates.  NB: this
-	will only work if you have a working FSL or ANTs installation.
+	will only work if you have a working FSL installation.
 
 Inputs:
 ^^^^^^^
-	Text files containing time series data
+
+	inputfileroot - the root name of the input NIFTI files (up and including the ‘desc’ but not the underscore).
+        
+	outputdir - The location for the output files
+
+	featdirectory - Either a feat-like directory (x.feat or x.ica) or an fmriprep derivativesanat directory where the information needed for registration to standard space can be found
+
 
 Outputs:
 ^^^^^^^^
-	None
+
+	The happy maps, transformed to MNI152 space
 
 Usage:
 ^^^^^^
