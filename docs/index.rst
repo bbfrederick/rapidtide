@@ -59,6 +59,9 @@ Contents
    usage_rapidtide.rst
    usage_happy.rst
    usage_rapidtide2std.rst
+   usage_showxcorrlegacy.rst
+   usage_showxcorrx.rst
+   usage_other.rst
    legacy.rst
    api.rst
    contributing.rst
