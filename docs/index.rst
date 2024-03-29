@@ -57,8 +57,10 @@ Contents
 
    usage_general.rst
    usage_rapidtide.rst
-   usage_happy.rst
    usage_rapidtide2std.rst
+   usage_tidepool.rst
+   usage_happy.rst
+   usage_happy2std.rst
    usage_showxcorrlegacy.rst
    usage_showxcorrx.rst
    usage_other.rst

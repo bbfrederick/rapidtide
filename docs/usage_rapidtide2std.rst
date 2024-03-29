@@ -14,7 +14,8 @@ Inputs:
 
 Outputs:
 ^^^^^^^^
-	New versions of the rapidtide output maps, registered to either MNI152 space or to the hires anatomic images for the subject.  All maps are named with the specified root name with '_std' appended.
+	New versions of the rapidtide output maps, registered to either MNI152 space or to the hires anatomic images for the subject.  
+	All maps are named with the specified root name with '_std' appended.
 
 Usage:
 ^^^^^^
