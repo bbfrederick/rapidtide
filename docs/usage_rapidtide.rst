@@ -136,7 +136,7 @@ The base command you'd use would be:
 
 This will do a the default analysis (but each and every particular can be changed by adding command line options).  By default, rapidtide will:
 
-    #. Prefilter the data to the LFO band (0.009-0.15Hz).
+    #. Temporally prefilter the data to the LFO band (0.009-0.15Hz), and spatially filter with a Gaussian kernel of 1/2 the mean voxel dimension in x, y, and z.
 
     #. Construct a probe regressor from the global mean of the signal in inputfmrifile (default behavior if no regressor or selections masks are specified).
 
