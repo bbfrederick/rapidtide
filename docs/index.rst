@@ -63,6 +63,12 @@ Contents
    usage_happy2std.rst
    usage_showxcorrlegacy.rst
    usage_showxcorrx.rst
+   usage_showtc.rst
+   usage_glmfilt.rst
+   usage_atlasaverage.rst
+   usage_ccorrica.rst
+   usage_tcfrom2col.rst
+   usage_tcfrom3col.rst
    usage_other.rst
    legacy.rst
    api.rst
