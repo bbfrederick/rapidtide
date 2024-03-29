@@ -62,6 +62,7 @@ modules_list = [
     "rapidtide/workflows/glmfilt",
     "rapidtide/workflows/gmscalc",
     "rapidtide/workflows/happy",
+    "rapidtide/workflows/happy2std",
     "rapidtide/workflows/happy_parser",
     "rapidtide/workflows/histnifti",
     "rapidtide/workflows/localflow",
