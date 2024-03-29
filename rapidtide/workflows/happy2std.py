@@ -22,21 +22,7 @@ import os
 import subprocess
 import sys
 
-import rapidtide.util as tide_util
-
-fsldir = os.environ.get("FSLDIR")
-if fsldir is not None:
-    fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
-    flirtcmd = os.path.join(fsldir, "bin", "flirt")
-    applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
-else:
-    print("FSL directory not found - aborting")
-    sys.exit()
-
-c3dexists = tide_util.isexecutable("c3d_affine_tool")
-print("c3dexists =", c3dexists)
-antsexists = tide_util.isexecutable("antsApplyTransforms")
-print("antsexists =", antsexists)
+import rapidtide.externaltools as tide_extern
 
 
 def _get_parser():
@@ -97,32 +83,6 @@ def _get_parser():
     return parser
 
 
-def makefslcmd(theinputfile, reftarget, xform, outputname, warpfile=None):
-    thecommand = []
-    if warpfile is None:
-        print("doing linear transformation")
-        thecommand.append(fslsubcmd)
-        thecommand.append(flirtcmd)
-        thecommand.append("-in")
-        thecommand.append(theinputfile)
-        thecommand.append("-ref")
-        thecommand.append(reftarget)
-        thecommand.append("-applyxfm")
-        thecommand.append("-init")
-        thecommand.append(xform)
-        thecommand.append("-out")
-        thecommand.append(outputname)
-    else:
-        print("doing nonlinear transformation")
-        thecommand.append(fslsubcmd)
-        thecommand.append(applywarpcmd)
-        thecommand.append("--ref=" + reftarget)
-        thecommand.append("--in=" + theinputfile)
-        thecommand.append("--out=" + outputname)
-        thecommand.append("--warp=" + warpfile)
-    return thecommand
-
-
 def transformmaps(
     thepath,
     theoutputdir,
@@ -147,7 +107,7 @@ def transformmaps(
                 outputname = os.path.abspath(
                     os.path.join(theoutputdir, subjroot + outputtag + themap + ".nii.gz")
                 )
-                thecommand = makefslcmd(
+                thecommand = tide_extern.makeflirtcmd(
                     inputname,
                     reftarget,
                     xformfuncmat,
@@ -179,7 +139,9 @@ def transformmaps(
                         xform = os.path.abspath(
                             glob.glob(os.path.join(xformdir, "reg", "highres2standard.mat"))[0]
                         )
-                        thecommand = makefslcmd(inputname, reftarget, xform, outputname)
+                        thecommand = tide_extern.makeflirtcmd(
+                            inputname, reftarget, xform, outputname
+                        )
 
                     if preponly:
                         print(" ".join(thecommand))
@@ -191,6 +153,10 @@ def transformmaps(
 
 def happy2std(args):
     # make sure the appropriate transformation matrix and targets exist
+    fsldir = os.environ.get("FSLDIR")
+    if fsldir is None:
+        raise RuntimeError("FSLDIR not set")
+
     if args.aligntohires:
         reftarget = os.path.abspath(os.path.join(args.featdirectory, "reg", "highres.nii.gz"))
         warpfuncfile = ""

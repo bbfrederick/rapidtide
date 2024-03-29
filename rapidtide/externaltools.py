@@ -24,6 +24,15 @@ import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 
 
+def fslinfo():
+    fsldir = os.environ.get("FSLDIR")
+    if fsldir is not None:
+        fslexists = True
+    else:
+        fslexists = False
+    return fsldir
+
+
 def whatexists():
     fsldir = os.environ.get("FSLDIR")
     if fsldir is not None:
