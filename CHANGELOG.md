@@ -1,5 +1,12 @@
 # Release history
 
+## Version 2.8.5 (3/30/24)
+* (rapidtide) Adjusted some default parameters to reflect the current best picks.
+* (rapidtide) Fixed the --denoising option (it didn't actually do anything!)
+* (package) Partially implemented a major reorganization of all the programs in the package to make them workflows with standard interfaces.
+* (docs) Started the process of standardizing the program descriptions and properly using autodoc.
+
+
 ## Version 2.8.4 (3/28/24)
 * (rapidtide) Output some .json sidecars that I had neglected.
 * (glmsim) New program to help develop instructional tools re: how rapidtide works. This is a WIP.
