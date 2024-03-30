@@ -108,17 +108,64 @@ Usage:
    :func: _get_parser
 
 
+Preprocessing
+^^^^^^^^^^^^^
+Rapidtide operates on data which has been subjected to "standard" preprocessing steps, most importantly motion
+correction and slice time correction.
+
+Motion correction is good since you want to actually be looking at the same voxels in each timepoint.  Definitely
+do it.  There may be spin history effects even after motion correction, so if you give rapidtide a motion file
+using ``--motionfile FILENAME`` (and various other options to tune how it does the motion regression)
+it can regress out residual motion prior to estimating sLFO parameters. In cases of extreme motion, this will
+make rapidtide work a lot better.  If you choose to regress out the motion signals yourself, that's fine too -
+rapidtide is happy to work on data that's been run through AROMA (not so much FIX - see a further discussion below).
+
+Since rapidtide is looking for subtle time differences in the arrival of the
+sLFO signal, it will absolutely see slice acquisition time differences.  If you are doing noise removal, that's not
+such a big deal, but if you're doing delay mapping, you'll get stripes in your delay maps, which tell you about the
+fMRI acquisition, but you care about physiology, so best to avoid that.  Unfortunately, Human Connectome Project data
+does NOT have slice time correction applied, and unless you want to rerun the entire processing chain to add it in,
+you just have to deal with it.  Fortunately the TR is quite short, so the stripes are subtle.  The geometric
+distortion correction and alignment steps done in the HCP distort the stripes, but you can certainly see them.  If you
+average enough subjects though, they get washed out.
+
+I generally do NOT apply any spatial filtering
+during preprocessing - you can always do it later, and rapidtide lets you do spatial smoothing for the purpose of
+estimating the delayed regressor using the ``--gausssigma`` parameter.
+
+Rapidtide does all it's own temporal filtering; highpass filtering at 0.01Hz, common in resting state preprocessing,
+doesn't affect the frequency ranges rapidtide cares about for sLFOs, so you can do it or not during preprocessing
+as you see fit (but if you're doing
+CVR or gas challenge experiments you probably shouldn't).
+
+NOTE: Astute readers will notice that between spatial filtering, motion regression, and other procedures, rapidtide
+does a lot of it's work of estimating sLFOs on potentially heavily filtered data.  However, you may or may not
+want this filtering to have been done for whatever your particular subsequent analysis is.  So prior to GLM denoising, rapidtide
+rereads the unmodified fMRI input file, and regresses the voxel specific sLFO out of _that_ - since the filtering
+process is linear, that's cool - the data you get out is the data you put in, just minus the sLFO signal.  If for
+some reason you _do_ want to use the data that rapidtide has abused, simply use the ``--preservefiltering`` option.
+
+Working with other packages
+"""""""""""""""""""""""""""
+
+FSL
+
+fmriprep
+
+AFNI
+
+SPM
+
 
 Examples:
 ^^^^^^^^^
 
-Rapidtide can do many things - as I've found more interesting things to do with time delay processing, it's gained new functions and options to support these new applications.  As a result, it can be a little hard to know what to use for a new experiment.  To help with that, I've decided to add this section to the manual to get you started.  It's broken up by type of data/analysis you might want to do.
+Rapidtide can do many things - as I've found more interesting things to do with time delay processing, it's gained
+new functions and options to support these new applications.  As a result, it can be a little hard to know what to
+use for a new experiment.  To help with that, I've decided to add this section to the manual to get you started.
+It's broken up by type of data/analysis you might want to do.
 
 NB: To speed up the analysis, adding the argument ``--nprocs XX`` to any of the following commands will parallelize the analysis to use XX CPUs - set XX to -1 to use all available CPUs.  This can result in a speedup approaching a factor of the number of CPUs used.
-
-Preprocessing
-"""""""""""""
-Rapidtide operates on data which has been subjected to all the "standard" preprocessing steps, most importantly motion correction and slice time correction.  Since rapidtide
 
 Removing low frequency physiological noise from fMRI data
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
