@@ -68,6 +68,7 @@ Contents
    usage_glmfilt.rst
    usage_atlasaverage.rst
    usage_ccorrica.rst
+   usage_adjustoffset.rst
    usage_tcfrom2col.rst
    usage_tcfrom3col.rst
    usage_resamplenifti.rst

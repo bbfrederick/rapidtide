@@ -57,6 +57,7 @@ modules_list = [
     "rapidtide/util",
     "rapidtide/wiener",
     "rapidtide/_version",
+    "rapidtide/workflows/adjustoffset",
     "rapidtide/workflows/aligntcs",
     "rapidtide/workflows/atlasaverage",
     "rapidtide/workflows/ccorrica",
