@@ -17,32 +17,74 @@ than only at zero lag, as in a Pearson correlation).  As with many things,
 however, the devil is in the details, and so rapidtide provides a number of
 features which make it pretty good at this particular task.  A few highlights:
 
-* There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing, improper normalization, doing it in the time rather than frequency domain, etc.).  I'm pretty sure what rapidtide does by default is, if not the best way, at least a very good and very fast way.
-* rapidtide has been optimized and profiled to speed it up quite a bit; it has an optional dependency on numba – if it’s installed, some of the most heavily used routines will speed up significantly due to judicious use of @jit.
-* The sample rate of your probe regressor and the fMRI data do not have to match - rapidtide resamples the probe regressor to an integral multiple of the fMRI data rate automatically.
-* The probe and data can be temporally prefiltered to the LFO, respiratory, or cardiac frequency band with a command line switch, or you can specify any low, high, or bandpass range you want.
-* The data can be spatially smoothed at runtime (so you don't have to keep smoothed versions of big datasets around).  This is quite fast, so no reason not to do it this way.
-* rapidtide can generate a probe regressor from the global mean of the data itself - no externally recorded timecourse is required.  Optionally you can input both a mask of regions that you want to be included in the mean, and the voxels that you want excluded from the mean (there are situations when you might want to do one or the other or both).
-* Determining the significance threshold for filtered correlations where the optimal delay has been selected is nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.  rapidtide estimates the spurious correlation threshold by calculating the distribution of null correlation values obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled correlations), and uses this value to mask the correlation maps it calculates.  As of version 0.1.2 it will also handle two-tailed significance, which you need when using bipolar mode.
-* rapidtide can do an iterative refinement of the probe regressor by aligning the voxel timecourses in time and regenerating the test regressor.
-* rapidtide fits the peak of the correlation function, so you can make fine grained distinctions between close lag times. The resolution of the time lag discrimination is set by the length of the timecourse, not the timestep – this is a feature of correlations, not rapidtide.
-* Once the time delay in each voxel has been found, rapidtide outputs a 4D file of delayed probe regressors for using as voxel specific confound regressors or to estimate the strength of the probe regressor in each voxel.  This regression is performed by default, but these outputs let you do it yourself if you are so inclined.
-* I've put a lot of effort into making the outputs as informative as possible - lots of useful maps, histograms, timecourses, etc.
-* There are a lot of tuning parameters you can mess with if you feel the need.  I've tried to make intelligent defaults so things will work well out of the box, but you have the ability to set most of the interesting parameters yourself.
+* There are lots of ways to do something even as simple as a cross-correlation in a nonoptimal way (not windowing,
+improper normalization, doing it in the time rather than frequency domain, etc.).  I'm pretty sure what rapidtide
+does by default is, if not the best way, at least a very good and very fast way.
+* rapidtide has been optimized and profiled to speed it up quite a bit; it has an optional dependency on numba –
+if it’s installed, some of the most heavily used routines will speed up significantly due to judicious use of @jit.
+* The sample rate of your probe regressor and the fMRI data do not have to match - rapidtide resamples the probe
+regressor to an integral multiple of the fMRI data rate automatically.
+* The probe and data can be temporally prefiltered to the LFO, respiratory, or cardiac frequency band with a command
+line switch, or you can specify any low, high, or bandpass range you want.
+* The data can be spatially smoothed at runtime (so you don't have to keep smoothed versions of big datasets around).
+This is quite fast, so no reason not to do it this way.
+* rapidtide can generate a probe regressor from the global mean of the data itself - no externally recorded timecourse
+is required.  Optionally you can input both a mask of regions that you want to be included in the mean, and the voxels
+that you want excluded from the mean (there are situations when you might want to do one or the other or both).
+* Determining the significance threshold for filtered correlations where the optimal delay has been selected is
+nontrivial; using the conventional formulae for the significance of a correlation leads to wildly inflated p values.
+rapidtide estimates the spurious correlation threshold by calculating the distribution of null correlation values
+obtained with a shuffling  procedure at the beginning of each run (the default is to use 10000 shuffled
+correlations), and uses this value to mask the correlation maps it calculates.  As of version 0.1.2 it will also
+handle two-tailed significance, which you need when using bipolar mode.
+* rapidtide can do an iterative refinement of the probe regressor by aligning the voxel timecourses in time and
+regenerating the test regressor.
+* rapidtide fits the peak of the correlation function, so you can make fine grained distinctions between close
+lag times. The resolution of the time lag discrimination is set by the length of the timecourse, not the timestep –
+this is a feature of correlations, not rapidtide.
+* Once the time delay in each voxel has been found, rapidtide outputs a 4D file of delayed probe regressors
+for using as voxel specific confound regressors or to estimate the strength of the probe regressor in each
+voxel.  This regression is performed by default, but these outputs let you do it yourself if you are so inclined.
+* I've put a lot of effort into making the outputs as informative as possible - lots of useful maps, histograms,
+timecourses, etc.
+* There are a lot of tuning parameters you can mess with if you feel the need.  I've tried to make intelligent
+defaults so things will work well out of the box, but you have the ability to set most of the interesting parameters
+yourself.
 
 Inputs:
 ^^^^^^^
 
-At a minimum, rapidtide needs a data file to work on (space by time), which is generally thought to be a BOLD fMRI data file.  This can be Nifti1 or Nifti2 (for fMRI data, in which case it is time by up to 3 spatial dimensions) or a whitespace separated text file (for NIRS data, each column is a time course, each row a separate channel); I can currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert them to nifti2 in workbench, run rapidtide, then convert back. As soon as nibabel finishes their Cifti support (EDIT: and I get around to figuring it out), I'll add that.
+At a minimum, rapidtide needs a data file to work on (space by time), which is generally thought to be a BOLD fMRI
+data file.  This can be Nifti1 or Nifti2 (for fMRI data, in which case it is time by up to 3 spatial dimensions) or
+a whitespace separated text file (for NIRS data, each column is a time course, each row a separate channel); I can
+currently read (probably) but not write Cifti files, so if you want to use grayordinate files you need to convert
+them to nifti2 in workbench, run rapidtide, then convert back. As soon as nibabel finishes their Cifti support
+(EDIT: and I get around to figuring it out), I'll add that.
 
-The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a time by voxel array for simplicity.
+The file needs one time dimension and at least one spatial dimension.  Internally, the array is flattened to a
+time by voxel array for simplicity.
 
-The file you input here should be the result of any preprocessing you intend to do.  The expectation is that rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking at low frequency oscillations, so when you run it, you usually use the ``--filterband lfo`` option or some other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.  So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.  Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
+The file you input here should be the result of any preprocessing you intend to do.  The expectation is that
+rapidtide will be run as the last preprocessing step before resting state or task based analysis.  So any slice
+time correction, motion correction, spike removal, etc. should already have been done.  If you use FSL, this
+means that if you've run preprocessing, you would use the filtered_func_data.nii.gz file as input.  Temporal
+and spatial filtering are the two (partial) exceptions here.  Generally rapidtide is most useful for looking
+at low frequency oscillations, so when you run it, you usually use the ``--filterband lfo`` option or some
+other to limit the analysis to the detection and removal of low frequency systemic physiological oscillations.
+So rapidtide will generally apply it's own temporal filtering on top of whatever you do in preprocessing.
+Also, you have the option of doing spatial smoothing in rapidtide to boost the SNR of the analysis; the
+hemodynamic signals rapidtide looks for are often very smooth, so you rather than smooth your functional
+data excessively, you can do it within rapidtide so that only the hemodynamic data is smoothed at that level.
 
 Outputs:
 ^^^^^^^^
 
-Outputs are space or space by time NIFTI or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  File formats and naming follow BIDS conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
+Outputs are space or space by time NIFTI or text files, depending on what the input data file was, and some
+text files containing textual information, histograms, or numbers.  File formats and naming follow BIDS
+conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match the
+input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be
+no time dimension, a time dimension that matches the input file, or something else, such as a time lag
+dimension for a correlation map.
 
 .. _bidsoutputs:
 
@@ -195,12 +237,18 @@ new functions and options to support these new applications.  As a result, it ca
 use for a new experiment.  To help with that, I've decided to add this section to the manual to get you started.
 It's broken up by type of data/analysis you might want to do.
 
-NB: To speed up the analysis, adding the argument ``--nprocs XX`` to any of the following commands will parallelize the analysis to use XX CPUs - set XX to -1 to use all available CPUs.  This can result in a speedup approaching a factor of the number of CPUs used.
+NB: To speed up the analysis, adding the argument ``--nprocs XX`` to any of the following commands will parallelize
+the analysis to use XX CPUs - set XX to -1 to use all available CPUs.  This can result in a speedup approaching a
+factor of the number of CPUs used.
 
 Removing low frequency physiological noise from fMRI data
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-This is what I figure most people will use rapidtide for - finding and removing the low frequency (LFO) signal from an existing dataset (including the case where the signal grows over time https://www.biorxiv.org/content/10.1101/2023.09.08.556939v2 ).  This presupposes you have not made a simultaneous physiological recording (well, you may have, but it assumes you aren't using it).  For this, you can use a minimal set of options, since the defaults are set to be generally optimal for noise removal.
+This is what I figure most people will use rapidtide for - finding and removing the low frequency (LFO) signal
+from an existing dataset (including the case where the signal grows over time
+https://www.biorxiv.org/content/10.1101/2023.09.08.556939v2 ).  This presupposes you have not made a
+simultaneous physiological recording (well, you may have, but it assumes you aren't using it).
+For this, you can use a minimal set of options, since the defaults are set to be generally optimal for noise removal.
 
 The base command you'd use would be:
 
@@ -211,7 +259,8 @@ The base command you'd use would be:
 		    outputname \
 		    --denoising
 
-This will do a the default analysis (but each and every particular can be changed by adding command line options).  By default, rapidtide will:
+This will do a the default analysis (but each and every particular can be changed by adding command line options).
+By default, rapidtide will:
 
     #. Temporally prefilter the data to the LFO band (0.009-0.15Hz), and spatially filter with a Gaussian kernel of 1/2 the mean voxel dimension in x, y, and z.
 
@@ -237,12 +286,26 @@ This will do a the default analysis (but each and every particular can be change
 
     #. After the three passes are complete, rapidtide will then use a GLM filter to remove a voxel specific lagged copy of the final probe regressor from the data - this denoised data will be in the file ``outputname_desc-lfofilterCleaned_bold.nii.gz``.  There will also a number of maps output with the prefix ``outputname_`` of delay, correlation strength and so on.  See the BIDS Output table above for specifics.
 
-Please note that rapidtide plays happily with AROMA, so you don't need to do anything special to process data that's been run through AROMA.  While FIX and AROMA both use spatiotemporal analysis of independent components to determine what components to remove, AROMA only targets ICs related to motion, which are quite distinct from the sLFO signal, so they don't interfere with each other.  In contrast, FIX targets components that are "bad", for multiple definitions of the term, which includes some purely hemodynamic components near the back of the brain.  As a result, FIX denoising impedes the operation of rapidtide.  See below.
+Please note that rapidtide plays happily with AROMA, so you don't need to do anything special to
+process data that's been run through AROMA.  While FIX and AROMA both use spatiotemporal
+analysis of independent components to determine what components to remove, AROMA only targets
+ICs related to motion, which are quite distinct from the sLFO signal, so they don't interfere
+with each other.  In contrast, FIX targets components that are "bad", for multiple definitions
+of the term, which includes some purely hemodynamic components near the back of the brain.
+As a result, FIX denoising impedes the operation of rapidtide.  See below.
 
 Removing low frequency physiological noise from fMRI data that has been processed with FIX
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-There is a special case if you are working on HCP data, which has both minimally processed and a fully processed (including FIX denoising) data files.  FIX denoising is a good thing, but it tends to distort the sLFO signals that rapidtide is looking for, so the selection and refinement of the sLFO can wander off into the thicket if applied to FIX processed data.  So ideally, you would run rapidtide, and THEN FIX.  However, since reprocessing the HCP data is kind of a pain, there's a hack that capitalizes on the fact that all of these operations are linear.  You run rapidtide on the minimmally processed data, to accurately assess the sLFO regressor and time delays in each voxel, but you apply the final GLM to the FIX processed data, to remove the data that has the other denoising already done.  This works very well!  To do this, you use the ``--glmsourcefile FILE`` option to specify the file you want to denoise.  The ``outputname_desc-lfofilterCleaned_bold.nii.gz`` file is the FIX file, with rapidtide denoising applied.
+There is a special case if you are working on HCP data, which has both minimally processed and a fully processed
+(including FIX denoising) data files.  FIX denoising is a good thing, but it tends to distort the sLFO signals that
+rapidtide is looking for, so the selection and refinement of the sLFO can wander off into the thicket if applied to
+FIX processed data.  So ideally, you would run rapidtide, and THEN FIX.  However, since reprocessing the HCP data
+is kind of a pain, there's a hack that capitalizes on the fact that all of these operations are linear.  You run
+rapidtide on the minimmally processed data, to accurately assess the sLFO regressor and time delays in each voxel,
+but you apply the final GLM to the FIX processed data, to remove the data that has the other denoising already done.
+This works very well!  To do this, you use the ``--glmsourcefile FILE`` option to specify the file you want to
+denoise.  The ``outputname_desc-lfofilterCleaned_bold.nii.gz`` file is the FIX file, with rapidtide denoising applied.
 
 	::
 
@@ -256,7 +319,12 @@ There is a special case if you are working on HCP data, which has both minimally
 Mapping long time delays in response to a gas challenge experiment:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Processing this sort of data requires a very different set of options from the previous case.  Instead of the distribution of delays you expect in healthy controls (a slightly skewed, somewhat normal distribution with a tail on the positive side, ranging from about -5 to 5 seconds), in this case, the maximum delay can be extremely long (100-120 seconds is not uncommon in stroke, moyamoya disesase, and atherosclerosis).  To do this, you need to radically change what options you use, not just the delay range, but a number of other options having to do with refinement and statistical measures.
+Processing this sort of data requires a very different set of options from the previous case.  Instead of the
+distribution of delays you expect in healthy controls (a slightly skewed, somewhat normal distribution with a
+tail on the positive side, ranging from about -5 to 5 seconds), in this case, the maximum delay can be extremely
+long (100-120 seconds is not uncommon in stroke, moyamoya disesase, and atherosclerosis).  To do this, you need
+to radically change what options you use, not just the delay range, but a number of other options having to do
+with refinement and statistical measures.
 
 For this type of analysis, a good place to start is the following:
 
@@ -272,21 +340,51 @@ For this type of analysis, a good place to start is the following:
 		    --noglm \
 		    --nofitfilt
 
-The first option (``--numnull 0``), shuts off the calculation of the null correlation distribution.  This is used to determine the significance threshold, but the method currently implemented in rapidtide is a bit simplistic - it assumes that all the time points in the data are exchangable.  This is certainly true for resting state data (see above), but it is very much NOT true for block paradigm gas challenges.  To properly analyze those, I need to consider what time points are 'equivalent', and up to now, I don't, so setting the number of iterations in the Monte Carlo analysis to zero omits this step.
+The first option (``--numnull 0``), shuts off the calculation of the null correlation distribution.  This is used to
+determine the significance threshold, but the method currently implemented in rapidtide is a bit simplistic - it
+assumes that all the time points in the data are exchangable.  This is certainly true for resting state data (see
+above), but it is very much NOT true for block paradigm gas challenges.  To properly analyze those, I need to
+consider what time points are 'equivalent', and up to now, I don't, so setting the number of iterations in the
+Monte Carlo analysis to zero omits this step.
 
-The second option (``--searchrange -10 140``) is fairly obvious - this extends the detectable delay range out to 140 seconds.  Note that this is somewhat larger than the maximum delays we frequently see, but to find the correlation peak with maximum precision, you need sufficient additional delay values so that the correlation can come to a peak and then come down enough that you can properly fit it.  Obviously adjust this as needed for your experiment, to fit the particulars of your gas challenge waveform and/or expected pathology.
+The second option (``--searchrange -10 140``) is fairly obvious - this extends the detectable delay range out
+to 140 seconds.  Note that this is somewhat larger than the maximum delays we frequently see, but to find the
+correlation peak with maximum precision, you need sufficient additional delay values so that the correlation
+can come to a peak and then come down enough that you can properly fit it.  Obviously adjust this as needed
+for your experiment, to fit the particulars of your gas challenge waveform and/or expected pathology.
 
-Setting ``--filterfreqs 0.0 0.1`` is VERY important.  By default, rapidtide assumes you are looking at endogenous low frequency oscillations, which typically between 0.09 and 0.15 Hz.  However, gas challenge paradigms are usually MUCH lower frequency (90 seconds off, 90 seconds on corresponds to 1/180s = ~0.006Hz).  So if you use the default frequency settings, you will completely filter out your stimulus, and presumably, your response.  If you are processing one of these experiments and get no results whatsoever, this is almost certainly the problem.
+Setting ``--filterfreqs 0.0 0.1`` is VERY important.  By default, rapidtide assumes you are looking at
+endogenous low frequency oscillations, which typically between 0.09 and 0.15 Hz.  However, gas challenge
+paradigms are usually MUCH lower frequency (90 seconds off, 90 seconds on corresponds to 1/180s = ~0.006Hz).
+So if you use the default frequency settings, you will completely filter out your stimulus, and presumably,
+your response.  If you are processing one of these experiments and get no results whatsoever, this is almost
+certainly the problem.
 
-The ``--noglm`` option disables data filtering.  If you are using rapidtide to estimate and remove low frequency noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal, leaving "pure" neuronal signal, which you'll use in further analyses.  That's not relevant here - the signal you'd be removing is the one you care about. So this option skips that step to save time and disk space.
+The ``--noglm`` option disables data filtering.  If you are using rapidtide to estimate and remove low frequency
+noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal,
+leaving "pure" neuronal signal, which you'll use in further analyses.  That's not relevant here - the signal you'd
+be removing is the one you care about. So this option skips that step to save time and disk space.
 
-``--nofitfilt`` skips a step after peak estimation.  Estimating the delay and correlation amplitude in each voxel is a two step process. First you make a quick estimate (where is the maximum point of the correlation function, and what is its amplitude?), then you refine it by fitting a Gaussian function to the peak to improve the estimate.  If this step fails, which it can if the peak is too close to the end of the lag range, or strangely shaped, the default behavior is to mark the point as bad and zero out the parameters for the voxel.  The nofitfilt option means that if the fit fails, output the initial estimates rather than all zeros.   This means that you get some information, even if it's not fully refined.  In my experience it does tend to make the maps for the gas challenge experiments a lot cleaner to use this option since the correlation function is pretty well behaved.
+``--nofitfilt`` skips a step after peak estimation.  Estimating the delay and correlation amplitude in each voxel
+is a two step process. First you make a quick estimate (where is the maximum point of the correlation function,
+and what is its amplitude?), then you refine it by fitting a Gaussian function to the peak to improve the
+estimate.  If this step fails, which it can if the peak is too close to the end of the lag range, or
+strangely shaped, the default behavior is to mark the point as bad and zero out the parameters for the
+voxel.  The nofitfilt option means that if the fit fails, output the initial estimates rather than all
+zeros.   This means that you get some information, even if it's not fully refined.  In my experience it
+does tend to make the maps for the gas challenge experiments a lot cleaner to use this option since the
+correlation function is pretty well behaved.
 
 
 CVR mapping:
 """"""""""""
 
-This is a slightly different twist on interpreting the strength of the lagged correlation.  In this case, you supply an input regressor that corresponds to a measured, calibrated CO2 quantity (for example, etCO2 in mmHg).  Rapidtide then does a modified analysis - it still uses the cross-correlation to find when the input regressor is maximally aligned with the variance in the voxel signal, but instead of only returning a correlation strength, it calculates the percentage BOLD change in each voxel in units of the input regressor (e.g. %BOLD/mmHg), which is the standard in CVR analysis.
+This is a slightly different twist on interpreting the strength of the lagged correlation.  In this case,
+you supply an input regressor that corresponds to a measured, calibrated CO2 quantity (for example, etCO2
+in mmHg).  Rapidtide then does a modified analysis - it still uses the cross-correlation to find when the
+input regressor is maximally aligned with the variance in the voxel signal, but instead of only returning
+a correlation strength, it calculates the percentage BOLD change in each voxel in units of the input
+regressor (e.g. %BOLD/mmHg), which is the standard in CVR analysis.
 
 	::
 
@@ -296,9 +394,14 @@ This is a slightly different twist on interpreting the strength of the lagged co
 		    --regressor regressorfile \
 		    --CVR
 
-You invoke this with the ``--CVR`` option.  This is a macro that does a lot of things: I disabled refinement, hijacked the GLM filtering routine, and messed with some normalizations.  If you want to refine your regressor estimate, or filter the sLFO signal out of your data, you need to do a separate analysis.
+You invoke this with the ``--CVR`` option.  This is a macro that does a lot of things: I disabled refinement,
+hijacked the GLM filtering routine, and messed with some normalizations.  If you want to refine your regressor
+estimate, or filter the sLFO signal out of your data, you need to do a separate analysis.
 
-You also need to supply the regressor using ``--regressor regressorfile``.  If regressorfile is a bids tsv/json pair, this will have the sample rate and offset specified.  If the regressor file has sample rate other than the fMRI TR, or a non-zero offset relative to the fMRI data, you will also need to specify these parameters using ``--regressorfreq FREQ`` or ``--regressortstep TSTEP`` and/or ``--regressorstart START``.
+You also need to supply the regressor using ``--regressor regressorfile``.  If regressorfile is a bids
+tsv/json pair, this will have the sample rate and offset specified.  If the regressor file has sample
+rate other than the fMRI TR, or a non-zero offset relative to the fMRI data, you will also need to specify
+these parameters using ``--regressorfreq FREQ`` or ``--regressortstep TSTEP`` and/or ``--regressorstart START``.
 
 
 
