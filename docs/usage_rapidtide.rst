@@ -108,8 +108,8 @@ Usage:
    :func: _get_parser
 
 
-Preprocessing
-^^^^^^^^^^^^^
+Preprocessing for rapidtide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Rapidtide operates on data which has been subjected to "standard" preprocessing steps, most importantly motion
 correction and slice time correction.
 
@@ -141,20 +141,47 @@ CVR or gas challenge experiments you probably shouldn't).
 NOTE: Astute readers will notice that between spatial filtering, motion regression, and other procedures, rapidtide
 does a lot of it's work of estimating sLFOs on potentially heavily filtered data.  However, you may or may not
 want this filtering to have been done for whatever your particular subsequent analysis is.  So prior to GLM denoising, rapidtide
-rereads the unmodified fMRI input file, and regresses the voxel specific sLFO out of _that_ - since the filtering
+rereads the unmodified fMRI input file, and regresses the voxel specific sLFO out of *that* - since the filtering
 process is linear, that's cool - the data you get out is the data you put in, just minus the sLFO signal.  If for
-some reason you _do_ want to use the data that rapidtide has abused, simply use the ``--preservefiltering`` option.
+some reason you *do* want to use the data that rapidtide has abused, simply use the ``--preservefiltering`` option,
+but I'd recommend you don't do that.
 
-Working with other packages
-"""""""""""""""""""""""""""
+Working with standard fMRI packages
+"""""""""""""""""""""""""""""""""""
 
-FSL
+**FSL** - At the time I first developed rapidtide, I was using FSL almost exclusively, so some of the assumptions
+the program makes about the data stem from this.  If you want to integrate rapidtide into your FSL workflow, you would
+typically use the ``filtered_func_data.nii.gz`` file from your FEAT directory (the result of FSL preprocessing)
+as input to rapidtide.  Note that this is typically in native acquisition space.  You can use this, or do the
+processing in standard space if you've done that alignment - either is fine, but for conventional EPI acquisitions,
+there are typically far fewer voxels at native resolution, so processing will probably be faster.  On the flip side,
+having everything in standard space makes it easier to combine runs and subjects.
 
-fmriprep
+**fmriprep** - If you do preprocessing in fmriprep, the easiest file to use for input to rapidtide would be either
+``derivatives/fmriprep/sub-XXX/ses-XXX/func/XXX_desc-preproc_bold.nii.gz`` (native space) or
+``derivatives/fmriprep/sub-XXX/ses-XXX/func/XXX_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz``
+(standard space - replace ``MNI152NLin6aAsym_res-2`` with whatever space and resolution you used if not the FSL compatible
+one).  One caveat - unless this has changed recently, fmriprep does *not* store the transforms needed to go from
+native BOLD space to standard space, so you'll have to come up with that yourself either by fishing the transform
+out of the workdir, or redoing the alignment.  That's a pretty strong argument for using the standard space.  In addition,
+if you do the analysis in standard space, it makes it easier to use freesurfer parcellations and gray/white/csf
+segmentations that fmriprep provides for further tuning the rapidtide analysis.
 
-AFNI
+**AFNI** - Here's a case where you have to take some care - as I mentioned above, rapidtide assumes "FSL-like" data by
+default.  The most important difference between AFNI and FSL preprocessing is that AFNI removes the mean from the data
+(this is a valid implementation choice - no judgement, but, no, actually - seriously, WTF?  WHY WOULD YOU DO THAT???).
+This makes rapidtide sad, because the mean value is used for all sorts of things like generating masks.  Fortunately,
+all of this can be accommodated.  You have a couple of choices here.  You can
+supply a brain mask explicitly using ``--globalmeaninclude FILENAME``, which will get
+rapidtide past the place that zero mean data will confuse it.  Alternately, if you don't have a brain mask, you can
+use ``--globalmaskmethod variance`` to make a mask based on the variance over time in a voxel rather than than the
+mean.  Rapidtide should then work as normal, although the display in ``tidepool`` will be a little weird unless you
+specify a background image explicitly.
 
-SPM
+**SPM** - I have no reason to believe rapidtide won't work fine with data preprocessed in SPM.  That said, I don't use
+SPM, so I can't tell you what file to use, or what format to expect the preprocessed data will be in.  If you,
+dear reader, have
+any insight into this, PLEASE tell me and I'll do what I need to to support SPM data in the code and documentation.
 
 
 Examples:
