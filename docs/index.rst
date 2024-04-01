@@ -77,6 +77,11 @@ Contents
    usage_applydlfilter.rst
    usage_calctexticc.rst
    usage_diffrois.rst
+   usage_endtidalproc.rst
+   usage_filtnifti.rst
+   usage_filttc.rst
+   usage_spatialdecomp.rst
+   usage_temporaldecomp.rst
    usage_other.rst
    legacy.rst
    api.rst
