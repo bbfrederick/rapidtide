@@ -76,6 +76,8 @@ DEFAULT_DELAYMAPPING_DESPECKLE_PASSES = 4
 
 DEFAULT_CVRMAPPING_LAGMIN = -5.0
 DEFAULT_CVRMAPPING_LAGMAX = 20.0
+DEFAULT_CVRMAPPING_FILTER_LOWERPASS = 0.0
+DEFAULT_CVRMAPPING_FILTER_UPPERPASS = 0.01
 DEFAULT_CVRMAPPING_DESPECKLE_PASSES = 4
 
 
@@ -154,7 +156,8 @@ def _get_parser():
             "quantity over time (e.g. mmHg CO2 in the EtCO2 trace), rapidtide will calculate and output a map of percent "
             "BOLD change in units of the input regressor.  To do this, this sets: "
             f"passes=1, despeckle_passes={DEFAULT_CVRMAPPING_DESPECKLE_PASSES}, "
-            f"lagmin={DEFAULT_DELAYMAPPING_LAGMIN}, lagmax={DEFAULT_DELAYMAPPING_LAGMAX}, "
+            f"searchrange=({DEFAULT_CVRMAPPING_LAGMIN}, {DEFAULT_CVRMAPPING_LAGMAX}), "
+            f"filterfreqs=({DEFAULT_CVRMAPPING_FILTER_LOWERPASS}, {DEFAULT_CVRMAPPING_FILTER_UPPERPASS}), "
             "and calculates a voxelwise GLM using the optimally delayed "
             "input regressor and the percent normalized, demeaned BOLD data as inputs. This map is output as "
             "(XXX_desc-CVR_map.nii.gz).  If no input regressor is supplied, this will generate an error.  "
@@ -1572,10 +1575,6 @@ def process_args(inputargs=None):
     theobj = pf.postprocesstagopts(Namespace(**args))
     args = vars(theobj)
 
-    # configure the filter
-    theobj, theprefilter = pf.postprocessfilteropts(Namespace(**args))
-    args = vars(theobj)
-
     # Additional argument parsing not handled by argparse
     args["despeckle_passes"] = np.max([args["despeckle_passes"], 0])
 
@@ -1788,6 +1787,11 @@ def process_args(inputargs=None):
             raise ValueError(
                 "CVR mapping requires an externally supplied regresssor file - terminating."
             )
+        args["passvec"] = (
+            DEFAULT_CVRMAPPING_FILTER_LOWERPASS,
+            DEFAULT_CVRMAPPING_FILTER_UPPERPASS,
+        )
+        pf.setifnotset(args, "filterband", "arb")
         pf.setifnotset(args, "despeckle_passes", DEFAULT_CVRMAPPING_DESPECKLE_PASSES)
         pf.setifnotset(args, "lagmin", DEFAULT_CVRMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_CVRMAPPING_LAGMAX)
@@ -1805,6 +1809,10 @@ def process_args(inputargs=None):
         args["limitoutput"] = True
         pf.setifnotset(args, "doglmfilt", False)
         args["saveintermediatemaps"] = False
+
+    # configure the filter
+    theobj, theprefilter = pf.postprocessfilteropts(Namespace(**args))
+    args = vars(theobj)
 
     # process macros
     if args["venousrefine"]:

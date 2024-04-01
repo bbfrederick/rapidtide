@@ -3,7 +3,6 @@
 rapidtide \
     --nprocs -1 \
     sub-RAPIDTIDETEST.nii.gz \
-    --denoising \
     ../dst/sub-RAPIDTIDETEST
 
 #for fittype in None quad fastquad COM gauss fastgauss

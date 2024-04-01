@@ -335,7 +335,7 @@ For this type of analysis, a good place to start is the following:
 		    outputname \
 		    --numnull 0 \
 		    --searchrange -10 140 \
-		    --filterfreqs 0.0 0.1 \
+		    --filterfreqs 0.0 0.01 \
 		    --ampthresh 0.2 \
 		    --noglm \
 		    --nofitfilt
@@ -353,7 +353,7 @@ correlation peak with maximum precision, you need sufficient additional delay va
 can come to a peak and then come down enough that you can properly fit it.  Obviously adjust this as needed
 for your experiment, to fit the particulars of your gas challenge waveform and/or expected pathology.
 
-Setting ``--filterfreqs 0.0 0.1`` is VERY important.  By default, rapidtide assumes you are looking at
+Setting ``--filterfreqs 0.0 0.01`` is VERY important.  By default, rapidtide assumes you are looking at
 endogenous low frequency oscillations, which typically between 0.09 and 0.15 Hz.  However, gas challenge
 paradigms are usually MUCH lower frequency (90 seconds off, 90 seconds on corresponds to 1/180s = ~0.006Hz).
 So if you use the default frequency settings, you will completely filter out your stimulus, and presumably,
@@ -394,7 +394,9 @@ regressor (e.g. %BOLD/mmHg), which is the standard in CVR analysis.
 		    --regressor regressorfile \
 		    --CVR
 
-You invoke this with the ``--CVR`` option.  This is a macro that does a lot of things: I disabled refinement,
+You invoke this with the ``--CVR`` option.  This is a macro that does a lot of things: I disabled refinement, set
+``--passes 1``, set ``--filterfreqs 0.0 0.01`` (for the reasons described above regarding gas challenge experiments),
+set ``--searchrange -5 20``,
 hijacked the GLM filtering routine, and messed with some normalizations.  If you want to refine your regressor
 estimate, or filter the sLFO signal out of your data, you need to do a separate analysis.
 
