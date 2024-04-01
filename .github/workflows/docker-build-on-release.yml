@@ -28,7 +28,7 @@ jobs:
         id:   gitversion # id to later be referenced
         uses: gittools/actions/gitversion/execute@v1
         with:
-          config: config commit-date-format="yyyy-MM-ddTHH:mm:ssZ"
+          additionalArguments: /config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
       - name: Alternate Git Version
         id: alternategitversion
