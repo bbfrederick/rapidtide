@@ -113,14 +113,14 @@ Preprocessing for rapidtide
 Rapidtide operates on data which has been subjected to "standard" preprocessing steps, most importantly motion
 correction and slice time correction.
 
-Motion correction is good since you want to actually be looking at the same voxels in each timepoint.  Definitely
+**Motion correction** - Motion correction is good since you want to actually be looking at the same voxels in each timepoint.  Definitely
 do it.  There may be spin history effects even after motion correction, so if you give rapidtide a motion file
 using ``--motionfile FILENAME`` (and various other options to tune how it does the motion regression)
 it can regress out residual motion prior to estimating sLFO parameters. In cases of extreme motion, this will
 make rapidtide work a lot better.  If you choose to regress out the motion signals yourself, that's fine too -
 rapidtide is happy to work on data that's been run through AROMA (not so much FIX - see a further discussion below).
 
-Since rapidtide is looking for subtle time differences in the arrival of the
+**Slice time correction** - Since rapidtide is looking for subtle time differences in the arrival of the
 sLFO signal, it will absolutely see slice acquisition time differences.  If you are doing noise removal, that's not
 such a big deal, but if you're doing delay mapping, you'll get stripes in your delay maps, which tell you about the
 fMRI acquisition, but you care about physiology, so best to avoid that.  Unfortunately, Human Connectome Project data
@@ -129,17 +129,20 @@ you just have to deal with it.  Fortunately the TR is quite short, so the stripe
 distortion correction and alignment steps done in the HCP distort the stripes, but you can certainly see them.  If you
 average enough subjects though, they get washed out.
 
-I generally do NOT apply any spatial filtering
-during preprocessing - you can always do it later, and rapidtide lets you do spatial smoothing for the purpose of
-estimating the delayed regressor using the ``--gausssigma`` parameter.
+**Spatial filtering** - I generally do NOT apply any spatial filtering
+during preprocessing for a variety of reasons.  fmriprep doesn't do it, so I feel validated in this choice.
+You can always do it later, and rapidtide lets you do spatial smoothing for the purpose of
+estimating the delayed regressor using the ``--gausssigma`` parameter.  This turns out to stabilize the fits for
+rapidtide and is usually a good thing, however you probably don't want it for other processing (but that's ok - see below).
 
-Rapidtide does all it's own temporal filtering; highpass filtering at 0.01Hz, common in resting state preprocessing,
+**Temporal filtering** - Rapidtide does all it's own temporal filtering; highpass filtering at 0.01Hz, common in r
+esting state preprocessing,
 doesn't affect the frequency ranges rapidtide cares about for sLFOs, so you can do it or not during preprocessing
-as you see fit (but if you're doing
-CVR or gas challenge experiments you probably shouldn't).
+as you see fit (but if you're doing CVR or gas challenge experiments you probably shouldn't).
 
 NOTE: Astute readers will notice that between spatial filtering, motion regression, and other procedures, rapidtide
-does a lot of it's work of estimating sLFOs on potentially heavily filtered data.  However, you may or may not
+does a lot of it's work of estimating sLFOs on potentially heavily filtered data, which is good for improving the
+estimation and fitting of the sLFO signal.  However, you may or may not
 want this filtering to have been done for whatever your particular subsequent analysis is.  So prior to GLM denoising, rapidtide
 rereads the unmodified fMRI input file, and regresses the voxel specific sLFO out of *that* - since the filtering
 process is linear, that's cool - the data you get out is the data you put in, just minus the sLFO signal.  If for
@@ -184,8 +187,8 @@ dear reader, have
 any insight into this, PLEASE tell me and I'll do what I need to to support SPM data in the code and documentation.
 
 
-Examples:
-^^^^^^^^^
+Analysis Examples:
+^^^^^^^^^^^^^^^^^^
 
 Rapidtide can do many things - as I've found more interesting things to do with time delay processing, it's gained
 new functions and options to support these new applications.  As a result, it can be a little hard to know what to
@@ -302,9 +305,19 @@ You also need to supply the regressor using ``--regressor regressorfile``.  If r
 Denoising NIRS data:
 """"""""""""""""""""
 
-When we started this whole research effort, I waw originally planning to denoise NIRS data, not fMRI data.  But one thing led to another, and the NIRS got derailed for the fMRI effort.  Now that we have some time to catch our breaths, and more importantly, we have access to some much higher quality NIRS data, this moved back to the front burner.  The majority of the work was already done, I just needed to account for a few qualities that make NIRS data different from fMRI data:
+Fun face - when we started this whole research effort, I was originally planning to denoise NIRS data, not fMRI data.  But one
+thing led to another, and the NIRS got derailed for the fMRI effort.  Now that we have some time to catch our breaths,
+and more importantly, we have access to some much higher quality NIRS data, this moved back to the front burner.
+The majority of the work was already done, I just needed to account for a few qualities that make NIRS data different from fMRI data:
 
-* NIRS data is not generally stored in NIFTI files.  There is not as yet a standard NIRS format.  In the absence of one, you could do worse than a multicolumn text file, with one column per data channel.  That's what I did here - if the file has a '.txt' extension rather than '.nii.', '.nii.gz', or no extension, it will assume all I/O should be done on multicolumn text files.
-* NIRS data is often zero mean.  This turned out to mess with a lot of my assumptions about which voxels have significant data, and mask construction.  This has led to some new options for specifying mask threshholds and data averaging.
-* NIRS data is in some sense "calibrated" as relative micromolar changes in oxy-, deoxy-, and total hemoglobin concentration, so mean and/or variance normalizing the timecourses may not be right thing to do.  I've added in some new options to mess with normalizations.
+* NIRS data is not generally stored in NIFTI files.  While there is one now (SNIRF), at the time I started doing this,
+there was no standard NIRS file format.  In the absence of one,
+you could do worse than a multicolumn text file, with one column per data channel.  That's what I did here - if the
+file has a '.txt' extension rather than '.nii.', '.nii.gz', or no extension, it will assume all I/O should be done on
+multicolumn text files.  However, I'm a firm believer in SNIRF, and will add support for it one of these days.
+* NIRS data is often zero mean.  This turned out to mess with a lot of my assumptions about which voxels have
+significant data, and mask construction.  This has led to some new options for specifying mask threshholds and data averaging.
+* NIRS data is in some sense "calibrated" as relative micromolar changes in oxy-, deoxy-, and total hemoglobin
+concentration, so mean and/or variance normalizing the timecourses may not be right thing to do.  I've added in
+some new options to mess with normalizations.
 
