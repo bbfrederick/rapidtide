@@ -73,6 +73,10 @@ Contents
    usage_tcfrom3col.rst
    usage_resamplenifti.rst
    usage_pixelcomp.rst
+   usage_atlastool.rst
+   usage_applydlfilter.rst
+   usage_calctexticc.rst
+   usage_diffrois.rst
    usage_other.rst
    legacy.rst
    api.rst

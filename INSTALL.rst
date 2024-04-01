@@ -9,25 +9,21 @@ Required dependencies
 The processing programs in rapidtide require the following to be
 installed first:
 
--  Python 3.x (I no longer support or test running in 2.x, but it does
-   still work for the time being. But I use dependencies like nibabel
-   that have dropped 2.x support, so this is not going to last long.)
--  numpy>=1.16
+-  Python >= 3.8
+-  numpy
 -  scipy
 -  pandas
--  scikit-learn
+-  pyarrow
 -  scikit-image
+-  scikit-learn
 -  nibabel
 -  nilearn
 -  matplotlib
--  statsmodels
--  tqdm
-
-If you want to use tidepool for image display, you will also need to
-install the following:
-
+-  pyfftw
 -  pyqt5-sip
 -  pyqtgraph
+-  statsmodels
+-  tqdm
 
 Optional dependencies
 `````````````````````
@@ -35,8 +31,7 @@ Optional dependencies
 The following optional dependencies will be used if present:
 
 -  numba (for faster performance)
--  pyfftw (also for faster performance)
--  mkl and mkl-service (again, faster performance)
+-  mkl and mkl-service (faster performance on intel CPUs)
 
 If you want to use the deep learning filter in happy, you’ll need Keras
 and some sort of backend. If you want to be able to train filters,
@@ -75,9 +70,8 @@ The simplest way BY FAR to get this all done is to use Anaconda python
 from Continuum Analytics. It’s a free, curated scientific Python
 distribution that is easy to maintain and takes a lot of headaches out
 of maintaining a distribution. It also already comes with many of the
-dependancies for rapidtide installed by default. You can get it here:
-https://www.continuum.io. Rapidtide works with Python 2 or 3. If you are
-new to Python, you should probably just start at 3.
+dependencies for rapidtide installed by default. You can get it here:
+https://www.continuum.io. Rapidtide works with Python 3.8 or greater.
 
 After installing Anaconda python, install the remaining dependencies
 (including some good optional ones:
