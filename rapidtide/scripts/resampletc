@@ -17,7 +17,7 @@
 #
 #
 import rapidtide.workflows.parser_funcs as pf
-import rapidtide.workflows.resamp1tc as theworkflow
+import rapidtide.workflows.resampletc as theworkflow
 
 if __name__ == "__main__":
-    pf.generic_init(theworkflow._get_parser, theworkflow.resamp1tc)
+    pf.generic_init(theworkflow._get_parser, theworkflow.resampletc)

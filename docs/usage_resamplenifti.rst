@@ -3,15 +3,16 @@ resamplenifti
 
 Description:
 ^^^^^^^^^^^^
-	This takes an input nifti file at some TR and outputs a nifti file resampled to the specified TR.
+	This takes an input NIFTI file at some TR and outputs a NIFTI file resampled to the specified TR.
 
 
 Inputs:
 ^^^^^^^
+    The 4D NIFTI file to resample
 
 Outputs:
 ^^^^^^^^
-
+    A 4D NIFTI file resampled to the new TR
 Usage:
 ^^^^^^
 

@@ -30,7 +30,7 @@ def _get_parser():
     Argument parser for resamp1tc
     """
     parser = argparse.ArgumentParser(
-        prog="resamp1tc",
+        prog="resampletc",
         description=("Resample a timeseries file"),
         allow_abbrev=False,
     )
@@ -74,7 +74,7 @@ def _get_parser():
     return parser
 
 
-def resamp1tc(args):
+def resampletc(args):
     intimestep = 1.0 / args.insamplerate
     outtimestep = 1.0 / args.outsamplerate
     (

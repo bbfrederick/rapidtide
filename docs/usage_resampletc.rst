@@ -1,5 +1,5 @@
-resamp1tc
----------
+resampletc
+----------
 
 Description:
 ^^^^^^^^^^^^
@@ -16,8 +16,8 @@ Usage:
 ^^^^^^
 
 .. argparse::
-   :ref: rapidtide.workflows.resamp1tc._get_parser
-   :prog: resamp1tc
+   :ref: rapidtide.workflows.resampletc._get_parser
+   :prog: resampletc
    :func: _get_parser
 
    Debugging options : @skip
