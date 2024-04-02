@@ -16,13 +16,10 @@ Outputs:
 Usage:
 ^^^^^^
 
-	::
+.. argparse::
+   :ref: rapidtide.workflows.showhist._get_parser
+   :prog: showhist
+   :func: _get_parser
 
-		usage: showhist textfilename
-			plots xy histogram data in text file
-
-		required arguments:
-			textfilename	- a text file containing one timepoint per line
-
-
-
+   Debugging options : @skip
+      skip debugging options

@@ -106,6 +106,7 @@ modules_list = [
     "rapidtide/workflows/simdata",
     "rapidtide/workflows/tcfrom2col",
     "rapidtide/workflows/tcfrom3col",
+    "rapidtide/workflows/threeD",
     "rapidtide/workflows/tidepool",
     "rapidtide/workflows/utils",
     "rapidtide/workflows/variabilityizer",

@@ -3,7 +3,9 @@ showstxcorr
 
 Description:
 ^^^^^^^^^^^^
+
    Calculate and display the short term crosscorrelation between two timeseries (useful for dynamic correlation).
+
 
 Inputs:
 ^^^^^^^
@@ -19,3 +21,5 @@ Usage:
    :prog: showstxcorr
    :func: _get_parser
 
+   Debugging options : @skip
+      skip debugging options

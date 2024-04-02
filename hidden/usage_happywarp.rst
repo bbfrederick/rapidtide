@@ -1,5 +1,5 @@
-testhrv
--------
+showarbcorr
+-----------
 
 Description:
 ^^^^^^^^^^^^
@@ -14,8 +14,8 @@ Usage:
 ^^^^^^
 
 .. argparse::
-   :ref: rapidtide.workflows.testhrv._get_parser
-   :prog: testhrv
+   :ref: rapidtide.workflows.showarbcorr._get_parser
+   :prog: showarbcorr
    :func: _get_parser
 
    Debugging options : @skip

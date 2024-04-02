@@ -106,6 +106,7 @@ Contents
    usage_spatialfit.rst
    usage_spatialdecomp.rst
    usage_spatialmi.rst
+   usage_synthASL.rst
    legacy.rst
    api.rst
    contributing.rst
