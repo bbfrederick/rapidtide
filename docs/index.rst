@@ -94,7 +94,14 @@ Contents
    usage_resamp1tc.rst
    usage_runqualitycheck.rst
    usage_simdata.rst
-   usage_other.rst
+   usage_spatialfit.rst
+   usage_spatialmi.rst
+   usage_spectrogram.rst
+   usage_synthASL.rst
+   usage_variabilityizer.rst
+   usage_showhist.rst
+   usage_histnifti.rst
+   usage_showstxcorr.rst
    legacy.rst
    api.rst
    contributing.rst
