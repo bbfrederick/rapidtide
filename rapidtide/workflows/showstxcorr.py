@@ -22,7 +22,6 @@ import sys
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from scipy.interpolate import UnivariateSpline
 
 import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
