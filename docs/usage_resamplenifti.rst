@@ -3,16 +3,16 @@ resamplenifti
 
 Description:
 ^^^^^^^^^^^^
-	This takes an input NIFTI file at some TR and outputs a NIFTI file resampled to the specified TR.
+	Takes an input NIFTI file at some TR and outputs a NIFTI file resampled to the specified TR.  Downsampling is antialiased unless disabled.
 
 
 Inputs:
 ^^^^^^^
-    The 4D NIFTI file to resample
+    The 4D NIFTI file to resample.
 
 Outputs:
 ^^^^^^^^
-    A 4D NIFTI file resampled to the new TR
+    A 4D NIFTI file resampled to the new TR.
 Usage:
 ^^^^^^
 
