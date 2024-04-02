@@ -89,6 +89,11 @@ Contents
    usage_pairwisemergenifti.rst
    usage_physiofreq.rst
    usage_plethquality.rst
+   usage_proj2flow.rst
+   usage_rankimage.rst
+   usage_resamp1tc.rst
+   usage_runqualitycheck.rst
+   usage_simdata.rst
    usage_other.rst
    legacy.rst
    api.rst

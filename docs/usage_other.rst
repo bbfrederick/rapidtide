@@ -79,39 +79,6 @@ Usage:
 			textfilename	- a text file containing one timepoint per line
 
 
-resamp1tc
----------
-
-Description:
-^^^^^^^^^^^^
-	This takes an input text file at some sample rate and outputs a text file resampled to the specified sample rate.
-
-
-Inputs:
-^^^^^^^
-
-Outputs:
-^^^^^^^^
-
-Usage:
-^^^^^^
-
-	::
-
-		resamp1tc - resample a timeseries file
-
-		usage: resamp1tc infilename insamplerate outputfile outsamplerate [-s]
-
-		required arguments:
-			inputfile        - the name of the input text file
-			insamplerate     - the sample rate of the input file in Hz
-			outputfile       - the name of the output text file
-			outsamplerate    - the sample rate of the output file in Hz
-
-		 options:
-			-s               - split output data into physiological bands (LFO, respiratory, cardiac)
-
-
 
 showstxcorr
 -----------
