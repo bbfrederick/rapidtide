@@ -5,13 +5,9 @@ Description:
 ^^^^^^^^^^^^
 	Find temporal crosscorrelations between the columns of an input file
 
-
-
 Inputs:
 ^^^^^^^
-	timecoursefile - Text file containing one or more timeseries columns. Use [:COLSPEC] to select which column(s) to use, where COLSPEC is an integer, a column separated list of ranges, or a comma separated set of column names (if input file is BIDS). Default is to use all columns
-
-	outputroot - Root name for the output files
+	A text file containing one or more timeseries columns. Use [:COLSPEC] to select which column(s) to use, where COLSPEC is an integer, a column separated list of ranges, or a comma separated set of column names (if input file is BIDS). Default is to use all columns.
 
 Outputs:
 ^^^^^^^^

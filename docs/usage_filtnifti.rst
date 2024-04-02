@@ -3,12 +3,15 @@ filtnifti
 
 Description:
 ^^^^^^^^^^^^
+    Temporally filters a NIFTI file.
 
 Inputs:
 ^^^^^^^
+    A 4D NIFTI file
 
 Outputs:
 ^^^^^^^^
+    The filtered 4D NIFTI file
 
 Usage:
 ^^^^^^

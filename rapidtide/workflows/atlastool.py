@@ -35,7 +35,7 @@ def _get_parser():
     """
     parser = argparse.ArgumentParser(
         prog="atlastool",
-        description=("A tool to manipulate nifti atlas files"),
+        description=("A utility to manipulate nifti atlas files"),
         allow_abbrev=False,
     )
 

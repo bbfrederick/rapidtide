@@ -32,7 +32,7 @@ def _get_parser():
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="filtnifti",
-        description="Temporally filters a nifti file.",
+        description="Temporally filters a NIFTI file.",
         allow_abbrev=False,
     )
     parser.add_argument("inputfilename", type=str, help="The name of the input nifti file.")
