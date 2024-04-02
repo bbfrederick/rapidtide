@@ -101,7 +101,10 @@ Contents
    usage_gmscalc.rst
    usage_roisummarize.rst
    usage_localflow.rst
+   usage_simdata.rst
+   usage_spectrogram.rst
    usage_spatialfit.rst
+   usage_spatialdecomp.rst
    usage_spatialmi.rst
    legacy.rst
    api.rst
