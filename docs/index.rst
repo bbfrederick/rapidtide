@@ -82,6 +82,13 @@ Contents
    usage_filttc.rst
    usage_spatialdecomp.rst
    usage_temporaldecomp.rst
+   usage_polyfitim.rst
+   usage_histtc.rst
+   usage_mergequality.rst
+   usage_pairproc.rst
+   usage_pairwisemergenifti.rst
+   usage_physiofreq.rst
+   usage_plethquality.rst
    usage_other.rst
    legacy.rst
    api.rst
