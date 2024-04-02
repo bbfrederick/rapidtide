@@ -30,7 +30,7 @@ band (rapditide2) and now in the cardiac band (happy).
 Citing rapidtide
 -------------------
 
-  Frederick, B, rapidtide [Computer Software] (2016-2022). Available from
+  Frederick, B, rapidtide [Computer Software] (2016-2024). Available from
   https://github.com/bbfrederick/rapidtide. doi:`10.5281/zenodo.814990`_
 
 .. _10.5281/zenodo.814990: https://doi.org/10.5281/zenodo.814990
@@ -101,6 +101,8 @@ Contents
    usage_gmscalc.rst
    usage_roisummarize.rst
    usage_localflow.rst
+   usage_spatialfit.rst
+   usage_spatialmi.rst
    legacy.rst
    api.rst
    contributing.rst
