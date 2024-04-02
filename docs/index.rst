@@ -65,6 +65,8 @@ Contents
    usage_showxcorrlegacy.rst
    usage_showxcorrx.rst
    usage_showtc.rst
+   usage_showxy.rst
+   usage_showhist.rst
    usage_glmfilt.rst
    usage_atlasaverage.rst
    usage_ccorrica.rst
@@ -80,7 +82,6 @@ Contents
    usage_endtidalproc.rst
    usage_filtnifti.rst
    usage_filttc.rst
-   usage_spatialdecomp.rst
    usage_temporaldecomp.rst
    usage_polyfitim.rst
    usage_histtc.rst
@@ -93,15 +94,13 @@ Contents
    usage_rankimage.rst
    usage_resamp1tc.rst
    usage_runqualitycheck.rst
-   usage_simdata.rst
-   usage_spatialfit.rst
-   usage_spatialmi.rst
-   usage_spectrogram.rst
-   usage_synthASL.rst
    usage_variabilityizer.rst
-   usage_showhist.rst
    usage_histnifti.rst
-   usage_showstxcorr.rst
+   usage_aligntcs.rst
+   usage_fdica.rst
+   usage_gmscalc.rst
+   usage_roisummarize.rst
+   usage_localflow.rst
    legacy.rst
    api.rst
    contributing.rst
