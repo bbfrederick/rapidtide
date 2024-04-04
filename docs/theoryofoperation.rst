@@ -1,13 +1,21 @@
+..
+   Headings are organized in this manner:
+   =====
+   -----
+   ^^^^^
+   """""
+   '''''
+
 Theory of operation
-===================
+-------------------
 If you're bored enough or misguided enough to be reading this section, you are
 my intended audience!
 
 rapidtide
-"""""""""
+^^^^^^^^^
 
 What is rapidtide trying to do?
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Rapidtide attempts to separate an fMRI or NIRS dataset into two components - a
 single timecourse that appears throughout the dataset with varying time delays
 and intensities in each voxel, and  everything else.  We and others have
@@ -48,8 +56,7 @@ look here [Erdogan2016]_.
 
 
 What is the difference between RIPTiDe and rapidtide?
-`````````````````````````````````````````````````````
-
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 RIPTiDe (Regressor Interpolation at Progressive Time Delays) is the name of
 the technique used for finding and removing time lagged physiological signals
 in fMRI data.  In the original RIPTiDe papers, we generated a
@@ -86,7 +93,7 @@ in the Physiology section below).
 
 
 How does rapidtide work?
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 In order to perform this task, rapidtide does a number of things:
 
 1. Obtain some initial estimate of the moving signal.
@@ -109,8 +116,7 @@ Each of these steps has nuances which will be discussed below.
 
 
 Generation of Masks
-```````````````````
-
+"""""""""""""""""""
 By default, rapidtide calculates masks dynamically at run time.  There
 are 5 masks used: 1) the global mean mask, which determines which voxels
 are used to generate the initial global mean regressor, 2) The
@@ -175,13 +181,56 @@ from being used to generate the intial global mean signal estimate, or from bein
 
 
 Initial Moving Signal Estimation
-````````````````````````````````
+""""""""""""""""""""""""""""""""
+You can stabililize and improve rapidtide's delay estimation quite a bit by making sure you have a good starting
+regressor, and do refinement in "good" brain regions that don't have wacky delay structures.
+While just about anything works well in young, healthy subjects (like the HCP-YA dataset), as people get older,
+their delays become weird - my working theory is that over time various routine vascular insults and unhealthy habits
+accumulate, leading to increasing heterogeneity between vascular territories (which I like to call "vascular
+personality"). So the global mean may be made up of several pools of blood, delayed by up to several seconds
+from each other, leading to weird autocorrelation that can confuse my delay finding algorithm, because it
+invalidates my assumption that the global mean is a good initial estimate of the "true" moving regressor.
+One way to combat this is to limit the brain region that you get your initial regressor from. For example, you
+could use gray metter only for the global regresor estimation, since white matter has a lower signal and tends to
+get blood much later than gray matter anyway.  Just add the option
+``--globalmeaninclude standardspaceaparcasegfilename.nii.gz`` to your rapidtide command line.  If you are using
+fmriprep, you can get a gray matter mask using:
 
+::
+
+  fslmaths \
+      BIDSHOME/derivatives/fmriprep/sub-XXX/anat/sub-YYY_space-MNI152NLin6Asym_res-2_label-GM_probseg.nii.gz \
+      -s 3 \
+      -thr 0.25 \
+      -bin \
+      graymask
+
+If you want to be even more proactive, you could select a brain region that you think has unperturbed circulation.
+For an Alzheimer's study that I am currently working on, we ended up starting only from blood in right and
+left cerebellar gray matter (aparc+aseg regions 8 and 47) on the theory that if circulation in your cerebellum
+is too messed up, you're dead, so would not be in the dataset. That made our delay estimates work a lot better.
+So we used the freesurfer parcellations from fmriprep, transformed to standard space, to do that
+preselection, using the option ``--globalmeaninclude standardspaceaparcasegfilename.nii.gz:8,47``.
+
+fmriprep does not provide a standard space aparc+aseg file - it's in T1 native space at 1mm resolution
+(because that's what freesurfer works in).  Resampling to standard space is easy, just remember to use NearestNeighbor
+interpolation, or you'll get smeared, averaged boundaries between brain regions, which you REALLY don't want.
+This command should get you ``standardspaceaparcasegfilename.nii.gz``:
+
+::
+
+  antsApplyTransforms \
+      --default-value 0 \
+      -d 3 \
+      -i BIDSHOME/derivatives/sub-XXX/anat/sub-XXX_desc-aparcaseg_dseg.nii.gz \
+      -o BIDSHOME/derivatives/sub-XXX/anat/mymnispace_desc-aparcaseg_dseg.nii.gz \
+      -r BIDSHOME/derivatives/sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-preproc_T1w.nii.gz \
+      --interpolation NearestNeighbor \
+      --transform BIDSHOME/derivatives/sub-XXX/anat/sub-XXX_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5
 
 
 Moving Signal Preprocessing
-```````````````````````````
-
+"""""""""""""""""""""""""""
 **Oversampling:**  In order to simplify delay calculation, rapidtide performs all delay estimation operations
 on data with a sample rate of 2Hz or faster.  Since most fMRI is recorded with a TR > 0.5s, this is acheived by 
 oversampling the data.  The oversampling factor can be specified explicitly 
@@ -250,31 +299,31 @@ correction.
 
 
 Moving Signal Massaging
-```````````````````````
+"""""""""""""""""""""""
 
 
 Dataset Preprocessing
-`````````````````````
+"""""""""""""""""""""
 
 
 Time delay determination
-````````````````````````
+""""""""""""""""""""""""
 
 
 Generating a Better Moving Signal Estimate
-``````````````````````````````````````````
+""""""""""""""""""""""""""""""""""""""""""
 
 
 Lather, Rinse, Repeat
-`````````````````````
+"""""""""""""""""""""
 
 
 Save Useful Parameters
-``````````````````````
+""""""""""""""""""""""
 
 
 Regress Out the Moving Signal
-`````````````````````````````
+"""""""""""""""""""""""""""""
 
 .. [Tong2019] Tong, Y., Hocke, L.M., and Frederick, B.B., Low Frequency
    Systemic Hemodynamic "Noise" in Resting State BOLD fMRI: Characteristics,

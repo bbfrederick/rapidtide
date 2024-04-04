@@ -189,7 +189,8 @@ one).  One caveat - unless this has changed recently, fmriprep does *not* store 
 native BOLD space to standard space, so you'll have to come up with that yourself either by fishing the transform
 out of the workdir, or redoing the alignment.  That's a pretty strong argument for using the standard space.  In addition,
 if you do the analysis in standard space, it makes it easier to use freesurfer parcellations and gray/white/csf
-segmentations that fmriprep provides for further tuning the rapidtide analysis.
+segmentations that fmriprep provides for further tuning the rapidtide analysis.  See the "Theory of Operation" section
+for more on this subject.
 
 **AFNI** - Here's a case where you have to take some care - as I mentioned above, rapidtide assumes "FSL-like" data by
 default.  The most important difference between AFNI and FSL preprocessing is that AFNI removes the mean from the data

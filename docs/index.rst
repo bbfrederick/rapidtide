@@ -59,7 +59,7 @@ Contents
 
    usage_general.rst
 
-      usage_rapidtide.rst
+   usage_rapidtide.rst
    usage_rapidtide2std.rst
    usage_tidepool.rst
    usage_adjustoffset.rst
@@ -127,7 +127,7 @@ Contents
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Digging deeper:
 
    theoryofoperation.rst
