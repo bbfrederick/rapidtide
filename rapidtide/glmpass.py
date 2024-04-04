@@ -25,41 +25,45 @@ import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
 
 
-def _procOneVoxelSpecificGLMItem(
-    vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"
-):
+def _procOneGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
+    # NOTE: if theevs is 2D, dimension 0 is number of points, dimension 1 is number of evs
     thefit, R = tide_fit.mlregress(theevs, thedata)
-    fitcoeff = rt_floatset(thefit[0, 1])
-    datatoremove = rt_floatset(fitcoeff * theevs)
-    if fitcoeff == 0.0:
-        R = 0.0
-    return (
-        vox,
-        rt_floatset(thefit[0, 0]),
-        rt_floatset(R),
-        rt_floatset(R * R),
-        fitcoeff,
-        rt_floatset(thefit[0, 1] / thefit[0, 0]),
-        datatoremove,
-        rt_floatset(thedata - datatoremove),
-    )
-
-
-def _procOneConfoundGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
-    thefit, R = tide_fit.mlregress(theevs, thedata)
-    fitcoeffs = rt_floatset(thefit[0, 1:])
-    datatoremove = theevs[0, :] * 0.0
-    for j in range(theevs.shape[0]):
-        datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * theevs[j, :])
-    if np.any(fitcoeffs) != 0.0:
-        pass
+    if theevs.ndim > 1:
+        if thefit is None:
+            thefit = np.matrix(np.zeros((1, theevs.shape[1] + 1), dtype=rt_floattype))
+        fitcoeffs = rt_floatset(thefit[0, 1:])
+        datatoremove = theevs[:, 0] * 0.0
+        for j in range(theevs.shape[1]):
+            datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * theevs[:, j])
+        if np.any(fitcoeffs) != 0.0:
+            pass
+        else:
+            R = 0.0
+        return (
+            vox,
+            rt_floatset(thefit[0, 0]),
+            rt_floatset(R),
+            rt_floatset(R * R),
+            fitcoeffs,
+            rt_floatset(thefit[0, 1:] / thefit[0, 0]),
+            datatoremove,
+            rt_floatset(thedata - datatoremove),
+        )
     else:
-        R = 0.0
-    return (
-        vox,
-        rt_floatset(R * R),
-        rt_floatset(thedata - datatoremove),
-    )
+        fitcoeff = rt_floatset(thefit[0, 1])
+        datatoremove = rt_floatset(fitcoeff * theevs)
+        if fitcoeff == 0.0:
+            R = 0.0
+        return (
+            vox,
+            rt_floatset(thefit[0, 0]),
+            rt_floatset(R),
+            rt_floatset(R * R),
+            fitcoeff,
+            rt_floatset(thefit[0, 1] / thefit[0, 0]),
+            datatoremove,
+            rt_floatset(thedata - datatoremove),
+        )
 
 
 def glmpass(
@@ -121,7 +125,7 @@ def glmpass(
                     if procbyvoxel:
                         if confoundglm:
                             outQ.put(
-                                _procOneConfoundGLMItem(
+                                _procOneGLMItem(
                                     val,
                                     theevs,
                                     fmri_data[val, :],
@@ -131,7 +135,7 @@ def glmpass(
                             )
                         else:
                             outQ.put(
-                                _procOneVoxelSpecificGLMItem(
+                                _procOneGLMItem(
                                     val,
                                     theevs[val, :],
                                     fmri_data[val, :],
@@ -142,9 +146,9 @@ def glmpass(
                     else:
                         if confoundglm:
                             outQ.put(
-                                _procOneConfoundGLMItem(
+                                _procOneGLMItem(
                                     val,
-                                    np.transpose(theevs),
+                                    theevs,
                                     fmri_data[:, val],
                                     rt_floatset=rt_floatset,
                                     rt_floattype=rt_floattype,
@@ -152,7 +156,7 @@ def glmpass(
                             )
                         else:
                             outQ.put(
-                                _procOneVoxelSpecificGLMItem(
+                                _procOneGLMItem(
                                     val,
                                     theevs[:, val],
                                     fmri_data[:, val],
@@ -180,8 +184,8 @@ def glmpass(
         if procbyvoxel:
             if confoundglm:
                 for voxel in data_out:
-                    r2value[voxel[0]] = voxel[1]
-                    filtereddata[voxel[0], :] = voxel[2]
+                    r2value[voxel[0]] = voxel[3]
+                    filtereddata[voxel[0], :] = voxel[7]
                     itemstotal += 1
             else:
                 for voxel in data_out:
@@ -196,8 +200,8 @@ def glmpass(
         else:
             if confoundglm:
                 for timepoint in data_out:
-                    r2value[timepoint[0]] = timepoint[1]
-                    filtereddata[:, timepoint[0]] = timepoint[2]
+                    r2value[timepoint[0]] = timepoint[3]
+                    filtereddata[:, timepoint[0]] = timepoint[7]
                     itemstotal += 1
             else:
                 for timepoint in data_out:
@@ -225,9 +229,14 @@ def glmpass(
                     if confoundglm:
                         (
                             dummy,
+                            dummy,
+                            dummy,
                             r2value[vox],
+                            dummy,
+                            dummy,
+                            dummy,
                             filtereddata[vox, :],
-                        ) = _procOneConfoundGLMItem(
+                        ) = _procOneGLMItem(
                             vox,
                             theevs,
                             thedata,
@@ -244,7 +253,7 @@ def glmpass(
                             fitNorm[vox],
                             datatoremove[vox, :],
                             filtereddata[vox, :],
-                        ) = _procOneVoxelSpecificGLMItem(
+                        ) = _procOneGLMItem(
                             vox,
                             theevs[vox, :],
                             thedata,
@@ -264,11 +273,16 @@ def glmpass(
                     if confoundglm:
                         (
                             dummy,
+                            dummy,
+                            dummy,
                             r2value[timepoint],
+                            dummy,
+                            dummy,
+                            dummy,
                             filtereddata[:, timepoint],
-                        ) = _procOneConfoundGLMItem(
+                        ) = _procOneGLMItem(
                             timepoint,
-                            np.transpose(theevs),
+                            theevs,
                             thedata,
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
@@ -283,7 +297,7 @@ def glmpass(
                             fitNorm[timepoint],
                             datatoremove[:, timepoint],
                             filtereddata[:, timepoint],
-                        ) = _procOneVoxelSpecificGLMItem(
+                        ) = _procOneGLMItem(
                             timepoint,
                             theevs[:, timepoint],
                             thedata,
@@ -294,6 +308,42 @@ def glmpass(
         if showprogressbar:
             print()
     return itemstotal
+
+
+def makevoxelspecificderivs(theevs, nderivs=1, debug=False):
+    r"""Perform multicomponent expansion on theevs (each ev replaced by itself,
+    its square, its cube, etc.).
+
+    Parameters
+    ----------
+    theevs : 2D numpy array
+        NxP array of voxel specific explanatory variables (one timecourse per voxel)
+        :param theevs:
+
+    nderivs : integer
+        Number of components to use for each ev.  Each successive component is a
+        higher power of the initial ev (initial, square, cube, etc.)
+        :param nderivs:
+
+    debug: bool
+        Flag to toggle debugging output
+        :param debug:
+    """
+    if debug:
+        print(f"{theevs.shape=}")
+    if nderivs == 0:
+        thenewevs = theevs
+    else:
+        thenewevs = np.zeros((theevs.shape[0], theevs.shape[1], nderivs + 1), dtype=float)
+        for thevoxel in range(0, theevs.shape[0]):
+            thenewevs[thevoxel, :, 0] = theevs[thevoxel, :] * 1.0
+            for i in range(1, nderivs + 1):
+                thenewevs[thevoxel, :, i] = np.gradient(thenewevs[thevoxel, :, i - 1])
+    if debug:
+        print(f"{nderivs=}")
+        print(f"{thenewevs.shape=}")
+
+    return thenewevs
 
 
 def motionregress(
@@ -308,9 +358,7 @@ def motionregress(
     motionlp=None,
     position=True,
     deriv=True,
-    derivdelayed=False,
     showprogressbar=True,
-    usemultiprocglm=False,
     debug=False,
 ):
     print("regressing out motion")
@@ -318,7 +366,6 @@ def motionregress(
         tide_io.readmotion(themotionfilename),
         position=position,
         deriv=deriv,
-        derivdelayed=derivdelayed,
     )
     if motend == -1:
         motionregressors = motionregressors[:, motstart:]
@@ -348,80 +395,29 @@ def motionregress(
         )
 
     print("start motion filtering")
-    if usemultiprocglm:
-        numprocitems = thedataarray.shape[0]
-        filtereddata = thedataarray * 0.0
-        r2value = np.zeros(numprocitems)
-        numfiltered = glmpass(
-            numprocitems,
-            thedataarray,
-            None,
-            motionregressors,
-            None,
-            None,
-            r2value,
-            None,
-            None,
-            None,
-            filtereddata,
-            confoundglm=True,
-            nprocs=nprocs,
-            showprogressbar=showprogressbar,
-            procbyvoxel=True,
-            debug=debug,
-        )
-    else:
-        filtereddata, r2value = confoundglm(
-            thedataarray, motionregressors, showprogressbar=showprogressbar, debug=debug
-        )
+
+    numprocitems = thedataarray.shape[0]
+    filtereddata = thedataarray * 0.0
+    r2value = np.zeros(numprocitems)
+    numfiltered = glmpass(
+        numprocitems,
+        thedataarray,
+        None,
+        np.transpose(motionregressors),
+        None,
+        None,
+        r2value,
+        None,
+        None,
+        None,
+        filtereddata,
+        confoundglm=True,
+        nprocs=nprocs,
+        showprogressbar=showprogressbar,
+        procbyvoxel=True,
+        debug=debug,
+    )
 
     print()
-    print("motion filtering complete")
+    print(f"motion filtering on {numfiltered} voxels complete")
     return motionregressors, motionregressorlabels, filtereddata, r2value
-
-
-def confoundglm(
-    data,
-    regressors,
-    debug=False,
-    showprogressbar=True,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-):
-    r"""Filters multiple regressors out of an array of data
-
-    Parameters
-    ----------
-    data : 2d numpy array
-        A data array.  First index is the spatial dimension, second is the time (filtering) dimension.
-
-    regressors: 2d numpy array
-        The set of regressors to filter out of each timecourse.  The first dimension is the regressor number, second is the time (filtering) dimension:
-
-    debug : boolean
-        Print additional diagnostic information if True
-
-    Returns
-    -------
-    """
-    if debug:
-        print("data shape:", data.shape)
-        print("regressors shape:", regressors.shape)
-    datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
-    filtereddata = data * 0.0
-    r2value = data[:, 0] * 0.0
-    for i in tqdm(
-        range(data.shape[0]),
-        desc="Voxel",
-        unit="voxels",
-        disable=(not showprogressbar),
-    ):
-        datatoremove *= 0.0
-        thefit, R = tide_fit.mlregress(regressors, data[i, :])
-        if i == 0 and debug:
-            print("fit shape:", thefit.shape)
-        for j in range(regressors.shape[0]):
-            datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
-        filtereddata[i, :] = data[i, :] - datatoremove
-        r2value[i] = R * R
-    return filtereddata, r2value
