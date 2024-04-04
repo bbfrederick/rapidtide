@@ -41,7 +41,6 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         "1",
         "--despecklepasses",
         "3",
-        "--usemultiprocmotionglm",
         "--motionfile",
         os.path.join(get_examples_path(), "fakemotion.par"),
     ]

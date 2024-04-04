@@ -37,7 +37,6 @@ rapidtide \
 #	    --filterband lfo \
 #	    --corrweighting regressor \
 #	    --corrtype linear \
-#            --usemultiprocmotionglm \
 #	    --peakfittype ${fittype} \
 #	    sub-RAPIDTIDETEST.nii.gz \
 #	    ../dst/sub-RAPIDTIDETEST
