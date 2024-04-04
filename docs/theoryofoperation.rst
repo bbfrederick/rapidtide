@@ -199,7 +199,7 @@ is to resample the moving regressor estimate to match the (oversampled)
 data sample rate.
 
 **Pseudoperiodicity:**  The first uncontrolled quantity is
-pseudoperiodicity.  From time to time, signal energy in the 0.09-0.15 Hz
+pseudoperiodicity.  From time to time, signal energy in the 0.009-0.15 Hz
 band will be strongly concentrated in one or more spectral peaks.
 Whether this is completely random, or due to some pathological or
 congenital condition that affects circulation is not known. It seems

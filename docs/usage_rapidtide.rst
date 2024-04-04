@@ -333,7 +333,7 @@ can come to a peak and then come down enough that you can properly fit it.  Obvi
 for your experiment, to fit the particulars of your gas challenge waveform and/or expected pathology.
 
 Setting ``--filterfreqs 0.0 0.01`` is VERY important.  By default, rapidtide assumes you are looking at
-endogenous low frequency oscillations, which typically between 0.09 and 0.15 Hz.  However, gas challenge
+endogenous low frequency oscillations, which typically between 0.009 and 0.15 Hz.  However, gas challenge
 paradigms are usually MUCH lower frequency (90 seconds off, 90 seconds on corresponds to 1/180s = ~0.006Hz).
 So if you use the default frequency settings, you will completely filter out your stimulus, and presumably,
 your response.  If you are processing one of these experiments and get no results whatsoever, this is almost
