@@ -88,7 +88,7 @@ def makedataarray(motionregressors):
     return dataarray
 
 
-def test_motionregress(debug=True, displayplots=False):
+def test_motionregress(debug=False, displayplots=False):
     np.random.seed(12345)
     tsize = 200
     startcycles = 11
