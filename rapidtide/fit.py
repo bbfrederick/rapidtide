@@ -1838,6 +1838,53 @@ def glmfilt(thedata, theevs, debug=False):
     return filtered, datatoremove, R, retcoffs
 
 
+def confoundglm(
+    data,
+    regressors,
+    debug=False,
+    showprogressbar=True,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
+    r"""Filters multiple regressors out of an array of data
+
+    Parameters
+    ----------
+    data : 2d numpy array
+        A data array.  First index is the spatial dimension, second is the time (filtering) dimension.
+
+    regressors: 2d numpy array
+        The set of regressors to filter out of each timecourse.  The first dimension is the regressor number, second is the time (filtering) dimension:
+
+    debug : boolean
+        Print additional diagnostic information if True
+
+    Returns
+    -------
+    """
+    if debug:
+        print("data shape:", data.shape)
+        print("regressors shape:", regressors.shape)
+    datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
+    filtereddata = data * 0.0
+    r2value = data[:, 0] * 0.0
+    for i in tqdm(
+        range(data.shape[0]),
+        desc="Voxel",
+        unit="voxels",
+        disable=(not showprogressbar),
+    ):
+        datatoremove *= 0.0
+        thefit, R = tide_fit.mlregress(regressors, data[i, :])
+        if i == 0 and debug:
+            print("fit shape:", thefit.shape)
+        for j in range(regressors.shape[0]):
+            datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
+        filtereddata[i, :] = data[i, :] - datatoremove
+        r2value[i] = R * R
+    return filtereddata, r2value
+
+
 # --------------------------- Peak detection functions ----------------------------------------------
 # The following three functions are taken from the peakdetect distribution by Sixten Bergman
 # They were distributed under the DWTFYWTPL, so I'm relicensing them under Apache 2.0
