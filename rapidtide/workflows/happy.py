@@ -242,7 +242,6 @@ def happy_main(argparsingfunc):
             motionlp=args.motionlp,
             position=args.motfilt_pos,
             deriv=args.motfilt_deriv,
-            derivdelayed=args.motfilt_derivdelayed,
         )
         fmri_data[validprojvoxels, :] = filtereddata[:, :]
         infodict["numorthogmotregressors"] = motionregressors.shape[0]

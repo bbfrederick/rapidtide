@@ -61,6 +61,7 @@ DEFAULT_SIMILARITYMETRIC = "correlation"
 DEFAULT_PEAKFIT_TYPE = "gauss"
 DEFAULT_REFINE_PRENORM = "None"
 DEFAULT_REFINE_WEIGHTING = "R2"
+DEFAULT_GLMDERIVS = 0
 
 DEFAULT_DENOISING_LAGMIN = -10.0
 DEFAULT_DENOISING_LAGMAX = 10.0
@@ -377,8 +378,8 @@ def _get_parser():
         metavar="MOTFILE",
         help=(
             "Read 6 columns of motion regressors out of MOTFILE file (.par or BIDS .json) "
-            "(with timepoints rows) and regress their derivatives "
-            "and delayed derivatives out of the data prior to analysis. "
+            "(with timepoints rows) and regress them and their derivatives "
+            "out of the data prior to analysis. "
         ),
         default=None,
     )
@@ -388,9 +389,9 @@ def _get_parser():
         action="store_true",
         help=(
             "Toggle whether displacement regressors will be used in motion "
-            "regression. Default is False. "
+            "regression. Default is True. "
         ),
-        default=False,
+        default=True,
     )
     preproc.add_argument(
         "--motderiv",
@@ -400,16 +401,6 @@ def _get_parser():
             "Toggle whether derivatives will be used in motion regression.  " "Default is True. "
         ),
         default=True,
-    )
-    preproc.add_argument(
-        "--motdelayderiv",
-        dest="mot_delayderiv",
-        action="store_true",
-        help=(
-            "Toggle whether delayed derivative regressors will be used in "
-            "motion regression.  Default is False. "
-        ),
-        default=False,
     )
     preproc.add_argument(
         "--globalsignalmethod",
@@ -1228,6 +1219,17 @@ def _get_parser():
         default=0.0,
     )
     experimental.add_argument(
+        "--glmderivs",
+        dest="glmderivs",
+        action="store",
+        type=int,
+        metavar="NDERIVS",
+        help=(
+            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
+        ),
+        default=DEFAULT_GLMDERIVS,
+    )
+    experimental.add_argument(
         "--echocancel",
         dest="echocancel",
         action="store_true",
@@ -1448,13 +1450,6 @@ def _get_parser():
         dest="singleproc_glm",
         action="store_true",
         help=("Force single proc path for glm."),
-        default=False,
-    )
-    debugging.add_argument(
-        "--usemultiprocmotionglm",
-        dest="usemultiprocmotionglm",
-        action="store_true",
-        help=("Use the new multiprocessor glm."),
         default=False,
     )
     debugging.add_argument(

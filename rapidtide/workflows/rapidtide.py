@@ -740,10 +740,8 @@ def rapidtide_main(argparsingfunc):
             motstart=validstart,
             motend=validend + 1,
             position=optiondict["mot_pos"],
-            usemultiprocglm=optiondict["usemultiprocmotionglm"],
             deriv=optiondict["mot_deriv"],
             showprogressbar=optiondict["showprogressbar"],
-            derivdelayed=optiondict["mot_delayderiv"],
         )
 
         TimingLGR.info(
@@ -2907,12 +2905,16 @@ def rapidtide_main(argparsingfunc):
             del nim_data
 
         # now allocate the arrays needed for GLM filtering
+        internalvalidspaceshapederivs = (
+            internalvalidspaceshape,
+            optiondict["glmderivs"] + 1,
+        )
         if optiondict["sharedmem"]:
             glmmean, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             rvalue, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
             r2value, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
-            fitNorm, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
-            fitcoeff, dummy, dummy = allocshared(internalvalidspaceshape, rt_outfloatset)
+            fitNorm, dummy, dummy = allocshared(internalvalidspaceshapederivs, rt_outfloatset)
+            fitcoeff, dummy, dummy = allocshared(internalvalidspaceshapederivs, rt_outfloatset)
             movingsignal, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
             lagtc, dummy, dummy = allocshared(internalvalidfmrishape, rt_floatset)
             filtereddata, dummy, dummy = allocshared(internalvalidfmrishape, rt_outfloatset)
@@ -2920,8 +2922,8 @@ def rapidtide_main(argparsingfunc):
             glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-            fitNorm = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-            fitcoeff = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
+            fitcoeff = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
             movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
             lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
@@ -2976,11 +2978,16 @@ def rapidtide_main(argparsingfunc):
         else:
             glmthreshval = threshval
 
+        if optiondict["glmderivs"] > 0:
+            print(f"adding derivatives up to order {optiondict['glmderivs']} prior to regression")
+            regressorset = tide_glmpass.makevoxelspecificderivs(lagtc, optiondict["glmderivs"])
+        else:
+            regressorset = lagtc
         voxelsprocessed_glm = glmpass_func(
             numvalidspatiallocs,
             fmri_data_valid,
             glmthreshval,
-            lagtc,
+            regressorset,
             glmmean,
             rvalue,
             r2value,
@@ -2995,6 +3002,9 @@ def rapidtide_main(argparsingfunc):
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
+        if fitcoeff.ndim > 1:
+            fitcoeff = fitcoeff[:, 0]
+            fitNorm = fitNorm[:, 0]
 
         if optiondict["docvrmap"]:
             # if we are doing a cvr map, multiply the fitcoeff by 100, so we are in percent

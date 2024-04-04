@@ -886,7 +886,7 @@ def readmotion(filename):
     return motiondict
 
 
-def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, derivdelayed=False):
+def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True):
     r"""Calculates various motion related timecourses from motion data dict, and returns an array
 
     Parameters
@@ -912,8 +912,6 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
         numoutputregressors += 6
     if deriv:
         numoutputregressors += 6
-    if derivdelayed:
-        numoutputregressors += 6
     if numoutputregressors > 0:
         outputregressors = np.zeros((numoutputregressors, numoutputpoints), dtype=float)
     else:
@@ -928,13 +926,8 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, de
             activecolumn += 1
     if deriv:
         for thelabel in labels:
-            outputregressors[activecolumn, 1:] = np.diff(motiondict[thelabel][start : end + 1])
+            outputregressors[activecolumn, :] = np.gradient(motiondict[thelabel][start : end + 1])
             outlabels.append(thelabel + "_deriv")
-            activecolumn += 1
-    if derivdelayed:
-        for thelabel in labels:
-            outputregressors[activecolumn, 2:] = np.diff(motiondict[thelabel][start : end + 1])[1:]
-            outlabels.append(thelabel + "_delayedderiv")
             activecolumn += 1
     return outputregressors, outlabels
 

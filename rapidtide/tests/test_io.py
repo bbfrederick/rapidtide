@@ -389,7 +389,7 @@ def test_io(debug=True, displayplots=False):
     othermotiondict = tide_io.readparfile(motionfilename)
     theinitmotiondict = tide_io.readmotion(motionfilename)
     theexpandedmotionregressors, thelabels = tide_io.calcmotregressors(
-        theinitmotiondict, derivdelayed=True
+        theinitmotiondict, deriv=True
     )
     if debug:
         print(theexpandedmotionregressors.shape)
