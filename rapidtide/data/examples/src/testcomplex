@@ -1,20 +1,23 @@
 #!/usr/bin/env python
 
-import sys
-import time
+import warnings
 
 import numpy as np
-import pyfftw
-import pylab as pl
-import scipy as sp
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
+
 from scipy import fftpack, signal
 
-import rapidtide.filter as tide_filt
-import rapidtide.fit as tide_fit
-import rapidtide.util as tide_util
-
-fftpack = pyfftw.interfaces.scipy_fftpack
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 
 
 def complexupsample(inputcplx, debug=False):
@@ -23,9 +26,7 @@ def complexupsample(inputcplx, debug=False):
     conjdata[0] = 0.0
     concatfft = np.concatenate([fftdata, conjdata])
     if debug:
-        print(f"{thelen=}")
         print(f"{inputcplx.shape=}")
-        print(f"{upsampled.shape=}")
         print(f"{fftdata.shape=}")
     return fftpack.ifft(concatfft)
 

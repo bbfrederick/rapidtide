@@ -23,7 +23,12 @@ import numpy as np
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import pyfftw
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
 
 import scipy as sp
 from scipy.stats import johnsonsb, kurtosis, kurtosistest, skew, skewtest
@@ -31,8 +36,9 @@ from scipy.stats import johnsonsb, kurtosis, kurtosistest, skew, skewtest
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 
-fftpack = pyfftw.interfaces.scipy_fftpack
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 
 
 # ---------------------------------------- Global constants -------------------------------------------
