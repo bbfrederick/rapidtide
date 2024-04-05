@@ -896,13 +896,6 @@ def _get_parser():
         default=True,
     )
     reg_ref.add_argument(
-        "--psdfilter",
-        dest="psdfilter",
-        action="store_true",
-        help=("Apply a PSD weighted Wiener filter to " "shifted timecourses prior to refinement."),
-        default=False,
-    )
-    reg_ref.add_argument(
         "--pickleft",
         dest="pickleft",
         action="store_true",
@@ -1187,6 +1180,13 @@ def _get_parser():
         "Experimental options (not fully tested, may not work)"
     )
     experimental.add_argument(
+        "--psdfilter",
+        dest="psdfilter",
+        action="store_true",
+        help=("Apply a PSD weighted Wiener filter to shifted timecourses prior to refinement."),
+        default=False,
+    )
+    experimental.add_argument(
         "--corrbaselinespatialsigma",
         dest="corrbaselinespatialsigma",
         action="store",
@@ -1233,7 +1233,7 @@ def _get_parser():
         "--echocancel",
         dest="echocancel",
         action="store_true",
-        help=("Attempt to perform echo cancellation."),
+        help=("Attempt to perform echo cancellation on current moving regressor."),
         default=False,
     )
     experimental.add_argument(
@@ -1346,7 +1346,7 @@ def _get_parser():
         "--dispersioncalc",
         dest="dodispersioncalc",
         action="store_true",
-        help=("Generate extra data during refinement to " "allow calculation of dispersion."),
+        help=("Generate extra data during refinement to allow calculation of dispersion."),
         default=False,
     )
     experimental.add_argument(

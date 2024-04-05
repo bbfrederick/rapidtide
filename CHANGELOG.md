@@ -1,5 +1,18 @@
 # Release history
 
+## Version 2.8.6 (4/5/24)
+* (rapidtide) Tweaked the behavior of the ``--CVR`` flag.
+* (rapidtide) Made major improvements to motion regression.
+* (rapidtide) Consolodated all glm filtering into a single multiprocessing routine, added some new capabilities to rapidtide GLM filtering.
+* (resampletc) Renamed from resamp1tc to make the program names more consistent.
+* (package) Made pyfftw an optional dependency, since it seems to be the only thing blocking python 3.12 compatibility.
+* (package) Added some new tests.
+* (package) Major reorganization of most scripts to make them workflows (this is to make the calling interfaces and documentation consistent.)
+* (package) Incorporated dependabot changes.
+* (docs) Further cleanup of the program documentation section, especially rapidtide usage.
+* (docs) Expanded the Theory of Operation section.
+* (docs) Fixed many typos.
+
 ## Version 2.8.5.1 (4/1/24)
 * (docs) Extensive revision of the rapidtide program usage section.
 

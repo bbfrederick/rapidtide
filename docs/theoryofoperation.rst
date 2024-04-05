@@ -161,10 +161,19 @@ not specified, don't change the mask.
 **For the refine mean mask:**
 If --refineinclude MASK[:VALSPEC] is specified, include all voxels
 selected by MASK[:VALSPEC].  If it is not specified, include all voxels
-in the mask.  Then if --refineexclude MASK[:VALSPEC] is specified,
+in the correlation mask mask.  Then if --refineexclude MASK[:VALSPEC] is specified,
 remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is
 not specified, don't change the mask.  Then multiply by corrmask, since
-you can't used voxels rwhere rapidtide was not run to do refinement.
+you can't use voxels where rapidtide was not run to do refinement.
+
+**For the offset mask**
+If --offsetinclude MASK[:VALSPEC] is specified, include all voxels
+selected by MASK[:VALSPEC].  If it is not specified, include all voxels
+in the correlation mask.  Then if --offsetexclude MASK[:VALSPEC] is specified,
+remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is
+not specified, don't change the mask.  Then multiply by corrmask, and use the voxels within
+the mask to generate a histogram of delay values.  Calculate the offset of the peak of the delay histogram,
+and subtract this value from all delay values within the correlation mask.
 
 **For the GLM mask:**
 Include all voxels, unless you are calculating a CVR map, in which caserates other than the TR. Therefore
@@ -177,23 +186,25 @@ options.
 
 Depending on your data (including pathology), and what you want to accomplish, using the default correlation
 mask is not ideal.  For example, if a subject has obvious pathology, you may want to exclude these voxels
-from being used to generate the intial global mean signal estimate, or from being used in refinement.
+from being used to generate the initial global mean signal estimate, or from being used in refinement.
 
 
 Initial Moving Signal Estimation
 """"""""""""""""""""""""""""""""
-You can stabililize and improve rapidtide's delay estimation quite a bit by making sure you have a good starting
-regressor, and do refinement in "good" brain regions that don't have wacky delay structures.
-While just about anything works well in young, healthy subjects (like the HCP-YA dataset), as people get older,
+You can stabilize and improve rapidtide's delay estimation quite a bit by making sure you have a good starting
+regressor, estimating the global mean signal from "good" brain regions that don't have wacky delay structures.
+While just using the whole brain works well in young, healthy subjects (like the HCP-YA dataset), as people get older,
 their delays become weird - my working theory is that over time various routine vascular insults and unhealthy habits
 accumulate, leading to increasing heterogeneity between vascular territories (which I like to call "vascular
 personality"). So the global mean may be made up of several pools of blood, delayed by up to several seconds
-from each other, leading to weird autocorrelation that can confuse my delay finding algorithm, because it
+relative to each other, leading to weird autocorrelation in the global mean (essentially, confusing echoes of the
+moving signal) that can confuse my delay finding algorithm, because it
 invalidates my assumption that the global mean is a good initial estimate of the "true" moving regressor.
-One way to combat this is to limit the brain region that you get your initial regressor from. For example, you
-could use gray metter only for the global regresor estimation, since white matter has a lower signal and tends to
-get blood much later than gray matter anyway.  Just add the option
-``--globalmeaninclude standardspaceaparcasegfilename.nii.gz`` to your rapidtide command line.  If you are using
+One way to combat this is to limit the brain region that you get your initial regressor from, so that you are only
+sampling a single "pool" of delays. For example, you
+could use a gray matter mask for the global regresor estimation, since white matter has a smaller contribution from
+the moving blood signal, and tends to get blood much later than gray matter anyway.  Just add the option
+``--globalmeaninclude graymask.nii.gz`` to your rapidtide command line.  If you are using
 fmriprep, you can get a gray matter mask using:
 
 ::
@@ -205,22 +216,22 @@ fmriprep, you can get a gray matter mask using:
       -bin \
       graymask
 
-If you want to be even more proactive, you could select a brain region that you think has unperturbed circulation.
+If you want to be even more proactive, you could select a more focal brain region that you think has unperturbed circulation.
 For an Alzheimer's study that I am currently working on, we ended up starting only from blood in right and
-left cerebellar gray matter (aparc+aseg regions 8 and 47) on the theory that if circulation in your cerebellum
+left cerebellar gray matter (freesurfer aparc+aseg regions 8 and 47) on the theory that if circulation in your cerebellum
 is too messed up, you're dead, so would not be in the dataset. That made our delay estimates work a lot better.
 So we used the freesurfer parcellations from fmriprep, transformed to standard space, to do that
 preselection, using the option ``--globalmeaninclude standardspaceaparcasegfilename.nii.gz:8,47``.
 
 fmriprep does not provide a standard space aparc+aseg file - it's in T1 native space at 1mm resolution
-(because that's what freesurfer works in).  Resampling to standard space is easy, just remember to use NearestNeighbor
+(because that's the space freesurfer works in).  Resampling to standard space is easy, BUT you must
+remember to use NearestNeighbor
 interpolation, or you'll get smeared, averaged boundaries between brain regions, which you REALLY don't want.
-This command should get you ``standardspaceaparcasegfilename.nii.gz``:
+This command should get you a ``standardspaceaparcasegfilename.nii.gz`` (you need to have ANTs installed for this):
 
 ::
 
   antsApplyTransforms \
-      --default-value 0 \
       -d 3 \
       -i BIDSHOME/derivatives/sub-XXX/anat/sub-XXX_desc-aparcaseg_dseg.nii.gz \
       -o BIDSHOME/derivatives/sub-XXX/anat/mymnispace_desc-aparcaseg_dseg.nii.gz \
@@ -231,11 +242,14 @@ This command should get you ``standardspaceaparcasegfilename.nii.gz``:
 
 Moving Signal Preprocessing
 """""""""""""""""""""""""""
+Before launching into in each pass, we process our moving regressor to make it more amenable to calculations.
+This includes the following operations:
+
 **Oversampling:**  In order to simplify delay calculation, rapidtide performs all delay estimation operations
-on data with a sample rate of 2Hz or faster.  Since most fMRI is recorded with a TR > 0.5s, this is acheived by 
+on data with a sample rate of 2Hz or faster.  Since most fMRI is recorded with a TR > 0.5s, this is achieved by
 oversampling the data.  The oversampling factor can be specified explicitly 
 (using the ``--oversampfac`` command line argument), but if it is
-not, for data with a sample rate of less than 2Hz, all data and regressors 
+not given, for data with a sample rate of less than 2Hz, all data and regressors
 are internally upsampled by the lowest
 integral factor that results in a sample rate >= 2Hz.
 
@@ -243,16 +257,24 @@ integral factor that results in a sample rate >= 2Hz.
 as the moving signal, the moving signal estimate and the fMRI data have 
 the same sample rate, but if we use external
 recordings, such as NIRS or etCO2 timecourses, these will in general have sample
-rates other than the TR. Therefore the first step in moving regressor processing 
+rates other than the TR, and may start before and/or end after the fMRI acquisition.
+Therefore the first step in moving regressor processing
 is to resample the moving regressor estimate to match the (oversampled)
-data sample rate.
+data sample rate and time range.
 
-**Pseudoperiodicity:**  The first uncontrolled quantity is
+Moving Signal Massaging
+"""""""""""""""""""""""
+Because the moving signal is "noise", we can't select or specify its properties, and sometimes the sLFO signal
+you end up with is problematic for one reason or another.  Rapidtide attempts to correct, where possible,
+problems in the moving signal that will impair proper delay estimation.  Again, if you're just doing
+signal denoising, these are not that important to you.
+
+**Pseudoperiodicity:**  The first potential problem in the sLFO regressor is
 pseudoperiodicity.  From time to time, signal energy in the 0.009-0.15 Hz
 band will be strongly concentrated in one or more spectral peaks.
-Whether this is completely random, or due to some pathological or
-congenital condition that affects circulation is not known. It seems
-for the most part to be purely by chance, as it is occasionally seen
+This can be completely random, or it can arise due to some pathological or
+congenital condition that affects circulation. It seems
+for the most part to be purely by chance, as you occasionally see it
 when looking at multiple runs in the same subject, where one run is
 pseudoperiodic while the rest are not. The effect of this is to cause
 the crosscorrelation between the probe signal and voxel timecourses to
@@ -267,10 +289,6 @@ one correlation peak will occur within the search window).  As the width
 of the search range increases, the spectral range of potentially
 confounding spectral peaks covers more of the sLFO frequency band.
 
-
-only perform the calculation on voxels exceeding 25% of the robust mean
-value (this is weird and will change).
-
 **Implications of pseudoperiodicity:** The extent to which
 pseudoperiodicity is a problem depends on the application.  In the case
 of noise removal, where the goal is to remove the global sLFO signal,
@@ -279,10 +297,12 @@ not to be much of a problem at all.  If the sLFO signal in a given voxel
 is sufficiently periodic that that the correctly delayed signal is
 indistinguishable from the signal one or more periods away, then it
 doesn’t matter which signal is removed – the resulting denoised signal
-is the same.
+is the same.  As the Host in Westworld asked - "Well if you can't tell, does it matter?"
+In this case, no.  Sadly, for those of you care more about hemodynamics than neuronal
+activation (raises hand), this is NOT ok, and we have to figure out how to deal with it.
 
 **Mitigation of pseudoperiodicity:** While we continue to work on fully
-resolving this issue, we have a number of ways of dealing with this.
+resolving this issue, we have a number of hackish ways of dealing with this.
 First of all, spectral analysis of the sLFO signal allows us to
 determine if the signal may be problematic.  Rapidtide checks the
 autocorrelation function of the sLFO signal for large sidelobes with
@@ -291,16 +311,26 @@ signals are present.  Then after delay maps are calculated, they are
 processed with an iterative despeckling process analogous to phase
 unwrapping.  The delay of each voxel is compared to the median delay of
 its neighbors.  If the voxel delay differs by the period of an
-identified problematic sidelobe, the delay is constrained to the “correct”
+identified problematic sidelobe, the delay is switched to the “correct”
 value, and refit.  This procedure greatly attenuates, but does not
 completely solve, the problem of bad sidelobes.  A more general solution
 to the problem of non-uniform spectra will likely improve the
 correction.
 
+**Correlation weighting:** Another method I've recently implemented is "regressor weighting" the correlation
+function - since we do correlation in the spectral domain, you can normalize the
+power spectrum magnitude by the power spectrum of the sLFO regressor - this deemphasizes
+spectral peaks.  It helps, but it's not a magic wand.
 
-Moving Signal Massaging
-"""""""""""""""""""""""
+**Echo cancellation:**  One thing that I keep thinking about is that in the case of pathology causing disparate
+delay pools, we are essentially looking at an echo cancellation problem.  We have a driving signal, and it is
+corrupted by delayed copies of itself being added in.  This is a problem that Bell Labs solved in the 60s or 70s (well
+digitally - I think analog echo cancellation existed long before that).  It seems like I should be able to dust off
+some audio library somewhere that would fix this right up, but I haven't found anything yet.  Any bored audio engineers
+looking to get involved in a FOSS neuroimaging project :-) ?
 
+Most of the options languishing in the "experimental" group of command line options are partially implemented versions
+of various regressor fixes.
 
 Dataset Preprocessing
 """""""""""""""""""""
