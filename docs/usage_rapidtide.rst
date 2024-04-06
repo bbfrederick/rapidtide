@@ -172,7 +172,6 @@ but I'd recommend you don't do that.
 
 Working with standard fMRI packages
 """""""""""""""""""""""""""""""""""
-
 **FSL** - At the time I first developed rapidtide, I was using FSL almost exclusively, so some of the assumptions
 the program makes about the data stem from this.  If you want to integrate rapidtide into your FSL workflow, you would
 typically use the ``filtered_func_data.nii.gz`` file from your FEAT directory (the result of FSL preprocessing)
@@ -193,12 +192,15 @@ segmentations that fmriprep provides for further tuning the rapidtide analysis. 
 for more on this subject.
 
 **AFNI** - Here's a case where you have to take some care - as I mentioned above, rapidtide assumes "FSL-like" data by
-default.  The most important difference between AFNI and FSL preprocessing is that AFNI removes the mean from the data
+default.  The most important difference between AFNI and FSL preprocessing (assuming you've put your AFNI data into
+NIFTI format) is that AFNI removes the mean from the preprocessed fMRI data
 (this is a valid implementation choice - no judgement, but, no, actually - seriously, WTF?  WHY WOULD YOU DO THAT???).
-This makes rapidtide sad, because the mean value is used for all sorts of things like generating masks.  Fortunately,
-all of this can be accommodated.  You have a couple of choices here.  You can
-supply a brain mask explicitly using ``--globalmeaninclude FILENAME``, which will get
-rapidtide past the place that zero mean data will confuse it.  Alternately, if you don't have a brain mask, you can
+This makes rapidtide sad, because the mean value of the fMRI data is used for all sorts of things like
+generating masks.  Fortunately, this can be easily accommodated.  You have a couple of choices here.  You can
+supply a mean mask and correlation mask explicitly using ``--globalmeaninclude FILENAME`` and ``--corrmask FILENAME``,
+(FILENAME should definitely be a brain mask for ``--corrmask`` - it can be more focussed for ``--globalmeaninclude`` -
+for example, a gray matter mask, but a brain mask works fine in most cases) which will get
+rapidtide past the places that zero mean data will confuse it.  Alternately, if you don't have a brain mask, you can
 use ``--globalmaskmethod variance`` to make a mask based on the variance over time in a voxel rather than than the
 mean.  Rapidtide should then work as normal, although the display in ``tidepool`` will be a little weird unless you
 specify a background image explicitly.
@@ -211,7 +213,6 @@ any insight into this, PLEASE tell me and I'll do what I need to to support SPM 
 
 Analysis Examples:
 ^^^^^^^^^^^^^^^^^^
-
 Rapidtide can do many things - as I've found more interesting things to do with time delay processing, it's gained
 new functions and options to support these new applications.  As a result, it can be a little hard to know what to
 use for a new experiment.  To help with that, I've decided to add this section to the manual to get you started.
@@ -223,7 +224,6 @@ factor of the number of CPUs used.
 
 Removing low frequency physiological noise from fMRI data
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 This is what I figure most people will use rapidtide for - finding and removing the low frequency (LFO) signal
 from an existing dataset (including the case where the signal grows over time
 https://www.biorxiv.org/content/10.1101/2023.09.08.556939v2 ).  This presupposes you have not made a
@@ -276,7 +276,6 @@ As a result, FIX denoising impedes the operation of rapidtide.  See below.
 
 Removing low frequency physiological noise from fMRI data that has been processed with FIX
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 There is a special case if you are working on HCP data, which has both minimally processed and a fully processed
 (including FIX denoising) data files.  FIX denoising is a good thing, but it tends to distort the sLFO signals that
 rapidtide is looking for, so the selection and refinement of the sLFO can wander off into the thicket if applied to
@@ -298,7 +297,6 @@ denoise.  The ``outputname_desc-lfofilterCleaned_bold.nii.gz`` file is the FIX f
 
 Mapping long time delays in response to a gas challenge experiment:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 Processing this sort of data requires a very different set of options from the previous case.  Instead of the
 distribution of delays you expect in healthy controls (a slightly skewed, somewhat normal distribution with a
 tail on the positive side, ranging from about -5 to 5 seconds), in this case, the maximum delay can be extremely
@@ -358,7 +356,6 @@ correlation function is pretty well behaved.
 
 CVR mapping:
 """"""""""""
-
 This is a slightly different twist on interpreting the strength of the lagged correlation.  In this case,
 you supply an input regressor that corresponds to a measured, calibrated CO2 quantity (for example, etCO2
 in mmHg).  Rapidtide then does a modified analysis - it still uses the cross-correlation to find when the
@@ -389,7 +386,6 @@ these parameters using ``--regressorfreq FREQ`` or ``--regressortstep TSTEP`` an
 
 Denoising NIRS data:
 """"""""""""""""""""
-
 Fun face - when we started this whole research effort, I was originally planning to denoise NIRS data, not fMRI data.  But one
 thing led to another, and the NIRS got derailed for the fMRI effort.  Now that we have some time to catch our breaths,
 and more importantly, we have access to some much higher quality NIRS data, this moved back to the front burner.

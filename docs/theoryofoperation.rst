@@ -50,7 +50,7 @@ due to, say, neuronal activation, then this moving signal is rather pernicious
 in-band noise.  Global mean regression is often used to remove it, but this is
 not optimal - in fact it can generate spurious anticorrelations, which are
 not helpful.  Rapidtide will regress out the moving signal, appropriately
-delayed in each voxel.  This gives you better noise removal, and also
+delayed in each voxel.  This removes significantly more variance, and also
 avoids generating spurious correlations.  For a detailed consideration of this,
 look here [Erdogan2016]_.
 
@@ -63,7 +63,7 @@ in fMRI data.  In the original RIPTiDe papers, we generated a
 set of regressors over a range of different time shifts (starting from a regressor recorded
 outside of the brain), and then ran a GLM in FSL using the entire set of regressors.
 We realized that this 1) doesn't give you the optimal delay value directly,
-which turns out to be a useful thing to know, and 2) burns degrees of freedom
+which turns out to be a useful thing to know, 2) burns degrees of freedom
 unnecessarily, since having one optimally delayed regressor in each voxel gets
 you pretty much the same degree of noise removal (this is assuming that in each
 voxel there is one and only one pool of delayed blood, which while not true,
@@ -77,7 +77,7 @@ so you don't have to have any arguments about slow neuronal waves).
 
 In contrast rapidtide (lets say it means Rapid Time Delay) is the newer faster,
 self-contained python program that implements an updated version of the RIPTiDe
-algorithm) estimates delay in every voxel and recursively refines an estimate
+algorithm which estimates delay in every voxel and recursively refines an estimate
 of the "true" systemic noise signal propagating through the brain by shifting and
 merging the voxel timecourses to undo this effect. This refinement procedure is
 shown in Figure 5 of Tong, 2019 (reference 6 in the Physiology section below). In recent
@@ -125,12 +125,12 @@ rapidtide fits in (what you are describing here), 3) the refine mask,
 which selects which voxels are used to generate a refined regressor for
 the next fitting pass, 4) the offset mask, which determines which voxels are 
 used to estimate the "zero" time of the delay distribution, 
-and 4) the GLM mask, which determines which
+and 5) the GLM mask, which determines which
 voxels have the rapidtide regressors removed.
 
 Below is a description of how this works currently.  NB: this is not how
 I THOUGHT is worked - until I just looked at the code just now.  It
-built up over time, and evolved into something not quite what I
+built up over time, and evolved into something that was not quite what I
 designed.  I'm going to fix it up, but this what it's doing as of 2.6.1,
 which works most of the time, but may not be what you want.
 
@@ -142,8 +142,8 @@ https://nilearn.github.io/stable/modules/generated/nilearn.masking.compute_epi_m
 If you have
 standard, non-zero-mean fMRI data, it seems to work pretty well, but you
 can specify your own mask using --corrmask NAME[:VALSPEC] (include any
-non-zero voxels in NAME in the mask.  If VALSPEC is provided, only
-include voxels with integral values listed in VALSPEC in the mask).
+non-zero voxels in the file NAME in the mask.  If VALSPEC is provided, only
+include voxels with integral values specified by VALSPEC in the mask).
 VALSPEC is a comma separated list of integers (1,2,7,12) and/or integer
 ranges (2-7,12-15) so you can make masks of complicated combinations of
 regions from an atlas.  So for example --corrmask mymask.nii.gz:1,7-9,54
@@ -262,6 +262,12 @@ Therefore the first step in moving regressor processing
 is to resample the moving regressor estimate to match the (oversampled)
 data sample rate and time range.
 
+**Temporal filtering:** The moving regressor is then filtered to the appropriate frequency range - by default the
+LFO band (0.009-0.15Hz).
+
+**Detrending and normalization:** The regressor is detrended to Nth order (N=3 by default), demeaned, and divided
+by the standard deviation over time.
+
 Moving Signal Massaging
 """""""""""""""""""""""
 Because the moving signal is "noise", we can't select or specify its properties, and sometimes the sLFO signal
@@ -354,6 +360,9 @@ Save Useful Parameters
 
 Regress Out the Moving Signal
 """""""""""""""""""""""""""""
+
+References
+""""""""""
 
 .. [Tong2019] Tong, Y., Hocke, L.M., and Frederick, B.B., Low Frequency
    Systemic Hemodynamic "Noise" in Resting State BOLD fMRI: Characteristics,
