@@ -265,11 +265,13 @@ def addversionopts(parser):
     version_opts.add_argument(
         "--version",
         action="version",
+        help="Show simplified version information and exit",
         version=f"%(prog)s {tide_util.version()[0]}",
     )
     version_opts.add_argument(
         "--detailedversion",
         action="version",
+        help="Show detailed version information and exit",
         version=f"%(prog)s {tide_util.version()}",
     )
 
