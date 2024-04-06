@@ -362,10 +362,11 @@ def motionregress(
     debug=False,
 ):
     print("regressing out motion")
-    motionregressors, motionregressorlabels = tide_io.calcmotregressors(
+    motionregressors, motionregressorlabels = tide_io.calcexpandedregressors(
         tide_io.readmotion(themotionfilename),
         position=position,
         deriv=deriv,
+        order=1,
     )
     if motend == -1:
         motionregressors = motionregressors[:, motstart:]

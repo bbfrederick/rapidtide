@@ -95,10 +95,11 @@ def test_motionregress(debug=False, displayplots=False):
 
     themotiondict = genmotions(tsize=tsize, numcycles=startcycles)
 
-    motionregressors, motionregressorlabels = tide_io.calcmotregressors(
+    motionregressors, motionregressorlabels = tide_io.calcexpandedregressors(
         themotiondict,
         position=True,
         deriv=False,
+        order=1,
     )
     dataarray = makedataarray(motionregressors)
     if displayplots:
@@ -108,10 +109,11 @@ def test_motionregress(debug=False, displayplots=False):
 
     for orthogonalize in [False, True]:
         for position, deriv in [[True, False], [False, True], [True, True]]:
-            motionregressors, motionregressorlabels = tide_io.calcmotregressors(
+            motionregressors, motionregressorlabels = tide_io.calcexpandedregressors(
                 themotiondict,
                 position=position,
                 deriv=deriv,
+                order=1,
             )
             if orthogonalize:
                 motionregressors = tide_fit.gram_schmidt(motionregressors)

@@ -905,13 +905,13 @@ def readmotion(filename):
     return motiondict
 
 
-def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True):
+def calcexpandedregressors(confounddict, start=0, end=-1, position=True, deriv=True, order=1):
     r"""Calculates various motion related timecourses from motion data dict, and returns an array
 
     Parameters
     ----------
-    motiondict: dict
-        A dictionary of the 6 motion direction vectors
+    confounddict: dict
+        A dictionary of the confound vectors
 
     Returns
     -------
@@ -920,7 +920,7 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True):
 
     """
     labels = ["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"]
-    numpoints = len(motiondict[labels[0]])
+    numpoints = len(confounddict[labels[0]])
     if end == -1:
         end = numpoints - 1
     if (0 <= start <= numpoints - 1) and (start < end + 1):
@@ -940,12 +940,14 @@ def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True):
     outlabels = []
     if position:
         for thelabel in labels:
-            outputregressors[activecolumn, :] = motiondict[thelabel][start : end + 1]
+            outputregressors[activecolumn, :] = confounddict[thelabel][start : end + 1]
             outlabels.append(thelabel)
             activecolumn += 1
     if deriv:
         for thelabel in labels:
-            outputregressors[activecolumn, :] = np.gradient(motiondict[thelabel][start : end + 1])
+            outputregressors[activecolumn, :] = np.gradient(
+                confounddict[thelabel][start : end + 1]
+            )
             outlabels.append(thelabel + "_deriv")
             activecolumn += 1
     return outputregressors, outlabels

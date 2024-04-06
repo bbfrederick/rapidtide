@@ -153,7 +153,7 @@ API
     rapidtide.io.checkifparfile
     rapidtide.io.readparfile
     rapidtide.io.readmotion
-    rapidtide.io.calcmotregressors
+    rapidtide.io.calcexpandedregressors
     rapidtide.io.sliceinfo
     rapidtide.io.getslicetimesfromfile
     rapidtide.io.readbidssidecar
