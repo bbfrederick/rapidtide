@@ -31,6 +31,7 @@ import rapidtide.workflows.parser_funcs as pf
 LGR = logging.getLogger(__name__)
 
 # Some default settings
+DEFAULT_SPATIALFILT = -1
 DEFAULT_HISTLEN = 101
 DEFAULT_DETREND_ORDER = 3
 DEFAULT_GLOBAL_PCACOMPONENTS = 0.8
@@ -324,7 +325,7 @@ def _get_parser():
             "to have rapidtide set it to half the mean voxel "
             "dimension (a rule of thumb for a good value)."
         ),
-        default=0.0,
+        default=DEFAULT_SPATIALFILT,
     )
     preproc.add_argument(
         "--globalmean",
