@@ -1105,13 +1105,6 @@ def _get_parser():
         default=False,
     )
     misc.add_argument(
-        "--wiener",
-        dest="dodeconv",
-        action="store_true",
-        help=("Do Wiener deconvolution to find voxel transfer function."),
-        default=False,
-    )
-    misc.add_argument(
         "--spcalculation",
         dest="internalprecision",
         action="store_const",
@@ -1215,6 +1208,13 @@ def _get_parser():
         dest="psdfilter",
         action="store_true",
         help=("Apply a PSD weighted Wiener filter to shifted timecourses prior to refinement."),
+        default=False,
+    )
+    experimental.add_argument(
+        "--wiener",
+        dest="dodeconv",
+        action="store_true",
+        help=("Do Wiener deconvolution to find voxel transfer function."),
         default=False,
     )
     experimental.add_argument(
