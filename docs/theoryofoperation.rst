@@ -340,11 +340,31 @@ of various regressor fixes.
 
 Dataset Preprocessing
 """""""""""""""""""""
+Prior to processing, I do a few things to the fMRI dataset:
 
+**Spatial filtering:**  While the moving signal can contribute up to 50% of the low frequency variance in gray matter
+voxels, it's often MUCH less than that, especially in white matter.  So anything you can do to boost your SNR is a plus.
+Spatial filtering works for that - for the most part, the delay time varies quite smoothly over space, since capillary
+blood (to which we are most sensitive) moves in a pretty orderly fashion.  Even a small amount of smoothing is
+sufficient to boost the quality of the delay maps a lot.  A Gaussian kernel with a radius of ~1/2 the average voxel
+dimension in all three axes turns out to be pretty good.  Use ``--spatialfilt SIGMA`` to set the filtering.  Set
+SIGMA to -1 to have it set automatically as described above (default), or set SIGMA to the kernel size in mm.
+SIGMA=0 turns spatial filtering off.
+
+**Mask, trim to size and reshape:**  Select only the voxels and timpoints that are going to be processed, as
+specified by the spatial masks, and the ``--numskip`` and ``--timerange`` options, and reformat the remaining data
+into a voxel by time array.  This simplifies all of the subsequent processing.  Spatial filtering (done previously)
+and despeckling (managed by mapping lag data back to x, y, z space to check against neighbors)
+are the only operations that require us to know the spatial relationship between voxels.
 
 Time delay determination
 """"""""""""""""""""""""
+This is the core of the program, that actually does the delay determination.  It's currently divided into two parts -
+calculation of a time dependant similarity function between the sLFO regressor and each voxel, and then a fitting
+step to find the time delay and strength of association between the two.
 
+Types of similarity function
+````````````````````````````
 
 Generating a Better Moving Signal Estimate
 """"""""""""""""""""""""""""""""""""""""""
