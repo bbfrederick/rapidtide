@@ -266,7 +266,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QRadioButton" name="flame_radioButton">
+            <widget class="QRadioButton" name="plasma_radioButton">
              <property name="font">
               <font>
                <family>Arial Narrow</family>
@@ -274,7 +274,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Flame</string>
+              <string>Plasma</string>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">colormap_buttonGroup</string>
