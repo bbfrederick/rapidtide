@@ -378,7 +378,7 @@ def _get_parser():
         metavar="MOTFILE",
         help=(
             "Read 6 columns of motion regressors out of MOTFILE file (.par or BIDS .json) "
-            "(with timepoints rows) and regress them and their derivatives "
+            "(with timepoints rows) and regress them and/or their derivatives "
             "out of the data prior to analysis. "
         ),
         default=None,
@@ -402,6 +402,36 @@ def _get_parser():
         ),
         default=True,
     )
+    """preproc.add_argument(
+        "--confoundfile",
+        dest="confoundfilespec",
+        metavar="CONFFILE",
+        help=(
+            "Read additional confound regressors out of CONFFILE file (which can be any type of multicolumn text file "
+            "rapidtide reads as long as data is sampled at TR with timepoints rows).  Optionally do power expansion "
+            "and/or  calculate derivatives prior to regression. "
+        ),
+        default=None,
+    )
+    preproc.add_argument(
+        "--confoundpowers",
+        dest="confound_power",
+        metavar="N",
+        type=int,
+        help=(
+            "Include powers of each confound regressor up to order N. Default is 1 (no expansion). "
+        ),
+        default=1,
+    )
+    preproc.add_argument(
+        "--confoundderiv",
+        dest="confound_deriv",
+        action="store_false",
+        help=(
+            "Toggle whether derivatives will be used in confound regression.  " "Default is True. "
+        ),
+        default=True,
+    )"""
     preproc.add_argument(
         "--globalsignalmethod",
         dest="globalsignalmethod",

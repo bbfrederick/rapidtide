@@ -722,10 +722,11 @@ def rapidtide_main(argparsingfunc):
         fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
         TimingLGR.verbose("End moving fmri_data to shared memory")
 
-    # filter out motion regressors here
+    # filter out motion and other confound regressors here
+    # if optiondict["confoundfilespec"] is not None:
+    #    confounddict = readconfounds(optiondict["confoundfilespec"])
     if optiondict["motionfilename"] is not None:
         LGR.info("regressing out motion")
-
         TimingLGR.verbose("Motion filtering start")
         (
             motionregressors,

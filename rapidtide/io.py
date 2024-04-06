@@ -756,6 +756,25 @@ def checkifparfile(filename):
         return False
 
 
+def readconfounds(filename, debug=False):
+    (
+        thesamplerate,
+        thestarttime,
+        thecolumns,
+        thedata,
+        compressed,
+        filetype,
+    ) = readvectorsfromtextfile(filename, debug=debug)
+    if thecolumns is None:
+        thecolumns = []
+        for i in range(thedata.shape[0]):
+            thecolumns.append(f"confound_{str(i).zfill(3)}")
+    theconfounddict = {}
+    for i in range(thedata.shape[0]):
+        theconfounddict[thecolumns[i]] = thedata[i]
+    return theconfounddict
+
+
 def readparfile(filename):
     r"""Checks to see if a file is an FSL style motion parameter file
 
