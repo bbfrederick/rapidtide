@@ -496,6 +496,8 @@ def rapidtide_main(argparsingfunc):
         )
 
     # do spatial filtering if requested
+    if fileiscifti:
+        optiondict["gausssigma"] = 0.0
     if optiondict["gausssigma"] < 0.0 and not optiondict["textio"]:
         # set gausssigma automatically
         optiondict["gausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
