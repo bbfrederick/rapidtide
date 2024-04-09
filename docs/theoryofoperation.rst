@@ -365,6 +365,43 @@ step to find the time delay and strength of association between the two.
 
 Types of similarity function
 ````````````````````````````
+**Crosscorrelation:** The most straightforward way to calculate similarity between two timecourses is crosscorrelation.  It has several
+advantages - interpretation is easy - the magnitude of the function ranges from 0 (no similarity) to 1 (timecourses
+are identical.  Negative magnitudes mean that the one timecourse is inverted relative to the other.  It is also
+extremely fast to calculate in the spectral domain (O(2Nlog2N) rather than O(N2)).  For signals of the length of
+typical fMRI scans, calculation in the spectral domain is a clear win.  However, it does have drawbacks.  First, it
+assumes the relationship between the signals is linear.  In practice, this is generally ok for our purposes, but is
+not ideal.  More problematic are unpredicatible performance when the SNR is low (as it is in voxels with lower
+blood content, such as white matter), which can make the signal harder to
+quantify.  Correlation peaks can be very broad due to low pass filtering, autocorrelation and window function choices
+, and baseline roll can lead toincorrect peak identification.  This
+makes the peak fitting process complicated.
+
+**Mutual information:**  Mutual information (MI) is a very different method of quantifying similarity.  It is a measure of
+the amount of information you can gain about one signal from the other (yes, I know the definition is about "random
+variables", but for our purposes, we mean timecourses).  So, no assumption of linearity (or in fact
+any assumption whatsoever about the functional form of the relationship).  That's cool, because it really frees you
+up in terms of what you can look at (as an aside, I'm not sure why this isn't used more in task based analyses). MI
+is especially useful in image registration, for example, lining T2 weighted functional images up with T1 weighted
+anatomics.  The cross-MI has some nice properties.
+
+    * It tends to give sharp peaks when signals are aligned, even in cases where the source data is lowpass filtered.
+    * As mentioned above, it really doesn't care how signals are related, only that they are.  So you aren't restricted to linear relationships between signals.
+
+So why don't we use it for everything?  A couple of reasons.
+
+    * It's much more computationally expensive than correlation (O(N2) at least).  My implementation of a cross-MI function (which is actually pretty fast) takes about 10x as long to calculate as crosscorrelation for typical fMRI data.
+    * It does not have as straightforward an interpretation as crosscorrelation - while there are "normalized" calculations, "1" does not mean identical, "0" does not mean unrelated, and it's positive definite.  The MI of a signal with itself is the same as the MI of -1 * itself.  For cross-MI, you can really only rely on the fact that you get a maximum when the signals are most aligned.
+
+**Hybrid similarity:**  I'm kind of proud of this one.  Crosscorrelation is fast and interpretable, but has the
+MI is very slow and hard to interpred, but quite unambiguous in selecting the best match.  Enter "hybrid similarity" -
+Use the crosscorrelation to identify candidate peaks, then calculate the MI only at those peak locations, pick the one
+that has the higher MI, and then proceed to the fitting step for full quantification.  This is almost as fast as
+straight correlation, but does tend to be more stable.
+
+Peak fitting and quantification
+```````````````````````````````
+
 
 Generating a Better Moving Signal Estimate
 """"""""""""""""""""""""""""""""""""""""""
