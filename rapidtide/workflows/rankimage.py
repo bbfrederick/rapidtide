@@ -18,8 +18,8 @@
 #
 import argparse
 
-import matplotlib as mpl
 import numpy as np
+from scipy.stats import rankdata
 
 import rapidtide.io as tide_io
 
@@ -62,8 +62,9 @@ def imtopercentile(image, mask, debug=False):
             f"Processing {numvalidspatiallocs} of {nativespaceshape[0] * nativespaceshape[1] * nativespaceshape[2]} voxels"
         )
         print(f"{np.shape(input_data_valid)=}")
-    order = input_data_valid.argsort()
-    percentilescore = 100.0 * order.argsort() / numvalidspatiallocs
+    percentilescore = (
+        100.0 * (rankdata(input_data_valid, method="dense") - 1) / (numvalidspatiallocs - 1)
+    )
     outmaparray[validvoxels] = percentilescore[:]
     return outmaparray.reshape(nativespaceshape)
 

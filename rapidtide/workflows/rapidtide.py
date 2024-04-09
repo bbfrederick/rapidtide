@@ -30,6 +30,7 @@ from pathlib import Path
 import numpy as np
 from nilearn import masking
 from scipy import ndimage
+from scipy.stats import rankdata
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
@@ -2287,8 +2288,9 @@ def rapidtide_main(argparsingfunc):
                 },
             )
         # Step 2c - make a rank order map
-        order = lagtimes.argsort()
-        timepercentile = 100.0 * order.argsort() / numvalidspatiallocs
+        timepercentile = (
+            100.0 * (rankdata(lagtimes, method="dense") - 1) / (numvalidspatiallocs - 1)
+        )
 
         if optiondict["saveintermediatemaps"]:
             maplist = [
