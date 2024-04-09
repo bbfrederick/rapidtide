@@ -376,7 +376,7 @@ not ideal.  More problematic is unpredicatible performance when the SNR is low (
 blood content, such as white matter), which can make the signal harder to
 quantify.  Correlation peaks can be very broad due to low pass filtering, autocorrelation and window function choices,
 and baseline roll can lead to incorrect peak identification.  This
-makes the peak fitting process complicated.  Use ``--similaritymetric correlation`` to use crosscorrelation (default).
+makes the peak fitting process complicated.  Use ``--similaritymetric correlation`` to select crosscorrelation (default).
 
 **Mutual information:**  Mutual information (MI) is a very different method of quantifying similarity.  It is a measure of
 the amount of information you can gain about one signal from the other (yes, I know the definition is about "random
@@ -395,13 +395,13 @@ So why don't we use it for everything?  A couple of reasons.
     * It's much more computationally expensive than correlation (O(N2) at least).  My implementation of a cross-MI function (which is actually pretty fast) takes about 10x as long to calculate as crosscorrelation for typical fMRI data.
     * It does not have as straightforward an interpretation as crosscorrelation - while there are "normalized" calculations, "1" does not mean identical, "0" does not mean unrelated, and it's positive definite.  The MI of a signal with itself is the same as the MI of -1 times itself.  For cross-MI, you can really only rely on the fact that you get a maximum when the signals are most aligned.
 
-Use ``--similaritymetric mutualinfo`` to use MI.
+Use ``--similaritymetric mutualinfo`` to select MI.
 
 **Hybrid similarity:**  I'm kind of proud of this one.  Crosscorrelation is fast and interpretable, but has the
 MI is very slow and hard to interpred, but quite unambiguous in selecting the best match.  Enter "hybrid similarity" -
 Use the crosscorrelation to identify candidate peaks, then calculate the MI only at those peak locations, pick the one
 that has the higher MI, and then proceed to the fitting step for full quantification.  This is almost as fast as
-straight correlation, but does tend to be more stable. Use ``--similaritymetric hybrid`` to use hybrid similarity.
+straight correlation, but does tend to be more stable. Use ``--similaritymetric hybrid`` to select hybrid similarity.
 
 Peak fitting and quantification
 ```````````````````````````````
