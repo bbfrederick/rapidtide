@@ -363,6 +363,9 @@ This is the core of the program, that actually does the delay determination.  It
 calculation of a time dependant similarity function between the sLFO regressor and each voxel, and then a fitting
 step to find the time delay and strength of association between the two.
 
+Signal preparation
+``````````````````
+
 Types of similarity function
 ````````````````````````````
 **Crosscorrelation:** The most straightforward way to calculate similarity between two timecourses is crosscorrelation.  It has several
@@ -392,13 +395,14 @@ anatomics.  The cross-MI has some nice properties.
 
 So why don't we use it for everything?  A couple of reasons.
 
-    * It's much more computationally expensive than correlation (O(N2) at least).  My implementation of a cross-MI function (which is actually pretty fast) takes about 10x as long to calculate as crosscorrelation for typical fMRI data.
+    * It's much more computationally expensive than correlation (O(N2) at least).  My implementation of a cross-MI function (which is actually pretty fast) still takes about 10x as long to calculate as crosscorrelation for typical fMRI data.
     * It does not have as straightforward an interpretation as crosscorrelation - while there are "normalized" calculations, "1" does not mean identical, "0" does not mean unrelated, and it's positive definite.  The MI of a signal with itself is the same as the MI of -1 times itself.  For cross-MI, you can really only rely on the fact that you get a maximum when the signals are most aligned.
 
 Use ``--similaritymetric mutualinfo`` to select MI.
 
 **Hybrid similarity:**  I'm kind of proud of this one.  Crosscorrelation is fast and interpretable, but has the
-MI is very slow and hard to interpred, but quite unambiguous in selecting the best match.  Enter "hybrid similarity" -
+problem of ambiguous time delay values, whereas
+cross-MI is very slow and hard to interpret, but quite unambiguous in selecting the best match.  Enter "hybrid similarity" -
 Use the crosscorrelation to identify candidate peaks, then calculate the MI only at those peak locations, pick the one
 that has the higher MI, and then proceed to the fitting step for full quantification.  This is almost as fast as
 straight correlation, but does tend to be more stable. Use ``--similaritymetric hybrid`` to select hybrid similarity.
@@ -409,6 +413,10 @@ Peak fitting and quantification
 
 Generating a Better Moving Signal Estimate
 """"""""""""""""""""""""""""""""""""""""""
+Now that we have an estimate of when the moving regressor arrives at every voxel, we can make a better estimate of the
+driving signal.  To do this, we first negate the time delay in every voxel and timeshift the voxel by that amount.
+This will have the effect of bringing the portion of the signal in each voxel due to the moving sLFO signal into
+alignment.  Then we can refine our sLFO estimate.
 
 
 Lather, Rinse, Repeat
