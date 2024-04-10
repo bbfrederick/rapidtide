@@ -903,11 +903,11 @@ def viridis_radioButton_clicked(enabled):
         updateLUT()
 
 
-def jet_radioButton_clicked(enabled):
+def turbo_radioButton_clicked(enabled):
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
-            gen_cyclic_state(), alpha=LUT_alpha, endalpha=LUT_endalpha
+            gen_turbo_state(), alpha=LUT_alpha, endalpha=LUT_endalpha
         )
         overlays[currentdataset.focusmap].gradient.restoreState(
             overlays[currentdataset.focusmap].lut_state
@@ -1094,8 +1094,8 @@ def overlay_radioButton_clicked(which, enabled):
                 ui.plasma_radioButton.setChecked(True)
             elif overlays[currentdataset.focusmap].lut_state == gen_viridis_state():
                 ui.viridis_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_cyclic_state():
-                ui.jet_radioButton.setChecked(True)
+            elif overlays[currentdataset.focusmap].lut_state == gen_turbo_state():
+                ui.turbo_radioButton.setChecked(True)
             else:
                 ui.rainbow_radioButton.setChecked(True)
 
@@ -1670,7 +1670,7 @@ def tidepool(args):
     ui.thermal_radioButton.clicked.connect(thermal_radioButton_clicked)
     ui.plasma_radioButton.clicked.connect(plasma_radioButton_clicked)
     ui.viridis_radioButton.clicked.connect(viridis_radioButton_clicked)
-    ui.jet_radioButton.clicked.connect(jet_radioButton_clicked)
+    ui.turbo_radioButton.clicked.connect(turbo_radioButton_clicked)
     ui.rainbow_radioButton.clicked.connect(rainbow_radioButton_clicked)
 
     # wire up the transparency checkbox
