@@ -1570,7 +1570,7 @@ def process_args(inputargs=None):
     args["dosighistfit"] = True
     if args["corrtype"] == "linear":
         args["corrpadding"] = -1
-        pf.setifnotset(args, "windowfunc", "None")
+        #pf.setifnotset(args, "windowfunc", "None")
     else:
         args["corrpadding"] = 0
 
