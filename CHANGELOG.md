@@ -1,5 +1,15 @@
 # Release history
 
+## Version 2.8.7 (4/10/24)
+* (rapidtide) Spatial filtering with the default kernel (1/2 the average voxel dimension) is now the default.
+* (rapidtide) Rewrote the lag time rank order calculation to use scipy.signal.rankdata.
+* (rapidtide) Moved some command line options to the "experimental" section, where they should have been to begin with.
+* (rapidtide, happy) Initial reorganization and expansion of confound regression code.
+* (tidepool) Replaced the flame colormap option with plasma and jet with turbo (similar, to what they replaced, but perceptually uniform).
+* (package) Made some proactive fixes for numpy 2.0.0 compatibility.
+* (tests) Removed some superfluous metadata from test data files.
+* (docs) Further extensive revisions.
+
 ## Version 2.8.6 (4/5/24)
 * (rapidtide) Tweaked the behavior of the ``--CVR`` flag.
 * (rapidtide) Made major improvements to motion regression.
