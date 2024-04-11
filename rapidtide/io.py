@@ -905,7 +905,7 @@ def readmotion(filename):
     return motiondict
 
 
-def calcexpandedregressors(confounddict, start=0, end=-1, position=True, deriv=True, order=1):
+def calcexpandedregressors(confounddict, labels=None, start=0, end=-1, deriv=True, order=1):
     r"""Calculates various motion related timecourses from motion data dict, and returns an array
 
     Parameters
@@ -919,18 +919,23 @@ def calcexpandedregressors(confounddict, start=0, end=-1, position=True, deriv=T
         All the derivative timecourses to use in a numpy array
 
     """
-    labels = ["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"]
+    if labels is None:
+        labels = list(confounddict.keys())
+    if order > 1:
+        for theorder in range(1,order):
+            for thelabel in labels:
+                confounddict[thelabel + f"^{theorder+1}"] = (confounddict[thelabel][start : end + 1])**(theorder + 1)
+
+    numkeys = len(labels)
     numpoints = len(confounddict[labels[0]])
     if end == -1:
         end = numpoints - 1
     if (0 <= start <= numpoints - 1) and (start < end + 1):
         numoutputpoints = end - start + 1
 
-    numoutputregressors = 0
-    if position:
-        numoutputregressors += 6
+    numoutputregressors = numkeys
     if deriv:
-        numoutputregressors += 6
+        numoutputregressors += numkeys
     if numoutputregressors > 0:
         outputregressors = np.zeros((numoutputregressors, numoutputpoints), dtype=float)
     else:
@@ -938,11 +943,10 @@ def calcexpandedregressors(confounddict, start=0, end=-1, position=True, deriv=T
         sys.exit()
     activecolumn = 0
     outlabels = []
-    if position:
-        for thelabel in labels:
-            outputregressors[activecolumn, :] = confounddict[thelabel][start : end + 1]
-            outlabels.append(thelabel)
-            activecolumn += 1
+    for thelabel in labels:
+        outputregressors[activecolumn, :] = confounddict[thelabel][start : end + 1]
+        outlabels.append(thelabel)
+        activecolumn += 1
     if deriv:
         for thelabel in labels:
             outputregressors[activecolumn, :] = np.gradient(

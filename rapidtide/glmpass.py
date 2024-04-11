@@ -346,56 +346,49 @@ def makevoxelspecificderivs(theevs, nderivs=1, debug=False):
     return thenewevs
 
 
-def motionregress(
-    themotionfilename,
+def confoundregress(
+    theregressors,
+    theregressorlabels,
     thedataarray,
     tr,
     nprocs=1,
     orthogonalize=True,
-    motstart=0,
-    motend=-1,
-    motionhp=None,
-    motionlp=None,
-    position=True,
-    deriv=True,
+    tcstart=0,
+    tcend=-1,
+    tchp=None,
+    tclp=None,
     showprogressbar=True,
     debug=False,
 ):
-    print("regressing out motion")
-    motionregressors, motionregressorlabels = tide_io.calcexpandedregressors(
-        tide_io.readmotion(themotionfilename),
-        position=position,
-        deriv=deriv,
-        order=1,
-    )
-    if motend == -1:
-        motionregressors = motionregressors[:, motstart:]
+
+    if tcend == -1:
+        theregressors = theregressors[:, tcstart:]
     else:
-        motionregressors = motionregressors[:, motstart:motend]
-    if (motionlp is not None) or (motionhp is not None):
+        theregressors = theregressors[:, tcstart:tcend]
+    if (tclp is not None) or (tchp is not None):
         mothpfilt = tide_filt.NoncausalFilter(filtertype="arb", transferfunc="trapezoidal")
-        if motionlp is None:
-            motionlp = 0.5 / tr
+        if tclp is None:
+            tclp = 0.5 / tr
         else:
-            motionlp = np.min([0.5 / tr, motionlp])
-        if motionhp is None:
-            motionhp = 0.0
-        mothpfilt.setfreqs(0.9 * motionhp, motionhp, motionlp, np.min([0.5 / tr, motionlp * 1.1]))
-        for i in range(motionregressors.shape[0]):
-            motionregressors[i, :] = mothpfilt.apply(1.0 / tr, motionregressors[i, :])
+            tclp = np.min([0.5 / tr, tclp])
+        if tchp is None:
+            tchp = 0.0
+        mothpfilt.setfreqs(0.9 * tchp, tchp, tclp, np.min([0.5 / tr, tclp * 1.1]))
+        for i in range(theregressors.shape[0]):
+            theregressors[i, :] = mothpfilt.apply(1.0 / tr, theregressors[i, :])
     if orthogonalize:
-        motionregressors = tide_fit.gram_schmidt(motionregressors)
-        initregressors = len(motionregressorlabels)
-        motionregressorlabels = []
-        for theregressor in range(motionregressors.shape[0]):
-            motionregressorlabels.append("orthogmotion_{:02d}".format(theregressor))
+        theregressors = tide_fit.gram_schmidt(theregressors)
+        initregressors = len(theregressorlabels)
+        theregressorlabels = []
+        for theregressor in range(theregressors.shape[0]):
+            theregressorlabels.append("orthogconfound_{:02d}".format(theregressor))
         print(
             "After orthogonalization, {0} of {1} regressors remain.".format(
-                len(motionregressorlabels), initregressors
+                len(theregressorlabels), initregressors
             )
         )
 
-    print("start motion filtering")
+    print("start confound filtering")
 
     numprocitems = thedataarray.shape[0]
     filtereddata = thedataarray * 0.0
@@ -404,7 +397,7 @@ def motionregress(
         numprocitems,
         thedataarray,
         None,
-        np.transpose(motionregressors),
+        np.transpose(theregressors),
         None,
         None,
         r2value,
@@ -420,5 +413,5 @@ def motionregress(
     )
 
     print()
-    print(f"motion filtering on {numfiltered} voxels complete")
-    return motionregressors, motionregressorlabels, filtereddata, r2value
+    print(f"confound filtering on {numfiltered} voxels complete")
+    return theregressors, theregressorlabels, filtereddata, r2value

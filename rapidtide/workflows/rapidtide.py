@@ -352,10 +352,10 @@ def rapidtide_main(argparsingfunc):
     if optiondict["nprocs"] < 1:
         optiondict["nprocs"] = tide_multiproc.maxcpus(reservecpu=optiondict["reservecpu"])
 
-    if optiondict["singleproc_motionregress"]:
-        optiondict["nprocs_motionregress"] = 1
+    if optiondict["singleproc_confoundregress"]:
+        optiondict["nprocs_confoundregress"] = 1
     else:
-        optiondict["nprocs_motionregress"] = optiondict["nprocs"]
+        optiondict["nprocs_confoundregress"] = optiondict["nprocs"]
 
     if optiondict["singleproc_getNullDist"]:
         optiondict["nprocs_getNullDist"] = 1
@@ -725,72 +725,114 @@ def rapidtide_main(argparsingfunc):
         fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
         TimingLGR.verbose("End moving fmri_data to shared memory")
 
-    # filter out motion and other confound regressors here
-    # if optiondict["confoundfilespec"] is not None:
-    #    confounddict = readconfounds(optiondict["confoundfilespec"])
+    # read in any motion and/or other confound regressors here
     if optiondict["motionfilename"] is not None:
-        LGR.info("regressing out motion")
+        LGR.info("preparing motion regressors")
         TimingLGR.verbose("Motion filtering start")
+        motionregressors, motionregressorlabels = tide_io.calcexpandedregressors(
+            tide_io.readmotion(optiondict["motionfilename"]),
+            labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
+            deriv=optiondict["mot_deriv"],
+            order=1,
+        )
+        domotion=True
+    else:
+        domotion=False
+
+    if optiondict["confoundfilespec"] is not None:
+        LGR.info("preparing confound regressors")
+        confoundregressors, confoundregressorlabels = tide_io.calcexpandedregressors(
+            tide_io.readconfounds(optiondict["confoundfilespec"]),
+            deriv=optiondict["confound_deriv"],
+            order=optiondict["confound_power"],
+        )
+        doconfounds=True
+    else:
+        doconfounds=False
+
+    # now actually do the filtering
+    if domotion or doconfounds:
+        LGR.info("Doing confound filtering")
+        TimingLGR.verbose("Confound filtering start")
+        if domotion:
+            if doconfounds:
+                mergedregressors = np.concatenate((motionregressors, confoundregressors), axis=0)
+                mergedregressorlabels = motionregressorlabels + confoundregressorlabels
+            else:
+                mergedregressors = motionregressors
+                mergedregressorlabels = motionregressorlabels
+        else:
+            if doconfounds:
+                mergedregressors = confoundregressors
+                mergedregressorlabels = confoundregressorlabels
+        tide_io.writebidstsv(
+            f"{outputname}_desc-expandedconfounds_timeseries",
+            mergedregressors,
+            1.0 / fmritr,
+            columns=mergedregressorlabels,
+            append=False,
+        )
+
         (
-            motionregressors,
-            motionregressorlabels,
+            mergedregressors,
+            mergedregressorlabels,
             fmri_data_valid,
-            motionr2,
-        ) = tide_glmpass.motionregress(
-            optiondict["motionfilename"],
+            confoundr2,
+        ) = tide_glmpass.confoundregress(
+            mergedregressors,
+            mergedregressorlabels,
             fmri_data_valid,
             fmritr,
-            nprocs=optiondict["nprocs_motionregress"],
-            motstart=validstart,
-            motend=validend + 1,
-            position=optiondict["mot_pos"],
-            deriv=optiondict["mot_deriv"],
+            nprocs=optiondict["nprocs_confoundregress"],
+            tcstart=validstart,
+            tcend=validend + 1,
+            orthogonalize=optiondict["orthogonalize"],
             showprogressbar=optiondict["showprogressbar"],
         )
 
         TimingLGR.info(
-            "Motion filtering end",
+            "Confound filtering end",
             {
                 "message2": fmri_data_valid.shape[0],
                 "message3": "voxels",
             },
         )
-        outmotionr2 = np.zeros((numspatiallocs), dtype=rt_floattype)
-        outmotionr2[validvoxels] = motionr2[:]
+        outconfoundr2 = np.zeros((numspatiallocs), dtype=rt_floattype)
+        outconfoundr2[validvoxels] = confoundr2[:]
         if optiondict["textio"]:
             tide_io.writenpvecs(
-                outmotionr2.reshape((numspatiallocs)),
-                f"{outputname}_motionr2.txt",
+                outconfoundr2.reshape((numspatiallocs)),
+                f"{outputname}_confoundr2.txt",
             )
         else:
-            savename = f"{outputname}_desc-motionr2"
+            savename = f"{outputname}_desc-confoundr2"
             tide_io.savetonifti(
-                outmotionr2.reshape((xsize, ysize, numslices)),
+                outconfoundr2.reshape((xsize, ysize, numslices)),
                 nim_hdr,
                 savename,
             )
         tide_io.writebidstsv(
-            f"{outputname}_desc-orthogonalizedmotion_timeseries",
-            motionregressors,
+            f"{outputname}_desc-orthogonalizedconfound_timeseries",
+            mergedregressors,
             1.0 / fmritr,
-            columns=motionregressorlabels,
+            columns=mergedregressorlabels,
             append=False,
         )
         if optiondict["memprofile"]:
             memcheckpoint("...done")
         else:
-            tide_util.logmem("after motion glm filter")
+            tide_util.logmem("after confound glm filter")
 
-        if optiondict["savemotionfiltered"]:
+        if optiondict["saveconfoundfiltered"]:
             outfmriarray = np.zeros((numspatiallocs, validtimepoints), dtype=rt_floattype)
             outfmriarray[validvoxels, :] = fmri_data_valid[:, :]
             if optiondict["textio"]:
                 tide_io.writenpvecs(
                     outfmriarray.reshape((numspatiallocs, validtimepoints)),
-                    f"{outputname}_motionfiltered.txt",
+                    f"{outputname}_confoundfiltered.txt",
                 )
             else:
-                savename = f"{outputname}_desc-motionfiltered"
+                savename = f"{outputname}_desc-confoundfiltered"
                 tide_io.savetonifti(
                     outfmriarray.reshape((xsize, ysize, numslices, validtimepoints)),
                     nim_hdr,

@@ -385,32 +385,23 @@ def _get_parser():
         default=None,
     )
     preproc.add_argument(
-        "--motpos",
-        dest="mot_pos",
-        action="store_true",
-        help=(
-            "Toggle whether displacement regressors will be used in motion "
-            "regression. Default is True. "
-        ),
-        default=True,
-    )
-    preproc.add_argument(
         "--motderiv",
         dest="mot_deriv",
         action="store_false",
         help=(
-            "Toggle whether derivatives will be used in motion regression.  " "Default is True. "
+            "Toggle whether derivatives will be used in motion regression.  Default is True."
         ),
         default=True,
     )
-    """preproc.add_argument(
+    preproc.add_argument(
         "--confoundfile",
         dest="confoundfilespec",
         metavar="CONFFILE",
         help=(
-            "Read additional confound regressors out of CONFFILE file (which can be any type of multicolumn text file "
+            "Read additional (non-motion) confound regressors out of CONFFILE file (which can be any type of "
+            "multicolumn text file "
             "rapidtide reads as long as data is sampled at TR with timepoints rows).  Optionally do power expansion "
-            "and/or  calculate derivatives prior to regression. "
+            "and/or calculate derivatives prior to regression. "
         ),
         default=None,
     )
@@ -429,10 +420,19 @@ def _get_parser():
         dest="confound_deriv",
         action="store_false",
         help=(
-            "Toggle whether derivatives will be used in confound regression.  " "Default is True. "
+            "Toggle whether derivatives will be used in confound regression.  Default is True. "
         ),
         default=True,
-    )"""
+    )
+    preproc.add_argument(
+        "--noconfoundorthogonalize",
+        dest="orthogonalize",
+        action="store_false",
+        help=(
+            "Do not orthogonalize confound regressors prior to regressing them out of the data. "
+        ),
+        default=True,
+    )
     preproc.add_argument(
         "--globalsignalmethod",
         dest="globalsignalmethod",
@@ -1428,10 +1428,10 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
-        "--singleproc_motionregress",
-        dest="singleproc_motionregress",
+        "--singleproc_confoundregress",
+        dest="singleproc_confoundregress",
         action="store_true",
-        help=("Force single proc path for motion regression."),
+        help=("Force single proc path for confound regression."),
         default=False,
     )
     debugging.add_argument(
@@ -1577,7 +1577,7 @@ def process_args(inputargs=None):
     # output options
     args["savedespecklemasks"] = True
     args["saveglmfiltered"] = True
-    args["savemotionfiltered"] = False
+    args["saveconfoundfiltered"] = False
     args["savecorrmask"] = True
 
     # refinement options
