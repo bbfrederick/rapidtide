@@ -414,14 +414,48 @@ Peak fitting and quantification
 Generating a Better Moving Signal Estimate
 """"""""""""""""""""""""""""""""""""""""""
 Now that we have an estimate of when the moving regressor arrives at every voxel, we can make a better estimate of the
-driving signal.  To do this, we first negate the time delay in every voxel and timeshift the voxel by that amount.
-This will have the effect of bringing the portion of the signal in each voxel due to the moving sLFO signal into
-alignment.  Then we can refine our sLFO estimate.
+driving signal.
 
+Voxel selection
+```````````````
+First we pick the voxels we want to use to generate the new estimate.  We can set the starting mask explicitly using
+the ``--refineinclude MASKFILE:VALSPEC`` and ``--refineexclude MASKFILE:VALSPEC`` command line options.  If left unset,
+we use all voxels with valid correlation fits.  We can further
+tune which voxels are excluded from refinement with the ``--norefinedespeckled``, ``--lagminthresh``,
+``--lagmaxthresh``, ``--ampthresh``, and ``--sigmathresh`` options.
+
+Alignment
+`````````
+In each of the voxels selected for refinement, we first negate the time delay in every voxel and timeshift the
+voxel by that amount.
+This will have the effect of bringing the portion of the signal in each voxel due to the moving sLFO signal into
+alignment.
+
+Prescaling
+``````````
+We then weight the voxels to use in the fit by first prenormalizing them using their mean, variance, or standard deviation over time,
+the inverse of the lag time,
+or leave them unweighted.  Selection is via the ``--refineprenorm`` option.  The default is to do no prenormalization.
+
+Timecourse generation
+`````````````````````
+The new timecourse is then generated from the set of aligned, scaled timecourses using a method specified with ``--refinetype``:
+
+    **(pca - default)** Perform a principal component analysis on the timecourses, reprojecting them onto a reduced set of components (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).  Average the result.
+
+    **(ica)** Perform an independent component analysis on the timecourses, reprojecting them onto a reduced set of components (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).  Average the result.
+
+    **(weighted_average)** Each voxel is scaled with either the correlation strength from the current pass, the square of the correlation strength, or is left unscaled.  This is selected with the ``--refineweighting`` option - the default is "R2".  The timecourses are then averaged.
+
+    **(unweighted average)**  Average the voxels.
 
 Lather, Rinse, Repeat
 """""""""""""""""""""
-
+Now that there is a new starting regressor, repeat the entire process some number of times.  This can be a fixed number
+of passes, specified by ``--passes NUMPASSES``.  The default is to do 3 passes.  Alternatively, by specifying
+``--convergencethresh THRESH``, the process is repeated until either the MSE between the new sLFO regresssor and the
+regressor from the previous pass falls below THRESH, or the number of passes reaches MAX, specified
+by ``--maxpasses MAX`` (default is 15).
 
 Save Useful Parameters
 """"""""""""""""""""""
