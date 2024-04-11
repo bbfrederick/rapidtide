@@ -232,7 +232,7 @@ def happy_main(argparsingfunc):
             motionregressors,
             motionregressorlabels,
             filtereddata,
-        ) = tide_glmpass.motionregress(
+        ) = tide_glmpass.confoundregress(
             args.motionfilename,
             fmri_data[validprojvoxels, :],
             tr,
@@ -240,7 +240,6 @@ def happy_main(argparsingfunc):
             motstart=args.motskip,
             motionhp=args.motionhp,
             motionlp=args.motionlp,
-            position=args.motfilt_pos,
             deriv=args.motfilt_deriv,
         )
         fmri_data[validprojvoxels, :] = filtereddata[:, :]

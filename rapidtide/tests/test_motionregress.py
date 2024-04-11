@@ -95,9 +95,8 @@ def test_motionregress(debug=False, displayplots=False):
 
     themotiondict = genmotions(tsize=tsize, numcycles=startcycles)
 
-    motionregressors, motionregressorlabels = tide_io.calcexpandedregressors(
+    motionregressors, motionregressorlabels = tide_fit.calcexpandedregressors(
         themotiondict,
-        position=True,
         deriv=False,
         order=1,
     )
@@ -108,10 +107,9 @@ def test_motionregress(debug=False, displayplots=False):
         plt.show()
 
     for orthogonalize in [False, True]:
-        for position, deriv in [[True, False], [False, True], [True, True]]:
-            motionregressors, motionregressorlabels = tide_io.calcexpandedregressors(
+        for deriv in [True, False]:
+            motionregressors, motionregressorlabels = tide_fit.calcexpandedregressors(
                 themotiondict,
-                position=position,
                 deriv=deriv,
                 order=1,
             )
