@@ -729,7 +729,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["motionfilename"] is not None:
         LGR.info("preparing motion regressors")
         TimingLGR.verbose("Motion filtering start")
-        motionregressors, motionregressorlabels = tide_io.calcexpandedregressors(
+        motionregressors, motionregressorlabels = tide_fit.calcexpandedregressors(
             tide_io.readmotion(optiondict["motionfilename"]),
             labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
             deriv=optiondict["mot_deriv"],
@@ -741,7 +741,7 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["confoundfilespec"] is not None:
         LGR.info("preparing confound regressors")
-        confoundregressors, confoundregressorlabels = tide_io.calcexpandedregressors(
+        confoundregressors, confoundregressorlabels = tide_fit.calcexpandedregressors(
             tide_io.readconfounds(optiondict["confoundfilespec"]),
             deriv=optiondict["confound_deriv"],
             order=optiondict["confound_power"],
@@ -812,7 +812,7 @@ def rapidtide_main(argparsingfunc):
                 savename,
             )
         tide_io.writebidstsv(
-            f"{outputname}_desc-orthogonalizedconfound_timeseries",
+            f"{outputname}_desc-orthogonalizedconfounds_timeseries",
             mergedregressors,
             1.0 / fmritr,
             columns=mergedregressorlabels,

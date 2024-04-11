@@ -1681,6 +1681,60 @@ def mlregress(x, y, intercept=True):
 
     return np.atleast_1d(solution[0].T), R
 
+def calcexpandedregressors(confounddict, labels=None, start=0, end=-1, deriv=True, order=1, debug=False):
+    r"""Calculates various motion related timecourses from motion data dict, and returns an array
+
+    Parameters
+    ----------
+    confounddict: dict
+        A dictionary of the confound vectors
+
+    Returns
+    -------
+    motionregressors: array
+        All the derivative timecourses to use in a numpy array
+
+    """
+    if labels is None:
+        labels = list(confounddict.keys())
+    if order > 1:
+        for theorder in range(1,order):
+            for thelabel in labels:
+                confounddict[f"{thelabel}^{theorder+1}"] = (confounddict[thelabel])**(theorder + 1)
+        labels = list(confounddict.keys())
+        if debug:
+            print(f"{labels=}")
+
+    numkeys = len(labels)
+    numpoints = len(confounddict[labels[0]])
+    if end == -1:
+        end = numpoints - 1
+    if (0 <= start <= numpoints - 1) and (start < end + 1):
+        numoutputpoints = end - start + 1
+
+    numoutputregressors = numkeys
+    if deriv:
+        numoutputregressors += numkeys
+    if numoutputregressors > 0:
+        outputregressors = np.zeros((numoutputregressors, numoutputpoints), dtype=float)
+    else:
+        print("no output types selected - exiting")
+        sys.exit()
+    activecolumn = 0
+    outlabels = []
+    for thelabel in labels:
+        outputregressors[activecolumn, :] = confounddict[thelabel][start : end + 1]
+        outlabels.append(thelabel)
+        activecolumn += 1
+    if deriv:
+        for thelabel in labels:
+            outputregressors[activecolumn, :] = np.gradient(
+                confounddict[thelabel][start : end + 1]
+            )
+            outlabels.append(thelabel + "_deriv")
+            activecolumn += 1
+    return outputregressors, outlabels
+
 
 def derivativeglmfilt(thedata, theevs, nderivs=1, debug=False):
     r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
