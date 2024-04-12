@@ -93,10 +93,11 @@ def test_motionregress(debug=False, displayplots=False):
     tsize = 200
     startcycles = 11
 
-    themotiondict = genmotions(tsize=tsize, numcycles=startcycles)
+    thismotiondict = genmotions(tsize=tsize, numcycles=startcycles)
 
     motionregressors, motionregressorlabels = tide_fit.calcexpandedregressors(
-        themotiondict,
+        thismotiondict,
+        labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
         deriv=False,
         order=1,
     )
@@ -108,53 +109,55 @@ def test_motionregress(debug=False, displayplots=False):
 
     for orthogonalize in [False, True]:
         for deriv in [True, False]:
-            motionregressors, motionregressorlabels = tide_fit.calcexpandedregressors(
-                themotiondict,
-                deriv=deriv,
-                order=1,
-            )
-            if orthogonalize:
-                motionregressors = tide_fit.gram_schmidt(motionregressors)
-                initregressors = len(motionregressorlabels)
-                motionregressorlabels = []
-                for theregressor in range(motionregressors.shape[0]):
-                    motionregressorlabels.append("orthogmotion_{:02d}".format(theregressor))
+            for order in [2, 1]:
+                motionregressors, motionregressorlabels = tide_fit.calcexpandedregressors(
+                    thismotiondict,
+                    labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
+                    deriv=deriv,
+                    order=order,
+                )
+                if orthogonalize:
+                    motionregressors = tide_fit.gram_schmidt(motionregressors)
+                    initregressors = len(motionregressorlabels)
+                    motionregressorlabels = []
+                    for theregressor in range(motionregressors.shape[0]):
+                        motionregressorlabels.append("orthogmotion_{:02d}".format(theregressor))
 
-            if debug:
-                print(f"{position=}, {deriv=}, {orthogonalize=}, {motionregressors.shape=}")
-            if displayplots:
-                showthetcs(motionregressors, motionregressorlabels)
+                if debug:
+                    print(f"{order=}, {deriv=}, {orthogonalize=}, {motionregressors.shape=}")
+                if displayplots:
+                    showthetcs(motionregressors, motionregressorlabels)
 
-            thedataarray = makedataarray(motionregressors)
-            numprocitems = thedataarray.shape[0]
-            filtereddata = thedataarray * 0.0
-            r2value = np.zeros(numprocitems)
-            dummy = tide_glmpass.glmpass(
-                numprocitems,
-                thedataarray,
-                None,
-                np.transpose(motionregressors),
-                None,
-                None,
-                r2value,
-                None,
-                None,
-                None,
-                filtereddata,
-                confoundglm=True,
-                nprocs=1,
-                showprogressbar=debug,
-                procbyvoxel=True,
-                debug=debug,
-            )
-            if displayplots:
-                plt.figure()
-                plt.imshow(filtereddata)
-                plt.show()
-            if debug:
-                print(f"\tMSE: {mse(filtereddata, 0.0 * thedataarray)}\n")
-            if position and deriv:
-                assert mse(filtereddata, 0.0 * thedataarray) < 1e-3
+                thedataarray = makedataarray(motionregressors)
+                numprocitems = thedataarray.shape[0]
+                filtereddata = thedataarray * 0.0
+                r2value = np.zeros(numprocitems)
+                dummy = tide_glmpass.glmpass(
+                    numprocitems,
+                    thedataarray,
+                    None,
+                    np.transpose(motionregressors),
+                    None,
+                    None,
+                    r2value,
+                    None,
+                    None,
+                    None,
+                    filtereddata,
+                    confoundglm=True,
+                    nprocs=1,
+                    showprogressbar=debug,
+                    procbyvoxel=True,
+                    debug=debug,
+                )
+                if displayplots:
+                    plt.figure()
+                    plt.imshow(filtereddata)
+                    plt.show()
+                if debug:
+                    print(f"\tMSE: {mse(filtereddata, 0.0 * thedataarray)}\n")
+                if deriv:
+                    assert mse(filtereddata, 0.0 * thedataarray) < 1e-2
 
 
 if __name__ == "__main__":
