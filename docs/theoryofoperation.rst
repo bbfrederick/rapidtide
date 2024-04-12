@@ -268,6 +268,12 @@ LFO band (0.009-0.15Hz).
 **Detrending and normalization:** The regressor is detrended to Nth order (N=3 by default), demeaned, and divided
 by the standard deviation over time.
 
+**Windowing:** We apply a window function to the regressor to improve the correlation properties.  By default, this is
+a Hamming window, but you can also select Hann, Blackman-Harris, or None, with the ``--windowfunc`` argument.
+
+**Zero padding:** The regressor is zero padded on each end to twice its length, so that we will be doing a linear
+rather than circular correlation (you can select circular correlation with ``--corrtype``, but I wouldn't recommend it.
+
 Moving Signal Massaging
 """""""""""""""""""""""
 Because the moving signal is "noise", we can't select or specify its properties, and sometimes the sLFO signal
@@ -357,6 +363,9 @@ into a voxel by time array.  This simplifies all of the subsequent processing.  
 and despeckling (managed by mapping lag data back to x, y, z space to check against neighbors)
 are the only operations that require us to know the spatial relationship between voxels.
 
+Significance threshold estimation
+"""""""""""""""""""""""""""""""""
+
 Time delay determination
 """"""""""""""""""""""""
 This is the core of the program, that actually does the delay determination.  It's currently divided into two parts -
@@ -365,6 +374,8 @@ step to find the time delay and strength of association between the two.
 
 Signal preparation
 ``````````````````
+Prior to processing, each timecourse is processed in the same way as the moving regressor (oversampling, filtering,
+detrending).  We also apply a window function
 
 Types of similarity function
 ````````````````````````````
