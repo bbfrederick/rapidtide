@@ -390,7 +390,9 @@ def test_io(debug=True, displayplots=False):
     othermotiondict = tide_io.readparfile(motionfilename)
     theinitmotiondict = tide_io.readmotion(motionfilename)
     theexpandedmotionregressors, thelabels = tide_fit.calcexpandedregressors(
-        theinitmotiondict, deriv=True
+        theinitmotiondict,
+        labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
+        deriv=True,
     )
     if debug:
         print(theexpandedmotionregressors.shape)
