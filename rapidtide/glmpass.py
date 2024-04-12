@@ -360,7 +360,6 @@ def confoundregress(
     showprogressbar=True,
     debug=False,
 ):
-
     if tcend == -1:
         theregressors = theregressors[:, tcstart:]
     else:

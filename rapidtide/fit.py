@@ -1681,7 +1681,10 @@ def mlregress(x, y, intercept=True):
 
     return np.atleast_1d(solution[0].T), R
 
-def calcexpandedregressors(confounddict, labels=None, start=0, end=-1, deriv=True, order=1, debug=False):
+
+def calcexpandedregressors(
+    confounddict, labels=None, start=0, end=-1, deriv=True, order=1, debug=False
+):
     r"""Calculates various motion related timecourses from motion data dict, and returns an array
 
     Parameters
@@ -1698,9 +1701,11 @@ def calcexpandedregressors(confounddict, labels=None, start=0, end=-1, deriv=Tru
     if labels is None:
         labels = list(confounddict.keys())
     if order > 1:
-        for theorder in range(1,order):
+        for theorder in range(1, order):
             for thelabel in labels:
-                confounddict[f"{thelabel}^{theorder+1}"] = (confounddict[thelabel])**(theorder + 1)
+                confounddict[f"{thelabel}^{theorder+1}"] = (confounddict[thelabel]) ** (
+                    theorder + 1
+                )
         labels = list(confounddict.keys())
         if debug:
             print(f"{labels=}")

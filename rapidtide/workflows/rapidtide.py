@@ -735,9 +735,9 @@ def rapidtide_main(argparsingfunc):
             deriv=optiondict["mot_deriv"],
             order=1,
         )
-        domotion=True
+        domotion = True
     else:
-        domotion=False
+        domotion = False
 
     if optiondict["confoundfilespec"] is not None:
         LGR.info("preparing confound regressors")
@@ -746,9 +746,9 @@ def rapidtide_main(argparsingfunc):
             deriv=optiondict["confound_deriv"],
             order=optiondict["confound_power"],
         )
-        doconfounds=True
+        doconfounds = True
     else:
-        doconfounds=False
+        doconfounds = False
 
     # now actually do the filtering
     if domotion or doconfounds:

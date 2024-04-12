@@ -905,7 +905,6 @@ def readmotion(filename):
     return motiondict
 
 
-
 def sliceinfo(slicetimes, tr):
     r"""Find out what slicetimes we have, their spacing, and which timepoint each slice occurs at.  This assumes
     uniform slice time spacing, but supports any slice acquisition order and multiband acquisitions.

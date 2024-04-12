@@ -20,8 +20,8 @@ import os
 
 import numpy as np
 
-import rapidtide.io as tide_io
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 

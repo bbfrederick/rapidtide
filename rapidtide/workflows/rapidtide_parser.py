@@ -388,9 +388,7 @@ def _get_parser():
         "--motderiv",
         dest="mot_deriv",
         action="store_false",
-        help=(
-            "Toggle whether derivatives will be used in motion regression.  Default is True."
-        ),
+        help=("Toggle whether derivatives will be used in motion regression.  Default is True."),
         default=True,
     )
     preproc.add_argument(
