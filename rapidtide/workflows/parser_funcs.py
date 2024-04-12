@@ -505,14 +505,6 @@ def addwindowopts(parser, windowtype=DEFAULT_WINDOWFUNC):
         default=windowtype,
     )
     wfunc.add_argument(
-        "--nowindow",
-        dest="windowfunc",
-        action="store_const",
-        const="None",
-        help="Disable precorrelation windowing.",
-        default=windowtype,
-    )
-    wfunc.add_argument(
         "--zeropadding",
         dest="zeropadding",
         action="store",
