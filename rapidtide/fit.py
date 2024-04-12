@@ -21,6 +21,7 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
+import tqdm
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -1699,19 +1700,24 @@ def calcexpandedregressors(
 
     """
     if labels is None:
-        labels = list(confounddict.keys())
+        localconfounddict = confounddict.copy()
+        labels = list(localconfounddict.keys())
+    else:
+        localconfounddict = {}
+        for label in labels:
+            localconfounddict[label] = confounddict[label]
     if order > 1:
         for theorder in range(1, order):
             for thelabel in labels:
-                confounddict[f"{thelabel}^{theorder+1}"] = (confounddict[thelabel]) ** (
+                localconfounddict[f"{thelabel}^{theorder+1}"] = (localconfounddict[thelabel]) ** (
                     theorder + 1
                 )
-        labels = list(confounddict.keys())
+        labels = list(localconfounddict.keys())
         if debug:
             print(f"{labels=}")
 
     numkeys = len(labels)
-    numpoints = len(confounddict[labels[0]])
+    numpoints = len(localconfounddict[labels[0]])
     if end == -1:
         end = numpoints - 1
     if (0 <= start <= numpoints - 1) and (start < end + 1):
@@ -1728,13 +1734,13 @@ def calcexpandedregressors(
     activecolumn = 0
     outlabels = []
     for thelabel in labels:
-        outputregressors[activecolumn, :] = confounddict[thelabel][start : end + 1]
+        outputregressors[activecolumn, :] = localconfounddict[thelabel][start : end + 1]
         outlabels.append(thelabel)
         activecolumn += 1
     if deriv:
         for thelabel in labels:
             outputregressors[activecolumn, :] = np.gradient(
-                confounddict[thelabel][start : end + 1]
+                localconfounddict[thelabel][start : end + 1]
             )
             outlabels.append(thelabel + "_deriv")
             activecolumn += 1
@@ -1934,7 +1940,7 @@ def confoundglm(
         disable=(not showprogressbar),
     ):
         datatoremove *= 0.0
-        thefit, R = tide_fit.mlregress(regressors, data[i, :])
+        thefit, R = mlregress(regressors, data[i, :])
         if i == 0 and debug:
             print("fit shape:", thefit.shape)
         for j in range(regressors.shape[0]):
