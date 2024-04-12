@@ -220,7 +220,7 @@ def addtagopts(
         "--infotag",
         action="append",
         nargs=2,
-        metavar=("tagname", "tagvalue"),
+        metavar=("tagkey", "tagvalue"),
         help=helptext,
         default=None,
     )
