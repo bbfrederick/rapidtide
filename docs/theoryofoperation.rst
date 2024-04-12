@@ -471,7 +471,28 @@ by ``--maxpasses MAX`` (default is 15).
 Regress Out the Moving Signal
 """""""""""""""""""""""""""""
 Now that we have optimized the moving blood signal and have final estimates of blood arrival time at each voxel,
-we can do the final regression to remove the
+we can do the final regression to (intelligently) remove the sLFO signal from the data.  By default, this is done on
+the original, unmodified data - i.e. none of the spatial or temporal filtering, masking, confound regression,
+or anything else has been done.  The reason for this is that some of the operations may be needed to get a good
+sLFO regressor estimate, or a good delay map, but they could interfere with whatever further analysis you might
+want to do after sLFO removal.  You can always do them later if you want.  Also, if you really want to keep all those
+manipulations, you can choose to by selecting ``--preservefiltering``.  But don't.
+
+Alternately, instead of loading the original file, you can load a _different_ file, and denoise that instead.  Why
+would you want to do that?  This is here for a very particular reason.  HCP data uses FIX, a really spiffy ICA noise
+removal tool that cleans things up quite a bit.  However, as mentioned above in the rapidtide usage section,
+it does tend to remove a lot of hemodynamic signal in some regions, particularly around the superior sagittal sinus.
+That makes rapidtide's sLFO estimation and refinement process a lot less stable.  So you really want to do that
+estimation on non-FIX'ed data (the "minimally processed" data).  Ideally, you would then run FIX on the rapidtide
+cleaned data, but that's a lot of computation that you don't necessarily want to do.  So a cheat is to regress the
+voxel specific noise regressors out of the FIX cleaned data.  Since the operations are linear, the order shouldn't
+matter (waves hands to distract from the fact that FIX has probably generated some spurious negative correlations
+by regressing out hemodynamic signal at the wrong time delay).  Anyway, while it's not perfect, it's better than not
+doing it this way.
+
+Finally, if you don't want to do glm filtering at all (i.e. you only care about time delays,
+and want to minimize storage space),
+you can shut off the glm filtering with ``--noglm``.
 
 
 References
