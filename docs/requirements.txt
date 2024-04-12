@@ -46,7 +46,7 @@ flake8-black==0.3.6
     # via rapidtide (setup.py)
 fonttools==4.43.0
     # via matplotlib
-idna==3.4
+idna==3.7
     # via requests
 imageio==2.31.1
     # via scikit-image
