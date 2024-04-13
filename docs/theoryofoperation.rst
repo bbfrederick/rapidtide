@@ -365,6 +365,19 @@ are the only operations that require us to know the spatial relationship between
 
 Significance threshold estimation
 """""""""""""""""""""""""""""""""
+This step is placed where it is done in the processing stream, but involves procedures described below.
+Estimating the significance threshold for the correlation measurements done below is not straightforward.
+While there is a standard relationship to convert correlation coefficient R to p for a given
+timecourse length, this assumes
+that you are correlating truly random signals (i.e. Gaussian random signals with white noise power
+spectra).  But the sLFO signals are severely band limited, so if you use these formulae, you will
+dramatically overestimate the significance of your
+correlations.  There are analytic ways of adjusting for this, but they are tedious - Monte Carlo
+simulation by performing a set of correlations of the sLFO regressor with scrambled, filtered
+versions of itself are more straightforward (this is described in [Hocke2016]_).  Prior to
+each pass, we do NREPS sham correlations (NREPS=10000 by default - adjust with ``--numnull NREPS``.  Set to 0 to disable
+significance estimation).  The p<0.05, p<0.01, and p<0.005 significance thresholds are estimated
+by fitting the distribution of null correlations to a Johnson distribution).
 
 Time delay determination
 """"""""""""""""""""""""
@@ -433,7 +446,9 @@ First we pick the voxels we want to use to generate the new estimate.  We can se
 the ``--refineinclude MASKFILE:VALSPEC`` and ``--refineexclude MASKFILE:VALSPEC`` command line options.  If left unset,
 we use all voxels with valid correlation fits.  We can further
 tune which voxels are excluded from refinement with the ``--norefinedespeckled``, ``--lagminthresh``,
-``--lagmaxthresh``, ``--ampthresh``, and ``--sigmathresh`` options.
+``--lagmaxthresh``, and ``--sigmathresh`` options.  By default, we also exclude voxels with correlation strengths
+less than the p<0.05 threshold found using the significance threshold estimation step above, or
+we can override this threshold using ``--ampthresh``.
 
 Timecourse alignment
 ````````````````````
@@ -509,3 +524,11 @@ References
    resting state fMRI-BOLD signals for blood arrival time enhances
    functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
    \| http://dx.doi.org/10.3389/fnhum.2016.00311
+
+.. [Hocke2016] Hocke LM, Tong Y, Lindsey KP, Frederick BB (2016). Comparison of
+   peripheral near-infrared spectroscopy low-frequency oscillations to
+   other denoising methods in resting state functional MRI with
+   ultrahigh temporal resolution. Magnetic resonance in medicine :
+   official journal of the Society of Magnetic Resonance in Medicine /
+   Society of Magnetic Resonance in Medicine. 2016.
+   \| http://dx.doi.org/10.1002/mrm.26038. PubMed PMID: 26854203.
