@@ -444,9 +444,9 @@ alignment.
 
 Prescaling
 ``````````
-We then weight the voxels to use in the fit by first prenormalizing them using their mean, variance, or standard deviation over time,
+We then prenormalize the voxels to use in the fit using their mean, variance, or standard deviation over time,
 the inverse of the lag time,
-or leave them unweighted.  Selection is via the ``--refineprenorm`` option.  The default is to do no prenormalization.
+or leave them unscaled.  Selection is via the ``--refineprenorm`` option.  The default is to do no prenormalization.
 
 New timecourse generation
 `````````````````````````
