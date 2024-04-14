@@ -366,18 +366,23 @@ are the only operations that require us to know the spatial relationship between
 Significance threshold estimation
 """""""""""""""""""""""""""""""""
 This step is placed where it is done in the processing stream, but involves procedures described below.
-Estimating the significance threshold for the correlation measurements done below is not straightforward.
-While there is a standard relationship to convert correlation coefficient R to p for a given
-timecourse length, this assumes
-that you are correlating truly random signals (i.e. Gaussian random signals with white noise power
+
+Estimating the significance threshold for the fitted crosscorrelation measurements done below is not
+straightforward.  While there is a standard relationship to convert correlation coefficient R to p for
+a given timecourse length, this assumes that you performing a Pearsonn correlation of truly
+random signals (i.e. Gaussian random signals with white noise power
 spectra).  But the sLFO signals are severely band limited, so if you use these formulae, you will
 dramatically overestimate the significance of your
-correlations.  There are analytic ways of adjusting for this, but they are tedious - Monte Carlo
-simulation by performing a set of correlations of the sLFO regressor with scrambled, filtered
-versions of itself are more straightforward (this is described in [Hocke2016]_).  Prior to
-each pass, we do NREPS sham correlations (NREPS=10000 by default - adjust with ``--numnull NREPS``.  Set to 0 to disable
+correlations.  Moreover, we are selecting the peak of a crosscorrelation over a range of delays,
+which will further inflate the values.
+There are analytical ways of adjusting for this, but they are tedious - Monte Carlo
+simulation by performing and fitting a set of crosscorrelations of the sLFO regressor with
+scrambled, filtered versions of itself are more straightforward (this is described
+in [Hocke2016]_).  Prior to each pass, we do NREPS of these sham correlations (NREPS=10000 by
+default - adjust with ``--numnull NREPS``.  Set to 0 to disable
 significance estimation).  The p<0.05, p<0.01, and p<0.005 significance thresholds are estimated
-by fitting the distribution of null correlations to a Johnson distribution).
+by fitting the set of null correlations to a Johnson SB distribution (the functional form which
+we empirically found best fits the data).
 
 Time delay determination
 """"""""""""""""""""""""
