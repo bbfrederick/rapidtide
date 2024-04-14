@@ -29,6 +29,7 @@ with warnings.catch_warnings():
 
 import scipy as sp
 import scipy.special as sps
+from scipy.optimize import curve_fit
 from scipy.signal import find_peaks, hilbert
 from scipy.stats import entropy, moment
 from statsmodels.robust import mad
@@ -1572,6 +1573,16 @@ def gaussfitsk(height, loc, width, skewness, xvals, yvals):
         maxfev=5000,
     )
     return plsq
+
+
+# found this sinc fitting routine (and optimization) here:
+# https://stackoverflow.com/questions/49676116/why-cant-scipy-optimize-curve-fit-fit-my-data-using-a-numpy-sinc-function
+def sincfit(height, loc, width, xvals, yvals):
+    def func(x, a, h, k):
+        return a * np.sinc(x - h) + k
+
+    popt, pcov = curve_fit(func, xvals, yvals, p0=[height, loc, width])
+    return popt, pcov
 
 
 def gaussfit(height, loc, width, xvals, yvals):
