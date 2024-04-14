@@ -387,13 +387,15 @@ we empirically found best fits the data).
 Time delay determination
 """"""""""""""""""""""""
 This is the core of the program, that actually does the delay determination.  It's currently divided into two parts -
-calculation of a time dependant similarity function between the sLFO regressor and each voxel, and then a fitting
-step to find the time delay and strength of association between the two.
+calculation of a time dependant similarity function between the sLFO regressor and each voxel (currently
+using one of three methods), and then a fitting
+step to find the peak time delay and strength of association between the two signals.
 
 Signal preparation
 ``````````````````
 Prior to processing, each timecourse is processed in the same way as the moving regressor (oversampling, filtering,
-detrending).  We also apply a window function
+detrending, applying the same window function used on the reference regressor, and zeropadding the ends.
+
 
 Types of similarity function
 ````````````````````````````
@@ -404,11 +406,9 @@ extremely fast to calculate in the spectral domain (O(2Nlog2N) rather than O(N2)
 typical fMRI scans, calculation in the spectral domain is substantially faster than in the time domain.
 However, it does have drawbacks.  First, it
 assumes the relationship between the signals is linear.  In practice, this is generally ok for our purposes, but is
-not ideal.  More problematic is unpredicatible performance when the SNR is low (as it is in voxels with lower
+not ideal.  More problematic is unpredictable behavior when the SNR is low (as it is in voxels with lower
 blood content, such as white matter), which can make the signal harder to
-quantify.  Correlation peaks can be very broad due to low pass filtering, autocorrelation and window function choices,
-and baseline roll can lead to incorrect peak identification.  This
-makes the peak fitting process complicated.  Use ``--similaritymetric correlation`` to select crosscorrelation (default).
+quantify (more below).  Use ``--similaritymetric correlation`` to select crosscorrelation (default).
 
 **Mutual information:**  Mutual information (MI) is a very different method of quantifying similarity.  It is a measure of
 the amount of information you can gain about one signal from the other (yes, I know the definition is about "random
@@ -438,7 +438,29 @@ straight correlation, but does tend to be more stable. Use ``--similaritymetric 
 
 Peak fitting and quantification
 ```````````````````````````````
+The second part of this process is peak fitting and quantification.  For most of this discussion,
+I'll refer to crosscorrelation, since its what I usually use.
 
+To first approximation, fitting isn't necessary.  The crosscorrelation function will always have a
+maximum somewhere, and if you've chosen your search range to cover the range of time lags that
+blood will have, it will fall within that range.  However, that's not a great way to do things.
+If you do this, your delay values will be quantized, either to TR, or in our case, TR divided by the
+oversampling factor (which is why we oversampled to begin with).  The delay range in healthy young
+adults runs from about -2 to +4 seconds, and is strongly peaked near 0.  Using our default
+oversampling, which makes the effective TR 0.5 seconds, that gives you at most 13 possible
+delay values, with most of them in a more restricted range of 5 or so values.  While somewhat
+useful, this is throwing away a lot of information unnecessarily.
+
+Remember that the sLFO signal is bandlimited to 0.009 to 0.15Hz, which means the highest
+frequency component in the data has a period of about 6.67 seconds.  So at a minimum, the
+correlation peak will be several seconds across, so in addition to the peak location, there will
+be several points on either side that carry information about the peak location, height, and
+width.  If you fit the points around the peak, you'll get a much better estimate of the true
+delay and correlation value.
+
+Correlation peaks can be very broad due to low pass filtering, autocorrelation and window function choices,
+and baseline roll can lead to incorrect peak identification.  This
+makes the peak fitting process complicated.
 
 Generating a better moving signal estimate (refinement)
 """""""""""""""""""""""""""""""""""""""""""""""""""""""
