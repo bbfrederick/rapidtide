@@ -394,7 +394,7 @@ step to find the peak time delay and strength of association between the two sig
 Signal preparation
 ``````````````````
 Prior to processing, each timecourse is processed in the same way as the moving regressor (oversampling, filtering,
-detrending, applying the same window function used on the reference regressor, and zeropadding the ends.
+detrending, applying the same window function used on the reference regressor, and zeropadding the ends.)
 
 
 Types of similarity function
@@ -455,12 +455,20 @@ Remember that the sLFO signal is bandlimited to 0.009 to 0.15Hz, which means the
 frequency component in the data has a period of about 6.67 seconds.  So at a minimum, the
 correlation peak will be several seconds across, so in addition to the peak location, there will
 be several points on either side that carry information about the peak location, height, and
-width.  If you fit the points around the peak, you'll get a much better estimate of the true
+width.  If you fit all the points around the peak, you'll get a much better estimate of the true
 delay and correlation value.
 
-Correlation peaks can be very broad due to low pass filtering, autocorrelation and window function choices,
+Correlation peaks can be a little messy; low pass filtering, weird autocorrelation properties due to
+nonuniform power spectra, window function choices,
 and baseline roll can lead to incorrect peak identification.  This
 makes the peak fitting process complicated.
+
+Despeckling
+```````````
+As mentioned above, your correlation function may be pseudoperiodic due to an unfortunate
+power spectrum.  At this point, the delay maps are subjected to a multipass despeckling operation,
+where voxels that look like they may have had incorrect fits are refit to be more consistent with
+their neighbors.
 
 Generating a better moving signal estimate (refinement)
 """""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -496,7 +504,7 @@ The new timecourse is then generated from the set of aligned, scaled timecourses
 
     **pca (default):** Perform a principal component analysis on the timecourses, reprojecting them onto a reduced set of components (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).  Average the result.
 
-    **(ica:** Perform an independent component analysis on the timecourses, reprojecting them onto a reduced set of components (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).  Average the result.
+    **ica:** Perform an independent component analysis on the timecourses, reprojecting them onto a reduced set of components (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).  Average the result.
 
     **weighted_average:** Each voxel is scaled with either the correlation strength from the current pass, the square of the correlation strength, or is left unscaled.  This is selected with the ``--refineweighting`` option - the default is "R2".  The timecourses are then averaged.
 
