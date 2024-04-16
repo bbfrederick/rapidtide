@@ -1012,6 +1012,51 @@ def _get_parser():
         default=DEFAULT_MAXPASSES,
     )
 
+    # GLM noise removal options
+    glm = parser.add_argument_group("GLM noise removal options")
+    glm.add_argument(
+        "--noglm",
+        dest="doglmfilt",
+        action="store_false",
+        help=(
+            "Turn off GLM filtering to remove delayed "
+            "regressor from each voxel (disables output of "
+            "fitNorm)."
+        ),
+        default=True,
+    )
+    glm.add_argument(
+        "--glmsourcefile",
+        dest="glmsourcefile",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="FILE",
+        help=(
+            "Regress delayed regressors out of FILE instead "
+            "of the initial fmri file used to estimate "
+            "delays."
+        ),
+        default=None,
+    )
+    glm.add_argument(
+        "--preservefiltering",
+        dest="preservefiltering",
+        action="store_true",
+        help="Don't reread data prior to performing GLM.",
+        default=False,
+    )
+    glm.add_argument(
+        "--glmderivs",
+        dest="glmderivs",
+        action="store",
+        type=int,
+        metavar="NDERIVS",
+        help=(
+            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
+        ),
+        default=DEFAULT_GLMDERIVS,
+    )
+
     # Output options
     output = parser.add_argument_group("Output options")
     output.add_argument(
@@ -1036,37 +1081,6 @@ def _get_parser():
         metavar="HISTLEN",
         help=(f"Change the histogram length to HISTLEN.  Default is {DEFAULT_HISTLEN}."),
         default=DEFAULT_HISTLEN,
-    )
-    output.add_argument(
-        "--glmsourcefile",
-        dest="glmsourcefile",
-        action="store",
-        type=lambda x: pf.is_valid_file(parser, x),
-        metavar="FILE",
-        help=(
-            "Regress delayed regressors out of FILE instead "
-            "of the initial fmri file used to estimate "
-            "delays."
-        ),
-        default=None,
-    )
-    output.add_argument(
-        "--noglm",
-        dest="doglmfilt",
-        action="store_false",
-        help=(
-            "Turn off GLM filtering to remove delayed "
-            "regressor from each voxel (disables output of "
-            "fitNorm)."
-        ),
-        default=True,
-    )
-    output.add_argument(
-        "--preservefiltering",
-        dest="preservefiltering",
-        action="store_true",
-        help="Don't reread data prior to performing GLM.",
-        default=False,
     )
     output.add_argument(
         "--saveintermediatemaps",
@@ -1246,17 +1260,6 @@ def _get_parser():
             "of EPSILON in any dimension.  By default, this is set to 0.0, requiring an exact match. "
         ),
         default=0.0,
-    )
-    experimental.add_argument(
-        "--glmderivs",
-        dest="glmderivs",
-        action="store",
-        type=int,
-        metavar="NDERIVS",
-        help=(
-            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
-        ),
-        default=DEFAULT_GLMDERIVS,
     )
     experimental.add_argument(
         "--echocancel",
