@@ -509,11 +509,10 @@ workflows:
       - build_docs:
           requires:
             - build_py311
-      # Can't use python 3.12 because there are no valid versions of pyfftw or tensorflow (1/12/24)
-      #- build_py312
-      #- test_py312:
-      #    requires:
-      #      - build_py312
+      - build_py312
+      - test_py312:
+          requires:
+            - build_py312
       #- style_check:
       #    requires:
       #      - build_py311
