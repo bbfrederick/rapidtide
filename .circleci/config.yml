@@ -166,7 +166,6 @@ jobs:
                 pip install --upgrade distlib
                 pip install -e .[tests,doc]
             fi
-            the next line doesn't work because pyfftw and tensorflow don't seem to be compatible
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
           key: deps2-312-{{ checksum "setup.py" }}
