@@ -392,13 +392,16 @@ def ppnormalize(vector):
         return demeaned
 
 
-def imagevariance(thedata, thefilter, samplefreq, debug=False):
+def imagevariance(thedata, thefilter, samplefreq, meannorm=True, debug=False):
     if debug:
         print(f"IMAGEVARIANCE: {thedata.shape}, {thefilter}, {samplefreq}")
     filteredim = thedata * 0.0
     for thevoxel in range(thedata.shape[0]):
         filteredim[thevoxel, :] = thefilter.apply(samplefreq, thedata[thevoxel, :])
-    return np.var(filteredim, axis=1)
+    if meannorm:
+        return np.nan_to_num(np.var(filteredim, axis=1) / np.mean(thedata, axis=1))
+    else:
+        return np.var(filteredim, axis=1)
 
 
 @conditionaljit()

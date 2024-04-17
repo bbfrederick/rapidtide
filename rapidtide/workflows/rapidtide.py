@@ -711,7 +711,7 @@ def rapidtide_main(argparsingfunc):
 
     tide_util.logmem("after selecting valid voxels")
 
-    # calculate the initial bandlimited variance if we're going to filter the data
+    # calculate the initial bandlimited mean normalized variance if we're going to filter the data
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
@@ -3069,11 +3069,11 @@ def rapidtide_main(argparsingfunc):
             append=False,
         )
 
-        # calculate the final bandlimited variance
+        # calculate the final bandlimited mean normalized variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
         divlocs = np.where(finalvariance > 0.0)
         varchange = initialvariance * 0.0
-        varchange[divlocs] = finalvariance[divlocs] / initialvariance[divlocs] - 1.0
+        varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
         del fmri_data_valid
 
         LGR.info("End filtering operation")
