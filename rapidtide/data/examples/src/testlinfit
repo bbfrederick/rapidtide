@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 fname = "testdata.txt"
-theinputdata = np.loadtxt(fname, dtype='float')
+theinputdata = np.loadtxt(fname, dtype="float")
 
 xvals = theinputdata[:, 0]
 yvals = theinputdata[:, 1]
@@ -18,4 +18,3 @@ print(f"{fitslope=}, {fitintercept=}")
 
 for i in range(len(xvals)):
     print(xvals[i], yvals[i], xvals[i] * fitslope + fitintercept)
-
