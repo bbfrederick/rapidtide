@@ -17,18 +17,27 @@
 #
 #
 import argparse
-import copy
-import sys
+import warnings
 
 import numpy as np
-import pyfftw
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
+
+from scipy import fftpack
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
-import rapidtide.workflows.parser_funcs as pf
 
-fftpack = pyfftw.interfaces.scipy_fftpack
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 
 
 def _get_parser():

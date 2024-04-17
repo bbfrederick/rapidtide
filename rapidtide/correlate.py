@@ -25,12 +25,17 @@ import numpy as np
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import pyfftw
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
 
-import pyfftw.interfaces.scipy_fftpack as fftpack
+
 import scipy as sp
 from numpy.fft import irfftn, rfftn
-from scipy import signal
+from scipy import fftpack, signal
 from sklearn.metrics import mutual_info_score
 
 import rapidtide.correlate as tide_corr
@@ -40,7 +45,9 @@ import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 LGR = logging.getLogger("GENERAL")
 
 # ---------------------------------------- Global constants -------------------------------------------

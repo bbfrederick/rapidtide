@@ -24,7 +24,12 @@ import numpy as np
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import pyfftw
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
 
 import pylab as pl
 import scipy as sp
@@ -34,8 +39,10 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.util as tide_util
 
-fftpack = pyfftw.interfaces.scipy_fftpack
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
+
 
 # this is here until numpy deals with their fft issue
 import warnings

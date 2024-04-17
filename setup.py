@@ -242,7 +242,6 @@ setup(
         "nibabel",
         "nilearn",
         "matplotlib",
-        "pyfftw",
         "pyqtgraph",
         "pyqt",
         "pyqt5-sip",

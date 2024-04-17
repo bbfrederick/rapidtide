@@ -21,23 +21,15 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tqdm
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import pyfftw
-
 import scipy as sp
 import scipy.special as sps
+import tqdm
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks, hilbert
 from scipy.stats import entropy, moment
 from statsmodels.robust import mad
 
 import rapidtide.util as tide_util
-
-fftpack = pyfftw.interfaces.scipy_fftpack
-pyfftw.interfaces.cache.enable()
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6

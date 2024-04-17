@@ -19,13 +19,24 @@
 import argparse
 import copy
 import sys
+import warnings
 
 import numpy as np
-import pyfftw
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
+from scipy import fftpack
 from sklearn.decomposition import PCA, FastICA
 
-fftpack = pyfftw.interfaces.scipy_fftpack
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 
 
 import rapidtide.filter as tide_filt
