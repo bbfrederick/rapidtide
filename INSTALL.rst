@@ -19,7 +19,6 @@ installed first:
 -  nibabel
 -  nilearn
 -  matplotlib
--  pyfftw
 -  pyqt5-sip
 -  pyqtgraph
 -  statsmodels
@@ -31,6 +30,7 @@ Optional dependencies
 The following optional dependencies will be used if present:
 
 -  numba (for faster performance)
+-  pyfftw (faster performance)
 -  mkl and mkl-service (faster performance on intel CPUs)
 
 If you want to use the deep learning filter in happy, you’ll need Keras
