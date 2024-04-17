@@ -59,6 +59,13 @@ except ImportError:
 else:
     donotusenumba = False
 
+try:
+    import pyfftw
+except ImportError:
+    pyfftwpresent = False
+else:
+    pyfftwpresent = True
+
 # hard disable numba, since it is currently broken on arm
 donotusenumba = True
 
@@ -69,6 +76,12 @@ def checkimports(optiondict):
     else:
         print("memprofiler does not exist")
     optiondict["memprofilerexists"] = memprofilerexists
+
+    if pyfftwpresent:
+        print("pfftw exists")
+    else:
+        print("pfftw does not exist")
+    optiondict["pfftwexists"] = pyfftwpresent
 
     if donotbeaggressive:
         print("no aggressive optimization")
