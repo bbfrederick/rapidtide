@@ -3586,9 +3586,6 @@ def rapidtide_main(argparsingfunc):
         ]
     )
 
-    # record optional imports
-    tide_util.checkimports(optiondict)
-
     optiondict["platform_information"] = nodeline
     tide_util.logmem("status")
 
