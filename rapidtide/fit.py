@@ -1722,6 +1722,38 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
     return [max_peaks, min_peaks]
 
 
+def ocscreetest(eigenvals, debug=False):
+    num = len(eigenvals)
+    a = eigenvals * 0.0
+    b = eigenvals * 0.0
+    prediction = eigenvals * 0.0
+    for i in range(num - 2, 1, -1):
+        a[i] = eigenvals[i + 1] - b[i + 1]
+        b[i] = (eigenvals[-1] - eigenvals[i + 1]) / (num - 1 - i - 1)
+        if debug:
+            print(f"{i=}, {a[i]=}, {b[i]=}")
+    retained = eigenvals[np.where(eigenvals > 1.0)]
+    retainednum = len(retained)
+    for i in range(1, retainednum):
+        prediction[i] = a[i + 1] + b[i + 1] * i
+        if debug:
+            print(f"{i=}, {eigenvals[i]=}, {prediction[i]=}")
+        if eigenvals[i] < retained[i]:
+            return i
+    return retainednum
+
+
+def afscreetest(eigenvals, debug=False):
+    num = len(eigenvals)
+    secondderiv = eigenvals * 0.0
+    for i in range(1, num - 1):
+        secondderiv[i] = eigenvals[i + 1] - 2.0 * eigenvals[i] - eigenvals[i - 1]
+        if debug:
+            print(f"{i=}, {secondderiv[i]=}")
+    maxaccloc = np.argmax(secondderiv)
+    return maxaccloc - 1
+
+
 def phaseanalysis(firstharmonic, displayplots=False):
     print("entering phaseanalysis")
     analytic_signal = hilbert(firstharmonic)
