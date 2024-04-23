@@ -4,20 +4,20 @@ rapidtide \
     --nprocs -1 \
     --denoising \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_0derivs
+    ../dst/sub-RAPIDTIDETEST_0derivs_nopyfftw
 rapidtide \
     --nprocs -1 \
     --denoising \
     --glmderivs 1 \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_1derivs
+    ../dst/sub-RAPIDTIDETEST_1derivs_nopyfftw
 
 rapidtide \
     --nprocs -1 \
     --denoising \
     --glmderivs 2 \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_2derivs
+    ../dst/sub-RAPIDTIDETEST_2derivs_nopyfftw
 
 
 #rapidtide \
