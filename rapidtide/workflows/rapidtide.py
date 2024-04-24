@@ -32,6 +32,7 @@ from nilearn import masking
 from scipy import ndimage
 from scipy.stats import rankdata
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 import rapidtide.calccoherence as tide_calccoherence
@@ -151,11 +152,13 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
                     globalmean += indata[vox, :] / themean[vox] - 1.0
     elif optiondict["globalsignalmethod"] == "pca":
         try:
-            thefit = PCA(n_components=pcacomponents).fit(selectedvoxels)
+            thefit = PCA(n_components=pcacomponents).fit(
+                StandardScaler.fit_transform(selectedvoxels)
+            )
         except ValueError:
             if pcacomponents == "mle":
                 LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
-                thefit = PCA(n_components=0.8).fit(selectedvoxels)
+                thefit = PCA(n_components=0.8).fit(StandardScaler.fit_transform(selectedvoxels))
             else:
                 raise ValueError("unhandled math exception in PCA refinement - exiting")
 
@@ -2529,27 +2532,6 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
             )
-            """theheader = copy.deepcopy(nim_hdr)
-            outfmriarray[validvoxels, :] = shiftedtcs[:, :]
-            savename = f"{outputname}_desc-alignvoxels_bold"
-            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-            outfmriarray[validvoxels, :] = weights[:, :]
-            savename = f"{outputname}_desc-alignweights_bold"
-            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-            thepaddedheader = copy.deepcopy(nim_hdr)
-            thepaddedheader["dim"][4] = theheader["dim"][4] + 2 * numpadtrs
-            paddedoutfmriarray[validvoxels, :] = paddedshiftedtcs[:, :]
-            savename = f"{outputname}_desc-paddedalignvoxels_bold"
-            tide_io.savetonifti(
-                paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
-            )
-            paddedoutfmriarray[validvoxels, :] = paddedweights[:, :]
-            savename = f"{outputname}_desc-paddedalignweights_bold"
-            tide_io.savetonifti(
-                paddedoutfmriarray.reshape(nativepaddedfmrishape), thepaddedheader, savename
-            )
-            if optiondict["psdfilter"]:
-                outputdata = tide_filt.transferfuncfilt(outputdata, psdsnrfilterfunc)"""
 
             optiondict["refinemasksize_pass" + str(thepass)] = voxelsprocessed_rr
             optiondict["refinemaskpct_pass" + str(thepass)] = (
