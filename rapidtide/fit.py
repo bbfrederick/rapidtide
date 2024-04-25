@@ -1722,7 +1722,7 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
     return [max_peaks, min_peaks]
 
 
-def ocscreetest(eigenvals, debug=False):
+def ocscreetest(eigenvals, debug=False, displayplots=False):
     num = len(eigenvals)
     a = eigenvals * 0.0
     b = eigenvals * 0.0
@@ -1739,18 +1739,44 @@ def ocscreetest(eigenvals, debug=False):
         if debug:
             print(f"{i=}, {eigenvals[i]=}, {prediction[i]=}")
         if eigenvals[i] < retained[i]:
-            return i
-    return retainednum
+            break
+    if displayplots:
+        print("making plots")
+        fig = plt.figure()
+        ax1 = fig.add_subplot(411)
+        ax1.set_title("Original")
+        plt.plot(eigenvals, color="k")
+        ax2 = fig.add_subplot(412)
+        ax2.set_title("a")
+        plt.plot(a, color="g")
+        ax3 = fig.add_subplot(413)
+        ax3.set_title("b")
+        plt.plot(b, color="r")
+        ax4 = fig.add_subplot(414)
+        ax4.set_title("prediction")
+        plt.plot(prediction, color="b")
+        plt.show()
+    return i
 
 
-def afscreetest(eigenvals, debug=False):
+def afscreetest(eigenvals, displayplots=False):
     num = len(eigenvals)
-    secondderiv = eigenvals * 0.0
-    for i in range(1, num - 1):
-        secondderiv[i] = eigenvals[i + 1] - 2.0 * eigenvals[i] - eigenvals[i - 1]
-        if debug:
-            print(f"{i=}, {secondderiv[i]=}")
+    firstderiv = np.gradient(eigenvals, edge_order=2)
+    secondderiv = np.gradient(firstderiv, edge_order=2)
     maxaccloc = np.argmax(secondderiv)
+    if displayplots:
+        print("making plots")
+        fig = plt.figure()
+        ax1 = fig.add_subplot(311)
+        ax1.set_title("Original")
+        plt.plot(eigenvals, color="k")
+        ax2 = fig.add_subplot(312)
+        ax2.set_title("First derivative")
+        plt.plot(firstderiv, color="r")
+        ax3 = fig.add_subplot(313)
+        ax3.set_title("Second derivative")
+        plt.plot(secondderiv, color="g")
+        plt.show()
     return maxaccloc - 1
 
 
