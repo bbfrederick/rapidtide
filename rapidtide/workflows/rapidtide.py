@@ -153,12 +153,12 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
     elif optiondict["globalsignalmethod"] == "pca":
         try:
             thefit = PCA(n_components=pcacomponents).fit(
-                StandardScaler.fit_transform(selectedvoxels)
+                StandardScaler().fit_transform(selectedvoxels)
             )
         except ValueError:
             if pcacomponents == "mle":
                 LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
-                thefit = PCA(n_components=0.8).fit(StandardScaler.fit_transform(selectedvoxels))
+                thefit = PCA(n_components=0.8).fit(StandardScaler().fit_transform(selectedvoxels))
             else:
                 raise ValueError("unhandled math exception in PCA refinement - exiting")
 
