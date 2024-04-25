@@ -37,6 +37,7 @@ from scipy import fftpack, signal
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 
 if pyfftwpresent:
@@ -275,6 +276,8 @@ class FastResampler:
         debug=False,
         method="univariate",
     ):
+        self.timeaxis = timeaxis
+        self.timecourse = timecourse
         self.upsampleratio = upsampleratio
         self.padtime = padtime
         self.initstep = timeaxis[1] - timeaxis[0]
@@ -327,6 +330,16 @@ class FastResampler:
             pl.legend(("input", "hires"))
             pl.show()
 
+    def save(self, outputname):
+        tide_io.writebidstsv(
+            outputname,
+            self.timecourse,
+            1.0 / self.initstep,
+            starttime=self.initstart,
+            columns=["timecourse"],
+            append=False,
+        )
+
     def yfromx(self, newtimeaxis, doplot=False, debug=False):
         if debug:
             print("FastResampler: yfromx called with following parameters")
@@ -357,6 +370,29 @@ class FastResampler:
             pl.legend(("hires", "output"))
             pl.show()
         return out_y
+
+
+def FastResamplerFromFile(inputname, colspec=None, debug=False, **kwargs):
+    (
+        insamplerate,
+        instarttime,
+        incolumns,
+        indata,
+        incompressed,
+        incolsource,
+    ) = tide_io.readbidstsv(inputname, colspec=colspec, debug=debug)
+    if len(incolumns) > 1:
+        raise ValueError("Multiple columns in input file")
+    intimecourse = indata[0, :]
+    intimeaxis = np.linspace(
+        instarttime,
+        instarttime + len(intimecourse) / insamplerate,
+        len(intimecourse),
+        endpoint=False,
+    )
+    if debug:
+        print(f"FastResamplerFromFile: {len(intimeaxis)=}, {intimecourse.shape=}")
+    return FastResampler(intimeaxis, intimecourse, **kwargs)
 
 
 def doresample(

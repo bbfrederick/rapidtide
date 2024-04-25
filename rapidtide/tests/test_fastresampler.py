@@ -20,7 +20,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rapidtide.resample import FastResampler
+from rapidtide.resample import FastResampler, FastResamplerFromFile
 from rapidtide.tests.utils import mse
 
 
@@ -40,6 +40,16 @@ def test_FastResampler(debug=False):
 
     # generate the fast resampled regressor
     genlaggedtc = FastResampler(timeaxis, timecoursein, padtime=padtime)
+    if debug:
+        print(f"{genlaggedtc.initstart=}, {genlaggedtc.initend=}, {genlaggedtc.initstep=}")
+        print(f"{genlaggedtc.hiresstart=}, {genlaggedtc.hiresend=}, {genlaggedtc.hiresstep=}")
+
+    # save and reload with another name
+    genlaggedtc.save("savedresampler")
+    genlaggedtc2 = FastResamplerFromFile("savedresampler", padtime=padtime, debug=debug)
+    if debug:
+        print(f"{genlaggedtc2.initstart=}, {genlaggedtc2.initend=}, {genlaggedtc2.initstep=}")
+        print(f"{genlaggedtc2.hiresstart=}, {genlaggedtc2.hiresend=}, {genlaggedtc2.hiresstep=}")
 
     if debug:
         plt.figure()
@@ -54,11 +64,19 @@ def test_FastResampler(debug=False):
 
         # generate the fast resampled regressor
         tcshifted = genlaggedtc.yfromx(timeaxis - shiftdist, debug=debug)
+        tcshifted2 = genlaggedtc2.yfromx(timeaxis - shiftdist, debug=debug)
 
         # print out all elements
         if debug:
             for i in range(0, len(tcrolled)):
-                print(i, tcrolled[i], tcshifted[i], tcshifted[i] - tcrolled[i])
+                print(
+                    i,
+                    tcrolled[i],
+                    tcshifted[i],
+                    tcshifted[i] - tcrolled[i],
+                    tcshifted2[i],
+                    tcshifted2[i] - tcrolled[i],
+                )
 
         # plot if we are doing that
         if debug:
@@ -68,12 +86,17 @@ def test_FastResampler(debug=False):
             offset += 1.0
             plt.plot(tcshifted + offset)
             legend.append("Fastresampler " + str(shiftdist))
+            offset += 1.0
+            plt.plot(tcshifted2 + offset)
+            legend.append("FastresamplerFromFile " + str(shiftdist))
 
         # do the tests
         msethresh = 1e-6
         aethresh = 2
         assert mse(tcrolled, tcshifted) < msethresh
         np.testing.assert_almost_equal(tcrolled, tcshifted, aethresh)
+        assert mse(tcrolled, tcshifted2) < msethresh
+        np.testing.assert_almost_equal(tcrolled, tcshifted2, aethresh)
 
     if debug:
         plt.legend(legend)
