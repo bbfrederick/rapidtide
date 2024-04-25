@@ -2627,6 +2627,7 @@ def rapidtide_main(argparsingfunc):
                 genlagtc = tide_resample.FastResampler(
                     initial_fmri_x, normoutputdata, padtime=padtime
                 )
+                genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
                 (
                     optiondict[f"kurtosis_reference_pass{thepass + 1}"],
                     optiondict[f"kurtosisz_reference_pass{thepass + 1}"],
