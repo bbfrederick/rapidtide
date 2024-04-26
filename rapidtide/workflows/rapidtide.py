@@ -2891,44 +2891,26 @@ def rapidtide_main(argparsingfunc):
         ):
             if optiondict["glmsourcefile"] is not None:
                 LGR.info(f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait")
-                if fileiscifti:
-                    LGR.info("input file is CIFTI")
-                    (
-                        cifti,
-                        cifti_hdr,
-                        nim_data,
-                        nim_hdr,
-                        thedims,
-                        thesizes,
-                        dummy,
-                    ) = tide_io.readfromcifti(optiondict["glmsourcefile"])
-                else:
-                    if optiondict["textio"]:
-                        nim_data = tide_io.readvecs(optiondict["glmsourcefile"])
-                    else:
-                        nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(
-                            optiondict["glmsourcefile"]
-                        )
+                sourcename = optiondict["glmsourcefile"]
             else:
                 LGR.info(f"rereading {fmrifilename} for GLM filter, please wait")
-                if fileiscifti:
-                    LGR.info("input file is CIFTI")
-                    (
-                        cifti,
-                        cifti_hdr,
-                        nim_data,
-                        nim_hdr,
-                        thedims,
-                        thesizes,
-                        dummy,
-                    ) = tide_io.readfromcifti(optiondict["glmsourcefile"])
+                sourcename = fmrifilename
+            if fileiscifti:
+                LGR.info("input file is CIFTI")
+                (
+                    cifti,
+                    cifti_hdr,
+                    nim_data,
+                    nim_hdr,
+                    thedims,
+                    thesizes,
+                    dummy,
+                ) = tide_io.readfromcifti(sourcename)
+            else:
+                if optiondict["textio"]:
+                    nim_data = tide_io.readvecs(sourcename)
                 else:
-                    if optiondict["textio"]:
-                        nim_data = tide_io.readvecs(fmrifilename)
-                    else:
-                        nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(
-                            fmrifilename
-                        )
+                    nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(sourcename)
 
             fmri_data_valid = (
                 nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
@@ -3167,15 +3149,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict[
-            "lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thetimepcts[i]
-        optiondict[
-            "lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thestrengthpcts[i]
-        optiondict[
-            "lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thesigmapcts[i]
+        optiondict["lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thetimepcts[i]
+        )
+        optiondict["lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thestrengthpcts[i]
+        )
+        optiondict["lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thesigmapcts[i]
+        )
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
