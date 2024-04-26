@@ -1032,7 +1032,9 @@ def rapidtide_main(argparsingfunc):
     optiondict["fmrifreq"] = fmrifreq
     skiptime = fmritr * (optiondict["preprocskip"])
     LGR.debug(f"first fMRI point is at {skiptime} seconds relative to time origin")
-    initial_fmri_x = np.arange(0.0, validtimepoints) * fmritr + skiptime
+    initial_fmri_x = (
+        np.linspace(0.0, validtimepoints * fmritr, num=validtimepoints, endpoint=False) + skiptime
+    )
     os_fmri_x = (
         np.arange(
             0.0,
@@ -1452,6 +1454,12 @@ def rapidtide_main(argparsingfunc):
     numpadtrs = int(padtime // fmritr)
     padtime = fmritr * numpadtrs
     genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
+    totalpadlen = validtimepoints + 2 * numpadtrs
+    paddedinitial_fmri_x = (
+        np.linspace(0.0, totalpadlen * fmritr, num=totalpadlen, endpoint=False)
+        + skiptime
+        - fmritr * numpadtrs
+    )
 
     if optiondict["textio"]:
         nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
@@ -2494,7 +2502,7 @@ def rapidtide_main(argparsingfunc):
 
             LGR.info("prenormalizing timecourses")
             tide_refine.prenorm(
-                shiftedtcs,
+                paddedshiftedtcs,
                 refinemask,
                 lagtimes,
                 optiondict["lagmaxthresh"],
@@ -2506,9 +2514,9 @@ def rapidtide_main(argparsingfunc):
 
             (
                 voxelsprocessed_rr,
-                outputdata,
+                paddedoutputdata,
             ) = tide_refine.dorefine(
-                shiftedtcs,
+                paddedshiftedtcs,
                 refinemask,
                 weights,
                 theprefilter,
@@ -2532,7 +2540,6 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
             )
-
             optiondict["refinemasksize_pass" + str(thepass)] = voxelsprocessed_rr
             optiondict["refinemaskpct_pass" + str(thepass)] = (
                 100.0 * voxelsprocessed_rr / optiondict["corrmasksize"]
@@ -2542,6 +2549,10 @@ def rapidtide_main(argparsingfunc):
             optiondict["refinelagfails_pass" + str(thepass)] = lagfails
             optiondict["refinesigmafails_pass" + str(thepass)] = sigmafails
             if voxelsprocessed_rr > 0:
+                paddednormoutputdata = tide_math.stdnormalize(
+                    theprefilter.apply(fmrifreq, paddedoutputdata)
+                )
+                outputdata = paddedoutputdata[numpadtrs:-numpadtrs]
                 normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
                 normunfilteredoutputdata = tide_math.stdnormalize(outputdata)
                 tide_io.writebidstsv(
@@ -2583,8 +2594,8 @@ def rapidtide_main(argparsingfunc):
                 if optiondict["detrendorder"] > 0:
                     resampnonosref_y = tide_fit.detrend(
                         tide_resample.doresample(
-                            initial_fmri_x,
-                            normoutputdata,
+                            paddedinitial_fmri_x,
+                            paddednormoutputdata,
                             initial_fmri_x,
                             method=optiondict["interptype"],
                         ),
@@ -2593,8 +2604,8 @@ def rapidtide_main(argparsingfunc):
                     )
                     resampref_y = tide_fit.detrend(
                         tide_resample.doresample(
-                            initial_fmri_x,
-                            normoutputdata,
+                            paddedinitial_fmri_x,
+                            paddednormoutputdata,
                             os_fmri_x,
                             method=optiondict["interptype"],
                         ),
@@ -2603,14 +2614,14 @@ def rapidtide_main(argparsingfunc):
                     )
                 else:
                     resampnonosref_y = tide_resample.doresample(
-                        initial_fmri_x,
-                        normoutputdata,
+                        paddedinitial_fmri_x,
+                        paddednormoutputdata,
                         initial_fmri_x,
                         method=optiondict["interptype"],
                     )
                     resampref_y = tide_resample.doresample(
-                        initial_fmri_x,
-                        normoutputdata,
+                        paddedinitial_fmri_x,
+                        paddednormoutputdata,
                         os_fmri_x,
                         method=optiondict["interptype"],
                     )
@@ -2625,7 +2636,7 @@ def rapidtide_main(argparsingfunc):
                 # reinitialize genlagtc for resampling
                 previousnormoutputdata = normoutputdata + 0.0
                 genlagtc = tide_resample.FastResampler(
-                    initial_fmri_x, normoutputdata, padtime=padtime
+                    paddedinitial_fmri_x, paddednormoutputdata, padtime=padtime
                 )
                 genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
                 (
