@@ -32,7 +32,6 @@ from nilearn import masking
 from scipy import ndimage
 from scipy.stats import rankdata
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 import rapidtide.calccoherence as tide_calccoherence
@@ -125,7 +124,9 @@ def allocshared(theshape, thetype):
     return outarray, outarray_shared, theshape
 
 
-def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcacomponents=0.8):
+def getglobalsignal(
+    indata, optiondict, includemask=None, excludemask=None, pcacomponents=0.8, debug=False
+):
     # Start with all voxels
     themask = indata[:, 0] * 0 + 1
 
@@ -141,9 +142,12 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
     thesize = np.shape(themask)
     numvoxelsused = int(np.sum(np.where(themask > 0.0, 1, 0)))
     selectedvoxels = indata[np.where(themask > 0.0), :][0]
+    if debug:
+        print(f"getglobalsignal: {selectedvoxels.shape=}")
     LGR.info(f"constructing global mean signal using {optiondict['globalsignalmethod']}")
     if optiondict["globalsignalmethod"] == "sum":
-        globalmean = np.sum(selectedvoxels, axis=0)
+        globalmean = np.mean(selectedvoxels, axis=0)
+        globalmean -= np.mean(globalmean)
     elif optiondict["globalsignalmethod"] == "meanscale":
         themean = np.mean(indata, axis=1)
         for vox in range(0, thesize[0]):
@@ -151,26 +155,39 @@ def getglobalsignal(indata, optiondict, includemask=None, excludemask=None, pcac
                 if themean[vox] != 0.0:
                     globalmean += indata[vox, :] / themean[vox] - 1.0
     elif optiondict["globalsignalmethod"] == "pca":
+        themean = np.mean(indata, axis=1)
+        thevar = np.var(indata, axis=1)
+        scaledvoxels = selectedvoxels * 0.0
+        for vox in range(0, selectedvoxels.shape[0]):
+            scaledvoxels[vox, :] = selectedvoxels[vox, :] - themean[vox]
+            if thevar[vox] > 0.0:
+                scaledvoxels[vox, :] = selectedvoxels[vox, :] / thevar[vox]
         try:
-            thefit = PCA(n_components=pcacomponents).fit(
-                StandardScaler().fit_transform(selectedvoxels)
-            )
+            thefit = PCA(n_components=pcacomponents).fit(np.transpose(scaledvoxels))
         except ValueError:
             if pcacomponents == "mle":
                 LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
-                thefit = PCA(n_components=0.8).fit(StandardScaler().fit_transform(selectedvoxels))
+                thefit = PCA(n_components=0.8).fit(np.transpose(scaledvoxels))
             else:
                 raise ValueError("unhandled math exception in PCA refinement - exiting")
 
         varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
+        thetransform = thefit.transform(np.transpose(scaledvoxels))
+        if debug:
+            print(f"getglobalsignal: {thetransform.shape=}")
+        globalmean = np.mean(thetransform, axis=0)
+        globalmean -= np.mean(globalmean)
+        if debug:
+            print(f"getglobalsignal: {varex=}")
         LGR.info(
             f"Using {len(thefit.components_)} component(s), accounting for "
             f"{varex:.2f}% of the variance"
         )
     else:
-        dummy = optiondict["globalsignalmethod"]
-        raise ValueError(f"illegal globalsignalmethod: {dummy}")
+        raise ValueError(f"illegal globalsignalmethod: {optiondict['globalsignalmethod']}")
     LGR.info(f"used {numvoxelsused} voxels to calculate global mean signal")
+    if debug:
+        print(f"getglobalsignal: {globalmean=}")
     return tide_math.stdnormalize(globalmean), themask
 
 
@@ -859,6 +876,7 @@ def rapidtide_main(argparsingfunc):
         includemask=internalglobalmeanincludemask,
         excludemask=internalglobalmeanexcludemask,
         pcacomponents=optiondict["globalpcacomponents"],
+        debug=True,
     )
 
     del fmri_data
