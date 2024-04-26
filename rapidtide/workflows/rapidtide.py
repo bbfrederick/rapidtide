@@ -183,6 +183,8 @@ def getglobalsignal(
             f"Using {len(thefit.components_)} component(s), accounting for "
             f"{varex:.2f}% of the variance"
         )
+    elif optiondict["globalsignalmethod"] == "random":
+        globalmean = np.random.standard_normal(size=len(globalmean))
     else:
         raise ValueError(f"illegal globalsignalmethod: {optiondict['globalsignalmethod']}")
     LGR.info(f"used {numvoxelsused} voxels to calculate global mean signal")
@@ -876,7 +878,7 @@ def rapidtide_main(argparsingfunc):
         includemask=internalglobalmeanincludemask,
         excludemask=internalglobalmeanexcludemask,
         pcacomponents=optiondict["globalpcacomponents"],
-        debug=True,
+        debug=False,
     )
 
     del fmri_data

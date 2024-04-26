@@ -436,10 +436,11 @@ def _get_parser():
         dest="globalsignalmethod",
         action="store",
         type=str,
-        choices=["sum", "meanscale", "pca"],
+        choices=["sum", "meanscale", "pca", "random"],
         help=(
             "The method for constructing the initial global signal regressor - straight summation, "
-            "mean scaling each voxel prior to summation, or MLE PCA of the voxels in the global signal mask. "
+            "mean scaling each voxel prior to summation, MLE PCA of the voxels in the global signal mask, "
+            "or initializing using random noise."
             f'Default is "{DEFAULT_GLOBALSIGNAL_METHOD}."'
         ),
         default=DEFAULT_GLOBALSIGNAL_METHOD,

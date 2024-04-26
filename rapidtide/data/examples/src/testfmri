@@ -1,16 +1,18 @@
 #!/bin/bash
 
-#rapidtide \
-#    --nprocs -1 \
-#    --denoising \
-#    sub-RAPIDTIDETEST.nii.gz \
-#    ../dst/sub-RAPIDTIDETEST_padded
+rapidtide \
+    --nprocs -1 \
+    --passes 5 \
+    --globalsignalmethod random \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_randomglobal
 
 rapidtide \
     --nprocs -1 \
     --denoising \
-    --globalsignalmethod pca \
-    ../dst/sub-RAPIDTIDETEST_pcaglobal
+    --passes 5 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST
 
 #rapidtide \
     #--nprocs -1 \
