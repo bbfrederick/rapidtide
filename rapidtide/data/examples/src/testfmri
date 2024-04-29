@@ -2,17 +2,30 @@
 
 rapidtide \
     --nprocs -1 \
-    --passes 5 \
-    --globalsignalmethod random \
+    --denoising \
+    --passes 3 \
+    --glmderivs 1 \
+    --nolimitoutput \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_randomglobal
+    ../dst/sub-RAPIDTIDETEST_1deriv
 
 rapidtide \
     --nprocs -1 \
     --denoising \
-    --passes 5 \
+    --passes 3 \
+    --glmderivs 2 \
+    --nolimitoutput \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+    ../dst/sub-RAPIDTIDETEST_2deriv
+
+rapidtide \
+    --nprocs -1 \
+    --passes 1 \
+    --nolimitoutput \
+    --regressor ../dst/sub-RAPIDTIDETEST_2deriv_desc-lagtcgenerator_timeseries.json \
+    --corrmask ../dst/sub-RAPIDTIDETEST_2deriv_desc-corrfit_mask.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_2deriv_desc-lfofilterRemoved_bold.nii.gz \
+    ../dst/secondpass
 
 #rapidtide \
     #--nprocs -1 \
