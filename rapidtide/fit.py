@@ -1101,7 +1101,7 @@ def gaussfunc(x, height, loc, FWHM):
 
 def gaussfit2(height, loc, width, xvals, yvals):
     popt, pcov = curve_fit(gaussfunc, xvals, yvals, p0=[height, loc, width])
-    return popt, pcov
+    return popt[0], popt[1], popt[2]
 
 
 def sincfunc(x, height, loc, FWHM, baseline):

@@ -742,7 +742,7 @@ def _get_parser():
         dest="peakfittype",
         action="store",
         type=str,
-        choices=["gauss", "fastgauss", "quad", "fastquad", "COM", "None"],
+        choices=["gauss", "gausscf", "fastgauss", "quad", "fastquad", "COM", "None"],
         help=(
             "Method for fitting the peak of the similarity function "
             '"gauss" performs a Gaussian fit, and is most accurate. '
