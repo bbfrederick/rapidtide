@@ -1,5 +1,18 @@
 # Release history
 
+## Version 2.8.8 (4/29/24)
+* (rapidtide) Properly initialize "starttime" so that it will use the value in a json file, if present.
+* (rapidtide) Added new option to start from a random probe regressor.
+* (rapidtide) Cleaned up code that reads (or rereads) data prior to GLM.
+* (rapidtide) Do refinement on padded data, to infer data past the ends of the imaging window.
+* (rapidtide) Save the padded, lagged timecourse generator.
+* (rapidtide) Scale voxel timecourses prior to PCA refinement.
+* (rapidtide) Change default refinement options.
+* (fit) Added routines to do automated component selection from scree tests.
+* (package) Merged some dependabot PRs.
+* (package) Removed numba and made pyfftw an optional dependency.
+* (package) Made compatible with Python 3.12.
+
 ## Version 2.8.7 (4/17/24)
 * (rapidtide) Spatial filtering with the default kernel (1/2 the average voxel dimension) is now the default.
 * (rapidtide) Rewrote the lag time rank order calculation to use scipy.signal.rankdata.
