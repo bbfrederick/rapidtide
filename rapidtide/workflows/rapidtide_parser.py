@@ -586,7 +586,7 @@ def _get_parser():
             "file, corresponding in the first TR of the fMRI "
             "file (default is 0.0)."
         ),
-        default=0.0,
+        default=None,
     )
     corr.add_argument(
         "--corrweighting",
