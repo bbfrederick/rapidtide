@@ -3468,7 +3468,7 @@ def rapidtide_main(argparsingfunc):
             theheader["dim"][4] = np.shape(outfmriarray)[1]
             theheader["pixdim"][4] = fmritr
 
-    if optiondict["savelagregressors"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
+    if optiondict["saveallglmfiles"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
         outfmriarray[validvoxels, :] = lagtc[:, :]
         if optiondict["textio"]:
             tide_io.writenpvecs(

@@ -1863,11 +1863,22 @@ def process_args(inputargs=None):
 
     # process limitoutput
     if args["limitoutput"]:
+        args["outputlevel"] = "min"
+    else:
+        args["outputlevel"] = "max"
+
+    if args["outputlevel"] == "min":
         args["savemovingsignal"] = False
         args["savelagregressors"] = False
+        args["saveallglmfiles"] = False
+    elif args["outputlevel"] == "max":
+        args["savemovingsignal"] = True
+        args["savelagregressors"] = True
+        args["saveallglmfiles"] = True
     else:
         args["savemovingsignal"] = True
         args["savelagregressors"] = True
+        args["saveallglmfiles"] = True
 
     # dispersion calculation
     args["dispersioncalc_lower"] = args["lagmin"]
