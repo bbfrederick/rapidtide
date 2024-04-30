@@ -287,6 +287,7 @@ def removeoutliers(vector, zerobad=True, outlierfac=3.0):
     return cleaneddata, themedian, sigmad
 
 
+@conditionaljit()
 def madnormalize(vector, returnnormfac=False):
     """
 
