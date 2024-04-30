@@ -284,7 +284,7 @@ def disablemkl(numprocs, debug=False):
 def enablemkl(numthreads, debug=False):
     if mklexists:
         if debug:
-            print(f"enablemkl: setting threads to {mkl.set_num_threads(numthreads)}")
+            print(f"enablemkl: setting threads to {numthreads}")
         mkl.set_num_threads(numthreads)
 
 
