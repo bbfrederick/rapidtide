@@ -114,6 +114,7 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
             ")",
         )
 
+    inputdtype = inputdata.dtype
     if padlen > 0:
         if cyclic:
             return np.concatenate((inputdata[-padlen:], inputdata, inputdata[0:padlen]))
@@ -124,14 +125,18 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
                 )
             elif padtype == "zero":
                 return np.concatenate(
-                    (np.zeros((padlen), dtype=float), inputdata, np.zeros((padlen), dtype=float))
+                    (
+                        np.zeros((padlen), dtype=inputdtype),
+                        inputdata,
+                        np.zeros((padlen), dtype=inputdtype),
+                    )
                 )
             elif padtype == "constant":
                 return np.concatenate(
                     (
-                        inputdata[0] * np.ones((padlen), dtype=float),
+                        inputdata[0] * np.ones((padlen), dtype=inputdtype),
                         inputdata,
-                        inputdata[-1] * np.ones((padlen), dtype=float),
+                        inputdata[-1] * np.ones((padlen), dtype=inputdtype),
                     )
                 )
             else:
