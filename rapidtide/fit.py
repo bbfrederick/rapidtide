@@ -51,9 +51,6 @@ except ImportError:
 else:
     donotusenumba = False
 
-# hard disable numba, since it is currently broken on arm
-donotusenumba = True
-
 
 def conditionaljit():
     def resdec(f):

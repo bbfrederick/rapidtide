@@ -2,8 +2,7 @@
 
 rapidtide \
     --nprocs -1 \
-    --denoising \
-    --passes 3 \
+    --passes 6 \
     --glmderivs 1 \
     --peakfittype gausscf \
     --nolimitoutput \
@@ -12,8 +11,7 @@ rapidtide \
 
 rapidtide \
     --nprocs -1 \
-    --denoising \
-    --passes 3 \
+    --passes 6 \
     --glmderivs 1 \
     --nolimitoutput \
     sub-RAPIDTIDETEST.nii.gz \

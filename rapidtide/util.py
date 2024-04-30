@@ -66,9 +66,6 @@ except ImportError:
 else:
     pyfftwpresent = True
 
-# hard disable numba, since it is currently broken on arm
-donotusenumba = True
-
 
 def checkimports(optiondict):
     if memprofilerexists:
