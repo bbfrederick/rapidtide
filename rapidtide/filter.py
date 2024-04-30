@@ -203,7 +203,7 @@ def ssmooth(xsize, ysize, zsize, sigma, inputdata):
 
 
 # - butterworth filters
-@conditionaljit()
+# @conditionaljit()
 def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, cyclic=False, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.

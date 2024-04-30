@@ -439,7 +439,7 @@ def mutual_info_2d(
     return mi
 
 
-@conditionaljit()
+# @conditionaljit
 def cross_mutual_info(
     x,
     y,
