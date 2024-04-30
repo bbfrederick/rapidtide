@@ -273,7 +273,7 @@ def fdica(
     print(f"shape of detrendedphasedata: {detrendedphasedata.shape}")
     X = np.linspace(lowerbin * hzperpoint, upperbin * hzperpoint, trimmedsize)
     for i in range(numfitvoxels):
-        thecoffs = Polynomial.fit(X, phasedata[i, :], 1)
+        thecoffs = Polynomial.fit(X, phasedata[i, :], 1).convert().coef
         phaseslopes[i], phasemeans[i] = thecoffs
         # detrendedphasedata[i, :] = phasedata[i, :] - tide_fit.trendgen(X, thecoffs, True)
         detrendedphasedata[i, :] = phasedata[i, :] - np.mean(phasedata[i, :])
