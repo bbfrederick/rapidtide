@@ -3,6 +3,7 @@
 import sys
 
 import numpy as np
+from numpy.polynomial import Polynomial
 
 fname = "testdata.txt"
 theinputdata = np.loadtxt(fname, dtype="float")
@@ -10,7 +11,7 @@ theinputdata = np.loadtxt(fname, dtype="float")
 xvals = theinputdata[:, 0]
 yvals = theinputdata[:, 1]
 
-thecoffs = np.polyfit(xvals, yvals, 1)
+thecoffs = Polynomial.fit(xvals, yvals, 1).convert().coef[::-1]
 fitslope = thecoffs[0]
 fitintercept = thecoffs[1]
 

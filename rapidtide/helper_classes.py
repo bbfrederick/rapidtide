@@ -22,6 +22,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
+from numpy.polynomial import Polynomial
 from statsmodels.robust import mad
 
 import rapidtide.correlate as tide_corr
@@ -1137,7 +1138,7 @@ class SimilarityFunctionFitter:
                 X = self.corrtimeaxis[peakstart : peakend + 1]
                 data = corrfunc[peakstart : peakend + 1]
                 try:
-                    thecoffs = np.polyfit(X, data, 2)
+                    thecoffs = Polynomial.fit(X, data, 2).convert().coef[::-1]
                     a = thecoffs[0]
                     b = thecoffs[1]
                     c = thecoffs[2]

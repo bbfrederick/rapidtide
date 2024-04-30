@@ -413,7 +413,7 @@ def detrend(inputdata, order=1, demean=False):
     """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
-        thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef
+        thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]
     except np.lib.polynomial.RankWarning:
         thecoffs = [0.0, 0.0]
     thefittc = trendgen(thetimepoints, thecoffs, demean)
@@ -2112,7 +2112,7 @@ def simfuncpeakfit(
             X = corrtimeaxis[peakstart : peakend + 1]
             data = corrfunc[peakstart : peakend + 1]
             try:
-                thecoffs = Polynomial.fit(X, data, 2).convert().coef
+                thecoffs = Polynomial.fit(X, data, 2).convert().coef[::-1]
                 a = thecoffs[0]
                 b = thecoffs[1]
                 c = thecoffs[2]

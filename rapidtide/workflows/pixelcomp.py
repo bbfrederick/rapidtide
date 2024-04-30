@@ -191,7 +191,9 @@ def pixelcomp(args):
 
     # now fit the line
     try:
-        thecoffs = Polynomial.fit(thearray[:, 0], thearray[:, 1], args.fitorder).convert().coef
+        thecoffs = (
+            Polynomial.fit(thearray[:, 0], thearray[:, 1], args.fitorder).convert().coef[::-1]
+        )
     except np.RankWarning:
         thecoffs = [0.0, 0.0]
     print("thecoffs=", thecoffs)

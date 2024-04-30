@@ -438,11 +438,15 @@ def showstxcorr(args):
         validlocs = np.where(np.fabs(Rvals) > args.corrthresh)
 
         # do a polynomial fit to the delay function
-        thefit = np.polyfit(
-            times[validlocs],
-            delayvals[validlocs],
-            7,
-            w=(Rvals[validlocs] * Rvals[validlocs]),
+        thefit = (
+            Polynomial.fit(
+                times[validlocs],
+                delayvals[validlocs],
+                7,
+                w=(Rvals[validlocs] * Rvals[validlocs]),
+            )
+            .convert()
+            .coef[::-1]
         )
         smoothdelayvals = np.poly1d(thefit)(times)
 

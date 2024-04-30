@@ -505,7 +505,7 @@ def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):
     """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
-        thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef
+        thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]
     except np.lib.RankWarning:
         thecoffs = [0.0, 0.0]
     thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
