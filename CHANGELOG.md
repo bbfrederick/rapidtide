@@ -4,7 +4,6 @@
 * (rapidtide) Properly initialize "starttime" so that it will use the value in a json file, if present.
 * (rapidtide) Added new option to start from a random probe regressor.
 * (rapidtide) Moved performance options into their own section.
-* (rapidtide) Added a new peak fit type, "gausscf", that does Gaussian fitting, but perhaps faster.
 * (rapidtide) Cleaned up code that reads (or rereads) data prior to GLM.
 * (rapidtide) You can specify MKL threads AND multiprocessing - multithreading is disabled and reenabled automatically as needed.
 * (rapidtide) Do refinement on padded data, to infer data past the ends of the imaging window.
