@@ -289,7 +289,7 @@ def enablemkl(numthreads, debug=False):
 
 
 def rapidtide_main(argparsingfunc):
-    threaddebug = True
+    threaddebug = False
     optiondict, theprefilter = argparsingfunc
 
     optiondict["nodename"] = platform.node()
