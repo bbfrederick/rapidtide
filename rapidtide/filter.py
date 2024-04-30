@@ -261,7 +261,7 @@ def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, cyclic=False, debug
     ).astype(np.float64)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, cyclic=False, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -318,7 +318,7 @@ def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, cyclic=False, debug
     )
 
 
-@conditionaljit()
+# @conditionaljit()
 def dobpfiltfilt(Fs, lowerpass, upperpass, inputdata, order, padlen=20, cyclic=False, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -445,7 +445,7 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
     return transferfunc
 
 
-@conditionaljit()
+# @conditionaljit()
 def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT brickwall lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -488,7 +488,7 @@ def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT brickwall highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -531,7 +531,7 @@ def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, cyclic=False, debug=False):
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT brickwall bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -581,7 +581,7 @@ def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, cyclic=False, de
 
 
 # - fft trapezoidal filters
-@conditionaljit()
+# @conditionaljit()
 def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
     r"""Generates a trapezoidal lowpass transfer function.
 
@@ -634,7 +634,7 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
     return transferfunc
 
 
-@conditionaljit()
+# @conditionaljit()
 def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type="brickwall", debug=False):
     if upperpass is None:
         print("getlptransfunc: upperpass must be specified")
@@ -719,7 +719,7 @@ def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type="brickwal
     return transferfunc
 
 
-@conditionaljit()
+# @conditionaljit()
 def dolptransfuncfilt(
     Fs,
     inputdata,
@@ -783,7 +783,7 @@ def dolptransfuncfilt(
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dohptransfuncfilt(
     Fs,
     inputdata,
@@ -853,7 +853,7 @@ def dohptransfuncfilt(
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dobptransfuncfilt(
     Fs,
     inputdata,
@@ -934,7 +934,7 @@ def dobptransfuncfilt(
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT filter with a trapezoidal lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
@@ -981,7 +981,7 @@ def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, cyclic=False
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
@@ -1028,7 +1028,7 @@ def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, cyclic=False
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dobptrapfftfilt(
     Fs,
     lowerstop,
