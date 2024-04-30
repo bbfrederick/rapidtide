@@ -401,7 +401,7 @@ def imagevariance(thedata, thefilter, samplefreq, meannorm=True, debug=False):
         return np.var(filteredim, axis=1)
 
 
-@conditionaljit()
+# @conditionaljit()
 def corrnormalize(thedata, detrendorder=1, windowfunc="hamming"):
     """
 

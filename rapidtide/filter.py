@@ -1323,7 +1323,7 @@ def csdfilter(obsdata, commondata, padlen=20, cyclic=False, debug=False):
     return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def arb_pass(
     Fs,
     inputdata,
