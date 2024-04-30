@@ -353,7 +353,7 @@ def calc_MI(x, y, bins=50):
     return mi
 
 
-@conditionaljit()
+# @conditionaljit()
 def mutual_info_2d(
     x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6, debug=False
 ):

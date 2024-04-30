@@ -176,7 +176,7 @@ def gausssk_eval(x, p):
     return p[0] * sp.stats.norm.pdf(t) * sp.stats.norm.cdf(p[3] * t)
 
 
-@conditionaljit()
+# @conditionaljit()
 def kaiserbessel_eval(x, p):
     """
 
@@ -310,63 +310,6 @@ def gasboxcar(
     falltime=3.0,
 ):
     return None
-
-
-'''def locpeak(data, samplerate, lastpeaktime, winsizeinsecs=5.0, thresh=0.75, hysteresissecs=0.4):
-    """
-
-    Parameters
-    ----------
-    data
-    samplerate
-    lastpeaktime
-    winsizeinsecs
-    thresh
-    hysteresissecs
-
-    Returns
-    -------
-
-    """
-    # look at a limited time window
-    winsizeinsecs = 5.0
-    numpoints = int(winsizeinsecs * samplerate)
-    startpoint = max((0, len(data) - numpoints))
-    currenttime = (len(data) - 1) / samplerate
-
-    # find normative limits
-    recentmax = max(data[startpoint:])
-    recentmin = min(data[startpoint:])
-    recentrange = recentmax - recentmin
-
-    # screen out obvious non-peaks
-    if data[-1] < recentmin + recentrange * thresh:
-        # print(currenttime,'below thresh')
-        return -1.0
-    if currenttime - lastpeaktime < hysteresissecs:
-        # print(currenttime,'too soon')
-        return -1.0
-
-    # now check to see if we have just passed a peak
-    if data[-1] < data[-2]:
-        if data[-2] <= data[-3]:
-            fitstart = -5
-            fitdata = data[fitstart:]
-            X = currenttime + (np.arange(0.0, len(fitdata)) - len(fitdata) + 1.0) / samplerate
-            maxtime = sum(X * fitdata) / sum(fitdata)
-            # maxsigma = np.sqrt(abs(np.square(sum((X - maxtime)) * fitdata) / sum(fitdata)))
-            maxsigma = np.sqrt(abs(sum((X - maxtime) ** 2 * fitdata) / sum(fitdata)))
-            maxval = fitdata.max()
-            peakheight, peakloc, peakwidth = gaussfit(maxval, maxtime, maxsigma, X, fitdata)
-            # print(currenttime,fitdata,X,peakloc)
-            return peakloc
-        else:
-            # print(currenttime,'not less enough')
-            return -1.0
-    else:
-        # print(currenttime,'not less')
-        return -1.0
-'''
 
 
 # generate the polynomial fit timecourse from the coefficients
