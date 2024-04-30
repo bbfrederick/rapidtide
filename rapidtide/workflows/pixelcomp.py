@@ -20,6 +20,7 @@ import argparse
 
 import matplotlib as mpl
 import numpy as np
+from numpy.polynomial import Polynomial
 
 import rapidtide.io as tide_io
 
@@ -190,7 +191,7 @@ def pixelcomp(args):
 
     # now fit the line
     try:
-        thecoffs = np.polyfit(thearray[:, 0], thearray[:, 1], args.fitorder)
+        thecoffs = Polynomial.fit(thearray[:, 0], thearray[:, 1], args.fitorder)
     except np.RankWarning:
         thecoffs = [0.0, 0.0]
     print("thecoffs=", thecoffs)

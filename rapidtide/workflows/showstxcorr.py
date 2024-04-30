@@ -22,6 +22,7 @@ import sys
 import nibabel as nib
 import numpy as np
 import pandas as pd
+from numpy.polynomial import Polynomial
 
 import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit

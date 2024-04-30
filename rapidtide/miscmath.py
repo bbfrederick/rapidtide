@@ -20,6 +20,7 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.polynomial import Polynomial
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -505,7 +506,7 @@ def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):
     """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
-        thecoffs = np.polyfit(thetimepoints, inputdata, order)
+        thecoffs = Polynomial.fit(thetimepoints, inputdata, order)
     except np.lib.RankWarning:
         thecoffs = [0.0, 0.0]
     thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)

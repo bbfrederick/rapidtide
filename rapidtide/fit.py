@@ -24,6 +24,7 @@ import numpy as np
 import scipy as sp
 import scipy.special as sps
 import tqdm
+from numpy.polynomial import Polynomial
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks, hilbert
 from scipy.stats import entropy, moment
@@ -412,7 +413,7 @@ def detrend(inputdata, order=1, demean=False):
     """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
-        thecoffs = np.polyfit(thetimepoints, inputdata, order)
+        thecoffs = Polynomial.fit(thetimepoints, inputdata, order)
     except np.lib.polynomial.RankWarning:
         thecoffs = [0.0, 0.0]
     thefittc = trendgen(thetimepoints, thecoffs, demean)
@@ -2111,7 +2112,7 @@ def simfuncpeakfit(
             X = corrtimeaxis[peakstart : peakend + 1]
             data = corrfunc[peakstart : peakend + 1]
             try:
-                thecoffs = np.polyfit(X, data, 2)
+                thecoffs = Polynomial.fit(X, data, 2)
                 a = thecoffs[0]
                 b = thecoffs[1]
                 c = thecoffs[2]

@@ -22,6 +22,7 @@ import sys
 import warnings
 
 import numpy as np
+from numpy.polynomial import Polynomial
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -272,7 +273,7 @@ def fdica(
     print(f"shape of detrendedphasedata: {detrendedphasedata.shape}")
     X = np.linspace(lowerbin * hzperpoint, upperbin * hzperpoint, trimmedsize)
     for i in range(numfitvoxels):
-        thecoffs = np.polyfit(X, phasedata[i, :], 1)
+        thecoffs = Polynomial.fit(X, phasedata[i, :], 1)
         phaseslopes[i], phasemeans[i] = thecoffs
         # detrendedphasedata[i, :] = phasedata[i, :] - tide_fit.trendgen(X, thecoffs, True)
         detrendedphasedata[i, :] = phasedata[i, :] - np.mean(phasedata[i, :])
