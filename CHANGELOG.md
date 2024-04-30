@@ -1,16 +1,20 @@
 # Release history
 
-## Version 2.8.8 (4/29/24)
+## Version 2.8.8 (4/30/24)
 * (rapidtide) Properly initialize "starttime" so that it will use the value in a json file, if present.
 * (rapidtide) Added new option to start from a random probe regressor.
+* (rapidtide) Added a new peak fit type, "gausscf", that does Gaussian fitting, but perhaps faster.
 * (rapidtide) Cleaned up code that reads (or rereads) data prior to GLM.
 * (rapidtide) Do refinement on padded data, to infer data past the ends of the imaging window.
 * (rapidtide) Save the padded, lagged timecourse generator.
 * (rapidtide) Scale voxel timecourses prior to PCA refinement.
 * (rapidtide) Change default refinement options.
+* (rapidtide) Started to increase the granularity of output file specification.
 * (fit) Added routines to do automated component selection from scree tests.
+* (package) Updated all calls to np.polyfit to the new Polynomial class.
 * (package) Merged some dependabot PRs.
-* (package) Removed numba and made pyfftw an optional dependency.
+* (package) Made pyfftw an optional dependency.
+* (package) Fixed numba crashes (on Intel - not tested on ARM yet) and made it an optional dependency.
 * (package) Made compatible with Python 3.12.
 
 ## Version 2.8.7 (4/17/24)
