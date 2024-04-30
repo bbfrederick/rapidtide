@@ -106,14 +106,13 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
 
     """
     if padlen > len(inputdata):
-        print(
+        raise RuntimeError(
             "ERROR: padlen (",
             padlen,
             ") is greater than input data length (",
             len(inputdata),
             ")",
         )
-        sys.exit()
 
     if padlen > 0:
         if cyclic:
