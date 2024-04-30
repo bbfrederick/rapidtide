@@ -1101,6 +1101,54 @@ def _get_parser():
     # Add version options
     pf.addversionopts(parser)
 
+    # Performance options
+    perf = parser.add_argument_group("Performance options")
+    perf.add_argument(
+        "--nprocs",
+        dest="nprocs",
+        action="store",
+        type=int,
+        metavar="NPROCS",
+        help=(
+            "Use NPROCS worker processes for multiprocessing. "
+            "Setting NPROCS to less than 1 sets the number of "
+            "worker processes to n_cpus (unless --reservecpu is used)."
+        ),
+        default=1,
+    )
+    perf.add_argument(
+        "--reservecpu",
+        dest="reservecpu",
+        action="store_true",
+        help=(
+            "When automatically setting nprocs, reserve one CPU for "
+            "process management rather than using them all for worker threads."
+        ),
+        default=False,
+    )
+    perf.add_argument(
+        "--mklthreads",
+        dest="mklthreads",
+        action="store",
+        type=int,
+        metavar="MKLTHREADS",
+        help=(
+            "If mkl library is installed, use no more than MKLTHREADS worker "
+            "threads in accelerated numpy calls.  Set to -1 to use the maximum available.  Default is 1."
+        ),
+        default=1,
+    )
+    perf.add_argument(
+        "--nonumba",
+        dest="nonumba",
+        action="store_true",
+        help=(
+            "By default, numba is used if present.  Use this option to disable jit "
+            "compilation with numba even if it is installed."
+        ),
+        default=False,
+    )
+
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")
     misc.add_argument(
@@ -1158,13 +1206,6 @@ def _get_parser():
         default=False,
     )
     misc.add_argument(
-        "--nonumba",
-        dest="nonumba",
-        action="store_true",
-        help="Disable jit compilation with numba.",
-        default=False,
-    )
-    misc.add_argument(
         "--nosharedmem",
         dest="sharedmem",
         action="store_false",
@@ -1176,38 +1217,6 @@ def _get_parser():
         dest="memprofile",
         action="store_true",
         help=("Enable memory profiling - " "warning: this slows things down a lot."),
-        default=False,
-    )
-    misc.add_argument(
-        "--mklthreads",
-        dest="mklthreads",
-        action="store",
-        type=int,
-        metavar="MKLTHREADS",
-        help=("Use no more than MKLTHREADS worker threads in accelerated numpy " "calls."),
-        default=1,
-    )
-    misc.add_argument(
-        "--nprocs",
-        dest="nprocs",
-        action="store",
-        type=int,
-        metavar="NPROCS",
-        help=(
-            "Use NPROCS worker processes for multiprocessing. "
-            "Setting NPROCS to less than 1 sets the number of "
-            "worker processes to n_cpus (unless --reservecpu is used)."
-        ),
-        default=1,
-    )
-    misc.add_argument(
-        "--reservecpu",
-        dest="reservecpu",
-        action="store_true",
-        help=(
-            "When automatically setting nprocs, reserve one CPU for "
-            "process management rather than using them all for worker threads."
-        ),
         default=False,
     )
     pf.addtagopts(misc)
