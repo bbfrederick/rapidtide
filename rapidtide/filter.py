@@ -79,6 +79,7 @@ def disablenumba():
 # NB: No automatic padding for precalculated filters
 
 
+@conditionaljit()
 def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
     r"""Returns a padded copy of the input data; padlen points of
     reflected data are prepended and appended to the input data to reduce
@@ -140,6 +141,7 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
         return inputdata
 
 
+@conditionaljit()
 def unpadvec(inputdata, padlen=20):
     r"""Returns a input data with the end pads removed (see padvec);
     padlen points of reflected data are removed from each end of the array.
