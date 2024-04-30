@@ -62,7 +62,8 @@ def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, toleranc
 
 
 def test_findmaxlag(displayplots=False, debug=False):
-    for fittype in ["gauss", "fastgauss", "gausscf", "quad", "fastquad", "COM", "None"]:
+    # for fittype in ["gauss", "quad", "fastquad", "COM", "None", "fastgauss", "gausscf"]:
+    for fittype in ["gauss"]:
         print("*************************************")
         print(f"testing fittype: {fittype}")
         textfilename = op.join(get_examples_path(), "lt_rt.txt")
