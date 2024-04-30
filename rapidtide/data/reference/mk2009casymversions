@@ -1,0 +1,32 @@
+#!/bin/bash
+
+python -c "from templateflow.api import get; print(str(get('MNI152NLin2009cAsym', resolution=2, suffix='T1w', desc=None, extension='nii.gz')))" 
+
+# do the masks first
+for atlas in HCP1200_binmask_2mm 
+do
+    antsApplyTransforms \
+        -d 3 \
+        -i ${atlas}.nii.gz \
+        -r /Users/frederic/.cache/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-02_T1w.nii.gz \
+        -o ${atlas}_2009c_asym.nii.gz \
+        -n NearestNeighbor \
+        -t /Users/frederic/.cache/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5
+done
+fslmaths HCP1200_binmask_2mm_2009c_asym -mul -1 -add 1 HCP1200_negmask_2mm_2009c_asym
+
+#$ then the maps
+for atlas in HCP1200_lag_2mm HCP1200_mask_2mm HCP1200_sigma_2mm HCP1200_strength_2mm
+do
+    antsApplyTransforms \
+        -d 3 \
+        -i ${atlas}.nii.gz \
+        -r /Users/frederic/.cache/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-02_T1w.nii.gz \
+        -o ${atlas}_2009c_asym.nii.gz \
+        -n Linear \
+        -t /Users/frederic/.cache/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5
+        fslmaths \
+	    ${atlas}_2009c_asym.nii.gz \
+            -mul HCP1200_binmask_2mm_2009c_asym.nii.gz \
+	    ${atlas}_2009c_asym.nii.gz 
+done

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+mamba update \
+    numpy \
+    scipy \
+    matplotlib \
+    pandas \
+    statsmodels \
+    scikit-learn \
+    scikit-image \
+    nibabel \
+    nilearn \
+    pyfftw \
+    pywavelets \
+    pyqt \
+    pyqt5-sip \
+    pyqtgraph \
+    tqdm
+
+#pip install tensorflow keras

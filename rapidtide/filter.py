@@ -29,13 +29,19 @@ import numpy as np
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import pyfftw
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
 
 from scipy import fftpack, ndimage, signal
 from scipy.signal import savgol_filter
 
-fftpack = pyfftw.interfaces.scipy_fftpack
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 try:
@@ -51,9 +57,6 @@ except ImportError:
     donotusenumba = True
 else:
     donotusenumba = False
-
-# hard disable numba, since it is currently broken on arm
-donotusenumba = True
 
 
 # ----------------------------------------- Conditional jit handling ----------------------------------
@@ -76,6 +79,7 @@ def disablenumba():
 # NB: No automatic padding for precalculated filters
 
 
+@conditionaljit()
 def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
     r"""Returns a padded copy of the input data; padlen points of
     reflected data are prepended and appended to the input data to reduce
@@ -102,15 +106,15 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
 
     """
     if padlen > len(inputdata):
-        print(
+        raise RuntimeError(
             "ERROR: padlen (",
             padlen,
             ") is greater than input data length (",
             len(inputdata),
             ")",
         )
-        sys.exit()
 
+    inputdtype = inputdata.dtype
     if padlen > 0:
         if cyclic:
             return np.concatenate((inputdata[-padlen:], inputdata, inputdata[0:padlen]))
@@ -121,14 +125,18 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
                 )
             elif padtype == "zero":
                 return np.concatenate(
-                    (np.zeros((padlen), dtype=float), inputdata, np.zeros((padlen), dtype=float))
+                    (
+                        np.zeros((padlen), dtype=inputdtype),
+                        inputdata,
+                        np.zeros((padlen), dtype=inputdtype),
+                    )
                 )
             elif padtype == "constant":
                 return np.concatenate(
                     (
-                        inputdata[0] * np.ones((padlen), dtype=float),
+                        inputdata[0] * np.ones((padlen), dtype=inputdtype),
                         inputdata,
-                        inputdata[-1] * np.ones((padlen), dtype=float),
+                        inputdata[-1] * np.ones((padlen), dtype=inputdtype),
                     )
                 )
             else:
@@ -137,6 +145,7 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect"):
         return inputdata
 
 
+@conditionaljit()
 def unpadvec(inputdata, padlen=20):
     r"""Returns a input data with the end pads removed (see padvec);
     padlen points of reflected data are removed from each end of the array.
@@ -198,7 +207,7 @@ def ssmooth(xsize, ysize, zsize, sigma, inputdata):
 
 
 # - butterworth filters
-@conditionaljit()
+# @conditionaljit()
 def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, cyclic=False, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -256,7 +265,7 @@ def dolpfiltfilt(Fs, upperpass, inputdata, order, padlen=20, cyclic=False, debug
     ).astype(np.float64)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, cyclic=False, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -313,7 +322,7 @@ def dohpfiltfilt(Fs, lowerpass, inputdata, order, padlen=20, cyclic=False, debug
     )
 
 
-@conditionaljit()
+# @conditionaljit()
 def dobpfiltfilt(Fs, lowerpass, upperpass, inputdata, order, padlen=20, cyclic=False, debug=False):
     r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -440,7 +449,7 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
     return transferfunc
 
 
-@conditionaljit()
+# @conditionaljit()
 def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT brickwall lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -483,7 +492,7 @@ def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT brickwall highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -526,7 +535,7 @@ def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, cyclic=False, debug=False):
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT brickwall bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -576,7 +585,7 @@ def dobpfftfilt(Fs, lowerpass, upperpass, inputdata, padlen=20, cyclic=False, de
 
 
 # - fft trapezoidal filters
-@conditionaljit()
+# @conditionaljit()
 def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
     r"""Generates a trapezoidal lowpass transfer function.
 
@@ -629,7 +638,7 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
     return transferfunc
 
 
-@conditionaljit()
+# @conditionaljit()
 def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type="brickwall", debug=False):
     if upperpass is None:
         print("getlptransfunc: upperpass must be specified")
@@ -714,7 +723,7 @@ def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type="brickwal
     return transferfunc
 
 
-@conditionaljit()
+# @conditionaljit()
 def dolptransfuncfilt(
     Fs,
     inputdata,
@@ -778,7 +787,7 @@ def dolptransfuncfilt(
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dohptransfuncfilt(
     Fs,
     inputdata,
@@ -848,7 +857,7 @@ def dohptransfuncfilt(
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dobptransfuncfilt(
     Fs,
     inputdata,
@@ -929,7 +938,7 @@ def dobptransfuncfilt(
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT filter with a trapezoidal lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
@@ -976,7 +985,7 @@ def dolptrapfftfilt(Fs, upperpass, upperstop, inputdata, padlen=20, cyclic=False
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, cyclic=False, debug=False):
     r"""Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
@@ -1023,7 +1032,7 @@ def dohptrapfftfilt(Fs, lowerstop, lowerpass, inputdata, padlen=20, cyclic=False
     return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def dobptrapfftfilt(
     Fs,
     lowerstop,
@@ -1318,7 +1327,7 @@ def csdfilter(obsdata, commondata, padlen=20, cyclic=False, debug=False):
     return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
 
 
-@conditionaljit()
+# @conditionaljit()
 def arb_pass(
     Fs,
     inputdata,

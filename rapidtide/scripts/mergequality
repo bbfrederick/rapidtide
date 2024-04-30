@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2024-2024 Blaise Frederick
+#   Copyright 2016-2024 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,151 +16,8 @@
 #   limitations under the License.
 #
 #
-import argparse
-
-import pandas as pd
-
-import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
-
-
-def _get_parser():
-    """
-    Argument parser for mergequality
-    """
-    parser = argparse.ArgumentParser(
-        prog="mergequality",
-        description=("Merge rapidtide quality check data from several runs."),
-        allow_abbrev=False,
-    )
-
-    # Required arguments
-    parser.add_argument("--input", action="store", type=str, nargs="*", required=True)
-    parser.add_argument("--outputroot", action="store", type=str, required=True)
-
-    # add optional
-    parser.add_argument("--keyfile", action="store", type=str, default=None)
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help=("Output additional debugging information."),
-        default=False,
-    )
-
-    return parser
-
-
-def main():
-    # read the arguments
-    try:
-        args = _get_parser().parse_args()
-    except SystemExit:
-        _get_parser().print_help()
-        raise
-
-    if args.debug:
-        print(f"{args.input=}")
-        print(f"{args.outputfile=}")
-        print(f"{args.keyfile=}")
-
-    if args.keyfile is not None:
-        thekeydict = tide_io.readdictfromjson(args.keyfile)
-    else:
-        thekeydict = {
-            "regressormetrics": {
-                "first_kurtosis": 2.537387476292494,
-                "first_kurtosis_p": 6.183462740419309e-34,
-                "first_kurtosis_z": 12.1438650905891,
-                "first_spectralflatness": 0.9488196863525793,
-                "last_kurtosis": 6.910158057761109,
-                "last_kurtosis_p": 2.964386400449096e-76,
-                "last_kurtosis_z": 18.480496898942274,
-                "last_spectralflatness": 0.9535900684764012,
-            },
-            "lagmetrics": {
-                "centerofmass": 0.3013670365563799,
-                "gradcenterofmass": 0.7145948623090327,
-                "gradpct02": 0.04245805314940407,
-                "gradpct25": 0.1601768346438284,
-                "gradpct50": 0.350119137512604,
-                "gradpct75": 1.6865165238166413,
-                "gradpct98": 4.493388554467473,
-                "gradpeakheight": 2.353895854165064,
-                "gradpeakloc": 0.10396039603960396,
-                "gradpeakpercentile": 13.389056843947651,
-                "gradpeakwidth": 0.4752475247524751,
-                "pct02": -6.247237430765624,
-                "pct25": -1.8274538423784459,
-                "pct50": -0.530521020240001,
-                "pct75": 0.18077034097490188,
-                "pct98": 8.433723194956478,
-                "peakheight": 0.4479834068401195,
-                "peakloc": -0.17326732673267342,
-                "peakpercentile": 63.616282460217185,
-                "peakwidth": 1.1881188118811883,
-            },
-            "strengthmetrics": {
-                "centerofmass": 0.0,
-                "pct02": 0.0,
-                "pct25": 0.0,
-                "pct50": 0.0,
-                "pct75": 0.0,
-                "pct98": 0.0,
-                "peakheight": 0.0,
-                "peakloc": 0.0,
-                "peakpercentile": 0.0,
-                "peakwidth": 0.0,
-            },
-            "MTTmetrics": {
-                "centerofmass": 0.0,
-                "pct02": 0.0,
-                "pct25": 0.0,
-                "pct50": 0.0,
-                "pct75": 0.0,
-                "pct98": 0.0,
-                "peakheight": 0.0,
-                "peakloc": 0.0,
-                "peakpercentile": 0.0,
-                "peakwidth": 0.0,
-            },
-        }
-
-    thecolumns = ["datasource"]
-    thedatadict = {"datasource": []}
-    for key in thekeydict.keys():
-        for subkey in thekeydict[key]:
-            thecolumns.append(key + "_" + str(subkey))
-            thedatadict[thecolumns[-1]] = []
-
-    if args.debug:
-        print(thecolumns)
-
-    for theinput in args.input:
-        inputdict = tide_io.readdictfromjson(theinput)
-        thedatadict["datasource"].append(theinput)
-        for column in thecolumns[1:]:
-            keyparts = column.split("_")
-            try:
-                thedataitem = inputdict[keyparts[0]]["_".join(keyparts[1:])]
-            except KeyError:
-                thedataitem = None
-            thedatadict[column].append(thedataitem)
-    df = pd.DataFrame(thedatadict, columns=thecolumns)
-    df.to_csv(args.outputroot + ".csv", index=False)
-
-    for column in thecolumns[1:]:
-        tide_stats.makeandsavehistogram(
-            df[column].to_numpy(),
-            51,
-            0,
-            args.outputroot + "_" + column,
-            displaytitle=column,
-            displayplots=False,
-            normalize=True,
-            append=False,
-            debug=False,
-        )
-
+import rapidtide.workflows.mergequality as theworkflow
+import rapidtide.workflows.parser_funcs as pf
 
 if __name__ == "__main__":
-    main()
+    pf.generic_init(theworkflow._get_parser, theworkflow.mergequality)

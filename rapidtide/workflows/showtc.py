@@ -33,6 +33,13 @@ import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
+try:
+    import seaborn as sns
+
+    haveseaborn = True
+except ImportError:
+    haveseaborn = False
+
 
 def phase(mcv):
     return np.arctan2(mcv.imag, mcv.real)
@@ -497,13 +504,23 @@ def showtc(args):
     for i in range(0, numvecs):
         if separate:
             ax = axlist[i]
-        ax.plot(
-            xvecs[i],
-            yvecs[i],
-            color=colorlist[i],
-            label=linelabels[i],
-            linewidth=thelinewidth[i % numlinewidths],
-        )
+        if haveseaborn:
+            sns.lineplot(
+                x=xvecs[i],
+                y=yvecs[i],
+                ax=ax,
+                color=colorlist[i],
+                label=linelabels[i],
+                linewidth=thelinewidth[i % numlinewidths],
+            )
+        else:
+            ax.plot(
+                xvecs[i],
+                yvecs[i],
+                color=colorlist[i],
+                label=linelabels[i],
+                linewidth=thelinewidth[i % numlinewidths],
+            )
         if dolegend:
             ax.legend(fontsize=thelegendfontsize, loc=legendloc)
         ax.set_xlim(xrange)

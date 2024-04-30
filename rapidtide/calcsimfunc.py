@@ -182,7 +182,10 @@ def correlationpass(
     LGR.info(f"\nSimilarity function calculated on {volumetotal} voxels")
 
     # garbage collect
-    collected = gc.collect()
-    LGR.info(f"Garbage collector: collected {collected} objects.")
+    uncollected = gc.collect()
+    if uncollected != 0:
+        LGR.info(f"garbage collected - unable to collect {uncollected} objects")
+    else:
+        LGR.info("garbage collected")
 
     return volumetotal, theglobalmaxlist, thecorrscale

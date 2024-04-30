@@ -20,6 +20,7 @@ import os
 
 import numpy as np
 
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
@@ -388,8 +389,10 @@ def test_io(debug=True, displayplots=False):
 
     othermotiondict = tide_io.readparfile(motionfilename)
     theinitmotiondict = tide_io.readmotion(motionfilename)
-    theexpandedmotionregressors, thelabels = tide_io.calcmotregressors(
-        theinitmotiondict, derivdelayed=True
+    theexpandedmotionregressors, thelabels = tide_fit.calcexpandedregressors(
+        theinitmotiondict,
+        labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
+        deriv=True,
     )
     if debug:
         print(theexpandedmotionregressors.shape)

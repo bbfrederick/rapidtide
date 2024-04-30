@@ -2,7 +2,10 @@
 
 rm ../testdatabundle.tgz
 
+xattr -dr com.apple.quarantine ./*.par ./*.json ./*.gz ./*.txt
+
 COPYFILE_DISABLE=1 tar --no-mac-metadata -cvzf ../testdatabundle.tgz \
+    fakemotion.par \
     lt_rt.txt \
     lforegressor.txt \
     sub-HAPPYTEST.json \

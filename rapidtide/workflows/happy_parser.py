@@ -193,13 +193,6 @@ def _get_parser():
         default=True,
     )
     preprocessing_opts.add_argument(
-        "--nomotderivdelayed",
-        dest="motfilt_derivdelayed",
-        action="store_false",
-        help=("Do not use delayed motion derivative regressors. "),
-        default=True,
-    )
-    preprocessing_opts.add_argument(
         "--discardmotionfiltered",
         dest="savemotionglmfilt",
         action="store_false",

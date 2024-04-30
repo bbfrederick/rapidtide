@@ -1,5 +1,99 @@
 # Release history
 
+## Version 2.8.8 (4/30/24)
+* (rapidtide) Properly initialize "starttime" so that it will use the value in a json file, if present.
+* (rapidtide) Added new option to start from a random probe regressor.
+* (rapidtide) Moved performance options into their own section.
+* (rapidtide) Added a new peak fit type, "gausscf", that does Gaussian fitting, but perhaps faster.
+* (rapidtide) Cleaned up code that reads (or rereads) data prior to GLM.
+* (rapidtide) You can specify MKL threads AND multiprocessing - multithreading is disabled and reenabled automatically as needed.
+* (rapidtide) Do refinement on padded data, to infer data past the ends of the imaging window.
+* (rapidtide) Save the padded, lagged timecourse generator.
+* (rapidtide) Scale voxel timecourses prior to PCA refinement.
+* (rapidtide) Change default refinement options.
+* (rapidtide) Started to increase the granularity of output file specification.
+* (fit) Added routines to do automated component selection from scree tests.
+* (package) Updated all calls to np.polyfit to the new Polynomial class.
+* (package) Merged some dependabot PRs.
+* (package) Made pyfftw an optional dependency.
+* (package) Fixed numba crashes (on Intel - not tested on ARM yet) and made it an optional dependency.
+* (package) Made compatible with Python 3.12.
+
+## Version 2.8.7 (4/17/24)
+* (rapidtide) Spatial filtering with the default kernel (1/2 the average voxel dimension) is now the default.
+* (rapidtide) Rewrote the lag time rank order calculation to use scipy.signal.rankdata.
+* (rapidtide) Moved some command line options to the "experimental" section, where they should have been to begin with.
+* (rapidtide) Moved GLM options to a new "GLM" section.
+* (rapidtide) Do not automatically disable windowing for linear correlation.
+* (rapidtide, happy) Reorganized, expanded and rationalized confound regression code.
+* (tidepool) Replaced the flame colormap option with plasma and jet with turbo (similar, to what they replaced, but perceptually uniform).
+* (package) Made some proactive fixes for numpy 2.0.0 compatibility.
+* (package) Merged some dependabot PRs.
+* (tests) Removed some superfluous metadata from test data files.
+* (docs) Further extensive revisions.
+
+## Version 2.8.6 (4/5/24)
+* (rapidtide) Tweaked the behavior of the ``--CVR`` flag.
+* (rapidtide) Made major improvements to motion regression.
+* (rapidtide) Consolodated all glm filtering into a single multiprocessing routine, added some new capabilities to rapidtide GLM filtering.
+* (resampletc) Renamed from resamp1tc to make the program names more consistent.
+* (package) Made pyfftw an optional dependency, since it seems to be the only thing blocking python 3.12 compatibility.
+* (package) Added some new tests.
+* (package) Major reorganization of most scripts to make them workflows (this is to make the calling interfaces and documentation consistent.)
+* (package) Incorporated dependabot changes.
+* (docs) Further cleanup of the program documentation section, especially rapidtide usage.
+* (docs) Expanded the Theory of Operation section.
+* (docs) Fixed many typos.
+
+## Version 2.8.5.1 (4/1/24)
+* (docs) Extensive revision of the rapidtide program usage section.
+
+## Version 2.8.5 (3/30/24)
+* (rapidtide) Adjusted some default parameters to reflect the current best picks.
+* (rapidtide) Fixed the --denoising option (it didn't actually do anything!)
+* (package) Partially implemented a major reorganization of all the programs in the package to make them workflows with standard interfaces.
+* (docs) Started the process of standardizing the program descriptions and properly using autodoc.
+
+## Version 2.8.4 (3/28/24)
+* (rapidtide) Output some .json sidecars that I had neglected.
+* (glmsim) New program to help develop instructional tools re: how rapidtide works. This is a WIP.
+* (docs) Major revisions to the rapidtide usage instructions.
+* (package) Accepted several dependabot changes.
+
+## Version 2.8.3 (3/7/24)
+* (rapidtide) Fixed the logic for saving lagregressors - they only exist if you do GLM or CVR analysis, so if you set nolimitoutput, check for existance first (thanks to Laura Murray for finding this bug).
+* (rapidtide) Changed the name of the file containing the voxel specific EVs that are regressed out by the GLM from "lagregressors_bold" to "lfofilterEVs_bold" (thanks to Tianye Zhai for flagging this).
+* (localflow) Added a new program to test a hunch.
+* (fit) Gracefully handle singular matrices in mlregress.
+* (reference) Corrected the abbreviated name for the MLSR region in the JHU level 1 atlas xml file (oops!).
+* (docs) Added description of the lfofilterEVs_bold and shiftedtcs_bold output files to the usage section.
+
+## Version 2.8.2 (2/26/24)
+* (rapidtide) Added a lot more internal debugging resources, and fixed a bug where zero range time data that was included due to explicit masks would put NaN's in the maps.
+* (rapidtide) Implemented multiprocessing to speed up motion regression.
+
+## Version 2.8.1 (2/19/24)
+* (cloud) Now using an s3 working folder.
+
+## Version 2.8.0 (2/18/24)
+* (Docker) Set to basecontainer_plus:latest-release to simplify builds.
+
+## Version 2.7.9 (2/18/24)
+* (runqualitycheck) Added new tests.
+* (reference) Added MNI152NLin2009cAsym versions of the HCP reference maps.
+* (cloud) Added support for selecting the dataset  (currently HCPA and ABCD are supported).
+
+## Version 2.7.8 (1/31/24)
+* (rapidtide) Added new feature - '--numtozero NUMPOINTS' allows you to specify how many points at the beginning of the data set to set to zero prior to processing.  This means that the sLFO fit does not get contaminated by synchronous noise at the beginning of the timecourse (such as T1 decay).  The initial timepoints are filled in from timecourses shifted forward in time.  This means better correlation of timecourses with the sLFO, and better noise removal with the GLM.
+* (rapidtide) Fixed a bug in how setting timerange and simcalc range interacted (and in range checking).  It all works now, and simcalc range is specified relative to the restricted time range.
+* (runqualitycheck) Fixed some masking bugs.
+
+## Version 2.7.7 (1/31/24)
+* (runqualitycheck) Added new tests, and the ability to optionally do tests restricted to gray and/or white matter.
+* (package) The makeandsavehistogram routine now saves some useful histogram stats in the json file.
+* (package) Added the ability to specify APARC_WHITE and APARC_ALLBUTCSF macros to a mask specification if you have an aparc+aseg file.
+* (RapidtideDataset) You can now optionally include gray and white matter masks in the dataset.
+
 ## Version 2.7.6 (1/29/24)
 * (rapidtide) Added the ability to calculate delays over a limited time range, but still GLM filter the entire timecourse.
 * (rapidtide) Fixed a very old bug in null significance distribution estimation.  Multiple worker processes all start with the same random seed (unless you explicitly fix that).  Who knew?

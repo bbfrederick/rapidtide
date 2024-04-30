@@ -17,6 +17,7 @@
 #
 #
 import gc
+import logging
 import warnings
 
 import numpy as np
@@ -27,6 +28,7 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
+LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelPeaks(
@@ -178,10 +180,13 @@ def peakevalpass(
                 interptype=interptype,
             )
             volumetotal += 1
-    print("\nPeak evaluation performed on " + str(volumetotal) + " voxels")
+    LGR.info(f"\nPeak evaluation performed on {volumetotal} voxels")
 
     # garbage collect
-    collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
+    uncollected = gc.collect()
+    if uncollected != 0:
+        LGR.info(f"garbage collected - unable to collect {uncollected} objects")
+    else:
+        LGR.info("garbage collected")
 
     return volumetotal, peakdict

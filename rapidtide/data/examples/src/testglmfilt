@@ -30,7 +30,7 @@ evs[:, 2] = np.sin(freq3 * xaxis + phase3)
 
 invec = amp1 * evs[:, 0] + amp2 * evs[:, 1] + amp3 * evs[:, 2] + noiseamp * np.random.rand(arrlen)
 
-filtered, datatoremove, R = tide_fit.glmfilt(invec, evs, debug=True)
+filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec, evs, debug=True)
 
 offset = 0.0
 plt.plot(evs[:, 0])
@@ -47,7 +47,7 @@ plt.plot(filtered + offset)
 print(R)
 plt.show()
 
-filtered, datatoremove, R = tide_fit.glmfilt(invec, evs[:, 0], debug=True)
+filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec, evs[:, 0], debug=True)
 
 """
 offset = 0.0
@@ -69,7 +69,7 @@ invec2 = (
     + noiseamp * np.random.rand(arrlen)
 )
 
-filtered, datatoremove, R = tide_fit.glmfilt(invec2, evs, debug=True)
+filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec2, evs, debug=True)
 
 """
 offset = 0.0
@@ -84,7 +84,9 @@ print(R)
 plt.show()
 """
 
-filtered, thenewevs, datatoremove, R = tide_fit.expandedglmfilt(invec2, evs, ncomps=3, debug=True)
+filtered, thenewevs, datatoremove, R, coffs = tide_fit.expandedglmfilt(
+    invec2, evs, ncomps=3, debug=True
+)
 
 """
 offset = 0.0
@@ -103,7 +105,7 @@ print(R)
 plt.show()
 """
 
-filtered, datatoremove, R = tide_fit.glmfilt(invec2, thenewevs, debug=True)
+filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec2, thenewevs, debug=True)
 """
 offset = 0.0
 plt.plot(invec2 + offset)
@@ -125,7 +127,7 @@ alignedev, maxdelay, maxval, failreason = tide_corr.aligntcwithref(
     verbose=True,
 )
 print(f"{maxdelay=}, {maxval=}, {failreason=}")
-filtered, datatoremove, R = tide_fit.glmfilt(invec3, alignedev, debug=True)
+filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec3, alignedev, debug=True)
 offset = 0.0
 plt.plot(evs[:, 0])
 offset += 1.0

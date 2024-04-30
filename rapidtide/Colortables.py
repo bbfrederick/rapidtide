@@ -90,10 +90,10 @@ def gen_spectrum_state():
     return Gradients["spectrum"]
 
 
-def gen_cyclic_state():
+def gen_turbo_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["cyclic"]
+    return Gradients["turbo"]
 
 
 def gen_gray_state():

@@ -255,8 +255,8 @@ assert tide_io.checkifparfile("afilename.par")
 
 othermotiondict = tide_io.readparfile(motionfilename)
 theinitmotiondict = tide_io.readmotion(motionfilename)
-theexpandedmotionregressors, thelabels = tide_io.calcmotregressors(
-    theinitmotiondict, derivdelayed=True
+theexpandedmotionregressors, thelabels = tide_io.calcexpandedregressors(
+    theinitmotiondict, deriv=True
 )
 if debug:
     print(theexpandedmotionregressors.shape)

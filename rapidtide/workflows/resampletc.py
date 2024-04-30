@@ -18,6 +18,7 @@
 #
 import argparse
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.io as tide_io
@@ -30,7 +31,7 @@ def _get_parser():
     Argument parser for resamp1tc
     """
     parser = argparse.ArgumentParser(
-        prog="resamp1tc",
+        prog="resampletc",
         description=("Resample a timeseries file"),
         allow_abbrev=False,
     )
@@ -74,20 +75,7 @@ def _get_parser():
     return parser
 
 
-def main():
-    # grab the command line arguments then pass them off.
-    try:
-        args = _get_parser().parse_args()
-    except SystemExit:
-        _get_parser().print_help()
-        raise
-
-    if args.display:
-        import matplotlib as mpl
-
-        mpl.use("TkAgg")
-        import matplotlib.pyplot as plt
-
+def resampletc(args):
     intimestep = 1.0 / args.insamplerate
     outtimestep = 1.0 / args.outsamplerate
     (
@@ -113,7 +101,3 @@ def main():
         plt.plot(out_t, outputdata, "r")
         plt.legend(("original signal", "resampled"))
         plt.show()
-
-
-if __name__ == "__main__":
-    main()

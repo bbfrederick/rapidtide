@@ -51,6 +51,9 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "--savelags",
         "--autosync",
         "--checkpoint",
+        "--timerange",
+        "11",
+        "-1",
         "--saveintermediatemaps",
         "--bipolar",
         "--nolimitoutput",
@@ -62,15 +65,14 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "2",
         "--numnull",
         "0",
-        "--simcalcrange",
-        "100",
-        "-1",
         "--similaritymetric",
         "hybrid",
         "--globalsignalmethod",
         "meanscale",
         "--refineprenorm",
         "var",
+        "--motionfile",
+        os.path.join(get_examples_path(), "fakemotion.par"),
     ]
     if debug:
         print(inputargs)

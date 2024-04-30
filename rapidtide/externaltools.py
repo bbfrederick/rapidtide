@@ -23,22 +23,30 @@ from os.path import join as pjoin
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 
-fsldir = os.environ.get("FSLDIR")
-if fsldir is not None:
-    fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
-    flirtcmd = os.path.join(fsldir, "bin", "flirt")
-    applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
-    fslexists = True
-else:
-    fslexists = False
 
-c3dexists = tide_util.isexecutable("c3d_affine_tool")
-print("c3dexists =", c3dexists)
-antsexists = tide_util.isexecutable("antsApplyTransforms")
-print("antsexists =", antsexists)
+def fslinfo():
+    fsldir = os.environ.get("FSLDIR")
+    if fsldir is not None:
+        fslexists = True
+    else:
+        fslexists = False
+    return fsldir
 
 
 def whatexists():
+    fsldir = os.environ.get("FSLDIR")
+    if fsldir is not None:
+        fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
+        flirtcmd = os.path.join(fsldir, "bin", "flirt")
+        applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
+        fslexists = True
+    else:
+        fslexists = False
+
+    c3dexists = tide_util.isexecutable("c3d_affine_tool")
+    print("c3dexists =", c3dexists)
+    antsexists = tide_util.isexecutable("antsApplyTransforms")
+    print("antsexists =", antsexists)
     return fslexists, c3dexists, antsexists
 
 

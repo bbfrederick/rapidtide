@@ -248,6 +248,14 @@ def savetonifti(thearray, theheader, thename, debug=False):
     output_nifti = None
 
 
+def niftifromarray(data):
+    return nib.Nifti1Image(data, affine=np.eye(4))
+
+
+def niftihdrfromarray(data):
+    return nib.Nifti1Image(data, affine=np.eye(4)).header.copy()
+
+
 def savetocifti(
     thearray,
     theciftiheader,
@@ -748,6 +756,25 @@ def checkifparfile(filename):
         return False
 
 
+def readconfounds(filename, debug=False):
+    (
+        thesamplerate,
+        thestarttime,
+        thecolumns,
+        thedata,
+        compressed,
+        filetype,
+    ) = readvectorsfromtextfile(filename, debug=debug)
+    if thecolumns is None:
+        thecolumns = []
+        for i in range(thedata.shape[0]):
+            thecolumns.append(f"confound_{str(i).zfill(3)}")
+    theconfounddict = {}
+    for i in range(thedata.shape[0]):
+        theconfounddict[thecolumns[i]] = thedata[i]
+    return theconfounddict
+
+
 def readparfile(filename):
     r"""Checks to see if a file is an FSL style motion parameter file
 
@@ -876,59 +903,6 @@ def readmotion(filename):
     for j in range(0, 6):
         motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]"""
     return motiondict
-
-
-def calcmotregressors(motiondict, start=0, end=-1, position=True, deriv=True, derivdelayed=False):
-    r"""Calculates various motion related timecourses from motion data dict, and returns an array
-
-    Parameters
-    ----------
-    motiondict: dict
-        A dictionary of the 6 motion direction vectors
-
-    Returns
-    -------
-    motionregressors: array
-        All the derivative timecourses to use in a numpy array
-
-    """
-    labels = ["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"]
-    numpoints = len(motiondict[labels[0]])
-    if end == -1:
-        end = numpoints - 1
-    if (0 <= start <= numpoints - 1) and (start < end + 1):
-        numoutputpoints = end - start + 1
-
-    numoutputregressors = 0
-    if position:
-        numoutputregressors += 6
-    if deriv:
-        numoutputregressors += 6
-    if derivdelayed:
-        numoutputregressors += 6
-    if numoutputregressors > 0:
-        outputregressors = np.zeros((numoutputregressors, numoutputpoints), dtype=float)
-    else:
-        print("no output types selected - exiting")
-        sys.exit()
-    activecolumn = 0
-    outlabels = []
-    if position:
-        for thelabel in labels:
-            outputregressors[activecolumn, :] = motiondict[thelabel][start : end + 1]
-            outlabels.append(thelabel)
-            activecolumn += 1
-    if deriv:
-        for thelabel in labels:
-            outputregressors[activecolumn, 1:] = np.diff(motiondict[thelabel][start : end + 1])
-            outlabels.append(thelabel + "_deriv")
-            activecolumn += 1
-    if derivdelayed:
-        for thelabel in labels:
-            outputregressors[activecolumn, 2:] = np.diff(motiondict[thelabel][start : end + 1])[1:]
-            outlabels.append(thelabel + "_delayedderiv")
-            activecolumn += 1
-    return outputregressors, outlabels
 
 
 def sliceinfo(slicetimes, tr):
@@ -1781,13 +1755,13 @@ def colspectolist(colspec, debug=False):
     return unique(sorted(collist))
 
 
-def processnamespec(maskspec, spectext1, spectext2):
+def processnamespec(maskspec, spectext1, spectext2, debug=False):
     thename, colspec = parsefilespec(maskspec)
     if colspec is not None:
         thevals = colspectolist(colspec)
     else:
         thevals = None
-    if thevals is not None:
+    if (thevals is not None) and debug:
         print(spectext1, thename, " = ", thevals, spectext2)
     return thename, thevals
 

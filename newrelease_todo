@@ -7,6 +7,8 @@
 
 + Sync everything to GitHub
 
++ Refresh local installation
+
 + Create a new release
     git tag -a vX.Y.Z -m "vX.Y.Z"
     git push origin vX.Y.Z

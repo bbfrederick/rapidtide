@@ -18,10 +18,5 @@
 #
 import rapidtide.workflows.niftistats
 
-
-def main():
-    rapidtide.workflows.niftistats.niftistats_main(calctype="icc")
-
-
 if __name__ == "__main__":
-    main()
+    rapidtide.workflows.niftistats.niftistats_main(calctype="icc")

@@ -53,6 +53,9 @@ def test_glmpass(debug=True, displayplots=False):
     targetarray, xwaveforms, twaveforms = gen2d(
         xsize=xsize, xcycles=xcycles, tsize=tsize, tcycles=tcycles
     )
+    if debug:
+        print(f"{twaveforms.shape=}")
+        print(f"{xwaveforms.shape=}")
     testarray = targetarray + np.random.random((xsize, tsize)) + mean
     if displayplots:
         plt.figure()
@@ -61,7 +64,7 @@ def test_glmpass(debug=True, displayplots=False):
 
     filtereddata = 0.0 * testarray
     datatoremove = 0.0 * testarray
-    threshval = 0.0
+    threshval = 0.01
     meanvals_t = np.zeros(tsize, dtype=np.float64)
     rvals_t = np.zeros(tsize, dtype=np.float64)
     r2vals_t = np.zeros(tsize, dtype=np.float64)
@@ -74,142 +77,73 @@ def test_glmpass(debug=True, displayplots=False):
     fitcoffs_x = np.zeros(xsize, dtype=np.float64)
     fitNorm_x = np.zeros(xsize, dtype=np.float64)
 
-    # run along spatial direction
-    # no multiproc
-    tide_glmpass.glmpass(
-        xsize,
-        testarray,
-        threshval,
-        twaveforms,
-        meanvals_x,
-        rvals_x,
-        r2vals_x,
-        fitcoffs_x,
-        fitNorm_x,
-        datatoremove,
-        filtereddata,
-        showprogressbar=False,
-        procbyvoxel=True,
-        nprocs=1,
-    )
-    if displayplots:
-        plt.figure()
-        plt.imshow(datatoremove)
-        plt.show()
-        plt.imshow(filtereddata)
-        plt.show()
-    if debug:
-        print("proc by space, single proc:", mse(datatoremove, targetarray))
-    assert mse(datatoremove, targetarray) < 1e-3
+    for confoundglm in [True, False]:
+        if confoundglm:
+            twaveformrange = np.transpose(twaveforms[:6, :])
+            xwaveformrange = xwaveforms[:, :6]
+            print(f"{twaveformrange.shape=} - {xwaveformrange.shape=}")
+        else:
+            twaveformrange = twaveforms
+            xwaveformrange = xwaveforms
+        for procbyvoxel in [True, False]:
+            if procbyvoxel:
+                waveforms = twaveformrange
+                meanvals = meanvals_x
+                rvals = rvals_x
+                r2vals = r2vals_x
+                fitcoffs = fitcoffs_x
+                fitNorm = fitNorm_x
+                direction = "space"
+            else:
+                waveforms = xwaveformrange
+                meanvals = meanvals_t
+                rvals = rvals_t
+                r2vals = r2vals_t
+                fitcoffs = fitcoffs_t
+                fitNorm = fitNorm_t
+                direction = "time"
+            for nprocs in [1, 2]:
+                if nprocs == 1:
+                    procstring = "single"
+                else:
+                    procstring = "multi"
+                for thisthreshval in [threshval, None]:
+                    if thisthreshval is None:
+                        maskstatus = "no mask"
+                    else:
+                        maskstatus = f"threshold={threshval}"
 
-    # multiproc
-    tide_glmpass.glmpass(
-        xsize,
-        testarray,
-        threshval,
-        twaveforms,
-        meanvals_x,
-        rvals_x,
-        r2vals_x,
-        fitcoffs_x,
-        fitNorm_x,
-        datatoremove,
-        filtereddata,
-        showprogressbar=False,
-        procbyvoxel=True,
-        nprocs=2,
-    )
-    if displayplots:
-        plt.figure()
-        plt.imshow(datatoremove)
-        plt.show()
-        plt.imshow(filtereddata)
-        plt.show()
-    if debug:
-        print("proc by space, multi proc:", mse(datatoremove, targetarray))
-    assert mse(datatoremove, targetarray) < 1e-3
-
-    # run along time direction
-    # no multiproc
-    tide_glmpass.glmpass(
-        tsize,
-        testarray,
-        threshval,
-        xwaveforms,
-        meanvals_t,
-        rvals_t,
-        r2vals_t,
-        fitcoffs_t,
-        fitNorm_t,
-        datatoremove,
-        filtereddata,
-        showprogressbar=False,
-        procbyvoxel=False,
-        nprocs=1,
-    )
-    if displayplots:
-        plt.figure()
-        plt.imshow(datatoremove)
-        plt.show()
-        plt.imshow(filtereddata)
-        plt.show()
-    if debug:
-        print("proc by time, single proc:", mse(datatoremove, targetarray))
-    assert mse(datatoremove, targetarray) < 1e-3
-
-    # multiproc
-    tide_glmpass.glmpass(
-        tsize,
-        testarray,
-        threshval,
-        xwaveforms,
-        meanvals_t,
-        rvals_t,
-        r2vals_t,
-        fitcoffs_t,
-        fitNorm_t,
-        datatoremove,
-        filtereddata,
-        showprogressbar=False,
-        procbyvoxel=False,
-        nprocs=2,
-    )
-    if displayplots:
-        plt.figure()
-        plt.imshow(datatoremove)
-        plt.show()
-        plt.imshow(filtereddata)
-        plt.show()
-    if debug:
-        print("proc by time, multi proc:", mse(datatoremove, targetarray))
-    assert mse(datatoremove, targetarray) < 1e-3
-
-    # no mask
-    tide_glmpass.glmpass(
-        tsize,
-        testarray,
-        None,
-        xwaveforms,
-        meanvals_t,
-        rvals_t,
-        r2vals_t,
-        fitcoffs_t,
-        fitNorm_t,
-        datatoremove,
-        filtereddata,
-        showprogressbar=False,
-        procbyvoxel=False,
-        nprocs=1,
-    )
-    if displayplots:
-        plt.figure()
-        plt.imshow(datatoremove)
-        plt.show()
-        plt.imshow(filtereddata)
-        plt.show()
-    if debug:
-        print("proc by time, single proc, no mask:", mse(datatoremove, targetarray))
-    assert mse(datatoremove, targetarray) < 1e-3
+                    if debug:
+                        print(
+                            f"confoundglm={confoundglm}, proc by {direction}, {procstring} proc, {maskstatus}"
+                        )
+                    tide_glmpass.glmpass(
+                        xsize,
+                        testarray,
+                        thisthreshval,
+                        waveforms,
+                        meanvals,
+                        rvals,
+                        r2vals,
+                        fitcoffs,
+                        fitNorm,
+                        datatoremove,
+                        filtereddata,
+                        showprogressbar=False,
+                        procbyvoxel=procbyvoxel,
+                        nprocs=nprocs,
+                        confoundglm=confoundglm,
+                    )
+                    if displayplots:
+                        plt.figure()
+                        plt.imshow(datatoremove)
+                        plt.show()
+                        plt.imshow(filtereddata)
+                        plt.show()
+                    if debug:
+                        print(f"\tMSE: {mse(datatoremove, targetarray)}\n")
+                    if not confoundglm:
+                        assert mse(datatoremove, targetarray) < 1e-3
 
 
 if __name__ == "__main__":

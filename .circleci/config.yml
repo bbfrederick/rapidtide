@@ -139,6 +139,39 @@ jobs:
           paths:
             - "/opt/conda/envs/py311_env"
 
+  build_py311_with_optional:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    resource_class: medium
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-311-{{ checksum "setup.py" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py311_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py311_env
+            else
+                conda create -n py311_env python=3.11 -yq
+                source activate py311_env
+                pip install --upgrade "setuptools>=54"
+                pip install --upgrade pip
+                pip install --upgrade distlib
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-311-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py311_env"
+
   build_py312:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -166,7 +199,6 @@ jobs:
                 pip install --upgrade distlib
                 pip install -e .[tests,doc]
             fi
-            the next line doesn't work because pyfftw and tensorflow don't seem to be compatible
             python setup.py install --user
       - save_cache:  # environment cache tied to requirements
           key: deps2-312-{{ checksum "setup.py" }}
@@ -323,7 +355,7 @@ jobs:
           path: test-results
 
 
-  test_py311:
+  test_py311_with_optional:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -342,6 +374,8 @@ jobs:
             apt-get install -yqq curl gpg 
             source activate py311_env
             pwd
+            pip install --upgrade numba
+            pip install --upgrade pyfftw
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
@@ -506,14 +540,16 @@ workflows:
       - test_py311_with_coverage:
           requires:
             - build_py311
+      - test_py311_with_optional:
+          requires:
+            - build_py311
       - build_docs:
           requires:
             - build_py311
-      # Can't use python 3.12 because there are no valid versions of pyfftw or tensorflow (1/12/24)
-      #- build_py312
-      #- test_py312:
-      #    requires:
-      #      - build_py312
+      - build_py312
+      - test_py312:
+          requires:
+            - build_py312
       #- style_check:
       #    requires:
       #      - build_py311

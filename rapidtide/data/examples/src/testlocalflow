@@ -1,0 +1,31 @@
+#!/bin/bash
+
+localflow \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/fitnooversamp \
+    --oversampfac 1 \
+    --radius 7.0 \
+    --padseconds 0 \
+    --dofit &
+
+#localflow \
+#    sub-RAPIDTIDETEST.nii.gz \
+#    ../dst/fitoversamp \
+#    --oversampfac -1 \
+#    --radius 7.0 \
+#    --padseconds 0 \
+#    --dofit &
+#
+#localflow \
+#    sub-RAPIDTIDETEST.nii.gz \
+#    ../dst/nofitnooversamp \
+#    --oversampfac 1 \
+#    --radius 7.0 \
+#    --padseconds 0 &
+#
+#localflow \
+#    sub-RAPIDTIDETEST.nii.gz \
+#    ../dst/nofitoversamp \
+#    --oversampfac -1 \
+#    --radius 7.0 \
+#    --padseconds 0  &

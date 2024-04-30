@@ -29,6 +29,106 @@ import rapidtide.io as tide_io
 ""
 
 
+def _get_parser():
+    class FullPaths(argparse.Action):
+        """Expand user- and relative-paths"""
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            if values == "":
+                setattr(namespace, self.dest, "__EMPTY__")
+            else:
+                setattr(namespace, self.dest, os.path.abspath(os.path.expanduser(values)))
+
+    def is_file(filename):
+        """Checks if a file exists"""
+        if not os.path.exists(filename):
+            msg = "{0} does not exist".format(filename)
+            raise argparse.ArgumentTypeError(msg)
+        else:
+            return filename
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Align an anatomic image with the preprocessed T1 in an fmriprep derivatives directory.\n"
+            "fmriprep does not align other anatomic images to the T1 by default.  This fixes that.\n"
+        ),
+        formatter_class=RawTextHelpFormatter,
+        allow_abbrev=False,
+    )
+
+    parser.add_argument(
+        "sourceimage",
+        help="cine output file from happy, in tide_io.nifti format",
+        action=FullPaths,
+        type=is_file,
+    )
+
+    parser.add_argument(
+        "--scalefac",
+        help="scale factor to exaggerate motion",
+        type=float,
+        default=20.0,
+    )
+
+    parser.add_argument(
+        "--threads",
+        help="number of threads to use for registration",
+        type=int,
+        default=1,
+    )
+
+    parser.add_argument(
+        "--finaltarget",
+        help="align all output images to this image in the final step",
+        action=FullPaths,
+        type=is_file,
+        default=None,
+    )
+
+    parser.add_argument(
+        "--splinesize",
+        help="spline size in voxels",
+        type=int,
+        default=10,
+    )
+
+    parser.add_argument(
+        "--transformtype",
+        help="Transform type.  Options are\n"
+        "\tr: rigid\n"
+        "\ta: rigid + affine\n"
+        "\ts: rigid + affine + deformable syn\n"
+        "\tb: rigid + affine + deformable b-spline syn\n",
+        default="b",
+    )
+
+    parser.add_argument(
+        "--rescaleonly",
+        help="only perform the warp scaling (assumes a previous full run).",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--redofinalalignment",
+        help="recalculate the transformation between epi and anatomic",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--fake",
+        help="Print what operations will be performed, but don't do them.",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--debug",
+        help="ouput additional debugging information",
+        action="store_true",
+    )
+
+    return parser
+
+
 def filterintime(filelist, extractedfile, workdir, filtcycles, dumpinput=False):
     numpoints = len(filelist)
     filelist = filelist * filtcycles
@@ -226,112 +326,13 @@ def dohappywarp(
 
 
 if __name__ == "__main__":
+    # get the command line parameters
+    try:
+        args = _get_parser().parse_args()
+    except SystemExit:
+        _get_parser().print_help()
+        raise
 
-    class FullPaths(argparse.Action):
-        """Expand user- and relative-paths"""
-
-        def __call__(self, parser, namespace, values, option_string=None):
-            if values == "":
-                setattr(namespace, self.dest, "__EMPTY__")
-            else:
-                setattr(namespace, self.dest, os.path.abspath(os.path.expanduser(values)))
-
-    def is_dir(dirname):
-        """Checks if a path is an actual directory"""
-        if not os.path.isdir(dirname):
-            msg = "{0} is not a directory".format(dirname)
-            raise argparse.ArgumentTypeError(msg)
-        else:
-            return dirname
-
-    def is_file(filename):
-        """Checks if a file exists"""
-        if not os.path.exists(filename):
-            msg = "{0} does not exist".format(filename)
-            raise argparse.ArgumentTypeError(msg)
-        else:
-            return filename
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "Align an anatomic image with the preprocessed T1 in an fmriprep derivatives directory.\n"
-            "fmriprep does not align other anatomic images to the T1 by default.  This fixes that.\n"
-        ),
-        formatter_class=RawTextHelpFormatter,
-        allow_abbrev=False,
-    )
-
-    parser.add_argument(
-        "sourceimage",
-        help="cine output file from happy, in tide_io.nifti format",
-        action=FullPaths,
-        type=is_file,
-    )
-
-    parser.add_argument(
-        "--scalefac",
-        help="scale factor to exaggerate motion",
-        type=float,
-        default=20.0,
-    )
-
-    parser.add_argument(
-        "--threads",
-        help="number of threads to use for registration",
-        type=int,
-        default=1,
-    )
-
-    parser.add_argument(
-        "--finaltarget",
-        help="align all output images to this image in the final step",
-        action=FullPaths,
-        type=is_file,
-        default=None,
-    )
-
-    parser.add_argument(
-        "--splinesize",
-        help="spline size in voxels",
-        type=int,
-        default=10,
-    )
-
-    parser.add_argument(
-        "--transformtype",
-        help="Transform type.  Options are\n"
-        "\tr: rigid\n"
-        "\ta: rigid + affine\n"
-        "\ts: rigid + affine + deformable syn\n"
-        "\tb: rigid + affine + deformable b-spline syn\n",
-        default="b",
-    )
-
-    parser.add_argument(
-        "--rescaleonly",
-        help="only perform the warp scaling (assumes a previous full run).",
-        action="store_true",
-    )
-
-    parser.add_argument(
-        "--redofinalalignment",
-        help="recalculate the transformation between epi and anatomic",
-        action="store_true",
-    )
-
-    parser.add_argument(
-        "--fake",
-        help="Print what operations will be performed, but don't do them.",
-        action="store_true",
-    )
-
-    parser.add_argument(
-        "--debug",
-        help="ouput additional debugging information",
-        action="store_true",
-    )
-
-    args = parser.parse_args()
     if args.debug:
         print(args)
 

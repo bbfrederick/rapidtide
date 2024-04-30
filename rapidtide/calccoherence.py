@@ -17,6 +17,7 @@
 #
 #
 import gc
+import logging
 import warnings
 
 import numpy as np
@@ -25,6 +26,7 @@ from tqdm import tqdm
 import rapidtide.multiproc as tide_multiproc
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
+LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelCoherence(
@@ -154,10 +156,13 @@ def coherencepass(
                 rt_floattype=rt_floattype,
             )
             volumetotal += 1
-    print(f"\nCoherence performed on {volumetotal} voxels")
+    LGR.info(f"\nCoherence performed on {volumetotal} voxels")
 
     # garbage collect
-    collected = gc.collect()
-    print(f"Garbage collector: collected {collected} objects.")
+    uncollected = gc.collect()
+    if uncollected != 0:
+        LGR.info(f"garbage collected - unable to collect {uncollected} objects")
+    else:
+        LGR.info("garbage collected")
 
     return volumetotal

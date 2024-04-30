@@ -19,13 +19,25 @@
 import argparse
 import copy
 import sys
+import warnings
 
 import numpy as np
-import pyfftw
+from numpy.polynomial import Polynomial
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
+from scipy import fftpack
 from sklearn.decomposition import PCA, FastICA
 
-fftpack = pyfftw.interfaces.scipy_fftpack
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 
 
 import rapidtide.filter as tide_filt
@@ -261,7 +273,7 @@ def fdica(
     print(f"shape of detrendedphasedata: {detrendedphasedata.shape}")
     X = np.linspace(lowerbin * hzperpoint, upperbin * hzperpoint, trimmedsize)
     for i in range(numfitvoxels):
-        thecoffs = np.polyfit(X, phasedata[i, :], 1)
+        thecoffs = Polynomial.fit(X, phasedata[i, :], 1).convert().coef[::-1]
         phaseslopes[i], phasemeans[i] = thecoffs
         # detrendedphasedata[i, :] = phasedata[i, :] - tide_fit.trendgen(X, thecoffs, True)
         detrendedphasedata[i, :] = phasedata[i, :] - np.mean(phasedata[i, :])

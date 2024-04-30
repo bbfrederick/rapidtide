@@ -22,6 +22,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
+from numpy.polynomial import Polynomial
 from statsmodels.robust import mad
 
 import rapidtide.correlate as tide_corr
@@ -1098,6 +1099,27 @@ class SimilarityFunctionFitter:
                     maxsigma = np.float64(0.0)
                 if self.debug:
                     print("fit output array:", [maxval, maxlag, maxsigma])
+            elif self.peakfittype == "gausscf":
+                X = self.corrtimeaxis[peakstart : peakend + 1] - baseline
+                data = corrfunc[peakstart : peakend + 1]
+                # do a least squares fit over the top of the peak
+                try:
+                    plsq, pcov = curve_fit(
+                        tide_fit.gaussfunc,
+                        xvals,
+                        yvals,
+                        p0=[maxval_init, maxlag_init, maxsigma_init],
+                    )
+                    maxval = plsq[0] + baseline
+                    maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
+                    maxsigma = plsq[2]
+                except:
+                    maxval = np.float64(0.0)
+                    maxlag = np.float64(0.0)
+                    maxsigma = np.float64(0.0)
+                if self.debug:
+                    print("fit output array:", [maxval, maxlag, maxsigma])
+
             elif self.peakfittype == "fastgauss":
                 X = self.corrtimeaxis[peakstart : peakend + 1] - baseline
                 data = corrfunc[peakstart : peakend + 1]
@@ -1116,7 +1138,7 @@ class SimilarityFunctionFitter:
                 X = self.corrtimeaxis[peakstart : peakend + 1]
                 data = corrfunc[peakstart : peakend + 1]
                 try:
-                    thecoffs = np.polyfit(X, data, 2)
+                    thecoffs = Polynomial.fit(X, data, 2).convert().coef[::-1]
                     a = thecoffs[0]
                     b = thecoffs[1]
                     c = thecoffs[2]

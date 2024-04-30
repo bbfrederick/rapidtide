@@ -220,7 +220,7 @@ def addtagopts(
         "--infotag",
         action="append",
         nargs=2,
-        metavar=("tagname", "tagvalue"),
+        metavar=("tagkey", "tagvalue"),
         help=helptext,
         default=None,
     )
@@ -265,11 +265,13 @@ def addversionopts(parser):
     version_opts.add_argument(
         "--version",
         action="version",
+        help="Show simplified version information and exit",
         version=f"%(prog)s {tide_util.version()[0]}",
     )
     version_opts.add_argument(
         "--detailedversion",
         action="version",
+        help="Show detailed version information and exit",
         version=f"%(prog)s {tide_util.version()}",
     )
 
@@ -500,14 +502,6 @@ def addwindowopts(parser, windowtype=DEFAULT_WINDOWFUNC):
             "Options are hamming, hann, "
             f"blackmanharris, and None. Default is {windowtype}"
         ),
-        default=windowtype,
-    )
-    wfunc.add_argument(
-        "--nowindow",
-        dest="windowfunc",
-        action="store_const",
-        const="None",
-        help="Disable precorrelation windowing.",
         default=windowtype,
     )
     wfunc.add_argument(
@@ -789,6 +783,24 @@ def postprocesstimerangeopts(args):
     else:
         args.endpoint = int(args.timerange[1])
     return args
+
+
+def parserange(timerange, descriptor="timerange", debug=False):
+    if timerange[0] < 0:
+        startpoint = 0
+    else:
+        startpoint = timerange[0]
+    if timerange[1] < 0:
+        endpoint = 100000000
+    else:
+        endpoint = timerange[1]
+    if debug:
+        print("startpoint:", startpoint)
+        print("endpoint:", endpoint)
+        print("timerange:", timerange)
+    if endpoint <= startpoint:
+        raise ValueError(f"{descriptor} startpoint must be < endpoint")
+    return startpoint, endpoint
 
 
 def addsimilarityopts(parser):

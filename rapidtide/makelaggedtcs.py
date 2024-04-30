@@ -16,14 +16,15 @@
 #   limitations under the License.
 #
 #
-import bisect
 import gc
+import logging
 
 import numpy as np
 from tqdm import tqdm
 
-import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
+
+LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelMakelagtc(
@@ -126,10 +127,13 @@ def makelaggedtcs(
                 )
                 volumetotal += 1
 
-    print("\nLagged timecourses created for " + str(volumetotal) + " voxels")
+    LGR.info(f"\nLagged timecourses created for {volumetotal} voxels")
 
     # garbage collect
-    collected = gc.collect()
-    print("Garbage collector: collected %d objects." % collected)
+    uncollected = gc.collect()
+    if uncollected != 0:
+        LGR.info(f"garbage collected - unable to collect {uncollected} objects")
+    else:
+        LGR.info("garbage collected")
 
     return volumetotal

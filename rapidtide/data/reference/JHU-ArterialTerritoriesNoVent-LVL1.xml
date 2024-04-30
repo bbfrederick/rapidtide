@@ -70,7 +70,7 @@
     <label index="1" x="51" y="62" z="59">Anterior cerebral artery left (ACAL)</label>
     <label index="2" x="39" y="60" z="59">Anterior cerebral artery right (ACAR)</label>
     <label index="3" x="49" y="67" z="46">Medial lenticulostriate left (MLSL)</label>
-    <label index="4" x="40" y="68" z="45">Medial lenticulostriate right (MSLR)</label>
+    <label index="4" x="40" y="68" z="45">Medial lenticulostriate right (MLSR)</label>
     <label index="5" x="56" y="63" z="40">Lateral lenticulostriate left (LLSL)</label>
     <label index="6" x="34" y="63" z="40">Lateral lenticulostriate right (LLSR)</label>
     <label index="7" x="61" y="77" z="44">Frontal pars of middle cerebral artery left (MCAFL)</label>

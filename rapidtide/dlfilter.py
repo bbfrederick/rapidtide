@@ -25,6 +25,7 @@ import glob
 import logging
 import os
 import sys
+import time
 import warnings
 
 import matplotlib as mpl
@@ -33,12 +34,20 @@ import numpy as np
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import pyfftw
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
 
-import pyfftw.interfaces.scipy_fftpack as fftpack
+
+from scipy import fftpack
 from statsmodels.robust.scale import mad
 
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 
 import rapidtide.io as tide_io
 

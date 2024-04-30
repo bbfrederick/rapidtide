@@ -25,12 +25,17 @@ import numpy as np
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import pyfftw
+    try:
+        import pyfftw
+    except ImportError:
+        pyfftwpresent = False
+    else:
+        pyfftwpresent = True
 
-import pyfftw.interfaces.scipy_fftpack as fftpack
+
 import scipy as sp
 from numpy.fft import irfftn, rfftn
-from scipy import signal
+from scipy import fftpack, signal
 from sklearn.metrics import mutual_info_score
 
 import rapidtide.correlate as tide_corr
@@ -40,7 +45,9 @@ import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
-pyfftw.interfaces.cache.enable()
+if pyfftwpresent:
+    fftpack = pyfftw.interfaces.scipy_fftpack
+    pyfftw.interfaces.cache.enable()
 LGR = logging.getLogger("GENERAL")
 
 # ---------------------------------------- Global constants -------------------------------------------
@@ -56,9 +63,6 @@ except ImportError:
     donotusenumba = True
 else:
     donotusenumba = False
-
-# hard disable numba, since it is currently broken on arm
-donotusenumba = True
 
 
 def conditionaljit():
@@ -349,7 +353,7 @@ def calc_MI(x, y, bins=50):
     return mi
 
 
-@conditionaljit()
+# @conditionaljit()
 def mutual_info_2d(
     x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6, debug=False
 ):
@@ -435,7 +439,7 @@ def mutual_info_2d(
     return mi
 
 
-@conditionaljit()
+# @conditionaljit
 def cross_mutual_info(
     x,
     y,
