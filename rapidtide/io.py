@@ -671,7 +671,7 @@ def checkspaceresmatch(sizes1, sizes2, tolerance=1.0e-3):
             return True
 
 
-def checkspacedimmatch(dims1, dims2):
+def checkspacedimmatch(dims1, dims2, verbose=False):
     r"""Check the dimension arrays of two nifti files to determine if the cover the same number of voxels in each dimension
 
     Parameters
@@ -688,14 +688,15 @@ def checkspacedimmatch(dims1, dims2):
     """
     for i in range(1, 4):
         if dims1[i] != dims2[i]:
-            print("File spatial voxels do not match")
-            print("dimension ", i, ":", dims1[i], "!=", dims2[i])
+            if verbose:
+                print("File spatial voxels do not match")
+                print("dimension ", i, ":", dims1[i], "!=", dims2[i])
             return False
         else:
             return True
 
 
-def checktimematch(dims1, dims2, numskip1=0, numskip2=0):
+def checktimematch(dims1, dims2, numskip1=0, numskip2=0, verbose=False):
     r"""Check the dimensions of two nifti files to determine if the cover the same number of timepoints
 
     Parameters
@@ -716,20 +717,21 @@ def checktimematch(dims1, dims2, numskip1=0, numskip2=0):
 
     """
     if (dims1[4] - numskip1) != (dims2[4] - numskip2):
-        print("File numbers of timepoints do not match")
-        print(
-            "dimension ",
-            4,
-            ":",
-            dims1[4],
-            "(skip ",
-            numskip1,
-            ") !=",
-            dims2[4],
-            " (skip ",
-            numskip2,
-            ")",
-        )
+        if verbose:
+            print("File numbers of timepoints do not match")
+            print(
+                "dimension ",
+                4,
+                ":",
+                dims1[4],
+                "(skip ",
+                numskip1,
+                ") !=",
+                dims2[4],
+                " (skip ",
+                numskip2,
+                ")",
+            )
         return False
     else:
         return True
