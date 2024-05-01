@@ -434,6 +434,7 @@ class RapidtideDataset:
     "Store all the data associated with a rapidtide dataset"
     focusregressor = None
     regressorfilterlimits = None
+    regressorsimcalclimits = None
     focusmap = None
     dispmaps = None
     allloadedmaps = None
@@ -883,6 +884,8 @@ class RapidtideDataset:
         # load the regressors
         self.regressors = {}
         self.therunoptions = tide_io.readoptionsfile(self.fileroot + "options")
+        if self.verbose > 1:
+            print("regressor similarity calculation limits:", self.regressorsimcalclimits)
         try:
             self.regressorfilterlimits = (
                 float(self.therunoptions["lowerpass"]),
@@ -912,6 +915,13 @@ class RapidtideDataset:
             self.similaritymetric = self.therunoptions["similaritymetric"]
         except KeyError:
             self.similaritymetric = "correlation"
+        try:
+            self.regressorsimcalclimits = (
+                float((1.0 / self.fmrifreq) * self.therunoptions["validsimcalcstart"]),
+                float((1.0 / self.fmrifreq) * self.therunoptions["validsimcalcend"]),
+            )
+        except KeyError:
+            self.regressorsimcalclimits = (0.0, 10000000.0)
         try:
             self.numberofpasses = int(self.therunoptions["actual_passes"])
         except KeyError:

@@ -228,6 +228,7 @@ def qualitycheck(
     # put in some basic information
     outputdict["passes"] = thedataset.numberofpasses
     outputdict["filterlimits"] = thedataset.regressorfilterlimits
+    outputdict["simcalclimits"] = thedataset.regressorsimcalclimits
 
     # process the masks
     outputdict["mask"] = {}

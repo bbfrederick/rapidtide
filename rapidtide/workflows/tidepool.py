@@ -636,6 +636,20 @@ def updateRegressor():
         text = pg.TextItem(text=thelabel, anchor=(0.0, 2.0), angle=0, fill=(0, 0, 0, 100))
         # regressor_ax.addItem(text)
 
+        # add in calculation limits
+        regressorsimcalclimits = currentdataset.regressorsimcalclimits
+        tctop = 1.25 * np.max(regressors[focusregressor].timedata)
+        tcbottom = 1.25 * np.min(regressors[focusregressor].timedata)
+        lowerlim = regressorsimcalclimits[0]
+        if regressorsimcalclimits[1] == -1:
+            upperlim = regressors[focusregressor].timeaxis[-1]
+        else:
+            upperlim = regressorsimcalclimits[1]
+        bottomleft = [lowerlim, tcbottom]
+        size = [upperlim - lowerlim, tctop - tcbottom]
+        therectangle = RectangleItem(bottomleft, size)
+        regressor_ax.addItem(therectangle)
+
 
 def updateRegressorSpectrum():
     global regressorspectrum_ax, liveplots, currentdataset
@@ -1354,7 +1368,7 @@ def tidepool(args):
     global focusmap, bgmap
     global maps
     global roi
-    global overlays, regressors, regressorfilterlimits, loadedfuncmaps, atlasstats, averagingmode
+    global overlays, regressors, regressorfilterlimits, regressorsimcalclimits, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimages, overlaybuttons, panetomap
     global img_colorbar, LUT_alpha, LUT_endalpha
     global lg_imgsize, scalefacx, scalefacy, scalefacz
