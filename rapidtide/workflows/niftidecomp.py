@@ -300,6 +300,7 @@ def niftidecomp_workflow(
             )
 
         # stash the eigenvalues
+        exp_var = thefit.explained_variance_
         exp_var_pct = 100.0 * thefit.explained_variance_ratio_
 
         if decompaxis == "temporal":
@@ -395,7 +396,12 @@ def main(decompaxis, args):
     )
 
     # save the eigenvalues
-    print("variance explained by component:", exp_var_pct)
+    print("variance explained by component:", exp_var)
+    tide_io.writenpvecs(
+        exp_var,
+        args["outputroot"] + "_explained_variance.txt",
+    )
+    print("percentage variance explained by component:", exp_var_pct)
     tide_io.writenpvecs(
         exp_var_pct,
         args["outputroot"] + "_explained_variance_pct.txt",
