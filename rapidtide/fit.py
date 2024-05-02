@@ -1131,7 +1131,8 @@ def mlregress(x, y, intercept=True):
     If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
     """
 
-    warnings.filterwarnings("ignore", "invalid*")
+    if donotusenumba:
+        warnings.filterwarnings("ignore", "invalid*")
     y = np.atleast_1d(y)
     n = y.shape[0]
 
