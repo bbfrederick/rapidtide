@@ -1788,8 +1788,8 @@ def process_args(inputargs=None):
 
     # motion processing
     if args["motionfilespec"] is not None:
-        (args["motionfilename"], args["motionfilevals"]) = tide_io.processnamespec(
-            args["motionfilespec"], "Using columns in ", "as motion regressors."
+        (args["motionfilename"], args["motionfilevals"]) = tide_io.parsefilespec(
+            args["motionfilespec"]
         )
     else:
         args["motionfilename"] = None
