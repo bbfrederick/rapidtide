@@ -799,7 +799,7 @@ def readparfile(filename):
     return motiondict
 
 
-def readmotion(filename):
+def readmotion(filename, colspec=None):
     r"""Reads motion regressors from filename (from the columns specified in colspec, if given)
 
     Parameters
@@ -893,17 +893,50 @@ def readmotion(filename):
             ]
         )
     else:
-        print("cannot read files with extension", extension)
-        sys.exit()
-    """
-    motionlen = motiondict['xtrans'].shape[0]
-    motiontimeseries = readvecs(filename, colspec=colspec)
-    if motiontimeseries.shape[0] != 6:
-        print('readmotion: expect 6 motion regressors', motiontimeseries.shape[0], 'given')
-        sys.exit()
-    motiondict = {}
-    for j in range(0, 6):
-        motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]"""
+        # handle weird files gracefully
+        allmotion = readvecs(filename, colspec=colspec, debug=debug)
+        if allmotion.shape[0] != 6:
+            print(
+                "motion files without a .par or .tsv extension must either have 6 columns or have 6 columns specified"
+            )
+            sys.exit()
+        # we are going to assume the columns are in FSL order, not that it really matters
+        motiondict = {}
+        motiondict["xtrans"] = allmotion[3, :] * 1.0
+        motiondict["ytrans"] = allmotion[4, :] * 1.0
+        motiondict["ztrans"] = allmotion[5, :] * 1.0
+        motiondict["maxtrans"] = np.max(
+            [
+                np.max(motiondict["xtrans"]),
+                np.max(motiondict["ytrans"]),
+                np.max(motiondict["ztrans"]),
+            ]
+        )
+        motiondict["mintrans"] = np.min(
+            [
+                np.min(motiondict["xtrans"]),
+                np.min(motiondict["ytrans"]),
+                np.min(motiondict["ztrans"]),
+            ]
+        )
+        motiondict["xrot"] = allmotion[0, :] * 1.0
+        motiondict["yrot"] = allmotion[1, :] * 1.0
+        motiondict["zrot"] = allmotion[2, :] * 1.0
+        motiondict["maxrot"] = np.max(
+            [
+                np.max(motiondict["xrot"]),
+                np.max(motiondict["yrot"]),
+                np.max(motiondict["zrot"]),
+            ]
+        )
+        motiondict["minrot"] = np.min(
+            [
+                np.min(motiondict["xrot"]),
+                np.min(motiondict["yrot"]),
+                np.min(motiondict["zrot"]),
+            ]
+        )
+
     return motiondict
 
 
