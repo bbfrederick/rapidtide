@@ -894,7 +894,7 @@ def readmotion(filename, colspec=None):
         )
     else:
         # handle weird files gracefully
-        allmotion = readvecs(filename, colspec=colspec, debug=debug)
+        allmotion = readvecs(filename, colspec=colspec)
         if allmotion.shape[0] != 6:
             print(
                 "motion files without a .par or .tsv extension must either have 6 columns or have 6 columns specified"
