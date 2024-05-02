@@ -768,7 +768,7 @@ def rapidtide_main(argparsingfunc):
         LGR.info("preparing motion regressors")
         TimingLGR.verbose("Motion filtering start")
         motionregressors, motionregressorlabels = tide_fit.calcexpandedregressors(
-            tide_io.readmotion(optiondict["motionfilename"], colspec=args["motionfilevals"]),
+            tide_io.readmotion(optiondict["motionfilename"], colspec=optiondict["motionfilevals"]),
             labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
             deriv=optiondict["mot_deriv"],
             order=1,
