@@ -1105,6 +1105,7 @@ def mlproject(thefit, theevs, intercept):
 
 
 ### I don't remember where this came from.  Need to check license
+@conditionaljit()
 def mlregress(x, y, intercept=True):
     """
 
