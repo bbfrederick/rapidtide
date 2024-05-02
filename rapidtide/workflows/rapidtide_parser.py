@@ -1788,7 +1788,7 @@ def process_args(inputargs=None):
 
     # motion processing
     if args["motionfilespec"] is not None:
-        (args["motionfilename"], args["motionfilevals"]) = tide_io.parsefilespec(
+        (args["motionfilename"], args["motionfilecolspec"]) = tide_io.parsefilespec(
             args["motionfilespec"]
         )
     else:
