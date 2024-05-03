@@ -10,7 +10,7 @@ mamba update \
     scikit-image \
     nibabel \
     nilearn \
-    pyfftw \
+    numba \
     pywavelets \
     pyqt \
     pyqt5-sip \
