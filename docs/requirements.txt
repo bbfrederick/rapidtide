@@ -236,7 +236,7 @@ threadpoolctl==3.2.0
     # via scikit-learn
 tifffile==2023.7.18
     # via scikit-image
-tqdm==4.66.1
+tqdm==4.66.3
     # via rapidtide (setup.py)
 tzdata==2023.3
     # via pandas
