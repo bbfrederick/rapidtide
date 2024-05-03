@@ -1105,18 +1105,7 @@ def mlproject(thefit, theevs, intercept):
     return thedest
 
 
-def mlregress_alt(X, y, intercept=True):
-    reg = LinearRegression(fit_intercept=intercept)
-    reg.fit(X, y)
-    coffs = reg.coef_
-    theintercept = reg.intercept_
-    R = reg.score(X, y)
-    coffs = np.insert(coffs, 0, theintercept, axis=0)
-    return np.asmatrix(coffs), R
-
-
-### I don't remember where this came from.  Need to check license
-def mlregress(x, y, intercept=True):
+def mlregress(X, y, intercept=True, debug=False):
     """
 
     Parameters
@@ -1140,13 +1129,72 @@ def mlregress(x, y, intercept=True):
 
     If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
     """
+    if debug:
+        print(f"mlregress initial: {X.shape=}, {y.shape=}")
+    y = np.atleast_1d(y)
+    n = y.shape[0]
 
+    X = np.atleast_2d(X)
+    nx, p = X.shape
+
+    if debug:
+        print(f"mlregress: {n=}, {p=}, {nx=}")
+
+    if nx != n:
+        X = X.transpose()
+        nx, p = X.shape
+        if nx != n:
+            raise AttributeError(
+                "X and y must have have the same number of samples (%d and %d)" % (nx, n)
+            )
+    if debug:
+        print(f"mlregress final: {X.shape=}, {y.shape=}")
+
+    reg = LinearRegression(fit_intercept=intercept)
+    reg.fit(X, y)
+    coffs = reg.coef_
+    theintercept = reg.intercept_
+    R = reg.score(X, y)
+    coffs = np.insert(coffs, 0, theintercept, axis=0)
+    return np.asmatrix(coffs), R
+
+
+### I don't remember where this came from.  Need to check license
+def mlregress_old(x, y, intercept=True, debug=False):
+    """
+
+    Parameters
+    ----------
+    x
+    y
+    intercept
+
+    Returns
+    -------
+
+    """
+    """Return the coefficients from a multiple linear regression, along with R, the coefficient of determination.
+
+    x: The independent variables (pxn or nxp).
+    y: The dependent variable (1xn or nx1).
+    intercept: Specifies whether or not the slope intercept should be considered.
+
+    The routine computes the coefficients (b_0, b_1, ..., b_p) from the data (x,y) under
+    the assumption that y = b0 + b_1 * x_1 + b_2 * x_2 + ... + b_p * x_p.
+
+    If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
+    """
+    if debug:
+        print(f"mlregress initial: {x.shape=}, {y.shape=}")
     warnings.filterwarnings("ignore", "invalid*")
     y = np.atleast_1d(y)
     n = y.shape[0]
 
     x = np.atleast_2d(x)
     p, nx = x.shape
+
+    if debug:
+        print(f"mlregress: {n=}, {p=}, {nx=}")
 
     if nx != n:
         x = x.transpose()
@@ -1155,6 +1203,8 @@ def mlregress(x, y, intercept=True):
             raise AttributeError(
                 "x and y must have have the same number of samples (%d and %d)" % (nx, n)
             )
+    if debug:
+        print(f"mlregress final: {x.shape=}, {y.shape=}")
 
     if intercept is True:
         xc = np.vstack((np.ones(n), x))
@@ -1347,7 +1397,7 @@ def expandedglmfilt(thedata, theevs, ncomps=1, debug=False):
     return filtered, thenewevs, datatoremove, R, coffs
 
 
-def glmfilt(thedata, theevs, debug=False):
+def glmfilt(thedata, theevs, returnintercept=False, debug=False):
     r"""Performs a glm fit of thedata using the vectors in theevs
     and returns the result.
 
@@ -1369,7 +1419,7 @@ def glmfilt(thedata, theevs, debug=False):
     if debug:
         print(f"{thedata.shape=}")
         print(f"{theevs.shape=}")
-    thefit, R = mlregress(theevs, thedata)
+    thefit, R = mlregress(theevs, thedata, debug=debug)
     retcoffs = np.zeros((thefit.shape[1] - 1), dtype=float)
     if debug:
         print(f"{thefit.shape=}")
@@ -1382,6 +1432,7 @@ def glmfilt(thedata, theevs, debug=False):
         for ev in range(1, thefit.shape[1]):
             if debug:
                 print(f"{ev=}")
+            theintercept = thefit[0, 0]
             retcoffs[ev - 1] = thefit[0, ev]
             datatoremove += thefit[0, ev] * theevs[:, ev - 1]
             if debug:
@@ -1394,7 +1445,10 @@ def glmfilt(thedata, theevs, debug=False):
     filtered = thedata - datatoremove
     if debug:
         print(f"{retcoffs=}")
-    return filtered, datatoremove, R, retcoffs
+    if returnintercept:
+        return filtered, datatoremove, R, retcoffs, theintercept
+    else:
+        return filtered, datatoremove, R, retcoffs
 
 
 def confoundglm(
