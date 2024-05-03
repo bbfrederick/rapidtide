@@ -28,6 +28,7 @@ from numpy.polynomial import Polynomial
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks, hilbert
 from scipy.stats import entropy, moment
+from sklearn.linear_model import LinearRegression
 from statsmodels.robust import mad
 
 import rapidtide.util as tide_util
@@ -1104,8 +1105,17 @@ def mlproject(thefit, theevs, intercept):
     return thedest
 
 
+def mlregress_alt(X, y, intercept=True):
+    reg = LinearRegression(fit_intercept=intercept)
+    reg.fit(X, y)
+    coffs = reg.coef_
+    theintercept = reg.intercept_
+    R = reg.score(X, y)
+    coffs = np.insert(coffs, 0, theintercept, axis=0)
+    return np.asmatrix(coffs), R
+
+
 ### I don't remember where this came from.  Need to check license
-@conditionaljit()
 def mlregress(x, y, intercept=True):
     """
 
@@ -1131,8 +1141,7 @@ def mlregress(x, y, intercept=True):
     If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
     """
 
-    if donotusenumba:
-        warnings.filterwarnings("ignore", "invalid*")
+    warnings.filterwarnings("ignore", "invalid*")
     y = np.atleast_1d(y)
     n = y.shape[0]
 
