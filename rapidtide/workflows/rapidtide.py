@@ -40,7 +40,6 @@ import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.glmfrommaps as tide_glmfrommaps
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
@@ -55,6 +54,7 @@ import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.wiener as tide_wiener
+import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
 from rapidtide.tests.utils import mse
 
 from .utils import setup_logger
@@ -2930,125 +2930,116 @@ def rapidtide_main(argparsingfunc):
     # write out the current version of the run options
     optiondict["currentstage"] = "preglm"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
-    if not optiondict["externalglm"]:
-        if optiondict["doglmfilt"] or optiondict["docvrmap"]:
-            if optiondict["doglmfilt"]:
-                TimingLGR.info("GLM filtering start")
-                LGR.info("\n\nGLM filtering")
+    if optiondict["doglmfilt"] or optiondict["docvrmap"]:
+        if optiondict["doglmfilt"]:
+            TimingLGR.info("GLM filtering start")
+            LGR.info("\n\nGLM filtering")
+        else:
+            TimingLGR.info("CVR map generation start")
+            LGR.info("\n\nCVR mapping")
+        if (
+            (optiondict["gausssigma"] > 0.0)
+            or (optiondict["glmsourcefile"] is not None)
+            or optiondict["docvrmap"]
+        ):
+            if optiondict["glmsourcefile"] is not None:
+                LGR.info(f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait")
+                sourcename = optiondict["glmsourcefile"]
             else:
-                TimingLGR.info("CVR map generation start")
-                LGR.info("\n\nCVR mapping")
-            if (
-                (optiondict["gausssigma"] > 0.0)
-                or (optiondict["glmsourcefile"] is not None)
-                or optiondict["docvrmap"]
-            ):
-                if optiondict["glmsourcefile"] is not None:
-                    LGR.info(
-                        f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait"
-                    )
-                    sourcename = optiondict["glmsourcefile"]
+                LGR.info(f"rereading {fmrifilename} for GLM filter, please wait")
+                sourcename = fmrifilename
+            if fileiscifti:
+                LGR.info("input file is CIFTI")
+                (
+                    cifti,
+                    cifti_hdr,
+                    nim_data,
+                    nim_hdr,
+                    thedims,
+                    thesizes,
+                    dummy,
+                ) = tide_io.readfromcifti(sourcename)
+            else:
+                if optiondict["textio"]:
+                    nim_data = tide_io.readvecs(sourcename)
                 else:
-                    LGR.info(f"rereading {fmrifilename} for GLM filter, please wait")
-                    sourcename = fmrifilename
-                if fileiscifti:
-                    LGR.info("input file is CIFTI")
-                    (
-                        cifti,
-                        cifti_hdr,
-                        nim_data,
-                        nim_hdr,
-                        thedims,
-                        thesizes,
-                        dummy,
-                    ) = tide_io.readfromcifti(sourcename)
-                else:
-                    if optiondict["textio"]:
-                        nim_data = tide_io.readvecs(sourcename)
-                    else:
-                        nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(
-                            sourcename
-                        )
+                    nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(sourcename)
 
-                fmri_data_valid = (
-                    nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
-                )[validvoxels, :] + 0.0
+            fmri_data_valid = (
+                nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
+            )[validvoxels, :] + 0.0
 
-                if optiondict["docvrmap"]:
-                    # percent normalize the fmri data
-                    LGR.info("normalzing data for CVR map")
-                    themean = np.mean(fmri_data_valid, axis=1)
-                    fmri_data_valid /= themean[:, None]
+            if optiondict["docvrmap"]:
+                # percent normalize the fmri data
+                LGR.info("normalzing data for CVR map")
+                themean = np.mean(fmri_data_valid, axis=1)
+                fmri_data_valid /= themean[:, None]
 
-                if optiondict["preservefiltering"]:
-                    LGR.info("reapplying temporal filters...")
-                    LGR.info(f"fmri_data_valid.shape: {fmri_data_valid.shape}")
-                    for i in range(len(validvoxels)):
-                        filteredtc = theprefilter.apply(
-                            optiondict["fmrifreq"], fmri_data_valid[i, :] + 0.0
-                        )
-                        fmri_data_valid[i, :] = filteredtc + 0.0
-                    LGR.info("...done")
-
-                # move fmri_data_valid into shared memory
-                if optiondict["sharedmem"]:
-                    LGR.info("moving fmri data to shared memory")
-                    TimingLGR.info("Start moving fmri_data to shared memory")
-                    numpy2shared_func = addmemprofiling(
-                        tide_util.numpy2shared,
-                        optiondict["memprofile"],
-                        "before movetoshared (glm)",
+            if optiondict["preservefiltering"]:
+                LGR.info("reapplying temporal filters...")
+                LGR.info(f"fmri_data_valid.shape: {fmri_data_valid.shape}")
+                for i in range(len(validvoxels)):
+                    filteredtc = theprefilter.apply(
+                        optiondict["fmrifreq"], fmri_data_valid[i, :] + 0.0
                     )
-                    fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
-                    TimingLGR.info("End moving fmri_data to shared memory")
-                del nim_data
+                    fmri_data_valid[i, :] = filteredtc + 0.0
+                LGR.info("...done")
 
-            # now allocate the arrays needed for GLM filtering
-            internalvalidspaceshapederivs = (
-                internalvalidspaceshape,
-                optiondict["glmderivs"] + 1,
-            )
+            # move fmri_data_valid into shared memory
             if optiondict["sharedmem"]:
-                glmmean, dummy, dummy = tide_util.allocshared(
-                    internalvalidspaceshape, rt_outfloatset
+                LGR.info("moving fmri data to shared memory")
+                TimingLGR.info("Start moving fmri_data to shared memory")
+                numpy2shared_func = addmemprofiling(
+                    tide_util.numpy2shared,
+                    optiondict["memprofile"],
+                    "before movetoshared (glm)",
                 )
-                rvalue, dummy, dummy = tide_util.allocshared(
-                    internalvalidspaceshape, rt_outfloatset
-                )
-                r2value, dummy, dummy = tide_util.allocshared(
-                    internalvalidspaceshape, rt_outfloatset
-                )
-                fitNorm, dummy, dummy = tide_util.allocshared(
-                    internalvalidspaceshapederivs, rt_outfloatset
-                )
-                fitcoeff, dummy, dummy = tide_util.allocshared(
-                    internalvalidspaceshapederivs, rt_outfloatset
-                )
-                movingsignal, dummy, dummy = tide_util.allocshared(
-                    internalvalidfmrishape, rt_outfloatset
-                )
-                lagtc, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
-                filtereddata, dummy, dummy = tide_util.allocshared(
-                    internalvalidfmrishape, rt_outfloatset
-                )
-            else:
-                glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-                rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-                r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-                fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-                fitcoeff = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-                movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-                lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-                filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+                fmri_data_valid = numpy2shared_func(fmri_data_valid, rt_floatset)
+                TimingLGR.info("End moving fmri_data to shared memory")
+            del nim_data
 
-            if optiondict["memprofile"]:
-                if optiondict["doglmfilt"]:
-                    memcheckpoint("about to start glm noise removal...")
-                else:
-                    memcheckpoint("about to start CVR magnitude estimation...")
-            else:
-                tide_util.logmem("before glm")
+        # now allocate the arrays needed for GLM filtering
+        internalvalidspaceshapederivs = (
+            internalvalidspaceshape,
+            optiondict["glmderivs"] + 1,
+        )
+        if optiondict["sharedmem"]:
+            glmmean, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
+            rvalue, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
+            r2value, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
+            fitNorm, dummy, dummy = tide_util.allocshared(
+                internalvalidspaceshapederivs, rt_outfloatset
+            )
+            fitcoeff, dummy, dummy = tide_util.allocshared(
+                internalvalidspaceshapederivs, rt_outfloatset
+            )
+            movingsignal, dummy, dummy = tide_util.allocshared(
+                internalvalidfmrishape, rt_outfloatset
+            )
+            lagtc, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
+            filtereddata, dummy, dummy = tide_util.allocshared(
+                internalvalidfmrishape, rt_outfloatset
+            )
+        else:
+            glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
+            fitcoeff = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
+            movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+            lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
+            filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
 
+        if optiondict["memprofile"]:
+            if optiondict["doglmfilt"]:
+                memcheckpoint("about to start glm noise removal...")
+            else:
+                memcheckpoint("about to start CVR magnitude estimation...")
+        else:
+            tide_util.logmem("before glm")
+
+        if not optiondict["externalglm"]:
+            # begin parsed section
             # generate the voxel specific regressors
             LGR.info("Start lagged timecourse creation")
             TimingLGR.info("Start lagged timecourse creation")
@@ -3140,12 +3131,14 @@ def rapidtide_main(argparsingfunc):
                 columns=[f"removedbyglm"],
                 append=False,
             )
+            # end parsed section
         else:
             if optiondict["doglmfilt"]:
                 mode = "glm"
             else:
                 mode = "cvrmap"
-            (
+            voxelsprocessed_glm = tide_glmfrommaps.glmfrommaps(
+                fmri_data_valid,
                 glmmean,
                 rvalue,
                 r2value,
@@ -3154,9 +3147,6 @@ def rapidtide_main(argparsingfunc):
                 movingsignal,
                 lagtc,
                 filtereddata,
-                finalvariance,
-            ) = tide_glmfrommaps.glmfrommaps(
-                fmrifilename,
                 theprefilter,
                 lagtimes,
                 fitmask,
@@ -3167,26 +3157,15 @@ def rapidtide_main(argparsingfunc):
                 oversamptr,
                 LGR,
                 TimingLGR,
-                fileiscifti,
-                textio,
-                numspatiallocs,
-                timepoints,
-                validstart,
-                validend,
                 validvoxels,
-                internalvalidspaceshape,
-                internalvalidfmrishape,
                 initial_fmri_x,
                 threshval,
-                gausssigma=optiondict["gausssigma"],
                 nprocs=optiondict["nprocs_glm"],
                 glmderivs=optiondict["glmderivs"],
                 mp_chunksize=optiondict["mp_chunksize"],
                 showprogressbar=optiondict["showprogressbar"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
                 memprofile=optiondict["memprofile"],
-                usesharedmem=optiondict["sharedmem"],
-                glmsourcefile=optiondict["glmsourcefile"],
             )
 
         # calculate the final bandlimited mean normalized variance
@@ -3388,8 +3367,10 @@ def rapidtide_main(argparsingfunc):
                 memcheckpoint(f"about to write {mapname}")
             else:
                 tide_util.logmem(f"about to write {mapname}")
+            if optiondict["externalglm"]:
+                print(f"saving {mapname} with dimensions {eval(mapname[:]).shape}")
             outmaparray[:] = 0.0
-            outmaparray[validvoxels] = eval(mapname)[:]
+            outmaparray[validvoxels] = (eval(mapname)[:]).reshape((numvalidspatiallocs))
             if optiondict["textio"]:
                 tide_io.writenpvecs(
                     outmaparray.reshape(nativespaceshape),

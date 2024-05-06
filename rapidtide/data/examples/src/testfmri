@@ -11,11 +11,20 @@
 #
 rapidtide \
     --nprocs -1 \
-    --motionfile fakemotion.txt \
     --passes 3 \
-    --confoundpowers 2 \
+    --refinetype unweighted_average \
+    --numnull 0 \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_6nospec_2power_oldmlregress
+    ../dst/sub-RAPIDTIDETEST_oldglm
+
+rapidtide \
+    --nprocs -1 \
+    --passes 3 \
+    --externalglm \
+    --refinetype unweighted_average \
+    --numnull 0 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_newglm
 
 #rapidtide \
 #    --nprocs -1 \

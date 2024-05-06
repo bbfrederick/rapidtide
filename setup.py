@@ -73,6 +73,7 @@ modules_list = [
     "rapidtide/workflows/filttc",
     "rapidtide/workflows/fingerprint",
     "rapidtide/workflows/glmfilt",
+    "rapidtide/workflows/glmfrommaps",
     "rapidtide/workflows/gmscalc",
     "rapidtide/workflows/happy",
     "rapidtide/workflows/happy2std",
