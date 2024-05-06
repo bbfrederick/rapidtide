@@ -463,6 +463,7 @@ class RapidtideDataset:
         userise=False,
         usecorrout=False,
         useatlas=False,
+        minimal=False,
         forcetr=False,
         forceoffset=False,
         coordinatespace="unspecified",
