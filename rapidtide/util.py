@@ -18,6 +18,7 @@
 #
 import bisect
 import logging
+import multiprocessing as mp
 import os
 import platform
 import resource
@@ -999,3 +1000,32 @@ def comparehappyruns(root1, root2, debug=False):
             print("done processing", timecourse)
 
     return results
+
+
+# shared memory routines
+def numpy2shared(inarray, thetype):
+    thesize = inarray.size
+    theshape = inarray.shape
+    if thetype == np.float64:
+        inarray_shared = mp.RawArray("d", inarray.reshape(thesize))
+    else:
+        inarray_shared = mp.RawArray("f", inarray.reshape(thesize))
+    inarray = np.frombuffer(inarray_shared, dtype=thetype, count=thesize)
+    inarray.shape = theshape
+    return inarray
+
+
+def allocshared(theshape, thetype):
+    thesize = int(1)
+    if not isinstance(theshape, (list, tuple)):
+        thesize = theshape
+    else:
+        for element in theshape:
+            thesize *= int(element)
+    if thetype == np.float64:
+        outarray_shared = mp.RawArray("d", thesize)
+    else:
+        outarray_shared = mp.RawArray("f", thesize)
+    outarray = np.frombuffer(outarray_shared, dtype=thetype, count=thesize)
+    outarray.shape = theshape
+    return outarray, outarray_shared, theshape

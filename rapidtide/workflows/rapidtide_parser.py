@@ -1392,6 +1392,13 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
+        "--externalglm",
+        dest="externalglm",
+        action="store_true",
+        help=("Use the independent, factored out GLM routine."),
+        default=False,
+    )
+    experimental.add_argument(
         "--tmask",
         dest="tmaskname",
         action="store",
