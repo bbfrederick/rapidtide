@@ -12,14 +12,6 @@
 rapidtide \
     --nprocs -1 \
     --passes 3 \
-    --refinetype unweighted_average \
-    --numnull 0 \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_oldglm
-
-rapidtide \
-    --nprocs -1 \
-    --passes 3 \
     --externalglm \
     --refinetype unweighted_average \
     --numnull 0 \

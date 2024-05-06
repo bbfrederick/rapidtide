@@ -1,0 +1,3 @@
+#!/bin/bash
+
+retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST_newglm --verbose
