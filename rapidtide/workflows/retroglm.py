@@ -17,16 +17,21 @@
 #
 #
 import argparse
+import copy
+import logging
+import os
+import sys
 
 import numpy as np
 
+import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
-from rapidtide.workflows.parser_funcs import is_valid_file
-import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
-from rapidtide.RapidtideDataset import RapidtideDataset
-import rapidtide.util as tide_util
+import rapidtide.miscmath as tide_math
+import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
-import logging
+import rapidtide.util as tide_util
+import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
+import rapidtide.workflows.parser_funcs as pf
 
 LGR = logging.getLogger("GENERAL")
 ErrorLGR = logging.getLogger("ERROR")
@@ -48,7 +53,7 @@ def _get_parser():
     # Required arguments
     parser.add_argument(
         "fmrifile",
-        type=lambda x: is_valid_file(parser, x),
+        type=lambda x: pf.is_valid_file(parser, x),
         help="The name of 4D nifti fmri file to filter.",
     )
     parser.add_argument(
@@ -104,8 +109,8 @@ def _get_parser():
         default=True,
     )
     parser.add_argument(
-        "--verbose",
-        dest="verbose",
+        "--debug",
+        dest="debug",
         action="store_true",
         help=("Output lots of helpful information."),
         default=False,
@@ -119,20 +124,56 @@ def retroglm(args):
     rt_outfloatset = np.float64
     rt_outfloattype = "float64"
 
+    thecommandline = " ".join(sys.argv[1:])
+
+    if args.nprocs < 1:
+        args.nprocs = tide_multiproc.maxcpus()
     # don't use shared memory if there is only one process
     if args.nprocs == 1:
         usesharedmem = False
     else:
         usesharedmem = True
 
-    # read the datafile and the evfiles
-    nim_input, fmri_data, nim_header, thedims_in, thesizes_in = tide_io.readfromnifti(
+    # read the necessary input files
+    print("reading fmrifile")
+    fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
         args.fmrifile
     )
-    xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(thesizes_in)
-    print(xdim, ydim, slicedim, fmritr)
-    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims_in)
-    print(xsize, ysize, numslices, timepoints)
+    print(f"{fmri_data.shape=}")
+    xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(fmri_sizes)
+    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(fmri_dims)
+    numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+    fmri_data_spacebytime = fmri_data.reshape((numspatiallocs, timepoints))
+    print(f"{fmri_data_spacebytime.shape=}")
+
+    # read the runoptions file
+    print("reading runoptions")
+    runoptionsfile = f"{args.datafileroot}_options"
+    therunoptions = tide_io.readoptionsfile(runoptionsfile)
+
+    print("reading maskfile")
+    maskfile = f"{args.datafileroot}_desc-processed_mask.nii.gz"
+    mask_input, lagmask, mask_header, mask_dims, mask_sizes = tide_io.readfromnifti(maskfile)
+    if not tide_io.checkspacematch(fmri_header, mask_header):
+        raise ValueError("mask dimensions do not match fmri dimensions")
+    lagmask_spacebytime = lagmask.reshape((numspatiallocs))
+    print(f"{lagmask_spacebytime.shape=}")
+
+    print("reading lagtimes")
+    lagtimesfile = f"{args.datafileroot}_desc-maxcorr_map.nii.gz"
+    (
+        lagtimes_input,
+        lagtimes,
+        lagtimes_header,
+        lagtimes_dims,
+        lagtimes_sizes,
+    ) = tide_io.readfromnifti(lagtimesfile)
+    if not tide_io.checkspacematch(fmri_header, lagtimes_header):
+        raise ValueError("lagtimes dimensions do not match fmri dimensions")
+    print(f"{lagtimes.shape=}")
+    lagtimes_spacebytime = lagtimes.reshape((numspatiallocs))
+    print(f"{lagtimes_spacebytime.shape=}")
+
     startpt = args.numskip
     endpt = timepoints - 1
     validtimepoints = endpt - startpt + 1
@@ -141,33 +182,55 @@ def retroglm(args):
         np.linspace(0.0, validtimepoints * fmritr, num=validtimepoints, endpoint=False) + skiptime
     )
 
-    inputdataset = RapidtideDataset(
-        "main",
-        args.datafileroot + "_",
-        verbose=args.verbose,
-        init_LUT=False,
-    )
-
-    # get the fitmask and make sure the dimensions match
-    fitmask = (inputdataset.overlays["lagmask"]).data
-    maskshape = fitmask.shape
-    if (maskshape[0] != xsize) or (maskshape[1] != ysize) or (maskshape[2] != numslices):
-        raise ValueError(
-            f"fmri data {xsize, ysize, numslices}does not have the dimensions of rapidtide dataset {maskshape}"
+    if therunoptions["arbvec"] is not None:
+        # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
+        # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
+        theprefilter = tide_filt.NoncausalFilter(
+            "arb",
+            transferfunc=therunoptions["filtertype"],
+        )
+        theprefilter.setfreqs(
+            therunoptions["arbvec"][2],
+            therunoptions["arbvec"][0],
+            therunoptions["arbvec"][1],
+            therunoptions["arbvec"][3],
+        )
+    else:
+        theprefilter = tide_filt.NoncausalFilter(
+            therunoptions["filterband"],
+            transferfunc=therunoptions["filtertype"],
+            padtime=therunoptions["padseconds"],
         )
 
-    validvoxels = np.where(fitmask > 0)[0]
+    # read the lagtc generator file
+    print("reading lagtc generator")
+    lagtcgeneratorfile = f"{args.datafileroot}_desc-lagtcgenerator_timeseries"
+    genlagtc = tide_resample.FastResamplerFromFile(lagtcgeneratorfile)
+
+    # select the voxels in the mask
+    print("figuring out valid voxels")
+    validvoxels = np.where(lagmask_spacebytime > 0)[0]
+    print(f"{validvoxels.shape=}")
     numvalidspatiallocs = np.shape(validvoxels)[0]
-    print(f"validvoxels shape = {numvalidspatiallocs}")
-    fmri_data_valid = fmri_data[validvoxels, :] + 0.0
+    print(f"{numvalidspatiallocs=}")
     internalvalidspaceshape = numvalidspatiallocs
     internalvalidspaceshapederivs = (
         internalvalidspaceshape,
         args.glmderivs + 1,
     )
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
+    print(f"validvoxels shape = {numvalidspatiallocs}")
+    print(f"internalvalidfmrishape shape = {internalvalidfmrishape}")
+
+    # slicing to valid voxels
+    print("selecting valid voxels")
+    fmri_data_valid = fmri_data_spacebytime[validvoxels, :]
+    lagtimes_valid = lagtimes_spacebytime[validvoxels]
+    lagmask_valid = lagmask_spacebytime[validvoxels]
+    print(f"{fmri_data_valid.shape=}")
 
     if usesharedmem:
+        print("allocating shared memory")
         glmmean, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         rvalue, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         r2value, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
@@ -181,6 +244,7 @@ def retroglm(args):
         lagtc, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
         filtereddata, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_outfloatset)
     else:
+        print("allocating memory")
         glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
@@ -190,16 +254,19 @@ def retroglm(args):
         lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
         filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
 
-    lagtimes = (inputdataset.overlays["lagtimes"]).data
-    oversampfactor = int(inputdataset.therunoptions["oversampfactor"])
+    oversampfactor = int(therunoptions["oversampfactor"])
     if args.alternateoutput is None:
-        outputname = inputdataset.therunoptions["outputname"]
+        outputname = therunoptions["outputname"]
     else:
         outputname = args.alternateoutput
+    print(f"{outputname=}")
     oversamptr = fmritr / oversampfactor
     threshval = 0.0
     mode = "glm"
-    genlagtc = tide_resample.FastResamplerFromFile(f"{outputname}_desc-lagtcgenerator_timeseries")
+
+    initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
+
+    print("calling glmmfrommaps")
     voxelsprocessed_glm = tide_glmfrommaps.glmfrommaps(
         fmri_data_valid,
         glmmean,
@@ -210,8 +277,8 @@ def retroglm(args):
         movingsignal,
         lagtc,
         filtereddata,
-        lagtimes,
-        fitmask,
+        lagtimes_valid,
+        lagmask_valid,
         genlagtc,
         mode,
         outputname,
@@ -229,4 +296,69 @@ def retroglm(args):
         alwaysmultiproc=False,
         memprofile=False,
         debug=True,
+    )
+
+    finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
+    divlocs = np.where(finalvariance > 0.0)
+    varchange = initialvariance * 0.0
+    varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
+
+    outputpath = os.path.dirname(outputname)
+    rawsources = [
+        os.path.relpath(args.fmrifile, start=outputpath),
+        os.path.relpath(lagtimesfile, start=outputpath),
+        os.path.relpath(maskfile, start=outputpath),
+        os.path.relpath(runoptionsfile, start=outputpath),
+        os.path.relpath(lagtcgeneratorfile, start=outputpath),
+    ]
+    bidsbasedict = {
+        "RawSources": rawsources,
+        "Units": "arbitrary",
+        "CommandLineArgs": thecommandline,
+    }
+
+    theheader = copy.deepcopy(lagtimes_header)
+    if mode == "glm":
+        maplist = [
+            (rvalue, "lfofilterR", "map"),
+            (r2value, "lfofilterR2", "map"),
+            (glmmean, "lfofilterMean", "map"),
+            (fitcoeff, "lfofilterCoeff", "map"),
+            (fitNorm, "lfofilterNorm", "map"),
+            (initialvariance, "lfofilterInbandVarianceBefore", "map"),
+            (finalvariance, "lfofilterInbandVarianceAfter", "map"),
+            (varchange, "lfofilterInbandVarianceChange", "map"),
+        ]
+    else:
+        maplist = [
+            (rvalue, "CVRR", "map"),
+            (r2value, "CVRR2", "map"),
+            (fitcoeff, "CVR", "map"),
+            (initialvariance, "lfofilterInbandVarianceBefore", "map"),
+            (finalvariance, "lfofilterInbandVarianceAfter", "map"),
+            (varchange, "CVRVariance", "map"),
+        ]
+
+    bidsdict = bidsbasedict.copy()
+
+    # write the 3D maps
+    tide_io.savemaplist(
+        outputname, maplist, validvoxels, (xsize, ysize, numslices), theheader, bidsdict
+    )
+
+    # write the 4D maps
+    theheader = copy.deepcopy(fmri_header)
+    maplist = [
+        (movingsignal, "lfofilterRemoved", "bold"),
+        (filtereddata, "lfofilterCleaned", "bold"),
+    ]
+    if args.debug:
+        maplist.append((fmri_data_valid, "inputdata", "bold"))
+    tide_io.savemaplist(
+        outputname,
+        maplist,
+        validvoxels,
+        (xsize, ysize, numslices, validtimepoints),
+        theheader,
+        bidsdict,
     )

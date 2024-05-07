@@ -94,11 +94,14 @@ def glmfrommaps(
     # generate the voxel specific regressors
     LGR.info("Start lagged timecourse creation")
     TimingLGR.info("Start lagged timecourse creation")
-    makelagged_func = addmemprofiling(
-        tide_makelagged.makelaggedtcs,
-        memprofile,
-        "before making lagged timecourses",
-    )
+    if memprofile:
+        makelagged_func = addmemprofiling(
+            tide_makelagged.makelaggedtcs,
+            memprofile,
+            "before making lagged timecourses",
+        )
+    else:
+        makelagged_func = tide_makelagged.makelaggedtcs
     voxelsprocessed_makelagged = makelagged_func(
         genlagtc,
         initial_fmri_x,
@@ -124,7 +127,10 @@ def glmfrommaps(
     # and do the filtering
     LGR.info("Start filtering operation")
     TimingLGR.info("Start filtering operation")
-    glmpass_func = addmemprofiling(tide_glmpass.glmpass, memprofile, "before glmpass")
+    if memprofile:
+        glmpass_func = addmemprofiling(tide_glmpass.glmpass, memprofile, "before glmpass")
+    else:
+        glmpass_func = tide_glmpass.glmpass
     if mode == "cvrmap":
         # set the threshval to zero
         glmthreshval = 0.0
@@ -175,4 +181,4 @@ def glmfrommaps(
         append=False,
     )
 
-    return voxelsprocessed_glm
+    return voxelsprocessed_glm, regressorset

@@ -1,3 +1,47 @@
 #!/bin/bash
 
-retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST_newglm --verbose
+rapidtide \
+    --nprocs -1 \
+    --passes 3 \
+    --refinetype unweighted_average \
+    --numnull 0 \
+    --nolimitoutput \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_oldglm
+
+rapidtide \
+    --nprocs -1 \
+    --passes 3 \
+    --refinetype unweighted_average \
+    --numnull 0 \
+    --externalglm \
+    --nolimitoutput \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_newglm
+
+retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST_oldglm --alternateoutput ../dst/rehydrated --nprocs -1 --debug
+
+for glm in new old
+do
+    for map in lfofilterR lfofilterR2 lfofilterMean lfofilterCoeff lfofilterNorm lfofilterInbandVarianceBefore lfofilterInbandVarianceAfter lfofilterInbandVarianceChange 
+    do
+        fslmaths \
+            ../dst/rehydrated_desc-${map}_map.nii.gz \
+            -sub \
+            ../dst/sub-RAPIDTIDETEST_${glm}glm_desc-${map}_map.nii.gz \
+            ../dst/diff_${glm}_${map}
+        therange=`fslstats ../dst/diff_${glm}_${map} -R`
+        echo ${glm} ${map}: ${therange}
+    done
+
+    for map in lfofilterRemoved_bold lfofilterCleaned_bold
+    do
+        fslmaths \
+            ../dst/rehydrated_desc-${map}.nii.gz \
+            -sub \
+            ../dst/sub-RAPIDTIDETEST_${glm}glm_desc-${map}.nii.gz \
+            ../dst/diff_${glm}_${map}
+        therange=`fslstats ../dst/diff_${glm}_${map} -R`
+        echo ${glm} ${map}: ${therange}
+    done
+done

@@ -462,6 +462,7 @@ def rapidtide_main(argparsingfunc):
             optiondict["isgrayordinate"] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+            cifti_hdr = None
         xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     tide_util.logmem("after reading in fmri data")
 
@@ -3137,7 +3138,7 @@ def rapidtide_main(argparsingfunc):
                 mode = "glm"
             else:
                 mode = "cvrmap"
-            voxelsprocessed_glm = tide_glmfrommaps.glmfrommaps(
+            voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
                 fmri_data_valid,
                 glmmean,
                 rvalue,
@@ -3254,15 +3255,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict["lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thetimepcts[i]
-        )
-        optiondict["lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thestrengthpcts[i]
-        )
-        optiondict["lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thesigmapcts[i]
-        )
+        optiondict[
+            "lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thetimepcts[i]
+        optiondict[
+            "lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thestrengthpcts[i]
+        optiondict[
+            "lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thesigmapcts[i]
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
@@ -3343,40 +3344,34 @@ def rapidtide_main(argparsingfunc):
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         if optiondict["doglmfilt"]:
             maplist = [
-                ("rvalue", "lfofilterR"),
-                ("r2value", "lfofilterR2"),
-                ("glmmean", "lfofilterMean"),
-                ("fitcoeff", "lfofilterCoeff"),
-                ("fitNorm", "lfofilterNorm"),
-                ("initialvariance", "lfofilterInbandVarianceBefore"),
-                ("finalvariance", "lfofilterInbandVarianceAfter"),
-                ("varchange", "lfofilterInbandVarianceChange"),
+                (rvalue, "lfofilterR", "map"),
+                (r2value, "lfofilterR2", "map"),
+                (glmmean, "lfofilterMean", "map"),
+                (fitcoeff, "lfofilterCoeff", "map"),
+                (fitNorm, "lfofilterNorm", "map"),
+                (initialvariance, "lfofilterInbandVarianceBefore", "map"),
+                (finalvariance, "lfofilterInbandVarianceAfter", "map"),
+                (varchange, "lfofilterInbandVarianceChange", "map"),
             ]
         else:
             maplist = [
-                ("rvalue", "CVRR"),
-                ("r2value", "CVRR2"),
-                ("fitcoeff", "CVR"),
-                ("initialvariance", "lfofilterInbandVarianceBefore"),
-                ("finalvariance", "lfofilterInbandVarianceAfter"),
-                ("varchange", "CVRVariance"),
+                (rvalue, "CVRR", "map"),
+                (r2value, "CVRR2", "map"),
+                (fitcoeff, "CVR", "map"),
+                (initialvariance, "lfofilterInbandVarianceBefore", "map"),
+                (finalvariance, "lfofilterInbandVarianceAfter", "map"),
+                (varchange, "CVRVariance", "map"),
             ]
-        for mapname, mapsuffix in maplist:
-            if optiondict["memprofile"]:
-                memcheckpoint(f"about to write {mapname}")
-            else:
-                tide_util.logmem(f"about to write {mapname}")
-            if optiondict["externalglm"]:
-                print(f"saving {mapname} with dimensions {eval(mapname[:]).shape}")
+        for themap, mapsuffix, maptype in maplist:
             outmaparray[:] = 0.0
-            outmaparray[validvoxels] = (eval(mapname)[:]).reshape((numvalidspatiallocs))
+            outmaparray[validvoxels] = themap[:].reshape((numvalidspatiallocs))
             if optiondict["textio"]:
                 tide_io.writenpvecs(
                     outmaparray.reshape(nativespaceshape),
-                    f"{outputname}_" + mapsuffix + ".txt",
+                    f"{outputname}_{mapsuffix}.txt",
                 )
             else:
-                savename = f"{outputname}_desc-" + mapsuffix + "_map"
+                savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
                 bidsdict = bidsbasedict.copy()
                 if mapsuffix == "CVR":
                     bidsdict["Units"] = "percent"

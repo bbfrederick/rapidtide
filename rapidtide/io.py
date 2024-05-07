@@ -256,6 +256,54 @@ def niftihdrfromarray(data):
     return nib.Nifti1Image(data, affine=np.eye(4)).header.copy()
 
 
+def savemaplist(
+    outputname,
+    maplist,
+    validvoxels,
+    destshape,
+    theheader,
+    bidsdict,
+    textio=False,
+    fileiscifti=False,
+    rt_floattype="float64",
+    cifti_hdr=None,
+):
+    internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
+    numvalidspatiallocs = np.shape(validvoxels)[0]
+    if len(destshape) == 3:
+        outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
+    else:
+        outmaparray = np.zeros((internalspaceshape, destshape[3]), dtype=rt_floattype)
+    for themap, mapsuffix, maptype in maplist:
+        if len(destshape) == 3:
+            outmaparray[:] = 0.0
+            outmaparray[validvoxels] = themap[:].reshape((numvalidspatiallocs))
+        else:
+            outmaparray[:, :] = 0.0
+            outmaparray[validvoxels, :] = themap[:, :].reshape((numvalidspatiallocs, destshape[3]))
+        if textio:
+            writenpvecs(
+                outmaparray.reshape(destshape),
+                f"{outputname}_{mapsuffix}.txt",
+            )
+        else:
+            savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
+            if mapsuffix == "CVR":
+                bidsdict["Units"] = "percent"
+            writedicttojson(bidsdict, savename + ".json")
+            if not fileiscifti:
+                savetonifti(outmaparray.reshape(destshape), theheader, savename)
+            else:
+                savetocifti(
+                    outmaparray,
+                    cifti_hdr,
+                    theheader,
+                    savename,
+                    isseries=False,
+                    names=[mapsuffix],
+                )
+
+
 def savetocifti(
     thearray,
     theciftiheader,
