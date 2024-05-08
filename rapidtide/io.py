@@ -269,11 +269,33 @@ def savemaplist(
     cifti_hdr=None,
     debug=False,
 ):
-    internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
-    if len(destshape) == 3:
+    if textio:
+        try:
+            internalspaceshape = destshape[0]
+            timedim = destshape[1]
+            spaceonly = False
+        except IndexError:
+            internalspaceshape = destshape
+            spaceonly = True
+    else:
+        if fileiscifti:
+            internalspaceshape = destshape[4]
+            if len(destshape) > 5:
+                spaceonly = False
+                timedim = destshape[5]
+            else:
+                spaceonly = True
+        else:
+            internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
+            if len(destshape) == 3:
+                spaceonly = True
+            else:
+                spaceonly = False
+                timedim = destshape[3]
+    if spaceonly:
         outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     else:
-        outmaparray = np.zeros((internalspaceshape, destshape[3]), dtype=rt_floattype)
+        outmaparray = np.zeros((internalspaceshape, timedim), dtype=rt_floattype)
     for themap, mapsuffix, maptype, theunit in maplist:
         # set up the output array, and remap if warranted
         if debug:
@@ -283,7 +305,7 @@ def savemaplist(
                 print(
                     f"savemaplist: saving {mapsuffix}  to {destshape} from {np.shape(validvoxels)[0]} valid voxels"
                 )
-        if len(destshape) == 3:
+        if spaceonly:
             outmaparray[:] = 0.0
             if validvoxels is not None:
                 outmaparray[validvoxels] = themap[:].reshape((np.shape(validvoxels)[0]))
@@ -293,10 +315,10 @@ def savemaplist(
             outmaparray[:, :] = 0.0
             if validvoxels is not None:
                 outmaparray[validvoxels, :] = themap[:, :].reshape(
-                    (np.shape(validvoxels)[0], destshape[3])
+                    (np.shape(validvoxels)[0], timedim)
                 )
             else:
-                outmaparray = themap[:, :].reshape((internalspaceshape, destshape[3]))
+                outmaparray = themap[:, :].reshape((internalspaceshape, timedim))
 
         # actually write out the data
         bidsdict = bidsbasedict.copy()
