@@ -320,23 +320,23 @@ def retroglm(args):
     theheader = copy.deepcopy(lagtimes_header)
     if mode == "glm":
         maplist = [
-            (rvalue, "lfofilterR", "map"),
-            (r2value, "lfofilterR2", "map"),
-            (glmmean, "lfofilterMean", "map"),
-            (fitcoeff, "lfofilterCoeff", "map"),
-            (fitNorm, "lfofilterNorm", "map"),
-            (initialvariance, "lfofilterInbandVarianceBefore", "map"),
-            (finalvariance, "lfofilterInbandVarianceAfter", "map"),
-            (varchange, "lfofilterInbandVarianceChange", "map"),
+            (rvalue, "lfofilterR", "map", None),
+            (r2value, "lfofilterR2", "map", None),
+            (glmmean, "lfofilterMean", "map", None),
+            (fitcoeff, "lfofilterCoeff", "map", None),
+            (fitNorm, "lfofilterNorm", "map", None),
+            (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
+            (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
+            (varchange, "lfofilterInbandVarianceChange", "map", None),
         ]
     else:
         maplist = [
-            (rvalue, "CVRR", "map"),
-            (r2value, "CVRR2", "map"),
-            (fitcoeff, "CVR", "map"),
-            (initialvariance, "lfofilterInbandVarianceBefore", "map"),
-            (finalvariance, "lfofilterInbandVarianceAfter", "map"),
-            (varchange, "CVRVariance", "map"),
+            (rvalue, "CVRR", "map", None),
+            (r2value, "CVRR2", "map", None),
+            (fitcoeff, "CVR", "map", "percent"),
+            (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
+            (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
+            (varchange, "CVRVariance", "map", None),
         ]
 
     bidsdict = bidsbasedict.copy()
@@ -349,11 +349,11 @@ def retroglm(args):
     # write the 4D maps
     theheader = copy.deepcopy(fmri_header)
     maplist = [
-        (movingsignal, "lfofilterRemoved", "bold"),
-        (filtereddata, "lfofilterCleaned", "bold"),
+        (movingsignal, "lfofilterRemoved", "bold", None),
+        (filtereddata, "lfofilterCleaned", "bold", None),
     ]
     if args.debug:
-        maplist.append((fmri_data_valid, "inputdata", "bold"))
+        maplist.append((fmri_data_valid, "inputdata", "bold", None))
     tide_io.savemaplist(
         outputname,
         maplist,

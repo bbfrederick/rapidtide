@@ -3271,7 +3271,7 @@ def rapidtide_main(argparsingfunc):
     # write out the options used
     tide_io.writedicttojson(optiondict, f"{outputname}_options.json")
 
-    # do ones with one time point first
+    # write the 3D maps that need to be remapped
     TimingLGR.info("Start saving maps")
     if not optiondict["textio"]:
         theheader = copy.deepcopy(nim_hdr)
@@ -3285,108 +3285,71 @@ def rapidtide_main(argparsingfunc):
             theheader["dim"][4] = 1
             theheader["pixdim"][4] = 1.0
 
-    # Prepare extra maps
     savelist = [
-        ("lagtimes", "maxtime"),
-        ("timepercentile", "timepercentile"),
-        ("lagstrengths", "maxcorr"),
-        ("lagsigma", "maxwidth"),
-        ("R2", "maxcorrsq"),
-        ("fitmask", "fitmask"),
-        ("failreason", "corrfitfailreason"),
+        (lagtimes, "maxtime", "map", "second"),
+        (timepercentile, "timepercentile", "map", None),
+        (lagstrengths, "maxcorr", "map", None),
+        (lagsigma, "maxwidth", "map", "second"),
+        (R2, "maxcorrsq", "map", None),
+        (fitmask, "fitmask", "mask", None),
+        (failreason, "corrfitfailreason", "info", None),
     ]
     MTT = np.square(lagsigma) - (optiondict["acwidth"] * optiondict["acwidth"])
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
-    savelist += [("MTT", "MTT")]
+    savelist += [(MTT, "MTT", "map", "second")]
     if optiondict["calccoherence"]:
         savelist += [
-            ("coherencepeakval", "coherencepeakval"),
-            ("coherencepeakfreq", "coherencepeakfreq"),
+            (coherencepeakval, "coherencepeakval", "map", None),
+            (coherencepeakfreq, "coherencepeakfreq", "map", None),
         ]
-    # if optiondict["similaritymetric"] == "mutualinfo":
-    #    savelist += [("baseline", "baseline"), ("baselinedev", "baselinedev")]
-    for mapname, mapsuffix in savelist:
-        if optiondict["memprofile"]:
-            memcheckpoint(f"about to write {mapname}" + "to" + mapsuffix)
-        else:
-            tide_util.logmem(f"about to write {mapname}" + "to" + mapsuffix)
-        outmaparray[:] = 0.0
-        outmaparray[validvoxels] = eval(mapname)[:]
-        if optiondict["textio"]:
-            tide_io.writenpvecs(
-                outmaparray.reshape(nativespaceshape, 1),
-                f"{outputname}_" + mapsuffix + ".txt",
-            )
-        else:
-            if mapname == "fitmask":
-                savename = f"{outputname}_desc-corrfit_mask"
-            elif mapname == "failreason":
-                savename = f"{outputname}_desc-corrfitfailreason_info"
-            else:
-                savename = f"{outputname}_desc-" + mapsuffix + "_map"
-            bidsdict = bidsbasedict.copy()
-            if mapname == "lagtimes" or mapname == "lagsigma" or mapname == "MTT":
-                bidsdict["Units"] = "second"
-            tide_io.writedicttojson(bidsdict, savename + ".json")
-            if not fileiscifti:
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
-            else:
-                tide_io.savetocifti(
-                    outmaparray,
-                    cifti_hdr,
-                    theheader,
-                    savename,
-                    isseries=False,
-                    names=[mapsuffix],
-                )
+    tide_io.savemaplist(
+        outputname,
+        savelist,
+        validvoxels,
+        nativespaceshape,
+        theheader,
+        bidsbasedict,
+        textio=optiondict["textio"],
+        fileiscifti=fileiscifti,
+        rt_floattype=rt_floattype,
+        cifti_hdr=cifti_hdr,
+    )
 
+    # write the optional 3D maps that need to be remapped
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         if optiondict["doglmfilt"]:
             maplist = [
-                (rvalue, "lfofilterR", "map"),
-                (r2value, "lfofilterR2", "map"),
-                (glmmean, "lfofilterMean", "map"),
-                (fitcoeff, "lfofilterCoeff", "map"),
-                (fitNorm, "lfofilterNorm", "map"),
-                (initialvariance, "lfofilterInbandVarianceBefore", "map"),
-                (finalvariance, "lfofilterInbandVarianceAfter", "map"),
-                (varchange, "lfofilterInbandVarianceChange", "map"),
+                (rvalue, "lfofilterR", "map", None),
+                (r2value, "lfofilterR2", "map", None),
+                (glmmean, "lfofilterMean", "map", None),
+                (fitcoeff, "lfofilterCoeff", "map", None),
+                (fitNorm, "lfofilterNorm", "map", None),
+                (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
+                (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
+                (varchange, "lfofilterInbandVarianceChange", "map", None),
             ]
         else:
             maplist = [
-                (rvalue, "CVRR", "map"),
-                (r2value, "CVRR2", "map"),
-                (fitcoeff, "CVR", "map"),
-                (initialvariance, "lfofilterInbandVarianceBefore", "map"),
-                (finalvariance, "lfofilterInbandVarianceAfter", "map"),
-                (varchange, "CVRVariance", "map"),
+                (rvalue, "CVRR", "map", None),
+                (r2value, "CVRR2", "map", None),
+                (fitcoeff, "CVR", "map", "percent"),
+                (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
+                (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
+                (varchange, "CVRVariance", "map", None),
             ]
-        for themap, mapsuffix, maptype in maplist:
-            outmaparray[:] = 0.0
-            outmaparray[validvoxels] = themap[:].reshape((numvalidspatiallocs))
-            if optiondict["textio"]:
-                tide_io.writenpvecs(
-                    outmaparray.reshape(nativespaceshape),
-                    f"{outputname}_{mapsuffix}.txt",
-                )
-            else:
-                savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
-                bidsdict = bidsbasedict.copy()
-                if mapsuffix == "CVR":
-                    bidsdict["Units"] = "percent"
-                tide_io.writedicttojson(bidsdict, savename + ".json")
-                if not fileiscifti:
-                    tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
-                else:
-                    tide_io.savetocifti(
-                        outmaparray,
-                        cifti_hdr,
-                        theheader,
-                        savename,
-                        isseries=False,
-                        names=[mapsuffix],
-                    )
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            nativespaceshape,
+            theheader,
+            bidsbasedict,
+            textio=optiondict["textio"],
+            fileiscifti=fileiscifti,
+            rt_floattype=rt_floattype,
+            cifti_hdr=cifti_hdr,
+        )
         del rvalue
         del r2value
         del fitcoeff
@@ -3395,34 +3358,22 @@ def rapidtide_main(argparsingfunc):
         del finalvariance
         del varchange
 
-    for mapname, mapsuffix in [("meanvalue", "mean")]:
-        if optiondict["memprofile"]:
-            memcheckpoint(f"about to write {mapname}")
-        else:
-            tide_util.logmem(f"about to write {mapname}")
-        outmaparray[:] = 0.0
-        outmaparray[:] = eval(mapname)[:]
-
-        if optiondict["textio"]:
-            tide_io.writenpvecs(
-                outmaparray.reshape(nativespaceshape),
-                f"{outputname}_" + mapsuffix + ".txt",
-            )
-        else:
-            savename = f"{outputname}_desc-" + mapsuffix + "_map"
-            bidsdict = bidsbasedict.copy()
-            tide_io.writedicttojson(bidsdict, savename + ".json")
-            if not fileiscifti:
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
-            else:
-                tide_io.savetocifti(
-                    outmaparray,
-                    cifti_hdr,
-                    theheader,
-                    savename,
-                    isseries=False,
-                    names=[mapsuffix],
-                )
+    # write the 3D maps that don't need to be remapped
+    maplist = [
+        (meanvalue, "mean", "map", None),
+    ]
+    tide_io.savemaplist(
+        outputname,
+        maplist,
+        None,
+        nativespaceshape,
+        theheader,
+        bidsbasedict,
+        textio=optiondict["textio"],
+        fileiscifti=fileiscifti,
+        rt_floattype=rt_floattype,
+        cifti_hdr=cifti_hdr,
+    )
     del meanvalue
 
     if optiondict["numestreps"] > 0:
@@ -3485,7 +3436,7 @@ def rapidtide_main(argparsingfunc):
     del R2
     del fitmask
 
-    # now do the ones with other numbers of time points
+    # now do the 4D maps of the similarity function and friends
     if not optiondict["textio"]:
         theheader = copy.deepcopy(nim_hdr)
         theheader["toffset"] = corrscale[corrorigin - lagmininpts]
@@ -3497,66 +3448,29 @@ def rapidtide_main(argparsingfunc):
         else:
             theheader["dim"][4] = np.shape(outcorrarray)[1]
             theheader["pixdim"][4] = corrtr
-    outcorrarray[:, :] = 0.0
-    outcorrarray[validvoxels, :] = gaussout[:, :]
-    if optiondict["textio"]:
-        tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape), f"{outputname}_gaussout.txt")
-    else:
-        savename = f"{outputname}_desc-gaussout_info"
-        if not fileiscifti:
-            tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
-        else:
-            tide_io.savetocifti(
-                outcorrarray,
-                cifti_hdr,
-                theheader,
-                savename,
-                isseries=True,
-                start=theheader["toffset"],
-                step=corrtr,
-            )
 
-    del gaussout
-    outcorrarray[:, :] = 0.0
-    outcorrarray[validvoxels, :] = windowout[:, :]
-    if optiondict["textio"]:
-        tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape), f"{outputname}_windowout.txt")
-    else:
-        savename = f"{outputname}_desc-corrfitwindow_info"
-        if not fileiscifti:
-            tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
-        else:
-            tide_io.savetocifti(
-                outcorrarray,
-                cifti_hdr,
-                theheader,
-                savename,
-                isseries=True,
-                start=theheader["toffset"],
-                step=corrtr,
-            )
-
+    maplist = [
+        (gaussout, "gaussout", "info", "second"),
+        (windowout, "corrfitwindow", "info", "second"),
+        (corrout, "corrout", "info", "second"),
+    ]
+    tide_io.savemaplist(
+        outputname,
+        maplist,
+        validvoxels,
+        nativecorrshape,
+        theheader,
+        bidsbasedict,
+        textio=optiondict["textio"],
+        fileiscifti=fileiscifti,
+        rt_floattype=rt_floattype,
+        cifti_hdr=cifti_hdr,
+    )
     del windowout
-    outcorrarray[:, :] = 0.0
-    outcorrarray[validvoxels, :] = corrout[:, :]
-    if optiondict["textio"]:
-        tide_io.writenpvecs(outcorrarray.reshape(nativecorrshape), f"{outputname}_corrout.txt")
-    else:
-        savename = f"{outputname}_desc-corrout_info"
-        if not fileiscifti:
-            tide_io.savetonifti(outcorrarray.reshape(nativecorrshape), theheader, savename)
-        else:
-            tide_io.savetocifti(
-                outcorrarray,
-                cifti_hdr,
-                theheader,
-                savename,
-                isseries=True,
-                start=theheader["toffset"],
-                step=corrtr,
-            )
+    del gaussout
     del corrout
 
+    # now save all the files that are of the same length as the input data file and masked
     if not optiondict["textio"]:
         theheader = copy.deepcopy(nim_hdr)
         if fileiscifti:
@@ -3568,102 +3482,42 @@ def rapidtide_main(argparsingfunc):
             theheader["dim"][4] = np.shape(outfmriarray)[1]
             theheader["pixdim"][4] = fmritr
 
+    maplist = []
     if optiondict["saveallglmfiles"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
-        outfmriarray[validvoxels, :] = lagtc[:, :]
-        if optiondict["textio"]:
-            tide_io.writenpvecs(
-                outfmriarray.reshape(nativefmrishape), f"{outputname}_lagregressor.txt"
-            )
-        else:
-            savename = f"{outputname}_desc-lfofilterEVs_bold"
-            tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-            bidsdict = bidsbasedict.copy()
-            tide_io.writedicttojson(bidsdict, savename + ".json")
-            if not fileiscifti:
-                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-            else:
-                tide_io.savetocifti(
-                    outfmriarray,
-                    cifti_hdr,
-                    theheader,
-                    savename,
-                    isseries=True,
-                    start=0.0,
-                    step=fmritr,
-                )
-        del lagtc
+        maplist += [
+            (lagtc, "lfofilterEVs", "bold", None),
+        ]
 
     if optiondict["passes"] > 1:
         if optiondict["savelagregressors"]:
-            outfmriarray[validvoxels, :] = shiftedtcs[:, :]
-            if optiondict["textio"]:
-                tide_io.writenpvecs(
-                    outfmriarray.reshape(nativefmrishape),
-                    f"{outputname}_shiftedtcs.txt",
-                )
-            else:
-                savename = f"{outputname}_desc-shiftedtcs_bold"
-                if not fileiscifti:
-                    tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-                else:
-                    tide_io.savetocifti(
-                        outfmriarray,
-                        cifti_hdr,
-                        theheader,
-                        savename,
-                        isseries=True,
-                        start=0.0,
-                        step=fmritr,
-                    )
-        del shiftedtcs
+            maplist += [
+                (shiftedtcs, "shiftedtcs", "bold", None),
+            ]
 
     if optiondict["doglmfilt"] and optiondict["saveglmfiltered"]:
+        maplist += [
+            (filtereddata, "lfofilterCleaned", "bold", None),
+        ]
         if optiondict["savemovingsignal"]:
-            outfmriarray[validvoxels, :] = movingsignal[:, :]
-            if optiondict["textio"]:
-                tide_io.writenpvecs(
-                    outfmriarray.reshape(nativefmrishape),
-                    f"{outputname}_movingsignal.txt",
-                )
-            else:
-                savename = f"{outputname}_desc-lfofilterRemoved_bold"
-                bidsdict = bidsbasedict.copy()
-                tide_io.writedicttojson(bidsdict, savename + ".json")
-                if not fileiscifti:
-                    tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-                else:
-                    tide_io.savetocifti(
-                        outfmriarray,
-                        cifti_hdr,
-                        theheader,
-                        savename,
-                        isseries=True,
-                        start=0.0,
-                        step=fmritr,
-                    )
-        del movingsignal
-        outfmriarray[validvoxels, :] = filtereddata[:, :]
-        if optiondict["textio"]:
-            tide_io.writenpvecs(
-                outfmriarray.reshape(nativefmrishape), f"{outputname}_filtereddata.txt"
-            )
-        else:
-            savename = f"{outputname}_desc-lfofilterCleaned_bold"
-            bidsdict = bidsbasedict.copy()
-            tide_io.writedicttojson(bidsdict, savename + ".json")
-            if not fileiscifti:
-                tide_io.savetonifti(outfmriarray.reshape(nativefmrishape), theheader, savename)
-            else:
-                tide_io.savetocifti(
-                    outfmriarray,
-                    cifti_hdr,
-                    theheader,
-                    savename,
-                    isseries=True,
-                    start=0.0,
-                    step=fmritr,
-                )
+            maplist += [
+                (movingsignal, "lfofilterRemoved", "bold", None),
+            ]
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            nativefmrishape,
+            theheader,
+            bidsbasedict,
+            textio=optiondict["textio"],
+            fileiscifti=fileiscifti,
+            rt_floattype=rt_floattype,
+            cifti_hdr=cifti_hdr,
+        )
+        del lagtc
+        del shiftedtcs
         del filtereddata
+        del movingsignal
 
     TimingLGR.info("Finished saving maps")
     LGR.info("done")

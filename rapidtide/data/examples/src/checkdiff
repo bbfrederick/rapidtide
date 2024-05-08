@@ -1,0 +1,12 @@
+#!/bin/bash
+
+OLD=sub-RAPIDTIDETEST_oldglm
+NEW=sub-RAPIDTIDETEST_oldglm_refactored
+for EXT in _desc-MTT_map.json _desc-MTT_map.nii.gz _desc-autocorr_timeseries.json _desc-corrfitfailreason_info.json _desc-corrfitfailreason_info.nii.gz _desc-corrfitwindow_info.nii.gz _desc-corrout_info.nii.gz _desc-despeckle_mask.nii.gz _desc-fitmask_mask.json _desc-fitmask_mask.nii.gz _desc-gaussout_info.nii.gz _desc-globalmean_mask.nii.gz _desc-lfofilterCleaned_bold.json _desc-lfofilterCleaned_bold.nii.gz _desc-lfofilterCoeff_map.json _desc-lfofilterCoeff_map.nii.gz _desc-lfofilterEVs_bold.json _desc-lfofilterEVs_bold.nii.gz _desc-lfofilterInbandVarianceAfter_map.json _desc-lfofilterInbandVarianceAfter_map.nii.gz _desc-lfofilterInbandVarianceBefore_map.json _desc-lfofilterInbandVarianceBefore_map.nii.gz _desc-lfofilterInbandVarianceChange_map.json _desc-lfofilterInbandVarianceChange_map.nii.gz _desc-lfofilterMean_map.json _desc-lfofilterMean_map.nii.gz _desc-lfofilterNorm_map.json _desc-lfofilterNorm_map.nii.gz _desc-lfofilterR2_map.json _desc-lfofilterR2_map.nii.gz _desc-lfofilterR_map.json _desc-lfofilterR_map.nii.gz _desc-lfofilterRemoved_bold.json _desc-lfofilterRemoved_bold.nii.gz _desc-maxcorr_map.json _desc-maxcorr_map.nii.gz _desc-maxcorrsq_map.json _desc-maxcorrsq_map.nii.gz _desc-maxtime_map.json _desc-maxtime_map.nii.gz _desc-maxwidth_map.json _desc-maxwidth_map.nii.gz _desc-mean_map.json _desc-mean_map.nii.gz _desc-processed_mask.nii.gz _desc-refine_mask.nii.gz _desc-shiftedtcs_bold.nii.gz _desc-timepercentile_map.json _desc-timepercentile_map.nii.gz
+do
+    echo ${EXT}
+    diff ../dst/${OLD}${EXT} ../dst/${NEW}${EXT}
+    echo
+    echo
+    echo
+done
