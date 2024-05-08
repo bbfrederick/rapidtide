@@ -3286,6 +3286,7 @@ def rapidtide_main(argparsingfunc):
             theheader["pixdim"][4] = 1.0
     else:
         theheader = None
+        cifti_hdr = None
 
     savelist = [
         (lagtimes, "maxtime", "map", "second"),
@@ -3452,6 +3453,7 @@ def rapidtide_main(argparsingfunc):
             theheader["pixdim"][4] = corrtr
     else:
         theheader = None
+        cifti_hdr = None
 
     maplist = [
         (gaussout, "gaussout", "info", "second"),
@@ -3487,6 +3489,7 @@ def rapidtide_main(argparsingfunc):
             theheader["pixdim"][4] = fmritr
     else:
         theheader = None
+        cifti_hdr = None
 
     maplist = []
     if optiondict["saveallglmfiles"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
