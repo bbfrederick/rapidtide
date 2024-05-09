@@ -3500,7 +3500,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["passes"] > 1:
         if optiondict["savelagregressors"]:
             maplist += [
-                (shiftedtcs, "shiftedtcs", "bold", None),
+                (paddedshiftedtcs[:, numpadtrs:-numpadtrs], "shiftedtcs", "bold", None),
             ]
 
     if optiondict["doglmfilt"] and optiondict["saveglmfiltered"]:
