@@ -279,10 +279,12 @@ def savemaplist(
             spaceonly = True
     else:
         if fileiscifti:
-            internalspaceshape = destshape[4]
+            spaceindex = len(destshape.shape) - 1
+            timeindex = spaceindex - 1
+            internalspaceshape = destshape[spaceindex]
             if len(destshape) > 5:
                 spaceonly = False
-                timedim = destshape[5]
+                timedim = destshape[timeindex]
             else:
                 spaceonly = True
         else:
