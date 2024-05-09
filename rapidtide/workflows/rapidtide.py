@@ -3294,7 +3294,7 @@ def rapidtide_main(argparsingfunc):
         (lagstrengths, "maxcorr", "map", None),
         (lagsigma, "maxwidth", "map", "second"),
         (R2, "maxcorrsq", "map", None),
-        (fitmask, "fitmask", "mask", None),
+        (fitmask, "corrfit", "mask", None),
         (failreason, "corrfitfailreason", "info", None),
     ]
     MTT = np.square(lagsigma) - (optiondict["acwidth"] * optiondict["acwidth"])
