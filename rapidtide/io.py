@@ -285,8 +285,10 @@ def savemaplist(
             if destshape[timeindex] > 1:
                 spaceonly = False
                 timedim = destshape[timeindex]
+                isseries = True
             else:
                 spaceonly = True
+                isseries = False
         else:
             internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
             if len(destshape) == 3:
@@ -337,14 +339,25 @@ def savemaplist(
             if not fileiscifti:
                 savetonifti(outmaparray.reshape(destshape), theheader, savename)
             else:
-                savetocifti(
-                    outmaparray,
-                    cifti_hdr,
-                    theheader,
-                    savename,
-                    isseries=False,
-                    names=[mapsuffix],
-                )
+                if isseries:
+                    savetocifti(
+                        outmaparray,
+                        cifti_hdr,
+                        theheader,
+                        savename,
+                        isseries=isseries,
+                        names=[mapsuffix],
+                    )
+                else:
+                    savetocifti(
+                        outmaparray,
+                        cifti_hdr,
+                        theheader,
+                        savename,
+                        isseries=isseries,
+                        start=theheader["toffset"],
+                        step=theheader["pixdim"][4],
+                    )
 
 
 def savetocifti(
