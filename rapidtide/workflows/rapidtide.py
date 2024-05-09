@@ -3255,15 +3255,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict["lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thetimepcts[i]
-        )
-        optiondict["lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thestrengthpcts[i]
-        )
-        optiondict["lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thesigmapcts[i]
-        )
+        optiondict[
+            "lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thetimepcts[i]
+        optiondict[
+            "lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thestrengthpcts[i]
+        optiondict[
+            "lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
+        ] = thesigmapcts[i]
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
@@ -3388,28 +3388,6 @@ def rapidtide_main(argparsingfunc):
                 pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
             masklist += [(pmask.copy(), f"plt{thepvalnames[i]}", "mask", None)]
 
-            """# start to be replaced
-            outmaparray[:] = 0.0
-            outmaparray[validvoxels] = pmask[:]
-            if optiondict["textio"]:
-                tide_io.writenpvecs(
-                    outmaparray.reshape(nativespaceshape),
-                    f"{outputname}_p_lt_" + thepvalnames[i] + "_mask.txt",
-                )
-            else:
-                savename = f"{outputname}_desc-plt" + thepvalnames[i] + "_mask"
-                if not fileiscifti:
-                    tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
-                else:
-                    tide_io.savetocifti(
-                        outmaparray,
-                        cifti_hdr,
-                        theheader,
-                        savename,
-                        isseries=False,
-                        names=["p_lt_" + thepvalnames[i] + "_mask"],
-                    )
-                # end to be replaced"""
         tide_io.savemaplist(
             outputname,
             masklist,
@@ -3432,29 +3410,6 @@ def rapidtide_main(argparsingfunc):
             masklist = [(refinemask, "globalmeanpreselect", "mask", None)]
         else:
             masklist = [(refinemask, "refine", "mask", None)]
-        """"# start to be replaced
-        outmaparray[:] = 0.0
-        outmaparray[validvoxels] = refinemask[:]
-        if optiondict["textio"]:
-            tide_io.writenpvecs(
-                outfmriarray.reshape(nativefmrishape), f"{outputname}_lagregressor.txt"
-            )
-        else:
-            savename = f"{outputname}_desc-refine_mask"
-            if optiondict["globalpreselect"]:
-                savename = savename.replace("refine", "globalmeanpreselect")
-            if not fileiscifti:
-                tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
-            else:
-                tide_io.savetocifti(
-                    outmaparray,
-                    cifti_hdr,
-                    theheader,
-                    savename,
-                    isseries=False,
-                    names=["refinemask"],
-                )
-        # end to be replaced"""
         tide_io.savemaplist(
             outputname,
             masklist,
