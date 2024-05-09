@@ -3524,7 +3524,9 @@ def rapidtide_main(argparsingfunc):
             cifti_hdr=cifti_hdr,
         )
         del lagtc
-        del shiftedtcs
+        if optiondict["passes"] > 1:
+            del paddedshiftedtcs
+            del shiftedtcs
         del filtereddata
         del movingsignal
 
