@@ -3255,15 +3255,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict[
-            "lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thetimepcts[i]
-        optiondict[
-            "lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thestrengthpcts[i]
-        optiondict[
-            "lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thesigmapcts[i]
+        optiondict["lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thetimepcts[i]
+        )
+        optiondict["lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thestrengthpcts[i]
+        )
+        optiondict["lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thesigmapcts[i]
+        )
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
@@ -3380,11 +3380,15 @@ def rapidtide_main(argparsingfunc):
     del meanvalue
 
     if optiondict["numestreps"] > 0:
+        masklist = []
         for i in range(0, len(thepercentiles)):
             if optiondict["dosighistfit"]:
                 pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
             else:
                 pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
+            masklist += [(pmask.copy(), f"plt{thepvalnames[i]}", "mask", None)]
+
+            """# start to be replaced
             outmaparray[:] = 0.0
             outmaparray[validvoxels] = pmask[:]
             if optiondict["textio"]:
@@ -3405,10 +3409,30 @@ def rapidtide_main(argparsingfunc):
                         isseries=False,
                         names=["p_lt_" + thepvalnames[i] + "_mask"],
                     )
+                # end to be replaced"""
+        tide_io.savemaplist(
+            outputname,
+            masklist,
+            validvoxels,
+            nativespaceshape,
+            theheader,
+            bidsbasedict,
+            textio=optiondict["textio"],
+            fileiscifti=fileiscifti,
+            rt_floattype=rt_floattype,
+            cifti_hdr=cifti_hdr,
+            savejson=False,
+        )
+        del masklist
 
     if (optiondict["passes"] > 1 or optiondict["globalpreselect"]) and optiondict[
         "refinestopreason"
     ] != "emptymask":
+        if optiondict["globalpreselect"]:
+            masklist = [(refinemask, "globalmeanpreselect", "mask", None)]
+        else:
+            masklist = [(refinemask, "refine", "mask", None)]
+        """"# start to be replaced
         outmaparray[:] = 0.0
         outmaparray[validvoxels] = refinemask[:]
         if optiondict["textio"]:
@@ -3430,6 +3454,20 @@ def rapidtide_main(argparsingfunc):
                     isseries=False,
                     names=["refinemask"],
                 )
+        # end to be replaced"""
+        tide_io.savemaplist(
+            outputname,
+            masklist,
+            validvoxels,
+            nativespaceshape,
+            theheader,
+            bidsbasedict,
+            textio=optiondict["textio"],
+            fileiscifti=fileiscifti,
+            rt_floattype=rt_floattype,
+            cifti_hdr=cifti_hdr,
+            savejson=False,
+        )
         del refinemask
 
     # clean up arrays that will no longer be needed

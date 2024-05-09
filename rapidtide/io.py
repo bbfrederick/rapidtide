@@ -267,6 +267,7 @@ def savemaplist(
     fileiscifti=False,
     rt_floattype="float64",
     cifti_hdr=None,
+    savejson=True,
     debug=False,
 ):
     if textio:
@@ -335,7 +336,8 @@ def savemaplist(
             )
         else:
             savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
-            writedicttojson(bidsdict, savename + ".json")
+            if savejson:
+                writedicttojson(bidsdict, savename + ".json")
             if not fileiscifti:
                 savetonifti(outmaparray.reshape(destshape), theheader, savename)
             else:
