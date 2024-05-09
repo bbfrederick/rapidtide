@@ -282,7 +282,7 @@ def savemaplist(
             spaceindex = len(destshape) - 1
             timeindex = spaceindex - 1
             internalspaceshape = destshape[spaceindex]
-            if len(destshape) > 5:
+            if destshape[timeindex] > 1:
                 spaceonly = False
                 timedim = destshape[timeindex]
             else:
