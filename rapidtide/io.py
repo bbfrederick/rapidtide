@@ -274,7 +274,7 @@ def savemaplist(
             internalspaceshape = destshape[0]
             timedim = destshape[1]
             spaceonly = False
-        except IndexError:
+        except TypeError:
             internalspaceshape = destshape
             spaceonly = True
     else:
