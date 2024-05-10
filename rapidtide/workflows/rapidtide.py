@@ -3113,9 +3113,6 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype=rt_floattype,
             )
             enablemkl(optiondict["mklthreads"], debug=threaddebug)
-            if fitcoeff.ndim > 1:
-                fitcoeff = fitcoeff[:, 0]
-                fitNorm = fitNorm[:, 0]
 
             if optiondict["docvrmap"]:
                 # if we are doing a cvr map, multiply the fitcoeff by 100, so we are in percent
@@ -3326,12 +3323,25 @@ def rapidtide_main(argparsingfunc):
                 (rvalue, "lfofilterR", "map", None),
                 (r2value, "lfofilterR2", "map", None),
                 (glmmean, "lfofilterMean", "map", None),
-                (fitcoeff, "lfofilterCoeff", "map", None),
-                (fitNorm, "lfofilterNorm", "map", None),
                 (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
                 (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
                 (varchange, "lfofilterInbandVarianceChange", "map", None),
             ]
+            if optiondict["glmderivs"] > 0:
+                maplist += [
+                    (fitcoeff[:, 0], f"lfofilterCoeff", "bold", None),
+                    (fitNorm[:, 0], f"lfofilterNorm", "bold", None),
+                ]
+                for thederiv in range(1, optiondict["glmderivs"] + 1):
+                    maplist += [
+                        (fitcoeff[:, thederiv], f"lfofilterCoeffDeriv{thederiv}", "map", None),
+                        (fitNorm[:, thederiv], f"lfofilterNormDeriv{thederiv}", "map", None),
+                    ]
+            else:
+                maplist += [
+                    (fitcoeff, "lfofilterCoeff", "map", None),
+                    (fitNorm, "lfofilterNorm", "map", None),
+                ]
         else:
             maplist = [
                 (rvalue, "CVRR", "map", None),
@@ -3486,9 +3496,18 @@ def rapidtide_main(argparsingfunc):
 
     maplist = []
     if optiondict["saveallglmfiles"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
-        maplist += [
-            (lagtc, "lfofilterEVs", "bold", None),
-        ]
+        if optiondict["glmderivs"] > 0:
+            maplist += [
+                (regressorset[:, 0], "lfofilterEV", "bold", None),
+            ]
+            for thederiv in range(1, optiondict["glmderivs"] + 1):
+                maplist += [
+                    (regressorset[:, thederiv], f"lfofilterEVDeriv{thederiv}", "map", None),
+                ]
+        else:
+            maplist += [
+                (regressorset, "lfofilterEV", "bold", None),
+            ]
 
     if optiondict["passes"] > 1:
         if optiondict["savelagregressors"]:

@@ -161,9 +161,6 @@ def glmfrommaps(
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
     )
-    if fitcoeff.ndim > 1:
-        fitcoeff = fitcoeff[:, 0]
-        fitNorm = fitNorm[:, 0]
 
     if mode == "cvrmap":
         # if we are doing a cvr map, multiply the fitcoeff by 100, so we are in percent
