@@ -213,11 +213,11 @@ def glmpass(
                     rvalue[timepoint[0]] = timepoint[2]
                     r2value[timepoint[0]] = timepoint[3]
                     if theevs.ndim > 1:
-                        fitcoeff[timepoint[0], :] = voxel[4]
-                        fitNorm[timepoint[0], :] = voxel[5]
+                        fitcoeff[:, timepoint[0]] = timepoint[4]
+                        fitNorm[:, timepoint[0]] = timepoint[5]
                     else:
-                        fitcoeff[timepoint[0]] = voxel[4]
-                        fitNorm[timepoint[0]] = voxel[5]
+                        fitcoeff[timepoint[0]] = timepoint[4]
+                        fitNorm[timepoint[0]] = timepoint[5]
                     datatoremove[:, timepoint[0]] = timepoint[6]
                     filtereddata[:, timepoint[0]] = timepoint[7]
                     itemstotal += 1

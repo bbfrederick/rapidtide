@@ -220,8 +220,8 @@ def test_delayestimation(displayplots=False, debug=False):
     windowout, dummy, dummy = allocshared(internalvalidcorrshape, np.float64)
     rvalue, dummy, dummy = allocshared((numlocs), np.float64)
     r2value, dummy, dummy = allocshared((numlocs), np.float64)
-    fitcoff, dummy, dummy = allocshared((numlocs), np.float64)
-    fitNorm, dummy, dummy = allocshared((numlocs), np.float64)
+    fitcoff, dummy, dummy = allocshared((waveforms.shape), np.float64)
+    fitNorm, dummy, dummy = allocshared((waveforms.shape), np.float64)
     R2, dummy, dummy = allocshared((numlocs), np.float64)
     movingsignal, dummy, dummy = allocshared(waveforms.shape, np.float64)
     filtereddata, dummy, dummy = allocshared(waveforms.shape, np.float64)
@@ -291,7 +291,6 @@ def test_delayestimation(displayplots=False, debug=False):
             print("\n\ncalling fitter")
         thefitter.setfunctype(similaritymetric)
         thefitter.setcorrtimeaxis(trimmedcorrscale)
-        genlagtc = tide_resample.FastResampler(timepoints, waveforms[refnum, :])
 
         if displayplots:
             fig = plt.figure()

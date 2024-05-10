@@ -68,14 +68,14 @@ def test_glmpass(debug=True, displayplots=False):
     meanvals_t = np.zeros(tsize, dtype=np.float64)
     rvals_t = np.zeros(tsize, dtype=np.float64)
     r2vals_t = np.zeros(tsize, dtype=np.float64)
-    fitcoffs_t = np.zeros(tsize, dtype=np.float64)
-    fitNorm_t = np.zeros(tsize, dtype=np.float64)
+    fitcoffs_t = np.zeros((xsize, tsize), dtype=np.float64)
+    fitNorm_t = np.zeros((xsize, tsize), dtype=np.float64)
 
     meanvals_x = np.zeros(xsize, dtype=np.float64)
     rvals_x = np.zeros(xsize, dtype=np.float64)
     r2vals_x = np.zeros(xsize, dtype=np.float64)
-    fitcoffs_x = np.zeros(xsize, dtype=np.float64)
-    fitNorm_x = np.zeros(xsize, dtype=np.float64)
+    fitcoffs_x = np.zeros((xsize, tsize), dtype=np.float64)
+    fitNorm_x = np.zeros((xsize, tsize), dtype=np.float64)
 
     for confoundglm in [True, False]:
         if confoundglm:
