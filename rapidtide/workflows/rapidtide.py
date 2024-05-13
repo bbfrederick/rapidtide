@@ -2314,39 +2314,29 @@ def rapidtide_main(argparsingfunc):
                     internaldespeckleincludemask[validvoxels] == 0.0, 0, 1
                 )
                 if thepass == optiondict["passes"]:
-                    theheader = copy.deepcopy(nim_hdr)
-                    theheader["dim"][4] = 1
-                    theheader["pixdim"][4] = 1.0
-                    savename = f"{outputname}_desc-despeckle_mask"
-                    if not fileiscifti:
-                        theheader["dim"][0] = 3
-                        tide_io.savetonifti(
-                            np.where(internaldespeckleincludemask == 0.0, 0, 1).reshape(
-                                nativespaceshape
-                            ),
-                            theheader,
-                            savename,
-                        )
-                    else:
-                        timeindex = theheader["dim"][0] - 1
-                        spaceindex = theheader["dim"][0]
-                        theheader["dim"][timeindex] = 1
-                        theheader["dim"][spaceindex] = numspatiallocs
-                        tide_io.savetocifti(
-                            (
-                                np.where(
-                                    np.abs(outmaparray - medianlags)
-                                    > optiondict["despeckle_thresh"],
-                                    medianlags,
-                                    0.0,
-                                )
-                            ),
-                            cifti_hdr,
-                            theheader,
-                            savename,
-                            isseries=False,
-                            names=["despecklemask"],
-                        )
+                    if not optiondict["textio"]:
+                        if fileiscifti:
+                            timeindex = theheader["dim"][0] - 1
+                            spaceindex = theheader["dim"][0]
+                            theheader["dim"][timeindex] = 1
+                            theheader["dim"][spaceindex] = numspatiallocs
+                        else:
+                            theheader["dim"][0] = 3
+                            theheader["dim"][4] = 1
+                            theheader["pixdim"][4] = 1.0
+                    masklist = [(despecklesavemask, "despeckle", "mask", None)]
+                    tide_io.savemaplist(
+                        outputname + "ALT",
+                        masklist,
+                        validvoxels,
+                        nativespaceshape,
+                        theheader,
+                        bidsbasedict,
+                        textio=optiondict["textio"],
+                        fileiscifti=fileiscifti,
+                        rt_floattype=rt_floattype,
+                        cifti_hdr=cifti_hdr,
+                    )
             LGR.info(
                 f"\n\n{voxelsprocessed_fc_ds} voxels despeckled in "
                 f"{optiondict['despeckle_passes']} passes"
