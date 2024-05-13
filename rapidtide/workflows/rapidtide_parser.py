@@ -1425,6 +1425,13 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
+        "--focaldebug",
+        dest="focaldebug",
+        action="store_true",
+        help=("Enable targetted additional debugging output (used during development)."),
+        default=False,
+    )
+    debugging.add_argument(
         "--verbose",
         dest="verbose",
         action="store_true",

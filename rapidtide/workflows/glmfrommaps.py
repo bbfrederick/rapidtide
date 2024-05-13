@@ -75,7 +75,7 @@ def glmfrommaps(
     TimingLGR,
     validvoxels,
     initial_fmri_x,
-    threshval,
+    glmthreshval,
     nprocs_makelaggedtcs=1,
     nprocs_glm=1,
     glmderivs=0,
@@ -87,6 +87,17 @@ def glmfrommaps(
 ):
     if debug:
         print("GLMFROMMAPS: Starting")
+        print(f"{nprocs_makelaggedtcs=}")
+        print(f"{nprocs_glm=}")
+        print(f"{glmderivs=}")
+        print(f"{mp_chunksize=}")
+        print(f"{showprogressbar=}")
+        print(f"{alwaysmultiproc=}")
+        print(f"{memprofile=}")
+        print(f"{mode=}")
+        print(f"{outputname=}")
+        print(f"{oversamptr=}")
+        print(f"{glmthreshval=}")
     rt_floatset = np.float64
     rt_floattype = "float64"
     numvalidspatiallocs = np.shape(validvoxels)[0]
@@ -131,11 +142,6 @@ def glmfrommaps(
         glmpass_func = addmemprofiling(tide_glmpass.glmpass, memprofile, "before glmpass")
     else:
         glmpass_func = tide_glmpass.glmpass
-    if mode == "cvrmap":
-        # set the threshval to zero
-        glmthreshval = 0.0
-    else:
-        glmthreshval = threshval
 
     if glmderivs > 0:
         print(f"adding derivatives up to order {glmderivs} prior to regression")

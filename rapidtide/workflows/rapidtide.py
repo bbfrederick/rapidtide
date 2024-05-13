@@ -3091,7 +3091,10 @@ def rapidtide_main(argparsingfunc):
         else:"""
         if optiondict["doglmfilt"]:
             mode = "glm"
+            optiondict["glmthreshval"] = threshval
         else:
+            # set the threshval to zero
+            optiondict["glmthreshval"] = 0.0
             mode = "cvrmap"
         voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
             fmri_data_valid,
@@ -3113,7 +3116,7 @@ def rapidtide_main(argparsingfunc):
             TimingLGR,
             validvoxels,
             initial_fmri_x,
-            threshval,
+            optiondict["glmthreshval"],
             nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
             nprocs_glm=optiondict["nprocs_glm"],
             glmderivs=optiondict["glmderivs"],
@@ -3121,6 +3124,7 @@ def rapidtide_main(argparsingfunc):
             showprogressbar=optiondict["showprogressbar"],
             alwaysmultiproc=optiondict["alwaysmultiproc"],
             memprofile=optiondict["memprofile"],
+            debug=optiondict["focaldebug"],
         )
 
         # calculate the final bandlimited mean normalized variance

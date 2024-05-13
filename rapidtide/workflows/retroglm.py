@@ -261,7 +261,10 @@ def retroglm(args):
         outputname = args.alternateoutput
     print(f"{outputname=}")
     oversamptr = fmritr / oversampfactor
-    threshval = 0.0
+    try:
+        threshval = therunoptions["glmthreshval"]
+    except KeyError:
+        threshval = 0.0
     mode = "glm"
 
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
