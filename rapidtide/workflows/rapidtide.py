@@ -209,38 +209,6 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
     return outputtimecourse, echofit, echoR
 
 
-def writeintermediatemaps(
-    thepass,
-    mapname,
-    mapsuffix,
-    optiondict,
-    outmaparray,
-    nativespaceshape,
-    outputname,
-    passsuffix,
-    bidsbasedict,
-    theheader,
-):
-    if optiondict["textio"]:
-        tide_io.writenpvecs(
-            outmaparray.reshape(nativespaceshape, 1),
-            f"{outputname}_{mapsuffix}{passsuffix}.txt",
-        )
-    else:
-        bidspasssuffix = f"_intermediatedata-pass{thepass}"
-        if mapname == "fitmask":
-            savename = f"{outputname}{bidspasssuffix}_desc-corrfit_mask"
-        elif mapname == "failreason":
-            savename = f"{outputname}{bidspasssuffix}_desc-corrfitfailreason_info"
-        else:
-            savename = f"{outputname}{bidspasssuffix}_desc-{mapsuffix}_map"
-        bidsdict = bidsbasedict.copy()
-        if mapname == "lagtimes" or mapname == "lagsigma":
-            bidsdict["Units"] = "second"
-        tide_io.writedicttojson(bidsdict, f"{savename}.json")
-        tide_io.savetonifti(outmaparray.reshape(nativespaceshape), theheader, savename)
-
-
 def disablemkl(numprocs, debug=False):
     if mklexists:
         if numprocs > 1:
@@ -936,34 +904,7 @@ def rapidtide_main(argparsingfunc):
             fileiscifti=fileiscifti,
             rt_floattype=rt_floattype,
             cifti_hdr=cifti_hdr,
-            savejson=False,
         )
-
-        """savename = f"{outputname}_desc-globalmean_mask"
-        if fileiscifti:
-            timeindex = theheader["dim"][0] - 1
-            spaceindex = theheader["dim"][0]
-            theheader["dim"][timeindex] = 1
-            theheader["dim"][spaceindex] = numspatiallocs
-            tide_io.savetocifti(
-                meanmask,
-                cifti_hdr,
-                theheader,
-                savename,
-                isseries=False,
-                names=["meanmask"],
-            )
-        elif optiondict["textio"]:
-            tide_io.writenpvecs(
-                meanmask,
-                savename + ".txt",
-            )
-        else:
-            theheader["dim"][0] = 3
-            theheader["dim"][4] = 1
-            theheader["pixdim"][4] = 1.0
-            tide_io.savetonifti(meanmask.reshape((xsize, ysize, numslices)), theheader, savename)"""
-
         optiondict["preprocskip"] = 0
     else:
         LGR.info(f"using externally supplied probe regressor {regressorfilename}")
@@ -2423,31 +2364,36 @@ def rapidtide_main(argparsingfunc):
         )
 
         if optiondict["saveintermediatemaps"]:
-            maplist = [
-                ("lagtimes", "maxtime"),
-                ("timepercentile", "timepercentile"),
-                ("lagstrengths", "maxcorr"),
-                ("lagsigma", "maxwidth"),
-            ]
-            for mapname, mapsuffix in maplist:
-                if optiondict["memprofile"]:
-                    memcheckpoint(f"about to write {mapname} to {mapsuffix}")
+            if not optiondict["textio"]:
+                theheader = copy.deepcopy(nim_hdr)
+                if fileiscifti:
+                    timeindex = theheader["dim"][0] - 1
+                    spaceindex = theheader["dim"][0]
+                    theheader["dim"][timeindex] = 1
+                    theheader["dim"][spaceindex] = numspatiallocs
                 else:
-                    tide_util.logmem(f"about to write {mapname} to {mapsuffix}")
-                outmaparray[:] = 0.0
-                outmaparray[validvoxels] = eval(mapname)[:]
-                writeintermediatemaps(
-                    thepass,
-                    mapname,
-                    mapsuffix,
-                    optiondict,
-                    outmaparray,
-                    nativespaceshape,
-                    outputname,
-                    passsuffix,
-                    bidsbasedict,
-                    theheader,
-                )
+                    theheader["dim"][0] = 3
+                    theheader["dim"][4] = 1
+                    theheader["pixdim"][4] = 1.0
+            bidspasssuffix = f"_intermediatedata-pass{thepass}"
+            maplist = [
+                (lagtimes, "maxtime", "map", None),
+                (timepercentile, "timepercentile", "map", None),
+                (lagstrengths, "maxcorr", "map", None),
+                (lagsigma, "maxwidth", "map", None),
+            ]
+            tide_io.savemaplist(
+                f"{outputname}{bidspasssuffix}",
+                maplist,
+                validvoxels,
+                nativespaceshape,
+                theheader,
+                bidsbasedict,
+                textio=optiondict["textio"],
+                fileiscifti=fileiscifti,
+                rt_floattype=rt_floattype,
+                cifti_hdr=cifti_hdr,
+            )
 
         # Step 3 - regressor refinement for next pass
         # write out the current version of the run options
@@ -2756,33 +2702,39 @@ def rapidtide_main(argparsingfunc):
                 },
             )
         if optiondict["saveintermediatemaps"]:
+            if not optiondict["textio"]:
+                theheader = copy.deepcopy(nim_hdr)
+                if fileiscifti:
+                    timeindex = theheader["dim"][0] - 1
+                    spaceindex = theheader["dim"][0]
+                    theheader["dim"][timeindex] = 1
+                    theheader["dim"][spaceindex] = numspatiallocs
+                else:
+                    theheader["dim"][0] = 3
+                    theheader["dim"][4] = 1
+                    theheader["pixdim"][4] = 1.0
+            bidspasssuffix = f"_intermediatedata-pass{thepass}"
             maplist = [
-                ("fitmask", "fitmask"),
-                ("failreason", "corrfitfailreason"),
+                (fitmask, "corrfit", "mask", None),
+                (failreason, "corrfitfailreason", "info", None),
             ]
             if optiondict["savedespecklemasks"] and (optiondict["despeckle_passes"] > 0):
-                maplist.append(("despecklesavemask", "despecklemask"))
+                maplist.append((despecklesavemask, "despecklemask", "map", None))
             if thepass < optiondict["passes"]:
-                maplist.append(("refinemask", "refinemask"))
-            for mapname, mapsuffix in maplist:
-                if optiondict["memprofile"]:
-                    memcheckpoint(f"about to write {mapname} to {mapsuffix}")
-                else:
-                    tide_util.logmem(f"about to write {mapname} to {mapsuffix}")
-                outmaparray[:] = 0.0
-                outmaparray[validvoxels] = eval(mapname)[:]
-                writeintermediatemaps(
-                    thepass,
-                    mapname,
-                    mapsuffix,
-                    optiondict,
-                    outmaparray,
-                    nativespaceshape,
-                    outputname,
-                    passsuffix,
-                    bidsbasedict,
-                    theheader,
-                )
+                maplist.append((refinemask, "refinemask", "map", None))
+            tide_io.savemaplist(
+                f"{outputname}{bidspasssuffix}",
+                maplist,
+                validvoxels,
+                nativespaceshape,
+                theheader,
+                bidsbasedict,
+                textio=optiondict["textio"],
+                fileiscifti=fileiscifti,
+                rt_floattype=rt_floattype,
+                cifti_hdr=cifti_hdr,
+            )
+
     # We are done with refinement.
     if optiondict["convergencethresh"] is None:
         optiondict["actual_passes"] = optiondict["passes"]
@@ -2865,39 +2817,33 @@ def rapidtide_main(argparsingfunc):
         enablemkl(optiondict["mklthreads"], debug=threaddebug)
 
         # save the results of the calculations
-        outcoherencearray = np.zeros(internalcoherenceshape, dtype=rt_floattype)
-        outcoherencearray[validvoxels, :] = coherencefunc[:, :]
-        theheader = copy.deepcopy(nim_hdr)
-        theheader["toffset"] = coherencefreqstart
-        theheader["pixdim"][4] = coherencefreqstep
-        if optiondict["textio"]:
-            tide_io.writenpvecs(
-                outcoherencearray.reshape(nativecoherenceshape),
-                f"{outputname}_coherence.txt",
-            )
-        else:
-            savename = f"{outputname}_desc-coherence_info"
-        if fileiscifti:
-            timeindex = theheader["dim"][0] - 1
-            spaceindex = theheader["dim"][0]
-            theheader["dim"][timeindex] = coherencefreqaxissize
-            theheader["dim"][spaceindex] = numspatiallocs
-            tide_io.savetocifti(
-                outcoherencearray,
-                cifti_hdr,
-                theheader,
-                savename,
-                isseries=True,
-                names=["coherence"],
-            )
-        else:
-            theheader["dim"][0] = 3
-            theheader["dim"][4] = coherencefreqaxissize
-            tide_io.savetonifti(
-                outcoherencearray.reshape(nativecoherenceshape), theheader, savename
-            )
+        if not optiondict["textio"]:
+            theheader = copy.deepcopy(nim_hdr)
+            theheader["toffset"] = coherencefreqstart
+            theheader["pixdim"][4] = coherencefreqstep
+            if fileiscifti:
+                timeindex = theheader["dim"][0] - 1
+                spaceindex = theheader["dim"][0]
+                theheader["dim"][timeindex] = coherencefreqaxissize
+                theheader["dim"][spaceindex] = numspatiallocs
+            else:
+                theheader["dim"][0] = 3
+                theheader["dim"][4] = coherencefreqaxissize
+                theheader["pixdim"][4] = 1.0
+        maplist = [(coherencefunc, "coherence", "info", None)]
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            nativecoherenceshape,
+            theheader,
+            bidsbasedict,
+            textio=optiondict["textio"],
+            fileiscifti=fileiscifti,
+            rt_floattype=rt_floattype,
+            cifti_hdr=cifti_hdr,
+        )
         del coherencefunc
-        del outcoherencearray
 
         TimingLGR.info(
             "Coherence calculation end",
@@ -3431,7 +3377,6 @@ def rapidtide_main(argparsingfunc):
             fileiscifti=fileiscifti,
             rt_floattype=rt_floattype,
             cifti_hdr=cifti_hdr,
-            savejson=False,
         )
         del masklist
 
@@ -3453,7 +3398,6 @@ def rapidtide_main(argparsingfunc):
             fileiscifti=fileiscifti,
             rt_floattype=rt_floattype,
             cifti_hdr=cifti_hdr,
-            savejson=False,
         )
         del refinemask
 
