@@ -438,6 +438,8 @@ def rapidtide_main(argparsingfunc):
         timepoints = theshape[1]
         thesizes = [0, int(xsize), 1, 1, int(timepoints)]
         numspatiallocs = int(xsize)
+        nativespaceshape = xsize
+        cifti_hdr = None
     else:
         fileiscifti = tide_io.checkifcifti(fmrifilename)
         if fileiscifti:
@@ -456,6 +458,7 @@ def rapidtide_main(argparsingfunc):
             numspatiallocs = nim_data.shape[0]
             LGR.debug(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
             slicesize = numspatiallocs
+            nativespaceshape = (1, 1, 1, 1, numspatiallocs)
         else:
             LGR.debug("input file is NIFTI")
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
@@ -463,8 +466,8 @@ def rapidtide_main(argparsingfunc):
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
             cifti_hdr = None
+            nativespaceshape = (xsize, ysize, numslices)
         xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
-    tide_util.logmem("after reading in fmri data")
 
     # correct some fields if necessary
     if fileiscifti:
@@ -908,9 +911,36 @@ def rapidtide_main(argparsingfunc):
         inputperiod = meanperiod
         inputstarttime = meanstarttime
         inputvec = meanvec
-        savename = f"{outputname}_desc-globalmean_mask"
+        theheader = copy.deepcopy(nim_hdr)
+
+        # save the meanmask
+        if not optiondict["textio"]:
+            if fileiscifti:
+                timeindex = theheader["dim"][0] - 1
+                spaceindex = theheader["dim"][0]
+                theheader["dim"][timeindex] = 1
+                theheader["dim"][spaceindex] = numspatiallocs
+            else:
+                theheader["dim"][0] = 3
+                theheader["dim"][4] = 1
+                theheader["pixdim"][4] = 1.0
+        masklist = [(meanmask, "globalmean", "mask", None)]
+        tide_io.savemaplist(
+            outputname,
+            masklist,
+            None,
+            nativespaceshape,
+            theheader,
+            bidsbasedict,
+            textio=optiondict["textio"],
+            fileiscifti=fileiscifti,
+            rt_floattype=rt_floattype,
+            cifti_hdr=cifti_hdr,
+            savejson=False,
+        )
+
+        """savename = f"{outputname}_desc-globalmean_mask"
         if fileiscifti:
-            theheader = copy.deepcopy(nim_hdr)
             timeindex = theheader["dim"][0] - 1
             spaceindex = theheader["dim"][0]
             theheader["dim"][timeindex] = 1
@@ -929,11 +959,10 @@ def rapidtide_main(argparsingfunc):
                 savename + ".txt",
             )
         else:
-            theheader = copy.deepcopy(nim_hdr)
             theheader["dim"][0] = 3
             theheader["dim"][4] = 1
             theheader["pixdim"][4] = 1.0
-            tide_io.savetonifti(meanmask.reshape((xsize, ysize, numslices)), theheader, savename)
+            tide_io.savetonifti(meanmask.reshape((xsize, ysize, numslices)), theheader, savename)"""
 
         optiondict["preprocskip"] = 0
     else:
@@ -1425,13 +1454,6 @@ def rapidtide_main(argparsingfunc):
 
     # allocate all the data arrays
     tide_util.logmem("before main array allocation")
-    if optiondict["textio"]:
-        nativespaceshape = xsize
-    else:
-        if fileiscifti:
-            nativespaceshape = (1, 1, 1, 1, numspatiallocs)
-        else:
-            nativespaceshape = (xsize, ysize, numslices)
     internalspaceshape = numspatiallocs
     internalvalidspaceshape = numvalidspatiallocs
     meanval = np.zeros(internalvalidspaceshape, dtype=rt_floattype)

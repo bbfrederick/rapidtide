@@ -21,6 +21,9 @@ rapidtide/experimental
 rapidtide/data/examples/dst/*
 rapidtide/tests/tmp/[abcdefghijklmnopqrstuvwxyz]*
 rapidtide/tests/*.jpg
+rapidtide/tests/*.json
+rapidtide/tests/*.tsv.gz
+rapidtide/tests/*.nii.gz
 
 # some local test data
 rapidtide/data/examples/src/*.jpg
