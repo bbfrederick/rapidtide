@@ -2997,7 +2997,7 @@ def rapidtide_main(argparsingfunc):
         else:
             tide_util.logmem("before glm")
 
-        if not optiondict["externalglm"]:
+        """if not optiondict["externalglm"]:
             # begin parsed section
             # generate the voxel specific regressors
             LGR.info("Start lagged timecourse creation")
@@ -3088,40 +3088,40 @@ def rapidtide_main(argparsingfunc):
                 append=False,
             )
             # end parsed section
+        else:"""
+        if optiondict["doglmfilt"]:
+            mode = "glm"
         else:
-            if optiondict["doglmfilt"]:
-                mode = "glm"
-            else:
-                mode = "cvrmap"
-            voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
-                fmri_data_valid,
-                glmmean,
-                rvalue,
-                r2value,
-                fitNorm,
-                fitcoeff,
-                movingsignal,
-                lagtc,
-                filtereddata,
-                lagtimes,
-                fitmask,
-                genlagtc,
-                mode,
-                outputname,
-                oversamptr,
-                LGR,
-                TimingLGR,
-                validvoxels,
-                initial_fmri_x,
-                threshval,
-                nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
-                nprocs_glm=optiondict["nprocs_glm"],
-                glmderivs=optiondict["glmderivs"],
-                mp_chunksize=optiondict["mp_chunksize"],
-                showprogressbar=optiondict["showprogressbar"],
-                alwaysmultiproc=optiondict["alwaysmultiproc"],
-                memprofile=optiondict["memprofile"],
-            )
+            mode = "cvrmap"
+        voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
+            fmri_data_valid,
+            glmmean,
+            rvalue,
+            r2value,
+            fitNorm,
+            fitcoeff,
+            movingsignal,
+            lagtc,
+            filtereddata,
+            lagtimes,
+            fitmask,
+            genlagtc,
+            mode,
+            outputname,
+            oversamptr,
+            LGR,
+            TimingLGR,
+            validvoxels,
+            initial_fmri_x,
+            threshval,
+            nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
+            nprocs_glm=optiondict["nprocs_glm"],
+            glmderivs=optiondict["glmderivs"],
+            mp_chunksize=optiondict["mp_chunksize"],
+            showprogressbar=optiondict["showprogressbar"],
+            alwaysmultiproc=optiondict["alwaysmultiproc"],
+            memprofile=optiondict["memprofile"],
+        )
 
         # calculate the final bandlimited mean normalized variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
@@ -3210,15 +3210,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict[
-            "lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thetimepcts[i]
-        optiondict[
-            "lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thestrengthpcts[i]
-        optiondict[
-            "lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"
-        ] = thesigmapcts[i]
+        optiondict["lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thetimepcts[i]
+        )
+        optiondict["lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thestrengthpcts[i]
+        )
+        optiondict["lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
+            thesigmapcts[i]
+        )
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 

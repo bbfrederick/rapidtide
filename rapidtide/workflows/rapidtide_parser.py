@@ -1391,13 +1391,13 @@ def _get_parser():
         help=("Generate extra data during refinement to allow calculation of dispersion."),
         default=False,
     )
-    experimental.add_argument(
+    """experimental.add_argument(
         "--externalglm",
         dest="externalglm",
         action="store_true",
         help=("Use the independent, factored out GLM routine."),
         default=False,
-    )
+    )"""
     experimental.add_argument(
         "--tmask",
         dest="tmaskname",
