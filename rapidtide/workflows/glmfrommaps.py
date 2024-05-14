@@ -126,6 +126,11 @@ def glmfrommaps(
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
     )
+    if debug:
+        print(f"after makelaggedtcs: shifted {voxelsprocessed_makelagged} timecourses")
+        exampletc = genlagtc.yfromx(initial_fmri_x)
+        for i in range(len(exampletc)):
+            print("\t", exampletc[i])
     LGR.info("End lagged timecourse creation")
     TimingLGR.info(
         "Lagged timecourse creation end",

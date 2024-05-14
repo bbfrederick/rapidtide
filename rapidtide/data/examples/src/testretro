@@ -23,7 +23,7 @@ do
     echo ${map}: ${therange}
 done
 
-for map in lfofilterRemoved_bold lfofilterCleaned_bold
+for map in datatofilter_bold lfofilterRemoved_bold lfofilterCleaned_bold
 do
     fslmaths \
         ../dst/rehydrated_desc-${map}.nii.gz \

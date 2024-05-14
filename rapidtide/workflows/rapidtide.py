@@ -3096,6 +3096,38 @@ def rapidtide_main(argparsingfunc):
             # set the threshval to zero
             optiondict["glmthreshval"] = 0.0
             mode = "cvrmap"
+        if optiondict["focaldebug"]:
+            # dump the fmri input file going to glm
+            if not optiondict["textio"]:
+                theheader = copy.deepcopy(nim_hdr)
+                if fileiscifti:
+                    timeindex = theheader["dim"][0] - 1
+                    spaceindex = theheader["dim"][0]
+                    theheader["dim"][timeindex] = np.shape(outfmriarray)[1]
+                    theheader["dim"][spaceindex] = numspatiallocs
+                else:
+                    theheader["dim"][4] = np.shape(outfmriarray)[1]
+                    theheader["pixdim"][4] = fmritr
+            else:
+                theheader = None
+                cifti_hdr = None
+
+            maplist = [
+                (fmri_data_valid, "datatofilter", "bold", "second"),
+            ]
+            tide_io.savemaplist(
+                outputname,
+                maplist,
+                validvoxels,
+                nativefmrishape,
+                theheader,
+                bidsbasedict,
+                textio=optiondict["textio"],
+                fileiscifti=fileiscifti,
+                rt_floattype=rt_floattype,
+                cifti_hdr=cifti_hdr,
+            )
+
         voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
             fmri_data_valid,
             glmmean,

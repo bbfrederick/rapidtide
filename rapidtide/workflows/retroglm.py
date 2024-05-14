@@ -267,10 +267,38 @@ def retroglm(args):
         threshval = 0.0
     mode = "glm"
 
+    bidsbasedict = {
+        "RawSources": args.fmrifile,
+        "Units": "arbitrary",
+        "CommandLineArgs": thecommandline,
+    }
+
+    if args.debug:
+        # dump the fmri input file going to glm
+        theheader = copy.deepcopy(fmri_header)
+        theheader["dim"][4] = validtimepoints
+        theheader["pixdim"][4] = fmritr
+
+        maplist = [
+            (fmri_data_valid, "datatofilter", "bold", "second"),
+        ]
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            (xsize, ysize, numslices, validtimepoints),
+            theheader,
+            bidsbasedict,
+            textio=False,
+            fileiscifti=False,
+            rt_floattype=rt_floattype,
+            cifti_hdr=None,
+        )
+
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     print("calling glmmfrommaps")
-    voxelsprocessed_glm = tide_glmfrommaps.glmfrommaps(
+    voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
         fmri_data_valid,
         glmmean,
         rvalue,
@@ -301,6 +329,7 @@ def retroglm(args):
         debug=True,
     )
 
+    print(f"filtered {voxelsprocessed_glm} voxels")
     finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
     divlocs = np.where(finalvariance > 0.0)
     varchange = initialvariance * 0.0
@@ -314,11 +343,6 @@ def retroglm(args):
         os.path.relpath(runoptionsfile, start=outputpath),
         os.path.relpath(lagtcgeneratorfile, start=outputpath),
     ]
-    bidsbasedict = {
-        "RawSources": rawsources,
-        "Units": "arbitrary",
-        "CommandLineArgs": thecommandline,
-    }
 
     theheader = copy.deepcopy(lagtimes_header)
     if mode == "glm":
@@ -344,6 +368,11 @@ def retroglm(args):
 
     bidsdict = bidsbasedict.copy()
 
+    if args.debug:
+        maplist += [
+            (lagtimes_valid, "maxtimeREAD", "map", "second"),
+            (lagmask_valid, "processedREAD", "mask", None),
+        ]
     # write the 3D maps
     tide_io.savemaplist(
         outputname, maplist, validvoxels, (xsize, ysize, numslices), theheader, bidsdict
@@ -355,6 +384,18 @@ def retroglm(args):
         (movingsignal, "lfofilterRemoved", "bold", None),
         (filtereddata, "lfofilterCleaned", "bold", None),
     ]
+    if args.glmderivs > 0:
+        maplist += [
+            (regressorset[:, 0], "lfofilterEV", "bold", None),
+        ]
+        for thederiv in range(1, args.glmderivs + 1):
+            maplist += [
+                (regressorset[:, thederiv], f"lfofilterEVDeriv{thederiv}", "map", None),
+            ]
+    else:
+        maplist += [
+            (regressorset, "lfofilterEV", "bold", None),
+        ]
     if args.debug:
         maplist.append((fmri_data_valid, "inputdata", "bold", None))
     tide_io.savemaplist(
