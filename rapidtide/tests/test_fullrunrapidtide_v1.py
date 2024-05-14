@@ -41,7 +41,6 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         "1",
         "--despecklepasses",
         "3",
-        "--externalglm",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
     rapidtide_quality.qualitycheck(os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1"))
