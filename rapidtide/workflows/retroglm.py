@@ -160,7 +160,7 @@ def retroglm(args):
     print(f"{lagmask_spacebytime.shape=}")
 
     print("reading lagtimes")
-    lagtimesfile = f"{args.datafileroot}_desc-maxcorr_map.nii.gz"
+    lagtimesfile = f"{args.datafileroot}_desc-maxtime_map.nii.gz"
     (
         lagtimes_input,
         lagtimes,
