@@ -23,7 +23,7 @@ do
     echo ${map}: ${therange}
 done
 
-for map in processed_mask maxtime_map
+for map in processed_mask corrfit_mask maxtime_map
 do
     readname=`echo ${map} | sed 's/_/READ_/g'`
     fslmaths \

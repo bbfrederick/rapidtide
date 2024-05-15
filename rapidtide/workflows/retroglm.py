@@ -134,7 +134,17 @@ def retroglm(args):
     else:
         usesharedmem = True
 
-    # read the necessary input files
+    # read the runoptions file
+    print("reading runoptions")
+    runoptionsfile = f"{args.datafileroot}_options"
+    therunoptions = tide_io.readoptionsfile(runoptionsfile)
+    try:
+        candoretroglm = therunoptions["retroglmcompatible"]
+    except KeyError:
+        print("this rapidtide dataset does not support retrospective GLM calculation")
+        sys.exit()
+
+    # read the fmri input files
     print("reading fmrifile")
     fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
         args.fmrifile
@@ -146,18 +156,35 @@ def retroglm(args):
     fmri_data_spacebytime = fmri_data.reshape((numspatiallocs, timepoints))
     print(f"{fmri_data_spacebytime.shape=}")
 
-    # read the runoptions file
-    print("reading runoptions")
-    runoptionsfile = f"{args.datafileroot}_options"
-    therunoptions = tide_io.readoptionsfile(runoptionsfile)
+    # read the processed mask
+    print("reading procfit maskfile")
+    procmaskfile = f"{args.datafileroot}_desc-processed_mask.nii.gz"
+    (
+        procmask_input,
+        procmask,
+        procmask_header,
+        procmask_dims,
+        procmask_sizes,
+    ) = tide_io.readfromnifti(procmaskfile)
+    if not tide_io.checkspacematch(fmri_header, procmask_header):
+        raise ValueError("procmask dimensions do not match fmri dimensions")
+    procmask_spacebytime = procmask.reshape((numspatiallocs))
+    print(f"{procmask_spacebytime.shape=}")
 
-    print("reading maskfile")
-    maskfile = f"{args.datafileroot}_desc-processed_mask.nii.gz"
-    mask_input, lagmask, mask_header, mask_dims, mask_sizes = tide_io.readfromnifti(maskfile)
-    if not tide_io.checkspacematch(fmri_header, mask_header):
-        raise ValueError("mask dimensions do not match fmri dimensions")
-    lagmask_spacebytime = lagmask.reshape((numspatiallocs))
-    print(f"{lagmask_spacebytime.shape=}")
+    # read the corrfit mask
+    print("reading corrfit maskfile")
+    corrmaskfile = f"{args.datafileroot}_desc-corrfit_mask.nii.gz"
+    (
+        corrmask_input,
+        corrmask,
+        corrmask_header,
+        corrmask_dims,
+        corrmask_sizes,
+    ) = tide_io.readfromnifti(corrmaskfile)
+    if not tide_io.checkspacematch(fmri_header, corrmask_header):
+        raise ValueError("corrmask dimensions do not match fmri dimensions")
+    corrmask_spacebytime = corrmask.reshape((numspatiallocs))
+    print(f"{corrmask_spacebytime.shape=}")
 
     print("reading lagtimes")
     lagtimesfile = f"{args.datafileroot}_desc-maxtime_map.nii.gz"
@@ -209,7 +236,7 @@ def retroglm(args):
 
     # select the voxels in the mask
     print("figuring out valid voxels")
-    validvoxels = np.where(lagmask_spacebytime > 0)[0]
+    validvoxels = np.where(procmask_spacebytime > 0)[0]
     print(f"{validvoxels.shape=}")
     numvalidspatiallocs = np.shape(validvoxels)[0]
     print(f"{numvalidspatiallocs=}")
@@ -226,7 +253,8 @@ def retroglm(args):
     print("selecting valid voxels")
     fmri_data_valid = fmri_data_spacebytime[validvoxels, :]
     lagtimes_valid = lagtimes_spacebytime[validvoxels]
-    lagmask_valid = lagmask_spacebytime[validvoxels]
+    corrmask_valid = corrmask_spacebytime[validvoxels]
+    procmask_valid = procmask_spacebytime[validvoxels]
     print(f"{fmri_data_valid.shape=}")
 
     if usesharedmem:
@@ -303,7 +331,7 @@ def retroglm(args):
         validvoxels,
         initial_fmri_x,
         lagtimes_valid,
-        lagmask_valid,
+        corrmask_valid,
         genlagtc,
         mode,
         outputname,
@@ -339,7 +367,8 @@ def retroglm(args):
     rawsources = [
         os.path.relpath(args.fmrifile, start=outputpath),
         os.path.relpath(lagtimesfile, start=outputpath),
-        os.path.relpath(maskfile, start=outputpath),
+        os.path.relpath(corrmaskfile, start=outputpath),
+        os.path.relpath(procmaskfile, start=outputpath),
         os.path.relpath(runoptionsfile, start=outputpath),
         os.path.relpath(lagtcgeneratorfile, start=outputpath),
     ]
@@ -371,7 +400,8 @@ def retroglm(args):
     if args.debug:
         maplist += [
             (lagtimes_valid, "maxtimeREAD", "map", "second"),
-            (lagmask_valid, "processedREAD", "mask", None),
+            (corrmask_valid, "corrfitREAD", "mask", None),
+            (procmask_valid, "processedREAD", "mask", None),
         ]
     # write the 3D maps
     tide_io.savemaplist(

@@ -1913,6 +1913,9 @@ def process_args(inputargs=None):
         ]
     )
 
+    # this is new enough to do retrospective GLM
+    args["retroglmcompatible"] = True
+
     LGR.debug("\nafter postprocessing\n{}".format(args))
 
     # start the clock!

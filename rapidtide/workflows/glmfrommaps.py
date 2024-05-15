@@ -127,10 +127,13 @@ def glmfrommaps(
         rt_floattype=rt_floattype,
     )
     if debug:
+        print(f"{lagtimes.shape=}")
+        threshmask = np.where(fitmask > 0, 1, 0)
+        print(f"{np.sum(threshmask)} nonzero mask voxels")
         print(f"after makelaggedtcs: shifted {voxelsprocessed_makelagged} timecourses")
-        exampletc = genlagtc.yfromx(initial_fmri_x)
-        for i in range(len(exampletc)):
-            print("\t", exampletc[i])
+        # exampletc = genlagtc.yfromx(initial_fmri_x)
+        # for i in range(len(exampletc)):
+        #    print("\t", exampletc[i])
     LGR.info("End lagged timecourse creation")
     TimingLGR.info(
         "Lagged timecourse creation end",

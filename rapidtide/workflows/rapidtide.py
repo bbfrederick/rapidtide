@@ -698,10 +698,6 @@ def rapidtide_main(argparsingfunc):
 
     tide_util.logmem("after selecting valid voxels")
 
-    # calculate the initial bandlimited mean normalized variance if we're going to filter the data
-    if optiondict["doglmfilt"] or optiondict["docvrmap"]:
-        initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
-
     # move fmri_data_valid into shared memory
     if optiondict["sharedmem"]:
         LGR.info("moving fmri data to shared memory")
@@ -3035,6 +3031,9 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype=rt_floattype,
                 cifti_hdr=cifti_hdr,
             )
+
+        # calculate the initial bandlimited mean normalized variance if we're going to filter the data
+        initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
         voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
             fmri_data_valid,
