@@ -3230,8 +3230,8 @@ def rapidtide_main(argparsingfunc):
             ]
             if optiondict["glmderivs"] > 0:
                 maplist += [
-                    (fitcoeff[:, 0], f"lfofilterCoeff", "bold", None),
-                    (fitNorm[:, 0], f"lfofilterNorm", "bold", None),
+                    (fitcoeff[:, 0], f"lfofilterCoeff", "map", None),
+                    (fitNorm[:, 0], f"lfofilterNorm", "map", None),
                 ]
                 for thederiv in range(1, optiondict["glmderivs"] + 1):
                     maplist += [
@@ -3397,11 +3397,11 @@ def rapidtide_main(argparsingfunc):
     if optiondict["saveallglmfiles"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
         if optiondict["glmderivs"] > 0:
             maplist += [
-                (regressorset[:, 0], "lfofilterEV", "bold", None),
+                (regressorset[:, :, 0], "lfofilterEV", "bold", None),
             ]
             for thederiv in range(1, optiondict["glmderivs"] + 1):
                 maplist += [
-                    (regressorset[:, thederiv], f"lfofilterEVDeriv{thederiv}", "map", None),
+                    (regressorset[:, :, thederiv], f"lfofilterEVDeriv{thederiv}", "bold", None),
                 ]
         else:
             maplist += [

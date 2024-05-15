@@ -154,7 +154,8 @@ def retroglm(args):
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(fmri_dims)
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
     fmri_data_spacebytime = fmri_data.reshape((numspatiallocs, timepoints))
-    print(f"{fmri_data_spacebytime.shape=}")
+    if args.debug:
+        print(f"{fmri_data_spacebytime.shape=}")
 
     # read the processed mask
     print("reading procfit maskfile")
@@ -169,7 +170,8 @@ def retroglm(args):
     if not tide_io.checkspacematch(fmri_header, procmask_header):
         raise ValueError("procmask dimensions do not match fmri dimensions")
     procmask_spacebytime = procmask.reshape((numspatiallocs))
-    print(f"{procmask_spacebytime.shape=}")
+    if args.debug:
+        print(f"{procmask_spacebytime.shape=}")
 
     # read the corrfit mask
     print("reading corrfit maskfile")
@@ -184,7 +186,8 @@ def retroglm(args):
     if not tide_io.checkspacematch(fmri_header, corrmask_header):
         raise ValueError("corrmask dimensions do not match fmri dimensions")
     corrmask_spacebytime = corrmask.reshape((numspatiallocs))
-    print(f"{corrmask_spacebytime.shape=}")
+    if args.debug:
+        print(f"{corrmask_spacebytime.shape=}")
 
     print("reading lagtimes")
     lagtimesfile = f"{args.datafileroot}_desc-maxtime_map.nii.gz"
@@ -197,9 +200,11 @@ def retroglm(args):
     ) = tide_io.readfromnifti(lagtimesfile)
     if not tide_io.checkspacematch(fmri_header, lagtimes_header):
         raise ValueError("lagtimes dimensions do not match fmri dimensions")
-    print(f"{lagtimes.shape=}")
+    if args.debug:
+        print(f"{lagtimes.shape=}")
     lagtimes_spacebytime = lagtimes.reshape((numspatiallocs))
-    print(f"{lagtimes_spacebytime.shape=}")
+    if args.debug:
+        print(f"{lagtimes_spacebytime.shape=}")
 
     startpt = args.numskip
     endpt = timepoints - 1
@@ -237,17 +242,20 @@ def retroglm(args):
     # select the voxels in the mask
     print("figuring out valid voxels")
     validvoxels = np.where(procmask_spacebytime > 0)[0]
-    print(f"{validvoxels.shape=}")
+    if args.debug:
+        print(f"{validvoxels.shape=}")
     numvalidspatiallocs = np.shape(validvoxels)[0]
-    print(f"{numvalidspatiallocs=}")
+    if args.debug:
+        print(f"{numvalidspatiallocs=}")
     internalvalidspaceshape = numvalidspatiallocs
     internalvalidspaceshapederivs = (
         internalvalidspaceshape,
         args.glmderivs + 1,
     )
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    print(f"validvoxels shape = {numvalidspatiallocs}")
-    print(f"internalvalidfmrishape shape = {internalvalidfmrishape}")
+    if args.debug:
+        print(f"validvoxels shape = {numvalidspatiallocs}")
+        print(f"internalvalidfmrishape shape = {internalvalidfmrishape}")
 
     # slicing to valid voxels
     print("selecting valid voxels")
@@ -255,10 +263,12 @@ def retroglm(args):
     lagtimes_valid = lagtimes_spacebytime[validvoxels]
     corrmask_valid = corrmask_spacebytime[validvoxels]
     procmask_valid = procmask_spacebytime[validvoxels]
-    print(f"{fmri_data_valid.shape=}")
+    if args.debug:
+        print(f"{fmri_data_valid.shape=}")
 
     if usesharedmem:
-        print("allocating shared memory")
+        if args.debug:
+            print("allocating shared memory")
         glmmean, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         rvalue, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         r2value, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
@@ -272,7 +282,8 @@ def retroglm(args):
         lagtc, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
         filtereddata, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_outfloatset)
     else:
-        print("allocating memory")
+        if args.debug:
+            print("allocating memory")
         glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
@@ -287,7 +298,8 @@ def retroglm(args):
         outputname = therunoptions["outputname"]
     else:
         outputname = args.alternateoutput
-    print(f"{outputname=}")
+    if args.debug:
+        print(f"{outputname=}")
     oversamptr = fmritr / oversampfactor
     try:
         threshval = therunoptions["glmthreshval"]
@@ -295,8 +307,18 @@ def retroglm(args):
         threshval = 0.0
     mode = "glm"
 
+    outputpath = os.path.dirname(outputname)
+    rawsources = [
+        os.path.relpath(args.fmrifile, start=outputpath),
+        os.path.relpath(lagtimesfile, start=outputpath),
+        os.path.relpath(corrmaskfile, start=outputpath),
+        os.path.relpath(procmaskfile, start=outputpath),
+        os.path.relpath(runoptionsfile, start=outputpath),
+        os.path.relpath(lagtcgeneratorfile, start=outputpath),
+    ]
+
     bidsbasedict = {
-        "RawSources": args.fmrifile,
+        "RawSources": rawsources,
         "Units": "arbitrary",
         "CommandLineArgs": thecommandline,
     }
@@ -349,12 +371,12 @@ def retroglm(args):
         threshval,
         nprocs_makelaggedtcs=args.nprocs,
         nprocs_glm=args.nprocs,
-        glmderivs=0,
+        glmderivs=args.glmderivs,
         mp_chunksize=50000,
         showprogressbar=True,
         alwaysmultiproc=False,
         memprofile=False,
-        debug=True,
+        debug=args.debug,
     )
 
     print(f"filtered {voxelsprocessed_glm} voxels")
@@ -363,24 +385,12 @@ def retroglm(args):
     varchange = initialvariance * 0.0
     varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
 
-    outputpath = os.path.dirname(outputname)
-    rawsources = [
-        os.path.relpath(args.fmrifile, start=outputpath),
-        os.path.relpath(lagtimesfile, start=outputpath),
-        os.path.relpath(corrmaskfile, start=outputpath),
-        os.path.relpath(procmaskfile, start=outputpath),
-        os.path.relpath(runoptionsfile, start=outputpath),
-        os.path.relpath(lagtcgeneratorfile, start=outputpath),
-    ]
-
     theheader = copy.deepcopy(lagtimes_header)
     if mode == "glm":
         maplist = [
             (rvalue, "lfofilterR", "map", None),
             (r2value, "lfofilterR2", "map", None),
             (glmmean, "lfofilterMean", "map", None),
-            (fitcoeff, "lfofilterCoeff", "map", None),
-            (fitNorm, "lfofilterNorm", "map", None),
             (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
             (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
             (varchange, "lfofilterInbandVarianceChange", "map", None),
@@ -403,9 +413,32 @@ def retroglm(args):
             (corrmask_valid, "corrfitREAD", "mask", None),
             (procmask_valid, "processedREAD", "mask", None),
         ]
+
+    if args.glmderivs > 0:
+        maplist += [
+            (fitcoeff[:, 0], "lfofilterCoeff", "map", None),
+            (fitNorm[:, 0], "lfofilterNorm", "map", None),
+        ]
+        for thederiv in range(1, args.glmderivs + 1):
+            maplist += [
+                (fitcoeff[:, thederiv], f"lfofilterCoeffDeriv{thederiv}", "map", None),
+                (fitNorm[:, thederiv], f"lfofilterNormDeriv{thederiv}", "map", None),
+            ]
+    else:
+        maplist += [
+            (fitcoeff, "lfofilterCoeff", "map", None),
+            (fitNorm, "lfofilterNorm", "map", None),
+        ]
+
     # write the 3D maps
     tide_io.savemaplist(
-        outputname, maplist, validvoxels, (xsize, ysize, numslices), theheader, bidsdict
+        outputname,
+        maplist,
+        validvoxels,
+        (xsize, ysize, numslices),
+        theheader,
+        bidsdict,
+        debug=args.debug,
     )
 
     # write the 4D maps
@@ -415,14 +448,21 @@ def retroglm(args):
         (filtereddata, "lfofilterCleaned", "bold", None),
     ]
     if args.glmderivs > 0:
+        if args.debug:
+            print("going down the multiple EV path")
+            print(f"{regressorset[:, :, 0].shape=}")
         maplist += [
-            (regressorset[:, 0], "lfofilterEV", "bold", None),
+            (regressorset[:, :, 0], "lfofilterEV", "bold", None),
         ]
         for thederiv in range(1, args.glmderivs + 1):
+            if args.debug:
+                print(f"{regressorset[:, :, thederiv].shape=}")
             maplist += [
-                (regressorset[:, thederiv], f"lfofilterEVDeriv{thederiv}", "map", None),
+                (regressorset[:, :, thederiv], f"lfofilterEVDeriv{thederiv}", "bold", None),
             ]
     else:
+        if args.debug:
+            print("going down the single EV path")
         maplist += [
             (regressorset, "lfofilterEV", "bold", None),
         ]
@@ -435,4 +475,5 @@ def retroglm(args):
         (xsize, ysize, numslices, validtimepoints),
         theheader,
         bidsdict,
+        debug=args.debug,
     )

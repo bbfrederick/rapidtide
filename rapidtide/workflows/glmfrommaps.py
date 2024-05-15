@@ -131,9 +131,6 @@ def glmfrommaps(
         threshmask = np.where(fitmask > 0, 1, 0)
         print(f"{np.sum(threshmask)} nonzero mask voxels")
         print(f"after makelaggedtcs: shifted {voxelsprocessed_makelagged} timecourses")
-        # exampletc = genlagtc.yfromx(initial_fmri_x)
-        # for i in range(len(exampletc)):
-        #    print("\t", exampletc[i])
     LGR.info("End lagged timecourse creation")
     TimingLGR.info(
         "Lagged timecourse creation end",
@@ -152,10 +149,15 @@ def glmfrommaps(
         glmpass_func = tide_glmpass.glmpass
 
     if glmderivs > 0:
-        print(f"adding derivatives up to order {glmderivs} prior to regression")
+        if debug:
+            print(f"adding derivatives up to order {glmderivs} prior to regression")
         regressorset = tide_glmpass.makevoxelspecificderivs(lagtc, glmderivs)
     else:
+        if debug:
+            print(f"using raw lagged regressors for regression")
         regressorset = lagtc
+    if debug:
+        print(f"{regressorset.shape=}")
     voxelsprocessed_glm = glmpass_func(
         numvalidspatiallocs,
         fmri_data_valid,
