@@ -2997,105 +2997,13 @@ def rapidtide_main(argparsingfunc):
         else:
             tide_util.logmem("before glm")
 
-        """if not optiondict["externalglm"]:
-            # begin parsed section
-            # generate the voxel specific regressors
-            LGR.info("Start lagged timecourse creation")
-            TimingLGR.info("Start lagged timecourse creation")
-            makelagged_func = addmemprofiling(
-                tide_makelagged.makelaggedtcs,
-                optiondict["memprofile"],
-                "before making lagged timecourses",
-            )
-            disablemkl(optiondict["nprocs_makelaggedtcs"], debug=threaddebug)
-            voxelsprocessed_makelagged = tide_makelagged.makelaggedtcs(
-                genlagtc,
-                initial_fmri_x,
-                fitmask,
-                lagtimes,
-                lagtc,
-                nprocs=optiondict["nprocs_makelaggedtcs"],
-                alwaysmultiproc=optiondict["alwaysmultiproc"],
-                showprogressbar=optiondict["showprogressbar"],
-                chunksize=optiondict["mp_chunksize"],
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
-            )
-            enablemkl(optiondict["mklthreads"], debug=threaddebug)
-            LGR.info("End lagged timecourse creation")
-            TimingLGR.info(
-                "Lagged timecourse creation end",
-                {
-                    "message2": voxelsprocessed_makelagged,
-                    "message3": "voxels",
-                },
-            )
-
-            # and do the filtering
-            LGR.info("Start filtering operation")
-            TimingLGR.info("Start filtering operation")
-            glmpass_func = addmemprofiling(
-                tide_glmpass.glmpass, optiondict["memprofile"], "before glmpass"
-            )
-            if optiondict["docvrmap"]:
-                # set the threshval to zero
-                glmthreshval = 0.0
-            else:
-                glmthreshval = threshval
-
-            if optiondict["glmderivs"] > 0:
-                print(
-                    f"adding derivatives up to order {optiondict['glmderivs']} prior to regression"
-                )
-                regressorset = tide_glmpass.makevoxelspecificderivs(lagtc, optiondict["glmderivs"])
-            else:
-                regressorset = lagtc
-            disablemkl(optiondict["nprocs_glm"], debug=threaddebug)
-            voxelsprocessed_glm = glmpass_func(
-                numvalidspatiallocs,
-                fmri_data_valid,
-                glmthreshval,
-                regressorset,
-                glmmean,
-                rvalue,
-                r2value,
-                fitcoeff,
-                fitNorm,
-                movingsignal,
-                filtereddata,
-                nprocs=optiondict["nprocs_glm"],
-                alwaysmultiproc=optiondict["alwaysmultiproc"],
-                showprogressbar=optiondict["showprogressbar"],
-                mp_chunksize=optiondict["mp_chunksize"],
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
-            )
-            enablemkl(optiondict["mklthreads"], debug=threaddebug)
-
-            if optiondict["docvrmap"]:
-                # if we are doing a cvr map, multiply the fitcoeff by 100, so we are in percent
-                fitcoeff *= 100.0
-
-            # determine what was removed
-            removeddata = fmri_data_valid - filtereddata
-            noiseremoved = np.var(removeddata, axis=0)
-            tide_io.writebidstsv(
-                f"{outputname}_desc-lfoNoiseRemoved_timeseries",
-                noiseremoved,
-                1.0 / oversamptr,
-                starttime=0.0,
-                columns=[f"removedbyglm"],
-                append=False,
-            )
-            # end parsed section
-        else:"""
         if optiondict["doglmfilt"]:
             mode = "glm"
             optiondict["glmthreshval"] = threshval
         else:
             # set the threshval to zero
-            optiondict["glmthreshval"] = 0.0
             mode = "cvrmap"
+            optiondict["glmthreshval"] = 0.0
         if optiondict["focaldebug"]:
             # dump the fmri input file going to glm
             if not optiondict["textio"]:
@@ -3246,15 +3154,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict["lagtimes_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thetimepcts[i]
-        )
-        optiondict["lagstrengths_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thestrengthpcts[i]
-        )
-        optiondict["lagsigma_" + str(int(np.round(100 * histpcts[i], 0))).zfill(2) + "pct"] = (
-            thesigmapcts[i]
-        )
+        optiondict[
+            f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thetimepcts[i]
+        optiondict[
+            f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thestrengthpcts[i]
+        optiondict[
+            f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thesigmapcts[i]
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
