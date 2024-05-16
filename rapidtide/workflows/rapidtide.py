@@ -645,7 +645,7 @@ def rapidtide_main(argparsingfunc):
         corrmask *= 0
         corrmask += 1
         threshval = -10000000.0
-    if optiondict["savecorrmask"] and not (fileiscifti or optiondict["textio"]):
+    if not (fileiscifti or optiondict["textio"]):
         theheader = copy.deepcopy(nim_hdr)
         theheader["dim"][0] = 3
         theheader["dim"][4] = 1
@@ -3357,23 +3357,27 @@ def rapidtide_main(argparsingfunc):
         theheader = None
         cifti_hdr = None
 
-    maplist = [
-        (gaussout, "gaussout", "info", "second"),
-        (windowout, "corrfitwindow", "info", "second"),
-        (corrout, "corrout", "info", "second"),
-    ]
-    tide_io.savemaplist(
-        outputname,
-        maplist,
-        validvoxels,
-        nativecorrshape,
-        theheader,
-        bidsbasedict,
-        textio=optiondict["textio"],
-        fileiscifti=fileiscifti,
-        rt_floattype=rt_floattype,
-        cifti_hdr=cifti_hdr,
-    )
+    if optiondict["outputlevel"] != "min":
+        maplist = [
+            (corrout, "corrout", "info", "second"),
+        ]
+        if optiondict["savegaussout"]:
+            maplist += [
+                (gaussout, "gaussout", "info", "second"),
+                (windowout, "corrfitwindow", "info", "second"),
+            ]
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            nativecorrshape,
+            theheader,
+            bidsbasedict,
+            textio=optiondict["textio"],
+            fileiscifti=fileiscifti,
+            rt_floattype=rt_floattype,
+            cifti_hdr=cifti_hdr,
+        )
     del windowout
     del gaussout
     del corrout
@@ -3414,7 +3418,7 @@ def rapidtide_main(argparsingfunc):
                 (paddedshiftedtcs[:, numpadtrs:-numpadtrs], "shiftedtcs", "bold", None),
             ]
 
-    if optiondict["doglmfilt"] and optiondict["saveglmfiltered"]:
+    if optiondict["doglmfilt"]:
         maplist += [
             (filtereddata, "lfofilterCleaned", "bold", None),
         ]

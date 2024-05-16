@@ -109,6 +109,13 @@ def _get_parser():
         default=True,
     )
     parser.add_argument(
+        "--noprogressbar",
+        dest="showprogressbar",
+        action="store_false",
+        help=("Will disable showing progress bars (helpful if stdout is going to a file)."),
+        default=True,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -149,7 +156,8 @@ def retroglm(args):
     fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
         args.fmrifile
     )
-    print(f"{fmri_data.shape=}")
+    if args.debug:
+        print(f"{fmri_data.shape=}")
     xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(fmri_sizes)
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(fmri_dims)
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
@@ -372,10 +380,7 @@ def retroglm(args):
         nprocs_makelaggedtcs=args.nprocs,
         nprocs_glm=args.nprocs,
         glmderivs=args.glmderivs,
-        mp_chunksize=50000,
-        showprogressbar=True,
-        alwaysmultiproc=False,
-        memprofile=False,
+        showprogressbar=args.showprogressbar,
         debug=args.debug,
     )
 

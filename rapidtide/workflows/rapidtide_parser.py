@@ -82,6 +82,8 @@ DEFAULT_CVRMAPPING_FILTER_LOWERPASS = 0.0
 DEFAULT_CVRMAPPING_FILTER_UPPERPASS = 0.01
 DEFAULT_CVRMAPPING_DESPECKLE_PASSES = 4
 
+DEFAULT_OUTPUTLEVEL = "norm"
+
 
 def _get_parser():
     """
@@ -142,7 +144,7 @@ def _get_parser():
             "Preset for delay mapping analysis - this is a macro that "
             f"sets searchrange=({DEFAULT_DELAYMAPPING_LAGMIN}, {DEFAULT_DELAYMAPPING_LAGMAX}), "
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
-            "refineoffset=True, pickleft=True, limitoutput=True, "
+            "refineoffset=True, pickleft=True, outputlevel='mid', "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
@@ -174,7 +176,7 @@ def _get_parser():
         help=(
             "Treat this run as an initial pass to locate good candidate voxels for global mean "
             "regressor generation.  This sets: passes=1, pickleft=True, despecklepasses=0, "
-            "refinedespeckle=False, limitoutput=True, doglmfilt=False, saveintermediatemaps=False."
+            "refinedespeckle=False, outputlevel='mid', doglmfilt=False, saveintermediatemaps=False."
         ),
         default=False,
     )
@@ -1061,10 +1063,28 @@ def _get_parser():
     # Output options
     output = parser.add_argument_group("Output options")
     output.add_argument(
+        "--outputlevel",
+        dest="outputlevel",
+        action="store",
+        type=str,
+        choices=["min", "norm", "more", "max"],
+        help=(
+            "The level of file output produced.  'min' produces only absolutely essential files, 'norm' saves what you "
+            "would typically want around for interactive data exploration, "
+            "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
+            "Selecting 'max' will produce ~3x your input datafile size as output.  "
+            f'Default is "{DEFAULT_OUTPUTLEVEL}."'
+        ),
+        default=DEFAULT_OUTPUTLEVEL,
+    )
+    output.add_argument(
         "--nolimitoutput",
         dest="limitoutput",
         action="store_false",
-        help=("Save some of the large and rarely used files."),
+        help=(
+            "Save some of the large and rarely used files.  "
+            "DEPRECATED: Use '--outputlevel max' instead."
+        ),
         default=True,
     )
     output.add_argument(
@@ -1155,7 +1175,7 @@ def _get_parser():
         "--noprogressbar",
         dest="showprogressbar",
         action="store_false",
-        help=("Will disable showing progress bars (helpful if stdout is going " "to a file)."),
+        help=("Will disable showing progress bars (helpful if stdout is going to a file)."),
         default=True,
     )
     misc.add_argument(
@@ -1599,12 +1619,6 @@ def process_args(inputargs=None):
     else:
         args["corrpadding"] = 0
 
-    # output options
-    args["savedespecklemasks"] = True
-    args["saveglmfiltered"] = True
-    args["saveconfoundfiltered"] = False
-    args["savecorrmask"] = True
-
     # refinement options
     args["filterbeforePCA"] = True
     args["dispersioncalc_step"] = 0.50
@@ -1817,7 +1831,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
         args["refineoffset"] = True
         args["pickleft"] = True
-        args["limitoutput"] = True
+        args["outputlevel"] = "mid"
         pf.setifnotset(args, "doglmfilt", False)
 
     if args["denoising"]:
@@ -1848,7 +1862,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "lagmax", DEFAULT_CVRMAPPING_LAGMAX)
         args["preservefiltering"] = True
         args["passes"] = 1
-        args["limitoutput"] = False
+        args["outputlevel"] = "min"
         args["doglmfilt"] = False
 
     if args["globalpreselect"]:
@@ -1857,7 +1871,7 @@ def process_args(inputargs=None):
         args["pickleft"] = True
         args["despeckle_passes"] = 0
         args["refinedespeckle"] = False
-        args["limitoutput"] = True
+        args["outputlevel"] = "mid"
         pf.setifnotset(args, "doglmfilt", False)
         args["saveintermediatemaps"] = False
 
@@ -1885,23 +1899,41 @@ def process_args(inputargs=None):
         args["despeckle_passes"] = 0
 
     # process limitoutput
-    if args["limitoutput"]:
-        args["outputlevel"] = "min"
-    else:
+    if not args["limitoutput"]:
         args["outputlevel"] = "max"
 
+    # output options
     if args["outputlevel"] == "min":
         args["savemovingsignal"] = False
         args["savelagregressors"] = False
         args["saveallglmfiles"] = False
+        args["savedespecklemasks"] = False
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
+    elif args["outputlevel"] == "norm":
+        args["savemovingsignal"] = False
+        args["savelagregressors"] = False
+        args["saveallglmfiles"] = False
+        args["savedespecklemasks"] = False
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
+    elif args["outputlevel"] == "more":
+        args["savemovingsignal"] = True
+        args["savelagregressors"] = True
+        args["saveallglmfiles"] = False
+        args["savedespecklemasks"] = False
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
     elif args["outputlevel"] == "max":
         args["savemovingsignal"] = True
         args["savelagregressors"] = True
         args["saveallglmfiles"] = True
+        args["savedespecklemasks"] = True
+        args["saveconfoundfiltered"] = True
+        args["savegaussout"] = True
     else:
-        args["savemovingsignal"] = True
-        args["savelagregressors"] = True
-        args["saveallglmfiles"] = True
+        print(f"illegal output level {args['outputlevel']}")
+        sys.exit()
 
     # dispersion calculation
     args["dispersioncalc_lower"] = args["lagmin"]
