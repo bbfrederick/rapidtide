@@ -1,0 +1,14 @@
+#!/bin/bash
+
+FILEROOT=$1
+
+
+totaltrs=0
+for THISFILE in ${FILEROOT}*nii.gz
+do
+    numtrs=`fslhd ${THISFILE} | grep dim4 | egrep -v pixdim | awk '{print $2}'`
+    totaltrs=`echo ${totaltrs} ${numtrs} | awk '{print $1+$2}'`
+    echo "	"${numtrs}
+done
+
+echo ${totaltrs}

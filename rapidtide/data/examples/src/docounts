@@ -1,0 +1,7 @@
+#!/bin/bash
+
+for THERUNDIR in min norm more max minglm normglm moreglm maxglm
+do
+    numtrs=`counttrs ../dst/${THERUNDIR}/sub`
+    echo ${THERUNDIR} ${numtrs}
+done
