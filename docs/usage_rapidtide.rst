@@ -123,6 +123,76 @@ BIDS Outputs:
 ..
 
 
+
+Output data size:
+^^^^^^^^^^^^^^^^^
+
+You can calculate the output data size approximately with the following formula.
+
+As an example, the following table shows the size of the data produced by running a rapidtide analysis on one HCP-YA resting state dataset with various output levels, with and without doing GLM noise removal, either directly, or with the addition of one voxelwise time derivative.  The correlation function fit was calculated from -5 to 10 seconds, resulting in a correlation function length of 41 points at the oversampled TR of 0.36 seconds. 
+
+
+
+.. list-table::  Output data sizes
+   :widths: 25 25 25 25
+   :header-rows: 1
+
+
+   * - Output level
+     - GLM?
+     - Derivatives
+     - Size in bytes
+   * - min
+     - No
+     -
+     - 13M
+   * - min
+     - Yes
+     - 0
+     - 1.2G
+   * - min
+     - Yes
+     - 1
+     - 1.2G
+   * - more
+     - No
+     -
+     - 87M
+   * - more
+     - Yes
+     - 0
+     - 3.2G
+   * - more
+     - Yes
+     - 1
+     - 3.1G
+   * - norm
+     - No
+     -
+     - 90M
+   * - norm
+     - Yes
+     - 0
+     - 1.3G
+   * - norm
+     - Yes
+     - 1
+     - 1.3G
+   * - max
+     - No
+     -
+     - 154M
+   * - max
+     - Yes
+     - 0
+     - 4.3G
+   * - max
+     - Yes
+     - 1
+     - 5.6G
+
+
+
 Usage:
 ^^^^^^
 
