@@ -15,7 +15,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rapidtide/scripts/rapidtide" />
-    <option name="PARAMETERS" value="sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST1 --spatialfilt 2 --numtozero 4 --nprocs -1 --passes 1 --despecklepasses 3 --externalglm" />
+    <option name="PARAMETERS" value="sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST1 --spatialfilt 2 --numtozero 4 --nprocs -1 --passes 1 --despecklepasses 3" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
