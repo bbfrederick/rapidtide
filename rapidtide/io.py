@@ -301,7 +301,7 @@ def savemaplist(
         outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     else:
         outmaparray = np.zeros((internalspaceshape, timedim), dtype=rt_floattype)
-    for themap, mapsuffix, maptype, theunit in maplist:
+    for themap, mapsuffix, maptype, theunit, thedescription in maplist:
         # set up the output array, and remap if warranted
         if debug:
             if validvoxels is None:
@@ -329,6 +329,8 @@ def savemaplist(
         bidsdict = bidsbasedict.copy()
         if theunit is not None:
             bidsdict["Units"] = theunit
+        if thedescription is not None:
+            bidsdict["Description"] = thedescription
         if textio:
             writenpvecs(
                 outmaparray.reshape(destshape),

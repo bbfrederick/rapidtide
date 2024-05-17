@@ -338,7 +338,13 @@ def retroglm(args):
         theheader["pixdim"][4] = fmritr
 
         maplist = [
-            (fmri_data_valid, "datatofilter", "bold", "second"),
+            (
+                fmri_data_valid,
+                "datatofilter",
+                "bold",
+                None,
+                "fMRI data that will be subjected to GLM filtering",
+            ),
         ]
         tide_io.savemaplist(
             outputname,
@@ -393,12 +399,36 @@ def retroglm(args):
     theheader = copy.deepcopy(lagtimes_header)
     if mode == "glm":
         maplist = [
-            (rvalue, "lfofilterR", "map", None),
-            (r2value, "lfofilterR2", "map", None),
-            (glmmean, "lfofilterMean", "map", None),
-            (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
-            (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
-            (varchange, "lfofilterInbandVarianceChange", "map", None),
+            (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
+            (
+                r2value,
+                "lfofilterR2",
+                "map",
+                None,
+                "Squared R value of the GLM fit (proportion of variance explained)",
+            ),
+            (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
+            (
+                initialvariance,
+                "lfofilterInbandVarianceBefore",
+                "map",
+                None,
+                "Inband variance prior to filtering",
+            ),
+            (
+                finalvariance,
+                "lfofilterInbandVarianceAfter",
+                "map",
+                None,
+                "Inband variance after filtering",
+            ),
+            (
+                varchange,
+                "lfofilterInbandVarianceChange",
+                "map",
+                "percent",
+                "Change in inband variance after filtering, in percent",
+            ),
         ]
     else:
         maplist = [
@@ -414,25 +444,43 @@ def retroglm(args):
 
     if args.debug:
         maplist += [
-            (lagtimes_valid, "maxtimeREAD", "map", "second"),
-            (corrmask_valid, "corrfitREAD", "mask", None),
-            (procmask_valid, "processedREAD", "mask", None),
+            (
+                lagtimes_valid,
+                "maxtimeREAD",
+                "map",
+                "second",
+                "Lag time in seconds used for calculation",
+            ),
+            (corrmask_valid, "corrfitREAD", "mask", None, "Correlation mask used for calculation"),
+            (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
         ]
 
     if args.glmderivs > 0:
         maplist += [
-            (fitcoeff[:, 0], "lfofilterCoeff", "map", None),
-            (fitNorm[:, 0], "lfofilterNorm", "map", None),
+            (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
+            (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
         ]
         for thederiv in range(1, args.glmderivs + 1):
             maplist += [
-                (fitcoeff[:, thederiv], f"lfofilterCoeffDeriv{thederiv}", "map", None),
-                (fitNorm[:, thederiv], f"lfofilterNormDeriv{thederiv}", "map", None),
+                (
+                    fitcoeff[:, thederiv],
+                    f"lfofilterCoeffDeriv{thederiv}",
+                    "map",
+                    None,
+                    f"Fit coefficient for temporal derivative {thederiv}",
+                ),
+                (
+                    fitNorm[:, thederiv],
+                    f"lfofilterNormDeriv{thederiv}",
+                    "map",
+                    None,
+                    f"Normalized fit coefficient for temporal derivative {thederiv}",
+                ),
             ]
     else:
         maplist += [
-            (fitcoeff, "lfofilterCoeff", "map", None),
-            (fitNorm, "lfofilterNorm", "map", None),
+            (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
+            (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
         ]
 
     # write the 3D maps
@@ -449,30 +497,60 @@ def retroglm(args):
     # write the 4D maps
     theheader = copy.deepcopy(fmri_header)
     maplist = [
-        (movingsignal, "lfofilterRemoved", "bold", None),
-        (filtereddata, "lfofilterCleaned", "bold", None),
+        (
+            movingsignal,
+            "lfofilterRemoved",
+            "bold",
+            None,
+            "sLFO signal filtered out of this voxel",
+        ),
+        (
+            filtereddata,
+            "lfofilterCleaned",
+            "bold",
+            None,
+            "fMRI data with sLFO signal filtered out",
+        ),
     ]
     if args.glmderivs > 0:
         if args.debug:
             print("going down the multiple EV path")
             print(f"{regressorset[:, :, 0].shape=}")
         maplist += [
-            (regressorset[:, :, 0], "lfofilterEV", "bold", None),
+            (
+                regressorset[:, :, 0],
+                "lfofilterEV",
+                "bold",
+                None,
+                "Shifted sLFO regressor to filter",
+            ),
         ]
         for thederiv in range(1, args.glmderivs + 1):
             if args.debug:
                 print(f"{regressorset[:, :, thederiv].shape=}")
             maplist += [
-                (regressorset[:, :, thederiv], f"lfofilterEVDeriv{thederiv}", "bold", None),
+                (
+                    regressorset[:, :, thederiv],
+                    f"lfofilterEVDeriv{thederiv}",
+                    "bold",
+                    None,
+                    f"Time derivative {thederiv} of shifted sLFO regressor",
+                ),
             ]
     else:
         if args.debug:
             print("going down the single EV path")
         maplist += [
-            (regressorset, "lfofilterEV", "bold", None),
+            (
+                regressorset,
+                "lfofilterEV",
+                "bold",
+                None,
+                "Shifted sLFO regressor to filter",
+            ),
         ]
     if args.debug:
-        maplist.append((fmri_data_valid, "inputdata", "bold", None))
+        maplist.append((fmri_data_valid, "inputdata", "bold", None, None))
     tide_io.savemaplist(
         outputname,
         maplist,

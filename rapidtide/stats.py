@@ -823,6 +823,7 @@ def makeandsavehistogram(
         thedict[varroot + "_centerofmass.txt"] = centerofmass
         thedict[varroot + "_peak.txt"] = peakloc
     extraheaderinfo = {}
+    extraheaderinfo["Description"] = displaytitle
     extraheaderinfo["centerofmass"] = centerofmass
     extraheaderinfo["peakloc"] = peakloc
     extraheaderinfo["peakwidth"] = peakwidth

@@ -239,6 +239,9 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Startup
     ####################################################
+    optiondict[
+        "Description"
+    ] = "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
@@ -888,7 +891,7 @@ def rapidtide_main(argparsingfunc):
                 theheader["dim"][0] = 3
                 theheader["dim"][4] = 1
                 theheader["pixdim"][4] = 1.0
-        masklist = [(meanmask, "globalmean", "mask", None)]
+        masklist = [(meanmask, "globalmean", "mask", None, "Voxels used to calculate global mean")]
         tide_io.savemaplist(
             outputname,
             masklist,
@@ -1072,6 +1075,9 @@ def rapidtide_main(argparsingfunc):
         inputfreq,
         starttime=-inputstarttime,
         columns=["prefilt"],
+        extraheaderinfo={
+            "Description": "The raw and filtered initial probe regressor, at the original sampling resolution"
+        },
         append=False,
     )
 
@@ -1098,6 +1104,9 @@ def rapidtide_main(argparsingfunc):
         inputfreq,
         starttime=-inputstarttime,
         columns=["postfilt"],
+        extraheaderinfo={
+            "Description": "The raw and filtered initial probe regressor, at the original sampling resolution"
+        },
         append=True,
     )
 
@@ -1603,7 +1612,7 @@ def rapidtide_main(argparsingfunc):
             len(corrscale),
             0,
             outputname + namesuffix,
-            displaytitle="lagtime histogram",
+            displaytitle="Histogram of lag times prior to echo cancellation",
             therange=(corrscale[0], corrscale[-1]),
             refine=False,
             dictvarname="globallaghist_preechocancel",
@@ -1763,6 +1772,9 @@ def rapidtide_main(argparsingfunc):
                 thexcorr,
                 1.0 / (accheckcorrscale[1] - accheckcorrscale[0]),
                 starttime=accheckcorrscale[0],
+                extraheaderinfo={
+                    "Description": "Autocorrelation of the probe regressor for each pass"
+                },
                 columns=[f"pass{thepass}"],
                 append=(thepass > 1),
             )
@@ -1945,6 +1957,7 @@ def rapidtide_main(argparsingfunc):
                 simdistdata,
                 1.0,
                 columns=["pass" + str(thepass)],
+                extraheaderinfo={"Description": "Individual sham correlation datapoints"},
                 append=(thepass > 1),
             )
             cleansimdistdata, nullmedian, nullmad = tide_math.removeoutliers(
@@ -1957,6 +1970,9 @@ def rapidtide_main(argparsingfunc):
                 cleansimdistdata,
                 1.0,
                 columns=["pass" + str(thepass)],
+                extraheaderinfo={
+                    "Description": "Individual sham correlation datapoints after outlier removal"
+                },
                 append=(thepass > 1),
             )
 
@@ -2108,7 +2124,7 @@ def rapidtide_main(argparsingfunc):
             len(corrscale),
             0,
             outputname + namesuffix,
-            displaytitle="lagtime histogram",
+            displaytitle="Histogram of lag times from global lag calculation",
             therange=(corrscale[0], corrscale[-1]),
             refine=False,
             dictvarname="globallaghist_pass" + str(thepass),
@@ -2320,7 +2336,15 @@ def rapidtide_main(argparsingfunc):
                             theheader["dim"][0] = 3
                             theheader["dim"][4] = 1
                             theheader["pixdim"][4] = 1.0
-                    masklist = [(despecklesavemask, "despeckle", "mask", None)]
+                    masklist = [
+                        (
+                            despecklesavemask,
+                            "despeckle",
+                            "mask",
+                            None,
+                            "Voxels that underwent despeckling",
+                        )
+                    ]
                     tide_io.savemaplist(
                         outputname,
                         masklist,
@@ -2363,10 +2387,16 @@ def rapidtide_main(argparsingfunc):
                     theheader["pixdim"][4] = 1.0
             bidspasssuffix = f"_intermediatedata-pass{thepass}"
             maplist = [
-                (lagtimes, "maxtime", "map", None),
-                (timepercentile, "timepercentile", "map", None),
-                (lagstrengths, "maxcorr", "map", None),
-                (lagsigma, "maxwidth", "map", None),
+                (lagtimes, "maxtime", "map", "second", "Lag time in seconds"),
+                (
+                    timepercentile,
+                    "timepercentile",
+                    "map",
+                    "percent",
+                    "Percentile ranking of this voxels delay",
+                ),
+                (lagstrengths, "maxcorr", "map", None, "Maximum correlation strength"),
+                (lagsigma, "maxwidth", "map", "second", "Width of corrrelation peak"),
             ]
             tide_io.savemaplist(
                 f"{outputname}{bidspasssuffix}",
@@ -2571,6 +2601,9 @@ def rapidtide_main(argparsingfunc):
                     normunfilteredoutputdata,
                     1.0 / fmritr,
                     columns=["unfiltered_pass" + str(thepass)],
+                    extraheaderinfo={
+                        "Description": "The raw and filtered probe regressor produced by the refinement procedure, at the time resolution of the data"
+                    },
                     append=(thepass > 1),
                 )
                 tide_io.writebidstsv(
@@ -2578,6 +2611,9 @@ def rapidtide_main(argparsingfunc):
                     normoutputdata,
                     1.0 / fmritr,
                     columns=["filtered_pass" + str(thepass)],
+                    extraheaderinfo={
+                        "Description": "The raw and filtered probe regressor produced by the refinement procedure, at the time resolution of the data"
+                    },
                     append=True,
                 )
 
@@ -2666,6 +2702,9 @@ def rapidtide_main(argparsingfunc):
                         tide_math.stdnormalize(resampnonosref_y),
                         1.0 / fmritr,
                         columns=["pass" + str(thepass + 1)],
+                        extraheaderinfo={
+                            "Description": "The probe regressor used in each pass, at the time resolution of the data"
+                        },
                         append=True,
                     )
                     tide_io.writebidstsv(
@@ -2673,6 +2712,9 @@ def rapidtide_main(argparsingfunc):
                         tide_math.stdnormalize(resampref_y),
                         oversampfreq,
                         columns=["pass" + str(thepass + 1)],
+                        extraheaderinfo={
+                            "Description": "The probe regressor used in each pass, at the time resolution used for calculating the similarity function"
+                        },
                         append=True,
                     )
             else:
@@ -2701,13 +2743,29 @@ def rapidtide_main(argparsingfunc):
                     theheader["pixdim"][4] = 1.0
             bidspasssuffix = f"_intermediatedata-pass{thepass}"
             maplist = [
-                (fitmask, "corrfit", "mask", None),
-                (failreason, "corrfitfailreason", "info", None),
+                (fitmask, "corrfit", "mask", None, "Voxels where correlation value was fit"),
+                (
+                    failreason,
+                    "corrfitfailreason",
+                    "info",
+                    None,
+                    "Result codes for correlation fit",
+                ),
             ]
             if optiondict["savedespecklemasks"] and (optiondict["despeckle_passes"] > 0):
-                maplist.append((despecklesavemask, "despecklemask", "map", None))
+                maplist.append(
+                    (
+                        despecklesavemask,
+                        "despecklemask",
+                        "map",
+                        None,
+                        "Voxels that underwent despeckling",
+                    )
+                )
             if thepass < optiondict["passes"]:
-                maplist.append((refinemask, "refinemask", "map", None))
+                maplist.append(
+                    (refinemask, "refinemask", "map", None, "Voxels used for regressor refinement")
+                )
             tide_io.savemaplist(
                 f"{outputname}{bidspasssuffix}",
                 maplist,
@@ -2816,7 +2874,7 @@ def rapidtide_main(argparsingfunc):
                 theheader["dim"][0] = 3
                 theheader["dim"][4] = coherencefreqaxissize
                 theheader["pixdim"][4] = 1.0
-        maplist = [(coherencefunc, "coherence", "info", None)]
+        maplist = [(coherencefunc, "coherence", "info", None, "Coherence function")]
         tide_io.savemaplist(
             outputname,
             maplist,
@@ -3017,7 +3075,13 @@ def rapidtide_main(argparsingfunc):
                 cifti_hdr = None
 
             maplist = [
-                (fmri_data_valid, "datatofilter", "bold", "second"),
+                (
+                    fmri_data_valid,
+                    "datatofilter",
+                    "bold",
+                    None,
+                    "fMRI data that will be subjected to GLM filtering",
+                ),
             ]
             tide_io.savemaplist(
                 outputname,
@@ -3106,7 +3170,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["histlen"],
         0,
         outputname + namesuffix,
-        displaytitle="lagtime histogram",
+        displaytitle="Histogram of maximum correlation times",
         refine=False,
         dictvarname="laghist",
         thedict=optiondict,
@@ -3117,7 +3181,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["histlen"],
         0,
         outputname + namesuffix,
-        displaytitle="lagstrength histogram",
+        displaytitle="Histogram of maximum correlation coefficients",
         therange=(0.0, 1.0),
         dictvarname="strengthhist",
         thedict=optiondict,
@@ -3128,7 +3192,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["histlen"],
         1,
         outputname + namesuffix,
-        displaytitle="lagsigma histogram",
+        displaytitle="Histogram of correlation peak widths",
         dictvarname="widthhist",
         thedict=optiondict,
     )
@@ -3139,7 +3203,7 @@ def rapidtide_main(argparsingfunc):
             optiondict["histlen"],
             1,
             outputname + namesuffix,
-            displaytitle="correlation R2 histogram",
+            displaytitle="Histogram of GLM filter R2 values",
             dictvarname="R2hist",
             thedict=optiondict,
         )
@@ -3150,7 +3214,7 @@ def rapidtide_main(argparsingfunc):
             optiondict["histlen"],
             1,
             outputname + namesuffix,
-            displaytitle="Percent of inband variance removed histogram",
+            displaytitle="Histogram of percent of inband variance removed by GLM filter",
             dictvarname="varchangehist",
             thedict=optiondict,
         )
@@ -3199,22 +3263,34 @@ def rapidtide_main(argparsingfunc):
         cifti_hdr = None
 
     savelist = [
-        (lagtimes, "maxtime", "map", "second"),
-        (timepercentile, "timepercentile", "map", None),
-        (lagstrengths, "maxcorr", "map", None),
-        (lagsigma, "maxwidth", "map", "second"),
-        (R2, "maxcorrsq", "map", None),
-        (fitmask, "corrfit", "mask", None),
-        (failreason, "corrfitfailreason", "info", None),
+        (lagtimes, "maxtime", "map", "second", "Lag time in seconds"),
+        (
+            timepercentile,
+            "timepercentile",
+            "map",
+            "percent",
+            "Percentile ranking of this voxels delay",
+        ),
+        (lagstrengths, "maxcorr", "map", None, "Maximum correlation strength"),
+        (lagsigma, "maxwidth", "map", "second", "Width of corrrelation peak"),
+        (
+            R2,
+            "maxcorrsq",
+            "map",
+            None,
+            "Squared maximum correlation strength (proportion of variance explained)",
+        ),
+        (fitmask, "corrfit", "mask", None, "Voxels where correlation value was fit"),
+        (failreason, "corrfitfailreason", "info", None, "Result codes for correlation fit"),
     ]
     MTT = np.square(lagsigma) - (optiondict["acwidth"] * optiondict["acwidth"])
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
-    savelist += [(MTT, "MTT", "map", "second")]
+    savelist += [(MTT, "MTT", "map", "second", "Mean transit time estimate")]
     if optiondict["calccoherence"]:
         savelist += [
-            (coherencepeakval, "coherencepeakval", "map", None),
-            (coherencepeakfreq, "coherencepeakfreq", "map", None),
+            (coherencepeakval, "coherencepeakval", "map", None, "Coherence peak value"),
+            (coherencepeakfreq, "coherencepeakfreq", "map", None, "Coherence peak frequency"),
         ]
     tide_io.savemaplist(
         outputname,
@@ -3233,36 +3309,102 @@ def rapidtide_main(argparsingfunc):
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         if optiondict["doglmfilt"]:
             maplist = [
-                (rvalue, "lfofilterR", "map", None),
-                (r2value, "lfofilterR2", "map", None),
-                (glmmean, "lfofilterMean", "map", None),
-                (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
-                (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
-                (varchange, "lfofilterInbandVarianceChange", "map", None),
+                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
+                (
+                    r2value,
+                    "lfofilterR2",
+                    "map",
+                    None,
+                    "Squared R value of the GLM fit (proportion of variance explained)",
+                ),
+                (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
+                (
+                    initialvariance,
+                    "lfofilterInbandVarianceBefore",
+                    "map",
+                    None,
+                    "Inband variance prior to filtering",
+                ),
+                (
+                    finalvariance,
+                    "lfofilterInbandVarianceAfter",
+                    "map",
+                    None,
+                    "Inband variance after filtering",
+                ),
+                (
+                    varchange,
+                    "lfofilterInbandVarianceChange",
+                    "map",
+                    "percent",
+                    "Change in inband variance after filtering, in percent",
+                ),
             ]
             if optiondict["glmderivs"] > 0:
                 maplist += [
-                    (fitcoeff[:, 0], f"lfofilterCoeff", "map", None),
-                    (fitNorm[:, 0], f"lfofilterNorm", "map", None),
+                    (fitcoeff[:, 0], f"lfofilterCoeff", "map", None, "Fit coefficient"),
+                    (fitNorm[:, 0], f"lfofilterNorm", "map", None, "Normalized fit coefficient"),
                 ]
                 for thederiv in range(1, optiondict["glmderivs"] + 1):
                     maplist += [
-                        (fitcoeff[:, thederiv], f"lfofilterCoeffDeriv{thederiv}", "map", None),
-                        (fitNorm[:, thederiv], f"lfofilterNormDeriv{thederiv}", "map", None),
+                        (
+                            fitcoeff[:, thederiv],
+                            f"lfofilterCoeffDeriv{thederiv}",
+                            "map",
+                            None,
+                            f"Fit coefficient for temporal derivative {thederiv}",
+                        ),
+                        (
+                            fitNorm[:, thederiv],
+                            f"lfofilterNormDeriv{thederiv}",
+                            "map",
+                            None,
+                            f"Normalized fit coefficient for temporal derivative {thederiv}",
+                        ),
                     ]
             else:
                 maplist += [
-                    (fitcoeff, "lfofilterCoeff", "map", None),
-                    (fitNorm, "lfofilterNorm", "map", None),
+                    (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
+                    (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
                 ]
         else:
             maplist = [
-                (rvalue, "CVRR", "map", None),
-                (r2value, "CVRR2", "map", None),
-                (fitcoeff, "CVR", "map", "percent"),
-                (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
-                (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
-                (varchange, "CVRVariance", "map", None),
+                (rvalue, "CVRR", "map", None, "R value of the GLM fit"),
+                (
+                    r2value,
+                    "CVRR2",
+                    "map",
+                    None,
+                    "Squared R value of the GLM fit (proportion of variance explained)",
+                ),
+                (
+                    fitcoeff,
+                    "CVR",
+                    "map",
+                    "percent",
+                    "Percent signal change due to the CVR regressor",
+                ),
+                (
+                    initialvariance,
+                    "lfofilterInbandVarianceBefore",
+                    "map",
+                    None,
+                    "Inband variance prior to filtering",
+                ),
+                (
+                    finalvariance,
+                    "lfofilterInbandVarianceAfter",
+                    "map",
+                    None,
+                    "Inband variance after filtering",
+                ),
+                (
+                    varchange,
+                    "CVRVariance",
+                    "map",
+                    None,
+                    "Percentage of inband variance attributable to CVR regressor",
+                ),
             ]
         tide_io.savemaplist(
             outputname,
@@ -3286,7 +3428,7 @@ def rapidtide_main(argparsingfunc):
 
     # write the 3D maps that don't need to be remapped
     maplist = [
-        (meanvalue, "mean", "map", None),
+        (meanvalue, "mean", "map", None, "Voxelwise mean of fmri data"),
     ]
     tide_io.savemaplist(
         outputname,
@@ -3309,7 +3451,15 @@ def rapidtide_main(argparsingfunc):
                 pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
             else:
                 pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
-            masklist += [(pmask.copy(), f"plt{thepvalnames[i]}", "mask", None)]
+            masklist += [
+                (
+                    pmask.copy(),
+                    f"plt{thepvalnames[i]}",
+                    "mask",
+                    None,
+                    f"Voxels where the maxcorr value exceeds the p < {pcts[i]} significance level",
+                )
+            ]
 
         tide_io.savemaplist(
             outputname,
@@ -3329,9 +3479,17 @@ def rapidtide_main(argparsingfunc):
         "refinestopreason"
     ] != "emptymask":
         if optiondict["globalpreselect"]:
-            masklist = [(refinemask, "globalmeanpreselect", "mask", None)]
+            masklist = [
+                (
+                    refinemask,
+                    "globalmeanpreselect",
+                    "mask",
+                    None,
+                    "I really don't know what this file is for",
+                )
+            ]
         else:
-            masklist = [(refinemask, "refine", "mask", None)]
+            masklist = [(refinemask, "refine", "mask", None, "Voxels used for refinement")]
         tide_io.savemaplist(
             outputname,
             masklist,
@@ -3371,12 +3529,12 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["outputlevel"] != "min":
         maplist = [
-            (corrout, "corrout", "info", "second"),
+            (corrout, "corrout", "info", "second", "Correlation function"),
         ]
         if optiondict["savegaussout"]:
             maplist += [
-                (gaussout, "gaussout", "info", "second"),
-                (windowout, "corrfitwindow", "info", "second"),
+                (gaussout, "gaussout", "info", "second", "Simulated correlation function"),
+                (windowout, "corrfitwindow", "info", "second", "I'm not sure what this is"),
             ]
         tide_io.savemaplist(
             outputname,
@@ -3413,30 +3571,60 @@ def rapidtide_main(argparsingfunc):
     if optiondict["saveallglmfiles"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
         if optiondict["glmderivs"] > 0:
             maplist += [
-                (regressorset[:, :, 0], "lfofilterEV", "bold", None),
+                (
+                    regressorset[:, :, 0],
+                    "lfofilterEV",
+                    "bold",
+                    None,
+                    "Shifted sLFO regressor to filter",
+                ),
             ]
             for thederiv in range(1, optiondict["glmderivs"] + 1):
                 maplist += [
-                    (regressorset[:, :, thederiv], f"lfofilterEVDeriv{thederiv}", "bold", None),
+                    (
+                        regressorset[:, :, thederiv],
+                        f"lfofilterEVDeriv{thederiv}",
+                        "bold",
+                        None,
+                        f"Time derivative {thederiv} of shifted sLFO regressor",
+                    ),
                 ]
         else:
             maplist += [
-                (regressorset, "lfofilterEV", "bold", None),
+                (regressorset, "lfofilterEV", "bold", None, "Shifted sLFO regressor to filter"),
             ]
 
     if optiondict["passes"] > 1:
         if optiondict["savelagregressors"]:
             maplist += [
-                (paddedshiftedtcs[:, numpadtrs:-numpadtrs], "shiftedtcs", "bold", None),
+                (
+                    paddedshiftedtcs[:, numpadtrs:-numpadtrs],
+                    "shiftedtcs",
+                    "bold",
+                    None,
+                    "Shifted sLFO regressor",
+                ),
             ]
 
     if optiondict["doglmfilt"]:
         maplist += [
-            (filtereddata, "lfofilterCleaned", "bold", None),
+            (
+                filtereddata,
+                "lfofilterCleaned",
+                "bold",
+                None,
+                "fMRI data with sLFO signal filtered out",
+            ),
         ]
         if optiondict["savemovingsignal"]:
             maplist += [
-                (movingsignal, "lfofilterRemoved", "bold", None),
+                (
+                    movingsignal,
+                    "lfofilterRemoved",
+                    "bold",
+                    None,
+                    "sLFO signal filtered out of this voxel",
+                ),
             ]
         tide_io.savemaplist(
             outputname,
