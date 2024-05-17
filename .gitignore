@@ -26,6 +26,7 @@ rapidtide/tests/*.tsv.gz
 rapidtide/tests/*.nii.gz
 
 # some local test data
+rapidtide/data/examples/src/scratch
 rapidtide/data/examples/src/*.jpg
 rapidtide/data/examples/src/*.dat
 rapidtide/data/examples/src/tc1*
