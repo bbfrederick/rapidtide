@@ -127,6 +127,17 @@ BIDS Outputs:
 Output data size:
 ^^^^^^^^^^^^^^^^^
 
+The amount of data output by rapidtide varies quite a bit, depending on your run options and the output level you select.
+What output level you use depends on what you are trying to do.  The vast majority of the runtime of rapidtide is spent
+estimating, extracting and refining the sLFO signal, and calculating the voxelwise blood arrival time delay and signal
+strength.  This produces a surprisingly small amount of data - the largest output files are the maps of the various
+hemodynamic parameters and some masks, each as large a single TR of the input data set.  So at a minimum (as in, you
+select ``"--outputlevel min"`` and do not run GLM denoising: ``"--noglm"``), you produce
+16 3D maps as NIFTI files, and a number of masks and timecourse files.  For a single resting state run in the HCP-YA
+dataset, this is ~13MB of data (compared to the input data file size of about 1GB).  If you want slightly more data
+to help you evaluate the fit quality, and make cool movies, you probably want to leave the outputlevel at the default of
+``"normal"``.
+
 You can calculate the output data size approximately with the following formula.
 
 As an example, the following table shows the size of the data produced by running a rapidtide analysis on one HCP-YA resting state dataset with various output levels, with and without doing GLM noise removal, either directly, or with the addition of one voxelwise time derivative.  The correlation function fit was calculated from -5 to 10 seconds, resulting in a correlation function length of 41 points at the oversampled TR of 0.36 seconds. 
@@ -154,6 +165,18 @@ As an example, the following table shows the size of the data produced by runnin
      - Yes
      - 1
      - 1.2G
+   * - normal
+     - No
+     -
+     - 90M
+   * - normal
+     - Yes
+     - 0
+     - 1.3G
+   * - normal
+     - Yes
+     - 1
+     - 1.3G
    * - more
      - No
      -
@@ -166,18 +189,6 @@ As an example, the following table shows the size of the data produced by runnin
      - Yes
      - 1
      - 3.1G
-   * - norm
-     - No
-     -
-     - 90M
-   * - norm
-     - Yes
-     - 0
-     - 1.3G
-   * - norm
-     - Yes
-     - 1
-     - 1.3G
    * - max
      - No
      -
@@ -215,7 +226,8 @@ make rapidtide work a lot better.  If you choose to regress out the motion signa
 rapidtide is happy to work on data that's been run through AROMA (not so much FIX - see a further discussion below).
 
 **Slice time correction** - Since rapidtide is looking for subtle time differences in the arrival of the
-sLFO signal, it will absolutely see slice acquisition time differences.  If you are doing noise removal, that's not
+sLFO signal, slice acquisition time differences will show up as artifactual offsets in the delay maps if you don't
+correct them beforehand.  If you are doing noise removal, that's not
 such a big deal, but if you're doing delay mapping, you'll get stripes in your delay maps, which tell you about the
 fMRI acquisition, but you care about physiology, so best to avoid that.  Unfortunately, Human Connectome Project data
 does NOT have slice time correction applied, and unless you want to rerun the entire processing chain to add it in,
