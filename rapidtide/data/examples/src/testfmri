@@ -1,16 +1,18 @@
 #!/bin/bash
 
-for LEVEL in min norm more max
+rm -rf ../dst/*
+for LEVEL in min normal more max
 do
     mkdir -p ../dst/${LEVEL}
     rapidtide \
         --nprocs -1 \
         --passes 3 \
+        --searchrange -5 10 \
         --outputlevel ${LEVEL} \
         --noglm \
         sub-RAPIDTIDETEST.nii.gz \
-        ../dst/${LEVEL}/sub-RAPIDTIDETEST_${LEVEL}
-    for NDERIV in 0 1 2
+        ../dst/${LEVEL}/XXX
+    for NDERIV in 0 1
     do
         RUN=${LEVEL}glm${NDERIV}
     
@@ -18,9 +20,10 @@ do
         rapidtide \
             --nprocs -1 \
             --passes 3 \
+            --searchrange -5 10 \
             --outputlevel ${LEVEL} \
             --glmderivs ${NDERIV} \
             sub-RAPIDTIDETEST.nii.gz \
-            ../dst/${RUN}/sub-RAPIDTIDETEST_${RUN}
+            ../dst/${RUN}/XXX
     done
 done

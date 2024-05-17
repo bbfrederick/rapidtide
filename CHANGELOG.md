@@ -1,5 +1,17 @@
 # Release history
 
+## Version 2.8.9 (5/17/24)
+* (rapidtide) Simplified specification of output files.  Now use "--outputlevel" with values "min", "normal", "more", or "max" to specify what files are output.
+* (rapidtide) Improved motion regression and made it more flexible.
+* (rapidtide) Merged all bids nifti file writes into a common output routine.
+* (retroglm, rapidtide) Factored out all the GLM calculation code so it can be done (or redone with different options) after the fact with "retroglm" as a separate step.
+* (retroglm, rapidtide) Allow arbitrary number of derivatives of lagged regressors, and properly save all EVs and fit coefficients.
+* (niftidecomp) Now output raw variance explained in addition to variance explained ratio.
+* (tidepool) Now show graphically what part of the probe regressor was used for similarity calculation.
+* (package) Replaced the "mlregress" routine of unknown provenance with LinearRegression from sklearn.
+* (package) Merged some dependabot PRs.
+* (docs) Added a section on output data size.
+
 ## Version 2.8.8 (4/30/24)
 * (rapidtide) Properly initialize "starttime" so that it will use the value in a json file, if present.
 * (rapidtide) Added new option to start from a random probe regressor.

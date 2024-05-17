@@ -2322,7 +2322,7 @@ def rapidtide_main(argparsingfunc):
                             theheader["pixdim"][4] = 1.0
                     masklist = [(despecklesavemask, "despeckle", "mask", None)]
                     tide_io.savemaplist(
-                        outputname + "ALT",
+                        outputname,
                         masklist,
                         validvoxels,
                         nativespaceshape,
@@ -3132,7 +3132,7 @@ def rapidtide_main(argparsingfunc):
         dictvarname="widthhist",
         thedict=optiondict,
     )
-    namesuffix = "_desc-maxcorrsq_hist"
+    namesuffix = "_desc-lfofilterR2_hist"
     if optiondict["doglmfilt"]:
         tide_stats.makeandsavehistogram(
             r2value[np.where(fitmask > 0)],
@@ -3143,6 +3143,18 @@ def rapidtide_main(argparsingfunc):
             dictvarname="R2hist",
             thedict=optiondict,
         )
+    namesuffix = "_desc-lfofilterVarchange_hist"
+    if optiondict["doglmfilt"]:
+        tide_stats.makeandsavehistogram(
+            varchange[np.where(fitmask > 0)],
+            optiondict["histlen"],
+            1,
+            outputname + namesuffix,
+            displaytitle="Percent of inband variance removed histogram",
+            dictvarname="varchangehist",
+            thedict=optiondict,
+        )
+
     TimingLGR.info("Finished saving histograms")
 
     # put some quality metrics into the info structure

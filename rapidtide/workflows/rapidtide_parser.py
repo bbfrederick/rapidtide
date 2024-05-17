@@ -82,7 +82,7 @@ DEFAULT_CVRMAPPING_FILTER_LOWERPASS = 0.0
 DEFAULT_CVRMAPPING_FILTER_UPPERPASS = 0.01
 DEFAULT_CVRMAPPING_DESPECKLE_PASSES = 4
 
-DEFAULT_OUTPUTLEVEL = "norm"
+DEFAULT_OUTPUTLEVEL = "normal"
 
 
 def _get_parser():
@@ -1067,9 +1067,9 @@ def _get_parser():
         dest="outputlevel",
         action="store",
         type=str,
-        choices=["min", "norm", "more", "max"],
+        choices=["min", "normal", "more", "max"],
         help=(
-            "The level of file output produced.  'min' produces only absolutely essential files, 'norm' saves what you "
+            "The level of file output produced.  'min' produces only absolutely essential files, 'normal' saves what you "
             "would typically want around for interactive data exploration, "
             "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
             "Selecting 'max' will produce ~3x your input datafile size as output.  "
@@ -1083,7 +1083,7 @@ def _get_parser():
         action="store_false",
         help=(
             "Save some of the large and rarely used files.  "
-            "DEPRECATED: Use '--outputlevel max' instead."
+            "NB: THIS IS NOW DEPRECATED: Use '--outputlevel max' instead."
         ),
         default=True,
     )
@@ -1910,7 +1910,7 @@ def process_args(inputargs=None):
         args["savedespecklemasks"] = False
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
-    elif args["outputlevel"] == "norm":
+    elif args["outputlevel"] == "normal":
         args["savemovingsignal"] = False
         args["savelagregressors"] = False
         args["saveallglmfiles"] = False
