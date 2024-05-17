@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.8.9.1 (5/17/24)
+* (package) Merged some dependabot PRs.
+
 ## Version 2.8.9 (5/17/24)
 * (rapidtide) Simplified specification of output files.  Now use "--outputlevel" with values "min", "normal", "more", or "max" to specify what files are output.
 * (rapidtide) Improved motion regression and made it more flexible.
