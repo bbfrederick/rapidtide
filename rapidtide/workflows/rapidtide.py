@@ -184,6 +184,9 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
         thetimecourse,
         1.0 / thetimestep,
         columns=["original"],
+        extraheaderinfo={
+            "Description": "The input timecourse, measured echo, and filtered output of echo cancellation",
+        },
         append=False,
     )
     shifttr = echooffset / thetimestep  # lagtime is in seconds
@@ -197,6 +200,9 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
         echotc,
         1.0 / thetimestep,
         columns=["echo"],
+        extraheaderinfo={
+            "Description": "The input timecourse, measured echo, and filtered output of echo cancellation",
+        },
         append=True,
     )
     tide_io.writebidstsv(
@@ -204,6 +210,9 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
         outputtimecourse,
         1.0 / thetimestep,
         columns=["filtered"],
+        extraheaderinfo={
+            "Description": "The input timecourse, measured echo, and filtered output of echo cancellation",
+        },
         append=True,
     )
     return outputtimecourse, echofit, echoR
@@ -758,6 +767,9 @@ def rapidtide_main(argparsingfunc):
             mergedregressors,
             1.0 / fmritr,
             columns=mergedregressorlabels,
+            extraheaderinfo={
+                "Description": "The expanded (via derivatives and powers) set of confound regressors used for prefiltering the data"
+            },
             append=False,
         )
 
@@ -806,6 +818,9 @@ def rapidtide_main(argparsingfunc):
             mergedregressors,
             1.0 / fmritr,
             columns=mergedregressorlabels,
+            extraheaderinfo={
+                "Description": "The orthogonalized set of confound regressors used for prefiltering the data"
+            },
             append=False,
         )
         if optiondict["memprofile"]:
@@ -1263,9 +1278,9 @@ def rapidtide_main(argparsingfunc):
             1.0 / oversamptr,
             starttime=0.0,
             columns=["initial"],
+            extraheaderinfo={"Description": "The temporal mask used on the probe regressor"},
             append=False,
         )
-        # tide_io.writenpvecs(tmask_y, f"{outputname}temporalmask.txt")
         resampnonosref_y *= tmask_y
         thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
         resampnonosref_y -= thefit[0, 1] * tmask_y
@@ -1278,7 +1293,7 @@ def rapidtide_main(argparsingfunc):
             f"{outputname}_desc-noiseregressor_timeseries",
             tide_math.stdnormalize(resampnonosref_y),
             1.0 / fmritr,
-            columns=["resamplled"],
+            columns=["resampled"],
             append=False,
         )
         tide_io.writebidstsv(
@@ -1304,6 +1319,9 @@ def rapidtide_main(argparsingfunc):
         tide_math.stdnormalize(resampnonosref_y),
         1.0 / fmritr,
         columns=["pass1"],
+        extraheaderinfo={
+            "Description": "The probe regressor used in each pass, at the time resolution of the data"
+        },
         append=False,
     )
     tide_io.writebidstsv(
@@ -1311,6 +1329,9 @@ def rapidtide_main(argparsingfunc):
         tide_math.stdnormalize(resampref_y),
         oversampfreq,
         columns=["pass1"],
+        extraheaderinfo={
+            "Description": "The probe regressor used in each pass, at the time resolution used for calculating the similarity function"
+        },
         append=False,
     )
     TimingLGR.info("End of reference prep")
@@ -3243,7 +3264,7 @@ def rapidtide_main(argparsingfunc):
 
     # Post refinement step 3 - save out all the important arrays to nifti files
     # write out the options used
-    tide_io.writedicttojson(optiondict, f"{outputname}_options.json")
+    tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
     # write the 3D maps that need to be remapped
     TimingLGR.info("Start saving maps")
@@ -3457,7 +3478,7 @@ def rapidtide_main(argparsingfunc):
                     f"plt{thepvalnames[i]}",
                     "mask",
                     None,
-                    f"Voxels where the maxcorr value exceeds the p < {pcts[i]} significance level",
+                    f"Voxels where the maxcorr value exceeds the p < {1.0 - thepercentiles[i]:.3f} significance level",
                 )
             ]
 
@@ -3602,7 +3623,7 @@ def rapidtide_main(argparsingfunc):
                     "shiftedtcs",
                     "bold",
                     None,
-                    "Shifted sLFO regressor",
+                    "The filtered input fMRI data, in voxels used for refinement, time shifted by the negated delay in every voxel so that the moving blood component is aligned.",
                 ),
             ]
 
@@ -3668,7 +3689,7 @@ def rapidtide_main(argparsingfunc):
     # shut down logging
     logging.shutdown()
 
-    # reformat timing information
+    # reformat timing information and delete the unformatted version
     timingdata, optiondict["totalruntime"] = tide_util.proctiminglogfile(
         f"{outputname}_runtimings.tsv"
     )
@@ -3676,6 +3697,7 @@ def rapidtide_main(argparsingfunc):
         timingdata,
         f"{outputname}_desc-formattedruntimings_info.tsv",
     )
+    Path(f"{outputname}_runtimings.tsv").unlink(missing_ok=True)
 
     # do a final save of the options file
     optiondict["currentstage"] = "done"
