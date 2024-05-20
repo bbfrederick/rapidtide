@@ -21,7 +21,6 @@ import numpy as np
 from scipy.ndimage import binary_erosion
 
 import rapidtide.filter as tide_filt
-import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 from rapidtide.RapidtideDataset import RapidtideDataset
 
