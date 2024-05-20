@@ -50,7 +50,7 @@ def makecleanoutputdir(pathname):
 
 
 def dirfromoptions(level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle):
-    return f"{level}_passesgt1-{passesgt1}_numnullgt0-{numnullgt0}_doglm-{doglm}_domotion-{domotion}_doderrivs-{doderivs}_dodespeckle-{dodespeckle}"
+    return f"{level}_passesgt1-{passesgt1}_numnullgt0-{numnullgt0}_doglm-{doglm}_domotion-{domotion}_doderivs-{doderivs}_dodespeckle-{dodespeckle}"
 
 
 def runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle):
@@ -98,7 +98,7 @@ def getdescription(jsonname):
         return None
 
 
-def listfiles(outputdir, fileroots, runinfo):
+def listfiles(outputdir, fileroots, runinfo, debug=False):
     thefiles = glob.glob(os.path.join(outputdir, "XXX_*"))
 
     filesadded = []
@@ -127,13 +127,14 @@ def listfiles(outputdir, fileroots, runinfo):
                 thedescription = getdescription(thisfile)
                 fileroots[basename]["description"] = thedescription
 
-    if len(filesadded) > 0:
-        print(f"Files added from {outputdir}")
-        for thisfile in filesadded:
-            print(f"\t{thisfile}")
-    else:
-        print(f"No files added from {outputdir}")
-    print()
+    if debug:
+        if len(filesadded) > 0:
+            print(f"Files added from {outputdir}")
+            for thisfile in filesadded:
+                print(f"\t{thisfile}")
+        else:
+            print(f"No files added from {outputdir}")
+        print()
 
 
 if __name__ == "__main__":
@@ -152,12 +153,12 @@ if __name__ == "__main__":
         ("normal", False, False, True, False, False, False),
         ("more", False, False, True, False, False, False),
         ("max", False, False, True, False, False, False),
-        ("max", False, False, False, False, True, False),
+        ("max", False, False, True, False, True, False),
     ]
-    # runinfo = [
-    #    ("min", False, False, False, False, False, False),
-    #    ("min", False, False, True, False, False, False),
-    # ]
+
+    #runinfo = [
+    #    ("max", False, False, False, True, False, False),
+    #]
 
     fileroots = {}
     for level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle in runinfo:
@@ -165,14 +166,15 @@ if __name__ == "__main__":
             level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
         )
         outputdir = os.path.join("..", "dst", "scratch", subdir)
-        makecleanoutputdir(outputdir)
-        runrapidtide(
-            outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
-        )
+        #makecleanoutputdir(outputdir)
+        #runrapidtide(
+        #    outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
+        #)
         listfiles(
             outputdir,
             fileroots,
             (level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle),
+            debug=True,
         )
 
     for key in fileroots:
