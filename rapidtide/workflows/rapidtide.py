@@ -799,20 +799,47 @@ def rapidtide_main(argparsingfunc):
                 "message3": "voxels",
             },
         )
-        outconfoundr2 = np.zeros((numspatiallocs), dtype=rt_floattype)
+        # save the confound filter R2 map
+        if not optiondict["textio"]:
+            if fileiscifti:
+                timeindex = theheader["dim"][0] - 1
+                spaceindex = theheader["dim"][0]
+                theheader["dim"][timeindex] = 1
+                theheader["dim"][spaceindex] = numspatiallocs
+            else:
+                theheader["dim"][0] = 3
+                theheader["dim"][4] = 1
+                theheader["pixdim"][4] = 1.0
+        maplist = [
+            (confoundr2, "confoundfilterR2", "map", None, "R2 of the motion/confound regression")
+        ]
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            nativespaceshape,
+            theheader,
+            bidsbasedict,
+            textio=optiondict["textio"],
+            fileiscifti=fileiscifti,
+            rt_floattype=rt_floattype,
+            cifti_hdr=cifti_hdr,
+        )
+
+        """outconfoundr2 = np.zeros((numspatiallocs), dtype=rt_floattype)
         outconfoundr2[validvoxels] = confoundr2[:]
         if optiondict["textio"]:
             tide_io.writenpvecs(
                 outconfoundr2.reshape((numspatiallocs)),
-                f"{outputname}_confoundr2.txt",
+                f"{outputname}_confoundR2.txt",
             )
         else:
-            savename = f"{outputname}_desc-confoundr2"
+            savename = f"{outputname}_desc-confoundR2"
             tide_io.savetonifti(
                 outconfoundr2.reshape((xsize, ysize, numslices)),
                 nim_hdr,
                 savename,
-            )
+            )"""
         tide_io.writebidstsv(
             f"{outputname}_desc-orthogonalizedconfounds_timeseries",
             mergedregressors,
@@ -829,7 +856,46 @@ def rapidtide_main(argparsingfunc):
             tide_util.logmem("after confound glm filter")
 
         if optiondict["saveconfoundfiltered"]:
-            outfmriarray = np.zeros((numspatiallocs, validtimepoints), dtype=rt_floattype)
+            if not optiondict["textio"]:
+                theheader = copy.deepcopy(nim_hdr)
+                if fileiscifti:
+                    nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
+                    timeindex = theheader["dim"][0] - 1
+                    spaceindex = theheader["dim"][0]
+                    theheader["dim"][timeindex] = np.shape(fmri_data_valid)[1]
+                    theheader["dim"][spaceindex] = numspatiallocs
+                else:
+                    nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
+                    theheader["dim"][4] = np.shape(fmri_data_valid)[1]
+                    theheader["pixdim"][4] = fmritr
+            else:
+                nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
+                theheader = None
+                cifti_hdr = None
+
+            maplist += [
+                (
+                    fmri_data_valid,
+                    "confoundfilterCleaned",
+                    "bold",
+                    None,
+                    "fMRI data after motion/confound regression",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputname,
+                maplist,
+                validvoxels,
+                nativefmrishape,
+                theheader,
+                bidsbasedict,
+                textio=optiondict["textio"],
+                fileiscifti=fileiscifti,
+                rt_floattype=rt_floattype,
+                cifti_hdr=cifti_hdr,
+            )
+
+            """outfmriarray = np.zeros((numspatiallocs, validtimepoints), dtype=rt_floattype)
             outfmriarray[validvoxels, :] = fmri_data_valid[:, :]
             if optiondict["textio"]:
                 tide_io.writenpvecs(
@@ -842,7 +908,7 @@ def rapidtide_main(argparsingfunc):
                     outfmriarray.reshape((xsize, ysize, numslices, validtimepoints)),
                     nim_hdr,
                     savename,
-                )
+                )"""
 
     # get rid of memory we aren't using
     tide_util.logmem("before purging full sized fmri data")
