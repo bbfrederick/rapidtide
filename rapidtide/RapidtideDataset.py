@@ -884,7 +884,7 @@ class RapidtideDataset:
     def setupregressors(self):
         # load the regressors
         self.regressors = {}
-        self.therunoptions = tide_io.readoptionsfile(self.fileroot + "_desc-runoptions_info")
+        self.therunoptions = tide_io.readoptionsfile(self.fileroot + "desc-runoptions_info")
         if self.verbose > 1:
             print("regressor similarity calculation limits:", self.regressorsimcalclimits)
         try:
