@@ -111,19 +111,20 @@ def listfiles(outputdir, fileroots, runinfo):
 if __name__ == "__main__":
     runinfo = [
         ("min", False, False, False, False, False, False),
+        ("min", False, False, True, False, False, False),
         ("min", True, False, False, False, False, False),
         ("min", False, True, False, False, False, False),
-        ("min", True, True, False, False, False, False),
         ("min", False, False, False, True, False, False),
-        ("normal", True, True, False, False, False, False),
-        ("more", True, True, False, False, False, False),
-        ("max", True, True, False, False, False, False),
+        ("min", False, False, False, False, False, True),
+        ("normal", False, False, False, False, False, False),
+        ("more", False, False, False, False, False, False),
+        ("max", False, False, False, False, False, False),
+        ("max", False, False, True, False, False, True),
+        ("normal", False, False, True, False, False, False),
+        ("more", False, False, True, False, False, False),
+        ("max", False, False, True, False, False, False),
+        ("max", False, False, False, False, True, False),
         ("max", False, False, False, False, False, True),
-        ("min", True, True, True, False, False, False),
-        ("normal", True, True, True, False, False, False),
-        ("more", True, True, True, False, False, False),
-        ("max", True, True, True, False, False, False),
-        ("max", True, True, True, False, True, False),
     ]
     #runinfo = [
     #    ("min", False, False, False, False, False, False),
@@ -183,8 +184,8 @@ if __name__ == "__main__":
         try:
             descstring = fileroots[key]["description"]
         except KeyError:
-            descstring = "'No description'"
-        descstring.replace("'", '"')
+            descstring = "No description"
+        descstring = '"' + descstring + '"'
         print(f"{writekey}, {extstring}, {descstring}, {presentkey}")
         #for theitem in (fileroots[key]).items():
         #    print(f"\t{theitem}")
