@@ -2045,7 +2045,7 @@ def rapidtide_main(argparsingfunc):
                                 optiondict["sighistlen"],
                                 0,
                                 outputname + namesuffix,
-                                displaytitle="Null correlation histogram, pass" + str(thepass),
+                                displaytitle="Null correlation histogram",
                                 refine=False,
                                 dictvarname="nullsimfunchist_pass" + str(thepass),
                                 therange=(0.0, 1.0),
