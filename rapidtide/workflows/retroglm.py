@@ -143,7 +143,7 @@ def retroglm(args):
 
     # read the runoptions file
     print("reading runoptions")
-    runoptionsfile = f"{args.datafileroot}_options"
+    runoptionsfile = f"{args.datafileroot}_desc-runoptions_info"
     therunoptions = tide_io.readoptionsfile(runoptionsfile)
     try:
         candoretroglm = therunoptions["retroglmcompatible"]
