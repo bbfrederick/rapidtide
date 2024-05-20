@@ -1,0 +1,190 @@
+#!/usr/bin/env python
+
+import os
+import glob
+import shutil
+
+import rapidtide.qualitycheck as rapidtide_quality
+import rapidtide.workflows.rapidtide as rapidtide_workflow
+import rapidtide.workflows.rapidtide_parser as rapidtide_parser
+from rapidtide.io import readdictfromjson
+
+def dirfromoptions(level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle):
+    return f"{level}_passesgt1-{passesgt1}_numnullgt0-{numnullgt0}_doglm-{doglm}_domotion-{domotion}_doderrivs-{doderivs}_dodespeckle-{dodespeckle}"
+
+def runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle):
+    # run rapidtide
+    if passesgt1:
+        npasses = 2
+    else:
+        npasses = 1
+    if numnullgt0:
+        numnull = 1000
+    else:
+        numnull = 0
+
+    inputargs = [
+        "sub-RAPIDTIDETEST.nii.gz",
+        os.path.join(outputdir,  "XXX"),
+        "--nprocs", "-1",
+        "--passes", str(npasses),
+        "--numnull", str(numnull),
+        "--searchrange", "-5", "10",
+        "--outputlevel", level,
+    ]
+    if domotion:
+        inputargs += ["--motionfile", "fakemotion.par"]
+    if not dodespeckle:
+        inputargs += ["--despecklepasses", "0"]
+    if not doglm:
+        inputargs += ["--noglm"]
+    if doderivs:
+        inputargs += ["--glmderivs", "1"]
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+
+
+
+def makecleanoutputdir(pathname):
+    # first delete the directory if it exists
+    shutil.rmtree(pathname,ignore_errors=True)
+
+    # now make the directory
+    try:
+        os.makedirs(pathname)
+    except OSError:
+        if os.path.exists(pathname):
+            # We are nearly safe
+            return True
+        else:
+            # There was an error on creation, so make sure we know about it
+            print("ERROR: ", pathname, " does not exist, and could not create it")
+            return False
+    return True
+
+
+def getdescription(jsonname):
+    thedict = readdictfromjson(jsonname)
+    try:
+        return thedict["Description"]
+    except KeyError:
+        return None
+    
+
+def listfiles(outputdir, fileroots, runinfo):
+    thefiles = glob.glob(os.path.join(outputdir, "XXX_*"))
+
+    filesadded = []
+    for thisfile in thefiles:
+        basedir, filename = os.path.split(thisfile)
+        periodloc = filename.find(".")
+        if periodloc > -1:
+            basename = filename[:periodloc]
+            extension = filename[(periodloc + 1):]
+            try:
+                dummy = fileroots[basename]
+                if extension not in fileroots[basename]["extensions"]:
+                    fileroots[basename]["extensions"] += [ extension ]
+            except KeyError:
+                fileroots[basename] = {}
+                fileroots[basename]["extensions"] = [ extension ]
+                fileroots[basename]["level"] = runinfo[0]
+                fileroots[basename]["passesgt1"] = runinfo[1]
+                fileroots[basename]["numnullgt0"] = runinfo[2]
+                fileroots[basename]["doglm"] = runinfo[3]
+                fileroots[basename]["domotion"] = runinfo[4]
+                fileroots[basename]["doderivs"] = runinfo[5]
+                fileroots[basename]["dodespeckle"] = runinfo[6]
+                filesadded += [ basename ]
+            if extension == "json":
+                thedescription = getdescription(thisfile)
+                fileroots[basename]["description"] = thedescription
+
+    if len(filesadded) > 0:
+        print(f"Files added from {outputdir}")
+        for thisfile in filesadded:
+            print(f"\t{thisfile}")
+    else:
+        print(f"No files added from {outputdir}")
+    print()
+        
+
+if __name__ == "__main__":
+    runinfo = [
+        ("min", False, False, False, False, False, False),
+        ("min", True, False, False, False, False, False),
+        ("min", False, True, False, False, False, False),
+        ("min", True, True, False, False, False, False),
+        ("min", False, False, False, True, False, False),
+        ("normal", True, True, False, False, False, False),
+        ("more", True, True, False, False, False, False),
+        ("max", True, True, False, False, False, False),
+        ("max", False, False, False, False, False, True),
+        ("min", True, True, True, False, False, False),
+        ("normal", True, True, True, False, False, False),
+        ("more", True, True, True, False, False, False),
+        ("max", True, True, True, False, False, False),
+        ("max", True, True, True, False, True, False),
+    ]
+    #runinfo = [
+    #    ("min", False, False, False, False, False, False),
+    #    ("min", False, False, True, False, False, False),
+    #]
+
+    fileroots = {}
+    for level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle in runinfo:
+        subdir = dirfromoptions(level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle)
+        outputdir = os.path.join("..", "dst", "scratch", subdir)
+        makecleanoutputdir(outputdir)
+        runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle)
+        listfiles(outputdir, fileroots, (level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle))
+
+    for key in fileroots:
+        extlist = []
+        for theext in ["txt", "tsv", "tsv.gz", "nii.gz", "json"]:
+            if theext in fileroots[key]["extensions"]:
+                extlist.append(theext)
+
+        if fileroots[key]["passesgt1"]:
+            existstring = "Present if passes > 1"
+        elif fileroots[key]["numnullgt0"]:
+            existstring = "Present if numnull > 0"
+        elif fileroots[key]["domotion"]:
+            existstring = "Present if doing motion/confound regression"
+        elif fileroots[key]["dodespeckle"]:
+            existstring = "Present if despecklepasses > 0 (default) and outputlevel is max"
+        elif fileroots[key]["doglm"]:
+            if fileroots[key]["doderivs"]:
+                existstring = "Present if GLM is enabled (default), glmderivs > 0, and outputlevel is max"
+            elif fileroots[key]["level"] == "min":
+                existstring = "Present if GLM is enabled (default)"
+            elif fileroots[key]["level"] == "normal":
+                existstring = "Present if GLM is enabled (default) and outputlevel is >= normal"
+            elif fileroots[key]["level"] == "more":
+                existstring = "Present if GLM is enabled (default) and outputlevel is >= more"
+            elif fileroots[key]["level"] == "max":
+                existstring = "Present if GLM is enabled (default) and outputlevel is max"
+            else:
+                print("you shouldn't be able to get here")
+        elif fileroots[key]["level"] == "min":
+            existstring = "Always"
+        elif fileroots[key]["level"] == "normal":
+            existstring = "Present if outputlevel is >= normal"
+        elif fileroots[key]["level"] == "more":
+            existstring = "Present if outputlevel is >= more"
+        elif fileroots[key]["level"] == "max":
+            existstring = "Present if outputlevel is max"
+        else:
+            existstring = "Illegal level specification"
+
+             
+        extstring = '"' + ",".join(extlist) + '"'
+        writekey = '"' + key + '"'
+        presentkey = '"' + existstring + '"'
+        try:
+            descstring = fileroots[key]["description"]
+        except KeyError:
+            descstring = "'No description'"
+        descstring.replace("'", '"')
+        print(f"{writekey}, {extstring}, {descstring}, {presentkey}")
+        #for theitem in (fileroots[key]).items():
+        #    print(f"\t{theitem}")
