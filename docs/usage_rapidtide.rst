@@ -70,11 +70,9 @@ dimension for a correlation map.
 BIDS Outputs:
 ^^^^^^^^^^^^^
 
-NOTE - the following table is currently being revised.  It will be correct as of v2.8.9.1
-
 .. csv-table::
    :header: "Name", "Extension(s)", "Content", "When present"
-   :widths: 15, 15, 30, 10
+   :widths: 30, 10, 30, 20
 
     "XXX_DONE", "txt", "Run status file", "If rapidtide successfully completed"
     "XXX_RUNNING", "txt", "Run status file", "If rapidtide was started, but has not yet successfully completed"
