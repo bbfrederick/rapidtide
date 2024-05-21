@@ -150,6 +150,7 @@ if __name__ == "__main__":
         ("more", False, False, False, False, False, False),
         ("more", False, False, True, False, False, False),
         ("max", False, False, False, False, False, False),
+        ("max", True, False, False, False, False, False),
         ("max", False, False, True, False, False, True),
         ("max", False, False, False, True, False, False),
         ("max", False, False, True, False, False, False),
@@ -174,7 +175,7 @@ if __name__ == "__main__":
             outputdir,
             fileroots,
             (level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle),
-            debug=True,
+            debug=False,
         )
 
     for key in fileroots:
@@ -183,11 +184,7 @@ if __name__ == "__main__":
             if theext in fileroots[key]["extensions"]:
                 extlist.append(theext)
 
-        if fileroots[key]["passesgt1"]:
-            existstring = "Present if passes > 1"
-        elif fileroots[key]["numnullgt0"]:
-            existstring = "Present if numnull > 0"
-        elif fileroots[key]["domotion"]:
+        if fileroots[key]["domotion"]:
             if fileroots[key]["level"] == "max":
                 existstring = "Present if doing motion/confound regression and outputlevel is max"
             else:
@@ -210,13 +207,21 @@ if __name__ == "__main__":
             else:
                 print("you shouldn't be able to get here")
         elif fileroots[key]["level"] == "min":
-            existstring = "Always"
+            if fileroots[key]["passesgt1"]:
+                existstring = "Present if passes > 1"
+            elif fileroots[key]["numnullgt0"]:
+                existstring = "Present if numnull > 0"
+            else:
+                existstring = "Always"
         elif fileroots[key]["level"] == "normal":
             existstring = "Present if outputlevel is \u2265 normal"
         elif fileroots[key]["level"] == "more":
             existstring = "Present if outputlevel is \u2265 more"
         elif fileroots[key]["level"] == "max":
-            existstring = "Present if outputlevel is max"
+            if fileroots[key]["passesgt1"]:
+                existstring = "Present if passes > 1 and outputlevel is max"
+            else:
+                existstring = "Present if outputlevel is max"
         else:
             existstring = "Illegal level specification"
 
