@@ -70,7 +70,7 @@ dimension for a correlation map.
 BIDS Outputs:
 ^^^^^^^^^^^^^
 
-.. csv-table::
+.. csv-table::  Output files produced by rapidtide
    :header: "Name", "Extension(s)", "Content", "When present"
    :widths: 30, 10, 30, 20
 
@@ -160,64 +160,30 @@ You can calculate the output data size approximately with the following formula.
 As an example, the following table shows the size of the data produced by running a rapidtide analysis on one HCP-YA resting state dataset with various output levels, with and without doing GLM noise removal, either directly, or with the addition of one voxelwise time derivative.  The correlation function fit was calculated from -5 to 10 seconds, resulting in a correlation function length of 41 points at the oversampled TR of 0.36 seconds. 
 
 
+.. csv-table::  Output data size from running rapidtide on a single HCP-YA rsfMRI dataset
+   :header: "Output level", "Motion regression", "GLM?", "Derivatives", "Size in bytes"
+   :widths: 10, 10, 10, 10, 10
 
-.. list-table::  Output data sizes from running rapidtide on one HCP-YA rsfMRI dataset
-   :widths: 25 25 25 25
-   :header-rows: 1
+   "min", "No", "No", "-", "13M"
+   "min", "Yes", "No", "-", "15M"
+   "min", "No", "Yes", "0", "1.1G"
+   "min", "No", "Yes", "1", "1.1G"
+   "normal", "No", "No", "-", "79M"
+   "normal", "Yes", "No", "-", "81M"
+   "normal", "No", "Yes", "0", "1.2G"
+   "normal", "No", "Yes", "1", "1.2G"
+   "more", "No", "No", "-", "682M"
+   "more", "Yes", "No", "-", "664M"
+   "more", "No", "Yes", "0", "3.0G"
+   "more", "No", "Yes", "1", "3.0G"
+   "max", "No", "No", "-", "749M"
+   "max", "Yes", "No", "-", "2.6G"
+   "max", "No", "Yes", "0", "4.1G"
+   "max", "No", "Yes", "1", "5.2G"
+..
 
 
-   * - Output level
-     - GLM?
-     - Derivatives
-     - Size in bytes
-   * - min
-     - No
-     -
-     - 13M
-   * - min
-     - Yes
-     - 0
-     - 1.2G
-   * - min
-     - Yes
-     - 1
-     - 1.2G
-   * - normal
-     - No
-     -
-     - 90M
-   * - normal
-     - Yes
-     - 0
-     - 1.3G
-   * - normal
-     - Yes
-     - 1
-     - 1.3G
-   * - more
-     - No
-     -
-     - 87M
-   * - more
-     - Yes
-     - 0
-     - 3.2G
-   * - more
-     - Yes
-     - 1
-     - 3.1G
-   * - max
-     - No
-     -
-     - 154M
-   * - max
-     - Yes
-     - 0
-     - 4.3G
-   * - max
-     - Yes
-     - 1
-     - 5.6G
+
 
 
 
