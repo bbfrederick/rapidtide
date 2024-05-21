@@ -3746,6 +3746,13 @@ def rapidtide_main(argparsingfunc):
     optiondict["currentstage"] = "done"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
+    # shut down the loggers
+    for thelogger in [LGR, ErrorLGR, TimingLGR]:
+        handlers = thelogger.handlers[:]
+        for handler in handlers:
+            thelogger.removeHandler(handler)
+            handler.close()
+
     # delete the canary file
     Path(f"{outputname}_ISRUNNING.txt").unlink()
 
