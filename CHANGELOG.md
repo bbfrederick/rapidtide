@@ -1,6 +1,12 @@
 # Release history
 
-## Version 2.8.9.1 (5/17/24)
+## Version 2.8.9.1 (5/21/24)
+* (rapidtide) Fixed a very old bug where the loggers were not properly closed, leading to duplicate output messages when rapidtide was run as a workflow.
+* (rapidtide) Fixed the selection logic so that shiftedtcs are written if output level is max, passes > 1, but GLM is no longer required.
+* (rapidtide) Added "Description" tag to output json files.
+* (rapidtide) Rationalized the names of some output files.
+* (docs) The output files list now reflects the current output selection logic.
+* (docs) Made a semiautomated procedure for updating the output table.
 * (package) Merged some dependabot PRs.
 
 ## Version 2.8.9 (5/17/24)
