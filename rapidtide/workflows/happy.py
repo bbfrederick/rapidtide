@@ -23,7 +23,6 @@ import time
 import warnings
 
 import numpy as np
-from nilearn import masking
 from tqdm import tqdm
 
 import rapidtide.correlate as tide_corr
