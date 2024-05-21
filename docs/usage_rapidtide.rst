@@ -160,7 +160,7 @@ You can calculate the output data size approximately with the following formula.
 As an example, the following table shows the size of the data produced by running a rapidtide analysis on one HCP-YA resting state dataset with various output levels, with and without doing GLM noise removal, either directly, or with the addition of one voxelwise time derivative.  The correlation function fit was calculated from -5 to 10 seconds, resulting in a correlation function length of 41 points at the oversampled TR of 0.36 seconds. 
 
 
-.. csv-table::  Output data size from running rapidtide on a single HCP-YA rsfMRI dataset
+.. csv-table::  Output data size from running rapidtide on one HCP-YA rsfMRI dataset
    :header: "Output level", "Motion regression", "GLM?", "Derivatives", "Size in bytes"
    :widths: 10, 10, 10, 10, 10
 
