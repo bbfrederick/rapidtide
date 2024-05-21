@@ -170,7 +170,7 @@ pywavelets==1.4.1
     #   scikit-image
 recommonmark==0.7.1
     # via rapidtide (setup.py)
-requests==2.31.0
+requests==2.32.0
     # via
     #   codecov
     #   coveralls
