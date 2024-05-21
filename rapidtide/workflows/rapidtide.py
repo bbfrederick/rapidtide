@@ -3690,6 +3690,9 @@ def rapidtide_main(argparsingfunc):
                     "sLFO signal filtered out of this voxel",
                 ),
             ]
+
+    # save maps in the current output list
+    if len(maplist) > 0:
         tide_io.savemaplist(
             outputname,
             maplist,
@@ -3702,10 +3705,13 @@ def rapidtide_main(argparsingfunc):
             rt_floattype=rt_floattype,
             cifti_hdr=cifti_hdr,
         )
+
+    # clean up
+    if optiondict["passes"] > 1:
+        del paddedshiftedtcs
+        del shiftedtcs
+    if optiondict["doglmfilt"]:
         del lagtc
-        if optiondict["passes"] > 1:
-            del paddedshiftedtcs
-            del shiftedtcs
         del filtereddata
         del movingsignal
 
