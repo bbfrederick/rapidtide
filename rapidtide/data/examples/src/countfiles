@@ -146,12 +146,12 @@ if __name__ == "__main__":
         ("min", False, False, False, True, False, False),
         ("min", False, False, False, False, False, True),
         ("normal", False, False, False, False, False, False),
+        ("normal", False, False, True, False, False, False),
         ("more", False, False, False, False, False, False),
+        ("more", False, False, True, False, False, False),
         ("max", False, False, False, False, False, False),
         ("max", False, False, True, False, False, True),
         ("max", False, False, False, True, False, False),
-        ("normal", False, False, True, False, False, False),
-        ("more", False, False, True, False, False, False),
         ("max", False, False, True, False, False, False),
         ("max", False, False, True, False, True, False),
     ]
@@ -202,9 +202,9 @@ if __name__ == "__main__":
             elif fileroots[key]["level"] == "min":
                 existstring = "Present if GLM is enabled (default)"
             elif fileroots[key]["level"] == "normal":
-                existstring = "Present if GLM is enabled (default) and outputlevel is >= normal"
+                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 normal"
             elif fileroots[key]["level"] == "more":
-                existstring = "Present if GLM is enabled (default) and outputlevel is >= more"
+                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 more"
             elif fileroots[key]["level"] == "max":
                 existstring = "Present if GLM is enabled (default) and outputlevel is max"
             else:
@@ -212,9 +212,9 @@ if __name__ == "__main__":
         elif fileroots[key]["level"] == "min":
             existstring = "Always"
         elif fileroots[key]["level"] == "normal":
-            existstring = "Present if outputlevel is >= normal"
+            existstring = "Present if outputlevel is \u2265 normal"
         elif fileroots[key]["level"] == "more":
-            existstring = "Present if outputlevel is >= more"
+            existstring = "Present if outputlevel is \u2265 more"
         elif fileroots[key]["level"] == "max":
             existstring = "Present if outputlevel is max"
         else:

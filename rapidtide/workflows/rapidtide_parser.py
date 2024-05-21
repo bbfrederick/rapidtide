@@ -28,6 +28,15 @@ import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
+
+# Create a sentinel.
+# from https://stackoverflow.com/questions/58594956/find-out-which-arguments-were-passed-explicitly-in-argparse
+class _Sentinel:
+    pass
+
+
+sentinel = _Sentinel()
+
 LGR = logging.getLogger(__name__)
 
 # Some default settings

@@ -2400,7 +2400,7 @@ def rapidtide_main(argparsingfunc):
                             "despeckle",
                             "mask",
                             None,
-                            "Voxels that underwent despeckling",
+                            "Voxels that underwent despeckling in the final pass",
                         )
                     ]
                     tide_io.savemaplist(
@@ -3344,7 +3344,7 @@ def rapidtide_main(argparsingfunc):
     MTT = np.square(lagsigma) - (optiondict["acwidth"] * optiondict["acwidth"])
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
-    savelist += [(MTT, "MTT", "map", "second", "Mean transit time estimate")]
+    savelist += [(MTT, "MTT", "map", "second", "Mean transit time (estimated)")]
     if optiondict["calccoherence"]:
         savelist += [
             (coherencepeakval, "coherencepeakval", "map", None, "Coherence peak value"),
@@ -3592,7 +3592,13 @@ def rapidtide_main(argparsingfunc):
         if optiondict["savegaussout"]:
             maplist += [
                 (gaussout, "gaussout", "info", "second", "Simulated correlation function"),
-                (windowout, "corrfitwindow", "info", "second", "I'm not sure what this is"),
+                (
+                    windowout,
+                    "corrfitwindow",
+                    "info",
+                    "second",
+                    "The search window for the correlation peak fit",
+                ),
             ]
         tide_io.savemaplist(
             outputname,

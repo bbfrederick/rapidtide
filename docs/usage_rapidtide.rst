@@ -87,7 +87,7 @@ NOTE - the following table is currently being revised.  It will be correct as of
     "XXX_desc-corrfit_mask", "nii.gz, json", "Voxels where correlation value was fit", "Always"
     "XXX_desc-corrfitfailreason_info", "nii.gz, json", "Result codes for correlation fit", "Always"
     "XXX_desc-corrfitwindow_info", "nii.gz, json", "I'm not sure what this is", "Present if outputlevel is max"
-    "XXX_desc-corrout_info", "nii.gz, json", "Correlation function", "Present if outputlevel is >= normal"
+    "XXX_desc-corrout_info", "nii.gz, json", "Correlation function", "Present if outputlevel is ≥ normal"
     "XXX_desc-despeckle_mask", "nii.gz, json", "Voxels that underwent despeckling", "Present if despecklepasses > 0 (default) and outputlevel is max"
     "XXX_desc-expandedconfounds_timeseries", "tsv.gz, json", "The expanded (via derivatives and powers) set of confound regressors used for prefiltering the data", "Present if doing motion/confound regression"
     "XXX_desc-formattedruntimings_info", "tsv", "No description", "Always"
@@ -163,7 +163,7 @@ As an example, the following table shows the size of the data produced by runnin
 
 
 
-.. list-table::  Output data sizes
+.. list-table::  Output data sizes from running rapidtide on one HCP-YA rsfMRI dataset
    :widths: 25 25 25 25
    :header-rows: 1
 
