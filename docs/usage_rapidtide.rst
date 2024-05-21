@@ -155,9 +155,42 @@ dataset, this is ~13MB of data (compared to the input data file size of about 1G
 to help you evaluate the fit quality, and make cool movies, you probably want to leave the outputlevel at the default of
 ``"normal"``.
 
-You can calculate the output data size approximately with the following formula.
+You can calculate the output data size approximately with the following formulae (to first approximation, assuming
+that the image files dominate the size of the output data).
 
-As an example, the following table shows the size of the data produced by running a rapidtide analysis on one HCP-YA resting state dataset with various output levels, with and without doing GLM noise removal, either directly, or with the addition of one voxelwise time derivative.  The correlation function fit was calculated from -5 to 10 seconds, resulting in a correlation function length of 41 points at the oversampled TR of 0.36 seconds. 
+FMRISIZE is the number of TRs in the input fMRI data.
+
+CORRFUNCSIZE is the size of the correlation function in TRs at the oversampled TR.
+
+* The TR oversampling factor is the smallest integer divisor of the fMRI TR that results in an oversampled TR <= 0.5 seconds.
+* CORRFUNCSIZE is the search range in seconds divided by the oversampled TR.
+
+The output sizes in TRs (with no motion regression) are as follows:
+
+.. csv-table::  Total image output data size in TRs
+   :header: "Output level", "GLM?", "Number of TRs"
+   :widths: 10, 10, 10
+
+    "min", "No", "16"
+    "normal", "No", "16 + CORRFUNCSIZE"
+    "more", "No", "16 + CORRFUNCSIZE"
+    "max", "No", "17 + CORRFUNCSIZE"
+    "min", "Yes", "24 + FMRISIZE"
+    "normal", "Yes", "24 + CORRFUNCSIZE + FMRISIZE"
+    "more", "Yes", "24 + CORRFUNCSIZE + 3*FMRISIZE"
+    "max", "Yes", "25 + 3*CORRFUNCSIZE + 4*FMRISIZE"
+..
+
+The data size is then this number of TRs times the size of 1 TR worth of data in the input fMRI file.
+
+
+As an example, the following table shows the size of the data produced by running a rapidtide analysis on one HCP-YA
+resting state dataset with various output levels, with and without doing GLM noise removal, either directly, or
+with the addition of one voxelwise time derivative.  The correlation function fit was calculated from -5 to 10
+seconds, resulting in a correlation function length of 41 points at the oversampled TR of 0.36 seconds. NB: motion
+regression is independent of GLM calculation, so to find the size of a GLM analysis with motion regression at a
+given output level, add the difference between the sizes of the motion regressed and non-motion regressed non-GLM
+analysis.
 
 
 .. csv-table::  Output data size from running rapidtide on one HCP-YA rsfMRI dataset
@@ -183,7 +216,16 @@ As an example, the following table shows the size of the data produced by runnin
 ..
 
 
-
+PRO TIP:  Extraction of the sLFO regressor and calculation of the delay and strength maps take the VAST majority of
+the computation time, and generates only a small fraction of the data of a full analysis.
+If you are doing computation on AWS (where compute is cheap, storage is semi-pricey,and download costs are extortionate), it makes
+sense to do everything except GLM filtering on your data, and download or store the outputs of that, only doing the
+GLM step at the time when you need to do it.  For example - running rapidtide on all of the HCP-YA resting state data
+generates less than 70GB of output data.  That's not too expensive to download, or store on S3, and costs nothing to
+upload.  The denoised data, however is huge (bigger than the input dataset), so you don't want to download it or even
+pay to store it for too long.  So make it when you need it, use it for whatever,
+then throw it away, and make it again if you need it again.
+This will save you an enormous amount of money.
 
 
 
