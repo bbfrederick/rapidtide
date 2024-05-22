@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+import numpy as np
+
+for i in range(30):
+    thetriplet = np.random.rand(3)
+    normtriplet = thetriplet / np.linalg.norm(thetriplet)
+    print(f"{i + 1}\t{normtriplet[0]:.4f}\t{normtriplet[1]:.4f}\t{normtriplet[2]:.4f}")
