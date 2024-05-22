@@ -1912,6 +1912,7 @@ def process_args(inputargs=None):
         args["savedespecklemasks"] = False
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
+        args["savecorrtimes"] = False
     elif args["outputlevel"] == "normal":
         args["savemovingsignal"] = False
         args["savelagregressors"] = False
@@ -1919,6 +1920,7 @@ def process_args(inputargs=None):
         args["savedespecklemasks"] = False
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
+        args["savecorrtimes"] = False
     elif args["outputlevel"] == "more":
         args["savemovingsignal"] = True
         args["savelagregressors"] = True
@@ -1926,6 +1928,7 @@ def process_args(inputargs=None):
         args["savedespecklemasks"] = False
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
+        args["savecorrtimes"] = False
     elif args["outputlevel"] == "max":
         args["savemovingsignal"] = True
         args["savelagregressors"] = True
@@ -1933,6 +1936,7 @@ def process_args(inputargs=None):
         args["savedespecklemasks"] = True
         args["saveconfoundfiltered"] = True
         args["savegaussout"] = True
+        args["savecorrtimes"] = True
     else:
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()
