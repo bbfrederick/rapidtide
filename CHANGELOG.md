@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.8.9.2 (5/22/24)
+* (docs) More updates to output file names, descriptions, and size tables.
+
 ## Version 2.8.9.1 (5/21/24)
 * (rapidtide) Fixed a very old bug where the loggers were not properly closed, leading to duplicate output messages when rapidtide was run as a workflow.
 * (rapidtide) Fixed the selection logic so that shiftedtcs are written if output level is max, passes > 1, but GLM is no longer required.
