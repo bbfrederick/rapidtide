@@ -248,9 +248,9 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Startup
     ####################################################
-    optiondict[
-        "Description"
-    ] = "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
+    optiondict["Description"] = (
+        "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
+    )
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
@@ -491,6 +491,27 @@ def rapidtide_main(argparsingfunc):
         raise ValueError(
             f"magnitude of lagmax exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
         )
+    optiondict["simcalcoffset"] = validstart * fmritr
+    optiondict["simcalcoffset"] = 0.0
+
+    # determine the valid timepoints
+    validtimepoints = validend - validstart + 1
+    validsimcalcstart, validsimcalcend = tide_util.startendcheck(
+        validtimepoints,
+        optiondict["simcalcstartpoint"],
+        optiondict["simcalcendpoint"],
+    )
+    if optiondict["debug"]:
+        LGR.debug(
+            f"simcalcrangelimits: {validtimepoints=}, {optiondict['simcalcstartpoint']=}, {optiondict['simcalcendpoint']}"
+        )
+        LGR.debug(f"simcalcrangelimits: {validsimcalcstart=}, {validsimcalcend=}")
+    osvalidsimcalcstart = validsimcalcstart * optiondict["oversampfactor"]
+    osvalidsimcalcend = validsimcalcend * optiondict["oversampfactor"]
+    optiondict["validsimcalcstart"] = validsimcalcstart
+    optiondict["validsimcalcend"] = validsimcalcend
+    optiondict["osvalidsimcalcstart"] = osvalidsimcalcstart
+    optiondict["osvalidsimcalcend"] = osvalidsimcalcend
 
     ####################################################
     #  Prepare data
@@ -526,7 +547,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict["numtozero"] > 0:
         themean = np.mean(fmri_data[:, optiondict["numtozero"] :], axis=1)
         fmri_data[:, 0 : optiondict["numtozero"]] = themean[:, None]
-    validtimepoints = validend - validstart + 1
 
     # detect zero mean data
     optiondict["dataiszeromean"] = checkforzeromean(fmri_data)
@@ -997,12 +1017,14 @@ def rapidtide_main(argparsingfunc):
 
     if not optiondict["useglobalref"]:
         globalcorrx, globalcorry, dummy, dummy = tide_corr.arbcorr(
-            meanvec, meanfreq, inputvec, inputfreq, start2=inputstarttime
+            meanvec, meanfreq, inputvec, inputfreq, start2=(inputstarttime)
         )
         synctime = globalcorrx[np.argmax(globalcorry)]
         if optiondict["autosync"]:
             optiondict["offsettime"] = -synctime
             optiondict["offsettime_total"] = synctime
+            optiondict["offsettime_autosync"] = -synctime
+            optiondict["offsettime_total_autosync"] = synctime
     else:
         synctime = 0.0
     LGR.info(f"synctime is {synctime}")
@@ -1437,12 +1459,12 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["savecorrtimes"]:
         # bidsify
-        """tide_io.writebidstsv(
+        tide_io.writebidstsv(
             f"{outputname}_desc-corrtimes_timeseries",
             trimmedcorrscale,
             1.0,
             starttime=0.0,
-            columns=["initial"],
+            columns=["corrtimes"],
             append=False,
         )
         tide_io.writebidstsv(
@@ -1450,11 +1472,13 @@ def rapidtide_main(argparsingfunc):
             trimmedmiscale,
             1.0,
             starttime=0.0,
-            columns=["initial"],
+            columns=["mitimes"],
             append=False,
-        )"""
+        )
+        """
         tide_io.writenpvecs(trimmedcorrscale, f"{outputname}_corrtimes.txt")
         tide_io.writenpvecs(trimmedmiscale, f"{outputname}_mitimes.txt")
+        """
 
     # allocate all the data arrays
     tide_util.logmem("before main array allocation")
@@ -1603,23 +1627,6 @@ def rapidtide_main(argparsingfunc):
         zerooutbadfit=optiondict["zerooutbadfit"],
     )
 
-    validsimcalcstart, validsimcalcend = tide_util.startendcheck(
-        validtimepoints,
-        optiondict["simcalcstartpoint"],
-        optiondict["simcalcendpoint"],
-    )
-    if optiondict["debug"]:
-        LGR.debug(
-            f"simcalcrangelimits: {validtimepoints=}, {optiondict['simcalcstartpoint']=}, {optiondict['simcalcendpoint']}"
-        )
-        LGR.debug(f"simcalcrangelimits: {validsimcalcstart=}, {validsimcalcend=}")
-    osvalidsimcalcstart = validsimcalcstart * optiondict["oversampfactor"]
-    osvalidsimcalcend = validsimcalcend * optiondict["oversampfactor"]
-    optiondict["validsimcalcstart"] = validsimcalcstart
-    optiondict["validsimcalcend"] = validsimcalcend
-    optiondict["osvalidsimcalcstart"] = osvalidsimcalcstart
-    optiondict["osvalidsimcalcend"] = osvalidsimcalcend
-
     # Preprocessing - echo cancellation
     if optiondict["echocancel"]:
         LGR.info("\n\nEcho cancellation")
@@ -1645,8 +1652,8 @@ def rapidtide_main(argparsingfunc):
             fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             referencetc,
             theCorrelator,
-            initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
-            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
+            initial_fmri_x[validsimcalcstart : validsimcalcend + 1] + optiondict["simcalcoffset"],
+            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1] + optiondict["simcalcoffset"],
             lagmininpts,
             lagmaxinpts,
             corrout,
@@ -2133,8 +2140,10 @@ def rapidtide_main(argparsingfunc):
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 theMutualInformationator,
-                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
-                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1]
+                + optiondict["simcalcoffset"],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1]
+                + optiondict["simcalcoffset"],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -2157,8 +2166,10 @@ def rapidtide_main(argparsingfunc):
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 theCorrelator,
-                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
-                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1]
+                + optiondict["simcalcoffset"],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1]
+                + optiondict["simcalcoffset"],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -2224,8 +2235,10 @@ def rapidtide_main(argparsingfunc):
             voxelsprocessed_pe, thepeakdict = peakevalpass_func(
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
-                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
-                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1]
+                + optiondict["simcalcoffset"],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1]
+                + optiondict["simcalcoffset"],
                 theMutualInformationator,
                 trimmedcorrscale,
                 corrout,
@@ -2501,6 +2514,8 @@ def rapidtide_main(argparsingfunc):
                 )
                 optiondict["offsettime"] = peaklag
                 optiondict["offsettime_total"] += peaklag
+                optiondict[f"offsettime_pass{thepass}"] = optiondict["offsettime"]
+                optiondict[f"offsettime_total_pass{thepass}"] = optiondict["offsettime_total"]
                 LGR.info(
                     f"offset time set to {optiondict['offsettime']:.3f}, "
                     f"total is {optiondict['offsettime_total']:.3f}"
@@ -3287,15 +3302,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict[
-            f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thetimepcts[i]
-        optiondict[
-            f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thestrengthpcts[i]
-        optiondict[
-            f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thesigmapcts[i]
+        optiondict[f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thetimepcts[i]
+        )
+        optiondict[f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thestrengthpcts[i]
+        )
+        optiondict[f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thesigmapcts[i]
+        )
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
