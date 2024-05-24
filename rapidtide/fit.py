@@ -1583,7 +1583,7 @@ def parabfit(x_axis, y_axis, peakloc, points):
 
     # build list of approximations
     p0 = (a, tau, c)
-    popt, pcov = sp.optimize.curve_fit(func, x_data, y_data, p0)
+    popt, pcov = curve_fit(func, x_data, y_data, p0)
 
     # retrieve tau and c i.e x and y value of peak
     x, y = popt[1:3]

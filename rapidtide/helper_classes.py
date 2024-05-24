@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 from numpy.polynomial import Polynomial
+from scipy.optimize import curve_fit
 from statsmodels.robust import mad
 
 import rapidtide.correlate as tide_corr
@@ -1106,8 +1107,8 @@ class SimilarityFunctionFitter:
                 try:
                     plsq, pcov = curve_fit(
                         tide_fit.gaussfunc,
-                        xvals,
-                        yvals,
+                        X,
+                        data,
                         p0=[maxval_init, maxlag_init, maxsigma_init],
                     )
                     maxval = plsq[0] + baseline
