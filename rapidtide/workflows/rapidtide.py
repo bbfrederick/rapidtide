@@ -248,9 +248,9 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Startup
     ####################################################
-    optiondict["Description"] = (
-        "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
-    )
+    optiondict[
+        "Description"
+    ] = "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
@@ -491,8 +491,6 @@ def rapidtide_main(argparsingfunc):
         raise ValueError(
             f"magnitude of lagmax exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
         )
-    optiondict["simcalcoffset"] = validstart * fmritr
-    optiondict["simcalcoffset"] = 0.0
 
     # determine the valid timepoints
     validtimepoints = validend - validstart + 1
@@ -512,6 +510,7 @@ def rapidtide_main(argparsingfunc):
     optiondict["validsimcalcend"] = validsimcalcend
     optiondict["osvalidsimcalcstart"] = osvalidsimcalcstart
     optiondict["osvalidsimcalcend"] = osvalidsimcalcend
+    optiondict["simcalcoffset"] = -validsimcalcstart * fmritr
 
     ####################################################
     #  Prepare data
@@ -1445,6 +1444,7 @@ def rapidtide_main(argparsingfunc):
     theMutualInformationator.setreftc(
         np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float64)
     )
+    dummy, miscale, dummy = theMutualInformationator.getfunction(trim=False)
     nummilags = theMutualInformationator.similarityfunclen
     theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
     dummy, trimmedmiscale, dummy = theMutualInformationator.getfunction()
@@ -1460,7 +1460,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["savecorrtimes"]:
         # bidsify
         tide_io.writebidstsv(
-            f"{outputname}_desc-corrtimes_timeseries",
+            f"{outputname}_desc-trimmedcorrtimes_timeseries",
             trimmedcorrscale,
             1.0,
             starttime=0.0,
@@ -1468,8 +1468,24 @@ def rapidtide_main(argparsingfunc):
             append=False,
         )
         tide_io.writebidstsv(
-            f"{outputname}_desc-mitimes_timeseries",
+            f"{outputname}_desc-trimmedmitimes_timeseries",
             trimmedmiscale,
+            1.0,
+            starttime=0.0,
+            columns=["mitimes"],
+            append=False,
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-corrtimes_timeseries",
+            corrscale,
+            1.0,
+            starttime=0.0,
+            columns=["corrtimes"],
+            append=False,
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-mitimes_timeseries",
+            miscale,
             1.0,
             starttime=0.0,
             columns=["mitimes"],
@@ -1652,8 +1668,8 @@ def rapidtide_main(argparsingfunc):
             fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             referencetc,
             theCorrelator,
-            initial_fmri_x[validsimcalcstart : validsimcalcend + 1] + optiondict["simcalcoffset"],
-            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1] + optiondict["simcalcoffset"],
+            initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
             lagmininpts,
             lagmaxinpts,
             corrout,
@@ -1670,7 +1686,7 @@ def rapidtide_main(argparsingfunc):
         enablemkl(optiondict["mklthreads"], debug=threaddebug)
 
         for i in range(len(theglobalmaxlist)):
-            theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
+            theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]] - optiondict["simcalcoffset"]
         namesuffix = "_desc-globallag_hist"
         tide_stats.makeandsavehistogram(
             np.asarray(theglobalmaxlist),
@@ -2140,10 +2156,8 @@ def rapidtide_main(argparsingfunc):
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 theMutualInformationator,
-                initial_fmri_x[validsimcalcstart : validsimcalcend + 1]
-                + optiondict["simcalcoffset"],
-                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1]
-                + optiondict["simcalcoffset"],
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -2166,10 +2180,8 @@ def rapidtide_main(argparsingfunc):
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 theCorrelator,
-                initial_fmri_x[validsimcalcstart : validsimcalcend + 1]
-                + optiondict["simcalcoffset"],
-                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1]
-                + optiondict["simcalcoffset"],
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
                 lagmininpts,
                 lagmaxinpts,
                 corrout,
@@ -2186,7 +2198,7 @@ def rapidtide_main(argparsingfunc):
         enablemkl(optiondict["mklthreads"], debug=threaddebug)
 
         for i in range(len(theglobalmaxlist)):
-            theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]]
+            theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]] - optiondict["simcalcoffset"]
         namesuffix = "_desc-globallag_hist"
         tide_stats.makeandsavehistogram(
             np.asarray(theglobalmaxlist),
@@ -2235,10 +2247,8 @@ def rapidtide_main(argparsingfunc):
             voxelsprocessed_pe, thepeakdict = peakevalpass_func(
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
-                initial_fmri_x[validsimcalcstart : validsimcalcend + 1]
-                + optiondict["simcalcoffset"],
-                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1]
-                + optiondict["simcalcoffset"],
+                initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+                os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
                 theMutualInformationator,
                 trimmedcorrscale,
                 corrout,
@@ -3302,15 +3312,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict[f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
-            thetimepcts[i]
-        )
-        optiondict[f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
-            thestrengthpcts[i]
-        )
-        optiondict[f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
-            thesigmapcts[i]
-        )
+        optiondict[
+            f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thetimepcts[i]
+        optiondict[
+            f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thestrengthpcts[i]
+        optiondict[
+            f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thesigmapcts[i]
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
