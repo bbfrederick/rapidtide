@@ -1382,6 +1382,7 @@ def tidepool(args):
     global atlasaveragingdone
     global currentdataset
     global verbosity
+    global simfuncFitter
 
     # initialize default values
     averagingmode = None
