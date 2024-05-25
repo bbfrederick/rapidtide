@@ -1798,7 +1798,10 @@ def tidepool(args):
     currentdataset = thesubjects[-1]
     print("loading datasets...")
 
+    print("getting regressors")
     regressors = currentdataset.getregressors()
+
+    print("getting overlays")
     overlays = currentdataset.getoverlays()
     try:
         test = overlays["corrout"].display_state
@@ -1806,6 +1809,7 @@ def tidepool(args):
         usecorrout = False
 
     # activate the appropriate regressor radio buttons
+    print("activating radio buttons")
     if "prefilt" in regressors.keys():
         ui.prefilt_radioButton.setDisabled(False)
         ui.prefilt_radioButton.show()
@@ -1848,6 +1852,7 @@ def tidepool(args):
         bgmap = None
 
     # set up the timecourse plot window
+    print("setting up timecourse plot window")
     xpos = int(currentdataset.xdim) // 2
     ypos = int(currentdataset.ydim) // 2
     zpos = int(currentdataset.zdim) // 2
@@ -1874,6 +1879,7 @@ def tidepool(args):
     tpos = 0
 
     # set position and scale of images
+    print("setting position and scale of images")
     lg_imgsize = 256.0
     sm_imgsize = 32.0
     xfov = currentdataset.xdim * currentdataset.xsize
