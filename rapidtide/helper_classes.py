@@ -1120,7 +1120,6 @@ class SimilarityFunctionFitter:
                     maxsigma = np.float64(0.0)
                 if self.debug:
                     print("fit output array:", [maxval, maxlag, maxsigma])
-
             elif self.peakfittype == "fastgauss":
                 X = self.corrtimeaxis[peakstart : peakend + 1] - baseline
                 data = corrfunc[peakstart : peakend + 1]
