@@ -1991,7 +1991,6 @@ def tidepool(args):
             enableMouse=True,
             verbose=verbosity,
         )
-    mainwin.updated.connect(updateXYZFromMainWin)
 
     orthoimages = {}
     if verbosity > 1:
@@ -2114,6 +2113,9 @@ def tidepool(args):
         simfuncFitter = SimilarityFunctionFitter()
     else:
         simfunc_ax = None
+
+    # update the main window now that simfuncFitter has been defined
+    mainwin.updated.connect(updateXYZFromMainWin)
 
     # set up the regressor timecourse window
     if verbosity > 1:
