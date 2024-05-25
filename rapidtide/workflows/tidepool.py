@@ -1383,6 +1383,7 @@ def tidepool(args):
     global currentdataset
     global verbosity
     global simfuncFitter
+    global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption
 
     # initialize default values
     averagingmode = None
@@ -1665,13 +1666,6 @@ def tidepool(args):
     ui.robustmean_radioButton.setDisabled(True)
     ui.std_radioButton.setDisabled(True)
     ui.MAD_radioButton.setDisabled(True)
-
-    """ui.raw_radioButton.hide()
-    ui.mean_radioButton.hide()
-    ui.median_radioButton.hide()
-    ui.robustmean_radioButton.hide()
-    ui.std_radioButton.hide()
-    ui.MAD_radioButton.hide()"""
 
     ui.raw_radioButton.clicked.connect(raw_radioButton_clicked)
     ui.mean_radioButton.clicked.connect(mean_radioButton_clicked)
@@ -2064,7 +2058,6 @@ def tidepool(args):
     # set up the similarity function window
     if verbosity > 1:
         print("about to set up the similarity function window")
-    global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption, simfuncFitter
 
     try:
         thesimfunc_groupBox = ui.simfunc_groupBox
@@ -2111,6 +2104,7 @@ def tidepool(args):
         simfuncCaption.setParentItem(simfuncCurvePoint)
         simfuncCurve.scene().sigMouseClicked.connect(updateTimepoint)
         simfuncFitter = SimilarityFunctionFitter()
+        print("simfuncFitter has been defined")
     else:
         simfunc_ax = None
 
