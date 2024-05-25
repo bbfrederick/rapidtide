@@ -1301,7 +1301,10 @@ def printfocusvals():
                         logstatus(ui.logOutput, outstring)
                     else:
                         if focusval > 0.0:
-                            failstring = simfuncFitter.diagnosefail(np.uint32(focusval))
+                            if simfuncFitter is None:
+                                failstring = ""
+                            else:
+                                failstring = simfuncFitter.diagnosefail(np.uint32(focusval))
                             outstring = (
                                 "\t"
                                 + str(overlays[key].label.ljust(26))
@@ -1406,6 +1409,7 @@ def tidepool(args):
     zpos = 0
     tpos = 0
     verbosity = 0
+    simfuncFitter = None
 
     if args.compact:
         import rapidtide.tidepoolTemplate_alt as uiTemplate
