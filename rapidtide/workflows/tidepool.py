@@ -1301,17 +1301,15 @@ def printfocusvals():
                         logstatus(ui.logOutput, outstring)
                     else:
                         if focusval > 0.0:
-                            if simfuncFitter is None:
-                                failstring = ""
-                            else:
+                            if simfuncFitter is not None:
                                 failstring = simfuncFitter.diagnosefail(np.uint32(focusval))
-                            outstring = (
-                                "\t"
-                                + str(overlays[key].label.ljust(26))
-                                + str(":\n\t    ")
-                                + failstring.replace(", ", "\n\t    ")
-                            )
-                            logstatus(ui.logOutput, outstring)
+                                outstring = (
+                                    "\t"
+                                    + str(overlays[key].label.ljust(26))
+                                    + str(":\n\t    ")
+                                    + failstring.replace(", ", "\n\t    ")
+                                )
+                                logstatus(ui.logOutput, outstring)
                 else:
                     outstring = (
                         "\t"
