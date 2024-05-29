@@ -1906,37 +1906,41 @@ def process_args(inputargs=None):
 
     # output options
     if args["outputlevel"] == "min":
-        args["savemovingsignal"] = False
-        args["savelagregressors"] = False
-        args["saveallglmfiles"] = False
-        args["savedespecklemasks"] = False
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
         args["savecorrtimes"] = False
+        args["savelagregressors"] = False
+        args["savedespecklemasks"] = False
+        args["savenormalglmfiles"] = False
+        args["savemovingsignal"] = False
+        args["saveallglmfiles"] = False
     elif args["outputlevel"] == "normal":
-        args["savemovingsignal"] = False
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
+        args["savecorrtimes"] = False
         args["savelagregressors"] = False
-        args["saveallglmfiles"] = False
         args["savedespecklemasks"] = False
-        args["saveconfoundfiltered"] = False
-        args["savegaussout"] = False
-        args["savecorrtimes"] = False
+        args["savenormalglmfiles"] = True
+        args["savemovingsignal"] = False
+        args["saveallglmfiles"] = False
     elif args["outputlevel"] == "more":
-        args["savemovingsignal"] = True
-        args["savelagregressors"] = True
-        args["saveallglmfiles"] = False
-        args["savedespecklemasks"] = False
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
         args["savecorrtimes"] = False
-    elif args["outputlevel"] == "max":
-        args["savemovingsignal"] = True
         args["savelagregressors"] = True
-        args["saveallglmfiles"] = True
-        args["savedespecklemasks"] = True
+        args["savedespecklemasks"] = False
+        args["savenormalglmfiles"] = True
+        args["savemovingsignal"] = True
+        args["saveallglmfiles"] = False
+    elif args["outputlevel"] == "max":
         args["saveconfoundfiltered"] = True
         args["savegaussout"] = True
         args["savecorrtimes"] = True
+        args["savelagregressors"] = True
+        args["savedespecklemasks"] = True
+        args["savenormalglmfiles"] = True
+        args["savemovingsignal"] = True
+        args["saveallglmfiles"] = True
     else:
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()

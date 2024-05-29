@@ -140,15 +140,19 @@ def retroglm(args):
     rt_outfloattype = "float64"
 
     if args.outputlevel == "min":
+        args.savenormalglmfiles = False
         args.savemovingsignal = False
         args.saveallglmfiles = False
     elif args.outputlevel == "normal":
+        args.savenormalglmfiles = True
         args.savemovingsignal = False
         args.saveallglmfiles = False
     elif args.outputlevel == "more":
+        args.savenormalglmfiles = True
         args.savemovingsignal = True
         args.saveallglmfiles = False
     elif args.outputlevel == "max":
+        args.savenormalglmfiles = True
         args.savemovingsignal = True
         args.saveallglmfiles = True
     else:
@@ -423,15 +427,6 @@ def retroglm(args):
     theheader = copy.deepcopy(lagtimes_header)
     if mode == "glm":
         maplist = [
-            (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
-            (
-                r2value,
-                "lfofilterR2",
-                "map",
-                None,
-                "Squared R value of the GLM fit (proportion of variance explained)",
-            ),
-            (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
             (
                 initialvariance,
                 "lfofilterInbandVarianceBefore",
@@ -454,15 +449,30 @@ def retroglm(args):
                 "Change in inband variance after filtering, in percent",
             ),
         ]
+        if args.savenormalglmfiles:
+            maplist += [
+                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
+                (
+                    r2value,
+                    "lfofilterR2",
+                    "map",
+                    None,
+                    "Squared R value of the GLM fit (proportion of variance explained)",
+                ),
+                (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
+            ]
     else:
         maplist = [
-            (rvalue, "CVRR", "map", None),
-            (r2value, "CVRR2", "map", None),
-            (fitcoeff, "CVR", "map", "percent"),
             (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
             (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
             (varchange, "CVRVariance", "map", None),
         ]
+        if args.savenormalglmfiles:
+            maplist += [
+                (rvalue, "CVRR", "map", None),
+                (r2value, "CVRR2", "map", None),
+                (fitcoeff, "CVR", "map", "percent"),
+            ]
 
     bidsdict = bidsbasedict.copy()
 
@@ -479,7 +489,7 @@ def retroglm(args):
             (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
         ]
 
-    if args.glmderivs > 0:
+    if (args.glmderivs > 0) and args.savenormalglmfiles:
         maplist += [
             (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
             (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
@@ -520,15 +530,17 @@ def retroglm(args):
 
     # write the 4D maps
     theheader = copy.deepcopy(fmri_header)
-    maplist = [
-        (
-            filtereddata,
-            "lfofilterCleaned",
-            "bold",
-            None,
-            "fMRI data with sLFO signal filtered out",
-        ),
-    ]
+    maplist = []
+    if args.savenormalglmfiles:
+        maplist = [
+            (
+                filtereddata,
+                "lfofilterCleaned",
+                "bold",
+                None,
+                "fMRI data with sLFO signal filtered out",
+            ),
+        ]
     if args.savemovingsignal:
         maplist += [
             (
