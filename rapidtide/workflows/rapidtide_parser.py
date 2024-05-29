@@ -153,7 +153,7 @@ def _get_parser():
             "Preset for delay mapping analysis - this is a macro that "
             f"sets searchrange=({DEFAULT_DELAYMAPPING_LAGMIN}, {DEFAULT_DELAYMAPPING_LAGMAX}), "
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
-            "refineoffset=True, pickleft=True, outputlevel='mid', "
+            "refineoffset=True, pickleft=True, outputlevel='normal', "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
@@ -185,7 +185,7 @@ def _get_parser():
         help=(
             "Treat this run as an initial pass to locate good candidate voxels for global mean "
             "regressor generation.  This sets: passes=1, pickleft=True, despecklepasses=0, "
-            "refinedespeckle=False, outputlevel='mid', doglmfilt=False, saveintermediatemaps=False."
+            "refinedespeckle=False, outputlevel='normal', doglmfilt=False, saveintermediatemaps=False."
         ),
         default=False,
     )
@@ -1833,7 +1833,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
         args["refineoffset"] = True
         args["pickleft"] = True
-        args["outputlevel"] = "mid"
+        args["outputlevel"] = "normal"
         pf.setifnotset(args, "doglmfilt", False)
 
     if args["denoising"]:
@@ -1873,7 +1873,7 @@ def process_args(inputargs=None):
         args["pickleft"] = True
         args["despeckle_passes"] = 0
         args["refinedespeckle"] = False
-        args["outputlevel"] = "mid"
+        args["outputlevel"] = "normal"
         pf.setifnotset(args, "doglmfilt", False)
         args["saveintermediatemaps"] = False
 

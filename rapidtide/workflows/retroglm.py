@@ -102,11 +102,19 @@ def _get_parser():
         default=0,
     )
     parser.add_argument(
-        "--limitoutput",
-        dest="saveall",
-        action="store_false",
-        help=("Only save the filtered data and the R value."),
-        default=True,
+        "--outputlevel",
+        dest="outputlevel",
+        action="store",
+        type=str,
+        choices=["min", "normal", "more", "max"],
+        help=(
+            "The level of file output produced.  'min' produces only absolutely essential files, 'normal' saves what you "
+            "would typically want around for interactive data exploration, "
+            "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
+            "Selecting 'max' will produce ~3x your input datafile size as output.  "
+            f'Default is "normal".'
+        ),
+        default="normal",
     )
     parser.add_argument(
         "--noprogressbar",
@@ -130,6 +138,22 @@ def retroglm(args):
     rt_floattype = "float64"
     rt_outfloatset = np.float64
     rt_outfloattype = "float64"
+
+    if args.outputlevel == "min":
+        args.savemovingsignal = False
+        args.saveallglmfiles = False
+    elif args.outputlevel == "normal":
+        args.savemovingsignal = False
+        args.saveallglmfiles = False
+    elif args.outputlevel == "more":
+        args.savemovingsignal = True
+        args.saveallglmfiles = False
+    elif args.outputlevel == "max":
+        args.savemovingsignal = True
+        args.saveallglmfiles = True
+    else:
+        print(f"illegal output level {args['outputlevel']}")
+        sys.exit()
 
     thecommandline = " ".join(sys.argv[1:])
 
@@ -498,13 +522,6 @@ def retroglm(args):
     theheader = copy.deepcopy(fmri_header)
     maplist = [
         (
-            movingsignal,
-            "lfofilterRemoved",
-            "bold",
-            None,
-            "sLFO signal filtered out of this voxel",
-        ),
-        (
             filtereddata,
             "lfofilterCleaned",
             "bold",
@@ -512,43 +529,55 @@ def retroglm(args):
             "fMRI data with sLFO signal filtered out",
         ),
     ]
-    if args.glmderivs > 0:
-        if args.debug:
-            print("going down the multiple EV path")
-            print(f"{regressorset[:, :, 0].shape=}")
+    if args.savemovingsignal:
         maplist += [
             (
-                regressorset[:, :, 0],
-                "lfofilterEV",
+                movingsignal,
+                "lfofilterRemoved",
                 "bold",
                 None,
-                "Shifted sLFO regressor to filter",
-            ),
+                "sLFO signal filtered out of this voxel",
+            )
         ]
-        for thederiv in range(1, args.glmderivs + 1):
+
+    if args.saveallglmfiles:
+        if args.glmderivs > 0:
             if args.debug:
-                print(f"{regressorset[:, :, thederiv].shape=}")
+                print("going down the multiple EV path")
+                print(f"{regressorset[:, :, 0].shape=}")
             maplist += [
                 (
-                    regressorset[:, :, thederiv],
-                    f"lfofilterEVDeriv{thederiv}",
+                    regressorset[:, :, 0],
+                    "lfofilterEV",
                     "bold",
                     None,
-                    f"Time derivative {thederiv} of shifted sLFO regressor",
+                    "Shifted sLFO regressor to filter",
                 ),
             ]
-    else:
-        if args.debug:
-            print("going down the single EV path")
-        maplist += [
-            (
-                regressorset,
-                "lfofilterEV",
-                "bold",
-                None,
-                "Shifted sLFO regressor to filter",
-            ),
-        ]
+            for thederiv in range(1, args.glmderivs + 1):
+                if args.debug:
+                    print(f"{regressorset[:, :, thederiv].shape=}")
+                maplist += [
+                    (
+                        regressorset[:, :, thederiv],
+                        f"lfofilterEVDeriv{thederiv}",
+                        "bold",
+                        None,
+                        f"Time derivative {thederiv} of shifted sLFO regressor",
+                    ),
+                ]
+        else:
+            if args.debug:
+                print("going down the single EV path")
+            maplist += [
+                (
+                    regressorset,
+                    "lfofilterEV",
+                    "bold",
+                    None,
+                    "Shifted sLFO regressor to filter",
+                ),
+            ]
     if args.debug:
         maplist.append((fmri_data_valid, "inputdata", "bold", None, None))
     tide_io.savemaplist(
