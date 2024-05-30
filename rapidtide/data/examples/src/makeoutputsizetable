@@ -1,0 +1,40 @@
+#!/bin/bash
+
+#   "Output level", "Motion regression", "GLM?", "Derivatives", "Size in bytes"
+#   "min", "No", "No", "", "13M"
+#   "min", "Yes", "No", "", "15M"
+#   "min", "No", "Yes", "0", "1.1G"
+#   "min", "No", "Yes", "1", "1.1G"
+#   "normal", "No", "No", "", "79M"
+#   "normal", "Yes", "No", "", "81M"
+#   "normal", "No", "Yes", "0", "1.2G"
+#   "normal", "No", "Yes", "1", "1.2G"
+#   "more", "No", "No", "", "682M"
+#   "more", "Yes", "No", "", "664M"
+#   "more", "No", "Yes", "0", "3.0G"
+#   "more", "No", "Yes", "1", "3.0G"
+#   "max", "No", "No", "", "749M"
+#   "max", "Yes", "No", "", "2.6G"
+#   "max", "No", "Yes", "0", "4.1G"
+#   "max", "No", "Yes", "1", "5.2G"
+
+
+echo '"min", "No", "No", "", "'`du -sh ../dst/nomotregress/min | awk '{print $1}'`'"'
+echo '"min", "Yes", "No", "", "'`du -sh ../dst/motregress/min  | awk '{print $1}'`'"'
+echo '"min", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/minglm0  | awk '{print $1}'`'"'
+echo '"min", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/minglm1  | awk '{print $1}'`'"'
+
+echo '"normal", "No", "No", "", "'`du -sh ../dst/nomotregress/normal | awk '{print $1}'`'"'
+echo '"normal", "Yes", "No", "", "'`du -sh ../dst/motregress/normal  | awk '{print $1}'`'"'
+echo '"normal", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/normalglm0  | awk '{print $1}'`'"'
+echo '"normal", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/normalglm1  | awk '{print $1}'`'"'
+
+echo '"more", "No", "No", "", "'`du -sh ../dst/nomotregress/more | awk '{print $1}'`'"'
+echo '"more", "Yes", "No", "", "'`du -sh ../dst/motregress/more  | awk '{print $1}'`'"'
+echo '"more", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/moreglm0  | awk '{print $1}'`'"'
+echo '"more", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/moreglm1  | awk '{print $1}'`'"'
+
+echo '"max", "No", "No", "", "'`du -sh ../dst/nomotregress/max | awk '{print $1}'`'"'
+echo '"max", "Yes", "No", "", "'`du -sh ../dst/motregress/max  | awk '{print $1}'`'"'
+echo '"max", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/maxglm0  | awk '{print $1}'`'"'
+echo '"max", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/maxglm1  | awk '{print $1}'`'"'

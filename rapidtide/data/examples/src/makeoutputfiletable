@@ -157,9 +157,7 @@ if __name__ == "__main__":
         ("max", False, False, True, False, True, False),
     ]
 
-    #runinfo = [
-    #    ("max", False, False, False, True, False, False),
-    #]
+    genfiles = True
 
     fileroots = {}
     for level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle in runinfo:
@@ -167,10 +165,11 @@ if __name__ == "__main__":
             level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
         )
         outputdir = os.path.join("..", "dst", "scratch", subdir)
-        #makecleanoutputdir(outputdir)
-        #runrapidtide(
-        #    outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
-        #)
+        if genfiles:
+            makecleanoutputdir(outputdir)
+            runrapidtide(
+                outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
+            )
         listfiles(
             outputdir,
             fileroots,
