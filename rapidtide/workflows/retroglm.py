@@ -106,9 +106,10 @@ def _get_parser():
         dest="outputlevel",
         action="store",
         type=str,
-        choices=["min", "normal", "more", "max"],
+        choices=["min", "less", "normal", "more", "max"],
         help=(
-            "The level of file output produced.  'min' produces only absolutely essential files, 'normal' saves what you "
+            "The level of file output produced.  'min' produces only absolutely essential files, 'less' adds in "
+            "the GLM filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
             "would typically want around for interactive data exploration, "
             "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
             "Selecting 'max' will produce ~3x your input datafile size as output.  "
@@ -140,18 +141,27 @@ def retroglm(args):
     rt_outfloattype = "float64"
 
     if args.outputlevel == "min":
+        args.saveminimumglmfiles = False
         args.savenormalglmfiles = False
         args.savemovingsignal = False
         args.saveallglmfiles = False
     elif args.outputlevel == "normal":
+        args.saveminimumglmfiles = True
+        args.savenormalglmfiles = False
+        args.savemovingsignal = False
+        args.saveallglmfiles = False
+    elif args.outputlevel == "normal":
+        args.saveminimumglmfiles = True
         args.savenormalglmfiles = True
         args.savemovingsignal = False
         args.saveallglmfiles = False
     elif args.outputlevel == "more":
+        args.saveminimumglmfiles = True
         args.savenormalglmfiles = True
         args.savemovingsignal = True
         args.saveallglmfiles = False
     elif args.outputlevel == "max":
+        args.saveminimumglmfiles = True
         args.savenormalglmfiles = True
         args.savemovingsignal = True
         args.saveallglmfiles = True
@@ -449,9 +459,8 @@ def retroglm(args):
                 "Change in inband variance after filtering, in percent",
             ),
         ]
-        if args.savenormalglmfiles:
+        if args.saveminimumglmfiles:
             maplist += [
-                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
                 (
                     r2value,
                     "lfofilterR2",
@@ -459,6 +468,10 @@ def retroglm(args):
                     None,
                     "Squared R value of the GLM fit (proportion of variance explained)",
                 ),
+            ]
+        if args.savenormalglmfiles:
+            maplist += [
+                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
                 (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
             ]
     else:
@@ -531,7 +544,7 @@ def retroglm(args):
     # write the 4D maps
     theheader = copy.deepcopy(fmri_header)
     maplist = []
-    if args.savenormalglmfiles:
+    if args.saveminimumglmfiles:
         maplist = [
             (
                 filtereddata,

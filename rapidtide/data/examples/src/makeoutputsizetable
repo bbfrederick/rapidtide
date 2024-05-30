@@ -24,6 +24,11 @@ echo '"min", "Yes", "No", "", "'`du -sh ../dst/motregress/min  | awk '{print $1}
 echo '"min", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/minglm0  | awk '{print $1}'`'"'
 echo '"min", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/minglm1  | awk '{print $1}'`'"'
 
+echo '"less", "No", "No", "", "'`du -sh ../dst/nomotregress/less | awk '{print $1}'`'"'
+echo '"less", "Yes", "No", "", "'`du -sh ../dst/motregress/less  | awk '{print $1}'`'"'
+echo '"less", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/lessglm0  | awk '{print $1}'`'"'
+echo '"less", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/lessglm1  | awk '{print $1}'`'"'
+
 echo '"normal", "No", "No", "", "'`du -sh ../dst/nomotregress/normal | awk '{print $1}'`'"'
 echo '"normal", "Yes", "No", "", "'`du -sh ../dst/motregress/normal  | awk '{print $1}'`'"'
 echo '"normal", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/normalglm0  | awk '{print $1}'`'"'

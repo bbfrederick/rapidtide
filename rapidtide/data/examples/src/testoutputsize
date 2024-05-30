@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-for LEVEL in min normal more max
+for LEVEL in min less normal more max
 do
     mkdir -p ../dst/nomotregress/${LEVEL}
     sbatch --mem=64G --time=90 --cpus-per-task 4 /cm/shared/anaconda3/envs/mic/bin/rapidtide \
@@ -14,7 +14,7 @@ do
         /home/frederic/code/rapidtide/rapidtide/data/examples/dst/nomotregress/${LEVEL}/sub-RAPIDTIDETEST
 done
 
-for LEVEL in min normal more max
+for LEVEL in min less normal more max
 do
     mkdir -p ../dst/motregress/${LEVEL}
     sbatch --mem=64G --time=90 --cpus-per-task 4 /cm/shared/anaconda3/envs/mic/bin/rapidtide \
@@ -28,7 +28,7 @@ do
         /home/frederic/code/rapidtide/rapidtide/data/examples/dst/motregress/${LEVEL}/sub-RAPIDTIDETEST
 done
 
-for LEVEL in min normal more max
+for LEVEL in min less normal more max
 do
     for NDERIVS in 0 1
     do

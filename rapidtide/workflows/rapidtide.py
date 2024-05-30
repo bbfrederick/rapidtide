@@ -248,9 +248,9 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Startup
     ####################################################
-    optiondict["Description"] = (
-        "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
-    )
+    optiondict[
+        "Description"
+    ] = "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
@@ -3312,15 +3312,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict[f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
-            thetimepcts[i]
-        )
-        optiondict[f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
-            thestrengthpcts[i]
-        )
-        optiondict[f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
-            thesigmapcts[i]
-        )
+        optiondict[
+            f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thetimepcts[i]
+        optiondict[
+            f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thestrengthpcts[i]
+        optiondict[
+            f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+        ] = thesigmapcts[i]
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
@@ -3414,9 +3414,8 @@ def rapidtide_main(argparsingfunc):
                     "Change in inband variance after filtering, in percent",
                 ),
             ]
-            if optiondict["savenormalglmfiles"]:
+            if optiondict["saveminimumglmfiles"]:
                 maplist += [
-                    (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
                     (
                         r2value,
                         "lfofilterR2",
@@ -3424,6 +3423,10 @@ def rapidtide_main(argparsingfunc):
                         None,
                         "Squared R value of the GLM fit (proportion of variance explained)",
                     ),
+                ]
+            if optiondict["savenormalglmfiles"]:
+                maplist += [
+                    (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
                     (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
                 ]
                 if optiondict["glmderivs"] > 0:
@@ -3623,7 +3626,7 @@ def rapidtide_main(argparsingfunc):
         theheader = None
         cifti_hdr = None
 
-    if optiondict["outputlevel"] != "min":
+    if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
         maplist = [
             (corrout, "corrout", "info", "second", "Correlation function"),
         ]
@@ -3709,7 +3712,7 @@ def rapidtide_main(argparsingfunc):
             ]
 
     if optiondict["doglmfilt"]:
-        if optiondict["savenormalglmfiles"]:
+        if optiondict["saveminimumglmfiles"]:
             maplist += [
                 (
                     filtereddata,

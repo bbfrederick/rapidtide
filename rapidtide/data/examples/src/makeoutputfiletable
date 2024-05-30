@@ -145,6 +145,8 @@ if __name__ == "__main__":
         ("min", False, True, False, False, False, False),
         ("min", False, False, False, True, False, False),
         ("min", False, False, False, False, False, True),
+        ("less", False, False, False, False, False, False),
+        ("less", False, False, True, False, False, False),
         ("normal", False, False, False, False, False, False),
         ("normal", False, False, True, False, False, False),
         ("more", False, False, False, False, False, False),
@@ -177,7 +179,13 @@ if __name__ == "__main__":
             debug=False,
         )
 
+    sortedkeys = []
     for key in fileroots:
+        sortedkeys.append(key)
+
+    sortedkeys = sorted(sortedkeys, key=str.casefold)
+
+    for key in sortedkeys:
         extlist = []
         for theext in ["txt", "tsv", "tsv.gz", "nii.gz", "json"]:
             if theext in fileroots[key]["extensions"]:
@@ -197,6 +205,8 @@ if __name__ == "__main__":
                 )
             elif fileroots[key]["level"] == "min":
                 existstring = "Present if GLM is enabled (default)"
+            elif fileroots[key]["level"] == "less":
+                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 less"
             elif fileroots[key]["level"] == "normal":
                 existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 normal"
             elif fileroots[key]["level"] == "more":
@@ -212,6 +222,8 @@ if __name__ == "__main__":
                 existstring = "Present if numnull > 0"
             else:
                 existstring = "Always"
+        elif fileroots[key]["level"] == "less":
+            existstring = "Present if outputlevel is \u2265 less"
         elif fileroots[key]["level"] == "normal":
             existstring = "Present if outputlevel is \u2265 normal"
         elif fileroots[key]["level"] == "more":
@@ -226,12 +238,18 @@ if __name__ == "__main__":
 
         extstring = '"' + ", ".join(extlist) + '"'
         writekey = '"' + key + '"'
+        writekey = writekey.replace("Deriv1", "DerivN")
         presentkey = '"' + existstring + '"'
         try:
             descstring = fileroots[key]["description"]
         except KeyError:
             descstring = fixkey(key)
-        descstring = '"' + descstring + '"'
+        if descstring is not None:
+            descstring = '"' + descstring + '"'
+        else:
+            descstring = '""'
+        descstring = descstring.replace("Time derivative 1", "Nth time derivative")
+        descstring = descstring.replace("temporal derivative 1", "the Nth temporal derivative")
         print(f"{writekey}, {extstring}, {descstring}, {presentkey}")
         # for theitem in (fileroots[key]).items():
         #    print(f"\t{theitem}")

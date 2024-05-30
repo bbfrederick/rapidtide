@@ -1076,9 +1076,10 @@ def _get_parser():
         dest="outputlevel",
         action="store",
         type=str,
-        choices=["min", "normal", "more", "max"],
+        choices=["min", "less", "normal", "more", "max"],
         help=(
-            "The level of file output produced.  'min' produces only absolutely essential files, 'normal' saves what you "
+            "The level of file output produced.  'min' produces only absolutely essential files, 'less' adds in "
+            "the GLM filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
             "would typically want around for interactive data exploration, "
             "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
             "Selecting 'max' will produce ~3x your input datafile size as output.  "
@@ -1911,6 +1912,17 @@ def process_args(inputargs=None):
         args["savecorrtimes"] = False
         args["savelagregressors"] = False
         args["savedespecklemasks"] = False
+        args["saveminimumglmfiles"] = False
+        args["savenormalglmfiles"] = False
+        args["savemovingsignal"] = False
+        args["saveallglmfiles"] = False
+    elif args["outputlevel"] == "less":
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
+        args["savecorrtimes"] = False
+        args["savelagregressors"] = False
+        args["savedespecklemasks"] = False
+        args["saveminimumglmfiles"] = True
         args["savenormalglmfiles"] = False
         args["savemovingsignal"] = False
         args["saveallglmfiles"] = False
@@ -1920,6 +1932,7 @@ def process_args(inputargs=None):
         args["savecorrtimes"] = False
         args["savelagregressors"] = False
         args["savedespecklemasks"] = False
+        args["saveminimumglmfiles"] = True
         args["savenormalglmfiles"] = True
         args["savemovingsignal"] = False
         args["saveallglmfiles"] = False
@@ -1929,6 +1942,7 @@ def process_args(inputargs=None):
         args["savecorrtimes"] = False
         args["savelagregressors"] = True
         args["savedespecklemasks"] = False
+        args["saveminimumglmfiles"] = True
         args["savenormalglmfiles"] = True
         args["savemovingsignal"] = True
         args["saveallglmfiles"] = False
@@ -1938,6 +1952,7 @@ def process_args(inputargs=None):
         args["savecorrtimes"] = True
         args["savelagregressors"] = True
         args["savedespecklemasks"] = True
+        args["saveminimumglmfiles"] = True
         args["savenormalglmfiles"] = True
         args["savemovingsignal"] = True
         args["saveallglmfiles"] = True
