@@ -248,9 +248,9 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Startup
     ####################################################
-    optiondict[
-        "Description"
-    ] = "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
+    optiondict["Description"] = (
+        "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
+    )
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
@@ -3312,15 +3312,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict[
-            f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thetimepcts[i]
-        optiondict[
-            f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thestrengthpcts[i]
-        optiondict[
-            f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thesigmapcts[i]
+        optiondict[f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thetimepcts[i]
+        )
+        optiondict[f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thestrengthpcts[i]
+        )
+        optiondict[f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thesigmapcts[i]
+        )
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
@@ -3392,15 +3392,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
         if optiondict["doglmfilt"]:
             maplist = [
-                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
-                (
-                    r2value,
-                    "lfofilterR2",
-                    "map",
-                    None,
-                    "Squared R value of the GLM fit (proportion of variance explained)",
-                ),
-                (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
                 (
                     initialvariance,
                     "lfofilterInbandVarianceBefore",
@@ -3423,50 +3414,53 @@ def rapidtide_main(argparsingfunc):
                     "Change in inband variance after filtering, in percent",
                 ),
             ]
-            if optiondict["glmderivs"] > 0:
+            if optiondict["savenormalglmfiles"]:
                 maplist += [
-                    (fitcoeff[:, 0], f"lfofilterCoeff", "map", None, "Fit coefficient"),
-                    (fitNorm[:, 0], f"lfofilterNorm", "map", None, "Normalized fit coefficient"),
+                    (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
+                    (
+                        r2value,
+                        "lfofilterR2",
+                        "map",
+                        None,
+                        "Squared R value of the GLM fit (proportion of variance explained)",
+                    ),
+                    (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
                 ]
-                for thederiv in range(1, optiondict["glmderivs"] + 1):
+                if optiondict["glmderivs"] > 0:
                     maplist += [
+                        (fitcoeff[:, 0], f"lfofilterCoeff", "map", None, "Fit coefficient"),
                         (
-                            fitcoeff[:, thederiv],
-                            f"lfofilterCoeffDeriv{thederiv}",
+                            fitNorm[:, 0],
+                            f"lfofilterNorm",
                             "map",
                             None,
-                            f"Fit coefficient for temporal derivative {thederiv}",
-                        ),
-                        (
-                            fitNorm[:, thederiv],
-                            f"lfofilterNormDeriv{thederiv}",
-                            "map",
-                            None,
-                            f"Normalized fit coefficient for temporal derivative {thederiv}",
+                            "Normalized fit coefficient",
                         ),
                     ]
-            else:
-                maplist += [
-                    (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
-                    (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
-                ]
+                    for thederiv in range(1, optiondict["glmderivs"] + 1):
+                        maplist += [
+                            (
+                                fitcoeff[:, thederiv],
+                                f"lfofilterCoeffDeriv{thederiv}",
+                                "map",
+                                None,
+                                f"Fit coefficient for temporal derivative {thederiv}",
+                            ),
+                            (
+                                fitNorm[:, thederiv],
+                                f"lfofilterNormDeriv{thederiv}",
+                                "map",
+                                None,
+                                f"Normalized fit coefficient for temporal derivative {thederiv}",
+                            ),
+                        ]
+                else:
+                    maplist += [
+                        (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
+                        (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
+                    ]
         else:
             maplist = [
-                (rvalue, "CVRR", "map", None, "R value of the GLM fit"),
-                (
-                    r2value,
-                    "CVRR2",
-                    "map",
-                    None,
-                    "Squared R value of the GLM fit (proportion of variance explained)",
-                ),
-                (
-                    fitcoeff,
-                    "CVR",
-                    "map",
-                    "percent",
-                    "Percent signal change due to the CVR regressor",
-                ),
                 (
                     initialvariance,
                     "lfofilterInbandVarianceBefore",
@@ -3489,6 +3483,25 @@ def rapidtide_main(argparsingfunc):
                     "Percentage of inband variance attributable to CVR regressor",
                 ),
             ]
+            if optiondict["savenormalglmfiles"]:
+                maplist = [
+                    (rvalue, "CVRR", "map", None, "R value of the GLM fit"),
+                    (
+                        r2value,
+                        "CVRR2",
+                        "map",
+                        None,
+                        "Squared R value of the GLM fit (proportion of variance explained)",
+                    ),
+                    (
+                        fitcoeff,
+                        "CVR",
+                        "map",
+                        "percent",
+                        "Percent signal change due to the CVR regressor",
+                    ),
+                ]
+
         tide_io.savemaplist(
             outputname,
             maplist,
@@ -3696,15 +3709,16 @@ def rapidtide_main(argparsingfunc):
             ]
 
     if optiondict["doglmfilt"]:
-        maplist += [
-            (
-                filtereddata,
-                "lfofilterCleaned",
-                "bold",
-                None,
-                "fMRI data with sLFO signal filtered out",
-            ),
-        ]
+        if optiondict["savenormalglmfiles"]:
+            maplist += [
+                (
+                    filtereddata,
+                    "lfofilterCleaned",
+                    "bold",
+                    None,
+                    "fMRI data with sLFO signal filtered out",
+                ),
+            ]
         if optiondict["savemovingsignal"]:
             maplist += [
                 (
