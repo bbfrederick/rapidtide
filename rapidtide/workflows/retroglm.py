@@ -145,7 +145,7 @@ def retroglm(args):
         args.savenormalglmfiles = False
         args.savemovingsignal = False
         args.saveallglmfiles = False
-    elif args.outputlevel == "normal":
+    elif args.outputlevel == "less":
         args.saveminimumglmfiles = True
         args.savenormalglmfiles = False
         args.savemovingsignal = False
@@ -501,34 +501,34 @@ def retroglm(args):
             (corrmask_valid, "corrfitREAD", "mask", None, "Correlation mask used for calculation"),
             (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
         ]
-
-    if (args.glmderivs > 0) and args.savenormalglmfiles:
-        maplist += [
-            (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
-            (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
-        ]
-        for thederiv in range(1, args.glmderivs + 1):
+    if args.savenormalglmfiles:
+        if args.glmderivs > 0:
             maplist += [
-                (
-                    fitcoeff[:, thederiv],
-                    f"lfofilterCoeffDeriv{thederiv}",
-                    "map",
-                    None,
-                    f"Fit coefficient for temporal derivative {thederiv}",
-                ),
-                (
-                    fitNorm[:, thederiv],
-                    f"lfofilterNormDeriv{thederiv}",
-                    "map",
-                    None,
-                    f"Normalized fit coefficient for temporal derivative {thederiv}",
-                ),
+                (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
+                (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
             ]
-    else:
-        maplist += [
-            (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
-            (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
-        ]
+            for thederiv in range(1, args.glmderivs + 1):
+                maplist += [
+                    (
+                        fitcoeff[:, thederiv],
+                        f"lfofilterCoeffDeriv{thederiv}",
+                        "map",
+                        None,
+                        f"Fit coefficient for temporal derivative {thederiv}",
+                    ),
+                    (
+                        fitNorm[:, thederiv],
+                        f"lfofilterNormDeriv{thederiv}",
+                        "map",
+                        None,
+                        f"Normalized fit coefficient for temporal derivative {thederiv}",
+                    ),
+                ]
+        else:
+            maplist += [
+                (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
+                (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
+            ]
 
     # write the 3D maps
     tide_io.savemaplist(
