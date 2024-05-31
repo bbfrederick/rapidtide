@@ -3203,6 +3203,7 @@ def rapidtide_main(argparsingfunc):
             LGR,
             TimingLGR,
             optiondict["glmthreshval"],
+            optiondict["saveminimumglmfiles"],
             nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
             nprocs_glm=optiondict["nprocs_glm"],
             glmderivs=optiondict["glmderivs"],

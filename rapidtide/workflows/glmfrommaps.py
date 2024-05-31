@@ -76,6 +76,7 @@ def glmfrommaps(
     LGR,
     TimingLGR,
     glmthreshval,
+    saveminimumglmfiles,
     nprocs_makelaggedtcs=1,
     nprocs_glm=1,
     glmderivs=0,
@@ -185,16 +186,17 @@ def glmfrommaps(
     # determine what was removed
     removeddata = fmri_data_valid - filtereddata
     noiseremoved = np.var(removeddata, axis=0)
-    tide_io.writebidstsv(
-        f"{outputname}_desc-lfofilterNoiseRemoved_timeseries",
-        noiseremoved,
-        1.0 / oversamptr,
-        starttime=0.0,
-        columns=[f"removedbyglm"],
-        extraheaderinfo={
-            "Description": "Variance over space of data removed by GLM filter at each timepoint"
-        },
-        append=False,
-    )
+    if saveminimumglmfiles:
+        tide_io.writebidstsv(
+            f"{outputname}_desc-lfofilterNoiseRemoved_timeseries",
+            noiseremoved,
+            1.0 / oversamptr,
+            starttime=0.0,
+            columns=[f"removedbyglm"],
+            extraheaderinfo={
+                "Description": "Variance over space of data removed by GLM filter at each timepoint"
+            },
+            append=False,
+        )
 
     return voxelsprocessed_glm, regressorset
