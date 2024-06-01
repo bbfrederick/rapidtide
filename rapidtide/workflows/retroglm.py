@@ -421,7 +421,7 @@ def retroglm(args):
         LGR,
         TimingLGR,
         threshval,
-        saveminimumglmfiles,
+        args.saveminimumglmfiles,
         nprocs_makelaggedtcs=args.nprocs,
         nprocs_glm=args.nprocs,
         glmderivs=args.glmderivs,
