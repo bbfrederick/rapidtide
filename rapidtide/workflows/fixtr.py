@@ -17,20 +17,6 @@
 #
 #
 import argparse
-import warnings
-
-import numpy as np
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from scipy import fftpack
 
 import rapidtide.io as tide_io
 
@@ -69,8 +55,8 @@ def fixtr(args):
 
     output_hdr = input_hdr.copy()
     if input_hdr.get_xyzt_units()[1] == "msec":
-        output_hdr["pixdim"][4] = args.outputr / 1000.0
+        output_hdr["pixdim"][4] = args.outputtr / 1000.0
     else:
-        output_hdr["pixdim"][4] = args.outputr
+        output_hdr["pixdim"][4] = args.outputtr
 
     tide_io.savetonifti(input_data, output_hdr, args.outputfile)
