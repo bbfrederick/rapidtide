@@ -44,10 +44,17 @@ def _get_parser():
         ),
     )
     parser.add_argument(
-        "--all",
-        dest="all",
+        "--corrout",
+        dest="corrout",
         action="store_true",
         help=("Also transform the corrout file (warning - file may be huge)."),
+        default=False,
+    )
+    parser.add_argument(
+        "--clean",
+        dest="clean",
+        action="store_true",
+        help=("Also transform the cleaned data file (warning - file may be huge)."),
         default=False,
     )
     parser.add_argument(
@@ -185,14 +192,20 @@ def rapidtide2std(args):
         "desc-maxcorrsq_map",
         "desc-lfofilterNorm_map",
         "desc-lfofilterCoeff_map",
+        "desc-lfofilterInbandVarianceBefore_map",
+        "desc-lfofilterInbandVarianceAfter_map",
+        "desc-lfofilterInbandVarianceChange_map",
         "desc-plt0p050_mask",
         "desc-plt0p010_mask",
         "desc-plt0p005_mask",
         "desc-plt0p001_mask",
     ]
 
-    if args.all:
+    if args.corrout:
         thefmrimaps.append("desc-corrout_info")
+
+    if args.clean:
+        thefmrimaps.append("desc-lfofilterCleaned_bold")
 
     absname = os.path.abspath(thefileroot)
     thepath, thebase = os.path.split(absname)
