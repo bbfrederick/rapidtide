@@ -49,6 +49,13 @@ def _get_parser():
     parser.add_argument("outputfile", help="The name of the output nifti file, without extension")
     parser.add_argument("outputtr", type=float, help="The new TR, in seconds")
 
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Enable additional debugging output."),
+        default=False,
+    )
     return parser
 
 
