@@ -20,4 +20,4 @@ import rapidtide.workflows.fixtr as theworkflow
 import rapidtide.workflows.parser_funcs as pf
 
 if __name__ == "__main__":
-    pf.generic_init(theworkflow._get_parser, theworkflow.showhist)
+    pf.generic_init(theworkflow._get_parser, theworkflow.fixtr)
