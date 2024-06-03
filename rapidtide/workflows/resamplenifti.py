@@ -78,7 +78,7 @@ def _get_parser():
     return parser
 
 
-def resamplenifi(args):
+def resamplenifti(args):
     # get the input TR
     inputtr, numinputtrs = tide_io.fmritimeinfo(args.inputfile)
     if args.debug:
