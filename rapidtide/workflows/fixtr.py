@@ -53,10 +53,12 @@ def fixtr(args):
 
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
 
+    thedtype = input_hdr.get_data_dtype()
+
     output_hdr = input_hdr.copy()
     if input_hdr.get_xyzt_units()[1] == "msec":
         output_hdr["pixdim"][4] = args.outputtr / 1000.0
     else:
         output_hdr["pixdim"][4] = args.outputtr
 
-    tide_io.savetonifti(input_data, output_hdr, args.outputfile)
+    tide_io.savetonifti(input_data.astype(thedtype), output_hdr, args.outputfile)
