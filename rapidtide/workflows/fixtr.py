@@ -65,7 +65,7 @@ def fixtr(args):
     if args.debug:
         print("input data: ", numinputtrs, " timepoints, tr = ", inputtr)
 
-    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.niftifile)
+    input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
 
     output_hdr = input_hdr.copy()
     if input_hdr.get_xyzt_units()[1] == "msec":
@@ -73,4 +73,4 @@ def fixtr(args):
     else:
         output_hdr["pixdim"][4] = args.outputr
 
-    tide_io.savetonifti(input_data, output_hdr, outputfile)
+    tide_io.savetonifti(input_data, output_hdr, args.outputfile)
