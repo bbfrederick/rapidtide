@@ -25,6 +25,7 @@ import rapidtide.util as tide_util
 
 
 def fslinfo():
+    global fslexists
     fsldir = os.environ.get("FSLDIR")
     if fsldir is not None:
         fslexists = True
@@ -36,9 +37,6 @@ def fslinfo():
 def whatexists():
     fsldir = os.environ.get("FSLDIR")
     if fsldir is not None:
-        fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
-        flirtcmd = os.path.join(fsldir, "bin", "flirt")
-        applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
         fslexists = True
     else:
         fslexists = False
@@ -48,6 +46,14 @@ def whatexists():
     antsexists = tide_util.isexecutable("antsApplyTransforms")
     print("antsexists =", antsexists)
     return fslexists, c3dexists, antsexists
+
+
+def getfslcmds():
+    fsldir = os.environ.get("FSLDIR")
+    fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
+    flirtcmd = os.path.join(fsldir, "bin", "flirt")
+    applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
+    return fslsubcmd, flirtcmd, applywarpcmd
 
 
 def runcmd(thecmd, fake=False, debug=False):
@@ -63,6 +69,7 @@ def runcmd(thecmd, fake=False, debug=False):
 def makeflirtcmd(
     inputfile, targetname, xform, outputname, warpfile=None, cluster=False, debug=False
 ):
+    fslsubcmd, flirtcmd, applywarpcmd = getfslcmds()
     thecommand = []
     if warpfile is None:
         print("doing linear transformation")
