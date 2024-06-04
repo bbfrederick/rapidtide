@@ -240,6 +240,8 @@ def rapidtide2std(args):
             outputname = os.path.abspath(
                 os.path.join(theoutputdir, subjroot + outputtag + themap + ".nii.gz")
             )
+            if args.debug:
+                print(f"Transforming {inputname}")
             thecommand = tide_exttools.makeflirtcmd(
                 inputname,
                 reftarget,
