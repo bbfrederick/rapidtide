@@ -217,7 +217,7 @@ def rapidtide2std(args):
     outputname = os.path.abspath(
         os.path.join(theoutputdir, subjroot + outputtag + "desc-runoptions_info")
     )
-    tide_io.writedicttojson(theoptionsdict, f"{outputname}_desc-runoptions_info.json")
+    tide_io.writedicttojson(theoptionsdict, f"{outputname}.json")
     # thecommand = ["cp", f"{inputname}.json", f"{outputname}.json"]
     # tide_exttools.runcmd(thecommand, fake=args.preponly)
 
