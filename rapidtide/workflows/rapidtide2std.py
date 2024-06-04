@@ -214,9 +214,9 @@ def rapidtide2std(args):
     print("SUBJROOT:", subjroot)
 
     # copy the options file
-    inputname = os.path.abspath(os.path.join(thepath, subjroot + "_desc-runoptions.json"))
+    inputname = os.path.abspath(os.path.join(thepath, subjroot + "_desc-runoptions_info.json"))
     outputname = os.path.abspath(
-        os.path.join(theoutputdir, subjroot + outputtag + "_desc-runoptions.json")
+        os.path.join(theoutputdir, subjroot + outputtag + "_desc-runoptions_info.json")
     )
     thecommand = ["cp", inputname, outputname]
     tide_exttools.runcmd(thecommand, fake=args.preponly)
