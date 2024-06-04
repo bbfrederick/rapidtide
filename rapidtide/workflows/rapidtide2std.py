@@ -22,6 +22,7 @@ import os
 import sys
 
 import rapidtide.externaltools as tide_exttools
+import rapidtide.io as tide_io
 
 
 def _get_parser():
@@ -108,11 +109,7 @@ def rapidtide2std(args):
         print(args)
 
     fsldir = os.environ.get("FSLDIR")
-    if fsldir is not None:
-        fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
-        flirtcmd = os.path.join(fsldir, "bin", "flirt")
-        applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
-    else:
+    if fsldir is None:
         print("FSL directory not found - aborting")
         sys.exit()
 
@@ -214,12 +211,15 @@ def rapidtide2std(args):
     print("SUBJROOT:", subjroot)
 
     # copy the options file
-    inputname = os.path.abspath(os.path.join(thepath, subjroot + "_desc-runoptions_info.json"))
+    inputname = os.path.abspath(os.path.join(thepath, subjroot + "_desc-runoptions_info"))
+    theoptionsdict = tide_io.readoptionsfile(inputname)
+    theoptionsdict["rapidtide2std_source"] = os.path.abspath(os.path.join(thepath, subjroot))
     outputname = os.path.abspath(
-        os.path.join(theoutputdir, subjroot + outputtag + "desc-runoptions_info.json")
+        os.path.join(theoutputdir, subjroot + outputtag + "desc-runoptions_info")
     )
-    thecommand = ["cp", inputname, outputname]
-    tide_exttools.runcmd(thecommand, fake=args.preponly)
+    tide_io.writedicttojson(theoptionsdict, f"{outputname}_desc-runoptions_info.json")
+    # thecommand = ["cp", f"{inputname}.json", f"{outputname}.json"]
+    # tide_exttools.runcmd(thecommand, fake=args.preponly)
 
     # copy the timecourses
     for timecoursefile in thetimecoursefiles:

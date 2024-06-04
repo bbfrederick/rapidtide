@@ -1,5 +1,14 @@
 # Release history
 
+## Version 2.9.0 (6/3/24)
+* (rapidtide) Inband variance maps (Before, After, Change) are now always output if a GLM is performed.
+* (rapidtide) Tuned outputlevel configurations.  Added a new level, "less".
+* (rapidtide) Fixed globallaghist output.
+* (rapidtide2std) Updated for new file names, added option to transform GLM filtered data.
+* (fixtr) New utility to change the TR in a nifti header.
+* (reference) Made a new lut for JHU LVL1 NoVent to try to highlight heirarchy.
+* (package) Found and fixed a lot of weird, rare bugs (mostly typos).
+
 ## Version 2.8.9.2 (5/22/24)
 * (docs) More updates to output file names, descriptions, and size tables.
 
