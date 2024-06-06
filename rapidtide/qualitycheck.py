@@ -98,6 +98,11 @@ def gethistmetrics(
             thedict["pct98"],
         ) = tide_stats.getfracvals(dataforhist, [0.02, 0.25, 0.5, 0.75, 0.98], debug=debug)
         thedict["voxelsincluded"] = len(dataforhist)
+        thedict["q1width"] = thedict["pct25"] - thedict["pct02"]
+        thedict["q2width"] = thedict["pct50"] - thedict["pct25"]
+        thedict["q3width"] = thedict["pct75"] - thedict["pct50"]
+        thedict["q4width"] = thedict["pct98"] - thedict["pct75"]
+        thedict["mid50width"] = thedict["pct75"] - thedict["pct25"]
 
         # get moments
         (
@@ -140,6 +145,7 @@ def gethistmetrics(
     else:
         thedict["voxelsincluded"] = 0
         taglist = ["pct02", "pct25", "pct50", "pct75", "pct98"]
+        taglist += ["q1width", "q2width", "q3width", "q4width", "mid50width"]
         taglist += ["kurtosis", "kurtosis_z", "kurtosis_p", "skewness", "skewness_z", "skewness_p"]
         taglist += ["peakheight", "peakloc", "peakwidth", "centerofmass", "peakpercentile"]
         if savehist:
