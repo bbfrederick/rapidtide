@@ -1241,6 +1241,38 @@ def readcsv(inputfilename, debug=False):
     return timeseriesdict
 
 
+def readfslmat(inputfilename, debug=False):
+    r"""Read time series out of an FSL design.mat file
+
+    Parameters
+    ----------
+    inputfilename : str
+        The root name of the csv (no extension)
+
+    Returns
+    -------
+        timeseriesdict: dict
+            All the timecourses in the file, keyed by the first row if it exists, by "col1, col2...colN"
+            if not.
+
+    NOTE:  If file does not exist or is not valid, return an empty dictionary
+
+    """
+    timeseriesdict = {}
+
+    # Read the data in with no header
+    df = pd.read_csv(inputfilename + ".mat", delim_whitespace=True, header=None, skiprows=5)
+
+    if debug:
+        print(df)
+    colnum = 0
+    for dummy, theseries in df.items():
+        timeseriesdict[makecolname(colnum, 0)] = theseries.values
+        colnum += 1
+
+    return timeseriesdict
+
+
 def readoptionsfile(inputfileroot):
     if os.path.isfile(inputfileroot + ".json"):
         # options saved as json
@@ -1444,7 +1476,8 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     ----------
     fullfilespec : str
         The file name.  If extension is .tsv or .json, it will be assumed to be either a BIDS tsv, or failing that,
-         a non-BIDS tsv.  If the extension is .csv, it will be assumed to be a csv file. If any other extension or
+         a non-BIDS tsv.  If the extension is .csv, it will be assumed to be a csv file. If the extension is .mat,
+         it will be assumed to be an FSL design.mat file.  If any other extension or
          no extension, it will be assumed to be a plain, whitespace separated text file.
     colspec:  A valid list and/or range of column numbers, or list of column names, or None
     debug : bool
@@ -1481,6 +1514,8 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     jsonexists = os.path.exists(thefileroot + ".json")
     tsvexists = os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
     compressed = os.path.exists(thefileroot + ".tsv.gz")
+    csvexists = os.path.exists(thefileroot + ".csv")
+    matexists = os.path.exists(thefileroot + ".mat")
     if debug:
         print("jsonexists=", jsonexists)
         print("tsvexists=", tsvexists)
@@ -1490,12 +1525,12 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
             filetype = "bidscontinuous"
         else:
             filetype = "plaintsv"
+    elif csvexists:
+        filetype = "csv"
+    elif matexists:
+        filetype = "mat"
     else:
-        csvexists = os.path.exists(thefileroot + ".csv")
-        if csvexists:
-            filetype = "csv"
-        else:
-            filetype = "text"
+        filetype = "text"
     if debug:
         print(f"detected file type is {filetype}")
     if debug:
@@ -1551,8 +1586,11 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         thesamplerate = None
         thestarttime = None
         compressed = None
-    elif filetype == "csv":
-        thedatadict = readcsv(thefileroot, debug=debug)
+    elif (filetype == "csv") or (filetype == "mat"):
+        if filetype == "csv":
+            thedatadict = readcsv(thefileroot, debug=debug)
+        else:
+            thedatadict = readfslmat(thefileroot, debug=debug)
         if colspec is None:
             thecolumns = list(thedatadict.keys())
         else:
@@ -1575,7 +1613,6 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         thesamplerate = None
         thestarttime = None
         compressed = None
-
     else:
         print("illegal file type:", filetype)
 
