@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 
 
@@ -383,6 +383,11 @@ def confoundregress(
         mothpfilt.setfreqs(0.9 * tchp, tchp, tclp, np.min([0.5 / tr, tclp * 1.1]))
         for i in range(theregressors.shape[0]):
             theregressors[i, :] = mothpfilt.apply(1.0 / tr, theregressors[i, :])
+
+    # stddev normalize the regressors.  Not strictly necessary, but might help with stability.
+    for i in range(theregressors.shape[0]):
+        theregressors[i, :] = tide_math.normalize(theregressors[i, :], method="stddev")
+
     if orthogonalize:
         theregressors = tide_fit.gram_schmidt(theregressors)
         initregressors = len(theregressorlabels)
