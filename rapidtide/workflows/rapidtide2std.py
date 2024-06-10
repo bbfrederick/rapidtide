@@ -212,7 +212,7 @@ def rapidtide2std(args):
         thefmrimaps.append("desc-lfofilterCleaned_bold")
 
     if args.confound:
-        thefmrimaps = ["desc-confoundfilterR2_map"]
+        thefmrimaps.append("desc-confoundfilterR2_map")
 
     absname = os.path.abspath(thefileroot)
     thepath, thebase = os.path.split(absname)
