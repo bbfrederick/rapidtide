@@ -59,6 +59,13 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--confound",
+        dest="confound",
+        action="store_true",
+        help=("Transform the counfound fit R2 map (if present)."),
+        default=False,
+    )
+    parser.add_argument(
         "--hires",
         dest="aligntohires",
         action="store_true",
@@ -203,6 +210,9 @@ def rapidtide2std(args):
 
     if args.clean:
         thefmrimaps.append("desc-lfofilterCleaned_bold")
+
+    if args.confound:
+        thefmrimaps = ["desc-confoundfilterR2_map"]
 
     absname = os.path.abspath(thefileroot)
     thepath, thebase = os.path.split(absname)
