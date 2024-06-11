@@ -811,18 +811,6 @@ def rapidtide_main(argparsingfunc):
         )
         enablemkl(optiondict["mklthreads"], debug=threaddebug)
 
-        if optiondict["orthogonalize"]:
-            tide_io.writebidstsv(
-                f"{outputname}_desc-expandedpreprocconfounds_timeseries",
-                mergedregressors,
-                1.0 / fmritr,
-                columns=mergedregressorlabels,
-                extraheaderinfo={
-                    "Description": "The preprocessed (normalized, filtered, orthogonalized) set of expanded (via derivatives and powers) set of confound regressors used for prefiltering the data"
-                },
-                append=False,
-            )
-
         TimingLGR.info(
             "Confound filtering end",
             {
@@ -858,12 +846,12 @@ def rapidtide_main(argparsingfunc):
         )
 
         tide_io.writebidstsv(
-            f"{outputname}_desc-orthogonalizedconfounds_timeseries",
+            f"{outputname}_desc-preprocessedconfounds_timeseries",
             mergedregressors,
             1.0 / fmritr,
             columns=mergedregressorlabels,
             extraheaderinfo={
-                "Description": "The orthogonalized set of confound regressors used for prefiltering the data"
+                "Description": "The preprocessed (normalized, filtered, orthogonalized) set of expanded confound regressors used for prefiltering the data"
             },
             append=False,
         )
