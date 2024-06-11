@@ -248,9 +248,9 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Startup
     ####################################################
-    optiondict[
-        "Description"
-    ] = "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
+    optiondict["Description"] = (
+        "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
+    )
     fmrifilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
@@ -810,6 +810,18 @@ def rapidtide_main(argparsingfunc):
             showprogressbar=optiondict["showprogressbar"],
         )
         enablemkl(optiondict["mklthreads"], debug=threaddebug)
+
+        if optiondict["orthogonalize"]:
+            tide_io.writebidstsv(
+                f"{outputname}_desc-expandedpreprocconfounds_timeseries",
+                mergedregressors,
+                1.0 / fmritr,
+                columns=mergedregressorlabels,
+                extraheaderinfo={
+                    "Description": "The preprocessed (normalized, filtered, orthogonalized) set of expanded (via derivatives and powers) set of confound regressors used for prefiltering the data"
+                },
+                append=False,
+            )
 
         TimingLGR.info(
             "Confound filtering end",
@@ -3313,15 +3325,15 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
-        optiondict[
-            f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thetimepcts[i]
-        optiondict[
-            f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thestrengthpcts[i]
-        optiondict[
-            f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
-        ] = thesigmapcts[i]
+        optiondict[f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thetimepcts[i]
+        )
+        optiondict[f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thestrengthpcts[i]
+        )
+        optiondict[f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            thesigmapcts[i]
+        )
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 

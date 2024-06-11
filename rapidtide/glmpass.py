@@ -400,6 +400,10 @@ def confoundregress(
             )
         )
 
+    # stddev normalize the regressors.  Not strictly necessary, but might help with stability.
+    for i in range(theregressors.shape[0]):
+        theregressors[i, :] = tide_math.normalize(theregressors[i, :], method="stddev")
+
     print("start confound filtering")
 
     numprocitems = thedataarray.shape[0]
