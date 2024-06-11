@@ -1781,9 +1781,9 @@ def rapidtide_main(argparsingfunc):
             )
             LGR.info(
                 "Maximum correlation amplitude with noise regressor is "
-                + optiondict[f"noisecorr_pass{thepass}"]
+                + str(optiondict[f"noisecorr_pass{thepass}"])
                 + " at "
-                + optiondict[f"noisedelay_pass{thepass}"]
+                + str(optiondict[f"noisedelay_pass{thepass}"])
             )
 
             # regress out
