@@ -1,5 +1,12 @@
 # Release history
 
+## Version 2.9.1 (6/12/24)
+* (rapidtide) Made some tweaks to confound regresssion.
+* (rapidtide) Fixed a logging error when doing noise regressor cleaning.
+* (rapidtide2std) Also regeister confoundfilter R2 map.
+* (io) Added the ability to read in FSL design.mat file as multicolumn text files.
+* (qualitycheck) Added some new metrics.
+
 ## Version 2.9.0 (6/3/24)
 * (rapidtide) Inband variance maps (Before, After, Change) are now always output if a GLM is performed.
 * (rapidtide) Tuned outputlevel configurations.  Added a new level, "less".
