@@ -1,8 +1,9 @@
 #!/bin/bash
 set -eu
 
-if [[ $# -ne 2 ]]; then
-    echo "Usage; $0 SUB SES, e.g. HCA9953406 V1"
+if [[ $# -ne 3 ]]; then
+    echo "Usage; $0 SUB SES DATASET, e.g. HCA9953406 V1 HCPA"
+    echo "ABCD can be ABCD or HCPA currently."
     exit 1
 fi
 
@@ -11,10 +12,15 @@ downloadcmd --username $NDA_USERNAME \
             --package $NDA_PACKAGE \
             --file-regex datastructure_manifest
 
-/cloud/list-rapidtide-relevant-images \
-    --participant $1 \
-    --session $2 \
-> /s3-files-requested
+for task in $TASKS; do
+    echo participant $1 session $2 task $task
+    /cloud/list-rapidtide-relevant-images \
+        --participant $1 \
+        --session $2 \
+        --task $task \
+        --dataset $3 \
+    >> /s3-files-requested
+done
 
 downloadcmd --package $NDA_PACKAGE \
             --username $NDA_USERNAME \
