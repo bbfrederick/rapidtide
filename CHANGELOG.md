@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.9.2 (6/12/24)
+* (rapidtide-cloud) Made nda-download-data take a dataset name.
+
 ## Version 2.9.1 (6/12/24)
 * (rapidtide) Made some tweaks to confound regresssion.
 * (rapidtide) Fixed a logging error when doing noise regressor cleaning.
