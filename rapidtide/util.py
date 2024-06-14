@@ -324,7 +324,7 @@ def startendcheck(timepoints, startpoint, endpoint):
         endpoint = 100000000
     if endpoint > timepoints - 1:
         realend = timepoints - 1
-        print("endppoint set to maximum, (", timepoints - 1, ")")
+        print("endpoint set to maximum, (", timepoints - 1, ")")
     else:
         realend = endpoint
         print("endpoint set to ", endpoint)
