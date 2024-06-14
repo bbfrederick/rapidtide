@@ -396,7 +396,7 @@ def confoundregress(
             theregressorlabels.append("orthogconfound_{:02d}".format(theregressor))
         if len(theregressorlabels) == 0:
             print("No regressors survived orthogonalization - skipping confound regression")
-            return theregressors, theregressorlabels, thedataarray, np.zeros(numprocitems)
+            return theregressors, theregressorlabels, thedataarray, None
         print(
             f"After orthogonalization, {len(theregressorlabels)} of {initregressors} regressors remain."
         )

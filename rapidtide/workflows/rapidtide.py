@@ -810,6 +810,9 @@ def rapidtide_main(argparsingfunc):
             showprogressbar=optiondict["showprogressbar"],
         )
         enablemkl(optiondict["mklthreads"], debug=threaddebug)
+        if confoundr2 is None:
+            print("There are no nonzero confound regressors - exiting")
+            sys.exit()
 
         TimingLGR.info(
             "Confound filtering end",
