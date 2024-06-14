@@ -394,10 +394,11 @@ def confoundregress(
         theregressorlabels = []
         for theregressor in range(theregressors.shape[0]):
             theregressorlabels.append("orthogconfound_{:02d}".format(theregressor))
+        if len(theregressorlabels) == 0:
+            print("No regressors survived orthogonalization - skipping confound regression")
+            return theregressors, theregressorlabels, thedataarray, np.zeros(numprocitems)
         print(
-            "After orthogonalization, {0} of {1} regressors remain.".format(
-                len(theregressorlabels), initregressors
-            )
+            f"After orthogonalization, {len(theregressorlabels)} of {initregressors} regressors remain."
         )
 
     # stddev normalize the regressors.  Not strictly necessary, but might help with stability.
