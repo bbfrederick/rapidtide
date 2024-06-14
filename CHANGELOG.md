@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.9.2.1 (6/14/24)
+* (rapidtide) Bugfixes, including more graceful handling of null confound regressors.
+* (resampletc) Prepping for some additional features.
+
 ## Version 2.9.2 (6/12/24)
 * (rapidtide-cloud) Made nda-download-data take a dataset name.
 
