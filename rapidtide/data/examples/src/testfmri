@@ -3,14 +3,16 @@
 rapidtide \
     --nprocs -1 \
     --passes 3 \
-    --outputlevel max \
+    --simcalcrange 50 -1 \
+    --awsmode \
+    --outputlevel min \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+    ../dst/sub-RAPIDTIDETEST_awsmode
 
 rapidtide \
     --nprocs -1 \
     --passes 3 \
     --simcalcrange 50 -1 \
-    --outputlevel max \
+    --outputlevel min \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_simcalcstart50
+    ../dst/sub-RAPIDTIDETEST
