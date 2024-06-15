@@ -181,7 +181,7 @@ The output sizes in TRs (with no motion regression) are as follows:
     "more", "No", "16 + CORRFUNCSIZE"
     "max", "No", "17 + CORRFUNCSIZE"
     "min", "Yes", "24"
-    "min", "Yes", "24 + FMRISIZE"
+    "less", "Yes", "24 + FMRISIZE"
     "normal", "Yes", "24 + CORRFUNCSIZE + FMRISIZE"
     "more", "Yes", "24 + CORRFUNCSIZE + 3*FMRISIZE"
     "max", "Yes", "25 + 3*CORRFUNCSIZE + 4*FMRISIZE"
