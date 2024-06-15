@@ -3630,7 +3630,11 @@ def rapidtide_main(argparsingfunc):
         theheader = None
         cifti_hdr = None
 
-    if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
+    if (
+        optiondict["awsmode"]
+        or (optiondict["outputlevel"] != "min")
+        and (optiondict["outputlevel"] != "less")
+    ):
         maplist = [
             (corrout, "corrout", "info", "second", "Correlation function"),
         ]

@@ -1532,6 +1532,13 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
+        "--awsmode",
+        dest="awsmode",
+        action="store_true",
+        help=("Save the corrout file even if you normally wouldn't."),
+        default=False,
+    )
+    debugging.add_argument(
         "--isatest",
         dest="isatest",
         action="store_true",
