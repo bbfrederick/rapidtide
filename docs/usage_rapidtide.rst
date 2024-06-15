@@ -80,6 +80,7 @@ BIDS Outputs:
     "XXX_desc-autocorr_timeseries", "tsv.gz, json", "Autocorrelation of the probe regressor for each pass", "Always"
     "XXX_desc-cleansimdistdata_info", "tsv.gz, json", "Individual sham correlation datapoints after outlier removal", "Present if numnull > 0"
     "XXX_desc-confoundfilterCleaned_bold", "nii.gz, json", "fMRI data after motion/confound regression", "Present if doing motion/confound regression and outputlevel is max"
+    "XXX_desc-confoundfilterR2_hist", "tsv.gz, json", "Histogram of confound filter R2 values", "Present if doing motion/confound regression"
     "XXX_desc-confoundfilterR2_map", "nii.gz, json", "R2 of the motion/confound regression", "Present if doing motion/confound regression"
     "XXX_desc-corrfit_mask", "nii.gz, json", "Voxels where correlation value was fit", "Always"
     "XXX_desc-corrfitfailreason_info", "nii.gz, json", "Result codes for correlation fit", "Always"
@@ -101,16 +102,16 @@ BIDS Outputs:
     "XXX_desc-lfofilterEVDerivN_bold", "nii.gz, json", "Nth time derivative of shifted sLFO regressor", "Present if GLM is enabled (default), glmderivs > 0, and outputlevel is max"
     "XXX_desc-lfofilterInbandVarianceAfter_map", "nii.gz, json", "Inband variance after filtering", "Present if GLM is enabled (default)"
     "XXX_desc-lfofilterInbandVarianceBefore_map", "nii.gz, json", "Inband variance prior to filtering", "Present if GLM is enabled (default)"
+    "XXX_desc-lfofilterInbandVarianceChange_hist", "tsv.gz, json", "Histogram of percent of inband variance removed by GLM filter", "Present if GLM is enabled (default)"
     "XXX_desc-lfofilterInbandVarianceChange_map", "nii.gz, json", "Change in inband variance after filtering, in percent", "Present if GLM is enabled (default)"
     "XXX_desc-lfofilterMean_map", "nii.gz, json", "Intercept from GLM fit", "Present if GLM is enabled (default) and outputlevel is ≥ normal"
-    "XXX_desc-lfofilterNoiseRemoved_timeseries", "tsv.gz, json", "Variance over space of data removed by GLM filter at each timepoint", "Present if GLM is enabled (default)"
+    "XXX_desc-lfofilterNoiseRemoved_timeseries", "tsv.gz, json", "Variance over space of data removed by GLM filter at each timepoint", "Present if GLM is enabled (default) and outputlevel is ≥ less"
     "XXX_desc-lfofilterNorm_map", "nii.gz, json", "Normalized fit coefficient", "Present if GLM is enabled (default) and outputlevel is ≥ normal"
     "XXX_desc-lfofilterNormDerivN_map", "nii.gz, json", "Normalized fit coefficient for the Nth temporal derivative", "Present if GLM is enabled (default), glmderivs > 0, and outputlevel is max"
     "XXX_desc-lfofilterR2_hist", "tsv.gz, json", "Histogram of GLM filter R2 values", "Present if GLM is enabled (default)"
     "XXX_desc-lfofilterR2_map", "nii.gz, json", "Squared R value of the GLM fit (proportion of variance explained)", "Present if GLM is enabled (default) and outputlevel is ≥ less"
     "XXX_desc-lfofilterR_map", "nii.gz, json", "R value of the GLM fit", "Present if GLM is enabled (default) and outputlevel is ≥ normal"
     "XXX_desc-lfofilterRemoved_bold", "nii.gz, json", "sLFO signal filtered out of this voxel", "Present if GLM is enabled (default) and outputlevel is ≥ more"
-    "XXX_desc-lfofilterVarchange_hist", "tsv.gz, json", "Histogram of percent of inband variance removed by GLM filter", "Present if GLM is enabled (default)"
     "XXX_desc-maxcorr_hist", "tsv.gz, json", "Histogram of maximum correlation coefficients", "Always"
     "XXX_desc-maxcorr_map", "nii.gz, json", "Maximum correlation strength", "Always"
     "XXX_desc-maxcorrsq_map", "nii.gz, json", "Squared maximum correlation strength (proportion of variance explained)", "Always"
@@ -121,14 +122,15 @@ BIDS Outputs:
     "XXX_desc-mean_map", "nii.gz, json", "Voxelwise mean of fmri data", "Always"
     "XXX_desc-mitimes_timeseries", "tsv.gz, json", "", "Present if outputlevel is max"
     "XXX_desc-movingregressor_timeseries", "tsv.gz, json", "The probe regressor used in each pass, at the time resolution of the data", "Always"
+    "XXX_desc-MTT_hist", "tsv.gz, json", "Histogram of correlation peak widths", "Always"
     "XXX_desc-MTT_map", "nii.gz, json", "Mean transit time (estimated)", "Always"
     "XXX_desc-nullsimfunc_hist", "tsv.gz, json", "Null correlation histogram", "Present if numnull > 0"
-    "XXX_desc-orthogonalizedconfounds_timeseries", "tsv.gz, json", "The orthogonalized set of confound regressors used for prefiltering the data", "Present if doing motion/confound regression"
     "XXX_desc-oversampledmovingregressor_timeseries", "tsv.gz, json", "The probe regressor used in each pass, at the time resolution used for calculating the similarity function", "Always"
     "XXX_desc-plt0p001_mask", "nii.gz, json", "Voxels where the maxcorr value exceeds the p < 0.001 significance level", "Present if numnull > 0"
     "XXX_desc-plt0p005_mask", "nii.gz, json", "Voxels where the maxcorr value exceeds the p < 0.005 significance level", "Present if numnull > 0"
     "XXX_desc-plt0p010_mask", "nii.gz, json", "Voxels where the maxcorr value exceeds the p < 0.010 significance level", "Present if numnull > 0"
     "XXX_desc-plt0p050_mask", "nii.gz, json", "Voxels where the maxcorr value exceeds the p < 0.050 significance level", "Present if numnull > 0"
+    "XXX_desc-preprocessedconfounds_timeseries", "tsv.gz, json", "The preprocessed (normalized, filtered, orthogonalized) set of expanded confound regressors used for prefiltering the data", "Present if doing motion/confound regression"
     "XXX_desc-processed_mask", "nii.gz", "No description", "Always"
     "XXX_desc-refine_mask", "nii.gz, json", "Voxels used for refinement", "Present if passes > 1"
     "XXX_desc-refinedmovingregressor_timeseries", "tsv.gz, json", "The raw and filtered probe regressor produced by the refinement procedure, at the time resolution of the data", "Present if passes > 1"
@@ -356,12 +358,12 @@ For this, you can use a minimal set of options, since the defaults are set to be
 
 The base command you'd use would be:
 
-	::
+    ::
 
-		rapidtide \
-		    inputfmrifile \
-		    outputname \
-		    --denoising
+        rapidtide \
+            inputfmrifile \
+            outputname \
+            --denoising
 
 This will do a the default analysis (but each and every particular can be changed by adding command line options).
 By default, rapidtide will:
@@ -410,13 +412,13 @@ but you apply the final GLM to the FIX processed data, to remove the data that h
 This works very well!  To do this, you use the ``--glmsourcefile FILE`` option to specify the file you want to
 denoise.  The ``outputname_desc-lfofilterCleaned_bold.nii.gz`` file is the FIX file, with rapidtide denoising applied.
 
-	::
+    ::
 
-		rapidtide \
-		    minimallyprocessedinputfmrifile \
-		    outputname \
-		    --denoising \
-		    --glmsourcefile FIXprocessedfile
+        rapidtide \
+            minimallyprocessedinputfmrifile \
+            outputname \
+            --denoising \
+            --glmsourcefile FIXprocessedfile
 
 
 Mapping long time delays in response to a gas challenge experiment:
@@ -430,17 +432,17 @@ with refinement and statistical measures.
 
 For this type of analysis, a good place to start is the following:
 
-	::
+    ::
 
-		rapidtide \
-		    inputfmrifile \
-		    outputname \
-		    --numnull 0 \
-		    --searchrange -10 140 \
-		    --filterfreqs 0.0 0.01 \
-		    --ampthresh 0.2 \
-		    --noglm \
-		    --nofitfilt
+        rapidtide \
+            inputfmrifile \
+            outputname \
+            --numnull 0 \
+            --searchrange -10 140 \
+            --filterfreqs 0.0 0.01 \
+            --ampthresh 0.2 \
+            --noglm \
+            --nofitfilt
 
 The first option (``--numnull 0``), shuts off the calculation of the null correlation distribution.  This is used to
 determine the significance threshold, but the method currently implemented in rapidtide is a bit simplistic - it
@@ -487,13 +489,13 @@ input regressor is maximally aligned with the variance in the voxel signal, but 
 a correlation strength, it calculates the percentage BOLD change in each voxel in units of the input
 regressor (e.g. %BOLD/mmHg), which is the standard in CVR analysis.
 
-	::
+    ::
 
-		rapidtide \
-		    inputfmrifile \
-		    outputname \
-		    --regressor regressorfile \
-		    --CVR
+        rapidtide \
+            inputfmrifile \
+            outputname \
+            --regressor regressorfile \
+            --CVR
 
 You invoke this with the ``--CVR`` option.  This is a macro that does a lot of things: I disabled refinement, set
 ``--passes 1``, set ``--filterfreqs 0.0 0.01`` (for the reasons described above regarding gas challenge experiments),
