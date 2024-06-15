@@ -1,5 +1,9 @@
 # Release history
 
+## Version 2.9.2.2 (6/15/24)
+* (rapidtide) Added "--awsmode" to force the output of the corrout file independent of output level.
+* (rapittide) When doing confound filtering, output a histogram of filter R2 values.
+
 ## Version 2.9.2.1 (6/14/24)
 * (rapidtide) Bugfixes, including more graceful handling of null confound regressors.
 * (resampletc) Prepping for some additional features.
