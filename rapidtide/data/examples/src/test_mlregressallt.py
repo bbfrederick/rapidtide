@@ -2,7 +2,9 @@
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
+
 from rapidtide.fit import mlregress_alt
+
 
 def test_mlregress_alt():
     # Test with a simple dataset
