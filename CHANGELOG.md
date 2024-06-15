@@ -1,8 +1,13 @@
 # Release history
 
+## Version 2.9.3 (6/15/24)
+* (rapidtide) Aligned names of histograms with the maps they summarize.
+* (rapidtide) Renamed ``--awsmode`` to ``--savecorrout``.
+* (docs) Updated file output table.
+
 ## Version 2.9.2.2 (6/15/24)
-* (rapidtide) Added "--awsmode" to force the output of the corrout file independent of output level.
-* (rapittide) When doing confound filtering, output a histogram of filter R2 values.
+* (rapidtide) Added ``--awsmode`` to force the output of the corrout file independent of output level.
+* (rapidtide) When doing confound filtering, output a histogram of filter R2 values.
 
 ## Version 2.9.2.1 (6/14/24)
 * (rapidtide) Bugfixes, including more graceful handling of null confound regressors.
@@ -40,7 +45,7 @@
 * (package) Merged some dependabot PRs.
 
 ## Version 2.8.9 (5/17/24)
-* (rapidtide) Simplified specification of output files.  Now use "--outputlevel" with values "min", "normal", "more", or "max" to specify what files are output.
+* (rapidtide) Simplified specification of output files.  Now use ``--outputlevel`` with values "min", "normal", "more", or "max" to specify what files are output.
 * (rapidtide) Improved motion regression and made it more flexible.
 * (rapidtide) Merged all bids nifti file writes into a common output routine.
 * (retroglm, rapidtide) Factored out all the GLM calculation code so it can be done (or redone with different options) after the fact with "retroglm" as a separate step.
@@ -100,7 +105,7 @@
 
 ## Version 2.8.5 (3/30/24)
 * (rapidtide) Adjusted some default parameters to reflect the current best picks.
-* (rapidtide) Fixed the --denoising option (it didn't actually do anything!)
+* (rapidtide) Fixed the ``--denoising`` option (it didn't actually do anything!)
 * (package) Partially implemented a major reorganization of all the programs in the package to make them workflows with standard interfaces.
 * (docs) Started the process of standardizing the program descriptions and properly using autodoc.
 
@@ -134,7 +139,7 @@
 * (cloud) Added support for selecting the dataset  (currently HCPA and ABCD are supported).
 
 ## Version 2.7.8 (1/31/24)
-* (rapidtide) Added new feature - '--numtozero NUMPOINTS' allows you to specify how many points at the beginning of the data set to set to zero prior to processing.  This means that the sLFO fit does not get contaminated by synchronous noise at the beginning of the timecourse (such as T1 decay).  The initial timepoints are filled in from timecourses shifted forward in time.  This means better correlation of timecourses with the sLFO, and better noise removal with the GLM.
+* (rapidtide) Added new feature - ``--numtozero NUMPOINTS`` allows you to specify how many points at the beginning of the data set to set to zero prior to processing.  This means that the sLFO fit does not get contaminated by synchronous noise at the beginning of the timecourse (such as T1 decay).  The initial timepoints are filled in from timecourses shifted forward in time.  This means better correlation of timecourses with the sLFO, and better noise removal with the GLM.
 * (rapidtide) Fixed a bug in how setting timerange and simcalc range interacted (and in range checking).  It all works now, and simcalc range is specified relative to the restricted time range.
 * (runqualitycheck) Fixed some masking bugs.
 
@@ -264,7 +269,7 @@
 * (Docker) Set memory limits on resource use when running in Docker containers so you don't get silent out of memory failures.
 
 ## Version 2.6.1 (8/17/23)
-* (rapidtide) Fixed crash when using --acfix option.  Thanks to Jakub Szewczyk for spotting this.  Should resolve https://github.com/bbfrederick/rapidtide/issues/115.
+* (rapidtide) Fixed crash when using ``--acfix`` option.  Thanks to Jakub Szewczyk for spotting this.  Should resolve https://github.com/bbfrederick/rapidtide/issues/115.
 * (atlasaverage) Added text region summary outputs.
 * (atlastool) Enhancing spatial registration options.
 * (package) Initial steps to implementing a more flexible way of applying external registration tools to data.
@@ -272,7 +277,7 @@
 * (Docker) Updated to basecontainer 0.2.1 and added new cleanup operations - the container is now ~30% smaller.
 
 ## Version 2.6.0 (8/10/23)
-* (rapidtide) Added new "--CVR" analysis type to generate calibrated CVR maps when given a CO2 regressor as input.  Thanks to Kristina Zvolanek for the suggestion to add it!
+* (rapidtide) Added new ``--CVR`` analysis type to generate calibrated CVR maps when given a CO2 regressor as input.  Thanks to Kristina Zvolanek for the suggestion to add it!
 * (rapidtide) Fixed calculation and output of variance change after GLM filtering.
 * (happy) Moved support functions into a separate file.
 * (simdata) Added separate voxel level and volume level noise specification, and a test script.
@@ -281,7 +286,7 @@
 * (package) Removed Python 3.7 support (mostly because it doesn't support all the features of f-strings I use.)
 
 ## Version 2.5.8 (8/3/23)
-* (rapidtide) --nofitfilt now actually works.  Thank you to https://github.com/poeplau for finding (and fixing) the problem!  Resolves https://github.com/bbfrederick/rapidtide/issues/114
+* (rapidtide) ``--nofitfilt`` now actually works.  Thank you to https://github.com/poeplau for finding (and fixing) the problem!  Resolves https://github.com/bbfrederick/rapidtide/issues/114
 
 ## Version 2.5.7 (5/15/23)
 * (glmfilt) Added ability to specify a mask, and to limit output files.
@@ -295,14 +300,14 @@
 * (package) Modernized install procedure.
 
 ## Version 2.5.4 (5/10/23)
-* (rapidtide) Default to using N processors rather than N-1 when nprocs=-1.  You can toggle old behavior with --reservecpu.
+* (rapidtide) Default to using N processors rather than N-1 when nprocs=-1.  You can toggle old behavior with ``--reservecpu``.
 * (rapidtide-cloud) Rapidtide will record the instance type if running on AWS in the options file (AWS_instancetype).
 
 ## Version 2.5.3.1 (5/9/23)
 * (rapidtide, happy) Fixed a crash when you DIDN'T specify informational tags (SMH).
 
 ## Version 2.5.3 (5/9/23)
-* (rapidtide, happy) Added the ability to save arbitrary informational tags to the run options (or info) json files using the --infotag command line argument.
+* (rapidtide, happy) Added the ability to save arbitrary informational tags to the run options (or info) json files using the ``--infotag`` command line argument.
 
 ## Version 2.5.2 (5/8/23)
 * (rapidtide) Now allow the global mean mask to be completely outside of the correlation mask (the fact this previously wasn't allowed was a bug).  Thank you to Daniele Marinazzo for finding this.
@@ -347,7 +352,7 @@
 * (package) Several changes to fix the build environment.
 
 ## Version 2.4.2 (2/8/23)
-* (rapidtide) Added ability set a threshold value for "equivalence" of spatial dimensions of NIFTI files (rather than requiring an exact match) using the --spatialtolerance option.
+* (rapidtide) Added ability set a threshold value for "equivalence" of spatial dimensions of NIFTI files (rather than requiring an exact match) using the ``--spatialtolerance`` option.
 * (rapidtide) Added "offset masks" to set the region that defines "zero" time offset.
 * (fingerprint) Added several new summary statistics for each region.
 * (fingerprint) Allow the use of 3D masks with 4D data.
@@ -416,7 +421,7 @@
 * (rapidtide) Reenabled numba by default.
 * (fingerprint) Fixed handling of 4D atlases, empty regions, and 4D masks.  Added "constant" template, and allow 0th order processing (mean).
 * (atlastood) Fixed 4D atlas handling.  Now mask atlas after collapsing to 3D.
-* (histnifti) Added --transform flag to map values to percentiles.
+* (histnifti) Added ``--transform`` flag to map values to percentiles.
 
 ## Version 2.2.4 (4/11/22)
 * (fingerprint) Now works properly for 3D input files.
@@ -424,7 +429,7 @@
 * (RapidtideDataset.py) Fixed the default type of "numberofpasses".
 
 ## Version 2.2.3 (4/1/22)
-* (rapidtide) Added a new feature, --globalmeanselect, to try to locate a good, uniform, short delay pool of voxels to use for the initial global mean signal.  This is an attempt to fix the "poison regressor" problem - if the initial regressor contains data from multiple, distinct pools of voxels with different delays, the initial global regressor is strongly autocorrelated, and delay fits become ambiguous.  This cannot be corrected by refinement, so better to avoid it altogether. This option selects only voxels with clear, short delays, after a single pass with despeckling disabled.  The result is a mask (XXXdesc-globalmeanpreselect_mask.nii.gz) that can be used with --globalmeanincludemask for a subsequent run.
+* (rapidtide) Added a new feature, ``--globalmeanselect``, to try to locate a good, uniform, short delay pool of voxels to use for the initial global mean signal.  This is an attempt to fix the "poison regressor" problem - if the initial regressor contains data from multiple, distinct pools of voxels with different delays, the initial global regressor is strongly autocorrelated, and delay fits become ambiguous.  This cannot be corrected by refinement, so better to avoid it altogether. This option selects only voxels with clear, short delays, after a single pass with despeckling disabled.  The result is a mask (XXXdesc-globalmeanpreselect_mask.nii.gz) that can be used with ``--globalmeanincludemask`` for a subsequent run.
 * (rapidtide) Fixed a nasty bug that caused offsettime and lagminthresh to interact incorrectly, sometimes leading to almost no voxels for refinement.
 * (happy) Moved some code around, changed some internal names, and added secret bits to support future, secret, features.
 * (tidepool) Trying to add a little more clarity to the user about image orientation (the image's affine transform is correct, so the mapping between voxel and MNI coordinate is correct, but currently it's not clear if displayed images are radiological or neurological orientation.
@@ -434,7 +439,7 @@
 * (pony) One time offer, today only - every user gets a pony upon request!
 
 ## Version 2.2.2 (3/16/22)
-* (happy, happy_legacy, simdata) This release corrects a flaw (or perhaps more accurately an ambiguity) in slice time specification.  In FSL slicetime files, slicetimes are specified in fractions of a TR. In .json sidecars, they are specified in seconds. This is now detected on file read, and slicetime files are now converted to seconds.  Until now, happy and simdata assumed all slice times were in seconds.  This will fix behavior when FSL-style (fractional TR) slicetime files are used.  Behavior with .json sidecars is not changed.  Non-json files are assumed to be the FSL style (fractions of a TR) UNLESS the --slicetimesareinseconds flag is used.
+* (happy, happy_legacy, simdata) This release corrects a flaw (or perhaps more accurately an ambiguity) in slice time specification.  In FSL slicetime files, slicetimes are specified in fractions of a TR. In .json sidecars, they are specified in seconds. This is now detected on file read, and slicetime files are now converted to seconds.  Until now, happy and simdata assumed all slice times were in seconds.  This will fix behavior when FSL-style (fractional TR) slicetime files are used.  Behavior with .json sidecars is not changed.  Non-json files are assumed to be the FSL style (fractions of a TR) UNLESS the ``--slicetimesareinseconds`` flag is used.
 
 ## Version 2.2.1 (3/16/22)
 * (rapidtide) Tweaked mask checking logic to address a bug introduced by despeckling changes.
