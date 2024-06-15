@@ -847,6 +847,16 @@ def rapidtide_main(argparsingfunc):
             rt_floattype=rt_floattype,
             cifti_hdr=cifti_hdr,
         )
+        tide_stats.makeandsavehistogram(
+            confoundr2,
+            optiondict["histlen"],
+            0,
+            outputname + "_desc-confoundfilterR2_hist",
+            displaytitle="Histogram of confound filter R2 values",
+            refine=False,
+            dictvarname="confoundR2hist",
+            thedict=optiondict,
+        )
 
         tide_io.writebidstsv(
             f"{outputname}_desc-preprocessedconfounds_timeseries",
