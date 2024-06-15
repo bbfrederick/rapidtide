@@ -3304,7 +3304,7 @@ def rapidtide_main(argparsingfunc):
             dictvarname="R2hist",
             thedict=optiondict,
         )
-    namesuffix = "_desc-lfofilterVarchange_hist"
+    namesuffix = "_desc-lfofilterInbandVarianceChange_hist"
     if optiondict["doglmfilt"]:
         tide_stats.makeandsavehistogram(
             varchange[np.where(fitmask > 0)],
@@ -3400,6 +3400,16 @@ def rapidtide_main(argparsingfunc):
         fileiscifti=fileiscifti,
         rt_floattype=rt_floattype,
         cifti_hdr=cifti_hdr,
+    )
+    namesuffix = "_desc-MTT_hist"
+    tide_stats.makeandsavehistogram(
+        MTT[np.where(fitmask > 0)],
+        optiondict["histlen"],
+        1,
+        outputname + namesuffix,
+        displaytitle="Histogram of correlation peak widths",
+        dictvarname="MTThist",
+        thedict=optiondict,
     )
 
     # write the optional 3D maps that need to be remapped
@@ -3641,7 +3651,7 @@ def rapidtide_main(argparsingfunc):
         cifti_hdr = None
 
     if (
-        optiondict["awsmode"]
+        optiondict["savecorrout"]
         or (optiondict["outputlevel"] != "min")
         and (optiondict["outputlevel"] != "less")
     ):
