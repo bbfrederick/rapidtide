@@ -179,7 +179,7 @@ requests==2.32.0
     #   sphinx
 scikit-image==0.21.0
     # via rapidtide (setup.py)
-scikit-learn==1.3.0
+scikit-learn==1.5.0
     # via
     #   nilearn
     #   rapidtide (setup.py)
