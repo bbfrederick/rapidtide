@@ -1449,8 +1449,8 @@ def writebidstsv(
             outputfileroot + ".tsv", sep="\t", compression=None, header=colsintsv, index=False
         )
     headerdict = {}
-    headerdict["SamplingFrequency"] = samplerate
-    headerdict["StartTime"] = starttime
+    headerdict["SamplingFrequency"] = float(samplerate)
+    headerdict["StartTime"] = float(starttime)
     if colsinjson:
         if startcol == 0:
             headerdict["Columns"] = columns
