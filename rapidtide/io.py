@@ -907,7 +907,7 @@ def readparfile(filename):
     return motiondict
 
 
-def readmotion(filename, colspec=None):
+def readmotion(filename, tr=1.0, colspec=None):
     r"""Reads motion regressors from filename (from the columns specified in colspec, if given)
 
     Parameters
@@ -1044,7 +1044,7 @@ def readmotion(filename, colspec=None):
                 np.min(motiondict["zrot"]),
             ]
         )
-
+    motiondict["tr"] = tr
     return motiondict
 
 
