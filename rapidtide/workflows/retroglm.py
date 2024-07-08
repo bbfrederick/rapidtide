@@ -125,6 +125,13 @@ def _get_parser():
         default=True,
     )
     parser.add_argument(
+        "--makepseudofile",
+        dest="makepseudofile",
+        action="store_true",
+        help=("Make a simulated input file from the mean and the movingsignal."),
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -606,6 +613,25 @@ def retroglm(args):
             ]
     if args.debug:
         maplist.append((fmri_data_valid, "inputdata", "bold", None, None))
+    if args.makepseudofile:
+        print("reading mean image")
+        meanfile = f"{args.datafileroot}_desc-mean_map.nii.gz"
+        (
+            mean_input,
+            mean,
+            mean_header,
+            mean_dims,
+            mean_sizes,
+        ) = tide_io.readfromnifti(meanfile)
+        if not tide_io.checkspacematch(fmri_header, mean_header):
+            raise ValueError("mean dimensions do not match fmri dimensions")
+        if args.debug:
+            print(f"{mean.shape=}")
+        mean_spacebytime = mean.reshape((numspatiallocs))
+        if args.debug:
+            print(f"{mean_spacebytime.shape=}")
+        pseudofile = mean_spacebytime[validvoxels, None] + movingsignal[:, :]
+        maplist.append((pseudofile, "pseudofile", "bold", None, None))
     tide_io.savemaplist(
         outputname,
         maplist,
