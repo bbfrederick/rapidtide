@@ -9,11 +9,24 @@
 #    sub-RAPIDTIDETEST.nii.gz \
 #    ../dst/sub-RAPIDTIDETEST_awsmode
 
-rapidtide \
-    --nprocs -1 \
-    --passes 3 \
-    --simcalcrange 50 -1 \
-    --outputlevel min \
-    --motionfile fakemotion.par \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+for FILT in 1 2 4 8 16
+do
+    rapidtide \
+        --spatialfilt ${FILT} \
+        --nprocs -1 \
+        --passes 3 \
+        --simcalcrange 50 -1 \
+        --outputlevel min \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_${FILT}
+done
+
+for MAP in maxtime maxcorr
+do
+    fslmerge -t ../dst/all_${MAP} \
+        ../dst/sub-RAPIDTIDETEST_1_desc-${MAP}_map.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_2_desc-${MAP}_map.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_4_desc-${MAP}_map.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_8_desc-${MAP}_map.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_16_desc-${MAP}_map.nii.gz 
+done
