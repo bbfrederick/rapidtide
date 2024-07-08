@@ -1,5 +1,5 @@
 {
-    "Branch_1":{
+    "branch_1":{
         "left":[
             1,
             2,
@@ -37,7 +37,7 @@
         ],
         "right_volume":339699
     },
-    "Branch_10":{
+    "branch_10":{
         "left":[
             17,
             18
@@ -49,7 +49,7 @@
         ],
         "right_volume":252288
     },
-    "Branch_11":{
+    "branch_11":{
         "left":[
             25,
             26
@@ -61,7 +61,7 @@
         ],
         "right_volume":40052
     },
-    "Branch_12":{
+    "branch_12":{
         "left":[
             1,
             2
@@ -73,7 +73,7 @@
         ],
         "right_volume":206187
     },
-    "Branch_13":{
+    "branch_13":{
         "left":[
             19,
             20
@@ -85,7 +85,7 @@
         ],
         "right_volume":60940
     },
-    "Branch_14":{
+    "branch_14":{
         "left":[
             27,
             28
@@ -97,7 +97,7 @@
         ],
         "right_volume":140912
     },
-    "Branch_15":{
+    "branch_15":{
         "left":[
             27
         ],
@@ -107,7 +107,7 @@
         ],
         "right_volume":36978
     },
-    "Branch_16":{
+    "branch_16":{
         "left":[
             29
         ],
@@ -117,7 +117,7 @@
         ],
         "right_volume":71377
     },
-    "Branch_17":{
+    "branch_17":{
         "left":[
             5
         ],
@@ -127,7 +127,7 @@
         ],
         "right_volume":24573
     },
-    "Branch_18":{
+    "branch_18":{
         "left":[
             25
         ],
@@ -137,7 +137,7 @@
         ],
         "right_volume":18499
     },
-    "Branch_19":{
+    "branch_19":{
         "left":[
             21
         ],
@@ -147,7 +147,7 @@
         ],
         "right_volume":19338
     },
-    "Branch_2":{
+    "branch_2":{
         "left":[
             1,
             2,
@@ -175,7 +175,7 @@
         ],
         "right_volume":58589
     },
-    "Branch_20":{
+    "branch_20":{
         "left":[
             19
         ],
@@ -185,7 +185,7 @@
         ],
         "right_volume":104433
     },
-    "Branch_21":{
+    "branch_21":{
         "left":[
             13
         ],
@@ -195,7 +195,7 @@
         ],
         "right_volume":27467
     },
-    "Branch_22":{
+    "branch_22":{
         "left":[
             17
         ],
@@ -205,7 +205,7 @@
         ],
         "right_volume":18577
     },
-    "Branch_23":{
+    "branch_23":{
         "left":[
             11
         ],
@@ -215,7 +215,7 @@
         ],
         "right_volume":124444
     },
-    "Branch_24":{
+    "branch_24":{
         "left":[
             7
         ],
@@ -225,7 +225,7 @@
         ],
         "right_volume":192734
     },
-    "Branch_25":{
+    "branch_25":{
         "left":[
             1
         ],
@@ -235,7 +235,7 @@
         ],
         "right_volume":153171
     },
-    "Branch_26":{
+    "branch_26":{
         "left":[
             9
         ],
@@ -245,7 +245,7 @@
         ],
         "right_volume":104636
     },
-    "Branch_27":{
+    "branch_27":{
         "left":[
             3
         ],
@@ -255,7 +255,7 @@
         ],
         "right_volume":8724
     },
-    "Branch_28":{
+    "branch_28":{
         "left":[
             15
         ],
@@ -265,7 +265,7 @@
         ],
         "right_volume":12167
     },
-    "Branch_29":{
+    "branch_29":{
         "left":[
             23
         ],
@@ -275,7 +275,7 @@
         ],
         "right_volume":8509
     },
-    "Branch_3":{
+    "branch_3":{
         "left":[
             3,
             4
@@ -289,7 +289,7 @@
         ],
         "right_volume":40895
     },
-    "Branch_4":{
+    "branch_4":{
         "left":[
             13,
             14,
@@ -311,7 +311,7 @@
         ],
         "right_volume":1195332
     },
-    "Branch_5":{
+    "branch_5":{
         "left":[
             11,
             12,
@@ -329,7 +329,7 @@
         ],
         "right_volume":904472
     },
-    "Branch_6":{
+    "branch_6":{
         "left":[
             27,
             28,
@@ -347,7 +347,7 @@
         ],
         "right_volume":125454
     },
-    "Branch_7":{
+    "branch_7":{
         "left":[
             15,
             16
@@ -359,7 +359,7 @@
         ],
         "right_volume":16840
     },
-    "Branch_8":{
+    "branch_8":{
         "left":[
             5,
             6
@@ -373,7 +373,7 @@
         ],
         "right_volume":76954
     },
-    "Branch_9":{
+    "branch_9":{
         "left":[
             7,
             8
@@ -386,5 +386,35 @@
             10
         ],
         "right_volume":513915
-    }
+    },
+    "territory_10_size":104636,
+    "territory_11_size":127844,
+    "territory_12_size":124444,
+    "territory_13_size":33473,
+    "territory_14_size":27467,
+    "territory_15_size":11888,
+    "territory_16_size":12167,
+    "territory_17_size":19995,
+    "territory_18_size":18577,
+    "territory_19_size":109971,
+    "territory_1_size":154557,
+    "territory_20_size":104433,
+    "territory_21_size":20714,
+    "territory_22_size":19338,
+    "territory_23_size":8331,
+    "territory_24_size":8509,
+    "territory_25_size":18403,
+    "territory_26_size":18499,
+    "territory_27_size":36355,
+    "territory_28_size":36978,
+    "territory_29_size":69535,
+    "territory_2_size":153171,
+    "territory_30_size":71377,
+    "territory_3_size":8970,
+    "territory_4_size":8724,
+    "territory_5_size":23927,
+    "territory_6_size":24573,
+    "territory_7_size":197823,
+    "territory_8_size":192734,
+    "territory_9_size":101551
 }
