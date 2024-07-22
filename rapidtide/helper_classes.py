@@ -1394,3 +1394,69 @@ class FrequencyTracker:
                 pady[xstart:xend] += padx[xstart:xend]
             padweight[xstart:xend] += 1.0
         return (pady / padweight)[halfwidth:-halfwidth]
+
+
+class fMRIData:
+    header = None
+    data = None
+    data_byvoxel = None
+    data_valid = None
+    mask = None
+    validvoxels = None
+
+    def __init__(
+        self,
+        header=None,
+        data=None,
+        mask=None,
+        validvoxels=None,
+        dims=None,
+        sizes=None,
+        description=None,
+    ):
+        r"""
+
+        Parameters
+        ----------
+        corrtimeaxis:  1D float array
+            The time axis of the correlation function
+        lagmin: float
+            The minimum allowed lag time in seconds
+        lagmax: float
+            The maximum allowed lag time in seconds
+        absmaxsigma: float
+            The maximum allowed peak halfwidth in seconds
+        hardlimit
+        bipolar: boolean
+            If true find the correlation peak with the maximum absolute value, regardless of sign
+        threshval
+        uthreshval
+        debug
+        zerooutbadfit
+        maxguess
+        useguess
+        searchfrac
+        lagmod
+        enforcethresh
+        displayplots
+
+        Returns
+        -------
+
+
+        Methods
+        -------
+        fit(corrfunc):
+            Fit the correlation function given in corrfunc and return the location of the peak in seconds, the maximum
+            correlation value, the peak width
+        setrange(lagmin, lagmax):
+            Specify the search range for lag peaks, in seconds
+        """
+
+        self.header = header
+        self.data = data
+        self.mask = mask
+        self.validvoxels = validvoxels
+        self.dims = dims
+        self.sizes = sizes
+        self.description = description
