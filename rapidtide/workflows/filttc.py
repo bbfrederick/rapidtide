@@ -136,8 +136,6 @@ def filttc(args):
     print("samplerate is", samplerate)
     outvecs = invecs * 0.0
     for i in range(numvecs):
-        if args.demean:
-            invecs[i, :] -= np.mean(invecs[i, :])
         if args.normfirst:
             outvecs[i, :] = thefilter.apply(
                 samplerate, tide_math.normalize(invecs[i, :], method=args.normmethod)
@@ -146,6 +144,8 @@ def filttc(args):
             outvecs[i, :] = tide_math.normalize(
                 thefilter.apply(samplerate, invecs[i, :]), method=args.normmethod
             )
+        if args.demean:
+            outvecs[i, :] -= np.mean(outvecs[i, :])
 
     tide_io.writevectorstotextfile(
         outvecs,
