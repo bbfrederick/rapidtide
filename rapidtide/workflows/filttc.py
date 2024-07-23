@@ -83,6 +83,13 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--demean",
+        dest="demean",
+        action="store_true",
+        help=("Demean before filtering."),
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -129,6 +136,8 @@ def filttc(args):
     print("samplerate is", samplerate)
     outvecs = invecs * 0.0
     for i in range(numvecs):
+        if args.demean:
+            invecs[i, :] -= np.mean(invecs[i, :])
         if args.normfirst:
             outvecs[i, :] = thefilter.apply(
                 samplerate, tide_math.normalize(invecs[i, :], method=args.normmethod)
