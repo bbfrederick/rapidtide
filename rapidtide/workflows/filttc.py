@@ -19,6 +19,8 @@
 import argparse
 import sys
 
+import numpy as np
+
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
