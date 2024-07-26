@@ -224,6 +224,21 @@ def _get_parser():
         ),
         default=False,
     )
+    macros.add_argument(
+        "--graymattermask",
+        dest="graymatterspec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "This specifies a  graymatter mask registered to the input functional data.  "
+            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+            "voxels with value > 0.1 are used.  If this option is set, "
+            "rapidtide will use voxels in the graymatter mask to 1) calculate the initial global mean regressor, "
+            "2) refine the regressor at the end of each pass, and 3) for determining the zero time offset value. "
+            "Setting --globalmeaninclude, --refineinclude, or --offsetinclude explicitly will override this for "
+            "the given include mask."
+        ),
+        default=None,
+    )
 
     # Preprocessing options
     preproc = parser.add_argument_group("Preprocessing options")
@@ -1253,7 +1268,21 @@ def _get_parser():
 
     # Experimental options (not fully tested, may not work)
     experimental = parser.add_argument_group(
-        "Experimental options (not fully tested, may not work)"
+        "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
+    )
+    experimental.add_argument(
+        "--territorymap",
+        dest="territorymap",
+        metavar="MAP[:VALSPEC]",
+        help=(
+            "This specifies a territory map.  Each territory is a set of voxels with the same integral value.  "
+            "If VALSPEC is given, only territories in the mask with integral values listed in VALSPEC are used, otherwise "
+            "all nonzero voxels are used.  If this option is set, certain output measures will be summarized over "
+            "each territory in the map, in addition to over the whole brain.  Some interesting territory maps might be: "
+            "a gray/white/csf segmentation image, an arterial territory map, lesion area vs. healthy "
+            "tissue segmentation, etc.  NB: at the moment this is just a placeholder - it doesn't do anything."
+        ),
+        default=None,
     )
     experimental.add_argument(
         "--psdfilter",
@@ -1756,6 +1785,27 @@ def process_args(inputargs=None):
     else:
         args["corrmaskincludename"] = None
 
+    # if graymatterspec is set, set globalmeaninclude, refineinclude, and offsetinclude to it.
+    if args["graymatterspec"] is not None:
+        (
+            args["globalmeanincludename"],
+            args["globalmeanincludevals"],
+        ) = tide_io.processnamespec(
+            args["graymatterspec"], "Including voxels where ", "in global mean."
+        )
+        (
+            args["refineincludename"],
+            args["refineincludevals"],
+        ) = tide_io.processnamespec(
+            args["graymatterspec"], "Including voxels where ", "in refinement."
+        )
+        (
+            args["offsetincludename"],
+            args["offsetincludevals"],
+        ) = tide_io.processnamespec(
+            args["graymatterspec"], "Including voxels where ", "in offset calculation."
+        )
+
     if args["globalmeanincludespec"] is not None:
         (
             args["globalmeanincludename"],
@@ -1976,6 +2026,17 @@ def process_args(inputargs=None):
             args["dispersioncalc_step"],
         ]
     )
+
+    if args["territorymap"] is not None:
+        (
+            args["territorymapname"],
+            args["territorymapincludevals"],
+        ) = tide_io.processnamespec(
+            args["territorymap"], "Including voxels where ", "in global mean."
+        )
+    else:
+        args["territorymapname"] = None
+        args["territorymapincludevals"] = None
 
     # this is new enough to do retrospective GLM
     args["retroglmcompatible"] = True
