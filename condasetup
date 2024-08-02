@@ -1,8 +1,8 @@
 #!/bin/bash
 
-conda create --name rapidtide python==3.11
+conda create --name rapidtide python==3.12
 conda activate rapidtide
-conda install \
+mamba install \
     numpy \
     scipy \
     matplotlib \
@@ -19,4 +19,4 @@ conda install \
     pyqtgraph \
     tqdm
 
-pip install tensorflow keras
+mamba install tensorflow keras
