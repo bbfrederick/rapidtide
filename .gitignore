@@ -177,3 +177,5 @@ default.profraw
 *.xlsx
 
 docs/practicalities.rst
+
+standalone/

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+for FILT in 2
+do
+    ../../../scripts/dist/rapidtide \
+        --spatialfilt ${FILT} \
+        --nprocs -1 \
+        --passes 3 \
+        --simcalcrange 50 -1 \
+        --outputlevel min \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_${FILT}
+done

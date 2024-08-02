@@ -1,0 +1,22 @@
+#!/bin/bash
+
+arch=$(uname)
+
+mkdir -p ./standalone/${arch}
+cd rapidtide/scripts
+
+#pyinstaller \
+    #--onefile rapidtide \
+    #--collect-submodules=numpy.f2py \
+    #--hiddenimport=scipy._lib.array_api_compat.numpy.fft \
+    #--hiddenimport=scipy.special._special_ufuncs
+#mv dist/rapidtide ../../standalone/${arch}
+#rm -r build dist
+
+pyinstaller \
+    --onefile happy \
+    --collect-submodules=numpy.f2py \
+    --hiddenimport=scipy._lib.array_api_compat.numpy.fft \
+    --hiddenimport=scipy.special._special_ufuncs
+mv dist/happy ../../standalone/${arch}
+rm -r build dist
