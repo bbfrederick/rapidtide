@@ -2,6 +2,5 @@
 
 git pull
 cleandirs
-pip install .
-chmod -R u+rwx build
-rm -rf build dist rapidtide.egg-info
+pip install -e .
+rm -rf rapidtide.egg-info

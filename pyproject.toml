@@ -1,10 +1,13 @@
 [build-system]
-requires = ['setuptools', 'wheel', 'versioneer[toml]']
+#requires = ['setuptools', 'wheel', 'versioneer[toml]']
+requires = ["setuptools>=42", "cffi>=1.0.0", 'versioneer[toml]']
 build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'rapidtide'
 description = 'Tools for performing correlation analysis on fMRI data.'
+keywords = ["fMRI", "correlation", "RIPTiDe", "noise"]
+license = {text = "Apache Software License"}
 authors = [
   { name='Blaise Frederick', email='blaise.frederick@gmail.com' },
 ]
@@ -38,7 +41,8 @@ dependencies = [
   'pywavelets',
   'tqdm',
 ]
-dynamic = ['version', 'license', 'keywords']
+#dynamic = ['version', 'license', 'keywords']
+dynamic = ['version']
 
 [project.urls]
 'Homepage' = 'https://github.com/bbfrederick/rapidtide'
