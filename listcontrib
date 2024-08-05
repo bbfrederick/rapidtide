@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+#import urllib.request
+import json
+import requests
+import ast
+
+
+def getcontribinfo(theurl):
+    content = requests.get(theurl)
+    data = json.loads(content.content)
+    try:
+        thename = data['name']
+    except KeyError:
+        return None
+    else:
+        return thename
+    
+
+theurl = 'https://api.github.com/repos/bbfrederick/rapidtide/contributors?anon=1'
+content = requests.get(theurl)
+data = json.loads(content.content)
+
+for theitem in data:
+    #for thekey in theitem.keys():
+        #print(f"{thekey}, {thekey=='url'}")
+    try:
+        contriburl = theitem['url']
+    except KeyError:
+        pass
+    else:
+        print(contriburl, getcontribinfo(contriburl))
