@@ -20,6 +20,7 @@ theurl = 'https://api.github.com/repos/bbfrederick/rapidtide/contributors?anon=1
 content = requests.get(theurl)
 data = json.loads(content.content)
 
+contriblist = []
 for theitem in data:
     #for thekey in theitem.keys():
         #print(f"{thekey}, {thekey=='url'}")
@@ -28,4 +29,9 @@ for theitem in data:
     except KeyError:
         pass
     else:
-        print(contriburl, getcontribinfo(contriburl))
+        thename = getcontribinfo(contriburl)
+        if thename is not None:
+            contriblist.append({"name": thename})
+            #print(contriburl, getcontribinfo(contriburl))
+
+print(contriblist)
