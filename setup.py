@@ -254,6 +254,7 @@ setup(
         "requests",
         "statsmodels",
         "pywavelets",
+        "pyyaml",
         "tqdm",
     ],
     # "keras",
