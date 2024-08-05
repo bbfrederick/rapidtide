@@ -254,7 +254,7 @@ setup(
         "requests",
         "statsmodels",
         "pywavelets",
-        "pyyaml",
+        "tomlkit",
         "tqdm",
     ],
     # "keras",

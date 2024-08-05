@@ -7,12 +7,6 @@ name = 'rapidtide'
 description = 'Tools for performing correlation analysis on fMRI data.'
 keywords = ["fMRI", "correlation", "RIPTiDe", "noise"]
 license = {text = "Apache Software License"}
-authors = [
-  { name='Blaise Frederick', email='blaise.frederick@gmail.com' },
-  { name='Taylor Salo', email='' },
-  { name='Daniel Drucker', email='' },
-  { name='Jeffrey N Stout', email='' },
-]
 readme = 'README.rst'
 classifiers = [
     'Operating System :: OS Independent',
@@ -41,11 +35,17 @@ dependencies = [
   'requests',
   'statsmodels',
   'pywavelets',
-  'tomlkit',
+  'pyyaml',
   'tqdm',
 ]
 #dynamic = ['version', 'license', 'keywords']
 dynamic = ['version']
+authors = [
+    {name = "Blaise deB Frederick"},
+    {name = "Taylor Salo"},
+    {name = "Daniel M. Drucker, Ph.D."},
+    {name = "Jeffrey N Stout"},
+]
 
 [project.urls]
 'Homepage' = 'https://github.com/bbfrederick/rapidtide'
