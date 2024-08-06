@@ -35,7 +35,7 @@ dependencies = [
   'requests',
   'statsmodels',
   'pywavelets',
-  'pyyaml',
+  'tomlkit',
   'tqdm',
 ]
 #dynamic = ['version', 'license', 'keywords']

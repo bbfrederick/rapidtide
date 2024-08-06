@@ -4,6 +4,31 @@ import requests
 import tomlkit
 import io
 
+def get_commit_emails(owner, repo, token=None):
+    base_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
+    headers = {'Authorization': f'token {token}'} if token else {}
+    page = 1
+    emails = set()
+
+    while True:
+        url = f"{base_url}?per_page=100&page={page}"
+        response = requests.get(url, headers=headers)
+        data = response.json()
+        
+        if response.status_code != 200 or not data:
+            break
+        
+        for commit in data:
+            if 'commit' in commit:
+                author = commit['commit']['author']
+                print(author)
+                if 'email' in author:
+                    emails.add(author['email'])
+
+        page += 1
+
+    return json.dumps(list(emails), indent=2)
+
 
 def getcontribinfo(theurl):
     content = requests.get(theurl)
@@ -19,7 +44,6 @@ def getcontribinfo(theurl):
 theurl = 'https://api.github.com/repos/bbfrederick/rapidtide/contributors?anon=1'
 content = requests.get(theurl)
 data = json.loads(content.content)
-print(data)
 
 contriblist = []
 for theitem in data:
@@ -32,7 +56,6 @@ for theitem in data:
         thename = getcontribinfo(contriburl)
         if thename is not None:
             contriblist.append({"name": thename})
-            #print(contriburl, getcontribinfo(contriburl))
 
 with open("pyproject.toml") as stream:
     try:
@@ -40,6 +63,8 @@ with open("pyproject.toml") as stream:
     except tomlkit.TOMLError as exc:
         print(exc)
 
+
+#print(get_commit_emails("bbfrederick", "rapidtide"))
 
 # remove the existing authors field
 pyproject_loaded["project"].pop("authors")
@@ -52,9 +77,7 @@ authoritem.add_line(indent="")
 print(authoritem.as_string())
 
 # now add it
-pyproject_loaded["project"]["authors"] = authoritem
-
-
+pyproject_loaded["project"].append("authors", authoritem)
 
 # Write TOML file
 with io.open('test.toml', 'w', encoding='utf8') as outfile:
