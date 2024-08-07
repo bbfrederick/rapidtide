@@ -226,16 +226,27 @@ def _get_parser():
     )
     macros.add_argument(
         "--graymattermask",
-        dest="graymatterspec",
+        dest="graymatterincludespec",
         metavar="MASK[:VALSPEC]",
         help=(
-            "This specifies a  graymatter mask registered to the input functional data.  "
+            "This specifies a gray matter mask registered to the input functional data.  "
             "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
             "voxels with value > 0.1 are used.  If this option is set, "
-            "rapidtide will use voxels in the graymatter mask to 1) calculate the initial global mean regressor, "
+            "rapidtide will use voxels in the gray matter mask to 1) calculate the initial global mean regressor, "
             "2) refine the regressor at the end of each pass, and 3) for determining the zero time offset value. "
             "Setting --globalmeaninclude, --refineinclude, or --offsetinclude explicitly will override this for "
             "the given include mask."
+        ),
+        default=None,
+    )
+    macros.add_argument(
+        "--whitemattermask",
+        dest="whitematterincludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "This specifies a white matter mask registered to the input functional data.  "
+            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+            "voxels with value > 0.1 are used."
         ),
         default=None,
     )
@@ -1785,25 +1796,42 @@ def process_args(inputargs=None):
     else:
         args["corrmaskincludename"] = None
 
-    # if graymatterspec is set, set globalmeaninclude, refineinclude, and offsetinclude to it.
-    if args["graymatterspec"] is not None:
+    # if graymatterincludespec is set, set globalmeaninclude, refineinclude, and offsetinclude to it.
+    if args["graymatterincludespec"] is not None:
+        (
+            args["graymatterincludename"],
+            args["graymatterincludevals"],
+        ) = tide_io.processnamespec(
+            args["graymatterincludespec"], "Including voxels where ", "in gray matter mask."
+        )
         (
             args["globalmeanincludename"],
             args["globalmeanincludevals"],
-        ) = tide_io.processnamespec(
-            args["graymatterspec"], "Including voxels where ", "in global mean."
+        ) = (
+            args["graymatterincludename"],
+            args["graymatterincludevals"],
         )
         (
             args["refineincludename"],
             args["refineincludevals"],
-        ) = tide_io.processnamespec(
-            args["graymatterspec"], "Including voxels where ", "in refinement."
+        ) = (
+            args["graymatterincludename"],
+            args["graymatterincludevals"],
         )
         (
             args["offsetincludename"],
             args["offsetincludevals"],
+        ) = (
+            args["graymatterincludename"],
+            args["graymatterincludevals"],
+        )
+
+    if args["whitematterspec"] is not None:
+        (
+            args["whitematterincludename"],
+            args["whitematterincludevals"],
         ) = tide_io.processnamespec(
-            args["graymatterspec"], "Including voxels where ", "in offset calculation."
+            args["whitematterspec"], "Including voxels where ", "in white matter mask."
         )
 
     if args["globalmeanincludespec"] is not None:
