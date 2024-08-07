@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.9.4.1 (8/7/24)
+* (package) Deployment fix
+
 ## Version 2.9.4 (8/7/24)
 * (rapidtide) Added "--graymattermask" macro to set region for global mean, refinement, and offset calculations.
 * (rapidtide) Added whitemattermask input.
