@@ -1,5 +1,14 @@
 # Release history
 
+## Version 2.9.4 (8/7/24)
+* (rapidtide) Added "--graymattermask" macro to set region for global mean, refinement, and offset calculations.
+* (rapidtide) Added whitematter mask input.
+* (rapidtide) Calculate normalized motion derivatives when denoising.
+* (filttc) Various improvements.
+* (docs) Automated calculation of rapidtide data output sizes.
+* (package) Multiple buffs and improvements to packaging and installation files.
+* (package) Merged many dependabot PRs.
+
 ## Version 2.9.3 (6/15/24)
 * (rapidtide) Aligned names of histograms with the maps they summarize.
 * (rapidtide) Renamed ``--awsmode`` to ``--savecorrout``.
