@@ -1826,12 +1826,12 @@ def process_args(inputargs=None):
             args["graymatterincludevals"],
         )
 
-    if args["whitematterspec"] is not None:
+    if args["whitematterincludespec"] is not None:
         (
             args["whitematterincludename"],
             args["whitematterincludevals"],
         ) = tide_io.processnamespec(
-            args["whitematterspec"], "Including voxels where ", "in white matter mask."
+            args["whitematterincludespec"], "Including voxels where ", "in white matter mask."
         )
 
     if args["globalmeanincludespec"] is not None:
