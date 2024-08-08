@@ -18,6 +18,7 @@
 #
 import argparse
 import logging
+import os
 import sys
 from argparse import Namespace
 
@@ -1804,6 +1805,8 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["graymatterincludespec"], "Including voxels where ", "in gray matter mask."
         )
+        if not os.path.isfile(args["graymatterincludename"]):
+            raise FileNotFoundError(f"file {args['graymatterincludename']} does not exist.")
         (
             args["globalmeanincludename"],
             args["globalmeanincludevals"],
@@ -1842,7 +1845,7 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["whitematterincludespec"], "Including voxels where ", "in white matter mask."
         )
-    else
+    else:
         args["whitematterincludename"] = None
         args["whitematterincludevals"] = None
 
