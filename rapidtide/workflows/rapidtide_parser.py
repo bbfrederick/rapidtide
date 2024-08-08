@@ -1853,9 +1853,6 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["globalmeanincludespec"], "Including voxels where ", "in global mean."
         )
-    else:
-        args["globalmeanincludename"] = None
-        args["globalmeanincludevals"] = None
 
     if args["globalmeanexcludespec"] is not None:
         (
@@ -1877,9 +1874,6 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["refineincludespec"], "Including voxels where ", "in refinement."
         )
-    else:
-        args["refineincludename"] = None
-        args["refineincludevals"] = None
 
     if args["refineexcludespec"] is not None:
         (
@@ -1899,9 +1893,6 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["offsetincludespec"], "Including voxels where ", "in offset calculation."
         )
-    else:
-        args["offsetincludename"] = None
-        args["offsetincludevals"] = None
 
     if args["offsetexcludespec"] is not None:
         (
