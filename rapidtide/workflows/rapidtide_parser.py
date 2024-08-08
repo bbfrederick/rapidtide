@@ -198,9 +198,8 @@ def _get_parser():
             "Single arguments that change default values for many "
             "arguments. "
             "Macros override individually set parameters. "
-            "Macros are mutually exclusive with one another."
         ),
-    ).add_mutually_exclusive_group()
+    )
     macros.add_argument(
         "--venousrefine",
         dest="venousrefine",
