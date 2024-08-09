@@ -1899,6 +1899,8 @@ def colspectolist(colspec, debug=False):
         ("APARC_GRAY", "8-13,17-20,26-28,47-56,58-60,96,97,1000-1035,2000-2035"),
         ("APARC_WHITE", "2,7,41,46,177,219"),
         ("APARC_ALLBUTCSF", "2,7-13,17-20,26-28,41,46-56,58-60,96,97,177,219,1000-1035,2000-2035"),
+        ("SSEG_GRAY", "3,8,10-13,16-18,26,42,47,49-54,58"),
+        ("SSEG_WHITE", "2,7,41,46"),
     )
     preprocessedranges = []
     for thisrange in theranges:
