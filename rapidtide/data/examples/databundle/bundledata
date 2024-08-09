@@ -23,8 +23,10 @@ COPYFILE_DISABLE=1 tar --no-mac-metadata -cvzf ../testdatabundle.tgz \
     sub-RAPIDTIDETEST_cifti.ptseries.nii \
     sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json \
     sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.tsv.gz \
+    sub-RAPIDTIDETEST_mean.nii.gz \
     sub-RAPIDTIDETEST_nullmask.nii.gz \
     sub-RAPIDTIDETEST_restrictedmask.nii.gz \
+    sub-RAPIDTIDETEST_synthseg.nii.gz \
     timecourse1.txt \
     timecourse2.txt \
     tmask.txt \
