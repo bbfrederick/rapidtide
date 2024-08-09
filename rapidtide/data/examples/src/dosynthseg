@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#/Users/frederic/miniforge3/envs/synthseg_38/bin/python \
+    #/Users/frederic/code/SynthSeg/scripts/commands/SynthSeg_predict.py \
+    #--i sub-RAPIDTIDETEST_mean.nii.gz \
+    #--o sub-RAPIDTIDETEST_synthseg_1mm.nii.gz \
+    #--robust \
+    #--threads 12 \
+    #--resample 3.5,3.5,3.99
+
+#flirt \
+    #-interp nearestneighbour \
+    #-in sub-RAPIDTIDETEST_synthseg_1mm.nii.gz \
+    #-ref sub-RAPIDTIDETEST_mean.nii.gz \
+    #-applyxfm -init ${FSLDIR}/data/atlases/bin/eye.mat \
+    #-out sub-RAPIDTIDETEST_synthseg.nii.gz
+
+mri_synthseg \
+    --i sub-RAPIDTIDETEST_mean.nii.gz \
+    --o sub-RAPIDTIDETEST_synthseg.nii.gz \
+    --autocrop \
+    --robust \
+    --threads 12 \
+    --keepgeom
+
