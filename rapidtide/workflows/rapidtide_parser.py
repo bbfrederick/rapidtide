@@ -199,7 +199,7 @@ def _get_parser():
             "arguments. "
             "Macros override individually set parameters. "
         ),
-    )
+    ).add_mutually_exclusive_group()
     macros.add_argument(
         "--venousrefine",
         dest="venousrefine",
@@ -224,7 +224,35 @@ def _get_parser():
         ),
         default=False,
     )
-    macros.add_argument(
+
+    anatomy = parser.add_argument_group(
+        title="Anatomic information",
+        description=(
+            "These options allow you to tailor the analysis with some anatomic constraints.  You don't need to supply "
+            "any of them, but if you do, rapidtide will try to make intelligent processing decisions based on "
+            "these maps.  Any individual masks set with anatomic information will be overridden if you specify "
+            "that mask directly."
+        ),
+    )
+    """anatomy.add_argument(
+        "--brainmask",
+        dest="brainincludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "This specifies the valid brain voxels.  No voxels outside of this mask will be used for global mean "
+            "calculation, correlation, refinement, offset calculation, or denoising. "
+            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+            "voxels with value > 0.1 are used.  If this option is set, "
+            "rapidtide limit the include mask used to 1) calculate the initial global mean regressor, "
+            "2) decide which voxels in which to calculate delays, "
+            "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
+            "to remove sLFO signal. "
+            "Setting --globalmeaninclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
+            "override this for the given include mask."
+        ),
+        default=None,
+    )"""
+    anatomy.add_argument(
         "--graymattermask",
         dest="graymatterincludespec",
         metavar="MASK[:VALSPEC]",
@@ -239,14 +267,16 @@ def _get_parser():
         ),
         default=None,
     )
-    macros.add_argument(
+    anatomy.add_argument(
         "--whitemattermask",
         dest="whitematterincludespec",
         metavar="MASK[:VALSPEC]",
         help=(
             "This specifies a white matter mask registered to the input functional data.  "
             "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
-            "voxels with value > 0.1 are used."
+            "voxels with value > 0.1 are used.  "
+            "This currently isn't used for anything, but rapidtide will keep track of it and might use if for something "
+            "in a later version."
         ),
         default=None,
     )
@@ -1795,6 +1825,21 @@ def process_args(inputargs=None):
         )
     else:
         args["corrmaskincludename"] = None
+
+    # if brainincludespec is set, set corrmaskinclude to it.
+    args["brainincludespec"] = None
+    if args["brainincludespec"] is not None:
+        (
+            args["brainincludename"],
+            args["brainincludevals"],
+        ) = tide_io.processnamespec(
+            args["brainincludespec"], "Limiting all processing to voxels ", "in brain mask."
+        )
+        if not os.path.isfile(args["brainincludename"]):
+            raise FileNotFoundError(f"file {args['brainincludename']} does not exist.")
+    else:
+        args["brainincludename"] = None
+        args["brainincludevals"] = None
 
     # if graymatterincludespec is set, set globalmeaninclude, refineinclude, and offsetinclude to it.
     if args["graymatterincludespec"] is not None:
