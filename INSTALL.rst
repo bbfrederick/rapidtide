@@ -22,6 +22,7 @@ installed first:
 -  pyqt5-sip
 -  pyqtgraph
 -  statsmodels
+-  tomlkit
 -  tqdm
 
 Optional dependencies
@@ -31,7 +32,7 @@ The following optional dependencies will be used if present:
 
 -  numba (for faster performance)
 -  pyfftw (faster performance)
--  mkl and mkl-service (faster performance on intel CPUs)
+-  mkl and mkl-service (faster performance on Intel CPUs)
 
 If you want to use the deep learning filter in happy, you’ll need Keras
 and some sort of backend. If you want to be able to train filters,
@@ -48,20 +49,11 @@ GPU, install:
    week - anything I say here will probably be obsolete by the time you
    read this.)
 
-If you are on linux (or Windows) WITHOUT an Nvidia GPU, install:
+If you are on linux (or Windows) WITHOUT an Nvidia GPU, or on a Mac, install:
 
 - keras
 - tensorflow (and make sure it doesn’t sneakily try to install the GPU version - that won’t work)
 
-If you are on a Mac, you almost certainly have a non-Nvidia GPU, so you
-should install
-
--  plaidml-keras (it installs Keras and uses PlaidML as the backend
-   rather than tensorflow). You will have to run a configuration step in
-   plaidML to tell it what GPU to use and how. I use the “metal” option
-   with the AMD GPU in my laptop - that seems to be the most stable.
-   Currently, I think you have you have to do this from pypi - I haven’t
-   seen a conda version of this.
 
 Installing Python
 `````````````````
@@ -97,20 +89,12 @@ or:
    conda install keras tensorflow
 
 
-(for Linux or Windows WITHOUT Nvidia GPU)
+(for a Mac, or Linux or Windows WITHOUT Nvidia GPU)
 
-or
-
-::
-
-   pip install plaidml-keras
-
-
-(on a Mac)
 
 Done.
 
-Installing the rapidtide library
+Installing the rapidtide package
 ````````````````````````````````
 
 Once you have installed the prerequisites, cd into the package
@@ -145,7 +129,7 @@ first make sure you have docker installed and properly configured, then run the 
     docker pull fredericklab/rapidtide:latest-release
 
 
-This will download the docker container from dockerhub.
+This will download the Docker container from dockerhub.
 It's around a 3GB download, so it may take some time, but it caches the file locally, so you won't have to do this again
 unless the container updates.  To use a particular version, replace "latest-release" with the version of the
 container you want.
