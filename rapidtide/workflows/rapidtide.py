@@ -557,6 +557,34 @@ def rapidtide_main(argparsingfunc):
         optiondict["refineprenorm"] = "None"
         optiondict["globalmaskmethod"] = "variance"
 
+    # read in the anatomic masks
+    anatomiclist = [
+        ["brainmaskincludename", "brainmaskincludevals", "brainmask"],
+        ["graymatterincludename", "graymatterincludevals", "graymattermask"],
+        ["whitematterincludename", "whitematterincludevals", "whitemattermask"],
+    ]
+    anatomicmasks = []
+    for thisanatomic in anatomiclist:
+        if optiondict[thisanatomic[0]] is not None:
+            anatomicmasks.append(
+                tide_mask.readamask(
+                    optiondict[thisanatomic[0]],
+                    nim_hdr,
+                    xsize,
+                    istext=optiondict["textio"],
+                    valslist=optiondict[thisanatomic[1]],
+                    maskname=thisanatomic[2],
+                    tolerance=optiondict["spatialtolerance"],
+                )
+            )
+            anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
+        else:
+            anatomicmasks.append(None)
+    brainmask = anatomicmasks[0]
+    invbrainmask = 1 - brainmask
+    graymask = anatomicmasks[1]
+    whitemask = anatomicmasks[2]
+
     # read in the optional masks
     tide_util.logmem("before setting masks")
 
@@ -3553,6 +3581,12 @@ def rapidtide_main(argparsingfunc):
     maplist = [
         (meanvalue, "mean", "map", None, "Voxelwise mean of fmri data"),
     ]
+    if brainmask is not None:
+        maplist.append((brainmask, "brainmask", "mask", None, "Brain mask"))
+    if graymask is not None:
+        maplist.append((graymask, "GM", "mask", None, "Gray matter mask"))
+    if whitemask is not None:
+        maplist.append((whitemask, "WM", "mask", None, "White matter mask"))
     tide_io.savemaplist(
         outputname,
         maplist,

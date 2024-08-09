@@ -234,24 +234,27 @@ def _get_parser():
             "that mask directly."
         ),
     )
-    """anatomy.add_argument(
+    anatomy.add_argument(
         "--brainmask",
-        dest="brainincludespec",
+        dest="brainmaskincludespec",
         metavar="MASK[:VALSPEC]",
-        help=(
-            "This specifies the valid brain voxels.  No voxels outside of this mask will be used for global mean "
-            "calculation, correlation, refinement, offset calculation, or denoising. "
-            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
-            "voxels with value > 0.1 are used.  If this option is set, "
-            "rapidtide limit the include mask used to 1) calculate the initial global mean regressor, "
-            "2) decide which voxels in which to calculate delays, "
-            "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
-            "to remove sLFO signal. "
-            "Setting --globalmeaninclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
-            "override this for the given include mask."
-        ),
+        help=argparse.SUPPRESS,
         default=None,
-    )"""
+    )
+
+    """help=(
+        "This specifies the valid brain voxels.  No voxels outside of this mask will be used for global mean "
+        "calculation, correlation, refinement, offset calculation, or denoising. "
+        "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+        "voxels with value > 0.1 are used.  If this option is set, "
+        "rapidtide limit the include mask used to 1) calculate the initial global mean regressor, "
+        "2) decide which voxels in which to calculate delays, "
+        "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
+        "to remove sLFO signal. "
+        "Setting --globalmeaninclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
+        "override this for the given include mask."
+    ),"""
+
     anatomy.add_argument(
         "--graymattermask",
         dest="graymatterincludespec",
@@ -1826,20 +1829,19 @@ def process_args(inputargs=None):
     else:
         args["corrmaskincludename"] = None
 
-    # if brainincludespec is set, set corrmaskinclude to it.
-    args["brainincludespec"] = None
-    if args["brainincludespec"] is not None:
+    # if brainmaskincludespec is set, set corrmaskinclude to it.
+    if args["brainmaskincludespec"] is not None:
         (
-            args["brainincludename"],
-            args["brainincludevals"],
+            args["brainmaskincludename"],
+            args["brainmaskincludevals"],
         ) = tide_io.processnamespec(
-            args["brainincludespec"], "Limiting all processing to voxels ", "in brain mask."
+            args["brainmaskincludespec"], "Limiting all processing to voxels ", "in brain mask."
         )
-        if not os.path.isfile(args["brainincludename"]):
-            raise FileNotFoundError(f"file {args['brainincludename']} does not exist.")
+        if not os.path.isfile(args["brainmaskincludename"]):
+            raise FileNotFoundError(f"file {args['brainmaskincludename']} does not exist.")
     else:
-        args["brainincludename"] = None
-        args["brainincludevals"] = None
+        args["brainmaskincludename"] = None
+        args["brainmaskincludevals"] = None
 
     # if graymatterincludespec is set, set globalmeaninclude, refineinclude, and offsetinclude to it.
     if args["graymatterincludespec"] is not None:
