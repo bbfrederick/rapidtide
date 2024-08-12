@@ -581,7 +581,10 @@ def rapidtide_main(argparsingfunc):
         else:
             anatomicmasks.append(None)
     brainmask = anatomicmasks[0]
-    invbrainmask = 1 - brainmask
+    if brainmask is None:
+        invbrainmask = None
+    else:
+        invbrainmask = 1 - brainmask
     graymask = anatomicmasks[1]
     whitemask = anatomicmasks[2]
 
