@@ -580,6 +580,7 @@ def rapidtide_main(argparsingfunc):
             anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
         else:
             anatomicmasks.append(None)
+            # anatomicmasks[-1] = np.uint16(np.ones(nativespaceshape, dtype=np.uint16))
     brainmask = anatomicmasks[0]
     if brainmask is None:
         invbrainmask = None
