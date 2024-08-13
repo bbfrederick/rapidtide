@@ -238,23 +238,20 @@ def _get_parser():
         "--brainmask",
         dest="brainmaskincludespec",
         metavar="MASK[:VALSPEC]",
-        help=argparse.SUPPRESS,
+        help=(
+            "This specifies the valid brain voxels.  No voxels outside of this mask will be used for global mean "
+            "calculation, correlation, refinement, offset calculation, or denoising. "
+            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+            "voxels with value > 0.1 are used.  If this option is set, "
+            "rapidtide will limit the include mask used to 1) calculate the initial global mean regressor, "
+            "2) decide which voxels in which to calculate delays, "
+            "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
+            "to remove sLFO signal. "
+            "Setting --globalmeaninclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
+            "override this for the given include mask."
+        ),
         default=None,
     )
-
-    """help=(
-        "This specifies the valid brain voxels.  No voxels outside of this mask will be used for global mean "
-        "calculation, correlation, refinement, offset calculation, or denoising. "
-        "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
-        "voxels with value > 0.1 are used.  If this option is set, "
-        "rapidtide will limit the include mask used to 1) calculate the initial global mean regressor, "
-        "2) decide which voxels in which to calculate delays, "
-        "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
-        "to remove sLFO signal. "
-        "Setting --globalmeaninclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
-        "override this for the given include mask."
-    ),"""
-
     anatomy.add_argument(
         "--graymattermask",
         dest="graymatterincludespec",

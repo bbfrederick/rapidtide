@@ -584,8 +584,13 @@ def rapidtide_main(argparsingfunc):
     brainmask = anatomicmasks[0]
     if brainmask is None:
         invbrainmask = None
+
+        internalbrainmask = None
+        internalinvbrainmask = None
     else:
         invbrainmask = 1 - brainmask
+        internalbrainmask = brainmask.reshape((numspatiallocs))
+        internalinvbrainmask = invbrainmask.reshape((numspatiallocs))
     graymask = anatomicmasks[1]
     whitemask = anatomicmasks[2]
 
@@ -603,6 +608,11 @@ def rapidtide_main(argparsingfunc):
         istext=optiondict["textio"],
         tolerance=optiondict["spatialtolerance"],
     )
+    if internalinvbrainmask is not None:
+        if internalglobalmeanexcludemask is not None:
+            internalglobalmeanexcludemask *= internalinvbrainmask
+        else:
+            internalglobalmeanexcludemask = internalinvbrainmask
 
     internalrefineincludemask, internalrefineexcludemask, dummy = tide_mask.getmaskset(
         "refine",
@@ -615,6 +625,11 @@ def rapidtide_main(argparsingfunc):
         istext=optiondict["textio"],
         tolerance=optiondict["spatialtolerance"],
     )
+    if internalinvbrainmask is not None:
+        if internalrefineexcludemask is not None:
+            internalrefineexcludemask *= internalinvbrainmask
+        else:
+            internalrefineexcludemask = internalinvbrainmask
 
     internaloffsetincludemask, internaloffsetexcludemask, dummy = tide_mask.getmaskset(
         "offset",
@@ -627,7 +642,11 @@ def rapidtide_main(argparsingfunc):
         istext=optiondict["textio"],
         tolerance=optiondict["spatialtolerance"],
     )
-
+    if internalinvbrainmask is not None:
+        if internaloffsetexcludemask is not None:
+            internaloffsetexcludemask *= internalinvbrainmask
+        else:
+            internaloffsetexcludemask = internalinvbrainmask
     tide_util.logmem("after setting masks")
 
     # read or make a mask of where to calculate the correlations
@@ -677,6 +696,8 @@ def rapidtide_main(argparsingfunc):
                 corrmask = np.uint16(
                     tide_stats.makemask(stdim, threshpct=optiondict["corrmaskthreshpct"])
                 )
+    if internalbrainmask is not None:
+        corrmask *= internalbrainmask
     if tide_stats.getmasksize(corrmask) == 0:
         raise ValueError("ERROR: there are no voxels in the correlation mask - exiting")
 
