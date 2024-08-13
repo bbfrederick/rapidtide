@@ -154,7 +154,7 @@ def _get_parser():
             "Preset for delay mapping analysis - this is a macro that "
             f"sets searchrange=({DEFAULT_DELAYMAPPING_LAGMIN}, {DEFAULT_DELAYMAPPING_LAGMAX}), "
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
-            "refineoffset=True, pickleft=True, outputlevel='normal', "
+            "refineoffset=True, outputlevel='normal', "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
@@ -185,7 +185,7 @@ def _get_parser():
         action="store_true",
         help=(
             "Treat this run as an initial pass to locate good candidate voxels for global mean "
-            "regressor generation.  This sets: passes=1, pickleft=True, despecklepasses=0, "
+            "regressor generation.  This sets: passes=1, despecklepasses=0, "
             "refinedespeckle=False, outputlevel='normal', doglmfilt=False, saveintermediatemaps=False."
         ),
         default=False,
@@ -247,7 +247,7 @@ def _get_parser():
         "calculation, correlation, refinement, offset calculation, or denoising. "
         "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
         "voxels with value > 0.1 are used.  If this option is set, "
-        "rapidtide limit the include mask used to 1) calculate the initial global mean regressor, "
+        "rapidtide will limit the include mask used to 1) calculate the initial global mean regressor, "
         "2) decide which voxels in which to calculate delays, "
         "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
         "to remove sLFO signal. "
@@ -996,11 +996,20 @@ def _get_parser():
         default=True,
     )
     reg_ref.add_argument(
-        "--pickleft",
+        "--nopickleft",
         dest="pickleft",
+        action="store_false",
+        help=("Disables selecting the leftmost delay peak when setting the refine offset."),
+        default=True,
+    )
+    reg_ref.add_argument(
+        "--pickleft",
+        dest="dummy",
         action="store_true",
-        help=("Will select the leftmost delay peak when setting the refine " "offset."),
-        default=False,
+        help=(
+            "DEPRECATED. pickleft is now on by default. Use 'nopickleft' to disable it instead."
+        ),
+        default=True,
     )
     reg_ref.add_argument(
         "--pickleftthresh",
@@ -1970,7 +1979,6 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
         args["refineoffset"] = True
-        args["pickleft"] = True
         args["outputlevel"] = "normal"
         pf.setifnotset(args, "doglmfilt", False)
 
@@ -2008,7 +2016,6 @@ def process_args(inputargs=None):
     if args["globalpreselect"]:
         LGR.warning('Using "globalpreselect" analysis mode. Overriding any affected arguments.')
         args["passes"] = 1
-        args["pickleft"] = True
         args["despeckle_passes"] = 0
         args["refinedespeckle"] = False
         args["outputlevel"] = "normal"
