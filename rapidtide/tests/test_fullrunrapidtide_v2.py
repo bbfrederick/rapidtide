@@ -30,7 +30,7 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
     inputargs = [
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST2"),
-        "--tmask",
+        "--tincludemask",
         os.path.join(get_examples_path(), "tmask3.txt"),
         "--corrmask",
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),

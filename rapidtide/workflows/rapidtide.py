@@ -1388,10 +1388,32 @@ def rapidtide_main(argparsingfunc):
     optiondict["initialmovingregressornormfac"] = np.std(resampnonosref_y)
 
     # prepare the temporal mask
-    if optiondict["tmaskname"] is not None:
-        tmask_y = tide_mask.maketmask(
-            optiondict["tmaskname"], reference_x, rt_floatset(reference_y)
+    if optiondict["tincludemaskname"] is not None:
+        print("creating temporal include mask")
+        includetmask_y = tide_mask.maketmask(
+            optiondict["tincludemaskname"], reference_x, rt_floatset(reference_y) + 0.0
         )
+    else:
+        includetmask_y = (reference_x * 0.0) + 1.0
+    if optiondict["texcludemaskname"] is not None:
+        print("creating temporal exclude mask")
+        excludetmask_y = (
+            -1.0
+            * tide_mask.maketmask(
+                optiondict["texcludemaskname"], reference_x, rt_floatset(reference_y) + 0.0
+            )
+            + 1.0
+        )
+    else:
+        excludetmask_y = (reference_x * 0.0) + 1.0
+    tmask_y = includetmask_y * excludetmask_y
+    tmask_y = np.where(tmask_y == 0.0, 0.0, 1.0)
+    if optiondict["focaldebug"]:
+        print("after posterizing temporal mask")
+        print(tmask_y)
+    if (optiondict["tincludemaskname"] is not None) or (
+        optiondict["texcludemaskname"] is not None
+    ):
         tmaskos_y = tide_resample.doresample(
             reference_x, tmask_y, os_fmri_x, method=optiondict["interptype"]
         )
@@ -2821,7 +2843,7 @@ def rapidtide_main(argparsingfunc):
                         os_fmri_x,
                         method=optiondict["interptype"],
                     )
-                if optiondict["tmaskname"] is not None:
+                if optiondict["tincludemaskname"] is not None:
                     resampnonosref_y *= tmask_y
                     thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
                     resampnonosref_y -= thefit[0, 1] * tmask_y

@@ -1501,8 +1501,8 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
-        "--tmask",
-        dest="tmaskname",
+        "--tincludemask",
+        dest="tincludemaskname",
         action="store",
         type=lambda x: pf.is_valid_file(parser, x),
         metavar="FILE",
@@ -1514,7 +1514,20 @@ def _get_parser():
         ),
         default=None,
     )
-
+    experimental.add_argument(
+        "--texcludemask",
+        dest="texcludemaskname",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="FILE",
+        help=(
+            "Do not correlate during epochs specified "
+            "in MASKFILE (NB: each line of FILE "
+            "contains the time and duration of an "
+            "epoch to exclude."
+        ),
+        default=None,
+    )
     # Debugging options
     debugging = parser.add_argument_group(
         "Debugging options.  You probably don't want to use any of these unless I ask you to to help diagnose a problem"
