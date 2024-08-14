@@ -261,8 +261,8 @@ def _get_parser():
             "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
             "voxels with value > 0.1 are used.  If this option is set, "
             "rapidtide will use voxels in the gray matter mask to 1) calculate the initial global mean regressor, "
-            "2) refine the regressor at the end of each pass, and 3) for determining the zero time offset value. "
-            "Setting --globalmeaninclude, --refineinclude, or --offsetinclude explicitly will override this for "
+            "and 2) for determining the zero time offset value. "
+            "Setting --globalmeaninclude or --offsetinclude explicitly will override this for "
             "the given include mask."
         ),
         default=None,
@@ -1849,7 +1849,7 @@ def process_args(inputargs=None):
         args["brainmaskincludename"] = None
         args["brainmaskincludevals"] = None
 
-    # if graymatterincludespec is set, set globalmeaninclude, refineinclude, and offsetinclude to it.
+    # if graymatterincludespec is set, set globalmeaninclude and offsetinclude to it.
     if args["graymatterincludespec"] is not None:
         (
             args["graymatterincludename"],
@@ -1867,13 +1867,6 @@ def process_args(inputargs=None):
             args["graymatterincludevals"],
         )
         (
-            args["refineincludename"],
-            args["refineincludevals"],
-        ) = (
-            args["graymatterincludename"],
-            args["graymatterincludevals"],
-        )
-        (
             args["offsetincludename"],
             args["offsetincludevals"],
         ) = (
@@ -1885,8 +1878,6 @@ def process_args(inputargs=None):
         args["graymatterincludevals"] = None
         args["globalmeanincludename"] = None
         args["globalmeanincludevals"] = None
-        args["refineincludename"] = None
-        args["refineincludevals"] = None
         args["offsetincludename"] = None
         args["offsetincludevals"] = None
 
