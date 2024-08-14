@@ -1920,6 +1920,9 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["refineincludespec"], "Including voxels where ", "in refinement."
         )
+    else:
+        args["refineincludename"] = None
+        args["refineincludevals"] = None
 
     if args["refineexcludespec"] is not None:
         (
