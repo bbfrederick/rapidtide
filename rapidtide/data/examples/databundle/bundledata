@@ -31,6 +31,7 @@ COPYFILE_DISABLE=1 tar --no-mac-metadata -cvzf ../testdatabundle.tgz \
     timecourse2.txt \
     tmask.txt \
     tmask3.txt \
+    tmask3_exclude.txt \
     tmask_seg1.txt \
     tmask_seg2.txt \
     tmask_seg3.txt
