@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.9.5.1 (8/14/24)
+* (rapidtide) Backed off on using the gray matter mask to limit refine voxels.
+
 ## Version 2.9.5 (8/14/24)
 * (rapidtide) Now specifying brainmask and/or graymattermask will automatically do smart processing enhancements.  You can specify whitemattermask, but that currently does nothing except pass the map along.
 * (rapidtide) pickleft is now the default (you never don't want to do it).  The argument to specify it does nothing, but doesn't throw an error.  You can turn it off with nopickleft (but, seriously, don't).
