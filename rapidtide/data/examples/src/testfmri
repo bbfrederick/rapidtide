@@ -13,7 +13,7 @@ rapidtide \
     --nprocs -1 \
     --passes 3 \
     --simcalcrange 50 -1 \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --brainmask sub-RAPIDTIDETEST_restrictedmask.nii.gz \
     --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     sub-RAPIDTIDETEST.nii.gz \
