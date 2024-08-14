@@ -1192,6 +1192,10 @@ def readlabelledtsv(inputfilename, compressed=False):
     else:
         theext = ".tsv"
     df = pd.read_csv(inputfilename + theext, sep="\t", quotechar='"')
+
+    # replace nans with 0
+    df = df.fillna(0.0)
+
     for thecolname, theseries in df.items():
         confounddict[thecolname] = theseries.values
     return confounddict
@@ -1219,6 +1223,9 @@ def readcsv(inputfilename, debug=False):
     # Read the data in initially with no header
     df = pd.read_csv(inputfilename + ".csv", sep=",", quotechar='"', header=0)
 
+    # replace nans with 0
+    df = df.fillna(0.0)
+
     # Check to see if the first element is a float
     try:
         dummy = float(df.columns[0])
@@ -1230,6 +1237,10 @@ def readcsv(inputfilename, debug=False):
     else:
         # if we got to here, reread the data, but assume there is no header line
         df = pd.read_csv(inputfilename + ".csv", sep=",", quotechar='"', header=None)
+
+        # replace nans with 0
+        df = df.fillna(0.0)
+
         if debug:
             print("there is no header line")
         colnum = 0
@@ -1728,6 +1739,9 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
             quotechar='"',
         )
 
+        # replace nans with 0
+        df = df.fillna(0.0)
+
         # check for header line
         if any(df.iloc[0].apply(lambda x: isinstance(x, str))):
             headerlinefound = True
@@ -1740,6 +1754,10 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 sep="\t",
                 quotechar='"',
             )
+
+            # replace nans with 0
+            df = df.fillna(0.0)
+
             if warn:
                 print(
                     "Warning - Column header line found in "
