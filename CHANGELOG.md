@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.9.5.2 (8/14/24)
+* (package) Deployment fix
+
 ## Version 2.9.5.1 (8/14/24)
 * (rapidtide) Backed off on using the gray matter mask to limit refine voxels.
 
