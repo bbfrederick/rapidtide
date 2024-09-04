@@ -419,7 +419,7 @@ def rapidtide_main(argparsingfunc):
         if fileiscifti:
             LGR.debug("input file is CIFTI")
             (
-                cifti,
+                dummy,
                 cifti_hdr,
                 nim_data,
                 nim_hdr,
@@ -440,7 +440,7 @@ def rapidtide_main(argparsingfunc):
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
             cifti_hdr = None
             nativespaceshape = (xsize, ysize, numslices)
-        xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
+        xdim, ydim, slicethickness, dummy = tide_io.parseniftisizes(thesizes)
 
     # correct some fields if necessary
     if fileiscifti:
@@ -1621,7 +1621,6 @@ def rapidtide_main(argparsingfunc):
 
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    internalpaddedfmrishape = (numspatiallocs, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
     internalvalidpaddedfmrishape = (
         numvalidspatiallocs,
         2 * numpadtrs + np.shape(initial_fmri_x)[0],
@@ -1651,16 +1650,11 @@ def rapidtide_main(argparsingfunc):
                 internalvalidpaddedfmrishape, rt_floatset
             )
         tide_util.logmem("after refinement array allocation")
+
     if optiondict["sharedmem"]:
         outfmriarray, dummy, dummy = tide_util.allocshared(internalfmrishape, rt_floatset)
-        paddedoutfmriarray, dummy, dummy = tide_util.allocshared(
-            (internalpaddedfmrishape), rt_floatset
-        )
     else:
         outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
-        paddedoutfmriarray, dummy, dummy = tide_util.allocshared(
-            (internalpaddedfmrishape), rt_floatset
-        )
 
         # cycle over all voxels
     refine = True
@@ -1816,7 +1810,7 @@ def rapidtide_main(argparsingfunc):
                 shiftednoise,
                 optiondict[f"noisedelay_pass{thepass}"],
                 optiondict[f"noisecorr_pass{thepass}"],
-                thisfailreason,
+                dummy,
             ) = tide_corr.aligntcwithref(
                 resampref_y,
                 resampnoise_y,
@@ -1832,7 +1826,7 @@ def rapidtide_main(argparsingfunc):
             )
 
             # regress out
-            resampref_y, datatoremove, R, coffs = tide_fit.glmfilt(
+            resampref_y, datatoremove, R, dummy = tide_fit.glmfilt(
                 resampref_y, shiftednoise, debug=True
             )
 
@@ -1875,14 +1869,14 @@ def rapidtide_main(argparsingfunc):
             )
             thefitter.setcorrtimeaxis(accheckcorrscale)
             (
-                maxindex,
-                maxlag,
-                maxval,
+                dummy,
+                dummy,
+                dummy,
                 acwidth,
-                maskval,
-                peakstart,
-                peakend,
-                thisfailreason,
+                dummy,
+                dummy,
+                dummy,
+                dummy,
             ) = tide_simfuncfit.onesimfuncfit(
                 thexcorr,
                 thefitter,
@@ -2560,7 +2554,7 @@ def rapidtide_main(argparsingfunc):
                     )
                     offsetmask = fitmask
 
-                peaklag, peakheight, peakwidth = tide_stats.gethistprops(
+                peaklag, dummy, dummy = tide_stats.gethistprops(
                     lagtimes[np.where(offsetmask > 0)],
                     optiondict["histlen"],
                     pickleft=optiondict["pickleft"],
@@ -2610,7 +2604,7 @@ def rapidtide_main(argparsingfunc):
             # create the refinement mask
             LGR.info("making refine mask")
             (
-                voxelsprocessed_rrm,
+                dummy,
                 refinemask,
                 locationfails,
                 ampfails,
@@ -3090,7 +3084,7 @@ def rapidtide_main(argparsingfunc):
             if fileiscifti:
                 LGR.info("input file is CIFTI")
                 (
-                    cifti,
+                    dummy,
                     cifti_hdr,
                     nim_data,
                     nim_hdr,
