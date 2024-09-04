@@ -16,11 +16,9 @@
 #   limitations under the License.
 #
 #
-import bisect
 import copy
 import gc
 import logging
-import multiprocessing as mp
 import os
 import platform
 import sys
@@ -28,7 +26,6 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-from nilearn import masking
 from scipy import ndimage
 from scipy.stats import rankdata
 from sklearn.decomposition import PCA
@@ -43,7 +40,6 @@ import rapidtide.fit as tide_fit
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
-import rapidtide.makelaggedtcs as tide_makelagged
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
@@ -266,15 +262,13 @@ def rapidtide_main(argparsingfunc):
         print("turning on garbage collection")
 
     # if we are running in a Docker container, make sure we enforce memory limits properly
-    try:
-        testval = os.environ["IS_DOCKER_8395080871"]
-    except KeyError:
-        optiondict["runningindocker"] = False
-    else:
+    if "IS_DOCKER_8395080871" in os.environ:
         optiondict["runningindocker"] = True
         optiondict["dockermemfree"], optiondict["dockermemswap"] = tide_util.findavailablemem()
         if optiondict["dockermemfix"]:
             tide_util.setmemlimit(optiondict["dockermemfree"])
+    else:
+        optiondict["runningindocker"] = False
 
     # write out the current version of the run options
     optiondict["currentstage"] = "init"
@@ -437,7 +431,6 @@ def rapidtide_main(argparsingfunc):
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
             LGR.debug(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
-            slicesize = numspatiallocs
             nativespaceshape = (1, 1, 1, 1, numspatiallocs)
         else:
             LGR.debug("input file is NIFTI")
@@ -1316,19 +1309,6 @@ def rapidtide_main(argparsingfunc):
         )
         if optiondict["noisetimecoursespec"] is not None:
             if optiondict["detrendorder"] > 0:
-                resampnonosnoise_y = tide_fit.detrend(
-                    tide_resample.doresample(
-                        noise_x,
-                        noise_y,
-                        initial_fmri_x,
-                        padlen=int((1.0 / fmritr) * optiondict["padseconds"]),
-                        padtype="zero",
-                        method=optiondict["interptype"],
-                        debug=optiondict["debug"],
-                    ),
-                    order=optiondict["detrendorder"],
-                    demean=optiondict["dodemean"],
-                )
                 resampnoise_y = tide_fit.detrend(
                     tide_resample.doresample(
                         noise_x,
@@ -1359,14 +1339,6 @@ def rapidtide_main(argparsingfunc):
             method=optiondict["interptype"],
         )
         if optiondict["noisetimecoursespec"] is not None:
-            resampnonosnoise_y = tide_resample.doresample(
-                noise_x,
-                noise_y,
-                initial_fmri_x,
-                padlen=int((1.0 / fmritr) * optiondict["padseconds"]),
-                padtype="zero",
-                method=optiondict["interptype"],
-            )
             resampnoise_y = tide_resample.doresample(
                 noise_x,
                 noise_y,
@@ -1642,25 +1614,10 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["textio"]:
         nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
-        nativepaddedfmrishape = (xsize, 2 * numpadtrs + np.shape(initial_fmri_x)[0])
+    elif fileiscifti:
+        nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
     else:
-        if fileiscifti:
-            nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
-            nativepaddedfmrishape = (
-                1,
-                1,
-                1,
-                2 * numpadtrs + np.shape(initial_fmri_x)[0],
-                numspatiallocs,
-            )
-        else:
-            nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
-            nativepaddedfmrishape = (
-                xsize,
-                ysize,
-                numslices,
-                2 * numpadtrs + np.shape(initial_fmri_x)[0],
-            )
+        nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
 
     internalfmrishape = (numspatiallocs, np.shape(initial_fmri_x)[0])
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
@@ -1935,7 +1892,6 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
             )
-            outputarray = np.asarray([accheckcorrscale, thexcorr])
             tide_io.writebidstsv(
                 f"{outputname}_desc-autocorr_timeseries",
                 thexcorr,
@@ -2989,7 +2945,6 @@ def rapidtide_main(argparsingfunc):
                 nativecoherenceshape = (xsize, ysize, numslices, coherencefreqaxissize)
 
         internalvalidcoherenceshape = (numvalidspatiallocs, coherencefreqaxissize)
-        internalcoherenceshape = (numspatiallocs, coherencefreqaxissize)
 
         # now allocate the arrays needed for the coherence calculation
         if optiondict["sharedmem"]:
@@ -3530,10 +3485,10 @@ def rapidtide_main(argparsingfunc):
                 ]
                 if optiondict["glmderivs"] > 0:
                     maplist += [
-                        (fitcoeff[:, 0], f"lfofilterCoeff", "map", None, "Fit coefficient"),
+                        (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
                         (
                             fitNorm[:, 0],
-                            f"lfofilterNorm",
+                            "lfofilterNorm",
                             "map",
                             None,
                             "Normalized fit coefficient",
