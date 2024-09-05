@@ -2907,6 +2907,26 @@ def rapidtide_main(argparsingfunc):
         optiondict["actual_passes"] = thepass - 1
     optiondict["refinestopreason"] = refinestopreason
 
+    # calculate the sLFO growth
+    (
+        filtrms,
+        filtrmslinfit,
+        optiondict["sLFO_startamp"],
+        optiondict["sLFO_endamp"],
+        optiondict["sLFO_changepct"],
+        optiondict["sLFO_changerate"],
+    ) = tide_math.noiseamp(resampref_y, 1.0 / oversamptr, optiondict["sLFOnoiseampwindow"])
+    tide_io.writebidstsv(
+        f"{outputname}_desc-sLFOamplitude_timeseries",
+        np.vstack((filtrms, filtrmslinfit)),
+        oversampfreq,
+        columns=["filteredRMS", "linearfit"],
+        extraheaderinfo={
+            "Description": "Filtered RMS amplitude of the probe regressor, and a linear fit"
+        },
+        append=False,
+    )
+
     # Post refinement step -1 - Coherence calculation
     if optiondict["calccoherence"]:
         TimingLGR.info("Coherence calculation start")

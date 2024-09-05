@@ -94,6 +94,8 @@ DEFAULT_CVRMAPPING_DESPECKLE_PASSES = 4
 
 DEFAULT_OUTPUTLEVEL = "normal"
 
+DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
+
 
 def _get_parser():
     """
@@ -1019,6 +1021,18 @@ def _get_parser():
             f"to be considered the start of a peak.  Default is {DEFAULT_PICKLEFT_THRESH}."
         ),
         default=DEFAULT_PICKLEFT_THRESH,
+    )
+    reg_ref.add_argument(
+        "--sLFOnoiseampwindow",
+        dest="sLFOnoiseampwindow",
+        action="store",
+        metavar="SECONDS",
+        type=float,
+        help=(
+            "Width of the averaging window for filtering the RMS sLFO waveform to calculate "
+            f"amplitude change over time.  Default is {DEFAULT_SLFONOISEAMP_WINDOWSIZE}."
+        ),
+        default=DEFAULT_SLFONOISEAMP_WINDOWSIZE,
     )
 
     refine = reg_ref.add_mutually_exclusive_group()

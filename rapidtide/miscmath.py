@@ -430,6 +430,45 @@ def corrnormalize(thedata, detrendorder=1, windowfunc="hamming"):
         return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
 
 
+def noiseamp(vector, Fs, windowsize=40.0):
+    """
+
+    Parameters
+    ----------
+    vector
+    Fs
+
+    Returns
+    -------
+
+    """
+    cutoff = 1.0 / windowsize
+    padlen = int(len(vector) // 2)
+    theenvbpf = tide_filt.NoncausalFilter(filtertype="arb")
+    theenvbpf.setfreqs(0.0, 0.0, cutoff, 1.1 * cutoff)
+    tide_filt.unpadvec(theenvbpf.apply(Fs, tide_filt.padvec(np.square(vector), padlen)), padlen)
+    filtsq = tide_filt.unpadvec(
+        theenvbpf.apply(Fs, tide_filt.padvec(np.square(vector), padlen)), padlen
+    )
+    filtsq = np.where(filtsq >= 0.0, filtsq, 0.0)
+    filtrms = np.sqrt(filtsq)
+    thetimepoints = np.arange(0.0, len(filtrms), 1.0) - len(filtrms) / 2.0
+    try:
+        thecoffs = Polynomial.fit(thetimepoints, filtrms, 1).convert().coef[::-1]
+    except np.lib.RankWarning:
+        thecoffs = [0.0, 0.0]
+    thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
+    startamp = thefittc[0]
+    endamp = thefittc[-1]
+    if startamp > 0.0:
+        changepct = 100.0 * (endamp / startamp - 1.0)
+    else:
+        changepct = 0.0
+    runtime = len(vector) / Fs
+    changerate = changepct / runtime
+    return filtrms, thefittc, startamp, endamp, changepct, changerate
+
+
 def rms(vector):
     """
 
