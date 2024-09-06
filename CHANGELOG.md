@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.9.6 (9/5/24)
+* (rapidtide) Estimate and save information about sLFO signal growth over the course of a scan.
+* (rapidtide) Now you can have both include and exclude tmasks.
+* (rapidtide) Fixed some bugs in memory profiling.
+* (rapidtide) Removed some extraneous code to save memory.
+
 ## Version 2.9.5.2 (8/14/24)
 * (package) Deployment fix
 
