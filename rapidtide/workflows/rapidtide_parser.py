@@ -29,6 +29,13 @@ import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
+try:
+    from memory_profiler import profile
+
+    memprofilerexists = True
+except ImportError:
+    memprofilerexists = False
+
 
 # Create a sentinel.
 # from https://stackoverflow.com/questions/58594956/find-out-which-arguments-were-passed-explicitly-in-argparse
@@ -2121,6 +2128,12 @@ def process_args(inputargs=None):
     else:
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()
+
+    # disable memory profiling if necessary
+    if not memprofilerexists:
+        if args["memprofile"]:
+            LGR.info("memprofiler is not installed - disabling memory profiling")
+            args["memprofile"] = False
 
     # dispersion calculation
     args["dispersioncalc_lower"] = args["lagmin"]
