@@ -33,6 +33,7 @@ The following optional dependencies will be used if present:
 -  numba (for faster performance)
 -  pyfftw (faster performance)
 -  mkl and mkl-service (faster performance on Intel CPUs)
+-  memory_profiler (allows for more detailed memory usage stats)
 
 If you want to use the deep learning filter in happy, you’ll need Keras
 and some sort of backend. If you want to be able to train filters,
