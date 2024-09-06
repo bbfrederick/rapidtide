@@ -6,35 +6,35 @@ rapidtide \
     --passes 3 \
     --simcalcrange 50 -1 \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_nomask
+    ../dst/sub-RAPIDTIDETEST_default
 
 rapidtide \
     --spatialfilt 2 \
     --nprocs -1 \
     --passes 3 \
     --simcalcrange 50 -1 \
-    --tincludemask tmask3.txt \
+    --memprofile \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_includemask
+    ../dst/sub-RAPIDTIDETEST_memprofile
 
-rapidtide \
-    --spatialfilt 2 \
-    --nprocs -1 \
-    --passes 3 \
-    --simcalcrange 50 -1 \
-    --texcludemask tmask3_exclude.txt \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_excludemask
-
-rapidtide \
-    --spatialfilt 2 \
-    --nprocs -1 \
-    --passes 3 \
-    --simcalcrange 50 -1 \
-    --tincludemask tmask3.txt \
-    --texcludemask tmask3_exclude.txt \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_bothmasks
+#rapidtide \
+    #--spatialfilt 2 \
+    #--nprocs -1 \
+    #--passes 3 \
+    #--simcalcrange 50 -1 \
+    #--texcludemask tmask3_exclude.txt \
+    #sub-RAPIDTIDETEST.nii.gz \
+    #../dst/sub-RAPIDTIDETEST_excludemask
+#
+#rapidtide \
+    #--spatialfilt 2 \
+    #--nprocs -1 \
+    #--passes 3 \
+    #--simcalcrange 50 -1 \
+    #--tincludemask tmask3.txt \
+    #--texcludemask tmask3_exclude.txt \
+    #sub-RAPIDTIDETEST.nii.gz \
+    #../dst/sub-RAPIDTIDETEST_bothmasks
 
 #for FILT in 1 2 4 8 16
 #do

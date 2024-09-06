@@ -158,10 +158,10 @@ def getglobalsignal(
 
 
 def addmemprofiling(thefunc, memprofile, themessage):
+    tide_util.logmem(themessage)
     if memprofile:
         return profile(thefunc, precision=2)
     else:
-        tide_util.logmem(themessage)
         return thefunc
 
 
@@ -384,8 +384,7 @@ def rapidtide_main(argparsingfunc):
         LGR.info(f"using {optiondict['mklthreads']} MKL threads")
 
     # Generate MemoryLGR output file with column names
-    if not optiondict["memprofile"]:
-        tide_util.logmem()
+    tide_util.logmem()
 
     ####################################################
     #  Read data
@@ -916,8 +915,7 @@ def rapidtide_main(argparsingfunc):
         )
         if optiondict["memprofile"]:
             memcheckpoint("...done")
-        else:
-            tide_util.logmem("after confound glm filter")
+        tide_util.logmem("after confound glm filter")
 
         if optiondict["saveconfoundfiltered"]:
             if not optiondict["textio"]:
@@ -3188,8 +3186,7 @@ def rapidtide_main(argparsingfunc):
                 memcheckpoint("about to start glm noise removal...")
             else:
                 memcheckpoint("about to start CVR magnitude estimation...")
-        else:
-            tide_util.logmem("before glm")
+        tide_util.logmem("before glm")
 
         if optiondict["doglmfilt"]:
             mode = "glm"
@@ -3288,8 +3285,7 @@ def rapidtide_main(argparsingfunc):
         )
         if optiondict["memprofile"]:
             memcheckpoint("...done")
-        else:
-            tide_util.logmem("after glm filter")
+        tide_util.logmem("after glm filter")
         LGR.info("")
     else:
         # get the original data to calculate the mean
