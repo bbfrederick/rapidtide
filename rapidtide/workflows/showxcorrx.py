@@ -575,7 +575,7 @@ def showxcorrx(args):
     else:
         # intitialize the correlation fitter
         thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
-            corrtimeaxis=xcorr_x,
+            corrtimeaxis=xcorr_x_trim,
             lagmin=args.lagmin,
             lagmax=args.lagmax,
             absmaxsigma=args.absmaxsigma,
