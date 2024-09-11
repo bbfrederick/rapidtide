@@ -601,7 +601,7 @@ def showxcorrx(args):
     timeaxis = np.linspace(0, 1.0, num=len(trimdata1), endpoint=False) / args.samplerate
     thetc = trimdata1 * 0.0
 
-    if args.similaritymetric == "hybrid":
+    if args.similaritymetric == "hybrid" or args.similaritymetric == "correlation":
         peakstartind = tide_util.valtoindex(xcorr_x, args.lagmin, discretization="floor")
         peakendind = tide_util.valtoindex(xcorr_x, args.lagmax, discretization="ceiling") + 1
         dummy, thepeaks = tide_peakeval._procOneVoxelPeaks(
@@ -670,7 +670,7 @@ def showxcorrx(args):
             failreason,
             peakstart,
             peakend,
-        ) = thexsimfuncfitter.fit(thexcorr_trim)
+        ) = thexsimfuncfitter.fit(thexcorr)
         if failreason > 0:
             print("showxcorrx: FIT FAILED with reason:")
             print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
