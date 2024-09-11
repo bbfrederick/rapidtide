@@ -575,7 +575,7 @@ def showxcorrx(args):
     else:
         # intitialize the correlation fitter
         thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
-            corrtimeaxis=xcorr_x_trim,
+            corrtimeaxis=xcorr_x,
             lagmin=args.lagmin,
             lagmax=args.lagmax,
             absmaxsigma=args.absmaxsigma,
@@ -670,7 +670,7 @@ def showxcorrx(args):
             failreason,
             peakstart,
             peakend,
-        ) = thexsimfuncfitter.fit(thexcorr)
+        ) = thexsimfuncfitter.fit(thexcorr_trim)
         if failreason > 0:
             print("showxcorrx: FIT FAILED with reason:")
             print(thexsimfuncfitter.diagnosefail(np.uint32(failreason)))
