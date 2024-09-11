@@ -497,14 +497,22 @@ def showxcorrx(args):
     else:
         # do the correlation
         thexcorr, xcorr_x, globalmax = theCorrelator.run(trimdata1, trim=False)
+        if args.display and args.debug:
+            plt.plot(xcorr_x, thexcorr)
+            plt.show()
         print("Correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
         if dumpfiltered:
             tide_io.writenpvecs(theCorrelator.preptesttc, "correlator_filtereddata1.txt")
             tide_io.writenpvecs(theCorrelator.prepreftc, "correlator_filtereddata2.txt")
+        if args.debug:
+            print(f"limits: {args.lagmin, args.lagmax}")
         theCorrelator.setlimits(
             int((-args.lagmin * args.samplerate) - 0.5), int((args.lagmax * args.samplerate) + 0.5)
         )
         thexcorr_trim, xcorr_x_trim, dummy = theCorrelator.getfunction(trim=True)
+        if args.display and args.debug:
+            plt.plot(xcorr_x_trim, thexcorr_trim)
+            plt.show()
         print("trimmed Correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     if args.cepstral:
