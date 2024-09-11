@@ -21,6 +21,7 @@ import sys
 
 import matplotlib.cm as cm
 import numpy as np
+import pyplot as plt
 import scipy as sp
 from scipy.signal import correlate
 from scipy.stats import pearsonr
