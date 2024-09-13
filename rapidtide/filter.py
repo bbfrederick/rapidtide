@@ -1015,7 +1015,7 @@ def dolptrapfftfilt(
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug)
     inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen, debug=debug)
+    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
 # @conditionaljit()
