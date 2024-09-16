@@ -14,7 +14,7 @@ mamba update \
     pywavelets \
     pyqt \
     pyqt5-sip \
-    pyqtgraph>=0.12.0 \
+    pyqtgraph>=0.13.4 \
     tqdm
 
 #pip install tensorflow keras

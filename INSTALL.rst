@@ -20,7 +20,7 @@ installed first:
 -  nilearn
 -  matplotlib >= 3.3.0
 -  pyqt5-sip
--  pyqtgraph >= 0.12.0
+-  pyqtgraph >= 0.13.4
 -  statsmodels
 -  tomlkit
 -  tqdm
