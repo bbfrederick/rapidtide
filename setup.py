@@ -247,7 +247,7 @@ setup(
         "scikit-learn",
         "nibabel",
         "nilearn",
-        "matplotlib",
+        "matplotlib>=3.3.0",
         "pyqtgraph",
         "pyqt",
         "pyqt5-sip",

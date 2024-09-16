@@ -30,7 +30,7 @@ dependencies = [
   'scikit-learn',
   'nibabel',
   'nilearn',
-  'matplotlib',
+  'matplotlib>=3.3.0',
   'pyqtgraph',
   'pyqt5-sip',
   'requests',
