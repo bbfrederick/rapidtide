@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.9.7 (9/16/24)
+* (package) Updated requirements for matplotlib and pyqtgraph to make sure tidepool works (thanks to Hui Zheng for finding this - resolves https://github.com/bbfrederick/rapidtide/issues/168).
+* (package) Dropped Python 3.8 support (not supported by the version of pyqtgraph I need).
+* (filter.py) You can now specify padtype to all filters.
+* (reference) Added the newest version of the HCP-YA mean parameter maps.
+
 ## Version 2.9.6 (9/5/24)
 * (rapidtide) Estimate and save information about sLFO signal growth over the course of a scan.
 * (rapidtide) Now you can have both include and exclude tmasks.
