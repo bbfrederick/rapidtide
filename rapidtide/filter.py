@@ -110,7 +110,16 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect", debug=False):
 
     """
     if debug:
-        print(f"padvec: {padlen=}, {cyclic=}, {padtype=}, {len(inputdata)=}")
+        print(
+            "padvec: padlen=",
+            padlen,
+            ", cyclic=",
+            cyclic,
+            ", padtype=",
+            padtype,
+            ", len(inputdata)=",
+            len(inputdata),
+        )
     if padlen > len(inputdata):
         raise RuntimeError(
             "ERROR: padlen (",
