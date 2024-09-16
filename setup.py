@@ -248,7 +248,7 @@ setup(
         "nibabel",
         "nilearn",
         "matplotlib>=3.3.0",
-        "pyqtgraph>=0.11.0",
+        "pyqtgraph>=0.12.0",
         "pyqt",
         "pyqt5-sip",
         "requests",

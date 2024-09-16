@@ -3,7 +3,7 @@
 mamba update \
     numpy \
     scipy \
-    matplotlib \
+    matplotlib>=3.3.0 \
     pandas \
     statsmodels \
     scikit-learn \
@@ -14,7 +14,7 @@ mamba update \
     pywavelets \
     pyqt \
     pyqt5-sip \
-    pyqtgraph \
+    pyqtgraph>=0.12.0 \
     tqdm
 
 #pip install tensorflow keras

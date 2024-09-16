@@ -18,9 +18,9 @@ installed first:
 -  scikit-learn
 -  nibabel
 -  nilearn
--  matplotlib
+-  matplotlib >= 3.3.0
 -  pyqt5-sip
--  pyqtgraph
+-  pyqtgraph >= 0.12.0
 -  statsmodels
 -  tomlkit
 -  tqdm
@@ -71,7 +71,7 @@ After installing Anaconda python, install the remaining dependencies
 
 ::
 
-   conda install nibabel pyqtgraph pyfftw
+   conda install nibabel "pyqtgraph>=0.12.0" pyfftw
 
 
 For the deep learning filter in happy, also do:
