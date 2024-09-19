@@ -762,7 +762,7 @@ def updateAtlasStats():
 def doAtlasAveraging(state):
     global atlasaveragingdone
     print('in doAtlasAveraging')
-    if state == QtCore.Qt.Checked:
+    if state == QtCore.Qt.CheckState.Checked:
         atlasaveragingdone = True
         print('atlas averaging is turned on')
     else:
@@ -1753,7 +1753,7 @@ def tidepool(args):
 
     def on_context_menu(point):
         # show context menu
-        popMenu.exec_(ui.setMask_Button.mapToGlobal(point))
+        popMenu.exec(ui.setMask_Button.mapToGlobal(point))
 
     ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     ui.setMask_Button.customContextMenuRequested.connect(on_context_menu)
@@ -2208,4 +2208,4 @@ def tidepool(args):
     updateUI(callingfunc="main thread", orthoimages=True, focusvals=True)
     updateRegressor()
 
-    QtWidgets.QApplication.instance().exec_()
+    QtWidgets.QApplication.instance().exec()
