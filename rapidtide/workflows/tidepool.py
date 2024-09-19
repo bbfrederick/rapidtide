@@ -37,6 +37,14 @@ from rapidtide.helper_classes import SimilarityFunctionFitter
 from rapidtide.OrthoImageItem import OrthoImageItem
 from rapidtide.RapidtideDataset import RapidtideDataset
 
+try:
+    from PyQt6.QtCore import QT_VERSION_STR
+except ImportError:
+    pyqtversion = 5
+else:
+    pyqtversion = 6
+print(f"using {pyqtversion=}")
+
 os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
 
@@ -111,7 +119,10 @@ def _get_parser():
 def selectFile():
     global datafileroot
     mydialog = QtWidgets.QFileDialog()
-    options = mydialog.Options()
+    if pyqtversion == 5:
+        options = mydialog.Options()
+    else:
+        options = mydialog.options()
     lagfilename = mydialog.getOpenFileName(
         options=options,
         filter="Lag time files (*_lagtimes.nii.gz *_desc-maxtime_map.nii.gz)",
@@ -445,7 +456,8 @@ class xyztlocation(QtWidgets.QWidget):
 
 
 def logstatus(thetextbox, thetext):
-    thetextbox.moveCursor(QtGui.QTextCursor.End)
+    if pyqtversion == 5:
+        thetextbox.moveCursor(QtGui.QTextCursor.End)
     thetextbox.insertPlainText(thetext + "\n")
     sb = thetextbox.verticalScrollBar()
     sb.setValue(sb.maximum())
@@ -1409,10 +1421,16 @@ def tidepool(args):
     verbosity = 0
     simfuncFitter = None
 
-    if args.compact:
-        import rapidtide.tidepoolTemplate_alt as uiTemplate
+    if pyqtversion == 5:
+        if args.compact:
+            import rapidtide.tidepoolTemplate_alt as uiTemplate
+        else:
+            import rapidtide.tidepoolTemplate as uiTemplate
     else:
-        import rapidtide.tidepoolTemplate as uiTemplate
+        if args.compact:
+            import rapidtide.tidepoolTemplate_alt_qt6 as uiTemplate
+        else:
+            import rapidtide.tidepoolTemplate_qt6 as uiTemplate
 
     verbosity = args.verbose
     print(f"verbosity: {args.verbose}")
@@ -1728,25 +1746,29 @@ def tidepool(args):
 
     # define things for the popup mask menu
     popMenu = QtWidgets.QMenu(win)
-    sel_nomask = QtWidgets.QAction("No mask", win)
+    if pyqtversion == 5:
+        qactionfunc = QtWidgets.QAction
+    else:
+        qactionfunc = QtGui.QAction
+    sel_nomask = qactionfunc("No mask", win)
     sel_nomask.triggered.connect(set_nomask)
-    sel_lagmask = QtWidgets.QAction("Valid fit", win)
+    sel_lagmask = qactionfunc("Valid fit", win)
     sel_lagmask.triggered.connect(set_lagmask)
-    sel_refinemask = QtWidgets.QAction("Voxels used in refine", win)
-    sel_meanmask = QtWidgets.QAction("Voxels used in mean regressor calculation", win)
-    sel_preselectmask = QtWidgets.QAction(
+    sel_refinemask = qactionfunc("Voxels used in refine", win)
+    sel_meanmask = qactionfunc("Voxels used in mean regressor calculation", win)
+    sel_preselectmask = qactionfunc(
         "Voxels chosen for the mean regressor calculation in the preselect pass", win
     )
     sel_refinemask.triggered.connect(set_refinemask)
     sel_meanmask.triggered.connect(set_meanmask)
     sel_preselectmask.triggered.connect(set_preselectmask)
-    sel_0p05 = QtWidgets.QAction("p<0.05", win)
+    sel_0p05 = qactionfunc("p<0.05", win)
     sel_0p05.triggered.connect(set_0p05)
-    sel_0p01 = QtWidgets.QAction("p<0.01", win)
+    sel_0p01 = qactionfunc("p<0.01", win)
     sel_0p01.triggered.connect(set_0p01)
-    sel_0p005 = QtWidgets.QAction("p<0.005", win)
+    sel_0p005 = qactionfunc("p<0.005", win)
     sel_0p005.triggered.connect(set_0p005)
-    sel_0p001 = QtWidgets.QAction("p<0.001", win)
+    sel_0p001 = qactionfunc("p<0.001", win)
     sel_0p001.triggered.connect(set_0p001)
     popMenu.addAction(sel_nomask)
     numspecial = 0
@@ -1755,7 +1777,7 @@ def tidepool(args):
         # show context menu
         popMenu.exec(ui.setMask_Button.mapToGlobal(point))
 
-    ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
     ui.setMask_Button.customContextMenuRequested.connect(on_context_menu)
 
     # wire up the regressor selection radio buttons

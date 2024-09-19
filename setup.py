@@ -115,6 +115,8 @@ modules_list = [
     "rapidtide/workflows/variabilityizer",
     "rapidtide/tidepoolTemplate",
     "rapidtide/tidepoolTemplate_alt",
+    "rapidtide/tidepoolTemplate_qt6",
+    "rapidtide/tidepoolTemplate_alt_qt6",
 ]
 
 
