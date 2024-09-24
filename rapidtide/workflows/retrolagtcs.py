@@ -76,11 +76,9 @@ def _get_parser():
         help="The root name of the lagtc generator file (usually called XXX_desc-lagtcgenerator_timeseries)",
     )
     parser.add_argument(
-        "--outputname",
-        dest="outputname",
+        "outputroot",
         type=str,
         help="Output root.",
-        default=None,
     )
     parser.add_argument(
         "--glmderivs",
@@ -263,7 +261,7 @@ def retrolagtcs(args):
             print("allocating memory")
         lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
 
-    outputpath = os.path.dirname(args.outputname)
+    outputpath = os.path.dirname(args.outputroot)
     rawsources = [
         os.path.relpath(args.fmrifile, start=outputpath),
         os.path.relpath(args.lagtimesfile, start=outputpath),
@@ -294,7 +292,7 @@ def retrolagtcs(args):
             ),
         ]
         tide_io.savemaplist(
-            args.outputname,
+            args.outputroot,
             maplist,
             validvoxels,
             (xsize, ysize, numslices, validtimepoints),
@@ -335,16 +333,16 @@ def retrolagtcs(args):
             (procmask_valid, "procfitREAD", "mask", None, "Processed mask used for calculation"),
         ]
 
-    # write the 3D maps
-    tide_io.savemaplist(
-        args.outputname,
-        maplist,
-        validvoxels,
-        (xsize, ysize, numslices),
-        theheader,
-        bidsdict,
-        debug=args.debug,
-    )
+        # write the 3D maps
+        tide_io.savemaplist(
+            args.outputroot,
+            maplist,
+            validvoxels,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
 
     # write the 4D maps
     theheader = copy.deepcopy(fmri_header)
@@ -395,7 +393,7 @@ def retrolagtcs(args):
     if args.debug:
         maplist.append((fmri_data_valid, "inputdata", "bold", None, None))
     tide_io.savemaplist(
-        args.outputname,
+        args.outputroot,
         maplist,
         validvoxels,
         (xsize, ysize, numslices, validtimepoints),
