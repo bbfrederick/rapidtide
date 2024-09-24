@@ -29,7 +29,7 @@ import pandas as pd
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
-def readfromnifti(inputfile):
+def readfromnifti(inputfile, headeronly=False):
     r"""Open a nifti file and read in the various important parts
 
     Parameters
@@ -55,7 +55,10 @@ def readfromnifti(inputfile):
     else:
         raise FileNotFoundError(f"nifti file {inputfile} does not exist")
     nim = nib.load(inputfilename)
-    nim_data = nim.get_fdata()
+    if headeronly:
+        nim_data = None
+    else:
+        nim_data = nim.get_fdata()
     nim_hdr = nim.header.copy()
     thedims = nim_hdr["dim"].copy()
     thesizes = nim_hdr["pixdim"].copy()

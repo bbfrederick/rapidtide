@@ -148,18 +148,14 @@ def retrolagtcs(args):
         usesharedmem = True
 
     # read the fmri input files
-    print("reading fmrifile")
-    fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
-        args.fmrifile
+    print("reading fmrifile header")
+    fmri_input, dummy, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
+        args.fmrifile,
+        headeronly=True,
     )
-    if args.debug:
-        print(f"{fmri_data.shape=}")
     xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(fmri_sizes)
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(fmri_dims)
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-    fmri_data_spacebytime = fmri_data.reshape((numspatiallocs, timepoints))
-    if args.debug:
-        print(f"{fmri_data_spacebytime.shape=}")
 
     # read the processed mask
     print("reading procfit maskfile")
@@ -239,12 +235,11 @@ def retrolagtcs(args):
 
     # slicing to valid voxels
     print("selecting valid voxels")
-    fmri_data_valid = fmri_data_spacebytime[validvoxels, :]
     lagtimes_valid = lagtimes_spacebytime[validvoxels]
     corrmask_valid = corrmask_spacebytime[validvoxels]
     procmask_valid = procmask_spacebytime[validvoxels]
     if args.debug:
-        print(f"{fmri_data_valid.shape=}")
+        print(f"{lagtimes_valid.shape=}")
 
     if usesharedmem:
         if args.debug:
@@ -276,34 +271,6 @@ def retrolagtcs(args):
         "CommandLineArgs": thecommandline,
     }
 
-    if args.debug:
-        # dump the fmri input file going to glm
-        theheader = copy.deepcopy(fmri_header)
-        theheader["dim"][4] = validtimepoints
-        theheader["pixdim"][4] = fmritr
-
-        maplist = [
-            (
-                fmri_data_valid,
-                "datatofilter",
-                "bold",
-                None,
-                "fMRI data that will be subjected to GLM filtering",
-            ),
-        ]
-        tide_io.savemaplist(
-            args.outputroot,
-            maplist,
-            validvoxels,
-            (xsize, ysize, numslices, validtimepoints),
-            theheader,
-            bidsbasedict,
-            textio=False,
-            fileiscifti=False,
-            rt_floattype=rt_floattype,
-            cifti_hdr=None,
-        )
-
     print("calling glmmfrommaps")
     voxelsprocessed_makelagged = tide_makelagged.makelaggedtcs(
         genlagtc,
@@ -321,7 +288,7 @@ def retrolagtcs(args):
     bidsdict = bidsbasedict.copy()
 
     if args.debug:
-        maplist += [
+        maplist = [
             (
                 lagtimes_valid,
                 "maxtimeREAD",
@@ -390,8 +357,6 @@ def retrolagtcs(args):
                 "Shifted sLFO regressor to filter",
             ),
         ]
-    if args.debug:
-        maplist.append((fmri_data_valid, "inputdata", "bold", None, None))
     tide_io.savemaplist(
         args.outputroot,
         maplist,
