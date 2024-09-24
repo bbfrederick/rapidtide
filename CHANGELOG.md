@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.9.8.2 (9/24/24)
+* (package) Pypi gets mad when you redeploy with the same tag number...
+
 ## Version 2.9.8.1 (9/24/24)
 * (retrolagtcs) Now only use one mask (corrmask).
 * (retrolagtcs) Now only load the fmri file header to save memory.
