@@ -2,6 +2,7 @@
 
 ## Version 2.9.8.1 (9/24/24)
 * (retrolagtcs) Now only use one mask (corrmask).
+* (retrolagtcs) Now only load the fmri file header to save memory.
 
 ## Version 2.9.8 (9/24/24)
 * (retrolagtcs) Made a new program to generate lagged timecourses from a lagmap, masks, and a lagtc generator (for fmripost_rapidtide).

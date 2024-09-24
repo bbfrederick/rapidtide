@@ -239,7 +239,7 @@ def retrolagtcs(args):
     rawsources = [
         os.path.relpath(args.fmrifile, start=outputpath),
         os.path.relpath(args.lagtimesfile, start=outputpath),
-        os.path.relpath(args.procmaskfile, start=outputpath),
+        os.path.relpath(args.maskfile, start=outputpath),
         os.path.relpath(args.lagtcgeneratorfile, start=outputpath),
     ]
 
