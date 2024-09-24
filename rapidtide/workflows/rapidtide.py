@@ -963,6 +963,12 @@ def rapidtide_main(argparsingfunc):
         nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
         axis=1,
     )
+    stddevvalue = np.std(
+        nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
+        axis=1,
+    )
+    covvalue = np.where(meanvalue > 0.0, stddevvalue / meanvalue, 0.0)
+    covvalue *= corrmask
 
     ####################################################
     #  Get the moving regressor from somewhere
@@ -3592,6 +3598,8 @@ def rapidtide_main(argparsingfunc):
     # write the 3D maps that don't need to be remapped
     maplist = [
         (meanvalue, "mean", "map", None, "Voxelwise mean of fmri data"),
+        (stddevvalue, "std", "map", None, "Voxelwise standard deviation of fmri data"),
+        (covvalue, "CoV", "map", None, "Voxelwise coefficient of variation of fmri data"),
     ]
     if brainmask is not None:
         maplist.append((brainmask, "brainmask", "mask", None, "Brain mask"))
