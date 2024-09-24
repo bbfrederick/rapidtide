@@ -1,5 +1,11 @@
 # Release history
 
+## Version 2.9.8 (9/16/24)
+* (retrolagtc) Made a new program to generate lagged timecourses from a lagmap, masks, and a lagtc generator (for fmripost_rapidtide).
+* (rapidtide) Added coefficient of variation output.
+* (tidepool) Now works with PyQt6.
+* (package) Some import cleanups.
+
 ## Version 2.9.7 (9/16/24)
 * (package) Updated requirements for matplotlib and pyqtgraph to make sure tidepool works (thanks to Hui Zheng for finding this - resolves https://github.com/bbfrederick/rapidtide/issues/168).
 * (package) Dropped Python 3.8 support (not supported by the version of pyqtgraph I need).
