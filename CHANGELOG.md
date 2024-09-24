@@ -1,7 +1,10 @@
 # Release history
 
-## Version 2.9.8 (9/16/24)
-* (retrolagtc) Made a new program to generate lagged timecourses from a lagmap, masks, and a lagtc generator (for fmripost_rapidtide).
+## Version 2.9.8.1 (9/24/24)
+* (retrolagtcs) Now only use one mask (corrmask).
+
+## Version 2.9.8 (9/24/24)
+* (retrolagtcs) Made a new program to generate lagged timecourses from a lagmap, masks, and a lagtc generator (for fmripost_rapidtide).
 * (rapidtide) Added coefficient of variation output.
 * (tidepool) Now works with PyQt6.
 * (package) Some import cleanups.

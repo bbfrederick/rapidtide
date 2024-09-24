@@ -56,14 +56,9 @@ def _get_parser():
         help="The name of 4D nifti fmri target file.",
     )
     parser.add_argument(
-        "procmaskfile",
+        "maskfile",
         type=str,
-        help="The name of the processed mask file (usually called XXX_desc-processed_mask.nii.gz)",
-    )
-    parser.add_argument(
-        "corrmaskfile",
-        type=str,
-        help="The root name of the correlation fit mask file (usually called XXX_desc-corrfit_mask.nii.gz)",
+        help="The mask file to use (usually called XXX_desc-corrfit_mask.nii.gz)",
     )
     parser.add_argument(
         "lagtimesfile",
@@ -165,27 +160,12 @@ def retrolagtcs(args):
         procmask_header,
         procmask_dims,
         procmask_sizes,
-    ) = tide_io.readfromnifti(args.procmaskfile)
+    ) = tide_io.readfromnifti(args.maskfile)
     if not tide_io.checkspacematch(fmri_header, procmask_header):
         raise ValueError("procmask dimensions do not match fmri dimensions")
     procmask_spacebytime = procmask.reshape((numspatiallocs))
     if args.debug:
         print(f"{procmask_spacebytime.shape=}")
-
-    # read the corrfit mask
-    print("reading corrfit maskfile")
-    (
-        corrmask_input,
-        corrmask,
-        corrmask_header,
-        corrmask_dims,
-        corrmask_sizes,
-    ) = tide_io.readfromnifti(args.corrmaskfile)
-    if not tide_io.checkspacematch(fmri_header, corrmask_header):
-        raise ValueError("corrmask dimensions do not match fmri dimensions")
-    corrmask_spacebytime = corrmask.reshape((numspatiallocs))
-    if args.debug:
-        print(f"{corrmask_spacebytime.shape=}")
 
     print("reading lagtimes")
     (
@@ -236,7 +216,6 @@ def retrolagtcs(args):
     # slicing to valid voxels
     print("selecting valid voxels")
     lagtimes_valid = lagtimes_spacebytime[validvoxels]
-    corrmask_valid = corrmask_spacebytime[validvoxels]
     procmask_valid = procmask_spacebytime[validvoxels]
     if args.debug:
         print(f"{lagtimes_valid.shape=}")
@@ -260,7 +239,6 @@ def retrolagtcs(args):
     rawsources = [
         os.path.relpath(args.fmrifile, start=outputpath),
         os.path.relpath(args.lagtimesfile, start=outputpath),
-        os.path.relpath(args.corrmaskfile, start=outputpath),
         os.path.relpath(args.procmaskfile, start=outputpath),
         os.path.relpath(args.lagtcgeneratorfile, start=outputpath),
     ]
@@ -275,7 +253,7 @@ def retrolagtcs(args):
     voxelsprocessed_makelagged = tide_makelagged.makelaggedtcs(
         genlagtc,
         initial_fmri_x,
-        corrmask_valid,
+        procmask_valid,
         lagtimes_valid,
         lagtc,
         nprocs=args.nprocs,
@@ -296,8 +274,7 @@ def retrolagtcs(args):
                 "second",
                 "Lag time in seconds used for calculation",
             ),
-            (corrmask_valid, "corrfitREAD", "mask", None, "Correlation mask used for calculation"),
-            (procmask_valid, "procfitREAD", "mask", None, "Processed mask used for calculation"),
+            (procmask_valid, "maskREAD", "mask", None, "Mask used for calculation"),
         ]
 
         # write the 3D maps
