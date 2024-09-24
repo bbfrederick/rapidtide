@@ -22,7 +22,6 @@ import numpy as np
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.io as tide_io
 import rapidtide.makelaggedtcs as tide_makelagged
-import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 
 try:
