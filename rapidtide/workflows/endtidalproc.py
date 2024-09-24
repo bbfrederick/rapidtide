@@ -104,7 +104,7 @@ def _get_parser():
     return parser
 
 
-def process_args():
+def process_args(args):
     if args.samplerate is None:
         args.samplerate = 1.0
 
@@ -116,8 +116,8 @@ def process_args():
     return args
 
 
-def endtidalproc(args):
-    args = process_args()
+def endtidalproc():
+    args = process_args(_get_parser().parse_args(sys.argv[1:]))
 
     if args.isoxygen:
         print("Fitting trace as oxygen")
@@ -166,4 +166,4 @@ def endtidalproc(args):
 
 
 if __name__ == "__main__":
-    main()
+    endtidalproc()
