@@ -198,11 +198,13 @@ def atlastool(args):
         if args.debug:
             print(f"numregions is {numregions}")
         rs_template = np.reshape(template_data, numvoxels)
+        print(f"{rs_template.shape=}")
         templatevoxels = np.zeros((numvoxels, numregions))
         validvoxels = np.where(rs_template > 0)[0]
         print(f"{len(validvoxels)} valid voxels")
         for thevoxel in validvoxels:
             templatevoxels[thevoxel, int(round(rs_template[thevoxel], 0)) - 1] = 1
+        print(f"{templatevoxels.shape=}")
     maskvoxels = np.max(templatevoxels, axis=1).astype(np.uint16)
     maskvoxels[np.where(maskvoxels > args.maskthresh)] = 1
 
@@ -404,6 +406,8 @@ def atlastool(args):
             else:
                 print(f"no voxels with value {i + 1} - removing.")
         numregions = numnonzero
+    else:
+        numnonzero = numregions
 
     for theregion in range(numregions):
         templatevoxels[:, theregion] *= maskvoxels
