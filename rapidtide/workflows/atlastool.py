@@ -205,8 +205,6 @@ def atlastool(args):
         for thevoxel in validvoxels:
             templatevoxels[thevoxel, int(round(rs_template[thevoxel], 0)) - 1] = 1
         print(f"{templatevoxels.shape=}")
-    maskvoxels = np.max(templatevoxels, axis=1).astype(np.uint16)
-    maskvoxels[np.where(maskvoxels > args.maskthresh)] = 1
 
     # read in the label file, if there is one
     if args.labelfile is not None:
@@ -388,8 +386,24 @@ def atlastool(args):
                 f"Dimensions of {args.maskfile} do not match the target dimensions - exiting"
             )
     else:
-        maskvoxels = np.max(templatevoxels, axis=1).astype(np.uint16)
-        maskvoxels[np.where(maskvoxels > args.maskthresh)] = 1
+        maskvoxels = np.max(templatevoxels, axis=1)
+        mask_hdr = template_hdr.copy()
+        mask_hdr["dim"][4] = 1
+        if args.debug:
+            tide_io.savetonifti(
+                maskvoxels.reshape((xsize, ysize, numslices)),
+                mask_hdr,
+                "masktemp1",
+            )
+        maskvoxels = np.where(maskvoxels > args.maskthresh, 1, 0)
+        maskvoxels = maskvoxels.astype(np.uint16)
+        if args.debug:
+            tide_io.savetonifti(
+                maskvoxels.reshape((xsize, ysize, numslices)),
+                mask_hdr,
+                "masktemp2",
+            )
+        print(f"{np.sum(maskvoxels)=}")
 
     # eliminate any newly missing values
     numnonzero = 0
@@ -410,7 +424,13 @@ def atlastool(args):
         numnonzero = numregions
 
     for theregion in range(numregions):
+        if args.debug:
+            print(f"region {theregion}:")
+            print(f"\tprior to masking: {np.sum(templatevoxels[:, theregion])} voxels")
         templatevoxels[:, theregion] *= maskvoxels
+        if args.debug:
+            print(f"\tafter masking: {np.sum(templatevoxels[:, theregion])} voxels")
+            print()
 
     if args.volumeperregion:
         outputvoxels = templatevoxels[:, : numnonzero + 1]
