@@ -162,6 +162,7 @@ class SimilarityFunctionator:
         reftc=None,
         reftcstart=0.0,
         detrendorder=1,
+        filterinputdata=True,
         debug=False,
     ):
         self.Fs = Fs
@@ -172,6 +173,7 @@ class SimilarityFunctionator:
         self.negativegradient = negativegradient
         self.reftc = reftc
         self.detrendorder = detrendorder
+        self.filterinputdata = filterinputdata
         self.debug = debug
         if self.reftc is not None:
             self.setreftc(self.reftc)
@@ -179,18 +181,33 @@ class SimilarityFunctionator:
 
     def preptc(self, thetc, isreftc=False):
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
-        if isreftc or (not self.negativegradient):
+        if isreftc:
             thenormtc = tide_math.corrnormalize(
                 self.ncprefilter.apply(self.Fs, thetc),
                 detrendorder=self.detrendorder,
                 windowfunc=self.windowfunc,
             )
         else:
-            thenormtc = tide_math.corrnormalize(
-                -np.gradient(self.ncprefilter.apply(self.Fs, thetc)),
-                detrendorder=self.detrendorder,
-                windowfunc=self.windowfunc,
-            )
+            if self.negativegradient:
+                thenormtc = tide_math.corrnormalize(
+                    -np.gradient(self.ncprefilter.apply(self.Fs, thetc)),
+                    detrendorder=self.detrendorder,
+                    windowfunc=self.windowfunc,
+                )
+            else:
+                if self.filterinputdata:
+                    thenormtc = tide_math.corrnormalize(
+                        self.ncprefilter.apply(self.Fs, thetc),
+                        detrendorder=self.detrendorder,
+                        windowfunc=self.windowfunc,
+                    )
+                else:
+                    thenormtc = tide_math.corrnormalize(
+                        thetc,
+                        detrendorder=self.detrendorder,
+                        windowfunc=self.windowfunc,
+                    )
+
         return thenormtc
 
     def trim(self, vector):

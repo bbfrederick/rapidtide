@@ -1515,6 +1515,15 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
+        "--donotfilterinputdata",
+        dest="filterinputdata",
+        action="store_false",
+        help=(
+            "Do not filter input data prior to similarity calculation.  May make processing faster."
+        ),
+        default=True,
+    )
+    experimental.add_argument(
         "--dispersioncalc",
         dest="dodispersioncalc",
         action="store_true",

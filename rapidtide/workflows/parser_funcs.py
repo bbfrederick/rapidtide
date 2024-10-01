@@ -137,6 +137,7 @@ def is_valid_tag(parser, arg):
 
 DEFAULT_FILTER_ORDER = 6
 DEFAULT_PAD_SECONDS = 30.0
+DEFAULT_PREFILTERPADTYPE = "reflect"
 DEFAULT_PERMUTATIONMETHOD = "shuffle"
 DEFAULT_NORMTYPE = "stddev"
 DEFAULT_FILTERBAND = "lfo"
@@ -395,10 +396,23 @@ def addfilteropts(
             metavar="SECONDS",
             help=(
                 "The number of seconds of padding to add to each end of a "
-                "filtered timecourse "
+                "timecourse to be filtered "
                 f"to reduce end effects.  Default is {DEFAULT_PAD_SECONDS}."
             ),
             default=DEFAULT_PAD_SECONDS,
+        )
+        filt_opts.add_argument(
+            "--padtype",
+            dest="ncfiltpadtype",
+            action="store",
+            type=str,
+            choices=["reflect", "zero", "constant"],
+            help=(
+                f"The type of padding at each end of a "
+                "timecourse to be filtered "
+                f'to reduce end effects.  Default is "{DEFAULT_PREFILTERPADTYPE}".'
+            ),
+            default=DEFAULT_PREFILTERPADTYPE,
         )
 
 
@@ -428,6 +442,10 @@ def postprocessfilteropts(args, debug=False):
         thepadseconds = args.padseconds
     except AttributeError:
         args.padseconds = DEFAULT_PAD_SECONDS
+    try:
+        prefilterpadtype = args.prefilterpadtype
+    except AttributeError:
+        args.prefilterpadtype = DEFAULT_PREFILTERPADTYPE
 
     # if passvec, or passvec and stopvec, are set, we are going set up an arbpass filter
     args.arbvec = None
@@ -456,6 +474,8 @@ def postprocessfilteropts(args, debug=False):
         theprefilter = tide_filt.NoncausalFilter(
             "arb",
             transferfunc=args.filtertype,
+            padtime=args.padseconds,
+            padtype=args.prefilterpadtype,
         )
         theprefilter.setfreqs(args.arbvec[2], args.arbvec[0], args.arbvec[1], args.arbvec[3])
     else:
@@ -463,6 +483,7 @@ def postprocessfilteropts(args, debug=False):
             args.filterband,
             transferfunc=args.filtertype,
             padtime=args.padseconds,
+            padtype=args.prefilterpadtype,
         )
 
     # set the butterworth order
