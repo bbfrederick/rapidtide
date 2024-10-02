@@ -60,7 +60,7 @@ os.environ["TF_USE_LEGACY_KERAS"] = "1"
 try:
     import tensorflow.compat.v1 as tf
 
-    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+    # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
     if tf.__version__[0] == "2":
         tfversion = 2
     elif tf.__version__[0] == "1":
