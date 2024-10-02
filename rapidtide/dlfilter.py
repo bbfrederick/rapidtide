@@ -79,7 +79,19 @@ import tensorflow.compat.v1 as tf
 LGR.debug("using tensorflow v2x")
 # tf.disable_v2_behavior()
 from tensorflow.keras.callbacks import ModelCheckpoint, TerminateOnNaN
-from tensorflow.keras.layers import LSTM, Activation, BatchNormalization, Bidirectional, Convolution1D, Dense, Dropout, GlobalMaxPool1D, MaxPooling1D, TimeDistributed, UpSampling1D,
+from tensorflow.keras.layers import (
+    LSTM,
+    Activation,
+    BatchNormalization,
+    Bidirectional,
+    Convolution1D,
+    Dense,
+    Dropout,
+    GlobalMaxPool1D,
+    MaxPooling1D,
+    TimeDistributed,
+    UpSampling1D,
+)
 
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import RMSprop
