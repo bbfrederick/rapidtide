@@ -57,23 +57,7 @@ mpl.use("Agg")
 
 os.environ["TF_USE_LEGACY_KERAS"] = "1"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
-
-"""try:
-    import tensorflow.compat.v1 as tf
-
-    # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-    if tf.__version__[0] == "2":
-        tfversion = 2
-    elif tf.__version__[0] == "1":
-        tfversion = 1
-    else:
-        LGR.warning(f"could not interpret {tf.__version__[0]}")
-    LGR.debug(f"tensorflow version is {tfversion}")
-except ImportError:
-    raise ImportError("no backend found - exiting")
-
-
-if tfversion == 2:"""
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import tensorflow.compat.v1 as tf
 
@@ -98,33 +82,6 @@ from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import RMSprop
 
 LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
-
-"""elif tfversion == 1:
-    LGR.debug("using tensorflow v1x")
-    from keras.callbacks import ModelCheckpoint, TerminateOnNaN
-    from keras.layers import (
-        LSTM,
-        Activation,
-        BatchNormalization,
-        Bidirectional,
-        Concatenate,
-        Conv1D,
-        Dense,
-        Dropout,
-        GlobalMaxPool1D,
-        Input,
-        MaxPooling1D,
-        TimeDistributed,
-        UpSampling1D,
-    )
-    from keras.models import Model, Sequential, load_model, model_from_json
-    from keras.optimizers import RMSprop
-
-    LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
-elif tfversion == 0:
-    pass
-else:
-    raise ImportError("could not find backend - exiting")"""
 
 
 class DeepLearningFilter:
