@@ -56,6 +56,7 @@ LGR.debug("setting backend to Agg")
 mpl.use("Agg")
 
 os.environ["TF_USE_LEGACY_KERAS"] = "1"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 """try:
     import tensorflow.compat.v1 as tf
@@ -293,7 +294,7 @@ class DeepLearningFilter:
         self.lossfilename = os.path.join(self.modelname, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
-        YPred = self.model.predict(self.val_x)
+        YPred = self.model.predict(self.val_x, verbose=0)
 
         error = self.val_y - YPred
         self.pred_error = np.mean(np.square(error))
@@ -459,7 +460,7 @@ class DeepLearningFilter:
             for i in range(X.shape[0]):
                 X[i, :, 0] = scaleddata[i : i + self.window_size]
 
-        Y = self.model.predict(X)
+        Y = self.model.predict(X, verbose=0)
         for i in range(X.shape[0]):
             predicteddata[i : i + self.window_size] += Y[i, :, 0]
 
