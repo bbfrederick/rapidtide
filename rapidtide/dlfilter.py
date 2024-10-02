@@ -57,7 +57,7 @@ mpl.use("Agg")
 
 os.environ["TF_USE_LEGACY_KERAS"] = "1"
 
-try:
+"""try:
     import tensorflow.compat.v1 as tf
 
     # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -72,28 +72,21 @@ except ImportError:
     raise ImportError("no backend found - exiting")
 
 
-if tfversion == 2:
-    LGR.debug("using tensorflow v2x")
-    tf.disable_v2_behavior()
-    from tensorflow.keras.callbacks import ModelCheckpoint, TerminateOnNaN
-    from tensorflow.keras.layers import (
-        LSTM,
-        Activation,
-        BatchNormalization,
-        Bidirectional,
-        Convolution1D,
-        Dense,
-        Dropout,
-        GlobalMaxPool1D,
-        MaxPooling1D,
-        TimeDistributed,
-        UpSampling1D,
-    )
-    from tensorflow.keras.models import Sequential, load_model
-    from tensorflow.keras.optimizers import RMSprop
+if tfversion == 2:"""
 
-    LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
-elif tfversion == 1:
+import tensorflow.compat.v1 as tf
+
+LGR.debug("using tensorflow v2x")
+# tf.disable_v2_behavior()
+from tensorflow.keras.callbacks import ModelCheckpoint, TerminateOnNaN
+from tensorflow.keras.layers import LSTM, Activation, BatchNormalization, Bidirectional, Convolution1D, Dense, Dropout, GlobalMaxPool1D, MaxPooling1D, TimeDistributed, UpSampling1D,
+
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.optimizers import RMSprop
+
+LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
+
+"""elif tfversion == 1:
     LGR.debug("using tensorflow v1x")
     from keras.callbacks import ModelCheckpoint, TerminateOnNaN
     from keras.layers import (
@@ -118,7 +111,7 @@ elif tfversion == 1:
 elif tfversion == 0:
     pass
 else:
-    raise ImportError("could not find backend - exiting")
+    raise ImportError("could not find backend - exiting")"""
 
 
 class DeepLearningFilter:
@@ -371,7 +364,6 @@ class DeepLearningFilter:
             self.model.load_weights(os.path.join(self.modelname, "model_weights.h5"))
         if verbose:
             self.model.summary()
-        LGR.info(f"{modelname} loaded")
 
         # now load additional information
         self.infodict = tide_io.readdictfromjson(
@@ -383,6 +375,7 @@ class DeepLearningFilter:
         # model is ready to use
         self.initialized = True
         self.trained = True
+        LGR.info(f"{modelname} loaded")
 
     def initialize(self):
         self.getname()
