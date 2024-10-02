@@ -22,6 +22,7 @@ import platform
 import sys
 import time
 import warnings
+from pathlib import Path
 
 import numpy as np
 from tqdm import tqdm
@@ -70,6 +71,9 @@ def happy_main(argparsingfunc):
     fmrifilename = args.fmrifilename
     slicetimename = args.slicetimename
     outputroot = args.outputroot
+
+    # create the canary file
+    Path(f"{outputroot}_ISRUNNING.txt").touch()
 
     # if we are running in a Docker container, make sure we enforce memory limits properly
     try:
@@ -1821,3 +1825,9 @@ def happy_main(argparsingfunc):
     )
 
     tide_util.logmem("final")
+
+    # delete the canary file
+    Path(f"{outputroot}_ISRUNNING.txt").unlink()
+
+    # create the finished file
+    Path(f"{outputroot}_DONE.txt").touch()

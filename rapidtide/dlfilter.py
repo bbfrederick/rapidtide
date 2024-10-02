@@ -55,48 +55,22 @@ LGR = logging.getLogger("GENERAL")
 LGR.debug("setting backend to Agg")
 mpl.use("Agg")
 
-tfversion = -1
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
+
 try:
-    import plaidml.keras
+    import tensorflow.compat.v1 as tf
 
-    plaidml.keras.install_backend("plaidml")
-    tfversion = 0
-    LGR.debug("using plaidml keras")
-    from keras.callbacks import ModelCheckpoint, TerminateOnNaN
-    from keras.layers import (
-        LSTM,
-        Activation,
-        BatchNormalization,
-        Bidirectional,
-        Concatenate,
-        Conv1D,
-        Dense,
-        Dropout,
-        GlobalMaxPool1D,
-        Input,
-        MaxPooling1D,
-        TimeDistributed,
-        UpSampling1D,
-    )
-    from keras.models import Model, Sequential, load_model
-    from keras.optimizers import RMSprop
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+    if tf.__version__[0] == "2":
+        tfversion = 2
+    elif tf.__version__[0] == "1":
+        tfversion = 1
+    else:
+        LGR.warning(f"could not interpret {tf.__version__[0]}")
+    LGR.debug(f"tensorflow version is {tfversion}")
 except ImportError:
-    tfversion = -1
-    LGR.warning("import plaidml.keras failed: falling back to standard tensorflow keras")
+    raise ImportError("no backend found - exiting")
 
-if tfversion == -1:
-    try:
-        import tensorflow.compat.v1 as tf
-
-        if tf.__version__[0] == "2":
-            tfversion = 2
-        elif tf.__version__[0] == "1":
-            tfversion = 1
-        else:
-            LGR.warning(f"could not interpret {tf.__version__[0]}")
-        LGR.debug(f"tensorflow version is {tfversion}")
-    except ImportError:
-        raise ImportError("no backend found - exiting")
 
 if tfversion == 2:
     LGR.debug("using tensorflow v2x")

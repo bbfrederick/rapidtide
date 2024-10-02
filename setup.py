@@ -258,10 +258,10 @@ setup(
         "statsmodels",
         "pywavelets",
         "tomlkit",
+        "tensorflow>=2.10.0",
+        "tf-keras",
         "tqdm",
     ],
-    # "keras",
-    # "tensorflow>=2.4.0",
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:

@@ -36,6 +36,8 @@ dependencies = [
   'statsmodels',
   'pywavelets',
   'tomlkit',
+  'tensorflow>=2.10.0',
+  'tf-keras',
   'tqdm',
 ]
 #dynamic = ['version', 'license', 'keywords']
