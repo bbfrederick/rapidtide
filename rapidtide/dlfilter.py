@@ -371,6 +371,7 @@ class DeepLearningFilter:
             self.model.load_weights(os.path.join(self.modelname, "model_weights.h5"))
         if verbose:
             self.model.summary()
+        LGR.info(f"{modelname} loaded")
 
         # now load additional information
         self.infodict = tide_io.readdictfromjson(
