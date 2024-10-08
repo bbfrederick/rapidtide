@@ -251,6 +251,9 @@ def rapidtide_main(argparsingfunc):
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
 
+    # delete the old completion file, if present
+    Path(f"{outputname}_DONE.txt").unlink(missing_ok=True)
+
     # create the canary file
     Path(f"{outputname}_ISRUNNING.txt").touch()
 
