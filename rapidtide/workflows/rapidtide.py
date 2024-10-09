@@ -692,7 +692,7 @@ def rapidtide_main(argparsingfunc):
                     tide_stats.makemask(stdim, threshpct=optiondict["corrmaskthreshpct"])
                 )
     if internalbrainmask is not None:
-        corrmask *= internalbrainmask
+        corrmask = internalbrainmask
     if tide_stats.getmasksize(corrmask) == 0:
         raise ValueError("ERROR: there are no voxels in the correlation mask - exiting")
 
