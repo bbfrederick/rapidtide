@@ -73,7 +73,7 @@ def happy_main(argparsingfunc):
     outputroot = args.outputroot
 
     # delete the old completion file, if present
-    Path(f"{outputname}_DONE.txt").unlink(missing_ok=True)
+    Path(f"{outputroot}_DONE.txt").unlink(missing_ok=True)
 
     # create the canary file
     Path(f"{outputroot}_ISRUNNING.txt").touch()
