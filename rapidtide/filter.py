@@ -159,8 +159,8 @@ def padvec(inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debu
                     )
                 )
             elif padtype == "constant+":
-                startval = np.mean(inputdata[0:avlen]).astype(inputdtype)
-                endval = np.mean(inputdata[-avlen:]).astype(inputdtype)
+                startval = np.mean(inputdata[0:avlen])
+                endval = np.mean(inputdata[-avlen:])
                 return np.concatenate(
                     (
                         startval * np.ones((padlen), dtype=inputdtype),
