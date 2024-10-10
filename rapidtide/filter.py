@@ -80,7 +80,7 @@ def disablenumba():
 
 
 @conditionaljit()
-def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect", debug=False):
+def padvec(inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debug=False):
     r"""Returns a padded copy of the input data; padlen points of
     reflected data are prepended and appended to the input data to reduce
     end effects when the data is then filtered.
@@ -113,6 +113,8 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect", debug=False):
         print(
             "padvec: padlen=",
             padlen,
+            "avlen=",
+            avlen,
             ", cyclic=",
             cyclic,
             ", padtype=",
@@ -128,6 +130,8 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect", debug=False):
             len(inputdata),
             ")",
         )
+    if avlen > padlen:
+        avlen = padlen
 
     inputdtype = inputdata.dtype
     if padlen > 0:
@@ -152,6 +156,14 @@ def padvec(inputdata, padlen=20, cyclic=False, padtype="reflect", debug=False):
                         inputdata[0] * np.ones((padlen), dtype=inputdtype),
                         inputdata,
                         inputdata[-1] * np.ones((padlen), dtype=inputdtype),
+                    )
+                )
+            elif padtype == "constant+":
+                return np.concatenate(
+                    (
+                        np.mean(inputdata[0:avlen]) * np.ones((padlen), dtype=inputdtype),
+                        inputdata,
+                        np.mean(inputdata[-avlen:-1]) * np.ones((padlen), dtype=inputdtype),
                     )
                 )
             else:
@@ -1743,8 +1755,8 @@ class NoncausalFilter:
         else:
             self.lowerstop = 0.0
             self.lowerpass = 0.0
-            self.upperpass = -1.0
-            self.upperstop = -1.0
+            self.upperpass = 1.0e20
+            self.upperstop = 1.0e20
 
     def gettype(self):
         return self.filtertype
