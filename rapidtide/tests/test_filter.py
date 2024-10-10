@@ -33,6 +33,10 @@ def spectralfilterprops(thefilter, thefiltername, debug=False):
     upperstopindex = int(
         np.min([np.ceil(upperstop / freqspace), len(thefilter["frequencies"]) - 1])
     )
+    lowerstopindex = np.max([0, lowerstopindex])
+    lowerpassindex = np.max([0, lowerpassindex])
+    upperstopindex = np.min([len(thefilter["frequencies"]), upperstopindex])
+    upperpassindex = np.min([len(thefilter["frequencies"]), upperpassindex])
     if debug:
         print("filter name:", thefiltername)
         print("freqspace:", freqspace)
@@ -121,7 +125,7 @@ def eval_filterprops(
                     }
                 )
 
-    """'# make the lowpass filters
+    # make the lowpass filters
     for transferfunc in transferfunclist:
         testfilter = NoncausalFilter(
                         filtertype='arb',
@@ -146,7 +150,7 @@ def eval_filterprops(
                         filtertype='arb',
                         transferfunc=transferfunc,
                         initlowerstop=0.09, initlowerpass=0.1,
-                        initupperpass=-1.0, initupperstop=-1.0)
+                        initupperpass=1.0e20, initupperstop=1.0e20)
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
             allfilters.append(
@@ -156,8 +160,8 @@ def eval_filterprops(
                                 filtertype='arb',
                                 transferfunc=transferfunc,
                                 initlowerstop=0.09, initlowerpass=0.1,
-                                initupperpass=-1.0, initupperstop=-1.0, debug=False)
-                })"""
+                                initupperpass=1.0e20, initupperstop=1.0e20, debug=False)
+                })
 
     # calculate the transfer functions for the filters
     for index in range(0, len(allfilters)):
@@ -231,23 +235,30 @@ def eval_filterprops(
         }
     )
 
+    scratch = timeaxis * 0.0
+    scratch[int(tclen / 2):] = 1.0
+    testwaves.append(
+        {
+            "name": "step regressor",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 1.0 * scratch,
+        }
+    )
+
     # show the end effects waveforms
     if displayplots:
-        legend = []
         plt.figure()
         plt.ylim([-2.2, 2.2 * len(testwaves)])
-        offset = 0.0
         for thewave in testwaves:
+            legend = []
+            offset = 0.0
             for thefilter in allfilters:
                 plt.plot(
                     thewave["timeaxis"],
                     offset + thefilter["filter"].apply(1.0 / sampletime, thewave["waveform"]),
                 )
                 legend.append(thewave["name"] + ": " + thefilter["name"])
-                offset += 1.0
-            # plt.plot(thewave['timeaxis'], thewave['waveform'] + offset)
-            # legend.append(thewave['name'])
-            # offset += 2.2
+                offset += 1.25
             plt.legend(legend)
             plt.show()
 
