@@ -163,9 +163,9 @@ def padvec(inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debu
                 endval = np.mean(inputdata[-avlen:])
                 return np.concatenate(
                     (
-                        startval * np.ones((padlen), dtype=inputdtype),
+                        (startval * np.ones((padlen), dtype=inputdtype)).astype(inputdtype),
                         inputdata,
-                        endval * np.ones((padlen), dtype=inputdtype),
+                        (endval * np.ones((padlen), dtype=inputdtype)).astype(inputdtype),
                     )
                 )
             else:
