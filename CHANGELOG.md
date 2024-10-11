@@ -1,11 +1,12 @@
 # Release history
 
-## Version 2.9.9 (10/8/24)
+## Version 2.9.9 (10/11/24)
 * (rapidtide) Changed correlation mask to use brain mask as correlation mask if provided.
 * (rapidtide,happy) Improved creation and deletion of canary files.
 * (dlfilter) Simplified to support only newer versions of tensorflow 2.X and fix some deprecation problems.
 * (atlastool) Fixed 4D processing.
 * (showtc) Allowed display of timecourses with different x axes on the same timeline.
+* (package) Enhanced filter testing.
 * (package) Updated requirements to fix tensorflow installation.
 * (package) Merged some dependabot PRs.
 
