@@ -74,7 +74,7 @@ def spectralfilterprops(thefilter, thefiltername, debug=False):
     upperstopindex = int(
         np.min([np.ceil(upperstop / freqspace), len(thefilter["frequencies"]) - 1])
     )
-    print(f"max allowable index: {len(thefilter["frequencies"]) - 1}")
+    print(f"max allowable index: {len(thefilter['frequencies']) - 1}")
     lowerstopindex = np.max([0, lowerstopindex])
     lowerpassindex = np.max([0, lowerpassindex])
     upperstopindex = np.min([len(thefilter["frequencies"]) - 1, upperstopindex])
