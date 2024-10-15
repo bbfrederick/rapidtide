@@ -326,6 +326,7 @@ def addfilteropts(
             "hrv_hf",
             "hrv_vhf",
             "lfo_legacy",
+            "lfo_tight",
         ],
         help=(
             f'Filter {filtertarget} to specific band. Use "None" to disable filtering.  '
