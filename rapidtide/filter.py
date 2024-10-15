@@ -1757,6 +1757,11 @@ class NoncausalFilter:
         self.LF_LEGACY_LOWERSTOP = 0.009
         self.LF_LEGACY_UPPERSTOP = 0.2
 
+        self.LF_TIGHT_LOWERPASS = 0.01
+        self.LF_TIGHT_UPPERPASS = 0.10
+        self.LF_TIGHT_LOWERSTOP = self.LF_TIGHT_LOWERPASS * (1.0 - self.transitionfrac)
+        self.LF_TIGHT_UPPERSTOP = self.LF_TIGHT_UPPERPASS * (1.0 + self.transitionfrac)
+
         self.RESP_LOWERPASS = 0.2
         self.RESP_UPPERPASS = 0.5
         self.RESP_LOWERSTOP = self.RESP_LOWERPASS * (1.0 - self.transitionfrac)
@@ -1809,6 +1814,11 @@ class NoncausalFilter:
             self.lowerpass = 1.0 * self.LF_LEGACY_LOWERPASS
             self.upperpass = 1.0 * self.LF_LEGACY_UPPERPASS
             self.upperstop = 1.0 * self.LF_LEGACY_UPPERSTOP
+        elif self.filtertype == "lfo_tight" or self.filtertype == "lfo_tight_stop":
+            self.lowerstop = 1.0 * self.LF_TIGHT_LOWERSTOP
+            self.lowerpass = 1.0 * self.LF_TIGHT_LOWERPASS
+            self.upperpass = 1.0 * self.LF_TIGHT_UPPERPASS
+            self.upperstop = 1.0 * self.LF_TIGHT_UPPERSTOP
         elif self.filtertype == "resp" or self.filtertype == "resp_stop":
             self.lowerstop = 1.0 * self.RESP_LOWERSTOP
             self.lowerpass = 1.0 * self.RESP_LOWERPASS
@@ -2071,6 +2081,7 @@ class NoncausalFilter:
             self.filtertype == "vlf"
             or self.filtertype == "lfo"
             or self.filtertype == "lfo_legacy"
+            or self.filtertype == "lfo_tight"
             or self.filtertype == "resp"
             or self.filtertype == "cardiac"
             or self.filtertype == "hrv_ulf"
@@ -2098,6 +2109,7 @@ class NoncausalFilter:
             self.filtertype == "vlf_stop"
             or self.filtertype == "lfo_stop"
             or self.filtertype == "lfo_legacy_stop"
+            or self.filtertype == "lfo_tight_stop"
             or self.filtertype == "resp_stop"
             or self.filtertype == "cardiac_stop"
             or self.filtertype == "hrv_ulf_stop"
