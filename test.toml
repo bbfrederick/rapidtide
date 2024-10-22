@@ -69,6 +69,7 @@ doc = [
   'sphinx-gallery',
   'myst-parser',
   'numpydoc',
+  'sphinxcontrib-bibtex',
 ]
 
 #[project.scripts]

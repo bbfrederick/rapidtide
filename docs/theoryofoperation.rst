@@ -225,19 +225,26 @@ or from being used in refinement.
 Initial Moving Signal Estimation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can stabilize and improve rapidtide's delay estimation quite a bit by making sure you have a good starting
-regressor, estimating the global mean signal from "good" brain regions that don't have wacky delay structures.
-While just using the whole brain works well in young, healthy subjects (like the HCP-YA dataset), as people get older,
-their delays become weird - my working theory is that over time various routine vascular insults and unhealthy habits
-accumulate, leading to increasing heterogeneity between vascular territories (which I like to call "vascular
-personality"). So the global mean may be made up of several pools of blood, delayed by up to several seconds
-relative to each other, leading to weird autocorrelation in the global mean (essentially, confusing echoes of the
-moving signal) that can confuse my delay finding algorithm, because it
-invalidates my assumption that the global mean is a good initial estimate of the "true" moving regressor.
-One way to combat this is to limit the brain region that you get your initial regressor from, so that you are only
-sampling a single "pool" of delays. For example, you
-could use a gray matter mask for the global regresor estimation, since white matter has a smaller contribution from
-the moving blood signal, and tends to get blood much later than gray matter anyway.
+You can stabilize and improve rapidtide's delay estimation quite a bit by
+making sure you have a good starting regressor,
+estimating the global mean signal from "good" brain regions that don't have wacky delay structures.
+While just using the whole brain works well in young, healthy subjects (like the HCP-YA dataset),
+as people get older, their delays become weird -
+my working theory is that over time various routine vascular insults and unhealthy habits accumulate,
+leading to increasing heterogeneity between vascular territories
+(which I like to call "vascular personality").
+So the global mean may be made up of several pools of blood,
+delayed by up to several seconds relative to each other,
+leading to weird autocorrelation in the global mean
+(essentially, confusing echoes of the moving signal)
+that can confuse my delay finding algorithm,
+because it invalidates my assumption that the global mean is a good initial estimate of the
+"true" moving regressor.
+One way to combat this is to limit the brain region that you get your initial regressor from,
+so that you are only sampling a single "pool" of delays.
+For example, you could use a gray matter mask for the global regresor estimation,
+since white matter has a smaller contribution from the moving blood signal,
+and tends to get blood much later than gray matter anyway.
 
 Just add the option ``--graymattermask graymask.nii.gz`` to your rapidtide command line.
 If you are using fMRIPrep, you can use the gray matter probabilistic map directly,
@@ -481,12 +488,19 @@ So why don't we use it for everything?  A couple of reasons.
 
 Use ``--similaritymetric mutualinfo`` to select MI.
 
-**Hybrid similarity:**  I'm kind of proud of this one.  Crosscorrelation is fast and interpretable, but has the
-problem of ambiguous time delay values, whereas
-cross-MI is very slow and hard to interpret, but quite unambiguous in selecting the best match.  Enter "hybrid similarity" -
-Use the crosscorrelation to identify candidate peaks, then calculate the MI only at those peak locations, pick the one
-that has the higher MI, and then proceed to the fitting step for full quantification.  This is almost as fast as
-straight correlation, but does tend to be more stable. Use ``--similaritymetric hybrid`` to select hybrid similarity.
+**Hybrid similarity:**  I'm kind of proud of this one.
+Crosscorrelation is fast and interpretable,
+but has the problem of ambiguous time delay values,
+whereas cross-MI is very slow and hard to interpret,
+but quite unambiguous in selecting the best match.
+Enter "hybrid similarity" -
+Use the crosscorrelation to identify candidate peaks,
+then calculate the MI only at those peak locations,
+pick the one that has the higher MI,
+and then proceed to the fitting step for full quantification.
+This is almost as fast as straight correlation,
+but does tend to be more stable.
+Use ``--similaritymetric hybrid`` to select hybrid similarity.
 
 Peak fitting and quantification
 """""""""""""""""""""""""""""""
@@ -557,8 +571,8 @@ moving sLFO signal into alignment.
 Prescaling
 """"""""""
 
-We then prenormalize the voxels to use in the fit using their mean, variance, or standard deviation over time,
-the inverse of the lag time, or leave them unscaled.
+We then prenormalize the voxels to use in the fit using their mean, variance,
+or standard deviation over time, the inverse of the lag time, or leave them unscaled.
 Selection is via the ``--refineprenorm`` option.
 The default is to do no prenormalization.
 
@@ -610,18 +624,22 @@ specified by ``--maxpasses MAX`` (default is 15).
 Regress Out the Moving Signal
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now that we have optimized the moving blood signal and have final estimates of blood arrival time at each voxel,
+Now that we have optimized the moving blood signal and have final estimates of blood
+arrival time at each voxel,
 we can do the final regression to (intelligently) remove the sLFO signal from the data.
 By default, this is done on the original, unmodified data -
-i.e. none of the spatial or temporal filtering, masking, confound regression, or anything else has been done.
+i.e. none of the spatial or temporal filtering, masking, confound regression,
+or anything else has been done.
 The reason for this is that some of the operations may be needed to get a good sLFO regressor estimate,
-or a good delay map, but they could interfere with whatever further analysis you might want to do after sLFO removal.
+or a good delay map,
+but they could interfere with whatever further analysis you might want to do after sLFO removal.
 You can always do them later if you want.
 Also, if you really want to keep all those manipulations,
 you can choose to by selecting ``--preservefiltering``.
 But don't.
 
-Alternately, instead of loading the original file, you can load a _different_ file, and denoise that instead.
+Alternately, instead of loading the original file, you can load a _different_ file,
+and denoise that instead.
 Why would you want to do that?
 This is here for a very particular reason.
 HCP data uses FIX, a really spiffy ICA noise removal tool that cleans things up quite a bit.
@@ -630,7 +648,8 @@ it does tend to remove a lot of hemodynamic signal in some regions,
 particularly around the superior sagittal sinus.
 That makes rapidtide's sLFO estimation and refinement process a lot less stable.
 So you really want to do that estimation on non-FIX'ed data (the "minimally processed" data).
-Ideally, you would then run FIX on the rapidtide cleaned data, but that's a lot of computation that you don't necessarily want to do.
+Ideally, you would then run FIX on the rapidtide cleaned data,
+but that's a lot of computation that you don't necessarily want to do.
 So a cheat is to regress the voxel specific noise regressors out of the FIX cleaned data.
 Since the operations are linear, the order shouldn't matter
 (waves hands to distract from the fact that FIX has probably generated some spurious negative correlations

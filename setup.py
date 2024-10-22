@@ -274,6 +274,7 @@ setup(
             "sphinx-gallery",
             "myst-parser",
             "numpydoc",
+            "sphinxcontrib-bibtex",
         ],
         "tests": [
             "codecov",
