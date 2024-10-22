@@ -323,6 +323,11 @@ you need to create a reduced version of the confounds file with only the columns
 
 You can also load the confounds file to identify non-steady-state volumes to use for the ``--numtozero`` parameter.
 
+fMRIPrep includes the TR in the output NIfTI files' headers, so you don't need to provide ``--datatstep``,
+and it usually performs slice timing correction
+(unless you don't have slice timing information in your BIDS dataset or choose ``--ignore slicetiming``),
+so you don't need to use ``--slicetiming``.
+
 **AFNI** - Here's a case where you have to take some care - as I mentioned above, rapidtide assumes "FSL-like" data by
 default.  The most important difference between AFNI and FSL preprocessing (assuming you've put your AFNI data into
 NIFTI format) is that AFNI removes the mean from the preprocessed fMRI data

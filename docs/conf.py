@@ -375,15 +375,26 @@ linkcode_resolve = make_linkcode_resolve(
     "https://github.com/bbfrederick/" "rapidtide/blob/{revision}/" "{package}/{path}#L{lineno}",
 )
 
-# Example configuration for intersphinx: refer to the Python standard library.
+# -----------------------------------------------------------------------------
+# intersphinx
+# -----------------------------------------------------------------------------
+_python_version_str = f"{sys.version_info.major}.{sys.version_info.minor}"
+_python_doc_base = f"https://docs.python.org/{_python_version_str}"
 intersphinx_mapping = {
-    "http://docs.python.org/3.6": None,
-    "http://docs.scipy.org/doc/numpy": None,
-    "http://docs.scipy.org/doc/scipy/reference": None,
-    "http://matplotlib.org/": None,
-    "http://scikit-learn.org/stable": None,
-    "http://nipy.org/nibabel/": None,
-    "http://pandas.pydata.org/pandas-docs/stable/": None,
+    "python": (_python_doc_base, None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": (
+        "https://docs.scipy.org/doc/scipy/reference",
+        (None, "./_intersphinx/scipy-objects.inv"),
+    ),
+    "matplotlib": (
+        "https://matplotlib.org/stable/",
+        (None, "https://matplotlib.org/stable/objects.inv"),
+    ),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "nibabel": ("https://nipy.org/nibabel/", None),
+    "nilearn": ("http://nilearn.github.io/stable/", None),
+    "scikit-learn": ("http://scikit-learn.org/stable", None),
 }
 
 sphinx_gallery_conf = {
