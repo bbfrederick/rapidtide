@@ -277,10 +277,12 @@ distortion correction and alignment steps done in the HCP distort the stripes, b
 average enough subjects though, they get washed out.
 
 **Spatial filtering** - I generally do NOT apply any spatial filtering
-during preprocessing for a variety of reasons.  fMRIPrep doesn't do it, so I feel validated in this choice.
+during preprocessing for a variety of reasons.
+fMRIPrep doesn't do it, so I feel validated in this choice.
 You can always do it later, and rapidtide lets you do spatial smoothing for the purpose of
-estimating the delayed regressor using the ``--gausssigma`` parameter.  This turns out to stabilize the fits for
-rapidtide and is usually a good thing, however you probably don't want it for other processing (but that's ok - see below).
+estimating the delayed regressor using the ``--gausssigma`` parameter.
+This turns out to stabilize the fits for rapidtide and is usually a good thing,
+however you probably don't want it for other processing (but that's ok - see below).
 
 **Temporal filtering** - Rapidtide does all it's own temporal filtering; highpass filtering at 0.01Hz, common in r
 esting state preprocessing,
@@ -327,6 +329,21 @@ fMRIPrep includes the TR in the output NIfTI files' headers, so you don't need t
 and it usually performs slice timing correction
 (unless you don't have slice timing information in your BIDS dataset or choose ``--ignore slicetiming``),
 so you don't need to use ``--slicetiming``.
+
+For most non-clinical participants,
+we recommend using the tissue type masks provided by fMRIPrep for many of the masks used in rapidtide.
+For example:
+
+.. bash::
+
+    rapidtide \
+        sub-XXX/func/sub-XXX_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz \
+        /path/to/rapidtide/sub-XXX_task-rest_space-MNI152NLin6Asym_res-2 \
+        --brainmask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz \
+        --graymattermask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-GM_probseg.nii.gz \
+        --whitemattermask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-WM_probseg.nii.gz \
+        --motionfile sub-XXX/func/sub-XXX_task-rest_desc-confounds_timeseries.tsv
+
 
 **AFNI** - Here's a case where you have to take some care - as I mentioned above, rapidtide assumes "FSL-like" data by
 default.  The most important difference between AFNI and FSL preprocessing (assuming you've put your AFNI data into

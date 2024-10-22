@@ -211,22 +211,18 @@ One way to combat this is to limit the brain region that you get your initial re
 sampling a single "pool" of delays. For example, you
 could use a gray matter mask for the global regresor estimation, since white matter has a smaller contribution from
 the moving blood signal, and tends to get blood much later than gray matter anyway.
-Just add the option ``--globalmeaninclude graymask.nii.gz`` to your rapidtide command line.
-If you are using fMRIPrep, you can get a gray matter mask using:
 
-::
+Just add the option ``--graymattermask graymask.nii.gz`` to your rapidtide command line.
+If you are using fMRIPrep, you can use the gray matter probabilistic map directly,
+as rapidtide will threshold it automatically:
 
-  fslmaths \
-      BIDSHOME/derivatives/fmriprep/sub-XXX/anat/sub-YYY_space-MNI152NLin6Asym_res-2_label-GM_probseg.nii.gz \
-      -s 3 \
-      -thr 0.25 \
-      -bin \
-      graymask
+.. bash::
 
-.. tip::
-
-   It's often a good idea to use that gray matter mask for the
-   ``--refineinclude`` and ``--offsetinclude`` parameters as well.
+    rapidtide \
+        ... \
+        --brainmask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz \
+        --graymattermask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-GM_probseg.nii.gz \
+        --whitemattermask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-WM_probseg.nii.gz
 
 If you want to be even more proactive, you could select a more focal brain region that you think has unperturbed circulation.
 For an Alzheimer's study that I am currently working on, we ended up starting only from blood in right and
