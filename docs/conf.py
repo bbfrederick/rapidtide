@@ -17,8 +17,6 @@ import os
 import sys
 from datetime import datetime
 
-from recommonmark.parser import CommonMarkParser
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -74,10 +72,10 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
+    "myst_parser",
     "numpydoc",
     "sphinx.ext.ifconfig",
     "sphinx.ext.linkcode",
-    "recommonmark",
     "sphinx_gallery.gen_gallery",
 ]
 

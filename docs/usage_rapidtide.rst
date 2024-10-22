@@ -334,7 +334,7 @@ For most non-clinical participants,
 we recommend using the tissue type masks provided by fMRIPrep for many of the masks used in rapidtide.
 For example:
 
-.. bash::
+.. code-block:: bash
 
     rapidtide \
         sub-XXX/func/sub-XXX_task-rest_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz \

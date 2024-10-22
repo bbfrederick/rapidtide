@@ -272,8 +272,8 @@ setup(
             "sphinx_rtd_theme",
             "sphinx-argparse",
             "sphinx-gallery",
+            "myst-parser",
             "numpydoc",
-            "recommonmark",
         ],
         "tests": [
             "codecov",
