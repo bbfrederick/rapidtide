@@ -1,11 +1,14 @@
 # Release history
 
 ## Version 2.9.9 (10/11/24)
+* (docs) Integrated lots of documentation upgrades from Taylor Salo (tsalo).
 * (rapidtide) Changed correlation mask to use brain mask as correlation mask if provided.
+* (rapidtide) Lowered the default lagminthresh, lagmaxthresh.
 * (rapidtide,happy) Improved creation and deletion of canary files.
 * (dlfilter) Simplified to support only newer versions of tensorflow 2.X and fix some deprecation problems.
 * (atlastool) Fixed 4D processing.
 * (showtc) Allowed display of timecourses with different x axes on the same timeline.
+* (package) Defined a new filter band - "lfo_tight" from 0.01-0.1Hz (matches a lot of papers).
 * (package) Enhanced filter testing.
 * (package) Updated requirements to fix tensorflow installation.
 * (package) Merged some dependabot PRs.

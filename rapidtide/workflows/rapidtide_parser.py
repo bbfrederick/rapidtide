@@ -1892,7 +1892,8 @@ def process_args(inputargs=None):
         args["brainmaskincludename"] = None
         args["brainmaskincludevals"] = None
 
-    # if graymatterincludespec is set, set globalmeaninclude and offsetinclude to it.
+    # if graymatterincludespec is set, set globalmeaninclude, offsetinclude to it.
+    graymasks = ["globalmean", "offset"]
     if args["graymatterincludespec"] is not None:
         (
             args["graymatterincludename"],
@@ -1902,27 +1903,21 @@ def process_args(inputargs=None):
         )
         if not os.path.isfile(args["graymatterincludename"]):
             raise FileNotFoundError(f"file {args['graymatterincludename']} does not exist.")
-        (
-            args["globalmeanincludename"],
-            args["globalmeanincludevals"],
-        ) = (
-            args["graymatterincludename"],
-            args["graymatterincludevals"],
-        )
-        (
-            args["offsetincludename"],
-            args["offsetincludevals"],
-        ) = (
-            args["graymatterincludename"],
-            args["graymatterincludevals"],
-        )
+        for masktype in graymasks:
+            (
+                args[f"{masktype}includename"],
+                args[f"{masktype}includevals"],
+            ) = (
+                args["graymatterincludename"],
+                args["graymatterincludevals"],
+            )
+            print(f"setting {masktype}include mask to gray matter mask")
     else:
         args["graymatterincludename"] = None
         args["graymatterincludevals"] = None
-        args["globalmeanincludename"] = None
-        args["globalmeanincludevals"] = None
-        args["offsetincludename"] = None
-        args["offsetincludevals"] = None
+        for masktype in graymasks:
+            args[f"{masktype}includename"] = None
+            args[f"{masktype}includevals"] = None
 
     if args["whitematterincludespec"] is not None:
         (
