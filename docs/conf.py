@@ -77,6 +77,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.linkcode",
     "sphinx_gallery.gen_gallery",
+    "sphinxcontrib.bibtex",
 ]
 
 from distutils.version import LooseVersion
@@ -386,6 +387,17 @@ intersphinx_mapping = {
     "scikit-learn": ("http://scikit-learn.org/stable", None),
 }
 
+# -----------------------------------------------------------------------------
+# sphinxcontrib-bibtex
+# -----------------------------------------------------------------------------
+bibtex_bibfiles = ["references.bib"]
+bibtex_style = "unsrt"
+bibtex_reference_style = "author_year"
+bibtex_footbibliography_header = ""
+
+# -----------------------------------------------------------------------------
+# sphinx gallery
+# -----------------------------------------------------------------------------
 sphinx_gallery_conf = {
     # path to your examples scripts
     "examples_dirs": "../examples",
