@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.9.9.1 (10/22/24)
+* (docs) More documentation enhancements by tsalo.
+* (docs) Updated requirements.txt file to reflect recent documentation changes so readthedocs build would complete.
+* (docs) Added a new reference.
+
 ## Version 2.9.9 (10/22/24)
 * (docs) Integrated lots of documentation upgrades from Taylor Salo (tsalo).
 * (rapidtide) Changed correlation mask to use brain mask as correlation mask if provided.

@@ -26,9 +26,11 @@ cycler==0.12.1
 docutils==0.21.2
     # via
     #   myst-parser
+    #   pybtex-docutils
     #   sphinx
     #   sphinx-argparse
     #   sphinx-rtd-theme
+    #   sphinxcontrib-bibtex
 flatbuffers==24.3.25
     # via tensorflow
 fonttools==4.54.1
@@ -63,6 +65,8 @@ keras==3.6.0
     # via tensorflow
 kiwisolver==1.4.7
     # via matplotlib
+latexcodec==3.0.0
+    # via pybtex
 lazy-loader==0.4
     # via scikit-image
 libclang==18.1.1
@@ -162,6 +166,12 @@ protobuf==4.25.5
     #   tensorflow
 pyarrow==17.0.0
     # via rapidtide (../setup.py)
+pybtex==0.24.0
+    # via
+    #   pybtex-docutils
+    #   sphinxcontrib-bibtex
+pybtex-docutils==1.0.3
+    # via sphinxcontrib-bibtex
 pygments==2.18.0
     # via
     #   rich
@@ -181,7 +191,9 @@ pytz==2024.2
 pywavelets==1.7.0
     # via rapidtide (../setup.py)
 pyyaml==6.0.2
-    # via myst-parser
+    # via
+    #   myst-parser
+    #   pybtex
 requests==2.32.3
     # via
     #   nilearn
@@ -208,6 +220,7 @@ six==1.16.0
     #   astunparse
     #   google-pasta
     #   patsy
+    #   pybtex
     #   python-dateutil
     #   tensorboard
     #   tensorflow
@@ -221,6 +234,7 @@ sphinx==8.1.3
     #   sphinx-argparse
     #   sphinx-gallery
     #   sphinx-rtd-theme
+    #   sphinxcontrib-bibtex
     #   sphinxcontrib-jquery
 sphinx-argparse==0.5.2
     # via rapidtide (../setup.py)
@@ -230,6 +244,8 @@ sphinx-rtd-theme==3.0.1
     # via rapidtide (../setup.py)
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
+sphinxcontrib-bibtex==2.6.3
+    # via rapidtide (../setup.py)
 sphinxcontrib-devhelp==2.0.0
     # via sphinx
 sphinxcontrib-htmlhelp==2.1.0

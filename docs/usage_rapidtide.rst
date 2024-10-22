@@ -380,7 +380,7 @@ Removing low frequency physiological noise from fMRI data
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 This is what I figure most people will use rapidtide for - finding and removing the low frequency (LFO) signal
 from an existing dataset
-(including the case where the signal grows over time :footcite:p:`korponay2023brain`).
+(including the case where the signal grows over time :footcite:p:`korponay2024nathumbeh`).
 This presupposes you have not made a simultaneous physiological recording
 (well, you may have, but it assumes you aren't using it).
 For this, you can use a minimal set of options, since the defaults are set to be generally optimal for noise removal.
