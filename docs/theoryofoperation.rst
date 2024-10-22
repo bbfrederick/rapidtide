@@ -7,93 +7,110 @@
    '''''
 
 Theory of operation
--------------------
-If you're bored enough or misguided enough to be reading this section, you are
-my intended audience!
+===================
 
-rapidtide
-^^^^^^^^^
+If you're bored enough or misguided enough to be reading this section,
+you are my intended audience!
+
 
 What is rapidtide trying to do?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Rapidtide attempts to separate an fMRI or NIRS dataset into two components - a
-single timecourse that appears throughout the dataset with varying time delays
-and intensities in each voxel, and  everything else.  We and others have
-observed that a large proportion of the "global mean signal", commonly referred
-to as "physiological noise" seen throughout in vivo datasets that quantify time
-dependant fluctuations in hemodynamic measures can be well modelled by a single
-timecourse with a range of time shifts.  This has been seen in fMRI and NIRS
-data recorded throughout the brain and body, with time lags generally increasing
-at locations farther from the heart along the vasculature.  This appears to be a
-signal carried by the blood, as changes in blood oxygenation and/or volume that
-propagate with bulk blood flow.  The source of the signal is not known, being
-variously attributed to cardiac and respiratory changes over time, changes in
-blood CO2, gastric motility, and other sources (for a survey, see [Tong2019]_.)
+-------------------------------
+
+Rapidtide attempts to separate an fMRI or NIRS dataset into two components -
+a single timecourse that appears throughout the dataset with varying time delays and
+intensities in each voxel,
+and everything else.
+We and others have observed that a large proportion of the "global mean signal",
+commonly referred to as "physiological noise" seen throughout in vivo datasets that
+quantify time dependent fluctuations in hemodynamic measures can be well modelled by
+a single timecourse with a range of time shifts.
+This has been seen in fMRI and NIRS data recorded throughout the brain and body,
+with time lags generally increasing at locations farther from the heart along the vasculature.
+This appears to be a signal carried by the blood,
+as changes in blood oxygenation and/or volume that propagate with bulk blood flow.
+The source of the signal is not known,
+being variously attributed to cardiac and respiratory changes over time,
+changes in blood CO2, gastric motility, and other sources
+(for a survey, see :footcite:t:`tong2019low`).
 As biology is complicated, it's probably some mixture of these sources and
-others that we may not have considered. No matter what the source of the signal,
+others that we may not have considered.
+No matter what the source of the signal,
 this model can be exploited for a number of purposes.
 
-If you're interested in hemodynamics, using  rapidtide to get the time delay in
-every voxel gives you a lot of information  that's otherwise hard or impossible
-to obtain noninvasively, namely the arrival time of blood in each voxel, and the
-fraction of the variance in that voxel  that's accounted for by that moving
-signal, which is related to regional CBV (however there's also a factor that's
-due to blood oxygenation, so you have to interpret it carefully).  You can use
-this information to understand the blood flow changes arising from vascular
-pathology, such as stroke or moyamoya disease, or to potentially see changes in
-blood flow due to a pharmacological intervention. In this case, the moving
-signal is not noise - it's the signal of interest.  So the various maps
-rapidtide produces can be used to describe hemodynamics.
+If you're interested in hemodynamics,
+using rapidtide to get the time delay in every voxel gives you a lot of information
+that's otherwise hard or impossible to obtain noninvasively,
+namely the arrival time of blood in each voxel,
+and the fraction of the variance in that voxel that's accounted for by that moving signal,
+which is related to regional CBV
+(however there's also a factor that's due to blood oxygenation, so you have to interpret it carefully).
+You can use this information to understand the blood flow changes arising from vascular pathology,
+such as stroke or moyamoya disease,
+or to potentially see changes in blood flow due to a pharmacological intervention.
+In this case, the moving signal is not noise - it's the signal of interest.
+So the various maps rapidtide produces can be used to describe hemodynamics.
 
 However, if you are interested in local rather than global hemodynamics,
-due to, say, neuronal activation, then this moving signal constitutes rather pernicious
-in-band noise.  Global mean regression is often used to remove it, but this is
-not optimal - in fact it can generate spurious anticorrelations, which are
-not at all helpful.  Rapidtide will regress out the moving signal, appropriately
-delayed in each voxel.  This removes significantly more variance, and also
-avoids generating spurious correlations.  For a detailed consideration of this,
-look here [Erdogan2016]_.
+due to, say, neuronal activation,
+then this moving signal constitutes rather pernicious in-band noise.
+Global mean regression is often used to remove it,
+but this is not optimal - in fact it can generate spurious anticorrelations,
+which are not at all helpful.
+Rapidtide will regress out the moving signal, appropriately delayed in each voxel.
+This removes significantly more variance, and also avoids generating spurious correlations.
+For a detailed consideration of this, see :footcite:t:`erdougan2016correcting`.
 
 
 What is the difference between RIPTiDe and rapidtide?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------------------
+
 RIPTiDe (Regressor Interpolation at Progressive Time Delays) is the name of
-the technique used for finding and removing time lagged physiological signals
-in fMRI data.  In the original RIPTiDe papers, we generated a
-set of regressors over a range of different time shifts (starting from a regressor recorded
-outside of the brain), and then ran a GLM in FSL using the entire set of regressors.
-We realized that this 1) doesn't give you the optimal delay value directly,
-which turns out to be a useful thing to know, 2) burns degrees of freedom
-unnecessarily, since having one optimally delayed regressor in each voxel gets
-you pretty much the same degree of noise removal (this is assuming that in each
-voxel there is one and only one pool of delayed blood, which while not true,
-is true enough, since almost every voxel is dominated by a single pool of
-delayed blood), 3) is slow, since you're doing way more calculation than you
-need to, and 4) doesn't necessarily get you the best noise removal, since
-the systemic noise signal recorded outside the brain has its own characteristics
+the technique used for finding and removing time lagged physiological signals in fMRI data.
+In the original RIPTiDe papers,
+we generated a set of regressors over a range of different time shifts
+(starting from a regressor recorded outside of the brain),
+and then ran a GLM in FSL using the entire set of regressors.
+We realized that this
+1) doesn't give you the optimal delay value directly,
+which turns out to be a useful thing to know,
+2) burns degrees of freedom unnecessarily,
+since having one optimally delayed regressor in each voxel gets you pretty much
+the same degree of noise removal
+(this is assuming that in each voxel there is one and only one pool of delayed blood,
+which while not true, is true enough,
+since almost every voxel is dominated by a single pool of delayed blood),
+3) is slow, since you're doing way more calculation than you need to,
+and 4) doesn't necessarily get you the best noise removal,
+since the systemic noise signal recorded outside the brain has its own characteristics
 and noise mechanisms that may make it diverge somewhat from what is actually
-getting into the brain (although on the plus side, it is inarguably non-neuronal, 
+getting into the brain
+(although on the plus side, it is inarguably non-neuronal,
 so you don't have to have any arguments about slow neuronal waves).
 
-In contrast rapidtide (lets say it means Rapid Time Delay) is the newer faster,
-self-contained python program that implements an updated version of the RIPTiDe
+In contrast rapidtide (let's say it means Rapid Time Delay) is the newer, faster,
+self-contained Python program that implements an updated version of the RIPTiDe
 algorithm which estimates delay in every voxel and recursively refines an estimate
 of the "true" systemic noise signal propagating through the brain by shifting and
-merging the voxel timecourses to undo this effect. This refinement procedure is
-shown in Figure 5 of Tong, 2019 (reference 6 in the Physiology section below). In recent
-years, I've personally become more interested in estimating blood flow in the brain than
-denoising resting state data, so a lot of the documentation talks about that, but the
-two procedures are tightly coupled, and as the final step, rapidtide does regress
-the optimally delayed refined estimate of the systemic noise signal out of the data.
+merging the voxel timecourses to undo this effect.
+This refinement procedure is shown in Figure 5 of :footcite:t:`tong2019low`.
+In recent years,
+I've personally become more interested in estimating blood flow in the brain than
+denoising resting state data,
+so a lot of the documentation talks about that,
+but the two procedures are tightly coupled,
+and, as the final step,
+rapidtide does regress the optimally delayed refined estimate of the systemic noise signal out of the data.
 We have found that it works quite well for resting state noise removal while avoiding
-the major problems of global signal regression (which we refer to as "static global
-signal regression" as opposed to "dynamic global signal regression", which is
-what rapidtide does). For a detailed exploration of this topic, we refer you again to [Erdogan2016]_ (also
-in the Physiology section below).
+the major problems of global signal regression
+(which we refer to as "static global signal regression" as opposed to
+"dynamic global signal regression", which is what rapidtide does).
+For a detailed exploration of this topic,
+we refer you again to :footcite:t:`erdougan2016correcting`.
 
 
 How does rapidtide work?
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
+
 In order to perform this task, rapidtide does a number of things:
 
 1. Obtain some initial estimate of the moving signal.
@@ -104,27 +121,26 @@ In order to perform this task, rapidtide does a number of things:
    analysis, and to emphasize the bloodborne component.
 5. Determine the time delay in each voxel by finding the time when the voxel
    timecourse has the maximum similarity to the moving signal.
-6. Optionally use this time delay information to generate a better estimate of
-   the moving signal.
+6. Optionally use this time delay information to generate a better estimate of the moving signal.
 7. Repeat steps 3-7 as needed.
 8. Parametrize the similarity between the moving signal and each voxels'
    timecourse, and save these metrics.
-9. Optionally regress the voxelwise time delayed moving signal out of the
-   original dataset.
+9. Optionally regress the voxelwise time delayed moving signal out of the original dataset.
 
 Each of these steps (and substeps) has nuances which will be discussed below.
 
 
 Generation of Masks
-"""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^
+
 By default, rapidtide calculates masks dynamically at run time.  There
 are 5 masks used: 1) the global mean mask, which determines which voxels
 are used to generate the initial global mean regressor, 2) The
 correlation mask, which determines which voxels you actually calculate
 rapidtide fits in (what you are describing here), 3) the refine mask,
 which selects which voxels are used to generate a refined regressor for
-the next fitting pass, 4) the offset mask, which determines which voxels are 
-used to estimate the "zero" time of the delay distribution, 
+the next fitting pass, 4) the offset mask, which determines which voxels are
+used to estimate the "zero" time of the delay distribution,
 and 5) the GLM mask, which determines which
 voxels have the rapidtide regressors removed.
 
@@ -138,7 +154,7 @@ The default behavior is to first calculate the correlation mask using
 nilearn.masking.compute_epi_mask with default values.  This is a
 complicated function, which I'm using as a bit of a black box.
 Documentation for it is here:
-https://nilearn.github.io/stable/modules/generated/nilearn.masking.compute_epi_mask.html#nilearn.masking.compute_epi_mask.  
+https://nilearn.github.io/stable/modules/generated/nilearn.masking.compute_epi_mask.html#nilearn.masking.compute_epi_mask.
 If you have
 standard, non-zero-mean fMRI data, it seems to work pretty well, but you
 can specify your own mask using --corrmask NAME[:VALSPEC] (include any
@@ -190,7 +206,8 @@ from being used to generate the initial global mean signal estimate, or from bei
 
 
 Initial Moving Signal Estimation
-""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 You can stabilize and improve rapidtide's delay estimation quite a bit by making sure you have a good starting
 regressor, estimating the global mean signal from "good" brain regions that don't have wacky delay structures.
 While just using the whole brain works well in young, healthy subjects (like the HCP-YA dataset), as people get older,
@@ -241,20 +258,21 @@ This command should get you a ``standardspaceaparcasegfilename.nii.gz`` (you nee
 
 
 Moving Signal Preprocessing
-"""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Before launching into in each pass, we process our moving regressor to make it more amenable to calculations.
 This includes the following operations:
 
 **Oversampling:**  In order to simplify delay calculation, rapidtide performs all delay estimation operations
 on data with a sample rate of 2Hz or faster.  Since most fMRI is recorded with a TR > 0.5s, this is achieved by
-oversampling the data.  The oversampling factor can be specified explicitly 
+oversampling the data.  The oversampling factor can be specified explicitly
 (using the ``--oversampfac`` command line argument), but if it is
 not given, for data with a sample rate of less than 2Hz, all data and regressors
 are internally upsampled by the lowest
 integral factor that results in a sample rate >= 2Hz.
 
-**Regressor resampling:** In the case where we are using the global mean signal 
-as the moving signal, the moving signal estimate and the fMRI data have 
+**Regressor resampling:** In the case where we are using the global mean signal
+as the moving signal, the moving signal estimate and the fMRI data have
 the same sample rate, but if we use external
 recordings, such as NIRS or etCO2 timecourses, these will in general have sample
 rates other than the TR, and may start before and/or end after the fMRI acquisition.
@@ -274,8 +292,10 @@ a Hamming window, but you can also select Hann, Blackman-Harris, or None, with t
 **Zero padding:** The regressor is zero padded on each end to twice its length, so that we will be doing a linear
 rather than circular correlation (you can select circular correlation with ``--corrtype``, but I wouldn't recommend it.
 
+
 Moving Signal Massaging
-"""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^
+
 Because the moving signal is "noise", we can't select or specify its properties, and sometimes the sLFO signal
 you end up with is problematic for one reason or another.  Rapidtide attempts to correct, where possible,
 problems in the moving signal that will impair proper delay estimation.  Again, if you're just doing
@@ -344,8 +364,10 @@ looking to get involved in a FOSS neuroimaging project :-) ?
 Most of the options languishing in the "experimental" group of command line options are partially implemented versions
 of various regressor fixes.
 
+
 Dataset Preprocessing
-"""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^
+
 Prior to processing, I do a few things to the fMRI dataset:
 
 **Spatial filtering:**  While the moving signal can contribute up to 50% of the low frequency variance in gray matter
@@ -363,8 +385,10 @@ into a voxel by time array.  This simplifies all of the subsequent processing.  
 and despeckling (managed by mapping lag data back to x, y, z space to check against neighbors)
 are the only operations that require us to know the spatial relationship between voxels.
 
+
 Significance threshold estimation
-"""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 This step is placed where it is done in the processing stream, but involves procedures described below.
 
 Estimating the significance threshold for the fitted crosscorrelation measurements done below is not
@@ -377,28 +401,34 @@ correlations.  Moreover, we are selecting the peak of a crosscorrelation over a 
 which will further inflate the values.
 There are analytical ways of adjusting for this, but they are tedious - Monte Carlo
 simulation by performing and fitting a set of crosscorrelations of the sLFO regressor with
-scrambled, filtered versions of itself are more straightforward (this is described
-in [Hocke2016]_).  Prior to each pass, we do NREPS of these sham correlations (NREPS=10000 by
+scrambled, filtered versions of itself are more straightforward
+(this is described in :footcite:t:`hocke2016comparison`).
+Prior to each pass, we do NREPS of these sham correlations (NREPS=10000 by
 default - adjust with ``--numnull NREPS``.  Set to 0 to disable
 significance estimation).  The p<0.05, p<0.01, and p<0.005 significance thresholds are estimated
 by fitting the set of null correlations to a Johnson SB distribution (the functional form which
 we empirically found best fits the data).
 
+
 Time delay determination
-""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 This is the core of the program, that actually does the delay determination.  It's currently divided into two parts -
 calculation of a time dependant similarity function between the sLFO regressor and each voxel (currently
 using one of three methods), and then a fitting
 step to find the peak time delay and strength of association between the two signals.
 
+
 Signal preparation
-``````````````````
+""""""""""""""""""
+
 Prior to processing, each timecourse is processed in the same way as the moving regressor (oversampling, filtering,
 detrending, applying the same window function used on the reference regressor, and zeropadding the ends.)
 
 
 Types of similarity function
-````````````````````````````
+""""""""""""""""""""""""""""
+
 **Crosscorrelation:** The most straightforward way to calculate similarity between two timecourses is crosscorrelation.  It has several
 advantages - interpretation is easy - the magnitude of the function ranges from 0 (no similarity) to 1 (timecourses
 are identical).  Negative magnitudes mean that the one timecourse is inverted relative to the other.  It is also
@@ -437,7 +467,7 @@ that has the higher MI, and then proceed to the fitting step for full quantifica
 straight correlation, but does tend to be more stable. Use ``--similaritymetric hybrid`` to select hybrid similarity.
 
 Peak fitting and quantification
-```````````````````````````````
+"""""""""""""""""""""""""""""""
 The second part of this process is peak fitting and quantification.  For most of this discussion,
 I'll refer to crosscorrelation, since its what I usually use.
 
@@ -460,110 +490,137 @@ delay and correlation value.
 
 Correlation peaks can be a little messy; low pass filtering, weird autocorrelation properties due to
 nonuniform power spectra, window function choices,
-and baseline roll can lead to incorrect peak identification.  This
-makes the peak fitting process complicated.
+and baseline roll can lead to incorrect peak identification.
+This makes the peak fitting process complicated.
+
 
 Despeckling
-```````````
-As mentioned above, your correlation function may be pseudoperiodic due to an unfortunate
-power spectrum.  At this point, the delay maps are subjected to a multipass despeckling operation,
+"""""""""""
+
+As mentioned above, your correlation function may be pseudoperiodic due to an unfortunate power spectrum.
+At this point, the delay maps are subjected to a multipass despeckling operation,
 where voxels that look like they may have had incorrect fits are refit to be more consistent with
 their neighbors.
 
+
 Generating a better moving signal estimate (refinement)
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Now that we have an estimate of when the moving regressor arrives at every voxel, we can make a better estimate of the
-driving signal.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Now that we have an estimate of when the moving regressor arrives at every voxel,
+we can make a better estimate of the driving signal.
+
 
 Voxel selection
-```````````````
-First we pick the voxels we want to use to generate the new estimate.  We can set the starting mask explicitly using
-the ``--refineinclude MASKFILE:VALSPEC`` and ``--refineexclude MASKFILE:VALSPEC`` command line options.  If left unset,
-we use all voxels with valid correlation fits.  We can further
-tune which voxels are excluded from refinement with the ``--norefinedespeckled``, ``--lagminthresh``,
-``--lagmaxthresh``, and ``--sigmathresh`` options.  By default, we also exclude voxels with correlation strengths
-less than the p<0.05 threshold found using the significance threshold estimation step above, or
-we can override this threshold using ``--ampthresh``.
+"""""""""""""""
+
+First we pick the voxels we want to use to generate the new estimate.
+We can set the starting mask explicitly using the ``--refineinclude MASKFILE:VALSPEC`` and
+``--refineexclude MASKFILE:VALSPEC`` command line options.
+If left unset, we use all voxels with valid correlation fits.
+We can further tune which voxels are excluded from refinement with the
+``--norefinedespeckled``, ``--lagminthresh``, ``--lagmaxthresh``, and ``--sigmathresh`` options.
+By default, we also exclude voxels with correlation strengths less than the p<0.05 threshold
+found using the significance threshold estimation step above,
+or we can override this threshold using ``--ampthresh``.
+
 
 Timecourse alignment
-````````````````````
-In each of the voxels selected for refinement, we first negate the time delay in every voxel and timeshift the
-voxel by that amount.
-This will have the effect of bringing the portion of the signal in each voxel due to the moving sLFO signal into
-alignment.
+""""""""""""""""""""
+
+In each of the voxels selected for refinement,
+we first negate the time delay in every voxel and timeshift the voxel by that amount.
+This will have the effect of bringing the portion of the signal in each voxel due to the
+moving sLFO signal into alignment.
+
 
 Prescaling
-``````````
+""""""""""
+
 We then prenormalize the voxels to use in the fit using their mean, variance, or standard deviation over time,
-the inverse of the lag time,
-or leave them unscaled.  Selection is via the ``--refineprenorm`` option.  The default is to do no prenormalization.
+the inverse of the lag time, or leave them unscaled.
+Selection is via the ``--refineprenorm`` option.
+The default is to do no prenormalization.
+
 
 New timecourse generation
-`````````````````````````
-The new timecourse is then generated from the set of aligned, scaled timecourses using a method specified with ``--refinetype``:
+"""""""""""""""""""""""""
 
-    **pca (default):** Perform a principal component analysis on the timecourses, reprojecting them onto a reduced set of components (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).  Average the result.
+The new timecourse is then generated from the set of aligned,
+scaled timecourses using a method specified with ``--refinetype``:
 
-    **ica:** Perform an independent component analysis on the timecourses, reprojecting them onto a reduced set of components (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).  Average the result.
+-  **pca (default):** Perform a principal component analysis on the timecourses,
+   reprojecting them onto a reduced set of components
+   (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).
+   Average the result.
+-  **ica:** Perform an independent component analysis on the timecourses,
+   reprojecting them onto a reduced set of components
+   (specified by ``--pcacomponents`` - the default is the set explaining >=80% of total variance).
+   Average the result.
+-  **weighted_average:** Each voxel is scaled with either the correlation strength from the current pass,
+   the square of the correlation strength, or is left unscaled.
+   This is selected with the ``--refineweighting`` option - the default is "R2".
+   The timecourses are then averaged.
+-  **unweighted_average:**  Average the voxels.
 
-    **weighted_average:** Each voxel is scaled with either the correlation strength from the current pass, the square of the correlation strength, or is left unscaled.  This is selected with the ``--refineweighting`` option - the default is "R2".  The timecourses are then averaged.
-
-    **unweighted_average:**  Average the voxels.
 
 Lather, Rinse, Repeat
-"""""""""""""""""""""
-Now that there is a new starting regressor, repeat the entire process some number of times.  This can be a fixed number
-of passes, specified by ``--passes NUMPASSES``.  The default is to do 3 passes.  Alternatively, by specifying
-``--convergencethresh THRESH``, the process is repeated until either the MSE between the new sLFO regresssor and the
-regressor from the previous pass falls below THRESH, or the number of passes reaches MAX, specified
-by ``--maxpasses MAX`` (default is 15).
+^^^^^^^^^^^^^^^^^^^^^
+
+Now that there is a new starting regressor, repeat the entire process some number of times.
+This can be a fixed number of passes, specified by ``--passes NUMPASSES``.
+The default is to do 3 passes.
+Alternatively, by specifying ``--convergencethresh THRESH``,
+the process is repeated until either the MSE between the new sLFO regressor and the
+regressor from the previous pass falls below THRESH,
+or the number of passes reaches MAX,
+specified by ``--maxpasses MAX`` (default is 15).
+
+.. tip::
+
+   As a general rule, the more passes you do, the better the final result will be.
+   However, this is a matter of diminishing returns,
+   and I have found that 3 passes work well for most data.
+   If you are not concerned about memory usage or processing time,
+   you can set the number of passes to a higher value.
+
+   The same logic applies to ``--despecklepasses``.
+
 
 Regress Out the Moving Signal
-"""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Now that we have optimized the moving blood signal and have final estimates of blood arrival time at each voxel,
-we can do the final regression to (intelligently) remove the sLFO signal from the data.  By default, this is done on
-the original, unmodified data - i.e. none of the spatial or temporal filtering, masking, confound regression,
-or anything else has been done.  The reason for this is that some of the operations may be needed to get a good
-sLFO regressor estimate, or a good delay map, but they could interfere with whatever further analysis you might
-want to do after sLFO removal.  You can always do them later if you want.  Also, if you really want to keep all those
-manipulations, you can choose to by selecting ``--preservefiltering``.  But don't.
+we can do the final regression to (intelligently) remove the sLFO signal from the data.
+By default, this is done on the original, unmodified data -
+i.e. none of the spatial or temporal filtering, masking, confound regression, or anything else has been done.
+The reason for this is that some of the operations may be needed to get a good sLFO regressor estimate,
+or a good delay map, but they could interfere with whatever further analysis you might want to do after sLFO removal.
+You can always do them later if you want.
+Also, if you really want to keep all those manipulations,
+you can choose to by selecting ``--preservefiltering``.
+But don't.
 
-Alternately, instead of loading the original file, you can load a _different_ file, and denoise that instead.  Why
-would you want to do that?  This is here for a very particular reason.  HCP data uses FIX, a really spiffy ICA noise
-removal tool that cleans things up quite a bit.  However, as mentioned above in the rapidtide usage section,
-it does tend to remove a lot of hemodynamic signal in some regions, particularly around the superior sagittal sinus.
-That makes rapidtide's sLFO estimation and refinement process a lot less stable.  So you really want to do that
-estimation on non-FIX'ed data (the "minimally processed" data).  Ideally, you would then run FIX on the rapidtide
-cleaned data, but that's a lot of computation that you don't necessarily want to do.  So a cheat is to regress the
-voxel specific noise regressors out of the FIX cleaned data.  Since the operations are linear, the order shouldn't
-matter (waves hands to distract from the fact that FIX has probably generated some spurious negative correlations
-by regressing out hemodynamic signal at the wrong time delay).  Anyway, while it's not perfect, it's better than not
-doing it this way.
+Alternately, instead of loading the original file, you can load a _different_ file, and denoise that instead.
+Why would you want to do that?
+This is here for a very particular reason.
+HCP data uses FIX, a really spiffy ICA noise removal tool that cleans things up quite a bit.
+However, as mentioned above in the rapidtide usage section,
+it does tend to remove a lot of hemodynamic signal in some regions,
+particularly around the superior sagittal sinus.
+That makes rapidtide's sLFO estimation and refinement process a lot less stable.
+So you really want to do that estimation on non-FIX'ed data (the "minimally processed" data).
+Ideally, you would then run FIX on the rapidtide cleaned data, but that's a lot of computation that you don't necessarily want to do.
+So a cheat is to regress the voxel specific noise regressors out of the FIX cleaned data.
+Since the operations are linear, the order shouldn't matter
+(waves hands to distract from the fact that FIX has probably generated some spurious negative correlations
+by regressing out hemodynamic signal at the wrong time delay).
+Anyway, while it's not perfect, it's better than not doing it this way.
 
-Finally, if you don't want to do glm filtering at all (i.e. you only care about time delays,
-and want to minimize storage space),
+Finally, if you don't want to do glm filtering at all
+(i.e. you only care about time delays, and want to minimize storage space),
 you can shut off the glm filtering with ``--noglm``.
 
 
 References
-""""""""""
+^^^^^^^^^^
 
-.. [Tong2019] Tong, Y., Hocke, L.M., and Frederick, B.B., Low Frequency
-   Systemic Hemodynamic "Noise" in Resting State BOLD fMRI: Characteristics,
-   Causes, Implications, Mitigation Strategies, and Applications.
-   Front Neurosci, 2019. 13: p. 787.
-   \| http://dx.doi.org/10.3389/fnins.2019.00787
-
-
-.. [Erdogan2016] Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B. Correcting
-   resting state fMRI-BOLD signals for blood arrival time enhances
-   functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
-   \| http://dx.doi.org/10.3389/fnhum.2016.00311
-
-.. [Hocke2016] Hocke LM, Tong Y, Lindsey KP, Frederick BB (2016). Comparison of
-   peripheral near-infrared spectroscopy low-frequency oscillations to
-   other denoising methods in resting state functional MRI with
-   ultrahigh temporal resolution. Magnetic resonance in medicine :
-   official journal of the Society of Magnetic Resonance in Medicine /
-   Society of Magnetic Resonance in Medicine. 2016.
-   \| http://dx.doi.org/10.1002/mrm.26038. PubMed PMID: 26854203.
+.. footbibliography::
