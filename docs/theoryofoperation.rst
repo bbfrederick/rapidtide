@@ -224,6 +224,7 @@ If you are using fMRIPrep, you can get a gray matter mask using:
       graymask
 
 .. tip::
+
    It's often a good idea to use that gray matter mask for the
    ``--refineinclude`` and ``--offsetinclude`` parameters as well.
 
