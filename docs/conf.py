@@ -17,8 +17,6 @@ import os
 import sys
 from datetime import datetime
 
-from m2r import MdInclude
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -74,6 +72,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
+    "myst_parser",
     "numpydoc",
     "sphinx.ext.ifconfig",
     "sphinx.ext.linkcode",
@@ -208,14 +207,6 @@ html_static_path = ["_static"]
 # https://github.com/rtfd/sphinx_rtd_theme/issues/117
 def setup(app):
     app.add_css_file("theme_overrides.css")
-    # Fix to https://github.com/sphinx-doc/sphinx/issues/7420
-    # from https://github.com/life4/deal/commit/7f33cbc595ed31519cefdfaaf6f415dada5acd94
-    # from m2r to make `mdinclude` work
-    app.add_config_value("no_underscore_emphasis", False, "env")
-    app.add_config_value("m2r_parse_relative_links", False, "env")
-    app.add_config_value("m2r_anonymous_references", False, "env")
-    app.add_config_value("m2r_disable_inline_math", False, "env")
-    app.add_directive("mdinclude", MdInclude)
 
 
 # Add any extra paths that contain custom files (such as robots.txt or

@@ -65,7 +65,7 @@ doc = [
   'sphinx_rtd_theme',
   'sphinx-argparse',
   'sphinx-gallery',
-  'm2r',
+  'myst_parser',
   'numpydoc',
   'recommonmark',
   'mistune',
@@ -77,7 +77,7 @@ doc = [
 #calcicc = 'rapidtide.scripts.calcicc:main'
 
 [tool.setuptools]
-include-package-data = true 
+include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ['rapidtide', 'cloud']
