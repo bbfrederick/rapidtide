@@ -131,7 +131,7 @@ Each of these steps (and substeps) has nuances which will be discussed below.
 
 
 Generation of Masks
-"""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^
 
 By default, rapidtide calculates masks dynamically at run time.
 There are 5 masks used:
