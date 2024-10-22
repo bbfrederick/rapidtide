@@ -308,12 +308,20 @@ having everything in standard space makes it easier to combine runs and subjects
 
 **fMRIPrep** - If you do preprocessing in fMRIPrep,
 the easiest file to use for input to rapidtide would be either
-``derivatives/fMRIPrep/sub-XXX/ses-XXX/func/XXX_desc-preproc_bold.nii.gz`` (native space) or
-``derivatives/fMRIPrep/sub-XXX/ses-XXX/func/XXX_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz``
+``derivatives/fmriprep/sub-XXX/ses-XXX/func/XXX_desc-preproc_bold.nii.gz`` (native space) or
+``derivatives/fmriprep/sub-XXX/ses-XXX/func/XXX_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz``
 (standard space - replace ``MNI152NLin6aAsym_res-2`` with whatever space and resolution you used if not the FSL compatible one).
 If you do the analysis in standard space, it makes it easier to use freesurfer parcellations and gray/white/csf
 segmentations that fMRIPrep provides for further tuning the rapidtide analysis.
 See the "Theory of Operation" section for more on this subject.
+
+You can pass the confounds file from fMRIPrep
+(``derivatives/fmriprep/sub-XXX/ses-XXX/func/XXX_desc-confounds_timeseries.tsv``)
+directly to rapidtide as ``--motionfile``.
+However, if you want to use the ``--confoundfile`` parameter,
+you need to create a reduced version of the confounds file with only the columns you want to use for confound regression.
+
+You can also load the confounds file to identify non-steady-state volumes to use for the ``--numtozero`` parameter.
 
 **AFNI** - Here's a case where you have to take some care - as I mentioned above, rapidtide assumes "FSL-like" data by
 default.  The most important difference between AFNI and FSL preprocessing (assuming you've put your AFNI data into
