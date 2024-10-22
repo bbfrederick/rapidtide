@@ -379,9 +379,10 @@ factor of the number of CPUs used.
 Removing low frequency physiological noise from fMRI data
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 This is what I figure most people will use rapidtide for - finding and removing the low frequency (LFO) signal
-from an existing dataset (including the case where the signal grows over time
-https://www.biorxiv.org/content/10.1101/2023.09.08.556939v2 ).  This presupposes you have not made a
-simultaneous physiological recording (well, you may have, but it assumes you aren't using it).
+from an existing dataset
+(including the case where the signal grows over time :footcite:p:`korponay2023brain`).
+This presupposes you have not made a simultaneous physiological recording
+(well, you may have, but it assumes you aren't using it).
 For this, you can use a minimal set of options, since the defaults are set to be generally optimal for noise removal.
 
 The base command you'd use would be:
@@ -451,12 +452,15 @@ denoise.  The ``outputname_desc-lfofilterCleaned_bold.nii.gz`` file is the FIX f
 
 Mapping long time delays in response to a gas challenge experiment:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Processing this sort of data requires a very different set of options from the previous case.  Instead of the
-distribution of delays you expect in healthy controls (a slightly skewed, somewhat normal distribution with a
-tail on the positive side, ranging from about -5 to 5 seconds), in this case, the maximum delay can be extremely
-long (100-120 seconds is not uncommon in stroke, moyamoya disesase, and atherosclerosis).  To do this, you need
-to radically change what options you use, not just the delay range, but a number of other options having to do
-with refinement and statistical measures.
+
+Processing this sort of data requires a very different set of options from the previous case.
+Instead of the distribution of delays you expect in healthy controls
+(a slightly skewed, somewhat normal distribution with a tail on the positive side,
+ranging from about -5 to 5 seconds),
+in this case, the maximum delay can be extremely long
+(100-120 seconds is not uncommon in stroke, moyamoya disease, and atherosclerosis).
+To do this, you need to radically change what options you use, not just the delay range,
+but a number of other options having to do with refinement and statistical measures.
 
 For this type of analysis, a good place to start is the following:
 
@@ -510,12 +514,16 @@ correlation function is pretty well behaved.
 
 CVR mapping:
 """"""""""""
-This is a slightly different twist on interpreting the strength of the lagged correlation.  In this case,
-you supply an input regressor that corresponds to a measured, calibrated CO2 quantity (for example, etCO2
-in mmHg).  Rapidtide then does a modified analysis - it still uses the cross-correlation to find when the
-input regressor is maximally aligned with the variance in the voxel signal, but instead of only returning
-a correlation strength, it calculates the percentage BOLD change in each voxel in units of the input
-regressor (e.g. %BOLD/mmHg), which is the standard in CVR analysis.
+This is a slightly different twist on interpreting the strength of the lagged correlation,
+validated in :footcite:t:`donahue2016time`.
+In this case, you supply an input regressor that corresponds to a measured, calibrated CO2 quantity
+(for example, etCO2 in mmHg).
+Rapidtide then does a modified analysis -
+it still uses the cross-correlation to find when the input regressor is maximally aligned with
+the variance in the voxel signal,
+but instead of only returning a correlation strength,
+it calculates the percentage BOLD change in each voxel in units of the input regressor (e.g. %BOLD/mmHg),
+which is the standard in CVR analysis.
 
     ::
 
@@ -537,7 +545,6 @@ rate other than the fMRI TR, or a non-zero offset relative to the fMRI data, you
 these parameters using ``--regressorfreq FREQ`` or ``--regressortstep TSTEP`` and/or ``--regressorstart START``.
 
 
-
 Denoising NIRS data:
 """"""""""""""""""""
 Fun face - when we started this whole research effort, I was originally planning to denoise NIRS data, not fMRI data.  But one
@@ -549,3 +556,8 @@ The majority of the work was already done, I just needed to account for a few qu
 * NIRS data is often zero mean.  This turned out to mess with a lot of my assumptions about which voxels have significant data, and mask construction.  This has led to some new options for specifying mask threshholds and data averaging.
 * NIRS data is in some sense "calibrated" as relative micromolar changes in oxy-, deoxy-, and total hemoglobin concentration, so mean and/or variance normalizing the timecourses may not be right thing to do.  I've added in some new options to mess with normalizations.
 
+
+References
+^^^^^^^^^^
+
+.. footbibliography::
