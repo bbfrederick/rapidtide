@@ -136,15 +136,15 @@ Generation of Masks
 By default, rapidtide calculates masks dynamically at run time.
 There are 5 masks used:
 
-1. the global mean mask, which determines which voxels
-   are used to generate the initial global mean regressor;
-2. the correlation mask, which determines which voxels you actually calculate
-   rapidtide fits in (what you are describing here);
-3. the refine mean mask, which selects which voxels are used to generate a refined regressor for
-   the next fitting pass;
-4. the offset mask, which determines which voxels are used to estimate the "zero" time of
-   the delay distribution; and
-5. the GLM mask, which determines which voxels have the rapidtide regressors removed.
+1. The global mean mask, which determines which voxels
+   are used to generate the initial global mean regressor.
+2. The correlation mask, which determines which voxels you actually calculate
+   rapidtide fits in (what you are describing here).
+3. The refine mean mask, which selects which voxels are used to generate a refined regressor for
+   the next fitting pass.
+4. The offset mask, which determines which voxels are used to estimate the "zero" time of
+   the delay distribution.
+5. The GLM mask, which determines which voxels have the rapidtide regressors removed.
 
 Below is a description of how this works currently.
 NB: this is not how I THOUGHT is worked - until I just looked at the code just now.
