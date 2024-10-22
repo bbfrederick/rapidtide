@@ -226,7 +226,7 @@ Just add the option ``--graymattermask graymask.nii.gz`` to your rapidtide comma
 If you are using fMRIPrep, you can use the gray matter probabilistic map directly,
 as rapidtide will threshold it automatically:
 
-.. bash::
+.. code-block:: bash
 
     rapidtide \
         ... \
