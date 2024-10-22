@@ -421,6 +421,12 @@ Physiological noise identification and removal using time delay methods
    Front Neurosci, 2019. 13: p. 787.
    \| http://dx.doi.org/10.3389/fnins.2019.00787
 
+7) Korponay, C, Janes, AC and Frederick, BB, Brain-wide functional connectivity
+   artifactually inflates throughout functional magnetic resonance imaging
+   scans.  Nat. Hum. Behav. 8, 1568–1580 (2024).
+   \| http://dx.doi.org/10.1038/s41562-024-01908-6
+  
+
 .. |PyPi Latest Version| image:: https://img.shields.io/pypi/v/rapidtide.svg
    :target: https://pypi.python.org/pypi/rapidtide/
 .. |PyPi - Python Versions| image:: https://img.shields.io/pypi/pyversions/rapidtide.svg
