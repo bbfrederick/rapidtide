@@ -137,7 +137,7 @@ Contents
    :maxdepth: 2
    :caption: History:
 
-   ../CHANGELOG.md
+   whatsnew.rst
 
 
 Indices and tables
