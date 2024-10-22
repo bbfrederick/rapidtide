@@ -540,7 +540,7 @@ these parameters using ``--regressorfreq FREQ`` or ``--regressortstep TSTEP`` an
 
 Denoising NIRS data:
 """"""""""""""""""""
-Fun face - when we started this whole research effort, I was originally planning to denoise NIRS data, not fMRI data.  But one
+Fun fact - when we started this whole research effort, I was originally planning to denoise NIRS data, not fMRI data.  But one
 thing led to another, and the NIRS got derailed for the fMRI effort.  Now that we have some time to catch our breaths,
 and more importantly, we have access to some much higher quality NIRS data, this moved back to the front burner.
 The majority of the work was already done, I just needed to account for a few qualities that make NIRS data different from fMRI data:
