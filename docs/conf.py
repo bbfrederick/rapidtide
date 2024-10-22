@@ -17,8 +17,6 @@ import os
 import sys
 from datetime import datetime
 
-from m2r import MdInclude
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -74,10 +72,10 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
+    "myst_parser",
     "numpydoc",
     "sphinx.ext.ifconfig",
     "sphinx.ext.linkcode",
-    "recommonmark",
     "sphinx_gallery.gen_gallery",
 ]
 
@@ -95,8 +93,7 @@ templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
-# source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
+source_suffix = [".rst"]
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
@@ -208,14 +205,6 @@ html_static_path = ["_static"]
 # https://github.com/rtfd/sphinx_rtd_theme/issues/117
 def setup(app):
     app.add_css_file("theme_overrides.css")
-    # Fix to https://github.com/sphinx-doc/sphinx/issues/7420
-    # from https://github.com/life4/deal/commit/7f33cbc595ed31519cefdfaaf6f415dada5acd94
-    # from m2r to make `mdinclude` work
-    app.add_config_value("no_underscore_emphasis", False, "env")
-    app.add_config_value("m2r_parse_relative_links", False, "env")
-    app.add_config_value("m2r_anonymous_references", False, "env")
-    app.add_config_value("m2r_disable_inline_math", False, "env")
-    app.add_directive("mdinclude", MdInclude)
 
 
 # Add any extra paths that contain custom files (such as robots.txt or
@@ -375,15 +364,26 @@ linkcode_resolve = make_linkcode_resolve(
     "https://github.com/bbfrederick/" "rapidtide/blob/{revision}/" "{package}/{path}#L{lineno}",
 )
 
-# Example configuration for intersphinx: refer to the Python standard library.
+# -----------------------------------------------------------------------------
+# intersphinx
+# -----------------------------------------------------------------------------
+_python_version_str = f"{sys.version_info.major}.{sys.version_info.minor}"
+_python_doc_base = f"https://docs.python.org/{_python_version_str}"
 intersphinx_mapping = {
-    "http://docs.python.org/3.6": None,
-    "http://docs.scipy.org/doc/numpy": None,
-    "http://docs.scipy.org/doc/scipy/reference": None,
-    "http://matplotlib.org/": None,
-    "http://scikit-learn.org/stable": None,
-    "http://nipy.org/nibabel/": None,
-    "http://pandas.pydata.org/pandas-docs/stable/": None,
+    "python": (_python_doc_base, None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": (
+        "https://docs.scipy.org/doc/scipy/reference",
+        (None, "./_intersphinx/scipy-objects.inv"),
+    ),
+    "matplotlib": (
+        "https://matplotlib.org/stable/",
+        (None, "https://matplotlib.org/stable/objects.inv"),
+    ),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "nibabel": ("https://nipy.org/nibabel/", None),
+    "nilearn": ("http://nilearn.github.io/stable/", None),
+    "scikit-learn": ("http://scikit-learn.org/stable", None),
 }
 
 sphinx_gallery_conf = {

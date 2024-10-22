@@ -72,7 +72,7 @@ delayed blood), 3) is slow, since you're doing way more calculation than you
 need to, and 4) doesn't necessarily get you the best noise removal, since
 the systemic noise signal recorded outside the brain has its own characteristics
 and noise mechanisms that may make it diverge somewhat from what is actually
-getting into the brain (although on the plus side, it is inarguably non-neuronal, 
+getting into the brain (although on the plus side, it is inarguably non-neuronal,
 so you don't have to have any arguments about slow neuronal waves).
 
 In contrast rapidtide (lets say it means Rapid Time Delay) is the newer faster,
@@ -117,76 +117,93 @@ Each of these steps (and substeps) has nuances which will be discussed below.
 
 Generation of Masks
 """""""""""""""""""
-By default, rapidtide calculates masks dynamically at run time.  There
-are 5 masks used: 1) the global mean mask, which determines which voxels
-are used to generate the initial global mean regressor, 2) The
-correlation mask, which determines which voxels you actually calculate
-rapidtide fits in (what you are describing here), 3) the refine mask,
-which selects which voxels are used to generate a refined regressor for
-the next fitting pass, 4) the offset mask, which determines which voxels are 
-used to estimate the "zero" time of the delay distribution, 
-and 5) the GLM mask, which determines which
-voxels have the rapidtide regressors removed.
+By default, rapidtide calculates masks dynamically at run time.
+There are 5 masks used:
 
-Below is a description of how this works currently.  NB: this is not how
-I THOUGHT is worked - until I just looked at the code just now.  It
-built up over time, and evolved into something that was not quite what I
-designed.  I'm going to fix it up, but this what it's doing as of 2.6.1,
+1. the global mean mask, which determines which voxels
+   are used to generate the initial global mean regressor;
+2. the correlation mask, which determines which voxels you actually calculate
+   rapidtide fits in (what you are describing here);
+3. the refine mean mask, which selects which voxels are used to generate a refined regressor for
+   the next fitting pass;
+4. the offset mask, which determines which voxels are used to estimate the "zero" time of
+   the delay distribution; and
+5. the GLM mask, which determines which voxels have the rapidtide regressors removed.
+
+Below is a description of how this works currently.
+NB: this is not how I THOUGHT is worked - until I just looked at the code just now.
+It built up over time, and evolved into something that was not quite what I designed.
+I'm going to fix it up, but this what it's doing as of 2.6.1,
 which works most of the time, but may not be what you want.
 
 The default behavior is to first calculate the correlation mask using
 nilearn.masking.compute_epi_mask with default values.  This is a
 complicated function, which I'm using as a bit of a black box.
 Documentation for it is here:
-https://nilearn.github.io/stable/modules/generated/nilearn.masking.compute_epi_mask.html#nilearn.masking.compute_epi_mask.  
-If you have
-standard, non-zero-mean fMRI data, it seems to work pretty well, but you
-can specify your own mask using --corrmask NAME[:VALSPEC] (include any
-non-zero voxels in the file NAME in the mask.  If VALSPEC is provided, only
-include voxels with integral values specified by VALSPEC in the mask).
+https://nilearn.github.io/stable/modules/generated/nilearn.masking.compute_epi_mask.html#nilearn.masking.compute_epi_mask.
+If you have standard, non-zero-mean fMRI data, it seems to work pretty well,
+but you can specify your own mask using ``--corrmask NAME[:VALSPEC]``
+(include any non-zero voxels in the file NAME in the mask.
+If VALSPEC is provided, only include voxels with integral values specified by VALSPEC in the mask).
 VALSPEC is a comma separated list of integers (1,2,7,12) and/or integer
 ranges (2-7,12-15) so you can make masks of complicated combinations of
-regions from an atlas.  So for example --corrmask mymask.nii.gz:1,7-9,54
-would include any voxels in mymask with values of 1, 7, 8, 9, or 54,
-whereas --corrmask mymask.nii.gz would include any non-zero voxels in
-mymask.
+regions from an atlas.
+So for example ``--corrmask mymask.nii.gz:1,7-9,54`` would include any voxels in mymask
+with values of 1, 7, 8, 9, or 54,
+whereas ``--corrmask mymask.nii.gz`` would include any non-zero voxels in mymask.
+
+.. tip::
+
+   The ``--brainmask`` argument will automatically set all five of these masks,
+   but each can be overridden with the individual mask parameters.
+
+.. tip::
+
+   The ``--graymattermask`` argument will automatically set both the global mean mask and the offset mask,
+   but each can be overridden with the individual mask parameters.
 
 **For the global mean mask:**
-If --globalmeaninclude MASK[:VALSPEC] is specified, include all voxels
-selected by MASK[:VALSPEC].  If it is not specified, include all voxels
-in the mask.  Then, if --globalmeanexclude MASK[:VALSPEC] is specified,
-remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is
-not specified, don't change the mask.
+If ``--globalmeaninclude MASK[:VALSPEC]`` is specified, include all voxels selected by ``MASK[:VALSPEC]``.
+If it is not specified, include all voxels in the mask.
+Then, if ``--globalmeanexclude MASK[:VALSPEC]`` is specified,
+remove any voxels selected by ``MASK[:VALSPEC]`` from the mask.
+If it is not specified, don't change the mask.
 
 **For the refine mean mask:**
-If --refineinclude MASK[:VALSPEC] is specified, include all voxels
-selected by MASK[:VALSPEC].  If it is not specified, include all voxels
-in the correlation mask mask.  Then if --refineexclude MASK[:VALSPEC] is specified,
-remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is
-not specified, don't change the mask.  Then multiply by corrmask, since
-you can't use voxels where rapidtide was not run to do refinement.
+If ``--refineinclude MASK[:VALSPEC]`` is specified, include all voxels selected by ``MASK[:VALSPEC]``.
+If it is not specified, include all voxels in the correlation mask mask.
+Then if ``--refineexclude MASK[:VALSPEC]`` is specified,
+remove any voxels selected by ``MASK[:VALSPEC]`` from the mask.
+If it is not specified, don't change the mask.
+Then multiply by the correlation mask,
+since you can't use voxels where rapidtide was not run to do refinement.
 
 **For the offset mask**
-If --offsetinclude MASK[:VALSPEC] is specified, include all voxels
-selected by MASK[:VALSPEC].  If it is not specified, include all voxels
-in the correlation mask.  Then if --offsetexclude MASK[:VALSPEC] is specified,
-remove any voxels selected by MASK[:VALSPEC] from the mask.  If it is
-not specified, don't change the mask.  Then multiply by corrmask, and use the voxels within
-the mask to generate a histogram of delay values.  Calculate the offset of the peak of the delay histogram,
+If ``--offsetinclude MASK[:VALSPEC]`` is specified, include all voxels selected by ``MASK[:VALSPEC]``.
+If it is not specified, include all voxels in the correlation mask.
+Then if ``--offsetexclude MASK[:VALSPEC]`` is specified,
+remove any voxels selected by`` MASK[:VALSPEC]`` from the mask.
+If it is not specified, don't change the mask.
+Then multiply by the correlation mask,
+and use the voxels within the mask to generate a histogram of delay values.
+Calculate the offset of the peak of the delay histogram,
 and subtract this value from all delay values within the correlation mask.
 
 **For the GLM mask:**
-Include all voxels, unless you are calculating a CVR map, in which caserates other than the TR. Therefore
-the first step in moving regressor processing is to resample the moving regressor estimate to match the (oversampled)
-data sample rate.
+Include all voxels, unless you are calculating a CVR map, in which case rates other than the TR.
+Therefore the first step in moving regressor processing is to resample the moving regressor
+estimate to match the (oversampled) data sample rate.
 
-**Temporal filtering:**  By default, all data and moving regressors are temporally bandpass filtered to 0.009-0.15Hz
-(our standard definition of the LFO band).  This can be overridden with ``--filterband`` and ``--filterfreqs`` command line
-options.
+**Temporal filtering:**
+By default, all data and moving regressors are temporally bandpass filtered to 0.009-0.15 Hz
+(our standard definition of the LFO band).
+This can be overridden with ``--filterband`` and ``--filterfreqs`` command line options.
 
-Depending on your data (including pathology), and what you want to accomplish, using the default correlation
-mask is not ideal.  For example, if a subject has obvious pathology, you may want to exclude these voxels
-from being used to generate the initial global mean signal estimate, or from being used in refinement.
+Depending on your data (including pathology),
+and what you want to accomplish, using the default correlation mask is not ideal.
+For example, if a subject has obvious pathology,
+you may want to exclude these voxels from being used to generate the initial global mean signal estimate,
+or from being used in refinement.
 
 
 Initial Moving Signal Estimation
@@ -203,40 +220,45 @@ invalidates my assumption that the global mean is a good initial estimate of the
 One way to combat this is to limit the brain region that you get your initial regressor from, so that you are only
 sampling a single "pool" of delays. For example, you
 could use a gray matter mask for the global regresor estimation, since white matter has a smaller contribution from
-the moving blood signal, and tends to get blood much later than gray matter anyway.  Just add the option
-``--globalmeaninclude graymask.nii.gz`` to your rapidtide command line.  If you are using
-fmriprep, you can get a gray matter mask using:
+the moving blood signal, and tends to get blood much later than gray matter anyway.
 
-::
+Just add the option ``--graymattermask graymask.nii.gz`` to your rapidtide command line.
+If you are using fMRIPrep, you can use the gray matter probabilistic map directly,
+as rapidtide will threshold it automatically:
 
-  fslmaths \
-      BIDSHOME/derivatives/fmriprep/sub-XXX/anat/sub-YYY_space-MNI152NLin6Asym_res-2_label-GM_probseg.nii.gz \
-      -s 3 \
-      -thr 0.25 \
-      -bin \
-      graymask
+.. code-block:: bash
+
+    rapidtide \
+        ... \
+        --brainmask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii.gz \
+        --graymattermask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-GM_probseg.nii.gz \
+        --whitemattermask sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-WM_probseg.nii.gz
 
 If you want to be even more proactive, you could select a more focal brain region that you think has unperturbed circulation.
 For an Alzheimer's study that I am currently working on, we ended up starting only from blood in right and
 left cerebellar gray matter (freesurfer aparc+aseg regions 8 and 47) on the theory that if circulation in your cerebellum
-is too messed up, you're dead, so would not be in the dataset. That made our delay estimates work a lot better.
-So we used the freesurfer parcellations from fmriprep, transformed to standard space, to do that
-preselection, using the option ``--globalmeaninclude standardspaceaparcasegfilename.nii.gz:8,47``.
+is too messed up, you're dead, so would not be in the dataset.
+That made our delay estimates work a lot better.
+So we used the freesurfer parcellations from fMRIPrep, transformed to standard space,
+to do that preselection,
+using the option ``--globalmeaninclude sub-XXX_space-MNI152NLin6Asym_res-2_desc-aparcaseg_dseg.nii.gz:8,47``.
 
-fmriprep does not provide a standard space aparc+aseg file - it's in T1 native space at 1mm resolution
-(because that's the space freesurfer works in).  Resampling to standard space is easy, BUT you must
-remember to use NearestNeighbor
-interpolation, or you'll get smeared, averaged boundaries between brain regions, which you REALLY don't want.
-This command should get you a ``standardspaceaparcasegfilename.nii.gz`` (you need to have ANTs installed for this):
+fMRIPrep does not provide a standard space aparc+aseg file - it's in T1 native space at 1mm resolution
+(because that's the space freesurfer works in).
+Resampling to standard space is easy, BUT you must remember to use NearestNeighbor interpolation (or GenericLabel if you're using antsApplyTransforms),
+or you'll get smeared, averaged boundaries between brain regions, which you REALLY don't want.
+This command should get you a standard-space aparc+aseg file named
+``sub-XXX_space-MNI152NLin6Asym_res-2_desc-aparcaseg_dseg.nii.gz``
+(you need to have ANTs installed for this):
 
 ::
 
   antsApplyTransforms \
       -d 3 \
       -i BIDSHOME/derivatives/sub-XXX/anat/sub-XXX_desc-aparcaseg_dseg.nii.gz \
-      -o BIDSHOME/derivatives/sub-XXX/anat/mymnispace_desc-aparcaseg_dseg.nii.gz \
+      -o BIDSHOME/derivatives/sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-aparcaseg_dseg.nii.gz \
       -r BIDSHOME/derivatives/sub-XXX/anat/sub-XXX_space-MNI152NLin6Asym_res-2_desc-preproc_T1w.nii.gz \
-      --interpolation NearestNeighbor \
+      --interpolation GenericLabel \
       --transform BIDSHOME/derivatives/sub-XXX/anat/sub-XXX_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5
 
 
@@ -247,14 +269,14 @@ This includes the following operations:
 
 **Oversampling:**  In order to simplify delay calculation, rapidtide performs all delay estimation operations
 on data with a sample rate of 2Hz or faster.  Since most fMRI is recorded with a TR > 0.5s, this is achieved by
-oversampling the data.  The oversampling factor can be specified explicitly 
+oversampling the data.  The oversampling factor can be specified explicitly
 (using the ``--oversampfac`` command line argument), but if it is
 not given, for data with a sample rate of less than 2Hz, all data and regressors
 are internally upsampled by the lowest
 integral factor that results in a sample rate >= 2Hz.
 
-**Regressor resampling:** In the case where we are using the global mean signal 
-as the moving signal, the moving signal estimate and the fMRI data have 
+**Regressor resampling:** In the case where we are using the global mean signal
+as the moving signal, the moving signal estimate and the fMRI data have
 the same sample rate, but if we use external
 recordings, such as NIRS or etCO2 timecourses, these will in general have sample
 rates other than the TR, and may start before and/or end after the fMRI acquisition.
