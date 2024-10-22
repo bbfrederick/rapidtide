@@ -1,6 +1,6 @@
 # Release history
 
-## Version 2.9.9 (10/11/24)
+## Version 2.9.9 (10/22/24)
 * (docs) Integrated lots of documentation upgrades from Taylor Salo (tsalo).
 * (rapidtide) Changed correlation mask to use brain mask as correlation mask if provided.
 * (rapidtide) Lowered the default lagminthresh, lagmaxthresh.
