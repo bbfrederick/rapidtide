@@ -129,10 +129,10 @@ the next fitting pass;
 the delay distribution; and
 5) the GLM mask, which determines which voxels have the rapidtide regressors removed.
 
-Below is a description of how this works currently.  NB: this is not how
-I THOUGHT is worked - until I just looked at the code just now.  It
-built up over time, and evolved into something that was not quite what I
-designed.  I'm going to fix it up, but this what it's doing as of 2.6.1,
+Below is a description of how this works currently.
+NB: this is not how I THOUGHT is worked - until I just looked at the code just now.
+It built up over time, and evolved into something that was not quite what I designed.
+I'm going to fix it up, but this what it's doing as of 2.6.1,
 which works most of the time, but may not be what you want.
 
 The default behavior is to first calculate the correlation mask using
@@ -140,17 +140,26 @@ nilearn.masking.compute_epi_mask with default values.  This is a
 complicated function, which I'm using as a bit of a black box.
 Documentation for it is here:
 https://nilearn.github.io/stable/modules/generated/nilearn.masking.compute_epi_mask.html#nilearn.masking.compute_epi_mask.
-If you have
-standard, non-zero-mean fMRI data, it seems to work pretty well, but you
-can specify your own mask using ``--corrmask NAME[:VALSPEC]`` (include any
-non-zero voxels in the file NAME in the mask.  If VALSPEC is provided, only
-include voxels with integral values specified by VALSPEC in the mask).
+If you have standard, non-zero-mean fMRI data, it seems to work pretty well,
+but you can specify your own mask using ``--corrmask NAME[:VALSPEC]``
+(include any non-zero voxels in the file NAME in the mask.
+If VALSPEC is provided, only include voxels with integral values specified by VALSPEC in the mask).
 VALSPEC is a comma separated list of integers (1,2,7,12) and/or integer
 ranges (2-7,12-15) so you can make masks of complicated combinations of
-regions from an atlas.  So for example ``--corrmask mymask.nii.gz:1,7-9,54``
-would include any voxels in mymask with values of 1, 7, 8, 9, or 54,
-whereas ``--corrmask mymask.nii.gz`` would include any non-zero voxels in
-mymask.
+regions from an atlas.
+So for example ``--corrmask mymask.nii.gz:1,7-9,54`` would include any voxels in mymask
+with values of 1, 7, 8, 9, or 54,
+whereas ``--corrmask mymask.nii.gz`` would include any non-zero voxels in mymask.
+
+.. tip::
+
+   The ``--brainmask`` argument will automatically set all five of these masks,
+   but each can be overridden with the individual mask parameters.
+
+.. tip::
+
+   The ``--graymattermask`` argument will automatically set both the global mean mask and the offset mask,
+   but each can be overridden with the individual mask parameters.
 
 **For the global mean mask:**
 If ``--globalmeaninclude MASK[:VALSPEC]`` is specified, include all voxels selected by ``MASK[:VALSPEC]``.
