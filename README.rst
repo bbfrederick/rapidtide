@@ -302,130 +302,85 @@ website: https://www.nirs-fmri.net/home/publications
 General overview of systemic low frequency oscillations in fMRI data
 --------------------------------------------------------------------
 
-1) Tong Y, Hocke LM, Frederick BB. (2019) Low Frequency Systemic
-   Hemodynamic \"Noise\" in Resting State BOLD fMRI: Characteristics,
-   Causes, Implications, Mitigation Strategies, and Applications. Front.
-   Neurosci., 14 August 2019 \| https://doi.org/10.3389/fnins.2019.00787
+:cite:empty:`tong2019low`
+
+.. bibliography::
+   :filter: False
+   :style: unsrt
+
+   tong2019low
+
 
 Multimodal Cerebral Circulation Imaging
 ---------------------------------------
 
-1)  Tong Y, Frederick BD. (2010) Time lag dependent multimodal
-    processing of concurrent fMRI and near-infrared spectroscopy (NIRS)
-    data suggests a global circulatory origin for low-frequency
-    oscillation signals in human brain. Neuroimage, 53(2), 553-64.
+:cite:empty:`tong2010`
+:cite:empty:`tong2011isolating`
+:cite:empty:`tong2011improvedCVR`
+:cite:empty:`tong2012concurrent`
+:cite:empty:`tong2012lfo`
+:cite:empty:`tong2014short`
+:cite:empty:`tong2014studying`
+:cite:empty:`tong2014tracking`
+:cite:empty:`donahue2016time`
+:cite:empty:`hocke2015optimized`
+:cite:empty:`tong2015canapparent`
+:cite:empty:`tong2016perfusion`
 
-2)  Tong Y, Hocke L, Frederick BD. (2011) Isolating the sources of
-    widespread physiological fluctuations in fNIRS signals. J Biomed
-    Opt. 16(10), 106005.
+.. bibliography::
+   :filter: False
+   :style: unsrt
 
-3)  Tong Y, Bergethon PR, Frederick BD. (2011c) An improved method for
-    mapping cerebrovascular reserve using concurrent fMRI and
-    near-infrared spectroscopy with Regressor Interpolation at
-    Progressive Time Delays (RIPTiDe). Neuroimage, 56(4), 2047-2057.
+   tong2010
+   tong2011isolating
+   tong2011improvedCVR
+   tong2012concurrent
+   tong2012lfo
+   tong2014short
+   tong2014studying
+   tong2014tracking
+   donahue2016time
+   hocke2015optimized
+   tong2015canapparent
+   tong2016perfusion
 
-4)  Tong Y, Frederick BD. (2012) Concurrent fNIRS and fMRI processing
-    allows independent visualization of the propagation of pressure
-    waves and bulk blood flow in the cerebral vasculature. Neuroimage,
-    Jul 16;61(4): 1419-27.
-
-5)  Tong Y, Hocke LM, Licata SC, Frederick BD. (2012) Low frequency
-    oscillations measured in the periphery with near infrared
-    spectroscopy (NIRS) are strongly correlated with blood oxygen
-    level-dependent functional magnetic resonance imaging (BOLD fMRI)
-    signals. J Biomed Opt, 2012;17(10):106004. doi:
-    10.1117/1.JBO.17.10.106004. PubMed PMID: 23224003; PMCID: 3461094.
-
-6)  Tong Y, Hocke LM, Frederick BD. (2013) Short repetition time
-    multiband EPI with simultaneous pulse recording allows dynamic
-    imaging of the cardiac pulsation signal. Magn Reson Med
-    2014;72(5):1268-76. Epub Nov 22, 2013. doi: 10.1002/mrm.25041.
-    PubMed PMID: 24272768.
-
-7)  Tong Y, Frederick B. (2014) Studying the Spatial Distribution of
-    Physiological Effects on BOLD Signals using Ultrafast fMRI. Front
-    Hum Neurosci 2014;5(196). doi: doi: 10.3389/fnhum.2014.00196.
-
-8)  Tong Y, Frederick B. (2014) Tracking cerebral blood flow in BOLD
-    fMRI using recursively generated regressors. Hum Brain Mapp.
-    2014;35(11):5471-85. doi: 10.1002/hbm.22564. PubMed PMID: 24954380;
-    PMCID: PMC4206590.
-
-9)  Donahue M, Strother M, Lindsey K, Hocke L, Tong Y, Frederick B.
-    (2015) Time delay processing of hypercapnic fMRI allows quantitative
-    parameterization of cerebrovascular reactivity and blood flow
-    delays. Journal of Cerebral Blood Flow & Metabolism.  2015. PubMed 
-    PMID: 26661192. Epub October 19, 2015. doi: 10.1177/0271678X15608643.
-
-10) Hocke L, Cayetano K, Tong Y, Frederick B. (2015) An optimized
-    multimodal fMRI/NIRS probe for ultra-high resolution mapping.
-    Neurophotonics. 2(4), 045004 (Oct-Dec 2015). doi:
-    10.1117/1.NPh.2.4.0450004.
-
-11) Tong Y, Hocke LM, Fan X, Janes AC, Frederick B (2015). Can apparent
-    resting state connectivity arise from systemic fluctuations?
-    Frontiers in human neuroscience. 2015;9. doi:
-    10.3389/fnhum.2015.00285.
-
-12) Tong Y, Lindsey KP, Hocke LM, Vitaliano G, Mintzopoulos D, Frederick
-    B. (2016) Perfusion information extracted from resting state
-    functional magnetic resonance imaging. Journal of cerebral blood
-    flow and metabolism : official journal of the International Society
-    of Cerebral Blood Flow and Metabolism. 2016. doi:
-    10.1177/0271678X16631755. PubMed PMID: 26873885.
 
 Cardiac waveform extraction and refinement
 ------------------------------------------
 
-1) Aslan S, Hocke L, Schwarz N, Frederick B. (2019) Extraction of the
-   cardiac waveform from simultaneous multislice fMRI data using slice
-   sorted averaging and a deep learning reconstruction filter.
-   NeuroImage 198, 303–316 (2019).
+:cite:empty:`aslan2019`
+
+.. bibliography::
+   :filter: False
+   :style: unsrt
+
+   aslan2019
+
 
 Physiological noise identification and removal using time delay methods
 -----------------------------------------------------------------------
 
-1) Tong Y, Lindsey KP, Frederick BD. (2011b) Partitioning of
-   physiological noise signals in the brain with concurrent
-   near-infrared spectroscopy (NIRS) and fMRI. J Cereb Blood Flow Metab.
-   31(12), 2352-62.
+:cite:empty:`frederick2012`
+:cite:empty:`tong2011b`
+:cite:empty:`tong2013evaluating`
+:cite:empty:`hocke2016comparison`
+:cite:empty:`erdougan2016correcting`
+:cite:empty:`tong2019lowB`
+:cite:empty:`korponay2024nathumbeh`
 
-2) Frederick BD, Nickerson LD, Tong Y. (2012) Physiological denoising of
-   BOLD fMRI data using Regressor Interpolation at Progressive Time
-   Delays (RIPTiDe) processing of concurrent fMRI and near-infrared
-   spectroscopy (NIRS). Neuroimage, Apr 15;60(3): 1419-27.
 
-3) Tong Y, Hocke LM, Nickerson LD, Licata SC, Lindsey KP, Frederick BB
-   (2013) Evaluating the effects of systemic low frequency oscillations
-   measured in the periphery on the independent component analysis
-   results of resting state networks. NeuroImage. 2013;76C:202-15. doi:
-   10.1016/j.neuroimage.2013.03.019. PubMed PMID: 23523805; PMCID:
-   PMC3652630.
+.. bibliography::
+   :filter: False
+   :style: unsrt
 
-4) Hocke LM, Tong Y, Lindsey KP, Frederick BB (2016). Comparison of
-   peripheral near-infrared spectroscopy low-frequency oscillations to
-   other denoising methods in resting state functional MRI with
-   ultrahigh temporal resolution. Magnetic resonance in medicine :
-   official journal of the Society of Magnetic Resonance in Medicine /
-   Society of Magnetic Resonance in Medicine. 2016.
-   \| http://dx.doi.org/10.1002/mrm.26038. PubMed PMID: 26854203.
+   frederick2012
+   tong2011b
+   tong2013evaluating
+   hocke2016comparison
+   erdougan2016correcting
+   tong2019lowB
+   korponay2024nathumbeh
 
-5) Erdoğan S, Tong Y, Hocke L, Lindsey K, Frederick B (2016). Correcting
-   resting state fMRI-BOLD signals for blood arrival time enhances
-   functional connectivity analysis. Front. Hum. Neurosci., 28 June 2016
-   \| http://dx.doi.org/10.3389/fnhum.2016.00311
-
-6) Tong, Y, Hocke, LM, and Frederick, BB, Low Frequency
-   Systemic Hemodynamic \"Noise\" in Resting State BOLD fMRI: Characteristics,
-   Causes, Implications, Mitigation Strategies, and Applications.
-   Front Neurosci, 2019. 13: p. 787.
-   \| http://dx.doi.org/10.3389/fnins.2019.00787
-
-7) Korponay, C, Janes, AC and Frederick, BB, Brain-wide functional connectivity
-   artifactually inflates throughout functional magnetic resonance imaging
-   scans.  Nat. Hum. Behav. 8, 1568–1580 (2024).
-   \| http://dx.doi.org/10.1038/s41562-024-01908-6
-  
 
 .. |PyPi Latest Version| image:: https://img.shields.io/pypi/v/rapidtide.svg
    :target: https://pypi.python.org/pypi/rapidtide/
@@ -443,3 +398,4 @@ Physiological noise identification and removal using time delay methods
    :target: https://doi.org/10.5281/zenodo.814990
 .. |Funded by NIH| image:: https://img.shields.io/badge/NIH-RF1--MH130637--01-yellowgreen.svg
    :target: https://reporter.nih.gov/project-details/10509534
+
