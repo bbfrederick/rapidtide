@@ -98,7 +98,9 @@ def _get_parser():
         action="store",
         type=str,
         choices=["None", "phat", "liang", "eckart"],
-        help=("Method to use for cross-correlation " "weighting. Default is  None. "),
+        help=(
+            f"Method to use for cross-correlation weighting. Default is {DEFAULT_CORRWEIGHTING}. "
+        ),
         default=DEFAULT_CORRWEIGHTING,
     )
     parser.add_argument(
