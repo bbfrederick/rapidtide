@@ -886,7 +886,7 @@ def _get_parser():
     reg_ref.add_argument(
         "--passes",
         dest="passes",
-        action="store",
+        action=pf.IndicateSpecifiedAction,
         type=int,
         metavar="PASSES",
         help=("Set the number of processing passes to PASSES.  " f"Default is {DEFAULT_PASSES}."),
@@ -1773,6 +1773,8 @@ def process_args(inputargs=None):
     args = vars(theobj)
 
     # Additional argument parsing not handled by argparse
+    args["passes"] = np.max([args["passes"], 1])
+
     args["despeckle_passes"] = np.max([args["despeckle_passes"], 0])
 
     if "lag_extrema_nondefault" in args.keys():
