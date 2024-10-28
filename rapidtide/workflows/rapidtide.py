@@ -2387,6 +2387,7 @@ def rapidtide_main(argparsingfunc):
             # find lags that are very different from their neighbors, and refit starting at the median lag for the point
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
+            lastnumdespeckled = 1000000
             for despecklepass in range(optiondict["despeckle_passes"]):
                 LGR.info(f"\n\n{similaritytype} despeckling subpass {despecklepass + 1}")
                 outmaparray *= 0.0
@@ -2401,7 +2402,9 @@ def rapidtide_main(argparsingfunc):
                     -1000000.0,
                 )[validvoxels]
                 if len(initlags) > 0:
-                    if len(np.where(initlags != -1000000.0)[0]) > 0:
+                    numdespeckled = len(np.where(initlags != -1000000.0)[0])
+                    if lastnumdespeckled > numdespeckled > 0:
+                        lastnumdespeckled = numdespeckled
                         disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
                         voxelsprocessed_thispass = fitcorr_func(
                             trimmedcorrscale,
