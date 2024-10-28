@@ -1,9 +1,14 @@
 # Release history
 
-## Version 2.9.9.1 (10/22/24)
+## Version 2.9.9.1 (10/28/24)
+* (rapidtide) Properly set the "_nodefault" flag on "passes".  Should resolve https://github.com/bbfrederick/rapidtide/issues/178.
+* (rapidtide) Terminate despeckling if the number of voxels to despeckle is not changing.
+* (rapidtide,ccorrica) Changed default correlation weighting to "phat".
+* (ccorrica) Output filtered timecourses.
 * (docs) More documentation enhancements by tsalo.
 * (docs) Updated requirements.txt file to reflect recent documentation changes so readthedocs build would complete.
-* (docs) Added a new reference.
+* (docs) Added some references to references.bib.
+* (package) Merged some dependabot PRs.
 
 ## Version 2.9.9 (10/22/24)
 * (docs) Integrated lots of documentation upgrades from Taylor Salo (tsalo).
