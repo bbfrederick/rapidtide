@@ -182,13 +182,22 @@ def ccorrica(args):
         Fs *= args.oversampfactor
         tclen *= args.oversampfactor
 
+    # filter the data
+    for component in range(0, numcomponents):
+        reformdata[component, :] = tide_math.stdnormalize(
+            theprefilter.apply(Fs, reformdata[component, :])
+        )
+
+    # save the filtered timecourses
+    tide_io.writenpvecs(reformdata, args.outputroot + "_filtereddata.txt")
+
+    # now detrend, window, and normalize the data
     for component in range(0, numcomponents):
         reformdata[component, :] = tide_math.corrnormalize(
-            theprefilter.apply(Fs, reformdata[component, :]),
+            reformdata[component, :],
             detrendorder=args.detrendorder,
             windowfunc=args.windowfunc,
         )
-    tide_io.writenpvecs(reformdata, args.outputroot + "_filtereddata.txt")
 
     xcorrlen = 2 * tclen - 1
     sampletime = 1.0 / Fs
