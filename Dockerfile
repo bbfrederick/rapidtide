@@ -23,6 +23,7 @@ RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
 
 # Install rapidtide
+USER root
 COPY . /src/rapidtide
 RUN echo $GITVERSION > /src/rapidtide/VERSION
 RUN cd /src/rapidtide && \
@@ -47,6 +48,8 @@ RUN ldconfig
 WORKDIR /tmp/
 RUN ln -s /src/rapidtide/cloud /
 ENTRYPOINT ["/cloud/mount-and-run"]
+
+USER rapidtide
 
 LABEL org.label-schema.build-date=$BUILD_TIME \
       org.label-schema.name="rapidtide" \
