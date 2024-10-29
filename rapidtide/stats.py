@@ -582,7 +582,7 @@ def gethistprops(
         i = 1
         started = False
         finished = False
-        while i < len(thestore[1, :] - 2) and not finished:
+        while i < len(thestore[1, :] - 3) and not finished:
             if thestore[1, i] > peakthresh * overallmax:
                 started = True
             if thestore[1, i] > thestore[1, peakindex]:
