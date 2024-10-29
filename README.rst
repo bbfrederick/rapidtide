@@ -287,6 +287,18 @@ nibabel:
    nibabel
 
 
+scikit-image:
+-------------
+
+:cite:empty:`van2014scikit`
+
+.. bibliography::
+   :filter: False
+   :style: unsrt
+
+   van2014scikit
+
+
 scikit-learn:
 -------------
 
@@ -297,6 +309,18 @@ scikit-learn:
    :style: unsrt
 
    scikitlearn
+
+
+statsmodels:
+-------------
+
+:cite:empty:`seabold2010statsmodels`
+
+.. bibliography::
+   :filter: False
+   :style: unsrt
+
+   seabold2010statsmodels
 
 
 pandas:
@@ -321,6 +345,18 @@ nilearn:
    :style: unsrt
 
    nilearn
+
+
+pyqtgraph:
+-------------
+
+:cite:empty:`pyqtgraph`
+
+.. bibliography::
+   :filter: False
+   :style: unsrt
+
+   pyqtgraph
 
 
 References
