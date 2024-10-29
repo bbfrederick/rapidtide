@@ -7,7 +7,7 @@
 * (ccorrica) Output filtered timecourses.
 * (docs) More documentation enhancements by tsalo.
 * (docs) Updated requirements.txt file to reflect recent documentation changes so readthedocs build would complete.
-* (docs) Added some references to references.bib.
+* (docs) Converted all references to bibtex.
 * (package) Merged some dependabot PRs.
 
 ## Version 2.9.9 (10/22/24)
