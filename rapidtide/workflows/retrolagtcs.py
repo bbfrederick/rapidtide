@@ -223,13 +223,11 @@ def retrolagtcs(args):
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
-        fitNorm, dummy, dummy = tide_util.allocshared(
+        fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloatset)
+        fitcoeff, fitcoeff_shm = tide_util.allocshared(
             internalvalidspaceshapederivs, rt_outfloatset
         )
-        fitcoeff, dummy, dummy = tide_util.allocshared(
-            internalvalidspaceshapederivs, rt_outfloatset
-        )
-        lagtc, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
+        lagtc, lagtc_shm = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
     else:
         if args.debug:
             print("allocating memory")
