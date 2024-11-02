@@ -461,7 +461,7 @@ def _get_parser():
         default=None,
     )
     preproc.add_argument(
-        "--motderiv",
+        "--nomotderiv",
         dest="mot_deriv",
         action="store_false",
         help=("Toggle whether derivatives will be used in motion regression.  Default is True."),
@@ -490,7 +490,7 @@ def _get_parser():
         default=1,
     )
     preproc.add_argument(
-        "--confoundderiv",
+        "--noconfoundderiv",
         dest="confound_deriv",
         action="store_false",
         help=(

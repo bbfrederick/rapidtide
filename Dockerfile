@@ -1,5 +1,6 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer_plus:latest-release
+#FROM fredericklab/basecontainer_plus:latest-release
+FROM fredericklab/basecontainer:latest-release
 
 # get build arguments
 ARG BUILD_TIME
@@ -9,8 +10,8 @@ ARG GITSHA
 ARG GITDATE
 
 # set and echo environment variables
-ENV BUILD_TIME $BUILD_TIME
-ENV BRANCH $BRANCH
+ENV BUILD_TIME=$BUILD_TIME
+ENV BRANCH=$BRANCH
 ENV GITVERSION=${GITVERSION}
 ENV GITSHA=${GITSHA}
 ENV GITDATE=${GITDATE}
@@ -22,6 +23,7 @@ RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
 
 # Install rapidtide
+USER root
 COPY . /src/rapidtide
 RUN echo $GITVERSION > /src/rapidtide/VERSION
 RUN cd /src/rapidtide && \
@@ -46,6 +48,8 @@ RUN ldconfig
 WORKDIR /tmp/
 RUN ln -s /src/rapidtide/cloud /
 ENTRYPOINT ["/cloud/mount-and-run"]
+
+USER rapidtide
 
 LABEL org.label-schema.build-date=$BUILD_TIME \
       org.label-schema.name="rapidtide" \
