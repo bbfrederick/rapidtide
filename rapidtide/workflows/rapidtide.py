@@ -510,6 +510,34 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Prepare data
     ####################################################
+    # read in the anatomic masks
+    anatomiclist = [
+        ["brainmaskincludename", "brainmaskincludevals", "brainmask"],
+        ["graymatterincludename", "graymatterincludevals", "graymattermask"],
+        ["whitematterincludename", "whitematterincludevals", "whitemattermask"],
+    ]
+    anatomicmasks = []
+    for thisanatomic in anatomiclist:
+        if optiondict[thisanatomic[0]] is not None:
+            anatomicmasks.append(
+                tide_mask.readamask(
+                    optiondict[thisanatomic[0]],
+                    nim_hdr,
+                    xsize,
+                    istext=optiondict["textio"],
+                    valslist=optiondict[thisanatomic[1]],
+                    maskname=thisanatomic[2],
+                    tolerance=optiondict["spatialtolerance"],
+                )
+            )
+            anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
+        else:
+            anatomicmasks.append(None)
+            # anatomicmasks[-1] = np.uint16(np.ones(nativespaceshape, dtype=np.uint16))
+    brainmask = anatomicmasks[0]
+    graymask = anatomicmasks[1]
+    whitemask = anatomicmasks[2]
+
     # do spatial filtering if requested
     if fileiscifti:
         optiondict["gausssigma"] = 0.0
@@ -517,6 +545,16 @@ def rapidtide_main(argparsingfunc):
         # set gausssigma automatically
         optiondict["gausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
     if optiondict["gausssigma"] > 0.0:
+        # premask data if requested
+        if optiondict["premask"] and brainmask is not None:
+            LGR.info(f"premasking timepoints {validstart} to {validend}")
+            for i in tqdm(
+                range(validstart, validend + 1),
+                desc="Timepoint",
+                unit="timepoints",
+                disable=(not optiondict["showprogressbar"]),
+            ):
+                nim_data[:, :, :, i] *= brainmask
         LGR.info(
             f"applying gaussian spatial filter to timepoints {validstart} "
             f"to {validend} with sigma={optiondict['gausssigma']}"
@@ -552,31 +590,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["refineprenorm"] = "None"
         optiondict["globalmaskmethod"] = "variance"
 
-    # read in the anatomic masks
-    anatomiclist = [
-        ["brainmaskincludename", "brainmaskincludevals", "brainmask"],
-        ["graymatterincludename", "graymatterincludevals", "graymattermask"],
-        ["whitematterincludename", "whitematterincludevals", "whitemattermask"],
-    ]
-    anatomicmasks = []
-    for thisanatomic in anatomiclist:
-        if optiondict[thisanatomic[0]] is not None:
-            anatomicmasks.append(
-                tide_mask.readamask(
-                    optiondict[thisanatomic[0]],
-                    nim_hdr,
-                    xsize,
-                    istext=optiondict["textio"],
-                    valslist=optiondict[thisanatomic[1]],
-                    maskname=thisanatomic[2],
-                    tolerance=optiondict["spatialtolerance"],
-                )
-            )
-            anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
-        else:
-            anatomicmasks.append(None)
-            # anatomicmasks[-1] = np.uint16(np.ones(nativespaceshape, dtype=np.uint16))
-    brainmask = anatomicmasks[0]
+    # reformat the brain mask, if it exists
     if brainmask is None:
         invbrainmask = None
 
@@ -586,8 +600,6 @@ def rapidtide_main(argparsingfunc):
         invbrainmask = 1 - brainmask
         internalbrainmask = brainmask.reshape((numspatiallocs))
         internalinvbrainmask = invbrainmask.reshape((numspatiallocs))
-    graymask = anatomicmasks[1]
-    whitemask = anatomicmasks[2]
 
     # read in the optional masks
     tide_util.logmem("before setting masks")

@@ -1301,6 +1301,18 @@ def _get_parser():
         default="single",
     )
     misc.add_argument(
+        "--spatialtolerance",
+        dest="spatialtolerance",
+        action="store",
+        type=float,
+        metavar="EPSILON",
+        help=(
+            "When checking to see if the spatial dimensions of two NIFTI files match, allow a relative difference "
+            "of EPSILON in any dimension.  By default, this is set to 0.0, requiring an exact match. "
+        ),
+        default=0.0,
+    )
+    misc.add_argument(
         "--cifti",
         dest="isgrayordinate",
         action="store_true",
@@ -1356,6 +1368,15 @@ def _get_parser():
         default=None,
     )
     experimental.add_argument(
+        "--premask",
+        dest="premask",
+        action="store_true",
+        help=(
+            "Apply masking prior to spatial filtering to limit delay calculation to brain tissue only."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
         "--psdfilter",
         dest="psdfilter",
         action="store_true",
@@ -1386,18 +1407,6 @@ def _get_parser():
         metavar="FREQ",
         help=(
             "Temporal highpass cutoff, in Hz, for filtering the correlation function baseline. "
-        ),
-        default=0.0,
-    )
-    experimental.add_argument(
-        "--spatialtolerance",
-        dest="spatialtolerance",
-        action="store",
-        type=float,
-        metavar="EPSILON",
-        help=(
-            "When checking to see if the spatial dimensions of two NIFTI files match, allow a relative difference "
-            "of EPSILON in any dimension.  By default, this is set to 0.0, requiring an exact match. "
         ),
         default=0.0,
     )
