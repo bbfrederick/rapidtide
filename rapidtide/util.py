@@ -1032,13 +1032,11 @@ def allocshared_old(theshape, thetype):
 
 
 # shared memory routines
-def numpy2shared_new(inarray, thetype):
-    # Calculate array properties
-    thesize = inarray.size
-    theshape = inarray.shape
+def numpy2shared_new(inarray, theouttype):
     # Create a shared memory block to store the array data
-    shm = shared_memory.SharedMemory(create=True, size=inarray.nbytes)
-    inarray_shared = np.ndarray(theshape, dtype=thetype, buffer=shm.buf)
+    outnbytes = np.dtype(theouttype).itemsize * inarray.size
+    shm = shared_memory.SharedMemory(create=True, size=outnbytes)
+    inarray_shared = np.ndarray(inarray.shape, dtype=theouttype, buffer=shm.buf)
     np.copyto(inarray_shared, inarray)  # Copy data to shared memory array
     return inarray_shared, shm  # Return both the array and the shared memory object
 
