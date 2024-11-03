@@ -1371,7 +1371,18 @@ def _get_parser():
         "--premask",
         dest="premask",
         action="store_true",
-        help=("Apply masking prior to spatial filtering to limit extracerebral sources."),
+        help=(
+            "Apply masking prior to spatial filtering to limit extracerebral sources (requires --brainmask)"
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--premasktissueonly",
+        dest="premasktissueonly",
+        action="store_true",
+        help=(
+            "Apply more stringent masking prior to spatial filtering, removing CSF voxels (requires --graymattermask and --whitemattermask)."
+        ),
         default=False,
     )
     experimental.add_argument(

@@ -1003,22 +1003,22 @@ def comparehappyruns(root1, root2, debug=False):
 
 
 # shared memory routines
-def numpy2shared(inarray, theouttype):
+def numpy2shared(inarray, theouttype, name=None, create=True):
     # Create a shared memory block to store the array data
     outnbytes = np.dtype(theouttype).itemsize * inarray.size
-    shm = shared_memory.SharedMemory(create=True, size=outnbytes)
+    shm = shared_memory.SharedMemory(name=name, create=create, size=outnbytes)
     inarray_shared = np.ndarray(inarray.shape, dtype=theouttype, buffer=shm.buf)
     np.copyto(inarray_shared, inarray)  # Copy data to shared memory array
     return inarray_shared, shm  # Return both the array and the shared memory object
 
 
-def allocshared(theshape, thetype):
+def allocshared(theshape, thetype, name=None):
     # Calculate size based on shape
     thesize = np.prod(theshape)
     # Determine the data type size
     dtype_size = np.dtype(thetype).itemsize
     # Create a shared memory block of the required size
-    shm = shared_memory.SharedMemory(create=True, size=thesize * dtype_size)
+    shm = shared_memory.SharedMemory(name=name, create=True, size=thesize * dtype_size)
     outarray = np.ndarray(theshape, dtype=thetype, buffer=shm.buf)
     return outarray, shm  # Return both the array and the shared memory object
 
