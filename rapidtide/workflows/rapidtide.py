@@ -3070,13 +3070,6 @@ def rapidtide_main(argparsingfunc):
             rt_floattype=rt_floattype,
             cifti_hdr=cifti_hdr,
         )
-        del coherencefunc
-        del coherencepeakval
-        del coherencepeakfreq
-        if optiondict["sharedmem"]:
-            tide_util.cleanup_shm(coherencefunc_shm)
-            tide_util.cleanup_shm(coherencepeakval_shm)
-            tide_util.cleanup_shm(coherencepeakfreq_shm)
 
         TimingLGR.info(
             "Coherence calculation end",
@@ -3521,6 +3514,14 @@ def rapidtide_main(argparsingfunc):
         dictvarname="MTThist",
         thedict=optiondict,
     )
+    if optiondict["calccoherence"]:
+        del coherencefunc
+        del coherencepeakval
+        del coherencepeakfreq
+        if optiondict["sharedmem"]:
+            tide_util.cleanup_shm(coherencefunc_shm)
+            tide_util.cleanup_shm(coherencepeakval_shm)
+            tide_util.cleanup_shm(coherencepeakfreq_shm)
 
     # write the optional 3D maps that need to be remapped
     if optiondict["doglmfilt"] or optiondict["docvrmap"]:
