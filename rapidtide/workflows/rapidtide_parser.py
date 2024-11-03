@@ -1371,9 +1371,7 @@ def _get_parser():
         "--premask",
         dest="premask",
         action="store_true",
-        help=(
-            "Apply masking prior to spatial filtering to limit delay calculation to brain tissue only."
-        ),
+        help=("Apply masking prior to spatial filtering to limit extracerebral sources."),
         default=False,
     )
     experimental.add_argument(
