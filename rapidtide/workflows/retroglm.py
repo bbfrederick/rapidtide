@@ -322,18 +322,20 @@ def retroglm(args):
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
-        glmmean, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        rvalue, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        r2value, dummy, dummy = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        fitNorm, dummy, dummy = tide_util.allocshared(
+        glmmean, glmmean_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
+        rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
+        r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
+        fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloatset)
+        fitcoeff, fitcoeff_shm = tide_util.allocshared(
             internalvalidspaceshapederivs, rt_outfloatset
         )
-        fitcoeff, dummy, dummy = tide_util.allocshared(
-            internalvalidspaceshapederivs, rt_outfloatset
+        movingsignal, movingsignal_shm = tide_util.allocshared(
+            internalvalidfmrishape, rt_outfloatset
         )
-        movingsignal, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_outfloatset)
-        lagtc, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
-        filtereddata, dummy, dummy = tide_util.allocshared(internalvalidfmrishape, rt_outfloatset)
+        lagtc, lagtc_shm = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
+        filtereddata, filtereddata_shm = tide_util.allocshared(
+            internalvalidfmrishape, rt_outfloatset
+        )
     else:
         if args.debug:
             print("allocating memory")

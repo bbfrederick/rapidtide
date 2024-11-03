@@ -18,7 +18,6 @@
 #
 import bisect
 import logging
-import multiprocessing as mp
 import os
 import platform
 import resource
@@ -27,6 +26,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from multiprocessing import RawArray, shared_memory
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1003,29 +1003,28 @@ def comparehappyruns(root1, root2, debug=False):
 
 
 # shared memory routines
-def numpy2shared(inarray, thetype):
-    thesize = inarray.size
-    theshape = inarray.shape
-    if thetype == np.float64:
-        inarray_shared = mp.RawArray("d", inarray.reshape(thesize))
-    else:
-        inarray_shared = mp.RawArray("f", inarray.reshape(thesize))
-    inarray = np.frombuffer(inarray_shared, dtype=thetype, count=thesize)
-    inarray.shape = theshape
-    return inarray
+def numpy2shared(inarray, theouttype):
+    # Create a shared memory block to store the array data
+    outnbytes = np.dtype(theouttype).itemsize * inarray.size
+    shm = shared_memory.SharedMemory(create=True, size=outnbytes)
+    inarray_shared = np.ndarray(inarray.shape, dtype=theouttype, buffer=shm.buf)
+    np.copyto(inarray_shared, inarray)  # Copy data to shared memory array
+    return inarray_shared, shm  # Return both the array and the shared memory object
 
 
 def allocshared(theshape, thetype):
-    thesize = int(1)
-    if not isinstance(theshape, (list, tuple)):
-        thesize = theshape
-    else:
-        for element in theshape:
-            thesize *= int(element)
-    if thetype == np.float64:
-        outarray_shared = mp.RawArray("d", thesize)
-    else:
-        outarray_shared = mp.RawArray("f", thesize)
-    outarray = np.frombuffer(outarray_shared, dtype=thetype, count=thesize)
-    outarray.shape = theshape
-    return outarray, outarray_shared, theshape
+    # Calculate size based on shape
+    thesize = np.prod(theshape)
+    # Determine the data type size
+    dtype_size = np.dtype(thetype).itemsize
+    # Create a shared memory block of the required size
+    shm = shared_memory.SharedMemory(create=True, size=thesize * dtype_size)
+    outarray = np.ndarray(theshape, dtype=thetype, buffer=shm.buf)
+    return outarray, shm  # Return both the array and the shared memory object
+
+
+def cleanup_shm(shm):
+    # Cleanup
+    if shm is not None:
+        shm.close()
+        shm.unlink()
