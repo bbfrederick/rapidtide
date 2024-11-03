@@ -26,40 +26,33 @@ def test_numpy2shared(debug=False):
         if debug:
             print(f"{intype=}, {sourcevector.size=}, {sourcevector.dtype=}")
         for outtype in [np.float32, np.float64]:
+
+            destvector, shm = tide_util.numpy2shared(sourcevector, outtype)
             if debug:
-                print(f"\t{outtype=}")
-            for function in [tide_util.numpy2shared_old, tide_util.numpy2shared_new]:
-                destvector, shm = function(sourcevector, outtype)
-                if debug:
-                    print(f"\t\t{function=}, {destvector.size=}, {destvector.dtype=}")
+                print(f"\t{outtype=}, {destvector.size=}, {destvector.dtype=}")
 
-                # check everything
-                assert destvector.dtype == outtype
-                assert destvector.size == sourcevector.size
-                np.testing.assert_almost_equal(sourcevector, destvector, 3)
+            # check everything
+            assert destvector.dtype == outtype
+            assert destvector.size == sourcevector.size
+            np.testing.assert_almost_equal(sourcevector, destvector, 3)
 
-                # clean up if needed
-                if shm is not None:
-                    tide_util.cleanup_shm_new(shm)
+            # clean up
+            tide_util.cleanup_shm(shm)
 
 
 def test_allocshared(debug=False):
     datashape = (10, 10, 10)
     for outtype in [np.float32, np.float64]:
+        destarray, shm = tide_util.allocshared(datashape, outtype)
         if debug:
-            print(f"{outtype=}")
-        for function in [tide_util.allocshared_old, tide_util.allocshared_new]:
-            destarray, shm = function(datashape, outtype)
-            if debug:
-                print(f"\t{function=}, {destarray.size=}, {destarray.dtype=}")
+            print(f"{outtype=}, {destarray.size=}, {destarray.dtype=}")
 
-            # check everything
-            assert destarray.dtype == outtype
-            assert destarray.size == np.prod(datashape)
+        # check everything
+        assert destarray.dtype == outtype
+        assert destarray.size == np.prod(datashape)
 
-            # clean up if needed
-            if shm is not None:
-                tide_util.cleanup_shm_new(shm)
+        # clean up if needed
+        tide_util.cleanup_shm(shm)
 
 
 if __name__ == "__main__":
