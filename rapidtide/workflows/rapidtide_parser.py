@@ -464,7 +464,9 @@ def _get_parser():
         "--nomotderiv",
         dest="mot_deriv",
         action="store_false",
-        help=("Toggle whether derivatives will be used in motion regression.  Default is True."),
+        help=(
+            "Do not use derivatives in motion regression.  Default is to use temporal derivatives."
+        ),
         default=True,
     )
     preproc.add_argument(
@@ -494,7 +496,7 @@ def _get_parser():
         dest="confound_deriv",
         action="store_false",
         help=(
-            "Toggle whether derivatives will be used in confound regression.  Default is True. "
+            "Do not use derivatives in confound regression.  Default is to use temporal derivatives."
         ),
         default=True,
     )
