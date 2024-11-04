@@ -3188,7 +3188,9 @@ def rapidtide_main(argparsingfunc):
                 LGR.info("...done")
 
             # move fmri_data_valid into shared memory
+            del fmri_data_valid
             if optiondict["sharedmem"]:
+                tide_util.cleanup_shm(fmri_data_valid_shm)
                 LGR.info("moving fmri data to shared memory")
                 TimingLGR.info("Start moving fmri_data to shared memory")
                 numpy2shared_func = addmemprofiling(
@@ -3196,8 +3198,8 @@ def rapidtide_main(argparsingfunc):
                     optiondict["memprofile"],
                     "before movetoshared (glm)",
                 )
-                fmri_data_valid, fmri_data_valid_shm = numpy2shared_func(
-                    fmri_data_valid, rt_floatset, name="fmri_data_valid", create=False
+                fmri_data_valid, fmri_data_valid_glm_shm = numpy2shared_func(
+                    fmri_data_valid, rt_floatset, name="fmri_data_valid"
                 )
                 TimingLGR.info("End moving fmri_data to shared memory")
             del nim_data
@@ -3336,7 +3338,7 @@ def rapidtide_main(argparsingfunc):
         varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
         del fmri_data_valid
         if optiondict["sharedmem"]:
-            tide_util.cleanup_shm(fmri_data_valid_shm)
+            tide_util.cleanup_shm(fmri_data_valid_glm_shm)
 
         LGR.info("End filtering operation")
         TimingLGR.info(
