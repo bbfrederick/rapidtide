@@ -344,3 +344,9 @@ def retrolagtcs(args):
         bidsdict,
         debug=args.debug,
     )
+
+    # clean up shared memory
+    if usesharedmem:
+        tide_util.cleanup_shm(fitNorm_shm)
+        tide_util.cleanup_shm(fitcoeff_shm)
+        tide_util.cleanup_shm(lagtc_shm)

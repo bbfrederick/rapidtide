@@ -646,3 +646,14 @@ def retroglm(args):
         bidsdict,
         debug=args.debug,
     )
+
+    # clean up shared memory
+    if usesharedmem:
+        tide_util.cleanup_shm(glmmean_shm)
+        tide_util.cleanup_shm(rvalue_shm)
+        tide_util.cleanup_shm(r2value_shm)
+        tide_util.cleanup_shm(fitNorm_shm)
+        tide_util.cleanup_shm(fitcoeff_shm)
+        tide_util.cleanup_shm(movingsignal_shm)
+        tide_util.cleanup_shm(lagtc_shm)
+        tide_util.cleanup_shm(filtereddata_shm)

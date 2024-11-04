@@ -368,6 +368,27 @@ def test_delayestimation(displayplots=False, debug=False):
 
         print(proctype, "glmpass", np.mean(diffsignal), np.max(np.fabs(diffsignal)))
 
+    # clean up shared memory
+    tide_util.cleanup_shm(waveforms_shm)
+    tide_util.cleanup_shm(corrout_shm)
+    tide_util.cleanup_shm(meanval_shm)
+    tide_util.cleanup_shm(lagtc_shm)
+    tide_util.cleanup_shm(fitmask_shm)
+    tide_util.cleanup_shm(failreason_shm)
+    tide_util.cleanup_shm(lagtimes_shm)
+    tide_util.cleanup_shm(lagstrengths_shm)
+    tide_util.cleanup_shm(lagsigma_shm)
+    tide_util.cleanup_shm(gaussout_shm)
+    tide_util.cleanup_shm(windowout_shm)
+    tide_util.cleanup_shm(rvalue_shm)
+    tide_util.cleanup_shm(r2value_shm)
+    tide_util.cleanup_shm(fitcoff_shm)
+    tide_util.cleanup_shm(fitNorm_shm)
+    tide_util.cleanup_shm(R2_shm)
+    tide_util.cleanup_shm(movingsignal_shm)
+    tide_util.cleanup_shm(filtereddata_shm)
+    tide_util.cleanup_shm(filteredwaveforms_shm)
+
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
