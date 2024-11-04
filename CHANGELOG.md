@@ -1,5 +1,10 @@
 # Release history
 
+## Version 2.9.9.2 (11/03/24)
+* (rapidtide) Added the ability to mask data before spatial filtering.
+* (rapidtide) Revised shared memory access to use more modern interface.
+* (docs) More reference reformatting.
+
 ## Version 2.9.9.1 (10/28/24)
 * (rapidtide) Properly set the "_nodefault" flag on "passes".  Should resolve https://github.com/bbfrederick/rapidtide/issues/178.
 * (rapidtide) Terminate despeckling if the number of voxels to despeckle is not changing.
