@@ -132,6 +132,9 @@ def retrolagtcs(args):
     rt_outfloatset = np.float64
     rt_outfloattype = "float64"
 
+    # get the pid of the parent process
+    args.pid = os.getpid()
+
     thecommandline = " ".join(sys.argv[1:])
 
     if args.nprocs < 1:

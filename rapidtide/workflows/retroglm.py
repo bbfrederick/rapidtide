@@ -147,6 +147,9 @@ def retroglm(args):
     rt_outfloatset = np.float64
     rt_outfloattype = "float64"
 
+    # get the pid of the parent process
+    args.pid = os.getpid()
+
     if args.outputlevel == "min":
         args.saveminimumglmfiles = False
         args.savenormalglmfiles = False

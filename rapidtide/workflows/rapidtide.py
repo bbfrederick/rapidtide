@@ -251,6 +251,9 @@ def rapidtide_main(argparsingfunc):
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
 
+    # get the pid of the parent process
+    optiondict["pid"] = os.getpid()
+
     # delete the old completion file, if present
     Path(f"{outputname}_DONE.txt").unlink(missing_ok=True)
 
@@ -811,7 +814,7 @@ def rapidtide_main(argparsingfunc):
             tide_util.numpy2shared, optiondict["memprofile"], "before fmri data move"
         )
         fmri_data_valid, fmri_data_valid_shm = numpy2shared_func(
-            fmri_data_valid, rt_floatset, name="fmri_data_valid"
+            fmri_data_valid, rt_floatset, name=f"fmri_data_valid_{optiondict['pid']}"
         )
         TimingLGR.verbose("End moving fmri_data to shared memory")
 
@@ -1622,16 +1625,16 @@ def rapidtide_main(argparsingfunc):
     )
     if optiondict["sharedmem"]:
         corrout, corrout_shm = tide_util.allocshared(
-            internalvalidcorrshape, rt_floatset, name="corrout"
+            internalvalidcorrshape, rt_floatset, name=f"corrout_{optiondict['pid']}"
         )
         gaussout, gaussout_shm = tide_util.allocshared(
-            internalvalidcorrshape, rt_floatset, name="gaussout"
+            internalvalidcorrshape, rt_floatset, name=f"gaussout_{optiondict['pid']}"
         )
         windowout, windowout_shm = tide_util.allocshared(
-            internalvalidcorrshape, rt_floatset, name="windowout"
+            internalvalidcorrshape, rt_floatset, name=f"windowout_{optiondict['pid']}"
         )
         outcorrarray, outcorrarray_shm = tide_util.allocshared(
-            internalcorrshape, rt_floatset, name="outcorrarray"
+            internalcorrshape, rt_floatset, name=f"outcorrarray_{optiondict['pid']}"
         )
     else:
         corrout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
@@ -1678,16 +1681,20 @@ def rapidtide_main(argparsingfunc):
     ):
         if optiondict["sharedmem"]:
             shiftedtcs, shiftedtcs_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_floatset, name="shiftedtcs"
+                internalvalidfmrishape, rt_floatset, name=f"shiftedtcs_{optiondict['pid']}"
             )
             weights, weights_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_floatset, name="weights"
+                internalvalidfmrishape, rt_floatset, name=f"weights_{optiondict['pid']}"
             )
             paddedshiftedtcs, paddedshiftedtcs_shm = tide_util.allocshared(
-                internalvalidpaddedfmrishape, rt_floatset, name="paddedshiftedtcs"
+                internalvalidpaddedfmrishape,
+                rt_floatset,
+                name=f"paddedshiftedtcs_{optiondict['pid']}",
             )
             paddedweights, paddedweights_shm = tide_util.allocshared(
-                internalvalidpaddedfmrishape, rt_floatset, name="paddedweights"
+                internalvalidpaddedfmrishape,
+                rt_floatset,
+                name=f"paddedweights_{optiondict['pid']}",
             )
         else:
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
@@ -3008,13 +3015,15 @@ def rapidtide_main(argparsingfunc):
         # now allocate the arrays needed for the coherence calculation
         if optiondict["sharedmem"]:
             coherencefunc, coherencefunc_shm = tide_util.allocshared(
-                internalvalidcoherenceshape, rt_outfloatset, name="coherencefunc"
+                internalvalidcoherenceshape,
+                rt_outfloatset,
+                name=f"coherencefunc_{optiondict['pid']}",
             )
             coherencepeakval, coherencepeakval_shm = tide_util.allocshared(
-                numvalidspatiallocs, rt_outfloatset, name="coherencepeakval"
+                numvalidspatiallocs, rt_outfloatset, name=f"coherencepeakval_{optiondict['pid']}"
             )
             coherencepeakfreq, coherencepeakfreq_shm = tide_util.allocshared(
-                numvalidspatiallocs, rt_outfloatset, name="coherencepeakfreq"
+                numvalidspatiallocs, rt_outfloatset, name=f"coherencepeakfreq_{optiondict['pid']}"
             )
         else:
             coherencefunc = np.zeros(internalvalidcoherenceshape, dtype=rt_outfloattype)
@@ -3087,10 +3096,10 @@ def rapidtide_main(argparsingfunc):
         # now allocate the arrays needed for Wiener deconvolution
         if optiondict["sharedmem"]:
             wienerdeconv, wienerdeconv_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name="wienerdeconv"
+                internalvalidspaceshape, rt_outfloatset, name=f"wienerdeconv_{optiondict['pid']}"
             )
             wpeak, wpeak_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name="wpeak"
+                internalvalidspaceshape, rt_outfloatset, name=f"wpeak_{optiondict['pid']}"
             )
         else:
             wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
@@ -3198,7 +3207,7 @@ def rapidtide_main(argparsingfunc):
                     "before movetoshared (glm)",
                 )
                 fmri_data_valid, fmri_data_valid_shm = numpy2shared_func(
-                    fmri_data_valid, rt_floatset, name="fmri_data_valid_glm"
+                    fmri_data_valid, rt_floatset, name=f"fmri_data_valid_glm_{optiondict['pid']}"
                 )
                 TimingLGR.info("End moving fmri_data to shared memory")
             del nim_data
@@ -3210,28 +3219,28 @@ def rapidtide_main(argparsingfunc):
         )
         if optiondict["sharedmem"]:
             glmmean, glmmean_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name="glmmean"
+                internalvalidspaceshape, rt_outfloatset, name=f"glmmean_{optiondict['pid']}"
             )
             rvalue, rvalue_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name="rvalue"
+                internalvalidspaceshape, rt_outfloatset, name=f"rvalue_{optiondict['pid']}"
             )
             r2value, r2value_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name="r2value"
+                internalvalidspaceshape, rt_outfloatset, name=f"r2value_{optiondict['pid']}"
             )
             fitNorm, fitNorm_shm = tide_util.allocshared(
-                internalvalidspaceshapederivs, rt_outfloatset, name="fitNorm"
+                internalvalidspaceshapederivs, rt_outfloatset, name=f"fitNorm_{optiondict['pid']}"
             )
             fitcoeff, fitcoeff_shm = tide_util.allocshared(
-                internalvalidspaceshapederivs, rt_outfloatset, name="fitcoeff"
+                internalvalidspaceshapederivs, rt_outfloatset, name=f"fitcoeff_{optiondict['pid']}"
             )
             movingsignal, movingsignal_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_outfloatset, name="movingsignal"
+                internalvalidfmrishape, rt_outfloatset, name=f"movingsignal_{optiondict['pid']}"
             )
             lagtc, lagtc_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_floatset, name="lagtc"
+                internalvalidfmrishape, rt_floatset, name=f"lagtc_{optiondict['pid']}"
             )
             filtereddata, filtereddata_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_outfloatset, name="filtereddata"
+                internalvalidfmrishape, rt_outfloatset, name=f"filtereddata_{optiondict['pid']}"
             )
         else:
             glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
