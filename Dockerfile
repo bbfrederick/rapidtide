@@ -22,12 +22,17 @@ RUN echo "GITVERSION: "$GITVERSION
 RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
 
-# Install rapidtide
+# Copy rapidtide into container
 USER root
 COPY . /src/rapidtide
+RUN ln -s /src/rapidtide/cloud /
 RUN echo $GITVERSION > /src/rapidtide/VERSION
+
+# init and switch to the new environment
+RUN pip install --upgrade pip
 RUN cd /src/rapidtide && \
-    pip install . && \
+    pip install .
+RUN cd /src/rapidtide && \
     versioneer install --no-vendor && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
@@ -37,19 +42,20 @@ RUN cd /src/rapidtide/rapidtide/data/examples/src && \
 #RUN mamba clean -y --all
 RUN pip cache purge
 
-# Create a shared $HOME directory
+# switch to the rapidtide user
 RUN useradd -m -s /bin/bash -G users rapidtide
+RUN chown -R rapidtide /src/rapidtide
+USER rapidtide
 WORKDIR /home/rapidtide
 ENV HOME="/home/rapidtide"
+RUN /opt/miniforge3/bin/mamba init
+RUN echo "mamba activate science" >> ~/.bashrc
 
 ENV IS_DOCKER_8395080871=1
 
-RUN ldconfig
+#RUN ldconfig
 WORKDIR /tmp/
-RUN ln -s /src/rapidtide/cloud /
 ENTRYPOINT ["/cloud/mount-and-run"]
-
-USER rapidtide
 
 LABEL org.label-schema.build-date=$BUILD_TIME \
       org.label-schema.name="rapidtide" \
