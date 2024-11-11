@@ -406,11 +406,7 @@ def showtc(args):
                 else:
                     linelabels.append(thisfilename)
             else:
-                linelabels.append(legends[i % len(legends)])
-                """if invecs.shape[0] > 1:
-                    linelabels.append(legends[i % len(legends)] + '_column' + str(j).zfill(2))
-                else:
-                    linelabels.append(legends[i % len(legends)])"""
+                linelabels.append(legends[j % len(legends)])
             samplerates.append(thissamplerate + 0.0)
             if args.debug:
                 print(
