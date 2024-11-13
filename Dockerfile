@@ -37,6 +37,7 @@ RUN cd /src/rapidtide && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
     ./installtestdatadocker
+RUN ldconfig
 
 # clean up
 #RUN mamba clean -y --all
@@ -45,15 +46,15 @@ RUN pip cache purge
 # switch to the rapidtide user
 RUN useradd -m -s /bin/bash -G users rapidtide
 RUN chown -R rapidtide /src/rapidtide
-USER rapidtide
+#USER rapidtide
 WORKDIR /home/rapidtide
 ENV HOME="/home/rapidtide"
 RUN /opt/miniforge3/bin/mamba init
 RUN echo "mamba activate science" >> ~/.bashrc
+RUN echo "/opt/miniforge3/bin/mamba activate science" >> ~/.login
 
 ENV IS_DOCKER_8395080871=1
 
-#RUN ldconfig
 WORKDIR /tmp/
 ENTRYPOINT ["/cloud/mount-and-run"]
 
