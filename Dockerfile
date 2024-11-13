@@ -1,6 +1,5 @@
 # Start from the fredericklab base container
-#FROM fredericklab/basecontainer_plus:latest-release
-FROM fredericklab/basecontainer:latest-release
+FROM fredericklab/basecontainer_plus:v0.0.3
 
 # get build arguments
 ARG BUILD_TIME
@@ -46,12 +45,11 @@ RUN pip cache purge
 # switch to the rapidtide user
 RUN useradd -m -s /bin/bash -G users rapidtide
 RUN chown -R rapidtide /src/rapidtide
-#USER rapidtide
 WORKDIR /home/rapidtide
 ENV HOME="/home/rapidtide"
-RUN /opt/miniforge3/bin/mamba init
-RUN echo "mamba activate science" >> ~/.bashrc
-RUN echo "/opt/miniforge3/bin/mamba activate science" >> ~/.login
+#RUN /opt/miniforge3/bin/mamba init
+#RUN echo "mamba activate science" >> ~/.bashrc
+#RUN echo "/opt/miniforge3/bin/mamba activate science" >> ~/.login
 
 ENV IS_DOCKER_8395080871=1
 
