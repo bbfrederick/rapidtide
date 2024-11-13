@@ -308,7 +308,7 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             source activate py311_env
-            pip install --upgrade pytest
+            pip install --upgrade codecov coverage coveralls flake8-black pytest pytest-cov
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
