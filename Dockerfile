@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer_plus:v0.0.3
+FROM fredericklab/basecontainer:latest
 
 # get build arguments
 ARG BUILD_TIME
@@ -27,19 +27,22 @@ COPY . /src/rapidtide
 RUN ln -s /src/rapidtide/cloud /
 RUN echo $GITVERSION > /src/rapidtide/VERSION
 
-# init and switch to the new environment
-RUN pip install --upgrade pip
+# init and install rapidtide
+RUN uv pip install --upgrade pip
 RUN cd /src/rapidtide && \
-    pip install .
+    uv pip install .
+
+# install versioneer
 RUN cd /src/rapidtide && \
     versioneer install --no-vendor && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
+
+# install test data
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
     ./installtestdatadocker
 RUN ldconfig
 
 # clean up
-#RUN mamba clean -y --all
 RUN pip cache purge
 
 # switch to the rapidtide user
