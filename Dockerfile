@@ -22,7 +22,6 @@ RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
 
 # Copy rapidtide into container
-USER root
 COPY . /src/rapidtide
 RUN ln -s /src/rapidtide/cloud /
 RUN echo $GITVERSION > /src/rapidtide/VERSION
