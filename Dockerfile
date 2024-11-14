@@ -57,6 +57,8 @@ RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
 RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
 USER rapidtide
 
+ENV BASH_ENV="/home/rapidtide/.bashrc"
+
 ENV IS_DOCKER_8395080871=1
 
 WORKDIR /tmp/
