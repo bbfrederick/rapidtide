@@ -10,7 +10,7 @@ from codecs import open
 from os import path
 
 # Always prefer setuptools over distutils
-from setuptools import find_namespace_packages, find_packages, setup
+from setuptools import find_namespace_packages, find_packages, setup, Extension
 
 import versioneer
 
@@ -19,7 +19,6 @@ here = path.abspath(path.dirname(__file__))
 # Get the long description from the README file
 with open(path.join(here, "LONGDESC.rst"), encoding="utf-8") as f:
     long_description = f.read()
-
 
 # Write version number out to VERSION file
 version = versioneer.get_version()
