@@ -1,12 +1,13 @@
 # Release history
 
-## Version 2.9.9.2 (11/13/24)
+## Version 2.9.9.2 (11/14/24)
 * (rapidtide) Fixed https://neurostars.org/t/indexing-error-during-regressor-refinment/30790
 * (rapidtide) Addressed https://github.com/bbfrederick/rapidtide/issues/175
 * (rapidtide) Added the ability to mask data before spatial filtering.
 * (rapidtide) Revised shared memory access to use more modern interface.
 * (rapidtide) Clarified option descriptions in help output.
 * (Docker) Temporary workaround for https://github.com/bbfrederick/rapidtide/issues/180
+* (deployment) Tried to fix pypi deployment.
 * (showtc) Fixed legends when using multiple input files.
 * (docs) More reference reformatting.
 
