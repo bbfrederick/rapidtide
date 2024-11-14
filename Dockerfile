@@ -38,8 +38,10 @@ RUN cd /src/rapidtide && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 
 # install test data
-RUN cd /src/rapidtide/rapidtide/data/examples/src && \
-    ./installtestdatadocker
+#RUN cd /src/rapidtide/rapidtide/data/examples/src && \
+#    ./installtestdatadocker
+
+# update the paths to libraries
 RUN ldconfig
 
 # clean up
