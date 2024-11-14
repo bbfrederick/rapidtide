@@ -57,7 +57,8 @@ RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
 RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
 USER rapidtide
 
-ENV BASH_ENV="/home/rapidtide/.bashrc"
+# set up variable for non-interactive shell
+ENV PATH=/opt/miniforge3/envs/science/bin:/opt/miniforge3/condabin:.:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 ENV IS_DOCKER_8395080871=1
 
