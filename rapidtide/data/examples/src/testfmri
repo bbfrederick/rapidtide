@@ -5,38 +5,39 @@ rapidtide \
     --nprocs -1 \
     --simcalcrange 50 -1 \
     --outputlevel max \
+    --glmderivs 1 \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_nospec
+    ../dst/sub-RAPIDTIDETEST
 
-rapidtide \
-    --spatialfilt 2 \
-    --nprocs -1 \
-    --passes 50 \
-    --despecklepasses 50 \
-    --simcalcrange 50 -1 \
-    --outputlevel max \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_spec
-
-rapidtide \
-    --spatialfilt 2 \
-    --nprocs -1 \
-    --denoising \
-    --passes 4 \
-    --despecklepasses 5 \
-    --simcalcrange 50 -1 \
-    --outputlevel max \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_denoisingspec
-
-rapidtide \
-    --spatialfilt 2 \
-    --nprocs -1 \
-    --denoising \
-    --simcalcrange 50 -1 \
-    --outputlevel max \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_denoisingnospec
+#rapidtide \
+#    --spatialfilt 2 \
+#    --nprocs -1 \
+#    --passes 50 \
+#    --despecklepasses 50 \
+#    --simcalcrange 50 -1 \
+#    --outputlevel max \
+#    sub-RAPIDTIDETEST.nii.gz \
+#    ../dst/sub-RAPIDTIDETEST_spec
+#
+#rapidtide \
+#    --spatialfilt 2 \
+#    --nprocs -1 \
+#    --denoising \
+#    --passes 4 \
+#    --despecklepasses 5 \
+#    --simcalcrange 50 -1 \
+#    --outputlevel max \
+#    sub-RAPIDTIDETEST.nii.gz \
+#    ../dst/sub-RAPIDTIDETEST_denoisingspec
+#
+#rapidtide \
+#    --spatialfilt 2 \
+#    --nprocs -1 \
+#    --denoising \
+#    --simcalcrange 50 -1 \
+#    --outputlevel max \
+#    sub-RAPIDTIDETEST.nii.gz \
+#    ../dst/sub-RAPIDTIDETEST_denoisingnospec
 #rapidtide \
     #--spatialfilt 2 \
     #--nprocs -1 \
