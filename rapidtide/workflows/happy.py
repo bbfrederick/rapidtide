@@ -80,7 +80,7 @@ def happy_main(argparsingfunc):
 
     # if we are running in a Docker container, make sure we enforce memory limits properly
     try:
-        testval = os.environ["IS_DOCKER_8395080871"]
+        testval = os.environ["IN_DOCKER_CONTAINER"]
     except KeyError:
         args.runningindocker = False
     else:
