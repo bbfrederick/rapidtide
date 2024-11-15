@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.9.9.5 (11/15/24)
+* (deployment) New idea - split the README.rst file to remove potentially offending reference stuff.
+
 ## Version 2.9.9.4 (11/15/24)
 * (deployment) Attempt to fix deployment by essentially giving up.
 
