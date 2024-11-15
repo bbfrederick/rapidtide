@@ -1,5 +1,8 @@
 # Release history
 
+## Version 2.9.9.3 (11/15/24)
+* (deployment) Yet another attempt to fix deployment.
+
 ## Version 2.9.9.2 (11/14/24)
 * (rapidtide) Fixed https://neurostars.org/t/indexing-error-during-regressor-refinment/30790
 * (rapidtide) Addressed https://github.com/bbfrederick/rapidtide/issues/175
