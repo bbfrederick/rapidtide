@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:latest
+FROM fredericklab/basecontainer:v0.4.0
 
 # get build arguments
 ARG BUILD_TIME
@@ -38,8 +38,8 @@ RUN cd /src/rapidtide && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
 
 # install test data
-#RUN cd /src/rapidtide/rapidtide/data/examples/src && \
-#    ./installtestdatadocker
+RUN cd /src/rapidtide/rapidtide/data/examples/src && \
+    ./installtestdatadocker
 
 # update the paths to libraries
 RUN ldconfig
