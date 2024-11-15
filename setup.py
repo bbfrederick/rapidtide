@@ -17,8 +17,9 @@ import versioneer
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, "LONGDESC.rst"), encoding="utf-8") as f:
-    long_description = f.read()
+#with open(path.join(here, "LONGDESC.rst"), encoding="utf-8") as f:
+#    long_description = f.read()
+long_description = "Rapidtide is a suite of Python programs used to model, characterize, visualize, and remove time varying, physiological blood signals from fMRI and fNIRS datasets.  The primary workhorses of the package are the rapidtide program, which characterizes bulk blood flow, and happy, which focusses on the cardiac band.\nFull documentation is at: http://rapidtide.readthedocs.io/en/latest/"
 
 # Write version number out to VERSION file
 version = versioneer.get_version()
