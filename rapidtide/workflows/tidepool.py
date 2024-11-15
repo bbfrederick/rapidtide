@@ -37,6 +37,14 @@ from rapidtide.helper_classes import SimilarityFunctionFitter
 from rapidtide.OrthoImageItem import OrthoImageItem
 from rapidtide.RapidtideDataset import RapidtideDataset
 
+try:
+    from PyQt6.QtCore import QT_VERSION_STR
+except ImportError:
+    pyqtversion = 5
+else:
+    pyqtversion = 6
+print(f"using {pyqtversion=}")
+
 os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
 
@@ -111,7 +119,10 @@ def _get_parser():
 def selectFile():
     global datafileroot
     mydialog = QtWidgets.QFileDialog()
-    options = mydialog.Options()
+    if pyqtversion == 5:
+        options = mydialog.Options()
+    else:
+        options = mydialog.options()
     lagfilename = mydialog.getOpenFileName(
         options=options,
         filter="Lag time files (*_lagtimes.nii.gz *_desc-maxtime_map.nii.gz)",
@@ -445,7 +456,8 @@ class xyztlocation(QtWidgets.QWidget):
 
 
 def logstatus(thetextbox, thetext):
-    thetextbox.moveCursor(QtGui.QTextCursor.End)
+    if pyqtversion == 5:
+        thetextbox.moveCursor(QtGui.QTextCursor.End)
     thetextbox.insertPlainText(thetext + "\n")
     sb = thetextbox.verticalScrollBar()
     sb.setValue(sb.maximum())
@@ -636,6 +648,20 @@ def updateRegressor():
         text = pg.TextItem(text=thelabel, anchor=(0.0, 2.0), angle=0, fill=(0, 0, 0, 100))
         # regressor_ax.addItem(text)
 
+        # add in calculation limits
+        regressorsimcalclimits = currentdataset.regressorsimcalclimits
+        tctop = 1.25 * np.max(regressors[focusregressor].timedata)
+        tcbottom = 1.25 * np.min(regressors[focusregressor].timedata)
+        lowerlim = regressorsimcalclimits[0]
+        if regressorsimcalclimits[1] == -1:
+            upperlim = regressors[focusregressor].timeaxis[-1]
+        else:
+            upperlim = regressorsimcalclimits[1]
+        bottomleft = [lowerlim, tcbottom]
+        size = [upperlim - lowerlim, tctop - tcbottom]
+        therectangle = RectangleItem(bottomleft, size)
+        regressor_ax.addItem(therectangle)
+
 
 def updateRegressorSpectrum():
     global regressorspectrum_ax, liveplots, currentdataset
@@ -748,7 +774,7 @@ def updateAtlasStats():
 def doAtlasAveraging(state):
     global atlasaveragingdone
     print('in doAtlasAveraging')
-    if state == QtCore.Qt.Checked:
+    if state == QtCore.Qt.CheckState.Checked:
         atlasaveragingdone = True
         print('atlas averaging is turned on')
     else:
@@ -1287,14 +1313,15 @@ def printfocusvals():
                         logstatus(ui.logOutput, outstring)
                     else:
                         if focusval > 0.0:
-                            failstring = simfuncFitter.diagnosefail(np.uint32(focusval))
-                            outstring = (
-                                "\t"
-                                + str(overlays[key].label.ljust(26))
-                                + str(":\n\t    ")
-                                + failstring.replace(", ", "\n\t    ")
-                            )
-                            logstatus(ui.logOutput, outstring)
+                            if simfuncFitter is not None:
+                                failstring = simfuncFitter.diagnosefail(np.uint32(focusval))
+                                outstring = (
+                                    "\t"
+                                    + str(overlays[key].label.ljust(26))
+                                    + str(":\n\t    ")
+                                    + failstring.replace(", ", "\n\t    ")
+                                )
+                                logstatus(ui.logOutput, outstring)
                 else:
                     outstring = (
                         "\t"
@@ -1354,7 +1381,7 @@ def tidepool(args):
     global focusmap, bgmap
     global maps
     global roi
-    global overlays, regressors, regressorfilterlimits, loadedfuncmaps, atlasstats, averagingmode
+    global overlays, regressors, regressorfilterlimits, regressorsimcalclimits, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimages, overlaybuttons, panetomap
     global img_colorbar, LUT_alpha, LUT_endalpha
     global lg_imgsize, scalefacx, scalefacy, scalefacz
@@ -1368,6 +1395,8 @@ def tidepool(args):
     global atlasaveragingdone
     global currentdataset
     global verbosity
+    global simfuncFitter
+    global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption
 
     # initialize default values
     averagingmode = None
@@ -1390,11 +1419,18 @@ def tidepool(args):
     zpos = 0
     tpos = 0
     verbosity = 0
+    simfuncFitter = None
 
-    if args.compact:
-        import rapidtide.tidepoolTemplate_alt as uiTemplate
+    if pyqtversion == 5:
+        if args.compact:
+            import rapidtide.tidepoolTemplate_alt as uiTemplate
+        else:
+            import rapidtide.tidepoolTemplate as uiTemplate
     else:
-        import rapidtide.tidepoolTemplate as uiTemplate
+        if args.compact:
+            import rapidtide.tidepoolTemplate_alt_qt6 as uiTemplate
+        else:
+            import rapidtide.tidepoolTemplate_qt6 as uiTemplate
 
     verbosity = args.verbose
     print(f"verbosity: {args.verbose}")
@@ -1651,13 +1687,6 @@ def tidepool(args):
     ui.std_radioButton.setDisabled(True)
     ui.MAD_radioButton.setDisabled(True)
 
-    """ui.raw_radioButton.hide()
-    ui.mean_radioButton.hide()
-    ui.median_radioButton.hide()
-    ui.robustmean_radioButton.hide()
-    ui.std_radioButton.hide()
-    ui.MAD_radioButton.hide()"""
-
     ui.raw_radioButton.clicked.connect(raw_radioButton_clicked)
     ui.mean_radioButton.clicked.connect(mean_radioButton_clicked)
     ui.median_radioButton.clicked.connect(median_radioButton_clicked)
@@ -1717,34 +1746,38 @@ def tidepool(args):
 
     # define things for the popup mask menu
     popMenu = QtWidgets.QMenu(win)
-    sel_nomask = QtWidgets.QAction("No mask", win)
+    if pyqtversion == 5:
+        qactionfunc = QtWidgets.QAction
+    else:
+        qactionfunc = QtGui.QAction
+    sel_nomask = qactionfunc("No mask", win)
     sel_nomask.triggered.connect(set_nomask)
-    sel_lagmask = QtWidgets.QAction("Valid fit", win)
+    sel_lagmask = qactionfunc("Valid fit", win)
     sel_lagmask.triggered.connect(set_lagmask)
-    sel_refinemask = QtWidgets.QAction("Voxels used in refine", win)
-    sel_meanmask = QtWidgets.QAction("Voxels used in mean regressor calculation", win)
-    sel_preselectmask = QtWidgets.QAction(
+    sel_refinemask = qactionfunc("Voxels used in refine", win)
+    sel_meanmask = qactionfunc("Voxels used in mean regressor calculation", win)
+    sel_preselectmask = qactionfunc(
         "Voxels chosen for the mean regressor calculation in the preselect pass", win
     )
     sel_refinemask.triggered.connect(set_refinemask)
     sel_meanmask.triggered.connect(set_meanmask)
     sel_preselectmask.triggered.connect(set_preselectmask)
-    sel_0p05 = QtWidgets.QAction("p<0.05", win)
+    sel_0p05 = qactionfunc("p<0.05", win)
     sel_0p05.triggered.connect(set_0p05)
-    sel_0p01 = QtWidgets.QAction("p<0.01", win)
+    sel_0p01 = qactionfunc("p<0.01", win)
     sel_0p01.triggered.connect(set_0p01)
-    sel_0p005 = QtWidgets.QAction("p<0.005", win)
+    sel_0p005 = qactionfunc("p<0.005", win)
     sel_0p005.triggered.connect(set_0p005)
-    sel_0p001 = QtWidgets.QAction("p<0.001", win)
+    sel_0p001 = qactionfunc("p<0.001", win)
     sel_0p001.triggered.connect(set_0p001)
     popMenu.addAction(sel_nomask)
     numspecial = 0
 
     def on_context_menu(point):
         # show context menu
-        popMenu.exec_(ui.setMask_Button.mapToGlobal(point))
+        popMenu.exec(ui.setMask_Button.mapToGlobal(point))
 
-    ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
     ui.setMask_Button.customContextMenuRequested.connect(on_context_menu)
 
     # wire up the regressor selection radio buttons
@@ -1789,7 +1822,10 @@ def tidepool(args):
     currentdataset = thesubjects[-1]
     print("loading datasets...")
 
+    print("getting regressors")
     regressors = currentdataset.getregressors()
+
+    print("getting overlays")
     overlays = currentdataset.getoverlays()
     try:
         test = overlays["corrout"].display_state
@@ -1797,6 +1833,7 @@ def tidepool(args):
         usecorrout = False
 
     # activate the appropriate regressor radio buttons
+    print("activating radio buttons")
     if "prefilt" in regressors.keys():
         ui.prefilt_radioButton.setDisabled(False)
         ui.prefilt_radioButton.show()
@@ -1839,6 +1876,7 @@ def tidepool(args):
         bgmap = None
 
     # set up the timecourse plot window
+    print("setting up timecourse plot window")
     xpos = int(currentdataset.xdim) // 2
     ypos = int(currentdataset.ydim) // 2
     zpos = int(currentdataset.zdim) // 2
@@ -1865,6 +1903,7 @@ def tidepool(args):
     tpos = 0
 
     # set position and scale of images
+    print("setting position and scale of images")
     lg_imgsize = 256.0
     sm_imgsize = 32.0
     xfov = currentdataset.xdim * currentdataset.xsize
@@ -1976,7 +2015,6 @@ def tidepool(args):
             enableMouse=True,
             verbose=verbosity,
         )
-    mainwin.updated.connect(updateXYZFromMainWin)
 
     orthoimages = {}
     if verbosity > 1:
@@ -2050,7 +2088,6 @@ def tidepool(args):
     # set up the similarity function window
     if verbosity > 1:
         print("about to set up the similarity function window")
-    global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption, simfuncFitter
 
     try:
         thesimfunc_groupBox = ui.simfunc_groupBox
@@ -2097,8 +2134,12 @@ def tidepool(args):
         simfuncCaption.setParentItem(simfuncCurvePoint)
         simfuncCurve.scene().sigMouseClicked.connect(updateTimepoint)
         simfuncFitter = SimilarityFunctionFitter()
+        print("simfuncFitter has been defined")
     else:
         simfunc_ax = None
+
+    # update the main window now that simfuncFitter has been defined
+    mainwin.updated.connect(updateXYZFromMainWin)
 
     # set up the regressor timecourse window
     if verbosity > 1:
@@ -2189,4 +2230,4 @@ def tidepool(args):
     updateUI(callingfunc="main thread", orthoimages=True, focusvals=True)
     updateRegressor()
 
-    QtWidgets.QApplication.instance().exec_()
+    QtWidgets.QApplication.instance().exec()

@@ -4,6 +4,7 @@ import os
 
 import numpy as np
 
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 
 debug = True
@@ -255,7 +256,7 @@ assert tide_io.checkifparfile("afilename.par")
 
 othermotiondict = tide_io.readparfile(motionfilename)
 theinitmotiondict = tide_io.readmotion(motionfilename)
-theexpandedmotionregressors, thelabels = tide_io.calcexpandedregressors(
+theexpandedmotionregressors, thelabels = tide_fit.calcexpandedregressors(
     theinitmotiondict, deriv=True
 )
 if debug:

@@ -286,7 +286,7 @@ def atlasaverage(args):
             print(
                 "extracting",
                 theregionvoxels.shape[1],
-                "voxels from region",
+                "timepoints from region",
                 theregion,
                 "of",
                 numregions,

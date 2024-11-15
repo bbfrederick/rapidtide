@@ -34,6 +34,9 @@ import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
+DEFAULT_DETREND_ORDER = 3
+DEFAULT_CORRWEIGHTING = "phat"
+
 
 def _get_parser():
     """
@@ -95,15 +98,17 @@ def _get_parser():
         action="store",
         type=str,
         choices=["None", "phat", "liang", "eckart"],
-        help=("Method to use for cross-correlation " "weighting. Default is  None. "),
-        default="None",
+        help=(
+            f"Method to use for cross-correlation weighting. Default is {DEFAULT_CORRWEIGHTING}. "
+        ),
+        default=DEFAULT_CORRWEIGHTING,
     )
     parser.add_argument(
         "--detrendorder",
         dest="detrendorder",
         type=int,
-        help=("Detrending order (default is 1 - linear).  Set to 0 to disable"),
-        default=1,
+        help=(f"Detrending order (default is {DEFAULT_DETREND_ORDER}).  Set to 0 to disable"),
+        default=DEFAULT_DETREND_ORDER,
     )
 
     parser.add_argument(
@@ -116,7 +121,6 @@ def _get_parser():
         ),
         default=1,
     )
-
     parser.add_argument(
         "--debug",
         dest="debug",
@@ -178,9 +182,19 @@ def ccorrica(args):
         Fs *= args.oversampfactor
         tclen *= args.oversampfactor
 
+    # filter the data
+    for component in range(0, numcomponents):
+        reformdata[component, :] = tide_math.stdnormalize(
+            theprefilter.apply(Fs, reformdata[component, :])
+        )
+
+    # save the filtered timecourses
+    tide_io.writenpvecs(reformdata, args.outputroot + "_filtereddata.txt")
+
+    # now detrend, window, and normalize the data
     for component in range(0, numcomponents):
         reformdata[component, :] = tide_math.corrnormalize(
-            theprefilter.apply(Fs, reformdata[component, :]),
+            reformdata[component, :],
             detrendorder=args.detrendorder,
             windowfunc=args.windowfunc,
         )

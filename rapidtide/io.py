@@ -29,7 +29,7 @@ import pandas as pd
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
-def readfromnifti(inputfile):
+def readfromnifti(inputfile, headeronly=False):
     r"""Open a nifti file and read in the various important parts
 
     Parameters
@@ -55,7 +55,10 @@ def readfromnifti(inputfile):
     else:
         raise FileNotFoundError(f"nifti file {inputfile} does not exist")
     nim = nib.load(inputfilename)
-    nim_data = nim.get_fdata()
+    if headeronly:
+        nim_data = None
+    else:
+        nim_data = nim.get_fdata()
     nim_hdr = nim.header.copy()
     thedims = nim_hdr["dim"].copy()
     thesizes = nim_hdr["pixdim"].copy()
@@ -254,6 +257,114 @@ def niftifromarray(data):
 
 def niftihdrfromarray(data):
     return nib.Nifti1Image(data, affine=np.eye(4)).header.copy()
+
+
+def savemaplist(
+    outputname,
+    maplist,
+    validvoxels,
+    destshape,
+    theheader,
+    bidsbasedict,
+    textio=False,
+    fileiscifti=False,
+    rt_floattype="float64",
+    cifti_hdr=None,
+    savejson=True,
+    debug=False,
+):
+    if textio:
+        try:
+            internalspaceshape = destshape[0]
+            timedim = destshape[1]
+            spaceonly = False
+        except TypeError:
+            internalspaceshape = destshape
+            spaceonly = True
+    else:
+        if fileiscifti:
+            spaceindex = len(destshape) - 1
+            timeindex = spaceindex - 1
+            internalspaceshape = destshape[spaceindex]
+            if destshape[timeindex] > 1:
+                spaceonly = False
+                timedim = destshape[timeindex]
+                isseries = True
+            else:
+                spaceonly = True
+                isseries = False
+        else:
+            internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
+            if len(destshape) == 3:
+                spaceonly = True
+            else:
+                spaceonly = False
+                timedim = destshape[3]
+    if spaceonly:
+        outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
+    else:
+        outmaparray = np.zeros((internalspaceshape, timedim), dtype=rt_floattype)
+    for themap, mapsuffix, maptype, theunit, thedescription in maplist:
+        # set up the output array, and remap if warranted
+        if debug:
+            if validvoxels is None:
+                print(f"savemaplist: saving {mapsuffix}  to {destshape}")
+            else:
+                print(
+                    f"savemaplist: saving {mapsuffix}  to {destshape} from {np.shape(validvoxels)[0]} valid voxels"
+                )
+        if spaceonly:
+            outmaparray[:] = 0.0
+            if validvoxels is not None:
+                outmaparray[validvoxels] = themap[:].reshape((np.shape(validvoxels)[0]))
+            else:
+                outmaparray = themap[:].reshape((internalspaceshape))
+        else:
+            outmaparray[:, :] = 0.0
+            if validvoxels is not None:
+                outmaparray[validvoxels, :] = themap[:, :].reshape(
+                    (np.shape(validvoxels)[0], timedim)
+                )
+            else:
+                outmaparray = themap[:, :].reshape((internalspaceshape, timedim))
+
+        # actually write out the data
+        bidsdict = bidsbasedict.copy()
+        if theunit is not None:
+            bidsdict["Units"] = theunit
+        if thedescription is not None:
+            bidsdict["Description"] = thedescription
+        if textio:
+            writenpvecs(
+                outmaparray.reshape(destshape),
+                f"{outputname}_{mapsuffix}.txt",
+            )
+        else:
+            savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
+            if savejson:
+                writedicttojson(bidsdict, savename + ".json")
+            if not fileiscifti:
+                savetonifti(outmaparray.reshape(destshape), theheader, savename)
+            else:
+                if isseries:
+                    savetocifti(
+                        outmaparray,
+                        cifti_hdr,
+                        theheader,
+                        savename,
+                        isseries=isseries,
+                        names=[mapsuffix],
+                    )
+                else:
+                    savetocifti(
+                        outmaparray,
+                        cifti_hdr,
+                        theheader,
+                        savename,
+                        isseries=isseries,
+                        start=theheader["toffset"],
+                        step=theheader["pixdim"][4],
+                    )
 
 
 def savetocifti(
@@ -671,7 +782,7 @@ def checkspaceresmatch(sizes1, sizes2, tolerance=1.0e-3):
             return True
 
 
-def checkspacedimmatch(dims1, dims2):
+def checkspacedimmatch(dims1, dims2, verbose=False):
     r"""Check the dimension arrays of two nifti files to determine if the cover the same number of voxels in each dimension
 
     Parameters
@@ -688,14 +799,15 @@ def checkspacedimmatch(dims1, dims2):
     """
     for i in range(1, 4):
         if dims1[i] != dims2[i]:
-            print("File spatial voxels do not match")
-            print("dimension ", i, ":", dims1[i], "!=", dims2[i])
+            if verbose:
+                print("File spatial voxels do not match")
+                print("dimension ", i, ":", dims1[i], "!=", dims2[i])
             return False
         else:
             return True
 
 
-def checktimematch(dims1, dims2, numskip1=0, numskip2=0):
+def checktimematch(dims1, dims2, numskip1=0, numskip2=0, verbose=False):
     r"""Check the dimensions of two nifti files to determine if the cover the same number of timepoints
 
     Parameters
@@ -716,20 +828,21 @@ def checktimematch(dims1, dims2, numskip1=0, numskip2=0):
 
     """
     if (dims1[4] - numskip1) != (dims2[4] - numskip2):
-        print("File numbers of timepoints do not match")
-        print(
-            "dimension ",
-            4,
-            ":",
-            dims1[4],
-            "(skip ",
-            numskip1,
-            ") !=",
-            dims2[4],
-            " (skip ",
-            numskip2,
-            ")",
-        )
+        if verbose:
+            print("File numbers of timepoints do not match")
+            print(
+                "dimension ",
+                4,
+                ":",
+                dims1[4],
+                "(skip ",
+                numskip1,
+                ") !=",
+                dims2[4],
+                " (skip ",
+                numskip2,
+                ")",
+            )
         return False
     else:
         return True
@@ -797,7 +910,7 @@ def readparfile(filename):
     return motiondict
 
 
-def readmotion(filename):
+def readmotion(filename, tr=1.0, colspec=None):
     r"""Reads motion regressors from filename (from the columns specified in colspec, if given)
 
     Parameters
@@ -891,17 +1004,50 @@ def readmotion(filename):
             ]
         )
     else:
-        print("cannot read files with extension", extension)
-        sys.exit()
-    """
-    motionlen = motiondict['xtrans'].shape[0]
-    motiontimeseries = readvecs(filename, colspec=colspec)
-    if motiontimeseries.shape[0] != 6:
-        print('readmotion: expect 6 motion regressors', motiontimeseries.shape[0], 'given')
-        sys.exit()
-    motiondict = {}
-    for j in range(0, 6):
-        motiondict[labels[j]] = 1.0 * motiontimeseries[j, :]"""
+        # handle weird files gracefully
+        allmotion = readvecs(filename, colspec=colspec)
+        if allmotion.shape[0] != 6:
+            print(
+                "motion files without a .par or .tsv extension must either have 6 columns or have 6 columns specified"
+            )
+            sys.exit()
+        # we are going to assume the columns are in FSL order, not that it really matters
+        motiondict = {}
+        motiondict["xtrans"] = allmotion[3, :] * 1.0
+        motiondict["ytrans"] = allmotion[4, :] * 1.0
+        motiondict["ztrans"] = allmotion[5, :] * 1.0
+        motiondict["maxtrans"] = np.max(
+            [
+                np.max(motiondict["xtrans"]),
+                np.max(motiondict["ytrans"]),
+                np.max(motiondict["ztrans"]),
+            ]
+        )
+        motiondict["mintrans"] = np.min(
+            [
+                np.min(motiondict["xtrans"]),
+                np.min(motiondict["ytrans"]),
+                np.min(motiondict["ztrans"]),
+            ]
+        )
+        motiondict["xrot"] = allmotion[0, :] * 1.0
+        motiondict["yrot"] = allmotion[1, :] * 1.0
+        motiondict["zrot"] = allmotion[2, :] * 1.0
+        motiondict["maxrot"] = np.max(
+            [
+                np.max(motiondict["xrot"]),
+                np.max(motiondict["yrot"]),
+                np.max(motiondict["zrot"]),
+            ]
+        )
+        motiondict["minrot"] = np.min(
+            [
+                np.min(motiondict["xrot"]),
+                np.min(motiondict["yrot"]),
+                np.min(motiondict["zrot"]),
+            ]
+        )
+    motiondict["tr"] = tr
     return motiondict
 
 
@@ -1049,6 +1195,10 @@ def readlabelledtsv(inputfilename, compressed=False):
     else:
         theext = ".tsv"
     df = pd.read_csv(inputfilename + theext, sep="\t", quotechar='"')
+
+    # replace nans with 0
+    df = df.fillna(0.0)
+
     for thecolname, theseries in df.items():
         confounddict[thecolname] = theseries.values
     return confounddict
@@ -1076,6 +1226,9 @@ def readcsv(inputfilename, debug=False):
     # Read the data in initially with no header
     df = pd.read_csv(inputfilename + ".csv", sep=",", quotechar='"', header=0)
 
+    # replace nans with 0
+    df = df.fillna(0.0)
+
     # Check to see if the first element is a float
     try:
         dummy = float(df.columns[0])
@@ -1087,6 +1240,10 @@ def readcsv(inputfilename, debug=False):
     else:
         # if we got to here, reread the data, but assume there is no header line
         df = pd.read_csv(inputfilename + ".csv", sep=",", quotechar='"', header=None)
+
+        # replace nans with 0
+        df = df.fillna(0.0)
+
         if debug:
             print("there is no header line")
         colnum = 0
@@ -1094,6 +1251,38 @@ def readcsv(inputfilename, debug=False):
             timeseriesdict[makecolname(colnum, 0)] = theseries.values
             colnum += 1
         # timeseriesdict["columnsource"] = "synthetic"
+
+    return timeseriesdict
+
+
+def readfslmat(inputfilename, debug=False):
+    r"""Read time series out of an FSL design.mat file
+
+    Parameters
+    ----------
+    inputfilename : str
+        The root name of the csv (no extension)
+
+    Returns
+    -------
+        timeseriesdict: dict
+            All the timecourses in the file, keyed by the first row if it exists, by "col1, col2...colN"
+            if not.
+
+    NOTE:  If file does not exist or is not valid, return an empty dictionary
+
+    """
+    timeseriesdict = {}
+
+    # Read the data in with no header
+    df = pd.read_csv(inputfilename + ".mat", delim_whitespace=True, header=None, skiprows=5)
+
+    if debug:
+        print(df)
+    colnum = 0
+    for dummy, theseries in df.items():
+        timeseriesdict[makecolname(colnum, 0)] = theseries.values
+        colnum += 1
 
     return timeseriesdict
 
@@ -1274,8 +1463,8 @@ def writebidstsv(
             outputfileroot + ".tsv", sep="\t", compression=None, header=colsintsv, index=False
         )
     headerdict = {}
-    headerdict["SamplingFrequency"] = samplerate
-    headerdict["StartTime"] = starttime
+    headerdict["SamplingFrequency"] = float(samplerate)
+    headerdict["StartTime"] = float(starttime)
     if colsinjson:
         if startcol == 0:
             headerdict["Columns"] = columns
@@ -1301,7 +1490,8 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     ----------
     fullfilespec : str
         The file name.  If extension is .tsv or .json, it will be assumed to be either a BIDS tsv, or failing that,
-         a non-BIDS tsv.  If the extension is .csv, it will be assumed to be a csv file. If any other extension or
+         a non-BIDS tsv.  If the extension is .csv, it will be assumed to be a csv file. If the extension is .mat,
+         it will be assumed to be an FSL design.mat file.  If any other extension or
          no extension, it will be assumed to be a plain, whitespace separated text file.
     colspec:  A valid list and/or range of column numbers, or list of column names, or None
     debug : bool
@@ -1338,6 +1528,8 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     jsonexists = os.path.exists(thefileroot + ".json")
     tsvexists = os.path.exists(thefileroot + ".tsv.gz") or os.path.exists(thefileroot + ".tsv")
     compressed = os.path.exists(thefileroot + ".tsv.gz")
+    csvexists = os.path.exists(thefileroot + ".csv")
+    matexists = os.path.exists(thefileroot + ".mat")
     if debug:
         print("jsonexists=", jsonexists)
         print("tsvexists=", tsvexists)
@@ -1347,12 +1539,12 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
             filetype = "bidscontinuous"
         else:
             filetype = "plaintsv"
+    elif csvexists:
+        filetype = "csv"
+    elif matexists:
+        filetype = "mat"
     else:
-        csvexists = os.path.exists(thefileroot + ".csv")
-        if csvexists:
-            filetype = "csv"
-        else:
-            filetype = "text"
+        filetype = "text"
     if debug:
         print(f"detected file type is {filetype}")
     if debug:
@@ -1408,8 +1600,11 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         thesamplerate = None
         thestarttime = None
         compressed = None
-    elif filetype == "csv":
-        thedatadict = readcsv(thefileroot, debug=debug)
+    elif (filetype == "csv") or (filetype == "mat"):
+        if filetype == "csv":
+            thedatadict = readcsv(thefileroot, debug=debug)
+        else:
+            thedatadict = readfslmat(thefileroot, debug=debug)
         if colspec is None:
             thecolumns = list(thedatadict.keys())
         else:
@@ -1432,7 +1627,6 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
         thesamplerate = None
         thestarttime = None
         compressed = None
-
     else:
         print("illegal file type:", filetype)
 
@@ -1548,6 +1742,9 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
             quotechar='"',
         )
 
+        # replace nans with 0
+        df = df.fillna(0.0)
+
         # check for header line
         if any(df.iloc[0].apply(lambda x: isinstance(x, str))):
             headerlinefound = True
@@ -1560,6 +1757,10 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 sep="\t",
                 quotechar='"',
             )
+
+            # replace nans with 0
+            df = df.fillna(0.0)
+
             if warn:
                 print(
                     "Warning - Column header line found in "
@@ -1719,6 +1920,8 @@ def colspectolist(colspec, debug=False):
         ("APARC_GRAY", "8-13,17-20,26-28,47-56,58-60,96,97,1000-1035,2000-2035"),
         ("APARC_WHITE", "2,7,41,46,177,219"),
         ("APARC_ALLBUTCSF", "2,7-13,17-20,26-28,41,46-56,58-60,96,97,177,219,1000-1035,2000-2035"),
+        ("SSEG_GRAY", "3,8,10-13,16-18,26,42,47,49-54,58"),
+        ("SSEG_WHITE", "2,7,41,46"),
     )
     preprocessedranges = []
     for thisrange in theranges:

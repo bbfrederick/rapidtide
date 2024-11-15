@@ -19,6 +19,8 @@
 import argparse
 import sys
 
+import numpy as np
+
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
@@ -83,6 +85,13 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--demean",
+        dest="demean",
+        action="store_true",
+        help=("Demean before filtering."),
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -137,6 +146,8 @@ def filttc(args):
             outvecs[i, :] = tide_math.normalize(
                 thefilter.apply(samplerate, invecs[i, :]), method=args.normmethod
             )
+        if args.demean:
+            outvecs[i, :] -= np.mean(outvecs[i, :])
 
     tide_io.writevectorstotextfile(
         outvecs,

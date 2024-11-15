@@ -1,13 +1,12 @@
 [build-system]
-requires = ['setuptools', 'wheel', 'versioneer[toml]']
+requires = ["setuptools>=42", "cffi>=1.0.0", 'versioneer[toml]']
 build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'rapidtide'
 description = 'Tools for performing correlation analysis on fMRI data.'
-authors = [
-  { name='Blaise Frederick', email='blaise.frederick@gmail.com' },
-]
+keywords = ["fMRI", "correlation", "RIPTiDe", "noise"]
+license = {text = "Apache Software License"}
 readme = 'README.rst'
 classifiers = [
     'Operating System :: OS Independent',
@@ -15,29 +14,40 @@ classifiers = [
     'Intended Audience :: Science/Research',
     'Topic :: Scientific/Engineering :: Image Recognition',
     'License :: OSI Approved :: Apache Software License',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
 ]
-requires-python = '>=3.8'
+requires-python = '>=3.9'
 dependencies = [
   'numpy',
   'scipy',
   'pandas',
+  'pyarrow',
   'scikit-image',
   'scikit-learn',
   'nibabel',
   'nilearn',
-  'matplotlib',
-  'pyqtgraph',
+  'matplotlib>=3.3.0',
+  'pyqtgraph>=0.13.4',
   'pyqt5-sip',
   'requests',
   'statsmodels',
   'pywavelets',
+  'tomlkit',
+  'tensorflow>=2.10.0',
+  'tf-keras',
   'tqdm',
 ]
-dynamic = ['version', 'license', 'keywords']
+#dynamic = ['version', 'license', 'keywords']
+dynamic = ['version']
+authors = [
+    {name = "Blaise deB Frederick", email='blaise.frederick@gmail.com' },
+    {name = "Taylor Salo"},
+    {name = "Daniel M. Drucker, Ph.D."},
+    {name = "Jeffrey N Stout"},
+]
 
 [project.urls]
 'Homepage' = 'https://github.com/bbfrederick/rapidtide'
@@ -47,7 +57,7 @@ dynamic = ['version', 'license', 'keywords']
 'Changelog' = 'https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md'
 
 [project.optional-dependencies]
-test = [
+tests = [
   'codecov',
   'coverage',
   'coveralls',
@@ -60,10 +70,9 @@ doc = [
   'sphinx_rtd_theme',
   'sphinx-argparse',
   'sphinx-gallery',
-  'm2r',
+  'myst-parser',
   'numpydoc',
-  'recommonmark',
-  'mistune',
+  'sphinxcontrib-bibtex',
 ]
 
 #[project.scripts]
@@ -72,7 +81,7 @@ doc = [
 #calcicc = 'rapidtide.scripts.calcicc:main'
 
 [tool.setuptools]
-include-package-data = true 
+include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ['rapidtide', 'cloud']

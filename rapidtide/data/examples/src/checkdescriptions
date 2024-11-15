@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for JSONFILE in ../dst/*json
+do
+    grep -L "Description" ${JSONFILE}
+done

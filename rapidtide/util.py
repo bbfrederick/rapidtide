@@ -26,6 +26,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from multiprocessing import RawArray, shared_memory
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -323,7 +324,7 @@ def startendcheck(timepoints, startpoint, endpoint):
         endpoint = 100000000
     if endpoint > timepoints - 1:
         realend = timepoints - 1
-        print("endppoint set to maximum, (", timepoints - 1, ")")
+        print("endpoint set to maximum, (", timepoints - 1, ")")
     else:
         realend = endpoint
         print("endpoint set to ", endpoint)
@@ -999,3 +1000,31 @@ def comparehappyruns(root1, root2, debug=False):
             print("done processing", timecourse)
 
     return results
+
+
+# shared memory routines
+def numpy2shared(inarray, theouttype, name=None):
+    # Create a shared memory block to store the array data
+    outnbytes = np.dtype(theouttype).itemsize * inarray.size
+    shm = shared_memory.SharedMemory(name=None, create=True, size=outnbytes)
+    inarray_shared = np.ndarray(inarray.shape, dtype=theouttype, buffer=shm.buf)
+    np.copyto(inarray_shared, inarray)  # Copy data to shared memory array
+    return inarray_shared, shm  # Return both the array and the shared memory object
+
+
+def allocshared(theshape, thetype, name=None):
+    # Calculate size based on shape
+    thesize = np.prod(theshape)
+    # Determine the data type size
+    dtype_size = np.dtype(thetype).itemsize
+    # Create a shared memory block of the required size
+    shm = shared_memory.SharedMemory(name=None, create=True, size=thesize * dtype_size)
+    outarray = np.ndarray(theshape, dtype=thetype, buffer=shm.buf)
+    return outarray, shm  # Return both the array and the shared memory object
+
+
+def cleanup_shm(shm):
+    # Cleanup
+    if shm is not None:
+        shm.close()
+        shm.unlink()

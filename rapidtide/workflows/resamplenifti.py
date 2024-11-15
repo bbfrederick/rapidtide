@@ -78,7 +78,7 @@ def _get_parser():
     return parser
 
 
-def resamplenifi(args):
+def resamplenifti(args):
     # get the input TR
     inputtr, numinputtrs = tide_io.fmritimeinfo(args.inputfile)
     if args.debug:
@@ -150,4 +150,4 @@ def resamplenifi(args):
     resampled_hdr = input_hdr.copy()
     resampled_hdr["pixdim"][4] = args.outputtr
     outputroot, dummy = tide_io.niftisplitext(args.outputfile)
-    tide_io.savetonifti(resampledtcs, input_hdr, outputroot)
+    tide_io.savetonifti(resampledtcs, resampled_hdr, outputroot)

@@ -17,10 +17,12 @@ freq3 = 7.0
 amp1 = 1.0
 amp2 = 0.5
 amp3 = 0.25
+intercept = 0.1
 phase1 = 0.0
 phase2 = np.pi / 2.0
 phase3 = np.pi
 noiseamp = 0.5
+
 
 evs = np.zeros((arrlen, 3), dtype=float)
 
@@ -28,9 +30,16 @@ evs[:, 0] = np.sin(freq1 * xaxis + phase1)
 evs[:, 1] = np.sin(freq2 * xaxis + phase2)
 evs[:, 2] = np.sin(freq3 * xaxis + phase3)
 
-invec = amp1 * evs[:, 0] + amp2 * evs[:, 1] + amp3 * evs[:, 2] + noiseamp * np.random.rand(arrlen)
+datavec = amp1 * evs[:, 0] + amp2 * evs[:, 1] + amp3 * evs[:, 2] + intercept
+noisevec = noiseamp * np.random.rand(arrlen)
+invec = datavec + noisevec
 
-filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec, evs, debug=True)
+filtered, datatoremove, R, outcoffs, outintercept = tide_fit.glmfilt(invec, evs, returnintercept=True, debug=True)
+
+incoffs = [amp1, amp2, amp3]
+coffdiffs = outcoffs - incoffs
+interceptdiffs = outintercept - intercept
+print(f"{incoffs=}, {outcoffs=}, {intercept=}, {outintercept=}, {coffdiffs=}, {interceptdiffs=}")
 
 offset = 0.0
 plt.plot(evs[:, 0])
@@ -44,6 +53,8 @@ offset += 1.0
 plt.plot(datatoremove + offset)
 offset += 1.0
 plt.plot(filtered + offset)
+offset += 1.0
+plt.plot(datavec - datatoremove + offset)
 print(R)
 plt.show()
 

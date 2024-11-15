@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer_plus:latest-release
+FROM fredericklab/basecontainer:v0.4.0
 
 # get build arguments
 ARG BUILD_TIME
@@ -9,8 +9,8 @@ ARG GITSHA
 ARG GITDATE
 
 # set and echo environment variables
-ENV BUILD_TIME $BUILD_TIME
-ENV BRANCH $BRANCH
+ENV BUILD_TIME=$BUILD_TIME
+ENV BRANCH=$BRANCH
 ENV GITVERSION=${GITVERSION}
 ENV GITSHA=${GITSHA}
 ENV GITDATE=${GITDATE}
@@ -21,30 +21,48 @@ RUN echo "GITVERSION: "$GITVERSION
 RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
 
-# Install rapidtide
+# Copy rapidtide into container
 COPY . /src/rapidtide
+RUN ln -s /src/rapidtide/cloud /
 RUN echo $GITVERSION > /src/rapidtide/VERSION
+
+# init and install rapidtide
+RUN uv pip install --upgrade pip
 RUN cd /src/rapidtide && \
-    pip install . && \
+    uv pip install .
+RUN chmod -R a+r /src/rapidtide
+
+# install versioneer
+RUN cd /src/rapidtide && \
     versioneer install --no-vendor && \
     rm -rf /src/rapidtide/build /src/rapidtide/dist
+
+# install test data
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
     ./installtestdatadocker
 
+# update the paths to libraries
+RUN ldconfig
+
 # clean up
-#RUN mamba clean -y --all
 RUN pip cache purge
 
-# Create a shared $HOME directory
+# switch to the rapidtide user
 RUN useradd -m -s /bin/bash -G users rapidtide
+RUN chown -R rapidtide /src/rapidtide
 WORKDIR /home/rapidtide
 ENV HOME="/home/rapidtide"
+RUN /opt/miniforge3/bin/mamba init
+RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
+RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
+USER rapidtide
+
+# set up variable for non-interactive shell
+ENV PATH=/opt/miniforge3/envs/science/bin:/opt/miniforge3/condabin:.:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 ENV IS_DOCKER_8395080871=1
 
-RUN ldconfig
 WORKDIR /tmp/
-RUN ln -s /src/rapidtide/cloud /
 ENTRYPOINT ["/cloud/mount-and-run"]
 
 LABEL org.label-schema.build-date=$BUILD_TIME \

@@ -70,6 +70,22 @@ def _get_parser():
         default=True,
     )
 
+    """parser.add_argument(
+        "--outputstarttime",
+        dest="starttime",
+        type=lambda x: pf.is_float(parser, x),
+        help=("Start time in seconds of the output.  If not set, go to the beginning of data (default)"),
+        default=None,
+    )
+
+    parser.add_argument(
+        "--outputendtime",
+        dest="endtime",
+        type=lambda x: pf.is_float(parser, x),
+        help=("End time in seconds - if not set, go to the end of data (default)."),
+        default=None,
+    )"""
+
     # Miscellaneous options
 
     return parser
@@ -79,19 +95,38 @@ def resampletc(args):
     intimestep = 1.0 / args.insamplerate
     outtimestep = 1.0 / args.outsamplerate
     (
-        dummy,
-        dummy,
-        dummy,
+        insamplerate,
+        instarttime,
+        incolumns,
         inputdata,
         compressed,
         filetype,
     ) = tide_io.readvectorsfromtextfile(args.inputfile, onecol=True)
 
+    if insamplerate is not None:
+        if insamplerate != args.insamplerate:
+            print(
+                f"warning: specified sampling rate {insamplerate} does not match input file {args.insamplerate}"
+            )
+    if instarttime is None:
+        instarttime = 0.0
+
     outputdata = tide_resample.arbresample(
         inputdata, args.insamplerate, args.outsamplerate, decimate=False, antialias=args.antialias
     )
-    in_t = intimestep * np.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
+    in_t = (
+        intimestep * np.linspace(0.0, 1.0 * len(inputdata), len(inputdata), endpoint=True)
+        + instarttime
+    )
+    """if args.starttime is None:
+        outstarttime = in_t[0]
+    else:
+        outstarttime = args.starttime"""
     out_t = outtimestep * np.linspace(0.0, len(outputdata), len(outputdata), endpoint=True)
+    """if args.endtime is None:
+        endtime = in_t[-1]
+    else:
+        endtime = args.endtime"""
     if len(out_t) < len(outputdata):
         outputdata = outputdata[0 : len(out_t)]
 

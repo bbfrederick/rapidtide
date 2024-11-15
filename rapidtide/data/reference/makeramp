@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+
+import numpy as np
+
+import rapidtide.io as tide_io
+
+nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti("hoot.nii.gz")
+
+for i in range(30):
+    start = i * 10
+    stop = start + 10
+    nim_data[:,start:stop] = i + 1
+
+tide_io.savetonifti(nim_data, nim_hdr, "ramp30")

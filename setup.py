@@ -10,7 +10,7 @@ from codecs import open
 from os import path
 
 # Always prefer setuptools over distutils
-from setuptools import find_namespace_packages, find_packages, setup
+from setuptools import find_namespace_packages, find_packages, setup, Extension
 
 import versioneer
 
@@ -19,7 +19,6 @@ here = path.abspath(path.dirname(__file__))
 # Get the long description from the README file
 with open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
-
 
 # Write version number out to VERSION file
 version = versioneer.get_version()
@@ -72,7 +71,9 @@ modules_list = [
     "rapidtide/workflows/filtnifti",
     "rapidtide/workflows/filttc",
     "rapidtide/workflows/fingerprint",
+    "rapidtide/workflows/fixtr",
     "rapidtide/workflows/glmfilt",
+    "rapidtide/workflows/glmfrommaps",
     "rapidtide/workflows/gmscalc",
     "rapidtide/workflows/happy",
     "rapidtide/workflows/happy2std",
@@ -96,6 +97,8 @@ modules_list = [
     "rapidtide/workflows/rapidtide_parser",
     "rapidtide/workflows/resampletc",
     "rapidtide/workflows/resamplenifti",
+    "rapidtide/workflows/retroglm",
+    "rapidtide/workflows/retrolagtcs",
     "rapidtide/workflows/roisummarize",
     "rapidtide/workflows/showarbcorr",
     "rapidtide/workflows/showhist",
@@ -112,6 +115,8 @@ modules_list = [
     "rapidtide/workflows/variabilityizer",
     "rapidtide/tidepoolTemplate",
     "rapidtide/tidepoolTemplate_alt",
+    "rapidtide/tidepoolTemplate_qt6",
+    "rapidtide/tidepoolTemplate_alt_qt6",
 ]
 
 
@@ -131,6 +136,7 @@ script_list = [
     "rapidtide/scripts/filtnifti",
     "rapidtide/scripts/filttc",
     "rapidtide/scripts/fingerprint",
+    "rapidtide/scripts/fixtr",
     "rapidtide/scripts/glmfilt",
     "rapidtide/scripts/gmscalc",
     "rapidtide/scripts/happy",
@@ -152,6 +158,8 @@ script_list = [
     "rapidtide/scripts/rapidtide2std",
     "rapidtide/scripts/resampletc",
     "rapidtide/scripts/resamplenifti",
+    "rapidtide/scripts/retroglm",
+    "rapidtide/scripts/retrolagtcs",
     "rapidtide/scripts/roisummarize",
     "rapidtide/scripts/runqualitycheck",
     "rapidtide/scripts/showarbcorr",
@@ -207,10 +215,10 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     # What does your project relate to?
     keywords=["fMRI", "correlation", "RIPTiDe", "noise"],
@@ -241,17 +249,18 @@ setup(
         "scikit-learn",
         "nibabel",
         "nilearn",
-        "matplotlib",
-        "pyqtgraph",
+        "matplotlib>=3.3.0",
+        "pyqtgraph>=0.13.4",
         "pyqt",
         "pyqt5-sip",
         "requests",
         "statsmodels",
         "pywavelets",
+        "tomlkit",
+        "tensorflow>=2.10.0",
+        "tf-keras",
         "tqdm",
     ],
-    # "keras",
-    # "tensorflow>=2.4.0",
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
@@ -262,10 +271,9 @@ setup(
             "sphinx_rtd_theme",
             "sphinx-argparse",
             "sphinx-gallery",
-            "m2r",
+            "myst-parser",
             "numpydoc",
-            "recommonmark",
-            "mistune==0.8.4",
+            "sphinxcontrib-bibtex",
         ],
         "tests": [
             "codecov",

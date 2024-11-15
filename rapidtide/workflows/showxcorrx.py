@@ -497,14 +497,22 @@ def showxcorrx(args):
     else:
         # do the correlation
         thexcorr, xcorr_x, globalmax = theCorrelator.run(trimdata1, trim=False)
+        if args.display and args.debug:
+            plt.plot(xcorr_x, thexcorr)
+            plt.show()
         print("Correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
         if dumpfiltered:
             tide_io.writenpvecs(theCorrelator.preptesttc, "correlator_filtereddata1.txt")
             tide_io.writenpvecs(theCorrelator.prepreftc, "correlator_filtereddata2.txt")
+        if args.debug:
+            print(f"limits: {args.lagmin, args.lagmax}")
         theCorrelator.setlimits(
             int((-args.lagmin * args.samplerate) - 0.5), int((args.lagmax * args.samplerate) + 0.5)
         )
         thexcorr_trim, xcorr_x_trim, dummy = theCorrelator.getfunction(trim=True)
+        if args.display and args.debug:
+            plt.plot(xcorr_x_trim, thexcorr_trim)
+            plt.show()
         print("trimmed Correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     if args.cepstral:
@@ -593,7 +601,7 @@ def showxcorrx(args):
     timeaxis = np.linspace(0, 1.0, num=len(trimdata1), endpoint=False) / args.samplerate
     thetc = trimdata1 * 0.0
 
-    if args.similaritymetric == "hybrid":
+    if args.similaritymetric == "hybrid" or args.similaritymetric == "correlation":
         peakstartind = tide_util.valtoindex(xcorr_x, args.lagmin, discretization="floor")
         peakendind = tide_util.valtoindex(xcorr_x, args.lagmax, discretization="ceiling") + 1
         dummy, thepeaks = tide_peakeval._procOneVoxelPeaks(
@@ -862,39 +870,38 @@ def showxcorrx(args):
         print("illegal legend location:", args.legendloc)
         sys.exit()
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    thelegend = []
-    if args.legends is not None:
-        thelegend.append = args.legends
-    else:
-        if args.similaritymetric == "mutualinfo":
-            thelegend.append("Mutual Information")
-            ax.plot(
-                MI_x_trim,
-                theMI_trim,
-                color=colorlist[0],
-                label=thelegend[0],
-                linewidth=thelinewidth[0],
-            )
-        else:
-            thelegend.append("Cross correlation")
-            ax.plot(
-                xcorr_x_trim,
-                thexcorr_trim,
-                color=colorlist[0],
-                label=thelegend[0],
-                linewidth=thelinewidth[0],
-            )
-    if args.dolegend:
-        ax.legend(thelegend, fontsize=thelegendfontsize, loc=args.legendloc)
-    ax.set_title("Similarity metric over the search range", fontsize=thetitlefontsize)
-    if args.showxax:
-        ax.tick_params(axis="x", labelsize=thexlabelfontsize, which="both")
-    if args.showyax:
-        ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
-
     if args.display:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        thelegend = []
+        if args.legends is not None:
+            thelegend.append = args.legends
+        else:
+            if args.similaritymetric == "mutualinfo":
+                thelegend.append("Mutual Information")
+                ax.plot(
+                    MI_x_trim,
+                    theMI_trim,
+                    color=colorlist[0],
+                    label=thelegend[0],
+                    linewidth=thelinewidth[0],
+                )
+            else:
+                thelegend.append("Cross correlation")
+                ax.plot(
+                    xcorr_x_trim,
+                    thexcorr_trim,
+                    color=colorlist[0],
+                    label=thelegend[0],
+                    linewidth=thelinewidth[0],
+                )
+        if args.dolegend:
+            ax.legend(thelegend, fontsize=thelegendfontsize, loc=args.legendloc)
+        ax.set_title("Similarity metric over the search range", fontsize=thetitlefontsize)
+        if args.showxax:
+            ax.tick_params(axis="x", labelsize=thexlabelfontsize, which="both")
+        if args.showyax:
+            ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
         if args.outputfile is not None:
             plt.savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
         else:

@@ -12,7 +12,7 @@ docker run \
     -it \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide:latest \
-    rapidtide \
+    /cloud/mount-and-run rapidtide \
         /data/src/sub-RAPIDTIDETEST.nii.gz \
         /data/dst/sub-RAPIDTIDETEST \
         --passes 3 \

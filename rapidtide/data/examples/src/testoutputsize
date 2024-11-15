@@ -1,0 +1,45 @@
+#!/bin/bash
+
+
+for LEVEL in min less normal more max
+do
+    mkdir -p ../dst/nomotregress/${LEVEL}
+    sbatch --mem=64G --time=90 --cpus-per-task 4 /cm/shared/miniforge3/envs/mic/bin/rapidtide \
+        --nprocs 4 \
+        --passes 3 \
+        --outputlevel ${LEVEL} \
+        --searchrange -5 10 \
+        --noglm \
+        /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz \
+        /home/frederic/code/rapidtide/rapidtide/data/examples/dst/nomotregress/${LEVEL}/sub-RAPIDTIDETEST
+done
+
+for LEVEL in min less normal more max
+do
+    mkdir -p ../dst/motregress/${LEVEL}
+    sbatch --mem=64G --time=90 --cpus-per-task 4 /cm/shared/miniforge3/envs/mic/bin/rapidtide \
+        --nprocs 4 \
+        --passes 3 \
+        --outputlevel ${LEVEL} \
+        --searchrange -5 10 \
+        --noglm \
+        --motionfile /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/Movement_Regressors.txt:0-5 \
+        /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz \
+        /home/frederic/code/rapidtide/rapidtide/data/examples/dst/motregress/${LEVEL}/sub-RAPIDTIDETEST
+done
+
+for LEVEL in min less normal more max
+do
+    for NDERIVS in 0 1
+    do
+        mkdir -p ../dst/nomotregress/${LEVEL}glm${NDERIVS}
+        sbatch --mem=64G --time=90 --cpus-per-task 4 /cm/shared/miniforge3/envs/mic/bin/rapidtide \
+            --nprocs 4 \
+            --passes 3 \
+            --outputlevel ${LEVEL} \
+            --glmderivs ${NDERIVS} \
+            --searchrange -5 10 \
+            /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz \
+            /home/frederic/code/rapidtide/rapidtide/data/examples/dst/nomotregress/${LEVEL}glm${NDERIVS}/sub-RAPIDTIDETEST
+    done
+done

@@ -1,0 +1,12 @@
+{
+    "regions": [
+        "ACAL",
+        "ACAR",
+        "MCAL",
+        "MCAR",
+        "PCAL",
+        "PCAR",
+        "VBL",
+        "VBR"
+    ]
+}

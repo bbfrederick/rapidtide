@@ -355,6 +355,17 @@ def tfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
         return tval
 
 
+def pfromz(z, twotailed=True):
+    # importing packages
+    import scipy.stats
+
+    # finding p-value
+    if twotailed:
+        return scipy.stats.norm.sf(abs(z)) * 2
+    else:
+        return scipy.stats.norm.sf(abs(z))
+
+
 def zfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
     """
 
@@ -381,6 +392,14 @@ def zfromr(r, nsamps, dfcorrfac=1.0, oversampfactor=1.0, returnp=False):
         return zval, pval
     else:
         return zval
+
+
+def zofcorrdiff(r1, r2, n1, n2):
+    return (fisher(r1) - fisher(r2)) / stderrofdiff(n1, n2)
+
+
+def stderrofdiff(n1, n2):
+    return np.sqrt(1.0 / (n1 - 3) + 1.0 / (n2 - 3))
 
 
 def fisher(r):
@@ -563,7 +582,7 @@ def gethistprops(
         i = 1
         started = False
         finished = False
-        while i < len(thestore[1, :] - 2) and not finished:
+        while i < len(thestore[1, :] - 3) and not finished:
             if thestore[1, i] > peakthresh * overallmax:
                 started = True
             if thestore[1, i] > thestore[1, peakindex]:
@@ -804,6 +823,7 @@ def makeandsavehistogram(
         thedict[varroot + "_centerofmass.txt"] = centerofmass
         thedict[varroot + "_peak.txt"] = peakloc
     extraheaderinfo = {}
+    extraheaderinfo["Description"] = displaytitle
     extraheaderinfo["centerofmass"] = centerofmass
     extraheaderinfo["peakloc"] = peakloc
     extraheaderinfo["peakwidth"] = peakwidth

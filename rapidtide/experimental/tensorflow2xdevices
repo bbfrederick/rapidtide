@@ -1,0 +1,30 @@
+#!/cm/shared/anaconda3/envs/tensorflowgpu/bin/python
+
+import tensorflow as tf
+import os
+
+thisnode = os.uname().nodename
+print('thisnode:', thisnode)
+
+cpus = tf.config.experimental.list_physical_devices('CPU')
+
+print('tf2 CPU summary')
+if len(cpus) == 0:
+    print('\tno cpus found!')
+else:
+    for cpu in cpus:
+        print("\tName:", cpu.name, "  Type:", cpu.device_type)
+
+print()
+
+print('tf2 GPU summary')
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if len(gpus) == 0:
+    print('\tno gpus found!')
+else:
+    for gpu in gpus:
+        print("\tName:", gpu.name, "  Type:", gpu.device_type)
+
+print('Environment variables')
+for key, value in sorted(os.environ.items()):
+    print(str(key) + ':\t' + str(value))

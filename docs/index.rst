@@ -137,7 +137,7 @@ Contents
    :maxdepth: 2
    :caption: History:
 
-   whats_new.rst
+   whatsnew.rst
 
 
 Indices and tables

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+#rapidtide \
+#    --nprocs -1 \
+#    --passes 3 \
+#    --refinetype unweighted_average \
+#    --numnull 0 \
+#    --outputlevel max \
+#    --glmderivs 1 \
+#    sub-RAPIDTIDETEST.nii.gz \
+#    ../dst/sub-RAPIDTIDETEST
+
+##retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv --nprocs -1 
+retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/1deriv --nprocs -1 --glmderivs 1 --makepseudofile --outputlevel max
+##retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/2deriv --nprocs -1 --glmderivs 2
+##retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/3deriv --nprocs -1 --glmderivs 3
+
+ALTNAME=1deriv
+
+#for map in lfofilterR lfofilterR2 lfofilterMean lfofilterCoeff lfofilterCoeffDeriv1 lfofilterNorm lfofilterInbandVarianceBefore lfofilterInbandVarianceAfter lfofilterInbandVarianceChange 
+#do
+#    fslmaths \
+#        ../dst/${ALTNAME}_desc-${map}_map.nii.gz \
+#        -sub \
+#        ../dst/sub-RAPIDTIDETEST_desc-${map}_map.nii.gz \
+#        ../dst/diff_${map}
+#    therange=`fslstats ../dst/diff_${map} -R`
+#    echo ${map}: ${therange}
+#done
+#
+##for map in processed_mask corrfit_mask maxtime_map
+##do
+##    readname=`echo ${map} | sed 's/_/READ_/g'`
+##    fslmaths \
+#        ../dst/${ALTNAME}_desc-${readname}.nii.gz \
+#        -sub \
+#        ../dst/sub-RAPIDTIDETEST_desc-${map}.nii.gz \
+#        ../dst/diff_${map}
+#    therange=`fslstats ../dst/diff_${map} -R`
+#    echo ${map}: ${therange}
+#done
+
+#for map in datatofilter_bold
+#do
+    #fslmaths \
+        #../dst/${ALTNAME}_desc-${map}.nii.gz \
+        #-sub \
+        #../dst/sub-RAPIDTIDETEST_desc-${map}.nii.gz \
+        #../dst/diff_${map}
+    #therange=`fslstats ../dst/diff_${map} -R`
+    #echo ${map}: ${therange}
+#done
+
+#for map in lfofilterEV_bold lfofilterEVDeriv1_bold lfofilterRemoved_bold lfofilterCleaned_bold
+#do
+#    fslmaths \
+#        ../dst/${ALTNAME}_desc-${map}.nii.gz \
+#        -sub \
+#        ../dst/sub-RAPIDTIDETEST_desc-${map}.nii.gz \
+#        ../dst/diff_${map}
+#    therange=`fslstats ../dst/diff_${map} -R`
+#    echo ${map}: ${therange}
+#done
+#

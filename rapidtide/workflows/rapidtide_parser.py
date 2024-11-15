@@ -18,6 +18,7 @@
 #
 import argparse
 import logging
+import os
 import sys
 from argparse import Namespace
 
@@ -27,6 +28,22 @@ import numpy as np
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
+
+try:
+    from memory_profiler import profile
+
+    memprofilerexists = True
+except ImportError:
+    memprofilerexists = False
+
+
+# Create a sentinel.
+# from https://stackoverflow.com/questions/58594956/find-out-which-arguments-were-passed-explicitly-in-argparse
+class _Sentinel:
+    pass
+
+
+sentinel = _Sentinel()
 
 LGR = logging.getLogger(__name__)
 
@@ -44,8 +61,8 @@ DEFAULT_SIGMAMIN = 0.0
 DEFAULT_DESPECKLE_PASSES = 4
 DEFAULT_DESPECKLE_THRESH = 5.0
 DEFAULT_PASSES = 3
-DEFAULT_LAGMIN_THRESH = 0.5
-DEFAULT_LAGMAX_THRESH = 5.0
+DEFAULT_LAGMIN_THRESH = 0.25
+DEFAULT_LAGMAX_THRESH = 3.0
 DEFAULT_AMPTHRESH = 0.3
 DEFAULT_PICKLEFT_THRESH = 0.33
 DEFAULT_SIGMATHRESH = 100.0
@@ -55,7 +72,7 @@ DEFAULT_INTERPTYPE = "univariate"
 DEFAULT_WINDOW_TYPE = "hamming"
 DEFAULT_GLOBALMASK_METHOD = "mean"
 DEFAULT_GLOBALSIGNAL_METHOD = "sum"
-DEFAULT_CORRWEIGHTING = "regressor"
+DEFAULT_CORRWEIGHTING = "phat"
 DEFAULT_CORRTYPE = "linear"
 DEFAULT_SIMILARITYMETRIC = "correlation"
 DEFAULT_PEAKFIT_TYPE = "gauss"
@@ -81,6 +98,10 @@ DEFAULT_CVRMAPPING_LAGMAX = 20.0
 DEFAULT_CVRMAPPING_FILTER_LOWERPASS = 0.0
 DEFAULT_CVRMAPPING_FILTER_UPPERPASS = 0.01
 DEFAULT_CVRMAPPING_DESPECKLE_PASSES = 4
+
+DEFAULT_OUTPUTLEVEL = "normal"
+
+DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
 
 
 def _get_parser():
@@ -142,7 +163,7 @@ def _get_parser():
             "Preset for delay mapping analysis - this is a macro that "
             f"sets searchrange=({DEFAULT_DELAYMAPPING_LAGMIN}, {DEFAULT_DELAYMAPPING_LAGMAX}), "
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
-            "refineoffset=True, pickleft=True, limitoutput=True, "
+            "refineoffset=True, outputlevel='normal', "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
@@ -173,8 +194,8 @@ def _get_parser():
         action="store_true",
         help=(
             "Treat this run as an initial pass to locate good candidate voxels for global mean "
-            "regressor generation.  This sets: passes=1, pickleft=True, despecklepasses=0, "
-            "refinedespeckle=False, limitoutput=True, doglmfilt=False, saveintermediatemaps=False."
+            "regressor generation.  This sets: passes=1, despecklepasses=0, "
+            "refinedespeckle=False, outputlevel='normal', doglmfilt=False, saveintermediatemaps=False."
         ),
         default=False,
     )
@@ -186,7 +207,6 @@ def _get_parser():
             "Single arguments that change default values for many "
             "arguments. "
             "Macros override individually set parameters. "
-            "Macros are mutually exclusive with one another."
         ),
     ).add_mutually_exclusive_group()
     macros.add_argument(
@@ -212,6 +232,62 @@ def _get_parser():
             "lagminthresh=0.1. "
         ),
         default=False,
+    )
+
+    anatomy = parser.add_argument_group(
+        title="Anatomic information",
+        description=(
+            "These options allow you to tailor the analysis with some anatomic constraints.  You don't need to supply "
+            "any of them, but if you do, rapidtide will try to make intelligent processing decisions based on "
+            "these maps.  Any individual masks set with anatomic information will be overridden if you specify "
+            "that mask directly."
+        ),
+    )
+    anatomy.add_argument(
+        "--brainmask",
+        dest="brainmaskincludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "This specifies the valid brain voxels.  No voxels outside of this mask will be used for global mean "
+            "calculation, correlation, refinement, offset calculation, or denoising. "
+            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+            "voxels with value > 0.1 are used.  If this option is set, "
+            "rapidtide will limit the include mask used to 1) calculate the initial global mean regressor, "
+            "2) decide which voxels in which to calculate delays, "
+            "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
+            "to remove sLFO signal. "
+            "Setting --globalmeaninclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
+            "override this for the given include mask."
+        ),
+        default=None,
+    )
+    anatomy.add_argument(
+        "--graymattermask",
+        dest="graymatterincludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "This specifies a gray matter mask registered to the input functional data.  "
+            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+            "voxels with value > 0.1 are used.  If this option is set, "
+            "rapidtide will use voxels in the gray matter mask to 1) calculate the initial global mean regressor, "
+            "and 2) for determining the zero time offset value. "
+            "Setting --globalmeaninclude or --offsetinclude explicitly will override this for "
+            "the given include mask."
+        ),
+        default=None,
+    )
+    anatomy.add_argument(
+        "--whitemattermask",
+        dest="whitematterincludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "This specifies a white matter mask registered to the input functional data.  "
+            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+            "voxels with value > 0.1 are used.  "
+            "This currently isn't used for anything, but rapidtide will keep track of it and might use if for something "
+            "in a later version."
+        ),
+        default=None,
     )
 
     # Preprocessing options
@@ -385,10 +461,12 @@ def _get_parser():
         default=None,
     )
     preproc.add_argument(
-        "--motderiv",
+        "--nomotderiv",
         dest="mot_deriv",
         action="store_false",
-        help=("Toggle whether derivatives will be used in motion regression.  Default is True."),
+        help=(
+            "Do not use derivatives in motion regression.  Default is to use temporal derivatives."
+        ),
         default=True,
     )
     preproc.add_argument(
@@ -414,11 +492,11 @@ def _get_parser():
         default=1,
     )
     preproc.add_argument(
-        "--confoundderiv",
+        "--noconfoundderiv",
         dest="confound_deriv",
         action="store_false",
         help=(
-            "Toggle whether derivatives will be used in confound regression.  Default is True. "
+            "Do not use derivatives in confound regression.  Default is to use temporal derivatives."
         ),
         default=True,
     )
@@ -742,7 +820,7 @@ def _get_parser():
         dest="peakfittype",
         action="store",
         type=str,
-        choices=["gauss", "gausscf", "fastgauss", "quad", "fastquad", "COM", "None"],
+        choices=["gauss", "fastgauss", "quad", "fastquad", "COM", "None"],
         help=(
             "Method for fitting the peak of the similarity function "
             '"gauss" performs a Gaussian fit, and is most accurate. '
@@ -810,7 +888,7 @@ def _get_parser():
     reg_ref.add_argument(
         "--passes",
         dest="passes",
-        action="store",
+        action=pf.IndicateSpecifiedAction,
         type=int,
         metavar="PASSES",
         help=("Set the number of processing passes to PASSES.  " f"Default is {DEFAULT_PASSES}."),
@@ -926,11 +1004,20 @@ def _get_parser():
         default=True,
     )
     reg_ref.add_argument(
-        "--pickleft",
+        "--nopickleft",
         dest="pickleft",
+        action="store_false",
+        help=("Disables selecting the leftmost delay peak when setting the refine offset."),
+        default=True,
+    )
+    reg_ref.add_argument(
+        "--pickleft",
+        dest="dummy",
         action="store_true",
-        help=("Will select the leftmost delay peak when setting the refine " "offset."),
-        default=False,
+        help=(
+            "DEPRECATED. pickleft is now on by default. Use 'nopickleft' to disable it instead."
+        ),
+        default=True,
     )
     reg_ref.add_argument(
         "--pickleftthresh",
@@ -943,6 +1030,18 @@ def _get_parser():
             f"to be considered the start of a peak.  Default is {DEFAULT_PICKLEFT_THRESH}."
         ),
         default=DEFAULT_PICKLEFT_THRESH,
+    )
+    reg_ref.add_argument(
+        "--sLFOnoiseampwindow",
+        dest="sLFOnoiseampwindow",
+        action="store",
+        metavar="SECONDS",
+        type=float,
+        help=(
+            "Width of the averaging window for filtering the RMS sLFO waveform to calculate "
+            f"amplitude change over time.  Default is {DEFAULT_SLFONOISEAMP_WINDOWSIZE}."
+        ),
+        default=DEFAULT_SLFONOISEAMP_WINDOWSIZE,
     )
 
     refine = reg_ref.add_mutually_exclusive_group()
@@ -1061,10 +1160,29 @@ def _get_parser():
     # Output options
     output = parser.add_argument_group("Output options")
     output.add_argument(
+        "--outputlevel",
+        dest="outputlevel",
+        action="store",
+        type=str,
+        choices=["min", "less", "normal", "more", "max"],
+        help=(
+            "The level of file output produced.  'min' produces only absolutely essential files, 'less' adds in "
+            "the GLM filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
+            "would typically want around for interactive data exploration, "
+            "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
+            "Selecting 'max' will produce ~3x your input datafile size as output.  "
+            f'Default is "{DEFAULT_OUTPUTLEVEL}."'
+        ),
+        default=DEFAULT_OUTPUTLEVEL,
+    )
+    output.add_argument(
         "--nolimitoutput",
         dest="limitoutput",
         action="store_false",
-        help=("Save some of the large and rarely used files."),
+        help=(
+            "Save some of the large and rarely used files.  "
+            "NB: THIS IS NOW DEPRECATED: Use '--outputlevel max' instead."
+        ),
         default=True,
     )
     output.add_argument(
@@ -1155,7 +1273,7 @@ def _get_parser():
         "--noprogressbar",
         dest="showprogressbar",
         action="store_false",
-        help=("Will disable showing progress bars (helpful if stdout is going " "to a file)."),
+        help=("Will disable showing progress bars (helpful if stdout is going to a file)."),
         default=True,
     )
     misc.add_argument(
@@ -1183,6 +1301,18 @@ def _get_parser():
         const="double",
         help=("Use double precision for output files."),
         default="single",
+    )
+    misc.add_argument(
+        "--spatialtolerance",
+        dest="spatialtolerance",
+        action="store",
+        type=float,
+        metavar="EPSILON",
+        help=(
+            "When checking to see if the spatial dimensions of two NIFTI files match, allow a relative difference "
+            "of EPSILON in any dimension.  By default, this is set to 0.0, requiring an exact match. "
+        ),
+        default=0.0,
     )
     misc.add_argument(
         "--cifti",
@@ -1223,7 +1353,39 @@ def _get_parser():
 
     # Experimental options (not fully tested, may not work)
     experimental = parser.add_argument_group(
-        "Experimental options (not fully tested, may not work)"
+        "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
+    )
+    experimental.add_argument(
+        "--territorymap",
+        dest="territorymap",
+        metavar="MAP[:VALSPEC]",
+        help=(
+            "This specifies a territory map.  Each territory is a set of voxels with the same integral value.  "
+            "If VALSPEC is given, only territories in the mask with integral values listed in VALSPEC are used, otherwise "
+            "all nonzero voxels are used.  If this option is set, certain output measures will be summarized over "
+            "each territory in the map, in addition to over the whole brain.  Some interesting territory maps might be: "
+            "a gray/white/csf segmentation image, an arterial territory map, lesion area vs. healthy "
+            "tissue segmentation, etc.  NB: at the moment this is just a placeholder - it doesn't do anything."
+        ),
+        default=None,
+    )
+    experimental.add_argument(
+        "--premask",
+        dest="premask",
+        action="store_true",
+        help=(
+            "Apply masking prior to spatial filtering to limit extracerebral sources (requires --brainmask)"
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--premasktissueonly",
+        dest="premasktissueonly",
+        action="store_true",
+        help=(
+            "Apply more stringent masking prior to spatial filtering, removing CSF voxels (requires --graymattermask and --whitemattermask)."
+        ),
+        default=False,
     )
     experimental.add_argument(
         "--psdfilter",
@@ -1256,18 +1418,6 @@ def _get_parser():
         metavar="FREQ",
         help=(
             "Temporal highpass cutoff, in Hz, for filtering the correlation function baseline. "
-        ),
-        default=0.0,
-    )
-    experimental.add_argument(
-        "--spatialtolerance",
-        dest="spatialtolerance",
-        action="store",
-        type=float,
-        metavar="EPSILON",
-        help=(
-            "When checking to see if the spatial dimensions of two NIFTI files match, allow a relative difference "
-            "of EPSILON in any dimension.  By default, this is set to 0.0, requiring an exact match. "
         ),
         default=0.0,
     )
@@ -1385,6 +1535,15 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
+        "--donotfilterinputdata",
+        dest="filterinputdata",
+        action="store_false",
+        help=(
+            "Do not filter input data prior to similarity calculation.  May make processing faster."
+        ),
+        default=True,
+    )
+    experimental.add_argument(
         "--dispersioncalc",
         dest="dodispersioncalc",
         action="store_true",
@@ -1392,8 +1551,8 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
-        "--tmask",
-        dest="tmaskname",
+        "--tincludemask",
+        dest="tincludemaskname",
         action="store",
         type=lambda x: pf.is_valid_file(parser, x),
         metavar="FILE",
@@ -1405,7 +1564,20 @@ def _get_parser():
         ),
         default=None,
     )
-
+    experimental.add_argument(
+        "--texcludemask",
+        dest="texcludemaskname",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="FILE",
+        help=(
+            "Do not correlate during epochs specified "
+            "in MASKFILE (NB: each line of FILE "
+            "contains the time and duration of an "
+            "epoch to exclude."
+        ),
+        default=None,
+    )
     # Debugging options
     debugging = parser.add_argument_group(
         "Debugging options.  You probably don't want to use any of these unless I ask you to to help diagnose a problem"
@@ -1415,6 +1587,13 @@ def _get_parser():
         dest="debug",
         action="store_true",
         help=("Enable additional debugging output."),
+        default=False,
+    )
+    debugging.add_argument(
+        "--focaldebug",
+        dest="focaldebug",
+        action="store_true",
+        help=("Enable targetted additional debugging output (used during development)."),
         default=False,
     )
     debugging.add_argument(
@@ -1492,6 +1671,13 @@ def _get_parser():
         dest="singleproc_glm",
         action="store_true",
         help=("Force single proc path for glm."),
+        default=False,
+    )
+    debugging.add_argument(
+        "--savecorrout",
+        dest="savecorrout",
+        action="store_true",
+        help=("Save the corrout file even if you normally wouldn't."),
         default=False,
     )
     debugging.add_argument(
@@ -1585,12 +1771,6 @@ def process_args(inputargs=None):
     else:
         args["corrpadding"] = 0
 
-    # output options
-    args["savedespecklemasks"] = True
-    args["saveglmfiltered"] = True
-    args["saveconfoundfiltered"] = False
-    args["savecorrmask"] = True
-
     # refinement options
     args["filterbeforePCA"] = True
     args["dispersioncalc_step"] = 0.50
@@ -1613,6 +1793,8 @@ def process_args(inputargs=None):
     args = vars(theobj)
 
     # Additional argument parsing not handled by argparse
+    args["passes"] = np.max([args["passes"], 1])
+
     args["despeckle_passes"] = np.max([args["despeckle_passes"], 0])
 
     if "lag_extrema_nondefault" in args.keys():
@@ -1718,6 +1900,58 @@ def process_args(inputargs=None):
     else:
         args["corrmaskincludename"] = None
 
+    # if brainmaskincludespec is set, set corrmaskinclude to it.
+    if args["brainmaskincludespec"] is not None:
+        (
+            args["brainmaskincludename"],
+            args["brainmaskincludevals"],
+        ) = tide_io.processnamespec(
+            args["brainmaskincludespec"], "Limiting all processing to voxels ", "in brain mask."
+        )
+        if not os.path.isfile(args["brainmaskincludename"]):
+            raise FileNotFoundError(f"file {args['brainmaskincludename']} does not exist.")
+    else:
+        args["brainmaskincludename"] = None
+        args["brainmaskincludevals"] = None
+
+    # if graymatterincludespec is set, set globalmeaninclude, offsetinclude to it.
+    graymasks = ["globalmean", "offset"]
+    if args["graymatterincludespec"] is not None:
+        (
+            args["graymatterincludename"],
+            args["graymatterincludevals"],
+        ) = tide_io.processnamespec(
+            args["graymatterincludespec"], "Including voxels where ", "in gray matter mask."
+        )
+        if not os.path.isfile(args["graymatterincludename"]):
+            raise FileNotFoundError(f"file {args['graymatterincludename']} does not exist.")
+        for masktype in graymasks:
+            (
+                args[f"{masktype}includename"],
+                args[f"{masktype}includevals"],
+            ) = (
+                args["graymatterincludename"],
+                args["graymatterincludevals"],
+            )
+            print(f"setting {masktype}include mask to gray matter mask")
+    else:
+        args["graymatterincludename"] = None
+        args["graymatterincludevals"] = None
+        for masktype in graymasks:
+            args[f"{masktype}includename"] = None
+            args[f"{masktype}includevals"] = None
+
+    if args["whitematterincludespec"] is not None:
+        (
+            args["whitematterincludename"],
+            args["whitematterincludevals"],
+        ) = tide_io.processnamespec(
+            args["whitematterincludespec"], "Including voxels where ", "in white matter mask."
+        )
+    else:
+        args["whitematterincludename"] = None
+        args["whitematterincludevals"] = None
+
     if args["globalmeanincludespec"] is not None:
         (
             args["globalmeanincludename"],
@@ -1725,9 +1959,6 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["globalmeanincludespec"], "Including voxels where ", "in global mean."
         )
-    else:
-        args["globalmeanincludename"] = None
-        args["globalmeanincludevals"] = None
 
     if args["globalmeanexcludespec"] is not None:
         (
@@ -1771,9 +2002,6 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["offsetincludespec"], "Including voxels where ", "in offset calculation."
         )
-    else:
-        args["offsetincludename"] = None
-        args["offsetincludevals"] = None
 
     if args["offsetexcludespec"] is not None:
         (
@@ -1788,8 +2016,8 @@ def process_args(inputargs=None):
 
     # motion processing
     if args["motionfilespec"] is not None:
-        (args["motionfilename"], args["motionfilevals"]) = tide_io.processnamespec(
-            args["motionfilespec"], "Using columns in ", "as motion regressors."
+        (args["motionfilename"], args["motionfilecolspec"]) = tide_io.parsefilespec(
+            args["motionfilespec"]
         )
     else:
         args["motionfilename"] = None
@@ -1802,8 +2030,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
         args["refineoffset"] = True
-        args["pickleft"] = True
-        args["limitoutput"] = True
+        args["outputlevel"] = "normal"
         pf.setifnotset(args, "doglmfilt", False)
 
     if args["denoising"]:
@@ -1834,16 +2061,15 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "lagmax", DEFAULT_CVRMAPPING_LAGMAX)
         args["preservefiltering"] = True
         args["passes"] = 1
-        args["limitoutput"] = False
+        args["outputlevel"] = "min"
         args["doglmfilt"] = False
 
     if args["globalpreselect"]:
         LGR.warning('Using "globalpreselect" analysis mode. Overriding any affected arguments.')
         args["passes"] = 1
-        args["pickleft"] = True
         args["despeckle_passes"] = 0
         args["refinedespeckle"] = False
-        args["limitoutput"] = True
+        args["outputlevel"] = "normal"
         pf.setifnotset(args, "doglmfilt", False)
         args["saveintermediatemaps"] = False
 
@@ -1871,23 +2097,69 @@ def process_args(inputargs=None):
         args["despeckle_passes"] = 0
 
     # process limitoutput
-    if args["limitoutput"]:
-        args["outputlevel"] = "min"
-    else:
+    if not args["limitoutput"]:
         args["outputlevel"] = "max"
 
+    # output options
     if args["outputlevel"] == "min":
-        args["savemovingsignal"] = False
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
+        args["savecorrtimes"] = False
         args["savelagregressors"] = False
+        args["savedespecklemasks"] = False
+        args["saveminimumglmfiles"] = False
+        args["savenormalglmfiles"] = False
+        args["savemovingsignal"] = False
+        args["saveallglmfiles"] = False
+    elif args["outputlevel"] == "less":
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
+        args["savecorrtimes"] = False
+        args["savelagregressors"] = False
+        args["savedespecklemasks"] = False
+        args["saveminimumglmfiles"] = True
+        args["savenormalglmfiles"] = False
+        args["savemovingsignal"] = False
+        args["saveallglmfiles"] = False
+    elif args["outputlevel"] == "normal":
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
+        args["savecorrtimes"] = False
+        args["savelagregressors"] = False
+        args["savedespecklemasks"] = False
+        args["saveminimumglmfiles"] = True
+        args["savenormalglmfiles"] = True
+        args["savemovingsignal"] = False
+        args["saveallglmfiles"] = False
+    elif args["outputlevel"] == "more":
+        args["saveconfoundfiltered"] = False
+        args["savegaussout"] = False
+        args["savecorrtimes"] = False
+        args["savelagregressors"] = True
+        args["savedespecklemasks"] = False
+        args["saveminimumglmfiles"] = True
+        args["savenormalglmfiles"] = True
+        args["savemovingsignal"] = True
         args["saveallglmfiles"] = False
     elif args["outputlevel"] == "max":
-        args["savemovingsignal"] = True
+        args["saveconfoundfiltered"] = True
+        args["savegaussout"] = True
+        args["savecorrtimes"] = True
         args["savelagregressors"] = True
+        args["savedespecklemasks"] = True
+        args["saveminimumglmfiles"] = True
+        args["savenormalglmfiles"] = True
+        args["savemovingsignal"] = True
         args["saveallglmfiles"] = True
     else:
-        args["savemovingsignal"] = True
-        args["savelagregressors"] = True
-        args["saveallglmfiles"] = True
+        print(f"illegal output level {args['outputlevel']}")
+        sys.exit()
+
+    # disable memory profiling if necessary
+    if not memprofilerexists:
+        if args["memprofile"]:
+            LGR.info("memprofiler is not installed - disabling memory profiling")
+            args["memprofile"] = False
 
     # dispersion calculation
     args["dispersioncalc_lower"] = args["lagmin"]
@@ -1898,6 +2170,20 @@ def process_args(inputargs=None):
             args["dispersioncalc_step"],
         ]
     )
+
+    if args["territorymap"] is not None:
+        (
+            args["territorymapname"],
+            args["territorymapincludevals"],
+        ) = tide_io.processnamespec(
+            args["territorymap"], "Including voxels where ", "in global mean."
+        )
+    else:
+        args["territorymapname"] = None
+        args["territorymapincludevals"] = None
+
+    # this is new enough to do retrospective GLM
+    args["retroglmcompatible"] = True
 
     LGR.debug("\nafter postprocessing\n{}".format(args))
 

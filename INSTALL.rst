@@ -9,7 +9,7 @@ Required dependencies
 The processing programs in rapidtide require the following to be
 installed first:
 
--  Python >= 3.8
+-  Python >= 3.9
 -  numpy
 -  scipy
 -  pandas
@@ -18,10 +18,11 @@ installed first:
 -  scikit-learn
 -  nibabel
 -  nilearn
--  matplotlib
+-  matplotlib >= 3.3.0
 -  pyqt5-sip
--  pyqtgraph
+-  pyqtgraph >= 0.13.4
 -  statsmodels
+-  tomlkit
 -  tqdm
 
 Optional dependencies
@@ -31,7 +32,8 @@ The following optional dependencies will be used if present:
 
 -  numba (for faster performance)
 -  pyfftw (faster performance)
--  mkl and mkl-service (faster performance on intel CPUs)
+-  mkl and mkl-service (faster performance on Intel CPUs)
+-  memory_profiler (allows for more detailed memory usage stats)
 
 If you want to use the deep learning filter in happy, you’ll need Keras
 and some sort of backend. If you want to be able to train filters,
@@ -48,20 +50,11 @@ GPU, install:
    week - anything I say here will probably be obsolete by the time you
    read this.)
 
-If you are on linux (or Windows) WITHOUT an Nvidia GPU, install:
+If you are on linux (or Windows) WITHOUT an Nvidia GPU, or on a Mac, install:
 
 - keras
 - tensorflow (and make sure it doesn’t sneakily try to install the GPU version - that won’t work)
 
-If you are on a Mac, you almost certainly have a non-Nvidia GPU, so you
-should install
-
--  plaidml-keras (it installs Keras and uses PlaidML as the backend
-   rather than tensorflow). You will have to run a configuration step in
-   plaidML to tell it what GPU to use and how. I use the “metal” option
-   with the AMD GPU in my laptop - that seems to be the most stable.
-   Currently, I think you have you have to do this from pypi - I haven’t
-   seen a conda version of this.
 
 Installing Python
 `````````````````
@@ -71,14 +64,14 @@ from Continuum Analytics. It’s a free, curated scientific Python
 distribution that is easy to maintain and takes a lot of headaches out
 of maintaining a distribution. It also already comes with many of the
 dependencies for rapidtide installed by default. You can get it here:
-https://www.continuum.io. Rapidtide works with Python 3.8 or greater.
+https://www.continuum.io. Rapidtide works with Python 3.9 or greater.
 
 After installing Anaconda python, install the remaining dependencies
 (including some good optional ones:
 
 ::
 
-   conda install nibabel pyqtgraph pyfftw
+   conda install nibabel "pyqtgraph>=0.12.0" pyfftw
 
 
 For the deep learning filter in happy, also do:
@@ -97,20 +90,12 @@ or:
    conda install keras tensorflow
 
 
-(for Linux or Windows WITHOUT Nvidia GPU)
+(for a Mac, or Linux or Windows WITHOUT Nvidia GPU)
 
-or
-
-::
-
-   pip install plaidml-keras
-
-
-(on a Mac)
 
 Done.
 
-Installing the rapidtide library
+Installing the rapidtide package
 ````````````````````````````````
 
 Once you have installed the prerequisites, cd into the package
@@ -145,7 +130,7 @@ first make sure you have docker installed and properly configured, then run the 
     docker pull fredericklab/rapidtide:latest-release
 
 
-This will download the docker container from dockerhub.
+This will download the Docker container from dockerhub.
 It's around a 3GB download, so it may take some time, but it caches the file locally, so you won't have to do this again
 unless the container updates.  To use a particular version, replace "latest-release" with the version of the
 container you want.

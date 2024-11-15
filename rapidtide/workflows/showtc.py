@@ -166,6 +166,13 @@ def _get_parser():
         default=0,
     )
     parser.add_argument(
+        "--fullxrange",
+        dest="fullxrange",
+        action="store_true",
+        help="Set xrange to be the overall range of all files.",
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -399,11 +406,7 @@ def showtc(args):
                 else:
                     linelabels.append(thisfilename)
             else:
-                linelabels.append(legends[i % len(legends)])
-                """if invecs.shape[0] > 1:
-                    linelabels.append(legends[i % len(legends)] + '_column' + str(j).zfill(2))
-                else:
-                    linelabels.append(legends[i % len(legends)])"""
+                linelabels.append(legends[j % len(legends)])
             samplerates.append(thissamplerate + 0.0)
             if args.debug:
                 print(
@@ -429,7 +432,10 @@ def showtc(args):
     for thevec in xvecs:
         overallxmax = np.max([np.max(thevec), overallxmax])
         overallxmin = np.min([np.min(thevec), overallxmin])
-    xrange = (np.max([overallxmin, args.thestarttime]), np.min([overallxmax, args.theendtime]))
+    if args.fullxrange:
+        xrange = (overallxmin, overallxmax)
+    else:
+        xrange = (np.max([overallxmin, args.thestarttime]), np.min([overallxmax, args.theendtime]))
     ymins = []
     ymaxs = []
     for thevec in yvecs:

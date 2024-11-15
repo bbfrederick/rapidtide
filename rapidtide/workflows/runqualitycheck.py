@@ -18,9 +18,6 @@
 #
 import argparse
 
-import matplotlib as mpl
-import numpy as np
-
 import rapidtide.io as tide_io
 import rapidtide.qualitycheck as tide_quality
 

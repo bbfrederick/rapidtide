@@ -1,0 +1,2 @@
+git push --delete origin vX.Y.Z
+git tag -d vX.Y.Z

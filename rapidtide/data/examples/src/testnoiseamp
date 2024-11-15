@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+import rapidtide.miscmath as tide_math
+import rapidtide.io as tide_io
+import matplotlib.pyplot as plt
+
+
+windowsize = 40.0
+samplerate, starttime, inputdata = tide_io.readcolfrombidstsv("../dst/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json", columnname="pass3")
+
+
+filtrms, thefittc, startamp, endamp, changepct, changerate = tide_math.noiseamp(inputdata, samplerate, windowsize=windowsize)
+
+exptime = len(inputdata) / samplerate
+print(f"sLFO grows {changepct:.2f}% over {exptime} seconds ({changepct/exptime:.3f} %/s)")
+
+plt.plot(filtrms)
+plt.plot(thefittc)
+plt.show()
+
+

@@ -17,7 +17,6 @@
 #
 #
 import multiprocessing as mp
-import signal
 import sys
 import threading as thread
 from platform import python_version, system

@@ -19,11 +19,12 @@
 import copy
 import os
 import platform
+import sys
 import time
 import warnings
+from pathlib import Path
 
 import numpy as np
-from nilearn import masking
 from tqdm import tqdm
 
 import rapidtide.correlate as tide_corr
@@ -70,6 +71,12 @@ def happy_main(argparsingfunc):
     fmrifilename = args.fmrifilename
     slicetimename = args.slicetimename
     outputroot = args.outputroot
+
+    # delete the old completion file, if present
+    Path(f"{outputroot}_DONE.txt").unlink(missing_ok=True)
+
+    # create the canary file
+    Path(f"{outputroot}_ISRUNNING.txt").touch()
 
     # if we are running in a Docker container, make sure we enforce memory limits properly
     try:
@@ -228,20 +235,21 @@ def happy_main(argparsingfunc):
     # filter out motion regressors here
     if args.motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
-        (
-            motionregressors,
-            motionregressorlabels,
-            filtereddata,
-        ) = tide_glmpass.confoundregress(
-            args.motionfilename,
-            fmri_data[validprojvoxels, :],
-            tr,
-            orthogonalize=args.orthogonalize,
-            motstart=args.motskip,
-            motionhp=args.motionhp,
-            motionlp=args.motionlp,
-            deriv=args.motfilt_deriv,
+        (motionregressors, motionregressorlabels, filtereddata, confoundr2) = (
+            tide_glmpass.confoundregress(
+                args.motionfilename,
+                fmri_data[validprojvoxels, :],
+                tr,
+                orthogonalize=args.orthogonalize,
+                motstart=args.motskip,
+                motionhp=args.motionhp,
+                motionlp=args.motionlp,
+                deriv=args.motfilt_deriv,
+            )
         )
+        if confoundr2 is None:
+            print("There are no nonzero confound regressors - exiting")
+            sys.exit()
         fmri_data[validprojvoxels, :] = filtereddata[:, :]
         infodict["numorthogmotregressors"] = motionregressors.shape[0]
         timings.append(["Motion filtering end", time.time(), numspatiallocs, "voxels"])
@@ -1820,3 +1828,9 @@ def happy_main(argparsingfunc):
     )
 
     tide_util.logmem("final")
+
+    # delete the canary file
+    Path(f"{outputroot}_ISRUNNING.txt").unlink()
+
+    # create the finished file
+    Path(f"{outputroot}_DONE.txt").touch()

@@ -1,12 +1,13 @@
 #!/bin/bash
 
-conda create --name rapidtide python==3.11
-conda activate rapidtide
-conda install \
+conda create --name mic python==3.12
+conda activate mic
+mamba install \
     numpy \
     scipy \
-    matplotlib \
+    matplotlib>=3.3.0 \
     pandas \
+    pyarrow \
     statsmodels \
     scikit-learn \
     scikit-image \
@@ -16,7 +17,8 @@ conda install \
     pywavelets \
     pyqt \
     pyqt5-sip \
-    pyqtgraph \
+    pyqtgraph>=0.13.4 \
+    tomlkit \
     tqdm
 
-pip install tensorflow keras
+mamba install tensorflow keras

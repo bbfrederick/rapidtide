@@ -1,0 +1,6 @@
+#!/bin/bash
+
+fsl_sub -q gpu.q tensorflow1xdevices
+fsl_sub -q gpu.q tensorflow2xdevices
+fsl_sub -q test.q tensorflow1xdevices
+fsl_sub -q test.q tensorflow2xdevices

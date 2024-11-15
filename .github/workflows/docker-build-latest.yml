@@ -15,19 +15,19 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v1
+        uses: gittools/actions/gitversion/setup@v2
         with:
           versionSpec: '5.x'
 
       - name: Install Checkout
-        uses: actions/checkout@v4.1.4
+        uses: actions/checkout@v4.2.2
         with:
           ref: ${{ github.head_ref }}   # checkout the correct branch name
           fetch-depth: 0
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
-        uses: gittools/actions/gitversion/execute@v1
+        uses: gittools/actions/gitversion/execute@v2
         with:
           additionalArguments: /config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
@@ -90,7 +90,7 @@ jobs:
 
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
           push: true

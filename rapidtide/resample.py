@@ -334,6 +334,7 @@ class FastResampler:
             1.0 / self.initstep,
             starttime=self.initstart,
             columns=["timecourse"],
+            extraheaderinfo={"Description": "The lagged timecourse generator"},
             append=False,
         )
 

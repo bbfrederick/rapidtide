@@ -22,6 +22,7 @@ import os
 import sys
 
 import rapidtide.externaltools as tide_exttools
+import rapidtide.io as tide_io
 
 
 def _get_parser():
@@ -44,10 +45,24 @@ def _get_parser():
         ),
     )
     parser.add_argument(
-        "--all",
-        dest="all",
+        "--corrout",
+        dest="corrout",
         action="store_true",
         help=("Also transform the corrout file (warning - file may be huge)."),
+        default=False,
+    )
+    parser.add_argument(
+        "--clean",
+        dest="clean",
+        action="store_true",
+        help=("Also transform the cleaned data file (warning - file may be huge)."),
+        default=False,
+    )
+    parser.add_argument(
+        "--confound",
+        dest="confound",
+        action="store_true",
+        help=("Transform the counfound fit R2 map (if present)."),
         default=False,
     )
     parser.add_argument(
@@ -101,11 +116,7 @@ def rapidtide2std(args):
         print(args)
 
     fsldir = os.environ.get("FSLDIR")
-    if fsldir is not None:
-        fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
-        flirtcmd = os.path.join(fsldir, "bin", "flirt")
-        applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
-    else:
+    if fsldir is None:
         print("FSL directory not found - aborting")
         sys.exit()
 
@@ -185,14 +196,23 @@ def rapidtide2std(args):
         "desc-maxcorrsq_map",
         "desc-lfofilterNorm_map",
         "desc-lfofilterCoeff_map",
+        "desc-lfofilterInbandVarianceBefore_map",
+        "desc-lfofilterInbandVarianceAfter_map",
+        "desc-lfofilterInbandVarianceChange_map",
         "desc-plt0p050_mask",
         "desc-plt0p010_mask",
         "desc-plt0p005_mask",
         "desc-plt0p001_mask",
     ]
 
-    if args.all:
+    if args.corrout:
         thefmrimaps.append("desc-corrout_info")
+
+    if args.clean:
+        thefmrimaps.append("desc-lfofilterCleaned_bold")
+
+    if args.confound:
+        thefmrimaps.append("desc-confoundfilterR2_map")
 
     absname = os.path.abspath(thefileroot)
     thepath, thebase = os.path.split(absname)
@@ -201,10 +221,15 @@ def rapidtide2std(args):
     print("SUBJROOT:", subjroot)
 
     # copy the options file
-    inputname = os.path.abspath(os.path.join(thepath, subjroot + "_options.json"))
-    outputname = os.path.abspath(os.path.join(theoutputdir, subjroot + outputtag + "options.json"))
-    thecommand = ["cp", inputname, outputname]
-    tide_exttools.runcmd(thecommand, fake=args.preponly)
+    inputname = os.path.abspath(os.path.join(thepath, subjroot + "_desc-runoptions_info"))
+    theoptionsdict = tide_io.readoptionsfile(inputname)
+    theoptionsdict["rapidtide2std_source"] = os.path.abspath(os.path.join(thepath, subjroot))
+    outputname = os.path.abspath(
+        os.path.join(theoutputdir, subjroot + outputtag + "desc-runoptions_info")
+    )
+    tide_io.writedicttojson(theoptionsdict, f"{outputname}.json")
+    # thecommand = ["cp", f"{inputname}.json", f"{outputname}.json"]
+    # tide_exttools.runcmd(thecommand, fake=args.preponly)
 
     # copy the timecourses
     for timecoursefile in thetimecoursefiles:
@@ -225,6 +250,8 @@ def rapidtide2std(args):
             outputname = os.path.abspath(
                 os.path.join(theoutputdir, subjroot + outputtag + themap + ".nii.gz")
             )
+            if args.debug:
+                print(f"Transforming {inputname}")
             thecommand = tide_exttools.makeflirtcmd(
                 inputname,
                 reftarget,

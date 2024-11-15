@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 from numpy.polynomial import Polynomial
+from scipy.optimize import curve_fit
 from statsmodels.robust import mad
 
 import rapidtide.correlate as tide_corr
@@ -43,6 +44,7 @@ class fMRIDataset:
     slicesize = None
     numvox = None
     numskip = 0
+    validvoxels = None
 
     def __init__(self, thedata, zerodata=False, copydata=False, numskip=0):
         if zerodata:
@@ -70,6 +72,9 @@ class fMRIDataset:
     def setnumskip(self, numskip):
         self.numskip = numskip
         self.timepoints = self.realtimepoints - self.numskip
+
+    def setvalid(self, validvoxels):
+        self.validvoxels = validvoxels
 
     def byslice(self):
         return self.thedata[:, :, :, self.numskip :].reshape(
@@ -157,6 +162,7 @@ class SimilarityFunctionator:
         reftc=None,
         reftcstart=0.0,
         detrendorder=1,
+        filterinputdata=True,
         debug=False,
     ):
         self.Fs = Fs
@@ -167,6 +173,7 @@ class SimilarityFunctionator:
         self.negativegradient = negativegradient
         self.reftc = reftc
         self.detrendorder = detrendorder
+        self.filterinputdata = filterinputdata
         self.debug = debug
         if self.reftc is not None:
             self.setreftc(self.reftc)
@@ -174,18 +181,33 @@ class SimilarityFunctionator:
 
     def preptc(self, thetc, isreftc=False):
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
-        if isreftc or (not self.negativegradient):
+        if isreftc:
             thenormtc = tide_math.corrnormalize(
                 self.ncprefilter.apply(self.Fs, thetc),
                 detrendorder=self.detrendorder,
                 windowfunc=self.windowfunc,
             )
         else:
-            thenormtc = tide_math.corrnormalize(
-                -np.gradient(self.ncprefilter.apply(self.Fs, thetc)),
-                detrendorder=self.detrendorder,
-                windowfunc=self.windowfunc,
-            )
+            if self.negativegradient:
+                thenormtc = tide_math.corrnormalize(
+                    -np.gradient(self.ncprefilter.apply(self.Fs, thetc)),
+                    detrendorder=self.detrendorder,
+                    windowfunc=self.windowfunc,
+                )
+            else:
+                if self.filterinputdata:
+                    thenormtc = tide_math.corrnormalize(
+                        self.ncprefilter.apply(self.Fs, thetc),
+                        detrendorder=self.detrendorder,
+                        windowfunc=self.windowfunc,
+                    )
+                else:
+                    thenormtc = tide_math.corrnormalize(
+                        thetc,
+                        detrendorder=self.detrendorder,
+                        windowfunc=self.windowfunc,
+                    )
+
         return thenormtc
 
     def trim(self, vector):
@@ -1106,8 +1128,8 @@ class SimilarityFunctionFitter:
                 try:
                     plsq, pcov = curve_fit(
                         tide_fit.gaussfunc,
-                        xvals,
-                        yvals,
+                        X,
+                        data,
                         p0=[maxval_init, maxlag_init, maxsigma_init],
                     )
                     maxval = plsq[0] + baseline
@@ -1119,7 +1141,6 @@ class SimilarityFunctionFitter:
                     maxsigma = np.float64(0.0)
                 if self.debug:
                     print("fit output array:", [maxval, maxlag, maxsigma])
-
             elif self.peakfittype == "fastgauss":
                 X = self.corrtimeaxis[peakstart : peakend + 1] - baseline
                 data = corrfunc[peakstart : peakend + 1]

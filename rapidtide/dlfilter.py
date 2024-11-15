@@ -55,96 +55,33 @@ LGR = logging.getLogger("GENERAL")
 LGR.debug("setting backend to Agg")
 mpl.use("Agg")
 
-tfversion = -1
-try:
-    import plaidml.keras
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-    plaidml.keras.install_backend("plaidml")
-    tfversion = 0
-    LGR.debug("using plaidml keras")
-    from keras.callbacks import ModelCheckpoint, TerminateOnNaN
-    from keras.layers import (
-        LSTM,
-        Activation,
-        BatchNormalization,
-        Bidirectional,
-        Concatenate,
-        Conv1D,
-        Dense,
-        Dropout,
-        GlobalMaxPool1D,
-        Input,
-        MaxPooling1D,
-        TimeDistributed,
-        UpSampling1D,
-    )
-    from keras.models import Model, Sequential, load_model
-    from keras.optimizers import RMSprop
-except ImportError:
-    tfversion = -1
-    LGR.warning("import plaidml.keras failed: falling back to standard tensorflow keras")
+import tensorflow.compat.v1 as tf
 
-if tfversion == -1:
-    try:
-        import tensorflow.compat.v1 as tf
+LGR.debug("using tensorflow v2x")
+# tf.disable_v2_behavior()
+from tensorflow.keras.callbacks import ModelCheckpoint, TerminateOnNaN
+from tensorflow.keras.layers import (
+    LSTM,
+    Activation,
+    BatchNormalization,
+    Bidirectional,
+    Convolution1D,
+    Dense,
+    Dropout,
+    GlobalMaxPool1D,
+    MaxPooling1D,
+    TimeDistributed,
+    UpSampling1D,
+)
 
-        if tf.__version__[0] == "2":
-            tfversion = 2
-        elif tf.__version__[0] == "1":
-            tfversion = 1
-        else:
-            LGR.warning(f"could not interpret {tf.__version__[0]}")
-        LGR.debug(f"tensorflow version is {tfversion}")
-    except ImportError:
-        raise ImportError("no backend found - exiting")
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.optimizers import RMSprop
 
-if tfversion == 2:
-    LGR.debug("using tensorflow v2x")
-    tf.disable_v2_behavior()
-    from tensorflow.keras.callbacks import ModelCheckpoint, TerminateOnNaN
-    from tensorflow.keras.layers import (
-        LSTM,
-        Activation,
-        BatchNormalization,
-        Bidirectional,
-        Convolution1D,
-        Dense,
-        Dropout,
-        GlobalMaxPool1D,
-        MaxPooling1D,
-        TimeDistributed,
-        UpSampling1D,
-    )
-    from tensorflow.keras.models import Sequential, load_model
-    from tensorflow.keras.optimizers import RMSprop
-
-    LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
-elif tfversion == 1:
-    LGR.debug("using tensorflow v1x")
-    from keras.callbacks import ModelCheckpoint, TerminateOnNaN
-    from keras.layers import (
-        LSTM,
-        Activation,
-        BatchNormalization,
-        Bidirectional,
-        Concatenate,
-        Conv1D,
-        Dense,
-        Dropout,
-        GlobalMaxPool1D,
-        Input,
-        MaxPooling1D,
-        TimeDistributed,
-        UpSampling1D,
-    )
-    from keras.models import Model, Sequential, load_model, model_from_json
-    from keras.optimizers import RMSprop
-
-    LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
-elif tfversion == 0:
-    pass
-else:
-    raise ImportError("could not find backend - exiting")
+LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
 
 
 class DeepLearningFilter:
@@ -314,7 +251,7 @@ class DeepLearningFilter:
         self.lossfilename = os.path.join(self.modelname, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
-        YPred = self.model.predict(self.val_x)
+        YPred = self.model.predict(self.val_x, verbose=0)
 
         error = self.val_y - YPred
         self.pred_error = np.mean(np.square(error))
@@ -408,6 +345,7 @@ class DeepLearningFilter:
         # model is ready to use
         self.initialized = True
         self.trained = True
+        LGR.info(f"{modelname} loaded")
 
     def initialize(self):
         self.getname()
@@ -479,7 +417,7 @@ class DeepLearningFilter:
             for i in range(X.shape[0]):
                 X[i, :, 0] = scaleddata[i : i + self.window_size]
 
-        Y = self.model.predict(X)
+        Y = self.model.predict(X, verbose=0)
         for i in range(X.shape[0]):
             predicteddata[i : i + self.window_size] += Y[i, :, 0]
 

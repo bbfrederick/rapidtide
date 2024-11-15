@@ -1,0 +1,255 @@
+#!/usr/bin/env python
+
+import glob
+import os
+import shutil
+
+import rapidtide.qualitycheck as rapidtide_quality
+import rapidtide.workflows.rapidtide as rapidtide_workflow
+import rapidtide.workflows.rapidtide_parser as rapidtide_parser
+from rapidtide.io import readdictfromjson
+
+
+def fixkey(key):
+    if key == "XXX_DONE":
+        return "Run status file"
+    elif key == "XXX_memusage":
+        return "Memory usage statistics for performance tuning"
+    elif key == "XXX_runtimings":
+        return "Raw timing information"
+    elif key == "XXX_commandline":
+        return "Raw command line used to invoke rapidtide"
+    elif key == "XXX_formattedcommandline":
+        return "Command line used to invoke rapidtide, nicely formatted"
+    elif key == "XXX_log":
+        return "Diagnostic log file with a lot of informational output"
+    elif key == "XXX_runtimings":
+        return "Raw timing information"
+    elif key == "XXX_formattedruntimings":
+        return "Run timing information, broken out by analysis phase"
+    else:
+        return "No description"
+
+
+def makecleanoutputdir(pathname):
+    # first delete the directory if it exists
+    shutil.rmtree(pathname, ignore_errors=True)
+
+    # now make the directory
+    try:
+        os.makedirs(pathname)
+    except OSError:
+        if os.path.exists(pathname):
+            # We are nearly safe
+            return True
+        else:
+            # There was an error on creation, so make sure we know about it
+            print("ERROR: ", pathname, " does not exist, and could not create it")
+            return False
+    return True
+
+
+def dirfromoptions(level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle):
+    return f"{level}_passesgt1-{passesgt1}_numnullgt0-{numnullgt0}_doglm-{doglm}_domotion-{domotion}_doderivs-{doderivs}_dodespeckle-{dodespeckle}"
+
+
+def runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle):
+    # run rapidtide
+    if passesgt1:
+        npasses = 2
+    else:
+        npasses = 1
+    if numnullgt0:
+        numnull = 1000
+    else:
+        numnull = 0
+
+    inputargs = [
+        "sub-RAPIDTIDETEST.nii.gz",
+        os.path.join(outputdir, "XXX"),
+        "--nprocs",
+        "-1",
+        "--passes",
+        str(npasses),
+        "--numnull",
+        str(numnull),
+        "--searchrange",
+        "-5",
+        "10",
+        "--outputlevel",
+        level,
+    ]
+    if domotion:
+        inputargs += ["--motionfile", "fakemotion.par"]
+    if not dodespeckle:
+        inputargs += ["--despecklepasses", "0"]
+    if not doglm:
+        inputargs += ["--noglm"]
+    if doderivs:
+        inputargs += ["--glmderivs", "1"]
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+
+
+def getdescription(jsonname):
+    thedict = readdictfromjson(jsonname)
+    try:
+        return thedict["Description"]
+    except KeyError:
+        return None
+
+
+def listfiles(outputdir, fileroots, runinfo, debug=False):
+    thefiles = glob.glob(os.path.join(outputdir, "XXX_*"))
+
+    filesadded = []
+    for thisfile in thefiles:
+        basedir, filename = os.path.split(thisfile)
+        periodloc = filename.find(".")
+        if periodloc > -1:
+            basename = filename[:periodloc]
+            extension = filename[(periodloc + 1) :]
+            try:
+                dummy = fileroots[basename]
+                if extension not in fileroots[basename]["extensions"]:
+                    fileroots[basename]["extensions"] += [extension]
+            except KeyError:
+                fileroots[basename] = {}
+                fileroots[basename]["extensions"] = [extension]
+                fileroots[basename]["level"] = runinfo[0]
+                fileroots[basename]["passesgt1"] = runinfo[1]
+                fileroots[basename]["numnullgt0"] = runinfo[2]
+                fileroots[basename]["doglm"] = runinfo[3]
+                fileroots[basename]["domotion"] = runinfo[4]
+                fileroots[basename]["doderivs"] = runinfo[5]
+                fileroots[basename]["dodespeckle"] = runinfo[6]
+                filesadded += [basename]
+            if extension == "json":
+                thedescription = getdescription(thisfile)
+                fileroots[basename]["description"] = thedescription
+
+    if debug:
+        if len(filesadded) > 0:
+            print(f"Files added from {outputdir}")
+            for thisfile in filesadded:
+                print(f"\t{thisfile}")
+        else:
+            print(f"No files added from {outputdir}")
+        print()
+
+
+if __name__ == "__main__":
+    runinfo = [
+        ("min", False, False, False, False, False, False),
+        ("min", False, False, True, False, False, False),
+        ("min", True, False, False, False, False, False),
+        ("min", False, True, False, False, False, False),
+        ("min", False, False, False, True, False, False),
+        ("min", False, False, False, False, False, True),
+        ("less", False, False, False, False, False, False),
+        ("less", False, False, True, False, False, False),
+        ("normal", False, False, False, False, False, False),
+        ("normal", False, False, True, False, False, False),
+        ("more", False, False, False, False, False, False),
+        ("more", False, False, True, False, False, False),
+        ("max", False, False, False, False, False, False),
+        ("max", True, False, False, False, False, False),
+        ("max", False, False, True, False, False, True),
+        ("max", False, False, False, True, False, False),
+        ("max", False, False, True, False, False, False),
+        ("max", False, False, True, False, True, False),
+    ]
+
+    genfiles = True
+
+    fileroots = {}
+    for level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle in runinfo:
+        subdir = dirfromoptions(
+            level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
+        )
+        outputdir = os.path.join("..", "dst", "scratch", subdir)
+        if genfiles:
+            makecleanoutputdir(outputdir)
+            runrapidtide(
+                outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
+            )
+        listfiles(
+            outputdir,
+            fileroots,
+            (level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle),
+            debug=False,
+        )
+
+    sortedkeys = []
+    for key in fileroots:
+        sortedkeys.append(key)
+
+    sortedkeys = sorted(sortedkeys, key=str.casefold)
+
+    for key in sortedkeys:
+        extlist = []
+        for theext in ["txt", "tsv", "tsv.gz", "nii.gz", "json"]:
+            if theext in fileroots[key]["extensions"]:
+                extlist.append(theext)
+
+        if fileroots[key]["domotion"]:
+            if fileroots[key]["level"] == "max":
+                existstring = "Present if doing motion/confound regression and outputlevel is max"
+            else:
+                existstring = "Present if doing motion/confound regression"
+        elif fileroots[key]["dodespeckle"]:
+            existstring = "Present if despecklepasses > 0 (default) and outputlevel is max"
+        elif fileroots[key]["doglm"]:
+            if fileroots[key]["doderivs"]:
+                existstring = (
+                    "Present if GLM is enabled (default), glmderivs > 0, and outputlevel is max"
+                )
+            elif fileroots[key]["level"] == "min":
+                existstring = "Present if GLM is enabled (default)"
+            elif fileroots[key]["level"] == "less":
+                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 less"
+            elif fileroots[key]["level"] == "normal":
+                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 normal"
+            elif fileroots[key]["level"] == "more":
+                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 more"
+            elif fileroots[key]["level"] == "max":
+                existstring = "Present if GLM is enabled (default) and outputlevel is max"
+            else:
+                print("you shouldn't be able to get here")
+        elif fileroots[key]["level"] == "min":
+            if fileroots[key]["passesgt1"]:
+                existstring = "Present if passes > 1"
+            elif fileroots[key]["numnullgt0"]:
+                existstring = "Present if numnull > 0"
+            else:
+                existstring = "Always"
+        elif fileroots[key]["level"] == "less":
+            existstring = "Present if outputlevel is \u2265 less"
+        elif fileroots[key]["level"] == "normal":
+            existstring = "Present if outputlevel is \u2265 normal"
+        elif fileroots[key]["level"] == "more":
+            existstring = "Present if outputlevel is \u2265 more"
+        elif fileroots[key]["level"] == "max":
+            if fileroots[key]["passesgt1"]:
+                existstring = "Present if passes > 1 and outputlevel is max"
+            else:
+                existstring = "Present if outputlevel is max"
+        else:
+            existstring = "Illegal level specification"
+
+        extstring = '"' + ", ".join(extlist) + '"'
+        writekey = '"' + key + '"'
+        writekey = writekey.replace("Deriv1", "DerivN")
+        presentkey = '"' + existstring + '"'
+        try:
+            descstring = fileroots[key]["description"]
+        except KeyError:
+            descstring = fixkey(key)
+        if descstring is not None:
+            descstring = '"' + descstring + '"'
+        else:
+            descstring = '""'
+        descstring = descstring.replace("Time derivative 1", "Nth time derivative")
+        descstring = descstring.replace("temporal derivative 1", "the Nth temporal derivative")
+        print(f"{writekey}, {extstring}, {descstring}, {presentkey}")
+        # for theitem in (fileroots[key]).items():
+        #    print(f"\t{theitem}")

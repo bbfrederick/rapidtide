@@ -24,6 +24,47 @@ import scipy as sp
 from rapidtide.filter import NoncausalFilter
 
 
+def maketestwaves(timeaxis):
+    tclen = len(timeaxis)
+    testwaves = []
+    testwaves.append(
+        {
+            "name": "constant high",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": np.ones((tclen), dtype="float"),
+        }
+    )
+    testwaves.append(
+        {
+            "name": "white noise",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 0.3 * np.random.normal(size=tclen),
+        }
+    )
+
+    scratch = timeaxis * 0.0
+    scratch[int(tclen / 5) : int(2 * tclen / 5)] = 1.0
+    scratch[int(3 * tclen / 5) : int(4 * tclen / 5)] = 1.0
+    testwaves.append(
+        {
+            "name": "block regressor",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 1.0 * scratch,
+        }
+    )
+
+    scratch = timeaxis * 0.0
+    scratch[int(tclen / 2) :] = 1.0
+    testwaves.append(
+        {
+            "name": "step regressor",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 1.0 * scratch,
+        }
+    )
+    return testwaves
+
+
 def spectralfilterprops(thefilter, thefiltername, debug=False):
     lowerstop, lowerpass, upperpass, upperstop = thefilter["filter"].getfreqs()
     freqspace = thefilter["frequencies"][1] - thefilter["frequencies"][0]
@@ -33,6 +74,11 @@ def spectralfilterprops(thefilter, thefiltername, debug=False):
     upperstopindex = int(
         np.min([np.ceil(upperstop / freqspace), len(thefilter["frequencies"]) - 1])
     )
+    print(f"max allowable index: {len(thefilter['frequencies']) - 1}")
+    lowerstopindex = np.max([0, lowerstopindex])
+    lowerpassindex = np.max([0, lowerpassindex])
+    upperstopindex = np.min([len(thefilter["frequencies"]) - 1, upperstopindex])
+    upperpassindex = np.min([len(thefilter["frequencies"]) - 1, upperpassindex])
     if debug:
         print("filter name:", thefiltername)
         print("freqspace:", freqspace)
@@ -105,7 +151,7 @@ def eval_filterprops(
     allfilters = []
 
     # construct all the physiological filters
-    for filtertype in ["lfo", "resp", "cardiac", "hrv_lf", "hrv_hf", "hrv_vhf"]:
+    for filtertype in ["None", "lfo", "resp", "cardiac", "hrv_lf", "hrv_hf", "hrv_vhf"]:
         testfilter = NoncausalFilter(filtertype=filtertype)
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
@@ -121,43 +167,59 @@ def eval_filterprops(
                     }
                 )
 
-    """'# make the lowpass filters
+    # make the lowpass filters
     for transferfunc in transferfunclist:
         testfilter = NoncausalFilter(
-                        filtertype='arb',
-                        transferfunc=transferfunc,
-                        initlowerstop=0.0, initlowerpass=0.0,
-                        initupperpass=0.1, initupperstop=0.11)
+            filtertype="arb",
+            transferfunc=transferfunc,
+            initlowerstop=0.0,
+            initlowerpass=0.0,
+            initupperpass=0.1,
+            initupperstop=0.11,
+        )
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
             allfilters.append(
                 {
-                    'name': '0.1Hz LP ' + transferfunc,
-                    'filter': NoncausalFilter(
-                                filtertype='arb',
-                                transferfunc=transferfunc,
-                                initlowerstop=0.0, initlowerpass=0.0,
-                                initupperpass=0.1, initupperstop=0.11, debug=False)
-                })
+                    "name": "0.1Hz LP " + transferfunc,
+                    "filter": NoncausalFilter(
+                        filtertype="arb",
+                        transferfunc=transferfunc,
+                        initlowerstop=0.0,
+                        initlowerpass=0.0,
+                        initupperpass=0.1,
+                        initupperstop=0.11,
+                        debug=False,
+                    ),
+                }
+            )
 
     # make the highpass filters
     for transferfunc in transferfunclist:
         testfilter = NoncausalFilter(
-                        filtertype='arb',
-                        transferfunc=transferfunc,
-                        initlowerstop=0.09, initlowerpass=0.1,
-                        initupperpass=-1.0, initupperstop=-1.0)
+            filtertype="arb",
+            transferfunc=transferfunc,
+            initlowerstop=0.09,
+            initlowerpass=0.1,
+            initupperpass=1.0e20,
+            initupperstop=1.0e20,
+        )
         lstest, lptest, uptest, ustest = testfilter.getfreqs()
         if lptest < nyquist:
             allfilters.append(
                 {
-                    'name': '0.1Hz HP ' + transferfunc,
-                    'filter': NoncausalFilter(
-                                filtertype='arb',
-                                transferfunc=transferfunc,
-                                initlowerstop=0.09, initlowerpass=0.1,
-                                initupperpass=-1.0, initupperstop=-1.0, debug=False)
-                })"""
+                    "name": "0.1Hz HP " + transferfunc,
+                    "filter": NoncausalFilter(
+                        filtertype="arb",
+                        transferfunc=transferfunc,
+                        initlowerstop=0.09,
+                        initlowerpass=0.1,
+                        initupperpass=1.0e20,
+                        initupperstop=1.0e20,
+                        debug=False,
+                    ),
+                }
+            )
 
     # calculate the transfer functions for the filters
     for index in range(0, len(allfilters)):
@@ -204,50 +266,22 @@ def eval_filterprops(
         assert response["upperstopmean"] < 1e4
 
     # construct some test waveforms for end effects
-    testwaves = []
-    testwaves.append(
-        {
-            "name": "constant high",
-            "timeaxis": 1.0 * timeaxis,
-            "waveform": np.ones((tclen), dtype="float"),
-        }
-    )
-    testwaves.append(
-        {
-            "name": "white noise",
-            "timeaxis": 1.0 * timeaxis,
-            "waveform": 0.3 * np.random.normal(size=tclen),
-        }
-    )
-
-    scratch = timeaxis * 0.0
-    scratch[int(tclen / 5) : int(2 * tclen / 5)] = 1.0
-    scratch[int(3 * tclen / 5) : int(4 * tclen / 5)] = 1.0
-    testwaves.append(
-        {
-            "name": "block regressor",
-            "timeaxis": 1.0 * timeaxis,
-            "waveform": 1.0 * scratch,
-        }
-    )
+    testwaves = maketestwaves(timeaxis)
 
     # show the end effects waveforms
     if displayplots:
-        legend = []
         plt.figure()
         plt.ylim([-2.2, 2.2 * len(testwaves)])
-        offset = 0.0
         for thewave in testwaves:
+            legend = []
+            offset = 0.0
             for thefilter in allfilters:
                 plt.plot(
                     thewave["timeaxis"],
                     offset + thefilter["filter"].apply(1.0 / sampletime, thewave["waveform"]),
                 )
                 legend.append(thewave["name"] + ": " + thefilter["name"])
-                offset += 1.0
-            # plt.plot(thewave['timeaxis'], thewave['waveform'] + offset)
-            # legend.append(thewave['name'])
-            # offset += 2.2
+                offset += 1.25
             plt.legend(legend)
             plt.show()
 

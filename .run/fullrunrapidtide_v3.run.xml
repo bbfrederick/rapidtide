@@ -1,0 +1,26 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="fullrunrapidtide_v3" type="PythonConfigurationType" factoryName="Python">
+    <module name="rapidtide" />
+    <option name="ENV_FILES" value="" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+    </envs>
+    <option name="SDK_HOME" value="" />
+    <option name="SDK_NAME" value="mic" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/rapidtide/data/examples/src" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rapidtide/scripts/rapidtide" />
+    <option name="PARAMETERS" value="sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST3 --corrmask sub-RAPIDTIDETEST_restrictedmask.nii.gz:1 --maxpasses 2 --numnull 100 --refinetype pca --convergencethresh 0.5 --noglm --nprocs -1 --similaritymetric mutualinfo --dpoutput --spcalculation --simcalcrange 100 -1 --globalsignalmethod pca --calccoherence --refineprenorm std --refineweighting R --regressor sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="MODULE_MODE" value="false" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
+    <method v="2" />
+  </configuration>
+</component>

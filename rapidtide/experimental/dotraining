@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+#source activate tensorflowgpu
+
+/cm/shared/anaconda3/envs/tensorflowgpu114/bin/python /home/frederic/code/rapidtide/rapidtide/experimental/train

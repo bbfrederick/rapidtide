@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 
 
@@ -192,8 +192,12 @@ def glmpass(
                     meanvalue[voxel[0]] = voxel[1]
                     rvalue[voxel[0]] = voxel[2]
                     r2value[voxel[0]] = voxel[3]
-                    fitcoeff[voxel[0]] = voxel[4]
-                    fitNorm[voxel[0]] = voxel[5]
+                    if theevs.ndim > 1:
+                        fitcoeff[voxel[0], :] = voxel[4]
+                        fitNorm[voxel[0], :] = voxel[5]
+                    else:
+                        fitcoeff[voxel[0]] = voxel[4]
+                        fitNorm[voxel[0]] = voxel[5]
                     datatoremove[voxel[0], :] = voxel[6]
                     filtereddata[voxel[0], :] = voxel[7]
                     itemstotal += 1
@@ -208,8 +212,12 @@ def glmpass(
                     meanvalue[timepoint[0]] = timepoint[1]
                     rvalue[timepoint[0]] = timepoint[2]
                     r2value[timepoint[0]] = timepoint[3]
-                    fitcoeff[timepoint[0]] = timepoint[4]
-                    fitNorm[timepoint[0]] = timepoint[5]
+                    if theevs.ndim > 1:
+                        fitcoeff[:, timepoint[0]] = timepoint[4]
+                        fitNorm[:, timepoint[0]] = timepoint[5]
+                    else:
+                        fitcoeff[timepoint[0]] = timepoint[4]
+                        fitNorm[timepoint[0]] = timepoint[5]
                     datatoremove[:, timepoint[0]] = timepoint[6]
                     filtereddata[:, timepoint[0]] = timepoint[7]
                     itemstotal += 1
@@ -375,17 +383,27 @@ def confoundregress(
         mothpfilt.setfreqs(0.9 * tchp, tchp, tclp, np.min([0.5 / tr, tclp * 1.1]))
         for i in range(theregressors.shape[0]):
             theregressors[i, :] = mothpfilt.apply(1.0 / tr, theregressors[i, :])
+
+    # stddev normalize the regressors.  Not strictly necessary, but might help with stability.
+    for i in range(theregressors.shape[0]):
+        theregressors[i, :] = tide_math.normalize(theregressors[i, :], method="stddev")
+
     if orthogonalize:
         theregressors = tide_fit.gram_schmidt(theregressors)
         initregressors = len(theregressorlabels)
         theregressorlabels = []
         for theregressor in range(theregressors.shape[0]):
             theregressorlabels.append("orthogconfound_{:02d}".format(theregressor))
+        if len(theregressorlabels) == 0:
+            print("No regressors survived orthogonalization - skipping confound regression")
+            return theregressors, theregressorlabels, thedataarray, None
         print(
-            "After orthogonalization, {0} of {1} regressors remain.".format(
-                len(theregressorlabels), initregressors
-            )
+            f"After orthogonalization, {len(theregressorlabels)} of {initregressors} regressors remain."
         )
+
+    # stddev normalize the regressors.  Not strictly necessary, but might help with stability.
+    for i in range(theregressors.shape[0]):
+        theregressors[i, :] = tide_math.normalize(theregressors[i, :], method="stddev")
 
     print("start confound filtering")
 

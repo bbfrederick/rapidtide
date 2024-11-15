@@ -1,0 +1,16 @@
+#!/bin/bash
+
+retrolagtcs \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_0deriv_desc-corrfit_mask.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_0deriv_desc-maxtime_map.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_0deriv_desc-lagtcgenerator_timeseries \
+    ../dst/retrolag_0deriv
+
+retrolagtcs \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_1deriv_desc-corrfit_mask.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_1deriv_desc-maxtime_map.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_1deriv_desc-lagtcgenerator_timeseries \
+    ../dst/retrolag_1deriv \
+    --glmderivs 1 
