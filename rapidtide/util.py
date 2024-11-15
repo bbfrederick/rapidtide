@@ -453,7 +453,7 @@ def version():
 
     """
     try:
-        dummy = os.environ["IS_DOCKER_8395080871"]
+        dummy = os.environ["IN_DOCKER_CONTAINER"]
     except KeyError:
         isdocker = False
     else:

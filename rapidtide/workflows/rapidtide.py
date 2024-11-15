@@ -268,7 +268,7 @@ def rapidtide_main(argparsingfunc):
         print("turning on garbage collection")
 
     # if we are running in a Docker container, make sure we enforce memory limits properly
-    if "IS_DOCKER_8395080871" in os.environ:
+    if "IN_DOCKER_CONTAINER" in os.environ:
         optiondict["runningindocker"] = True
         optiondict["dockermemfree"], optiondict["dockermemswap"] = tide_util.findavailablemem()
         if optiondict["dockermemfix"]:
@@ -3339,6 +3339,28 @@ def rapidtide_main(argparsingfunc):
             debug=optiondict["focaldebug"],
         )
 
+        if optiondict["glmderivs"] == 1:
+            # special case - calculate the ratio of derivative to raw regressor
+            glmderivratio = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
+            ratiolist = np.linspace(-10.0, 10.0, 21, endpoint=True)
+            """outtcs = np.zeros((len(ratiolist), regressorset.shape[]), dtype=rt_floattype)
+            colnames = []
+            for ratioidx in range(outtcs.shape[0]):
+                outtcs[ratioidx, :] = tide_math.stdnormalize(
+                    regressorset[0, :] + ratiolist[ratioidx] * regressorset[1, :]
+                )
+                colnames.append(str(ratiolist[ratioidx]))
+            tide_io.writebidstsv(
+                f"{outputname}_desc-glmratio_timeseries",
+                outtcs,
+                oversampfreq,
+                columns=["filteredRMS", "linearfit"],
+                extraheaderinfo={
+                    "Description": "Filtered RMS amplitude of the probe regressor, and a linear fit"
+                },
+                append=False,
+            )"""
+
         # calculate the final bandlimited mean normalized variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
         divlocs = np.where(finalvariance > 0.0)
@@ -3501,6 +3523,10 @@ def rapidtide_main(argparsingfunc):
         savelist += [
             (coherencepeakval, "coherencepeakval", "map", None, "Coherence peak value"),
             (coherencepeakfreq, "coherencepeakfreq", "map", None, "Coherence peak frequency"),
+        ]
+    if optiondict["glmderivs"] == 1:
+        savelist += [
+            (glmderivratio, "glmderivratio", "map", None, "GLM derivative ratio"),
         ]
     tide_io.savemaplist(
         outputname,
