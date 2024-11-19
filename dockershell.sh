@@ -1,3 +1,6 @@
 #!/bin/bash
 
-docker run -it fredericklab/rapidtide:latest bash
+VERSION=latest
+
+docker pull fredericklab/rapidtide:${VERSION}
+docker run -it fredericklab/rapidtide:${VERSION} bash
