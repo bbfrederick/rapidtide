@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:v0.4.0
+FROM fredericklab/basecontainer:latest-release
 
 # get build arguments
 ARG BUILD_TIME
@@ -20,6 +20,9 @@ RUN echo "BUILD_TIME: "$BUILD_TIME
 RUN echo "GITVERSION: "$GITVERSION
 RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
+
+# security patches
+RUN uv pip install "cryptography>=42.0.4" "urllib3>=1.26.17" "certifi>=2023.7.22"
 
 # Copy rapidtide into container
 COPY . /src/rapidtide

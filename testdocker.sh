@@ -6,6 +6,7 @@ VERSION=latest
 # allow network connections in Xquartz Security settings
 xhost +
 
+docker pull fredericklab/rapidtide:${VERSION}
 docker run \
     --rm \
     --ipc host \
