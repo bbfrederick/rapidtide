@@ -152,6 +152,10 @@ def glmfrommaps(
         if debug:
             print(f"adding derivatives up to order {glmderivs} prior to regression")
         regressorset = tide_glmpass.makevoxelspecificderivs(lagtc, glmderivs)
+        baseev = rt_floatset(genlagtc.yfromx(initial_fmri_x))
+        evset = tide_glmpass.makevoxelspecificderivs(baseev.reshape((1, -1)), glmderivs).reshape(
+            (-1, 2)
+        )
     else:
         if debug:
             print(f"using raw lagged regressors for regression")
@@ -198,4 +202,4 @@ def glmfrommaps(
             append=False,
         )
 
-    return voxelsprocessed_glm, regressorset
+    return voxelsprocessed_glm, regressorset, evset

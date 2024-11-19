@@ -3307,7 +3307,7 @@ def rapidtide_main(argparsingfunc):
         # calculate the initial bandlimited mean normalized variance if we're going to filter the data
         initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
-        voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
+        voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
             fmri_data_valid,
             validvoxels,
             initial_fmri_x,
@@ -3343,23 +3343,44 @@ def rapidtide_main(argparsingfunc):
             # special case - calculate the ratio of derivative to raw regressor
             glmderivratio = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
             ratiolist = np.linspace(-10.0, 10.0, 21, endpoint=True)
-            """outtcs = np.zeros((len(ratiolist), regressorset.shape[]), dtype=rt_floattype)
+            outtcs = np.zeros((len(ratiolist), evset.shape[0]), dtype=rt_floattype)
+            print(f"{glmderivratio.shape=}, {ratiolist.shape=}, {evset.shape=}, {outtcs.shape=}")
             colnames = []
-            for ratioidx in range(outtcs.shape[0]):
-                outtcs[ratioidx, :] = tide_math.stdnormalize(
-                    regressorset[0, :] + ratiolist[ratioidx] * regressorset[1, :]
-                )
-                colnames.append(str(ratiolist[ratioidx]))
+            for ratioidx, theratio in enumerate(ratiolist):
+                print(f"{ratioidx=}, {theratio=}")
+                outtcs[ratioidx, :] = tide_math.stdnormalize(evset[:, 0] + theratio * evset[:, 1])
+                colnames.append(f"ratio_{str(theratio)}")
             tide_io.writebidstsv(
                 f"{outputname}_desc-glmratio_timeseries",
                 outtcs,
-                oversampfreq,
-                columns=["filteredRMS", "linearfit"],
-                extraheaderinfo={
-                    "Description": "Filtered RMS amplitude of the probe regressor, and a linear fit"
-                },
+                1.0 / fmritr,
+                columns=colnames,
+                extraheaderinfo={"Description": "GLM regressor for various derivative ratios"},
                 append=False,
-            )"""
+            )
+            theCorrelator.setreftc(evset[:, 0])
+            (
+                dummy,
+                newglobalmaxlist,
+                newtrimmedcorrscale,
+            ) = calcsimilaritypass_func(
+                outtcs,
+                evset[:, 0],
+                theCorrelator,
+                initial_fmri_x,
+                os_fmri_x,
+                lagmininpts,
+                lagmaxinpts,
+                corrout,
+                meanval,
+                nprocs=1,
+                oversampfactor=1,
+                interptype=optiondict["interptype"],
+                showprogressbar=optiondict["showprogressbar"],
+                chunksize=optiondict["mp_chunksize"],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+            )
 
         # calculate the final bandlimited mean normalized variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)

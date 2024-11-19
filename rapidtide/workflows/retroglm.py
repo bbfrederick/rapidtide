@@ -412,7 +412,7 @@ def retroglm(args):
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     print("calling glmmfrommaps")
-    voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
+    voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
         fmri_data_valid,
         validvoxels,
         initial_fmri_x,
