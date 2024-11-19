@@ -160,6 +160,8 @@ def glmfrommaps(
         if debug:
             print(f"using raw lagged regressors for regression")
         regressorset = lagtc
+        evset = rt_floatset(genlagtc.yfromx(initial_fmri_x))
+
     if debug:
         print(f"{regressorset.shape=}")
     voxelsprocessed_glm = glmpass_func(
