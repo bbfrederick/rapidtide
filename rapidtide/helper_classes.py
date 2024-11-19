@@ -165,7 +165,7 @@ class SimilarityFunctionator:
         filterinputdata=True,
         debug=False,
     ):
-        self.setFs(self, Fs)
+        self.setFs(Fs)
         self.similarityfuncorigin = similarityfuncorigin
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
