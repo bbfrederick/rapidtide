@@ -10,7 +10,7 @@ from codecs import open
 from os import path
 
 # Always prefer setuptools over distutils
-from setuptools import find_namespace_packages, find_packages, setup, Extension
+from setuptools import Extension, find_namespace_packages, find_packages, setup
 
 import versioneer
 
@@ -49,6 +49,7 @@ modules_list = [
     "rapidtide/multiproc",
     "rapidtide/peakeval",
     "rapidtide/refine",
+    "rapidtide/refinedelay",
     "rapidtide/refine_factored",
     "rapidtide/resample",
     "rapidtide/simfuncfit",
