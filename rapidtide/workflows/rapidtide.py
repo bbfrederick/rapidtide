@@ -3339,6 +3339,20 @@ def rapidtide_main(argparsingfunc):
             debug=optiondict["focaldebug"],
         )
 
+        evcolnames = ["base"]
+        if optiondict["glmderivs"] > 0:
+            for i in range(1, optiondict["glmderivs"] + 1):
+                evcolnames.append(f"deriv_{str(i)}")
+
+        tide_io.writebidstsv(
+            f"{outputname}_desc-EV_timeseries",
+            np.transpose(evset),
+            1.0 / fmritr,
+            columns=evcolnames,
+            extraheaderinfo={"Description": "GLM regressor set"},
+            append=False,
+        )
+
         if optiondict["glmderivs"] == 1:
             # special case - calculate the ratio of derivative to raw regressor
             glmderivratio = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
@@ -3359,7 +3373,7 @@ def rapidtide_main(argparsingfunc):
                 append=False,
             )
             theCorrelator.setreftc(evset[:, 0])
-            (
+            """(
                 dummy,
                 newglobalmaxlist,
                 newtrimmedcorrscale,
@@ -3380,7 +3394,7 @@ def rapidtide_main(argparsingfunc):
                 chunksize=optiondict["mp_chunksize"],
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
-            )
+            )"""
 
         # calculate the final bandlimited mean normalized variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
