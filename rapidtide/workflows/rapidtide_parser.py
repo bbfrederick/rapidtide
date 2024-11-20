@@ -1379,6 +1379,13 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
+        "--refinedelay",
+        dest="refinedelay",
+        action="store_true",
+        help=("Refine the delay map using GLM information every cycle."),
+        default=False,
+    )
+    experimental.add_argument(
         "--premasktissueonly",
         dest="premasktissueonly",
         action="store_true",
