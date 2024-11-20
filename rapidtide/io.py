@@ -294,12 +294,11 @@ def makedestarray(
     return outmaparray, internalspaceshape
 
 
-def inflatemap(
+def populatemap(
     themap,
     internalspaceshape,
     validvoxels,
     outmaparray,
-    destshape,
     debug=False,
 ):
     if len(outmaparray.shape) == 1:
@@ -316,7 +315,8 @@ def inflatemap(
             )
         else:
             outmaparray = themap[:, :].reshape((internalspaceshape, outmaparray.shape[1]))
-
+    if debug:
+        print(f"populatemap: output array shape is {outmaparray.shape}")
     return outmaparray
 
 
@@ -349,12 +349,11 @@ def savemaplist(
                 print(
                     f"savemaplist: saving {mapsuffix}  to {destshape} from {np.shape(validvoxels)[0]} valid voxels"
                 )
-        outmaparray = inflatemap(
+        outmaparray = populatemap(
             themap,
             internalspaceshape,
             validvoxels,
             outmaparray,
-            destshape,
             debug=False,
         )
 
