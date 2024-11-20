@@ -259,6 +259,67 @@ def niftihdrfromarray(data):
     return nib.Nifti1Image(data, affine=np.eye(4)).header.copy()
 
 
+def makedestarray(
+    destshape,
+    textio=False,
+    fileiscifti=False,
+    rt_floattype="float64",
+):
+    if textio:
+        try:
+            internalspaceshape = destshape[0]
+            timedim = destshape[1]
+        except TypeError:
+            internalspaceshape = destshape
+            timedim = None
+    else:
+        if fileiscifti:
+            spaceindex = len(destshape) - 1
+            timeindex = spaceindex - 1
+            internalspaceshape = destshape[spaceindex]
+            if destshape[timeindex] > 1:
+                timedim = destshape[timeindex]
+            else:
+                timedim = None
+        else:
+            internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
+            if len(destshape) == 3:
+                timedim = None
+            else:
+                timedim = destshape[3]
+    if timedim is None:
+        outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
+    else:
+        outmaparray = np.zeros((internalspaceshape, timedim), dtype=rt_floattype)
+    return outmaparray, internalspaceshape
+
+
+def inflatemap(
+    themap,
+    internalspaceshape,
+    validvoxels,
+    outmaparray,
+    destshape,
+    debug=False,
+):
+    if len(outmaparray.shape) == 1:
+        outmaparray[:] = 0.0
+        if validvoxels is not None:
+            outmaparray[validvoxels] = themap[:].reshape((np.shape(validvoxels)[0]))
+        else:
+            outmaparray = themap[:].reshape((internalspaceshape))
+    else:
+        outmaparray[:, :] = 0.0
+        if validvoxels is not None:
+            outmaparray[validvoxels, :] = themap[:, :].reshape(
+                (np.shape(validvoxels)[0], outmaparray.shape[1])
+            )
+        else:
+            outmaparray = themap[:, :].reshape((internalspaceshape, outmaparray.shape[1]))
+
+    return outmaparray
+
+
 def savemaplist(
     outputname,
     maplist,
@@ -273,39 +334,14 @@ def savemaplist(
     savejson=True,
     debug=False,
 ):
-    if textio:
-        try:
-            internalspaceshape = destshape[0]
-            timedim = destshape[1]
-            spaceonly = False
-        except TypeError:
-            internalspaceshape = destshape
-            spaceonly = True
-    else:
-        if fileiscifti:
-            spaceindex = len(destshape) - 1
-            timeindex = spaceindex - 1
-            internalspaceshape = destshape[spaceindex]
-            if destshape[timeindex] > 1:
-                spaceonly = False
-                timedim = destshape[timeindex]
-                isseries = True
-            else:
-                spaceonly = True
-                isseries = False
-        else:
-            internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
-            if len(destshape) == 3:
-                spaceonly = True
-            else:
-                spaceonly = False
-                timedim = destshape[3]
-    if spaceonly:
-        outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
-    else:
-        outmaparray = np.zeros((internalspaceshape, timedim), dtype=rt_floattype)
+    outmaparray, internalspaceshape = makedestarray(
+        destshape,
+        textio=False,
+        fileiscifti=False,
+        rt_floattype="float64",
+    )
     for themap, mapsuffix, maptype, theunit, thedescription in maplist:
-        # set up the output array, and remap if warranted
+        # copy the data into the output array, remapping if warranted
         if debug:
             if validvoxels is None:
                 print(f"savemaplist: saving {mapsuffix}  to {destshape}")
@@ -313,20 +349,14 @@ def savemaplist(
                 print(
                     f"savemaplist: saving {mapsuffix}  to {destshape} from {np.shape(validvoxels)[0]} valid voxels"
                 )
-        if spaceonly:
-            outmaparray[:] = 0.0
-            if validvoxels is not None:
-                outmaparray[validvoxels] = themap[:].reshape((np.shape(validvoxels)[0]))
-            else:
-                outmaparray = themap[:].reshape((internalspaceshape))
-        else:
-            outmaparray[:, :] = 0.0
-            if validvoxels is not None:
-                outmaparray[validvoxels, :] = themap[:, :].reshape(
-                    (np.shape(validvoxels)[0], timedim)
-                )
-            else:
-                outmaparray = themap[:, :].reshape((internalspaceshape, timedim))
+        outmaparray = inflatemap(
+            themap,
+            internalspaceshape,
+            validvoxels,
+            outmaparray,
+            destshape,
+            debug=False,
+        )
 
         # actually write out the data
         bidsdict = bidsbasedict.copy()
@@ -346,6 +376,7 @@ def savemaplist(
             if not fileiscifti:
                 savetonifti(outmaparray.reshape(destshape), theheader, savename)
             else:
+                isseries = len(outmaparray.shape) != 1
                 if isseries:
                     savetocifti(
                         outmaparray,
@@ -2004,31 +2035,6 @@ def readvecs(inputfilename, colspec=None, numskip=0, debug=False, thedtype=float
     -------
 
     """
-    """if False:
-        dataarray = pd.read_table(inputfilename, sep=None, header=None)
-        if colspec is None:
-            collist = range(len(dataarray.columns))
-        else:
-            collist = colspectolist(colspec, debug=debug)
-        if debug:
-            print("using collist:", collist)
-        if len(collist) > len(dataarray.columns):
-            print("READVECS: too many columns requested - exiting")
-            sys.exit()
-        if max(collist) > len(dataarray.columns) - 1:
-            print("READVECS: requested column number", max(collist), "too large - exiting")
-            sys.exit()
-        numvals = len(dataarray[numskip:])
-        numvecs = len(collist)
-        inputvec = np.zeros((numvecs, numvals), dtype="float64")
-        outcol = 0
-        if debug:
-            print(f"numvals = {numvals}, numvecs = {numvecs}")
-        for vecnum in collist:
-            inputvec[outcol, :] = dataarray[vecnum][numskip:]
-            outcol += 1
-        return 1.0 * inputvec[:, 0:numvals]
-    else:"""
     if debug:
         print(f"inputfilename: {inputfilename}")
         print(f"colspec: {colspec}")
