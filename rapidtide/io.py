@@ -336,9 +336,9 @@ def savemaplist(
 ):
     outmaparray, internalspaceshape = makedestarray(
         destshape,
-        textio=False,
-        fileiscifti=False,
-        rt_floattype="float64",
+        textio=textio,
+        fileiscifti=fileiscifti,
+        rt_floattype=rt_floattype,
     )
     for themap, mapsuffix, maptype, theunit, thedescription in maplist:
         # copy the data into the output array, remapping if warranted
