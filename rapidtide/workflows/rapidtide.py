@@ -44,7 +44,8 @@ import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.peakeval as tide_peakeval
-import rapidtide.refine_factored as tide_refine
+import rapidtide.refinedelay as tide_refinedelay
+import rapidtide.refineregressor as tide_refineregressor
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
@@ -2663,7 +2664,7 @@ def rapidtide_main(argparsingfunc):
                 lagfails,
                 sigmafails,
                 numinmask,
-            ) = tide_refine.makerefinemask(
+            ) = tide_refineregressor.makerefinemask(
                 lagstrengths,
                 lagtimes,
                 lagsigma,
@@ -2686,7 +2687,7 @@ def rapidtide_main(argparsingfunc):
 
             # align timecourses to prepare for refinement
             alignvoxels_func = addmemprofiling(
-                tide_refine.alignvoxels,
+                tide_refineregressor.alignvoxels,
                 optiondict["memprofile"],
                 "before aligning voxel timecourses",
             )
@@ -2715,7 +2716,7 @@ def rapidtide_main(argparsingfunc):
             LGR.info(f"align complete: {voxelsprocessed_rra=}")
 
             LGR.info("prenormalizing timecourses")
-            tide_refine.prenorm(
+            tide_refineregressor.prenorm(
                 paddedshiftedtcs,
                 refinemask,
                 lagtimes,
@@ -2729,7 +2730,7 @@ def rapidtide_main(argparsingfunc):
             (
                 voxelsprocessed_rr,
                 paddedoutputdata,
-            ) = tide_refine.dorefine(
+            ) = tide_refineregressor.dorefine(
                 paddedshiftedtcs,
                 refinemask,
                 weights,
@@ -3353,7 +3354,39 @@ def rapidtide_main(argparsingfunc):
             append=False,
         )
 
-        if optiondict["glmderivs"] == 1:
+        if optiondict["refinedelay"]:
+            tide_refinedelay.refinedelay(
+                fmri_data_valid,
+                nativespaceshape,
+                validvoxels,
+                initial_fmri_x,
+                lagtimes,
+                fitmask,
+                genlagtc,
+                mode,
+                outputname,
+                oversamptr,
+                glmmean,
+                rvalue,
+                r2value,
+                fitNorm,
+                fitcoeff,
+                movingsignal,
+                lagtc,
+                filtereddata,
+                copy.deepcopy(nim_hdr),
+                LGR,
+                TimingLGR,
+                optiondict,
+                bidsbasedict,
+                cifti_hdr,
+                patchthresh=optiondict["delaypatchthresh"],
+                fileiscifti=fileiscifti,
+                textio=optiondict["textio"],
+                rt_floattype="float64",
+                rt_floatset=np.float64,
+            )
+        """if optiondict["glmderivs"] == 1:
             # special case - calculate the ratio of derivative to raw regressor
             glmderivratio = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
             ratiolist = np.linspace(-10.0, 10.0, 21, endpoint=True)
@@ -3372,29 +3405,7 @@ def rapidtide_main(argparsingfunc):
                 extraheaderinfo={"Description": "GLM regressor for various derivative ratios"},
                 append=False,
             )
-            theCorrelator.setreftc(evset[:, 0])
-            """(
-                dummy,
-                newglobalmaxlist,
-                newtrimmedcorrscale,
-            ) = calcsimilaritypass_func(
-                outtcs,
-                evset[:, 0],
-                theCorrelator,
-                initial_fmri_x,
-                os_fmri_x,
-                lagmininpts,
-                lagmaxinpts,
-                corrout,
-                meanval,
-                nprocs=1,
-                oversampfactor=1,
-                interptype=optiondict["interptype"],
-                showprogressbar=optiondict["showprogressbar"],
-                chunksize=optiondict["mp_chunksize"],
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
-            )"""
+            theCorrelator.setreftc(evset[:, 0])"""
 
         # calculate the final bandlimited mean normalized variance
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
@@ -3559,10 +3570,10 @@ def rapidtide_main(argparsingfunc):
             (coherencepeakval, "coherencepeakval", "map", None, "Coherence peak value"),
             (coherencepeakfreq, "coherencepeakfreq", "map", None, "Coherence peak frequency"),
         ]
-    if optiondict["glmderivs"] == 1:
+    """if optiondict["glmderivs"] == 1:
         savelist += [
             (glmderivratio, "glmderivratio", "map", None, "GLM derivative ratio"),
-        ]
+        ]"""
     tide_io.savemaplist(
         outputname,
         savelist,

@@ -103,6 +103,8 @@ DEFAULT_OUTPUTLEVEL = "normal"
 
 DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
 
+DEFAULT_PATCHTHRESH = 3.0
+
 
 def _get_parser():
     """
@@ -1384,6 +1386,18 @@ def _get_parser():
         action="store_true",
         help=("Refine the delay map using GLM information every cycle."),
         default=False,
+    )
+    experimental.add_argument(
+        "--delaypatchthresh",
+        dest="delaypatchthresh",
+        action="store",
+        type=float,
+        metavar="NUMMADs",
+        help=(
+            "Maximum number of robust standard deviations to permit in the offset delay refine map. "
+            f"Default is {DEFAULT_PATCHTHRESH}"
+        ),
+        default=DEFAULT_PATCHTHRESH,
     )
     experimental.add_argument(
         "--premasktissueonly",
