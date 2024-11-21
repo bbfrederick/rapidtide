@@ -17,6 +17,7 @@
 #
 #
 import numpy as np
+from scipy.ndimage import median_filter
 from statsmodels.robust import mad
 
 import rapidtide.io as tide_io
@@ -26,6 +27,7 @@ import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
 
 def refinedelay(
     fmri_data_valid,
+    nativespaceshape,
     validvoxels,
     initial_fmri_x,
     lagtimes,
@@ -42,9 +44,15 @@ def refinedelay(
     movingsignal,
     lagtc,
     filtereddata,
+    theheader,
     LGR,
     TimingLGR,
     optiondict,
+    bidsbasedict,
+    cifti_hdr,
+    patchthresh=3.0,
+    fileiscifti=False,
+    textio=False,
     rt_floattype="float64",
     rt_floatset=np.float64,
 ):
@@ -82,16 +90,85 @@ def refinedelay(
 
     # calculate the ratio of the first derivative to the main regressor
     glmderivratio = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
+    delayoffset = -glmderivratio * optiondict["fmrifreq"]
 
     # filter the ratio to find weird values
-    themad = mad(glmderivratio[validvoxels]).astype(np.float64)
+    themad = mad(delayoffset).astype(np.float64)
+    print(f"MAD of delay offsets = {themad}")
+    outmaparray, internalspaceshape = tide_io.makedestarray(
+        nativespaceshape,
+        textio=textio,
+        fileiscifti=fileiscifti,
+        rt_floattype=rt_floattype,
+    )
+    mappeddelayoffset = tide_io.populatemap(
+        delayoffset,
+        internalspaceshape,
+        validvoxels,
+        outmaparray,
+        debug=False,
+    )
+    if textio or fileiscifti:
+        medfilt = delayoffset
+        filteredarray = delayoffset
+    else:
+        print(f"{delayoffset.shape=}, {mappeddelayoffset.shape=}")
+        medfilt = median_filter(
+            mappeddelayoffset.reshape(nativespaceshape), size=(3, 3, 3)
+        ).reshape(internalspaceshape)[validvoxels]
+        filteredarray = np.where(
+            np.fabs(delayoffset - medfilt) > patchthresh * themad, medfilt, delayoffset
+        )
+    savelist = [
+        (glmderivratio, "glmderivratio", "map", None, "GLM derivative ratio"),
+        (
+            delayoffset,
+            "rawdelayoffset",
+            "map",
+            "sec",
+            "Delay offset calculated from GLM derivative ratio",
+        ),
+        (medfilt, "medfiltdelayoffset", "map", "sec", "Delay offset, median filtered"),
+        (
+            filteredarray,
+            "delayoffset",
+            "map",
+            "sec",
+            "Delay offset, selectively median filtered",
+        ),
+    ]
+    if not optiondict["textio"]:
+        if fileiscifti:
+            timeindex = theheader["dim"][0] - 1
+            spaceindex = theheader["dim"][0]
+            theheader["dim"][timeindex] = 1
+            theheader["dim"][spaceindex] = filteredarray.shape[0]
+        else:
+            theheader["dim"][0] = 3
+            theheader["dim"][4] = 1
+            theheader["pixdim"][4] = 1.0
+    else:
+        theheader = None
+        cifti_hdr = None
+    tide_io.savemaplist(
+        outputname,
+        savelist,
+        validvoxels,
+        nativespaceshape,
+        theheader,
+        bidsbasedict,
+        textio=optiondict["textio"],
+        fileiscifti=fileiscifti,
+        rt_floattype=rt_floattype,
+        cifti_hdr=cifti_hdr,
+    )
 
-    ratiolist = np.linspace(-5.0, 5.0, 21, endpoint=True)
+    ratiolist = np.linspace(-patchthresh, patchthresh, 21, endpoint=True)
     outtcs = np.zeros((len(ratiolist), evset.shape[0]), dtype=rt_floattype)
     print(f"{glmderivratio.shape=}, {ratiolist.shape=}, {evset.shape=}, {outtcs.shape=}")
     colnames = []
     for ratioidx, theratio in enumerate(ratiolist):
-        print(f"{ratioidx=}, {theratio=}")
+        # print(f"{ratioidx=}, {theratio=}")
         outtcs[ratioidx, :] = tide_math.stdnormalize(evset[:, 0] + theratio * evset[:, 1])
         colnames.append(f"ratio_{str(theratio)}")
     tide_io.writebidstsv(
