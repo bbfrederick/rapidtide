@@ -720,13 +720,6 @@ def addpermutationopts(parser, numreps=10000):
         ),
         default=numreps,
     )
-    sigcalc_opts.add_argument(
-        "--skipsighistfit",
-        dest="dosighistfit",
-        action="store_false",
-        help=("Do not fit significance histogram with a Johnson SB function."),
-        default=True,
-    )
 
 
 def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0):

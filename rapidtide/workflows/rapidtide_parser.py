@@ -1764,7 +1764,6 @@ def process_args(inputargs=None):
 
     # significance estimation
     args["sighistlen"] = 1000
-    args["dosighistfit"] = True
     if args["corrtype"] == "linear":
         args["corrpadding"] = -1
         # pf.setifnotset(args, "windowfunc", "None")

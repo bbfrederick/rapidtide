@@ -2157,18 +2157,17 @@ def rapidtide_main(argparsingfunc):
                 similaritymetric=optiondict["similaritymetric"],
                 twotail=optiondict["bipolar"],
                 nozero=optiondict["nohistzero"],
-                dosighistfit=optiondict["dosighistfit"],
+                dosighistfit=True,
             )
             if pcts is not None:
                 for i in range(len(thepvalnames)):
                     optiondict[
                         "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_thresh.txt"
                     ] = pcts[i]
-                    if optiondict["dosighistfit"]:
-                        optiondict[
-                            "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_fitthresh"
-                        ] = pcts_fit[i]
-                        optiondict["sigfit"] = sigfit
+                    optiondict[
+                        "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_fitthresh"
+                    ] = pcts_fit[i]
+                    optiondict["sigfit"] = sigfit
                 if optiondict["ampthreshfromsig"]:
                     if pcts is not None:
                         LGR.info(
@@ -2180,25 +2179,24 @@ def rapidtide_main(argparsingfunc):
                             thepercentiles,
                             "Crosscorrelation significance thresholds from data:",
                         )
-                        if optiondict["dosighistfit"]:
-                            tide_stats.printthresholds(
-                                pcts_fit,
-                                thepercentiles,
-                                "Crosscorrelation significance thresholds from fit:",
-                            )
-                            namesuffix = "_desc-nullsimfunc_hist"
-                            tide_stats.makeandsavehistogram(
-                                simdistdata,
-                                optiondict["sighistlen"],
-                                0,
-                                outputname + namesuffix,
-                                displaytitle="Null correlation histogram",
-                                refine=False,
-                                dictvarname="nullsimfunchist_pass" + str(thepass),
-                                therange=(0.0, 1.0),
-                                append=(thepass > 1),
-                                thedict=optiondict,
-                            )
+                        tide_stats.printthresholds(
+                            pcts_fit,
+                            thepercentiles,
+                            "Crosscorrelation significance thresholds from fit:",
+                        )
+                        namesuffix = "_desc-nullsimfunc_hist"
+                        tide_stats.makeandsavehistogram(
+                            simdistdata,
+                            optiondict["sighistlen"],
+                            0,
+                            outputname + namesuffix,
+                            displaytitle="Null correlation histogram",
+                            refine=False,
+                            dictvarname="nullsimfunchist_pass" + str(thepass),
+                            therange=(0.0, 1.0),
+                            append=(thepass > 1),
+                            thedict=optiondict,
+                        )
                     else:
                         LGR.info("leaving ampthresh unchanged")
                 else:
@@ -3732,10 +3730,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["numestreps"] > 0:
         masklist = []
         for i in range(0, len(thepercentiles)):
-            if optiondict["dosighistfit"]:
-                pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
-            else:
-                pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
+            pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
             masklist += [
                 (
                     pmask.copy(),

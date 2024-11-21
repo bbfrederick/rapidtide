@@ -310,6 +310,27 @@ def sigFromDistributionData(
         return pcts_data, 0, 0
 
 
+global neglogpfromr_interpolator
+neglogpfromr_interpolator = None
+
+
+def neglog10pfromr(rval, histfit, lutlen=100, initialize=False, neglogpmin=0.0, neglogpmax=3.0):
+    global neglogpfromr_interpolator
+    if neglogpfromr_interpolator is None or initialize:
+        neglogparray = np.linspace(neglogpmin, neglogpmax, lutlen, endpoint=False)
+        percentile_list = (1.0 - pow(10.0, -neglogparray)).tolist()
+        rforneglogp = getfracvalsfromfit(histfit, percentile_list).asarray(dtype=float)
+        neglogpfromr_interpolator = sp.interpolate.UnivariateSpline(
+            rforneglogp, neglogparray, k=3, s=0
+        )
+    if rval > rforneglogp[-1]:
+        return rforneglogp[-1]
+    elif rval < rforneglogp[0]:
+        return rforneglogp[0]
+    else:
+        return np.float64(neglogpfromr_interpolator([rval]))[0]
+
+
 def rfromp(fitfile, thepercentiles):
     """
 
