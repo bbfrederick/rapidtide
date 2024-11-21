@@ -179,3 +179,4 @@ def refinedelay(
         extraheaderinfo={"Description": "GLM regressor for various derivative ratios"},
         append=False,
     )
+    return delayoffset

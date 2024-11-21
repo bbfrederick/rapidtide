@@ -3142,13 +3142,24 @@ def rapidtide_main(argparsingfunc):
     # write out the current version of the run options
     optiondict["currentstage"] = "preglm"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
-    if optiondict["doglmfilt"] or optiondict["docvrmap"]:
+    if optiondict["doglmfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
         if optiondict["doglmfilt"]:
-            TimingLGR.info("GLM filtering start")
-            LGR.info("\n\nGLM filtering")
+            if optiondict["refinedelay"]:
+                TimingLGR.info("Setting up for delay refinement and GLM filtering")
+                LGR.info("\n\nDelay refinement and GLM filtering setup")
+            else:
+                TimingLGR.info("Setting up for GLM filtering")
+                LGR.info("\n\nGLM filtering setup")
+        elif optiondict["docvrmap"]:
+            if optiondict["refinedelay"]:
+                TimingLGR.info("Setting up for delay refinement and CVR map generation")
+                LGR.info("\n\nDelay refinement and CVR mapping setup")
+            else:
+                TimingLGR.info("Setting up for CVR map generation")
+                LGR.info("\n\nCVR mapping setup")
         else:
-            TimingLGR.info("CVR map generation start")
-            LGR.info("\n\nCVR mapping")
+            TimingLGR.info("Setting up for delay refinement")
+            LGR.info("\n\nDelay refinement setup")
         if (
             (optiondict["gausssigma"] > 0.0)
             or (optiondict["glmsourcefile"] is not None)
@@ -3214,9 +3225,13 @@ def rapidtide_main(argparsingfunc):
             del nim_data
 
         # now allocate the arrays needed for GLM filtering
+        if optiondict["refinedelay"]:
+            derivaxissize = np.max([2, optiondict["glmderivs"] + 1])
+        else:
+            derivaxissize = optiondict["glmderivs"] + 1
         internalvalidspaceshapederivs = (
             internalvalidspaceshape,
-            optiondict["glmderivs"] + 1,
+            derivaxissize,
         )
         if optiondict["sharedmem"]:
             glmmean, glmmean_shm = tide_util.allocshared(
@@ -3305,57 +3320,11 @@ def rapidtide_main(argparsingfunc):
                 cifti_hdr=cifti_hdr,
             )
 
-        # calculate the initial bandlimited mean normalized variance if we're going to filter the data
-        initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
-
-        voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
-            fmri_data_valid,
-            validvoxels,
-            initial_fmri_x,
-            lagtimes,
-            fitmask,
-            genlagtc,
-            mode,
-            outputname,
-            oversamptr,
-            glmmean,
-            rvalue,
-            r2value,
-            fitNorm,
-            fitcoeff,
-            movingsignal,
-            lagtc,
-            filtereddata,
-            LGR,
-            TimingLGR,
-            optiondict["glmthreshval"],
-            optiondict["saveminimumglmfiles"],
-            nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
-            nprocs_glm=optiondict["nprocs_glm"],
-            glmderivs=optiondict["glmderivs"],
-            mp_chunksize=optiondict["mp_chunksize"],
-            showprogressbar=optiondict["showprogressbar"],
-            alwaysmultiproc=optiondict["alwaysmultiproc"],
-            memprofile=optiondict["memprofile"],
-            debug=optiondict["focaldebug"],
-        )
-
-        evcolnames = ["base"]
-        if optiondict["glmderivs"] > 0:
-            for i in range(1, optiondict["glmderivs"] + 1):
-                evcolnames.append(f"deriv_{str(i)}")
-
-        tide_io.writebidstsv(
-            f"{outputname}_desc-EV_timeseries",
-            np.transpose(evset),
-            1.0 / fmritr,
-            columns=evcolnames,
-            extraheaderinfo={"Description": "GLM regressor set"},
-            append=False,
-        )
-
+        # refine the delay value prior to calculating the GLM
         if optiondict["refinedelay"]:
-            tide_refinedelay.refinedelay(
+            TimingLGR.info("Delay refinement start")
+            LGR.info("\n\nDelay refinement")
+            delayoffset = tide_refinedelay.refinedelay(
                 fmri_data_valid,
                 nativespaceshape,
                 validvoxels,
@@ -3369,8 +3338,8 @@ def rapidtide_main(argparsingfunc):
                 glmmean,
                 rvalue,
                 r2value,
-                fitNorm,
-                fitcoeff,
+                fitNorm[:, :2],
+                fitcoeff[:, :2],
                 movingsignal,
                 lagtc,
                 filtereddata,
@@ -3386,56 +3355,89 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype="float64",
                 rt_floatset=np.float64,
             )
-        """if optiondict["glmderivs"] == 1:
-            # special case - calculate the ratio of derivative to raw regressor
-            glmderivratio = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
-            ratiolist = np.linspace(-10.0, 10.0, 21, endpoint=True)
-            outtcs = np.zeros((len(ratiolist), evset.shape[0]), dtype=rt_floattype)
-            print(f"{glmderivratio.shape=}, {ratiolist.shape=}, {evset.shape=}, {outtcs.shape=}")
-            colnames = []
-            for ratioidx, theratio in enumerate(ratiolist):
-                print(f"{ratioidx=}, {theratio=}")
-                outtcs[ratioidx, :] = tide_math.stdnormalize(evset[:, 0] + theratio * evset[:, 1])
-                colnames.append(f"ratio_{str(theratio)}")
+            ####################################################
+            #  Delay refinement end
+            ####################################################
+
+        if optiondict["doglmfilt"] or optiondict["docvrmap"]:
+            if optiondict["doglmfilt"]:
+                TimingLGR.info("GLM filtering start")
+                LGR.info("\n\nGLM filtering")
+            else:
+                TimingLGR.info("CVR map generation")
+                LGR.info("\n\nCVR mapping")
+
+            # calculate the initial bandlimited mean normalized variance if we're going to filter the data
+            initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
+
+            # now calculate the GLM
+            voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
+                fmri_data_valid,
+                validvoxels,
+                initial_fmri_x,
+                lagtimes,
+                fitmask,
+                genlagtc,
+                mode,
+                outputname,
+                oversamptr,
+                glmmean,
+                rvalue,
+                r2value,
+                fitNorm[:, : optiondict["glmderivs"] + 1],
+                fitcoeff[:, : optiondict["glmderivs"] + 1],
+                movingsignal,
+                lagtc,
+                filtereddata,
+                LGR,
+                TimingLGR,
+                optiondict["glmthreshval"],
+                optiondict["saveminimumglmfiles"],
+                nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
+                nprocs_glm=optiondict["nprocs_glm"],
+                glmderivs=optiondict["glmderivs"],
+                mp_chunksize=optiondict["mp_chunksize"],
+                showprogressbar=optiondict["showprogressbar"],
+                alwaysmultiproc=optiondict["alwaysmultiproc"],
+                memprofile=optiondict["memprofile"],
+                debug=optiondict["focaldebug"],
+            )
+
+            evcolnames = ["base"]
+            if optiondict["glmderivs"] > 0:
+                for i in range(1, optiondict["glmderivs"] + 1):
+                    evcolnames.append(f"deriv_{str(i)}")
+
             tide_io.writebidstsv(
-                f"{outputname}_desc-glmratio_timeseries",
-                outtcs,
+                f"{outputname}_desc-EV_timeseries",
+                np.transpose(evset),
                 1.0 / fmritr,
-                columns=colnames,
-                extraheaderinfo={"Description": "GLM regressor for various derivative ratios"},
+                columns=evcolnames,
+                extraheaderinfo={"Description": "GLM regressor set"},
                 append=False,
             )
-            theCorrelator.setreftc(evset[:, 0])"""
 
-        # calculate the final bandlimited mean normalized variance
-        finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
-        divlocs = np.where(finalvariance > 0.0)
-        varchange = initialvariance * 0.0
-        varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
-        del fmri_data_valid
-        if optiondict["sharedmem"]:
-            tide_util.cleanup_shm(fmri_data_valid_shm)
+            # calculate the final bandlimited mean normalized variance
+            finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
+            divlocs = np.where(finalvariance > 0.0)
+            varchange = initialvariance * 0.0
+            varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
+            del fmri_data_valid
+            if optiondict["sharedmem"]:
+                tide_util.cleanup_shm(fmri_data_valid_shm)
 
-        LGR.info("End filtering operation")
-        TimingLGR.info(
-            "GLM filtering end",
-            {
-                "message2": voxelsprocessed_glm,
-                "message3": "voxels",
-            },
-        )
-        if optiondict["memprofile"]:
-            memcheckpoint("...done")
-        tide_util.logmem("after glm filter")
-        LGR.info("")
-    else:
-        # get the original data to calculate the mean
-        pass
-        """LGR.info(f"rereading {fmrifilename} to calculate mean value, please wait")
-        if optiondict["textio"]:
-            nim_data = tide_io.readvecs(fmrifilename)
-        else:
-            nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)"""
+            LGR.info("End filtering operation")
+            TimingLGR.info(
+                "GLM filtering end",
+                {
+                    "message2": voxelsprocessed_glm,
+                    "message3": "voxels",
+                },
+            )
+            if optiondict["memprofile"]:
+                memcheckpoint("...done")
+            tide_util.logmem("after glm filter")
+            LGR.info("")
     ####################################################
     #  GLM filtering end
     ####################################################
@@ -3570,10 +3572,6 @@ def rapidtide_main(argparsingfunc):
             (coherencepeakval, "coherencepeakval", "map", None, "Coherence peak value"),
             (coherencepeakfreq, "coherencepeakfreq", "map", None, "Coherence peak frequency"),
         ]
-    """if optiondict["glmderivs"] == 1:
-        savelist += [
-            (glmderivratio, "glmderivratio", "map", None, "GLM derivative ratio"),
-        ]"""
     tide_io.savemaplist(
         outputname,
         savelist,
@@ -3676,8 +3674,20 @@ def rapidtide_main(argparsingfunc):
                         ]
                 else:
                     maplist += [
-                        (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
-                        (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
+                        (
+                            fitcoeff[:, : optiondict["glmderivs"] + 1],
+                            "lfofilterCoeff",
+                            "map",
+                            None,
+                            "Fit coefficient",
+                        ),
+                        (
+                            fitNorm[:, : optiondict["glmderivs"] + 1],
+                            "lfofilterNorm",
+                            "map",
+                            None,
+                            "Normalized fit coefficient",
+                        ),
                     ]
         else:
             maplist = [
