@@ -3728,19 +3728,22 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["numestreps"] > 0:
         masklist = []
-        # generate a neglogp map
-        neglog10pmap = lagstrengths * 0.0
-        for voxel in range(neglog10pmap.shape[0]):
-            neglog10pmap[voxel] = tide_stats.neglog10pfromr(lagstrengths[voxel], sigfit)
-        masklist += [
-            (
-                neglog10pmap.copy(),
-                "neglog10p",
-                "map",
-                None,
-                f"Negative log(10) of the p value of the r at each voxel",
-            )
-        ]
+
+        # we can only calculate this map if we have enough data for a good fit
+        if optiondict["numestreps"] >= 1000:
+            # generate a neglogp map
+            neglog10pmap = lagstrengths * 0.0
+            for voxel in range(neglog10pmap.shape[0]):
+                neglog10pmap[voxel] = tide_stats.neglog10pfromr(lagstrengths[voxel], sigfit)
+            masklist += [
+                (
+                    neglog10pmap.copy(),
+                    "neglog10p",
+                    "map",
+                    None,
+                    f"Negative log(10) of the p value of the r at each voxel",
+                )
+            ]
         for i in range(0, len(thepercentiles)):
             pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
             masklist += [
