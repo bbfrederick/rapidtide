@@ -15,7 +15,7 @@ rapidtide \
     --simcalcrange 50 -1 \
     --outputlevel max \
     --refinedelay \
-    --delaypatchthresh 5.0 \
+    --delaypatchthresh 10.0 \
     --glmderivs 1 \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_refine
