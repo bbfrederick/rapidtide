@@ -50,7 +50,7 @@ modules_list = [
     "rapidtide/peakeval",
     "rapidtide/refine",
     "rapidtide/refinedelay",
-    "rapidtide/refine_factored",
+    "rapidtide/refineregressor",
     "rapidtide/resample",
     "rapidtide/simfuncfit",
     "rapidtide/stats",
