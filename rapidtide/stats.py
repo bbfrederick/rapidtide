@@ -310,16 +310,25 @@ def sigFromDistributionData(
         return pcts_data, 0, 0
 
 
-global neglogpfromr_interpolator
+global neglogpfromr_interpolator, rforneglogp
 neglogpfromr_interpolator = None
+rforneglogp = None
 
 
-def neglog10pfromr(rval, histfit, lutlen=100, initialize=False, neglogpmin=0.0, neglogpmax=3.0):
-    global neglogpfromr_interpolator
+def neglog10pfromr(
+    rval, histfit, lutlen=3000, initialize=False, neglogpmin=0.0, neglogpmax=3.0, debug=False
+):
+    global neglogpfromr_interpolator, rforneglogp
     if neglogpfromr_interpolator is None or initialize:
-        neglogparray = np.linspace(neglogpmin, neglogpmax, lutlen, endpoint=False)
+        neglogparray = np.linspace(neglogpmin, neglogpmax, lutlen, endpoint=True)
+        if debug:
+            print(f"{neglogparray=}")
         percentile_list = (1.0 - pow(10.0, -neglogparray)).tolist()
-        rforneglogp = getfracvalsfromfit(histfit, percentile_list).asarray(dtype=float)
+        if debug:
+            print(f"{percentile_list=}")
+        rforneglogp = np.asarray(getfracvalsfromfit(histfit, percentile_list), dtype=float)
+        if debug:
+            print(f"{rforneglogp=}")
         neglogpfromr_interpolator = sp.interpolate.UnivariateSpline(
             rforneglogp, neglogparray, k=3, s=0
         )
@@ -328,7 +337,7 @@ def neglog10pfromr(rval, histfit, lutlen=100, initialize=False, neglogpmin=0.0, 
     elif rval < rforneglogp[0]:
         return rforneglogp[0]
     else:
-        return np.float64(neglogpfromr_interpolator([rval]))[0]
+        return np.float64(neglogpfromr_interpolator(np.asarray([rval], dtype=float))[0])
 
 
 def rfromp(fitfile, thepercentiles):
