@@ -3226,7 +3226,9 @@ def rapidtide_main(argparsingfunc):
 
         # now allocate the arrays needed for GLM filtering
         if optiondict["refinedelay"]:
-            derivaxissize = np.max([2, optiondict["glmderivs"] + 1])
+            derivaxissize = np.max(
+                [optiondict["refinedelayorder"] + 1, optiondict["glmderivs"] + 1]
+            )
         else:
             derivaxissize = optiondict["glmderivs"] + 1
         internalvalidspaceshapederivs = (
@@ -3338,8 +3340,8 @@ def rapidtide_main(argparsingfunc):
                 glmmean,
                 rvalue,
                 r2value,
-                fitNorm[:, :2],
-                fitcoeff[:, :2],
+                fitNorm[:, : (optiondict[refinedelayorder] + 1)],
+                fitcoeff[:, : (optiondict[refinedelayorder] + 1)],
                 movingsignal,
                 lagtc,
                 filtereddata,

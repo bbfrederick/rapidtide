@@ -104,6 +104,7 @@ DEFAULT_OUTPUTLEVEL = "normal"
 DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
 
 DEFAULT_PATCHTHRESH = 3.0
+DEFAULT_REFINEDELAYORDER = 1
 
 
 def _get_parser():
@@ -1386,6 +1387,18 @@ def _get_parser():
         action="store_true",
         help=("Refine the delay map using GLM information every cycle."),
         default=False,
+    )
+    experimental.add_argument(
+        "--refinedelayorder",
+        dest="refinedelayorder",
+        action="store",
+        type=float,
+        metavar="ORDER",
+        help=(
+            "Number of derivatives to use in delay refinement. "
+            f"Default is {DEFAULT_REFINEDELAYORDER}"
+        ),
+        default=DEFAULT_REFINEDELAYORDER,
     )
     experimental.add_argument(
         "--delaypatchthresh",
