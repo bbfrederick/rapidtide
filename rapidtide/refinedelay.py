@@ -17,7 +17,7 @@
 #
 #
 import numpy as np
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, UnivariateSpline
 from scipy.ndimage import median_filter
 from statsmodels.robust import mad
 
@@ -65,19 +65,19 @@ def trainratiotooffset(
         print("lagtimes=", lagtimes)
 
     # now make synthetic fMRI data
-    internalvalidfmrishape = (numpoints, timeaxis.shape[0])
+    internalvalidfmrishape = (numpoints + 2 * edgepad, timeaxis.shape[0])
     fmridata = np.zeros(internalvalidfmrishape, dtype=float)
-    fmrimask = np.ones(numpoints, dtype=float)
+    fmrimask = np.ones(numpoints + 2 * edgepad, dtype=float)
     validvoxels = np.where(fmrimask > 0)[0]
-    for i in range(numpoints):
+    for i in range(numpoints + 2 * edgepad):
         fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i])
 
     rt_floattype = "float64"
-    glmmean = np.zeros(numpoints, dtype=rt_floattype)
-    rvalue = np.zeros(numpoints, dtype=rt_floattype)
-    r2value = np.zeros(numpoints, dtype=rt_floattype)
-    fitNorm = np.zeros((numpoints, 2), dtype=rt_floattype)
-    fitcoeff = np.zeros((numpoints, 2), dtype=rt_floattype)
+    glmmean = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
+    rvalue = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
+    r2value = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
+    fitNorm = np.zeros((numpoints + 2 * edgepad, 2), dtype=rt_floattype)
+    fitcoeff = np.zeros((numpoints + 2 * edgepad, 2), dtype=rt_floattype)
     movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
@@ -122,7 +122,6 @@ def trainratiotooffset(
     if debug:
         print("before trimming")
         print(f"{glmderivratios.shape=}")
-        print(f"{smoothglmderivratios.shape=}")
         print(f"{lagtimes.shape=}")
     smoothglmderivratios = tide_filt.unpadvec(
         smooth(tide_filt.padvec(glmderivratios, padlen=20, padtype="constant"), smoothpts),
@@ -148,7 +147,7 @@ def trainratiotooffset(
         append=False,
     )
     ratiotooffsetfunc = CubicSpline(smoothglmderivratios[::-1], lagtimes[::-1])
-    maplimits = (glmderivratios[::-1][0], glmderivratios[::-1][-1])
+    maplimits = (smoothglmderivratios[::-1][0], smoothglmderivratios[::-1][-1])
 
 
 def ratiotodelay(theratio):

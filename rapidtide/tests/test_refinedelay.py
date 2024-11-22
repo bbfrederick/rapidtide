@@ -191,8 +191,8 @@ def eval_refinedelay(
     # do the tests
     msethresh = 1e-3
     aethresh = 2
-    assert mse(lagtimes, delayoffset) < msethresh
     print(f"{mse(lagtimes, delayoffset)=}")
+    assert mse(lagtimes, delayoffset) < msethresh
     # np.testing.assert_almost_equal(lagtimes, delayoffset, aethresh)
 
     if displayplots:
@@ -212,7 +212,7 @@ def test_refinedelay(displayplots=False, debug=False):
         mindelay=-3.0,
         maxdelay=3.0,
         numpoints=501,
-        smoothpts=3,
+        smoothpts=9,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         debug=debug,
@@ -223,7 +223,7 @@ def test_refinedelay(displayplots=False, debug=False):
         mindelay=-3.0,
         maxdelay=3.0,
         numpoints=501,
-        smoothpts=7,
+        smoothpts=9,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         debug=debug,
