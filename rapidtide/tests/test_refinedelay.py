@@ -27,15 +27,16 @@ import rapidtide.io as tide_io
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 from rapidtide.filter import NoncausalFilter
-from rapidtide.tests.utils import get_examples_path
+from rapidtide.tests.utils import get_examples_path, mse
 
 
 def eval_refinedelay(
     sampletime=0.72,
-    order=1,
     tclengthinsecs=300.0,
     mindelay=-5.0,
     maxdelay=5.0,
+    numpoints=501,
+    smoothpts=3,
     nativespaceshape=(10, 10, 10),
     displayplots=False,
     padtime=30.0,
@@ -75,6 +76,18 @@ def eval_refinedelay(
     numpadtrs = int(padtime // sampletime)
     padtime = sampletime * numpadtrs
     lagtcgenerator = tide_resample.FastResampler(timeaxis, sLFO, padtime=padtime)
+
+    # find the mapping of glm ratios to delays
+    tide_refinedelay.trainratiotooffset(
+        lagtcgenerator,
+        timeaxis,
+        "refinedelaytest",
+        mindelay=mindelay,
+        maxdelay=maxdelay,
+        numpoints=numpoints,
+        smoothpts=smoothpts,
+        debug=debug,
+    )
 
     # make a delay map
     numlags = nativespaceshape[0] * nativespaceshape[1] * nativespaceshape[2]
@@ -117,8 +130,8 @@ def eval_refinedelay(
     glmmean = np.zeros(numlags, dtype=rt_floattype)
     rvalue = np.zeros(numlags, dtype=rt_floattype)
     r2value = np.zeros(numlags, dtype=rt_floattype)
-    fitNorm = np.zeros((numlags, order + 1), dtype=rt_floattype)
-    fitcoeff = np.zeros((numlags, order + 1), dtype=rt_floattype)
+    fitNorm = np.zeros((numlags, 2), dtype=rt_floattype)
+    fitcoeff = np.zeros((numlags, 2), dtype=rt_floattype)
     movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
@@ -135,9 +148,9 @@ def eval_refinedelay(
         "fmrifreq": Fs,
         "textio": False,
     }
-    delayoffset = tide_refinedelay.refinedelay(
+
+    glmderivratios = tide_refinedelay.getderivratios(
         fmridata,
-        nativespaceshape,
         validvoxels,
         timeaxis,
         0.0 * lagtimes,
@@ -149,52 +162,68 @@ def eval_refinedelay(
         glmmean,
         rvalue,
         r2value,
-        fitNorm[:, : (order + 1)],
-        fitcoeff[:, : (order + 1)],
+        fitNorm[:, :2],
+        fitcoeff[:, :2],
         movingsignal,
         lagtc,
         filtereddata,
-        theheader,
         None,
         None,
         optiondict,
-        {
-            "Units": "arbitrary",
-        },
-        None,
-        order=order,
-        fileiscifti=False,
-        textio=False,
-        rt_floattype=rt_floattype,
-        rt_floatset=rt_floattype,
         debug=debug,
     )
+
+    medfilt, filteredglmderivratios = tide_refinedelay.filterderivratios(
+        glmderivratios,
+        nativespaceshape,
+        validvoxels,
+        patchthresh=3.0,
+        fileiscifti=False,
+        textio=False,
+        rt_floattype="float64",
+        debug=debug,
+    )
+
+    delayoffset = filteredglmderivratios * 0.0
+    for i in range(filteredglmderivratios.shape[0]):
+        delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+
+    # do the tests
+    msethresh = 1e-3
+    aethresh = 2
+    assert mse(lagtimes, delayoffset) < msethresh
+    print(f"{mse(lagtimes, delayoffset)=}")
+    # np.testing.assert_almost_equal(lagtimes, delayoffset, aethresh)
 
     if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_title("Ratio")
-        plt.plot(np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0]))
+        ax.set_title("Lagtimes")
+        plt.plot(lagtimes)
+        plt.plot(delayoffset)
+        plt.legend(["Target", "Fit"])
         plt.show()
 
 
 def test_refinedelay(displayplots=False, debug=False):
     eval_refinedelay(
         sampletime=0.72,
-        order=1,
         tclengthinsecs=300.0,
         mindelay=-3.0,
         maxdelay=3.0,
+        numpoints=501,
+        smoothpts=3,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         debug=debug,
     )
     eval_refinedelay(
         sampletime=0.72,
-        order=2,
         tclengthinsecs=300.0,
         mindelay=-3.0,
         maxdelay=3.0,
+        numpoints=501,
+        smoothpts=7,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         debug=debug,

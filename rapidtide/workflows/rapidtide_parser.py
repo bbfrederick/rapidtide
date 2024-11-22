@@ -104,7 +104,9 @@ DEFAULT_OUTPUTLEVEL = "normal"
 DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
 
 DEFAULT_PATCHTHRESH = 3.0
-DEFAULT_REFINEDELAYORDER = 1
+DEFAULT_REFINEDELAYMINDELAY = -5.0
+DEFAULT_REFINEDELAYMAXDELAY = 5.0
+DEFAULT_REFINEDELAYNUMPOINTS = 501
 
 
 def _get_parser():
@@ -1389,18 +1391,6 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
-        "--refinedelayorder",
-        dest="refinedelayorder",
-        action="store",
-        type=float,
-        metavar="ORDER",
-        help=(
-            "Number of derivatives to use in delay refinement. "
-            f"Default is {DEFAULT_REFINEDELAYORDER}"
-        ),
-        default=DEFAULT_REFINEDELAYORDER,
-    )
-    experimental.add_argument(
         "--delaypatchthresh",
         dest="delaypatchthresh",
         action="store",
@@ -1813,6 +1803,10 @@ def process_args(inputargs=None):
     args["check_autocorrelation"] = True
     args["acwidth"] = 0.0  # width of the reference autocorrelation function
 
+    # delay refinement
+    args["mindelay"] = DEFAULT_REFINEDELAYMINDELAY
+    args["maxdelay"] = DEFAULT_REFINEDELAYMAXDELAY
+    args["numpoints"] = DEFAULT_REFINEDELAYNUMPOINTS
     # diagnostic information about version
     (
         args["release_version"],

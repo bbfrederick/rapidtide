@@ -3226,9 +3226,7 @@ def rapidtide_main(argparsingfunc):
 
         # now allocate the arrays needed for GLM filtering
         if optiondict["refinedelay"]:
-            derivaxissize = np.max(
-                [optiondict["refinedelayorder"] + 1, optiondict["glmderivs"] + 1]
-            )
+            derivaxissize = np.max([2, optiondict["glmderivs"] + 1])
         else:
             derivaxissize = optiondict["glmderivs"] + 1
         internalvalidspaceshapederivs = (
@@ -3326,7 +3324,58 @@ def rapidtide_main(argparsingfunc):
         if optiondict["refinedelay"]:
             TimingLGR.info("Delay refinement start")
             LGR.info("\n\nDelay refinement")
-            delayoffset = tide_refinedelay.refinedelay(
+            glmderivratios = tide_refinedelay.getderivratios(
+                fmri_data_valid,
+                validvoxels,
+                initial_fmri_x,
+                lagtimes,
+                fitmask,
+                genlagtc,
+                mode,
+                outputname,
+                oversamptr,
+                glmmean,
+                rvalue,
+                r2value,
+                fitNorm[:, :2],
+                fitcoeff[:, :2],
+                movingsignal,
+                lagtc,
+                filtereddata,
+                LGR,
+                TimingLGR,
+                optiondict,
+                debug=optiondict["debug"],
+            )
+
+            medfiltglmderivratios, filteredglmderivratios = tide_refinedelay.filterderivratios(
+                glmderivratios,
+                nativespaceshape,
+                validvoxels,
+                patchthresh=optiondict["delaypatchthresh"],
+                fileiscifti=fileiscifti,
+                textio=optiondict["textio"],
+                rt_floattype="float64",
+                debug=optiondict["debug"],
+            )
+
+            # find the mapping of glm ratios to delays
+            tide_refinedelay.trainratiotooffset(
+                genlagtc,
+                initial_fmri_x,
+                outputname,
+                mindelay=optiondict["mindelay"],
+                maxdelay=optiondict["maxdelay"],
+                numpoints=optiondict["numpoints"],
+                debug=optiondict["debug"],
+            )
+
+            # now calculate the delay offsets
+            delayoffset = filteredglmderivratios * 0.0
+            for i in range(filteredglmderivratios.shape[0]):
+                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+
+            """delayoffset = tide_refinedelay.refinedelay(
                 fmri_data_valid,
                 nativespaceshape,
                 validvoxels,
@@ -3356,7 +3405,7 @@ def rapidtide_main(argparsingfunc):
                 textio=optiondict["textio"],
                 rt_floattype="float64",
                 rt_floatset=np.float64,
-            )
+            )"""
             ####################################################
             #  Delay refinement end
             ####################################################
@@ -3569,6 +3618,37 @@ def rapidtide_main(argparsingfunc):
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
     savelist += [(MTT, "MTT", "map", "second", "Mean transit time (estimated)")]
+    if optiondict["refinedelay"]:
+        savelist += [
+            (
+                glmderivratios,
+                "glmderivratios",
+                "map",
+                None,
+                "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
+            ),
+            (
+                medfiltglmderivratios,
+                "medfiltglmderivratios",
+                "map",
+                None,
+                "Median filtered version of the glmderivratios map",
+            ),
+            (
+                filteredglmderivratios,
+                "filteredglmderivratios",
+                "map",
+                None,
+                "glmderivratios, with outliers patched using median filtered data",
+            ),
+            (
+                delayoffset,
+                "delayoffset",
+                "map",
+                "second",
+                "Delay offset correction from delay refinement",
+            ),
+        ]
     if optiondict["calccoherence"]:
         savelist += [
             (coherencepeakval, "coherencepeakval", "map", None, "Coherence peak value"),
