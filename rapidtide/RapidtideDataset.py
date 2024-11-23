@@ -1051,6 +1051,8 @@ class RapidtideDataset:
         if self.bidsformat:
             self.funcmaps = [
                 ["lagtimes", "desc-maxtime_map"],
+                ["lagtimescorrected", "desc-maxtimecorrected_map"],
+                ["delayoffset", "desc-delayoffset_map"],
                 ["timepercentile", "desc-timepercentile_map"],
                 ["lagstrengths", "desc-maxcorr_map"],
                 ["lagsigma", "desc-maxwidth_map"],
