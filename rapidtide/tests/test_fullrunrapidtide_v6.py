@@ -53,7 +53,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--alternateoutput",
         os.path.join(get_test_temp_path(), "2deriv"),
         "--nprocs",
-        "-1 ",
+        "-1",
         "--glmderivs",
         "2",
         "--makepseudofile",
@@ -67,7 +67,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--alternateoutput",
         os.path.join(get_test_temp_path(), "1deriv_refined_corrected"),
         "--nprocs",
-        "-1 ",
+        "1",
         "--glmderivs",
         "1",
         "--makepseudofile",
@@ -83,13 +83,14 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--alternateoutput",
         os.path.join(get_test_temp_path(), "0deriv_refined"),
         "--nprocs",
-        "-1 ",
+        "-1",
         "--glmderivs",
         "0",
         "--makepseudofile",
         "--outputlevel",
         "min",
         "--refinedelay",
+        "--debug",
     ]
     rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
 
