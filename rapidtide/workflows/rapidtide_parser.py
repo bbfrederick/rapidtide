@@ -1387,7 +1387,14 @@ def _get_parser():
         "--refinedelay",
         dest="refinedelay",
         action="store_true",
-        help=("Refine the delay map using GLM information every cycle."),
+        help=("Refine the delay map using GLM information before the filter step."),
+        default=False,
+    )
+    experimental.add_argument(
+        "--filterwithrefineddelay",
+        dest="filterwithrefineddelay",
+        action="store_true",
+        help=("Use the refined delay in GLM filter."),
         default=False,
     )
     experimental.add_argument(

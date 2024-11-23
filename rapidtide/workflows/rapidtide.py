@@ -3374,42 +3374,24 @@ def rapidtide_main(argparsingfunc):
             delayoffset = filteredglmderivratios * 0.0
             for i in range(filteredglmderivratios.shape[0]):
                 delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+            namesuffix = "_desc-delayoffset_hist"
+            if optiondict["doglmfilt"]:
+                tide_stats.makeandsavehistogram(
+                    delayoffset[np.where(fitmask > 0)],
+                    optiondict["histlen"],
+                    1,
+                    outputname + namesuffix,
+                    displaytitle="Histogram of delay offsets calculated from GLM",
+                    dictvarname="delayoffsethist",
+                    thedict=optiondict,
+                )
+            lagtimescorrected = lagtimes + delayoffset
 
-            """delayoffset = tide_refinedelay.refinedelay(
-                fmri_data_valid,
-                nativespaceshape,
-                validvoxels,
-                initial_fmri_x,
-                lagtimes,
-                fitmask,
-                genlagtc,
-                mode,
-                outputname,
-                oversamptr,
-                glmmean,
-                rvalue,
-                r2value,
-                fitNorm[:, : (optiondict[refinedelayorder] + 1)],
-                fitcoeff[:, : (optiondict[refinedelayorder] + 1)],
-                movingsignal,
-                lagtc,
-                filtereddata,
-                copy.deepcopy(nim_hdr),
-                LGR,
-                TimingLGR,
-                optiondict,
-                bidsbasedict,
-                cifti_hdr,
-                patchthresh=optiondict["delaypatchthresh"],
-                fileiscifti=fileiscifti,
-                textio=optiondict["textio"],
-                rt_floattype="float64",
-                rt_floatset=np.float64,
-            )"""
             ####################################################
             #  Delay refinement end
             ####################################################
 
+        # now calculate the GLM or CVR map
         if optiondict["doglmfilt"] or optiondict["docvrmap"]:
             if optiondict["doglmfilt"]:
                 TimingLGR.info("GLM filtering start")
@@ -3422,11 +3404,15 @@ def rapidtide_main(argparsingfunc):
             initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
             # now calculate the GLM
+            if optiondict["filterwithrefineddelay"]:
+                lagstouse = lagtimescorrected
+            else:
+                lagstouse = lagtimes
             voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
                 fmri_data_valid,
                 validvoxels,
                 initial_fmri_x,
-                lagtimes,
+                lagstouse,
                 fitmask,
                 genlagtc,
                 mode,
@@ -3453,6 +3439,9 @@ def rapidtide_main(argparsingfunc):
                 memprofile=optiondict["memprofile"],
                 debug=optiondict["focaldebug"],
             )
+
+            if optiondict["refinedelay"]:
+                lagstrengthscorrected = np.sqrt(r2value)
 
             evcolnames = ["base"]
             if optiondict["glmderivs"] > 0:
@@ -3647,6 +3636,20 @@ def rapidtide_main(argparsingfunc):
                 "map",
                 "second",
                 "Delay offset correction from delay refinement",
+            ),
+            (
+                lagtimescorrected,
+                "maxtimecorrected",
+                "map",
+                "second",
+                "Lag time in seconds, corrected",
+            ),
+            (
+                lagstrengthscorrected,
+                "maxcorrcorrected",
+                "map",
+                None,
+                "Maximum correlation strength, corrected",
             ),
         ]
     if optiondict["calccoherence"]:
