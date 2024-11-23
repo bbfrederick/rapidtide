@@ -1654,6 +1654,7 @@ def rapidtide_main(argparsingfunc):
     numpadtrs = int(padtime // fmritr)
     padtime = fmritr * numpadtrs
     genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
+    genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
     totalpadlen = validtimepoints + 2 * numpadtrs
     paddedinitial_fmri_x = (
         np.linspace(0.0, totalpadlen * fmritr, num=totalpadlen, endpoint=False)
