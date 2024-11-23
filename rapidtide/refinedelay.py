@@ -137,10 +137,10 @@ def trainratiotooffset(
         print(f"{lagtimes.shape=}")
 
     tide_io.writebidstsv(
-        f"{outputname}_desc-ratiotodelayinfo_timeseries",
-        np.stack((glmderivratios[::-1], smoothglmderivratios[::-1], lagtimes[::-1])),
+        f"{outputname}_desc-ratiotodelaymapping_timeseries",
+        np.stack((smoothglmderivratios[::-1], lagtimes[::-1])),
         1.0,
-        columns=["glmderivratio", "smoothglmderivratio", "delay"],
+        columns=["smoothglmderivratio", "delay"],
         extraheaderinfo={
             "Description": "The ratio of sLFO derivative to the sLFO, and the corresponding delay offset"
         },
