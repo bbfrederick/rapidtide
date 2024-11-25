@@ -267,7 +267,7 @@ def retroglm(args):
 
     # read the processed mask
     print("reading procfit maskfile")
-    procmaskfile = f"{args.datafileroot}_desc-processed_mask.nii.gz"
+    procmaskfile = f"{args.datafileroot}_desc-corrfit_mask.nii.gz"
     (
         procmask_input,
         procmask,
@@ -673,6 +673,45 @@ def retroglm(args):
                 (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
                 (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
             ]
+
+    if args.refinedelay:
+        maplist += [
+            (
+                glmderivratios,
+                "glmderivratios",
+                "map",
+                None,
+                "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
+            ),
+            (
+                medfiltglmderivratios,
+                "medfiltglmderivratios",
+                "map",
+                None,
+                "Median filtered version of the glmderivratios map",
+            ),
+            (
+                filteredglmderivratios,
+                "filteredglmderivratios",
+                "map",
+                None,
+                "glmderivratios, with outliers patched using median filtered data",
+            ),
+            (
+                delayoffset,
+                "delayoffset",
+                "map",
+                "second",
+                "Delay offset correction from delay refinement",
+            ),
+            (
+                lagtimescorrected_valid,
+                "maxtimecorrected",
+                "map",
+                "second",
+                "Lag time in seconds, corrected",
+            ),
+        ]
 
     # write the 3D maps
     tide_io.savemaplist(

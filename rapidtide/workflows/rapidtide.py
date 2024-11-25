@@ -3441,9 +3441,6 @@ def rapidtide_main(argparsingfunc):
                 debug=optiondict["focaldebug"],
             )
 
-            if optiondict["refinedelay"]:
-                lagstrengthscorrected = np.sqrt(r2value)
-
             evcolnames = ["base"]
             if optiondict["glmderivs"] > 0:
                 for i in range(1, optiondict["glmderivs"] + 1):
@@ -3644,13 +3641,6 @@ def rapidtide_main(argparsingfunc):
                 "map",
                 "second",
                 "Lag time in seconds, corrected",
-            ),
-            (
-                lagstrengthscorrected,
-                "maxcorrcorrected",
-                "map",
-                None,
-                "Maximum correlation strength, corrected",
             ),
         ]
     if optiondict["calccoherence"]:
