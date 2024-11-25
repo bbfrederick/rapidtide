@@ -3384,6 +3384,8 @@ def rapidtide_main(argparsingfunc):
 
             # now calculate the delay offsets
             delayoffset = filteredglmderivratios * 0.0
+            if optiondict["focaldebug"]:
+                print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
             for i in range(filteredglmderivratios.shape[0]):
                 delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
             namesuffix = "_desc-delayoffset_hist"

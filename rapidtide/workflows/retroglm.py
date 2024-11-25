@@ -35,7 +35,15 @@ import rapidtide.util as tide_util
 import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
 import rapidtide.workflows.parser_funcs as pf
 
-LGR = logging.getLogger("GENERAL")
+
+# Create a sentinel.
+# from https://stackoverflow.com/questions/58594956/find-out-which-arguments-were-passed-explicitly-in-argparse
+class _Sentinel:
+    pass
+
+
+sentinel = _Sentinel()
+LGR = logging.getLogger(__name__)
 ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
@@ -138,13 +146,6 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
-        "--debug",
-        dest="debug",
-        action="store_true",
-        help=("Output lots of helpful information."),
-        default=False,
-    )
-    parser.add_argument(
         "--refinedelay",
         dest="refinedelay",
         action="store_true",
@@ -170,6 +171,20 @@ def _get_parser():
         ),
         default=DEFAULT_PATCHTHRESH,
     )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Output lots of helpful information."),
+        default=False,
+    )
+    parser.add_argument(
+        "--focaldebug",
+        dest="focaldebug",
+        action="store_true",
+        help=("Output lots of helpful information on a limited subset of operations."),
+        default=False,
+    )
 
     return parser
 
@@ -177,6 +192,14 @@ def _get_parser():
 def retroglm(args):
     # get the pid of the parent process
     args.pid = os.getpid()
+
+    sh = logging.StreamHandler()
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG, handlers=[sh])
+    else:
+        logging.basicConfig(level=logging.INFO, handlers=[sh])
+    TimingLGR.info("Start")
+    LGR.info(f"starting retroglm")
 
     # set some global values
     args.mindelay = DEFAULT_REFINEDELAYMINDELAY
@@ -277,8 +300,9 @@ def retroglm(args):
     if not tide_io.checkspacematch(fmri_header, procmask_header):
         raise ValueError("procmask dimensions do not match fmri dimensions")
     procmask_spacebytime = procmask.reshape((numspatiallocs))
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"{procmask_spacebytime.shape=}")
+        print(f"{tide_stats.getmasksize(procmask_spacebytime)=}")
 
     # read the corrfit mask
     print("reading corrfit maskfile")
@@ -293,8 +317,9 @@ def retroglm(args):
     if not tide_io.checkspacematch(fmri_header, corrmask_header):
         raise ValueError("corrmask dimensions do not match fmri dimensions")
     corrmask_spacebytime = corrmask.reshape((numspatiallocs))
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"{corrmask_spacebytime.shape=}")
+        print(f"{tide_stats.getmasksize(corrmask_spacebytime)=}")
 
     print("reading lagtimes")
     lagtimesfile = f"{args.datafileroot}_desc-maxtime_map.nii.gz"
@@ -354,7 +379,7 @@ def retroglm(args):
     print("figuring out valid voxels")
     validvoxels = np.where(procmask_spacebytime > 0)[0]
     numvalidspatiallocs = np.shape(validvoxels)[0]
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"{numvalidspatiallocs=}")
     internalvalidspaceshape = numvalidspatiallocs
     if args.refinedelay:
@@ -366,7 +391,7 @@ def retroglm(args):
         derivaxissize,
     )
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"validvoxels shape = {numvalidspatiallocs}")
         print(f"internalvalidfmrishape shape = {internalvalidfmrishape}")
 
@@ -422,7 +447,7 @@ def retroglm(args):
         threshval = 0.0
     mode = "glm"
 
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"{validvoxels.shape=}")
         np.savetxt(f"{outputname}_validvoxels.txt", validvoxels)
 
@@ -472,6 +497,7 @@ def retroglm(args):
 
     # refine the delay value prior to calculating the GLM
     if args.refinedelay:
+        print("\n\nDelay refinement")
         TimingLGR.info("Delay refinement start")
         LGR.info("\n\nDelay refinement")
         glmderivratios = tide_refinedelay.getderivratios(
@@ -522,6 +548,8 @@ def retroglm(args):
 
         # now calculate the delay offsets
         delayoffset = filteredglmderivratios * 0.0
+        if args.focaldebug:
+            print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
         for i in range(filteredglmderivratios.shape[0]):
             delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
         namesuffix = "_desc-delayoffset_hist"
@@ -638,7 +666,7 @@ def retroglm(args):
 
     bidsdict = bidsbasedict.copy()
 
-    if args.debug:
+    if args.debug or args.focaldebug:
         maplist += [
             (
                 lagtimes_valid,

@@ -226,7 +226,7 @@ def getderivratios(
         showprogressbar=optiondict["showprogressbar"],
         alwaysmultiproc=optiondict["alwaysmultiproc"],
         memprofile=optiondict["memprofile"],
-        debug=optiondict["focaldebug"],
+        debug=debug,
     )
 
     # calculate the ratio of the first derivative to the main regressor

@@ -49,11 +49,10 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "4.0",
         "--outputlevel",
         "max",
-        "--focaldebug",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
-    """inputargs = [
+    inputargs = [
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
@@ -83,7 +82,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--refinedelay",
         "--filterwithrefineddelay",
     ]
-    rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))"""
+    rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
 
     inputargs = [
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
@@ -100,7 +99,6 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "4.0",
         "--outputlevel",
         "max",
-        "--debug",
     ]
     rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
 
