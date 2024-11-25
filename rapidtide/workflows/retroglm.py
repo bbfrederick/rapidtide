@@ -345,13 +345,18 @@ def retroglm(args):
     # read the lagtc generator file
     print("reading lagtc generator")
     lagtcgeneratorfile = f"{args.datafileroot}_desc-lagtcgenerator_timeseries"
-    genlagtc = tide_resample.FastResamplerFromFile(lagtcgeneratorfile)
+    try:
+        thepadtime = therunoptions["fastresamplerpadtime"]
+    except KeyError:
+        thepadtime = therunoptions["padseconds"]
+    genlagtc = tide_resample.FastResamplerFromFile(lagtcgeneratorfile, padtime=thepadtime)
 
     # select the voxels in the mask
     print("figuring out valid voxels")
     validvoxels = np.where(procmask_spacebytime > 0)[0]
     if args.debug:
         print(f"{validvoxels.shape=}")
+        numpy.savetxt(outputname, validvoxels[0])
     numvalidspatiallocs = np.shape(validvoxels)[0]
     if args.debug:
         print(f"{numvalidspatiallocs=}")

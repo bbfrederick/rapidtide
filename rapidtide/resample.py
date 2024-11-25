@@ -288,13 +288,14 @@ class FastResampler:
         )
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
-        if method == "poly":
+        self.method = method
+        if self.method == "poly":
             self.hires_y = 0.0 * self.hires_x
             self.hires_y[
                 int(self.padtime // self.hiresstep)
                 + 1 : -(int(self.padtime // self.hiresstep) + 1)
             ] = signal.resample_poly(timecourse, int(self.upsampleratio * 10), 10)
-        elif method == "fourier":
+        elif self.method == "fourier":
             self.hires_y = 0.0 * self.hires_x
             self.hires_y[
                 int(self.padtime // self.hiresstep)
@@ -326,6 +327,23 @@ class FastResampler:
             pl.plot(timeaxis, timecourse, self.hires_x, self.hires_y)
             pl.legend(("input", "hires"))
             pl.show()
+
+    def info(self):
+        print(f"{self.timeaxis=}")
+        print(f"{self.timecourse=}")
+        print(f"{self.upsampleratio=}")
+        print(f"{self.padtime=}")
+        print(f"{self.initstep=}")
+        print(f"{self.initstart=}")
+        print(f"{self.initend=}")
+        print(f"{self.hiresstep=}")
+        print(f"{self.hires_x[0]=}")
+        print(f"{self.hires_x[-1]=}")
+        print(f"{self.hiresstart=}")
+        print(f"{self.hiresend=}")
+        print(f"{self.method=}")
+        print(f"{self.hires_y[0]=}")
+        print(f"{self.hires_y[-1]=}")
 
     def save(self, outputname):
         tide_io.writebidstsv(

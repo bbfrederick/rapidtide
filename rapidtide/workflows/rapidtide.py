@@ -1419,7 +1419,7 @@ def rapidtide_main(argparsingfunc):
         excludetmask_y = (reference_x * 0.0) + 1.0
     tmask_y = includetmask_y * excludetmask_y
     tmask_y = np.where(tmask_y == 0.0, 0.0, 1.0)
-    if optiondict["focaldebug"]:
+    if optiondict["debug"]:
         print("after posterizing temporal mask")
         print(tmask_y)
     if (optiondict["tincludemaskname"] is not None) or (
@@ -1645,16 +1645,20 @@ def rapidtide_main(argparsingfunc):
     tide_util.logmem("after correlation array allocation")
 
     # prepare for fast resampling
-    padtime = (
+    optiondict["fastresamplerpadtime"] = (
         max((-optiondict["lagmin"], optiondict["lagmax"]))
         + 30.0
         + np.abs(optiondict["offsettime"])
     )
-    LGR.info(f"setting up fast resampling with padtime = {padtime}")
-    numpadtrs = int(padtime // fmritr)
-    padtime = fmritr * numpadtrs
-    genlagtc = tide_resample.FastResampler(reference_x, reference_y, padtime=padtime)
+    LGR.info(f"setting up fast resampling with padtime = {optiondict['fastresamplerpadtime']}")
+    numpadtrs = int(optiondict["fastresamplerpadtime"] // fmritr)
+    optiondict["fastresamplerpadtime"] = fmritr * numpadtrs
+    genlagtc = tide_resample.FastResampler(
+        reference_x, reference_y, padtime=optiondict["fastresamplerpadtime"]
+    )
     genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
+    if optiondict["focaldebug"]:
+        genlagtc.info()
     totalpadlen = validtimepoints + 2 * numpadtrs
     paddedinitial_fmri_x = (
         np.linspace(0.0, totalpadlen * fmritr, num=totalpadlen, endpoint=False)
@@ -2858,9 +2862,13 @@ def rapidtide_main(argparsingfunc):
                 # reinitialize genlagtc for resampling
                 previousnormoutputdata = normoutputdata + 0.0
                 genlagtc = tide_resample.FastResampler(
-                    paddedinitial_fmri_x, paddednormoutputdata, padtime=padtime
+                    paddedinitial_fmri_x,
+                    paddednormoutputdata,
+                    padtime=optiondict["fastresamplerpadtime"],
                 )
                 genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
+                if optiondict["focaldebug"]:
+                    genlagtc.info()
                 (
                     optiondict[f"kurtosis_reference_pass{thepass + 1}"],
                     optiondict[f"kurtosisz_reference_pass{thepass + 1}"],
@@ -3283,7 +3291,7 @@ def rapidtide_main(argparsingfunc):
             # set the threshval to zero
             mode = "cvrmap"
             optiondict["glmthreshval"] = 0.0
-        if optiondict["focaldebug"]:
+        if optiondict["debug"]:
             # dump the fmri input file going to glm
             if not optiondict["textio"]:
                 theheader = copy.deepcopy(nim_hdr)
@@ -3438,7 +3446,7 @@ def rapidtide_main(argparsingfunc):
                 showprogressbar=optiondict["showprogressbar"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
                 memprofile=optiondict["memprofile"],
-                debug=optiondict["focaldebug"],
+                debug=optiondict["debug"],
             )
 
             evcolnames = ["base"]

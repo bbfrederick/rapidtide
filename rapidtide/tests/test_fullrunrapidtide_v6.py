@@ -49,6 +49,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "4.0",
         "--outputlevel",
         "max",
+        "--focaldebug",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 

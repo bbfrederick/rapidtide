@@ -47,6 +47,15 @@ def trainratiotooffset(
 ):
     global ratiotooffsetfunc, maplimits
 
+    if debug:
+        lagtcgenerator.info()
+        print("timeaxis:", timeaxis)
+        print("outputname:", outputname)
+        print("mindelay:", mindelay)
+        print("maxdelay:", maxdelay)
+        print("smoothpts:", smoothpts)
+        print("edgepad:", edgepad)
+        print("lagtcgenerator:", lagtcgenerator)
     # make a delay map
     delaystep = (maxdelay - mindelay) / (numpoints - 1)
     if debug:
