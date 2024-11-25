@@ -181,7 +181,6 @@ def retroglm(args):
     # set some global values
     args.mindelay = DEFAULT_REFINEDELAYMINDELAY
     args.maxdelay = DEFAULT_REFINEDELAYMAXDELAY
-    args.delaypatchthresh = DEFAULT_PATCHTHRESH
     args.numpoints = DEFAULT_REFINEDELAYNUMPOINTS
 
     if args.outputlevel == "min":
@@ -267,7 +266,7 @@ def retroglm(args):
 
     # read the processed mask
     print("reading procfit maskfile")
-    procmaskfile = f"{args.datafileroot}_desc-corrfit_mask.nii.gz"
+    procmaskfile = f"{args.datafileroot}_desc-processed_mask.nii.gz"
     (
         procmask_input,
         procmask,
@@ -354,9 +353,6 @@ def retroglm(args):
     # select the voxels in the mask
     print("figuring out valid voxels")
     validvoxels = np.where(procmask_spacebytime > 0)[0]
-    if args.debug:
-        print(f"{validvoxels.shape=}")
-        numpy.savetxt(outputname, validvoxels[0])
     numvalidspatiallocs = np.shape(validvoxels)[0]
     if args.debug:
         print(f"{numvalidspatiallocs=}")
@@ -426,6 +422,10 @@ def retroglm(args):
         threshval = 0.0
     mode = "glm"
 
+    if args.debug:
+        print(f"{validvoxels.shape=}")
+        np.savetxt(f"{outputname}_validvoxels.txt", validvoxels)
+
     outputpath = os.path.dirname(outputname)
     rawsources = [
         os.path.relpath(args.fmrifile, start=outputpath),
@@ -479,7 +479,7 @@ def retroglm(args):
             validvoxels,
             initial_fmri_x,
             lagtimes_valid,
-            procmask_valid,
+            corrmask_valid,
             genlagtc,
             mode,
             outputname,

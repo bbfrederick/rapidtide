@@ -48,14 +48,15 @@ def trainratiotooffset(
     global ratiotooffsetfunc, maplimits
 
     if debug:
-        lagtcgenerator.info()
-        print("timeaxis:", timeaxis)
-        print("outputname:", outputname)
-        print("mindelay:", mindelay)
-        print("maxdelay:", maxdelay)
-        print("smoothpts:", smoothpts)
-        print("edgepad:", edgepad)
-        print("lagtcgenerator:", lagtcgenerator)
+        print("ratiotooffsetfunc:")
+        lagtcgenerator.info(prefix="\t")
+        print("\ttimeaxis:", timeaxis)
+        print("\toutputname:", outputname)
+        print("\tmindelay:", mindelay)
+        print("\tmaxdelay:", maxdelay)
+        print("\tsmoothpts:", smoothpts)
+        print("\tedgepad:", edgepad)
+        print("\tlagtcgenerator:", lagtcgenerator)
     # make a delay map
     delaystep = (maxdelay - mindelay) / (numpoints - 1)
     if debug:
@@ -246,7 +247,10 @@ def filterderivratios(
 ):
 
     if debug:
-        print(f"{patchthresh=}")
+        print("filterderivratios:")
+        print(f"\t{patchthresh=}")
+        print(f"\t{validvoxels.shape=}")
+        print(f"\t{nativespaceshape=}")
 
     # filter the ratio to find weird values
     themad = mad(glmderivratio).astype(np.float64)

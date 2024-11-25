@@ -764,6 +764,9 @@ def rapidtide_main(argparsingfunc):
 
     LGR.verbose(f"image threshval = {threshval}")
     validvoxels = np.where(corrmask > 0)[0]
+    if optiondict["focaldebug"]:
+        print(f"{validvoxels.shape=}")
+        np.savetxt(f"{outputname}_validvoxels.txt", validvoxels)
     numvalidspatiallocs = np.shape(validvoxels)[0]
     LGR.debug(f"validvoxels shape = {numvalidspatiallocs}")
     fmri_data_valid = fmri_data[validvoxels, :] + 0.0
@@ -1657,7 +1660,7 @@ def rapidtide_main(argparsingfunc):
         reference_x, reference_y, padtime=optiondict["fastresamplerpadtime"]
     )
     genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
-    if optiondict["focaldebug"]:
+    if optiondict["debug"]:
         genlagtc.info()
     totalpadlen = validtimepoints + 2 * numpadtrs
     paddedinitial_fmri_x = (
@@ -2867,7 +2870,7 @@ def rapidtide_main(argparsingfunc):
                     padtime=optiondict["fastresamplerpadtime"],
                 )
                 genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
-                if optiondict["focaldebug"]:
+                if optiondict["debug"]:
                     genlagtc.info()
                 (
                     optiondict[f"kurtosis_reference_pass{thepass + 1}"],
@@ -3365,7 +3368,7 @@ def rapidtide_main(argparsingfunc):
                 fileiscifti=fileiscifti,
                 textio=optiondict["textio"],
                 rt_floattype="float64",
-                debug=optiondict["debug"],
+                debug=optiondict["focaldebug"],
             )
 
             # find the mapping of glm ratios to delays

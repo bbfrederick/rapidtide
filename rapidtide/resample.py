@@ -328,22 +328,22 @@ class FastResampler:
             pl.legend(("input", "hires"))
             pl.show()
 
-    def info(self):
-        print(f"{self.timeaxis=}")
-        print(f"{self.timecourse=}")
-        print(f"{self.upsampleratio=}")
-        print(f"{self.padtime=}")
-        print(f"{self.initstep=}")
-        print(f"{self.initstart=}")
-        print(f"{self.initend=}")
-        print(f"{self.hiresstep=}")
-        print(f"{self.hires_x[0]=}")
-        print(f"{self.hires_x[-1]=}")
-        print(f"{self.hiresstart=}")
-        print(f"{self.hiresend=}")
-        print(f"{self.method=}")
-        print(f"{self.hires_y[0]=}")
-        print(f"{self.hires_y[-1]=}")
+    def info(self, prefix=""):
+        print(f"{prefix}{self.timeaxis=}")
+        print(f"{prefix}{self.timecourse=}")
+        print(f"{prefix}{self.upsampleratio=}")
+        print(f"{prefix}{self.padtime=}")
+        print(f"{prefix}{self.initstep=}")
+        print(f"{prefix}{self.initstart=}")
+        print(f"{prefix}{self.initend=}")
+        print(f"{prefix}{self.hiresstep=}")
+        print(f"{prefix}{self.hires_x[0]=}")
+        print(f"{prefix}{self.hires_x[-1]=}")
+        print(f"{prefix}{self.hiresstart=}")
+        print(f"{prefix}{self.hiresend=}")
+        print(f"{prefix}{self.method=}")
+        print(f"{prefix}{self.hires_y[0]=}")
+        print(f"{prefix}{self.hires_y[-1]=}")
 
     def save(self, outputname):
         tide_io.writebidstsv(
