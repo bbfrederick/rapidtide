@@ -27,7 +27,7 @@ import rapidtide.io as tide_io
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 from rapidtide.filter import NoncausalFilter
-from rapidtide.tests.utils import get_examples_path, mse
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path, mse
 
 
 def eval_refinedelay(
@@ -40,9 +40,10 @@ def eval_refinedelay(
     nativespaceshape=(10, 10, 10),
     displayplots=False,
     padtime=30.0,
+    outputsuffix="",
     debug=False,
 ):
-    np.random.seed(12345)
+    #np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
 
     Fs = 1.0 / sampletime
@@ -81,7 +82,7 @@ def eval_refinedelay(
     tide_refinedelay.trainratiotooffset(
         lagtcgenerator,
         timeaxis,
-        "refinedelaytest",
+        os.path.join(get_test_temp_path(), "refinedelaytest" + outputsuffix),
         mindelay=mindelay,
         maxdelay=maxdelay,
         numpoints=numpoints,
@@ -215,6 +216,7 @@ def test_refinedelay(displayplots=False, debug=False):
         smoothpts=9,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
+        outputsuffix="_1",
         debug=debug,
     )
     eval_refinedelay(
@@ -226,15 +228,31 @@ def test_refinedelay(displayplots=False, debug=False):
         smoothpts=9,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
+        outputsuffix="_2",
         debug=debug,
     )
     eval_refinedelay(
+        sampletime=0.72,
+        tclengthinsecs=300.0,
+        mindelay=-3.0,
+        maxdelay=3.0,
+        numpoints=501,
+        smoothpts=9,
+        nativespaceshape=(10, 10, 10),
+        displayplots=displayplots,
+        outputsuffix="_3",
+        debug=debug,
+    )
+    """eval_refinedelay(
         sampletime=1.5,
         tclengthinsecs=300.0,
         mindelay=-3.0,
         maxdelay=3.0,
+        numpoints=501,
+        smoothpts=3,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
+        outputsuffix="_1p5_501_3",
         debug=debug,
     )
     eval_refinedelay(
@@ -242,10 +260,13 @@ def test_refinedelay(displayplots=False, debug=False):
         tclengthinsecs=300.0,
         mindelay=-3.0,
         maxdelay=3.0,
+        numpoints=501,
+        smoothpts=3,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
+        outputsuffix="_3p0_501_3",
         debug=debug,
-    )
+    )"""
 
 
 if __name__ == "__main__":

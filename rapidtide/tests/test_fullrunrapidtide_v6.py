@@ -41,10 +41,13 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "1",
         "--despecklepasses",
         "3",
+        "--glmderivs","0",
         "--refinedelay",
         "--filterwithrefineddelay",
         "--delaypatchthresh",
         "4.0",
+        "--outputlevel",
+        "max",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
     inputargs = [
@@ -81,16 +84,16 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
-        os.path.join(get_test_temp_path(), "0deriv_refined"),
+        os.path.join(get_test_temp_path(), "concordance"),
         "--nprocs",
         "-1",
-        "--glmderivs",
-        "0",
-        "--makepseudofile",
-        "--outputlevel",
-        "min",
+        "--glmderivs","0",
         "--refinedelay",
-        "--debug",
+        "--filterwithrefineddelay",
+        "--delaypatchthresh",
+        "4.0",
+        "--outputlevel",
+        "max",
     ]
     rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
 

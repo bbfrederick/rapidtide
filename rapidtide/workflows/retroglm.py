@@ -44,7 +44,6 @@ DEFAULT_PATCHTHRESH = 3.0
 DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
-DEFAULT_HISTLEN = 101
 
 
 def _get_parser():
@@ -176,11 +175,6 @@ def _get_parser():
 
 
 def retroglm(args):
-    rt_floatset = np.float64
-    rt_floattype = "float64"
-    rt_outfloatset = np.float64
-    rt_outfloattype = "float64"
-
     # get the pid of the parent process
     args.pid = os.getpid()
 
@@ -240,6 +234,22 @@ def retroglm(args):
             f"based on {runoptionsfile}, this rapidtide dataset does not support retrospective GLM calculation"
         )
         sys.exit()
+
+    if therunoptions["internalprecision"] == "double":
+        rt_floattype = "float64"
+        rt_floatset = np.float64
+    else:
+        rt_floattype = "float32"
+        rt_floatset = np.float32
+
+    # set the output precision
+    if therunoptions["outputprecision"] == "double":
+        rt_outfloattype = "float64"
+        rt_outfloatset = np.float64
+    else:
+        rt_outfloattype = "float32"
+        rt_outfloatset = np.float32
+    therunoptions["saveminimumglmfiles"] = args.saveminimumglmfiles
 
     # read the fmri input files
     print("reading fmrifile")
@@ -449,26 +459,13 @@ def retroglm(args):
             (xsize, ysize, numslices, validtimepoints),
             theheader,
             bidsbasedict,
-            textio=False,
+            textio=therunoptions["textio"],
             fileiscifti=False,
             rt_floattype=rt_floattype,
             cifti_hdr=None,
         )
 
     # refine the delay value prior to calculating the GLM
-    optiondict = {
-        "glmthreshval": 0.0,
-        "saveminimumglmfiles": False,
-        "nprocs_makelaggedtcs": 1,
-        "nprocs_glm": 1,
-        "mp_chunksize": 1000,
-        "showprogressbar": False,
-        "alwaysmultiproc": False,
-        "memprofile": False,
-        "focaldebug": args.debug,
-        "fmrifreq": 1.0 / fmritr,
-        "textio": False,
-    }
     if args.refinedelay:
         TimingLGR.info("Delay refinement start")
         LGR.info("\n\nDelay refinement")
@@ -492,7 +489,7 @@ def retroglm(args):
             filtereddata,
             LGR,
             TimingLGR,
-            optiondict,
+            therunoptions,
             debug=args.debug,
         )
 
@@ -503,7 +500,7 @@ def retroglm(args):
             patchthresh=args.delaypatchthresh,
             fileiscifti=False,
             textio=False,
-            rt_floattype="float64",
+            rt_floattype=rt_floattype,
             debug=args.debug,
         )
 
@@ -526,7 +523,7 @@ def retroglm(args):
         if args.refinedelay:
             tide_stats.makeandsavehistogram(
                 delayoffset,
-                DEFAULT_HISTLEN,
+                therunoptions["histlen"],
                 1,
                 outputname + namesuffix,
                 displaytitle="Histogram of delay offsets calculated from GLM",

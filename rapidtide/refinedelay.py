@@ -259,55 +259,13 @@ def filterderivratios(
         medfilt = glmderivratio
         filteredarray = glmderivratio
     else:
-        print(f"{glmderivratio.shape=}, {mappedglmderivratio.shape=}")
+        if debug:
+            print(f"{glmderivratio.shape=}, {mappedglmderivratio.shape=}")
         medfilt = median_filter(
             mappedglmderivratio.reshape(nativespaceshape), size=(3, 3, 3)
         ).reshape(internalspaceshape)[validvoxels]
         filteredarray = np.where(
             np.fabs(glmderivratio - medfilt) > patchthresh * themad, medfilt, glmderivratio
         )
-    """savelist = [
-        (glmderivratio, "glmderivratio", "map", None, "GLM derivative ratio"),
-        (
-            delayoffset,
-            "rawdelayoffset",
-            "map",
-            "sec",
-            "Delay offset calculated from GLM derivative ratio",
-        ),
-        (medfilt, "medfiltdelayoffset", "map", "sec", "Delay offset, median filtered"),
-        (
-            filteredarray,
-            "delayoffset",
-            "map",
-            "sec",
-            "Delay offset, selectively median filtered",
-        ),
-    ]
-    if not optiondict["textio"]:
-        if fileiscifti:
-            timeindex = theheader["dim"][0] - 1
-            spaceindex = theheader["dim"][0]
-            theheader["dim"][timeindex] = 1
-            theheader["dim"][spaceindex] = filteredarray.shape[0]
-        else:
-            theheader["dim"][0] = 3
-            theheader["dim"][4] = 1
-            theheader["pixdim"][4] = 1.0
-    else:
-        theheader = None
-        cifti_hdr = None
-    tide_io.savemaplist(
-        outputname,
-        savelist,
-        validvoxels,
-        nativespaceshape,
-        theheader,
-        bidsbasedict,
-        textio=optiondict["textio"],
-        fileiscifti=fileiscifti,
-        rt_floattype=rt_floattype,
-        cifti_hdr=cifti_hdr,
-    )"""
 
     return medfilt, filteredarray
