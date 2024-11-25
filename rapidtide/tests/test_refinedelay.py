@@ -43,7 +43,7 @@ def eval_refinedelay(
     outputsuffix="",
     debug=False,
 ):
-    #np.random.seed(12345)
+    np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
 
     Fs = 1.0 / sampletime
@@ -237,13 +237,13 @@ def test_refinedelay(displayplots=False, debug=False):
         mindelay=-3.0,
         maxdelay=3.0,
         numpoints=501,
-        smoothpts=9,
+        smoothpts=5,
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         outputsuffix="_3",
         debug=debug,
     )
-    """eval_refinedelay(
+    eval_refinedelay(
         sampletime=1.5,
         tclengthinsecs=300.0,
         mindelay=-3.0,
@@ -266,7 +266,7 @@ def test_refinedelay(displayplots=False, debug=False):
         displayplots=displayplots,
         outputsuffix="_3p0_501_3",
         debug=debug,
-    )"""
+    )
 
 
 if __name__ == "__main__":
