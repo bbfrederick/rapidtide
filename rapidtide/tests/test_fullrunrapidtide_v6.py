@@ -17,6 +17,7 @@
 #
 #
 import os
+import subprocess
 
 import matplotlib as mpl
 
@@ -56,7 +57,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
-        os.path.join(get_test_temp_path(), "2deriv"), 
+        os.path.join(get_test_temp_path(), "2deriv"),
         "--nprocs",
         "-1",
         "--glmderivs",
@@ -101,6 +102,29 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "max",
     ]
     rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
+
+    for map in [
+        "glmderivratios",
+        "medfiltglmderivratios",
+        "filteredglmderivratios",
+        "lfofilterInbandVarianceBefore",
+        "lfofilterInbandVarianceAfter",
+        "lfofilterInbandVarianceChange",
+        "lfofilterCoeff",
+        "lfofilterMean",
+        "lfofilterNorm",
+        "lfofilterR2",
+        "lfofilterR",
+    ]:
+        diffcmd = ["diff"]
+        diffcmd.extend([os.path.join(get_test_temp_path(), f"concordance_desc-{map}_map.nii.gz")])
+        diffcmd.extend(
+            [os.path.join(get_test_temp_path(), f"sub-RAPIDTIDETEST6_desc-{map}_map.nii.gz")]
+        )
+        proc = subprocess.run(diffcmd, capture_output=True)
+        if proc.returncode != 0:
+            print(f"{map} did not match")
+            assert False
 
 
 if __name__ == "__main__":
