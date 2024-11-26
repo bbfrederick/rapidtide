@@ -3376,6 +3376,7 @@ def rapidtide_main(argparsingfunc):
                 genlagtc,
                 initial_fmri_x,
                 outputname,
+                optiondict["outputlevel"],
                 mindelay=optiondict["mindelay"],
                 maxdelay=optiondict["maxdelay"],
                 numpoints=optiondict["numpoints"],
@@ -3621,27 +3622,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict["refinedelay"]:
         savelist += [
             (
-                glmderivratios,
-                "glmderivratios",
-                "map",
-                None,
-                "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
-            ),
-            (
-                medfiltglmderivratios,
-                "medfiltglmderivratios",
-                "map",
-                None,
-                "Median filtered version of the glmderivratios map",
-            ),
-            (
-                filteredglmderivratios,
-                "filteredglmderivratios",
-                "map",
-                None,
-                "glmderivratios, with outliers patched using median filtered data",
-            ),
-            (
                 delayoffset,
                 "delayoffset",
                 "map",
@@ -3656,6 +3636,30 @@ def rapidtide_main(argparsingfunc):
                 "Lag time in seconds, corrected",
             ),
         ]
+        if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
+            savelist += [
+                (
+                    glmderivratios,
+                    "glmderivratios",
+                    "map",
+                    None,
+                    "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
+                ),
+                (
+                    medfiltglmderivratios,
+                    "medfiltglmderivratios",
+                    "map",
+                    None,
+                    "Median filtered version of the glmderivratios map",
+                ),
+                (
+                    filteredglmderivratios,
+                    "filteredglmderivratios",
+                    "map",
+                    None,
+                    "glmderivratios, with outliers patched using median filtered data",
+                ),
+            ]
     if optiondict["calccoherence"]:
         savelist += [
             (coherencepeakval, "coherencepeakval", "map", None, "Coherence peak value"),

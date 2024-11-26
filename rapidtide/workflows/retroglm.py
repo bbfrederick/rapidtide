@@ -540,6 +540,7 @@ def retroglm(args):
             genlagtc,
             initial_fmri_x,
             outputname,
+            args.outputlevel,
             mindelay=args.mindelay,
             maxdelay=args.maxdelay,
             numpoints=args.numpoints,

@@ -83,6 +83,7 @@ def eval_refinedelay(
         lagtcgenerator,
         timeaxis,
         os.path.join(get_test_temp_path(), "refinedelaytest" + outputsuffix),
+        "norm",
         mindelay=mindelay,
         maxdelay=maxdelay,
         numpoints=numpoints,

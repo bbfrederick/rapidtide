@@ -38,6 +38,7 @@ def trainratiotooffset(
     lagtcgenerator,
     timeaxis,
     outputname,
+    outputlevel,
     mindelay=-3.0,
     maxdelay=3.0,
     numpoints=501,
@@ -146,16 +147,17 @@ def trainratiotooffset(
         print(f"{smoothglmderivratios.shape=}")
         print(f"{lagtimes.shape=}")
 
-    tide_io.writebidstsv(
-        f"{outputname}_desc-ratiotodelaymapping_timeseries",
-        np.stack((smoothglmderivratios[::-1], lagtimes[::-1])),
-        1.0,
-        columns=["smoothglmderivratio", "delay"],
-        extraheaderinfo={
-            "Description": "The ratio of sLFO derivative to the sLFO, and the corresponding delay offset"
-        },
-        append=False,
-    )
+    if (outputlevel != "min") and (outputlevel != "less"):
+        tide_io.writebidstsv(
+            f"{outputname}_desc-ratiotodelaymapping_timeseries",
+            np.stack((smoothglmderivratios[::-1], lagtimes[::-1])),
+            1.0,
+            columns=["smoothglmderivratio", "delay"],
+            extraheaderinfo={
+                "Description": "The ratio of sLFO derivative to the sLFO, and the corresponding delay offset"
+            },
+            append=False,
+        )
     ratiotooffsetfunc = CubicSpline(smoothglmderivratios[::-1], lagtimes[::-1])
     maplimits = (smoothglmderivratios[::-1][0], smoothglmderivratios[::-1][-1])
 

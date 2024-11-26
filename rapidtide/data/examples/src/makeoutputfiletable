@@ -49,11 +49,11 @@ def makecleanoutputdir(pathname):
     return True
 
 
-def dirfromoptions(level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle):
-    return f"{level}_passesgt1-{passesgt1}_numnullgt0-{numnullgt0}_doglm-{doglm}_domotion-{domotion}_doderivs-{doderivs}_dodespeckle-{dodespeckle}"
+def dirfromoptions(level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay):
+    return f"{level}_passesgt1-{passesgt1}_numnullgt0-{numnullgt0}_doglm-{doglm}_domotion-{domotion}_doderivs-{doderivs}_dodespeckle-{dodespeckle}_dorefinedelay-{dorefinedelay}"
 
 
-def runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle):
+def runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay):
     # run rapidtide
     if passesgt1:
         npasses = 2
@@ -87,6 +87,8 @@ def runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doder
         inputargs += ["--noglm"]
     if doderivs:
         inputargs += ["--glmderivs", "1"]
+    if dorefinedelay:
+        inputargs += ["--refinedelay"]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
 
@@ -122,6 +124,7 @@ def listfiles(outputdir, fileroots, runinfo, debug=False):
                 fileroots[basename]["domotion"] = runinfo[4]
                 fileroots[basename]["doderivs"] = runinfo[5]
                 fileroots[basename]["dodespeckle"] = runinfo[6]
+                fileroots[basename]["dorefinedelay"] = runinfo[7]
                 filesadded += [basename]
             if extension == "json":
                 thedescription = getdescription(thisfile)
@@ -139,43 +142,61 @@ def listfiles(outputdir, fileroots, runinfo, debug=False):
 
 if __name__ == "__main__":
     runinfo = [
-        ("min", False, False, False, False, False, False),
-        ("min", False, False, True, False, False, False),
-        ("min", True, False, False, False, False, False),
-        ("min", False, True, False, False, False, False),
-        ("min", False, False, False, True, False, False),
-        ("min", False, False, False, False, False, True),
-        ("less", False, False, False, False, False, False),
-        ("less", False, False, True, False, False, False),
-        ("normal", False, False, False, False, False, False),
-        ("normal", False, False, True, False, False, False),
-        ("more", False, False, False, False, False, False),
-        ("more", False, False, True, False, False, False),
-        ("max", False, False, False, False, False, False),
-        ("max", True, False, False, False, False, False),
-        ("max", False, False, True, False, False, True),
-        ("max", False, False, False, True, False, False),
-        ("max", False, False, True, False, False, False),
-        ("max", False, False, True, False, True, False),
+        ("min", False, False, False, False, False, False, False),
+        ("min", False, False, True, False, False, False, False),
+        ("min", True, False, False, False, False, False, False),
+        ("min", False, True, False, False, False, False, False),
+        ("min", False, False, False, True, False, False, False),
+        ("min", False, False, False, False, False, True, False),
+        ("less", False, False, False, False, False, False, False),
+        ("less", False, False, True, False, False, False, False),
+        ("normal", False, False, False, False, False, False, False),
+        ("normal", False, False, True, False, False, False, False),
+        ("more", False, False, False, False, False, False, False),
+        ("more", False, False, True, False, False, False, False),
+        ("max", False, False, False, False, False, False, False),
+        ("max", True, False, False, False, False, False, False),
+        ("max", False, False, True, False, False, True, False),
+        ("max", False, False, False, True, False, False, False),
+        ("max", False, False, True, False, False, False, False),
+        ("max", False, False, True, False, True, False, False),
+        ("min", False, False, False, False, False, False, True),
+        ("min", False, False, True, False, False, False, True),
+        ("min", True, False, False, False, False, False, True),
+        ("min", False, True, False, False, False, False, True),
+        ("min", False, False, False, True, False, False, True),
+        ("min", False, False, False, False, False, True, True),
+        ("less", False, False, False, False, False, False, True),
+        ("less", False, False, True, False, False, False, True),
+        ("normal", False, False, False, False, False, False, True),
+        ("normal", False, False, True, False, False, False, True),
+        ("more", False, False, False, False, False, False, True),
+        ("more", False, False, True, False, False, False, True),
+        ("max", False, False, False, False, False, False, True),
+        ("max", True, False, False, False, False, False, True),
+        ("max", False, False, True, False, False, True, True),
+        ("max", False, False, False, True, False, False, True),
+        ("max", False, False, True, False, False, False, True),
+        ("max", False, False, True, False, True, False, True),
     ]
 
     genfiles = True
 
     fileroots = {}
-    for level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle in runinfo:
+    for level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay in runinfo:
         subdir = dirfromoptions(
-            level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
+            level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay
         )
         outputdir = os.path.join("..", "dst", "scratch", subdir)
         if genfiles:
             makecleanoutputdir(outputdir)
             runrapidtide(
-                outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle
+                outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay
             )
         listfiles(
             outputdir,
             fileroots,
-            (level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle),
+            (level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay),
             debug=False,
         )
 
@@ -196,6 +217,8 @@ if __name__ == "__main__":
                 existstring = "Present if doing motion/confound regression and outputlevel is max"
             else:
                 existstring = "Present if doing motion/confound regression"
+        elif fileroots[key]["dorefinedelay"]:
+            existstring = "Present if refinedelay is enabled and outputlevel is \u2265 less"
         elif fileroots[key]["dodespeckle"]:
             existstring = "Present if despecklepasses > 0 (default) and outputlevel is max"
         elif fileroots[key]["doglm"]:
