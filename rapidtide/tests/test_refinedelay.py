@@ -175,7 +175,7 @@ def eval_refinedelay(
         debug=debug,
     )
 
-    medfilt, filteredglmderivratios = tide_refinedelay.filterderivratios(
+    medfilt, filteredglmderivratios, themad = tide_refinedelay.filterderivratios(
         glmderivratios,
         nativespaceshape,
         validvoxels,

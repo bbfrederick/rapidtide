@@ -283,4 +283,4 @@ def filterderivratios(
             np.fabs(glmderivratio - medfilt) > patchthresh * themad, medfilt, glmderivratio
         )
 
-    return medfilt, filteredarray
+    return medfilt, filteredarray, themad

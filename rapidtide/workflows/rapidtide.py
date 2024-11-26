@@ -3360,16 +3360,19 @@ def rapidtide_main(argparsingfunc):
                 debug=optiondict["debug"],
             )
 
-            medfiltglmderivratios, filteredglmderivratios = tide_refinedelay.filterderivratios(
-                glmderivratios,
-                nativespaceshape,
-                validvoxels,
-                patchthresh=optiondict["delaypatchthresh"],
-                fileiscifti=fileiscifti,
-                textio=optiondict["textio"],
-                rt_floattype="float64",
-                debug=optiondict["focaldebug"],
+            medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
+                tide_refinedelay.filterderivratios(
+                    glmderivratios,
+                    nativespaceshape,
+                    validvoxels,
+                    patchthresh=optiondict["delaypatchthresh"],
+                    fileiscifti=fileiscifti,
+                    textio=optiondict["textio"],
+                    rt_floattype="float64",
+                    debug=optiondict["focaldebug"],
+                )
             )
+            optiondict["delayoffsetMAD"] = delayoffsetMAD
 
             # find the mapping of glm ratios to delays
             tide_refinedelay.trainratiotooffset(

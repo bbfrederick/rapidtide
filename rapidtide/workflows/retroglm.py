@@ -524,15 +524,17 @@ def retroglm(args):
             debug=args.debug,
         )
 
-        medfiltglmderivratios, filteredglmderivratios = tide_refinedelay.filterderivratios(
-            glmderivratios,
-            (xsize, ysize, numslices),
-            validvoxels,
-            patchthresh=args.delaypatchthresh,
-            fileiscifti=False,
-            textio=False,
-            rt_floattype=rt_floattype,
-            debug=args.debug,
+        medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
+            tide_refinedelay.filterderivratios(
+                glmderivratios,
+                (xsize, ysize, numslices),
+                validvoxels,
+                patchthresh=args.delaypatchthresh,
+                fileiscifti=False,
+                textio=False,
+                rt_floattype=rt_floattype,
+                debug=args.debug,
+            )
         )
 
         # find the mapping of glm ratios to delays
@@ -850,6 +852,14 @@ def retroglm(args):
         bidsdict,
         debug=args.debug,
     )
+
+    # read the runoptions file
+    print("writing runoptions")
+    therunoptions["retroglm_delayoffsetMAD"] = delayoffsetMAD
+    therunoptions["retroglm_runtime"] = time.strftime(
+        "%a, %d %b %Y %H:%M:%S %Z", time.localtime(time.time())
+    )
+    tide_io.writedicttojson(therunoptions, f"{outputname}_desc-runoptions_info.json")
 
     # clean up shared memory
     if usesharedmem:
