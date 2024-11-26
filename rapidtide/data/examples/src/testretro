@@ -12,8 +12,8 @@
 
 ##retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv --nprocs -1 
 retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv --nprocs -1 --glmderivs 0 --makepseudofile --outputlevel max
-retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv_refined --nprocs -1 --glmderivs 0 --makepseudofile --outputlevel max --refinedelay
-retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv_refinedfit --nprocs -1 --glmderivs 0 --makepseudofile --outputlevel max --refinedelay --filterwithrefineddelay
+retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv_refined --nprocs -1 --glmderivs 0 --makepseudofile --outputlevel max --refinedelay --nofilterwithrefineddelay
+retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv_refinedfit --nprocs -1 --glmderivs 0 --makepseudofile --outputlevel max --refinedelay
 ##retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/2deriv --nprocs -1 --glmderivs 2
 ##retroglm sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/3deriv --nprocs -1 --glmderivs 3
 

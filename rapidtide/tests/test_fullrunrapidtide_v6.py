@@ -45,7 +45,6 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--glmderivs",
         "0",
         "--refinedelay",
-        "--filterwithrefineddelay",
         "--delaypatchthresh",
         "4.0",
         "--outputlevel",
@@ -81,7 +80,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--outputlevel",
         "max",
         "--refinedelay",
-        "--filterwithrefineddelay",
+        "--nofilterwithrefineddelay",
     ]
     rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
 
@@ -95,7 +94,6 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--glmderivs",
         "0",
         "--refinedelay",
-        "--filterwithrefineddelay",
         "--delaypatchthresh",
         "4.0",
         "--outputlevel",

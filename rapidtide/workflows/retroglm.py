@@ -21,6 +21,7 @@ import copy
 import logging
 import os
 import sys
+import time
 
 import numpy as np
 
@@ -153,11 +154,11 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
-        "--filterwithrefineddelay",
+        "--nofilterwithrefineddelay",
         dest="filterwithrefineddelay",
-        action="store_true",
-        help=("Use the refined delay in GLM filter."),
-        default=False,
+        action="store_false",
+        help=("Do not use the refined delay in GLM filter."),
+        default=True,
     )
     parser.add_argument(
         "--delaypatchthresh",
@@ -575,7 +576,7 @@ def retroglm(args):
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     print("calling glmmfrommaps")
-    if args.filterwithrefineddelay:
+    if args.refinedelay and args.filterwithrefineddelay:
         lagstouse_valid = lagtimescorrected_valid
     else:
         lagstouse_valid = lagtimes_valid
@@ -855,7 +856,8 @@ def retroglm(args):
 
     # read the runoptions file
     print("writing runoptions")
-    therunoptions["retroglm_delayoffsetMAD"] = delayoffsetMAD
+    if args.refinedelay:
+        therunoptions["retroglm_delayoffsetMAD"] = delayoffsetMAD
     therunoptions["retroglm_runtime"] = time.strftime(
         "%a, %d %b %Y %H:%M:%S %Z", time.localtime(time.time())
     )

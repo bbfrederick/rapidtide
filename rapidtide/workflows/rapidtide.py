@@ -3422,7 +3422,7 @@ def rapidtide_main(argparsingfunc):
             initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
             # now calculate the GLM
-            if optiondict["filterwithrefineddelay"]:
+            if optiondict["refinedelay"] and optiondict["filterwithrefineddelay"]:
                 lagstouse = lagtimescorrected
             else:
                 lagstouse = lagtimes

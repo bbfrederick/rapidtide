@@ -1391,11 +1391,11 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
-        "--filterwithrefineddelay",
+        "--nofilterwithrefineddelay",
         dest="filterwithrefineddelay",
-        action="store_true",
-        help=("Use the refined delay in GLM filter."),
-        default=False,
+        action="store_false",
+        help=("Do not use the refined delay in GLM filter."),
+        default=True,
     )
     experimental.add_argument(
         "--delaypatchthresh",

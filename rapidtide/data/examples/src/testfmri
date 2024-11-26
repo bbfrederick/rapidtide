@@ -15,6 +15,7 @@ rapidtide \
     --simcalcrange 50 -1 \
     --outputlevel max \
     --refinedelay \
+    --nofilterwithrefineddelay \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST
 
@@ -24,7 +25,6 @@ rapidtide \
     --simcalcrange 50 -1 \
     --outputlevel max \
     --refinedelay \
-    --filterwithrefineddelay \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_corr
 
