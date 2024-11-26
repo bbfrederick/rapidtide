@@ -218,7 +218,10 @@ if __name__ == "__main__":
             else:
                 existstring = "Present if doing motion/confound regression"
         elif fileroots[key]["dorefinedelay"]:
-            existstring = "Present if refinedelay is enabled and outputlevel is \u2265 less"
+            if fileroots[key]["level"] == "min" or fileroots[key]["level"] == "less":
+                existstring = "Present if refinedelay is enabled"
+            else:
+                existstring = "Present if refinedelay is enabled and outputlevel is \u2265 normal"
         elif fileroots[key]["dodespeckle"]:
             existstring = "Present if despecklepasses > 0 (default) and outputlevel is max"
         elif fileroots[key]["doglm"]:
