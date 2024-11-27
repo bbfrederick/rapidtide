@@ -27,17 +27,6 @@ import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
 
-def format_bytes(size):
-    # 2**10 = 1024
-    power = 2**10
-    n = 0
-    power_labels = {0: "", 1: "kilo", 2: "mega", 3: "giga", 4: "tera"}
-    while size > power:
-        size /= power
-        n += 1
-    return size, power_labels[n] + "bytes"
-
-
 def _get_parser():
     """
     Argument parser for glmfilt
@@ -185,7 +174,7 @@ def stupidramtricks(args):
         + filtereddata.nbytes
     )
 
-    thesize, theunit = format_bytes(totalbytes)
+    thesize, theunit = tide_util.format_bytes(totalbytes)
     print(f"allocated {thesize:.3f} {theunit} {location}")
 
     """glmderivratios = tide_refinedelay.getderivratios(

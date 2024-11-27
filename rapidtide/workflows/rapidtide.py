@@ -1640,11 +1640,18 @@ def rapidtide_main(argparsingfunc):
         outcorrarray, outcorrarray_shm = tide_util.allocshared(
             internalcorrshape, rt_floatset, name=f"outcorrarray_{optiondict['pid']}"
         )
+        ramlocation = "in shared memory"
     else:
         corrout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         gaussout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         windowout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
         outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
+        ramlocation = "locally"
+    optiondict["totalcorrelationbytes"] = (
+        corrout.nbytes + gaussout.nbytes + windowout.nbytes + outcorrarray.nbytes
+    )
+    thesize, theunit = tide_util.format_bytes(optiondict["totalcorrelationbytes"])
+    print(f"allocated {thesize:.3f} {theunit} {ramlocation} for correlation")
     tide_util.logmem("after correlation array allocation")
 
     # prepare for fast resampling
@@ -1705,11 +1712,18 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset,
                 name=f"paddedweights_{optiondict['pid']}",
             )
+            ramlocation = "in shared memory"
         else:
             shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             paddedshiftedtcs = np.zeros(internalvalidpaddedfmrishape, dtype=rt_floattype)
             paddedweights = np.zeros(internalvalidpaddedfmrishape, dtype=rt_floattype)
+            ramlocation = "locally"
+        optiondict["totalrefinementbytes"] = (
+            shiftedtcs.nbytes + weights.nbytes + paddedshiftedtcs.nbytes + paddedweights.nbytes
+        )
+        thesize, theunit = tide_util.format_bytes(optiondict["totalrefinementbytes"])
+        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for refinement")
         tide_util.logmem("after refinement array allocation")
 
     outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
@@ -3038,10 +3052,17 @@ def rapidtide_main(argparsingfunc):
             coherencepeakfreq, coherencepeakfreq_shm = tide_util.allocshared(
                 numvalidspatiallocs, rt_outfloatset, name=f"coherencepeakfreq_{optiondict['pid']}"
             )
+            ramlocation = "in shared memory"
         else:
             coherencefunc = np.zeros(internalvalidcoherenceshape, dtype=rt_outfloattype)
             coherencepeakval = np.zeros(numvalidspatiallocs, dtype=rt_outfloattype)
             coherencepeakfreq = np.zeros(numvalidspatiallocs, dtype=rt_outfloattype)
+            ramlocation = "locally"
+        optiondict["totalcoherencebytes"] = (
+            coherencefunc.nbytes + coherencepeakval.nbytes + coherencepeakfreq.nbytes
+        )
+        thesize, theunit = tide_util.format_bytes(optiondict["totalcoherencebytes"])
+        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for coherence calculation")
 
         coherencepass_func = addmemprofiling(
             tide_calccoherence.coherencepass,
@@ -3114,9 +3135,14 @@ def rapidtide_main(argparsingfunc):
             wpeak, wpeak_shm = tide_util.allocshared(
                 internalvalidspaceshape, rt_outfloatset, name=f"wpeak_{optiondict['pid']}"
             )
+            ramlocation = "in shared memory"
         else:
             wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            ramlocation = "locally"
+        optiondict["totalwienerbytes"] = wienerdeconv.nbytes + wpeak.nbytes
+        thesize, theunit = tide_util.format_bytes(optiondict["totalwienerbytes"])
+        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for wiener deconvolution")
 
         wienerpass_func = addmemprofiling(
             tide_wiener.wienerpass,
@@ -3270,6 +3296,7 @@ def rapidtide_main(argparsingfunc):
             filtereddata, filtereddata_shm = tide_util.allocshared(
                 internalvalidfmrishape, rt_outfloatset, name=f"filtereddata_{optiondict['pid']}"
             )
+            ramlocation = "in shared memory"
         else:
             glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
@@ -3279,6 +3306,20 @@ def rapidtide_main(argparsingfunc):
             movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
             lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
             filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+            ramlocation = "locally"
+
+        optiondict["totalglmbytes"] = (
+            glmmean.nbytes
+            + rvalue.nbytes
+            + r2value.nbytes
+            + fitNorm.nbytes
+            + fitcoeff.nbytes
+            + movingsignal.nbytes
+            + lagtc.nbytes
+            + filtereddata.nbytes
+        )
+        thesize, theunit = tide_util.format_bytes(optiondict["totalglmbytes"])
+        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for glm/delay refinement")
 
         if optiondict["memprofile"]:
             if optiondict["doglmfilt"]:

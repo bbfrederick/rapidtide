@@ -422,6 +422,7 @@ def retroglm(args):
         filtereddata, filtereddata_shm = tide_util.allocshared(
             internalvalidfmrishape, rt_outfloatset
         )
+        ramlocation = "in shared memory"
     else:
         if args.debug:
             print("allocating memory")
@@ -433,6 +434,20 @@ def retroglm(args):
         movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
         lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
         filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+        ramlocation = "locally"
+
+    totalbytes = (
+        glmmean.nbytes
+        + rvalue.nbytes
+        + r2value.nbytes
+        + fitNorm.nbytes
+        + fitcoeff.nbytes
+        + movingsignal.nbytes
+        + lagtc.nbytes
+        + filtereddata.nbytes
+    )
+    thesize, theunit = tide_util.format_bytes(totalbytes)
+    print(f"allocated {thesize:.3f} {theunit} {ramlocation}")
 
     oversampfactor = int(therunoptions["oversampfactor"])
     if args.alternateoutput is None:
