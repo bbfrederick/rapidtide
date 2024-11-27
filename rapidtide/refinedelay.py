@@ -147,17 +147,7 @@ def trainratiotooffset(
         print(f"{smoothglmderivratios.shape=}")
         print(f"{lagtimes.shape=}")
 
-    if (outputlevel != "min") and (outputlevel != "less"):
-        tide_io.writebidstsv(
-            f"{outputname}_desc-ratiotodelaymapping_timeseries",
-            np.stack((smoothglmderivratios[::-1], lagtimes[::-1])),
-            1.0,
-            columns=["smoothglmderivratio", "delay"],
-            extraheaderinfo={
-                "Description": "The ratio of sLFO derivative to the sLFO, and the corresponding delay offset"
-            },
-            append=False,
-        )
+    # make sure the mapping function is legal
     xaxis = smoothglmderivratios[::-1]
     yaxis = lagtimes[::-1]
     midpoint = int(len(xaxis) // 2)
@@ -169,6 +159,18 @@ def trainratiotooffset(
         upperlim += 1
     xaxis = xaxis[lowerlim : upperlim + 1]
     yaxis = yaxis[lowerlim : upperlim + 1]
+
+    if (outputlevel != "min") and (outputlevel != "less"):
+        tide_io.writebidstsv(
+            f"{outputname}_desc-ratiotodelaymapping_timeseries",
+            np.stack((xaxis, yaxis)),
+            1.0,
+            columns=["smoothglmderivratio", "delay"],
+            extraheaderinfo={
+                "Description": "The ratio of sLFO derivative to the sLFO, and the corresponding delay offset"
+            },
+            append=False,
+        )
     ratiotooffsetfunc = CubicSpline(xaxis, yaxis)
     maplimits = (xaxis[0], xaxis[-1])
 
