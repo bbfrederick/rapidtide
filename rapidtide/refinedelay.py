@@ -160,11 +160,12 @@ def trainratiotooffset(
         )
     xaxis = smoothglmderivratios[::-1]
     yaxis = lagtimes[::-1]
-    lowerlim = np.argmin(xaxis)
-    while xaxis[lowerlim] == xaxis[lowerlim + 1]:
-        lowerlim += 1
-    upperlim = np.argmax(xaxis)
-    while xaxis[upperlim] == xaxis[upperlim - 1]:
+    midpoint = int(len(xaxis) // 2)
+    lowerlim = midpoint + 0
+    while (lowerlim > 1) and xaxis[lowerlim] > xaxis[lowerlim - 1]:
+        lowerlim -= 1
+    upperlim = midpoint + 0
+    while (upperlim < len(xaxis) - 2) and xaxis[upperlim] < xaxis[upperlim + 1]:
         upperlim += 1
     xaxis = xaxis[lowerlim : upperlim + 1]
     yaxis = yaxis[lowerlim : upperlim + 1]
