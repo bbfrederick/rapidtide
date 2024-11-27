@@ -158,8 +158,18 @@ def trainratiotooffset(
             },
             append=False,
         )
-    ratiotooffsetfunc = CubicSpline(smoothglmderivratios[::-1], lagtimes[::-1])
-    maplimits = (smoothglmderivratios[::-1][0], smoothglmderivratios[::-1][-1])
+    xaxis = smoothglmderivratios[::-1]
+    yaxis = lagtimes[::-1]
+    lowerlim = np.argmin(xaxis)
+    while xaxis[lowerlim] == xaxis[lowerlim + 1]:
+        lowerlim += 1
+    upperlim = np.argmax(xaxis)
+    while xaxis[upperlim] == xaxis[upperlim - 1]:
+        upperlim += 1
+    xaxis = xaxis[lowerlim : upperlim + 1]
+    yaxis = yaxis[lowerlim : upperlim + 1]
+    ratiotooffsetfunc = CubicSpline(xaxis, yaxis)
+    maplimits = (xaxis[0], xaxis[-1])
 
 
 def ratiotodelay(theratio):
