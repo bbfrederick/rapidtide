@@ -132,9 +132,15 @@ def stupidramtricks(args):
         print(f"validvoxels shape = {numvalidspatiallocs}")
         print(f"internalvalidfmrishape shape = {internalvalidfmrishape}")
 
+    fmridata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+
     if args.usesharedmem:
         if args.debug:
             print("allocating shared memory")
+        # first move fmridata into shared memory
+        fmridata, fmridata_shm = tide_util.numpy2shared(
+            fmridata, rt_floatset, name=f"fmridata_{args.pid}"
+        )
         glmmean, glmmean_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
@@ -149,6 +155,7 @@ def stupidramtricks(args):
         filtereddata, filtereddata_shm = tide_util.allocshared(
             internalvalidfmrishape, rt_outfloatset
         )
+
         location = "in shared memory"
     else:
         if args.debug:
@@ -164,7 +171,8 @@ def stupidramtricks(args):
         location = "locally"
 
     totalbytes = (
-        glmmean.nbytes
+        fmridata.nbytes
+        + glmmean.nbytes
         + rvalue.nbytes
         + r2value.nbytes
         + fitNorm.nbytes
@@ -203,6 +211,7 @@ def stupidramtricks(args):
 
     # clean up shared memory
     if args.usesharedmem:
+        tide_util.cleanup_shm(fmridata_shm)
         tide_util.cleanup_shm(glmmean_shm)
         tide_util.cleanup_shm(rvalue_shm)
         tide_util.cleanup_shm(r2value_shm)
