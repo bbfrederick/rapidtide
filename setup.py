@@ -175,6 +175,7 @@ script_list = [
     "rapidtide/scripts/spatialfit",
     "rapidtide/scripts/spatialmi",
     "rapidtide/scripts/spectrogram",
+    "rapidtide/scripts/stupidramtricks",
     "rapidtide/scripts/synthASL",
     "rapidtide/scripts/tcfrom2col",
     "rapidtide/scripts/tcfrom3col",
