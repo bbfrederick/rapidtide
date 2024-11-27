@@ -161,7 +161,7 @@ def stupidramtricks(args):
         movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
         lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
         filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-        lcation = "locally"
+        location = "locally"
 
     totalbytes = (
         glmmean.nbytes
