@@ -108,6 +108,8 @@ DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
 
+DEFAULT_PATCHSIZE = 10
+
 
 def _get_parser():
     """
@@ -1582,6 +1584,13 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
+        "--patchshift",
+        dest="patchshift",
+        action="store_true",
+        help=("Perform patch shift correction."),
+        default=False,
+    )
+    experimental.add_argument(
         "--tincludemask",
         dest="tincludemaskname",
         action="store",
@@ -1792,6 +1801,7 @@ def process_args(inputargs=None):
     # The fraction of the main peak over which points are included in the peak
     args["searchfrac"] = 0.5
     args["mp_chunksize"] = 50000
+    args["patchsize"] = DEFAULT_PATCHSIZE
 
     # significance estimation
     args["sighistlen"] = 1000

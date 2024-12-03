@@ -38,6 +38,7 @@ modules_list = [
     "rapidtide/dlfilter",
     "rapidtide/externaltools",
     "rapidtide/filter",
+    "rapidtide/findpatches",
     "rapidtide/fit",
     "rapidtide/glmpass",
     "rapidtide/happy_supportfuncs",

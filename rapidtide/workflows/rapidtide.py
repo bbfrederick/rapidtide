@@ -36,6 +36,7 @@ import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
+import rapidtide.findpatches as tide_patch
 import rapidtide.fit as tide_fit
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
@@ -410,6 +411,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["textio"]:
         nim_data = tide_io.readvecs(fmrifilename)
         nim_hdr = None
+        nim_affine = None
         theshape = np.shape(nim_data)
         xsize = theshape[0]
         ysize = 1
@@ -433,6 +435,7 @@ def rapidtide_main(argparsingfunc):
                 thesizes,
                 dummy,
             ) = tide_io.readfromcifti(fmrifilename)
+            nim_affine = None
             optiondict["isgrayordinate"] = True
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
@@ -441,6 +444,7 @@ def rapidtide_main(argparsingfunc):
         else:
             LGR.debug("input file is NIFTI")
             nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
+            nim_affine = nim.affine
             optiondict["isgrayordinate"] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
@@ -571,6 +575,9 @@ def rapidtide_main(argparsingfunc):
                 disable=(not optiondict["showprogressbar"]),
             ):
                 nim_data[:, :, :, i] *= multmask
+
+        # this is where you'd slice time correct
+        # but we don't anymore
 
         # now apply the filter
         LGR.info(
@@ -2455,6 +2462,8 @@ def rapidtide_main(argparsingfunc):
                 LGR.info(f"\n\n{similaritytype} despeckling subpass {despecklepass + 1}")
                 outmaparray *= 0.0
                 outmaparray[validvoxels] = eval("lagtimes")[:]
+
+                # find voxels to despeckle
                 medianlags = ndimage.median_filter(
                     outmaparray.reshape(nativespaceshape), 3
                 ).reshape(numspatiallocs)
@@ -2464,6 +2473,7 @@ def rapidtide_main(argparsingfunc):
                     medianlags,
                     -1000000.0,
                 )[validvoxels]
+
                 if len(initlags) > 0:
                     numdespeckled = len(np.where(initlags != -1000000.0)[0])
                     if lastnumdespeckled > numdespeckled > 0:
@@ -2562,7 +2572,71 @@ def rapidtide_main(argparsingfunc):
                     "message3": "voxels",
                 },
             )
-        # Step 2c - make a rank order map
+
+        # Step 2c - patch shifting
+        if optiondict["patchshift"]:
+            outmaparray *= 0.0
+            outmaparray[validvoxels] = eval("lagtimes")[:]
+            # new method
+            masklist = [
+                (
+                    outmaparray[validvoxels],
+                    f"lagtimes_prepatch_pass{thepass}",
+                    "map",
+                    None,
+                    f"Input lagtimes map prior to patch map generation pass {thepass}",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputname,
+                masklist,
+                validvoxels,
+                nativespaceshape,
+                theheader,
+                bidsbasedict,
+                textio=optiondict["textio"],
+                fileiscifti=fileiscifti,
+                rt_floattype=rt_floattype,
+                cifti_hdr=cifti_hdr,
+            )
+
+            if nim_affine is not None:
+                patchmap = tide_patch.getclusters(
+                    outmaparray.reshape(nativespaceshape),
+                    nim_affine,
+                    thesizes,
+                    sizethresh=optiondict["patchsize"],
+                    debug=True,
+                )
+                masklist = [
+                    (
+                        patchmap,
+                        f"patch_pass{thepass}",
+                        "map",
+                        None,
+                        f"Patch map for despeckling pass {thepass}",
+                    ),
+                ]
+                tide_io.savemaplist(
+                    outputname,
+                    masklist,
+                    validvoxels,
+                    nativespaceshape,
+                    theheader,
+                    bidsbasedict,
+                    textio=optiondict["textio"],
+                    fileiscifti=fileiscifti,
+                    rt_floattype=rt_floattype,
+                    cifti_hdr=cifti_hdr,
+                )
+
+                """initlags = np.where(
+                    patchmap.reshape(numspatiallocs) > 0,
+                    medianlags,
+                    -1000000.0,
+                )[validvoxels]"""
+
+        # Step 2d - make a rank order map
         timepercentile = (
             100.0 * (rankdata(lagtimes, method="dense") - 1) / (numvalidspatiallocs - 1)
         )
