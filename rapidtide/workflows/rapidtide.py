@@ -36,7 +36,6 @@ import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
-import rapidtide.findpatches as tide_patch
 import rapidtide.fit as tide_fit
 import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
@@ -44,6 +43,7 @@ import rapidtide.io as tide_io
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
+import rapidtide.patchmatch as tide_patch
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.refineregressor as tide_refineregressor
@@ -2600,7 +2600,9 @@ def rapidtide_main(argparsingfunc):
                 cifti_hdr=cifti_hdr,
             )
 
+            # create list of anomalous 3D regions that don't match surroundings
             if nim_affine is not None:
+                # make an atlas of anomalous patches - each patch shares the same integer value
                 patchmap = tide_patch.getclusters(
                     outmaparray.reshape(nativespaceshape),
                     nim_affine,
@@ -2630,11 +2632,11 @@ def rapidtide_main(argparsingfunc):
                     cifti_hdr=cifti_hdr,
                 )
 
-                """initlags = np.where(
-                    patchmap.reshape(numspatiallocs) > 0,
-                    medianlags,
-                    -1000000.0,
-                )[validvoxels]"""
+            # now shift the patches to align with the majority of the image
+            numpatches = np.max(patchmap[validvoxels])
+            for patch in range(numpatches):
+                # this is where you match the boundary for each patch and interpolate across it
+                pass
 
         # Step 2d - make a rank order map
         timepercentile = (

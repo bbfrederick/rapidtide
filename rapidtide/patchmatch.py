@@ -23,11 +23,44 @@ import sys
 import warnings
 
 import numpy as np
-from scipy.ndimage import distance_transform_edt, gaussian_filter1d
+from scipy.ndimage import (
+    distance_transform_edt,
+    gaussian_filter1d,
+    distance_transform_edt,
+    map_coordinates,
+)
 from skimage.filters import threshold_multiotsu
 from skimage.segmentation import flood_fill
 
 import rapidtide.io as tide_io
+
+
+def interpolate_masked_voxels(data, mask):
+    """
+    Interpolates the values in a 3D numpy data array at the locations specified by the mask.
+    Data in the masked region is replaced by interpolated values derived from the unmasked region.
+
+    Parameters:
+        data (np.ndarray): A 3D numpy array containing the data.
+        mask (np.ndarray): A 3D binary numpy array of the same shape as `data`, where
+                           masked voxels are 1, and unmasked voxels are 0.
+
+    Returns:
+        np.ndarray: A new 3D array with interpolated values replacing masked regions.
+    """
+    if data.shape != mask.shape:
+        raise ValueError("Data and mask must have the same shape.")
+
+    # Ensure mask is binary
+    mask = mask.astype(bool)
+
+    # Compute the distance transform (distance to nearest unmasked voxel)
+    distance, indices = distance_transform_edt(~mask, return_indices=True)
+
+    # Use indices of nearest unmasked voxels to replace masked values
+    interpolated_data = data[tuple(indices)]
+
+    return interpolated_data
 
 
 def flood3d(

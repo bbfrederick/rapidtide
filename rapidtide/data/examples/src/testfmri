@@ -10,7 +10,7 @@
 #    ../dst/sub-RAPIDTIDETEST_norefine
 
 rapidtide \
-    --spatialfilt 2 \
+    --spatialfilt 5 \
     --nprocs -1 \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
