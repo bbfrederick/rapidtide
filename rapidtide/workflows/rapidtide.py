@@ -2603,16 +2603,78 @@ def rapidtide_main(argparsingfunc):
             # create list of anomalous 3D regions that don't match surroundings
             if nim_affine is not None:
                 # make an atlas of anomalous patches - each patch shares the same integer value
-                patchmap = tide_patch.getclusters(
-                    outmaparray.reshape(nativespaceshape),
+                step1 = tide_patch.calc_DoG(
+                    outmaparray.reshape(nativespaceshape).copy(),
                     nim_affine,
                     thesizes,
-                    sizethresh=optiondict["patchsize"],
+                    fwhm=optiondict["patchfwhm"],
+                    ratioopt=False,
                     debug=True,
                 )
                 masklist = [
                     (
-                        patchmap,
+                        step1.reshape(internalspaceshape)[validvoxels],
+                        f"DoG_pass{thepass}",
+                        "map",
+                        None,
+                        f"DoG map for pass {thepass}",
+                    ),
+                ]
+                tide_io.savemaplist(
+                    outputname,
+                    masklist,
+                    validvoxels,
+                    nativespaceshape,
+                    theheader,
+                    bidsbasedict,
+                    textio=optiondict["textio"],
+                    fileiscifti=fileiscifti,
+                    rt_floattype=rt_floattype,
+                    cifti_hdr=cifti_hdr,
+                )
+                step2 = tide_patch.invertedflood3D(
+                    step1,
+                    1,
+                )
+                masklist = [
+                    (
+                        step2.reshape(internalspaceshape)[validvoxels],
+                        f"invertflood_pass{thepass}",
+                        "map",
+                        None,
+                        f"Inverted flood map for pass {thepass}",
+                    ),
+                ]
+                tide_io.savemaplist(
+                    outputname,
+                    masklist,
+                    validvoxels,
+                    nativespaceshape,
+                    theheader,
+                    bidsbasedict,
+                    textio=optiondict["textio"],
+                    fileiscifti=fileiscifti,
+                    rt_floattype=rt_floattype,
+                    cifti_hdr=cifti_hdr,
+                )
+
+                patchmap = tide_patch.separateclusters(
+                    step2,
+                    sizethresh=optiondict["patchminsize"],
+                    debug=True,
+                )
+                # patchmap = tide_patch.getclusters(
+                #   outmaparray.reshape(nativespaceshape),
+                #    nim_affine,
+                #    thesizes,
+                #    fwhm=optiondict["patchfwhm"],
+                #    ratioopt=True,
+                #    sizethresh=optiondict["patchminsize"],
+                #    debug=True,
+                # )
+                masklist = [
+                    (
+                        patchmap[validvoxels],
                         f"patch_pass{thepass}",
                         "map",
                         None,
@@ -2633,10 +2695,7 @@ def rapidtide_main(argparsingfunc):
                 )
 
             # now shift the patches to align with the majority of the image
-            numpatches = np.max(patchmap[validvoxels])
-            for patch in range(numpatches):
-                # this is where you match the boundary for each patch and interpolate across it
-                pass
+            tide_patch.interppatch(lagtimes, patchmap[validvoxels])
 
         # Step 2d - make a rank order map
         timepercentile = (

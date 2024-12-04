@@ -108,7 +108,8 @@ DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
 
-DEFAULT_PATCHSIZE = 10
+DEFAULT_PATCHMINSIZE = 10
+DEFAULT_PATCHFWHM = 5
 
 
 def _get_parser():
@@ -1801,7 +1802,8 @@ def process_args(inputargs=None):
     # The fraction of the main peak over which points are included in the peak
     args["searchfrac"] = 0.5
     args["mp_chunksize"] = 50000
-    args["patchsize"] = DEFAULT_PATCHSIZE
+    args["patchminsize"] = DEFAULT_PATCHMINSIZE
+    args["patchfwhm"] = DEFAULT_PATCHFWHM
 
     # significance estimation
     args["sighistlen"] = 1000

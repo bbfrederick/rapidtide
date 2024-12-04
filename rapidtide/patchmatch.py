@@ -23,30 +23,30 @@ import sys
 import warnings
 
 import numpy as np
-from scipy.ndimage import (
-    distance_transform_edt,
-    gaussian_filter1d,
-    distance_transform_edt,
-    map_coordinates,
-)
+from scipy.interpolate import griddata
+from scipy.ndimage import distance_transform_edt, gaussian_filter1d
 from skimage.filters import threshold_multiotsu
 from skimage.segmentation import flood_fill
 
 import rapidtide.io as tide_io
 
 
-def interpolate_masked_voxels(data, mask):
+def interpolate_masked_voxels(data, mask, method="linear", extrapolate=True):
     """
-    Interpolates the values in a 3D numpy data array at the locations specified by the mask.
-    Data in the masked region is replaced by interpolated values derived from the unmasked region.
+    Replaces masked voxels in a 3D numpy array with interpolated values
+    from the unmasked region. Supports boundary extrapolation and multiple interpolation methods.
 
     Parameters:
         data (np.ndarray): A 3D numpy array containing the data.
-        mask (np.ndarray): A 3D binary numpy array of the same shape as `data`, where
-                           masked voxels are 1, and unmasked voxels are 0.
+        mask (np.ndarray): A 3D binary numpy array of the same shape as `data`,
+                           where 1 indicates masked voxels and 0 indicates unmasked voxels.
+        method (str): Interpolation method ('linear', 'nearest', or 'cubic').
+        extrapolate (bool): Whether to extrapolate values for masked voxels outside the convex hull
+                            of the unmasked points.
 
     Returns:
-        np.ndarray: A new 3D array with interpolated values replacing masked regions.
+        np.ndarray: A new 3D array with interpolated (and optionally extrapolated)
+                    values replacing masked regions.
     """
     if data.shape != mask.shape:
         raise ValueError("Data and mask must have the same shape.")
@@ -54,13 +54,69 @@ def interpolate_masked_voxels(data, mask):
     # Ensure mask is binary
     mask = mask.astype(bool)
 
-    # Compute the distance transform (distance to nearest unmasked voxel)
-    distance, indices = distance_transform_edt(~mask, return_indices=True)
+    # Get the coordinates of all voxels
+    coords = np.array(np.nonzero(~mask)).T  # Unmasked voxel coordinates
+    masked_coords = np.array(np.nonzero(mask)).T  # Masked voxel coordinates
 
-    # Use indices of nearest unmasked voxels to replace masked values
-    interpolated_data = data[tuple(indices)]
+    # Extract values at unmasked voxel locations
+    values = data[~mask]
+
+    # Perform interpolation
+    interpolated_values = griddata(
+        points=coords,
+        values=values,
+        xi=masked_coords,
+        method=method,
+        fill_value=np.nan,  # Use NaN to mark regions outside convex hull
+    )
+
+    # Handle extrapolation if requested
+    if extrapolate:
+        nan_mask = np.isnan(interpolated_values)
+        if np.any(nan_mask):
+            # Use nearest neighbor interpolation for NaNs
+            extrapolated_values = griddata(
+                points=coords, values=values, xi=masked_coords[nan_mask], method="nearest"
+            )
+            interpolated_values[nan_mask] = extrapolated_values
+
+    # Create a copy of the data to avoid modifying the original
+    interpolated_data = data.copy()
+    interpolated_data[mask] = interpolated_values
 
     return interpolated_data
+
+
+def get_bounding_box(mask, value, buffer=0):
+    """
+    Computes the 3D bounding box that contains all the voxels in the mask with value value.
+
+    Parameters:
+        mask (np.ndarray): A 3D binary mask where non-zero values indicate the masked region.
+        value (int): The masked region value.
+
+    Returns:
+        tuple: Two tuples defining the bounding box:
+               ((min_x, min_y, min_z), (max_x, max_y, max_z)),
+               where min and max are inclusive coordinates of the bounding box.
+    """
+    if mask.ndim != 3:
+        raise ValueError("Input mask must be a 3D array.")
+
+    # Get the indices of all non-zero voxels
+    non_zero_indices = np.argwhere(mask == value)
+
+    # Find the min and max coordinates along each axis
+    min_coords = np.min(non_zero_indices, axis=0)
+    max_coords = np.max(non_zero_indices, axis=0)
+
+    if buffer > 0:
+        for axis in range(mask.ndim):
+            min_coords[axis] = np.max([min_coords[axis] - buffer, 0])
+            max_coords[axis] = np.min([max_coords[axis] + buffer, mask.shape[axis]])
+
+    # Return the bounding box as ((min_x, min_y, min_z), (max_x, max_y, max_z))
+    return tuple(min_coords), tuple(max_coords)
 
 
 def flood3d(
@@ -114,15 +170,19 @@ def separateclusters(image, sizethresh=0, debug=False):
         if len(seedvoxels[0]) > 0:
             location = (seedvoxels[0][0], seedvoxels[1][0], seedvoxels[2][0])
             if debug:
-                print(f"growing from {location}")
-            regionsize = growregion(
-                image, location, value, separatedclusters, regionsize, debug=debug
-            )
+                if debug:
+                    print(f"growing from {location}")
+            try:
+                regionsize = growregion(
+                    image, location, value, separatedclusters, regionsize, debug=debug
+                )
+            except RecursionError:
+                raise RecursionError("Clusters are not separable.")
             if regionsize >= sizethresh:
-                print(f"region:{value}: {regionsize=} - retained")
+                if debug:
+                    print(f"region:{value}: {regionsize=} - retained")
                 value += 1
             else:
-                # print(f"{regionsize=} - discarded")
                 image[np.where(separatedclusters == value)] = 0
                 separatedclusters[np.where(separatedclusters == value)] = 0
         else:
@@ -175,7 +235,7 @@ def clamp(low, high, value):
     return max(low, min(high, value))
 
 
-def dehaze(fdata, level, verbose=0):
+def dehaze(fdata, level, debug=False):
     """use Otsu to threshold https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_multiotsu.html
         n.b. threshold used to mask image: dark values are zeroed, but result is NOT binary
     Parameters
@@ -191,9 +251,10 @@ def dehaze(fdata, level, verbose=0):
             3: 1/2
             4: 1/3
             5: 1/4
-    verbose : :obj:`int`, optional
-        Controls the amount of verbosity: higher numbers give more messages
-        (0 means no messages). Default=0.
+    debug : :obj:`bool`, optional
+        Controls the amount of verbosity: True give more messages
+        (False means no messages). Default=False.
+
     Returns
     -------
     :class:`nibabel.nifti1.Nifti1Image`
@@ -204,7 +265,7 @@ def dehaze(fdata, level, verbose=0):
     dark_classes = clamp(1, 3, dark_classes)
     thresholds = threshold_multiotsu(fdata, n_classes)
     thresh = thresholds[dark_classes - 1]
-    if verbose > 0:
+    if debug:
         print("Zeroing voxels darker than {}".format(thresh))
     fdata[fdata < thresh] = 0
     return fdata
@@ -311,7 +372,7 @@ def binary_zero_crossing(fdata):
     return edge
 
 
-def difference_of_gaussian(fdata, affine, fwhmNarrow, verbose=0):
+def difference_of_gaussian(fdata, affine, fwhmNarrow, ratioopt=True, debug=False):
     """Apply Difference of Gaussian (DoG) filter.
     https://en.wikipedia.org/wiki/Difference_of_Gaussians
     https://en.wikipedia.org/wiki/Marr–Hildreth_algorithm
@@ -326,9 +387,9 @@ def difference_of_gaussian(fdata, affine, fwhmNarrow, verbose=0):
         Narrow kernel width, in millimeters. Is an arbitrary ratio of wide to narrow kernel.
             human cortex about 2.5mm thick
             Large values yield smoother results
-    verbose : :obj:`int`, optional
-        Controls the amount of verbosity: higher numbers give more messages
-        (0 means no messages). Default=0.
+    debug : :obj:`bool`, optional
+        Controls the amount of verbosity: True give more messages
+        (False means no messages). Default=False.
     Returns
     -------
     :class:`nibabel.nifti1.Nifti1Image`
@@ -339,8 +400,9 @@ def difference_of_gaussian(fdata, affine, fwhmNarrow, verbose=0):
     # Wilson and Giese (1977) suggest narrow to wide ratio of 1.5
     fwhmWide = fwhmNarrow * 1.6
     # optimization: we will use the narrow Gaussian as the input to the wide filter
-    fwhmWide = math.sqrt((fwhmWide * fwhmWide) - (fwhmNarrow * fwhmNarrow))
-    if verbose > 0:
+    if ratioopt:
+        fwhmWide = math.sqrt((fwhmWide * fwhmWide) - (fwhmNarrow * fwhmNarrow))
+    if debug:
         print("Narrow/Wide FWHM {} / {}".format(fwhmNarrow, fwhmWide))
     imgNarrow = _smooth_array(fdata, affine, fwhmNarrow)
     imgWide = _smooth_array(imgNarrow, affine, fwhmWide)
@@ -353,7 +415,7 @@ def difference_of_gaussian(fdata, affine, fwhmNarrow, verbose=0):
 # We are operating on data in memory that are closely associated with the source
 # NIFTI files, so the affine and sizes fields are easy to come by, but unlike the
 # original library, we are not working directly with NIFTI images.
-def calc_DoG(thedata, theaffine, thesizes, fwhm=3, verbose=0):
+def calc_DoG(thedata, theaffine, thesizes, fwhm=3, ratioopt=True, debug=False):
     """Find edges of a NIfTI image using the Difference of Gaussian (DoG).
     Parameters
     ----------
@@ -362,23 +424,23 @@ def calc_DoG(thedata, theaffine, thesizes, fwhm=3, verbose=0):
         for a detailed description of the valid input types).
     fwhm : int
         Edge detection strength, as a full-width at half maximum, in millimeters.
-    verbose : :obj:`int`, optional
-        Controls the amount of verbosity: higher numbers give more messages
-        (0 means no messages). Default=0.
+    debug : :obj:`bool`, optional
+        Controls the amount of verbosity: True give more messages
+        (False means no messages). Default=False.
     Returns
     -------
     :class:`nibabel.nifti1.Nifti1Image`
     """
 
-    if verbose > 0:
+    if debug:
         print("Input intensity range {}..{}".format(np.nanmin(thedata), np.nanmax(thedata)))
         print("Image shape {}x{}x{}".format(thesizes[1], thesizes[2], thesizes[3]))
 
-    dehazed_data = dehaze(thedata, 3, verbose)
-    return difference_of_gaussian(dehazed_data, theaffine, fwhm, verbose)
+    dehazed_data = dehaze(thedata, 3, debug=debug)
+    return difference_of_gaussian(dehazed_data, theaffine, fwhm, ratioopt=ratioopt, debug=debug)
 
 
-def getclusters(theimage, theaffine, thesizes, sizethresh=10, debug=False):
+def getclusters(theimage, theaffine, thesizes, fwhm=5, ratioopt=True, sizethresh=10, debug=False):
     if debug:
         print("Detecting clusters..")
         print(f"\t{theimage.shape=}")
@@ -386,8 +448,48 @@ def getclusters(theimage, theaffine, thesizes, sizethresh=10, debug=False):
         print(f"\t{thesizes=}")
         print(f"\t{sizethresh=}")
     return separateclusters(
-        invertedflood3D(calc_DoG(theimage, theaffine, thesizes, fwhm=3), 1), sizethresh=sizethresh
+        invertedflood3D(
+            calc_DoG(theimage.copy(), theaffine, thesizes, fwhm=fwhm, ratioopt=ratioopt), 1
+        ),
+        sizethresh=sizethresh,
     )
+
+
+def interppatch(img_data, separatedimage, method="linear", debug=False):
+    interpolated = img_data + 0.0
+    justboxes = img_data * 0.0
+    numregions = np.max(separatedimage)
+    for region in range(1, numregions + 1):
+        if debug:
+            print(f"Region {region}:")
+        bbmins, bbmaxs = get_bounding_box(separatedimage, region, buffer=3)
+        if debug:
+            print(f"\t{bbmins}, {bbmaxs} (buffer 3)")
+        interpolated[
+            bbmins[0] : bbmaxs[0] + 1, bbmins[1] : bbmaxs[1] + 1, bbmins[2] : bbmaxs[2] + 1
+        ] = interpolate_masked_voxels(
+            img_data[
+                bbmins[0] : bbmaxs[0] + 1, bbmins[1] : bbmaxs[1] + 1, bbmins[2] : bbmaxs[2] + 1
+            ],
+            np.where(
+                separatedimage[
+                    bbmins[0] : bbmaxs[0] + 1, bbmins[1] : bbmaxs[1] + 1, bbmins[2] : bbmaxs[2] + 1
+                ]
+                > 0,
+                True,
+                False,
+            ),
+            method=method,
+        )
+        justboxes[
+            bbmins[0] : bbmaxs[0] + 1, bbmins[1] : bbmaxs[1] + 1, bbmins[2] : bbmaxs[2] + 1
+        ] = (
+            img_data[
+                bbmins[0] : bbmaxs[0] + 1, bbmins[1] : bbmaxs[1] + 1, bbmins[2] : bbmaxs[2] + 1
+            ]
+            + 0.0
+        )
+    return interpolated, justboxes
 
 
 if __name__ == "__main__":
@@ -404,7 +506,6 @@ if __name__ == "__main__":
     img, img_data, img_hdr, thedims, thesizes = tide_io.readfromnifti(fnm)
     img_data = img_data.astype(np.float32)
     theaffine = img.affine
-    dog = calc_DoG(img_data, theaffine, thesizes, fwhm=5, verbose=1)
 
     # update header
     out_hdr = copy.deepcopy(img_hdr)
@@ -422,17 +523,30 @@ if __name__ == "__main__":
             nm = nm[:-7]
     if not pth:
         pth = "."
-    outnm = pth + os.path.sep + "z" + nm
+
+    dog = calc_DoG(img_data.copy(), theaffine, thesizes, fwhm=5, ratioopt=True, debug=True)
+    outnm = pth + os.path.sep + "z2dog" + nm
     tide_io.savetonifti(dog, out_hdr, outnm)
 
+    outnm = pth + os.path.sep + "z1img" + nm
+    tide_io.savetonifti(img_data, out_hdr, outnm)
+
     filledim = invertedflood3D(dog, 1)
-    outnm = pth + os.path.sep + "zfill" + nm
+    outnm = pth + os.path.sep + "z3fill" + nm
     tide_io.savetonifti(filledim, out_hdr, outnm)
 
     separatedimage = separateclusters(filledim, sizethresh=10)
-    outnm = pth + os.path.sep + "zsep" + nm
+    outnm = pth + os.path.sep + "z4sep" + nm
     tide_io.savetonifti(separatedimage, out_hdr, outnm)
 
-    otherseparatedimage = getclusters(img_data, theaffine, thesizes, sizethresh=10, debug=True)
-    outnm = pth + os.path.sep + "zother" + nm
+    otherseparatedimage = getclusters(
+        img_data, theaffine, thesizes, fwhm=5, ratioopt=True, sizethresh=10, debug=False
+    )
+    outnm = pth + os.path.sep + "z5sep" + nm
     tide_io.savetonifti(otherseparatedimage, out_hdr, outnm)
+
+    interpolated, justboxes = interppatch(img_data, separatedimage)
+    outnm = pth + os.path.sep + "z6boxes" + nm
+    tide_io.savetonifti(justboxes, out_hdr, outnm)
+    outnm = pth + os.path.sep + "z7interp" + nm
+    tide_io.savetonifti(interpolated, out_hdr, outnm)
