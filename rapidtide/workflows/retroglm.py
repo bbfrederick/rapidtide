@@ -478,7 +478,9 @@ def retroglm(args):
         + filtereddata.nbytes
     )
     thesize, theunit = tide_util.format_bytes(totalbytes)
-    print(f"allocated {thesize:.3f} {theunit} {ramlocation}")
+    ramstring = f"allocated {thesize:.3f} {theunit} {ramlocation}"
+    print(ramstring)
+    therunoptions["totalretrobytes"] = totalbytes
 
     oversampfactor = int(therunoptions["oversampfactor"])
     if args.debug:
@@ -1039,7 +1041,6 @@ def retroglm(args):
     therunoptions["retroglm_runtime"] = time.strftime(
         "%a, %d %b %Y %H:%M:%S %Z", time.localtime(time.time())
     )
-    tide_io.writedicttojson(therunoptions, f"{outputname}_desc-runoptions_info.json")
 
     # clean up shared memory
     if usesharedmem:
@@ -1067,6 +1068,10 @@ def retroglm(args):
         f"{outputname}_desc-formattedretroruntimings_info.tsv",
     )
     Path(f"{outputname}_retroruntimings.tsv").unlink(missing_ok=True)
+
+    # save the modified runoptions file
+    tide_io.writedicttojson(therunoptions, f"{outputname}_desc-runoptions_info.json")
+
     # shut down the loggers
     for thelogger in [LGR, ErrorLGR, TimingLGR]:
         handlers = thelogger.handlers[:]
