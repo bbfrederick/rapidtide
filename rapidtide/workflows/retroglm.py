@@ -281,8 +281,14 @@ def retroglm(args):
         args.fmrifile
     )
 
+    # specify the output name
+    if args.alternateoutput is None:
+        outputname = therunoptions["outputname"]
+    else:
+        outputname = args.alternateoutput
+
     # create the canary file
-    Path(f"{args.datafileroot}_ISRUNNING.txt").touch()
+    Path(f"{outputname}_RETROISRUNNING.txt").touch()
 
     if args.debug:
         print(f"{fmri_data.shape=}")
@@ -455,10 +461,6 @@ def retroglm(args):
     print(f"allocated {thesize:.3f} {theunit} {ramlocation}")
 
     oversampfactor = int(therunoptions["oversampfactor"])
-    if args.alternateoutput is None:
-        outputname = therunoptions["outputname"]
-    else:
-        outputname = args.alternateoutput
     if args.debug:
         print(f"{outputname=}")
     oversamptr = fmritr / oversampfactor
@@ -895,10 +897,10 @@ def retroglm(args):
         tide_util.cleanup_shm(filtereddata_shm)
 
     # delete the canary file
-    Path(f"{args.datafileroot}_ISRUNNING.txt").unlink()
+    Path(f"{outputname}_RETROISRUNNING.txt").unlink()
 
     # create the finished file
-    Path(f"{args.datafileroot}_DONE.txt").touch()
+    Path(f"{outputname}_RETRODONE.txt").touch()
 
 
 def process_args(inputargs=None):
