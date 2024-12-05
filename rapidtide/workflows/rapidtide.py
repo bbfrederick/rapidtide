@@ -3594,7 +3594,8 @@ def rapidtide_main(argparsingfunc):
                 TimingLGR.info("CVR map generation")
                 LGR.info("\n\nCVR mapping")
 
-            # calculate the initial bandlimited mean normalized variance if we're going to filter the data
+            # calculate the initial raw and bandlimited mean normalized variance if we're going to filter the data
+            # initialrawvariance = tide_math.imagevariance(fmri_data_valid, None, 1.0 / fmritr)
             initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
             # now calculate the GLM
@@ -3648,11 +3649,20 @@ def rapidtide_main(argparsingfunc):
                 append=False,
             )
 
-            # calculate the final bandlimited mean normalized variance
+            # calculate the final raw and bandlimited mean normalized variance
+            # finalrawvariance = tide_math.imagevariance(filtereddata, None, 1.0 / fmritr)
             finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
+
             divlocs = np.where(finalvariance > 0.0)
             varchange = initialvariance * 0.0
             varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
+
+            """divlocs = np.where(finalrawvariance > 0.0)
+            rawvarchange = initialrawvariance * 0.0
+            rawvarchange[divlocs] = 100.0 * (
+                finalrawvariance[divlocs] / initialvariance[divlocs] - 1.0
+            )"""
+
             del fmri_data_valid
             if optiondict["sharedmem"]:
                 tide_util.cleanup_shm(fmri_data_valid_shm)

@@ -595,6 +595,7 @@ def retroglm(args):
         #  Delay refinement end
         ####################################################
 
+    # initialrawvariance = tide_math.imagevariance(fmri_data_valid, None, 1.0 / fmritr)
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     print("calling glmmfrommaps")
@@ -632,10 +633,16 @@ def retroglm(args):
     )
 
     print(f"filtered {voxelsprocessed_glm} voxels")
+    # finalrawvariance = tide_math.imagevariance(filtereddata, None, 1.0 / fmritr)
     finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
+
     divlocs = np.where(finalvariance > 0.0)
     varchange = initialvariance * 0.0
     varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
+
+    """divlocs = np.where(finalrawvariance > 0.0)
+    rawvarchange = initialrawvariance * 0.0
+    rawvarchange[divlocs] = 100.0 * (finalrawvariance[divlocs] / initialrawvariance[divlocs] - 1.0)"""
 
     theheader = copy.deepcopy(lagtimes_header)
     if mode == "glm":
@@ -661,6 +668,27 @@ def retroglm(args):
                 "percent",
                 "Change in inband variance after filtering, in percent",
             ),
+            # (
+            #   initialrawvariance,
+            #    "lfofilterTotalVarianceBefore",
+            #    "map",
+            #    None,
+            #    "Total variance prior to filtering",
+            # ),
+            # (
+            #    finalrawvariance,
+            #    "lfofilterTotalVarianceAfter",
+            #    "map",
+            #    None,
+            #    "Total variance after filtering",
+            # ),
+            # (
+            #    rawvarchange,
+            #    "lfofilterTotalVarianceChange",
+            #    "map",
+            #    "percent",
+            #    "Change in total variance after filtering, in percent",
+            # ),
         ]
         if args.saveminimumglmfiles:
             maplist += [
@@ -689,6 +717,23 @@ def retroglm(args):
                 (r2value, "CVRR2", "map", None),
                 (fitcoeff, "CVR", "map", "percent"),
             ]
+    if args.refinedelay:
+        maplist += [
+            (
+                delayoffset,
+                "delayoffset",
+                "map",
+                "second",
+                "Delay offset correction from delay refinement",
+            ),
+            (
+                lagtimescorrected_valid,
+                "maxtimecorrected",
+                "map",
+                "second",
+                "Lag time in seconds, corrected",
+            ),
+        ]
 
     bidsdict = bidsbasedict.copy()
 
