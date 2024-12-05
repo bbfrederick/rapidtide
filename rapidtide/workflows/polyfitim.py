@@ -189,10 +189,10 @@ def polyfitim(
     fitdata = np.zeros((numspatiallocs, timepoints), dtype="float")
     if regionatlas is not None:
         polycoffs = np.zeros((numregions, order + 1, timepoints), dtype="float")
-        rvals = np.zeros((numregions, timepoints), dtype="float")
+        r2vals = np.zeros((numregions, timepoints), dtype="float")
     else:
         polycoffs = np.zeros((order + 1, timepoints), dtype="float")
-        rvals = np.zeros(timepoints, dtype="float")
+        r2vals = np.zeros(timepoints, dtype="float")
 
     if regionatlas is not None:
         print("making region masks")
@@ -219,7 +219,7 @@ def polyfitim(
                 evlist = []
                 for i in range(1, order + 1):
                     evlist.append((rs_templatefile[voxelstofit]) ** i)
-                thefit, R = tide_fit.mlregress(
+                thefit, R2 = tide_fit.mlregress(
                     evlist,
                     rs_datafile[voxelstofit, thetime][0],
                 )
@@ -230,14 +230,14 @@ def polyfitim(
                     fitdata[voxelstoreconstruct, thetime] += polycoffs[region, i, thetime] * (
                         rs_templatefile[voxelstoreconstruct] ** i
                     )
-                rvals[region, thetime] = R
+                r2vals[region, thetime] = R2
         else:
             voxelstofit = np.where(thisdatamask > 0.5)
             voxelstoreconstruct = np.where(rs_templatemask > 0.5)
             evlist = []
             for i in range(1, order + 1):
                 evlist.append((rs_templatefile[voxelstofit]) ** i)
-            thefit, R = tide_fit.mlregress(evlist, rs_datafile[voxelstofit, thetime][0])
+            thefit, R2 = tide_fit.mlregress(evlist, rs_datafile[voxelstofit, thetime][0])
             for i in range(order + 1):
                 polycoffs[i, thetime] = thefit[0, i]
             fitdata[voxelstoreconstruct, thetime] = polycoffs[0, thetime]
@@ -245,13 +245,13 @@ def polyfitim(
                 fitdata[voxelstoreconstruct, thetime] += polycoffs[i, thetime] * (
                     rs_templatefile[voxelstoreconstruct] ** i
                 )
-            rvals[thetime] = R
+            r2vals[thetime] = R2
     residuals = rs_datafile - fitdata
 
     # write out the data files
     print("writing time series")
 
-    tide_io.writenpvecs(rvals, outputroot + "_rvals.txt")
+    tide_io.writenpvecs(r2vals, outputroot + "_r2vals.txt")
     if regionatlas is not None:
         for region in range(0, numregions):
             outstring = f"region {region + 1}:"

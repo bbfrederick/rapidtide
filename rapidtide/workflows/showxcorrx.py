@@ -454,9 +454,9 @@ def showxcorrx(args):
                 )
             )
         if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
-            thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
+            thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata1)
         if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
-            thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
+            thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
     # initialize the Correlator and MutualInformationator
     theCorrelator = tide_classes.Correlator(

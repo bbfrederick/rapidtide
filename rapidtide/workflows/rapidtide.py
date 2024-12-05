@@ -190,7 +190,7 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
     shifttr = echooffset / thetimestep  # lagtime is in seconds
     echotc, dummy, dummy, dummy = tide_resample.timeshift(thetimecourse, shifttr, padtimepoints)
     echotc[0 : int(np.ceil(shifttr))] = 0.0
-    echofit, echoR = tide_fit.mlregress(echotc, thetimecourse)
+    echofit, echoR2 = tide_fit.mlregress(echotc, thetimecourse)
     fitcoeff = echofit[0, 1]
     outputtimecourse = thetimecourse - fitcoeff * echotc
     tide_io.writebidstsv(
@@ -213,7 +213,7 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
         },
         append=True,
     )
-    return outputtimecourse, echofit, echoR
+    return outputtimecourse, echofit, echoR2
 
 
 def disablemkl(numprocs, debug=False):
@@ -1449,10 +1449,10 @@ def rapidtide_main(argparsingfunc):
             append=False,
         )
         resampnonosref_y *= tmask_y
-        thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
+        thefit, R2 = tide_fit.mlregress(tmask_y, resampnonosref_y)
         resampnonosref_y -= thefit[0, 1] * tmask_y
         resampref_y *= tmaskos_y
-        thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
+        thefit, R2 = tide_fit.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
 
     if optiondict["noisetimecoursespec"] is not None:
@@ -1822,13 +1822,13 @@ def rapidtide_main(argparsingfunc):
         # Now find and regress out the echo
         echooffset, echoratio = tide_stats.echoloc(np.asarray(theglobalmaxlist), len(corrscale))
         LGR.info(f"Echooffset, echoratio: {echooffset} {echoratio}")
-        echoremovedtc, echofit, echoR = echocancel(
+        echoremovedtc, echofit, echoR2 = echocancel(
             resampref_y, echooffset, oversamptr, outputname, numpadtrs
         )
         optiondict["echooffset"] = echooffset
         optiondict["echoratio"] = echoratio
         optiondict["echofit"] = [echofit[0, 0], echofit[0, 1]]
-        optiondict["echofitR"] = echoR
+        optiondict["echofitR2"] = echoR2
         resampref_y = echoremovedtc
         TimingLGR.info(
             "Echo cancellation calculation end",
@@ -3005,10 +3005,10 @@ def rapidtide_main(argparsingfunc):
                     )
                 if optiondict["tincludemaskname"] is not None:
                     resampnonosref_y *= tmask_y
-                    thefit, R = tide_fit.mlregress(tmask_y, resampnonosref_y)
+                    thefit, R2 = tide_fit.mlregress(tmask_y, resampnonosref_y)
                     resampnonosref_y -= thefit[0, 1] * tmask_y
                     resampref_y *= tmaskos_y
-                    thefit, R = tide_fit.mlregress(tmaskos_y, resampref_y)
+                    thefit, R2 = tide_fit.mlregress(tmaskos_y, resampref_y)
                     resampref_y -= thefit[0, 1] * tmaskos_y
 
                 # reinitialize genlagtc for resampling

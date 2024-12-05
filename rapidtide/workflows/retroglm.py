@@ -157,6 +157,15 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--refinecorr",
+        dest="refinecorr",
+        action="store_true",
+        help=(
+            "Recalculate the maxcorr map using GLM coefficient of determination from bandpassed data."
+        ),
+        default=False,
+    )
+    parser.add_argument(
         "--nofilterwithrefineddelay",
         dest="filterwithrefineddelay",
         action="store_false",
@@ -510,7 +519,7 @@ def retroglm(args):
         maplist = [
             (
                 fmri_data_valid,
-                "datatofilter",
+                "inputdata",
                 "bold",
                 None,
                 "fMRI data that will be subjected to GLM filtering",
@@ -902,8 +911,6 @@ def retroglm(args):
                     "Shifted sLFO regressor to filter",
                 ),
             ]
-    if args.debug:
-        maplist.append((fmri_data_valid, "inputdata", "bold", None, None))
     if args.makepseudofile:
         print("reading mean image")
         meanfile = f"{args.datafileroot}_desc-mean_map.nii.gz"
@@ -933,6 +940,98 @@ def retroglm(args):
         debug=args.debug,
     )
     TimingLGR.info("Finishing output save")
+
+    if args.refinecorr:
+        TimingLGR.info("Filtering for maxcorrcorrected calculation start")
+        for thevoxel in range(fmri_data_valid.shape[0]):
+            fmri_data_valid[thevoxel, :] = theprefilter.apply(
+                1.0 / fmritr, fmri_data_valid[thevoxel, :]
+            )
+        TimingLGR.info("Filtering for maxcorrcorrected calculation complete")
+        TimingLGR.info("GLM for maxcorrcorrected calculation start")
+        voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
+            fmri_data_valid,
+            validvoxels,
+            initial_fmri_x,
+            lagstouse_valid,
+            corrmask_valid,
+            genlagtc,
+            mode,
+            outputname,
+            oversamptr,
+            glmmean,
+            rvalue,
+            r2value,
+            fitNorm[:, : args.glmderivs + 1],
+            fitcoeff[:, : args.glmderivs + 1],
+            movingsignal,
+            lagtc,
+            filtereddata,
+            LGR,
+            TimingLGR,
+            threshval,
+            args.saveminimumglmfiles,
+            nprocs_makelaggedtcs=args.nprocs,
+            nprocs_glm=args.nprocs,
+            glmderivs=args.glmderivs,
+            showprogressbar=args.showprogressbar,
+            debug=args.debug,
+        )
+        TimingLGR.info(
+            "GLM for maxcorrcorrected calculation done",
+            {
+                "message2": voxelsprocessed_glm,
+                "message3": "voxels",
+            },
+        )
+
+        maplist = [
+            (
+                rvalue,
+                "maxcorrcorrected",
+                "map",
+                None,
+                "R value for the lfo component of the delayed regressor",
+            ),
+        ]
+        theheader = copy.deepcopy(lagtimes_header)
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
+        if args.debug:
+            # dump the fmri input file going to glm
+            theheader = copy.deepcopy(fmri_header)
+            theheader["dim"][4] = validtimepoints
+            theheader["pixdim"][4] = fmritr
+
+            maplist = [
+                (
+                    fmri_data_valid,
+                    "prefilteredinputdata",
+                    "bold",
+                    None,
+                    "fMRI data after temporal filtering",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputname,
+                maplist,
+                validvoxels,
+                (xsize, ysize, numslices, validtimepoints),
+                theheader,
+                bidsbasedict,
+                textio=therunoptions["textio"],
+                fileiscifti=False,
+                rt_floattype=rt_floattype,
+                cifti_hdr=None,
+            )
+
     # read the runoptions file
     print("writing runoptions")
     if args.refinedelay:
