@@ -1,5 +1,18 @@
 # Release history
 
+## Version 3.0alpha1 (12/5/24)
+* (rapidtide, retroglm) Added delay refinement.
+* (rapidtide, retroglm) Fixed a bad shared memory leak.
+* (retroglm) Significantly enhanced logging.
+* (retroglm) Added canary files.
+* (rapidtide) Implemented delay map patching.
+* (rapidtide) Write out individual EV timecourses.
+* (Docker) Cleaned up some internal variables.
+* (Docker) Improved build and testing scripts.
+* (package) Merged some dependabot PRs.
+
+* (package) Fixed a fairly big, but not necessarily impactful bug. mlregress returned R2, not R, so anything referring to the R of a fit was actually squared (R was actually R2, R2 was actually R4).
+
 ## Version 2.9.9.5 (11/15/24)
 * (deployment) New idea - split the README.rst file to remove potentially offending reference stuff.
 
