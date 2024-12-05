@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 import time
+from pathlib import Path
 
 import numpy as np
 
@@ -279,6 +280,10 @@ def retroglm(args):
     fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
         args.fmrifile
     )
+
+    # create the canary file
+    Path(f"{args.datafileroot}_ISRUNNING.txt").touch()
+
     if args.debug:
         print(f"{fmri_data.shape=}")
     xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(fmri_sizes)
@@ -888,6 +893,12 @@ def retroglm(args):
         tide_util.cleanup_shm(movingsignal_shm)
         tide_util.cleanup_shm(lagtc_shm)
         tide_util.cleanup_shm(filtereddata_shm)
+
+    # delete the canary file
+    Path(f"{args.datafileroot}_ISRUNNING.txt").unlink()
+
+    # create the finished file
+    Path(f"{args.datafileroot}_DONE.txt").touch()
 
 
 def process_args(inputargs=None):
