@@ -16,7 +16,7 @@ retroglm \
     --makepseudofile \
     --outputlevel max \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST \
+    ../dst/sub-RAPIDTIDETEST 
 
 retroglm \
     --nprocs -1 \

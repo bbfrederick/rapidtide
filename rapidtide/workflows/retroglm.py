@@ -37,6 +37,8 @@ import rapidtide.util as tide_util
 import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
 import rapidtide.workflows.parser_funcs as pf
 
+from .utils import setup_logger
+
 
 # Create a sentinel.
 # from https://stackoverflow.com/questions/58594956/find-out-which-arguments-were-passed-explicitly-in-argparse
@@ -195,11 +197,26 @@ def retroglm(args):
     # get the pid of the parent process
     args.pid = os.getpid()
 
+    # specify the output name
+    if args.alternateoutput is None:
+        outputname = args.datafileroot
+    else:
+        outputname = args.alternateoutput
+
+    # start the loggers low that we know the output name
     sh = logging.StreamHandler()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG, handlers=[sh])
     else:
         logging.basicConfig(level=logging.INFO, handlers=[sh])
+    # Set up loggers for workflow
+    setup_logger(
+        logger_filename=f"{outputname}_retrolog.txt",
+        timing_filename=f"{outputname}_retroruntimings.tsv",
+        error_filename=f"{outputname}_retroerrorlog.txt",
+        verbose=False,
+        debug=args.debug,
+    )
     TimingLGR.info("Start")
     LGR.info(f"starting retroglm")
 
@@ -280,12 +297,6 @@ def retroglm(args):
     fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
         args.fmrifile
     )
-
-    # specify the output name
-    if args.alternateoutput is None:
-        outputname = therunoptions["outputname"]
-    else:
-        outputname = args.alternateoutput
 
     # create the canary file
     Path(f"{outputname}_RETROISRUNNING.txt").touch()
@@ -523,6 +534,7 @@ def retroglm(args):
         print("\n\nDelay refinement")
         TimingLGR.info("Delay refinement start")
         LGR.info("\n\nDelay refinement")
+        TimingLGR.info("Refinement calibration start")
         glmderivratios = tide_refinedelay.getderivratios(
             fmri_data_valid,
             validvoxels,
@@ -571,26 +583,35 @@ def retroglm(args):
             numpoints=args.numpoints,
             debug=args.debug,
         )
+        TimingLGR.info("Refinement calibration end")
 
         # now calculate the delay offsets
+        TimingLGR.info("Calculating delay offsets")
         delayoffset = filteredglmderivratios * 0.0
         if args.focaldebug:
             print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
         for i in range(filteredglmderivratios.shape[0]):
             delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
         namesuffix = "_desc-delayoffset_hist"
-        if args.refinedelay:
-            tide_stats.makeandsavehistogram(
-                delayoffset,
-                therunoptions["histlen"],
-                1,
-                outputname + namesuffix,
-                displaytitle="Histogram of delay offsets calculated from GLM",
-                dictvarname="delayoffsethist",
-                thedict=None,
-            )
+
+        tide_stats.makeandsavehistogram(
+            delayoffset,
+            therunoptions["histlen"],
+            1,
+            outputname + namesuffix,
+            displaytitle="Histogram of delay offsets calculated from GLM",
+            dictvarname="delayoffsethist",
+            thedict=None,
+        )
         lagtimescorrected_valid = lagtimes_valid + delayoffset
 
+        TimingLGR.info(
+            "Delay offset calculation done",
+            {
+                "message2": filteredglmderivratios.shape[0],
+                "message3": "voxels",
+            },
+        )
         ####################################################
         #  Delay refinement end
         ####################################################
@@ -599,6 +620,7 @@ def retroglm(args):
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     print("calling glmmfrommaps")
+    TimingLGR.info("Starting GLM filtering")
     if args.refinedelay and args.filterwithrefineddelay:
         lagstouse_valid = lagtimescorrected_valid
     else:
@@ -631,8 +653,14 @@ def retroglm(args):
         showprogressbar=args.showprogressbar,
         debug=args.debug,
     )
-
     print(f"filtered {voxelsprocessed_glm} voxels")
+    TimingLGR.info(
+        "GLM filtering done",
+        {
+            "message2": voxelsprocessed_glm,
+            "message3": "voxels",
+        },
+    )
     # finalrawvariance = tide_math.imagevariance(filtereddata, None, 1.0 / fmritr)
     finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
 
@@ -644,6 +672,8 @@ def retroglm(args):
     rawvarchange = initialrawvariance * 0.0
     rawvarchange[divlocs] = 100.0 * (finalrawvariance[divlocs] / initialrawvariance[divlocs] - 1.0)"""
 
+    # save outputs
+    TimingLGR.info("Starting output save")
     theheader = copy.deepcopy(lagtimes_header)
     if mode == "glm":
         maplist = [
@@ -717,24 +747,6 @@ def retroglm(args):
                 (r2value, "CVRR2", "map", None),
                 (fitcoeff, "CVR", "map", "percent"),
             ]
-    if args.refinedelay:
-        maplist += [
-            (
-                delayoffset,
-                "delayoffset",
-                "map",
-                "second",
-                "Delay offset correction from delay refinement",
-            ),
-            (
-                lagtimescorrected_valid,
-                "maxtimecorrected",
-                "map",
-                "second",
-                "Lag time in seconds, corrected",
-            ),
-        ]
-
     bidsdict = bidsbasedict.copy()
 
     if args.debug or args.focaldebug:
@@ -920,7 +932,7 @@ def retroglm(args):
         bidsdict,
         debug=args.debug,
     )
-
+    TimingLGR.info("Finishing output save")
     # read the runoptions file
     print("writing runoptions")
     if args.refinedelay:
@@ -932,6 +944,7 @@ def retroglm(args):
 
     # clean up shared memory
     if usesharedmem:
+        TimingLGR.info("Shared memory cleanup start")
         tide_util.cleanup_shm(glmmean_shm)
         tide_util.cleanup_shm(rvalue_shm)
         tide_util.cleanup_shm(r2value_shm)
@@ -940,6 +953,27 @@ def retroglm(args):
         tide_util.cleanup_shm(movingsignal_shm)
         tide_util.cleanup_shm(lagtc_shm)
         tide_util.cleanup_shm(filtereddata_shm)
+        TimingLGR.info("Shared memory cleanup complete")
+
+    # shut down logging
+    TimingLGR.info("Done")
+    logging.shutdown()
+
+    # reformat timing information and delete the unformatted version
+    timingdata, therunoptions["totalretroruntime"] = tide_util.proctiminglogfile(
+        f"{outputname}_retroruntimings.tsv"
+    )
+    tide_io.writevec(
+        timingdata,
+        f"{outputname}_desc-formattedretroruntimings_info.tsv",
+    )
+    Path(f"{outputname}_retroruntimings.tsv").unlink(missing_ok=True)
+    # shut down the loggers
+    for thelogger in [LGR, ErrorLGR, TimingLGR]:
+        handlers = thelogger.handlers[:]
+        for handler in handlers:
+            thelogger.removeHandler(handler)
+            handler.close()
 
     # delete the canary file
     Path(f"{outputname}_RETROISRUNNING.txt").unlink()
