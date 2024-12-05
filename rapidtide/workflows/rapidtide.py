@@ -1449,10 +1449,10 @@ def rapidtide_main(argparsingfunc):
             append=False,
         )
         resampnonosref_y *= tmask_y
-        thefit, R2 = tide_fit.mlregress(tmask_y, resampnonosref_y)
+        thefit, R2val = tide_fit.mlregress(tmask_y, resampnonosref_y)
         resampnonosref_y -= thefit[0, 1] * tmask_y
         resampref_y *= tmaskos_y
-        thefit, R2 = tide_fit.mlregress(tmaskos_y, resampref_y)
+        thefit, R2val = tide_fit.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
 
     if optiondict["noisetimecoursespec"] is not None:
@@ -3005,10 +3005,10 @@ def rapidtide_main(argparsingfunc):
                     )
                 if optiondict["tincludemaskname"] is not None:
                     resampnonosref_y *= tmask_y
-                    thefit, R2 = tide_fit.mlregress(tmask_y, resampnonosref_y)
+                    thefit, R2val = tide_fit.mlregress(tmask_y, resampnonosref_y)
                     resampnonosref_y -= thefit[0, 1] * tmask_y
                     resampref_y *= tmaskos_y
-                    thefit, R2 = tide_fit.mlregress(tmaskos_y, resampref_y)
+                    thefit, R2val = tide_fit.mlregress(tmaskos_y, resampref_y)
                     resampref_y -= thefit[0, 1] * tmaskos_y
 
                 # reinitialize genlagtc for resampling
