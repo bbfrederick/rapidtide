@@ -17,6 +17,5 @@ retroglm \
     --outputlevel max \
     --refinedelay \
     --refinecorr \
-    --debug \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST

@@ -107,6 +107,7 @@ DEFAULT_PATCHTHRESH = 3.0
 DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
+DEFAULT_DELAYOFFSETSPATIALFILT = -1
 
 DEFAULT_PATCHMINSIZE = 10
 DEFAULT_PATCHFWHM = 5
@@ -407,7 +408,7 @@ def _get_parser():
             "Spatially filter fMRI data prior to analysis "
             "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
             "to have rapidtide set it to half the mean voxel "
-            "dimension (a rule of thumb for a good value)."
+            "dimension (a rule of thumb for a good value). Set to 0 to disable."
         ),
         default=DEFAULT_SPATIALFILT,
     )
@@ -1412,6 +1413,21 @@ def _get_parser():
         ),
         default=DEFAULT_PATCHTHRESH,
     )
+    experimental.add_argument(
+        "--delayoffsetspatialfilt",
+        dest="delayoffsetgausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter fMRI data prior to calculating delay offsets "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value).  Set to 0 to disable."
+        ),
+        default=DEFAULT_DELAYOFFSETSPATIALFILT,
+    )
+
     experimental.add_argument(
         "--premasktissueonly",
         dest="premasktissueonly",

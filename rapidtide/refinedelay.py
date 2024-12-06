@@ -254,7 +254,9 @@ def filterderivratios(
     glmderivratio,
     nativespaceshape,
     validvoxels,
+    thedims,
     patchthresh=3.0,
+    gausssigma=0,
     fileiscifti=False,
     textio=False,
     rt_floattype="float64",
@@ -295,5 +297,20 @@ def filterderivratios(
         filteredarray = np.where(
             np.fabs(glmderivratio - medfilt) > patchthresh * themad, medfilt, glmderivratio
         )
+        if gausssigma > 0:
+            mappedfilteredarray = tide_io.populatemap(
+                filteredarray,
+                internalspaceshape,
+                validvoxels,
+                outmaparray,
+                debug=debug,
+            )
+            filteredarray = tide_filt.ssmooth(
+                thedims[0],
+                thedims[1],
+                thedims[2],
+                gausssigma,
+                mappedfilteredarray.reshape(nativespaceshape),
+            ).reshape(internalspaceshape)[validvoxels]
 
     return medfilt, filteredarray, themad

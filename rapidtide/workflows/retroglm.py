@@ -56,6 +56,7 @@ DEFAULT_PATCHTHRESH = 3.0
 DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
+DEFAULT_DELAYOFFSETSPATIALFILT = -1
 
 
 def _get_parser():
@@ -183,6 +184,20 @@ def _get_parser():
             f"Default is {DEFAULT_PATCHTHRESH}"
         ),
         default=DEFAULT_PATCHTHRESH,
+    )
+    parser.add_argument(
+        "--delayoffsetspatialfilt",
+        dest="delayoffsetgausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter fMRI data prior to calculating delay offsets "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value)."
+        ),
+        default=DEFAULT_DELAYOFFSETSPATIALFILT,
     )
     parser.add_argument(
         "--debug",
@@ -545,6 +560,11 @@ def retroglm(args):
         print("\n\nDelay refinement")
         TimingLGR.info("Delay refinement start")
         LGR.info("\n\nDelay refinement")
+
+        if args.delayoffsetgausssigma < 0.0:
+            # set gausssigma automatically
+            args.delayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
+
         TimingLGR.info("Refinement calibration start")
         glmderivratios = tide_refinedelay.getderivratios(
             fmri_data_valid,
@@ -575,6 +595,8 @@ def retroglm(args):
                 glmderivratios,
                 (xsize, ysize, numslices),
                 validvoxels,
+                (xdim, ydim, slicedim),
+                gausssigma=args.delayoffsetgausssigma,
                 patchthresh=args.delaypatchthresh,
                 fileiscifti=False,
                 textio=False,

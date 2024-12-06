@@ -3512,6 +3512,10 @@ def rapidtide_main(argparsingfunc):
         if optiondict["refinedelay"]:
             TimingLGR.info("Delay refinement start")
             LGR.info("\n\nDelay refinement")
+            if optiondict["delayoffsetgausssigma"] < 0.0 and not optiondict["textio"]:
+                # set gausssigma automatically
+                optiondict["delayoffsetgausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
+
             glmderivratios = tide_refinedelay.getderivratios(
                 fmri_data_valid,
                 validvoxels,
@@ -3541,6 +3545,8 @@ def rapidtide_main(argparsingfunc):
                     glmderivratios,
                     nativespaceshape,
                     validvoxels,
+                    (xdim, ydim, slicethickness),
+                    gausssigma=optiondict["delayoffsetgausssigma"],
                     patchthresh=optiondict["delaypatchthresh"],
                     fileiscifti=fileiscifti,
                     textio=optiondict["textio"],
