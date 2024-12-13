@@ -117,6 +117,7 @@ def eval_refinedelay(
     nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_brainmask.nii.gz")
     )
+    xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(thesizes)
     theheader = copy.copy(nim_hdr)
     theheader["dim"][0] = 3
     theheader["dim"][1] = nativespaceshape[0]
@@ -179,6 +180,7 @@ def eval_refinedelay(
         glmderivratios,
         nativespaceshape,
         validvoxels,
+        (xdim, ydim, slicedim),
         patchthresh=3.0,
         fileiscifti=False,
         textio=False,
