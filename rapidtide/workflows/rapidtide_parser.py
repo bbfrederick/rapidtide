@@ -92,6 +92,7 @@ DEFAULT_DELAYMAPPING_LAGMIN = -10.0
 DEFAULT_DELAYMAPPING_LAGMAX = 30.0
 DEFAULT_DELAYMAPPING_PASSES = 3
 DEFAULT_DELAYMAPPING_DESPECKLE_PASSES = 4
+DEFAULT_DELAYMAPPING_SPATIALFILT = 5
 
 DEFAULT_CVRMAPPING_LAGMIN = -5.0
 DEFAULT_CVRMAPPING_LAGMAX = 20.0
@@ -172,7 +173,8 @@ def _get_parser():
             "Preset for delay mapping analysis - this is a macro that "
             f"sets searchrange=({DEFAULT_DELAYMAPPING_LAGMIN}, {DEFAULT_DELAYMAPPING_LAGMAX}), "
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
-            "refineoffset=True, outputlevel='normal', "
+            f"gausssigma={DEFAULT_DELAYMAPPING_SPATIALFILT}, "
+            "refineoffset=True, refinedelay=True, outputlevel='normal', "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
@@ -2092,9 +2094,11 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "despeckle_passes", DEFAULT_DELAYMAPPING_DESPECKLE_PASSES)
         pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
+        pf.setifnotset(args, "gausssigma", DEFAULT_DELAYMAPPING_SPATIALFILT)
         args["refineoffset"] = True
+        args["refinedelay"] = True
         args["outputlevel"] = "normal"
-        pf.setifnotset(args, "doglmfilt", False)
+        pf.setifnotset(args, "doglmfilt", True)
 
     if args["denoising"]:
         LGR.warning('Using "denoising" analysis mode. Overriding any affected arguments.')
@@ -2105,6 +2109,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "peakfittype", DEFAULT_DENOISING_PEAKFITTYPE)
         pf.setifnotset(args, "gausssigma", DEFAULT_DENOISING_SPATIALFILT)
         args["refineoffset"] = True
+        args["refinedelay"] = True
         args["zerooutbadfit"] = False
         pf.setifnotset(args, "doglmfilt", True)
 
