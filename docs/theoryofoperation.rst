@@ -737,12 +737,17 @@ derivative, and so on, you can calculate the signal at another point t + delta t
 weighted sum of those  values.  Neat!  Even more neat is that for very sufficiently small values of
 delta t, you can get a pretty good approximation using just the function and it's first derivative.
 
-There are some complications.
-1)  As I mentioned, this only works for "small" delay times.  What is small?  For LFO signals in the 0.01
-to 0.15 Hz band, this is only really good for about +/-3-5 seconds.
+There are some complications:
 
-2) The mapping between fit coefficient ratio and time delay depends on the function, so it needs to be determined
-for each regressor.
+1) The mapping between fit coefficient ratio and time delay depends on the function, so it needs to be determined
+for each regressor.  It's linear for very small angles (with a regressor specific slope),
+and then the mapping diverges (in a regressor specific way) as the delay increases.
+
+2)  As I mentioned, this only works for "small" delay times.  What is small?  For LFO signals in the 0.01
+to 0.15 Hz band, this is only really good for about +/-3-5 seconds of offset
+(which is why we can't use this method for the initial delay estimation, only for tuning).  The mapping function
+ends up being sigmoid - you can't really calculate
+the delay from the ratio when the slope gets close to zero.  When that happens depends on the specific regressor.
 
 
 References
