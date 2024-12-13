@@ -723,6 +723,28 @@ Finally, if you don't want to do glm filtering at all
 you can shut off the glm filtering with ``--noglm``.
 
 
+Delay refinement
+^^^^^^^^^^^^^^^^
+
+This is new to rapidtide 3.0.  I've added a new method for refining the delay time estimate in
+every voxel based on the filtering step.  To the best of my knowledge, this is something I came up
+with (well not entirely, but this application).
+
+As we remember from freshman physics, you can extrapolate a signal using a Taylor series approximation.
+Which is to say, if you know the value of a function at a time t, and the value of the derivative,
+and the second
+derivative, and so on, you can calculate the signal at another point t + delta t by using a
+weighted sum of those  values.  Neat!  Even more neat is that for very sufficiently small values of
+delta t, you can get a pretty good approximation using just the function and it's first derivative.
+
+There are some complications.
+1)  As I mentioned, this only works for "small" delay times.  What is small?  For LFO signals in the 0.01
+to 0.15 Hz band, this is only really good for about +/-3-5 seconds.
+
+2) The mapping between fit coefficient ratio and time delay depends on the function, so it needs to be determined
+for each regressor.
+
+
 References
 ^^^^^^^^^^
 
