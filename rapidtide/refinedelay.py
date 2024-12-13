@@ -25,6 +25,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
 
+
 global ratiotooffsetfunc, maplimits
 
 
@@ -159,9 +160,11 @@ def trainratiotooffset(
         upperlim += 1
     xaxis = xaxis[lowerlim : upperlim + 1]
     yaxis = yaxis[lowerlim : upperlim + 1]
+    ratiotooffsetfunc = CubicSpline(xaxis, yaxis)
+    maplimits = (xaxis[0], xaxis[-1])
 
-    if (outputlevel != "min") and (outputlevel != "less"):
-        tide_io.writebidstsv(
+    if outputlevel != "min":
+        """tide_io.writebidstsv(
             f"{outputname}_desc-ratiotodelaymapping_timeseries",
             np.stack((xaxis, yaxis)),
             1.0,
@@ -170,9 +173,19 @@ def trainratiotooffset(
                 "Description": "The ratio of sLFO derivative to the sLFO, and the corresponding delay offset"
             },
             append=False,
+        )"""
+        resampaxis = np.linspace(xaxis[0], xaxis[-1], num=len(xaxis), endpoint=True)
+        tide_io.writebidstsv(
+            f"{outputname}_desc-ratiotodelayfunc_timeseries",
+            ratiotooffsetfunc(resampaxis),
+            1.0 / (resampaxis[1] - resampaxis[0]),
+            starttime=resampaxis[0],
+            columns=["delay"],
+            extraheaderinfo={
+                "Description": "The function mapping derivative ratio to delay"
+            },
+            append=False,
         )
-    ratiotooffsetfunc = CubicSpline(xaxis, yaxis)
-    maplimits = (xaxis[0], xaxis[-1])
 
 
 def ratiotodelay(theratio):
