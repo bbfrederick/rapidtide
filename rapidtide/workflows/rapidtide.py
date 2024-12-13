@@ -3585,7 +3585,7 @@ def rapidtide_main(argparsingfunc):
                     dictvarname="delayoffsethist",
                     thedict=optiondict,
                 )
-            lagtimescorrected = lagtimes + delayoffset
+            lagtimesrefined = lagtimes + delayoffset
 
             ####################################################
             #  Delay refinement end
@@ -3606,7 +3606,7 @@ def rapidtide_main(argparsingfunc):
 
             # now calculate the GLM
             if optiondict["refinedelay"] and optiondict["filterwithrefineddelay"]:
-                lagstouse = lagtimescorrected
+                lagstouse = lagtimesrefined
             else:
                 lagstouse = lagtimes
             voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
@@ -3824,11 +3824,11 @@ def rapidtide_main(argparsingfunc):
                 "Delay offset correction from delay refinement",
             ),
             (
-                lagtimescorrected,
-                "maxtimecorrected",
+                lagtimesrefined,
+                "maxtimerefined",
                 "map",
                 "second",
-                "Lag time in seconds, corrected",
+                "Lag time in seconds, refined",
             ),
         ]
         if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
