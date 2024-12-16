@@ -636,7 +636,7 @@ def retroglm(args):
             dictvarname="delayoffsethist",
             thedict=None,
         )
-        lagtimesrefined_valid = lagtimes_valid + delayoffset
+        lagtimesrefined_valid = lagtimes_valid - delayoffset
 
         TimingLGR.info(
             "Delay offset calculation done",
