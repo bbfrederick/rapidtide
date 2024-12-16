@@ -3582,7 +3582,7 @@ def rapidtide_main(argparsingfunc):
                     dictvarname="delayoffsethist",
                     thedict=optiondict,
                 )
-            lagtimesrefined = lagtimes - delayoffset
+            lagtimesrefined = lagtimes + delayoffset
 
             ####################################################
             #  Delay refinement end
