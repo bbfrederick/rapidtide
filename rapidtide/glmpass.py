@@ -32,6 +32,10 @@ def _procOneGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="
         if thefit is None:
             thefit = np.matrix(np.zeros((1, theevs.shape[1] + 1), dtype=rt_floattype))
         fitcoeffs = rt_floatset(thefit[0, 1:])
+        if fitcoeffs[0, 0] < 0.0:
+            coeffsign = -1.0
+        else:
+            coeffsign = 1.0
         datatoremove = theevs[:, 0] * 0.0
         for j in range(theevs.shape[1]):
             datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * theevs[:, j])
@@ -42,7 +46,7 @@ def _procOneGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="
         return (
             vox,
             rt_floatset(thefit[0, 0]),
-            rt_floatset(np.sqrt(R2)),
+            rt_floatset(coeffsign * np.sqrt(R2)),
             rt_floatset(R2),
             fitcoeffs,
             rt_floatset(thefit[0, 1:] / thefit[0, 0]),
@@ -52,12 +56,16 @@ def _procOneGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="
     else:
         fitcoeff = rt_floatset(thefit[0, 1])
         datatoremove = rt_floatset(fitcoeff * theevs)
+        if fitcoeff < 0.0:
+            coeffsign = -1.0
+        else:
+            coeffsign = 1.0
         if fitcoeff == 0.0:
             R2 = 0.0
         return (
             vox,
             rt_floatset(thefit[0, 0]),
-            rt_floatset(np.sqrt(R2)),
+            rt_floatset(coeffsign * np.sqrt(R2)),
             rt_floatset(R2),
             fitcoeff,
             rt_floatset(thefit[0, 1] / thefit[0, 0]),

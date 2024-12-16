@@ -3830,6 +3830,7 @@ def rapidtide_main(argparsingfunc):
                 "second",
                 "Lag time in seconds, refined",
             ),
+            (np.fabs(rvalue), "maxcorralt", "map", None, "R value of the GLM fit, with sign"),
         ]
         if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
             savelist += [
@@ -3929,7 +3930,7 @@ def rapidtide_main(argparsingfunc):
                 ]
             if optiondict["savenormalglmfiles"]:
                 maplist += [
-                    (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
+                    (np.fabs(rvalue), "lfofilterR", "map", None, "R value of the GLM fit"),
                     (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
                 ]
                 if optiondict["glmderivs"] > 0:

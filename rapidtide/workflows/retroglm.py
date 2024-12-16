@@ -765,7 +765,7 @@ def retroglm(args):
             ]
         if args.savenormalglmfiles:
             maplist += [
-                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
+                (np.fabs(rvalue), "lfofilterR", "map", None, "R value of the GLM fit"),
                 (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
             ]
     else:
@@ -966,13 +966,13 @@ def retroglm(args):
     TimingLGR.info("Finishing output save")
 
     if args.refinecorr:
-        TimingLGR.info("Filtering for maxcorrrefined calculation start")
+        TimingLGR.info("Filtering for maxcorralt calculation start")
         for thevoxel in range(fmri_data_valid.shape[0]):
             fmri_data_valid[thevoxel, :] = theprefilter.apply(
                 1.0 / fmritr, fmri_data_valid[thevoxel, :]
             )
-        TimingLGR.info("Filtering for maxcorrrefined calculation complete")
-        TimingLGR.info("GLM for maxcorrrefined calculation start")
+        TimingLGR.info("Filtering for maxcorralt calculation complete")
+        TimingLGR.info("GLM for maxcorralt calculation start")
         voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
             fmri_data_valid,
             validvoxels,
@@ -1002,7 +1002,7 @@ def retroglm(args):
             debug=args.debug,
         )
         TimingLGR.info(
-            "GLM for maxcorrrefined calculation done",
+            "GLM for maxcorralt calculation done",
             {
                 "message2": voxelsprocessed_glm,
                 "message3": "voxels",
@@ -1012,10 +1012,10 @@ def retroglm(args):
         maplist = [
             (
                 rvalue,
-                "maxcorrrefined",
+                "maxcorralt",
                 "map",
                 None,
-                "R value for the lfo component of the delayed regressor",
+                "R value for the lfo component of the delayed regressor, with sign",
             ),
         ]
         theheader = copy.deepcopy(lagtimes_header)
