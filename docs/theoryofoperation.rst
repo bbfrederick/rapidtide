@@ -734,20 +734,32 @@ As we remember from freshman physics, you can extrapolate a signal using a Taylo
 Which is to say, if you know the value of a function at a time t, and the value of the derivative,
 and the second
 derivative, and so on, you can calculate the signal at another point t + delta t by using a
-weighted sum of those  values.  Neat!  Even more neat is that for very sufficiently small values of
+weighted sum of those  values.  Neat!  Even more neat is that for sufficiently small values of
 delta t, you can get a pretty good approximation using just the function and it's first derivative.
 
-There are some complications:
+As always, there are some complications:
 
-1) The mapping between fit coefficient ratio and time delay depends on the function, so it needs to be determined
-for each regressor.  It's linear for very small angles (with a regressor specific slope),
-and then the mapping diverges (in a regressor specific way) as the delay increases.
+    * The mapping between fit coefficient ratio and time delay depends on the function, so it needs
+      to be determined for each regressor.  It's linear for very small delay value, and then the
+      mapping diverges (in a regressor specific way) as the delay increases.
 
-2)  As I mentioned, this only works for "small" delay times.  What is small?  For LFO signals in the 0.01
-to 0.15 Hz band, this is only really good for about +/-3-5 seconds of offset
-(which is why we can't use this method for the initial delay estimation, only for tuning).  The mapping function
-ends up being sigmoid - you can't really calculate
-the delay from the ratio when the slope gets close to zero.  When that happens depends on the specific regressor.
+    * As I mentioned, this only works for "small" delay times.  What is small?  For LFO signals
+      in the 0.01 to 0.15 Hz band, this is only really good for about +/-3-5 seconds of offset
+      (and the linear region is only about +/-0.75 seconds (which is why we can't use this method
+      for the initial delay estimation, only for tuning).  The mapping function ends up being
+      sigmoid - you can't really calculate the delay from the ratio when the slope gets close to zero.
+      When that happens depends on the specific regressor, but you can pretty much always do the
+      mapping out to about +/-3.5 seconds.
+
+What is this good for?  Well, one thing I have found is that rapidtide gets much better fits if you
+use a fairly strong spatial smoothing filter (5mm gaussian kernel).  That's great for getting rid
+of a lot of the annoying speckling in the delay maps, but the result is that you lose a lot of fine
+detail in the delay map (which is obvious when you think about it). BUT - we know that delay varies
+relatively smoothly in real brains, so the smoothed delay values, while maybe not exactly right in
+most voxels, aren't far off.  So the delay in any voxel will be within +/-3 seconds of the smoothed
+value in every voxel, so the ratio-of-fit-derivatives method will be able to fit the difference, which
+you can then apply as an offset to find the exact delay in every voxel with much higher spatial resolution.
+Neat, huh?
 
 
 References
