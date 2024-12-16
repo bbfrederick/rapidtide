@@ -601,9 +601,6 @@ def rapidtide_main(argparsingfunc):
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
-    if optiondict["numtozero"] > 0:
-        themean = np.mean(fmri_data[:, optiondict["numtozero"] :], axis=1)
-        fmri_data[:, 0 : optiondict["numtozero"]] = themean[:, None]
 
     # detect zero mean data
     optiondict["dataiszeromean"] = checkforzeromean(fmri_data)
@@ -3585,7 +3582,7 @@ def rapidtide_main(argparsingfunc):
                     dictvarname="delayoffsethist",
                     thedict=optiondict,
                 )
-            lagtimesrefined = lagtimes + delayoffset
+            lagtimesrefined = lagtimes - delayoffset
 
             ####################################################
             #  Delay refinement end
@@ -4273,6 +4270,28 @@ def rapidtide_main(argparsingfunc):
                     "sLFO signal filtered out of this voxel",
                 ),
             ]
+
+            # save a pseudofile if we're going to
+            if optiondict["makepseudofile"]:
+                print("reading mean image")
+                meanfile = f"{outputname}_desc-mean_map.nii.gz"
+                (
+                    mean_input,
+                    mean,
+                    mean_header,
+                    mean_dims,
+                    mean_sizes,
+                ) = tide_io.readfromnifti(meanfile)
+                if not tide_io.checkspacematch(theheader, mean_header):
+                    raise ValueError("mean dimensions do not match fmri dimensions")
+                if optiondict["debug"]:
+                    print(f"{mean.shape=}")
+                mean_spacebytime = mean.reshape((numspatiallocs))
+                if optiondict["debug"]:
+                    print(f"{mean_spacebytime.shape=}")
+                pseudofile = mean_spacebytime[validvoxels, None] + movingsignal[:, :]
+                maplist.append((pseudofile, "pseudofile", "bold", None, None))
+
 
     # save maps in the current output list
     if len(maplist) > 0:
