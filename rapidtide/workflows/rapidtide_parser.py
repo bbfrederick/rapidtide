@@ -415,6 +415,24 @@ def _get_parser():
         default=DEFAULT_SPATIALFILT,
     )
     preproc.add_argument(
+        "--premask",
+        dest="premask",
+        action="store_true",
+        help=(
+            "Apply masking prior to spatial filtering to limit extracerebral sources (requires --brainmask)"
+        ),
+        default=False,
+    )
+    preproc.add_argument(
+        "--premasktissueonly",
+        dest="premasktissueonly",
+        action="store_true",
+        help=(
+            "Apply more stringent masking prior to spatial filtering, removing CSF voxels (requires --graymattermask and --whitemattermask)."
+        ),
+        default=False,
+    )
+    preproc.add_argument(
         "--globalmean",
         dest="useglobalref",
         action="store_true",
@@ -572,19 +590,6 @@ def _get_parser():
         default=0,
     )
     preproc.add_argument(
-        "--numtozero",
-        dest="numtozero",
-        action="store",
-        type=int,
-        metavar="NUMPOINTS",
-        help=(
-            "When calculating the moving regressor, set this number of points to zero at the beginning of the "
-            "voxel timecourses. This prevents initial points which may not be in equilibrium from contaminating the "
-            "calculated sLFO signal.  This may improve similarity fitting and GLM noise removal.  Default is 0."
-        ),
-        default=0,
-    )
-    preproc.add_argument(
         "--timerange",
         dest="timerange",
         action="store",
@@ -598,6 +603,34 @@ def _get_parser():
             "of START will be set to 0. Default is to use all timepoints."
         ),
         default=(-1, -1),
+    )
+    preproc.add_argument(
+        "--tincludemask",
+        dest="tincludemaskname",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="FILE",
+        help=(
+            "Only correlate during epochs specified "
+            "in MASKFILE (NB: each line of FILE "
+            "contains the time and duration of an "
+            "epoch to include."
+        ),
+        default=None,
+    )
+    preproc.add_argument(
+        "--texcludemask",
+        dest="texcludemaskname",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="FILE",
+        help=(
+            "Do not correlate during epochs specified "
+            "in MASKFILE (NB: each line of FILE "
+            "contains the time and duration of an "
+            "epoch to exclude."
+        ),
+        default=None,
     )
     preproc.add_argument(
         "--nothresh",
@@ -783,8 +816,8 @@ def _get_parser():
         dest="fixeddelayvalue",
         action="store",
         type=float,
-        metavar="DELAYTIME",
-        help=("Don't fit the delay time - set it to DELAYTIME seconds for all " "voxels."),
+        metavar="DELAY",
+        help=("Don't fit the delay time - set it to DELAY seconds for all " "voxels."),
         default=None,
     )
     fixdelay.add_argument(
@@ -1381,15 +1414,6 @@ def _get_parser():
         default=None,
     )
     experimental.add_argument(
-        "--premask",
-        dest="premask",
-        action="store_true",
-        help=(
-            "Apply masking prior to spatial filtering to limit extracerebral sources (requires --brainmask)"
-        ),
-        default=False,
-    )
-    experimental.add_argument(
         "--refinedelay",
         dest="refinedelay",
         action="store_true",
@@ -1429,14 +1453,11 @@ def _get_parser():
         ),
         default=DEFAULT_DELAYOFFSETSPATIALFILT,
     )
-
     experimental.add_argument(
-        "--premasktissueonly",
-        dest="premasktissueonly",
+        "--makepseudofile",
+        dest="makepseudofile",
         action="store_true",
-        help=(
-            "Apply more stringent masking prior to spatial filtering, removing CSF voxels (requires --graymattermask and --whitemattermask)."
-        ),
+        help=("Make a simulated input file from the mean and the movingsignal."),
         default=False,
     )
     experimental.add_argument(
@@ -1609,34 +1630,7 @@ def _get_parser():
         help=("Perform patch shift correction."),
         default=False,
     )
-    experimental.add_argument(
-        "--tincludemask",
-        dest="tincludemaskname",
-        action="store",
-        type=lambda x: pf.is_valid_file(parser, x),
-        metavar="FILE",
-        help=(
-            "Only correlate during epochs specified "
-            "in MASKFILE (NB: each line of FILE "
-            "contains the time and duration of an "
-            "epoch to include."
-        ),
-        default=None,
-    )
-    experimental.add_argument(
-        "--texcludemask",
-        dest="texcludemaskname",
-        action="store",
-        type=lambda x: pf.is_valid_file(parser, x),
-        metavar="FILE",
-        help=(
-            "Do not correlate during epochs specified "
-            "in MASKFILE (NB: each line of FILE "
-            "contains the time and duration of an "
-            "epoch to exclude."
-        ),
-        default=None,
-    )
+
     # Debugging options
     debugging = parser.add_argument_group(
         "Debugging options.  You probably don't want to use any of these unless I ask you to to help diagnose a problem"
