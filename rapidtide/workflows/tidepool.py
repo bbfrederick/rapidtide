@@ -1593,15 +1593,15 @@ def tidepool(args):
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
-        "lagtimescorrected": {
+        "lagtimesrefined": {
             "colormap": gen_viridis_state(),
-            "label": "Corrected lag times",
+            "label": "Refineed lag times",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "delayoffset": {
             "colormap": gen_viridis_state(),
-            "label": "Lag time corrections",
+            "label": "Lag time adjustments",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },

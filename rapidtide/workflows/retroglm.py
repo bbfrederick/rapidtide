@@ -636,7 +636,7 @@ def retroglm(args):
             dictvarname="delayoffsethist",
             thedict=None,
         )
-        lagtimescorrected_valid = lagtimes_valid + delayoffset
+        lagtimesrefined_valid = lagtimes_valid + delayoffset
 
         TimingLGR.info(
             "Delay offset calculation done",
@@ -655,7 +655,7 @@ def retroglm(args):
     print("calling glmmfrommaps")
     TimingLGR.info("Starting GLM filtering")
     if args.refinedelay and args.filterwithrefineddelay:
-        lagstouse_valid = lagtimescorrected_valid
+        lagstouse_valid = lagtimesrefined_valid
     else:
         lagstouse_valid = lagtimes_valid
     voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
@@ -854,11 +854,11 @@ def retroglm(args):
                 "Delay offset correction from delay refinement",
             ),
             (
-                lagtimescorrected_valid,
-                "maxtimecorrected",
+                lagtimesrefined_valid,
+                "maxtimerefined",
                 "map",
                 "second",
-                "Lag time in seconds, corrected",
+                "Lag time in seconds, refined",
             ),
         ]
 
@@ -966,13 +966,13 @@ def retroglm(args):
     TimingLGR.info("Finishing output save")
 
     if args.refinecorr:
-        TimingLGR.info("Filtering for maxcorrcorrected calculation start")
+        TimingLGR.info("Filtering for maxcorrrefined calculation start")
         for thevoxel in range(fmri_data_valid.shape[0]):
             fmri_data_valid[thevoxel, :] = theprefilter.apply(
                 1.0 / fmritr, fmri_data_valid[thevoxel, :]
             )
-        TimingLGR.info("Filtering for maxcorrcorrected calculation complete")
-        TimingLGR.info("GLM for maxcorrcorrected calculation start")
+        TimingLGR.info("Filtering for maxcorrrefined calculation complete")
+        TimingLGR.info("GLM for maxcorrrefined calculation start")
         voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
             fmri_data_valid,
             validvoxels,
@@ -1002,7 +1002,7 @@ def retroglm(args):
             debug=args.debug,
         )
         TimingLGR.info(
-            "GLM for maxcorrcorrected calculation done",
+            "GLM for maxcorrrefined calculation done",
             {
                 "message2": voxelsprocessed_glm,
                 "message3": "voxels",
@@ -1012,7 +1012,7 @@ def retroglm(args):
         maplist = [
             (
                 rvalue,
-                "maxcorrcorrected",
+                "maxcorrrefined",
                 "map",
                 None,
                 "R value for the lfo component of the delayed regressor",
