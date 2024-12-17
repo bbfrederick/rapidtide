@@ -27,6 +27,8 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 
+from rapidtide.tests.utils import mse
+
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 def readfromnifti(inputfile, headeronly=False):
@@ -876,6 +878,45 @@ def checktimematch(dims1, dims2, numskip1=0, numskip2=0, verbose=False):
         return False
     else:
         return True
+
+
+def checkdatamatch(data1, data2, absthresh=1e-12, msethresh=1e-12, debug=False):
+    msediff = mse(data1, data2)
+    absdiff = np.max(np.fabs(data1 - data2))
+    if debug:
+        print(f"msediff {msediff}, absdiff {absdiff}")
+    return msediff < msethresh, absdiff < absthresh
+
+
+def checkniftifilematch(
+    filename1, filename2, absthresh=1e-12, msethresh=1e-12, spacetolerance=1e-3, debug=False
+):
+    im1, im1_data, im1_hdr, im1_dims, im1_sizes = readfromnifti(filename1)
+    im2, im2_data, im2_hdr, im2_dims, im2_sizes = readfromnifti(filename2)
+    spacematch = checkspacematch(im1_hdr, im2_hdr, tolerance=spacetolerance)
+    if not spacematch:
+        print(
+            "file spatial dimensions or resolution do not match within tolerance {spacetolerance}"
+        )
+        return False
+    timematch = checktimematch(im1_dims, im2_dims)
+    if not timematch:
+        print(f"file time dimensions do not match")
+        return False
+    msedatamatch, absdatamatch = checkdatamatch(
+        im1_data,
+        im2_data,
+        absthresh=absthresh,
+        msethresh=msethresh,
+        debug=debug,
+    )
+    if not msedatamatch:
+        print(f"file data mse does not match within tolerance {msethresh}")
+        return False
+    if not absdatamatch:
+        print(f"files differ by at least {absthresh} in at least one voxel")
+        return False
+    return True
 
 
 # --------------------------- non-NIFTI file I/O functions ------------------------------------------
