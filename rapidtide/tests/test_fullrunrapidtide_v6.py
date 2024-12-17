@@ -21,6 +21,7 @@ import subprocess
 
 import matplotlib as mpl
 
+import rapidtide.io as tide_io
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 import rapidtide.workflows.retroglm as rapidtide_retroglm
@@ -102,10 +103,14 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
     ]
     rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
 
+    absthresh = 1e-10
+    msethresh = 1e-12
+    spacetolerance = 1e-3
     for map in [
         "glmderivratios",
         "medfiltglmderivratios",
         "filteredglmderivratios",
+        "maxtimerefined",
         "lfofilterInbandVarianceBefore",
         "lfofilterInbandVarianceAfter",
         "lfofilterInbandVarianceChange",
@@ -115,15 +120,17 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "lfofilterR2",
         "lfofilterR",
     ]:
-        diffcmd = ["diff"]
-        diffcmd.extend([os.path.join(get_test_temp_path(), f"concordance_desc-{map}_map.nii.gz")])
-        diffcmd.extend(
-            [os.path.join(get_test_temp_path(), f"sub-RAPIDTIDETEST6_desc-{map}_map.nii.gz")]
+        print(f"Testing map={map}")
+        filename1 = os.path.join(get_test_temp_path(), f"sub-RAPIDTIDETEST6_desc-{map}_map.nii.gz")
+        filename2 = os.path.join(get_test_temp_path(), f"concordance_desc-{map}_map.nii.gz")
+        assert tide_io.checkniftifilematch(
+            filename1,
+            filename2,
+            absthresh=absthresh,
+            msethresh=msethresh,
+            spacetolerance=spacetolerance,
+            debug=debug,
         )
-        proc = subprocess.run(diffcmd, capture_output=True)
-        if proc.returncode != 0:
-            print(f"{map} did not match")
-            assert False
 
 
 if __name__ == "__main__":
