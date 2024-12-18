@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 from rapidtide.filter import NoncausalFilter
@@ -40,6 +41,7 @@ def eval_refinedelay(
     nativespaceshape=(10, 10, 10),
     displayplots=False,
     padtime=30.0,
+    noiselevel=0.0,
     outputsuffix="",
     debug=False,
 ):
@@ -62,9 +64,9 @@ def eval_refinedelay(
 
     # make an sLFO timecourse
     timeaxis = np.linspace(0.0, sampletime * tclen, num=tclen, endpoint=False)
-    rawgms = np.random.normal(size=tclen)
+    rawgms = tide_math.stdnormalize(np.random.normal(size=tclen))
     testfilter = NoncausalFilter(filtertype="lfo")
-    sLFO = testfilter.apply(Fs, rawgms)
+    sLFO = tide_math.stdnormalize(testfilter.apply(Fs, rawgms))
     if displayplots:
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -103,7 +105,10 @@ def eval_refinedelay(
     fmrimask = np.ones(numlags, dtype=float)
     validvoxels = np.where(fmrimask > 0)[0]
     for i in range(numlags):
-        fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i])
+        noisevec = tide_math.stdnormalize(
+            testfilter.apply(Fs, tide_math.stdnormalize(np.random.normal(size=tclen)))
+        )
+        fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i]) + noiselevel * noisevec
 
     """if displayplots:
         fig = plt.figure()
@@ -193,7 +198,7 @@ def eval_refinedelay(
         delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
 
     # do the tests
-    msethresh = 1e-3
+    msethresh = 0.1
     aethresh = 2
     print(f"{mse(lagtimes, delayoffset)=}")
     assert mse(lagtimes, delayoffset) < msethresh
@@ -210,18 +215,20 @@ def eval_refinedelay(
 
 
 def test_refinedelay(displayplots=False, debug=False):
-    eval_refinedelay(
-        sampletime=0.72,
-        tclengthinsecs=300.0,
-        mindelay=-3.0,
-        maxdelay=3.0,
-        numpoints=501,
-        smoothpts=9,
-        nativespaceshape=(10, 10, 10),
-        displayplots=displayplots,
-        outputsuffix="_1",
-        debug=debug,
-    )
+    for noiselevel in np.linspace(0.0, 0.5, num=5, endpoint=True):
+        eval_refinedelay(
+            sampletime=0.72,
+            tclengthinsecs=300.0,
+            mindelay=-3.0,
+            maxdelay=3.0,
+            numpoints=501,
+            smoothpts=9,
+            nativespaceshape=(10, 10, 10),
+            displayplots=displayplots,
+            outputsuffix="_1",
+            noiselevel=noiselevel,
+            debug=debug,
+        )
     eval_refinedelay(
         sampletime=0.72,
         tclengthinsecs=300.0,
