@@ -1,8 +1,9 @@
 # Release history
 
-## Version 3.0alpha1 (12/5/24)
-* (rapidtide) The ``--fixdelay`` option has been split into two options.  ``--initialdelay DELAY`` lets you specify either a float that sets the starting delay for every voxel to that value, or a 3D file specifying the initial delay for each voxel.  ``--nodelayfit`` determines whether the delay can be adjusted from its initial value.
-* (rapidtide, retroglm) Added delay refinement.
+## Version 3.0alpha1 (12/18/24)
+* (rapidtide) The ``--fixdelay`` option has been split into two options.  ``--initialdelay DELAY`` lets you specify either a float that sets the starting delay for every voxel to that value, or a 3D file specifying the initial delay for each voxel.  ``--nodelayfit`` determines whether the delay can be adjusted from its initial value.  Closes https://github.com/bbfrederick/rapidtide/issues/171.
+* (rapidtide) Reorganized command line options and adjusted the default values.
+* (rapidtide, retroglm) Added delay refinement using the ratio of the fit coefficients of the regressor and its time derivative.
 * (rapidtide, retroglm) Fixed a bad shared memory leak.
 * (retroglm) Significantly enhanced logging.
 * (retroglm) Added canary files.
@@ -10,8 +11,8 @@
 * (rapidtide) Write out individual EV timecourses.
 * (Docker) Cleaned up some internal variables.
 * (Docker) Improved build and testing scripts.
+* (io) Added function to compare nifti files with some tolerance.
 * (package) Merged some dependabot PRs.
-
 * (package) Fixed a fairly big, but not necessarily impactful bug. mlregress returned R2, not R, so anything referring to the R of a fit was actually squared (R was actually R2, R2 was actually R4).
 
 ## Version 2.9.9.5 (11/15/24)
