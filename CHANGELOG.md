@@ -1,6 +1,7 @@
 # Release history
 
 ## Version 3.0alpha1 (12/5/24)
+* (rapidtide) The ``--fixdelay`` option has been split into two options.  ``--initialdelay DELAY`` lets you specify either a float that sets the starting delay for every voxel to that value, or a 3D file specifying the initial delay for each voxel.  ``--nodelayfit`` determines whether the delay can be adjusted from its initial value.
 * (rapidtide, retroglm) Added delay refinement.
 * (rapidtide, retroglm) Fixed a bad shared memory leak.
 * (retroglm) Significantly enhanced logging.

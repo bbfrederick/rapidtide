@@ -39,7 +39,7 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         "--nprocs",
         "-1",
         "--passes",
-        "1",
+        "2",
         "--despecklepasses",
         "3",
         "--refinedelay",
@@ -48,6 +48,46 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
     rapidtide_quality.qualitycheck(os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1"))
+
+    inputargs = [
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1_fixval"),
+        "--spatialfilt",
+        "2",
+        "--simcalcrange",
+        "4",
+        "-1",
+        "--nprocs",
+        "-1",
+        "--passes",
+        "1",
+        "--despecklepasses",
+        "3",
+        "--noglm",
+        "--initialdelay",
+        "0.0",
+    ]
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+
+    inputargs = [
+        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1_fixmap"),
+        "--spatialfilt",
+        "2",
+        "--simcalcrange",
+        "4",
+        "-1",
+        "--nprocs",
+        "-1",
+        "--passes",
+        "1",
+        "--despecklepasses",
+        "3",
+        "--noglm",
+        "--initialdelay",
+        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1_desc-maxtime_map.nii.gz"),
+    ]
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
 
 if __name__ == "__main__":

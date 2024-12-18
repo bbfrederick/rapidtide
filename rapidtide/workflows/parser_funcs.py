@@ -96,6 +96,25 @@ def is_float(parser, arg):
     return arg
 
 
+def is_valid_file_or_float(parser, arg):
+    """
+    Check if argument is existing file.
+    """
+    if arg is not None:
+        thefilename, colspec = tide_io.parsefilespec(arg)
+    else:
+        thefilename = None
+
+    if not op.isfile(thefilename) and thefilename is not None:
+        # this is not a file - is it a float?
+        try:
+            arg = float(arg)
+        except ValueError:
+            parser.error("Value {0} is not a float or a valid filename".format(arg))
+
+    return arg
+
+
 def is_int(parser, arg):
     """
     Check if argument is int or auto.
@@ -746,7 +765,7 @@ def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0)
     if details:
         parser.add_argument(
             "--fixdelay",
-            dest="fixeddelayvalue",
+            dest="initialdelayvalue",
             action="store",
             type=float,
             metavar="DELAYTIME",
@@ -759,12 +778,12 @@ def postprocesssearchrangeopts(args):
     # Additional argument parsing not handled by argparse
     # first handle fixed delay
     try:
-        test = args.fixeddelayvalue
+        test = args.initialdelayvalue
     except:
-        args.fixeddelayvalue = None
-    if args.fixeddelayvalue is not None:
+        args.initialdelayvalue = None
+    if args.initialdelayvalue is not None:
         args.fixdelay = True
-        args.lag_extrema = (args.fixeddelayvalue - 10.0, args.fixeddelayvalue + 10.0)
+        args.lag_extrema = (args.initialdelayvalue - 10.0, args.initialdelayvalue + 10.0)
     else:
         args.fixdelay = False
 

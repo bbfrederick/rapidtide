@@ -810,16 +810,19 @@ def _get_parser():
     # Correlation fitting options
     corr_fit = parser.add_argument_group("Correlation fitting options")
 
-    fixdelay = corr_fit.add_mutually_exclusive_group()
-    fixdelay.add_argument(
-        "--fixdelay",
-        dest="fixeddelayvalue",
-        action="store",
-        type=float,
+    corr_fit.add_argument(
+        "--initialdelay",
+        dest="initialdelayvalue",
+        type=lambda x: pf.is_valid_file_or_float(parser, x),
         metavar="DELAY",
-        help=("Don't fit the delay time - set it to DELAY seconds for all " "voxels."),
-        default=None,
+        help=(
+            "Start the analysis with predefined delays.  If DELAY is a filename, use it as an initial delay map; "
+            "if DELAY is a float, initialize all voxels to a  delay of DELAY seconds."
+        ),
+        default=0.0,
     )
+
+    fixdelay = corr_fit.add_mutually_exclusive_group()
     fixdelay.add_argument(
         "--searchrange",
         dest="lag_extrema",
@@ -832,6 +835,13 @@ def _get_parser():
             f"LAGMAX.  Default is {DEFAULT_LAGMIN} to {DEFAULT_LAGMAX} seconds. "
         ),
         default=(DEFAULT_LAGMIN, DEFAULT_LAGMAX),
+    )
+    fixdelay.add_argument(
+        "--nodelayfit",
+        dest="fixdelay",
+        action="store_true",
+        help=("Fix the delay in every voxel to its initial value.  Do not perform any fitting."),
+        default=False,
     )
     corr_fit.add_argument(
         "--sigmalimit",
@@ -1905,14 +1915,18 @@ def process_args(inputargs=None):
     else:
         args["nohistzero"] = True
 
-    if args["fixeddelayvalue"] is not None:
-        args["fixdelay"] = True
+    # sort out initial delay options
+    if args["fixdelay"]:
+        try:
+            tempinitialdelayvalue = float(args["initialdelayvalue"])
+        except ValueError:
+            tempinitialdelayvalue = 0.0
         args["lag_extrema"] = (
-            args["fixeddelayvalue"] - 10.0,
-            args["fixeddelayvalue"] + 10.0,
+            tempinitialdelayvalue - 10.0,
+            tempinitialdelayvalue + 10.0,
         )
     else:
-        args["fixdelay"] = False
+        args["initialdelayvalue"] = None
 
     if args["in_file"].endswith("txt") and args["realtr"] == "auto":
         raise ValueError(

@@ -14,9 +14,8 @@ rapidtide \
     --nprocs -1 \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
-    --makepseudofile \
     --outputlevel max \
-    --refinedelay \
+    --noglm \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST
 
@@ -25,11 +24,48 @@ rapidtide \
     --nprocs -1 \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
-    --makepseudofile \
     --outputlevel max \
+    --passes 1 \
+    --initialdelay 0.0 \
     --refinedelay \
-    ../dst/sub-RAPIDTIDETEST_desc-pseudofile_bold.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_secondpass
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_fixvalue
+
+rapidtide \
+    --spatialfilt 0 \
+    --nprocs -1 \
+    --simcalcrange 50 -1 \
+    --outputlevel max \
+    --passes 1 \
+    --initialdelay 0.0 \
+    --nodelayfit \
+    --noglm \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_fixvalue_nofit
+
+rapidtide \
+    --spatialfilt 0 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    --outputlevel max \
+    --passes 1 \
+    --initialdelay ../dst/sub-RAPIDTIDETEST_desc-maxtime_map.nii.gz \
+    --noglm \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_fixmap
+
+rapidtide \
+    --spatialfilt 0 \
+    --nprocs -1 \
+    --simcalcrange 50 -1 \
+    --outputlevel max \
+    --passes 1 \
+    --initialdelay ../dst/sub-RAPIDTIDETEST_desc-maxtime_map.nii.gz \
+    --nodelayfit \
+    --noglm \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_fixmap_nofit
 
 #rapidtide \
 #    --spatialfilt 5 \

@@ -11,7 +11,7 @@ a) Run rapidtide to perform dynamic global signal regression (dGSR) on an fMRI f
 b) Run rapidtide to perform static global signal regression (sGSR) on an fMRI file[1] (this is just global mean regression):
 ::
 
-    rapidtide rapidtide/data/examples/src/sub-RAPIDTIDETEST rapidtide/data/examples/dst/sub-RAPIDTIDETEST_sgsr --fixdelay 0.0 --passes 1
+    rapidtide rapidtide/data/examples/src/sub-RAPIDTIDETEST rapidtide/data/examples/dst/sub-RAPIDTIDETEST_sgsr --nodelayfit --passes 1
 
 
 c) Run tidepool to look at all the interesting maps and timecourses from a):

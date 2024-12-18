@@ -1658,6 +1658,35 @@ def rapidtide_main(argparsingfunc):
     print(f"allocated {thesize:.3f} {theunit} {ramlocation} for correlation")
     tide_util.logmem("after correlation array allocation")
 
+    # if there is a fixed delay map, read it in
+    if optiondict["initialdelayvalue"] is not None:
+        try:
+            theinitialdelay = float(optiondict["initialdelayvalue"])
+        except ValueError:
+            (
+                initialdelay_input,
+                initialdelay,
+                initialdelay_header,
+                initialdelay_dims,
+                initialdelay_sizes,
+            ) = tide_io.readfromnifti(optiondict["initialdelayvalue"])
+            theheader = copy.deepcopy(nim_hdr)
+            if not optiondict["textio"]:
+                if fileiscifti:
+                    timeindex = theheader["dim"][0] - 1
+                    spaceindex = theheader["dim"][0]
+                    theheader["dim"][timeindex] = 1
+                    theheader["dim"][spaceindex] = numspatiallocs
+                else:
+                    theheader["dim"][0] = 3
+                    theheader["dim"][4] = 1
+                    theheader["pixdim"][4] = 1.0
+            if not tide_io.checkspacematch(theheader, initialdelay_header):
+                raise ValueError("fixed delay map dimensions do not match fmri dimensions")
+            theinitialdelay = initialdelay.reshape(numspatiallocs)[validvoxels]
+    else:
+        theinitialdelay = None
+
     # prepare for fast resampling
     optiondict["fastresamplerpadtime"] = (
         max((-optiondict["lagmin"], optiondict["lagmax"]))
@@ -2141,7 +2170,6 @@ def rapidtide_main(argparsingfunc):
                 chunksize=optiondict["mp_chunksize"],
                 permutationmethod=optiondict["permutationmethod"],
                 fixdelay=optiondict["fixdelay"],
-                fixeddelayvalue=optiondict["fixeddelayvalue"],
                 rt_floatset=np.float64,
                 rt_floattype="float64",
             )
@@ -2428,6 +2456,7 @@ def rapidtide_main(argparsingfunc):
             nprocs=optiondict["nprocs_fitcorr"],
             alwaysmultiproc=optiondict["alwaysmultiproc"],
             fixdelay=optiondict["fixdelay"],
+            initialdelayvalue=theinitialdelay,
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],
             despeckle_thresh=optiondict["despeckle_thresh"],
@@ -2493,6 +2522,7 @@ def rapidtide_main(argparsingfunc):
                             nprocs=optiondict["nprocs_fitcorr"],
                             alwaysmultiproc=optiondict["alwaysmultiproc"],
                             fixdelay=optiondict["fixdelay"],
+                            initialdelayvalue=theinitialdelay,
                             showprogressbar=optiondict["showprogressbar"],
                             chunksize=optiondict["mp_chunksize"],
                             despeckle_thresh=optiondict["despeckle_thresh"],
@@ -4291,7 +4321,6 @@ def rapidtide_main(argparsingfunc):
                     print(f"{mean_spacebytime.shape=}")
                 pseudofile = mean_spacebytime[validvoxels, None] + movingsignal[:, :]
                 maplist.append((pseudofile, "pseudofile", "bold", None, None))
-
 
     # save maps in the current output list
     if len(maplist) > 0:
