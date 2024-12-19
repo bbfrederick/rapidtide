@@ -1657,6 +1657,72 @@ class Plethfilter:
         return signal.filtfilt(self.b, self.a, data, axis=-1, padtype="odd", padlen=None)
 
 
+def getfilterbandfreqs(band, transitionfrac=0.05, species="human"):
+    if species == "human":
+        if band == "vlf":
+            lowerpass = 0.0
+            upperpass = 0.009
+            lowerstop = 0.0
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "lfo":
+            lowerpass = 0.01
+            upperpass = 0.15
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "lfo_legacy":
+            lowerpass = 0.01
+            upperpass = 0.15
+            lowerstop = 0.009
+            upperstop = 0.2
+        elif band == "lfo_tight":
+            lowerpass = 0.01
+            upperpass = 0.10
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "resp":
+            lowerpass = 0.2
+            upperpass = 0.5
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "cardiac":
+            lowerpass = 0.66
+            upperpass = 3.0
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "hrv_ulf":
+            lowerpass = 0.0
+            upperpass = 0.0033
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "hrv_vlf":
+            lowerpass = 0.0033
+            upperpass = 0.04
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "hrv_lf":
+            lowerpass = 0.04
+            upperpass = 0.15
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "hrv_hf":
+            lowerpass = 0.15
+            upperpass = 0.4
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        elif band == "hrv_vhf":
+            lowerpass = 0.4
+            upperpass = 0.5
+            lowerstop = lowerpass * (1.0 - transitionfrac)
+            upperstop = upperpass * (1.0 + transitionfrac)
+        else:
+            print(f"unknown filter band: {band}")
+            sys.exit()
+    else:
+        print(f"unknown species: {species}")
+        sys.exit()
+    return lowerpass, upperpass, lowerstop, upperstop
+
+
 class NoncausalFilter:
     def __init__(
         self,
@@ -1678,7 +1744,7 @@ class NoncausalFilter:
 
         Parameters
         ----------
-        filtertype : {'None' 'vlf', 'lfo', 'resp', 'card', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'hrv_ulf', 'hrv_vlf', 'hrv_lf', 'hrv_hf', 'hrv_vhf', 'hrv_ulf_stop', 'hrv_vlf_stop', 'hrv_lf_stop', 'hrv_hf_stop', 'hrv_vhf_stop', 'arb', 'arb_stop', 'ringstop'}, optional
+        filtertype : {'None' 'vlf', 'lfo', 'resp', 'cardiac', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop', 'hrv_ulf', 'hrv_vlf', 'hrv_lf', 'hrv_hf', 'hrv_vhf', 'hrv_ulf_stop', 'hrv_vlf_stop', 'hrv_lf_stop', 'hrv_hf_stop', 'hrv_vhf_stop', 'arb', 'arb_stop', 'ringstop'}, optional
             The type of filter.
         butterworthorder: int, optional
             Butterworth filter order.  Default is 6.
@@ -1744,116 +1810,54 @@ class NoncausalFilter:
         self.padtype = padtype
         self.debug = debug
 
-        self.VLF_UPPERPASS = 0.009
-        self.VLF_UPPERSTOP = self.VLF_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.LF_LOWERPASS = 0.01
-        self.LF_UPPERPASS = 0.15
-        self.LF_LOWERSTOP = self.LF_LOWERPASS * (1.0 - self.transitionfrac)
-        self.LF_UPPERSTOP = self.LF_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.LF_LEGACY_LOWERPASS = 0.01
-        self.LF_LEGACY_UPPERPASS = 0.15
-        self.LF_LEGACY_LOWERSTOP = 0.009
-        self.LF_LEGACY_UPPERSTOP = 0.2
-
-        self.LF_TIGHT_LOWERPASS = 0.01
-        self.LF_TIGHT_UPPERPASS = 0.10
-        self.LF_TIGHT_LOWERSTOP = self.LF_TIGHT_LOWERPASS * (1.0 - self.transitionfrac)
-        self.LF_TIGHT_UPPERSTOP = self.LF_TIGHT_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.RESP_LOWERPASS = 0.2
-        self.RESP_UPPERPASS = 0.5
-        self.RESP_LOWERSTOP = self.RESP_LOWERPASS * (1.0 - self.transitionfrac)
-        self.RESP_UPPERSTOP = self.RESP_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.CARD_LOWERPASS = 0.66
-        self.CARD_UPPERPASS = 3.0
-        self.CARD_LOWERSTOP = self.CARD_LOWERPASS * (1.0 - self.transitionfrac)
-        self.CARD_UPPERSTOP = self.CARD_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.HRVULF_UPPERPASS = 0.0033
-        self.HRVULF_UPPERSTOP = self.HRVULF_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.HRVVLF_LOWERPASS = 0.0033
-        self.HRVVLF_UPPERPASS = 0.04
-        self.HRVVLF_LOWERSTOP = self.HRVVLF_LOWERPASS * (1.0 - self.transitionfrac)
-        self.HRVVLF_UPPERSTOP = self.HRVVLF_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.HRVLF_LOWERPASS = 0.04
-        self.HRVLF_UPPERPASS = 0.15
-        self.HRVLF_LOWERSTOP = self.HRVLF_LOWERPASS * (1.0 - self.transitionfrac)
-        self.HRVLF_UPPERSTOP = self.HRVLF_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.HRVHF_LOWERPASS = 0.15
-        self.HRVHF_UPPERPASS = 0.4
-        self.HRVHF_LOWERSTOP = self.HRVHF_LOWERPASS * (1.0 - self.transitionfrac)
-        self.HRVHF_UPPERSTOP = self.HRVHF_UPPERPASS * (1.0 + self.transitionfrac)
-
-        self.HRVVHF_LOWERPASS = 0.4
-        self.HRVVHF_UPPERPASS = 0.5
-        self.HRVVHF_LOWERSTOP = self.HRVVHF_LOWERPASS * (1.0 - self.transitionfrac)
-        self.HRVVHF_UPPERSTOP = self.HRVVHF_UPPERPASS * (1.0 + self.transitionfrac)
-
         self.settype(self.filtertype)
 
     def settype(self, thetype):
         self.filtertype = thetype
         if self.filtertype == "vlf" or self.filtertype == "vlf_stop":
-            self.lowerstop = 0.0
-            self.lowerpass = 0.0
-            self.upperpass = 1.0 * self.VLF_UPPERPASS
-            self.upperstop = 1.0 * self.VLF_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "vlf", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "lfo" or self.filtertype == "lfo_stop":
-            self.lowerstop = 1.0 * self.LF_LOWERSTOP
-            self.lowerpass = 1.0 * self.LF_LOWERPASS
-            self.upperpass = 1.0 * self.LF_UPPERPASS
-            self.upperstop = 1.0 * self.LF_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "lfo", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "lfo_legacy" or self.filtertype == "lfo_legacy_stop":
-            self.lowerstop = 1.0 * self.LF_LEGACY_LOWERSTOP
-            self.lowerpass = 1.0 * self.LF_LEGACY_LOWERPASS
-            self.upperpass = 1.0 * self.LF_LEGACY_UPPERPASS
-            self.upperstop = 1.0 * self.LF_LEGACY_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "lfo_legacy", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "lfo_tight" or self.filtertype == "lfo_tight_stop":
-            self.lowerstop = 1.0 * self.LF_TIGHT_LOWERSTOP
-            self.lowerpass = 1.0 * self.LF_TIGHT_LOWERPASS
-            self.upperpass = 1.0 * self.LF_TIGHT_UPPERPASS
-            self.upperstop = 1.0 * self.LF_TIGHT_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "lfo_tight", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "resp" or self.filtertype == "resp_stop":
-            self.lowerstop = 1.0 * self.RESP_LOWERSTOP
-            self.lowerpass = 1.0 * self.RESP_LOWERPASS
-            self.upperpass = 1.0 * self.RESP_UPPERPASS
-            self.upperstop = 1.0 * self.RESP_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "resp", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "cardiac" or self.filtertype == "cardiac_stop":
-            self.lowerstop = 1.0 * self.CARD_LOWERSTOP
-            self.lowerpass = 1.0 * self.CARD_LOWERPASS
-            self.upperpass = 1.0 * self.CARD_UPPERPASS
-            self.upperstop = 1.0 * self.CARD_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "cardiac", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "hrv_ulf" or self.filtertype == "hrv_ulf_stop":
-            self.lowerstop = 0.0
-            self.lowerpass = 0.0
-            self.upperpass = 1.0 * self.HRVULF_UPPERPASS
-            self.upperstop = 1.0 * self.HRVULF_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_ulf", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "hrv_vlf" or self.filtertype == "hrv_vlf_stop":
-            self.lowerstop = 1.0 * self.HRVVLF_LOWERSTOP
-            self.lowerpass = 1.0 * self.HRVVLF_LOWERPASS
-            self.upperpass = 1.0 * self.HRVVLF_UPPERPASS
-            self.upperstop = 1.0 * self.HRVVLF_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_vlf", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "hrv_lf" or self.filtertype == "hrv_lf_stop":
-            self.lowerstop = 1.0 * self.HRVLF_LOWERSTOP
-            self.lowerpass = 1.0 * self.HRVLF_LOWERPASS
-            self.upperpass = 1.0 * self.HRVLF_UPPERPASS
-            self.upperstop = 1.0 * self.HRVLF_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_lf", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "hrv_hf" or self.filtertype == "hrv_hf_stop":
-            self.lowerstop = 1.0 * self.HRVHF_LOWERSTOP
-            self.lowerpass = 1.0 * self.HRVHF_LOWERPASS
-            self.upperpass = 1.0 * self.HRVHF_UPPERPASS
-            self.upperstop = 1.0 * self.HRVHF_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_hf", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "hrv_vhf" or self.filtertype == "hrv_vhf_stop":
-            self.lowerstop = 1.0 * self.HRVVHF_LOWERSTOP
-            self.lowerpass = 1.0 * self.HRVVHF_LOWERPASS
-            self.upperpass = 1.0 * self.HRVVHF_UPPERPASS
-            self.upperstop = 1.0 * self.HRVVHF_UPPERSTOP
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_vhf", transitionfrac=self.transitionfrac, species=self.species
+            )
         elif self.filtertype == "arb" or self.filtertype == "arb_stop":
             self.lowerstop = 1.0 * self.arb_lowerstop
             self.lowerpass = 1.0 * self.arb_lowerpass
