@@ -349,7 +349,17 @@ def addfilteropts(
         ],
         help=(
             f'Filter {filtertarget} to specific band. Use "None" to disable filtering.  '
-            f'Default is "{defaultmethod}".'
+            f'Default is "{defaultmethod}".  Ranges are: '
+            f'vlf: {tide_filt.getfilterbandfreqs("vlf", asrange=True)}, '
+            f'lfo: {tide_filt.getfilterbandfreqs("lfo", asrange=True)}, '
+            f'cardiac: {tide_filt.getfilterbandfreqs("cardiac", asrange=True)}, '
+            f'hrv_ulf: {tide_filt.getfilterbandfreqs("hrv_ulf", asrange=True)}, '
+            f'hrv_vlf: {tide_filt.getfilterbandfreqs("hrv_vlf", asrange=True)}, '
+            f'hrv_lf: {tide_filt.getfilterbandfreqs("hrv_lf", asrange=True)}, '
+            f'hrv_hf: {tide_filt.getfilterbandfreqs("hrv_hf", asrange=True)}, '
+            f'hrv_vhf: {tide_filt.getfilterbandfreqs("hrv_vhf", asrange=True)}, '
+            f'lfo_legacy: {tide_filt.getfilterbandfreqs("lfo_legacy", asrange=True)}, '
+            f'lfo_tight: {tide_filt.getfilterbandfreqs("lfo_tight", asrange=True)}'
         ),
         default=defaultmethod,
     )

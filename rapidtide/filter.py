@@ -1657,7 +1657,7 @@ class Plethfilter:
         return signal.filtfilt(self.b, self.a, data, axis=-1, padtype="odd", padlen=None)
 
 
-def getfilterbandfreqs(band, transitionfrac=0.05, species="human"):
+def getfilterbandfreqs(band, transitionfrac=0.05, species="human", asrange=False):
     if species == "human":
         if band == "vlf":
             lowerpass = 0.0
@@ -1720,7 +1720,10 @@ def getfilterbandfreqs(band, transitionfrac=0.05, species="human"):
     else:
         print(f"unknown species: {species}")
         sys.exit()
-    return lowerpass, upperpass, lowerstop, upperstop
+    if asrange:
+        return f"{lowerpass}-{upperpass}Hz"
+    else:
+        return lowerpass, upperpass, lowerstop, upperstop
 
 
 class NoncausalFilter:
