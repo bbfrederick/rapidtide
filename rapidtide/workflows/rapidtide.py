@@ -44,7 +44,7 @@ import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.peakeval as tide_peakeval
-import rapidtide.refine_factored as tide_refine
+import rapidtide.refineregressor as tide_refine
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
