@@ -44,7 +44,7 @@ import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.peakeval as tide_peakeval
-import rapidtide.refineregressor as tide_refine
+import rapidtide.refineregressor as tide_refineregressor
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
@@ -2663,7 +2663,7 @@ def rapidtide_main(argparsingfunc):
                 lagfails,
                 sigmafails,
                 numinmask,
-            ) = tide_refine.makerefinemask(
+            ) = tide_refineregressor.makerefinemask(
                 lagstrengths,
                 lagtimes,
                 lagsigma,
@@ -2686,7 +2686,7 @@ def rapidtide_main(argparsingfunc):
 
             # align timecourses to prepare for refinement
             alignvoxels_func = addmemprofiling(
-                tide_refine.alignvoxels,
+                tide_refineregressor.alignvoxels,
                 optiondict["memprofile"],
                 "before aligning voxel timecourses",
             )
@@ -2715,7 +2715,7 @@ def rapidtide_main(argparsingfunc):
             LGR.info(f"align complete: {voxelsprocessed_rra=}")
 
             LGR.info("prenormalizing timecourses")
-            tide_refine.prenorm(
+            tide_refineregressor.prenorm(
                 paddedshiftedtcs,
                 refinemask,
                 lagtimes,
@@ -2729,7 +2729,7 @@ def rapidtide_main(argparsingfunc):
             (
                 voxelsprocessed_rr,
                 paddedoutputdata,
-            ) = tide_refine.dorefine(
+            ) = tide_refineregressor.dorefine(
                 paddedshiftedtcs,
                 refinemask,
                 weights,
