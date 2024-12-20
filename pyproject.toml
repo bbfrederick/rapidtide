@@ -136,3 +136,10 @@ versionfile_source = 'rapidtide/_version.py'
 versionfile_build = 'rapidtide/_version.py'
 tag_prefix = 'v'
 parentdir_prefix = 'rapidtide-'
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git*,versioneer.py,*.css,exportlist.txt,data,*.bib'
+check-hidden = true
+ignore-regex = '\bsubjeT\b'
+ignore-words-list = 'thex,normall'
