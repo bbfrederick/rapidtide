@@ -72,10 +72,16 @@ testlist["numnull"] = {
     "command": ["--numnull", "0"],
     "results": [["numestreps", 0], ["ampthreshfromsig", False]],
 }
-testlist["fixdelay"] = {
-    "command": ["--fixdelay", "0.0"],
+testlist["initialdelay"] = {
+    "command": ["--initialdelay", "0.0"],
     "results": [
-        ["fixeddelayvalue", 0.0, "isfloat"],
+        ["initialdelayvalue", 0.0, "isfloat"],
+    ],
+}
+testlist["nodelayfit"] = {
+    "command": ["--nodelayfit"],
+    "results": [
+        ["fixdelay", True],
     ],
 }
 

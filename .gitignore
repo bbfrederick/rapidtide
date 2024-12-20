@@ -19,7 +19,7 @@ v2changes
 
 # any generated test data
 rapidtide/data/examples/dst/*
-rapidtide/tests/tmp/[abcdefghijklmnopqrstuvwxyz]*
+rapidtide/tests/tmp/[0123456789abcdefghijklmnopqrstuvwxyz]*
 rapidtide/tests/*.jpg
 rapidtide/tests/*.json
 rapidtide/tests/*.tsv.gz

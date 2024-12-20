@@ -150,6 +150,17 @@ def formatmemamt(meminbytes):
     return f"{round(meminbytes/unitnumber, 3):.3f}{units[-1]}"
 
 
+def format_bytes(size):
+    # 2**10 = 1024
+    power = 2**10
+    n = 0
+    power_labels = {0: "", 1: "kilo", 2: "mega", 3: "giga", 4: "tera"}
+    while size > power:
+        size /= power
+        n += 1
+    return size, power_labels[n] + "bytes"
+
+
 def logmem(msg=None):
     """Log memory usage with a logging object.
 
@@ -1007,6 +1018,7 @@ def numpy2shared(inarray, theouttype, name=None):
     # Create a shared memory block to store the array data
     outnbytes = np.dtype(theouttype).itemsize * inarray.size
     shm = shared_memory.SharedMemory(name=None, create=True, size=outnbytes)
+    shm.unlink()
     inarray_shared = np.ndarray(inarray.shape, dtype=theouttype, buffer=shm.buf)
     np.copyto(inarray_shared, inarray)  # Copy data to shared memory array
     return inarray_shared, shm  # Return both the array and the shared memory object
@@ -1019,12 +1031,14 @@ def allocshared(theshape, thetype, name=None):
     dtype_size = np.dtype(thetype).itemsize
     # Create a shared memory block of the required size
     shm = shared_memory.SharedMemory(name=None, create=True, size=thesize * dtype_size)
+    shm.unlink()
     outarray = np.ndarray(theshape, dtype=thetype, buffer=shm.buf)
     return outarray, shm  # Return both the array and the shared memory object
 
 
 def cleanup_shm(shm):
     # Cleanup
-    if shm is not None:
-        shm.close()
-        shm.unlink()
+    pass
+    # if shm is not None:
+    #    shm.close()
+    #    shm.unlink()

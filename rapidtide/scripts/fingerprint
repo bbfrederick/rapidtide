@@ -341,12 +341,12 @@ def fingerprint_main(
     else:
         numcoffs = fitorder
     coff_array = np.zeros((numcoffs, numregions, nummaps), dtype="float")
-    R_array = np.zeros((numregions, nummaps), dtype="float")
+    R2_array = np.zeros((numregions, nummaps), dtype="float")
 
     # do the fit
     if debug:
         print("starting decomposition")
-    thefitmap, thecoffs, theRs = tide_fit.territorydecomp(
+    thefitmap, thecoffs, theR2s = tide_fit.territorydecomp(
         themap_data,
         thetemplate_data,
         atlas_data.astype(int),
@@ -358,13 +358,13 @@ def fingerprint_main(
 
     # transfer the data into arrays
     for whichmap in range(nummaps):
-        R_array[:, whichmap] = theRs[whichmap]
+        R2_array[:, whichmap] = theR2s[whichmap]
         coff_array[:, :, whichmap] = np.transpose(thecoffs[whichmap, :, :])
 
     # save the Rs as tsv
-    newcols = pd.DataFrame(np.transpose(R_array[:, :]))
+    newcols = pd.DataFrame(np.transpose(R2_array[:, :]))
     newcols.columns = atlaslabelsinput["Region"]
-    newcols.to_csv(f"{outputroot}_allRs.tsv", index=False, sep="\t")
+    newcols.to_csv(f"{outputroot}_allR2s.tsv", index=False, sep="\t")
 
     # save the fits as tsv
     if intercept:
@@ -400,11 +400,11 @@ def fingerprint_main(
 
     # save the Rs as nifti
     thehdr = copy.deepcopy(themap_hdr)
-    print(f"shape of R_array: {R_array.shape}")
+    print(f"shape of R2_array: {R2_array.shape}")
     print(f"thehdr before: {thehdr['dim']}")
     thehdr["dim"][0] = 2
-    thehdr["dim"][1] = R_array.shape[0]
-    thehdr["dim"][2] = R_array.shape[1]
+    thehdr["dim"][1] = R2_array.shape[0]
+    thehdr["dim"][2] = R2_array.shape[1]
     thehdr["dim"][3] = 1
     thehdr["dim"][4] = 1
     print(f"thehdr after: {thehdr['dim']}")
@@ -413,7 +413,7 @@ def fingerprint_main(
     thehdr["pixdim"][2] = 1.0
     thehdr["pixdim"][3] = 1.0
     thehdr["pixdim"][4] = 1.0
-    tide_io.savetonifti(R_array, thehdr, outputroot + "_allRs")
+    tide_io.savetonifti(R2_array, thehdr, outputroot + "_allR2s")
 
     # save the fit coefficients as nifti
     thehdr = copy.deepcopy(themap_hdr)
@@ -521,7 +521,7 @@ def fingerprint_main(
         for i in range(startpt, fitorder + 1):
             columnnames += str(i)
         newcols.columns = columnnames
-        atlaslabels["R"] = theRs[whichmap]
+        atlaslabels["R2"] = theR2s[whichmap]
         atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
         atlaslabels.to_csv(f"{outputroot}_{str(whichmap).zfill(4)}_fits.tsv", sep="\t")
         if debug:

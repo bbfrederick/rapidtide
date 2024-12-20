@@ -165,7 +165,7 @@ class SimilarityFunctionator:
         filterinputdata=True,
         debug=False,
     ):
-        self.Fs = Fs
+        self.setFs(Fs)
         self.similarityfuncorigin = similarityfuncorigin
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
@@ -178,6 +178,9 @@ class SimilarityFunctionator:
         if self.reftc is not None:
             self.setreftc(self.reftc)
             self.reftcstart = reftcstart
+
+    def setFs(self, Fs):
+        self.Fs = Fs
 
     def preptc(self, thetc, isreftc=False):
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function

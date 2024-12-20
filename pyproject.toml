@@ -43,7 +43,7 @@ dependencies = [
 #dynamic = ['version', 'license', 'keywords']
 dynamic = ['version']
 authors = [
-    {name = "Blaise deB Frederick", email='blaise.frederick@gmail.com' },
+    {name = "Blaise deB. Frederick", email="blaise.frederick@gmail.com"},
     {name = "Taylor Salo"},
     {name = "Daniel M. Drucker, Ph.D."},
     {name = "Jeffrey N Stout"},
