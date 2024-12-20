@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd ../dst/scratch
+
+for outputdir in *
+do
+rm -f greps
+touch greps
+    ls -1 ${outputdir}/*.nii.gz | awk '{print "fslhd "$1" | grep dim4 | egrep -v pixdim | awk YYY{print $2}YYY"}' | sed "s/YYY/'/g" > greps
+    singles=`source greps | grep 1 | wc | awk '{print $1}'`
+    corrtrs=`source greps | grep 29 | wc | awk '{print $1}'`
+    fmritrs=`source greps | grep 260 | wc | awk '{print $1}'`
+    echo ${outputdir} ${singles} ${corrtrs} ${fmritrs}
+done
