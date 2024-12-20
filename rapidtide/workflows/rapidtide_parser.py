@@ -1210,6 +1210,46 @@ def _get_parser():
         ),
         default=DEFAULT_GLMDERIVS,
     )
+    glm.add_argument(
+        "--refinedelay",
+        dest="refinedelay",
+        action="store_true",
+        help=("Refine the delay map using GLM information before the filter step."),
+        default=False,
+    )
+    glm.add_argument(
+        "--nofilterwithrefineddelay",
+        dest="filterwithrefineddelay",
+        action="store_false",
+        help=("Do not use the refined delay in GLM filter."),
+        default=True,
+    )
+    glm.add_argument(
+        "--delaypatchthresh",
+        dest="delaypatchthresh",
+        action="store",
+        type=float,
+        metavar="NUMMADs",
+        help=(
+            "Maximum number of robust standard deviations to permit in the offset delay refine map. "
+            f"Default is {DEFAULT_PATCHTHRESH}"
+        ),
+        default=DEFAULT_PATCHTHRESH,
+    )
+    glm.add_argument(
+        "--delayoffsetspatialfilt",
+        dest="delayoffsetgausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter fMRI data prior to calculating delay offsets "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value).  Set to 0 to disable."
+        ),
+        default=DEFAULT_DELAYOFFSETSPATIALFILT,
+    )
 
     # Output options
     output = parser.add_argument_group("Output options")
@@ -1331,6 +1371,13 @@ def _get_parser():
         default=True,
     )
     misc.add_argument(
+        "--makepseudofile",
+        dest="makepseudofile",
+        action="store_true",
+        help=("Make a simulated input file from the mean and the movingsignal."),
+        default=False,
+    )
+    misc.add_argument(
         "--checkpoint",
         dest="checkpoint",
         action="store_true",
@@ -1422,53 +1469,6 @@ def _get_parser():
             "tissue segmentation, etc.  NB: at the moment this is just a placeholder - it doesn't do anything."
         ),
         default=None,
-    )
-    experimental.add_argument(
-        "--refinedelay",
-        dest="refinedelay",
-        action="store_true",
-        help=("Refine the delay map using GLM information before the filter step."),
-        default=False,
-    )
-    experimental.add_argument(
-        "--nofilterwithrefineddelay",
-        dest="filterwithrefineddelay",
-        action="store_false",
-        help=("Do not use the refined delay in GLM filter."),
-        default=True,
-    )
-    experimental.add_argument(
-        "--delaypatchthresh",
-        dest="delaypatchthresh",
-        action="store",
-        type=float,
-        metavar="NUMMADs",
-        help=(
-            "Maximum number of robust standard deviations to permit in the offset delay refine map. "
-            f"Default is {DEFAULT_PATCHTHRESH}"
-        ),
-        default=DEFAULT_PATCHTHRESH,
-    )
-    experimental.add_argument(
-        "--delayoffsetspatialfilt",
-        dest="delayoffsetgausssigma",
-        action="store",
-        type=float,
-        metavar="GAUSSSIGMA",
-        help=(
-            "Spatially filter fMRI data prior to calculating delay offsets "
-            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
-            "to have rapidtide set it to half the mean voxel "
-            "dimension (a rule of thumb for a good value).  Set to 0 to disable."
-        ),
-        default=DEFAULT_DELAYOFFSETSPATIALFILT,
-    )
-    experimental.add_argument(
-        "--makepseudofile",
-        dest="makepseudofile",
-        action="store_true",
-        help=("Make a simulated input file from the mean and the movingsignal."),
-        default=False,
     )
     experimental.add_argument(
         "--psdfilter",
