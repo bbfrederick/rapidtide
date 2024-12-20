@@ -103,8 +103,8 @@ def _get_parser():
             "Atlas.  Options are: "
             "ASPECTS - ASPECTS territory atlas; "
             "ATT - Arterial transit time flow territories; "
-            "JHU1 - Johns Hopkins level 1 probabalistic arterial flow territories, without ventricles (default); "
-            "JHU2 - Johns Hopkins level 2 probabalistic arterial flow territories, without ventricles."
+            "JHU1 - Johns Hopkins level 1 probabilistic arterial flow territories, without ventricles (default); "
+            "JHU2 - Johns Hopkins level 2 probabilistic arterial flow territories, without ventricles."
         ),
         choices=["ASPECTS", "ATT", "JHU1", "JHU2"],
         default="JHU1",

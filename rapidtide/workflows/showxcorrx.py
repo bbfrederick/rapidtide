@@ -558,7 +558,7 @@ def showxcorrx(args):
         )
 
     if args.similaritymetric == "mutualinfo":
-        # intitialize the similarity function fitter
+        # initialize the similarity function fitter
         themifitter = tide_classes.SimilarityFunctionFitter(
             corrtimeaxis=MI_x_trim,
             lagmin=args.lagmin,
@@ -573,7 +573,7 @@ def showxcorrx(args):
         )
         maxdelaymi = MI_x_trim[np.argmax(theMI_trim)]
     else:
-        # intitialize the correlation fitter
+        # initialize the correlation fitter
         thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
             corrtimeaxis=xcorr_x,
             lagmin=args.lagmin,

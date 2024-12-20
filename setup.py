@@ -49,7 +49,6 @@ modules_list = [
     "rapidtide/multiproc",
     "rapidtide/patchmatch",
     "rapidtide/peakeval",
-    "rapidtide/refine",
     "rapidtide/refinedelay",
     "rapidtide/refineregressor",
     "rapidtide/resample",

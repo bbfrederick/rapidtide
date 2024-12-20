@@ -438,7 +438,7 @@ def findbadpts(
         thresh = numsigma * sigma
         thebadpts = np.where(absdev >= thresh, 1.0, 0.0)
         print(
-            "Bad point threshhold set to",
+            "Bad point threshold set to",
             "{:.3f}".format(thresh),
             "using the",
             thetype,

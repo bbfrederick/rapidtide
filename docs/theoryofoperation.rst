@@ -480,7 +480,7 @@ Time delay determination
 
 This is the core of the program, that actually does the delay determination.
 It's currently divided into two parts -
-calculation of a time dependant similarity function between the sLFO regressor and each voxel
+calculation of a time dependent similarity function between the sLFO regressor and each voxel
 (currently using one of three methods),
 and then a fitting step to find the peak time delay and strength of association between the two signals.
 

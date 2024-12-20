@@ -627,6 +627,7 @@ def dorefine(
 
     if cleanrefined:
         thefit, R2 = tide_fit.mlregress(averagediscard, averagedata)
+
         fitcoff = rt_floatset(thefit[0, 1])
         datatoremove = rt_floatset(fitcoff * averagediscard)
         outputdata -= datatoremove

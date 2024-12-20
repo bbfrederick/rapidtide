@@ -331,7 +331,7 @@ def happy_main(argparsingfunc):
     if args.fliparteries:
         # add another pass to refine the waveform after getting the new appflips
         numpasses += 1
-        print("Adding a pass to regenerate cardiac waveform using bettter appflips")
+        print("Adding a pass to regenerate cardiac waveform using better appflips")
 
     # output mask size
     print(f"estmask has {len(np.where(estmask_byslice[:, :] > 0)[0])} voxels above threshold.")
@@ -1073,7 +1073,7 @@ def happy_main(argparsingfunc):
                 infodict["respsamplerate"] = returnedinputfreq
                 infodict["numresppts_fullres"] = fullrespts
 
-        # account for slice time offests
+        # account for slice time offsets
         offsets_byslice = np.zeros((xsize * ysize, numslices), dtype=np.float64)
         for i in range(numslices):
             offsets_byslice[:, i] = slicetimes[i]
@@ -1543,12 +1543,12 @@ def happy_main(argparsingfunc):
                 debug=args.debug,
             )
 
-        # find vessel threshholds
+        # find vessel thresholds
         tide_util.logmem("before making vessel masks")
         hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
         softvesselthresh = args.softvesselfrac * hardvesselthresh
         print(
-            "hard, soft vessel threshholds set to",
+            "hard, soft vessel thresholds set to",
             "{:.3f}".format(hardvesselthresh),
             "{:.3f}".format(softvesselthresh),
         )

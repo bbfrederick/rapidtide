@@ -505,7 +505,7 @@ For this type of analysis, a good place to start is the following:
 
 The first option (``--numnull 0``), shuts off the calculation of the null correlation distribution.  This is used to
 determine the significance threshold, but the method currently implemented in rapidtide is a bit simplistic - it
-assumes that all the time points in the data are exchangable.  This is certainly true for resting state data (see
+assumes that all the time points in the data are exchangeable.  This is certainly true for resting state data (see
 above), but it is very much NOT true for block paradigm gas challenges.  To properly analyze those, I need to
 consider what time points are 'equivalent', and up to now, I don't, so setting the number of iterations in the
 Monte Carlo analysis to zero omits this step.
@@ -580,7 +580,7 @@ and more importantly, we have access to some much higher quality NIRS data, this
 The majority of the work was already done, I just needed to account for a few qualities that make NIRS data different from fMRI data:
 
 * NIRS data is not generally stored in NIFTI files.  While there is one now (SNIRF), at the time I started doing this, there was no standard NIRS file format.  In the absence of one, you could do worse than a multicolumn text file, with one column per data channel.  That's what I did here - if the file has a '.txt' extension rather than '.nii.', '.nii.gz', or no extension, it will assume all I/O should be done on multicolumn text files.  However, I'm a firm believer in SNIRF, and will add support for it one of these days.
-* NIRS data is often zero mean.  This turned out to mess with a lot of my assumptions about which voxels have significant data, and mask construction.  This has led to some new options for specifying mask threshholds and data averaging.
+* NIRS data is often zero mean.  This turned out to mess with a lot of my assumptions about which voxels have significant data, and mask construction.  This has led to some new options for specifying mask thresholds and data averaging.
 * NIRS data is in some sense "calibrated" as relative micromolar changes in oxy-, deoxy-, and total hemoglobin concentration, so mean and/or variance normalizing the timecourses may not be right thing to do.  I've added in some new options to mess with normalizations.
 
 

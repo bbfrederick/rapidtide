@@ -148,7 +148,7 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.offsetz = self.imgsize * (0.5 - self.zfov / (2.0 * self.maxfov))
 
         if self.verbose > 1:
-            print("OrthoImageItem intialization:")
+            print("OrthoImageItem initialization:")
             print("    Dimensions:", self.xdim, self.ydim, self.zdim)
             print("    Voxel sizes:", self.xsize, self.ysize, self.zsize)
             print("    FOVs:", self.xfov, self.yfov, self.zfov)
