@@ -1026,7 +1026,7 @@ def _get_parser():
         metavar="THRESH",
         type=float,
         help=(
-            "Threshhold value (fraction of maximum) in a histogram "
+            "Threshold value (fraction of maximum) in a histogram "
             f"to be considered the start of a peak.  Default is {DEFAULT_PICKLEFT_THRESH}."
         ),
         default=DEFAULT_PICKLEFT_THRESH,
@@ -1106,7 +1106,7 @@ def _get_parser():
         type=int,
         metavar="MAXPASSES",
         help=(
-            "Terminate refinement after MAXPASSES passes, whether or not convergence has occured. "
+            "Terminate refinement after MAXPASSES passes, whether or not convergence has occurred. "
             f"Default is {DEFAULT_MAXPASSES}."
         ),
         default=DEFAULT_MAXPASSES,
@@ -1593,7 +1593,7 @@ def _get_parser():
         "--focaldebug",
         dest="focaldebug",
         action="store_true",
-        help=("Enable targetted additional debugging output (used during development)."),
+        help=("Enable targeted additional debugging output (used during development)."),
         default=False,
     )
     debugging.add_argument(
@@ -1735,7 +1735,7 @@ def process_args(inputargs=None):
     # what fraction of the correlation window to avoid on either end when
     # fitting
     args["edgebufferfrac"] = 0.0
-    # only do fits in voxels that exceed threshhold
+    # only do fits in voxels that exceed threshold
     args["enforcethresh"] = True
     # if set to the location of the first autocorrelation sidelobe,
     # this will fold back sidelobes

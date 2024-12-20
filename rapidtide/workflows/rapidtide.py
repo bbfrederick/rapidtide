@@ -1713,7 +1713,7 @@ def rapidtide_main(argparsingfunc):
     )
     LGR.verbose(f"edgebufferfrac set to {optiondict['edgebufferfrac']}")
 
-    # intitialize the correlation fitter
+    # initialize the correlation fitter
     thefitter = tide_classes.SimilarityFunctionFitter(
         lagmod=optiondict["lagmod"],
         lthreshval=optiondict["lthreshval"],
@@ -2172,7 +2172,7 @@ def rapidtide_main(argparsingfunc):
                 if optiondict["ampthreshfromsig"]:
                     if pcts is not None:
                         LGR.info(
-                            f"setting ampthresh to the p < {1.0 - thepercentiles[0]:.3f} threshhold"
+                            f"setting ampthresh to the p < {1.0 - thepercentiles[0]:.3f} threshold"
                         )
                         optiondict["ampthresh"] = pcts[0]
                         tide_stats.printthresholds(
