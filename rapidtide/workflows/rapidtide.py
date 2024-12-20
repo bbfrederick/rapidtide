@@ -1573,6 +1573,7 @@ def rapidtide_main(argparsingfunc):
             1.0,
             starttime=0.0,
             columns=["corrtimes"],
+            extraheaderinfo={"Description": "Trimmed correlation time axis"},
             append=False,
         )
         tide_io.writebidstsv(
@@ -1581,6 +1582,7 @@ def rapidtide_main(argparsingfunc):
             1.0,
             starttime=0.0,
             columns=["mitimes"],
+            extraheaderinfo={"Description": "Trimmed cross mutual information time axis"},
             append=False,
         )
         tide_io.writebidstsv(
@@ -1589,6 +1591,7 @@ def rapidtide_main(argparsingfunc):
             1.0,
             starttime=0.0,
             columns=["corrtimes"],
+            extraheaderinfo={"Description": "Correlation time axis"},
             append=False,
         )
         tide_io.writebidstsv(
@@ -1597,12 +1600,9 @@ def rapidtide_main(argparsingfunc):
             1.0,
             starttime=0.0,
             columns=["mitimes"],
+            extraheaderinfo={"Description": "Cross mutual information time axis"},
             append=False,
         )
-        """
-        tide_io.writenpvecs(trimmedcorrscale, f"{outputname}_corrtimes.txt")
-        tide_io.writenpvecs(trimmedmiscale, f"{outputname}_mitimes.txt")
-        """
 
     # allocate all the data arrays
     tide_util.logmem("before main array allocation")
