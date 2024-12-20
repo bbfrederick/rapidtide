@@ -186,22 +186,37 @@ CORRFUNCSIZE is the size of the correlation function in TRs at the oversampled T
 The output sizes in TRs (with no motion regression) are as follows:
 
 .. csv-table::  Total image output data size in TRs
-   :header: "Output level", "GLM?", "Number of TRs"
-   :widths: 10, 10, 10
+   :header: "Output level", "Passes>1?", "Refine delay?", "GLM?", "Number of TRs"
+   :widths: 10, 10, 10, 10, 10
 
-    "min", "No", "16"
-    "less", "No", "16"
-    "normal", "No", "16 + CORRFUNCSIZE"
-    "more", "No", "16 + CORRFUNCSIZE"
-    "max", "No", "17 + CORRFUNCSIZE"
-    "min", "Yes", "24"
-    "less", "Yes", "24 + FMRISIZE"
-    "normal", "Yes", "24 + CORRFUNCSIZE + FMRISIZE"
-    "more", "Yes", "24 + CORRFUNCSIZE + 3*FMRISIZE"
-    "max", "Yes", "25 + 3*CORRFUNCSIZE + 4*FMRISIZE"
+    "min", "No", "No",  "No", "13"
+    "min", "No", "Yes",  "No", "16"
+    "min", "Yes", "No",  "No", "16"
+    "min", "Yes", "Yes",  "No", "19"
+    "min", "No", "No",  "Yes", "14"
+    "min", "Yes", "No",  "Yes", "17"
+    "less", "No", "No",  "No", "13"
+    "less", "No", "Yes",  "No", "17 + 1*FMRISIZE"
+    "less", "Yes", "No",  "No", "16"
+    "less", "Yes", "Yes",  "No", "20 + 1*FMRISIZE"
+    "normal", "No", "No",  "No", "13 + 1*CORRFUNCSIZE"
+    "normal", "No", "Yes",  "No", "21 + 1*CORRFUNCSIZE + 1*FMRISIZE"
+    "normal", "Yes", "No",  "No", "19 + 1*CORRFUNCSIZE"
+    "normal", "Yes", "Yes",  "No", "27 + 1*CORRFUNCSIZE + 1*FMRISIZE"
+    "more", "No", "No",  "No", "13 + 1*CORRFUNCSIZE"
+    "more", "No", "Yes",  "No", "21 + 1*CORRFUNCSIZE + 2*FMRISIZE"
+    "more", "Yes", "No",  "No", "19 + 1*CORRFUNCSIZE"
+    "more", "Yes", "Yes",  "No", "27 + 1*CORRFUNCSIZE + 2*FMRISIZE"
+    "max", "No", "No",  "No", "13 + 3*CORRFUNCSIZE"
+    "max", "No", "Yes",  "No", "21 + 3*CORRFUNCSIZE + 3*FMRISIZE"
+    "max", "Yes", "No",  "No", "19 + 3*CORRFUNCSIZE"
+    "max", "Yes", "Yes",  "No", "27 + 3*CORRFUNCSIZE + 3*FMRISIZE"
+    "max", "No", "No",  "Yes", "14 + 3*CORRFUNCSIZE + 1*FMRISIZE"
+    "max", "Yes", "No",  "Yes", "20 + 3*CORRFUNCSIZE + 1*FMRISIZE"
 ..
 
-The data size is then this number of TRs times the size of 1 TR worth of data in the input fMRI file.
+The data size is then this number of TRs times the size of 1 TR worth of data in the input fMRI file, (plus the size
+of the various timecourse files and .json sidecars which are much smaller than the image files).
 
 
 As an example, the following table shows the size of the data produced by running a rapidtide analysis on one HCP-YA

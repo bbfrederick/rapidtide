@@ -2,13 +2,49 @@
 
 cd ../dst/scratch
 
-for outputdir in *
+for outputlevel in min less normal more max
 do
-rm -f greps
-touch greps
-    ls -1 ${outputdir}/*.nii.gz | awk '{print "fslhd "$1" | grep dim4 | egrep -v pixdim | awk YYY{print $2}YYY"}' | sed "s/YYY/'/g" > greps
-    singles=`source greps | grep 1 | wc | awk '{print $1}'`
-    corrtrs=`source greps | grep 29 | wc | awk '{print $1}'`
-    fmritrs=`source greps | grep 260 | wc | awk '{print $1}'`
-    echo ${outputdir} ${singles} ${corrtrs} ${fmritrs}
+    for passesgt1 in False True
+    do
+        if [ ${passesgt1} = "True" ]; then
+            passesgt1str="Yes"
+        else
+            passesgt1str="No"
+        fi
+        for dorefinedelay in False True
+        do
+            if [ ${dorefinedelay} = "True" ]; then
+                refinedelaystr="Yes"
+            else
+                refinedelaystr="No"
+            fi
+            for doglm in False True
+            do
+                if [ ${doglm} = "True" ]; then
+                    glmstr="Yes"
+                else
+                    glmstr="No"
+                fi
+                for thisdir in ${outputlevel}*passesgt1-${passesgt1}_numnullgt0-False_doglm-${doglm}_domotion-False_doderivs-False_dodespeckle-False_dorefinedelay-${dorefinedelay}
+                do
+                    rm -f greps
+                    touch greps
+                    ls -1 ${thisdir}/*.nii.gz 2>/dev/null | awk '{print "fslhd "$1" | grep dim4 | egrep -v pixdim | awk YYY{print $2}YYY"}' | sed "s/YYY/'/g" 1> greps
+                    singles=`source greps | grep 1 | wc | awk '{print $1}'`
+                    corrtrs=`source greps | grep 29 | wc | awk '{print $1}'`
+                    fmritrs=`source greps | grep 260 | wc | awk '{print $1}'`
+                    if [ ${singles} != "0" ]; then
+                        outsize=${singles}
+                        if [ ${corrtrs} != "0" ]; then
+                            outsize=${outsize}" + "${corrtrs}"*CORRFUNCSIZE"
+                        fi
+                        if [ ${fmritrs} != "0" ]; then
+                            outsize=${outsize}" + "${fmritrs}"*FMRISIZE"
+                        fi
+                        echo '"'${outputlevel}'", "'${refinedelaystr}'", "'${glmstr}'",  "'${passesgt1str}'", "'${outsize}'"'
+                    fi
+                done
+            done
+        done
+    done
 done
