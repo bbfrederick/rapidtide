@@ -1389,7 +1389,7 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
     notchpct: float, optional
         Width of the notch relative to the filter frequency in percent.  Default is 1.0.
     debug: bool, optional
-        Set to True for additiona information on function internals.  Default is False.
+        Set to True for additional information on function internals.  Default is False.
 
     Returns
     -------
@@ -1451,7 +1451,7 @@ def csdfilter(
         If True, pad by wrapping the data in a cyclic manner rather than reflecting at the ends
 
     debug: bool, optional
-        Set to True for additiona information on function internals.  Default is False.
+        Set to True for additional information on function internals.  Default is False.
 
     Returns
     -------

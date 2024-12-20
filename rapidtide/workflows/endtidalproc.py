@@ -90,7 +90,7 @@ def _get_parser():
         dest="thresh",
         metavar="PCT",
         type=float,
-        help="Amount of fall (or rise) needed, in percent, to recognize a peak (or trough).",
+        help="Amount of fall (or rise) needed, in percent, to recognize a peak (or through).",
         default=1.0,
     )
     parser.add_argument(
@@ -138,7 +138,7 @@ def endtidalproc():
     args.thestarttime = xvec[thestartpoint]
     args.theendtime = xvec[theendpoint]
 
-    # set parameters - maxtime is the longest to look ahead for a peak (or trough) in seconds
+    # set parameters - maxtime is the longest to look ahead for a peak (or through) in seconds
     # lookahead should be '(samples / period) / f' where '4 >= f >= 1.25' might be a good value
     maxtime = 1.0
     f = 2.0

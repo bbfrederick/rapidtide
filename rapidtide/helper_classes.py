@@ -1337,7 +1337,7 @@ class FrequencyTracker:
             print(self.times.shape, self.freqs.shape, thespectrogram.shape)
             print(self.times)
 
-        # intitialize the peak fitter
+        # initialize the peak fitter
         thefitter = SimilarityFunctionFitter(
             corrtimeaxis=self.freqs,
             lagmin=self.lowerlim,

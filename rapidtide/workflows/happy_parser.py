@@ -677,7 +677,7 @@ def process_args(inputargs=None):
             args = _get_parser().parse_args(inputargs)
             argstowrite = inputargs
         except SystemExit:
-            print("Use --help option for detailed informtion on options.")
+            print("Use --help option for detailed information on options.")
             raise
 
     # save the raw and formatted command lines

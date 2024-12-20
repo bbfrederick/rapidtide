@@ -239,7 +239,7 @@ for o, a in opts:
         print('turning off legend label')
     elif o == '--debug':
         debug = True
-        print('turning debuggin on')
+        print('turning debugging on')
     elif o == '--nowindow':
         useHamming = False
         print('turning window off')

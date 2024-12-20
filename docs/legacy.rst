@@ -56,7 +56,7 @@ For compatibility with old workflows, rapidtide can be called using legacy synta
           --permutationmethod=METHOD     - Method for permuting the regressor for significance estimation.  Default
                                            is shuffle
           --skipsighistfit               - Do not fit significance histogram with a Johnson SB function
-          --windowfunc=FUNC              - Use FUNC window funcion prior to correlation.  Options are
+          --windowfunc=FUNC              - Use FUNC window function prior to correlation.  Options are
                                            hamming (default), hann, blackmanharris, and None
           --nowindow                     - Disable precorrelation windowing
           -f GAUSSSIGMA                  - Spatially filter fMRI data prior to analysis using
@@ -112,7 +112,7 @@ For compatibility with old workflows, rapidtide can be called using legacy synta
           --liang                        - Use generalized cross-correlation with Liang weighting function
                                            (Liang, et al, doi:10.1109/IMCCC.2015.283)
           --eckart                       - Use generalized cross-correlation with Eckart weighting function
-          --corrmaskthresh=PCT           - Do correlations in voxels where the mean exceeeds this
+          --corrmaskthresh=PCT           - Do correlations in voxels where the mean exceeds this
                                            percentage of the robust max (default is 1.0)
           --corrmask=MASK                - Only do correlations in voxels in MASK (if set, corrmaskthresh
                                            is ignored).
@@ -224,7 +224,7 @@ For compatibility with old workflows, rapidtide can be called using legacy synta
           --acfix                        - Perform a secondary correlation to disambiguate peak location
                                            (enables --accheck).  Experimental.
           --tmask=MASKFILE               - Only correlate during epochs specified in
-                                           MASKFILE (NB: if file has one colum, the length needs to match
+                                           MASKFILE (NB: if file has one column, the length needs to match
                                            the number of TRs used.  TRs with nonzero values will be used
                                            in analysis.  If there are 2 or more columns, each line of MASKFILE
                                            contains the time (first column) and duration (second column) of an
