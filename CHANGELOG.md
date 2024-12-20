@@ -78,7 +78,7 @@
 * (rapidtide) Now specifying brainmask and/or graymattermask will automatically do smart processing enhancements.  You can specify whitemattermask, but that currently does nothing except pass the map along.
 * (rapidtide) pickleft is now the default (you never don't want to do it).  The argument to specify it does nothing, but doesn't throw an error.  You can turn it off with nopickleft (but, seriously, don't).
 * (package) In addition to the APARC label macros for specifying atlas values, I've added SSEG_GRAY and SSEG_WHITE to support gray and white mask generation from SynthSeg output.
-* (package) Fixed a rarely encounted but serious bug when reading tsv files with missing values - these are now converted to zeros on read rather than propagating NaN's through processing.
+* (package) Fixed a rarely encountered but serious bug when reading tsv files with missing values - these are now converted to zeros on read rather than propagating NaN's through processing.
 
 ## Version 2.9.4.1 (8/7/24)
 * (package) Deployment fix
