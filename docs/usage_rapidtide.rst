@@ -187,7 +187,7 @@ The output sizes in TRs (with no motion regression) are as follows:
 
 .. csv-table::  Total image output data size in TRs
    :header: "Output level", "Passes>1?", "Refine delay?", "GLM?", "Number of TRs"
-   :widths: 10, 10, 10, 10, 10
+   :widths: 10, 10, 10, 10, 20
 
     "min", "No", "No",  "No", "13"
     "min", "No", "Yes",  "No", "16"
