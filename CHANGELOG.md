@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0alpha2 (12/20/24)
+* (package) Now includes codespell checking thank you to Yaroslav O. Halchenko (yarikoptic)!
+
 ## Version 3.0alpha1 (12/20/24)
 * (rapidtide) The ``--fixdelay`` option has been split into two options.  ``--initialdelay DELAY`` lets you specify either a float that sets the starting delay for every voxel to that value, or a 3D file specifying the initial delay for each voxel.  ``--nodelayfit`` determines whether the delay can be adjusted from its initial value.  Closes https://github.com/bbfrederick/rapidtide/issues/171. KNOWN ISSUE:  If you supply an initial delay map, instead of using the global mean, you should use the delays to make your first stage regressor.  Currently that is not the case.
 * (rapidtide) Reorganized command line options and adjusted the default values.
