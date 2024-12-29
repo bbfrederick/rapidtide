@@ -87,6 +87,17 @@ def happy_main(argparsingfunc):
         args.runningindocker = True
         args.dockermemfree, args.dockermemswap = tide_util.findavailablemem()
         tide_util.setmemlimit(args.dockermemfree)
+    
+    # if running Apptainer/Singularity, this is necessary to enforce mmemory limits properly
+    # otherwise likely to  error out in gzip.py or at voxelnormalize step
+    try:
+        singularity_env = os.environ.get("SINGULARITY_NAME") or os.environ.get("SINGULARITY_CONTAINER")
+    except KeyError:
+        args.runninginsingularity = False
+    else:
+        args.runninginsingularity = True
+        args.singularitymemfree, args.singularitymemswap = tide_util.findavailablemem()
+        tide_util.setmemlimit(args.singularitymemfree)
 
     # Set up loggers for workflow
     setup_logger(
