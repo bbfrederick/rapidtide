@@ -18,7 +18,7 @@
 * (io) Added function to compare nifti files with some tolerance.
 * (docs) Automated more table generation.
 * (package) Merged some dependabot PRs.
-* (package) Fixed a fairly big, but not necessarily impactful bug. mlregress returned R2, not R, so anything referring to the R of a fit was actually squared (R was actually R2, R2 was actually R4).  NB: this does NOT affect the calcuation of maxcorrsq, which does not use mlregress.
+* (package) Fixed a fairly big, but not necessarily impactful bug. mlregress returned R2, not R, so anything referring to the R of a fit was actually squared (R was actually R2, R2 was actually R4).  NB: this does NOT affect the calculation of maxcorrsq, which does not use mlregress.
 
 ## Version 2.9.9.5 (11/15/24)
 * (deployment) New idea - split the README.rst file to remove potentially offending reference stuff.
