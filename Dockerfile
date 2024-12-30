@@ -72,7 +72,7 @@ USER rapidtide
 # set up variable for non-interactive shell
 ENV PATH=/opt/miniforge3/envs/science/bin:/opt/miniforge3/condabin:.:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-ENV IN_DOCKER_CONTAINER=1
+ENV RUNNING_IN_CONTAINER=1
 
 WORKDIR /tmp/
 ENTRYPOINT ["/cloud/mount-and-run"]

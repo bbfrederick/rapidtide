@@ -1667,10 +1667,10 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
-        "--disabledockermemfix",
-        dest="dockermemfix",
+        "--disablecontainermemfix",
+        dest="containermemfix",
         action="store_false",
-        help=("Disable docker memory limit setting."),
+        help=("Disable container memory limit setting."),
         default=True,
     )
     debugging.add_argument(

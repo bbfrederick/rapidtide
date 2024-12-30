@@ -269,14 +269,14 @@ def rapidtide_main(argparsingfunc):
         gc.enable()
         print("turning on garbage collection")
 
-    # if we are running in a Docker container, make sure we enforce memory limits properly
-    if "IN_DOCKER_CONTAINER" in os.environ:
-        optiondict["runningindocker"] = True
-        optiondict["dockermemfree"], optiondict["dockermemswap"] = tide_util.findavailablemem()
-        if optiondict["dockermemfix"]:
-            tide_util.setmemlimit(optiondict["dockermemfree"])
+    # if we are running in a container, make sure we enforce memory limits properly
+    if "RUNNING_IN_CONTAINER" in os.environ:
+        optiondict["runningincontainer"] = True
+        optiondict["containermemfree"], optiondict["containermemswap"] = tide_util.findavailablemem()
+        if optiondict["containermemfix"]:
+            tide_util.setmemlimit(optiondict["containermemfree"])
     else:
-        optiondict["runningindocker"] = False
+        optiondict["runningincontainer"] = False
 
     # write out the current version of the run options
     optiondict["currentstage"] = "init"
