@@ -133,8 +133,12 @@ def findavailablemem():
 
 
 def checkifincontainer():
-    # if running in Docker or Apptainer/Singularity, this is necessary to enforce mmemory limits properly
-    # otherwise likely to error out in gzip.py or at voxelnormalize step
+    # Determine if the program is running in a container.  If so, we may need to adjust the python memory
+    # limits because they are not set properly.  But check if we're running on CircleCI - it does not seem
+    # to like you twiddling with the container parameters.
+    #
+    # possible return values are: None, "Docker", "Singularity", and "CircleCI"
+    #
     try:
         dummy = os.environ.get("RUNNING_IN_CONTAINER")
     except KeyError:

@@ -269,8 +269,9 @@ def rapidtide_main(argparsingfunc):
         gc.enable()
         print("turning on garbage collection")
 
-    # if running in Docker or Apptainer/Singularity, this is necessary to enforce mmemory limits properly
+    # if running in Docker or Apptainer/Singularity, this is necessary to enforce memory limits properly
     # otherwise likely to  error out in gzip.py or at voxelnormalize step.  But do nothing if running in CircleCI
+    # because it does NOT like you messing with the container.
     optiondict["containertype"] = tide_util.checkifincontainer()
     if optiondict["containertype"] is not None:
         if optiondict["containertype"] != "CircleCI":
