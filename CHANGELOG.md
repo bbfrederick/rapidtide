@@ -4,7 +4,7 @@
 * (package) Now includes codespell checking thank you to Yaroslav O. Halchenko (yarikoptic)!
 
 ## Version 3.0alpha1 (12/20/24)
-* (rapidtide) The ``--fixdelay`` option has been split into two options.  ``--initialdelay DELAY`` lets you specify either a float that sets the starting delay for every voxel to that value, or a 3D file specifying the initial delay for each voxel.  ``--nodelayfit`` determines whether the delay can be adjusted from its initial value.  Closes https://github.com/bbfrederick/rapidtide/issues/171. KNOWN ISSUE:  If you supply an initial delay map, instead of using the global mean, you should use the delays to make your first stage regressor.  Currently that is not the case.
+* (rapidtide) The ``--fixdelay`` option has been split into two options.  ``--initialdelay DELAY`` lets you specify either a float that sets the starting delay for every voxel to that value, or a 3D file specifying the initial delay for each voxel.  ``--nodelayfit`` determines whether the delay can be adjusted from its initial value.  Closes https://github.com/bbfrederick/rapidtide/issues/171. KNOWN ISSUE:  If you supply an initial delay map, instead of using the global mean, rapidtide should use the delays to make your first stage regressor.  Currently that is not the case.
 * (rapidtide) Reorganized command line options and adjusted the default values.
 * (rapidtide) Help output now shows the filter ranges.
 * (rapidtide, retroglm) Added delay refinement using the ratio of the fit coefficients of the regressor and its time derivative.
@@ -18,7 +18,7 @@
 * (io) Added function to compare nifti files with some tolerance.
 * (docs) Automated more table generation.
 * (package) Merged some dependabot PRs.
-* (package) Fixed a fairly big, but not necessarily impactful bug. mlregress returned R2, not R, so anything referring to the R of a fit was actually squared (R was actually R2, R2 was actually R4).
+* (package) Fixed a fairly big, but not necessarily impactful bug. mlregress returned R2, not R, so anything referring to the R of a fit was actually squared (R was actually R2, R2 was actually R4).  NB: this does NOT affect the calcuation of maxcorrsq, which does not use mlregress.
 
 ## Version 2.9.9.5 (11/15/24)
 * (deployment) New idea - split the README.rst file to remove potentially offending reference stuff.
