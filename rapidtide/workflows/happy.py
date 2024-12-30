@@ -91,7 +91,7 @@ def happy_main(argparsingfunc):
     # if running Apptainer/Singularity, this is necessary to enforce mmemory limits properly
     # otherwise likely to  error out in gzip.py or at voxelnormalize step
     try:
-        singularity_env = os.environ.get("SINGULARITY_NAME") or os.environ.get("SINGULARITY_CONTAINER")
+        singularity_env = (os.environ.get("SINGULARITY_NAME") or os.environ.get("SINGULARITY_CONTAINER")) and not os.environ.get("CIRCLECI")
     except KeyError:
         args.runningincontainer = False
     else:
