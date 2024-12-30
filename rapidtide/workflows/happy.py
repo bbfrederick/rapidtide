@@ -78,26 +78,27 @@ def happy_main(argparsingfunc):
     # create the canary file
     Path(f"{outputroot}_ISRUNNING.txt").touch()
 
-    # if we are running in a Docker container, make sure we enforce memory limits properly
+    # if we are running in a container, make sure we enforce memory limits properly
     try:
-        testval = os.environ["IN_DOCKER_CONTAINER"]
+        testval = os.environ["RUNNING_IN_CONTAINER"]
     except KeyError:
-        args.runningindocker = False
+        args.runningincontainer = False
     else:
-        args.runningindocker = True
-        args.dockermemfree, args.dockermemswap = tide_util.findavailablemem()
-        tide_util.setmemlimit(args.dockermemfree)
+        args.runningincontainer = True
+        args.containermemfree, args.containermemswap = tide_util.findavailablemem()
+        tide_util.setmemlimit(args.containermemfree)
     
     # if running Apptainer/Singularity, this is necessary to enforce mmemory limits properly
     # otherwise likely to  error out in gzip.py or at voxelnormalize step
     try:
         singularity_env = os.environ.get("SINGULARITY_NAME") or os.environ.get("SINGULARITY_CONTAINER")
     except KeyError:
-        args.runninginsingularity = False
+        args.runningincontainer = False
     else:
-        args.runninginsingularity = True
+        args.runningincontainer = True
         args.singularitymemfree, args.singularitymemswap = tide_util.findavailablemem()
         tide_util.setmemlimit(args.singularitymemfree)
+
 
     # Set up loggers for workflow
     setup_logger(

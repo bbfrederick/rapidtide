@@ -464,13 +464,13 @@ def version():
 
     """
     try:
-        dummy = os.environ["IN_DOCKER_CONTAINER"]
+        dummy = os.environ["RUNNING_IN_CONTAINER"]
     except KeyError:
-        isdocker = False
+        iscontainer = False
     else:
-        isdocker = True
+        iscontainer = True
 
-    if isdocker:
+    if iscontainer:
         try:
             theversion = os.environ["GITVERSION"]
             if theversion.find("+") < 0:
