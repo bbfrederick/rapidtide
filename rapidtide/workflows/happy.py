@@ -78,15 +78,16 @@ def happy_main(argparsingfunc):
     # create the canary file
     Path(f"{outputroot}_ISRUNNING.txt").touch()
 
-    # if we are running in a container, make sure we enforce memory limits properly
-    try:
-        testval = os.environ["RUNNING_IN_CONTAINER"]
-    except KeyError:
-        args.runningincontainer = False
-    else:
-        args.runningincontainer = True
-        args.containermemfree, args.containermemswap = tide_util.findavailablemem()
-        tide_util.setmemlimit(args.containermemfree)
+    # if running in Docker or Apptainer/Singularity, this is necessary to enforce memory limits properly
+    # otherwise likely to  error out in gzip.py or at voxelnormalize step.  But do nothing if running in CircleCI
+    # because it does NOT like you messing with the container.
+    args.containertype = tide_util.checkifincontainer()
+    if args.containertype is not None:
+        if args.containertype != "CircleCI":
+            args.containermemfree, args.containermemswap = tide_util.findavailablemem()
+            tide_util.setmemlimit(args.containermemfree)
+        else:
+            print("running in CircleCI environment - not messing with memory")
 
     # Set up loggers for workflow
     setup_logger(

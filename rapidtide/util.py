@@ -132,6 +132,24 @@ def findavailablemem():
         return free, swap
 
 
+def checkifincontainer():
+    # Determine if the program is running in a container.  If so, we may need to adjust the python memory
+    # limits because they are not set properly.  But check if we're running on CircleCI - it does not seem
+    # to like you twiddling with the container parameters.
+    #
+    # possible return values are: None, "Docker", "Singularity", and "CircleCI"
+    #
+    if os.environ.get("SINGULARITY_CONTAINER") is not None:
+        containertype = "Singularity"
+    elif os.environ.get("RUNNING_IN_CONTAINER") is not None:
+        containertype = "Docker"
+    else:
+        containertype = None
+    if os.environ.get("CIRCLECI") is not None:
+        containertype = "CircleCI"
+    return containertype
+
+
 def setmemlimit(memlimit):
     resource.setrlimit(resource.RLIMIT_AS, (memlimit, memlimit))
 
