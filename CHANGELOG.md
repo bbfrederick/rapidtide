@@ -1,7 +1,7 @@
 # Release history
 
 ## Version 3.0alpha2 (12/30/24)
-* (happy, rapidtide) Now do more sophisticated container checkin to handle both Docker and Singularity. Thank you to Derek Monroe (https://github.com/dcmonroe) for the catch and the fix!
+* (happy, rapidtide) Now do more sophisticated container checking to handle both Docker and Singularity. Thank you to Derek Monroe (https://github.com/dcmonroe) for the catch and the fix!
 * (package) Now includes codespell checking thanks to Yaroslav O. Halchenko (https://github.com/yarikoptic)!
 
 ## Version 3.0alpha1 (12/20/24)

@@ -48,6 +48,7 @@ authors = [
     {name = "Daniel M. Drucker, Ph.D."},
     {name = "Jeffrey N Stout"},
     {name = "Yaroslav O. Halchenko"},
+    {name = "Derek Monroe"},
 ]
 
 [project.urls]
