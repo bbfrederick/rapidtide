@@ -139,10 +139,10 @@ def checkifincontainer():
     #
     # possible return values are: None, "Docker", "Singularity", and "CircleCI"
     #
-    if os.environ.get("RUNNING_IN_CONTAINER") is not None:
-        containertype = "Docker"
-    elif os.environ.get("SINGULARITY_CONTAINER") is not None:
+    if os.environ.get("SINGULARITY_CONTAINER") is not None:
         containertype = "Singularity"
+    elif os.environ.get("RUNNING_IN_CONTAINER") is not None:
+        containertype = "Docker"
     else:
         containertype = None
     if os.environ.get("CIRCLECI") is not None:
