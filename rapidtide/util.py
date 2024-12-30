@@ -151,12 +151,13 @@ def checkifincontainer():
     else:
         containertype = "Docker"
 
-    try:
-        dummy = os.environ.get("CIRCLECI")
-    except KeyError:
-        pass
-    else:
-        containertype = "CircleCI"
+    if containertype is not None:
+        try:
+            dummy = os.environ.get("CIRCLECI")
+        except KeyError:
+            pass
+        else:
+            containertype = "CircleCI"
     return containertype
 
 
