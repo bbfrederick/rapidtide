@@ -132,6 +132,30 @@ def findavailablemem():
         return free, swap
 
 
+def checkifincontainer():
+    # if running in Docker or Apptainer/Singularity, this is necessary to enforce mmemory limits properly
+    # otherwise likely to error out in gzip.py or at voxelnormalize step
+    try:
+        dummy = os.environ.get("RUNNING_IN_CONTAINER")
+    except KeyError:
+        try:
+            dummy = os.environ.get("SINGULARITY_CONTAINER")
+        except KeyError:
+            containertype = None
+        else:
+            containertype = "Singularity"
+    else:
+        containertype = "Docker"
+
+    try:
+        dummy = os.environ.get("CIRCLECI")
+    except KeyError:
+        pass
+    else:
+        containertype = "CircleCI"
+    return containertype
+
+
 def setmemlimit(memlimit):
     resource.setrlimit(resource.RLIMIT_AS, (memlimit, memlimit))
 

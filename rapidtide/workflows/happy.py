@@ -77,19 +77,13 @@ def happy_main(argparsingfunc):
 
     # create the canary file
     Path(f"{outputroot}_ISRUNNING.txt").touch()
-    
+
     # if running in Docker or Apptainer/Singularity, this is necessary to enforce mmemory limits properly
-    # otherwise likely to  error out in gzip.py or at voxelnormalize step
-    try:
-        container_env = os.environ["RUNNING_IN_CONTAINER"] or os.environ.get("SINGULARITY_NAME") or os.environ.get("SINGULARITY_CONTAINER")
-    except KeyError:
-        args.runningincontainer = False
-    else:
-        args.runningincontainer = True
-        args.containermemfree, args.containermemswap = tide_util.findavailablemem()
-        try:
-            cirlecienv = os.environ.get("CIRCLECI")
-        except KeyError:
+    # otherwise likely to  error out in gzip.py or at voxelnormalize step.  But do nothing if running in CircleCI
+    args.containertype = tide_util.checkifincontainer()
+    if args.containertype is not None:
+        if args.containertype != "CircleCI":
+            args.containermemfree, args.containermemswap = tide_util.findavailablemem()
             tide_util.setmemlimit(args.containermemfree)
         else:
             print("running in CircleCI environment - not messing with memory")
