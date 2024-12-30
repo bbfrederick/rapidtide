@@ -139,25 +139,14 @@ def checkifincontainer():
     #
     # possible return values are: None, "Docker", "Singularity", and "CircleCI"
     #
-    try:
-        dummy = os.environ.get("RUNNING_IN_CONTAINER")
-    except KeyError:
-        try:
-            dummy = os.environ.get("SINGULARITY_CONTAINER")
-        except KeyError:
-            containertype = None
-        else:
-            containertype = "Singularity"
-    else:
+    if os.environ.get("RUNNING_IN_CONTAINER") is not None:
         containertype = "Docker"
-
-    if containertype is not None:
-        try:
-            dummy = os.environ.get("CIRCLECI")
-        except KeyError:
-            pass
-        else:
-            containertype = "CircleCI"
+    elif os.environ.get("SINGULARITY_CONTAINER") is not None:
+        containertype = "Singularity"
+    else:
+        containertype = None
+    if os.environ.get("CIRCLECI") is not None:
+        containertype = "CircleCI"
     return containertype
 
 
