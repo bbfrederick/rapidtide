@@ -897,10 +897,15 @@ def showxcorrx(args):
                 )
         if args.dolegend:
             ax.legend(thelegend, fontsize=thelegendfontsize, loc=args.legendloc)
-        ax.set_title("Similarity metric over the search range", fontsize=thetitlefontsize)
+        if args.thetitle is not None:
+            ax.set_title(args.thetitle, fontsize=thetitlefontsize)
+        else:
+            ax.set_title("Similarity metric over the search range", fontsize=thetitlefontsize)
         if args.showxax:
+            ax.set_xlabel(args.xlabel, fontsize=thexlabelfontsize, fontweight="bold")
             ax.tick_params(axis="x", labelsize=thexlabelfontsize, which="both")
         if args.showyax:
+            ax.set_ylabel(args.ylabel, fontsize=theylabelfontsize, fontweight="bold")
             ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
         if args.outputfile is not None:
             plt.savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)

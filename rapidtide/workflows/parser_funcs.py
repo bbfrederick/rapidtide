@@ -579,7 +579,7 @@ def addplotopts(parser, multiline=True):
         type=str,
         action="store",
         help="Use TITLE as the overall title of the graph.",
-        default="",
+        default=None,
     )
     plotopts.add_argument(
         "--xlabel",
@@ -588,7 +588,7 @@ def addplotopts(parser, multiline=True):
         type=str,
         action="store",
         help="Label for the plot x axis.",
-        default="",
+        default=None,
     )
     plotopts.add_argument(
         "--ylabel",
@@ -597,7 +597,7 @@ def addplotopts(parser, multiline=True):
         type=str,
         action="store",
         help="Label for the plot y axis.",
-        default="",
+        default=None,
     )
     if multiline:
         plotopts.add_argument(
