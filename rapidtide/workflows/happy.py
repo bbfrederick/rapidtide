@@ -78,15 +78,16 @@ def happy_main(argparsingfunc):
     # create the canary file
     Path(f"{outputroot}_ISRUNNING.txt").touch()
 
-    # if we are running in a Docker container, make sure we enforce memory limits properly
-    try:
-        testval = os.environ["IN_DOCKER_CONTAINER"]
-    except KeyError:
-        args.runningindocker = False
-    else:
-        args.runningindocker = True
-        args.dockermemfree, args.dockermemswap = tide_util.findavailablemem()
-        tide_util.setmemlimit(args.dockermemfree)
+    # if running in Docker or Apptainer/Singularity, this is necessary to enforce memory limits properly
+    # otherwise likely to  error out in gzip.py or at voxelnormalize step.  But do nothing if running in CircleCI
+    # because it does NOT like you messing with the container.
+    args.containertype = tide_util.checkifincontainer()
+    if args.containertype is not None:
+        if args.containertype != "CircleCI":
+            args.containermemfree, args.containermemswap = tide_util.findavailablemem()
+            tide_util.setmemlimit(args.containermemfree)
+        else:
+            print("running in CircleCI environment - not messing with memory")
 
     # Set up loggers for workflow
     setup_logger(
@@ -331,7 +332,7 @@ def happy_main(argparsingfunc):
     if args.fliparteries:
         # add another pass to refine the waveform after getting the new appflips
         numpasses += 1
-        print("Adding a pass to regenerate cardiac waveform using bettter appflips")
+        print("Adding a pass to regenerate cardiac waveform using better appflips")
 
     # output mask size
     print(f"estmask has {len(np.where(estmask_byslice[:, :] > 0)[0])} voxels above threshold.")
@@ -1073,7 +1074,7 @@ def happy_main(argparsingfunc):
                 infodict["respsamplerate"] = returnedinputfreq
                 infodict["numresppts_fullres"] = fullrespts
 
-        # account for slice time offests
+        # account for slice time offsets
         offsets_byslice = np.zeros((xsize * ysize, numslices), dtype=np.float64)
         for i in range(numslices):
             offsets_byslice[:, i] = slicetimes[i]
@@ -1543,12 +1544,12 @@ def happy_main(argparsingfunc):
                 debug=args.debug,
             )
 
-        # find vessel threshholds
+        # find vessel thresholds
         tide_util.logmem("before making vessel masks")
         hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
         softvesselthresh = args.softvesselfrac * hardvesselthresh
         print(
-            "hard, soft vessel threshholds set to",
+            "hard, soft vessel thresholds set to",
             "{:.3f}".format(hardvesselthresh),
             "{:.3f}".format(softvesselthresh),
         )

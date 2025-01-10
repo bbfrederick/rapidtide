@@ -10,7 +10,7 @@ from codecs import open
 from os import path
 
 # Always prefer setuptools over distutils
-from setuptools import find_namespace_packages, find_packages, setup, Extension
+from setuptools import Extension, find_namespace_packages, find_packages, setup
 
 import versioneer
 
@@ -47,9 +47,10 @@ modules_list = [
     "rapidtide/maskutil",
     "rapidtide/miscmath",
     "rapidtide/multiproc",
+    "rapidtide/patchmatch",
     "rapidtide/peakeval",
-    "rapidtide/refine",
-    "rapidtide/refine_factored",
+    "rapidtide/refinedelay",
+    "rapidtide/refineregressor",
     "rapidtide/resample",
     "rapidtide/simfuncfit",
     "rapidtide/stats",
@@ -174,6 +175,7 @@ script_list = [
     "rapidtide/scripts/spatialfit",
     "rapidtide/scripts/spatialmi",
     "rapidtide/scripts/spectrogram",
+    "rapidtide/scripts/stupidramtricks",
     "rapidtide/scripts/synthASL",
     "rapidtide/scripts/tcfrom2col",
     "rapidtide/scripts/tcfrom3col",

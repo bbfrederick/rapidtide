@@ -92,6 +92,7 @@ DEFAULT_DELAYMAPPING_LAGMIN = -10.0
 DEFAULT_DELAYMAPPING_LAGMAX = 30.0
 DEFAULT_DELAYMAPPING_PASSES = 3
 DEFAULT_DELAYMAPPING_DESPECKLE_PASSES = 4
+DEFAULT_DELAYMAPPING_SPATIALFILT = 5
 
 DEFAULT_CVRMAPPING_LAGMIN = -5.0
 DEFAULT_CVRMAPPING_LAGMAX = 20.0
@@ -102,6 +103,15 @@ DEFAULT_CVRMAPPING_DESPECKLE_PASSES = 4
 DEFAULT_OUTPUTLEVEL = "normal"
 
 DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
+
+DEFAULT_PATCHTHRESH = 3.0
+DEFAULT_REFINEDELAYMINDELAY = -5.0
+DEFAULT_REFINEDELAYMAXDELAY = 5.0
+DEFAULT_REFINEDELAYNUMPOINTS = 501
+DEFAULT_DELAYOFFSETSPATIALFILT = -1
+
+DEFAULT_PATCHMINSIZE = 10
+DEFAULT_PATCHFWHM = 5
 
 
 def _get_parser():
@@ -163,7 +173,8 @@ def _get_parser():
             "Preset for delay mapping analysis - this is a macro that "
             f"sets searchrange=({DEFAULT_DELAYMAPPING_LAGMIN}, {DEFAULT_DELAYMAPPING_LAGMAX}), "
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
-            "refineoffset=True, outputlevel='normal', "
+            f"gausssigma={DEFAULT_DELAYMAPPING_SPATIALFILT}, "
+            "refineoffset=True, refinedelay=True, outputlevel='normal', "
             "doglmfilt=False. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
@@ -399,9 +410,27 @@ def _get_parser():
             "Spatially filter fMRI data prior to analysis "
             "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
             "to have rapidtide set it to half the mean voxel "
-            "dimension (a rule of thumb for a good value)."
+            "dimension (a rule of thumb for a good value). Set to 0 to disable."
         ),
         default=DEFAULT_SPATIALFILT,
+    )
+    preproc.add_argument(
+        "--premask",
+        dest="premask",
+        action="store_true",
+        help=(
+            "Apply masking prior to spatial filtering to limit extracerebral sources (requires --brainmask)"
+        ),
+        default=False,
+    )
+    preproc.add_argument(
+        "--premasktissueonly",
+        dest="premasktissueonly",
+        action="store_true",
+        help=(
+            "Apply more stringent masking prior to spatial filtering, removing CSF voxels (requires --graymattermask and --whitemattermask)."
+        ),
+        default=False,
     )
     preproc.add_argument(
         "--globalmean",
@@ -561,19 +590,6 @@ def _get_parser():
         default=0,
     )
     preproc.add_argument(
-        "--numtozero",
-        dest="numtozero",
-        action="store",
-        type=int,
-        metavar="NUMPOINTS",
-        help=(
-            "When calculating the moving regressor, set this number of points to zero at the beginning of the "
-            "voxel timecourses. This prevents initial points which may not be in equilibrium from contaminating the "
-            "calculated sLFO signal.  This may improve similarity fitting and GLM noise removal.  Default is 0."
-        ),
-        default=0,
-    )
-    preproc.add_argument(
         "--timerange",
         dest="timerange",
         action="store",
@@ -587,6 +603,34 @@ def _get_parser():
             "of START will be set to 0. Default is to use all timepoints."
         ),
         default=(-1, -1),
+    )
+    preproc.add_argument(
+        "--tincludemask",
+        dest="tincludemaskname",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="FILE",
+        help=(
+            "Only correlate during epochs specified "
+            "in MASKFILE (NB: each line of FILE "
+            "contains the time and duration of an "
+            "epoch to include."
+        ),
+        default=None,
+    )
+    preproc.add_argument(
+        "--texcludemask",
+        dest="texcludemaskname",
+        action="store",
+        type=lambda x: pf.is_valid_file(parser, x),
+        metavar="FILE",
+        help=(
+            "Do not correlate during epochs specified "
+            "in MASKFILE (NB: each line of FILE "
+            "contains the time and duration of an "
+            "epoch to exclude."
+        ),
+        default=None,
     )
     preproc.add_argument(
         "--nothresh",
@@ -766,16 +810,19 @@ def _get_parser():
     # Correlation fitting options
     corr_fit = parser.add_argument_group("Correlation fitting options")
 
-    fixdelay = corr_fit.add_mutually_exclusive_group()
-    fixdelay.add_argument(
-        "--fixdelay",
-        dest="fixeddelayvalue",
-        action="store",
-        type=float,
-        metavar="DELAYTIME",
-        help=("Don't fit the delay time - set it to DELAYTIME seconds for all " "voxels."),
-        default=None,
+    corr_fit.add_argument(
+        "--initialdelay",
+        dest="initialdelayvalue",
+        type=lambda x: pf.is_valid_file_or_float(parser, x),
+        metavar="DELAY",
+        help=(
+            "Start the analysis with predefined delays.  If DELAY is a filename, use it as an initial delay map; "
+            "if DELAY is a float, initialize all voxels to a  delay of DELAY seconds."
+        ),
+        default=0.0,
     )
+
+    fixdelay = corr_fit.add_mutually_exclusive_group()
     fixdelay.add_argument(
         "--searchrange",
         dest="lag_extrema",
@@ -788,6 +835,13 @@ def _get_parser():
             f"LAGMAX.  Default is {DEFAULT_LAGMIN} to {DEFAULT_LAGMAX} seconds. "
         ),
         default=(DEFAULT_LAGMIN, DEFAULT_LAGMAX),
+    )
+    fixdelay.add_argument(
+        "--nodelayfit",
+        dest="fixdelay",
+        action="store_true",
+        help=("Fix the delay in every voxel to its initial value.  Do not perform any fitting."),
+        default=False,
     )
     corr_fit.add_argument(
         "--sigmalimit",
@@ -1026,7 +1080,7 @@ def _get_parser():
         metavar="THRESH",
         type=float,
         help=(
-            "Threshhold value (fraction of maximum) in a histogram "
+            "Threshold value (fraction of maximum) in a histogram "
             f"to be considered the start of a peak.  Default is {DEFAULT_PICKLEFT_THRESH}."
         ),
         default=DEFAULT_PICKLEFT_THRESH,
@@ -1106,7 +1160,7 @@ def _get_parser():
         type=int,
         metavar="MAXPASSES",
         help=(
-            "Terminate refinement after MAXPASSES passes, whether or not convergence has occured. "
+            "Terminate refinement after MAXPASSES passes, whether or not convergence has occurred. "
             f"Default is {DEFAULT_MAXPASSES}."
         ),
         default=DEFAULT_MAXPASSES,
@@ -1155,6 +1209,46 @@ def _get_parser():
             f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
         ),
         default=DEFAULT_GLMDERIVS,
+    )
+    glm.add_argument(
+        "--refinedelay",
+        dest="refinedelay",
+        action="store_true",
+        help=("Refine the delay map using GLM information before the filter step."),
+        default=False,
+    )
+    glm.add_argument(
+        "--nofilterwithrefineddelay",
+        dest="filterwithrefineddelay",
+        action="store_false",
+        help=("Do not use the refined delay in GLM filter."),
+        default=True,
+    )
+    glm.add_argument(
+        "--delaypatchthresh",
+        dest="delaypatchthresh",
+        action="store",
+        type=float,
+        metavar="NUMMADs",
+        help=(
+            "Maximum number of robust standard deviations to permit in the offset delay refine map. "
+            f"Default is {DEFAULT_PATCHTHRESH}"
+        ),
+        default=DEFAULT_PATCHTHRESH,
+    )
+    glm.add_argument(
+        "--delayoffsetspatialfilt",
+        dest="delayoffsetgausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter fMRI data prior to calculating delay offsets "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value).  Set to 0 to disable."
+        ),
+        default=DEFAULT_DELAYOFFSETSPATIALFILT,
     )
 
     # Output options
@@ -1277,6 +1371,13 @@ def _get_parser():
         default=True,
     )
     misc.add_argument(
+        "--makepseudofile",
+        dest="makepseudofile",
+        action="store_true",
+        help=("Make a simulated input file from the mean and the movingsignal."),
+        default=False,
+    )
+    misc.add_argument(
         "--checkpoint",
         dest="checkpoint",
         action="store_true",
@@ -1368,24 +1469,6 @@ def _get_parser():
             "tissue segmentation, etc.  NB: at the moment this is just a placeholder - it doesn't do anything."
         ),
         default=None,
-    )
-    experimental.add_argument(
-        "--premask",
-        dest="premask",
-        action="store_true",
-        help=(
-            "Apply masking prior to spatial filtering to limit extracerebral sources (requires --brainmask)"
-        ),
-        default=False,
-    )
-    experimental.add_argument(
-        "--premasktissueonly",
-        dest="premasktissueonly",
-        action="store_true",
-        help=(
-            "Apply more stringent masking prior to spatial filtering, removing CSF voxels (requires --graymattermask and --whitemattermask)."
-        ),
-        default=False,
     )
     experimental.add_argument(
         "--psdfilter",
@@ -1551,33 +1634,13 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
-        "--tincludemask",
-        dest="tincludemaskname",
-        action="store",
-        type=lambda x: pf.is_valid_file(parser, x),
-        metavar="FILE",
-        help=(
-            "Only correlate during epochs specified "
-            "in MASKFILE (NB: each line of FILE "
-            "contains the time and duration of an "
-            "epoch to include."
-        ),
-        default=None,
+        "--patchshift",
+        dest="patchshift",
+        action="store_true",
+        help=("Perform patch shift correction."),
+        default=False,
     )
-    experimental.add_argument(
-        "--texcludemask",
-        dest="texcludemaskname",
-        action="store",
-        type=lambda x: pf.is_valid_file(parser, x),
-        metavar="FILE",
-        help=(
-            "Do not correlate during epochs specified "
-            "in MASKFILE (NB: each line of FILE "
-            "contains the time and duration of an "
-            "epoch to exclude."
-        ),
-        default=None,
-    )
+
     # Debugging options
     debugging = parser.add_argument_group(
         "Debugging options.  You probably don't want to use any of these unless I ask you to to help diagnose a problem"
@@ -1593,7 +1656,7 @@ def _get_parser():
         "--focaldebug",
         dest="focaldebug",
         action="store_true",
-        help=("Enable targetted additional debugging output (used during development)."),
+        help=("Enable targeted additional debugging output (used during development)."),
         default=False,
     )
     debugging.add_argument(
@@ -1604,10 +1667,10 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
-        "--disabledockermemfix",
-        dest="dockermemfix",
+        "--disablecontainermemfix",
+        dest="containermemfix",
         action="store_false",
-        help=("Disable docker memory limit setting."),
+        help=("Disable container memory limit setting."),
         default=True,
     )
     debugging.add_argument(
@@ -1735,7 +1798,7 @@ def process_args(inputargs=None):
     # what fraction of the correlation window to avoid on either end when
     # fitting
     args["edgebufferfrac"] = 0.0
-    # only do fits in voxels that exceed threshhold
+    # only do fits in voxels that exceed threshold
     args["enforcethresh"] = True
     # if set to the location of the first autocorrelation sidelobe,
     # this will fold back sidelobes
@@ -1761,6 +1824,8 @@ def process_args(inputargs=None):
     # The fraction of the main peak over which points are included in the peak
     args["searchfrac"] = 0.5
     args["mp_chunksize"] = 50000
+    args["patchminsize"] = DEFAULT_PATCHMINSIZE
+    args["patchfwhm"] = DEFAULT_PATCHFWHM
 
     # significance estimation
     args["sighistlen"] = 1000
@@ -1778,6 +1843,10 @@ def process_args(inputargs=None):
     args["check_autocorrelation"] = True
     args["acwidth"] = 0.0  # width of the reference autocorrelation function
 
+    # delay refinement
+    args["mindelay"] = DEFAULT_REFINEDELAYMINDELAY
+    args["maxdelay"] = DEFAULT_REFINEDELAYMAXDELAY
+    args["numpoints"] = DEFAULT_REFINEDELAYNUMPOINTS
     # diagnostic information about version
     (
         args["release_version"],
@@ -1845,14 +1914,18 @@ def process_args(inputargs=None):
     else:
         args["nohistzero"] = True
 
-    if args["fixeddelayvalue"] is not None:
-        args["fixdelay"] = True
+    # sort out initial delay options
+    if args["fixdelay"]:
+        try:
+            tempinitialdelayvalue = float(args["initialdelayvalue"])
+        except ValueError:
+            tempinitialdelayvalue = 0.0
         args["lag_extrema"] = (
-            args["fixeddelayvalue"] - 10.0,
-            args["fixeddelayvalue"] + 10.0,
+            tempinitialdelayvalue - 10.0,
+            tempinitialdelayvalue + 10.0,
         )
     else:
-        args["fixdelay"] = False
+        args["initialdelayvalue"] = None
 
     if args["in_file"].endswith("txt") and args["realtr"] == "auto":
         raise ValueError(
@@ -2028,9 +2101,11 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "despeckle_passes", DEFAULT_DELAYMAPPING_DESPECKLE_PASSES)
         pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
+        pf.setifnotset(args, "gausssigma", DEFAULT_DELAYMAPPING_SPATIALFILT)
         args["refineoffset"] = True
+        args["refinedelay"] = True
         args["outputlevel"] = "normal"
-        pf.setifnotset(args, "doglmfilt", False)
+        pf.setifnotset(args, "doglmfilt", True)
 
     if args["denoising"]:
         LGR.warning('Using "denoising" analysis mode. Overriding any affected arguments.')
@@ -2041,6 +2116,7 @@ def process_args(inputargs=None):
         pf.setifnotset(args, "peakfittype", DEFAULT_DENOISING_PEAKFITTYPE)
         pf.setifnotset(args, "gausssigma", DEFAULT_DENOISING_SPATIALFILT)
         args["refineoffset"] = True
+        args["refinedelay"] = True
         args["zerooutbadfit"] = False
         pf.setifnotset(args, "doglmfilt", True)
 

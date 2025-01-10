@@ -122,7 +122,7 @@ def _get_parser():
 
     parser.add_argument(
         "--debug",
-        help="ouput additional debugging information",
+        help="output additional debugging information",
         action="store_true",
     )
 

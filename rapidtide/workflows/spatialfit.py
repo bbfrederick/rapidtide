@@ -180,7 +180,7 @@ def spatialfit(args):
     newmask = np.zeros((numspatiallocs), dtype="float")
     lincoffs = np.zeros((timepoints), dtype="float")
     offsets = np.zeros((timepoints), dtype="float")
-    rvals = np.zeros((timepoints), dtype="float")
+    r2vals = np.zeros((timepoints), dtype="float")
 
     if args.debug:
         print(fitdata.shape)
@@ -190,7 +190,7 @@ def spatialfit(args):
         print(newmask.shape)
         print(lincoffs.shape)
         print(offsets.shape)
-        print(rvals.shape)
+        print(r2vals.shape)
 
     # mask everything
     print("masking data and template")
@@ -215,10 +215,10 @@ def spatialfit(args):
     ):
         if args.debug:
             print("fitting")
-        thefit, R = tide_fit.mlregress(maskedtemplate[:, 0], maskeddata[:, thetime])
+        thefit, R2 = tide_fit.mlregress(maskedtemplate[:, 0], maskeddata[:, thetime])
         lincoffs[thetime] = thefit[0, 1]
         offsets[thetime] = thefit[0, 0]
-        rvals[thetime] = R
+        r2vals[thetime] = R2
         if args.debug:
             print("generating fit data")
             print(
@@ -241,7 +241,7 @@ def spatialfit(args):
     print("writing time series")
     tide_io.writenpvecs(lincoffs, args.outputroot + "_lincoffs.txt")
     tide_io.writenpvecs(offsets, args.outputroot + "_offsets.txt")
-    tide_io.writenpvecs(rvals, args.outputroot + "_rvals.txt")
+    tide_io.writenpvecs(r2vals, args.outputroot + "_r2vals.txt")
     print("slope mean, std:", np.mean(lincoffs), np.std(lincoffs))
     print("offset mean, std:", np.mean(offsets), np.std(offsets))
 

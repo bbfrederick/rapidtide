@@ -9,10 +9,10 @@ https://github.com/pypa/sampleproject
 from codecs import open
 from os import path
 
+import versioneer
+
 # Always prefer setuptools over distutils
 from setuptools import find_namespace_packages, find_packages, setup
-
-import versioneer
 
 here = path.abspath(path.dirname(__file__))
 
@@ -49,8 +49,7 @@ modules_list = [
     "rapidtide/miscmath",
     "rapidtide/multiproc",
     "rapidtide/peakeval",
-    "rapidtide/refine",
-    "rapidtide/refine_factored",
+    "rapidtide/refineregressor",
     "rapidtide/resample",
     "rapidtide/simfuncfit",
     "rapidtide/stats",

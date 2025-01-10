@@ -1,0 +1,21 @@
+#!/bin/bash
+
+rapidtide \
+    --spatialfilt 5 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    --outputlevel max \
+    --refinedelay \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST
+
+retroglm \
+    --nprocs -1 \
+    --alternateoutput ../dst/sub-RETROTEST_refined \
+    --makepseudofile \
+    --outputlevel max \
+    --refinedelay \
+    --refinecorr \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST

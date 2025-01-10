@@ -489,7 +489,7 @@ def cross_mutual_info(
     -------
     if returnaxis is True:
         thexmi_x : 1D array
-            the set of offsets at which cross mutual information is calcuated
+            the set of offsets at which cross mutual information is calculated
         thexmi_y : 1D array
             the set of cross mutual information values
         len(thexmi_x): int

@@ -97,8 +97,8 @@ def alignvoxels(
     Implicit outputs:
         shiftedtcs - voxelwise fmri data timeshifted to zero lag
         weights - the weights of every timepoint in the final regressor
-        paddedshiftedtcs - voxelwise fmri data timeshifted to zero lag, with a bufffer of padtrs on each end
-        paddedweights - the weights of every timepoint in the final regressor, with a bufffer of padtrs on each end
+        paddedshiftedtcs - voxelwise fmri data timeshifted to zero lag, with a buffer of padtrs on each end
+        paddedweights - the weights of every timepoint in the final regressor, with a buffer of padtrs on each end
 
 
     Parameters
@@ -626,7 +626,8 @@ def dorefine(
         outputdata = averagedata
 
     if cleanrefined:
-        thefit, R = tide_fit.mlregress(averagediscard, averagedata)
+        thefit, R2 = tide_fit.mlregress(averagediscard, averagedata)
+
         fitcoff = rt_floatset(thefit[0, 1])
         datatoremove = rt_floatset(fitcoff * averagediscard)
         outputdata -= datatoremove

@@ -43,10 +43,12 @@ dependencies = [
 #dynamic = ['version', 'license', 'keywords']
 dynamic = ['version']
 authors = [
-    {name = "Blaise deB Frederick", email='blaise.frederick@gmail.com' },
+    {name = "Blaise deB. Frederick", email="blaise.frederick@gmail.com"},
     {name = "Taylor Salo"},
     {name = "Daniel M. Drucker, Ph.D."},
     {name = "Jeffrey N Stout"},
+    {name = "Yaroslav O. Halchenko"},
+    {name = "Derek Monroe"},
 ]
 
 [project.urls]
@@ -136,3 +138,10 @@ versionfile_source = 'rapidtide/_version.py'
 versionfile_build = 'rapidtide/_version.py'
 tag_prefix = 'v'
 parentdir_prefix = 'rapidtide-'
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git*,versioneer.py,*.css,exportlist.txt,data,*.bib'
+check-hidden = true
+ignore-regex = '\bsubjeT\b'
+ignore-words-list = 'thex,normall'

@@ -27,23 +27,27 @@ import rapidtide.multiproc as tide_multiproc
 
 def _procOneGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
     # NOTE: if theevs is 2D, dimension 0 is number of points, dimension 1 is number of evs
-    thefit, R = tide_fit.mlregress(theevs, thedata)
+    thefit, R2 = tide_fit.mlregress(theevs, thedata)
     if theevs.ndim > 1:
         if thefit is None:
             thefit = np.matrix(np.zeros((1, theevs.shape[1] + 1), dtype=rt_floattype))
         fitcoeffs = rt_floatset(thefit[0, 1:])
+        if fitcoeffs[0, 0] < 0.0:
+            coeffsign = -1.0
+        else:
+            coeffsign = 1.0
         datatoremove = theevs[:, 0] * 0.0
         for j in range(theevs.shape[1]):
             datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * theevs[:, j])
         if np.any(fitcoeffs) != 0.0:
             pass
         else:
-            R = 0.0
+            R2 = 0.0
         return (
             vox,
             rt_floatset(thefit[0, 0]),
-            rt_floatset(R),
-            rt_floatset(R * R),
+            rt_floatset(coeffsign * np.sqrt(R2)),
+            rt_floatset(R2),
             fitcoeffs,
             rt_floatset(thefit[0, 1:] / thefit[0, 0]),
             datatoremove,
@@ -52,13 +56,17 @@ def _procOneGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="
     else:
         fitcoeff = rt_floatset(thefit[0, 1])
         datatoremove = rt_floatset(fitcoeff * theevs)
+        if fitcoeff < 0.0:
+            coeffsign = -1.0
+        else:
+            coeffsign = 1.0
         if fitcoeff == 0.0:
-            R = 0.0
+            R2 = 0.0
         return (
             vox,
             rt_floatset(thefit[0, 0]),
-            rt_floatset(R),
-            rt_floatset(R * R),
+            rt_floatset(coeffsign * np.sqrt(R2)),
+            rt_floatset(R2),
             fitcoeff,
             rt_floatset(thefit[0, 1] / thefit[0, 0]),
             datatoremove,

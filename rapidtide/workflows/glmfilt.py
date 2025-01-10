@@ -168,7 +168,7 @@ def glmfilt(inputfile, numskip, outputroot, evfilename, datamaskname, saveall=Tr
     print("will perform GLM with ", numregressors, " regressors")
     meandata = np.zeros((xsize, ysize, numslices), dtype="float")
     fitdata = np.zeros((xsize, ysize, numslices, numregressors), dtype="float")
-    Rdata = np.zeros((xsize, ysize, numslices), dtype="float")
+    R2data = np.zeros((xsize, ysize, numslices), dtype="float")
     trimmeddata = 1.0 * nim_data[:, :, :, numskip:]
 
     for z in range(0, numslices):
@@ -183,15 +183,15 @@ def glmfilt(inputfile, numskip, outputroot, evfilename, datamaskname, saveall=Tr
                         else:
                             regressorvec.append(evdata[j])
                     if np.max(trimmeddata[x, y, z, :]) - np.min(trimmeddata[x, y, z, :]) > 0.0:
-                        thefit, R = tide_fit.mlregress(regressorvec, trimmeddata[x, y, z, :])
+                        thefit, R2 = tide_fit.mlregress(regressorvec, trimmeddata[x, y, z, :])
                         meandata[x, y, z] = thefit[0, 0]
-                        Rdata[x, y, z] = R
+                        R2data[x, y, z] = R2
                         for j in range(0, numregressors):
                             fitdata[x, y, z, j] = thefit[0, j + 1]
                             # datatoremove[x, y, z, :, j] = thefit[0, j + 1] * regressorvec[j]
                     else:
                         meandata[x, y, z] = 0.0
-                        Rdata[x, y, z] = 0.0
+                        R2data[x, y, z] = 0.0
                         for j in range(0, numregressors):
                             fitdata[x, y, z, j] = 0.0
                             # datatoremove[x, y, z, :, j] = 0.0 * regressorvec[j]
@@ -206,8 +206,8 @@ def glmfilt(inputfile, numskip, outputroot, evfilename, datamaskname, saveall=Tr
         tide_io.savetonifti(meandata, theheader, outputroot + "_mean")
         for j in range(0, numregressors):
             tide_io.savetonifti(fitdata[:, :, :, j], theheader, outputroot + "_fit" + str(j))
-    tide_io.savetonifti(Rdata, theheader, outputroot + "_R")
-    Rdata = None
+    tide_io.savetonifti(R2data, theheader, outputroot + "_R2")
+    R2data = None
 
     print()
     print("Now constructing the array of data to remove")

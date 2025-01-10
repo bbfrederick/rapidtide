@@ -21,6 +21,8 @@ import copy
 import logging
 import os
 import sys
+import time
+from pathlib import Path
 
 import numpy as np
 
@@ -28,16 +30,33 @@ import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
+import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
+import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
 import rapidtide.workflows.parser_funcs as pf
 
-LGR = logging.getLogger("GENERAL")
+from .utils import setup_logger
+
+
+# Create a sentinel.
+# from https://stackoverflow.com/questions/58594956/find-out-which-arguments-were-passed-explicitly-in-argparse
+class _Sentinel:
+    pass
+
+
+sentinel = _Sentinel()
+LGR = logging.getLogger(__name__)
 ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
 DEFAULT_GLMDERIVS = 0
+DEFAULT_PATCHTHRESH = 3.0
+DEFAULT_REFINEDELAYMINDELAY = -5.0
+DEFAULT_REFINEDELAYMAXDELAY = 5.0
+DEFAULT_REFINEDELAYNUMPOINTS = 501
+DEFAULT_DELAYOFFSETSPATIALFILT = -1
 
 
 def _get_parser():
@@ -132,23 +151,103 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--refinedelay",
+        dest="refinedelay",
+        action="store_true",
+        help=("Refine the delay map using GLM information before the filter step."),
+        default=False,
+    )
+    parser.add_argument(
+        "--refinecorr",
+        dest="refinecorr",
+        action="store_true",
+        help=(
+            "Recalculate the maxcorr map using GLM coefficient of determination from bandpassed data."
+        ),
+        default=False,
+    )
+    parser.add_argument(
+        "--nofilterwithrefineddelay",
+        dest="filterwithrefineddelay",
+        action="store_false",
+        help=("Do not use the refined delay in GLM filter."),
+        default=True,
+    )
+    parser.add_argument(
+        "--delaypatchthresh",
+        dest="delaypatchthresh",
+        action="store",
+        type=float,
+        metavar="NUMMADs",
+        help=(
+            "Maximum number of robust standard deviations to permit in the offset delay refine map. "
+            f"Default is {DEFAULT_PATCHTHRESH}"
+        ),
+        default=DEFAULT_PATCHTHRESH,
+    )
+    parser.add_argument(
+        "--delayoffsetspatialfilt",
+        dest="delayoffsetgausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter fMRI data prior to calculating delay offsets "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value)."
+        ),
+        default=DEFAULT_DELAYOFFSETSPATIALFILT,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
         help=("Output lots of helpful information."),
         default=False,
     )
+    parser.add_argument(
+        "--focaldebug",
+        dest="focaldebug",
+        action="store_true",
+        help=("Output lots of helpful information on a limited subset of operations."),
+        default=False,
+    )
+
     return parser
 
 
 def retroglm(args):
-    rt_floatset = np.float64
-    rt_floattype = "float64"
-    rt_outfloatset = np.float64
-    rt_outfloattype = "float64"
-
     # get the pid of the parent process
     args.pid = os.getpid()
+
+    # specify the output name
+    if args.alternateoutput is None:
+        outputname = args.datafileroot
+    else:
+        outputname = args.alternateoutput
+
+    # start the loggers low that we know the output name
+    sh = logging.StreamHandler()
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG, handlers=[sh])
+    else:
+        logging.basicConfig(level=logging.INFO, handlers=[sh])
+    # Set up loggers for workflow
+    setup_logger(
+        logger_filename=f"{outputname}_retrolog.txt",
+        timing_filename=f"{outputname}_retroruntimings.tsv",
+        error_filename=f"{outputname}_retroerrorlog.txt",
+        verbose=False,
+        debug=args.debug,
+    )
+    TimingLGR.info("Start")
+    LGR.info(f"starting retroglm")
+
+    # set some global values
+    args.mindelay = DEFAULT_REFINEDELAYMINDELAY
+    args.maxdelay = DEFAULT_REFINEDELAYMAXDELAY
+    args.numpoints = DEFAULT_REFINEDELAYNUMPOINTS
 
     if args.outputlevel == "min":
         args.saveminimumglmfiles = False
@@ -196,14 +295,36 @@ def retroglm(args):
     try:
         candoretroglm = therunoptions["retroglmcompatible"]
     except KeyError:
-        print("this rapidtide dataset does not support retrospective GLM calculation")
+        print(
+            f"based on {runoptionsfile}, this rapidtide dataset does not support retrospective GLM calculation"
+        )
         sys.exit()
+
+    if therunoptions["internalprecision"] == "double":
+        rt_floattype = "float64"
+        rt_floatset = np.float64
+    else:
+        rt_floattype = "float32"
+        rt_floatset = np.float32
+
+    # set the output precision
+    if therunoptions["outputprecision"] == "double":
+        rt_outfloattype = "float64"
+        rt_outfloatset = np.float64
+    else:
+        rt_outfloattype = "float32"
+        rt_outfloatset = np.float32
+    therunoptions["saveminimumglmfiles"] = args.saveminimumglmfiles
 
     # read the fmri input files
     print("reading fmrifile")
     fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
         args.fmrifile
     )
+
+    # create the canary file
+    Path(f"{outputname}_RETROISRUNNING.txt").touch()
+
     if args.debug:
         print(f"{fmri_data.shape=}")
     xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(fmri_sizes)
@@ -226,8 +347,9 @@ def retroglm(args):
     if not tide_io.checkspacematch(fmri_header, procmask_header):
         raise ValueError("procmask dimensions do not match fmri dimensions")
     procmask_spacebytime = procmask.reshape((numspatiallocs))
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"{procmask_spacebytime.shape=}")
+        print(f"{tide_stats.getmasksize(procmask_spacebytime)=}")
 
     # read the corrfit mask
     print("reading corrfit maskfile")
@@ -242,8 +364,9 @@ def retroglm(args):
     if not tide_io.checkspacematch(fmri_header, corrmask_header):
         raise ValueError("corrmask dimensions do not match fmri dimensions")
     corrmask_spacebytime = corrmask.reshape((numspatiallocs))
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"{corrmask_spacebytime.shape=}")
+        print(f"{tide_stats.getmasksize(corrmask_spacebytime)=}")
 
     print("reading lagtimes")
     lagtimesfile = f"{args.datafileroot}_desc-maxtime_map.nii.gz"
@@ -293,23 +416,29 @@ def retroglm(args):
     # read the lagtc generator file
     print("reading lagtc generator")
     lagtcgeneratorfile = f"{args.datafileroot}_desc-lagtcgenerator_timeseries"
-    genlagtc = tide_resample.FastResamplerFromFile(lagtcgeneratorfile)
+    try:
+        thepadtime = therunoptions["fastresamplerpadtime"]
+    except KeyError:
+        thepadtime = therunoptions["padseconds"]
+    genlagtc = tide_resample.FastResamplerFromFile(lagtcgeneratorfile, padtime=thepadtime)
 
     # select the voxels in the mask
     print("figuring out valid voxels")
     validvoxels = np.where(procmask_spacebytime > 0)[0]
-    if args.debug:
-        print(f"{validvoxels.shape=}")
     numvalidspatiallocs = np.shape(validvoxels)[0]
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"{numvalidspatiallocs=}")
     internalvalidspaceshape = numvalidspatiallocs
+    if args.refinedelay:
+        derivaxissize = np.max([2, args.glmderivs + 1])
+    else:
+        derivaxissize = args.glmderivs + 1
     internalvalidspaceshapederivs = (
         internalvalidspaceshape,
-        args.glmderivs + 1,
+        derivaxissize,
     )
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    if args.debug:
+    if args.debug or args.focaldebug:
         print(f"validvoxels shape = {numvalidspatiallocs}")
         print(f"internalvalidfmrishape shape = {internalvalidfmrishape}")
 
@@ -339,6 +468,7 @@ def retroglm(args):
         filtereddata, filtereddata_shm = tide_util.allocshared(
             internalvalidfmrishape, rt_outfloatset
         )
+        ramlocation = "in shared memory"
     else:
         if args.debug:
             print("allocating memory")
@@ -350,12 +480,24 @@ def retroglm(args):
         movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
         lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
         filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+        ramlocation = "locally"
+
+    totalbytes = (
+        glmmean.nbytes
+        + rvalue.nbytes
+        + r2value.nbytes
+        + fitNorm.nbytes
+        + fitcoeff.nbytes
+        + movingsignal.nbytes
+        + lagtc.nbytes
+        + filtereddata.nbytes
+    )
+    thesize, theunit = tide_util.format_bytes(totalbytes)
+    ramstring = f"allocated {thesize:.3f} {theunit} {ramlocation}"
+    print(ramstring)
+    therunoptions["totalretrobytes"] = totalbytes
 
     oversampfactor = int(therunoptions["oversampfactor"])
-    if args.alternateoutput is None:
-        outputname = therunoptions["outputname"]
-    else:
-        outputname = args.alternateoutput
     if args.debug:
         print(f"{outputname=}")
     oversamptr = fmritr / oversampfactor
@@ -364,6 +506,10 @@ def retroglm(args):
     except KeyError:
         threshval = 0.0
     mode = "glm"
+
+    if args.debug or args.focaldebug:
+        print(f"{validvoxels.shape=}")
+        np.savetxt(f"{outputname}_validvoxels.txt", validvoxels)
 
     outputpath = os.path.dirname(outputname)
     rawsources = [
@@ -390,7 +536,7 @@ def retroglm(args):
         maplist = [
             (
                 fmri_data_valid,
-                "datatofilter",
+                "inputdata",
                 "bold",
                 None,
                 "fMRI data that will be subjected to GLM filtering",
@@ -403,20 +549,120 @@ def retroglm(args):
             (xsize, ysize, numslices, validtimepoints),
             theheader,
             bidsbasedict,
-            textio=False,
+            textio=therunoptions["textio"],
             fileiscifti=False,
             rt_floattype=rt_floattype,
             cifti_hdr=None,
         )
 
+    # refine the delay value prior to calculating the GLM
+    if args.refinedelay:
+        print("\n\nDelay refinement")
+        TimingLGR.info("Delay refinement start")
+        LGR.info("\n\nDelay refinement")
+
+        if args.delayoffsetgausssigma < 0.0:
+            # set gausssigma automatically
+            args.delayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
+
+        TimingLGR.info("Refinement calibration start")
+        glmderivratios = tide_refinedelay.getderivratios(
+            fmri_data_valid,
+            validvoxels,
+            initial_fmri_x,
+            lagtimes_valid,
+            corrmask_valid,
+            genlagtc,
+            mode,
+            outputname,
+            oversamptr,
+            glmmean,
+            rvalue,
+            r2value,
+            fitNorm[:, :2],
+            fitcoeff[:, :2],
+            movingsignal,
+            lagtc,
+            filtereddata,
+            LGR,
+            TimingLGR,
+            therunoptions,
+            debug=args.debug,
+        )
+
+        medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
+            tide_refinedelay.filterderivratios(
+                glmderivratios,
+                (xsize, ysize, numslices),
+                validvoxels,
+                (xdim, ydim, slicedim),
+                gausssigma=args.delayoffsetgausssigma,
+                patchthresh=args.delaypatchthresh,
+                fileiscifti=False,
+                textio=False,
+                rt_floattype=rt_floattype,
+                debug=args.debug,
+            )
+        )
+
+        # find the mapping of glm ratios to delays
+        tide_refinedelay.trainratiotooffset(
+            genlagtc,
+            initial_fmri_x,
+            outputname,
+            args.outputlevel,
+            mindelay=args.mindelay,
+            maxdelay=args.maxdelay,
+            numpoints=args.numpoints,
+            debug=args.debug,
+        )
+        TimingLGR.info("Refinement calibration end")
+
+        # now calculate the delay offsets
+        TimingLGR.info("Calculating delay offsets")
+        delayoffset = filteredglmderivratios * 0.0
+        if args.focaldebug:
+            print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
+        for i in range(filteredglmderivratios.shape[0]):
+            delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+        namesuffix = "_desc-delayoffset_hist"
+
+        tide_stats.makeandsavehistogram(
+            delayoffset,
+            therunoptions["histlen"],
+            1,
+            outputname + namesuffix,
+            displaytitle="Histogram of delay offsets calculated from GLM",
+            dictvarname="delayoffsethist",
+            thedict=None,
+        )
+        lagtimesrefined_valid = lagtimes_valid + delayoffset
+
+        TimingLGR.info(
+            "Delay offset calculation done",
+            {
+                "message2": filteredglmderivratios.shape[0],
+                "message3": "voxels",
+            },
+        )
+        ####################################################
+        #  Delay refinement end
+        ####################################################
+
+    # initialrawvariance = tide_math.imagevariance(fmri_data_valid, None, 1.0 / fmritr)
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     print("calling glmmfrommaps")
-    voxelsprocessed_glm, regressorset = tide_glmfrommaps.glmfrommaps(
+    TimingLGR.info("Starting GLM filtering")
+    if args.refinedelay and args.filterwithrefineddelay:
+        lagstouse_valid = lagtimesrefined_valid
+    else:
+        lagstouse_valid = lagtimes_valid
+    voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
         fmri_data_valid,
         validvoxels,
         initial_fmri_x,
-        lagtimes_valid,
+        lagstouse_valid,
         corrmask_valid,
         genlagtc,
         mode,
@@ -425,8 +671,8 @@ def retroglm(args):
         glmmean,
         rvalue,
         r2value,
-        fitNorm,
-        fitcoeff,
+        fitNorm[:, : args.glmderivs + 1],
+        fitcoeff[:, : args.glmderivs + 1],
         movingsignal,
         lagtc,
         filtereddata,
@@ -440,13 +686,27 @@ def retroglm(args):
         showprogressbar=args.showprogressbar,
         debug=args.debug,
     )
-
     print(f"filtered {voxelsprocessed_glm} voxels")
+    TimingLGR.info(
+        "GLM filtering done",
+        {
+            "message2": voxelsprocessed_glm,
+            "message3": "voxels",
+        },
+    )
+    # finalrawvariance = tide_math.imagevariance(filtereddata, None, 1.0 / fmritr)
     finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
+
     divlocs = np.where(finalvariance > 0.0)
     varchange = initialvariance * 0.0
     varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
 
+    """divlocs = np.where(finalrawvariance > 0.0)
+    rawvarchange = initialrawvariance * 0.0
+    rawvarchange[divlocs] = 100.0 * (finalrawvariance[divlocs] / initialrawvariance[divlocs] - 1.0)"""
+
+    # save outputs
+    TimingLGR.info("Starting output save")
     theheader = copy.deepcopy(lagtimes_header)
     if mode == "glm":
         maplist = [
@@ -471,6 +731,27 @@ def retroglm(args):
                 "percent",
                 "Change in inband variance after filtering, in percent",
             ),
+            # (
+            #   initialrawvariance,
+            #    "lfofilterTotalVarianceBefore",
+            #    "map",
+            #    None,
+            #    "Total variance prior to filtering",
+            # ),
+            # (
+            #    finalrawvariance,
+            #    "lfofilterTotalVarianceAfter",
+            #    "map",
+            #    None,
+            #    "Total variance after filtering",
+            # ),
+            # (
+            #    rawvarchange,
+            #    "lfofilterTotalVarianceChange",
+            #    "map",
+            #    "percent",
+            #    "Change in total variance after filtering, in percent",
+            # ),
         ]
         if args.saveminimumglmfiles:
             maplist += [
@@ -484,7 +765,7 @@ def retroglm(args):
             ]
         if args.savenormalglmfiles:
             maplist += [
-                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
+                (np.fabs(rvalue), "lfofilterR", "map", None, "R value of the GLM fit"),
                 (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
             ]
     else:
@@ -499,10 +780,9 @@ def retroglm(args):
                 (r2value, "CVRR2", "map", None),
                 (fitcoeff, "CVR", "map", "percent"),
             ]
-
     bidsdict = bidsbasedict.copy()
 
-    if args.debug:
+    if args.debug or args.focaldebug:
         maplist += [
             (
                 lagtimes_valid,
@@ -515,7 +795,7 @@ def retroglm(args):
             (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
         ]
     if args.savenormalglmfiles:
-        if args.glmderivs > 0:
+        if args.glmderivs > 0 or args.refinedelay:
             maplist += [
                 (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
                 (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
@@ -542,6 +822,45 @@ def retroglm(args):
                 (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
                 (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
             ]
+
+    if args.refinedelay:
+        maplist += [
+            (
+                glmderivratios,
+                "glmderivratios",
+                "map",
+                None,
+                "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
+            ),
+            (
+                medfiltglmderivratios,
+                "medfiltglmderivratios",
+                "map",
+                None,
+                "Median filtered version of the glmderivratios map",
+            ),
+            (
+                filteredglmderivratios,
+                "filteredglmderivratios",
+                "map",
+                None,
+                "glmderivratios, with outliers patched using median filtered data",
+            ),
+            (
+                delayoffset,
+                "delayoffset",
+                "map",
+                "second",
+                "Delay offset correction from delay refinement",
+            ),
+            (
+                lagtimesrefined_valid,
+                "maxtimerefined",
+                "map",
+                "second",
+                "Lag time in seconds, refined",
+            ),
+        ]
 
     # write the 3D maps
     tide_io.savemaplist(
@@ -616,8 +935,6 @@ def retroglm(args):
                     "Shifted sLFO regressor to filter",
                 ),
             ]
-    if args.debug:
-        maplist.append((fmri_data_valid, "inputdata", "bold", None, None))
     if args.makepseudofile:
         print("reading mean image")
         meanfile = f"{args.datafileroot}_desc-mean_map.nii.gz"
@@ -646,9 +963,110 @@ def retroglm(args):
         bidsdict,
         debug=args.debug,
     )
+    TimingLGR.info("Finishing output save")
+
+    if args.refinecorr:
+        TimingLGR.info("Filtering for maxcorralt calculation start")
+        for thevoxel in range(fmri_data_valid.shape[0]):
+            fmri_data_valid[thevoxel, :] = theprefilter.apply(
+                1.0 / fmritr, fmri_data_valid[thevoxel, :]
+            )
+        TimingLGR.info("Filtering for maxcorralt calculation complete")
+        TimingLGR.info("GLM for maxcorralt calculation start")
+        voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
+            fmri_data_valid,
+            validvoxels,
+            initial_fmri_x,
+            lagstouse_valid,
+            corrmask_valid,
+            genlagtc,
+            mode,
+            outputname,
+            oversamptr,
+            glmmean,
+            rvalue,
+            r2value,
+            fitNorm[:, : args.glmderivs + 1],
+            fitcoeff[:, : args.glmderivs + 1],
+            movingsignal,
+            lagtc,
+            filtereddata,
+            LGR,
+            TimingLGR,
+            threshval,
+            args.saveminimumglmfiles,
+            nprocs_makelaggedtcs=args.nprocs,
+            nprocs_glm=args.nprocs,
+            glmderivs=args.glmderivs,
+            showprogressbar=args.showprogressbar,
+            debug=args.debug,
+        )
+        TimingLGR.info(
+            "GLM for maxcorralt calculation done",
+            {
+                "message2": voxelsprocessed_glm,
+                "message3": "voxels",
+            },
+        )
+
+        maplist = [
+            (
+                rvalue,
+                "maxcorralt",
+                "map",
+                None,
+                "R value for the lfo component of the delayed regressor, with sign",
+            ),
+        ]
+        theheader = copy.deepcopy(lagtimes_header)
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
+        if args.debug:
+            # dump the fmri input file going to glm
+            theheader = copy.deepcopy(fmri_header)
+            theheader["dim"][4] = validtimepoints
+            theheader["pixdim"][4] = fmritr
+
+            maplist = [
+                (
+                    fmri_data_valid,
+                    "prefilteredinputdata",
+                    "bold",
+                    None,
+                    "fMRI data after temporal filtering",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputname,
+                maplist,
+                validvoxels,
+                (xsize, ysize, numslices, validtimepoints),
+                theheader,
+                bidsbasedict,
+                textio=therunoptions["textio"],
+                fileiscifti=False,
+                rt_floattype=rt_floattype,
+                cifti_hdr=None,
+            )
+
+    # read the runoptions file
+    print("writing runoptions")
+    if args.refinedelay:
+        therunoptions["retroglm_delayoffsetMAD"] = delayoffsetMAD
+    therunoptions["retroglm_runtime"] = time.strftime(
+        "%a, %d %b %Y %H:%M:%S %Z", time.localtime(time.time())
+    )
 
     # clean up shared memory
     if usesharedmem:
+        TimingLGR.info("Shared memory cleanup start")
         tide_util.cleanup_shm(glmmean_shm)
         tide_util.cleanup_shm(rvalue_shm)
         tide_util.cleanup_shm(r2value_shm)
@@ -657,3 +1075,42 @@ def retroglm(args):
         tide_util.cleanup_shm(movingsignal_shm)
         tide_util.cleanup_shm(lagtc_shm)
         tide_util.cleanup_shm(filtereddata_shm)
+        TimingLGR.info("Shared memory cleanup complete")
+
+    # shut down logging
+    TimingLGR.info("Done")
+    logging.shutdown()
+
+    # reformat timing information and delete the unformatted version
+    timingdata, therunoptions["totalretroruntime"] = tide_util.proctiminglogfile(
+        f"{outputname}_retroruntimings.tsv"
+    )
+    tide_io.writevec(
+        timingdata,
+        f"{outputname}_desc-formattedretroruntimings_info.tsv",
+    )
+    Path(f"{outputname}_retroruntimings.tsv").unlink(missing_ok=True)
+
+    # save the modified runoptions file
+    tide_io.writedicttojson(therunoptions, f"{outputname}_desc-runoptions_info.json")
+
+    # shut down the loggers
+    for thelogger in [LGR, ErrorLGR, TimingLGR]:
+        handlers = thelogger.handlers[:]
+        for handler in handlers:
+            thelogger.removeHandler(handler)
+            handler.close()
+
+    # delete the canary file
+    Path(f"{outputname}_RETROISRUNNING.txt").unlink()
+
+    # create the finished file
+    Path(f"{outputname}_RETRODONE.txt").touch()
+
+
+def process_args(inputargs=None):
+    """
+    Compile arguments for retroglm workflow.
+    """
+    args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
+    return args
