@@ -20,6 +20,7 @@ import argparse
 import sys
 
 import numpy as np
+from statsmodels.robust import mad
 
 import rapidtide.io as tide_io
 import rapidtide.maskutil as tide_mask
@@ -33,20 +34,32 @@ def summarize(thevoxels, method="mean"):
     else:
         numtimepoints = 1
 
-    if method == "mean":
-        themethod = np.mean
-    elif method == "sum":
-        themethod = np.sum
-    elif method == "median":
-        themethod = np.median
+    if method == "CoV":
+        if numtimepoints > 1:
+            regionsummary = 100.0 * np.nan_to_num(
+                np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
+            )
+        else:
+            regionsummary = 100.0 * np.nan_to_num(np.std(thevoxels) / np.mean(thevoxels))
     else:
-        print(f"illegal summary method {method} in summarize")
-        sys.exit()
+        if method == "mean":
+            themethod = np.mean
+        elif method == "sum":
+            themethod = np.sum
+        elif method == "median":
+            themethod = np.median
+        elif method == "std":
+            themethod = np.std
+        elif method == "mad":
+            themethod = mad
+        else:
+            print(f"illegal summary method {method} in summarize")
+            sys.exit()
 
-    if numtimepoints > 1:
-        regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
-    else:
-        regionsummary = np.nan_to_num(themethod(thevoxels))
+        if numtimepoints > 1:
+            regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
+        else:
+            regionsummary = np.nan_to_num(themethod(thevoxels))
     return regionsummary
 
 
@@ -88,8 +101,10 @@ def _get_parser():
         dest="summarymethod",
         action="store",
         type=str,
-        choices=["mean", "median", "sum"],
-        help=("Method to summarize a region.  Choices are 'mean' (default), 'median', and 'sum'."),
+        choices=["mean", "median", "sum", "std", "mad", "CoV"],
+        help=(
+            "Method to summarize the voxels in a region.  Choices are 'mean' (default), 'median', 'sum', 'std', 'mad', and 'CoV'."
+        ),
         default="mean",
     )
     parser.add_argument(
