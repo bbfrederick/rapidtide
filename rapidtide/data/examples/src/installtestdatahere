@@ -1,3 +1,4 @@
 #!/bin/bash
 
+mkdir ../dst
 wget  https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/testdatabundle.tgz -O - | tar -xvz
