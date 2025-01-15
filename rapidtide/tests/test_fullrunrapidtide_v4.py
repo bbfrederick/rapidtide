@@ -37,6 +37,7 @@ def test_fullrunrapidtide_v4(debug=False, displayplots=False):
         "0.2560",
         "--globalmaskmethod",
         "variance",
+        "--norefinedelay",
         "--despecklepasses",
         "0",
         "--numnull",

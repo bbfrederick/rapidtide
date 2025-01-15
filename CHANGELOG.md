@@ -1,4 +1,8 @@
-# Release history
+#Release history
+
+## Version 3.0alpha3 (1/15/25)
+* (rapidtide) Refine delay is now on by default.  Use --norefinedelay to disable it.
+* (showxcorrx) Fixed some issues with axis labelling.
 
 ## Version 3.0alpha2 (12/30/24)
 * (happy, rapidtide) Now do (correct) checking to see if running in a container that now handles both Docker and Singularity/Apptainer properly. Thank you to Derek Monroe (https://github.com/dcmonroe) for the catch and the fix!

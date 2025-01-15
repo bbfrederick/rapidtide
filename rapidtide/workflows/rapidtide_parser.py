@@ -1211,11 +1211,11 @@ def _get_parser():
         default=DEFAULT_GLMDERIVS,
     )
     glm.add_argument(
-        "--refinedelay",
+        "--norefinedelay",
         dest="refinedelay",
-        action="store_true",
-        help=("Refine the delay map using GLM information before the filter step."),
-        default=False,
+        action="store_false",
+        help=("Do not calculate a refined delay map using GLM information."),
+        default=True,
     )
     glm.add_argument(
         "--nofilterwithrefineddelay",

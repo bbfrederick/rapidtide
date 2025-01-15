@@ -20,8 +20,10 @@ import argparse
 import sys
 
 import numpy as np
+from statsmodels.robust import mad
 
 import rapidtide.io as tide_io
+import rapidtide.stats as tide_stats
 import rapidtide.maskutil as tide_mask
 import rapidtide.workflows.parser_funcs as pf
 
@@ -33,20 +35,32 @@ def summarize(thevoxels, method="mean"):
     else:
         numtimepoints = 1
 
-    if method == "mean":
-        themethod = np.mean
-    elif method == "sum":
-        themethod = np.sum
-    elif method == "median":
-        themethod = np.median
+    if method == "CoV":
+        if numtimepoints > 1:
+            regionsummary = 100.0 * np.nan_to_num(
+                np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
+            )
+        else:
+            regionsummary = 100.0 * np.nan_to_num(np.std(thevoxels) / np.mean(thevoxels))
     else:
-        print(f"illegal summary method {method} in summarize")
-        sys.exit()
+        if method == "mean":
+            themethod = np.mean
+        elif method == "sum":
+            themethod = np.sum
+        elif method == "median":
+            themethod = np.median
+        elif method == "std":
+            themethod = np.std
+        elif method == "mad":
+            themethod = mad
+        else:
+            print(f"illegal summary method {method} in summarize")
+            sys.exit()
 
-    if numtimepoints > 1:
-        regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
-    else:
-        regionsummary = np.nan_to_num(themethod(thevoxels))
+        if numtimepoints > 1:
+            regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
+        else:
+            regionsummary = np.nan_to_num(themethod(thevoxels))
     return regionsummary
 
 
@@ -88,8 +102,10 @@ def _get_parser():
         dest="summarymethod",
         action="store",
         type=str,
-        choices=["mean", "median", "sum"],
-        help=("Method to summarize a region.  Choices are 'mean' (default), 'median', and 'sum'."),
+        choices=["mean", "median", "sum", "std", "mad", "CoV"],
+        help=(
+            "Method to summarize the voxels in a region.  Choices are 'mean' (default), 'median', 'sum', 'std', 'mad', and 'CoV'."
+        ),
         default="mean",
     )
     parser.add_argument(
@@ -327,6 +343,7 @@ def atlasaverage(args):
         outputvoxels = inputvoxels * 0.0
         theregnums = []
         thevals = []
+        thepercentiles = []
         if args.datalabel is not None:
             theregnums.append("Region")
             thevals.append(args.datalabel)
@@ -354,8 +371,18 @@ def atlasaverage(args):
                     )
             if theregionvoxels.shape[0] > 0:
                 regionval = summarize(theregionvoxels, method=args.summarymethod)
+                regionpercentiles = [
+                    str(num)
+                    for num in tide_stats.getfracvals(
+                        theregionvoxels,
+                        [0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.100],
+                        nozero=True,
+                        debug=False,
+                    )
+                ]
                 outputvoxels[np.where(templatevoxels == theregion)] = regionval
                 thevals.append(str(regionval))
+                thepercentiles.append(regionpercentiles)
             else:
                 if args.debug:
                     print(f"\tregion {theregion} is empty")
@@ -381,4 +408,12 @@ def atlasaverage(args):
             tide_io.writevec(
                 [",".join(thevals)],
                 f"{args.outputroot}_regionsummaries.csv",
+            )
+
+        outlines = []
+        for idx, region in enumerate(theregnums):
+            outlines.append(region + "\t" + "\t".join(thepercentiles[idx]))
+            tide_io.writevec(
+                outlines,
+                f"{args.outputroot}_regionpercentiles.tsv",
             )
