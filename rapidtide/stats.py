@@ -320,15 +320,15 @@ def neglog10pfromr(
 ):
     global neglogpfromr_interpolator, rforneglogp
     if neglogpfromr_interpolator is None or initialize:
-        neglogparray = np.linspace(neglogpmin, neglogpmax, lutlen, endpoint=True)
-        if debug:
-            print(f"{neglogparray=}")
-        percentile_list = (1.0 - pow(10.0, -neglogparray)).tolist()
-        if debug:
-            print(f"{percentile_list=}")
+        neglogparray = np.linspace(neglogpmax, neglogpmin, lutlen, endpoint=True)
+        percentile_list = (pow(10.0, -neglogparray)).tolist()
         rforneglogp = np.asarray(getfracvalsfromfit(histfit, percentile_list), dtype=float)
         if debug:
-            print(f"{rforneglogp=}")
+            print("START NEGLOGPFROMR DEBUG")
+            print("neglogp\trfornlp\tpct")
+            for i in range(lutlen):
+                print(f"{neglogparray[i]}\t{rforneglogp[i]}\t{percentile_list[i]}")
+            print("END NEGLOGPFROMR DEBUG")
         neglogpfromr_interpolator = sp.interpolate.UnivariateSpline(
             rforneglogp, neglogparray, k=3, s=0
         )

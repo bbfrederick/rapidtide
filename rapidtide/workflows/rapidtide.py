@@ -772,7 +772,7 @@ def rapidtide_main(argparsingfunc):
 
     LGR.verbose(f"image threshval = {threshval}")
     validvoxels = np.where(corrmask > 0)[0]
-    if optiondict["focaldebug"]:
+    if optiondict["debug"]:
         print(f"{validvoxels.shape=}")
         np.savetxt(f"{outputname}_validvoxels.txt", validvoxels)
     numvalidspatiallocs = np.shape(validvoxels)[0]
@@ -3579,7 +3579,7 @@ def rapidtide_main(argparsingfunc):
                     fileiscifti=fileiscifti,
                     textio=optiondict["textio"],
                     rt_floattype="float64",
-                    debug=optiondict["focaldebug"],
+                    debug=optiondict["debug"],
                 )
             )
             optiondict["delayoffsetMAD"] = delayoffsetMAD
@@ -3598,7 +3598,7 @@ def rapidtide_main(argparsingfunc):
 
             # now calculate the delay offsets
             delayoffset = filteredglmderivratios * 0.0
-            if optiondict["focaldebug"]:
+            if optiondict["debug"]:
                 print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
             for i in range(filteredglmderivratios.shape[0]):
                 delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
@@ -4110,7 +4110,7 @@ def rapidtide_main(argparsingfunc):
             # generate a neglogp map
             neglog10pmap = lagstrengths * 0.0
             for voxel in range(neglog10pmap.shape[0]):
-                neglog10pmap[voxel] = tide_stats.neglog10pfromr(lagstrengths[voxel], sigfit)
+                neglog10pmap[voxel] = tide_stats.neglog10pfromr(lagstrengths[voxel], sigfit, debug=optiondict["focaldebug"])
             masklist += [
                 (
                     neglog10pmap.copy(),
