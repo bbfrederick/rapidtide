@@ -42,7 +42,6 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         "2",
         "--despecklepasses",
         "3",
-        "--refinedelay",
         "--delaypatchthresh",
         "4.0",
     ]
@@ -64,6 +63,7 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         "--despecklepasses",
         "3",
         "--noglm",
+        "--norefinedelay",
         "--initialdelay",
         "0.0",
     ]

@@ -56,6 +56,7 @@ def test_fullrunrapidtide_v2(debug=False, displayplots=False):
         "-1",
         "--saveintermediatemaps",
         "--bipolar",
+        "--norefinedelay",
         "--outputlevel",
         "max",
         "--calccoherence",
