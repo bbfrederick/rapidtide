@@ -5,6 +5,7 @@ atlasaverage \
     ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
     ../dst/atlastest_nomask \
     --ignorezeros \
+    --summarymethod median \
     --headerline
 
 atlasaverage \
@@ -13,5 +14,6 @@ atlasaverage \
     ../dst/atlastest_withmask \
     --ignorezeros \
     --includemask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
-    --extramaskname /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
+    --extramask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
+    --summarymethod median \
     --headerline

@@ -23,6 +23,7 @@ import numpy as np
 from statsmodels.robust import mad
 
 import rapidtide.io as tide_io
+import rapidtide.stats as tide_stats
 import rapidtide.maskutil as tide_mask
 import rapidtide.workflows.parser_funcs as pf
 
@@ -342,6 +343,7 @@ def atlasaverage(args):
         outputvoxels = inputvoxels * 0.0
         theregnums = []
         thevals = []
+        thepercentiles = []
         if args.datalabel is not None:
             theregnums.append("Region")
             thevals.append(args.datalabel)
@@ -369,8 +371,18 @@ def atlasaverage(args):
                     )
             if theregionvoxels.shape[0] > 0:
                 regionval = summarize(theregionvoxels, method=args.summarymethod)
+                regionpercentiles = [
+                    str(num)
+                    for num in tide_stats.getfracvals(
+                        theregionvoxels,
+                        [0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.100],
+                        nozero=True,
+                        debug=False,
+                    )
+                ]
                 outputvoxels[np.where(templatevoxels == theregion)] = regionval
                 thevals.append(str(regionval))
+                thepercentiles.append(regionpercentiles)
             else:
                 if args.debug:
                     print(f"\tregion {theregion} is empty")
@@ -396,4 +408,12 @@ def atlasaverage(args):
             tide_io.writevec(
                 [",".join(thevals)],
                 f"{args.outputroot}_regionsummaries.csv",
+            )
+
+        outlines = []
+        for idx, region in enumerate(theregnums):
+            outlines.append(region + "\t" + "\t".join(thepercentiles[idx]))
+            tide_io.writevec(
+                outlines,
+                f"{args.outputroot}_regionpercentiles.tsv",
             )
