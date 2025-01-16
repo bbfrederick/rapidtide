@@ -1,4 +1,4 @@
-#Release history
+# Release history
 
 ## Version 3.0alpha3 (1/16/25)
 * (rapidtide) Refine delay is now on by default.  Use --norefinedelay to disable it.  --refinedelay still exists for compatibility, but does nothing.
