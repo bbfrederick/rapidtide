@@ -772,7 +772,7 @@ def rapidtide_main(argparsingfunc):
 
     LGR.verbose(f"image threshval = {threshval}")
     validvoxels = np.where(corrmask > 0)[0]
-    if optiondict["focaldebug"]:
+    if optiondict["debug"]:
         print(f"{validvoxels.shape=}")
         np.savetxt(f"{outputname}_validvoxels.txt", validvoxels)
     numvalidspatiallocs = np.shape(validvoxels)[0]
@@ -2216,18 +2216,16 @@ def rapidtide_main(argparsingfunc):
                 similaritymetric=optiondict["similaritymetric"],
                 twotail=optiondict["bipolar"],
                 nozero=optiondict["nohistzero"],
-                dosighistfit=optiondict["dosighistfit"],
             )
             if pcts is not None:
                 for i in range(len(thepvalnames)):
                     optiondict[
                         "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_thresh.txt"
                     ] = pcts[i]
-                    if optiondict["dosighistfit"]:
-                        optiondict[
-                            "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_fitthresh"
-                        ] = pcts_fit[i]
-                        optiondict["sigfit"] = sigfit
+                    optiondict[
+                        "p_lt_" + thepvalnames[i] + "_pass" + str(thepass) + "_fitthresh"
+                    ] = pcts_fit[i]
+                    optiondict["sigfit"] = sigfit
                 if optiondict["ampthreshfromsig"]:
                     if pcts is not None:
                         LGR.info(
@@ -2239,25 +2237,24 @@ def rapidtide_main(argparsingfunc):
                             thepercentiles,
                             "Crosscorrelation significance thresholds from data:",
                         )
-                        if optiondict["dosighistfit"]:
-                            tide_stats.printthresholds(
-                                pcts_fit,
-                                thepercentiles,
-                                "Crosscorrelation significance thresholds from fit:",
-                            )
-                            namesuffix = "_desc-nullsimfunc_hist"
-                            tide_stats.makeandsavehistogram(
-                                simdistdata,
-                                optiondict["sighistlen"],
-                                0,
-                                outputname + namesuffix,
-                                displaytitle="Null correlation histogram",
-                                refine=False,
-                                dictvarname="nullsimfunchist_pass" + str(thepass),
-                                therange=(0.0, 1.0),
-                                append=(thepass > 1),
-                                thedict=optiondict,
-                            )
+                        tide_stats.printthresholds(
+                            pcts_fit,
+                            thepercentiles,
+                            "Crosscorrelation significance thresholds from fit:",
+                        )
+                        namesuffix = "_desc-nullsimfunc_hist"
+                        tide_stats.makeandsavehistogram(
+                            simdistdata,
+                            optiondict["sighistlen"],
+                            0,
+                            outputname + namesuffix,
+                            displaytitle="Null correlation histogram",
+                            refine=False,
+                            dictvarname="nullsimfunchist_pass" + str(thepass),
+                            therange=(0.0, 1.0),
+                            append=(thepass > 1),
+                            thedict=optiondict,
+                        )
                     else:
                         LGR.info("leaving ampthresh unchanged")
                 else:
@@ -3582,7 +3579,7 @@ def rapidtide_main(argparsingfunc):
                     fileiscifti=fileiscifti,
                     textio=optiondict["textio"],
                     rt_floattype="float64",
-                    debug=optiondict["focaldebug"],
+                    debug=optiondict["debug"],
                 )
             )
             optiondict["delayoffsetMAD"] = delayoffsetMAD
@@ -3601,7 +3598,7 @@ def rapidtide_main(argparsingfunc):
 
             # now calculate the delay offsets
             delayoffset = filteredglmderivratios * 0.0
-            if optiondict["focaldebug"]:
+            if optiondict["debug"]:
                 print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
             for i in range(filteredglmderivratios.shape[0]):
                 delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
@@ -4107,11 +4104,30 @@ def rapidtide_main(argparsingfunc):
 
     if optiondict["numestreps"] > 0:
         masklist = []
+
+        # we can only calculate this map if we have enough data for a good fit
+        if optiondict["numestreps"] >= 1000:
+            neglogpmax = np.log10(optiondict["numestreps"])
+            # generate a neglogp map
+            neglog10pmap = lagstrengths * 0.0
+            for voxel in range(neglog10pmap.shape[0]):
+                neglog10pmap[voxel] = tide_stats.neglog10pfromr(
+                    lagstrengths[voxel],
+                    sigfit,
+                    neglogpmax=neglogpmax,
+                    debug=optiondict["focaldebug"],
+                )
+            masklist += [
+                (
+                    neglog10pmap.copy(),
+                    "neglog10p",
+                    "map",
+                    None,
+                    f"Negative log(10) of the p value of the r at each voxel",
+                )
+            ]
         for i in range(0, len(thepercentiles)):
-            if optiondict["dosighistfit"]:
-                pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
-            else:
-                pmask = np.where(np.abs(lagstrengths) > pcts[i], fitmask, 0 * fitmask)
+            pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
             masklist += [
                 (
                     pmask.copy(),
