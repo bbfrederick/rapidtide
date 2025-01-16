@@ -1677,6 +1677,12 @@ def tidepool(args):
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
+        "neglog10p": {
+            "colormap": gen_thermal_state(),
+            "label": "Correlation fit significance",
+            "display": True,
+            "funcmask": "None",
+        },
     }
 
     # set up the timecourse plot window
