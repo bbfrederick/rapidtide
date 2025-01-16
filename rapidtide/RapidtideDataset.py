@@ -1052,7 +1052,6 @@ class RapidtideDataset:
             self.funcmaps = [
                 ["lagtimes", "desc-maxtime_map"],
                 ["lagtimesrefined", "desc-maxtimerefined_map"],
-                ["delayoffset", "desc-delayoffset_map"],
                 ["timepercentile", "desc-timepercentile_map"],
                 ["lagstrengths", "desc-maxcorr_map"],
                 ["lagsigma", "desc-maxwidth_map"],
@@ -1061,6 +1060,7 @@ class RapidtideDataset:
                 ["fitNorm", "desc-lfofilterNorm_map"],
                 ["fitcoff", "desc-lfofilterCoeff_map"],
                 ["neglog10p", "desc-neglog10p_map"],
+                ["delayoffset", "desc-delayoffset_map"],
             ]
             if self.usecorrout:
                 self.funcmaps += [["corrout", "desc-corrout_info"]]
