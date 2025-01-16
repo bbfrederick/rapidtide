@@ -1060,6 +1060,7 @@ class RapidtideDataset:
                 ["R2", "desc-lfofilterR2_map"],
                 ["fitNorm", "desc-lfofilterNorm_map"],
                 ["fitcoff", "desc-lfofilterCoeff_map"],
+                ["neglog10p", "desc-neglog10p_map"],
             ]
             if self.usecorrout:
                 self.funcmaps += [["corrout", "desc-corrout_info"]]

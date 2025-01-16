@@ -1218,6 +1218,13 @@ def _get_parser():
         default=True,
     )
     glm.add_argument(
+        "--refinedelay",
+        dest="dummy",
+        action="store_true",
+        help=("Calculate a refined delay map using GLM information. ***DEPRECATED*** - this is now on by default."),
+        default=True,
+    )
+    glm.add_argument(
         "--nofilterwithrefineddelay",
         dest="filterwithrefineddelay",
         action="store_false",
