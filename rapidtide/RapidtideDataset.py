@@ -29,6 +29,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 from rapidtide.Colortables import *
+from rapidtide.stats import neglogpfromr_interpolator
 
 atlases = {
     "ASPECTS": {"atlasname": "ASPECTS"},
@@ -227,7 +228,7 @@ class Overlay:
             geommask=self.geommask,
             label=newlabel,
             report=self.report,
-            init_LUT=self.init_LUT,
+            init_LUT=True,
             lut_state=self.lut_state,
         )
 
@@ -619,6 +620,18 @@ class RapidtideDataset:
                         self.fileroot + maskfilename + ".nii.gz",
                         " does not exist!",
                     )
+        if self.verbose > 1:
+            print(self.loadedfuncmasks)
+
+    def _genpmasks(self, pvals=[0.05,0.01,0.005,0.001]):
+        for thepval in pvals:
+            maskname = f"p_lt_{thepval:.3f}_mask".replace("0.0","0p0")
+            nlpthresh = -np.log10(thepval)
+            if self.verbose > 1:
+                print(f"generating {maskname} from neglog10p")
+            self.overlays[maskname] = self.overlays[self.loadedfuncmasks[-1]].duplicate(maskname, None)
+            self.overlays[maskname].setData(np.where(self.overlays["neglog10p"].data > nlpthresh, 1.0, 0.0), isaMask=True)
+            self.loadedfuncmasks.append(maskname)
         if self.verbose > 1:
             print(self.loadedfuncmasks)
 
@@ -1150,11 +1163,15 @@ class RapidtideDataset:
                 ["refinemask", "desc-refine_mask"],
                 ["meanmask", "desc-globalmean_mask"],
                 ["preselectmask", "desc-globalmeanpreselect_mask"],
-                ["p_lt_0p050_mask", "desc-plt0p050_mask"],
-                ["p_lt_0p010_mask", "desc-plt0p010_mask"],
-                ["p_lt_0p005_mask", "desc-plt0p005_mask"],
-                ["p_lt_0p001_mask", "desc-plt0p001_mask"],
             ]
+            if not ("neglog10p" in self.loadedfuncmaps):
+                # load p maps manually
+                self.funcmasks += [
+                    ["p_lt_0p050_mask", "desc-plt0p050_mask"],
+                    ["p_lt_0p010_mask", "desc-plt0p010_mask"],
+                    ["p_lt_0p005_mask", "desc-plt0p005_mask"],
+                    ["p_lt_0p001_mask", "desc-plt0p001_mask"],
+                ]
         else:
             if self.newstylenames:
                 self.funcmasks = [
@@ -1177,6 +1194,9 @@ class RapidtideDataset:
                     ["p_lt_0p001_mask", "p_lt_0p001_mask"],
                 ]
         self._loadfuncmasks()
+        if "neglog10p" in self.loadedfuncmaps:
+            # generate p maps on the fly
+            self._genpmasks()
 
         # then the geometric masks
         if self._loadgeommask():
