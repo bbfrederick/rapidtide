@@ -4126,17 +4126,6 @@ def rapidtide_main(argparsingfunc):
                     f"Negative log(10) of the p value of the r at each voxel",
                 )
             ]
-        """for i in range(0, len(thepercentiles)):
-            pmask = np.where(np.abs(lagstrengths) > pcts_fit[i], fitmask, 0 * fitmask)
-            masklist += [
-                (
-                    pmask.copy(),
-                    f"plt{thepvalnames[i]}",
-                    "mask",
-                    None,
-                    f"Voxels where the maxcorr value exceeds the p < {1.0 - thepercentiles[i]:.3f} significance level",
-                )
-            ]"""
 
         tide_io.savemaplist(
             outputname,
