@@ -4107,10 +4107,16 @@ def rapidtide_main(argparsingfunc):
 
         # we can only calculate this map if we have enough data for a good fit
         if optiondict["numestreps"] >= 1000:
+            neglogpmax = np.log10(optiondict["numestreps"])
             # generate a neglogp map
             neglog10pmap = lagstrengths * 0.0
             for voxel in range(neglog10pmap.shape[0]):
-                neglog10pmap[voxel] = tide_stats.neglog10pfromr(lagstrengths[voxel], sigfit, debug=optiondict["focaldebug"])
+                neglog10pmap[voxel] = tide_stats.neglog10pfromr(
+                    lagstrengths[voxel],
+                    sigfit,
+                    neglogpmax=neglogpmax,
+                    debug=optiondict["focaldebug"],
+                )
             masklist += [
                 (
                     neglog10pmap.copy(),

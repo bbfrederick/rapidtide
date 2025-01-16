@@ -2,6 +2,7 @@
 
 ## Version 3.0alpha3 (1/15/25)
 * (rapidtide) Refine delay is now on by default.  Use --norefinedelay to disable it.
+* (rapidtide) Now outputs a map of fit significance (-log10(p)).  In response to https://github.com/bbfrederick/rapidtide/issues/174.
 * (showxcorrx) Fixed some issues with axis labelling.
 
 ## Version 3.0alpha2 (12/30/24)
