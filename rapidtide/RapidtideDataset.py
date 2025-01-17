@@ -623,14 +623,18 @@ class RapidtideDataset:
         if self.verbose > 1:
             print(self.loadedfuncmasks)
 
-    def _genpmasks(self, pvals=[0.05,0.01,0.005,0.001]):
+    def _genpmasks(self, pvals=[0.05, 0.01, 0.005, 0.001]):
         for thepval in pvals:
-            maskname = f"p_lt_{thepval:.3f}_mask".replace("0.0","0p0")
+            maskname = f"p_lt_{thepval:.3f}_mask".replace("0.0", "0p0")
             nlpthresh = -np.log10(thepval)
             if self.verbose > 1:
                 print(f"generating {maskname} from neglog10p")
-            self.overlays[maskname] = self.overlays[self.loadedfuncmasks[-1]].duplicate(maskname, None)
-            self.overlays[maskname].setData(np.where(self.overlays["neglog10p"].data > nlpthresh, 1.0, 0.0), isaMask=True)
+            self.overlays[maskname] = self.overlays[self.loadedfuncmaps[-1]].duplicate(
+                maskname, None
+            )
+            self.overlays[maskname].setData(
+                np.where(self.overlays["neglog10p"].data > nlpthresh, 1.0, 0.0), isaMask=True
+            )
             self.loadedfuncmasks.append(maskname)
         if self.verbose > 1:
             print(self.loadedfuncmasks)
