@@ -229,7 +229,6 @@ class Overlay:
             label=newlabel,
             report=self.report,
             init_LUT=True,
-            lut_state=gen_gray_state(),
         )
 
     def updateStats(self):
