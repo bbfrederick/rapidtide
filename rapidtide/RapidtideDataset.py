@@ -219,7 +219,7 @@ class Overlay:
         if self.verbose > 0:
             self.summarize()
 
-    def duplicate(self, newname, newlabel):
+    def duplicate(self, newname, newlabel, init_LUT=True):
         return Overlay(
             newname,
             self.filename,
@@ -228,7 +228,7 @@ class Overlay:
             geommask=self.geommask,
             label=newlabel,
             report=self.report,
-            init_LUT=True,
+            init_LUT=init_LUT,
         )
 
     def updateStats(self):
@@ -629,7 +629,7 @@ class RapidtideDataset:
             if self.verbose > 1:
                 print(f"generating {maskname} from neglog10p")
             self.overlays[maskname] = self.overlays[self.loadedfuncmasks[-1]].duplicate(
-                maskname, self.init_LUT, None
+                maskname, None, self.init_LUT
             )
             self.overlays[maskname].setData(
                 np.where(self.overlays["neglog10p"].data > nlpthresh, 1.0, 0.0), isaMask=True
