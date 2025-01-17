@@ -629,7 +629,7 @@ class RapidtideDataset:
             if self.verbose > 1:
                 print(f"generating {maskname} from neglog10p")
             self.overlays[maskname] = self.overlays[self.loadedfuncmasks[-1]].duplicate(
-                maskname, None
+                maskname, self.init_LUT, None
             )
             self.overlays[maskname].setData(
                 np.where(self.overlays["neglog10p"].data > nlpthresh, 1.0, 0.0), isaMask=True
