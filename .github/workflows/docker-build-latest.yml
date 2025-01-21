@@ -106,4 +106,5 @@ jobs:
             GITVERSION=${{ env.GITVERSION }}
             GITSHA=${{ env.GITSHA }}
             GITDATE=${{ env.GITDATE }}
+            GITDIRECTVERSION=${{ env.GITDIRECTVERSION }}
             BUILD_TIME=${{ env.BUILD_TIME }}
