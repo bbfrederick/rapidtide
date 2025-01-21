@@ -52,9 +52,11 @@ jobs:
           GITVERSION=${GITPREVVERSION}+${GITCOMMITS}.g${GITSHA8}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
+          GITPRERELEASE=${{ steps.gitversion.outputs.preReleaseTag }}
           echo "GITVERSION=${GITVERSION}" >> $GITHUB_ENV
           echo "GITSHA=${GITSHA}" >> $GITHUB_ENV
           echo "GITDATE=${GITDATE}" >> $GITHUB_ENV
+          echo "GITPRELEASE=${GITPRERELEASE}" >> $GITHUB_ENV
           BUILD_TIME=$(date -Iseconds)
           echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
 
