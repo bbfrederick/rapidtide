@@ -496,6 +496,22 @@ def version():
         except KeyError:
             theversion = "UNKNOWN"
         try:
+            thedirectversion = os.environ["GITDIRECTVERSION"]
+            directversionparts = thedirectversion.split("-")
+            if len(directversionparts) == 3:
+                thedirectversion = directversionparts[0] + "." + directversionparts[1] + "+" + directversionparts[2]
+                isdirty = True
+            elif len(directversionparts) == 2:
+                thedirectversion = directversionparts[0] + "." + directversionparts[1]
+                isdirty = True
+            elif len(directversionparts) == 1:
+                thedirectversion = directversionparts[0]
+                isdirty = False
+            else:
+                pass
+        except KeyError:
+            thedirectversion = "UNKNOWN"
+        try:
             thesha = os.environ["GITSHA"]
         except KeyError:
             thesha = "UNKNOWN"
@@ -503,7 +519,8 @@ def version():
             thedate = os.environ["GITDATE"]
         except KeyError:
             thedate = "UNKNOWN"
-        isdirty = False
+        if thedirectversion != "UNKNOWN":
+            theversion = thedirectversion
     else:
         try:
             versioninfo = tide_versioneer.get_versions()
