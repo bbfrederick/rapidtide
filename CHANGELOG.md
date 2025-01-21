@@ -1,7 +1,8 @@
 # Release history
 
-## Version 3.0alpha4 (1/16/25)
+## Version 3.0alpha4 (1/21/25)
 * (rapidtide, tidepool) Both now only use neglog10p map to dynamically make significance masks.
+* (rapidtide, Docker) rapidtide should now properly report it's version number in a container even if it is in prerelease.
 
 ## Version 3.0alpha3 (1/16/25)
 * (rapidtide) Refine delay is now on by default.  Use --norefinedelay to disable it.  --refinedelay still exists for compatibility, but does nothing.
