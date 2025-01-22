@@ -27,6 +27,7 @@ import sys
 import time
 from datetime import datetime
 from multiprocessing import RawArray, shared_memory
+from os.path import split
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -499,7 +500,13 @@ def version():
             thedirectversion = os.environ["GITDIRECTVERSION"]
             directversionparts = thedirectversion.split("-")
             if len(directversionparts) == 3:
-                thedirectversion = directversionparts[0] + "." + directversionparts[1] + "+" + directversionparts[2]
+                thedirectversion = (
+                    directversionparts[0]
+                    + "."
+                    + directversionparts[1]
+                    + "+"
+                    + directversionparts[2]
+                )
                 isdirty = True
             elif len(directversionparts) == 2:
                 thedirectversion = directversionparts[0] + "." + directversionparts[1]
@@ -526,19 +533,25 @@ def version():
             versioninfo = tide_versioneer.get_versions()
         except:
             return "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"
-
+        isdirty = versioninfo["dirty"]
+        if isdirty is None:
+            isdirty = "UNKNOWN"
         theversion = versioninfo["version"]
         if theversion is None:
             theversion = "UNKNOWN"
+        else:
+            splitversion = theversion.split("+")
+            if len(splitversion) > 1:
+                resplit = splitversion[1].split(".")
+                if len(resplit) == 3:
+                    if resplit[0] == "0":
+                        theversion = splitversion[0]
         thesha = versioninfo["full-revisionid"]
         if thesha is None:
             thesha = "UNKNOWN"
         thedate = versioninfo["date"]
         if thedate is None:
             thedate = "UNKNOWN"
-        isdirty = versioninfo["dirty"]
-        if isdirty is None:
-            isdirty = "UNKNOWN"
 
     return theversion, thesha, thedate, isdirty
 
