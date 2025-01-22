@@ -4,24 +4,51 @@ happy
 Description:
 ^^^^^^^^^^^^
 
-happy is a new(er) addition to the rapidtide suite (it was added in 2019, so it's hardly new at this point).  It's complementary to rapidtide - it's focussed on fast, cardiac signals in fMRI, rather than the slow, LFO signals we are usually looking at.  It's sort of a Frankenprogram - it has three distinct jobs, which are related, but are very distinct.
+happy is a new(er) addition to the rapidtide suite (it was added in 2019, so it's hardly new at this point).
+It's complementary to rapidtide - it's focussed on fast, cardiac signals in fMRI, rather than the slow,
+LFO signals we are usually looking at.  It's sort of a Frankenprogram - it has three distinct jobs,
+which are related, but are very distinct.
 
-The first thing happy does is try to extract a cardiac waveform from the fMRI data.  This is something I've been thinking about for a long time.  It occured to me that while the TR for most scans is long compared to the required sample time for recording a cardiac waveform, the scanner is actually recording data at a much faster rate than that - each slice, or in the case of multibaand data, stack of slices, is acquired somewhere during each TR, so the _effective_ samplerate is TR/(number of acquisitions within a TR).
+The first thing happy does is try to extract a cardiac waveform from the fMRI data.  This is
+something I've been thinking about for a long time.  It occurred to me that while the TR for
+most scans is long compared to the required sample time for recording a cardiac waveform, the
+scanner is actually recording data at a much faster rate than that - each slice, or in the case
+of multibaand data, stack of slices, is acquired somewhere during each TR, so the _effective_
+samplerate is TR/(number of acquisitions within a TR).
 
-The second task is to take this raw estimate of the cardiac waveform, and clean it up using a deep learning filter.  The original signal is useful, but pretty gross, but I figured you should be able to exploit the pseudoperiodic nature of the signal to greatly improve it.  This was also a testbed to work on using neural nets to process time domain signals.  It seemed like a worthwhile project, so it got grafted in.
+The second task is to take this raw estimate of the cardiac waveform, and clean it up using a deep
+learning filter.  The original signal is useful, but pretty gross, but I figured you should be able to
+exploit the pseudoperiodic nature of the signal to greatly improve it.  This was also a testbed to work
+on using neural nets to process time domain signals.  It seemed like a worthwhile project, so it got grafted in.
 
-The final task (which was actually the initial task, and the reason I wrote happy to begin with) is to implement Henning Voss' totally cool hypersampling with analytic phase projection (guess where the name "happy" comes from).  This is fairly straightforward, as Voss describes his method very clearly.  But I have lots of data with no simultaneously recorded cardiac signals, and I was too lazy to go find datasets with pleth data to play with, so that's why I did the cardiac waveform extraction part. In retrospect, that's part is pretty cool in it's own right, if I do say so myself.
+The final task (which was actually the initial task, and the reason I wrote happy to begin with) is
+to implement Henning Voss' totally cool hypersampling with analytic phase projection (guess where the
+name "happy" comes from).  This is fairly straightforward, as Voss describes his method very clearly.
+But I have lots of data with no simultaneously recorded cardiac signals, and I was too lazy to go
+find datasets with pleth data to play with, so that's why I did the cardiac waveform extraction part.
+In retrospect, that's part is pretty cool in it's own right, if I do say so myself.
 
 
 Inputs:
 ^^^^^^^
-Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nifti1 or Nifti2.  If you have a simultaneously recorded cardiac waveform, it will happily (heh heh) use it, otherwise it will try to construct (and refine) one. NOTE: the 4D input dataset needs to be completely unpreprocessed - gradient distortion correction and motion correction can destroy the relationship between slice number and actual acquisition time, and slice time correction does not behave as expected for aliased signals (which the cardiac component in fMRI most certainly is), and in any case we need the slice time offsets to construct our waveform.
+Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nifti1 or Nifti2.  If you have
+a simultaneously recorded cardiac waveform, it will happily (heh heh) use it, otherwise it will try to
+construct (and refine) one. NOTE: the 4D input dataset needs to be completely unpreprocessed - gradient
+distortion correction and motion correction can destroy the relationship between slice number and actual
+acquisition time, and slice time correction does not behave as expected for aliased signals (which the
+cardiac component in fMRI most certainly is), and in any case we need the slice time offsets to
+construct our waveform.
 
 
 Outputs:
 ^^^^^^^^
 
-Outputs are space or space by time Nifti or text files, depending on what the input data file was, and some text files containing textual information, histograms, or numbers.  File formats and naming follow BIDS conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there can be no time dimension, a time dimension that matches the input file, or something else, such as a time lag dimension for a correlation map.
+Outputs are space or space by time Nifti or text files, depending on what the input data file was, and
+some text files containing textual information, histograms, or numbers.  File formats and naming follow
+BIDS conventions for derivative data for fMRI input data.  Output spatial dimensions and file type match
+the input dimensions and file type (Nifti1 in, Nifti1 out).  Depending on the file type of map, there
+can be no time dimension, a time dimension that matches the input file, or something else, such as a
+time lag dimension for a correlation map.
 
 
 BIDS Outputs:
@@ -133,7 +160,7 @@ Where:
 
     STARTTIME is the time delay into the file, in seconds, where the part of the waveform you want to use begins.  This is useful if you have a long pleth recording and don't want to have to chop it up into multiple files.
 
-NB:  If you have a high quality plethysmogram, then a lot of the constraints on happy go away.  The requirement of a combination of TR, multiband factor and slice number that allows you to succesfully extract a cardiac waveform aren't really relevant to analytic phase projection.  That should work regardless of any of those factors, so if you want to make a spiffy movie of pulsatility, and you have a pleth recording, you're good to go.
+NB:  If you have a high quality plethysmogram, then a lot of the constraints on happy go away.  The requirement of a combination of TR, multiband factor and slice number that allows you to successfully extract a cardiac waveform aren't really relevant to analytic phase projection.  That should work regardless of any of those factors, so if you want to make a spiffy movie of pulsatility, and you have a pleth recording, you're good to go.
 
 
 Performance tuning
