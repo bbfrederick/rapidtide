@@ -1,5 +1,9 @@
 # Release history
 
+## Version 3.0alpha5 (1/22/25)
+* (happy) Fixed a typo in argument description.
+* (docs) Significantly beefed up happy section.
+
 ## Version 3.0alpha4 (1/21/25)
 * (rapidtide, tidepool) Both now only use neglog10p map to dynamically make significance masks.
 * (rapidtide, Docker) rapidtide should now properly report it's version number in a container even if it is in prerelease.
