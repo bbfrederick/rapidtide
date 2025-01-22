@@ -99,7 +99,7 @@ def _get_parser():
         metavar="MODELNAME",
         help=(
             "Use model MODELNAME for dl filter (default is model_revised - "
-            "from the revised NeuroImage paper. "
+            "from the revised NeuroImage paper.) "
         ),
         default="model_revised",
     )
