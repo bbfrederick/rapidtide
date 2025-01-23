@@ -21,7 +21,7 @@ atlasaverage \
 atlasaverage \
     ../../reference/HCP1200v2_maxtime_2mm.nii.gz \
     ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
-    ../dst/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm_v2_nomask \
+    ../dst/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm \
     --ignorezeros \
     --summarymethod median \
     --headerline
@@ -29,7 +29,7 @@ atlasaverage \
 atlasaverage \
     ../../reference/HCP1200v2_maxtime_2mm.nii.gz \
     ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
-    ../dst/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm_v2_withmask \
+    ../dst/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm_withmask \
     --ignorezeros \
     --includemask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
     --extramask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \

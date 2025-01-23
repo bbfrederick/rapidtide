@@ -355,6 +355,7 @@ def atlasaverage(args):
         theregnums = []
         thevals = []
         thepercentiles = []
+        thesizes = []
         thefracs = np.linspace(0.0, 1.0, args.numpercentiles + 2, endpoint=True).tolist()
         numsubregions = len(thefracs) - 1
         segmentedatlasvoxels = inputvoxels * 0.0
@@ -385,8 +386,9 @@ def atlasaverage(args):
                     )
             if theregionvoxels.shape[0] > 0:
                 regionval = summarize(theregionvoxels, method=args.summarymethod)
+                regionsizes = theregionvoxels.shape[0]
                 regionpercentiles = [
-                    str(num)
+                    f"{num:.4f}"
                     for num in tide_stats.getfracvals(
                         theregionvoxels,
                         thefracs,
@@ -396,6 +398,7 @@ def atlasaverage(args):
                 ]
                 outputvoxels[np.where(templatevoxels == theregion)] = regionval
                 thevals.append(str(regionval))
+                thesizes.append(str(regionsizes))
                 thepercentiles.append(regionpercentiles)
             else:
                 if args.debug:
@@ -441,8 +444,10 @@ def atlasaverage(args):
             )
 
         outlines = []
+        pctstrings = [f"{num:.0f}" for num in (np.array(thefracs) * 100.0).tolist()]
+        outlines.append("Region\tVoxels\t" + "pct-" + "\tpct-".join(pctstrings))
         for idx, region in enumerate(theregnums):
-            outlines.append(region + "\t" + "\t".join(thepercentiles[idx]))
+            outlines.append(region + "\t" + thesizes[idx] + "\t" + "\t".join(thepercentiles[idx]))
             tide_io.writevec(
                 outlines,
                 f"{args.outputroot}_regionpercentiles.tsv",
