@@ -1,0 +1,131 @@
+<atlas>
+
+  <!-- The header defines the atlas name, type,
+       and paths to the atlas image files. -->
+  <header>
+
+    <!-- Human-readable atlas name -->
+    <name>JHU Arterial Territory Atlas, No Ventricles, Level 1, segmented in to early and late blood arrival</name>
+
+    <!-- Abbreviated atlas name -->
+    <shortname>JHU-Arterial-LVL1-seg2</shortname>
+
+    <!-- Atlas type - "Probabilistic" or "Label" -->
+    <type>Label</type>
+
+    <!-- Paths (defined relative to the location
+         of this XML file) to the atlas images.
+         Multiple <images> elements may be present
+         - one for each resolution in which the
+         atlas is available. -->
+    <images>
+
+      <!-- If the atlas type is "Probabilistic", the
+           <imagefile> must be a path to a 4D image
+           which contains one volume per region.
+           Otherwise, if the atlas type is "Label",
+           the <imagefile> must be a path to 3D
+           label image. -->
+      <imagefile>/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm</imagefile>
+
+      <!-- If the atlas type is "Probabilistic", the
+           <summaryimagefile> must be a path to a 3D
+           label image which 'summarises' the
+           probabilistic image. If the atlas type is
+           "Label", the <summaryimagefile> is identical
+           to the <imagefile>. There must be a
+           <summaryimagefile> for every <imagefile>. -->
+      <summaryimagefile>/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm</summaryimagefile>
+    </images>
+
+    <!-- A 1mm version of the same atlas images. -->
+    <images>
+      <imagefile>/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_1mm</imagefile>
+      <summaryimagefile>/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_1mm</summaryimagefile>
+    </images>
+  </header>
+
+  <!-- The <data> element contains descriptions
+       of all regions in the atlas. -->
+  <data>
+
+    <!-- Every region in the atlas has a <label> element which defines:
+
+         - The "index". For probabilistic atlases, this is the index
+           of the corresponding volume in the 4D image file. For
+           label images, the index is the value of voxels which
+           are in the corresponding region. For 3D summary images of
+           probabilistic atlases, add 1 to the index to get the
+           label value.
+
+         - The "x", "y", and "z" coordinates of a pre-
+           calculated "centre-of-gravity" for this region.
+           These are specified as voxel coordinates,
+           relative to the *first* image in the <images>
+           list, above.
+
+         - The name of the region. -->
+
+    <label index="0" x="0" y="0" z="0">Unclassified</label>
+    <label index="1" x="51" y="62" z="59">Anterior cerebral artery left, early (ACALE)</label>
+    <label index="2" x="51" y="62" z="59">Anterior cerebral artery left, late (ACALL)</label>
+    <label index="3" x="39" y="60" z="59">Anterior cerebral artery right, early (ACARE)</label>
+    <label index="4" x="39" y="60" z="59">Anterior cerebral artery right, late (ACARL)</label>
+    <label index="5" x="49" y="67" z="46">Medial lenticulostriate left, early (MLSLE)</label>
+    <label index="6" x="49" y="67" z="46">Medial lenticulostriate left, late (MLSLL)</label>
+    <label index="7" x="40" y="68" z="45">Medial lenticulostriate right, early (MLSRE)</label>
+    <label index="8" x="40" y="68" z="45">Medial lenticulostriate right, late (MLSRL)</label>
+    <label index="9" x="56" y="63" z="40">Lateral lenticulostriate left, early (LLSLE)</label>
+    <label index="10" x="56" y="63" z="40">Lateral lenticulostriate left, late (LLSLL)</label>
+    <label index="11" x="34" y="63" z="40">Lateral lenticulostriate right, early (LLSRE)</label>
+    <label index="12" x="34" y="63" z="40">Lateral lenticulostriate right, late (LLSRL)</label>
+    <label index="13" x="61" y="77" z="44">Frontal pars of middle cerebral artery left, early (MCAFLE)</label>
+    <label index="14" x="61" y="77" z="44">Frontal pars of middle cerebral artery left, late (MCAFLL)</label>
+    <label index="15" x="28" y="77" z="44">Frontal pars of middle cerebral artery right, early (MCAFRE)</label>
+    <label index="16" x="28" y="77" z="44">Frontal pars of middle cerebral artery right, late (MCAFRL)</label>
+    <label index="17" x="67" y="44" z="57">Parietal pars of middle cerebral artery left, early (MCAPLE)</label>
+    <label index="18" x="67" y="44" z="57">Parietal pars of middle cerebral artery left, late (MCAPLL)</label>
+    <label index="19" x="22" y="44" z="57">Parietal pars of middle cerebral artery right, early (MCAPRE)</label>
+    <label index="20" x="22" y="44" z="57">Parietal pars of middle cerebral artery right, late (MCAPRL)</label>
+    <label index="21" x="68" y="54" z="30">Temporal pars of middle cerebral artery left, early (MCATLE)</label>
+    <label index="22" x="68" y="54" z="30">Temporal pars of middle cerebral artery left, late (MCATLL)</label>
+    <label index="23" x="21" y="54" z="30">Temporal pars of middle cerebral artery right, early (MCATRE)</label>
+    <label index="24" x="21" y="54" z="30">Temporal pars of middle cerebral artery right, late (MCATRL)</label>
+    <label index="25" x="65" y="26" z="44">Occipital pars of middle cerebral artery left, early (MCAOLE)</label>
+    <label index="26" x="65" y="26" z="44">Occipital pars of middle cerebral artery left, late (MCAOLL)</label>
+    <label index="27" x="24" y="26" z="44">Occipital pars of middle cerebral artery right, early (MCAORE)</label>
+    <label index="28" x="24" y="26" z="44">Occipital pars of middle cerebral artery right, late (MCAORL)</label>
+    <label index="29" x="63" y="64" z="36">Insular pars of middle cerebral artery left, early (MCAILE)</label>
+    <label index="30" x="63" y="64" z="36">Insular pars of middle cerebral artery left, late (MCAILL)</label>
+    <label index="31" x="27" y="65" z="36">Insular pars of middle cerebral artery right, early (MCAIRE)</label>
+    <label index="32" x="27" y="65" z="36">Insular pars of middle cerebral artery right, late (MCAIRL)</label>
+    <label index="33" x="64" y="43" z="27">Temporal pars of posterior cerebral artery left, early (PCATLE)</label>
+    <label index="34" x="64" y="43" z="27">Temporal pars of posterior cerebral artery left, late (PCATLL)</label>
+    <label index="35" x="25" y="43" z="28">Temporal pars of posterior cerebral artery right, early (PCATRE)</label>
+    <label index="36" x="25" y="43" z="28">Temporal pars of posterior cerebral artery right, late (PCATRL)</label>
+    <label index="37" x="53" y="25" z="42">Occipital pars of posterior cerebral artery left, early (PCAOLE)</label>
+    <label index="38" x="53" y="25" z="42">Occipital pars of posterior cerebral artery left, late (PCAOLL)</label>
+    <label index="39" x="35" y="26" z="42">Occipital pars of posterior cerebral artery right, early (PCAORE)</label>
+    <label index="40" x="35" y="26" z="42">Occipital pars of posterior cerebral artery right, late (PCAORL)</label>
+    <label index="41" x="51" y="53" z="37">Posterior choroidal and thalamoperfurators left, early (PCTPLE)</label>
+    <label index="42" x="51" y="53" z="37">Posterior choroidal and thalamoperfurators left, late (PCTPLL)</label>
+    <label index="43" x="39" y="53" z="36">Posterior choroidal and thalamoperfurators right, early (PCTPRE)</label>
+    <label index="44" x="39" y="53" z="36">Posterior choroidal and thalamoperfurators right, late (PCTPRL)</label>
+    <label index="45" x="59" y="51" z="30">Anterior choroidal and thalamoperfurators left, early (ACTPLE)</label>
+    <label index="46" x="59" y="51" z="30">Anterior choroidal and thalamoperfurators left, late (ACTPLL)</label>
+    <label index="47" x="31" y="51" z="30">Anterior choroidal and thalamoperfurators right, early (ACTPRE)</label>
+    <label index="48" x="31" y="51" z="30">Anterior choroidal and thalamoperfurators right, late (ACTPRL)</label>
+    <label index="49" x="49" y="47" z="17">Basilar left, early (BLE)</label>
+    <label index="50" x="49" y="47" z="17">Basilar left, late (BLL)</label>
+    <label index="51" x="41" y="47" z="17">Basilar right, early (BRE)</label>
+    <label index="52" x="41" y="47" z="17">Basilar right, late (BRL)</label>
+    <label index="53" x="54" y="35" z="25">Superior cerebellar left, early (SCLE)</label>
+    <label index="54" x="54" y="35" z="25">Superior cerebellar left, late (SCLL)</label>
+    <label index="55" x="35" y="36" z="25">Superior cerebellar right, early (SCRE)</label>
+    <label index="56" x="35" y="36" z="25">Superior cerebellar right, late (SCRL)</label>
+    <label index="57" x="58" y="31" z="15">Inferior cerebellar left, early (ICLE)</label>
+    <label index="58" x="58" y="31" z="15">Inferior cerebellar left, early (ICLL)</label>
+    <label index="59" x="33" y="32" z="15">Inferior cerebellar right, early (ICRE)</label>
+    <label index="60" x="33" y="32" z="15">Inferior cerebellar right, late (ICRL)</label>
+  </data>
+</atlas>
