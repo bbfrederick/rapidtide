@@ -404,7 +404,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="robustmean_radioButton">
+          <widget class="QRadioButton" name="CoV_radioButton">
            <property name="font">
             <font>
              <family>Arial Narrow</family>
@@ -412,7 +412,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Robust mean</string>
+            <string>CoV</string>
            </property>
            <attribute name="buttonGroup">
             <string notr="true">stats_buttonGroup</string>

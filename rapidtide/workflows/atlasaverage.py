@@ -28,7 +28,7 @@ import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
 
-def summarize(thevoxels, method="mean"):
+def summarizevoxels(thevoxels, method="mean"):
     theshape = thevoxels.shape
     if len(theshape) > 1:
         numtimepoints = theshape[1]
@@ -51,10 +51,10 @@ def summarize(thevoxels, method="mean"):
             themethod = np.median
         elif method == "std":
             themethod = np.std
-        elif method == "mad":
+        elif method == "MAD":
             themethod = mad
         else:
-            print(f"illegal summary method {method} in summarize")
+            print(f"illegal summary method {method} in summarizevoxels")
             sys.exit()
 
         if numtimepoints > 1:
@@ -113,9 +113,9 @@ def _get_parser():
         dest="summarymethod",
         action="store",
         type=str,
-        choices=["mean", "median", "sum", "std", "mad", "CoV"],
+        choices=["mean", "median", "sum", "std", "MAD", "CoV"],
         help=(
-            "Method to summarize the voxels in a region.  Choices are 'mean' (default), 'median', 'sum', 'std', 'mad', and 'CoV'."
+            "Method to summarize the voxels in a region.  Choices are 'mean' (default), 'median', 'sum', 'std', 'MAD', and 'CoV'."
         ),
         default="mean",
     )
@@ -343,7 +343,7 @@ def atlasaverage(args):
                 if thenormfac[theloc] != 0.0:
                     theregionvoxels[theloc, :] /= thenormfac[theloc]
             if theregionvoxels.shape[1] > 0:
-                timecourses[theregion - 1, :] = summarize(
+                timecourses[theregion - 1, :] = summarizevoxels(
                     theregionvoxels, method=args.summarymethod
                 )
         if args.debug:
@@ -385,7 +385,7 @@ def atlasaverage(args):
                         f"voxels from region {theregion} of {numregions}"
                     )
             if theregionvoxels.shape[0] > 0:
-                regionval = summarize(theregionvoxels, method=args.summarymethod)
+                regionval = summarizevoxels(theregionvoxels, method=args.summarymethod)
                 regionsizes = theregionvoxels.shape[0]
                 regionpercentiles = [
                     f"{num:.4f}"
