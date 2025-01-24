@@ -1,36 +1,11 @@
 #!/bin/bash
 
 atlasaverage \
-    ../../reference/HCP1200_lag_2mm.nii.gz \
-    ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
-    ../dst/atlastest_nomask \
-    --ignorezeros \
-    --summarymethod median \
-    --headerline
-
-atlasaverage \
-    ../../reference/HCP1200_lag_2mm.nii.gz \
-    ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
-    ../dst/atlastest_withmask \
-    --ignorezeros \
-    --includemask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
-    --extramask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
-    --summarymethod median \
-    --headerline
-
-atlasaverage \
     ../../reference/HCP1200v2_maxtime_2mm.nii.gz \
     ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
-    ../dst/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm \
+    ../dst/JHU-ArterialTerritoriesNoVent-LVL1-seg4_space-MNI152NLin6Asym_2mm \
     --ignorezeros \
-    --summarymethod median \
-    --headerline
-
-atlasaverage \
-    ../../reference/HCP1200v2_maxtime_2mm.nii.gz \
-    ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz \
-    ../dst/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm_withmask \
-    --ignorezeros \
+    --numpercentiles 3 \
     --includemask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
     --extramask /opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
     --summarymethod median \
@@ -39,7 +14,10 @@ atlasaverage \
 atlasaverage \
     HCP1200v2_maxtime_1mm.nii.gz \
     ../../reference/JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_1mm.nii.gz \
-    ../dst/JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_1mm \
+    ../dst/JHU-ArterialTerritoriesNoVent-LVL1-seg4_space-MNI152NLin6Asym_1mm \
     --ignorezeros \
+    --numpercentiles 3 \
+    --includemask /opt/fsl-latest/data/standard/MNI152_T1_1mm_brain_mask.nii.gz \
+    --extramask /opt/fsl-latest/data/standard/MNI152_T1_1mm_brain_mask.nii.gz \
     --summarymethod median \
     --headerline

@@ -13,7 +13,7 @@ The first thing happy does is try to extract a cardiac waveform from the fMRI da
 something I've been thinking about for a long time.  It occurred to me that while the TR for
 most scans is long compared to the required sample time for recording a cardiac waveform, the
 scanner is actually recording data at a much faster rate than that - each slice, or in the case
-of multibaand data, stack of slices, is acquired somewhere during each TR, so the _effective_
+of multiband data, stack of slices, is acquired somewhere during each TR, so the _effective_
 samplerate is TR/(number of acquisitions within a TR).
 
 The second task is to take this raw estimate of the cardiac waveform, and clean it up using a deep
@@ -192,6 +192,8 @@ each echo is recorded at a slightly different time - how do we smartly combine t
 the echoes?  The answer for now is - you don't, because I'm not that smart.  What I can confirm
 through, my limited testing, is that in a 60 slice, TR=1.33s MB=4 4 echo acquisition (a trendy
 set of parameters in the circles I travel in) you can extract the cardiac waveform from _any_
-of the individual echoes, although the first echo has the highest SNR.  The noise in the
+of the individual echoes, although the first echo has the highest SNR - it seems that the short echo time
+enhances the cardiac variation.  The noise in the
 echoes seems largely uncorrelated (other than motion effects), so combining echoes is almost
-certainly a good idea.  I await your PR implementing this, dear reader...
+certainly a good idea.  Maybe use PCA to extract the most important timecourse from the set of derived
+cardiac regressors?  I await your PR implementing this with bated breath, dear reader...
