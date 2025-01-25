@@ -2,5 +2,6 @@
 
 git pull
 cleandirs
-pip install -e .
+#pip install -e .
+pip install .
 rm -rf rapidtide.egg-info

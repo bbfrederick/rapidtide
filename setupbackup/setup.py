@@ -9,17 +9,16 @@ https://github.com/pypa/sampleproject
 from codecs import open
 from os import path
 
-import versioneer
-
 # Always prefer setuptools over distutils
-from setuptools import find_namespace_packages, find_packages, setup
+from setuptools import Extension, find_namespace_packages, find_packages, setup
+
+import versioneer
 
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
 with open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
-
 
 # Write version number out to VERSION file
 version = versioneer.get_version()
@@ -48,7 +47,9 @@ modules_list = [
     "rapidtide/maskutil",
     "rapidtide/miscmath",
     "rapidtide/multiproc",
+    "rapidtide/patchmatch",
     "rapidtide/peakeval",
+    "rapidtide/refinedelay",
     "rapidtide/refineregressor",
     "rapidtide/resample",
     "rapidtide/simfuncfit",
@@ -98,6 +99,7 @@ modules_list = [
     "rapidtide/workflows/resampletc",
     "rapidtide/workflows/resamplenifti",
     "rapidtide/workflows/retroglm",
+    "rapidtide/workflows/retrolagtcs",
     "rapidtide/workflows/roisummarize",
     "rapidtide/workflows/showarbcorr",
     "rapidtide/workflows/showhist",
@@ -114,6 +116,8 @@ modules_list = [
     "rapidtide/workflows/variabilityizer",
     "rapidtide/tidepoolTemplate",
     "rapidtide/tidepoolTemplate_alt",
+    "rapidtide/tidepoolTemplate_qt6",
+    "rapidtide/tidepoolTemplate_alt_qt6",
 ]
 
 
@@ -156,6 +160,7 @@ script_list = [
     "rapidtide/scripts/resampletc",
     "rapidtide/scripts/resamplenifti",
     "rapidtide/scripts/retroglm",
+    "rapidtide/scripts/retrolagtcs",
     "rapidtide/scripts/roisummarize",
     "rapidtide/scripts/runqualitycheck",
     "rapidtide/scripts/showarbcorr",
@@ -170,6 +175,7 @@ script_list = [
     "rapidtide/scripts/spatialfit",
     "rapidtide/scripts/spatialmi",
     "rapidtide/scripts/spectrogram",
+    "rapidtide/scripts/stupidramtricks",
     "rapidtide/scripts/synthASL",
     "rapidtide/scripts/tcfrom2col",
     "rapidtide/scripts/tcfrom3col",
@@ -211,7 +217,6 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -246,18 +251,18 @@ setup(
         "scikit-learn",
         "nibabel",
         "nilearn",
-        "matplotlib",
-        "pyqtgraph",
+        "matplotlib>=3.3.0",
+        "pyqtgraph>=0.13.4",
         "pyqt",
         "pyqt5-sip",
         "requests",
         "statsmodels",
         "pywavelets",
         "tomlkit",
+        "tensorflow>=2.10.0",
+        "tf-keras",
         "tqdm",
     ],
-    # "keras",
-    # "tensorflow>=2.4.0",
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
