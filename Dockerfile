@@ -39,9 +39,9 @@ RUN cd /src/rapidtide && \
 RUN chmod -R a+r /src/rapidtide
 
 # install versioneer
-RUN cd /src/rapidtide && \
-    versioneer install --no-vendor && \
-    rm -rf /src/rapidtide/build /src/rapidtide/dist
+#RUN cd /src/rapidtide && \
+#    versioneer install --no-vendor && \
+#    rm -rf /src/rapidtide/build /src/rapidtide/dist
 
 # install test data
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
