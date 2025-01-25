@@ -34,7 +34,6 @@ jobs:
                 pip install --upgrade distlib
                 pip install .[tests,doc]
             fi
-            #pip install --user
       - save_cache:  # environment cache tied to requirements
           key: deps2-39-{{ checksum "pyproject.toml" }}
           paths:
@@ -67,7 +66,6 @@ jobs:
                 pip install --upgrade distlib
                 pip install .[tests,doc]
             fi
-            #pip install --user
       - save_cache:  # environment cache tied to requirements
           key: deps2-310-{{ checksum "pyproject.toml" }}
           paths:
@@ -100,7 +98,6 @@ jobs:
                 pip install --upgrade distlib
                 pip install .[tests,doc]
             fi
-            #pip install --user
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}
           paths:
@@ -133,7 +130,6 @@ jobs:
                 pip install --upgrade distlib
                 pip install .[tests,doc]
             fi
-            #pip install --user
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}
           paths:
@@ -166,7 +162,6 @@ jobs:
                 pip install --upgrade distlib
                 pip install .[tests,doc]
             fi
-            #pip install --user
       - save_cache:  # environment cache tied to requirements
           key: deps2-312-{{ checksum "pyproject.toml" }}
           paths:

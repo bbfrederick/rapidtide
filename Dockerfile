@@ -38,10 +38,6 @@ RUN cd /src/rapidtide && \
     uv pip install .
 RUN chmod -R a+r /src/rapidtide
 
-# install versioneer
-#RUN cd /src/rapidtide && \
-#    versioneer install --no-vendor && \
-
 # clean up install directories
 RUN rm -rf /src/rapidtide/build /src/rapidtide/dist
 
