@@ -15,6 +15,7 @@ recursive-include rapidtide/tests *
 include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*regions.txt
 include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*.xml
 include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*2mm.nii.gz
+include rapidtide/data/reference/JHU-ArterialTerritoriesNoVent-LVL*2mm_mask.nii.gz
 include rapidtide/data/reference/ASPECTS*
 include rapidtide/data/reference/ATT*
 include rapidtide/data/reference/HCP1200*
