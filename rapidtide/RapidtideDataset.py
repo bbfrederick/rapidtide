@@ -34,8 +34,8 @@ from rapidtide.stats import neglogpfromr_interpolator
 atlases = {
     "ASPECTS": {"atlasname": "ASPECTS"},
     "ATT": {"atlasname": "ATTbasedFlowTerritories_split"},
-    "JHU1": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym"},
-    "JHU2": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL2_space-MNI152NLin6Asym"},
+    "JHU1": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL1"},
+    "JHU2": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL2"},
 }
 
 
@@ -1227,19 +1227,20 @@ class RapidtideDataset:
                 print(self.atlaslabels)
             self.atlasniftiname = None
             if self.coordinatespace == "MNI152":
+                spacename = "_space-MNI152NLin6Asym"
                 if self.xsize == 2.0 and self.ysize == 2.0 and self.zsize == 2.0:
                     self.atlasniftiname = os.path.join(
-                        self.referencedir, self.atlasname + "_2mm.nii.gz"
+                        self.referencedir, self.atlasname + spacename + "_2mm.nii.gz"
                     )
                     self.atlasmaskniftiname = os.path.join(
-                        self.referencedir, self.atlasname + "_2mm_mask.nii.gz"
+                        self.referencedir, self.atlasname + spacename + "_2mm_mask.nii.gz"
                     )
                 if self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
                     self.atlasniftiname = os.path.join(
-                        self.referencedir, self.atlasname + "_3mm.nii.gz"
+                        self.referencedir, self.atlasname + spacename + "_3mm.nii.gz"
                     )
                     self.atlasmaskniftiname = os.path.join(
-                        self.referencedir, self.atlasname + "_3mm_mask.nii.gz"
+                        self.referencedir, self.atlasname + spacename + "_3mm_mask.nii.gz"
                     )
             else:
                 pass
