@@ -1,10 +1,11 @@
 # Release history
 
-## Version 3.0alpha5 (1/23/25)
+## Version 3.0alpha5 (1/25/25)
 * (happy) Fixed a typo in argument description.
 * (atlasaverage) Added the ability to segment a template atlas based on values of the map being summarized.
 * (docs) Significantly beefed up happy section.
 * (reference) Constructed a new version of the JHU LVL1 atlas where each territory is split into an early and late subterritory, based on the median delay in the HCP-YA dataset.
+* (package) Fully converted to using pyproject.toml for packaging.
 
 ## Version 3.0alpha4 (1/21/25)
 * (rapidtide, tidepool) Both now only use neglog10p map to dynamically make significance masks.
