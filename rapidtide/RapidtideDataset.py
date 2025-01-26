@@ -1216,8 +1216,6 @@ class RapidtideDataset:
             or (self.coordinatespace == "MNI152NLin6")
             or (self.coordinatespace == "MNI152NLin2009cAsym")
         ):
-            # self.atlasshortname = 'ASPECTS'
-            # self.atlasshortname = "ATT"
             self.atlasshortname = "JHU1"
             self.atlasname = atlases[self.atlasshortname]["atlasname"]
             self.atlaslabels = tide_io.readlabels(

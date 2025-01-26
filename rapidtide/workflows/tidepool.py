@@ -784,7 +784,7 @@ def updateAveragingMode():
     global overlays
     global currentdataset
     print("in updateAveragingMode")
-    if ("atlas" in overlays) and (not atlasaveragingdone) and False:
+    if ("atlas" in overlays) and (not atlasaveragingdone):
         calcAtlasStats()
         set_atlasmask()
     if ("atlas" in overlays) and False:
@@ -1692,12 +1692,20 @@ def tidepool(args):
         timecourse_ax.enableAutoRange()"""
 
     # wire up the atlas averaging checkboxes
-    ui.raw_radioButton.setDisabled(True)
-    ui.mean_radioButton.setDisabled(True)
-    ui.median_radioButton.setDisabled(True)
-    ui.CoV_radioButton.setDisabled(True)
-    ui.std_radioButton.setDisabled(True)
-    ui.MAD_radioButton.setDisabled(True)
+    if args.useatlas:
+        ui.raw_radioButton.setDisabled(False)
+        ui.mean_radioButton.setDisabled(False)
+        ui.median_radioButton.setDisabled(False)
+        ui.CoV_radioButton.setDisabled(False)
+        ui.std_radioButton.setDisabled(False)
+        ui.MAD_radioButton.setDisabled(False)
+    else:
+        ui.raw_radioButton.setDisabled(True)
+        ui.mean_radioButton.setDisabled(True)
+        ui.median_radioButton.setDisabled(True)
+        ui.CoV_radioButton.setDisabled(True)
+        ui.std_radioButton.setDisabled(True)
+        ui.MAD_radioButton.setDisabled(True)
 
     ui.raw_radioButton.clicked.connect(raw_radioButton_clicked)
     ui.mean_radioButton.clicked.connect(mean_radioButton_clicked)
