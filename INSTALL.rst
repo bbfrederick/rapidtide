@@ -7,7 +7,7 @@ Required dependencies
 `````````````````````
 
 The processing programs in rapidtide require the following to be
-installed first:
+installed:
 
 -  Python >= 3.9
 -  numpy
@@ -19,10 +19,10 @@ installed first:
 -  nibabel
 -  nilearn
 -  matplotlib >= 3.3.0
--  pyqt5-sip
+-  pyqt6-sip
+-  pyqt6
 -  pyqtgraph >= 0.13.4
 -  statsmodels
--  tomlkit
 -  tqdm
 
 Optional dependencies
