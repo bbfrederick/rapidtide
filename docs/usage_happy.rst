@@ -195,5 +195,8 @@ set of parameters in the circles I travel in) you can extract the cardiac wavefo
 of the individual echoes, although the first echo has the highest SNR - it seems that the short echo time
 enhances the cardiac variation.  The noise in the
 echoes seems largely uncorrelated (other than motion effects), so combining echoes is almost
-certainly a good idea.  Maybe use PCA to extract the most important timecourse from the set of derived
-cardiac regressors?  I await your PR implementing this with bated breath, dear reader...
+certainly a good idea.  That said, averaging doesn't make things look noticably better.
+Maybe use PCA to extract the most important timecourse from the set of derived
+cardiac regressors?  Or maybe actually using the timing information of the individual echoes
+to enhance the time resolution?  I await your PR implementing this with bated breath,
+dear reader...
