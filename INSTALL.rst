@@ -103,7 +103,7 @@ directory, and type the following:
 
 ::
 
-   python setup.py install
+   python install .
 
 
 to install all of the tools in the package. You should be able to run
