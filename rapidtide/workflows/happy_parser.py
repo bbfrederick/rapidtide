@@ -179,18 +179,22 @@ def _get_parser():
         default=True,
     )
     preprocessing_opts.add_argument(
-        "--motpos",
-        dest="motfilt_pos",
-        action="store_true",
-        help=("Include motion position regressors. "),
-        default=False,
-    )
-    preprocessing_opts.add_argument(
         "--nomotderiv",
         dest="motfilt_deriv",
         action="store_false",
         help=("Do not use motion derivative regressors. "),
         default=True,
+    )
+    preprocessing_opts.add_argument(
+        "--motfiltorder",
+        dest="motfilt_order",
+        action="store",
+        metavar="N",
+        type=lambda x: pf.is_int(parser, x),
+        help=(
+            "Include powers of each confound regressor up to order N. Default is 1 (no expansion). "
+        ),
+        default=1,
     )
     preprocessing_opts.add_argument(
         "--discardmotionfiltered",

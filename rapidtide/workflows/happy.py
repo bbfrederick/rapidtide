@@ -236,16 +236,21 @@ def happy_main(argparsingfunc):
     # filter out motion regressors here
     if args.motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
+        confoundregressors, confoundregressorlabels = tide_fit.calcexpandedregressors(
+            tide_io.readconfounds(args.motionfilename),
+            deriv=args.motfilt_deriv,
+            order=args.motfilt_order,
+        )
         (motionregressors, motionregressorlabels, filtereddata, confoundr2) = (
             tide_glmpass.confoundregress(
-                args.motionfilename,
+                confoundregressors,
+                confoundregressorlabels,
                 fmri_data[validprojvoxels, :],
                 tr,
                 orthogonalize=args.orthogonalize,
-                motstart=args.motskip,
-                motionhp=args.motionhp,
-                motionlp=args.motionlp,
-                deriv=args.motfilt_deriv,
+                tcstart=args.motskip,
+                tchp=args.motionhp,
+                tclp=args.motionlp,
             )
         )
         if confoundr2 is None:
