@@ -36,7 +36,6 @@ dependencies = [
   'requests',
   'statsmodels',
   'pywavelets',
-  'tomlkit',
   'tensorflow>=2.10.0',
   'tf-keras',
   'tqdm',
@@ -76,6 +75,7 @@ doc = [
   'myst-parser',
   'numpydoc',
   'sphinxcontrib-bibtex',
+  'tomlkit',
 ]
 
 [project.scripts]

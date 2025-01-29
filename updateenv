@@ -12,8 +12,8 @@ mamba update \
     nilearn \
     numba \
     pywavelets \
-    pyqt \
-    pyqt5-sip \
+    pyqt6 \
+    pyqt6-sip \
     pyqtgraph>=0.13.4 \
     tqdm
 
