@@ -48,21 +48,21 @@ import numpy as np
 from unittest.mock import patch, MagicMock
 import bisect
 
-import rapidtide.maskutil as tide_mask
+import rapidtide.maskutil
 
 class TestMaskingFunctions(unittest.TestCase):
-    @patch('tide_mask.resampmask')
+    @patch('rapidtide.maskutil.resampmask')
     def test_resampmask(self, mock_resampmask):
         themask = np.array([1, 0, 1])
         thetargetres = 2
-        result = tide_mask.resampmask(themask, thetargetres)
+        result = rapidtide.maskutil.resampmask(themask, thetargetres)
         self.assertEqual(result, themask)
 
     @patch('nilearn.masking.compute_epi_mask')
     def test_makeepimask(self, mock_compute_epi_mask):
         nim = MagicMock()
         mock_compute_epi_mask.return_value = np.array([1, 0, 1])
-        result = tide_mask.makeepimask(nim)
+        result = rapidtide.maskutil.makeepimask(nim)
         self.assertTrue(np.array_equal(result, np.array([1, 0, 1])))
 
     @patch('rapidtide.io.readvecs')
@@ -72,7 +72,7 @@ class TestMaskingFunctions(unittest.TestCase):
         inputdata = np.array([[1, 0, 1]])
         maskvector = np.zeros(4)
         mock_readvecs.return_value = inputdata
-        result = tide_mask.maketmask(filename, timeaxis, maskvector)
+        result = rapidtide.maskutil.maketmask(filename, timeaxis, maskvector)
         expected_result = np.array([1, 0, 1, 0])
         self.assertTrue(np.array_equal(result, expected_result))
 
@@ -83,7 +83,7 @@ class TestMaskingFunctions(unittest.TestCase):
         inputdata = np.array([[1, 0, 1], [0, 1, 0]])
         maskvector = np.zeros(4)
         mock_readvecs.return_value = inputdata
-        result = tide_mask.maketmask(filename, timeaxis, maskvector)
+        result = rapidtide.maskutil.maketmask(filename, timeaxis, maskvector)
         expected_result = np.array([1, 1, 1, 0])
         self.assertTrue(np.array_equal(result, expected_result))
 
@@ -97,11 +97,11 @@ class TestMaskingFunctions(unittest.TestCase):
         valslist = [1]
         inputdata = np.array([1, 2, 1])
         mock_readvecs.return_value = inputdata
-        result = tide_mask.readamask(filename, datahdr, numspatiallocs, istext=istext, valslist=valslist, tolerance=tolerance)
+        result = rapidtide.maskutil.readamask(filename, datahdr, numspatiallocs, istext=istext, valslist=valslist, tolerance=tolerance)
         expected_result = np.array([1, 0, 1])
         self.assertTrue(np.array_equal(result, expected_result))
 
-    @patch('tide_mask.readamask')
+    @patch('rapidtide.maskutil.readamask')
     def test_getmaskset(self, mock_readamask):
         maskname = 'test_mask'
         includename = 'include_file'
@@ -119,7 +119,7 @@ class TestMaskingFunctions(unittest.TestCase):
             None                  # extra mask
         ]
 
-        includemask, excludemask, extramask = tide_mask.getmaskset(
+        includemask, excludemask, extramask = rapidtide.maskutil.getmaskset(
             maskname,
             includename,
             includevals,
@@ -135,7 +135,7 @@ class TestMaskingFunctions(unittest.TestCase):
         self.assertTrue(np.array_equal(excludemask, np.array([0, 1, 0])))
         self.assertIsNone(extramask)
 
-    @patch('tide_mask.readamask')
+    @patch('rapidtide.maskutil.readamask')
     def test_getmaskset_with_extramask(self, mock_readamask):
         maskname = 'test_mask'
         includename = 'include_file'
@@ -155,7 +155,7 @@ class TestMaskingFunctions(unittest.TestCase):
             np.array([1, 1, 1])   # extra mask
         ]
 
-        includemask, excludemask, extramask = tide_mask.getmaskset(
+        includemask, excludemask, extramask = rapidtide.maskutil.getmaskset(
             maskname,
             includename,
             includevals,
@@ -173,7 +173,7 @@ class TestMaskingFunctions(unittest.TestCase):
         self.assertTrue(np.array_equal(excludemask, np.array([0, 1, 0])))
         self.assertTrue(np.array_equal(extramask, np.array([1, 1, 1])))
 
-    @patch('tide_mask.readamask')
+    @patch('rapidtide.maskutil.readamask')
     def test_getmaskset_no_includename(self, mock_readamask):
         maskname = 'test_mask'
         includename = None
@@ -187,7 +187,7 @@ class TestMaskingFunctions(unittest.TestCase):
 
         mock_readamask.return_value = np.array([0, 1, 0])  # exclude mask
 
-        includemask, excludemask, extramask = tide_mask.getmaskset(
+        includemask, excludemask, extramask = rapidtide.maskutil.getmaskset(
             maskname,
             includename,
             includevals,
@@ -203,7 +203,7 @@ class TestMaskingFunctions(unittest.TestCase):
         self.assertTrue(np.array_equal(excludemask, np.array([0, 1, 0])))
         self.assertIsNone(extramask)
 
-    @patch('tide_mask.readamask')
+    @patch('rapidtide.maskutil.readamask')
     def test_getmaskset_no_excludename(self, mock_readamask):
         maskname = 'test_mask'
         includename = 'include_file'
@@ -217,7 +217,7 @@ class TestMaskingFunctions(unittest.TestCase):
 
         mock_readamask.return_value = np.array([1, 0, 1])  # include mask
 
-        includemask, excludemask, extramask = tide_mask.getmaskset(
+        includemask, excludemask, extramask = rapidtide.maskutil.getmaskset(
             maskname,
             includename,
             includevals,
@@ -233,7 +233,7 @@ class TestMaskingFunctions(unittest.TestCase):
         self.assertIsNone(excludemask)
         self.assertIsNone(extramask)
 
-    @patch('tide_mask.readamask')
+    @patch('rapidtide.maskutil.readamask')
     def test_getmaskset_empty_valslist(self, mock_readamask):
         maskname = 'test_mask'
         includename = 'include_file'
@@ -250,7 +250,7 @@ class TestMaskingFunctions(unittest.TestCase):
             np.array([2, 1, 2])   # exclude mask
         ]
 
-        includemask, excludemask, extramask = tide_mask.getmaskset(
+        includemask, excludemask, extramask = rapidtide.maskutil.getmaskset(
             maskname,
             includename,
             includevals,
@@ -266,7 +266,7 @@ class TestMaskingFunctions(unittest.TestCase):
         self.assertTrue(np.array_equal(excludemask, np.array([2, 1, 2])))
         self.assertIsNone(extramask)
 
-    @patch('tide_mask.readamask')
+    @patch('rapidtide.maskutil.readamask')
     def test_getmaskset_invalid_includename(self, mock_readamask):
         maskname = 'test_mask'
         includename = 'invalid_include_file'
@@ -284,7 +284,7 @@ class TestMaskingFunctions(unittest.TestCase):
         ]
 
         with self.assertRaises(ValueError) as context:
-            tide_mask.getmaskset(
+            rapidtide.maskutil.getmaskset(
                 maskname,
                 includename,
                 includevals,
@@ -298,7 +298,7 @@ class TestMaskingFunctions(unittest.TestCase):
 
         self.assertEqual(str(context.exception), "Invalid include mask file")
 
-    @patch('tide_mask.readamask')
+    @patch('rapidtide.maskutil.readamask')
     def test_getmaskset_invalid_excludename(self, mock_readamask):
         maskname = 'test_mask'
         includename = 'include_file'
@@ -316,7 +316,7 @@ class TestMaskingFunctions(unittest.TestCase):
         ]
 
         with self.assertRaises(ValueError) as context:
-            tide_mask.getmaskset(
+            rapidtide.maskutil.getmaskset(
                 maskname,
                 includename,
                 includevals,
