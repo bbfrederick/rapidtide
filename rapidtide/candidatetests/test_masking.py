@@ -49,6 +49,7 @@ from unittest.mock import patch, MagicMock
 import bisect
 
 import rapidtide.maskutil
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 class TestMaskingFunctions(unittest.TestCase):
     @patch('rapidtide.maskutil.resampmask')
