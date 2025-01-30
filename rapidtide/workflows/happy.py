@@ -400,7 +400,7 @@ def happy_main(argparsingfunc):
         infodict["cardfromfmri_normfac"] = cardfromfmri_normfac
         slicetimeaxis = np.linspace(
             0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False
-        ) + args.teoffset,
+        ) + args.teoffset
         if (thispass == 0) and args.doupsampling:
             # allocate the upsampled image
             upsampleimage = np.zeros((xsize, ysize, numslices, numsteps * timepoints), dtype=float)
