@@ -67,6 +67,10 @@ RUN /opt/miniforge3/bin/mamba init
 RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
 RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
 
+# run things once
+RUN rapidtide
+RUN happy
+
 # switch to the rapidtide user
 USER rapidtide
 
