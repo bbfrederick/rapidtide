@@ -71,8 +71,8 @@ RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
 USER rapidtide
 
 # run things once
-RUN /opt/miniforge3/envs/science/bin/rapidtide
-RUN /opt/miniforge3/envs/science/bin/happy
+RUN /opt/miniforge3/envs/science/bin/rapidtide --help
+RUN happy --help
 
 # set up variable for non-interactive shell
 ENV PATH=/opt/miniforge3/envs/science/bin:/opt/miniforge3/condabin:.:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
