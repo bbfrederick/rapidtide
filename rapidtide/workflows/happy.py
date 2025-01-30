@@ -236,8 +236,10 @@ def happy_main(argparsingfunc):
     # filter out motion regressors here
     if args.motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
+        motiondict = tide_io.readmotion(args.motionfilename, tr=tr)
         confoundregressors, confoundregressorlabels = tide_fit.calcexpandedregressors(
-            tide_io.readconfounds(args.motionfilename),
+            motiondict,
+            labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
             deriv=args.motfilt_deriv,
             order=args.motfilt_order,
         )
