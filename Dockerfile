@@ -129,8 +129,6 @@ RUN /opt/miniforge3/envs/science/bin/synthASL --help
 RUN /opt/miniforge3/envs/science/bin/tcfrom2col --help
 RUN /opt/miniforge3/envs/science/bin/tcfrom3col --help
 RUN /opt/miniforge3/envs/science/bin/temporaldecomp --help
-RUN /opt/miniforge3/envs/science/bin/testhrv --help
-RUN /opt/miniforge3/envs/science/bin/threeD --help
 RUN /opt/miniforge3/envs/science/bin/tidepool --help
 RUN /opt/miniforge3/envs/science/bin/variabilityizer --help
 
