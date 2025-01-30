@@ -17,7 +17,6 @@
 #
 #
 import argparse
-import sys
 
 import numpy as np
 
@@ -666,23 +665,7 @@ def process_args(inputargs=None):
     """
     Compile arguments for rapidtide workflow.
     """
-    if inputargs is None:
-        print("processing command line arguments")
-        # write out the command used
-        try:
-            args = _get_parser().parse_args()
-            argstowrite = sys.argv
-        except SystemExit:
-            _get_parser().print_help()
-            raise
-    else:
-        print("processing passed argument list:")
-        try:
-            args = _get_parser().parse_args(inputargs)
-            argstowrite = inputargs
-        except SystemExit:
-            print("Use --help option for detailed information on options.")
-            raise
+    args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
 
     # save the raw and formatted command lines
     args.commandline = " ".join(argstowrite)
