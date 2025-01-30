@@ -71,8 +71,8 @@ RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
 USER rapidtide
 
 # Precompile Python code
-#RUN cd /src/rapidtide && \
-#    python -m compileall -b .
+RUN cd /opt/miniforge3/envs/science/lib/python3.12/site-packages/rapidtide && \
+    python -m compileall -b .
 
 # run things once
 #RUN /opt/miniforge3/envs/science/bin/adjustoffset --help
