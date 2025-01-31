@@ -39,6 +39,7 @@ dependencies = [
   'tensorflow>=2.10.0',
   'tf-keras',
   'tqdm',
+  'versioneer',
 ]
 #dynamic = ['version', 'license', 'keywords']
 dynamic = ['version']
