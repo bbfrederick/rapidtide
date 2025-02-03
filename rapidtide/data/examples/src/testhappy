@@ -66,4 +66,4 @@ happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy_motion \
-    --motionfile sub-HAPPYTEST_mcf.par
+    --upsample
