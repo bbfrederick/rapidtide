@@ -1,5 +1,9 @@
 # Release history
 
+## Version 3.0alpha7 (2/4/25)
+* (happy) Put in some initial support for multiecho data.
+* (happy) Updated argument parser.
+
 ## Version 3.0alpha6 (1/28/25)
 * (happy) Fixed a major bug in motion filtering (thank you to Sukru Demiral for reporting it!)
 

@@ -300,6 +300,7 @@ def happy_main(argparsingfunc):
                 teoffset = 0.0
         else:
             teoffset = 0.0
+    infodict["teoffset"] = teoffset
     timings.append(["Slice times determined", time.time(), None, None])
 
     # normalize the input data
