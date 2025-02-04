@@ -1319,6 +1319,9 @@ def happy_main(argparsingfunc):
                 signal_sliceres = cardfromfmri_sliceres
                 # signal_stdres = dlfilteredcard_stdres
 
+            # zero out bad points
+            signal_sliceres *= (1.0 - badpointlist)
+
             theAliasedCorrelator = tide_corr.AliasedCorrelator(
                 signal_sliceres,
                 slicesamplerate,

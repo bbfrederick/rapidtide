@@ -23,6 +23,7 @@ import numpy as np
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
+DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
 
 def _get_parser():
     """
@@ -547,6 +548,15 @@ def _get_parser():
         default=False,
     )
     misc_opts.add_argument(
+        "--aliasedcorrelationwidth",
+        dest="aliasedcorrelationwidth",
+        metavar="WIDTH",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        help=f"Width of the aliased correlation calculation (default is {DEFAULT_ALIASEDCORRELATIONWIDTH}). ",
+        default=DEFAULT_ALIASEDCORRELATIONWIDTH,
+    )
+    misc_opts.add_argument(
         "--upsample",
         dest="doupsampling",
         action="store_true",
@@ -715,7 +725,6 @@ def process_args(inputargs=None):
     args.upsamplefac = 100
     args.centric = True
     args.pulsereconstepsize = 0.01
-    args.aliasedcorrelationwidth = 3.0
     args.unnormvesselmap = True
     args.histlen = 100
     args.softvesselfrac = 0.4
