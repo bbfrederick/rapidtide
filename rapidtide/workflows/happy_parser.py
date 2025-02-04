@@ -299,7 +299,7 @@ def _get_parser():
         metavar="TE",
         type=lambda x: pf.is_float(parser, x),
         help="Specify the echo time in seconds.  This is used when combining multiecho data.  Default is 0. ",
-        default=0.0,
+        default=None,
     )
 
     # External cardiac waveform options
