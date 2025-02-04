@@ -289,6 +289,18 @@ def happy_main(argparsingfunc):
     slicetimes, normalizedtotr, fileisbidsjson = tide_io.getslicetimesfromfile(slicetimename)
     if normalizedtotr and not args.slicetimesareinseconds:
         slicetimes *= tr
+    if args.teoffset is not None:
+        teoffset = float(args.teoffset)
+    else:
+        if fileisbidsjson:
+            jsoninfodict = readdictfromjson(slicetimename)
+            try:
+                teoffset = jsoninfodict["EchoTime"]
+            except KeyError:
+                teoffset = 0.0
+        else:
+            teoffset = 0.0
+    timings.append(["Slice times determined", time.time(), None, None])
 
     # normalize the input data
     tide_util.logmem("before normalization")
@@ -396,8 +408,9 @@ def happy_main(argparsingfunc):
             ]
         )
         infodict["cardfromfmri_normfac"] = cardfromfmri_normfac
-        slicetimeaxis = np.linspace(
-            0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False
+        slicetimeaxis = (
+            np.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
+            + teoffset
         )
         if (thispass == 0) and args.doupsampling:
             happy_support.upsampleimage(

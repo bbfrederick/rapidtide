@@ -291,6 +291,15 @@ def _get_parser():
         ),
         default=False,
     )
+    cardiac_est_tuning.add_argument(
+        "--teoffset",
+        dest="teoffset",
+        action="store",
+        metavar="TE",
+        type=lambda x: pf.is_float(parser, x),
+        help="Specify the echo time in seconds.  This is used when combining multiecho data.  Default is 0. ",
+        default=None,
+    )
 
     # External cardiac waveform options
     external_cardiac_opts = parser.add_argument_group("External cardiac waveform options")
