@@ -205,4 +205,4 @@ parentdir_prefix = 'rapidtide-'
 skip = '.git*,versioneer.py,*.css,exportlist.txt,data,*.bib'
 check-hidden = true
 ignore-regex = '\bsubjeT\b'
-ignore-words-list = 'thex,normall'
+ignore-words-list = 'TE,thex,normall'
