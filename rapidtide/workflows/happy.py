@@ -293,7 +293,7 @@ def happy_main(argparsingfunc):
         teoffset = float(args.teoffset)
     else:
         if fileisbidsjson:
-            jsoninfodict = readdictfromjson(slicetimename)
+            jsoninfodict = tide_io.readdictfromjson(slicetimename)
             try:
                 teoffset = jsoninfodict["EchoTime"]
             except KeyError:
