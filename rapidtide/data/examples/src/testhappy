@@ -65,5 +65,4 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_motion \
-    --upsample
+    ../dst/happy_motion
