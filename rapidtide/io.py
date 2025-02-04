@@ -1160,13 +1160,15 @@ def getslicetimesfromfile(slicetimename):
             for idx, thetime in enumerate(slicetimelist):
                 slicetimes[idx] = float(thetime)
             normalizedtotr = False
+            fileisbidsjson = True
         except KeyError:
             print(slicetimename, "is not a valid BIDS sidecar file")
             sys.exit()
     else:
         slicetimes = readvec(slicetimename)
         normalizedtotr = True
-    return slicetimes, normalizedtotr
+        fileisbidsjson = False
+    return slicetimes, normalizedtotr, fileisbidsjson
 
 
 def readbidssidecar(inputfilename):

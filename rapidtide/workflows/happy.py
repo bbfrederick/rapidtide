@@ -286,11 +286,9 @@ def happy_main(argparsingfunc):
             timings.append(["Motion filtered data saved", time.time(), numspatiallocs, "voxels"])
 
     # get slice times
-    slicetimes, normalizedtotr = tide_io.getslicetimesfromfile(slicetimename)
+    slicetimes, normalizedtotr, fileisbidsjson = tide_io.getslicetimesfromfile(slicetimename)
     if normalizedtotr and not args.slicetimesareinseconds:
         slicetimes *= tr
-
-    timings.append(["Slice times determined", time.time(), None, None])
 
     # normalize the input data
     tide_util.logmem("before normalization")
@@ -402,7 +400,9 @@ def happy_main(argparsingfunc):
             0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False
         )
         if (thispass == 0) and args.doupsampling:
-            happy_support.upsampleimage(input_data, nim_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot)
+            happy_support.upsampleimage(
+                input_data, nim_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot
+            )
             sys.exit(0)
 
         if thispass == numpasses - 1:

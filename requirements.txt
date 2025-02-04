@@ -43,7 +43,7 @@ joblib==1.4.2
     # via
     #   nilearn
     #   scikit-learn
-keras==3.6.0
+keras==3.8.0
     # via tensorflow
 kiwisolver==1.4.7
     # via matplotlib
@@ -212,6 +212,8 @@ tzdata==2024.2
     # via pandas
 urllib3==2.2.3
     # via requests
+versioneer==0.29
+    # via rapidtide (pyproject.toml)
 werkzeug==3.0.6
     # via tensorboard
 wheel==0.44.0
