@@ -67,12 +67,16 @@ RUN /opt/miniforge3/bin/mamba init
 RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
 RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
 
-# run things once
-RUN rapidtide
-RUN happy
+# Precompile Python code
+RUN cd /opt/miniforge3/envs/science/lib/python3.12/site-packages/rapidtide && \
+    python -m compileall -b .
 
 # switch to the rapidtide user
 USER rapidtide
+
+# run things once
+RUN /opt/miniforge3/envs/science/bin/happy --help
+RUN /opt/miniforge3/envs/science/bin/rapidtide --help
 
 # set up variable for non-interactive shell
 ENV PATH=/opt/miniforge3/envs/science/bin:/opt/miniforge3/condabin:.:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin

@@ -308,7 +308,9 @@ def simdata(args):
         _get_parser().print_help()
         sys.exit()
 
-    sliceoffsettimes, normalizedtotr = tide_io.getslicetimesfromfile(args.slicetimefile)
+    sliceoffsettimes, normalizedtotr, fileisjson = tide_io.getslicetimesfromfile(
+        args.slicetimefile
+    )
 
     fmritr, numtrs = tide_io.fmritimeinfo(args.fmrifilename)
     if normalizedtotr:

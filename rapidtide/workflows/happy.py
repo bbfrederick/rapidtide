@@ -286,10 +286,9 @@ def happy_main(argparsingfunc):
             timings.append(["Motion filtered data saved", time.time(), numspatiallocs, "voxels"])
 
     # get slice times
-    slicetimes, normalizedtotr = tide_io.getslicetimesfromfile(slicetimename)
+    slicetimes, normalizedtotr, fileisbidsjson = tide_io.getslicetimesfromfile(slicetimename)
     if normalizedtotr and not args.slicetimesareinseconds:
         slicetimes *= tr
-    fileisbidsjson = False
     if args.teoffset is not None:
         teoffset = float(args.teoffset)
     else:
@@ -414,39 +413,10 @@ def happy_main(argparsingfunc):
             + teoffset
         )
         if (thispass == 0) and args.doupsampling:
-            # allocate the upsampled image
-            upsampleimage = np.zeros((xsize, ysize, numslices, numsteps * timepoints), dtype=float)
-            upsampleimage_byslice = upsampleimage.reshape(
-                xsize * ysize, numslices, numsteps * timepoints
+            happy_support.upsampleimage(
+                input_data, nim_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot
             )
-
-            # drop in the raw data
-            for theslice in range(numslices):
-                upsampleimage[
-                    :, :, theslice, sliceoffsets[theslice] : timepoints * numsteps : numsteps
-                ] = fmri_data.reshape((xsize, ysize, numslices, timepoints))[:, :, theslice, :]
-
-            # interpolate along the slice direction
-            for thestep in range(numsteps):
-                print(f"interpolating step {thestep}")
-                thesrclocs = np.where(sliceoffsets == thestep)[0]
-                print(f"sourcelocs: {thesrclocs}")
-                thedstlocs = np.linspace(0, numslices, num=len(sliceoffsets), endpoint=False)
-                print(f"len(destlocst), destlocs: {len(thedstlocs)}, {thedstlocs}")
-                for thetimepoint in range(0, timepoints * numsteps):
-                    print(f"timepoint: {thetimepoint}")
-                    for thexyvoxel in range(xsize * ysize):
-                        theinterps = np.interp(
-                            thedstlocs,
-                            1.0 * thesrclocs,
-                            upsampleimage_byslice[thexyvoxel, thesrclocs, thetimepoint],
-                        )
-                        upsampleimage_byslice[thexyvoxel, :, thetimepoint] = 1.0 * theinterps
-
-            theheader = copy.deepcopy(nim_hdr)
-            theheader["dim"][4] = timepoints * numsteps
-            theheader["pixdim"][4] = 1.0 / slicesamplerate
-            tide_io.savetonifti(upsampleimage, theheader, outputroot + "_upsampled")
+            sys.exit(0)
 
         if thispass == numpasses - 1:
             tide_io.writebidstsv(
