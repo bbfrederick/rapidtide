@@ -135,7 +135,7 @@ def test_nullsimfunc(debug=False, displayplots=False):
                 thefitter,
                 despeckle_thresh=5.0,
                 fixdelay=False,
-                fixeddelayvalue=0.0,
+                initialdelayvalue=0.0,
                 numestreps=optiondict["numestreps"],
                 nprocs=thenprocs,
                 showprogressbar=optiondict["showprogressbar"],

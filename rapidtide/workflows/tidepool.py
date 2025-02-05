@@ -36,6 +36,7 @@ from rapidtide.Colortables import *
 from rapidtide.helper_classes import SimilarityFunctionFitter
 from rapidtide.OrthoImageItem import OrthoImageItem
 from rapidtide.RapidtideDataset import RapidtideDataset
+from rapidtide.workflows.atlasaverage import summarizevoxels
 
 try:
     from PyQt6.QtCore import QT_VERSION_STR
@@ -697,6 +698,7 @@ def calcAtlasStats():
     global overlays, datafileroot, atlasstats, averagingmode, currentdataset
     global atlasaveragingdone
     print("in calcAtlasStats")
+    methodlist = ["mean", "median", "std", "MAD", "CoV"]
     if "atlas" in overlays:
         atlasstats = {}
         print("performing atlas averaging")
@@ -709,17 +711,11 @@ def calcAtlasStats():
                     maskedregion = np.where(
                         (overlays["atlas"].data == (regnum + 1)) & (overlays[themap].mask > 0)
                     )
-                    atlasstats[themap][region]["mean"] = np.mean(
-                        overlays[themap].data[maskedregion]
-                    )
-                    atlasstats[themap][region]["median"] = np.median(
-                        overlays[themap].data[maskedregion]
-                    )
-                    atlasstats[themap][region]["robustmean"] = mad(
-                        overlays[themap].data[maskedregion]
-                    )
-                    atlasstats[themap][region]["std"] = np.std(overlays[themap].data[maskedregion])
-                    atlasstats[themap][region]["MAD"] = mad(overlays[themap].data[maskedregion])
+                    for themethod in methodlist:
+                        atlasstats[themap][region][themethod] = summarizevoxels(
+                            overlays[themap].data[maskedregion],
+                            method=themethod,
+                        )
                 atlasstatmap = overlays[themap].duplicate(
                     themap + "_atlasstat", overlays[themap].label
                 )
@@ -729,7 +725,7 @@ def calcAtlasStats():
                 atlasstatmap.updateStats()
                 overlays[themap + "_atlasstat"] = atlasstatmap
         print("done performing atlas averaging")
-        for thestat in ["mean", "std", "robustmean", "median", "MAD"]:
+        for thestat in methodlist:
             d = {}
             cols = []
             d["Region"] = np.asarray(currentdataset.atlaslabels)
@@ -770,18 +766,16 @@ def updateAtlasStats():
                 overlays[themap + "_atlasstat"].updateStats()
 
 
-"""
 def doAtlasAveraging(state):
     global atlasaveragingdone
-    print('in doAtlasAveraging')
+    print("in doAtlasAveraging")
     if state == QtCore.Qt.CheckState.Checked:
         atlasaveragingdone = True
-        print('atlas averaging is turned on')
+        print("atlas averaging is turned on")
     else:
         atlasaveragingdone = False
-        print('atlas averaging is turned off')
+        print("atlas averaging is turned off")
     updateOrthoImages()
-"""
 
 
 def updateAveragingMode():
@@ -790,7 +784,7 @@ def updateAveragingMode():
     global overlays
     global currentdataset
     print("in updateAveragingMode")
-    if ("atlas" in overlays) and (not atlasaveragingdone) and False:
+    if ("atlas" in overlays) and (not atlasaveragingdone):
         calcAtlasStats()
         set_atlasmask()
     if ("atlas" in overlays) and False:
@@ -835,11 +829,11 @@ def median_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def robustmean_radioButton_clicked(enabled):
+def CoV_radioButton_clicked(enabled):
     global averagingmode
     if enabled:
-        print("in robustmean_radioButton_clicked")
-        averagingmode = "robustmean"
+        print("in CoV_radioButton_clicked")
+        averagingmode = "CoV"
         updateAveragingMode()
 
 
@@ -1593,6 +1587,12 @@ def tidepool(args):
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
+        "lagtimesrefined": {
+            "colormap": gen_viridis_state(),
+            "label": "Refineed lag times",
+            "display": True,
+            "funcmask": "p_lt_0p050_mask",
+        },
         "timepercentile": {
             "colormap": gen_viridis_state(),
             "label": "Lag percentile",
@@ -1665,6 +1665,18 @@ def tidepool(args):
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
+        "neglog10p": {
+            "colormap": gen_thermal_state(),
+            "label": "Correlation fit significance",
+            "display": True,
+            "funcmask": "None",
+        },
+        "delayoffset": {
+            "colormap": gen_viridis_state(),
+            "label": "Lag time adjustments",
+            "display": True,
+            "funcmask": "p_lt_0p050_mask",
+        },
     }
 
     # set up the timecourse plot window
@@ -1680,17 +1692,25 @@ def tidepool(args):
         timecourse_ax.enableAutoRange()"""
 
     # wire up the atlas averaging checkboxes
-    ui.raw_radioButton.setDisabled(True)
-    ui.mean_radioButton.setDisabled(True)
-    ui.median_radioButton.setDisabled(True)
-    ui.robustmean_radioButton.setDisabled(True)
-    ui.std_radioButton.setDisabled(True)
-    ui.MAD_radioButton.setDisabled(True)
+    if args.useatlas:
+        ui.raw_radioButton.setDisabled(False)
+        ui.mean_radioButton.setDisabled(False)
+        ui.median_radioButton.setDisabled(False)
+        ui.CoV_radioButton.setDisabled(False)
+        ui.std_radioButton.setDisabled(False)
+        ui.MAD_radioButton.setDisabled(False)
+    else:
+        ui.raw_radioButton.setDisabled(True)
+        ui.mean_radioButton.setDisabled(True)
+        ui.median_radioButton.setDisabled(True)
+        ui.CoV_radioButton.setDisabled(True)
+        ui.std_radioButton.setDisabled(True)
+        ui.MAD_radioButton.setDisabled(True)
 
     ui.raw_radioButton.clicked.connect(raw_radioButton_clicked)
     ui.mean_radioButton.clicked.connect(mean_radioButton_clicked)
     ui.median_radioButton.clicked.connect(median_radioButton_clicked)
-    ui.robustmean_radioButton.clicked.connect(robustmean_radioButton_clicked)
+    ui.CoV_radioButton.clicked.connect(CoV_radioButton_clicked)
     ui.std_radioButton.clicked.connect(std_radioButton_clicked)
     ui.MAD_radioButton.clicked.connect(MAD_radioButton_clicked)
 

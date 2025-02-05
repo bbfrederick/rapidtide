@@ -19,7 +19,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-39-{{ checksum "setup.py" }}
+          key: deps2-39-{{ checksum "pyproject.toml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -32,11 +32,10 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install -e .[tests,doc]
+                pip install .[tests,doc]
             fi
-            python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-39-{{ checksum "setup.py" }}
+          key: deps2-39-{{ checksum "pyproject.toml" }}
           paths:
             - "/opt/conda/envs/py39_env"
 
@@ -52,7 +51,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-310-{{ checksum "setup.py" }}
+          key: deps2-310-{{ checksum "pyproject.toml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -65,11 +64,10 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install -e .[tests,doc]
+                pip install .[tests,doc]
             fi
-            python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-310-{{ checksum "setup.py" }}
+          key: deps2-310-{{ checksum "pyproject.toml" }}
           paths:
             - "/opt/conda/envs/py310_env"
 
@@ -85,7 +83,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -98,11 +96,10 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install -e .[tests,doc]
+                pip install .[tests,doc]
             fi
-            python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-311-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}
           paths:
             - "/opt/conda/envs/py311_env"
 
@@ -118,7 +115,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -131,11 +128,10 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install -e .[tests,doc]
+                pip install .[tests,doc]
             fi
-            python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-311-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}
           paths:
             - "/opt/conda/envs/py311_env"
 
@@ -151,7 +147,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-312-{{ checksum "setup.py" }}
+          key: deps2-312-{{ checksum "pyproject.toml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -164,11 +160,10 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install -e .[tests,doc]
+                pip install .[tests,doc]
             fi
-            python setup.py install --user
       - save_cache:  # environment cache tied to requirements
-          key: deps2-312-{{ checksum "setup.py" }}
+          key: deps2-312-{{ checksum "pyproject.toml" }}
           paths:
             - "/opt/conda/envs/py312_env"
 
@@ -184,7 +179,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-39-{{ checksum "setup.py" }}
+          key: deps2-39-{{ checksum "pyproject.toml" }}
       - run:
           name: Run tests
           command:  |
@@ -222,7 +217,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-310-{{ checksum "setup.py" }}
+          key: deps2-310-{{ checksum "pyproject.toml" }}
       - run:
           name: Run tests
           command:  |
@@ -259,7 +254,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:
           name: Run tests
           command:  |
@@ -300,7 +295,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:
           name: Coverage
           file: rapidtide/coverage.xml
@@ -346,7 +341,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-312-{{ checksum "setup.py" }}
+          key: deps2-312-{{ checksum "pyproject.toml" }}
       - run:
           name: Run tests
           command:  |
@@ -383,14 +378,14 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:
           name: Build documentation
           command: |
             apt-get update
             apt-get install -yqq make
             source activate py311_env
-            pip install -e .[doc]
+            pip install .[doc]
             pip uninstall -y pyqtgraph
             pip install numpydoc
             #pip install pyqt5-sip
@@ -407,7 +402,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "setup.py" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:
           name: Linting
           command:  |

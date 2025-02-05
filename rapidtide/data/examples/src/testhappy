@@ -9,13 +9,13 @@
 #    --infotag tag2 value2 \
 #    --model model_revised
 
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happy \
-    --mklthreads 8 \
-    --model model_revised \
-    --spatialglm --aliasedcorrelation
+#happy \
+    #sub-HAPPYTEST.nii.gz \
+    #sub-HAPPYTEST.json \
+    #../dst/happy \
+    #--mklthreads 8 \
+    #--model model_revised \
+    #--spatialglm --aliasedcorrelation
 
 
 #happy \
@@ -62,9 +62,7 @@ happy \
     #--dodlfilter
 
 
-#happy \
-    #ses-060_bold_trunc.nii.gz \
-    #ses-060_bold_trunc.json \
-    #../dst/happy_motion \
-    #--mklthreads 8 \
-    #--motionfile ses-060_bold_trunc_prefiltered_func_data_mcf.par
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy_motion

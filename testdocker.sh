@@ -1,17 +1,19 @@
 #!/bin/bash
 
 MYIPADDRESS=`ifconfig en0 | grep 'inet ' | awk '{print $2}'`
+VERSION=latest
 
 # allow network connections in Xquartz Security settings
 xhost +
 
+docker pull fredericklab/rapidtide:${VERSION}
 docker run \
     --rm \
     --ipc host \
     --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
     -it \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:latest \
+    -u rapidtide fredericklab/rapidtide:${VERSION} \
     /cloud/mount-and-run rapidtide \
         /data/src/sub-RAPIDTIDETEST.nii.gz \
         /data/dst/sub-RAPIDTIDETEST \
@@ -25,7 +27,7 @@ docker run \
 #    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
 #    -it \
 #    -v /tmp/.X11-unix:/tmp/.X11-unix \
-#    -u rapidtide fredericklab/rapidtide:latest \
+#    -u rapidtide fredericklab/rapidtide:${VERSION} \
 #    rapidtide \
 #        /data/src/sub-RAPIDTIDETEST.nii.gz \
 #        /data/dst/sub-RAPIDTIDETEST_disabledockermemfix \
@@ -41,7 +43,7 @@ docker run \
 #    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
 #    -it \
 #    -v /tmp/.X11-unix:/tmp/.X11-unix \
-#    -u rapidtide fredericklab/rapidtide:latest \
+#    -u rapidtide fredericklab/rapidtide:${VERSION} \
 #    happy \
 #        /data/src/sub-HAPPYTEST.nii.gz \
 #        /data/src/sub-HAPPYTEST.json \
@@ -55,7 +57,7 @@ docker run \
 #    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
 #    -it \
 #    -v /tmp/.X11-unix:/tmp/.X11-unix \
-#    -u rapidtide fredericklab/rapidtide:latest \
+#    -u rapidtide fredericklab/rapidtide:${VERSION} \
 #    gmscalc \
 #        /data/src/sub-RAPIDTIDETEST.nii.gz \
 #        /data/dst/sub-RAPIDTIDETEST_GMS \
@@ -67,5 +69,5 @@ docker run \
     -it \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:latest \
+    -u rapidtide fredericklab/rapidtide:${VERSION} \
     tidepool --dataset /data/code/rapidtide/rapidtide/data/examples/dst/sub-RAPIDTIDETEST_

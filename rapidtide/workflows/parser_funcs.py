@@ -96,6 +96,25 @@ def is_float(parser, arg):
     return arg
 
 
+def is_valid_file_or_float(parser, arg):
+    """
+    Check if argument is existing file.
+    """
+    if arg is not None:
+        thefilename, colspec = tide_io.parsefilespec(arg)
+    else:
+        thefilename = None
+
+    if not op.isfile(thefilename) and thefilename is not None:
+        # this is not a file - is it a float?
+        try:
+            arg = float(arg)
+        except ValueError:
+            parser.error("Value {0} is not a float or a valid filename".format(arg))
+
+    return arg
+
+
 def is_int(parser, arg):
     """
     Check if argument is int or auto.
@@ -330,7 +349,17 @@ def addfilteropts(
         ],
         help=(
             f'Filter {filtertarget} to specific band. Use "None" to disable filtering.  '
-            f'Default is "{defaultmethod}".'
+            f'Default is "{defaultmethod}".  Ranges are: '
+            f'vlf: {tide_filt.getfilterbandfreqs("vlf", asrange=True)}, '
+            f'lfo: {tide_filt.getfilterbandfreqs("lfo", asrange=True)}, '
+            f'cardiac: {tide_filt.getfilterbandfreqs("cardiac", asrange=True)}, '
+            f'hrv_ulf: {tide_filt.getfilterbandfreqs("hrv_ulf", asrange=True)}, '
+            f'hrv_vlf: {tide_filt.getfilterbandfreqs("hrv_vlf", asrange=True)}, '
+            f'hrv_lf: {tide_filt.getfilterbandfreqs("hrv_lf", asrange=True)}, '
+            f'hrv_hf: {tide_filt.getfilterbandfreqs("hrv_hf", asrange=True)}, '
+            f'hrv_vhf: {tide_filt.getfilterbandfreqs("hrv_vhf", asrange=True)}, '
+            f'lfo_legacy: {tide_filt.getfilterbandfreqs("lfo_legacy", asrange=True)}, '
+            f'lfo_tight: {tide_filt.getfilterbandfreqs("lfo_tight", asrange=True)}'
         ),
         default=defaultmethod,
     )
@@ -550,7 +579,7 @@ def addplotopts(parser, multiline=True):
         type=str,
         action="store",
         help="Use TITLE as the overall title of the graph.",
-        default="",
+        default=None,
     )
     plotopts.add_argument(
         "--xlabel",
@@ -559,7 +588,7 @@ def addplotopts(parser, multiline=True):
         type=str,
         action="store",
         help="Label for the plot x axis.",
-        default="",
+        default=None,
     )
     plotopts.add_argument(
         "--ylabel",
@@ -568,7 +597,7 @@ def addplotopts(parser, multiline=True):
         type=str,
         action="store",
         help="Label for the plot y axis.",
-        default="",
+        default=None,
     )
     if multiline:
         plotopts.add_argument(
@@ -720,13 +749,6 @@ def addpermutationopts(parser, numreps=10000):
         ),
         default=numreps,
     )
-    sigcalc_opts.add_argument(
-        "--skipsighistfit",
-        dest="dosighistfit",
-        action="store_false",
-        help=("Do not fit significance histogram with a Johnson SB function."),
-        default=True,
-    )
 
 
 def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0):
@@ -746,7 +768,7 @@ def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0)
     if details:
         parser.add_argument(
             "--fixdelay",
-            dest="fixeddelayvalue",
+            dest="initialdelayvalue",
             action="store",
             type=float,
             metavar="DELAYTIME",
@@ -759,12 +781,12 @@ def postprocesssearchrangeopts(args):
     # Additional argument parsing not handled by argparse
     # first handle fixed delay
     try:
-        test = args.fixeddelayvalue
+        test = args.initialdelayvalue
     except:
-        args.fixeddelayvalue = None
-    if args.fixeddelayvalue is not None:
+        args.initialdelayvalue = None
+    if args.initialdelayvalue is not None:
         args.fixdelay = True
-        args.lag_extrema = (args.fixeddelayvalue - 10.0, args.fixeddelayvalue + 10.0)
+        args.lag_extrema = (args.initialdelayvalue - 10.0, args.initialdelayvalue + 10.0)
     else:
         args.fixdelay = False
 

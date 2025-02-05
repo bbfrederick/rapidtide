@@ -1,6 +1,14 @@
 #!/bin/bash
 
+# Checkout current state
 git pull
+
+# remove any previously installed versions
 cleandirs
-pip install -e .
-rm -rf rapidtide.egg-info
+
+# install the package
+#pip install -e .
+pip install .
+
+# remove the build directory
+rm -rf rapidtide.egg-info build

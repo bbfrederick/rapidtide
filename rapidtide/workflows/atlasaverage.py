@@ -20,33 +20,47 @@ import argparse
 import sys
 
 import numpy as np
+from statsmodels.robust import mad
 
 import rapidtide.io as tide_io
 import rapidtide.maskutil as tide_mask
+import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
 
-def summarize(thevoxels, method="mean"):
+def summarizevoxels(thevoxels, method="mean"):
     theshape = thevoxels.shape
     if len(theshape) > 1:
         numtimepoints = theshape[1]
     else:
         numtimepoints = 1
 
-    if method == "mean":
-        themethod = np.mean
-    elif method == "sum":
-        themethod = np.sum
-    elif method == "median":
-        themethod = np.median
+    if method == "CoV":
+        if numtimepoints > 1:
+            regionsummary = 100.0 * np.nan_to_num(
+                np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
+            )
+        else:
+            regionsummary = 100.0 * np.nan_to_num(np.std(thevoxels) / np.mean(thevoxels))
     else:
-        print(f"illegal summary method {method} in summarize")
-        sys.exit()
+        if method == "mean":
+            themethod = np.mean
+        elif method == "sum":
+            themethod = np.sum
+        elif method == "median":
+            themethod = np.median
+        elif method == "std":
+            themethod = np.std
+        elif method == "MAD":
+            themethod = mad
+        else:
+            print(f"illegal summary method {method} in summarizevoxels")
+            sys.exit()
 
-    if numtimepoints > 1:
-        regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
-    else:
-        regionsummary = np.nan_to_num(themethod(thevoxels))
+        if numtimepoints > 1:
+            regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
+        else:
+            regionsummary = np.nan_to_num(themethod(thevoxels))
     return regionsummary
 
 
@@ -84,12 +98,25 @@ def _get_parser():
         default="none",
     )
     parser.add_argument(
+        "--numpercentiles",
+        dest="numpercentiles",
+        metavar="NPCT",
+        type=int,
+        help=(
+            "Number of evenly spaced percentiles between 0 and 100 (not including the end points) to calculate "
+            "in each region.  For example, If NPCT = 1, calculate the 0th, 50th, and 100th percentiles."
+        ),
+        default=1,
+    )
+    parser.add_argument(
         "--summarymethod",
         dest="summarymethod",
         action="store",
         type=str,
-        choices=["mean", "median", "sum"],
-        help=("Method to summarize a region.  Choices are 'mean' (default), 'median', and 'sum'."),
+        choices=["mean", "median", "sum", "std", "MAD", "CoV"],
+        help=(
+            "Method to summarize the voxels in a region.  Choices are 'mean' (default), 'median', 'sum', 'std', 'MAD', and 'CoV'."
+        ),
         default="mean",
     )
     parser.add_argument(
@@ -316,7 +343,7 @@ def atlasaverage(args):
                 if thenormfac[theloc] != 0.0:
                     theregionvoxels[theloc, :] /= thenormfac[theloc]
             if theregionvoxels.shape[1] > 0:
-                timecourses[theregion - 1, :] = summarize(
+                timecourses[theregion - 1, :] = summarizevoxels(
                     theregionvoxels, method=args.summarymethod
                 )
         if args.debug:
@@ -327,6 +354,11 @@ def atlasaverage(args):
         outputvoxels = inputvoxels * 0.0
         theregnums = []
         thevals = []
+        thepercentiles = []
+        thesizes = []
+        thefracs = np.linspace(0.0, 1.0, args.numpercentiles + 2, endpoint=True).tolist()
+        numsubregions = len(thefracs) - 1
+        segmentedatlasvoxels = inputvoxels * 0.0
         if args.datalabel is not None:
             theregnums.append("Region")
             thevals.append(args.datalabel)
@@ -353,19 +385,47 @@ def atlasaverage(args):
                         f"voxels from region {theregion} of {numregions}"
                     )
             if theregionvoxels.shape[0] > 0:
-                regionval = summarize(theregionvoxels, method=args.summarymethod)
+                regionval = summarizevoxels(theregionvoxels, method=args.summarymethod)
+                regionsizes = theregionvoxels.shape[0]
+                regionpercentiles = [
+                    f"{num:.4f}"
+                    for num in tide_stats.getfracvals(
+                        theregionvoxels,
+                        thefracs,
+                        nozero=True,
+                        debug=False,
+                    )
+                ]
                 outputvoxels[np.where(templatevoxels == theregion)] = regionval
                 thevals.append(str(regionval))
+                thesizes.append(str(regionsizes))
+                thepercentiles.append(regionpercentiles)
             else:
                 if args.debug:
                     print(f"\tregion {theregion} is empty")
                 thevals.append("None")
+            for thesubregion in range(numsubregions):
+                scratchvoxels = inputvoxels * 0.0
+                subregionkey = 1 + (theregion - 1) * numsubregions + thesubregion
+                lowerlim = float(regionpercentiles[thesubregion])
+                upperlim = float(regionpercentiles[thesubregion + 1])
+                scratchvoxels[np.where(lowerlim <= inputvoxels)] = subregionkey
+                if thesubregion < numsubregions - 1:
+                    scratchvoxels[np.where(inputvoxels >= upperlim)] = 0
+                scratchvoxels[np.where(templatevoxels * themask != theregion)] = 0
+                segmentedatlasvoxels += scratchvoxels
         template_hdr["dim"][4] = 1
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices)),
             template_hdr,
             args.outputroot,
         )
+        tide_io.savetonifti(
+            segmentedatlasvoxels.reshape((xsize, ysize, numslices)),
+            template_hdr,
+            args.outputroot + "_percentiles",
+        )
+
         if args.includename is not None or args.excludename is not None:
             tide_io.savetonifti(
                 (templatevoxels * themask).reshape((xsize, ysize, numslices)),
@@ -381,4 +441,14 @@ def atlasaverage(args):
             tide_io.writevec(
                 [",".join(thevals)],
                 f"{args.outputroot}_regionsummaries.csv",
+            )
+
+        outlines = []
+        pctstrings = [f"{num:.0f}" for num in (np.array(thefracs) * 100.0).tolist()]
+        outlines.append("Region\tVoxels\t" + "pct-" + "\tpct-".join(pctstrings))
+        for idx, region in enumerate(theregnums):
+            outlines.append(region + "\t" + thesizes[idx] + "\t" + "\t".join(thepercentiles[idx]))
+            tide_io.writevec(
+                outlines,
+                f"{args.outputroot}_regionpercentiles.tsv",
             )

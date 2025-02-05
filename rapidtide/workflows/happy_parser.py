@@ -17,7 +17,6 @@
 #
 #
 import argparse
-import sys
 
 import numpy as np
 
@@ -99,7 +98,7 @@ def _get_parser():
         metavar="MODELNAME",
         help=(
             "Use model MODELNAME for dl filter (default is model_revised - "
-            "from the revised NeuroImage paper. "
+            "from the revised NeuroImage paper.) "
         ),
         default="model_revised",
     )
@@ -179,18 +178,22 @@ def _get_parser():
         default=True,
     )
     preprocessing_opts.add_argument(
-        "--motpos",
-        dest="motfilt_pos",
-        action="store_true",
-        help=("Include motion position regressors. "),
-        default=False,
-    )
-    preprocessing_opts.add_argument(
         "--nomotderiv",
         dest="motfilt_deriv",
         action="store_false",
         help=("Do not use motion derivative regressors. "),
         default=True,
+    )
+    preprocessing_opts.add_argument(
+        "--motfiltorder",
+        dest="motfilt_order",
+        action="store",
+        metavar="N",
+        type=lambda x: pf.is_int(parser, x),
+        help=(
+            "Include powers of each confound regressor up to order N. Default is 1 (no expansion). "
+        ),
+        default=1,
     )
     preprocessing_opts.add_argument(
         "--discardmotionfiltered",
@@ -287,6 +290,15 @@ def _get_parser():
             "Use this if there is a contrast agent in the blood. "
         ),
         default=False,
+    )
+    cardiac_est_tuning.add_argument(
+        "--teoffset",
+        dest="teoffset",
+        action="store",
+        metavar="TE",
+        type=lambda x: pf.is_float(parser, x),
+        help="Specify the echo time in seconds.  This is used when combining multiecho data.  Default is 0. ",
+        default=None,
     )
 
     # External cardiac waveform options
@@ -662,23 +674,7 @@ def process_args(inputargs=None):
     """
     Compile arguments for rapidtide workflow.
     """
-    if inputargs is None:
-        print("processing command line arguments")
-        # write out the command used
-        try:
-            args = _get_parser().parse_args()
-            argstowrite = sys.argv
-        except SystemExit:
-            _get_parser().print_help()
-            raise
-    else:
-        print("processing passed argument list:")
-        try:
-            args = _get_parser().parse_args(inputargs)
-            argstowrite = inputargs
-        except SystemExit:
-            print("Use --help option for detailed informtion on options.")
-            raise
+    args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
 
     # save the raw and formatted command lines
     args.commandline = " ".join(argstowrite)

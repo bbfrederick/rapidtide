@@ -438,7 +438,7 @@ def findbadpts(
         thresh = numsigma * sigma
         thebadpts = np.where(absdev >= thresh, 1.0, 0.0)
         print(
-            "Bad point threshhold set to",
+            "Bad point threshold set to",
             "{:.3f}".format(thresh),
             "using the",
             thetype,
@@ -1241,3 +1241,51 @@ def phaseproject(
         normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
             app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
         )
+
+def upsampleimage(input_data, input_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot):
+    fmri_data = input_data.byvol()
+    timepoints = input_data.timepoints
+    xsize = input_data.xsize
+    ysize = input_data.ysize
+    numslices = input_data.numslices
+
+    # allocate the image
+    print(f"upsampling fmri data by a factor of {numsteps}")
+    upsampleimage = np.zeros((xsize, ysize, numslices, numsteps * timepoints), dtype=float)
+    upsampleimage_byslice = upsampleimage.reshape(
+        xsize * ysize, numslices, numsteps * timepoints
+    )
+
+    # demean the raw data
+    meanfmri = fmri_data.mean(axis=1)
+    demeaned_data = fmri_data - meanfmri[:, None]
+
+    # drop in the raw data
+    for theslice in range(numslices):
+        upsampleimage[
+        :, :, theslice, sliceoffsets[theslice]: timepoints * numsteps: numsteps
+        ] = demeaned_data.reshape((xsize, ysize, numslices, timepoints))[:, :, theslice, :]
+
+    upsampleimage_byslice = upsampleimage.reshape(xsize * ysize, numslices, timepoints * numsteps)
+
+    # interpolate along the slice direction
+    thedstlocs = np.linspace(0, numslices, num=len(sliceoffsets), endpoint=False)
+    print(f"len(destlocst), destlocs: {len(thedstlocs)}, {thedstlocs}")
+    for thetimepoint in range(0, timepoints * numsteps):
+        thestep = thetimepoint % numsteps
+        print(f"interpolating step {thestep}")
+        thesrclocs = np.where(sliceoffsets == thestep)[0]
+        print(f"timepoint: {thetimepoint}, sourcelocs: {thesrclocs}")
+        for thexyvoxel in range(xsize * ysize):
+            theinterps = np.interp(
+                thedstlocs,
+                1.0 * thesrclocs,
+                upsampleimage_byslice[thexyvoxel, thesrclocs, thetimepoint],
+            )
+            upsampleimage_byslice[thexyvoxel, :, thetimepoint] = 1.0 * theinterps
+
+    theheader = copy.deepcopy(input_hdr)
+    theheader["dim"][4] = timepoints * numsteps
+    theheader["pixdim"][4] = 1.0 / slicesamplerate
+    tide_io.savetonifti(upsampleimage, theheader, outputroot + "_upsampled")
+    print("upsampling complete")

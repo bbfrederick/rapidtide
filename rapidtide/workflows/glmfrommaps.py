@@ -103,8 +103,10 @@ def glmfrommaps(
     numvalidspatiallocs = np.shape(validvoxels)[0]
 
     # generate the voxel specific regressors
-    LGR.info("Start lagged timecourse creation")
-    TimingLGR.info("Start lagged timecourse creation")
+    if LGR is not None:
+        LGR.info("Start lagged timecourse creation")
+    if TimingLGR is not None:
+        TimingLGR.info("Start lagged timecourse creation")
     if memprofile:
         makelagged_func = addmemprofiling(
             tide_makelagged.makelaggedtcs,
@@ -131,18 +133,22 @@ def glmfrommaps(
         threshmask = np.where(fitmask > 0, 1, 0)
         print(f"{np.sum(threshmask)} nonzero mask voxels")
         print(f"after makelaggedtcs: shifted {voxelsprocessed_makelagged} timecourses")
-    LGR.info("End lagged timecourse creation")
-    TimingLGR.info(
-        "Lagged timecourse creation end",
-        {
-            "message2": voxelsprocessed_makelagged,
-            "message3": "voxels",
-        },
-    )
+    if LGR is not None:
+        LGR.info("End lagged timecourse creation")
+    if TimingLGR is not None:
+        TimingLGR.info(
+            "Lagged timecourse creation end",
+            {
+                "message2": voxelsprocessed_makelagged,
+                "message3": "voxels",
+            },
+        )
 
     # and do the filtering
-    LGR.info("Start filtering operation")
-    TimingLGR.info("Start filtering operation")
+    if LGR is not None:
+        LGR.info("Start filtering operation")
+    if TimingLGR is not None:
+        TimingLGR.info("Start filtering operation")
     if memprofile:
         glmpass_func = addmemprofiling(tide_glmpass.glmpass, memprofile, "before glmpass")
     else:
@@ -152,10 +158,16 @@ def glmfrommaps(
         if debug:
             print(f"adding derivatives up to order {glmderivs} prior to regression")
         regressorset = tide_glmpass.makevoxelspecificderivs(lagtc, glmderivs)
+        baseev = rt_floatset(genlagtc.yfromx(initial_fmri_x))
+        evset = tide_glmpass.makevoxelspecificderivs(baseev.reshape((1, -1)), glmderivs).reshape(
+            (-1, 2)
+        )
     else:
         if debug:
             print(f"using raw lagged regressors for regression")
         regressorset = lagtc
+        evset = rt_floatset(genlagtc.yfromx(initial_fmri_x))
+
     if debug:
         print(f"{regressorset.shape=}")
     voxelsprocessed_glm = glmpass_func(
@@ -198,4 +210,4 @@ def glmfrommaps(
             append=False,
         )
 
-    return voxelsprocessed_glm, regressorset
+    return voxelsprocessed_glm, regressorset, evset

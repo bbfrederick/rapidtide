@@ -377,7 +377,7 @@ def showarbcorr(args):
 
     thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
-    # intitialize the correlation fitter
+    # initialize the correlation fitter
     thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
         corrtimeaxis=xcorr_x,
         lagmin=args.lagmin,

@@ -45,6 +45,7 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
         "-1",
         "--similaritymetric",
         "mutualinfo",
+        "--norefinedelay",
         "--dpoutput",
         "--spcalculation",
         "--simcalcrange",

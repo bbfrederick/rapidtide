@@ -57,7 +57,7 @@ def _get_parser():
     parser.add_argument(
         "--scatter",
         action="store_true",
-        help=("Do a scatter plot intstead of a contour plot."),
+        help=("Do a scatter plot instead of a contour plot."),
         default=False,
     )
     parser.add_argument(

@@ -27,6 +27,7 @@ import sys
 import time
 from datetime import datetime
 from multiprocessing import RawArray, shared_memory
+from os.path import split
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -132,6 +133,24 @@ def findavailablemem():
         return free, swap
 
 
+def checkifincontainer():
+    # Determine if the program is running in a container.  If so, we may need to adjust the python memory
+    # limits because they are not set properly.  But check if we're running on CircleCI - it does not seem
+    # to like you twiddling with the container parameters.
+    #
+    # possible return values are: None, "Docker", "Singularity", and "CircleCI"
+    #
+    if os.environ.get("SINGULARITY_CONTAINER") is not None:
+        containertype = "Singularity"
+    elif os.environ.get("RUNNING_IN_CONTAINER") is not None:
+        containertype = "Docker"
+    else:
+        containertype = None
+    if os.environ.get("CIRCLECI") is not None:
+        containertype = "CircleCI"
+    return containertype
+
+
 def setmemlimit(memlimit):
     resource.setrlimit(resource.RLIMIT_AS, (memlimit, memlimit))
 
@@ -148,6 +167,17 @@ def formatmemamt(meminbytes):
         if index >= len(units):
             break
     return f"{round(meminbytes/unitnumber, 3):.3f}{units[-1]}"
+
+
+def format_bytes(size):
+    # 2**10 = 1024
+    power = 2**10
+    n = 0
+    power_labels = {0: "", 1: "kilo", 2: "mega", 3: "giga", 4: "tera"}
+    while size > power:
+        size /= power
+        n += 1
+    return size, power_labels[n] + "bytes"
 
 
 def logmem(msg=None):
@@ -453,19 +483,41 @@ def version():
 
     """
     try:
-        dummy = os.environ["IS_DOCKER_8395080871"]
+        dummy = os.environ["RUNNING_IN_CONTAINER"]
     except KeyError:
-        isdocker = False
+        iscontainer = False
     else:
-        isdocker = True
+        iscontainer = True
 
-    if isdocker:
+    if iscontainer:
         try:
             theversion = os.environ["GITVERSION"]
             if theversion.find("+") < 0:
                 theverion = theversion.split(".")[0]
         except KeyError:
             theversion = "UNKNOWN"
+        try:
+            thedirectversion = os.environ["GITDIRECTVERSION"]
+            directversionparts = thedirectversion.split("-")
+            if len(directversionparts) == 3:
+                thedirectversion = (
+                    directversionparts[0]
+                    + "."
+                    + directversionparts[1]
+                    + "+"
+                    + directversionparts[2]
+                )
+                isdirty = True
+            elif len(directversionparts) == 2:
+                thedirectversion = directversionparts[0] + "." + directversionparts[1]
+                isdirty = True
+            elif len(directversionparts) == 1:
+                thedirectversion = directversionparts[0]
+                isdirty = False
+            else:
+                pass
+        except KeyError:
+            thedirectversion = "UNKNOWN"
         try:
             thesha = os.environ["GITSHA"]
         except KeyError:
@@ -474,25 +526,32 @@ def version():
             thedate = os.environ["GITDATE"]
         except KeyError:
             thedate = "UNKNOWN"
-        isdirty = False
+        if thedirectversion != "UNKNOWN":
+            theversion = thedirectversion
     else:
         try:
             versioninfo = tide_versioneer.get_versions()
         except:
             return "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"
-
+        isdirty = versioninfo["dirty"]
+        if isdirty is None:
+            isdirty = "UNKNOWN"
         theversion = versioninfo["version"]
         if theversion is None:
             theversion = "UNKNOWN"
+        else:
+            splitversion = theversion.split("+")
+            if len(splitversion) > 1:
+                resplit = splitversion[1].split(".")
+                if len(resplit) == 3:
+                    if resplit[0] == "0":
+                        theversion = splitversion[0]
         thesha = versioninfo["full-revisionid"]
         if thesha is None:
             thesha = "UNKNOWN"
         thedate = versioninfo["date"]
         if thedate is None:
             thedate = "UNKNOWN"
-        isdirty = versioninfo["dirty"]
-        if isdirty is None:
-            isdirty = "UNKNOWN"
 
     return theversion, thesha, thedate, isdirty
 
@@ -1007,6 +1066,7 @@ def numpy2shared(inarray, theouttype, name=None):
     # Create a shared memory block to store the array data
     outnbytes = np.dtype(theouttype).itemsize * inarray.size
     shm = shared_memory.SharedMemory(name=None, create=True, size=outnbytes)
+    shm.unlink()
     inarray_shared = np.ndarray(inarray.shape, dtype=theouttype, buffer=shm.buf)
     np.copyto(inarray_shared, inarray)  # Copy data to shared memory array
     return inarray_shared, shm  # Return both the array and the shared memory object
@@ -1019,12 +1079,14 @@ def allocshared(theshape, thetype, name=None):
     dtype_size = np.dtype(thetype).itemsize
     # Create a shared memory block of the required size
     shm = shared_memory.SharedMemory(name=None, create=True, size=thesize * dtype_size)
+    shm.unlink()
     outarray = np.ndarray(theshape, dtype=thetype, buffer=shm.buf)
     return outarray, shm  # Return both the array and the shared memory object
 
 
 def cleanup_shm(shm):
     # Cleanup
-    if shm is not None:
-        shm.close()
-        shm.unlink()
+    pass
+    # if shm is not None:
+    #    shm.close()
+    #    shm.unlink()

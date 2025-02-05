@@ -86,7 +86,7 @@ def _get_parser():
     return parser
 
 
-def makdcommandlinelist(arglist, starttime, endtime, extra=None):
+def makecommandlinelist(arglist, starttime, endtime, extra=None):
     # get the processing date
     dateline = (
         "# Processed on "
@@ -201,5 +201,5 @@ def gmscalc_main():
     tide_io.writevec(gms_lfo, args.outputroot + "_gmslfo.txt")
     tide_io.writevec(gms_hf, args.outputroot + "_gmshf.txt")
     runendtime = time.time()
-    thecommandfilelines = makdcommandlinelist(sys.argv, runstarttime, runendtime)
+    thecommandfilelines = makecommandlinelist(sys.argv, runstarttime, runendtime)
     tide_io.writevec(thecommandfilelines, args.outputroot + "_commandline.txt")

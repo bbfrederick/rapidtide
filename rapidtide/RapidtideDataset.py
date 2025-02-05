@@ -29,12 +29,13 @@ import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 from rapidtide.Colortables import *
+from rapidtide.stats import neglogpfromr_interpolator
 
 atlases = {
     "ASPECTS": {"atlasname": "ASPECTS"},
     "ATT": {"atlasname": "ATTbasedFlowTerritories_split"},
-    "JHU1": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym"},
-    "JHU2": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL2_space-MNI152NLin6Asym"},
+    "JHU1": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL1"},
+    "JHU2": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL2"},
 }
 
 
@@ -218,7 +219,7 @@ class Overlay:
         if self.verbose > 0:
             self.summarize()
 
-    def duplicate(self, newname, newlabel):
+    def duplicate(self, newname, newlabel, init_LUT=True):
         return Overlay(
             newname,
             self.filename,
@@ -227,8 +228,7 @@ class Overlay:
             geommask=self.geommask,
             label=newlabel,
             report=self.report,
-            init_LUT=self.init_LUT,
-            lut_state=self.lut_state,
+            init_LUT=init_LUT,
         )
 
     def updateStats(self):
@@ -619,6 +619,22 @@ class RapidtideDataset:
                         self.fileroot + maskfilename + ".nii.gz",
                         " does not exist!",
                     )
+        if self.verbose > 1:
+            print(self.loadedfuncmasks)
+
+    def _genpmasks(self, pvals=[0.05, 0.01, 0.005, 0.001]):
+        for thepval in pvals:
+            maskname = f"p_lt_{thepval:.3f}_mask".replace("0.0", "0p0")
+            nlpthresh = -np.log10(thepval)
+            if self.verbose > 1:
+                print(f"generating {maskname} from neglog10p")
+            self.overlays[maskname] = self.overlays[self.loadedfuncmasks[-1]].duplicate(
+                maskname, None, self.init_LUT
+            )
+            self.overlays[maskname].setData(
+                np.where(self.overlays["neglog10p"].data > nlpthresh, 1.0, 0.0), isaMask=True
+            )
+            self.loadedfuncmasks.append(maskname)
         if self.verbose > 1:
             print(self.loadedfuncmasks)
 
@@ -1051,6 +1067,7 @@ class RapidtideDataset:
         if self.bidsformat:
             self.funcmaps = [
                 ["lagtimes", "desc-maxtime_map"],
+                ["lagtimesrefined", "desc-maxtimerefined_map"],
                 ["timepercentile", "desc-timepercentile_map"],
                 ["lagstrengths", "desc-maxcorr_map"],
                 ["lagsigma", "desc-maxwidth_map"],
@@ -1058,6 +1075,8 @@ class RapidtideDataset:
                 ["R2", "desc-lfofilterR2_map"],
                 ["fitNorm", "desc-lfofilterNorm_map"],
                 ["fitcoff", "desc-lfofilterCoeff_map"],
+                ["neglog10p", "desc-neglog10p_map"],
+                ["delayoffset", "desc-delayoffset_map"],
             ]
             if self.usecorrout:
                 self.funcmaps += [["corrout", "desc-corrout_info"]]
@@ -1147,11 +1166,15 @@ class RapidtideDataset:
                 ["refinemask", "desc-refine_mask"],
                 ["meanmask", "desc-globalmean_mask"],
                 ["preselectmask", "desc-globalmeanpreselect_mask"],
-                ["p_lt_0p050_mask", "desc-plt0p050_mask"],
-                ["p_lt_0p010_mask", "desc-plt0p010_mask"],
-                ["p_lt_0p005_mask", "desc-plt0p005_mask"],
-                ["p_lt_0p001_mask", "desc-plt0p001_mask"],
             ]
+            if not ("neglog10p" in self.loadedfuncmaps):
+                # load p maps manually
+                self.funcmasks += [
+                    ["p_lt_0p050_mask", "desc-plt0p050_mask"],
+                    ["p_lt_0p010_mask", "desc-plt0p010_mask"],
+                    ["p_lt_0p005_mask", "desc-plt0p005_mask"],
+                    ["p_lt_0p001_mask", "desc-plt0p001_mask"],
+                ]
         else:
             if self.newstylenames:
                 self.funcmasks = [
@@ -1174,6 +1197,9 @@ class RapidtideDataset:
                     ["p_lt_0p001_mask", "p_lt_0p001_mask"],
                 ]
         self._loadfuncmasks()
+        if "neglog10p" in self.loadedfuncmaps:
+            # generate p maps on the fly
+            self._genpmasks()
 
         # then the geometric masks
         if self._loadgeommask():
@@ -1190,8 +1216,7 @@ class RapidtideDataset:
             or (self.coordinatespace == "MNI152NLin6")
             or (self.coordinatespace == "MNI152NLin2009cAsym")
         ):
-            # atlasname = 'ASPECTS'
-            self.atlasshortname = "ATT"
+            self.atlasshortname = "JHU1"
             self.atlasname = atlases[self.atlasshortname]["atlasname"]
             self.atlaslabels = tide_io.readlabels(
                 os.path.join(self.referencedir, self.atlasname + "_regions.txt")
@@ -1200,19 +1225,20 @@ class RapidtideDataset:
                 print(self.atlaslabels)
             self.atlasniftiname = None
             if self.coordinatespace == "MNI152":
+                spacename = "_space-MNI152NLin6Asym"
                 if self.xsize == 2.0 and self.ysize == 2.0 and self.zsize == 2.0:
                     self.atlasniftiname = os.path.join(
-                        self.referencedir, self.atlasname + "_2mm.nii.gz"
+                        self.referencedir, self.atlasname + spacename + "_2mm.nii.gz"
                     )
                     self.atlasmaskniftiname = os.path.join(
-                        self.referencedir, self.atlasname + "_2mm_mask.nii.gz"
+                        self.referencedir, self.atlasname + spacename + "_2mm_mask.nii.gz"
                     )
                 if self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
                     self.atlasniftiname = os.path.join(
-                        self.referencedir, self.atlasname + "_3mm.nii.gz"
+                        self.referencedir, self.atlasname + spacename + "_3mm.nii.gz"
                     )
                     self.atlasmaskniftiname = os.path.join(
-                        self.referencedir, self.atlasname + "_3mm_mask.nii.gz"
+                        self.referencedir, self.atlasname + spacename + "_3mm_mask.nii.gz"
                     )
             else:
                 pass

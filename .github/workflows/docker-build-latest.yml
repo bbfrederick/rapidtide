@@ -15,7 +15,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v2
+        uses: gittools/actions/gitversion/setup@v3
         with:
           versionSpec: '5.x'
 
@@ -27,7 +27,7 @@ jobs:
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
-        uses: gittools/actions/gitversion/execute@v2
+        uses: gittools/actions/gitversion/execute@v3
         with:
           additionalArguments: /config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
@@ -53,9 +53,11 @@ jobs:
           GITVERSION=${GITPREVVERSION}+${GITCOMMITS}.g${GITSHA8}
           GITTIME=`git show | grep Date | head -n 1 | awk '{print $5 $7}'`
           GITDATE=${{ steps.gitversion.outputs.commitDate }}"T"${GITTIME}
+          GITPRERELEASE=${{ steps.gitversion.outputs.preReleaseTag }}
           echo "GITVERSION=${GITVERSION}" >> $GITHUB_ENV
           echo "GITSHA=${GITSHA}" >> $GITHUB_ENV
           echo "GITDATE=${GITDATE}" >> $GITHUB_ENV
+          echo "GITPRELEASE=${GITPRERELEASE}" >> $GITHUB_ENV
           BUILD_TIME=$(date -Iseconds)
           echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
 
@@ -104,4 +106,5 @@ jobs:
             GITVERSION=${{ env.GITVERSION }}
             GITSHA=${{ env.GITSHA }}
             GITDATE=${{ env.GITDATE }}
+            GITDIRECTVERSION=${{ env.GITDIRECTVERSION }}
             BUILD_TIME=${{ env.BUILD_TIME }}

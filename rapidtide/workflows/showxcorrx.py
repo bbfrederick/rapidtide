@@ -454,9 +454,9 @@ def showxcorrx(args):
                 )
             )
         if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
-            thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
+            thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata1)
         if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
-            thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
+            thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
     # initialize the Correlator and MutualInformationator
     theCorrelator = tide_classes.Correlator(
@@ -558,7 +558,7 @@ def showxcorrx(args):
         )
 
     if args.similaritymetric == "mutualinfo":
-        # intitialize the similarity function fitter
+        # initialize the similarity function fitter
         themifitter = tide_classes.SimilarityFunctionFitter(
             corrtimeaxis=MI_x_trim,
             lagmin=args.lagmin,
@@ -573,7 +573,7 @@ def showxcorrx(args):
         )
         maxdelaymi = MI_x_trim[np.argmax(theMI_trim)]
     else:
-        # intitialize the correlation fitter
+        # initialize the correlation fitter
         thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
             corrtimeaxis=xcorr_x,
             lagmin=args.lagmin,
@@ -897,10 +897,15 @@ def showxcorrx(args):
                 )
         if args.dolegend:
             ax.legend(thelegend, fontsize=thelegendfontsize, loc=args.legendloc)
-        ax.set_title("Similarity metric over the search range", fontsize=thetitlefontsize)
+        if args.thetitle is not None:
+            ax.set_title(args.thetitle, fontsize=thetitlefontsize)
+        else:
+            ax.set_title("Similarity metric over the search range", fontsize=thetitlefontsize)
         if args.showxax:
+            ax.set_xlabel(args.xlabel, fontsize=thexlabelfontsize, fontweight="bold")
             ax.tick_params(axis="x", labelsize=thexlabelfontsize, which="both")
         if args.showyax:
+            ax.set_ylabel(args.ylabel, fontsize=theylabelfontsize, fontweight="bold")
             ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
         if args.outputfile is not None:
             plt.savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)

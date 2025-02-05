@@ -15,10 +15,9 @@ mamba install \
     nilearn \
     pyfftw \
     pywavelets \
-    pyqt \
-    pyqt5-sip \
+    pyqt6 \
+    pyqt6-sip \
     pyqtgraph>=0.13.4 \
-    tomlkit \
     tqdm
 
 mamba install tensorflow keras

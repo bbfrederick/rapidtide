@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools>=42", "cffi>=1.0.0", 'versioneer[toml]']
+requires = ['setuptools>=42', 'cffi>=1.0.0', 'versioneer[toml]']
 build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'rapidtide'
 description = 'Tools for performing correlation analysis on fMRI data.'
-keywords = ["fMRI", "correlation", "RIPTiDe", "noise"]
-license = {text = "Apache Software License"}
+keywords = ['fMRI', 'correlation', 'RIPTiDe', 'noise']
+license = {text = 'Apache Software License'}
 readme = 'README.rst'
 classifiers = [
     'Operating System :: OS Independent',
@@ -31,22 +31,25 @@ dependencies = [
   'nilearn',
   'matplotlib>=3.3.0',
   'pyqtgraph>=0.13.4',
-  'pyqt5-sip',
+  'pyqt6-sip',
+  'pyqt6',
   'requests',
   'statsmodels',
   'pywavelets',
-  'tomlkit',
   'tensorflow>=2.10.0',
   'tf-keras',
   'tqdm',
+  'versioneer',
 ]
 #dynamic = ['version', 'license', 'keywords']
 dynamic = ['version']
 authors = [
-    {name = "Blaise deB Frederick", email='blaise.frederick@gmail.com' },
-    {name = "Taylor Salo"},
-    {name = "Daniel M. Drucker, Ph.D."},
-    {name = "Jeffrey N Stout"},
+    {name = 'Blaise deB. Frederick', email='blaise.frederick@gmail.com'},
+    {name = 'Taylor Salo'},
+    {name = 'Daniel M. Drucker, Ph.D.'},
+    {name = 'Jeffrey N Stout'},
+    {name = 'Yaroslav O. Halchenko'},
+    {name = 'Derek Monroe'},
 ]
 
 [project.urls]
@@ -73,12 +76,72 @@ doc = [
   'myst-parser',
   'numpydoc',
   'sphinxcontrib-bibtex',
+  'tomlkit',
 ]
 
-#[project.scripts]
-#rapidtide = 'rapidtide.scripts.rapidtide:entrypoint'
-#tidepool = 'rapidtide.scripts.tidepool:entrypoint'
-#calcicc = 'rapidtide.scripts.calcicc:main'
+[project.scripts]
+adjustoffset = 'rapidtide.scripts.adjustoffset:entrypoint'
+aligntcs = 'rapidtide.scripts.aligntcs:entrypoint'
+applydlfilter = 'rapidtide.scripts.applydlfilter:entrypoint'
+atlasaverage = 'rapidtide.scripts.atlasaverage:entrypoint'
+atlastool = 'rapidtide.scripts.atlastool:entrypoint'
+calcicc = 'rapidtide.scripts.calcicc:entrypoint'
+calctexticc = 'rapidtide.scripts.calctexticc:entrypoint'
+calcttest = 'rapidtide.scripts.calcttest:entrypoint'
+ccorrica = 'rapidtide.scripts.ccorrica:entrypoint'
+diffrois = 'rapidtide.scripts.diffrois:entrypoint'
+endtidalproc = 'rapidtide.scripts.endtidalproc:entrypoint'
+fdica = 'rapidtide.scripts.fdica:entrypoint'
+filtnifti = 'rapidtide.scripts.filtnifti:entrypoint'
+filttc = 'rapidtide.scripts.filttc:entrypoint'
+fingerprint = 'rapidtide.scripts.fingerprint:entrypoint'
+fixtr = 'rapidtide.scripts.fixtr:entrypoint'
+glmfilt = 'rapidtide.scripts.glmfilt:entrypoint'
+gmscalc = 'rapidtide.scripts.gmscalc:entrypoint'
+happy = 'rapidtide.scripts.happy:entrypoint'
+happy2std = 'rapidtide.scripts.happy2std:entrypoint'
+happywarp = 'rapidtide.scripts.happywarp:entrypoint'
+histnifti = 'rapidtide.scripts.histnifti:entrypoint'
+histtc = 'rapidtide.scripts.histtc:entrypoint'
+localflow = 'rapidtide.scripts.localflow:entrypoint'
+mergequality = 'rapidtide.scripts.mergequality:entrypoint'
+pairproc = 'rapidtide.scripts.pairproc:entrypoint'
+pairwisemergenifti = 'rapidtide.scripts.pairwisemergenifti:entrypoint'
+physiofreq = 'rapidtide.scripts.physiofreq:entrypoint'
+pixelcomp = 'rapidtide.scripts.pixelcomp:entrypoint'
+plethquality = 'rapidtide.scripts.plethquality:entrypoint'
+polyfitim = 'rapidtide.scripts.polyfitim:entrypoint'
+proj2flow = 'rapidtide.scripts.proj2flow:entrypoint'
+rankimage = 'rapidtide.scripts.rankimage:entrypoint'
+rapidtide = 'rapidtide.scripts.rapidtide:entrypoint'
+rapidtide2std = 'rapidtide.scripts.rapidtide2std:entrypoint'
+resamplenifti = 'rapidtide.scripts.resamplenifti:entrypoint'
+resampletc = 'rapidtide.scripts.resampletc:entrypoint'
+retroglm = 'rapidtide.scripts.retroglm:entrypoint'
+retrolagtcs = 'rapidtide.scripts.retrolagtcs:entrypoint'
+roisummarize = 'rapidtide.scripts.roisummarize:entrypoint'
+runqualitycheck = 'rapidtide.scripts.runqualitycheck:entrypoint'
+showarbcorr = 'rapidtide.scripts.showarbcorr:entrypoint'
+showhist = 'rapidtide.scripts.showhist:entrypoint'
+showstxcorr = 'rapidtide.scripts.showstxcorr:entrypoint'
+showtc = 'rapidtide.scripts.showtc:entrypoint'
+showxcorr_legacy = 'rapidtide.scripts.showxcorr_legacy:main'
+showxcorrx = 'rapidtide.scripts.showxcorrx:entrypoint'
+showxy = 'rapidtide.scripts.showxy:entrypoint'
+simdata = 'rapidtide.scripts.simdata:entrypoint'
+spatialdecomp = 'rapidtide.scripts.spatialdecomp:entrypoint'
+spatialfit = 'rapidtide.scripts.spatialfit:entrypoint'
+spatialmi = 'rapidtide.scripts.spatialmi:entrypoint'
+spectrogram = 'rapidtide.scripts.spectrogram:entrypoint'
+stupidramtricks = 'rapidtide.scripts.stupidramtricks:entrypoint'
+synthASL = 'rapidtide.scripts.synthASL:entrypoint'
+tcfrom2col = 'rapidtide.scripts.tcfrom2col:entrypoint'
+tcfrom3col = 'rapidtide.scripts.tcfrom3col:entrypoint'
+temporaldecomp = 'rapidtide.scripts.temporaldecomp:entrypoint'
+testhrv = 'rapidtide.scripts.testhrv:main'
+threeD = 'rapidtide.scripts.threeD:entrypoint'
+tidepool = 'rapidtide.scripts.tidepool:entrypoint'
+variabilityizer = 'rapidtide.scripts.variabilityizer:entrypoint'
 
 [tool.setuptools]
 include-package-data = true
@@ -90,7 +153,7 @@ include = ['rapidtide', 'cloud']
 rapidtide = ['rapidtide/*.py', 'rapidtide/workflows/*.py', 'rapidtide/scripts/*']
 
 [tool.setuptools.dynamic]
-version = {attr = "rapidtide.__version__"}
+version = {attr = 'rapidtide.__version__'}
 
 [tool.setuptools.exclude-package-data]
 rapidtide = ['.eggs', '.git', '.github', '.pytest_cache', 'rapidtide/candidatetests', 'rapidtide/disabledtests', 'rapidtide/data/examples']
@@ -136,3 +199,10 @@ versionfile_source = 'rapidtide/_version.py'
 versionfile_build = 'rapidtide/_version.py'
 tag_prefix = 'v'
 parentdir_prefix = 'rapidtide-'
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git*,versioneer.py,*.css,exportlist.txt,data,*.bib'
+check-hidden = true
+ignore-regex = '\bsubjeT\b'
+ignore-words-list = 'TE,thex,normall'

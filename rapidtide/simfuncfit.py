@@ -37,7 +37,7 @@ def onesimfuncfit(
     despeckle_thresh=5.0,
     lthreshval=0.0,
     fixdelay=False,
-    fixeddelayvalue=0.0,
+    initialdelayvalue=0.0,
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
@@ -66,8 +66,8 @@ def onesimfuncfit(
     else:
         # do something different
         failreason = np.uint32(0)
-        maxlag = rt_floatset(fixeddelayvalue)
-        maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, fixeddelayvalue))
+        maxlag = rt_floatset(initialdelayvalue)
+        maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, initialdelayvalue))
         maxval = rt_floatset(correlationfunc[maxindex])
         maxsigma = rt_floatset(1.0)
         maskval = np.uint16(1)
@@ -85,7 +85,7 @@ def _procOneVoxelFitcorr(
     despeckle_thresh=5.0,
     initiallag=None,
     fixdelay=False,
-    fixeddelayvalue=0.0,
+    initialdelayvalue=0.0,
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
@@ -104,7 +104,7 @@ def _procOneVoxelFitcorr(
         disablethresholds=disablethresholds,
         despeckle_thresh=despeckle_thresh,
         fixdelay=fixdelay,
-        fixeddelayvalue=fixeddelayvalue,
+        initialdelayvalue=initialdelayvalue,
         initiallag=initiallag,
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
@@ -170,7 +170,7 @@ def fitcorr(
     nprocs=1,
     alwaysmultiproc=False,
     fixdelay=False,
-    fixdelayvalue=0.0,
+    initialdelayvalue=0.0,
     showprogressbar=True,
     chunksize=1000,
     despeckle_thresh=5.0,
@@ -215,10 +215,10 @@ def fitcorr(
                             thislag = initiallags[val]
                         else:
                             thislag = None
-                    """if initiallags is None:
-                        thislag = None
+                    if isinstance(initialdelayvalue, np.ndarray):
+                        thisinitialdelayvalue = initialdelayvalue[val]
                     else:
-                        thislag = initiallags[val]"""
+                        thisinitialdelayvalue = initialdelayvalue
                     outQ.put(
                         _procOneVoxelFitcorr(
                             val,
@@ -228,7 +228,7 @@ def fitcorr(
                             despeckle_thresh=despeckle_thresh,
                             initiallag=thislag,
                             fixdelay=fixdelay,
-                            fixeddelayvalue=fixdelayvalue,
+                            initialdelayvalue=thisinitialdelayvalue,
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
@@ -298,6 +298,10 @@ def fitcorr(
             else:
                 dothisone = False
                 thislag = None
+            if isinstance(initialdelayvalue, np.ndarray):
+                thisinitialdelayvalue = initialdelayvalue[vox]
+            else:
+                thisinitialdelayvalue = initialdelayvalue
             if dothisone:
                 (
                     dummy,
@@ -318,7 +322,7 @@ def fitcorr(
                     despeckle_thresh=despeckle_thresh,
                     initiallag=thislag,
                     fixdelay=fixdelay,
-                    fixeddelayvalue=fixdelayvalue,
+                    initialdelayvalue=thisinitialdelayvalue,
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
                 )

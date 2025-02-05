@@ -553,7 +553,7 @@ def territorydecomp(
     if debug:
         print(f"thecoffs.shape: {thecoffs.shape}")
         print(f"intercept: {intercept}, fitorder: {fitorder}")
-    theRs = np.zeros((nummaps, np.max(atlas)))
+    theR2s = np.zeros((nummaps, np.max(atlas)))
     for whichmap in range(nummaps):
         if nummaps == 1:
             thismap = inputmap
@@ -576,16 +576,16 @@ def territorydecomp(
                     evs = []
                     for order in range(1, fitorder + 1):
                         evs.append(np.power(template[maskedvoxels], order))
-                    thefit, R = mlregress(evs, thismap[maskedvoxels], intercept=intercept)
+                    thefit, R2 = mlregress(evs, thismap[maskedvoxels], intercept=intercept)
                     thecoffs[whichmap, i - 1, :] = np.asarray(thefit[0]).reshape((-1))
-                    theRs[whichmap, i - 1] = 1.0 * R
+                    theR2s[whichmap, i - 1] = 1.0 * R2
                     thisfit[maskedvoxels] = mlproject(thecoffs[whichmap, i - 1, :], evs, intercept)
                 else:
                     thecoffs[whichmap, i - 1, 0] = np.mean(thismap[maskedvoxels])
-                    theRs[whichmap, i - 1] = 1.0
+                    theR2s[whichmap, i - 1] = 1.0
                     thisfit[maskedvoxels] = np.mean(thismap[maskedvoxels])
 
-    return fitmap, thecoffs, theRs
+    return fitmap, thecoffs, theR2s
 
 
 def territorystats(
@@ -1154,77 +1154,9 @@ def mlregress(X, y, intercept=True, debug=False):
     reg.fit(X, y)
     coffs = reg.coef_
     theintercept = reg.intercept_
-    R = reg.score(X, y)
+    R2 = reg.score(X, y)
     coffs = np.insert(coffs, 0, theintercept, axis=0)
-    return np.asmatrix(coffs), R
-
-
-### I don't remember where this came from.  Need to check license
-def mlregress_old(x, y, intercept=True, debug=False):
-    """
-
-    Parameters
-    ----------
-    x
-    y
-    intercept
-
-    Returns
-    -------
-
-    """
-    """Return the coefficients from a multiple linear regression, along with R, the coefficient of determination.
-
-    x: The independent variables (pxn or nxp).
-    y: The dependent variable (1xn or nx1).
-    intercept: Specifies whether or not the slope intercept should be considered.
-
-    The routine computes the coefficients (b_0, b_1, ..., b_p) from the data (x,y) under
-    the assumption that y = b0 + b_1 * x_1 + b_2 * x_2 + ... + b_p * x_p.
-
-    If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
-    """
-    if debug:
-        print(f"mlregress initial: {x.shape=}, {y.shape=}")
-    warnings.filterwarnings("ignore", "invalid*")
-    y = np.atleast_1d(y)
-    n = y.shape[0]
-
-    x = np.atleast_2d(x)
-    p, nx = x.shape
-
-    if debug:
-        print(f"mlregress: {n=}, {p=}, {nx=}")
-
-    if nx != n:
-        x = x.transpose()
-        p, nx = x.shape
-        if nx != n:
-            raise AttributeError(
-                "x and y must have have the same number of samples (%d and %d)" % (nx, n)
-            )
-    if debug:
-        print(f"mlregress final: {x.shape=}, {y.shape=}")
-
-    if intercept is True:
-        xc = np.vstack((np.ones(n), x))
-        beta = np.ones(p + 1)
-    else:
-        xc = x
-        beta = np.ones(p)
-
-    solution = np.linalg.lstsq(np.asmatrix(xc).T, np.asmatrix(y).T, rcond=-1)
-
-    # Computation of the coefficient of determination.
-    Rx = np.atleast_2d(np.corrcoef(x, rowvar=1))
-    c = np.corrcoef(x, y, rowvar=1)[-1, :p]
-    try:
-        R2 = np.dot(np.dot(c, np.linalg.inv(Rx)), c.T)
-    except np.linalg.LinAlgError:
-        return None, None
-    R = np.sqrt(R2)
-
-    return np.atleast_1d(solution[0].T), R
+    return np.asmatrix(coffs), R2
 
 
 def calcexpandedregressors(
@@ -1419,12 +1351,12 @@ def glmfilt(thedata, theevs, returnintercept=False, debug=False):
     if debug:
         print(f"{thedata.shape=}")
         print(f"{theevs.shape=}")
-    thefit, R = mlregress(theevs, thedata, debug=debug)
+    thefit, R2 = mlregress(theevs, thedata, debug=debug)
     retcoffs = np.zeros((thefit.shape[1] - 1), dtype=float)
     if debug:
         print(f"{thefit.shape=}")
         print(f"{thefit=}")
-        print(f"{R=}")
+        print(f"{R2=}")
         print(f"{retcoffs.shape=}")
     datatoremove = thedata * 0.0
 
@@ -1446,9 +1378,9 @@ def glmfilt(thedata, theevs, returnintercept=False, debug=False):
     if debug:
         print(f"{retcoffs=}")
     if returnintercept:
-        return filtered, datatoremove, R, retcoffs, theintercept
+        return filtered, datatoremove, R2, retcoffs, theintercept
     else:
-        return filtered, datatoremove, R, retcoffs
+        return filtered, datatoremove, R2, retcoffs
 
 
 def confoundglm(
@@ -1488,13 +1420,13 @@ def confoundglm(
         disable=(not showprogressbar),
     ):
         datatoremove *= 0.0
-        thefit, R = mlregress(regressors, data[i, :])
+        thefit, R2 = mlregress(regressors, data[i, :])
         if i == 0 and debug:
             print("fit shape:", thefit.shape)
         for j in range(regressors.shape[0]):
             datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
         filtereddata[i, :] = data[i, :] - datatoremove
-        r2value[i] = R * R
+        r2value[i] = R2
     return filtereddata, r2value
 
 

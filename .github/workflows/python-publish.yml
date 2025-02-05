@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install setuptools wheel twine
+        pip install setuptools wheel twine build
 
     - name: Build and publish
       env:
@@ -32,5 +32,6 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         git fetch --prune --unshallow
-        python setup.py sdist bdist_wheel
+        #python setup.py sdist bdist_wheel
+        python -m build
         twine upload dist/*

@@ -78,15 +78,16 @@ def happy_main(argparsingfunc):
     # create the canary file
     Path(f"{outputroot}_ISRUNNING.txt").touch()
 
-    # if we are running in a Docker container, make sure we enforce memory limits properly
-    try:
-        testval = os.environ["IS_DOCKER_8395080871"]
-    except KeyError:
-        args.runningindocker = False
-    else:
-        args.runningindocker = True
-        args.dockermemfree, args.dockermemswap = tide_util.findavailablemem()
-        tide_util.setmemlimit(args.dockermemfree)
+    # if running in Docker or Apptainer/Singularity, this is necessary to enforce memory limits properly
+    # otherwise likely to  error out in gzip.py or at voxelnormalize step.  But do nothing if running in CircleCI
+    # because it does NOT like you messing with the container.
+    args.containertype = tide_util.checkifincontainer()
+    if args.containertype is not None:
+        if args.containertype != "CircleCI":
+            args.containermemfree, args.containermemswap = tide_util.findavailablemem()
+            tide_util.setmemlimit(args.containermemfree)
+        else:
+            print("running in CircleCI environment - not messing with memory")
 
     # Set up loggers for workflow
     setup_logger(
@@ -235,16 +236,23 @@ def happy_main(argparsingfunc):
     # filter out motion regressors here
     if args.motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
+        motiondict = tide_io.readmotion(args.motionfilename, tr=tr)
+        confoundregressors, confoundregressorlabels = tide_fit.calcexpandedregressors(
+            motiondict,
+            labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
+            deriv=args.motfilt_deriv,
+            order=args.motfilt_order,
+        )
         (motionregressors, motionregressorlabels, filtereddata, confoundr2) = (
             tide_glmpass.confoundregress(
-                args.motionfilename,
+                confoundregressors,
+                confoundregressorlabels,
                 fmri_data[validprojvoxels, :],
                 tr,
                 orthogonalize=args.orthogonalize,
-                motstart=args.motskip,
-                motionhp=args.motionhp,
-                motionlp=args.motionlp,
-                deriv=args.motfilt_deriv,
+                tcstart=args.motskip,
+                tchp=args.motionhp,
+                tclp=args.motionlp,
             )
         )
         if confoundr2 is None:
@@ -278,10 +286,21 @@ def happy_main(argparsingfunc):
             timings.append(["Motion filtered data saved", time.time(), numspatiallocs, "voxels"])
 
     # get slice times
-    slicetimes, normalizedtotr = tide_io.getslicetimesfromfile(slicetimename)
+    slicetimes, normalizedtotr, fileisbidsjson = tide_io.getslicetimesfromfile(slicetimename)
     if normalizedtotr and not args.slicetimesareinseconds:
         slicetimes *= tr
-
+    if args.teoffset is not None:
+        teoffset = float(args.teoffset)
+    else:
+        if fileisbidsjson:
+            jsoninfodict = tide_io.readdictfromjson(slicetimename)
+            try:
+                teoffset = jsoninfodict["EchoTime"]
+            except KeyError:
+                teoffset = 0.0
+        else:
+            teoffset = 0.0
+    infodict["teoffset"] = teoffset
     timings.append(["Slice times determined", time.time(), None, None])
 
     # normalize the input data
@@ -331,7 +350,7 @@ def happy_main(argparsingfunc):
     if args.fliparteries:
         # add another pass to refine the waveform after getting the new appflips
         numpasses += 1
-        print("Adding a pass to regenerate cardiac waveform using bettter appflips")
+        print("Adding a pass to regenerate cardiac waveform using better appflips")
 
     # output mask size
     print(f"estmask has {len(np.where(estmask_byslice[:, :] > 0)[0])} voxels above threshold.")
@@ -390,43 +409,15 @@ def happy_main(argparsingfunc):
             ]
         )
         infodict["cardfromfmri_normfac"] = cardfromfmri_normfac
-        slicetimeaxis = np.linspace(
-            0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False
+        slicetimeaxis = (
+            np.linspace(0.0, tr * timepoints, num=(timepoints * numsteps), endpoint=False)
+            + teoffset
         )
         if (thispass == 0) and args.doupsampling:
-            # allocate the upsampled image
-            upsampleimage = np.zeros((xsize, ysize, numslices, numsteps * timepoints), dtype=float)
-            upsampleimage_byslice = upsampleimage.reshape(
-                xsize * ysize, numslices, numsteps * timepoints
+            happy_support.upsampleimage(
+                input_data, nim_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot
             )
-
-            # drop in the raw data
-            for theslice in range(numslices):
-                upsampleimage[
-                    :, :, theslice, sliceoffsets[theslice] : timepoints * numsteps : numsteps
-                ] = fmri_data.reshape((xsize, ysize, numslices, timepoints))[:, :, theslice, :]
-
-            # interpolate along the slice direction
-            for thestep in range(numsteps):
-                print(f"interpolating step {thestep}")
-                thesrclocs = np.where(sliceoffsets == thestep)[0]
-                print(f"sourcelocs: {thesrclocs}")
-                thedstlocs = np.linspace(0, numslices, num=len(sliceoffsets), endpoint=False)
-                print(f"len(destlocst), destlocs: {len(thedstlocs)}, {thedstlocs}")
-                for thetimepoint in range(0, timepoints * numsteps):
-                    print(f"timepoint: {thetimepoint}")
-                    for thexyvoxel in range(xsize * ysize):
-                        theinterps = np.interp(
-                            thedstlocs,
-                            1.0 * thesrclocs,
-                            upsampleimage_byslice[thexyvoxel, thesrclocs, thetimepoint],
-                        )
-                        upsampleimage_byslice[thexyvoxel, :, thetimepoint] = 1.0 * theinterps
-
-            theheader = copy.deepcopy(nim_hdr)
-            theheader["dim"][4] = timepoints * numsteps
-            theheader["pixdim"][4] = 1.0 / slicesamplerate
-            tide_io.savetonifti(upsampleimage, theheader, outputroot + "_upsampled")
+            sys.exit(0)
 
         if thispass == numpasses - 1:
             tide_io.writebidstsv(
@@ -1073,7 +1064,7 @@ def happy_main(argparsingfunc):
                 infodict["respsamplerate"] = returnedinputfreq
                 infodict["numresppts_fullres"] = fullrespts
 
-        # account for slice time offests
+        # account for slice time offsets
         offsets_byslice = np.zeros((xsize * ysize, numslices), dtype=np.float64)
         for i in range(numslices):
             offsets_byslice[:, i] = slicetimes[i]
@@ -1543,12 +1534,12 @@ def happy_main(argparsingfunc):
                 debug=args.debug,
             )
 
-        # find vessel threshholds
+        # find vessel thresholds
         tide_util.logmem("before making vessel masks")
         hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
         softvesselthresh = args.softvesselfrac * hardvesselthresh
         print(
-            "hard, soft vessel threshholds set to",
+            "hard, soft vessel thresholds set to",
             "{:.3f}".format(hardvesselthresh),
             "{:.3f}".format(softvesselthresh),
         )

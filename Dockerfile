@@ -1,10 +1,11 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:v0.4.0
+FROM fredericklab/basecontainer:latest-release
 
 # get build arguments
 ARG BUILD_TIME
 ARG BRANCH
 ARG GITVERSION
+ARG GITDIRECTVERSION
 ARG GITSHA
 ARG GITDATE
 
@@ -14,12 +15,17 @@ ENV BRANCH=$BRANCH
 ENV GITVERSION=${GITVERSION}
 ENV GITSHA=${GITSHA}
 ENV GITDATE=${GITDATE}
+ENV GITDIRECTVERSION=${GITDIRECTVERSION}
 
 RUN echo "BRANCH: "$BRANCH
 RUN echo "BUILD_TIME: "$BUILD_TIME
 RUN echo "GITVERSION: "$GITVERSION
 RUN echo "GITSHA: "$GITSHA
 RUN echo "GITDATE: "$GITDATE
+RUN echo "GITDIRECTVERSION: "$GITDIRECTVERSION
+
+# security patches
+RUN uv pip install "cryptography>=42.0.4" "urllib3>=1.26.17" "certifi>=2023.7.22"
 
 # Copy rapidtide into container
 COPY . /src/rapidtide
@@ -32,10 +38,8 @@ RUN cd /src/rapidtide && \
     uv pip install .
 RUN chmod -R a+r /src/rapidtide
 
-# install versioneer
-RUN cd /src/rapidtide && \
-    versioneer install --no-vendor && \
-    rm -rf /src/rapidtide/build /src/rapidtide/dist
+# clean up install directories
+RUN rm -rf /src/rapidtide/build /src/rapidtide/dist
 
 # install test data
 RUN cd /src/rapidtide/rapidtide/data/examples/src && \
@@ -47,20 +51,37 @@ RUN ldconfig
 # clean up
 RUN pip cache purge
 
-# switch to the rapidtide user
-RUN useradd -m -s /bin/bash -G users rapidtide
-RUN chown -R rapidtide /src/rapidtide
-WORKDIR /home/rapidtide
+# Create a shared $HOME directory
+ENV USER=rapidtide
+RUN useradd \
+    --create-home \
+    --shell /bin/bash \
+    --groups users \
+    --home /home/$USER \
+    $USER
+RUN chown -R $USER /src/$USER
+WORKDIR /home/$USER
 ENV HOME="/home/rapidtide"
+
 RUN /opt/miniforge3/bin/mamba init
 RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
 RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
+
+# Precompile Python code
+RUN cd /opt/miniforge3/envs/science/lib/python3.12/site-packages/rapidtide && \
+    python -m compileall -b .
+
+# switch to the rapidtide user
 USER rapidtide
+
+# run things once
+RUN /opt/miniforge3/envs/science/bin/happy --help
+RUN /opt/miniforge3/envs/science/bin/rapidtide --help
 
 # set up variable for non-interactive shell
 ENV PATH=/opt/miniforge3/envs/science/bin:/opt/miniforge3/condabin:.:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-ENV IS_DOCKER_8395080871=1
+ENV RUNNING_IN_CONTAINER=1
 
 WORKDIR /tmp/
 ENTRYPOINT ["/cloud/mount-and-run"]

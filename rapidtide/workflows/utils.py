@@ -23,6 +23,7 @@ import os
 LGR = logging.getLogger("GENERAL")
 TimingLGR = logging.getLogger("TIMING")
 MemoryLGR = logging.getLogger("MEMORY")
+ErrorLGR = logging.getLogger("ERROR")
 
 starttime = None
 
@@ -57,7 +58,14 @@ class TimingFormatter(logging.Formatter):
         return super().format(record)
 
 
-def setup_logger(logger_filename, timing_filename, memory_filename, verbose=False, debug=False):
+def setup_logger(
+    logger_filename,
+    timing_filename,
+    memory_filename=None,
+    error_filename=None,
+    verbose=False,
+    debug=False,
+):
     """Set up a set of loggers.
 
     Parameters
@@ -68,6 +76,8 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
         Output file for timing-related information.
     memory_filename : str
         Output file for memory usage-related information.
+    error_filename : str
+        Output file for error-related information.
     verbose : bool, optional
         Sets the target logging level to VERBOSE (a custom level between INFO and DEBUG).
         Is overridden by ``debug``, if ``debug = True``.
@@ -76,10 +86,11 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
         Sets the target logging level to DEBUG. Default is False.
     """
     # Clean up existing files from previous runs
-    for fname in [logger_filename, timing_filename, memory_filename]:
-        if os.path.isfile(fname):
-            LGR.info(f"Removing existing file: {fname}")
-            os.remove(fname)
+    for fname in [logger_filename, timing_filename, memory_filename, error_filename]:
+        if fname is not None:
+            if os.path.isfile(fname):
+                LGR.info(f"Removing existing file: {fname}")
+                os.remove(fname)
 
     # Create a new "verbose" logging level
     VERBOSE_LEVEL = 15  # between info and debug
@@ -129,9 +140,19 @@ def setup_logger(logger_filename, timing_filename, memory_filename, verbose=Fals
     TimingLGR.propagate = False  # do not print to console
 
     # A memory logger
-    memory_formatter = logging.Formatter("%(message)s")
-    memory_handler = logging.FileHandler(memory_filename)
-    memory_handler.setFormatter(memory_formatter)
-    MemoryLGR.setLevel(logging.INFO)
-    MemoryLGR.addHandler(memory_handler)
-    MemoryLGR.propagate = False  # do not print to console
+    if memory_filename is not None:
+        memory_formatter = logging.Formatter("%(message)s")
+        memory_handler = logging.FileHandler(memory_filename)
+        memory_handler.setFormatter(memory_formatter)
+        MemoryLGR.setLevel(logging.INFO)
+        MemoryLGR.addHandler(memory_handler)
+        MemoryLGR.propagate = False  # do not print to console
+
+    # An error logger
+    if error_filename is not None:
+        error_formatter = logging.Formatter("%(message)s")
+        error_handler = logging.FileHandler(error_filename)
+        error_handler.setFormatter(error_formatter)
+        ErrorLGR.setLevel(logging.INFO)
+        ErrorLGR.addHandler(error_handler)
+        ErrorLGR.propagate = False  # do not print to console
