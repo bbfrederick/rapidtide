@@ -26,8 +26,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from multiprocessing import RawArray, shared_memory
-from os.path import split
+from multiprocessing import shared_memory
 
 import matplotlib.pyplot as plt
 import numpy as np
