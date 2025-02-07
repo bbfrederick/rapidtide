@@ -145,7 +145,7 @@ def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
 
 def cardiacfromimage(
     normdata_byslice,
-    estmask_byslice,
+    estweights_byslice,
     numslices,
     timepoints,
     tr,
@@ -182,7 +182,7 @@ def cardiacfromimage(
 
     # make sure there is an appflips array
     if appflips_byslice is None:
-        appflips_byslice = estmask_byslice * 0.0 + 1.0
+        appflips_byslice = estweights_byslice * 0.0 + 1.0
     else:
         if arteriesonly:
             appflips_byslice[np.where(appflips_byslice > 0.0)] = 0.0
@@ -196,22 +196,22 @@ def cardiacfromimage(
     if not verbose:
         print("Averaging slices...")
     if fliparteries:
-        thismask_byslice = appflips_byslice.astype(np.int64) * estmask_byslice
+        theseweights_byslice = appflips_byslice.astype(np.float64) * estweights_byslice
     else:
-        thismask_byslice = estmask_byslice
+        theseweights_byslice = estweights_byslice
     for theslice in range(numslices):
         if verbose:
             print("Averaging slice", theslice)
         if usemask:
-            validestvoxels = np.where(np.abs(thismask_byslice[:, theslice]) > 0)[0]
+            validestvoxels = np.where(np.abs(theseweights_byslice[:, theslice]) > 0)[0]
         else:
-            validestvoxels = np.where(np.abs(thismask_byslice[:, theslice] >= 0))[0]
+            validestvoxels = np.where(np.abs(theseweights_byslice[:, theslice] >= 0))[0]
         if len(validestvoxels) > 0:
             if madnorm:
                 sliceavs[theslice, :], slicenorms[theslice] = tide_math.madnormalize(
                     np.mean(
                         normdata_byslice[validestvoxels, theslice, :]
-                        * thismask_byslice[validestvoxels, theslice, np.newaxis],
+                        * theseweights_byslice[validestvoxels, theslice, np.newaxis],
                         axis=0,
                     ),
                     returnnormfac=True,
@@ -219,7 +219,7 @@ def cardiacfromimage(
             else:
                 sliceavs[theslice, :] = np.mean(
                     normdata_byslice[validestvoxels, theslice, :]
-                    * thismask_byslice[validestvoxels, theslice, np.newaxis],
+                    * theseweights_byslice[validestvoxels, theslice, np.newaxis],
                     axis=0,
                 )
                 slicenorms[theslice] = 1.0
@@ -1242,6 +1242,7 @@ def phaseproject(
             app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
         )
 
+
 def upsampleimage(input_data, input_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot):
     fmri_data = input_data.byvol()
     timepoints = input_data.timepoints
@@ -1252,9 +1253,7 @@ def upsampleimage(input_data, input_hdr, numsteps, sliceoffsets, slicesamplerate
     # allocate the image
     print(f"upsampling fmri data by a factor of {numsteps}")
     upsampleimage = np.zeros((xsize, ysize, numslices, numsteps * timepoints), dtype=float)
-    upsampleimage_byslice = upsampleimage.reshape(
-        xsize * ysize, numslices, numsteps * timepoints
-    )
+    upsampleimage_byslice = upsampleimage.reshape(xsize * ysize, numslices, numsteps * timepoints)
 
     # demean the raw data
     meanfmri = fmri_data.mean(axis=1)
@@ -1263,7 +1262,7 @@ def upsampleimage(input_data, input_hdr, numsteps, sliceoffsets, slicesamplerate
     # drop in the raw data
     for theslice in range(numslices):
         upsampleimage[
-        :, :, theslice, sliceoffsets[theslice]: timepoints * numsteps: numsteps
+            :, :, theslice, sliceoffsets[theslice] : timepoints * numsteps : numsteps
         ] = demeaned_data.reshape((xsize, ysize, numslices, timepoints))[:, :, theslice, :]
 
     upsampleimage_byslice = upsampleimage.reshape(xsize * ysize, numslices, timepoints * numsteps)

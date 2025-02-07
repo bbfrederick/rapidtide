@@ -330,30 +330,32 @@ def happy_main(argparsingfunc):
     tide_io.savetonifti(mads.reshape((xsize, ysize, numslices)), theheader, madsfilename)
 
     # read in estimation mask if present. Otherwise, otherwise use intensity mask.
-    infodict["estmaskname"] = args.estmaskname
+    infodict["estweightsname"] = args.estweightsname
     if args.debug:
-        print(args.estmaskname)
-    if args.estmaskname is not None:
-        tide_util.logmem("before reading in estmask")
-        estmask = happy_support.readextmask(
-            args.estmaskname, nim_hdr, xsize, ysize, numslices, args.debug
+        print(args.estweightsname)
+    if args.estweightsname is not None:
+        tide_util.logmem("before reading in estweights")
+        estweights = happy_support.readextmask(
+            args.estweightsname, nim_hdr, xsize, ysize, numslices, args.debug
         )
-        # * np.float64(mask_byslice)
-        estmask_byslice = estmask.reshape(xsize * ysize, numslices)
-        print("using estmask from file", args.estmaskname)
+        estweights_byslice = estweights.reshape(xsize * ysize, numslices)
+        print("using estweights from file", args.estweightsname)
         numpasses = 1
     else:
         # just fall back to the intensity mask
-        estmask_byslice = mask_byslice.astype("float64")
+        estweights_byslice = mask_byslice.astype("float64")
         numpasses = 2
         print("Not using separate estimation mask - doing initial estimate using intensity mask")
-    if args.fliparteries:
-        # add another pass to refine the waveform after getting the new appflips
+
+    # add another pass to refine the waveform after getting the new appflips
+    if args.fliparteries or args.doaliasedcorrelation:
         numpasses += 1
-        print("Adding a pass to regenerate cardiac waveform using better appflips")
+        print("Adding a pass to regenerate cardiac waveform using better vessel specification")
 
     # output mask size
-    print(f"estmask has {len(np.where(estmask_byslice[:, :] > 0)[0])} voxels above threshold.")
+    print(
+        f"estweights has {len(np.where(estweights_byslice[:, :] > 0)[0])} voxels above threshold."
+    )
 
     infodict["numpasses"] = numpasses
 
@@ -382,7 +384,7 @@ def happy_main(argparsingfunc):
             slicenorms,
         ) = happy_support.cardiacfromimage(
             normdata_byslice,
-            estmask_byslice,
+            estweights_byslice,
             numslices,
             timepoints,
             tr,
@@ -1311,16 +1313,14 @@ def happy_main(argparsingfunc):
         appsmoothingfilter.setfreqs(0.0, 0.0, phaseFc, phaseFc)
 
         # setup for aliased correlation if we're going to do it
-        if args.doaliasedcorrelation and (thispass == numpasses - 1):
+        if args.doaliasedcorrelation:
             if args.cardiacfilename and False:
                 signal_sliceres = pleth_sliceres
-                # signal_stdres = pleth_stdres
             else:
                 signal_sliceres = cardfromfmri_sliceres
-                # signal_stdres = dlfilteredcard_stdres
 
             # zero out bad points
-            signal_sliceres *= (1.0 - badpointlist)
+            signal_sliceres *= 1.0 - badpointlist
 
             theAliasedCorrelator = tide_corr.AliasedCorrelator(
                 signal_sliceres,
@@ -1333,16 +1333,21 @@ def happy_main(argparsingfunc):
             )
             correndloc = tide_util.valtoindex(thealiasedcorrx, args.aliasedcorrelationwidth / 2.0)
             aliasedcorrelationpts = correndloc - corrstartloc + 1
-            thecorrfunc = np.zeros(
-                (xsize, ysize, numslices, aliasedcorrelationpts), dtype=np.float64
-            )
-            thecorrfunc_byslice = thecorrfunc.reshape(
-                (xsize * ysize, numslices, aliasedcorrelationpts)
-            )
-            wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float64)
-            wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
-            waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float64)
-            waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
+            if thispass == 0:
+                thecorrfunc = np.zeros(
+                    (xsize, ysize, numslices, aliasedcorrelationpts), dtype=np.float64
+                )
+                thecorrfunc_byslice = thecorrfunc.reshape(
+                    (xsize * ysize, numslices, aliasedcorrelationpts)
+                )
+                wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float64)
+                wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
+                waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float64)
+                waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
+            else:
+                thecorrfunc *= 0.0
+                wavedelay *= 0.0
+                waveamp *= 0.0
 
         # now project the data
         fmri_data_byslice = input_data.byslice()
@@ -1407,7 +1412,7 @@ def happy_main(argparsingfunc):
                 corrected_rawapp_byslice[validlocs, theslice, :] = (
                     rawapp_byslice[validlocs, theslice, :] - timecoursemean
                 ) * appflips_byslice[validlocs, theslice, None] + timecoursemean
-                if args.doaliasedcorrelation and (thispass == numpasses - 1):
+                if args.doaliasedcorrelation and (thispass > 0):
                     for theloc in validlocs:
                         thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
                             -appflips_byslice[theloc, theslice]
@@ -1418,14 +1423,14 @@ def happy_main(argparsingfunc):
                         wavedelay_byslice[theloc, theslice] = (
                             thealiasedcorrx[corrstartloc : correndloc + 1]
                         )[maxloc]
-                        waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[
-                            theloc, theslice, maxloc
-                        ]
+                        waveamp_byslice[theloc, theslice] = np.fabs(
+                            thecorrfunc_byslice[theloc, theslice, maxloc]
+                        )
             else:
                 corrected_rawapp_byslice[validlocs, theslice, :] = rawapp_byslice[
                     validlocs, theslice, :
                 ]
-                if args.doaliasedcorrelation and (thispass == numpasses - 1):
+                if args.doaliasedcorrelation and (thispass > 0):
                     for theloc in validlocs:
                         thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
                             -demeandata_byslice[theloc, theslice, :],
@@ -1435,9 +1440,9 @@ def happy_main(argparsingfunc):
                         wavedelay_byslice[theloc, theslice] = (
                             thealiasedcorrx[corrstartloc : correndloc + 1]
                         )[maxloc]
-                        waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[
-                            theloc, theslice, maxloc
-                        ]
+                        waveamp_byslice[theloc, theslice] = np.fabs(
+                            thecorrfunc_byslice[theloc, theslice, maxloc]
+                        )
             timecoursemin = np.min(
                 corrected_rawapp_byslice[validlocs, theslice, :], axis=1
             ).reshape((-1, 1))
@@ -1610,8 +1615,18 @@ def happy_main(argparsingfunc):
                 tide_io.savetonifti(veins, theheader, veinmapfilename)
         timings.append(["Masks saved" + passstring, time.time(), None, None])
 
+        # save the mask we used for this pass
+        tide_io.savetonifti(
+            estweights_byslice.reshape((xsize, ysize, numslices)),
+            theheader,
+            f"{outputroot}_desc-estweightspass{thispass}_map",
+        )
+
         # now get ready to start again with a new mask
-        estmask_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
+        if args.doaliasedcorrelation and thispass > 0:
+            estweights_byslice = waveamp_byslice * vesselmask.reshape((xsize * ysize, numslices))
+        else:
+            estweights_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
 
     # save a vessel image
     if args.unnormvesselmap:

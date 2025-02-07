@@ -25,6 +25,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
 
+
 def _get_parser():
     """
     Argument parser for happy
@@ -207,10 +208,10 @@ def _get_parser():
     # Cardiac estimation tuning
     cardiac_est_tuning = parser.add_argument_group("Cardiac estimation tuning")
     cardiac_est_tuning.add_argument(
-        "--estmask",
-        dest="estmaskname",
+        "--estweights",
+        dest="estweightsname",
         action="store",
-        metavar="MASKNAME",
+        metavar="WEIGHTSNAME",
         help=(
             "Generation of cardiac waveform from data will be restricted to "
             "voxels in MASKNAME and weighted by the mask intensity.  If this is "
