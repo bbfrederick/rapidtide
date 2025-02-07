@@ -703,9 +703,12 @@ class AliasedCorrelator:
     """
 
     def __init__(self, hiressignal, hires_Fs, numsteps):
-        self.hiressignal = tide_math.corrnormalize(hiressignal)
         self.hires_Fs = hires_Fs
         self.numsteps = numsteps
+        self.sethiressignal(hiressignal)
+
+    def sethiressignal(self, hiressignal):
+        self.hiressignal = tide_math.corrnormalize(hiressignal)
         self.corrlen = len(self.hiressignal) * 2 + 1
         self.corrx = (
             np.linspace(0.0, self.corrlen, num=self.corrlen) / self.hires_Fs
@@ -735,10 +738,9 @@ class AliasedCorrelator:
             print(offset, self.numsteps)
         osvec = self.hiressignal * 0.0
         osvec[offset :: self.numsteps] = loressignal[:]
-        corrfunc = (
-            tide_corr.fastcorrelate(tide_math.corrnormalize(osvec), self.hiressignal)
-            * self.numsteps
-        )
+        corrfunc = tide_corr.fastcorrelate(
+            tide_math.corrnormalize(osvec), self.hiressignal
+        ) * np.sqrt(self.numsteps)
         return corrfunc
 
 
