@@ -1241,6 +1241,7 @@ def phaseproject(
         normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
             app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
         )
+    return app, rawapp, corrected_rawapp, normapp, weights, cine, derivatives
 
 
 def upsampleimage(input_data, input_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot):

@@ -1158,20 +1158,12 @@ def happy_main(argparsingfunc):
         # construct the destination arrays
         tide_util.logmem("before making destination arrays")
         app = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        app_byslice = app.reshape((xsize * ysize, numslices, args.destpoints))
         cine = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        cine_byslice = cine.reshape((xsize * ysize, numslices, args.destpoints))
         rawapp = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, args.destpoints))
         corrected_rawapp = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        corrected_rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, args.destpoints))
         normapp = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        normapp_byslice = normapp.reshape((xsize * ysize, numslices, args.destpoints))
         weights = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        weight_byslice = weights.reshape((xsize * ysize, numslices, args.destpoints))
         derivatives = np.zeros((xsize, ysize, numslices, 4), dtype=np.float64)
-        derivatives_byslice = derivatives.reshape((xsize * ysize, numslices, 4))
-
         timings.append(["Output arrays allocated" + passstring, time.time(), None, None])
 
         if args.centric:
@@ -1185,6 +1177,42 @@ def happy_main(argparsingfunc):
         # now do the phase projection
         #
         #
+        """app, rawapp, corrected_rawapp, normapp, weights, cine, derivatives = (
+            happy_support.phaseproject(
+                demeandata,
+                means,
+                args.destpoints,
+                numsteps,
+                timings,
+                cardfromfmri_sliceres,
+                instantaneous_cardiacphase,
+                thispass,
+                numpasses,
+                args,
+                outputroot,
+                slicesamplerate,
+                pleth_sliceres,
+                mrsamplerate,
+                projmask_byslice,
+                cardphasevals,
+                thetimes,
+                centric=True,
+                passstring="",
+                badpointlist=None,
+                congridbins=3.0,
+                gridkernel="kaiser",
+            )
+        )"""
+        app_byslice = app.reshape((xsize * ysize, numslices, args.destpoints))
+        rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, args.destpoints))
+        corrected_rawapp_byslice = corrected_rawapp.reshape(
+            (xsize * ysize, numslices, args.destpoints)
+        )
+        normapp_byslice = normapp.reshape((xsize * ysize, numslices, args.destpoints))
+        weights_byslice = weights.reshape((xsize * ysize, numslices, args.destpoints))
+        cine_byslice = cine.reshape((xsize * ysize, numslices, args.destpoints))
+        derivatives_byslice = derivatives.reshape((xsize * ysize, numslices, 4))
+
         demeandata_byslice = demeandata.reshape((xsize * ysize, numslices, timepoints))
         means_byslice = means.reshape((xsize * ysize, numslices))
 
@@ -1203,7 +1231,7 @@ def happy_main(argparsingfunc):
             procpoints = np.where(censorpoints < 1)[0]
 
         # do phase averaging
-        app_bypoint, weight_bypoint = happy_support.cardiaccycleaverage(
+        app_bypoint, weights_bypoint = happy_support.cardiaccycleaverage(
             instantaneous_cardiacphase,
             outphases,
             cardfromfmri_sliceres,
@@ -1225,7 +1253,7 @@ def happy_main(argparsingfunc):
             )
             tide_io.writebidstsv(
                 outputroot + "_desc-cardiaccycleweightfromfmri_timeseries",
-                weight_bypoint,
+                weights_bypoint,
                 1.0 / (outphases[1] - outphases[0]),
                 starttime=outphases[0],
                 columns=["cardiaccycleweightfromfmri"],
@@ -1282,7 +1310,7 @@ def happy_main(argparsingfunc):
         outtimes = np.linspace(
             0.0, maxtime, num=int(maxtime / args.pulsereconstepsize), endpoint=False
         )
-        atp_bypoint, atpweight_bypoint = happy_support.cardiaccycleaverage(
+        atp_bypoint, atpweights_bypoint = happy_support.cardiaccycleaverage(
             instantaneous_cardiactime,
             outtimes,
             cardfromfmri_sliceres,
@@ -1374,20 +1402,21 @@ def happy_main(argparsingfunc):
                         cyclic=True,
                     )
                     for i in range(len(theindices)):
-                        weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
+                        weights_byslice[validlocs, theslice, theindices[i]] += theweights[i]
                         # rawapp_byslice[validlocs, theslice, theindices[i]] += (
                         #    theweights[i] * filteredmr
                         # )
                         rawapp_byslice[validlocs, theslice, theindices[i]] += filteredmr
                         cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
                 for d in range(args.destpoints):
-                    if weight_byslice[validlocs[0], theslice, d] == 0.0:
-                        weight_byslice[validlocs, theslice, d] = 1.0
+                    if weights_byslice[validlocs[0], theslice, d] == 0.0:
+                        weights_byslice[validlocs, theslice, d] = 1.0
                 rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-                    rawapp_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :]
+                    rawapp_byslice[validlocs, theslice, :]
+                    / weights_byslice[validlocs, theslice, :]
                 )
                 cine_byslice[validlocs, theslice, :] = np.nan_to_num(
-                    cine_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :]
+                    cine_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
                 )
             else:
                 rawapp_byslice[:, theslice, :] = 0.0
