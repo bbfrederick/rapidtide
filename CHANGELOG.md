@@ -1,6 +1,7 @@
 # Release history
 
 ## Version 3.0alpha7 (2/4/25)
+* (happy) Trying out some new approaches for aliased correlation.
 * (happy) Put in some initial support for multiecho data.
 * (happy) Updated argument parser.
 
