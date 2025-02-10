@@ -31,7 +31,7 @@ def test_fullrunhappy_v2(debug=False, displayplots=False):
         os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz"),
         os.path.join(get_examples_path(), "sub-HAPPYTEST.json"),
         os.path.join(get_test_temp_path(), "happyout2"),
-        "--estmask",
+        "--estweights",
         os.path.join(get_examples_path(), "sub-HAPPYTEST_smallmask.nii.gz"),
         "--projmask",
         os.path.join(get_examples_path(), "sub-HAPPYTEST_smallmask.nii.gz"),
