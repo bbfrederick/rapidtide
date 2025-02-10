@@ -70,4 +70,5 @@ happy \
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_aliasedcorrelation --aliasedcorrelation
+    ../dst/happy_aliasedcorrelation \
+    --aliasedcorrelation
