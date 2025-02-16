@@ -134,6 +134,27 @@ def calc_3d_optical_flow(video, projmask, flowhdr, outputroot, window_size=3, de
     return flow_vectors
 
 
+def phasejolt(phaseimage):
+
+    # Compute the gradient of the window in x, y, and z directions
+    grad_x, grad_y, grad_z = np.gradient(phaseimage)
+
+    # Now compute the second order gradients of the window in x, y, and z directions
+    grad_xx, grad_xy, grad_xz = np.gradient(grad_x)
+    grad_yx, grad_yy, grad_yz = np.gradient(grad_y)
+    grad_zx, grad_zy, grad_zz = np.gradient(grad_z)
+
+    # Calculate our metrics of interest
+    jump = (np.fabs(grad_x) + np.fabs(grad_y) + np.fabs(grad_z)) / 3.0
+    jolt = (
+        (np.fabs(grad_xx) + np.fabs(grad_xy) + np.fabs(grad_xz))
+        + (np.fabs(grad_yx) + np.fabs(grad_yy) + np.fabs(grad_yz))
+        + (np.fabs(grad_zx) + np.fabs(grad_zy) + np.fabs(grad_zz))
+    ) / 9.0
+    laplacian = grad_xx + grad_yy + grad_zz
+    return (jump, jolt, laplacian)
+
+
 def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
     total = 0.0
     if phases is None:
