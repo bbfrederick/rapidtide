@@ -85,7 +85,10 @@ def _get_parser():
     )
     parser.add_argument(
         "--dataset",
-        help="Use this dataset (skip initial selection step)",
+        help=(
+            "Use this dataset root name (skip initial selection step).  The root name is the entire path "
+            "to the rapidtide output data (including the underscore) that precedes 'desc-maxtime_map.nii.gz'"
+        ),
         dest="datafileroot",
         default=None,
     )

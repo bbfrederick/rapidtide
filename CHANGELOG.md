@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0alpha8 (2/18/25)
+* (tidepool) Clarify how you specify the dataset name in the help text.
+
 ## Version 3.0alpha7 (2/11/25)
 * (happy) Trying out some new approaches for aliased correlation.
 * (happy) Put in some initial support for multiecho data.
