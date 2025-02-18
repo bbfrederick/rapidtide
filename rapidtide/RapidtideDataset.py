@@ -432,6 +432,7 @@ class Overlay:
 
 class RapidtideDataset:
     "Store all the data associated with a rapidtide dataset"
+    fileroot = None
     focusregressor = None
     regressorfilterlimits = None
     regressorsimcalclimits = None

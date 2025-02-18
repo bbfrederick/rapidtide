@@ -121,7 +121,6 @@ def _get_parser():
 
 
 def selectFile():
-    global datafileroot
     mydialog = QtWidgets.QFileDialog()
     if pyqtversion == 5:
         options = mydialog.Options()
@@ -137,6 +136,7 @@ def selectFile():
         datafileroot = str(lagfilename[:bidsstartloc])
     else:
         datafileroot = str(lagfilename[: lagfilename.find("lagtimes.nii.gz")])
+    return datafileroot
 
 
 class xyztlocation(QtWidgets.QWidget):
@@ -698,7 +698,7 @@ def updateRegressorSpectrum():
 
 
 def calcAtlasStats():
-    global overlays, datafileroot, atlasstats, averagingmode, currentdataset
+    global overlays, atlasstats, averagingmode, currentdataset
     global atlasaveragingdone
     print("in calcAtlasStats")
     methodlist = ["mean", "median", "std", "MAD", "CoV"]
@@ -745,7 +745,7 @@ def calcAtlasStats():
             df = pd.DataFrame(data=d)
             df = df[cols]
             df.to_csv(
-                datafileroot + currentdataset.atlasname + "_" + thestat + ".txt",
+                currentdataset.fileroot + currentdataset.atlasname + "_" + thestat + ".txt",
                 sep="\t",
                 index=False,
             )
@@ -755,7 +755,7 @@ def calcAtlasStats():
 
 
 def updateAtlasStats():
-    global overlays, datafileroot, atlasstats, averagingmode, currentdataset
+    global overlays, atlasstats, averagingmode, currentdataset
     print("in updateAtlasStats")
     if "atlas" in overlays and (averagingmode is not None):
         for idx, themap in enumerate(currentdataset.loadedfuncmaps):
@@ -1388,7 +1388,6 @@ def tidepool(args):
     global buttonisdown
     global imageadj
     global harvestcolormaps
-    global datafileroot
     global atlasaveragingdone
     global currentdataset
     global verbosity
@@ -1444,11 +1443,10 @@ def tidepool(args):
     else:
         geommaskname = None
 
-    datafileroot = args.datafileroot
-    if datafileroot is not None:
-        print("using ", datafileroot, " as the root file name ")
-    else:
-        datafileroot = ""
+    datafileroots = []
+    if args.datafileroot is not None:
+        print("using ", args.datafileroot, " as the root file name ")
+        datafileroots.append(args.datafileroot)
 
     if args.offsettime is not None:
         forceoffset = True
@@ -1478,10 +1476,24 @@ def tidepool(args):
     win.show()
     win.setWindowTitle("TiDePool")
 
+    """"# create the menu bar
+    print("creating menu bar")
+    menuBar = win.menuBar()
+    fileMenu = QtWidgets.QMenu(win)
+    if pyqtversion == 5:
+        qactionfunc = QtWidgets.QAction
+    else:
+        qactionfunc = QtGui.QAction
+    sel_open = qactionfunc("Open", win)
+    sel_open.triggered.connect(selectFile())
+    fileMenu.addAction(sel_open)
+    win.setMenuBar(menuBar)
+    print("done creating menu bar")"""
+
     # get inputfile root name if necessary
-    if datafileroot == "":
-        selectFile()
-    if datafileroot == "":
+    if len(datafileroots) == 0:
+        datafileroots.append(selectFile())
+    if len(datafileroots) == 0:
         print("No input file specified - exiting.")
         sys.exit()
 
@@ -1827,21 +1839,22 @@ def tidepool(args):
     # read in all the datasets
     thesubjects = []
 
-    thesubjects.append(
-        RapidtideDataset(
-            "main",
-            datafileroot,
-            anatname=anatname,
-            geommaskname=geommaskname,
-            userise=userise,
-            usecorrout=usecorrout,
-            useatlas=useatlas,
-            forcetr=forcetr,
-            forceoffset=forceoffset,
-            offsettime=offsettime,
-            verbose=args.verbose,
+    for thisdatafileroot in datafileroots:
+        thesubjects.append(
+            RapidtideDataset(
+                "main",
+                thisdatafileroot,
+                anatname=anatname,
+                geommaskname=geommaskname,
+                userise=userise,
+                usecorrout=usecorrout,
+                useatlas=useatlas,
+                forcetr=forcetr,
+                forceoffset=forceoffset,
+                offsettime=offsettime,
+                verbose=args.verbose,
+            )
         )
-    )
     currentdataset = thesubjects[-1]
     print("loading datasets...")
 
@@ -1878,11 +1891,11 @@ def tidepool(args):
         ui.pass4_radioButton.setText("Pass " + regressors["pass4"].label[4:])
         ui.pass4_radioButton.show()
 
-    win.setWindowTitle("TiDePool - " + datafileroot[:-1])
+    win.setWindowTitle("TiDePool - " + currentdataset.fileroot[:-1])
 
     # read in the significance distribution
-    if os.path.isfile(datafileroot + "sigfit.txt"):
-        sighistfitname = datafileroot + "sigfit.txt"
+    if os.path.isfile(currentdataset.fileroot + "sigfit.txt"):
+        sighistfitname = currentdataset.fileroot + "sigfit.txt"
     else:
         sighistfitname = None
 
