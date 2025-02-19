@@ -68,8 +68,11 @@ def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
     return thecolorbarfgwin, thecolorbarbgwin, theviewbox, colorbarvals
 
 
-def newViewWindow(view, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False):
-    theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
+def newViewWindow(
+    view, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False, doinit=True
+):
+    if doinit:
+        theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
     theviewbox.setAspectLocked()
     theviewbox.setRange(QtCore.QRectF(0, 0, imgsize, imgsize), padding=0.0, disableAutoRange=True)
     theviewbox.setBackgroundColor([50, 50, 50])
@@ -91,10 +94,12 @@ def newViewWindow(view, left, top, impixpervoxx, impixpervoxy, imgsize, enableMo
 
     theviewvLine = pg.InfiniteLine(angle=90, movable=False, pen="g")
     theviewvLine.setZValue(20)
-    theviewbox.addItem(theviewvLine)
+    if doinit:
+        theviewbox.addItem(theviewvLine)
     theviewhLine = pg.InfiniteLine(angle=0, movable=False, pen="g")
     theviewhLine.setZValue(20)
-    theviewbox.addItem(theviewhLine)
+    if doinit:
+        theviewbox.addItem(theviewhLine)
 
     return theviewfgwin, theviewbgwin, theviewvLine, theviewhLine, theviewbox
 
@@ -108,6 +113,7 @@ class OrthoImageItem(QtWidgets.QWidget):
         axview,
         corview,
         sagview,
+        doinit=False,
         enableMouse=False,
         button=None,
         imgsize=64,
@@ -124,6 +130,7 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.button = button
         self.verbose = verbose
         self.enableMouse = enableMouse
+        self.doinit = doinit
         self.xdim = self.map.xdim  # this is the number of voxels along this axis
         self.ydim = self.map.ydim  # this is the number of voxels along this axis
         self.zdim = self.map.zdim  # this is the number of voxels along this axis
@@ -189,6 +196,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.impixpervoxx,
             self.impixpervoxy,
             self.imgsize,
+            doinit=self.doinit,
             enableMouse=self.enableMouse,
         )
         (
@@ -204,6 +212,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.impixpervoxx,
             self.impixpervoxz,
             self.imgsize,
+            doinit=self.doinit,
             enableMouse=self.enableMouse,
         )
         (
@@ -219,6 +228,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.impixpervoxy,
             self.impixpervoxz,
             self.imgsize,
+            doinit=self.doinit,
             enableMouse=self.enableMouse,
         )
         if self.enableMouse:
