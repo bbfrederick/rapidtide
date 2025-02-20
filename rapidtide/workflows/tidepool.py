@@ -475,22 +475,22 @@ def keyPressed(evt):
     global defaultdict, overlayGraphicsViews
     numsubjects = len(thesubjects)
     if evt.key() == QtCore.Qt.Key.Key_Up:
-        whichsubject = (numsubjects + 1) % numsubjects
+        whichsubject = (whichsubject + 1) % numsubjects
         print("Key_Up")
     elif evt.key() == QtCore.Qt.Key.Key_Down:
-        whichsubject = (numsubjects - 1) % numsubjects
+        whichsubject = (whichsubject - 1) % numsubjects
         print("Key_Down")
     elif evt.key() == QtCore.Qt.Key.Key_Left:
-        whichsubject = (numsubjects - 1) % numsubjects
+        whichsubject = (whichsubject - 1) % numsubjects
         print("Key_Left")
     elif evt.key() == QtCore.Qt.Key.Key_Right:
-        whichsubject = (numsubjects + 1) % numsubjects
+        whichsubject = (whichsubject + 1) % numsubjects
         print("Key_Right")
     else:
         print(evt.key())
     print(f"subject number set to {whichsubject}")
-    """currentdataset = thesubjects[whichsubject]
-    activatedataset(
+    currentdataset = thesubjects[whichsubject]
+    """activatedataset(
         currentdataset,
         ui,
         win,
@@ -1365,6 +1365,7 @@ def printfocusvals():
         "\n\nValues at location "
         + "{0},{1},{2}".format(currentloc.xpos, currentloc.ypos, currentloc.zpos),
     )
+    indentstring = "   "
     for key in overlays:
         # print(key, overlays[key].report)
         if key != "mnibrainmask":
@@ -1376,7 +1377,7 @@ def printfocusvals():
                 if key != "atlas":
                     if key != "failimage":
                         outstring = (
-                            "\t"
+                            indentstring
                             + str(overlays[key].label.ljust(26))
                             + str(":")
                             + "{:.3f}".format(round(focusval, 3))
@@ -1387,7 +1388,7 @@ def printfocusvals():
                             if simfuncFitter is not None:
                                 failstring = simfuncFitter.diagnosefail(np.uint32(focusval))
                                 outstring = (
-                                    "\t"
+                                    indentstring
                                     + str(overlays[key].label.ljust(26))
                                     + str(":\n\t    ")
                                     + failstring.replace(", ", "\n\t    ")
@@ -1395,7 +1396,7 @@ def printfocusvals():
                                 logstatus(ui.logOutput, outstring)
                 else:
                     outstring = (
-                        "\t"
+                        indentstring
                         + str(overlays[key].label.ljust(26))
                         + str(":")
                         + str(currentdataset.atlaslabels[int(focusval) - 1])
@@ -1622,71 +1623,76 @@ def activatedataset(
 
     if verbosity > 1:
         print("focusmap is:", currentdataset.focusmap, "bgmap is:", bgmap)
-    if bgmap is None:
-        mainwin = OrthoImageItem(
-            overlays[currentdataset.focusmap],
-            ui.main_graphicsView_ax,
-            ui.main_graphicsView_cor,
-            ui.main_graphicsView_sag,
-            doinit=doinit,
-            imgsize=lg_imgsize,
-            enableMouse=True,
-            verbose=verbosity,
-        )
+    if doinit:
+        if bgmap is None:
+            mainwin = OrthoImageItem(
+                overlays[currentdataset.focusmap],
+                ui.main_graphicsView_ax,
+                ui.main_graphicsView_cor,
+                ui.main_graphicsView_sag,
+                imgsize=lg_imgsize,
+                enableMouse=True,
+                verbose=verbosity,
+            )
+        else:
+            mainwin = OrthoImageItem(
+                overlays[currentdataset.focusmap],
+                ui.main_graphicsView_ax,
+                ui.main_graphicsView_cor,
+                ui.main_graphicsView_sag,
+                bgmap=overlays[bgmap],
+                imgsize=lg_imgsize,
+                enableMouse=True,
+                verbose=verbosity,
+            )
     else:
-        mainwin = OrthoImageItem(
-            overlays[currentdataset.focusmap],
-            ui.main_graphicsView_ax,
-            ui.main_graphicsView_cor,
-            ui.main_graphicsView_sag,
-            doinit=doinit,
-            bgmap=overlays[bgmap],
-            imgsize=lg_imgsize,
-            enableMouse=True,
-            verbose=verbosity,
-        )
-    orthoimagedict = {}
+        mainwin.setMap(overlays[currentdataset.focusmap])
+
     if verbosity > 1:
         print("loading panes")
     availablepanes = len(overlayGraphicsViews)
     numnotloaded = 0
     numloaded = 0
-    for idx, themap in enumerate(currentdataset.dispmaps):
-        if overlays[themap].display_state:
-            if (numloaded > availablepanes - 1) or (
-                (numloaded > availablepanes - 2) and (themap != "corrout")
-            ):
-                if verbosity > 1:
-                    print("skipping map ", themap, "(", idx, "): out of display panes")
-                numnotloaded += 1
+    if doinit:
+        orthoimagedict = {}
+        for idx, themap in enumerate(currentdataset.dispmaps):
+            if overlays[themap].display_state:
+                if (numloaded > availablepanes - 1) or (
+                    (numloaded > availablepanes - 2) and (themap != "corrout")
+                ):
+                    if verbosity > 1:
+                        print("skipping map ", themap, "(", idx, "): out of display panes")
+                    numnotloaded += 1
+                else:
+                    if verbosity > 1:
+                        print("loading map ", themap, "(", idx, ") into pane ", numloaded)
+                    if bgmap is None:
+                        loadpane(
+                            overlays[themap],
+                            numloaded,
+                            overlayGraphicsViews,
+                            overlaybuttons,
+                            panetomap,
+                            orthoimagedict,
+                            sm_imgsize=sm_imgsize,
+                        )
+                    else:
+                        loadpane(
+                            overlays[themap],
+                            numloaded,
+                            overlayGraphicsViews,
+                            overlaybuttons,
+                            panetomap,
+                            orthoimagedict,
+                            bgmap=overlays[bgmap],
+                            sm_imgsize=sm_imgsize,
+                        )
+                numloaded += 1
             else:
                 if verbosity > 1:
-                    print("loading map ", themap, "(", idx, ") into pane ", numloaded)
-                if bgmap is None:
-                    loadpane(
-                        overlays[themap],
-                        numloaded,
-                        overlayGraphicsViews,
-                        overlaybuttons,
-                        panetomap,
-                        orthoimagedict,
-                        doinit=doinit,
-                    )
-                else:
-                    loadpane(
-                        overlays[themap],
-                        numloaded,
-                        overlayGraphicsViews,
-                        overlaybuttons,
-                        panetomap,
-                        orthoimagedict,
-                        doinit=doinit,
-                        bgmap=overlays[bgmap],
-                    )
-                numloaded += 1
-        else:
-            if verbosity > 1:
-                print("not loading map ", themap, "(", idx, "): display_state is False")
+                    print("not loading map ", themap, "(", idx, "): display_state is False")
+    else:
+        print(orthoimagedict)
     if verbosity > 1:
         print("done loading panes")
     if numnotloaded > 0:
@@ -1701,7 +1707,6 @@ def loadpane(
     panemap,
     orthoimagedict,
     bgmap=None,
-    doinit=False,
     sm_imgsize=32.0,
 ):
     if themap.display_state:
@@ -1711,7 +1716,6 @@ def loadpane(
                 view[thepane],
                 view[thepane],
                 view[thepane],
-                doinit=doinit,
                 button=button[thepane],
                 imgsize=sm_imgsize,
                 verbose=verbosity,
@@ -1722,7 +1726,6 @@ def loadpane(
                 view[thepane],
                 view[thepane],
                 view[thepane],
-                doinit=doinit,
                 button=button[thepane],
                 bgmap=bgmap,
                 imgsize=sm_imgsize,
@@ -1962,13 +1965,13 @@ def tidepool(args):
         },
         "lagtimes": {
             "colormap": gen_viridis_state(),
-            "label": "Lag times",
+            "label": "Lag time",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "lagtimesrefined": {
             "colormap": gen_viridis_state(),
-            "label": "Refineed lag times",
+            "label": "Refined lag time",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
@@ -1998,7 +2001,7 @@ def tidepool(args):
         },
         "R2": {
             "colormap": gen_thermal_state(),
-            "label": "R2",
+            "label": "Fit R2",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
@@ -2046,7 +2049,7 @@ def tidepool(args):
         },
         "neglog10p": {
             "colormap": gen_thermal_state(),
-            "label": "Correlation fit significance",
+            "label": "Correlation fit -log10p",
             "display": False,
             "funcmask": "None",
         },

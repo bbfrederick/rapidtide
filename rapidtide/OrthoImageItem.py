@@ -25,6 +25,7 @@ import os
 
 import numpy as np
 import pyqtgraph as pg
+from more_itertools.more import first
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 try:
@@ -68,11 +69,17 @@ def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
     return thecolorbarfgwin, thecolorbarbgwin, theviewbox, colorbarvals
 
 
-def newViewWindow(
-    view, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False, doinit=True
+def setupViewWindow(
+    view,
+    left,
+    top,
+    impixpervoxx,
+    impixpervoxy,
+    imgsize,
+    enableMouse=False,
 ):
-    if doinit:
-        theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
+
+    theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
     theviewbox.setAspectLocked()
     theviewbox.setRange(QtCore.QRectF(0, 0, imgsize, imgsize), padding=0.0, disableAutoRange=True)
     theviewbox.setBackgroundColor([50, 50, 50])
@@ -94,12 +101,10 @@ def newViewWindow(
 
     theviewvLine = pg.InfiniteLine(angle=90, movable=False, pen="g")
     theviewvLine.setZValue(20)
-    if doinit:
-        theviewbox.addItem(theviewvLine)
+    theviewbox.addItem(theviewvLine)
     theviewhLine = pg.InfiniteLine(angle=0, movable=False, pen="g")
     theviewhLine.setZValue(20)
-    if doinit:
-        theviewbox.addItem(theviewhLine)
+    theviewbox.addItem(theviewhLine)
 
     return theviewfgwin, theviewbgwin, theviewvLine, theviewhLine, theviewbox
 
@@ -113,7 +118,6 @@ class OrthoImageItem(QtWidgets.QWidget):
         axview,
         corview,
         sagview,
-        doinit=False,
         enableMouse=False,
         button=None,
         imgsize=64,
@@ -130,7 +134,6 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.button = button
         self.verbose = verbose
         self.enableMouse = enableMouse
-        self.doinit = doinit
         self.xdim = self.map.xdim  # this is the number of voxels along this axis
         self.ydim = self.map.ydim  # this is the number of voxels along this axis
         self.zdim = self.map.zdim  # this is the number of voxels along this axis
@@ -153,6 +156,17 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.offsetx = self.imgsize * (0.5 - self.xfov / (2.0 * self.maxfov))
         self.offsety = self.imgsize * (0.5 - self.yfov / (2.0 * self.maxfov))
         self.offsetz = self.imgsize * (0.5 - self.zfov / (2.0 * self.maxfov))
+        self.axviewbox = None
+        self.corviewbox = None
+        self.sagviewbox = None
+        self.axviewwin = None
+        self.corviewwin = None
+        self.sagviewwin = None
+        self.axviewbgwin = None
+        self.corviewbgwin = None
+        self.sagviewbgwin = None
+        self.debug = True
+        self.arrangement = arrangement
 
         if self.verbose > 1:
             print("OrthoImageItem initialization:")
@@ -169,7 +183,6 @@ class OrthoImageItem(QtWidgets.QWidget):
             print("    Offsets:", self.offsetx, self.offsety, self.offsetz)
         self.buttonisdown = False
 
-        self.arrangement = arrangement
         self.axview.setBackground(None)
         self.axview.setRange(padding=0.0)
         self.axview.ci.layout.setContentsMargins(0, 0, 0, 0)
@@ -189,14 +202,13 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.axviewvLine,
             self.axviewhLine,
             self.axviewbox,
-        ) = newViewWindow(
+        ) = setupViewWindow(
             self.axview,
             self.offsetx,
             self.offsety,
             self.impixpervoxx,
             self.impixpervoxy,
             self.imgsize,
-            doinit=self.doinit,
             enableMouse=self.enableMouse,
         )
         (
@@ -205,14 +217,13 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.corviewvLine,
             self.corviewhLine,
             self.corviewbox,
-        ) = newViewWindow(
+        ) = setupViewWindow(
             self.corview,
             self.offsetx,
             self.offsetz,
             self.impixpervoxx,
             self.impixpervoxz,
             self.imgsize,
-            doinit=self.doinit,
             enableMouse=self.enableMouse,
         )
         (
@@ -221,14 +232,13 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.sagviewvLine,
             self.sagviewhLine,
             self.sagviewbox,
-        ) = newViewWindow(
+        ) = setupViewWindow(
             self.sagview,
             self.offsety,
             self.offsetz,
             self.impixpervoxy,
             self.impixpervoxz,
             self.imgsize,
-            doinit=self.doinit,
             enableMouse=self.enableMouse,
         )
         if self.enableMouse:
