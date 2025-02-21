@@ -1,7 +1,11 @@
 # Release history
 
-## Version 3.0alpha8 (2/18/25)
+## Version 3.0alpha8 (2/20/25)
+* (rapidtide) Enhanced fit failure reporting.
+* (rapidtide) Fixed map output type for non-float maps.
 * (tidepool) Clarify how you specify the dataset name in the help text.
+* (tidepool) Fixed some typos in outputs.
+* (tidepool) Made some internal changes in preparation for allowing loading multiple files.
 
 ## Version 3.0alpha7 (2/11/25)
 * (happy) Trying out some new approaches for aliased correlation.

@@ -355,7 +355,7 @@ def savemaplist(
             themap,
             internalspaceshape,
             validvoxels,
-            outmaparray,
+            outmaparray.astype(themap.dtype),
             debug=False,
         )
 
