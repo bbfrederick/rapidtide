@@ -103,11 +103,12 @@ def _get_parser():
         "--maskname", help="Set geometric mask image", dest="geommaskname", default=None
     )
     parser.add_argument(
-        "--oldstyle",
-        help="Use the old style layout",
-        dest="compact",
-        action="store_false",
-        default=True,
+        "--uistyle",
+        action="store",
+        type=str,
+        choices=["normal", "old", "big"],
+        help="Set the window layout style.  Default is 'normal'.",
+        default="normal",
     )
     parser.add_argument(
         "--verbosity",
@@ -115,7 +116,7 @@ def _get_parser():
         dest="verbose",
         metavar="VERBOSITY",
         type=int,
-        default=1,
+        default=0,
     )
 
     return parser
@@ -460,24 +461,48 @@ class xyztlocation(QtWidgets.QWidget):
             self.movieTimer.start(int(self.frametime))
 
 
-class KeyPressWindow(QtWidgets.QMainWindow):
+"""class KeyPressWindow(QtWidgets.QMainWindow):
     sigKeyPress = QtCore.pyqtSignal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def keyPressEvent(self, ev):
-        self.sigKeyPress.emit(ev)
+        self.sigKeyPress.emit(ev)"""
 
 
-def keyPressed(evt):
+def nextFileButtonPressed():
     global currentsubject, thesubjects, whichsubject
     global defaultdict, overlayGraphicsViews
     numsubjects = len(thesubjects)
-    if evt.key() == QtCore.Qt.Key.Key_Up:
+    whichsubject = (whichsubject + 1) % numsubjects
+    print(f"subject number set to {whichsubject}")
+    currentdataset = thesubjects[whichsubject]
+    activatedataset(
+        currentdataset,
+        ui,
+        win,
+        defaultdict,
+        overlayGraphicsViews,
+        verbosity=verbosity,
+        doinit=False,
+    )
+    updateUI(
+        callingfunc="nextFileButtonPressed",
+        orthoimages=True,
+        histogram=True,
+        focusvals=True,
+    )
+
+
+"""def keyPressed(evt):
+    global currentsubject, thesubjects, whichsubject
+    global defaultdict, overlayGraphicsViews
+    numsubjects = len(thesubjects)
+    if evt.key() == QtCore.Qt.Key.Key_F:
         whichsubject = (whichsubject + 1) % numsubjects
         print("Key_Up")
-    elif evt.key() == QtCore.Qt.Key.Key_Down:
+    elif evt.key() == QtCore.Qt.Key.Key_B:
         whichsubject = (whichsubject - 1) % numsubjects
         print("Key_Down")
     elif evt.key() == QtCore.Qt.Key.Key_Left:
@@ -490,7 +515,7 @@ def keyPressed(evt):
         print(evt.key())
     print(f"subject number set to {whichsubject}")
     currentdataset = thesubjects[whichsubject]
-    """activatedataset(
+    activatedataset(
         currentdataset,
         ui,
         win,
@@ -498,7 +523,8 @@ def keyPressed(evt):
         overlayGraphicsViews,
         verbosity=verbosity,
         doinit=False,
-    )"""
+    )
+    updateOrthoImages()"""
 
 
 def logstatus(thetextbox, thetext):
@@ -1456,10 +1482,12 @@ def activatedataset(
     global usecorrout
     global orthoimagedict
 
-    print("getting regressors")
+    if verbosity > 1:
+        print("getting regressors")
     regressors = currentdataset.getregressors()
 
-    print("getting overlays")
+    if verbosity > 1:
+        print("getting overlays")
     overlays = currentdataset.getoverlays()
     try:
         test = overlays["corrout"].display_state
@@ -1467,7 +1495,8 @@ def activatedataset(
         usecorrout = False
 
     # activate the appropriate regressor radio buttons
-    print("activating radio buttons")
+    if verbosity > 1:
+        print("activating radio buttons")
     if "prefilt" in regressors.keys():
         ui.prefilt_radioButton.setDisabled(False)
         ui.prefilt_radioButton.show()
@@ -1530,7 +1559,8 @@ def activatedataset(
         bgmap = None
 
     # set up the timecourse plot window
-    print("setting up timecourse plot window")
+    if verbosity > 1:
+        print("setting up timecourse plot window")
     xpos = int(currentdataset.xdim) // 2
     ypos = int(currentdataset.ydim) // 2
     zpos = int(currentdataset.zdim) // 2
@@ -1557,7 +1587,8 @@ def activatedataset(
     tpos = 0
 
     # set position and scale of images
-    print("setting position and scale of images")
+    if verbosity > 1:
+        print("setting position and scale of images")
     lg_imgsize = 256.0
     sm_imgsize = 32.0
     xfov = currentdataset.xdim * currentdataset.xsize
@@ -1692,7 +1723,12 @@ def activatedataset(
                 if verbosity > 1:
                     print("not loading map ", themap, "(", idx, "): display_state is False")
     else:
-        print(orthoimagedict)
+        for thismap in panetomap:
+            if thismap != "":
+                try:
+                    orthoimagedict[thismap].setMap(overlays[thismap])
+                except KeyError:
+                    pass
     if verbosity > 1:
         print("done loading panes")
     if numnotloaded > 0:
@@ -1783,13 +1819,17 @@ def tidepool(args):
     simfuncFitter = None
 
     if pyqtversion == 5:
-        if args.compact:
+        if args.uistyle == "normal":
             import rapidtide.tidepoolTemplate_alt as uiTemplate
+        elif args.uistyle == "big":
+            import rapidtide.tidepoolTemplate_big as uiTemplate
         else:
             import rapidtide.tidepoolTemplate as uiTemplate
     else:
-        if args.compact:
+        if args.uistyle == "normal":
             import rapidtide.tidepoolTemplate_alt_qt6 as uiTemplate
+        elif args.uistyle == "big":
+            import rapidtide.tidepoolTemplate_big_qt6 as uiTemplate
         else:
             import rapidtide.tidepoolTemplate_qt6 as uiTemplate
 
@@ -1835,9 +1875,9 @@ def tidepool(args):
     # make the main window
     app = QtWidgets.QApplication([])
     print("setting up output window")
-    win = KeyPressWindow()
-    win.sigKeyPress.connect(keyPressed)
-    # win = QtWidgets.QMainWindow()
+    # win = KeyPressWindow()
+    # win.sigKeyPress.connect(keyPressed)
+    win = QtWidgets.QMainWindow()
     ui = uiTemplate.Ui_MainWindow()
     ui.setupUi(win)
     win.show()
@@ -2117,6 +2157,17 @@ def tidepool(args):
         ui.overlay_radioButton_07,
         ui.overlay_radioButton_08,
     ]
+    if args.uistyle == "big":
+        overlaybuttons += [
+            ui.overlay_radioButton_09,
+            ui.overlay_radioButton_10,
+            ui.overlay_radioButton_11,
+            ui.overlay_radioButton_12,
+            ui.overlay_radioButton_13,
+            ui.overlay_radioButton_14,
+            ui.overlay_radioButton_15,
+            ui.overlay_radioButton_16,
+        ]
     for i in range(len(overlaybuttons)):
         clickfunc = globals()[f"overlay_radioButton_{str(i + 1).zfill(2)}_clicked"]
         overlaybuttons[i].clicked.connect(clickfunc)
@@ -2135,7 +2186,17 @@ def tidepool(args):
         ui.overlay_graphicsView_07,
         ui.overlay_graphicsView_08,
     ]
-
+    if args.uistyle == "big":
+        overlayGraphicsViews += [
+            ui.overlay_graphicsView_09,
+            ui.overlay_graphicsView_10,
+            ui.overlay_graphicsView_11,
+            ui.overlay_graphicsView_12,
+            ui.overlay_graphicsView_13,
+            ui.overlay_graphicsView_14,
+            ui.overlay_graphicsView_15,
+            ui.overlay_graphicsView_16,
+        ]
     panetomap = []
 
     for theview in overlayGraphicsViews:
@@ -2233,6 +2294,13 @@ def tidepool(args):
         verbosity=verbosity,
         doinit=True,
     )
+
+    for thebutton in [ui.nextFile_Button]:
+        if len(thesubjects) == 1:
+            thebutton.setDisabled(True)
+            thebutton.hide()
+        else:
+            thebutton.clicked.connect(nextFileButtonPressed)
 
     # wire up the display range controls
     ui.resetDispLimits_Button.clicked.connect(resetDispLimits)
