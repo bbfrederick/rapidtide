@@ -25,7 +25,6 @@ import os
 
 import numpy as np
 import pyqtgraph as pg
-from more_itertools.more import first
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 try:
