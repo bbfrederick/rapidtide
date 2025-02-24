@@ -35,7 +35,7 @@ import rapidtide.util as tide_util
 from rapidtide.Colortables import *
 from rapidtide.helper_classes import SimilarityFunctionFitter
 from rapidtide.OrthoImageItem import OrthoImageItem
-from rapidtide.RapidtideDataset import RapidtideDataset
+from rapidtide.RapidtideDataset import RapidtideDataset, check_rt_spatialmatch
 from rapidtide.workflows.atlasaverage import summarizevoxels
 
 try:
@@ -2281,8 +2281,13 @@ def tidepool(args):
         )
         if len(thesubjects) > 0:
             # check to see that the dimensions match
-            pass
-        thesubjects.append(thissubject)
+            dimmatch, sizematch, spacematch, affinematch  = check_rt_spatialmatch(thissubject, thesubjects[0])
+            if sizematch:
+                thesubjects.append(thissubject)
+            else:
+                print(f"dataset {thisdatafileroot} does not match loaded data - skipping")
+        else:
+            thesubjects.append(thissubject)
     whichsubject = 0
     currentdataset = thesubjects[whichsubject]
     activatedataset(

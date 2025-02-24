@@ -38,6 +38,25 @@ atlases = {
     "JHU2": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL2"},
 }
 
+def check_rt_spatialmatch(dataset1, dataset2):
+    if (dataset1.xdim == dataset2.xdim) and (dataset1.ydim == dataset2.ydim) and (dataset1.zdim == dataset2.zdim):
+        dimmatch = True
+    else:
+        dimmatch = False
+    if (dataset1.xsize == dataset2.xsize) and (dataset1.ysize == dataset2.ysize) and (dataset1.zsize == dataset2.zsize):
+        sizematch = True
+    else:
+        sizematch = False
+    if dataset1.space == dataset2.space:
+        spacematch = True
+    else:
+        spacematch = False
+    if dataset1.affine == dataset2.affine:
+        affinematch = True
+    else:
+        affinematch = False
+    return dimmatch, sizematch, spacematch, affinematch
+
 
 class Timecourse:
     "Store a timecourse and some information about it"
@@ -452,6 +471,8 @@ class RapidtideDataset:
     ysize = 0.0
     zsize = 0.0
     tr = 0.0
+    space = None
+    affine = None
 
     def __init__(
         self,
