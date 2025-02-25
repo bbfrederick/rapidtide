@@ -118,6 +118,13 @@ def _get_parser():
         type=int,
         default=0,
     )
+    parser.add_argument(
+        "--ignoredimmatch",
+        help="Do not check to see if dataset sizes match",
+        dest="ignoredimmatch",
+        action="store_true",
+        default=False,
+    )
 
     return parser
 
@@ -472,11 +479,13 @@ class xyztlocation(QtWidgets.QWidget):
 
 
 def nextFileButtonPressed():
-    global currentsubject, thesubjects, whichsubject
+    global currentdataset, thesubjects, whichsubject
     global defaultdict, overlayGraphicsViews
     numsubjects = len(thesubjects)
     whichsubject = (whichsubject + 1) % numsubjects
     print(f"subject number set to {whichsubject}")
+    thesubjects[whichsubject].setfocusregressor(currentdataset.focusregressor)
+    thesubjects[whichsubject].setfocusmap(currentdataset.focusmap)
     currentdataset = thesubjects[whichsubject]
     activatedataset(
         currentdataset,
@@ -487,6 +496,8 @@ def nextFileButtonPressed():
         verbosity=verbosity,
         doinit=False,
     )
+    updateRegressor()
+    updateRegressorSpectrum()
     updateUI(
         callingfunc="nextFileButtonPressed",
         orthoimages=True,
@@ -733,6 +744,8 @@ def updateRegressor():
         size = [upperlim - lowerlim, tctop - tcbottom]
         therectangle = RectangleItem(bottomleft, size)
         regressor_ax.addItem(therectangle)
+    else:
+        print("currentdataset.focusregressor is None!")
 
 
 def updateRegressorSpectrum():
@@ -1774,7 +1787,7 @@ def tidepool(args):
     global vLine
     global ui, win
     global movierunning
-    global focusmap, bgmap
+    global focusmap, bgmap, focusregressor
     global maps
     global roi
     global overlays, regressors, regressorfilterlimits, regressorsimcalclimits, loadedfuncmaps, atlasstats, averagingmode
@@ -2281,8 +2294,10 @@ def tidepool(args):
         )
         if len(thesubjects) > 0:
             # check to see that the dimensions match
-            dimmatch, sizematch, spacematch, affinematch  = check_rt_spatialmatch(thissubject, thesubjects[0])
-            if sizematch:
+            dimmatch, sizematch, spacematch, affinematch = check_rt_spatialmatch(
+                thissubject, thesubjects[0]
+            )
+            if dimmatch or args.ignoredimmatch:
                 thesubjects.append(thissubject)
             else:
                 print(f"dataset {thisdatafileroot} does not match loaded data - skipping")

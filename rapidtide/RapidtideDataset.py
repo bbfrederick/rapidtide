@@ -38,12 +38,21 @@ atlases = {
     "JHU2": {"atlasname": "JHU-ArterialTerritoriesNoVent-LVL2"},
 }
 
+
 def check_rt_spatialmatch(dataset1, dataset2):
-    if (dataset1.xdim == dataset2.xdim) and (dataset1.ydim == dataset2.ydim) and (dataset1.zdim == dataset2.zdim):
+    if (
+        (dataset1.xdim == dataset2.xdim)
+        and (dataset1.ydim == dataset2.ydim)
+        and (dataset1.zdim == dataset2.zdim)
+    ):
         dimmatch = True
     else:
         dimmatch = False
-    if (dataset1.xsize == dataset2.xsize) and (dataset1.ysize == dataset2.ysize) and (dataset1.zsize == dataset2.zsize):
+    if (
+        (dataset1.xsize == dataset2.xsize)
+        and (dataset1.ysize == dataset2.ysize)
+        and (dataset1.zsize == dataset2.zsize)
+    ):
         sizematch = True
     else:
         sizematch = False
@@ -1079,7 +1088,11 @@ class RapidtideDataset:
         return self.regressors
 
     def setfocusregressor(self, whichregressor):
-        self.focusregressor = whichregressor
+        try:
+            testregressor = self.regressors[whichregressor]
+            self.focusregressor = whichregressor
+        except KeyError:
+            self.focusregressor = "prefilt"
 
     def setupoverlays(self):
         # load the overlays
@@ -1308,4 +1321,8 @@ class RapidtideDataset:
         return self.overlays
 
     def setfocusmap(self, whichmap):
-        self.focusmap = whichmap
+        try:
+            testmap = self.overlays[whichmap]
+            self.focusmap = whichmap
+        except KeyError:
+            self.focusmap = "lagtimes"
