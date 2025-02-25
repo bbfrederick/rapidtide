@@ -1,5 +1,9 @@
 # Release history
 
+## Version 3.0alpha9 (2/24/25)
+* (rapidtide) Fixed the calculation of the regressor autocorrelation width (used in estimating MTT).
+* (tidepool) First working version that allows loading multiple files.
+
 ## Version 3.0alpha8 (2/20/25)
 * (rapidtide) Enhanced fit failure reporting.
 * (rapidtide) Fixed map output type for non-float maps.

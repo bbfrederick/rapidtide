@@ -1968,11 +1968,13 @@ def rapidtide_main(argparsingfunc):
         if optiondict["check_autocorrelation"]:
             LGR.info("checking reference regressor autocorrelation properties")
             optiondict["lagmod"] = 1000.0
-            lagindpad = corrorigin - 2 * np.max((lagmininpts, lagmaxinpts))
-            acmininpts = lagmininpts + lagindpad
-            acmaxinpts = lagmaxinpts + lagindpad
+            lagindpad = np.max((lagmininpts, lagmaxinpts))
+            acmininpts = lagindpad
+            acmaxinpts = lagindpad
             theCorrelator.setreftc(referencetc)
             theCorrelator.setlimits(acmininpts, acmaxinpts)
+            # theCorrelator.setlimits(lagmininpts, lagmaxinpts)
+            print("check_autocorrelation:", acmininpts, acmaxinpts, lagmininpts, lagmaxinpts)
             thexcorr, accheckcorrscale, dummy = theCorrelator.run(
                 resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1]
             )
@@ -2156,7 +2158,8 @@ def rapidtide_main(argparsingfunc):
             theMutualInformationator.setreftc(cleaned_resampref_y)
             dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
             thefitter.setcorrtimeaxis(trimmedcorrscale)
-            # add parallel path for mutualinformationator BBF
+
+            # parallel path for mutual information
             if optiondict["similaritymetric"] == "mutualinfo":
                 theSimFunc = theMutualInformationator
             else:
@@ -3838,7 +3841,7 @@ def rapidtide_main(argparsingfunc):
         (fitmask, "corrfit", "mask", None, "Voxels where correlation value was fit"),
         (failreason, "corrfitfailreason", "info", None, "Result codes for correlation fit"),
     ]
-    MTT = np.square(lagsigma) - (optiondict["acwidth"] * optiondict["acwidth"])
+    MTT = np.square(lagsigma) - 0.5 * (optiondict["acwidth"] * optiondict["acwidth"])
     MTT = np.where(MTT > 0.0, MTT, 0.0)
     MTT = np.sqrt(MTT)
     savelist += [(MTT, "MTT", "map", "second", "Mean transit time (estimated)")]
