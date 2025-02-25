@@ -187,6 +187,8 @@ class Overlay:
         self.setGeomMask(geommask, maskdata=False)
         self.maskData()
         self.updateStats()
+        self.dispmin = self.robustmin
+        self.dispmax = self.robustmax
         if init_LUT:
             self.gradient = getagradient()
             self.lut_state = lut_state
@@ -270,8 +272,6 @@ class Overlay:
             self.pct75,
             self.robustmax,
         ) = tide_stats.getfracvals(calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
-        self.dispmin = self.robustmin
-        self.dispmax = self.robustmax
         self.histy, self.histx = np.histogram(
             calcmaskeddata, bins=np.linspace(self.minval, self.maxval, 200)
         )
