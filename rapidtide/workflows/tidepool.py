@@ -23,6 +23,7 @@ A simple GUI for looking at the results of a rapidtide analysis
 import argparse
 import os
 import sys
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -1033,6 +1034,46 @@ def rainbow_radioButton_clicked(enabled):
         updateLUT()
 
 
+def set_genericmask(maskname):
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    maskinfodicts = {}
+    maskinfodicts["nomask"] = {
+        "msg": "Disabling functional mask",
+        "label": "No mask",
+    }
+    maskinfodicts["meanmask"] = {
+        "msg": "Mean regressor seed mask",
+        "label": "Mean mask",
+    }
+    maskinfodicts["lagmask"] = {
+        "msg": "Using valid fit points as functional mask",
+        "label": "Valid mask",
+    }
+    maskinfodicts["refinemask"] = {
+        "msg": "Voxel refinement mask",
+        "label": "Refine mask",
+    }
+    maskinfodicts["preselectmask"] = {
+        "msg": "Preselected mean regressor seed mask",
+        "label": "Preselect mask",
+    }
+    for pval in [0.05, 0.01, 0.005, 0.001]:
+        maskinfodicts[f"p_lt_{(str(pval) + '0').replace('.','p')[0:5]}_mask"] = {
+            "msg": f"Setting functional mask to p<{str(pval)}",
+            "label": f"p<{str(pval)}",
+        }
+    print(maskinfodicts[maskname]["msg"])
+    ui.setMask_Button.setText(maskinfodicts[maskname]["label"])
+    for themap in currentdataset.loadedfuncmaps:
+        if maskname == "nomask":
+            overlays[themap].setFuncMask(None)
+        else:
+            overlays[themap].setFuncMask(overlays[maskname].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
+    updateUI(callingfunc=f"set_genericmask({maskname})", orthoimages=True, histogram=True)
+
+
 def set_atlasmask():
     global overlays, loadedfuncmaps, ui, currentdataset
     print("Using all defined atlas regions as functional mask")
@@ -1040,107 +1081,6 @@ def set_atlasmask():
     for themap in currentdataset.loadedfuncmaps:
         overlays[themap].setFuncMask(overlays["atlasmask"].data)
     updateUI(callingfunc="set_atlasmask", orthoimages=True, histogram=True)
-
-
-def set_lagmask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("Using valid fit points as functional mask")
-    ui.setMask_Button.setText("Valid mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["lagmask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_lagmask()", orthoimages=True, histogram=True)
-
-
-def set_refinemask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("Voxel refinement mask")
-    ui.setMask_Button.setText("Refine mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["refinemask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_refinemask", orthoimages=True, histogram=True)
-
-
-def set_meanmask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("Mean regressor seed mask")
-    ui.setMask_Button.setText("Mean mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["meanmask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_meanmask", orthoimages=True, histogram=True)
-
-
-def set_preselectmask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("Preselected mean regressor seed mask")
-    ui.setMask_Button.setText("Preselect mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["preselectmask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_preselectmask", orthoimages=True, histogram=True)
-
-
-def set_nomask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("disabling functional mask")
-    ui.setMask_Button.setText("No Mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(None)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_nomask", orthoimages=True, histogram=True)
-
-
-def set_0p05():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("setting functional mask to p<0.05")
-    ui.setMask_Button.setText("p<0.05")
-    # overlays['jit_mask'] = tide_stats.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["p_lt_0p050_mask"].data)
-        # overlays[themap].setFuncMask(overlays['jit_mask'].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_0p05", orthoimages=True, histogram=True)
-
-
-def set_0p01():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("setting functional mask to p<0.01")
-    ui.setMask_Button.setText("p<0.01")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["p_lt_0p010_mask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_0p01", orthoimages=True, histogram=True)
-
-
-def set_0p005():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("setting functional mask to p<0.005")
-    ui.setMask_Button.setText("p<0.005")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["p_lt_0p005_mask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_0p005", orthoimages=True, histogram=True)
-
-
-def set_0p001():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("setting functional mask to p<0.001")
-    ui.setMask_Button.setText("p<0.001")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["p_lt_0p001_mask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_0p001", orthoimages=True, histogram=True)
 
 
 def overlay_radioButton_01_clicked(enabled):
@@ -2223,25 +2163,26 @@ def tidepool(args):
     else:
         qactionfunc = QtGui.QAction
     sel_nomask = qactionfunc("No mask", win)
-    sel_nomask.triggered.connect(set_nomask)
     sel_lagmask = qactionfunc("Valid fit", win)
-    sel_lagmask.triggered.connect(set_lagmask)
     sel_refinemask = qactionfunc("Voxels used in refine", win)
     sel_meanmask = qactionfunc("Voxels used in mean regressor calculation", win)
     sel_preselectmask = qactionfunc(
         "Voxels chosen for the mean regressor calculation in the preselect pass", win
     )
-    sel_refinemask.triggered.connect(set_refinemask)
-    sel_meanmask.triggered.connect(set_meanmask)
-    sel_preselectmask.triggered.connect(set_preselectmask)
     sel_0p05 = qactionfunc("p<0.05", win)
-    sel_0p05.triggered.connect(set_0p05)
     sel_0p01 = qactionfunc("p<0.01", win)
-    sel_0p01.triggered.connect(set_0p01)
     sel_0p005 = qactionfunc("p<0.005", win)
-    sel_0p005.triggered.connect(set_0p005)
     sel_0p001 = qactionfunc("p<0.001", win)
-    sel_0p001.triggered.connect(set_0p001)
+
+    sel_nomask.triggered.connect(partial(set_genericmask, "nomask"))
+    sel_lagmask.triggered.connect(partial(set_genericmask, "lagmask"))
+    sel_refinemask.triggered.connect(partial(set_genericmask, "refinemask"))
+    sel_meanmask.triggered.connect(partial(set_genericmask, "meanmask"))
+    sel_preselectmask.triggered.connect(partial(set_genericmask, "preselectmask"))
+    sel_0p05.triggered.connect(partial(set_genericmask, "p_lt_0p050_mask"))
+    sel_0p01.triggered.connect(partial(set_genericmask, "p_lt_0p010_mask"))
+    sel_0p005.triggered.connect(partial(set_genericmask, "p_lt_0p005_mask"))
+    sel_0p001.triggered.connect(partial(set_genericmask, "p_lt_0p001_mask"))
     popMenu.addAction(sel_nomask)
     numspecial = 0
 
