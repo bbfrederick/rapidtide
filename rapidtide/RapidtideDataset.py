@@ -500,7 +500,7 @@ class RapidtideDataset:
         coordinatespace="unspecified",
         offsettime=0.0,
         init_LUT=True,
-        verbose=1,
+        verbose=0,
     ):
         self.verbose = verbose
         self.name = name
