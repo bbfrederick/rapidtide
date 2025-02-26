@@ -1034,7 +1034,7 @@ def rainbow_radioButton_clicked(enabled):
         updateLUT()
 
 
-def set_genericmask(maskname):
+def set_mask(maskname):
     global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     maskinfodicts = {}
     maskinfodicts["nomask"] = {
@@ -1071,7 +1071,7 @@ def set_genericmask(maskname):
             overlays[themap].setFuncMask(overlays[maskname].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateUI(callingfunc=f"set_genericmask({maskname})", orthoimages=True, histogram=True)
+    updateUI(callingfunc=f"set_mask({maskname})", orthoimages=True, histogram=True)
 
 
 def set_atlasmask():
@@ -1081,70 +1081,6 @@ def set_atlasmask():
     for themap in currentdataset.loadedfuncmaps:
         overlays[themap].setFuncMask(overlays["atlasmask"].data)
     updateUI(callingfunc="set_atlasmask", orthoimages=True, histogram=True)
-
-
-def overlay_radioButton_01_clicked(enabled):
-    overlay_radioButton_clicked(0, enabled)
-
-
-def overlay_radioButton_02_clicked(enabled):
-    overlay_radioButton_clicked(1, enabled)
-
-
-def overlay_radioButton_03_clicked(enabled):
-    overlay_radioButton_clicked(2, enabled)
-
-
-def overlay_radioButton_04_clicked(enabled):
-    overlay_radioButton_clicked(3, enabled)
-
-
-def overlay_radioButton_05_clicked(enabled):
-    overlay_radioButton_clicked(4, enabled)
-
-
-def overlay_radioButton_06_clicked(enabled):
-    overlay_radioButton_clicked(5, enabled)
-
-
-def overlay_radioButton_07_clicked(enabled):
-    overlay_radioButton_clicked(6, enabled)
-
-
-def overlay_radioButton_08_clicked(enabled):
-    overlay_radioButton_clicked(7, enabled)
-
-
-def overlay_radioButton_09_clicked(enabled):
-    overlay_radioButton_clicked(8, enabled)
-
-
-def overlay_radioButton_10_clicked(enabled):
-    overlay_radioButton_clicked(9, enabled)
-
-
-def overlay_radioButton_11_clicked(enabled):
-    overlay_radioButton_clicked(10, enabled)
-
-
-def overlay_radioButton_12_clicked(enabled):
-    overlay_radioButton_clicked(11, enabled)
-
-
-def overlay_radioButton_13_clicked(enabled):
-    overlay_radioButton_clicked(12, enabled)
-
-
-def overlay_radioButton_14_clicked(enabled):
-    overlay_radioButton_clicked(13, enabled)
-
-
-def overlay_radioButton_15_clicked(enabled):
-    overlay_radioButton_clicked(14, enabled)
-
-
-def overlay_radioButton_16_clicked(enabled):
-    overlay_radioButton_clicked(15, enabled)
 
 
 def overlay_radioButton_clicked(which, enabled):
@@ -1383,44 +1319,9 @@ def printfocusvals():
                     logstatus(ui.logOutput, outstring)
 
 
-def prefilt_radioButton_clicked(enabled):
+def regressor_radioButton_clicked(theregressor, enabled):
     global currentdataset
-    currentdataset.setfocusregressor("prefilt")
-    updateRegressor()
-    updateRegressorSpectrum()
-
-
-def postfilt_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("postfilt")
-    updateRegressor()
-    updateRegressorSpectrum()
-
-
-def pass1_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("pass1")
-    updateRegressor()
-    updateRegressorSpectrum()
-
-
-def pass2_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("pass2")
-    updateRegressor()
-    updateRegressorSpectrum()
-
-
-def pass3_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("pass3")
-    updateRegressor()
-    updateRegressorSpectrum()
-
-
-def pass4_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("pass4")
+    currentdataset.setfocusregressor(theregressor)
     updateRegressor()
     updateRegressorSpectrum()
 
@@ -2122,7 +2023,7 @@ def tidepool(args):
             ui.overlay_radioButton_16,
         ]
     for i in range(len(overlaybuttons)):
-        clickfunc = globals()[f"overlay_radioButton_{str(i + 1).zfill(2)}_clicked"]
+        clickfunc = partial(overlay_radioButton_clicked, i)
         overlaybuttons[i].clicked.connect(clickfunc)
 
     for button in overlaybuttons:
@@ -2174,15 +2075,15 @@ def tidepool(args):
     sel_0p005 = qactionfunc("p<0.005", win)
     sel_0p001 = qactionfunc("p<0.001", win)
 
-    sel_nomask.triggered.connect(partial(set_genericmask, "nomask"))
-    sel_lagmask.triggered.connect(partial(set_genericmask, "lagmask"))
-    sel_refinemask.triggered.connect(partial(set_genericmask, "refinemask"))
-    sel_meanmask.triggered.connect(partial(set_genericmask, "meanmask"))
-    sel_preselectmask.triggered.connect(partial(set_genericmask, "preselectmask"))
-    sel_0p05.triggered.connect(partial(set_genericmask, "p_lt_0p050_mask"))
-    sel_0p01.triggered.connect(partial(set_genericmask, "p_lt_0p010_mask"))
-    sel_0p005.triggered.connect(partial(set_genericmask, "p_lt_0p005_mask"))
-    sel_0p001.triggered.connect(partial(set_genericmask, "p_lt_0p001_mask"))
+    sel_nomask.triggered.connect(partial(set_mask, "nomask"))
+    sel_lagmask.triggered.connect(partial(set_mask, "lagmask"))
+    sel_refinemask.triggered.connect(partial(set_mask, "refinemask"))
+    sel_meanmask.triggered.connect(partial(set_mask, "meanmask"))
+    sel_preselectmask.triggered.connect(partial(set_mask, "preselectmask"))
+    sel_0p05.triggered.connect(partial(set_mask, "p_lt_0p050_mask"))
+    sel_0p01.triggered.connect(partial(set_mask, "p_lt_0p010_mask"))
+    sel_0p005.triggered.connect(partial(set_mask, "p_lt_0p005_mask"))
+    sel_0p001.triggered.connect(partial(set_mask, "p_lt_0p001_mask"))
     popMenu.addAction(sel_nomask)
     numspecial = 0
 
@@ -2202,13 +2103,12 @@ def tidepool(args):
         ui.pass3_radioButton,
         ui.pass4_radioButton,
     ]
-
-    ui.prefilt_radioButton.clicked.connect(prefilt_radioButton_clicked)
-    ui.postfilt_radioButton.clicked.connect(postfilt_radioButton_clicked)
-    ui.pass1_radioButton.clicked.connect(pass1_radioButton_clicked)
-    ui.pass2_radioButton.clicked.connect(pass2_radioButton_clicked)
-    ui.pass3_radioButton.clicked.connect(pass3_radioButton_clicked)
-    ui.pass4_radioButton.clicked.connect(pass4_radioButton_clicked)
+    ui.prefilt_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "prefilt"))
+    ui.postfilt_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "postfilt"))
+    ui.pass1_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "pass1"))
+    ui.pass2_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "pass2"))
+    ui.pass3_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "pass3"))
+    ui.pass4_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "pass4"))
 
     for thebutton in regressorbuttons:
         thebutton.setDisabled(True)
@@ -2424,7 +2324,7 @@ def tidepool(args):
     # timecourse_ax.enableAutoRange()
 
     # select the first pane
-    overlay_radioButton_01_clicked(True)
+    overlay_radioButton_clicked(0, True)
 
     # have to do this after the windows are created
     imageadj.sigGradientChanged.connect(updateLUT)
