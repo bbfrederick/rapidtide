@@ -2,10 +2,9 @@ To do list
 ----------
 
 1. (package) Expand automated testing
-2. (package) Expand documentation A LOT
-3. (rapidtide) Finish implementing the --tmask option
 4. (tidepool) Implement ASPECTS averaging
 7. (rapidtide) Implement a dispersive delay model
+8. (rapidtide) Add a sinc peak fit
 
 Implement new argument parsing:
 rapidtide/experimental/highresmotion
