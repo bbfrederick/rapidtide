@@ -2262,7 +2262,8 @@
      </property>
      <property name="font">
       <font>
-       <family>Courier</family>
+       <family>Courier New</family>
+       <pointsize>11</pointsize>
       </font>
      </property>
     </widget>
