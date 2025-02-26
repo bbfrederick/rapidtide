@@ -2,7 +2,8 @@
 
 ## Version 3.0alpha9 (2/26/25)
 * (rapidtide) Fixed the calculation of the regressor autocorrelation width (used in estimating MTT).
-* (tidepool) First working version that allows loading multiple files.
+* (tidepool) First working version that allows loading multiple files. Use ``--dataset DATASET1 DATASET2...``.
+* (tidepool) Added new "big" template to let you see more information at once.  Select with ``--uistyle big``.
 * (tidepool) Pretty significant code cleanup under the hood.
 
 ## Version 3.0alpha8 (2/20/25)
