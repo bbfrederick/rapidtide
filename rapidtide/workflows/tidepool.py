@@ -131,6 +131,7 @@ def _get_parser():
 
 
 def selectFile():
+    global datafileroots
     mydialog = QtWidgets.QFileDialog()
     if pyqtversion == 5:
         options = mydialog.Options()
@@ -146,7 +147,7 @@ def selectFile():
         datafileroot = str(lagfilename[:bidsstartloc])
     else:
         datafileroot = str(lagfilename[: lagfilename.find("lagtimes.nii.gz")])
-    return datafileroot
+    datafileroots.append(datafileroot)
 
 
 class xyztlocation(QtWidgets.QWidget):
@@ -469,16 +470,6 @@ class xyztlocation(QtWidgets.QWidget):
             self.movieTimer.start(int(self.frametime))
 
 
-"""class KeyPressWindow(QtWidgets.QMainWindow):
-    sigKeyPress = QtCore.pyqtSignal(object)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def keyPressEvent(self, ev):
-        self.sigKeyPress.emit(ev)"""
-
-
 def nextFileButtonPressed():
     global currentdataset, thesubjects, whichsubject
     global defaultdict, overlayGraphicsViews
@@ -505,38 +496,6 @@ def nextFileButtonPressed():
         histogram=True,
         focusvals=True,
     )
-
-
-"""def keyPressed(evt):
-    global currentsubject, thesubjects, whichsubject
-    global defaultdict, overlayGraphicsViews
-    numsubjects = len(thesubjects)
-    if evt.key() == QtCore.Qt.Key.Key_F:
-        whichsubject = (whichsubject + 1) % numsubjects
-        print("Key_Up")
-    elif evt.key() == QtCore.Qt.Key.Key_B:
-        whichsubject = (whichsubject - 1) % numsubjects
-        print("Key_Down")
-    elif evt.key() == QtCore.Qt.Key.Key_Left:
-        whichsubject = (whichsubject - 1) % numsubjects
-        print("Key_Left")
-    elif evt.key() == QtCore.Qt.Key.Key_Right:
-        whichsubject = (whichsubject + 1) % numsubjects
-        print("Key_Right")
-    else:
-        print(evt.key())
-    print(f"subject number set to {whichsubject}")
-    currentdataset = thesubjects[whichsubject]
-    activatedataset(
-        currentdataset,
-        ui,
-        win,
-        defaultdict,
-        overlayGraphicsViews,
-        verbosity=verbosity,
-        doinit=False,
-    )
-    updateOrthoImages()"""
 
 
 def logstatus(thetextbox, thetext):
@@ -1533,9 +1492,9 @@ def activatedataset(
     else:
         mainwin.setMap(overlays[currentdataset.focusmap])
 
-    if verbosity > 1:
-        print("loading panes")
     availablepanes = len(overlayGraphicsViews)
+    if verbosity > 0:
+        print(f"loading {availablepanes} available panes")
     numnotloaded = 0
     numloaded = 0
     if doinit:
@@ -1546,11 +1505,15 @@ def activatedataset(
                     (numloaded > availablepanes - 2) and (themap != "corrout")
                 ):
                     if verbosity > 1:
-                        print("skipping map ", themap, "(", idx, "): out of display panes")
+                        print(
+                            f"skipping map {themap}({idx}): out of display panes ({numloaded=}, {availablepanes=})"
+                        )
                     numnotloaded += 1
                 else:
                     if verbosity > 1:
-                        print("loading map ", themap, "(", idx, ") into pane ", numloaded)
+                        print(
+                            f"loading map {themap}=({idx}) into pane {numloaded} of {availablepanes}"
+                        )
                     if bgmap is None:
                         loadpane(
                             overlays[themap],
@@ -1572,7 +1535,7 @@ def activatedataset(
                             bgmap=overlays[bgmap],
                             sm_imgsize=sm_imgsize,
                         )
-                numloaded += 1
+                    numloaded += 1
             else:
                 if verbosity > 1:
                     print("not loading map ", themap, "(", idx, "): display_state is False")
@@ -1631,6 +1594,7 @@ def tidepool(args):
     global focusmap, bgmap, focusregressor
     global maps
     global roi
+    global datafileroots
     global overlays, regressors, regressorfilterlimits, regressorsimcalclimits, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimagedict, overlaybuttons, panetomap
     global img_colorbar, LUT_alpha, LUT_endalpha
@@ -1671,6 +1635,7 @@ def tidepool(args):
     tpos = 0
     verbosity = 0
     simfuncFitter = None
+    datafileroots = []
 
     if pyqtversion == 5:
         if args.uistyle == "normal":
@@ -1702,7 +1667,6 @@ def tidepool(args):
     else:
         geommaskname = None
 
-    datafileroots = []
     if args.datafileroot is not None:
         print("using ", args.datafileroot, " as the root file name list")
         datafileroots = args.datafileroot
@@ -1729,31 +1693,28 @@ def tidepool(args):
     # make the main window
     app = QtWidgets.QApplication([])
     print("setting up output window")
-    # win = KeyPressWindow()
-    # win.sigKeyPress.connect(keyPressed)
     win = QtWidgets.QMainWindow()
     ui = uiTemplate.Ui_MainWindow()
     ui.setupUi(win)
     win.show()
     win.setWindowTitle("TiDePool")
 
-    """"# create the menu bar
+    # create the menu bar
     print("creating menu bar")
     menuBar = win.menuBar()
-    fileMenu = QtWidgets.QMenu(win)
+    fileMenu = menuBar.addMenu("File")
     if pyqtversion == 5:
         qactionfunc = QtWidgets.QAction
     else:
         qactionfunc = QtGui.QAction
     sel_open = qactionfunc("Open", win)
-    sel_open.triggered.connect(selectFile())
+    sel_open.triggered.connect(selectFile)
     fileMenu.addAction(sel_open)
-    win.setMenuBar(menuBar)
-    print("done creating menu bar")"""
+    print("done creating menu bar")
 
     # get inputfile root name if necessary
     if len(datafileroots) == 0:
-        datafileroots.append(selectFile())
+        selectFile()
     if len(datafileroots) == 0:
         print("No input file specified - exiting.")
         sys.exit()
@@ -2058,7 +2019,7 @@ def tidepool(args):
         theview.hide()
 
     # define things for the popup mask menu
-    popMenu = QtWidgets.QMenu(win)
+    popMaskMenu = QtWidgets.QMenu(win)
     if pyqtversion == 5:
         qactionfunc = QtWidgets.QAction
     else:
@@ -2084,15 +2045,28 @@ def tidepool(args):
     sel_0p01.triggered.connect(partial(set_mask, "p_lt_0p010_mask"))
     sel_0p005.triggered.connect(partial(set_mask, "p_lt_0p005_mask"))
     sel_0p001.triggered.connect(partial(set_mask, "p_lt_0p001_mask"))
-    popMenu.addAction(sel_nomask)
+    popMaskMenu.addAction(sel_nomask)
     numspecial = 0
 
-    def on_context_menu(point):
+    # configure the mask selection popup menu
+    def on_mask_context_menu(point):
         # show context menu
-        popMenu.exec(ui.setMask_Button.mapToGlobal(point))
+        popMaskMenu.exec(ui.setMask_Button.mapToGlobal(point))
 
     ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
-    ui.setMask_Button.customContextMenuRequested.connect(on_context_menu)
+    ui.setMask_Button.customContextMenuRequested.connect(on_mask_context_menu)
+
+    # configure the file selection popup menu
+    def on_file_context_menu(point):
+        # show context menu
+        popMaskMenu.exec(ui.setFile_Button.mapToGlobal(point))
+
+    try:
+        ui.setFile_Button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        ui.setFile_Button.customContextMenuRequested.connect(on_file_context_menu)
+        setfilebuttonexists = True
+    except AttributeError:
+        setfilebuttonexists = False
 
     # wire up the regressor selection radio buttons
     regressorbuttons = [
@@ -2263,29 +2237,29 @@ def tidepool(args):
     if verbosity > 1:
         print("loadedfuncmasks", currentdataset.loadedfuncmasks)
     if len(currentdataset.loadedfuncmasks) > 0:
-        popMenu.addSeparator()
+        popMaskMenu.addSeparator()
         if "lagmask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_lagmask)
+            popMaskMenu.addAction(sel_lagmask)
             numspecial += 1
         if "refinemask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_refinemask)
+            popMaskMenu.addAction(sel_refinemask)
             numspecial += 1
         if "meanmask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_meanmask)
+            popMaskMenu.addAction(sel_meanmask)
             numspecial += 1
         if "preselectmask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_preselectmask)
+            popMaskMenu.addAction(sel_preselectmask)
             numspecial += 1
         if numspecial > 0:
-            popMenu.addSeparator()
+            popMaskMenu.addSeparator()
         if "p_lt_0p050_mask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_0p05)
+            popMaskMenu.addAction(sel_0p05)
         if "p_lt_0p010_mask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_0p01)
+            popMaskMenu.addAction(sel_0p01)
         if "p_lt_0p005_mask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_0p005)
+            popMaskMenu.addAction(sel_0p005)
         if "p_lt_0p001_mask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_0p001)
+            popMaskMenu.addAction(sel_0p001)
 
     # initialize the location picker
     global currentloc
