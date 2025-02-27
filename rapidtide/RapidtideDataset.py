@@ -81,6 +81,7 @@ class Timecourse:
         label=None,
         report=False,
         isbids=False,
+        limits=None,
         verbose=0,
     ):
         self.verbose = verbose
@@ -91,6 +92,7 @@ class Timecourse:
         self.displaysamplerate = displaysamplerate
         self.starttime = starttime
         self.isbids = isbids
+        self.limits = limits
 
         if label is None:
             self.label = name
@@ -117,11 +119,21 @@ class Timecourse:
         self.timeaxis = (
             np.linspace(0.0, self.length, num=self.length, endpoint=False) / self.samplerate
         ) - self.starttime
+        if self.limits is not None:
+            startpoint = np.max((int(np.round(self.limits[0] * self.samplerate, 0)), 0))
+            endpoint = np.min((int(np.round(self.limits[1] * self.samplerate, 0)), self.length))
+        else:
+            startpoint = 0
+            endpoint = self.length
         self.specaxis, self.specdata = tide_filt.spectrum(
-            tide_math.corrnormalize(self.timedata), self.samplerate
+            tide_math.corrnormalize(self.timedata[startpoint:endpoint]), self.samplerate
         )
-        self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(self.timedata)
-        self.skewness, self.skewness_z, self.skewness_p = tide_stats.skewnessstats(self.timedata)
+        self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(
+            self.timedata[startpoint:endpoint]
+        )
+        self.skewness, self.skewness_z, self.skewness_p = tide_stats.skewnessstats(
+            self.timedata[startpoint:endpoint]
+        )
 
         if self.verbose > 1:
             print("Timecourse data range:", np.min(self.timedata), np.max(self.timedata))
@@ -556,6 +568,7 @@ class RapidtideDataset:
                     label=thisregressor[1],
                     starttime=thisregressor[5],
                     isbids=self.bidsformat,
+                    limits=self.regressorsimcalclimits,
                     verbose=self.verbose,
                 )
                 if theregressor.timedata is not None:
