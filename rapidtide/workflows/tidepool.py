@@ -87,7 +87,7 @@ def _get_parser():
         "--dataset",
         nargs="*",
         help=(
-            "Use this dataset root name (skip initial selection step).  The root name is the entire path "
+            "Specify one or more dataset root names (skip initial selection step).  The root name is the entire path "
             "to the rapidtide output data (including the underscore) that precedes 'desc-maxtime_map.nii.gz'"
         ),
         dest="datafileroot",
@@ -106,8 +106,12 @@ def _get_parser():
         "--uistyle",
         action="store",
         type=str,
-        choices=["normal", "old", "big"],
-        help="Set the window layout style.  Default is 'normal'.",
+        choices=["normal", "big"],
+        help=(
+            "Set the window layout style.  The 'normal' uistyle loads 8 data maps into display panes, "
+            "and fits comfortably on the screen of a 14in MacbookPro screen.  The 'big' uistyle has 16 display "
+            "panes, and fits on a 16in MBP screen.  Default is 'normal'."
+        ),
         default="normal",
     )
     parser.add_argument(
@@ -120,7 +124,7 @@ def _get_parser():
     )
     parser.add_argument(
         "--ignoredimmatch",
-        help="Do not check to see if dataset sizes match",
+        help="Do not check to see if dataset sizes match.  This is almost certainly a terrible idea.",
         dest="ignoredimmatch",
         action="store_true",
         default=False,
