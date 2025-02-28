@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1600</width>
-    <height>815</height>
+    <width>1595</width>
+    <height>810</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>256</width>
-    <height>256</height>
+    <width>1595</width>
+    <height>810</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>1600</width>
-    <height>16777215</height>
+    <width>1595</width>
+    <height>810</height>
    </size>
   </property>
   <property name="sizeIncrement">
@@ -41,7 +41,7 @@
    <widget class="QGroupBox" name="imageData_groupBox">
     <property name="geometry">
      <rect>
-      <x>450</x>
+      <x>440</x>
       <y>7</y>
       <width>561</width>
       <height>591</height>
@@ -565,7 +565,7 @@
    <widget class="QGroupBox" name="overlays_groupBox">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>7</y>
       <width>421</width>
       <height>591</height>
@@ -1579,7 +1579,7 @@
    <widget class="QGroupBox" name="histogram_groupBox">
     <property name="geometry">
      <rect>
-      <x>1020</x>
+      <x>1010</x>
       <y>225</y>
       <width>571</width>
       <height>186</height>
@@ -1643,7 +1643,7 @@
    <widget class="QGroupBox" name="mainimagedata_groupBox">
     <property name="geometry">
      <rect>
-      <x>1020</x>
+      <x>1010</x>
       <y>7</y>
       <width>181</width>
       <height>221</height>
@@ -1939,7 +1939,7 @@
    <widget class="QGroupBox" name="regressor_groupBox">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>595</y>
       <width>1571</width>
       <height>181</height>
@@ -2209,7 +2209,7 @@
    <widget class="QGroupBox" name="logOutput_groupBox">
     <property name="geometry">
      <rect>
-      <x>1210</x>
+      <x>1200</x>
       <y>7</y>
       <width>381</width>
       <height>221</height>
@@ -2261,7 +2261,7 @@
    <widget class="QGroupBox" name="simfunc_groupBox">
     <property name="geometry">
      <rect>
-      <x>1020</x>
+      <x>1010</x>
       <y>407</y>
       <width>571</width>
       <height>186</height>
@@ -2379,7 +2379,7 @@
   </property>
  </designerdata>
  <buttongroups>
-  <buttongroup name="stats_buttonGroup"/>
   <buttongroup name="colormap_buttonGroup"/>
+  <buttongroup name="stats_buttonGroup"/>
  </buttongroups>
 </ui>

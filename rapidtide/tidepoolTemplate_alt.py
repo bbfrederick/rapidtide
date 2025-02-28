@@ -14,14 +14,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1373, 815)
+        MainWindow.resize(1380, 810)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
-        MainWindow.setMinimumSize(QtCore.QSize(256, 256))
-        MainWindow.setMaximumSize(QtCore.QSize(1400, 16777215))
+        MainWindow.setMinimumSize(QtCore.QSize(1380, 810))
+        MainWindow.setMaximumSize(QtCore.QSize(1380, 810))
         MainWindow.setSizeIncrement(QtCore.QSize(1, 1))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
