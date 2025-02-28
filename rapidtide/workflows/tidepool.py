@@ -24,6 +24,7 @@ import argparse
 import os
 import sys
 from functools import partial
+from shutil import which
 
 import numpy as np
 import pandas as pd
@@ -130,8 +131,86 @@ def _get_parser():
     return parser
 
 
-def selectFile():
-    global datafileroots
+def adddataset(
+    thisdatafileroot,
+    anatname=None,
+    geommaskname=None,
+    userise=False,
+    usecorrout=True,
+    useatlas=False,
+    forcetr=False,
+    forceoffset=False,
+    offsettime=0.0,
+    ignoredimmatch=False,
+):
+    global currentdataset, thesubjects, whichsubject, datafileroots
+    global verbosity
+
+    print("Loading", thisdatafileroot)
+    thissubject = RapidtideDataset(
+        "main",
+        thisdatafileroot,
+        anatname=anatname,
+        geommaskname=geommaskname,
+        userise=userise,
+        usecorrout=usecorrout,
+        useatlas=useatlas,
+        forcetr=forcetr,
+        forceoffset=forceoffset,
+        offsettime=offsettime,
+        verbose=verbosity,
+    )
+    if len(thesubjects) > 0:
+        # check to see that the dimensions match
+        dimmatch, sizematch, spacematch, affinematch = check_rt_spatialmatch(
+            thissubject, thesubjects[0]
+        )
+        if dimmatch or ignoredimmatch:
+            thesubjects.append(thissubject)
+        else:
+            print(f"dataset {thisdatafileroot} does not match loaded data - skipping")
+    else:
+        thesubjects.append(thissubject)
+
+    # list the datasets
+    for idx, subject in enumerate(thesubjects):
+        print(f"subject {idx}: {subject.fileroot}")
+
+
+def updateFileMenu():
+    global thesubjects, whichsubject
+    global fileMenu, sel_open
+    global sel_files
+
+    if pyqtversion == 5:
+        qactionfunc = QtWidgets.QAction
+    else:
+        qactionfunc = QtGui.QAction
+
+    # scrub file menu
+    if sel_files is not None:
+        for sel_file in sel_files:
+            fileMenu.removeAction(sel_file)
+            del sel_file
+
+    # now build it back
+    if len(thesubjects) > 0:
+        sel_files = []
+        for idx, subject in enumerate(thesubjects):
+            if idx == whichsubject:
+                indicator = "\u2714 "
+            else:
+                indicator = "  "
+            sel_files.append(qactionfunc(indicator + subject.fileroot, win))
+            sel_files[-1].triggered.connect(partial(selectDataset, idx))
+            fileMenu.addAction(sel_files[-1])
+
+
+def datasetPicker():
+    global currentdataset, thesubjects, whichsubject, datafileroots
+    global ui, win, defaultdict, overlagGraphicsViews
+    global verbosity
+
     mydialog = QtWidgets.QFileDialog()
     if pyqtversion == 5:
         options = mydialog.Options()
@@ -148,6 +227,34 @@ def selectFile():
     else:
         datafileroot = str(lagfilename[: lagfilename.find("lagtimes.nii.gz")])
     datafileroots.append(datafileroot)
+    adddataset(datafileroots[-1])
+    whichsubject = len(thesubjects) - 1
+    selectDataset(whichsubject)
+
+    # update the file menu
+    updateFileMenu()
+
+
+def selectDataset(thesubject):
+    global currentdataset, thesubjects, whichsubject, datafileroots
+    global ui, win, defaultdict, overlagGraphicsViews
+    global verbosity
+
+    whichsubject = thesubject
+    thesubjects[whichsubject].setfocusregressor(currentdataset.focusregressor)
+    thesubjects[whichsubject].setfocusmap(currentdataset.focusmap)
+    currentdataset = thesubjects[whichsubject]
+    activateDataset(
+        currentdataset,
+        ui,
+        win,
+        defaultdict,
+        overlayGraphicsViews,
+        verbosity=verbosity,
+    )
+
+    # update the file menu
+    updateFileMenu()
 
 
 class xyztlocation(QtWidgets.QWidget):
@@ -315,10 +422,17 @@ class xyztlocation(QtWidgets.QWidget):
         # print('resetting T spinbox values')
         if self.TPosSpinBox is not None:
             self.TPosSpinBox.setValue(self.tpos)
+            self.TPosSpinBox.setRange(0, self.tdim - 1)
         if self.TCoordSpinBox is not None:
             self.TCoordSpinBox.setValue(self.tcoord)
+            tllcoord = self.tr2real(0)
+            tulcoord = self.tr2real(self.tdim - 1)
+            tmin = np.min([tllcoord, tulcoord])
+            tmax = np.max([tllcoord, tulcoord])
+            self.TCoordSpinBox.setRange(tmin, tmax)
         if self.TimeSlider is not None:
             self.TimeSlider.setValue((self.tpos))
+            self.TimeSlider.setRange(0, self.tdim - 1)
         # print('done resetting T spinbox values')
         self.updatedT.emit()
 
@@ -350,6 +464,8 @@ class xyztlocation(QtWidgets.QWidget):
         self.updateXYZValues(emitsignal=emitsignal)
 
     def setTpos(self, tpos):
+        if tpos > self.tdim:
+            tpos = self.tdim
         if self.tpos != tpos:
             self.tpos = tpos
             self.tcoord = self.tr2real(self.tpos)
@@ -468,34 +584,6 @@ class xyztlocation(QtWidgets.QWidget):
         self.frametime = frametime
         if self.movierunning:
             self.movieTimer.start(int(self.frametime))
-
-
-def nextFileButtonPressed():
-    global currentdataset, thesubjects, whichsubject
-    global defaultdict, overlayGraphicsViews
-    numsubjects = len(thesubjects)
-    whichsubject = (whichsubject + 1) % numsubjects
-    print(f"subject number set to {whichsubject}")
-    thesubjects[whichsubject].setfocusregressor(currentdataset.focusregressor)
-    thesubjects[whichsubject].setfocusmap(currentdataset.focusmap)
-    currentdataset = thesubjects[whichsubject]
-    activatedataset(
-        currentdataset,
-        ui,
-        win,
-        defaultdict,
-        overlayGraphicsViews,
-        verbosity=verbosity,
-        doinit=False,
-    )
-    updateRegressor()
-    updateRegressorSpectrum()
-    updateUI(
-        callingfunc="nextFileButtonPressed",
-        orthoimages=True,
-        histogram=True,
-        focusvals=True,
-    )
 
 
 def logstatus(thetextbox, thetext):
@@ -1285,15 +1373,22 @@ def regressor_radioButton_clicked(theregressor, enabled):
     updateRegressorSpectrum()
 
 
-def activatedataset(
-    currentdataset, ui, win, defaultdict, overlayGraphicsViews, verbosity=0, doinit=False
-):
+def activateDataset(currentdataset, ui, win, defaultdict, overlayGraphicsViews, verbosity=0):
     global regressors, overlays
     global mainwin
     global xdim, ydim, zdim, tdim, xpos, ypos, zpos, tpos
     global timeaxis
     global usecorrout
     global orthoimagedict
+    global panesinitialized, uiinitialized
+    global currentloc
+
+    if uiinitialized:
+        currentloc.xdim = currentdataset.xdim
+        currentloc.ydim = currentdataset.ydim
+        currentloc.xdim = currentdataset.zdim
+        currentloc.tdim = currentdataset.tdim
+        currentloc.setTpos(currentloc.tpos)
 
     if verbosity > 1:
         print("getting regressors")
@@ -1467,7 +1562,7 @@ def activatedataset(
 
     if verbosity > 1:
         print("focusmap is:", currentdataset.focusmap, "bgmap is:", bgmap)
-    if doinit:
+    if not panesinitialized:
         if bgmap is None:
             mainwin = OrthoImageItem(
                 overlays[currentdataset.focusmap],
@@ -1497,7 +1592,7 @@ def activatedataset(
         print(f"loading {availablepanes} available panes")
     numnotloaded = 0
     numloaded = 0
-    if doinit:
+    if not panesinitialized:
         orthoimagedict = {}
         for idx, themap in enumerate(currentdataset.dispmaps):
             if overlays[themap].display_state:
@@ -1551,6 +1646,21 @@ def activatedataset(
     if numnotloaded > 0:
         print("WARNING:", numnotloaded, "maps could not be loaded - not enough panes")
 
+    # record that we've been through once
+    panesinitialized = True
+
+    if uiinitialized:
+        # update the windows
+        updateUI(
+            callingfunc="activateDataset",
+            orthoimages=True,
+            histogram=True,
+        )
+
+        # update the regressor
+        updateRegressor()
+        updateRegressorSpectrum()
+
 
 def loadpane(
     themap,
@@ -1590,11 +1700,11 @@ def loadpane(
 def tidepool(args):
     global vLine
     global ui, win
+    global fileMenu, sel_open, sel_files
     global movierunning
     global focusmap, bgmap, focusregressor
     global maps
     global roi
-    global datafileroots
     global overlays, regressors, regressorfilterlimits, regressorsimcalclimits, loadedfuncmaps, atlasstats, averagingmode
     global mainwin, orthoimagedict, overlaybuttons, panetomap
     global img_colorbar, LUT_alpha, LUT_endalpha
@@ -1607,9 +1717,10 @@ def tidepool(args):
     global imageadj
     global harvestcolormaps
     global atlasaveragingdone
-    global currentdataset, thesubjects, whichsubject
+    global currentdataset, thesubjects, whichsubject, datafileroots
     global defaultdict, overlayGraphicsViews
     global verbosity
+    global panesinitialized, uiinitialized
     global simfuncFitter
     global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption
 
@@ -1636,6 +1747,9 @@ def tidepool(args):
     verbosity = 0
     simfuncFitter = None
     datafileroots = []
+    panesinitialized = False
+    uiinitialized = False
+    sel_files = None
 
     if pyqtversion == 5:
         if args.uistyle == "normal":
@@ -1707,17 +1821,11 @@ def tidepool(args):
         qactionfunc = QtWidgets.QAction
     else:
         qactionfunc = QtGui.QAction
-    sel_open = qactionfunc("Open", win)
-    sel_open.triggered.connect(selectFile)
+    sel_open = qactionfunc("Add dataset...", win)
+    sel_open.triggered.connect(datasetPicker)
     fileMenu.addAction(sel_open)
+    fileMenu.addSeparator()
     print("done creating menu bar")
-
-    # get inputfile root name if necessary
-    if len(datafileroots) == 0:
-        selectFile()
-    if len(datafileroots) == 0:
-        print("No input file specified - exiting.")
-        sys.exit()
 
     # wire up the ortho image windows for mouse interaction
     vb_colorbar = pg.ViewBox(enableMouse=False)
@@ -2090,52 +2198,41 @@ def tidepool(args):
 
     # read in all the datasets
     thesubjects = []
-
-    print("loading datasets...")
-    for thisdatafileroot in datafileroots:
-        print("Loading", thisdatafileroot)
-        thissubject = RapidtideDataset(
-            "main",
-            thisdatafileroot,
-            anatname=anatname,
-            geommaskname=geommaskname,
-            userise=userise,
-            usecorrout=usecorrout,
-            useatlas=useatlas,
-            forcetr=forcetr,
-            forceoffset=forceoffset,
-            offsettime=offsettime,
-            verbose=verbosity,
-        )
-        if len(thesubjects) > 0:
-            # check to see that the dimensions match
-            dimmatch, sizematch, spacematch, affinematch = check_rt_spatialmatch(
-                thissubject, thesubjects[0]
-            )
-            if dimmatch or args.ignoredimmatch:
-                thesubjects.append(thissubject)
-            else:
-                print(f"dataset {thisdatafileroot} does not match loaded data - skipping")
-        else:
-            thesubjects.append(thissubject)
     whichsubject = 0
-    currentdataset = thesubjects[whichsubject]
-    activatedataset(
-        currentdataset,
-        ui,
-        win,
-        defaultdict,
-        overlayGraphicsViews,
-        verbosity=verbosity,
-        doinit=True,
-    )
+    if len(datafileroots) > 0:
+        print("loading prespecified datasets...")
+        for thisdatafileroot in datafileroots:
+            adddataset(
+                thisdatafileroot,
+                anatname=anatname,
+                geommaskname=geommaskname,
+                userise=userise,
+                usecorrout=usecorrout,
+                useatlas=useatlas,
+                forcetr=forcetr,
+                forceoffset=forceoffset,
+                offsettime=offsettime,
+                ignoredimmatch=args.ignoredimmatch,
+            )
+        currentdataset = thesubjects[whichsubject]
+        activateDataset(
+            currentdataset,
+            ui,
+            win,
+            defaultdict,
+            overlayGraphicsViews,
+            verbosity=verbosity,
+        )
+        # update the file menu
+        updateFileMenu()
+    else:
+        # get inputfile root name if necessary
+        datasetPicker()
 
-    for thebutton in [ui.nextFile_Button]:
-        if len(thesubjects) == 1:
-            thebutton.setDisabled(True)
-            thebutton.hide()
-        else:
-            thebutton.clicked.connect(nextFileButtonPressed)
+    # check to see that something is loaded
+    if len(thesubjects) == 0:
+        print("No input datasets specified - exiting.")
+        sys.exit()
 
     # wire up the display range controls
     ui.resetDispLimits_Button.clicked.connect(resetDispLimits)
@@ -2305,5 +2402,7 @@ def tidepool(args):
 
     updateUI(callingfunc="main thread", orthoimages=True, focusvals=True)
     updateRegressor()
+    updateRegressorSpectrum()
+    uiinitialized = True
 
     QtWidgets.QApplication.instance().exec()
