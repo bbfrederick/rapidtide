@@ -24,14 +24,12 @@ import argparse
 import os
 import sys
 from functools import partial
-from shutil import which
 
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from nibabel.affines import apply_affine
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
-from statsmodels.robust.scale import mad
 
 import rapidtide.util as tide_util
 from rapidtide.Colortables import *
@@ -131,7 +129,7 @@ def _get_parser():
     return parser
 
 
-def adddataset(
+def addDataset(
     thisdatafileroot,
     anatname=None,
     geommaskname=None,
@@ -227,7 +225,7 @@ def datasetPicker():
     else:
         datafileroot = str(lagfilename[: lagfilename.find("lagtimes.nii.gz")])
     datafileroots.append(datafileroot)
-    adddataset(datafileroots[-1])
+    addDataset(datafileroots[-1])
     whichsubject = len(thesubjects) - 1
     selectDataset(whichsubject)
 
@@ -587,7 +585,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.movieTimer.start(int(self.frametime))
 
 
-def logstatus(thetextbox, thetext):
+def logStatus(thetextbox, thetext):
     if pyqtversion == 5:
         thetextbox.moveCursor(QtGui.QTextCursor.End)
     thetextbox.insertPlainText(thetext + "\n")
@@ -919,7 +917,7 @@ def updateAveragingMode():
     print("in updateAveragingMode")
     if ("atlas" in overlays) and (not atlasaveragingdone):
         calcAtlasStats()
-        set_atlasmask()
+        setAtlasMask()
     if ("atlas" in overlays) and False:
         updateAtlasStats()
     if averagingmode is not None:
@@ -986,7 +984,7 @@ def MAD_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def transparency_checkbox_clicked():
+def transparencyCheckboxClicked():
     global LUT_alpha, LUT_endalpha, ui, overlays, currentdataset
     global verbosity
 
@@ -1082,7 +1080,7 @@ def rainbow_radioButton_clicked(enabled):
         updateLUT()
 
 
-def set_mask(maskname):
+def setMask(maskname):
     global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     maskinfodicts = {}
     maskinfodicts["nomask"] = {
@@ -1123,16 +1121,16 @@ def set_mask(maskname):
             overlays[themap].setFuncMask(overlays[maskname].data)
     atlasaveragingdone = False
     updateAveragingMode()
-    updateUI(callingfunc=f"set_mask({maskname})", orthoimages=True, histogram=True)
+    updateUI(callingfunc=f"setMask({maskname})", orthoimages=True, histogram=True)
 
 
-def set_atlasmask():
+def setAtlasMask():
     global overlays, loadedfuncmaps, ui, currentdataset
     print("Using all defined atlas regions as functional mask")
     ui.setMask_Button.setText("Valid mask")
     for themap in currentdataset.loadedfuncmaps:
         overlays[themap].setFuncMask(overlays["atlasmask"].data)
-    updateUI(callingfunc="set_atlasmask", orthoimages=True, histogram=True)
+    updateUI(callingfunc="setAtlasMask", orthoimages=True, histogram=True)
 
 
 def overlay_radioButton_clicked(which, enabled):
@@ -1148,6 +1146,8 @@ def overlay_radioButton_clicked(which, enabled):
                 currentdataset.setfocusmap(panetomap[which] + "_atlasstat")
             else:
                 currentdataset.setfocusmap(panetomap[which])
+                thedispmin = overlays[currentdataset.focusmap].dispmin
+                thedispmax = overlays[currentdataset.focusmap].dispmax
             if verbosity > 1:
                 print("currentdataset.focusmap set to ", currentdataset.focusmap)
             if overlays[currentdataset.focusmap].lut_state == gen_gray_state():
@@ -1174,7 +1174,9 @@ def overlay_radioButton_clicked(which, enabled):
                 overlays[currentdataset.focusmap].tr,
                 overlays[currentdataset.focusmap].toffset,
             )
-
+            overlays[currentdataset.focusmap].dispmin = thedispmin
+            overlays[currentdataset.focusmap].dispmax = thedispmax
+            updateDispLimits()
             updateUI(
                 callingfunc="overlay_radioButton_clicked",
                 histogram=True,
@@ -1327,7 +1329,7 @@ def printfocusvals():
     global ui, overlays, currentdataset
     global currentloc
     global simfuncFitter
-    logstatus(
+    logStatus(
         ui.logOutput,
         "\n\nValues at location "
         + "{0},{1},{2}".format(currentloc.xpos, currentloc.ypos, currentloc.zpos),
@@ -1349,7 +1351,7 @@ def printfocusvals():
                             + str(":")
                             + "{:.3f}".format(round(focusval, 3))
                         )
-                        logstatus(ui.logOutput, outstring)
+                        logStatus(ui.logOutput, outstring)
                     else:
                         if focusval > 0.0:
                             if simfuncFitter is not None:
@@ -1360,7 +1362,7 @@ def printfocusvals():
                                     + str(":\n\t    ")
                                     + failstring.replace(", ", "\n\t    ")
                                 )
-                                logstatus(ui.logOutput, outstring)
+                                logStatus(ui.logOutput, outstring)
                 else:
                     outstring = (
                         indentstring
@@ -1368,7 +1370,7 @@ def printfocusvals():
                         + str(":")
                         + str(currentdataset.atlaslabels[int(focusval) - 1])
                     )
-                    logstatus(ui.logOutput, outstring)
+                    logStatus(ui.logOutput, outstring)
 
 
 def regressor_radioButton_clicked(theregressor, enabled):
@@ -2113,7 +2115,7 @@ def tidepool(args):
     ui.rainbow_radioButton.clicked.connect(rainbow_radioButton_clicked)
 
     # wire up the transparency checkbox
-    ui.transparency_checkBox.stateChanged.connect(transparency_checkbox_clicked)
+    ui.transparency_checkBox.stateChanged.connect(transparencyCheckboxClicked)
 
     overlaybuttons = [
         ui.overlay_radioButton_01,
@@ -2190,16 +2192,16 @@ def tidepool(args):
     sel_0p005 = qactionfunc("p<0.005", win)
     sel_0p001 = qactionfunc("p<0.001", win)
 
-    sel_nomask.triggered.connect(partial(set_mask, "nomask"))
-    sel_lagmask.triggered.connect(partial(set_mask, "lagmask"))
-    sel_brainmask.triggered.connect(partial(set_mask, "brainmask"))
-    sel_refinemask.triggered.connect(partial(set_mask, "refinemask"))
-    sel_meanmask.triggered.connect(partial(set_mask, "meanmask"))
-    sel_preselectmask.triggered.connect(partial(set_mask, "preselectmask"))
-    sel_0p05.triggered.connect(partial(set_mask, "p_lt_0p050_mask"))
-    sel_0p01.triggered.connect(partial(set_mask, "p_lt_0p010_mask"))
-    sel_0p005.triggered.connect(partial(set_mask, "p_lt_0p005_mask"))
-    sel_0p001.triggered.connect(partial(set_mask, "p_lt_0p001_mask"))
+    sel_nomask.triggered.connect(partial(setMask, "nomask"))
+    sel_lagmask.triggered.connect(partial(setMask, "lagmask"))
+    sel_brainmask.triggered.connect(partial(setMask, "brainmask"))
+    sel_refinemask.triggered.connect(partial(setMask, "refinemask"))
+    sel_meanmask.triggered.connect(partial(setMask, "meanmask"))
+    sel_preselectmask.triggered.connect(partial(setMask, "preselectmask"))
+    sel_0p05.triggered.connect(partial(setMask, "p_lt_0p050_mask"))
+    sel_0p01.triggered.connect(partial(setMask, "p_lt_0p010_mask"))
+    sel_0p005.triggered.connect(partial(setMask, "p_lt_0p005_mask"))
+    sel_0p001.triggered.connect(partial(setMask, "p_lt_0p001_mask"))
     popMaskMenu.addAction(sel_nomask)
     numspecial = 0
 
@@ -2249,7 +2251,7 @@ def tidepool(args):
     if len(datafileroots) > 0:
         print("loading prespecified datasets...")
         for thisdatafileroot in datafileroots:
-            adddataset(
+            addDataset(
                 thisdatafileroot,
                 anatname=anatname,
                 geommaskname=geommaskname,
