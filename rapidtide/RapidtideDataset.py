@@ -175,6 +175,7 @@ class Overlay:
         alpha=128,
         endalpha=0,
         display_state=True,
+        invertonload=False,
         isaMask=False,
         init_LUT=True,
         verbose=1,
@@ -192,6 +193,7 @@ class Overlay:
         self.namebase = namebase
         if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
+        self.invertonload = invertonload
         self.readImageData(isaMask=isaMask)
         self.mask = None
         self.maskeddata = None
@@ -310,6 +312,8 @@ class Overlay:
         self.nim, self.data, self.header, self.dims, self.sizes = tide_io.readfromnifti(
             self.filename
         )
+        if self.invertonload:
+            self.data *= -1.0
         if isaMask:
             if self.filevals is None:
                 self.data[np.where(self.data < 0.5)] = 0.0
@@ -586,6 +590,7 @@ class RapidtideDataset:
                     )
 
     def _loadfuncmaps(self):
+        mapstoinvert = ["varChange"]
         self.loadedfuncmaps = []
         xdim = 0
         ydim = 0
@@ -601,12 +606,17 @@ class RapidtideDataset:
                         " exists - reading...",
                     )
                 thepath, thebase = os.path.split(self.fileroot)
+                if mapname in mapstoinvert:
+                    invertthismap = True
+                else:
+                    invertthismap = False
                 self.overlays[mapname] = Overlay(
                     mapname,
                     self.fileroot + mapfilename + ".nii.gz",
                     thebase,
                     init_LUT=self.init_LUT,
                     report=True,
+                    invertonload=invertthismap,
                     verbose=self.verbose,
                 )
                 if xdim == 0:
@@ -1121,6 +1131,11 @@ class RapidtideDataset:
                 ["lagsigma", "desc-maxwidth_map"],
                 ["MTT", "desc-MTT_map"],
                 ["R2", "desc-lfofilterR2_map"],
+                ["CoV", "desc-CoV_map"],
+                ["confoundR2", "desc-confoundfilterR2_map"],
+                ["varBefore", "desc-lfofilterInbandVarianceBefore_map"],
+                ["varAfter", "desc-lfofilterInbandVarianceAfter_map"],
+                ["varChange", "desc-lfofilterInbandVarianceChange_map"],
                 ["fitNorm", "desc-lfofilterNorm_map"],
                 ["fitcoff", "desc-lfofilterCoeff_map"],
                 ["neglog10p", "desc-neglog10p_map"],
@@ -1213,6 +1228,7 @@ class RapidtideDataset:
                 ["lagmask", "desc-corrfit_mask"],
                 ["refinemask", "desc-refine_mask"],
                 ["meanmask", "desc-globalmean_mask"],
+                ["brainmask", "desc-brainmask_mask"],
                 ["preselectmask", "desc-globalmeanpreselect_mask"],
             ]
             if not ("neglog10p" in self.loadedfuncmaps):
