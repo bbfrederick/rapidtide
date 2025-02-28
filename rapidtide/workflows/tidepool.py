@@ -238,11 +238,12 @@ def datasetPicker():
 def selectDataset(thesubject):
     global currentdataset, thesubjects, whichsubject, datafileroots
     global ui, win, defaultdict, overlagGraphicsViews
-    global verbosity
+    global verbosity, uiinitialized
 
     whichsubject = thesubject
-    thesubjects[whichsubject].setfocusregressor(currentdataset.focusregressor)
-    thesubjects[whichsubject].setfocusmap(currentdataset.focusmap)
+    if uiinitialized:
+        thesubjects[whichsubject].setfocusregressor(currentdataset.focusregressor)
+        thesubjects[whichsubject].setfocusmap(currentdataset.focusmap)
     currentdataset = thesubjects[whichsubject]
     activateDataset(
         currentdataset,
@@ -1096,6 +1097,10 @@ def set_mask(maskname):
         "msg": "Using valid fit points as functional mask",
         "label": "Valid mask",
     }
+    maskinfodicts["brainmask"] = {
+        "msg": "Externally provided brain mask",
+        "label": "Brain mask",
+    }
     maskinfodicts["refinemask"] = {
         "msg": "Voxel refinement mask",
         "label": "Refine mask",
@@ -1853,6 +1858,10 @@ def tidepool(args):
     if harvestcolormaps:
         ui.largeimage_horizontalLayout.addWidget(imageadj)
 
+    if args.uistyle == "big":
+        extramaps = True
+    else:
+        extramaps = False
     defaultdict = {
         "lagmask": {
             "colormap": gen_gray_state(),
@@ -1881,6 +1890,12 @@ def tidepool(args):
         "preselectmask": {
             "colormap": gen_gray_state(),
             "label": "Global mean preselect mask",
+            "display": False,
+            "funcmask": None,
+        },
+        "brainmask": {
+            "colormap": gen_gray_state(),
+            "label": "Brain mask",
             "display": False,
             "funcmask": None,
         },
@@ -1959,12 +1974,42 @@ def tidepool(args):
         "MTT": {
             "colormap": gen_spectrum_state(),
             "label": "MTT",
-            "display": True,
+            "display": extramaps,
             "funcmask": "p_lt_0p050_mask",
         },
         "R2": {
             "colormap": gen_thermal_state(),
-            "label": "Fit R2",
+            "label": "GLM Fit R2",
+            "display": extramaps,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "CoV": {
+            "colormap": gen_thermal_state(),
+            "label": "Coefficient of variation",
+            "display": True,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "confoundR2": {
+            "colormap": gen_thermal_state(),
+            "label": "Confound Fit R2",
+            "display": extramaps,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "varBefore": {
+            "colormap": gen_thermal_state(),
+            "label": "LFO variance before GLM",
+            "display": extramaps,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "varAfter": {
+            "colormap": gen_thermal_state(),
+            "label": "LFO variance after GLM",
+            "display": extramaps,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "varChange": {
+            "colormap": gen_thermal_state(),
+            "label": "LFO variance decrease %",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
@@ -1977,7 +2022,7 @@ def tidepool(args):
         "fitNorm": {
             "colormap": gen_thermal_state(),
             "label": "fitNorm",
-            "display": True,
+            "display": False,
             "funcmask": "p_lt_0p050_mask",
         },
         "gaussout": {
@@ -1989,7 +2034,7 @@ def tidepool(args):
         "failimage": {
             "colormap": gen_spectrum_state(),
             "label": "Fit failure reason",
-            "display": False,
+            "display": extramaps,
             "funcmask": None,
         },
         "anatomic": {
@@ -2013,7 +2058,7 @@ def tidepool(args):
         "neglog10p": {
             "colormap": gen_thermal_state(),
             "label": "Correlation fit -log10p",
-            "display": False,
+            "display": extramaps,
             "funcmask": "None",
         },
         "delayoffset": {
@@ -2134,6 +2179,7 @@ def tidepool(args):
         qactionfunc = QtGui.QAction
     sel_nomask = qactionfunc("No mask", win)
     sel_lagmask = qactionfunc("Valid fit", win)
+    sel_brainmask = qactionfunc("Externally provided brain mask", win)
     sel_refinemask = qactionfunc("Voxels used in refine", win)
     sel_meanmask = qactionfunc("Voxels used in mean regressor calculation", win)
     sel_preselectmask = qactionfunc(
@@ -2146,6 +2192,7 @@ def tidepool(args):
 
     sel_nomask.triggered.connect(partial(set_mask, "nomask"))
     sel_lagmask.triggered.connect(partial(set_mask, "lagmask"))
+    sel_brainmask.triggered.connect(partial(set_mask, "brainmask"))
     sel_refinemask.triggered.connect(partial(set_mask, "refinemask"))
     sel_meanmask.triggered.connect(partial(set_mask, "meanmask"))
     sel_preselectmask.triggered.connect(partial(set_mask, "preselectmask"))
@@ -2337,6 +2384,9 @@ def tidepool(args):
         popMaskMenu.addSeparator()
         if "lagmask" in currentdataset.loadedfuncmasks:
             popMaskMenu.addAction(sel_lagmask)
+            numspecial += 1
+        if "brainmask" in currentdataset.loadedfuncmasks:
+            popMaskMenu.addAction(sel_brainmask)
             numspecial += 1
         if "refinemask" in currentdataset.loadedfuncmasks:
             popMaskMenu.addAction(sel_refinemask)
