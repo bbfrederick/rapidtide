@@ -1,5 +1,10 @@
 # Release history
 
+## Version 3.0alpha10 (2/27/25)
+* (tidepool) Full support for multiple concurrent datasets.  Dataset loading and selection is now done through the File menu.
+* (tidepool) Fixed pane loading.
+* (tidepool) For the regressor spectrum, only do FFT of the portion of the regressor used for similarity calculation.
+
 ## Version 3.0alpha9 (2/26/25)
 * (rapidtide) Fixed the calculation of the regressor autocorrelation width (used in estimating MTT).
 * (tidepool) First working version that allows loading multiple files. Use ``--dataset DATASET1 DATASET2...``.
