@@ -63,37 +63,55 @@ def setendalpha(thestate, alpha, debug=False):
 def gen_thermal_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["thermal"]
+    thegradient = Gradients["thermal"]
+    thegradient["name"] = "thermal"
+    return thegradient
+    #return Gradients["thermal"]
 
 
 def gen_flame_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["flame"]
+    thegradient = Gradients["flame"]
+    thegradient["name"] = "flame"
+    return thegradient
+    #return Gradients["flame"]
 
 
 def gen_yellowy_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["yellowy"]
+    thegradient = Gradients["yellowy"]
+    thegradient["name"] = "yellowy"
+    return thegradient
+    #return Gradients["yellowy"]
 
 
 def gen_bipolar_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["bipolar"]
+    thegradient = Gradients["bipolar"]
+    thegradient["name"] = "bipolar"
+    return thegradient
+    #return Gradients["bipolar"]
 
 
 def gen_spectrum_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["spectrum"]
+    thegradient = Gradients["spectrum"]
+    thegradient["name"] = "spectrum"
+    return thegradient
+    #return Gradients["spectrum"]
 
 
 def gen_turbo_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["turbo"]
+    thegradient = Gradients["turbo"]
+    thegradient["name"] = "turbo"
+    return thegradient
+    #return Gradients["turbo"]
 
 
 def gen_gray_state():
@@ -103,6 +121,7 @@ def gen_gray_state():
             (1.0000, (255, 255, 255, 255)),
         ],
         "mode": "rgb",
+        "name": "gray",
     }
 
 
@@ -113,31 +132,44 @@ def gen_grey_state():
             (1.0000, (255, 255, 255, 255)),
         ],
         "mode": "rgb",
+        "name": "grey",
     }
 
 
 def gen_viridis_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["viridis"]
+    thegradient = Gradients["viridis"]
+    thegradient["name"] = "viridis"
+    return thegradient
+    #return Gradients["viridis"]
 
 
 def gen_inferno_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["inferno"]
+    thegradient = Gradients["inferno"]
+    thegradient["name"] = "inferno"
+    return thegradient
+    #return Gradients["inferno"]
 
 
 def gen_plasma_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["plasma"]
+    thegradient = Gradients["plasma"]
+    thegradient["name"] = "plasma"
+    return thegradient
+    #return Gradients["plasma"]
 
 
 def gen_magma_state():
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
-    return Gradients["magma"]
+    thegradient = Gradients["magma"]
+    thegradient["name"] = "magma"
+    return thegradient
+    #return Gradients["magma"]
 
 
 def gen_g2y2r_state():
@@ -150,6 +182,7 @@ def gen_g2y2r_state():
             (1.0000, (255, 0, 0, 0)),
         ],
         "mode": "rgb",
+        "name": "g2y2r",
     }
 
 
@@ -157,6 +190,7 @@ def gen_mask_state():
     return {
         "ticks": [(0.0000, (0, 0, 0, 255)), (1.0000, (255, 255, 255, 0))],
         "mode": "rgb",
+        "name": "mask",
     }
 
 
@@ -168,6 +202,7 @@ def gen_greyclip_state():
             (1.0, (255, 0, 0, 255)),
         ],
         "mode": "rgb",
+        "name": "greyclip",
     }
 
 

@@ -1153,16 +1153,17 @@ def overlay_radioButton_clicked(which, enabled):
                 thedispmin = overlays[currentdataset.focusmap].dispmin
                 thedispmax = overlays[currentdataset.focusmap].dispmax
             if verbosity > 1:
-                print("currentdataset.focusmap set to ", currentdataset.focusmap)
-            if overlays[currentdataset.focusmap].lut_state == gen_gray_state():
+                print(f"currentdataset.focusmap set to {currentdataset.focusmap}")
+                print(f"overlays[currentdataset.focusmap].LUTname set to {overlays[currentdataset.focusmap].LUTname}")
+            if overlays[currentdataset.focusmap].LUTname == "gray":
                 ui.gray_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_thermal_state():
+            elif overlays[currentdataset.focusmap].LUTname == "thermal":
                 ui.thermal_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_plasma_state():
+            elif overlays[currentdataset.focusmap].LUTname == "plasma":
                 ui.plasma_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_viridis_state():
+            elif overlays[currentdataset.focusmap].LUTname == "viridis":
                 ui.viridis_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_turbo_state():
+            elif overlays[currentdataset.focusmap].LUTname == "turbo":
                 ui.turbo_radioButton.setChecked(True)
             else:
                 ui.rainbow_radioButton.setChecked(True)

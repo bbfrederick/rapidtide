@@ -161,6 +161,7 @@ class Timecourse:
 
 class Overlay:
     "Store a data overlay and some information about it"
+    LUTname = None
 
     def __init__(
         self,
@@ -433,6 +434,7 @@ class Overlay:
             self.lut_state = setendalpha(lut_state, endalpha)
         self.gradient.restoreState(self.lut_state)
         self.theLUT = self.gradient.getLookupTable(512, alpha=True)
+        self.LUTname = lut_state["name"]
 
     def setisdisplayed(self, display_state):
         self.display_state = display_state

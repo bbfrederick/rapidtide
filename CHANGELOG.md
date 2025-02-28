@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0alpha11 (2/28/25)
+* (tidepool) Colormap radio button is now set correctly.
+
 ## Version 3.0alpha10 (2/28/25)
 * (tidepool) Full support for multiple concurrent datasets.  Dataset loading and selection is now done through the File menu.
 * (tidepool) Load additional informational maps, and somewhat more intelligently.
