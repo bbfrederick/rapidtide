@@ -19,8 +19,6 @@
 """
 A widget for orthographically displaying 3 and 4 dimensional data
 """
-
-import copy
 import os
 
 import numpy as np
@@ -33,6 +31,14 @@ try:
     PILexists = True
 except ImportError:
     PILexists = False
+
+try:
+    from PyQt6.QtCore import QT_VERSION_STR
+except ImportError:
+    pyqtversion = 5
+else:
+    pyqtversion = 6
+print(f"using {pyqtversion=}")
 
 
 def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
@@ -514,7 +520,10 @@ class OrthoImageItem(QtWidgets.QWidget):
         if self.verbose > 1:
             print("saving main window")
         mydialog = QtWidgets.QFileDialog()
-        options = mydialog.Options()
+        if pyqtversion == 5:
+            options = mydialog.Options()
+        else:
+            options = mydialog.options()
         thedir = str(
             mydialog.getExistingDirectory(options=options, caption="Image output directory")
         )
