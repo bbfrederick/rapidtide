@@ -142,11 +142,16 @@ Probe Regressor
 
 
 This panel shows the probe regressor used in various stages of the rapidtide analysis.  The left
-panel shows the time domain, the right shows the frequency domain, with a translucent green
-overlay indicating the filter band used in the analysis. The radio buttons on the right select
+panel shows the time domain, the right shows the frequency domain.  On the left, the translucent green overlay
+shows which part of the regressor was used in the similarity calculation (you can use ``--similaritycalcrange``
+to only use a section of the regressor with good data; i.e. fully relaxed, no large motions).  On the right,
+the translucent overlay
+overlay indicates the filter band used in the analysis.  Note that the spectrum shown is the power spectrum
+of the section of the regressor used for similarity calculation. The radio buttons on the right select
 which analysis stage to display: "Prefilt" is the initial probe regressor, either the global
 mean, or an externally supplied timecourse; "Postfilt" is this regressor after filtering to
-the active analysis band.  "PassX" is the resampled regressor used in each of the analysis passes.
+the active analysis band.  "PassX" is the resampled regressor used in each of the analysis passes after
+filtering, resampling, cleaning, and/or refinement from a previous pass.
 
 
 Dataset selection
