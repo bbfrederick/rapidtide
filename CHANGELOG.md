@@ -1,8 +1,10 @@
 # Release history
 
-## Version 3.0alpha10 (2/27/25)
+## Version 3.0alpha10 (2/28/25)
 * (tidepool) Full support for multiple concurrent datasets.  Dataset loading and selection is now done through the File menu.
-* (tidepool) Fixed pane loading.
+* (tidepool) Load additional informational maps, and somewhat more intelligently.
+* (tidepool) Fixed pane loading to use all available panes.
+* (tidepool) Fixed image saving under pyqt6.
 * (tidepool) For the regressor spectrum, only do FFT of the portion of the regressor used for similarity calculation.
 
 ## Version 3.0alpha9 (2/26/25)
