@@ -150,16 +150,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="nextFile_Button">
-           <property name="toolTip">
-            <string>Right click to select the mask used to display the current map</string>
-           </property>
-           <property name="text">
-            <string>Next file</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QDoubleSpinBox" name="dispmin_doubleSpinBox">
            <property name="alignment">
             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>

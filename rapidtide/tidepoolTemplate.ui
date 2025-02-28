@@ -342,13 +342,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="nextFile_Button">
-          <property name="text">
-           <string>Next file</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <spacer name="verticalSpacer_2">
           <property name="orientation">
            <enum>Qt::Orientation::Vertical</enum>
