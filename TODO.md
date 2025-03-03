@@ -2,9 +2,10 @@ To do list
 ----------
 
 1. (package) Expand automated testing
-4. (tidepool) Implement ASPECTS averaging
+4. (tidepool) Implement ASPECTS/JHU averaging
 7. (rapidtide) Implement a dispersive delay model
 8. (rapidtide) Add a sinc peak fit
+9. (tidepool) Fix the weird limit resetting bug when some panes are activated.
 
 Implement new argument parsing:
 rapidtide/experimental/highresmotion
