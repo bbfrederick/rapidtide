@@ -11,8 +11,8 @@ lag time (maxcorr) map.  tidpool will figure out the root name and pull in all o
 timecourses, and info files.  The displays are live, and linked together, so you can explore multiple
 parameters efficiently.  Works in native or standard space.
 
-There are two styles of ui - 'normal' and 'big'. 'normal' fits easily on the screen of a 14" MacBook Pro, and has
-8 overlay panes
+There are two styles of ui - 'normal' and 'big'. 'normal' fits easily on the screen of a small laptop 
+(e.g. a 13" MacBook Pro), and has 8 overlay panes.
 
 .. image:: images/tidepool_overview_normal.jpg
    :align: center
@@ -20,7 +20,7 @@ There are two styles of ui - 'normal' and 'big'. 'normal' fits easily on the scr
 The main tidepool window with a dataset loaded in 'normal' mode.
 
 
-'big' fits on the screen of a 16" MacBook Pro, and has 16 overlay panes.
+The 'big' style has 16 overlay panes, but requires a slightly larger screen.
 
 .. image:: images/tidepool_overview_big.jpg
    :align: center
