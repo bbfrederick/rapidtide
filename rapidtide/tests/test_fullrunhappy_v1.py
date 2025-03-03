@@ -36,7 +36,6 @@ def test_fullrunhappy_v1(debug=False, displayplots=False):
         "--spatialglm",
         "--model",
         "model_revised",
-        "--aliasedcorrelation",
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 
