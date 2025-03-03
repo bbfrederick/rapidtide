@@ -41,8 +41,7 @@ dependencies = [
   'tqdm',
   'versioneer',
 ]
-#dynamic = ['version', 'license', 'keywords']
-dynamic = ['version']
+dynamic = ["version"]
 authors = [
     {name = 'Blaise deB. Frederick', email='blaise.frederick@gmail.com'},
     {name = 'Taylor Salo'},
