@@ -16,12 +16,15 @@
 #   limitations under the License.
 #
 #
+import os
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
 from rapidtide.resample import FastResampler, FastResamplerFromFile
 from rapidtide.tests.utils import mse
+from rapidtide.tests.utils import get_test_temp_path
 
 
 def test_FastResampler(debug=False):
@@ -45,8 +48,9 @@ def test_FastResampler(debug=False):
         print(f"{genlaggedtc.hiresstart=}, {genlaggedtc.hiresend=}, {genlaggedtc.hiresstep=}")
 
     # save and reload with another name
-    genlaggedtc.save("savedresampler")
-    genlaggedtc2 = FastResamplerFromFile("savedresampler", padtime=padtime, debug=debug)
+    resamplername = os.path.join(get_test_temp_path(), "savedresampler")
+    genlaggedtc.save(resamplername)
+    genlaggedtc2 = FastResamplerFromFile(resamplername, padtime=padtime, debug=debug)
     if debug:
         print(f"{genlaggedtc2.initstart=}, {genlaggedtc2.initend=}, {genlaggedtc2.initstep=}")
         print(f"{genlaggedtc2.hiresstart=}, {genlaggedtc2.hiresend=}, {genlaggedtc2.hiresstep=}")
