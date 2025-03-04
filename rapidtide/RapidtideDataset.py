@@ -194,6 +194,7 @@ class Overlay:
         self.namebase = namebase
         if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
+        self.fracvals = {}
         self.invertonload = invertonload
         self.readImageData(isaMask=isaMask)
         self.mask = None
@@ -278,19 +279,50 @@ class Overlay:
 
     def updateStats(self):
         calcmaskeddata = self.data[np.where(self.mask != 0)]
-        self.minval = calcmaskeddata.min()
-        self.maxval = calcmaskeddata.max()
-        (
-            self.robustmin,
-            self.pct25,
-            self.pct50,
-            self.pct75,
-            self.robustmax,
-        ) = tide_stats.getfracvals(calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
-        self.histy, self.histx = np.histogram(
-            calcmaskeddata, bins=np.linspace(self.minval, self.maxval, 200)
-        )
-        self.quartiles = [self.pct25, self.pct50, self.pct75]
+
+        # get the hash for the current masks
+        maskhash = hash(calcmaskeddata.tostring())
+        try:
+            (
+                self.minval,
+                self.maxval,
+                self.robustmin,
+                self.pct25,
+                self.pct50,
+                self.pct75,
+                self.robustmax,
+                self.histy,
+                self.histx,
+                self.quartiles,
+            ) = self.fracvals[maskhash]
+            print("cache hit")
+        except KeyError:
+            print("cache miss:", maskhash, "not in", self.fracvals.keys())
+            self.minval = calcmaskeddata.min()
+            self.maxval = calcmaskeddata.max()
+            (
+                self.robustmin,
+                self.pct25,
+                self.pct50,
+                self.pct75,
+                self.robustmax,
+            ) = tide_stats.getfracvals(calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
+            self.histy, self.histx = np.histogram(
+                calcmaskeddata, bins=np.linspace(self.minval, self.maxval, 200)
+            )
+            self.quartiles = [self.pct25, self.pct50, self.pct75]
+            self.fracvals[maskhash] = (
+                self.minval,
+                self.maxval,
+                self.robustmin,
+                self.pct25,
+                self.pct50,
+                self.pct75,
+                self.robustmax,
+                self.histy,
+                self.histx,
+                self.quartiles,
+            )
         if self.verbose > 1:
             print(
                 self.name,
