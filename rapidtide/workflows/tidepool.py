@@ -1154,7 +1154,9 @@ def overlay_radioButton_clicked(which, enabled):
                 thedispmax = overlays[currentdataset.focusmap].dispmax
             if verbosity > 1:
                 print(f"currentdataset.focusmap set to {currentdataset.focusmap}")
-                print(f"overlays[currentdataset.focusmap].LUTname set to {overlays[currentdataset.focusmap].LUTname}")
+                print(
+                    f"overlays[currentdataset.focusmap].LUTname set to {overlays[currentdataset.focusmap].LUTname}"
+                )
             if overlays[currentdataset.focusmap].LUTname == "gray":
                 ui.gray_radioButton.setChecked(True)
             elif overlays[currentdataset.focusmap].LUTname == "thermal":
@@ -1568,9 +1570,10 @@ def activateDataset(currentdataset, ui, win, defaultdict, overlayGraphicsViews, 
         overlays["atlas"].setGeomMask(thegeommask)
         overlays["atlas"].setFuncMask(overlays["atlasmask"].data)
 
-    if verbosity > 0:
-        for theoverlay in overlays:
-            overlays[theoverlay].summarize()
+    if not panesinitialized:
+        if verbosity > 0:
+            for theoverlay in overlays:
+                overlays[theoverlay].summarize()
 
     if verbosity > 1:
         print("focusmap is:", currentdataset.focusmap, "bgmap is:", bgmap)
