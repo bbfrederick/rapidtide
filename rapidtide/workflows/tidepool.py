@@ -1118,6 +1118,7 @@ def setMask(maskname):
         }
     print(maskinfodicts[maskname]["msg"])
     ui.setMask_Button.setText(maskinfodicts[maskname]["label"])
+    currentdataset.setFuncMaskName(maskname)
     for themap in currentdataset.loadedfuncmaps:
         if maskname == "nomask":
             overlays[themap].setFuncMask(None)
@@ -1675,6 +1676,11 @@ def activateDataset(currentdataset, ui, win, defaultdict, overlayGraphicsViews, 
         # update the regressor
         updateRegressor()
         updateRegressorSpectrum()
+
+        # update the mask menu
+        if currentdataset.funcmaskname is not None:
+            print(f"updating the mask menu to {currentdataset.funcmaskname}")
+            setMask(currentdataset.funcmaskname)
 
 
 def loadpane(
@@ -2464,5 +2470,10 @@ def tidepool(args):
     updateRegressor()
     updateRegressorSpectrum()
     uiinitialized = True
+
+    # for profiling
+    """for i in range(20):
+        selectDataset((i + 1) % 2)
+    sys.exit(0)"""
 
     QtWidgets.QApplication.instance().exec()

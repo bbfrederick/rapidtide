@@ -194,7 +194,7 @@ class Overlay:
         self.namebase = namebase
         if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
-        self.fracvals = {}
+        self.maskhash = 0
         self.invertonload = invertonload
         self.readImageData(isaMask=isaMask)
         self.mask = None
@@ -280,49 +280,20 @@ class Overlay:
     def updateStats(self):
         calcmaskeddata = self.data[np.where(self.mask != 0)]
 
-        # get the hash for the current masks
-        maskhash = hash(calcmaskeddata.tostring())
-        try:
-            (
-                self.minval,
-                self.maxval,
-                self.robustmin,
-                self.pct25,
-                self.pct50,
-                self.pct75,
-                self.robustmax,
-                self.histy,
-                self.histx,
-                self.quartiles,
-            ) = self.fracvals[maskhash]
-            print("cache hit")
-        except KeyError:
-            print("cache miss:", maskhash, "not in", self.fracvals.keys())
-            self.minval = calcmaskeddata.min()
-            self.maxval = calcmaskeddata.max()
-            (
-                self.robustmin,
-                self.pct25,
-                self.pct50,
-                self.pct75,
-                self.robustmax,
-            ) = tide_stats.getfracvals(calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
-            self.histy, self.histx = np.histogram(
-                calcmaskeddata, bins=np.linspace(self.minval, self.maxval, 200)
-            )
-            self.quartiles = [self.pct25, self.pct50, self.pct75]
-            self.fracvals[maskhash] = (
-                self.minval,
-                self.maxval,
-                self.robustmin,
-                self.pct25,
-                self.pct50,
-                self.pct75,
-                self.robustmax,
-                self.histy,
-                self.histx,
-                self.quartiles,
-            )
+        self.minval = calcmaskeddata.min()
+        self.maxval = calcmaskeddata.max()
+        (
+            self.robustmin,
+            self.pct25,
+            self.pct50,
+            self.pct75,
+            self.robustmax,
+        ) = tide_stats.getfracvals(calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
+        self.histy, self.histx = np.histogram(
+            calcmaskeddata, bins=np.linspace(self.minval, self.maxval, 200)
+        )
+        self.quartiles = [self.pct25, self.pct50, self.pct75]
+
         if self.verbose > 1:
             print(
                 self.name,
@@ -435,9 +406,16 @@ class Overlay:
 
     def maskData(self):
         self.mask = self.geommask * self.funcmask
-        self.maskeddata = self.data.copy()
-        self.maskeddata[np.where(self.mask < 0.5)] = 0.0
-        self.updateStats()
+        maskhash = hash(self.mask.tostring())
+        # these operations are expensive, so only do them if the mask is changed
+        if maskhash == self.maskhash:
+            print("mask has not changed")
+        else:
+            print("mask changed - recalculating")
+            self.maskeddata = self.data.copy()
+            self.maskeddata[np.where(self.mask < 0.5)] = 0.0
+            self.updateStats()
+            self.maskhash = maskhash
 
     def setReport(self, report):
         self.report = report
@@ -539,6 +517,7 @@ class RapidtideDataset:
         fileroot,
         anatname=None,
         geommaskname=None,
+        funcmaskname=None,
         graymaskspec=None,
         whitemaskspec=None,
         userise=False,
@@ -557,6 +536,7 @@ class RapidtideDataset:
         self.fileroot = fileroot
         self.anatname = anatname
         self.geommaskname = geommaskname
+        self.funcmaskname = funcmaskname
         self.graymaskspec = graymaskspec
         self.whitemaskspec = whitemaskspec
         self.userise = userise
@@ -1389,3 +1369,6 @@ class RapidtideDataset:
             self.focusmap = whichmap
         except KeyError:
             self.focusmap = "lagtimes"
+
+    def setFuncMaskName(self, maskname):
+        self.funcmaskname = maskname
