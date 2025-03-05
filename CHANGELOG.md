@@ -5,7 +5,7 @@
 * (tidepool) Colormap radio button is now set correctly.
 * (tidepool) Mask menu label is now set correctly when restoring a loaded dataset.
 * (versioneer) Updated to 0.29.
-* (docs) Tidepool's new functionality is now described.
+* (docs) tidepool's documentation has been updated to reflect the current state of the program.
 
 ## Version 3.0alpha10 (2/28/25)
 * (tidepool) Full support for multiple concurrent datasets.  Dataset loading and selection is now done through the File menu.
