@@ -1766,6 +1766,7 @@
       <font>
        <family>Courier New</family>
        <pointsize>11</pointsize>
+       <bold>true</bold>
       </font>
      </property>
     </widget>
@@ -1847,7 +1848,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1373</width>
+     <width>1375</width>
      <height>24</height>
     </rect>
    </property>
@@ -1891,7 +1892,7 @@
   </property>
  </designerdata>
  <buttongroups>
-  <buttongroup name="colormap_buttonGroup"/>
   <buttongroup name="stats_buttonGroup"/>
+  <buttongroup name="colormap_buttonGroup"/>
  </buttongroups>
 </ui>

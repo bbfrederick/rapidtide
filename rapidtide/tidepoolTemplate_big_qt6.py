@@ -866,6 +866,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setFamily("Courier New")
         font.setPointSize(11)
+        font.setBold(True)
         self.logOutput.setFont(font)
         self.logOutput.setObjectName("logOutput")
         self.simfunc_groupBox = QtWidgets.QGroupBox(parent=self.centralwidget)

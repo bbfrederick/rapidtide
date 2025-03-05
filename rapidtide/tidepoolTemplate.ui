@@ -80,6 +80,7 @@
      <property name="font">
       <font>
        <family>Courier</family>
+       <bold>true</bold>
       </font>
      </property>
     </widget>

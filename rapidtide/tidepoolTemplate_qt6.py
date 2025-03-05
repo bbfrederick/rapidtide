@@ -37,6 +37,7 @@ class Ui_MainWindow(object):
         self.logOutput.setGeometry(QtCore.QRect(10, 30, 651, 131))
         font = QtGui.QFont()
         font.setFamily("Courier")
+        font.setBold(True)
         self.logOutput.setFont(font)
         self.logOutput.setObjectName("logOutput")
         self.imageData_groupBox = QtWidgets.QGroupBox(parent=self.centralwidget)
