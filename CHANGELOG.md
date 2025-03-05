@@ -1,9 +1,9 @@
 # Release history
 
 ## Version 3.0alpha11 (3/5/25)
+* (tidepool) Substantial speed improvement switching datasets.
 * (tidepool) Colormap radio button is now set correctly.
 * (tidepool) Mask menu label is now set correctly when restoring a loaded dataset.
-* (tidepool) Substantial speed improvement switching datasets.
 * (versioneer) Updated to 0.29.
 * (docs) Tidepool's new functionality is now described.
 
