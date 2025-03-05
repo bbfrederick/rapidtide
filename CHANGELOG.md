@@ -1,7 +1,11 @@
 # Release history
 
-## Version 3.0alpha11 (2/28/25)
+## Version 3.0alpha11 (3/5/25)
 * (tidepool) Colormap radio button is now set correctly.
+* (tidepool) Mask menu label is now set correctly when restoring a loaded dataset.
+* (tidepool) Substantial speed improvement switching datasets.
+* (versioneer) Updated to 0.29.
+* (docs) Tidepool's new functionality is now described.
 
 ## Version 3.0alpha10 (2/28/25)
 * (tidepool) Full support for multiple concurrent datasets.  Dataset loading and selection is now done through the File menu.
