@@ -408,10 +408,11 @@ class Overlay:
         self.mask = self.geommask * self.funcmask
         maskhash = hash(self.mask.tostring())
         # these operations are expensive, so only do them if the mask is changed
-        if maskhash == self.maskhash:
+        if (maskhash == self.maskhash) and (self.verbose > 1):
             print("mask has not changed")
         else:
-            print("mask changed - recalculating")
+            if self.verbose > 1:
+                print("mask changed - recalculating")
             self.maskeddata = self.data.copy()
             self.maskeddata[np.where(self.mask < 0.5)] = 0.0
             self.updateStats()
