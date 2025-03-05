@@ -6,30 +6,12 @@ To do list
 7. (rapidtide) Implement a dispersive delay model
 8. (rapidtide) Add a sinc peak fit
 9. (tidepool) Fix the weird limit resetting bug when some panes are activated.
+10. (tidepool)
 
 Implement new argument parsing:
-rapidtide/experimental/highresmotion
-rapidtide/experimental/harmonogram
-rapidtide/workflows/happy.py
+vi \
+rapidtide/scripts/showxcorr_legacy.py \
+rapidtide/scripts/threeD.py \
+rapidtide/experimental/highresmotion \
+rapidtide/experimental/harmonogram \
 rapidtide/workflows/rapidtide2x_parser.py
-rapidtide/workflows/linfit.py
-rapidtide/scripts/happy2std
-rapidtide/scripts/applydlfilter
-rapidtide/scripts/atlastool
-rapidtide/scripts/spatialfit
-rapidtide/scripts/showstxcorr
-rapidtide/scripts/pixelcomp
-rapidtide/scripts/histtc
-rapidtide/scripts/plethquality
-rapidtide/scripts/filttc
-rapidtide/scripts/ccorrica
-rapidtide/scripts/resamplenifti
-rapidtide/scripts/threeD
-rapidtide/scripts/resamp1tc
-rapidtide/scripts/showxcorr
-rapidtide/scripts/atlasaverage
-rapidtide/scripts/showxcorrx
-rapidtide/scripts/simdata
-rapidtide/scripts/rapidtide2std
-
-
