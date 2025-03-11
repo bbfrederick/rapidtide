@@ -25,7 +25,6 @@ import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
 
-
 global ratiotooffsetfunc, maplimits
 
 
@@ -45,6 +44,7 @@ def trainratiotooffset(
     numpoints=501,
     smoothpts=3,
     edgepad=5,
+    glmderivs=1,
     debug=False,
 ):
     global ratiotooffsetfunc, maplimits
@@ -58,6 +58,7 @@ def trainratiotooffset(
         print("\tmaxdelay:", maxdelay)
         print("\tsmoothpts:", smoothpts)
         print("\tedgepad:", edgepad)
+        print("\tglmderivs:", glmderivs)
         print("\tlagtcgenerator:", lagtcgenerator)
     # make a delay map
     delaystep = (maxdelay - mindelay) / (numpoints - 1)
@@ -129,6 +130,7 @@ def trainratiotooffset(
         None,
         None,
         optiondict,
+        glmderivs=glmderivs,
         debug=debug,
     )
     if debug:
@@ -181,9 +183,7 @@ def trainratiotooffset(
             1.0 / (resampaxis[1] - resampaxis[0]),
             starttime=resampaxis[0],
             columns=["delay"],
-            extraheaderinfo={
-                "Description": "The function mapping derivative ratio to delay"
-            },
+            extraheaderinfo={"Description": "The function mapping derivative ratio to delay"},
             append=False,
         )
 
@@ -219,12 +219,14 @@ def getderivratios(
     LGR,
     TimingLGR,
     optiondict,
+    glmderivs=1,
     debug=False,
 ):
     if debug:
         print("getderivratios")
         print(f"{fitNorm.shape=}")
         print(f"{fitcoeff.shape=}")
+        print(f"{glmderivs=}")
     voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
         fmri_data_valid,
         validvoxels,
@@ -249,7 +251,7 @@ def getderivratios(
         optiondict["saveminimumglmfiles"],
         nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
         nprocs_glm=optiondict["nprocs_glm"],
-        glmderivs=1,
+        glmderivs=glmderivs,
         mp_chunksize=optiondict["mp_chunksize"],
         showprogressbar=optiondict["showprogressbar"],
         alwaysmultiproc=optiondict["alwaysmultiproc"],
@@ -258,9 +260,14 @@ def getderivratios(
     )
 
     # calculate the ratio of the first derivative to the main regressor
-    glmderivratio = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
+    if glmderivs == 1:
+        glmderivratios = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
+    else:
+        glmderivratios = np.zeros((glmderivs, fitcoeff[:, 0]), dtype=np.float64)
+        for i in range(glmderivs):
+            glmderivratios[i, :] = np.nan_to_num(fitcoeff[:, i + 1] / fitcoeff[:, 0])
 
-    return glmderivratio
+    return glmderivratios
 
 
 def filterderivratios(
