@@ -137,12 +137,25 @@ def trainratiotooffset(
         print("before trimming")
         print(f"{glmderivratios.shape=}")
         print(f"{lagtimes.shape=}")
-    smoothglmderivratios = tide_filt.unpadvec(
-        smooth(tide_filt.padvec(glmderivratios, padlen=20, padtype="constant"), smoothpts),
-        padlen=20,
-    )
-    glmderivratios = glmderivratios[edgepad:-edgepad]
-    smoothglmderivratios = smoothglmderivratios[edgepad:-edgepad]
+    if glmderivs == 1:
+        smoothglmderivratios = tide_filt.unpadvec(
+            smooth(tide_filt.padvec(glmderivratios, padlen=20, padtype="constant"), smoothpts),
+            padlen=20,
+        )
+        glmderivratios = glmderivratios[edgepad:-edgepad]
+        smoothglmderivratios = smoothglmderivratios[edgepad:-edgepad]
+    else:
+        smoothglmderivratios = np.zeros_like(glmderivratios)
+        for i in range(glmderivs):
+            smoothglmderivratios[i, :] = tide_filt.unpadvec(
+                smooth(
+                    tide_filt.padvec(glmderivratios[i, :], padlen=20, padtype="constant"),
+                    smoothpts,
+                ),
+                padlen=20,
+            )
+        glmderivratios = glmderivratios[:, edgepad:-edgepad]
+        smoothglmderivratios = smoothglmderivratios[:, edgepad:-edgepad]
     lagtimes = lagtimes[edgepad:-edgepad]
     if debug:
         print("after trimming")

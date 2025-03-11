@@ -350,11 +350,17 @@ def makevoxelspecificderivs(theevs, nderivs=1, debug=False):
     if nderivs == 0:
         thenewevs = theevs
     else:
+        taylorcoffs = np.zeros((nderivs + 1), dtype=np.float64)
+        taylorcoffs[0] = 1.0
         thenewevs = np.zeros((theevs.shape[0], theevs.shape[1], nderivs + 1), dtype=float)
+        for i in range(1, nderivs + 1):
+            taylorcoffs[i] = 1.0 / np.math.factorial(i)
         for thevoxel in range(0, theevs.shape[0]):
             thenewevs[thevoxel, :, 0] = theevs[thevoxel, :] * 1.0
             for i in range(1, nderivs + 1):
-                thenewevs[thevoxel, :, i] = np.gradient(thenewevs[thevoxel, :, i - 1])
+                thenewevs[thevoxel, :, i] = taylorcoffs[i] * np.gradient(
+                    thenewevs[thevoxel, :, i - 1]
+                )
     if debug:
         print(f"{nderivs=}")
         print(f"{thenewevs.shape=}")

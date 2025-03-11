@@ -3568,6 +3568,7 @@ def rapidtide_main(argparsingfunc):
                 LGR,
                 TimingLGR,
                 optiondict,
+                glmderivs=1,
                 debug=optiondict["debug"],
             )
 
