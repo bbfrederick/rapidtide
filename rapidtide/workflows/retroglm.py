@@ -443,7 +443,7 @@ def retroglm(args):
         print(f"{numvalidspatiallocs=}")
     internalvalidspaceshape = numvalidspatiallocs
     if args.refinedelay:
-        derivaxissize = np.max([2, args.glmderivs + 1])
+        derivaxissize = np.max([args.refineglmderivs + 1, args.glmderivs + 1])
     else:
         derivaxissize = args.glmderivs + 1
     internalvalidspaceshapederivs = (
@@ -518,6 +518,7 @@ def retroglm(args):
         threshval = therunoptions["glmthreshval"]
     except KeyError:
         threshval = 0.0
+        therunoptions["glmthreshval"] = threshval
     mode = "glm"
 
     if args.debug or args.focaldebug:

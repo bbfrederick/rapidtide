@@ -266,7 +266,8 @@ def getderivratios(
     if glmderivs == 1:
         glmderivratios = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
     else:
-        glmderivratios = np.zeros((glmderivs, fitcoeff[:, 0]), dtype=np.float64)
+        numvoxels = fitcoeff.shape[0]
+        glmderivratios = np.zeros((glmderivs, numvoxels), dtype=np.float64)
         for i in range(glmderivs):
             glmderivratios[i, :] = np.nan_to_num(fitcoeff[:, i + 1] / fitcoeff[:, 0])
 
