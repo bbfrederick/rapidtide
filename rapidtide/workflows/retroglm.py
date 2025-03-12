@@ -604,7 +604,7 @@ def retroglm(args):
             debug=args.debug,
         )
 
-        if optiondict["refineglmderivs"] == 1:
+        if args.refineglmderivs == 1:
             medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
                 tide_refinedelay.filterderivratios(
                     glmderivratios,
