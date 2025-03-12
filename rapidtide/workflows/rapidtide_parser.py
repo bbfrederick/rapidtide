@@ -80,6 +80,7 @@ DEFAULT_REFINE_PRENORM = "var"
 DEFAULT_REFINE_WEIGHTING = "None"
 DEFAULT_REFINE_PCACOMPONENTS = 0.8
 DEFAULT_GLMDERIVS = 0
+DEFAULT_REFINEGLMDERIVS = 1
 
 DEFAULT_DENOISING_LAGMIN = -10.0
 DEFAULT_DENOISING_LAGMAX = 10.0
@@ -309,7 +310,7 @@ def _get_parser():
         dest="realtr",
         action="store",
         metavar="TSTEP",
-        type=lambda x: pf.is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x, minval=0.0),
         help=(
             "Set the timestep of the data file to TSTEP. "
             "This will override the TR in an "
@@ -395,7 +396,7 @@ def _get_parser():
         "--detrendorder",
         dest="detrendorder",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="ORDER",
         help=(f"Set order of trend removal (0 to disable). Default is {DEFAULT_DETREND_ORDER}."),
         default=DEFAULT_DETREND_ORDER,
@@ -514,7 +515,7 @@ def _get_parser():
         "--confoundpowers",
         dest="confound_power",
         metavar="N",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=1),
         help=(
             "Include powers of each confound regressor up to order N. Default is 1 (no expansion). "
         ),
@@ -580,7 +581,7 @@ def _get_parser():
         "--numskip",
         dest="preprocskip",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="SKIP",
         help=(
             "SKIP TRs were previously deleted during "
@@ -672,7 +673,7 @@ def _get_parser():
         "--regressorfreq",
         dest="inputfreq",
         action="store",
-        type=lambda x: pf.is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x, minval=0.0),
         metavar="FREQ",
         help=(
             "Probe regressor in file has sample "
@@ -888,7 +889,7 @@ def _get_parser():
         "--despecklepasses",
         dest="despeckle_passes",
         action=pf.IndicateSpecifiedAction,
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="PASSES",
         help=(
             "Detect and refit suspect correlations to "
@@ -943,7 +944,7 @@ def _get_parser():
         "--passes",
         dest="passes",
         action=pf.IndicateSpecifiedAction,
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="PASSES",
         help=("Set the number of processing passes to PASSES.  " f"Default is {DEFAULT_PASSES}."),
         default=DEFAULT_PASSES,
@@ -1157,7 +1158,7 @@ def _get_parser():
         "--maxpasses",
         dest="maxpasses",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="MAXPASSES",
         help=(
             "Terminate refinement after MAXPASSES passes, whether or not convergence has occurred. "
@@ -1203,7 +1204,7 @@ def _get_parser():
         "--glmderivs",
         dest="glmderivs",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="NDERIVS",
         help=(
             f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
@@ -1221,7 +1222,9 @@ def _get_parser():
         "--refinedelay",
         dest="dummy",
         action="store_true",
-        help=("Calculate a refined delay map using GLM information. ***DEPRECATED*** - this is now on by default."),
+        help=(
+            "Calculate a refined delay map using GLM information. ***DEPRECATED*** - this is now on by default."
+        ),
         default=True,
     )
     glm.add_argument(
@@ -1256,6 +1259,18 @@ def _get_parser():
             "dimension (a rule of thumb for a good value).  Set to 0 to disable."
         ),
         default=DEFAULT_DELAYOFFSETSPATIALFILT,
+    )
+    glm.add_argument(
+        "--refineglmderivs",
+        dest="refineglmderivs",
+        action="store",
+        type=lambda x: pf.is_int(parser, x, minval=1),
+        metavar="NDERIVS",
+        help=(
+            f"When doing GLM for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
+            f"Default is {DEFAULT_REFINEGLMDERIVS}"
+        ),
+        default=DEFAULT_REFINEGLMDERIVS,
     )
 
     # Output options
@@ -1297,7 +1312,7 @@ def _get_parser():
         "--histlen",  # was -h
         dest="histlen",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=5),
         metavar="HISTLEN",
         help=(f"Change the histogram length to HISTLEN.  Default is {DEFAULT_HISTLEN}."),
         default=DEFAULT_HISTLEN,
@@ -1349,7 +1364,7 @@ def _get_parser():
         "--mklthreads",
         dest="mklthreads",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="MKLTHREADS",
         help=(
             "If mkl library is installed, use no more than MKLTHREADS worker "
@@ -1542,7 +1557,7 @@ def _get_parser():
         "--noisefreq",
         dest="noisefreq",
         action="store",
-        type=lambda x: pf.is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x, minval=0.0),
         metavar="FREQ",
         help=(
             "Noise timecourse in file has sample "

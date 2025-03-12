@@ -83,7 +83,7 @@ def invert_float(parser, arg):
     return arg
 
 
-def is_float(parser, arg):
+def is_float(parser, arg, minval=None, maxval=None):
     """
     Check if argument is float or auto.
     """
@@ -92,6 +92,10 @@ def is_float(parser, arg):
             arg = float(arg)
         except parser.error:
             parser.error('Value {0} is not a float or "auto"'.format(arg))
+        if minval is not None and arg < minval:
+            parser.error("Value {0} is smaller than {1}".format(arg, minval))
+        if max(maxval is not None and arg > maxval):
+            parser.error("Value {0} is larger than {1}".format(arg, maxval))
 
     return arg
 
@@ -115,7 +119,7 @@ def is_valid_file_or_float(parser, arg):
     return arg
 
 
-def is_int(parser, arg):
+def is_int(parser, arg, minval=None, maxval=None):
     """
     Check if argument is int or auto.
     """
@@ -124,6 +128,10 @@ def is_int(parser, arg):
             arg = int(arg)
         except parser.error:
             parser.error('Value {0} is not an int or "auto"'.format(arg))
+        if minval is not None and arg < minval:
+            parser.error("Value {0} is smaller than {1}".format(arg, minval))
+        if max(maxval is not None and arg > maxval):
+            parser.error("Value {0} is larger than {1}".format(arg, maxval))
 
     return arg
 
