@@ -17,6 +17,7 @@
 #
 #
 import numpy as np
+from scipy.special import factorial
 from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
@@ -354,7 +355,7 @@ def makevoxelspecificderivs(theevs, nderivs=1, debug=False):
         taylorcoffs[0] = 1.0
         thenewevs = np.zeros((theevs.shape[0], theevs.shape[1], nderivs + 1), dtype=float)
         for i in range(1, nderivs + 1):
-            taylorcoffs[i] = 1.0 / np.math.factorial(i)
+            taylorcoffs[i] = 1.0 / factorial(i)
         for thevoxel in range(0, theevs.shape[0]):
             thenewevs[thevoxel, :, 0] = theevs[thevoxel, :] * 1.0
             for i in range(1, nderivs + 1):
