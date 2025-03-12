@@ -94,7 +94,7 @@ def is_float(parser, arg, minval=None, maxval=None):
             parser.error('Value {0} is not a float or "auto"'.format(arg))
         if minval is not None and arg < minval:
             parser.error("Value {0} is smaller than {1}".format(arg, minval))
-        if max(maxval is not None and arg > maxval):
+        if maxval is not None and arg > maxval):
             parser.error("Value {0} is larger than {1}".format(arg, maxval))
 
     return arg
@@ -130,7 +130,7 @@ def is_int(parser, arg, minval=None, maxval=None):
             parser.error('Value {0} is not an int or "auto"'.format(arg))
         if minval is not None and arg < minval:
             parser.error("Value {0} is smaller than {1}".format(arg, minval))
-        if max(maxval is not None and arg > maxval):
+        if maxval is not None and arg > maxval):
             parser.error("Value {0} is larger than {1}".format(arg, maxval))
 
     return arg
