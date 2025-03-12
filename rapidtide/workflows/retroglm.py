@@ -636,12 +636,30 @@ def retroglm(args):
 
             # now calculate the delay offsets
             TimingLGR.info("Calculating delay offsets")
-            delayoffset = filteredglmderivratios * 0.0
+            delayoffset = np.zeros_like(filteredglmderivratios)
             if args.focaldebug:
                 print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
             for i in range(filteredglmderivratios.shape[0]):
                 delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
         else:
+            medfiltglmderivratios = np.zeros_like(glmderivratios)
+            filteredglmderivratios = np.zeros_like(glmderivratios)
+            delayoffsetMAD = np.zeros(args.refineglmderivs, dtype=float)
+            for i in range(args.refineglmderivs):
+                medfiltglmderivratios[i, :], filteredglmderivratios[i, :], delayoffsetMAD[i] = (
+                    tide_refinedelay.filterderivratios(
+                        glmderivratios[i, :],
+                        (xsize, ysize, numslices),
+                        validvoxels,
+                        (xdim, ydim, slicedim),
+                        gausssigma=args.delayoffsetgausssigma,
+                        patchthresh=args.delaypatchthresh,
+                        fileiscifti=False,
+                        textio=False,
+                        rt_floattype=rt_floattype,
+                        debug=args.debug,
+                    )
+                )
             print("WARNING: refineglmderivs != 1")
             print("not implemented yet")
             sys.exit()

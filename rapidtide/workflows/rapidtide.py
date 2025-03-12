@@ -3604,15 +3604,41 @@ def rapidtide_main(argparsingfunc):
                 )
 
                 # now calculate the delay offsets
-                delayoffset = filteredglmderivratios * 0.0
+                delayoffset = np.zeros_like(filteredglmderivratios)
                 if optiondict["debug"]:
                     print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
                 for i in range(filteredglmderivratios.shape[0]):
                     delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
             else:
+                medfiltglmderivratios = np.zeros_like(glmderivratios)
+                filteredglmderivratios = np.zeros_like(glmderivratios)
+                delayoffsetMAD = np.zeros(optiondict["refineglmderivs"], dtype=float)
+                for i in range(args.refineglmderivs):
+                    medfiltglmderivratios[i, :], filteredglmderivratios[i, :], delayoffsetMAD[i] = (
+                        tide_refinedelay.filterderivratios(
+                            glmderivratios[i, :],
+                            (xsize, ysize, numslices),
+                            validvoxels,
+                            (xdim, ydim, slicedim),
+                            gausssigma=optiondict["delayoffsetgausssigma"],
+                            patchthresh=optiondict["delaypatchthresh"],
+                            fileiscifti=False,
+                            textio=False,
+                            rt_floattype=rt_floattype,
+                            debug=optiondict["debug"],
+                        )
+                    )
+                    optiondict[f"delayoffsetMAD_{i + 1}"] = delayoffsetMAD[i]
                 print("WARNING: refineglmderivs != 1")
                 print("not implemented yet")
                 sys.exit()
+
+                """# now calculate the delay offsets
+                delayoffset = np.zeros_like(filteredglmderivratios)
+                if optiondict["debug"]:
+                    print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
+                for i in range(filteredglmderivratios.shape[0]):
+                    delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])"""
 
             namesuffix = "_desc-delayoffset_hist"
             if optiondict["doglmfilt"]:
