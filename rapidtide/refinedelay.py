@@ -179,16 +179,6 @@ def trainratiotooffset(
     maplimits = (xaxis[0], xaxis[-1])
 
     if outputlevel != "min":
-        """tide_io.writebidstsv(
-            f"{outputname}_desc-ratiotodelaymapping_timeseries",
-            np.stack((xaxis, yaxis)),
-            1.0,
-            columns=["smoothglmderivratio", "delay"],
-            extraheaderinfo={
-                "Description": "The ratio of sLFO derivative to the sLFO, and the corresponding delay offset"
-            },
-            append=False,
-        )"""
         resampaxis = np.linspace(xaxis[0], xaxis[-1], num=len(xaxis), endpoint=True)
         tide_io.writebidstsv(
             f"{outputname}_desc-ratiotodelayfunc_timeseries",
@@ -284,7 +274,7 @@ def getderivratios(
 
 
 def filterderivratios(
-    glmderivratio,
+    glmderivratios,
     nativespaceshape,
     validvoxels,
     thedims,
@@ -303,7 +293,7 @@ def filterderivratios(
         print(f"\t{nativespaceshape=}")
 
     # filter the ratio to find weird values
-    themad = mad(glmderivratio).astype(np.float64)
+    themad = mad(glmderivratios).astype(np.float64)
     print(f"MAD of GLM derivative ratios = {themad}")
     outmaparray, internalspaceshape = tide_io.makedestarray(
         nativespaceshape,
@@ -311,24 +301,24 @@ def filterderivratios(
         fileiscifti=fileiscifti,
         rt_floattype=rt_floattype,
     )
-    mappedglmderivratio = tide_io.populatemap(
-        glmderivratio,
+    mappedglmderivratios = tide_io.populatemap(
+        glmderivratios,
         internalspaceshape,
         validvoxels,
         outmaparray,
         debug=debug,
     )
     if textio or fileiscifti:
-        medfilt = glmderivratio
-        filteredarray = glmderivratio
+        medfilt = glmderivratios
+        filteredarray = glmderivratios
     else:
         if debug:
-            print(f"{glmderivratio.shape=}, {mappedglmderivratio.shape=}")
+            print(f"{glmderivratios.shape=}, {mappedglmderivratios.shape=}")
         medfilt = median_filter(
-            mappedglmderivratio.reshape(nativespaceshape), size=(3, 3, 3)
+            mappedglmderivratios.reshape(nativespaceshape), size=(3, 3, 3)
         ).reshape(internalspaceshape)[validvoxels]
         filteredarray = np.where(
-            np.fabs(glmderivratio - medfilt) > patchthresh * themad, medfilt, glmderivratio
+            np.fabs(glmderivratios - medfilt) > patchthresh * themad, medfilt, glmderivratios
         )
         if gausssigma > 0:
             mappedfilteredarray = tide_io.populatemap(

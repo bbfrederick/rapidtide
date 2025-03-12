@@ -57,6 +57,7 @@ DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
 DEFAULT_DELAYOFFSETSPATIALFILT = -1
+DEFAULT_REFINEGLMDERIVS = 1
 
 
 def _get_parser():
@@ -91,7 +92,7 @@ def _get_parser():
         "--glmderivs",
         dest="glmderivs",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="NDERIVS",
         help=(
             f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
@@ -115,7 +116,7 @@ def _get_parser():
         "--numskip",
         dest="numskip",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="NUMSKIP",
         help=("Skip NUMSKIP points at the beginning of the fmri file."),
         default=0,
@@ -205,6 +206,18 @@ def _get_parser():
         action="store_true",
         help=("Output lots of helpful information."),
         default=False,
+    )
+    parser.add_argument(
+        "--refineglmderivs",
+        dest="refineglmderivs",
+        action="store",
+        type=lambda x: pf.is_int(parser, x, minval=1),
+        metavar="NDERIVS",
+        help=(
+            f"When doing GLM for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
+            f"Default is {DEFAULT_REFINEGLMDERIVS}"
+        ),
+        default=DEFAULT_REFINEGLMDERIVS,
     )
     parser.add_argument(
         "--focaldebug",
@@ -587,46 +600,52 @@ def retroglm(args):
             LGR,
             TimingLGR,
             therunoptions,
+            glmderivs=args.refineglmderivs,
             debug=args.debug,
         )
 
-        medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
-            tide_refinedelay.filterderivratios(
-                glmderivratios,
-                (xsize, ysize, numslices),
-                validvoxels,
-                (xdim, ydim, slicedim),
-                gausssigma=args.delayoffsetgausssigma,
-                patchthresh=args.delaypatchthresh,
-                fileiscifti=False,
-                textio=False,
-                rt_floattype=rt_floattype,
+        if optiondict["refineglmderivs"] == 1:
+            medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
+                tide_refinedelay.filterderivratios(
+                    glmderivratios,
+                    (xsize, ysize, numslices),
+                    validvoxels,
+                    (xdim, ydim, slicedim),
+                    gausssigma=args.delayoffsetgausssigma,
+                    patchthresh=args.delaypatchthresh,
+                    fileiscifti=False,
+                    textio=False,
+                    rt_floattype=rt_floattype,
+                    debug=args.debug,
+                )
+            )
+
+            # find the mapping of glm ratios to delays
+            tide_refinedelay.trainratiotooffset(
+                genlagtc,
+                initial_fmri_x,
+                outputname,
+                args.outputlevel,
+                mindelay=args.mindelay,
+                maxdelay=args.maxdelay,
+                numpoints=args.numpoints,
                 debug=args.debug,
             )
-        )
+            TimingLGR.info("Refinement calibration end")
 
-        # find the mapping of glm ratios to delays
-        tide_refinedelay.trainratiotooffset(
-            genlagtc,
-            initial_fmri_x,
-            outputname,
-            args.outputlevel,
-            mindelay=args.mindelay,
-            maxdelay=args.maxdelay,
-            numpoints=args.numpoints,
-            debug=args.debug,
-        )
-        TimingLGR.info("Refinement calibration end")
+            # now calculate the delay offsets
+            TimingLGR.info("Calculating delay offsets")
+            delayoffset = filteredglmderivratios * 0.0
+            if args.focaldebug:
+                print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
+            for i in range(filteredglmderivratios.shape[0]):
+                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+        else:
+            print("WARNING: refineglmderivs != 1")
+            print("not implemented yet")
+            sys.exit()
 
-        # now calculate the delay offsets
-        TimingLGR.info("Calculating delay offsets")
-        delayoffset = filteredglmderivratios * 0.0
-        if args.focaldebug:
-            print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
-        for i in range(filteredglmderivratios.shape[0]):
-            delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
         namesuffix = "_desc-delayoffset_hist"
-
         tide_stats.makeandsavehistogram(
             delayoffset,
             therunoptions["histlen"],

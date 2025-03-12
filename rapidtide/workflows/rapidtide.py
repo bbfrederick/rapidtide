@@ -3568,44 +3568,50 @@ def rapidtide_main(argparsingfunc):
                 LGR,
                 TimingLGR,
                 optiondict,
-                glmderivs=1,
+                glmderivs=optiondict["refineglmderivs"],
                 debug=optiondict["debug"],
             )
 
-            medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
-                tide_refinedelay.filterderivratios(
-                    glmderivratios,
-                    nativespaceshape,
-                    validvoxels,
-                    (xdim, ydim, slicethickness),
-                    gausssigma=optiondict["delayoffsetgausssigma"],
-                    patchthresh=optiondict["delaypatchthresh"],
-                    fileiscifti=fileiscifti,
-                    textio=optiondict["textio"],
-                    rt_floattype="float64",
+            if optiondict["refineglmderivs"] == 1:
+                medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
+                    tide_refinedelay.filterderivratios(
+                        glmderivratios,
+                        nativespaceshape,
+                        validvoxels,
+                        (xdim, ydim, slicethickness),
+                        gausssigma=optiondict["delayoffsetgausssigma"],
+                        patchthresh=optiondict["delaypatchthresh"],
+                        fileiscifti=fileiscifti,
+                        textio=optiondict["textio"],
+                        rt_floattype="float64",
+                        debug=optiondict["debug"],
+                    )
+                )
+                optiondict["delayoffsetMAD"] = delayoffsetMAD
+
+                # find the mapping of glm ratios to delays
+                tide_refinedelay.trainratiotooffset(
+                    genlagtc,
+                    initial_fmri_x,
+                    outputname,
+                    optiondict["outputlevel"],
+                    mindelay=optiondict["mindelay"],
+                    maxdelay=optiondict["maxdelay"],
+                    numpoints=optiondict["numpoints"],
                     debug=optiondict["debug"],
                 )
-            )
-            optiondict["delayoffsetMAD"] = delayoffsetMAD
 
-            # find the mapping of glm ratios to delays
-            tide_refinedelay.trainratiotooffset(
-                genlagtc,
-                initial_fmri_x,
-                outputname,
-                optiondict["outputlevel"],
-                mindelay=optiondict["mindelay"],
-                maxdelay=optiondict["maxdelay"],
-                numpoints=optiondict["numpoints"],
-                debug=optiondict["debug"],
-            )
+                # now calculate the delay offsets
+                delayoffset = filteredglmderivratios * 0.0
+                if optiondict["debug"]:
+                    print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
+                for i in range(filteredglmderivratios.shape[0]):
+                    delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+            else:
+                print("WARNING: refineglmderivs != 1")
+                print("not implemented yet")
+                sys.exit()
 
-            # now calculate the delay offsets
-            delayoffset = filteredglmderivratios * 0.0
-            if optiondict["debug"]:
-                print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
-            for i in range(filteredglmderivratios.shape[0]):
-                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
             namesuffix = "_desc-delayoffset_hist"
             if optiondict["doglmfilt"]:
                 tide_stats.makeandsavehistogram(
