@@ -6,7 +6,7 @@ rapidtide \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
     --outputlevel max \
-    --refineglmderivs 1 \
+    --refineglmderivs 2 \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST
 
