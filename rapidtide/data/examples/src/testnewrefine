@@ -8,13 +8,41 @@ rapidtide \
     --outputlevel max \
     --refineglmderivs 1 \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+    ../dst/sub-RAPIDTIDETEST_1deriv
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    --outputlevel max \
+    --refineglmderivs 2 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_2deriv
 
 
 retroglm \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST \
-    --alternateoutput ../dst/retrotest \
+    ../dst/sub-RAPIDTIDETEST_1deriv \
+    --alternateoutput ../dst/retrotest_1to1 \
+    --nprocs -1 \
+    --glmderivs 0 \
+    --refineglmderivs 1 \
+    --outputlevel max
+
+retroglm \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_2deriv \
+    --alternateoutput ../dst/retrotest_2to1 \
+    --nprocs -1 \
+    --glmderivs 0 \
+    --refineglmderivs 1 \
+    --outputlevel max
+
+retroglm \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_1deriv \
+    --alternateoutput ../dst/retrotest_1to2 \
     --nprocs -1 \
     --glmderivs 0 \
     --refineglmderivs 2 \

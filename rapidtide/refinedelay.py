@@ -17,6 +17,7 @@
 #
 #
 import numpy as np
+import numpy.polynomial.polynomial as poly
 from scipy.interpolate import CubicSpline, UnivariateSpline
 from scipy.ndimage import median_filter
 from statsmodels.robust import mad
@@ -199,6 +200,34 @@ def ratiotodelay(theratio):
         return ratiotooffsetfunc(maplimits[1])
     else:
         return ratiotooffsetfunc(theratio)
+
+
+def coffstodelay(thecoffs, mindelay=-3.0, maxdelay=3.0, debug=False):
+    justaone = np.array([1.0], dtype=thecoffs.dtype)
+    allcoffs = np.concatenate((justaone, thecoffs))
+    theroots = (poly.Polynomial(allcoffs, domain=(mindelay, maxdelay))).roots()
+    if theroots is None:
+        return 0.0
+    elif len(theroots) == 1:
+        return theroots[0].real
+    else:
+        candidates = []
+        for i in range(len(theroots)):
+            if np.isreal(theroots[i]) and (mindelay <= theroots[i] <= maxdelay):
+                if debug:
+                    print(f"keeping root {i} ({theroots[i]})")
+                candidates.append(theroots[i].real)
+            else:
+                if debug:
+                    print(f"discarding root {i} ({theroots[i]})")
+                else:
+                    pass
+        if len(candidates) > 0:
+            chosen = candidates[np.argmin(np.fabs(np.array(candidates)))].real
+            if debug:
+                print(f"{theroots=}, {candidates=}, {chosen=}")
+            return chosen
+        return 0.0
 
 
 def getderivratios(

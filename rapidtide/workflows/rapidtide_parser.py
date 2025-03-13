@@ -1260,18 +1260,6 @@ def _get_parser():
         ),
         default=DEFAULT_DELAYOFFSETSPATIALFILT,
     )
-    glm.add_argument(
-        "--refineglmderivs",
-        dest="refineglmderivs",
-        action="store",
-        type=lambda x: pf.is_int(parser, x, minval=1),
-        metavar="NDERIVS",
-        help=(
-            f"When doing GLM for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
-            f"Default is {DEFAULT_REFINEGLMDERIVS}"
-        ),
-        default=DEFAULT_REFINEGLMDERIVS,
-    )
 
     # Output options
     output = parser.add_argument_group("Output options")
@@ -1477,6 +1465,18 @@ def _get_parser():
     # Experimental options (not fully tested, may not work)
     experimental = parser.add_argument_group(
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
+    )
+    experimental.add_argument(
+        "--refineglmderivs",
+        dest="refineglmderivs",
+        action="store",
+        type=lambda x: pf.is_int(parser, x, minval=1),
+        metavar="NDERIVS",
+        help=(
+            f"When doing GLM for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
+            f"Default is {DEFAULT_REFINEGLMDERIVS}"
+        ),
+        default=DEFAULT_REFINEGLMDERIVS,
     )
     experimental.add_argument(
         "--territorymap",

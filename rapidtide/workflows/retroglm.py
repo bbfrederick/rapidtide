@@ -208,6 +208,16 @@ def _get_parser():
         default=False,
     )
     parser.add_argument(
+        "--focaldebug",
+        dest="focaldebug",
+        action="store_true",
+        help=("Output lots of helpful information on a limited subset of operations."),
+        default=False,
+    )
+    experimental = parser.add_argument_group(
+        "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
+    )
+    experimental.add_argument(
         "--refineglmderivs",
         dest="refineglmderivs",
         action="store",
@@ -218,13 +228,6 @@ def _get_parser():
             f"Default is {DEFAULT_REFINEGLMDERIVS}"
         ),
         default=DEFAULT_REFINEGLMDERIVS,
-    )
-    parser.add_argument(
-        "--focaldebug",
-        dest="focaldebug",
-        action="store_true",
-        help=("Output lots of helpful information on a limited subset of operations."),
-        default=False,
     )
 
     return parser
@@ -641,6 +644,13 @@ def retroglm(args):
                 print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
             for i in range(filteredglmderivratios.shape[0]):
                 delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+                """delayoffset[i] = tide_refinedelay.coffstodelay(
+                    np.asarray([filteredglmderivratios[i]]),
+                    mindelay=args.mindelay,
+                    maxdelay=args.maxdelay,
+                )"""
+
+            refinedvoxelstoreport = filteredglmderivratios.shape[0]
         else:
             medfiltglmderivratios = np.zeros_like(glmderivratios)
             filteredglmderivratios = np.zeros_like(glmderivratios)
@@ -660,9 +670,18 @@ def retroglm(args):
                         debug=args.debug,
                     )
                 )
-            print("WARNING: refineglmderivs != 1")
-            print("not implemented yet")
-            sys.exit()
+
+            # now calculate the delay offsets
+            delayoffset = np.zeros_like(filteredglmderivratios[0, :])
+            if args.debug:
+                print(f"calculating delayoffsets for {filteredglmderivratios.shape[1]} voxels")
+            for i in range(filteredglmderivratios.shape[1]):
+                delayoffset[i] = tide_refinedelay.coffstodelay(
+                    filteredglmderivratios[:, i],
+                    mindelay=args.mindelay,
+                    maxdelay=args.maxdelay,
+                )
+            refinedvoxelstoreport = filteredglmderivratios.shape[1]
 
         namesuffix = "_desc-delayoffset_hist"
         tide_stats.makeandsavehistogram(
@@ -679,7 +698,7 @@ def retroglm(args):
         TimingLGR.info(
             "Delay offset calculation done",
             {
-                "message2": filteredglmderivratios.shape[0],
+                "message2": refinedvoxelstoreport,
                 "message3": "voxels",
             },
         )
@@ -862,28 +881,56 @@ def retroglm(args):
             ]
 
     if args.refinedelay:
+        if args.refineglmderivs > 1:
+            for i in range(args.refineglmderivs):
+                maplist += [
+                    (
+                        glmderivratios[i, :],
+                        f"glmderivratios_{i}",
+                        "map",
+                        None,
+                        f"Ratio of derivative {i+1} of delayed sLFO to the delayed sLFO",
+                    ),
+                    (
+                        medfiltglmderivratios[i, :],
+                        f"medfiltglmderivratios_{i}",
+                        "map",
+                        None,
+                        f"Median filtered version of the glmderivratios_{i} map",
+                    ),
+                    (
+                        filteredglmderivratios[i, :],
+                        f"filteredglmderivratios_{i}",
+                        "map",
+                        None,
+                        f"glmderivratios_{i}, with outliers patched using median filtered data",
+                    ),
+                ]
+        else:
+            maplist += [
+                (
+                    glmderivratios,
+                    "glmderivratios",
+                    "map",
+                    None,
+                    "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
+                ),
+                (
+                    medfiltglmderivratios,
+                    "medfiltglmderivratios",
+                    "map",
+                    None,
+                    "Median filtered version of the glmderivratios map",
+                ),
+                (
+                    filteredglmderivratios,
+                    "filteredglmderivratios",
+                    "map",
+                    None,
+                    "glmderivratios, with outliers patched using median filtered data",
+                ),
+            ]
         maplist += [
-            (
-                glmderivratios,
-                "glmderivratios",
-                "map",
-                None,
-                "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
-            ),
-            (
-                medfiltglmderivratios,
-                "medfiltglmderivratios",
-                "map",
-                None,
-                "Median filtered version of the glmderivratios map",
-            ),
-            (
-                filteredglmderivratios,
-                "filteredglmderivratios",
-                "map",
-                None,
-                "glmderivratios, with outliers patched using median filtered data",
-            ),
             (
                 delayoffset,
                 "delayoffset",
