@@ -26,12 +26,23 @@ rapidtide \
     ../dst/sub-RAPIDTIDETEST_5mmfilt
 
 rapidtide \
+    --spatialfilt 5 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    --norefinedelay \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_5mmfilt_norefine
+
+rapidtide \
     --spatialfilt 0 \
     --nprocs -1 \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_nospatialfilt
+
+# tidepool --dataset ../dst/sub-RAPIDTIDETEST_defaultfilt_ ../dst/sub-RAPIDTIDETEST_5mmfilt_ ../dst/sub-RAPIDTIDETEST_5mmfilt_norefine_ ../dst/sub-RAPIDTIDETEST_nospatialfilt_ --uistyle big
 
 #rapidtide \
 #    --spatialfilt 5 \
