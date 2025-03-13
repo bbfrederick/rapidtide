@@ -1982,13 +1982,13 @@ def tidepool(args):
             "funcmask": "p_lt_0p050_mask",
         },
         "lagsigma": {
-            "colormap": gen_spectrum_state(),
+            "colormap": gen_plasma_state(),
             "label": "Similarity width",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "MTT": {
-            "colormap": gen_spectrum_state(),
+            "colormap": gen_plasma_state(),
             "label": "MTT",
             "display": extramaps,
             "funcmask": "p_lt_0p050_mask",
