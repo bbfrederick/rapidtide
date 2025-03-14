@@ -2980,9 +2980,9 @@ def rapidtide_main(argparsingfunc):
                 cifti_hdr=cifti_hdr,
             )"""
 
-    for key, value in outputdict.items():
-        optiondict[key] = value
-    # We are done with refinement.
+        for key, value in outputdict.items():
+            optiondict[key] = value
+        # We are done with refinement.
 
     if optiondict["convergencethresh"] is None:
         optiondict["actual_passes"] = optiondict["passes"]
