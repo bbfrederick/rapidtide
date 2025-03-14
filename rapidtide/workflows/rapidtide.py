@@ -46,7 +46,7 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.patchmatch as tide_patch
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.refinedelay as tide_refinedelay
-import rapidtide.refineregressor as tide_refineregressor
+import rapidtide.Refiner as tide_refiner
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
@@ -1455,6 +1455,8 @@ def rapidtide_main(argparsingfunc):
         resampref_y *= tmaskos_y
         thefit, R2val = tide_fit.mlregress(tmaskos_y, resampref_y)
         resampref_y -= thefit[0, 1] * tmaskos_y
+    else:
+        tmaskos_y = None
 
     if optiondict["noisetimecoursespec"] is not None:
         tide_io.writebidstsv(
@@ -1733,7 +1735,46 @@ def rapidtide_main(argparsingfunc):
         or optiondict["dofinalrefine"]
         or optiondict["convergencethresh"] is not None
     ):
-        if optiondict["sharedmem"]:
+        # we will be doing regressor refinement, so set that up
+        theRefiner = tide_refiner.Refiner(
+            internalvalidfmrishape,
+            internalvalidpaddedfmrishape,
+            optiondict["pid"],
+            optiondict["outputname"],
+            initial_fmri_x,
+            paddedinitial_fmri_x,
+            os_fmri_x,
+            sharedmem=optiondict["sharedmem"],
+            offsettime=optiondict["offsettime"],
+            ampthresh=optiondict["ampthresh"],
+            lagminthresh=optiondict["lagminthresh"],
+            lagmaxthresh=optiondict["lagmaxthresh"],
+            sigmathresh=optiondict["sigmathresh"],
+            cleanrefined=optiondict["cleanrefined"],
+            bipolar=optiondict["bipolar"],
+            LGR=LGR,
+            nprocs=optiondict["nprocs"],
+            detrendorder=optiondict["detrendorder"],
+            alwaysmultiproc=optiondict["alwaysmultiproc"],
+            showprogressbar=optiondict["showprogressbar"],
+            chunksize=optiondict["mp_chunksize"],
+            padtrs=numpadtrs,
+            refineprenorm=optiondict["refineprenorm"],
+            refineweighting=optiondict["refineweighting"],
+            refinetype=optiondict["refinetype"],
+            pcacomponents=optiondict["pcacomponents"],
+            windowfunc=optiondict["windowfunc"],
+            passes=optiondict["passes"],
+            maxpasses=optiondict["maxpasses"],
+            convergencethresh=optiondict["convergencethresh"],
+            interptype=optiondict["interptype"],
+            usetmask=(optiondict["tincludemaskname"] is not None),
+            tmask_y=tmask_y,
+            tmaskos_y=tmaskos_y,
+            fastresamplerpadtime=optiondict["fastresamplerpadtime"],
+            debug=optiondict["debug"],
+        )
+        """if optiondict["sharedmem"]:
             shiftedtcs, shiftedtcs_shm = tide_util.allocshared(
                 internalvalidfmrishape, rt_floatset, name=f"shiftedtcs_{optiondict['pid']}"
             )
@@ -1762,7 +1803,7 @@ def rapidtide_main(argparsingfunc):
         )
         thesize, theunit = tide_util.format_bytes(optiondict["totalrefinementbytes"])
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for refinement")
-        tide_util.logmem("after refinement array allocation")
+        tide_util.logmem("after refinement array allocation")"""
 
     outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
 
@@ -2842,254 +2883,45 @@ def rapidtide_main(argparsingfunc):
                         "NB: cannot exclude despeckled voxels from refinement - including for this pass"
                     )
                     thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
+            theRefiner.setmasks(
+                internalrefineincludemask_valid, thisinternalrefineexcludemask_valid
+            )
 
             # regenerate regressor for next pass
             # create the refinement mask
             LGR.info("making refine mask")
-            (
-                dummy,
-                refinemask,
-                locationfails,
-                ampfails,
-                lagfails,
-                sigmafails,
-                numinmask,
-            ) = tide_refineregressor.makerefinemask(
-                lagstrengths,
-                lagtimes,
-                lagsigma,
-                fitmask,
-                offsettime=optiondict["offsettime"],
-                ampthresh=optiondict["ampthresh"],
-                lagmaskside=optiondict["lagmaskside"],
-                lagminthresh=optiondict["lagminthresh"],
-                lagmaxthresh=optiondict["lagmaxthresh"],
-                sigmathresh=optiondict["sigmathresh"],
-                cleanrefined=optiondict["cleanrefined"],
-                bipolar=optiondict["bipolar"],
-                includemask=internalrefineincludemask_valid,
-                excludemask=thisinternalrefineexcludemask_valid,
-            )
-
-            if numinmask == 0:
-                LGR.critical("No voxels in refine mask - adjust thresholds or external masks")
-                sys.exit()
+            createdmask = theRefiner.makemask(lagstrengths, lagtimes, lagsigma, fitmask)
 
             # align timecourses to prepare for refinement
-            alignvoxels_func = addmemprofiling(
-                tide_refineregressor.alignvoxels,
-                optiondict["memprofile"],
-                "before aligning voxel timecourses",
-            )
             LGR.info("aligning timecourses")
             disablemkl(optiondict["nprocs_refine"], debug=threaddebug)
-            voxelsprocessed_rra = alignvoxels_func(
-                fmri_data_valid,
-                fmritr,
-                shiftedtcs,
-                weights,
-                paddedshiftedtcs,
-                paddedweights,
-                lagtimes,
-                refinemask,
-                nprocs=optiondict["nprocs_refine"],
-                detrendorder=optiondict["detrendorder"],
-                offsettime=optiondict["offsettime"],
-                alwaysmultiproc=optiondict["alwaysmultiproc"],
-                showprogressbar=optiondict["showprogressbar"],
-                chunksize=optiondict["mp_chunksize"],
-                padtrs=numpadtrs,
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
-            )
+            voxelsprocessed_rra = theRefiner.alignvoxels(fmri_data_valid, fmritr, lagtimes)
             enablemkl(optiondict["mklthreads"], debug=threaddebug)
             LGR.info(f"align complete: {voxelsprocessed_rra=}")
 
+            # prenormalize
             LGR.info("prenormalizing timecourses")
-            tide_refineregressor.prenorm(
-                paddedshiftedtcs,
-                refinemask,
-                lagtimes,
-                optiondict["lagmaxthresh"],
-                lagstrengths,
-                R2,
-                optiondict["refineprenorm"],
-                optiondict["refineweighting"],
-            )
+            theRefiner.prenormalize(lagtimes, lagstrengths, R2)
 
+            # now doing the refinement
             (
                 voxelsprocessed_rr,
-                paddedoutputdata,
-            ) = tide_refineregressor.dorefine(
-                paddedshiftedtcs,
-                refinemask,
-                weights,
+                outputdict,
+                previousnormoutputdata,
+                resampref_y,
+                resampnonosref_y,
+                stoprefining,
+                refinestopreason,
+                genlagtc,
+            ) = theRefiner.refine(
                 theprefilter,
                 fmritr,
                 thepass,
                 lagstrengths,
                 lagtimes,
-                optiondict["refinetype"],
-                optiondict["fmrifreq"],
-                optiondict["outputname"],
-                detrendorder=optiondict["detrendorder"],
-                pcacomponents=optiondict["pcacomponents"],
-                dodispersioncalc=optiondict["dodispersioncalc"],
-                dispersioncalc_lower=optiondict["dispersioncalc_lower"],
-                dispersioncalc_upper=optiondict["dispersioncalc_upper"],
-                dispersioncalc_step=optiondict["dispersioncalc_step"],
-                windowfunc=optiondict["windowfunc"],
-                cleanrefined=optiondict["cleanrefined"],
-                bipolar=optiondict["bipolar"],
-                debug=optiondict["debug"],
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
+                previousnormoutputdata,
+                optiondict["corrmasksize"],
             )
-            optiondict["refinemasksize_pass" + str(thepass)] = voxelsprocessed_rr
-            optiondict["refinemaskpct_pass" + str(thepass)] = (
-                100.0 * voxelsprocessed_rr / optiondict["corrmasksize"]
-            )
-            optiondict["refinelocationfails_pass" + str(thepass)] = locationfails
-            optiondict["refineampfails_pass" + str(thepass)] = ampfails
-            optiondict["refinelagfails_pass" + str(thepass)] = lagfails
-            optiondict["refinesigmafails_pass" + str(thepass)] = sigmafails
-            if voxelsprocessed_rr > 0:
-                paddednormoutputdata = tide_math.stdnormalize(
-                    theprefilter.apply(fmrifreq, paddedoutputdata)
-                )
-                outputdata = paddedoutputdata[numpadtrs:-numpadtrs]
-                normoutputdata = tide_math.stdnormalize(theprefilter.apply(fmrifreq, outputdata))
-                normunfilteredoutputdata = tide_math.stdnormalize(outputdata)
-                tide_io.writebidstsv(
-                    f"{outputname}_desc-refinedmovingregressor_timeseries",
-                    normunfilteredoutputdata,
-                    1.0 / fmritr,
-                    columns=["unfiltered_pass" + str(thepass)],
-                    extraheaderinfo={
-                        "Description": "The raw and filtered probe regressor produced by the refinement procedure, at the time resolution of the data"
-                    },
-                    append=(thepass > 1),
-                )
-                tide_io.writebidstsv(
-                    f"{outputname}_desc-refinedmovingregressor_timeseries",
-                    normoutputdata,
-                    1.0 / fmritr,
-                    columns=["filtered_pass" + str(thepass)],
-                    extraheaderinfo={
-                        "Description": "The raw and filtered probe regressor produced by the refinement procedure, at the time resolution of the data"
-                    },
-                    append=True,
-                )
-
-                # check for convergence
-                regressormse = mse(normoutputdata, previousnormoutputdata)
-                optiondict["regressormse_pass" + str(thepass).zfill(2)] = regressormse
-                LGR.info(f"regressor difference at end of pass {thepass:d} is {regressormse:.6f}")
-                if optiondict["convergencethresh"] is not None:
-                    if thepass >= optiondict["maxpasses"]:
-                        LGR.info("refinement ended (maxpasses reached)")
-                        stoprefining = True
-                        refinestopreason = "maxpassesreached"
-                    elif regressormse < optiondict["convergencethresh"]:
-                        LGR.info("refinement ended (refinement has converged")
-                        stoprefining = True
-                        refinestopreason = "convergence"
-                    else:
-                        stoprefining = False
-                elif thepass >= optiondict["passes"]:
-                    stoprefining = True
-                    refinestopreason = "passesreached"
-                else:
-                    stoprefining = False
-
-                if optiondict["detrendorder"] > 0:
-                    resampnonosref_y = tide_fit.detrend(
-                        tide_resample.doresample(
-                            paddedinitial_fmri_x,
-                            paddednormoutputdata,
-                            initial_fmri_x,
-                            method=optiondict["interptype"],
-                        ),
-                        order=optiondict["detrendorder"],
-                        demean=optiondict["dodemean"],
-                    )
-                    resampref_y = tide_fit.detrend(
-                        tide_resample.doresample(
-                            paddedinitial_fmri_x,
-                            paddednormoutputdata,
-                            os_fmri_x,
-                            method=optiondict["interptype"],
-                        ),
-                        order=optiondict["detrendorder"],
-                        demean=optiondict["dodemean"],
-                    )
-                else:
-                    resampnonosref_y = tide_resample.doresample(
-                        paddedinitial_fmri_x,
-                        paddednormoutputdata,
-                        initial_fmri_x,
-                        method=optiondict["interptype"],
-                    )
-                    resampref_y = tide_resample.doresample(
-                        paddedinitial_fmri_x,
-                        paddednormoutputdata,
-                        os_fmri_x,
-                        method=optiondict["interptype"],
-                    )
-                if optiondict["tincludemaskname"] is not None:
-                    resampnonosref_y *= tmask_y
-                    thefit, R2val = tide_fit.mlregress(tmask_y, resampnonosref_y)
-                    resampnonosref_y -= thefit[0, 1] * tmask_y
-                    resampref_y *= tmaskos_y
-                    thefit, R2val = tide_fit.mlregress(tmaskos_y, resampref_y)
-                    resampref_y -= thefit[0, 1] * tmaskos_y
-
-                # reinitialize genlagtc for resampling
-                previousnormoutputdata = normoutputdata + 0.0
-                genlagtc = tide_resample.FastResampler(
-                    paddedinitial_fmri_x,
-                    paddednormoutputdata,
-                    padtime=optiondict["fastresamplerpadtime"],
-                )
-                genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
-                if optiondict["debug"]:
-                    genlagtc.info()
-                (
-                    optiondict[f"kurtosis_reference_pass{thepass + 1}"],
-                    optiondict[f"kurtosisz_reference_pass{thepass + 1}"],
-                    optiondict[f"kurtosisp_reference_pass{thepass + 1}"],
-                ) = tide_stats.kurtosisstats(resampref_y)
-                (
-                    optiondict[f"skewness_reference_pass{thepass + 1}"],
-                    optiondict[f"skewnessz_reference_pass{thepass + 1}"],
-                    optiondict[f"skewnessp_reference_pass{thepass + 1}"],
-                ) = tide_stats.skewnessstats(resampref_y)
-                if not stoprefining:
-                    tide_io.writebidstsv(
-                        f"{outputname}_desc-movingregressor_timeseries",
-                        tide_math.stdnormalize(resampnonosref_y),
-                        1.0 / fmritr,
-                        columns=["pass" + str(thepass + 1)],
-                        extraheaderinfo={
-                            "Description": "The probe regressor used in each pass, at the time resolution of the data"
-                        },
-                        append=True,
-                    )
-                    tide_io.writebidstsv(
-                        f"{outputname}_desc-oversampledmovingregressor_timeseries",
-                        tide_math.stdnormalize(resampref_y),
-                        oversampfreq,
-                        columns=["pass" + str(thepass + 1)],
-                        extraheaderinfo={
-                            "Description": "The probe regressor used in each pass, at the time resolution used for calculating the similarity function"
-                        },
-                        append=True,
-                    )
-            else:
-                LGR.warning(f"refinement failed - terminating at end of pass {thepass}")
-                stoprefining = True
-                refinestopreason = "emptymask"
-
             TimingLGR.info(
                 f"Regressor refinement end, pass {thepass}",
                 {
@@ -3097,7 +2929,8 @@ def rapidtide_main(argparsingfunc):
                     "message3": "voxels",
                 },
             )
-        if optiondict["saveintermediatemaps"]:
+
+        """if optiondict["saveintermediatemaps"]:
             if not optiondict["textio"]:
                 theheader = copy.deepcopy(nim_hdr)
                 if fileiscifti:
@@ -3145,9 +2978,12 @@ def rapidtide_main(argparsingfunc):
                 fileiscifti=fileiscifti,
                 rt_floattype=rt_floattype,
                 cifti_hdr=cifti_hdr,
-            )
+            )"""
 
+    for key, value in outputdict.items():
+        optiondict[key] = value
     # We are done with refinement.
+
     if optiondict["convergencethresh"] is None:
         optiondict["actual_passes"] = optiondict["passes"]
     else:
@@ -4213,6 +4049,7 @@ def rapidtide_main(argparsingfunc):
     if (optiondict["passes"] > 1 or optiondict["globalpreselect"]) and optiondict[
         "refinestopreason"
     ] != "emptymask":
+        refinemask = theRefiner.getrefinemask()
         if optiondict["globalpreselect"]:
             masklist = [
                 (
@@ -4349,7 +4186,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["savelagregressors"]:
             maplist += [
                 (
-                    paddedshiftedtcs[:, numpadtrs:-numpadtrs],
+                    (theRefiner.getpaddedshiftedtcs())[:, numpadtrs:-numpadtrs],
                     "shiftedtcs",
                     "bold",
                     None,
@@ -4417,15 +4254,7 @@ def rapidtide_main(argparsingfunc):
 
     # clean up
     if optiondict["passes"] > 1:
-        del paddedshiftedtcs
-        del paddedweights
-        del shiftedtcs
-        del weights
-        if optiondict["sharedmem"]:
-            tide_util.cleanup_shm(paddedshiftedtcs_shm)
-            tide_util.cleanup_shm(paddedweights_shm)
-            tide_util.cleanup_shm(shiftedtcs_shm)
-            tide_util.cleanup_shm(weights_shm)
+        theRefiner.cleanup()
     if optiondict["doglmfilt"]:
         del lagtc
         del filtereddata
