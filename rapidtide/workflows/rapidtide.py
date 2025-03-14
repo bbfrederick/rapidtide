@@ -2929,6 +2929,8 @@ def rapidtide_main(argparsingfunc):
                     "message3": "voxels",
                 },
             )
+            for key, value in outputdict.items():
+                optiondict[key] = value
 
         """if optiondict["saveintermediatemaps"]:
             if not optiondict["textio"]:
@@ -2980,8 +2982,6 @@ def rapidtide_main(argparsingfunc):
                 cifti_hdr=cifti_hdr,
             )"""
 
-        for key, value in outputdict.items():
-            optiondict[key] = value
         # We are done with refinement.
 
     if optiondict["convergencethresh"] is None:
