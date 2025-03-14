@@ -1479,6 +1479,13 @@ def _get_parser():
         default=DEFAULT_REFINEGLMDERIVS,
     )
     experimental.add_argument(
+        "--dofinalrefine",
+        dest="dofinalrefine",
+        action="store_true",
+        help=("Do regressor refinement on the final pass."),
+        default=False,
+    )
+    experimental.add_argument(
         "--territorymap",
         dest="territorymap",
         metavar="MAP[:VALSPEC]",

@@ -1730,6 +1730,7 @@ def rapidtide_main(argparsingfunc):
     if (
         optiondict["passes"] > 1
         or optiondict["globalpreselect"]
+        or optiondict["dofinalrefine"]
         or optiondict["convergencethresh"] is not None
     ):
         if optiondict["sharedmem"]:
@@ -2779,6 +2780,7 @@ def rapidtide_main(argparsingfunc):
             thepass < optiondict["passes"]
             or optiondict["convergencethresh"] is not None
             or optiondict["globalpreselect"]
+            or optiondict["dofinalrefine"]
         ):
             LGR.info(f"\n\nRegressor refinement, pass {thepass}")
             TimingLGR.info(f"Regressor refinement start, pass {thepass}")
