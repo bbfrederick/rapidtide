@@ -17,7 +17,7 @@
 #
 #
 """
-A widget for orthographically displaying 3 and 4 dimensional data
+A class to impmement regressor refinement
 """
 import copy
 
@@ -167,6 +167,13 @@ class Refiner:
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for refinement")
         tide_util.logmem("after refinement array allocation")
         return totalrefinementbytes
+
+    def cleanup(self):
+        if self.sharedmem:
+            tide_util.cleanup_shm(self.paddedshiftedtcs_shm)
+            tide_util.cleanup_shm(self.paddedweights_shm)
+            tide_util.cleanup_shm(self.shiftedtcs_shm)
+            tide_util.cleanup_shm(self.weights_shm)
 
     def makemask(self, lagstrengths, lagtimes, lagsigma, fitmask):
         # create the refinement mask
