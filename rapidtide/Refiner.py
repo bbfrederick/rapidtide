@@ -454,4 +454,3 @@ class Refiner:
             refinestopreason,
             genlagtc,
         )
-        # We are done with refinement.
