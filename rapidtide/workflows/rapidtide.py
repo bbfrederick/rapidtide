@@ -1736,7 +1736,7 @@ def rapidtide_main(argparsingfunc):
         or optiondict["convergencethresh"] is not None
     ):
         # we will be doing regressor refinement, so set that up
-        theRefiner = tide_refiner.Refiner(
+        theRegressorRefiner = tide_refiner.Refiner(
             internalvalidfmrishape,
             internalvalidpaddedfmrishape,
             optiondict["pid"],
@@ -1774,36 +1774,6 @@ def rapidtide_main(argparsingfunc):
             fastresamplerpadtime=optiondict["fastresamplerpadtime"],
             debug=optiondict["debug"],
         )
-        """if optiondict["sharedmem"]:
-            shiftedtcs, shiftedtcs_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_floatset, name=f"shiftedtcs_{optiondict['pid']}"
-            )
-            weights, weights_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_floatset, name=f"weights_{optiondict['pid']}"
-            )
-            paddedshiftedtcs, paddedshiftedtcs_shm = tide_util.allocshared(
-                internalvalidpaddedfmrishape,
-                rt_floatset,
-                name=f"paddedshiftedtcs_{optiondict['pid']}",
-            )
-            paddedweights, paddedweights_shm = tide_util.allocshared(
-                internalvalidpaddedfmrishape,
-                rt_floatset,
-                name=f"paddedweights_{optiondict['pid']}",
-            )
-            ramlocation = "in shared memory"
-        else:
-            shiftedtcs = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-            weights = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-            paddedshiftedtcs = np.zeros(internalvalidpaddedfmrishape, dtype=rt_floattype)
-            paddedweights = np.zeros(internalvalidpaddedfmrishape, dtype=rt_floattype)
-            ramlocation = "locally"
-        optiondict["totalrefinementbytes"] = (
-            shiftedtcs.nbytes + weights.nbytes + paddedshiftedtcs.nbytes + paddedweights.nbytes
-        )
-        thesize, theunit = tide_util.format_bytes(optiondict["totalrefinementbytes"])
-        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for refinement")
-        tide_util.logmem("after refinement array allocation")"""
 
     outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
 
@@ -2883,25 +2853,27 @@ def rapidtide_main(argparsingfunc):
                         "NB: cannot exclude despeckled voxels from refinement - including for this pass"
                     )
                     thisinternalrefineexcludemask_valid = internalrefineexcludemask_valid
-            theRefiner.setmasks(
+            theRegressorRefiner.setmasks(
                 internalrefineincludemask_valid, thisinternalrefineexcludemask_valid
             )
 
             # regenerate regressor for next pass
             # create the refinement mask
             LGR.info("making refine mask")
-            createdmask = theRefiner.makemask(lagstrengths, lagtimes, lagsigma, fitmask)
+            createdmask = theRegressorRefiner.makemask(lagstrengths, lagtimes, lagsigma, fitmask)
 
             # align timecourses to prepare for refinement
             LGR.info("aligning timecourses")
             disablemkl(optiondict["nprocs_refine"], debug=threaddebug)
-            voxelsprocessed_rra = theRefiner.alignvoxels(fmri_data_valid, fmritr, lagtimes)
+            voxelsprocessed_rra = theRegressorRefiner.alignvoxels(
+                fmri_data_valid, fmritr, lagtimes
+            )
             enablemkl(optiondict["mklthreads"], debug=threaddebug)
             LGR.info(f"align complete: {voxelsprocessed_rra=}")
 
             # prenormalize
             LGR.info("prenormalizing timecourses")
-            theRefiner.prenormalize(lagtimes, lagstrengths, R2)
+            theRegressorRefiner.prenormalize(lagtimes, lagstrengths, R2)
 
             # now doing the refinement
             (
@@ -2913,7 +2885,7 @@ def rapidtide_main(argparsingfunc):
                 stoprefining,
                 refinestopreason,
                 genlagtc,
-            ) = theRefiner.refine(
+            ) = theRegressorRefiner.refine(
                 theprefilter,
                 fmritr,
                 thepass,
@@ -4049,7 +4021,7 @@ def rapidtide_main(argparsingfunc):
     if (optiondict["passes"] > 1 or optiondict["globalpreselect"]) and optiondict[
         "refinestopreason"
     ] != "emptymask":
-        refinemask = theRefiner.getrefinemask()
+        refinemask = theRegressorRefiner.getrefinemask()
         if optiondict["globalpreselect"]:
             masklist = [
                 (
@@ -4186,7 +4158,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["savelagregressors"]:
             maplist += [
                 (
-                    (theRefiner.getpaddedshiftedtcs())[:, numpadtrs:-numpadtrs],
+                    (theRegressorRefiner.getpaddedshiftedtcs())[:, numpadtrs:-numpadtrs],
                     "shiftedtcs",
                     "bold",
                     None,
@@ -4254,7 +4226,7 @@ def rapidtide_main(argparsingfunc):
 
     # clean up
     if optiondict["passes"] > 1:
-        theRefiner.cleanup()
+        theRegressorRefiner.cleanup()
     if optiondict["doglmfilt"]:
         del lagtc
         del filtereddata
