@@ -34,6 +34,9 @@ from rapidtide.tests.utils import mse
 
 
 class Refiner:
+
+    refinemaskvoxels = None
+
     def __init__(
         self,
         internalvalidfmrishape,
@@ -51,6 +54,7 @@ class Refiner:
         sigmathresh=1000.0,
         cleanrefined=False,
         bipolar=False,
+        fixdelay=False,
         includemask=None,
         excludemask=None,
         LGR=None,
@@ -71,7 +75,7 @@ class Refiner:
         windowfunc="hamming",
         passes=3,
         maxpasses=15,
-        convergencethreshold=None,
+        convergencethresh=None,
         interptype="univariate",
         usetmask=False,
         tmask_y=None,
@@ -96,8 +100,7 @@ class Refiner:
         self.sigmathresh = sigmathresh
         self.cleanrefined = cleanrefined
         self.bipolar = bipolar
-        self.includemask = includemask
-        self.excludemask = excludemask
+        self.fixdelay = fixdelay
         self.LGR = LGR
         self.nprocs = nprocs
         self.detrendorder = detrendorder
@@ -116,7 +119,7 @@ class Refiner:
         self.windowfunc = windowfunc
         self.passes = passes
         self.maxpasses = maxpasses
-        self.convergencethreshold = convergencethreshold
+        self.convergencethresh = convergencethresh
         self.interptype = interptype
         self.usetmask = usetmask
         self.tmask_y = tmask_y
@@ -126,7 +129,12 @@ class Refiner:
         self.rt_floattype = rt_floattype
         self.rt_floatset = rt_floatset
 
-        self.totalrefinementbytes = self._allocatemem(self, pid)
+        self.setmasks(includemask, excludemask)
+        self.totalrefinementbytes = self._allocatemem(pid)
+
+    def setmasks(self, includemask, excludemask):
+        self.includemask = includemask
+        self.excludemask = excludemask
 
     def _allocatemem(self, pid):
         if self.sharedmem:
@@ -169,6 +177,10 @@ class Refiner:
         return totalrefinementbytes
 
     def cleanup(self):
+        del self.paddedshiftedtcs
+        del self.paddedweights
+        del self.shiftedtcs
+        del self.weights
         if self.sharedmem:
             tide_util.cleanup_shm(self.paddedshiftedtcs_shm)
             tide_util.cleanup_shm(self.paddedweights_shm)
@@ -178,7 +190,7 @@ class Refiner:
     def makemask(self, lagstrengths, lagtimes, lagsigma, fitmask):
         # create the refinement mask
         (
-            dummy,
+            self.refinemaskvoxels,
             self.refinemask,
             self.locationfails,
             self.ampfails,
@@ -199,13 +211,21 @@ class Refiner:
             bipolar=self.bipolar,
             includemask=self.includemask,
             excludemask=self.excludemask,
+            fixdelay=self.fixdelay,
+            debug=self.debug,
         )
 
         if self.numinmask == 0:
             self.LGR.critical("No voxels in refine mask - adjust thresholds or external masks")
-            return True
-        else:
             return False
+        else:
+            return True
+
+    def getrefinemask(self):
+        return self.refinemask
+
+    def getpaddedshiftedtcs(self):
+        return self.paddedshiftedtcs
 
     def alignvoxels(self, fmri_data_valid, fmritr, lagtimes):
         # align timecourses to prepare for refinement
@@ -226,13 +246,14 @@ class Refiner:
             showprogressbar=self.showprogressbar,
             chunksize=self.chunksize,
             padtrs=self.padtrs,
+            debug=self.debug,
             rt_floatset=self.rt_floatset,
             rt_floattype=self.rt_floattype,
         )
-        self.LGR.info(f"align complete: {voxelsprocessed_rra=}")
+        return voxelsprocessed_rra
+        # self.LGR.info(f"align complete: {voxelsprocessed_rra=}")
 
     def prenormalize(self, lagtimes, lagstrengths, R2):
-        self.LGR.info("prenormalizing timecourses")
         tide_refineregressor.prenorm(
             self.paddedshiftedtcs,
             self.refinemask,
@@ -245,10 +266,17 @@ class Refiner:
         )
 
     def refine(
-        self, theprefilter, fmritr, thepass, lagstrengths, lagtimes, previousnormoutputdata
+        self,
+        theprefilter,
+        fmritr,
+        thepass,
+        lagstrengths,
+        lagtimes,
+        previousnormoutputdata,
+        corrmasksize,
     ):
         (
-            self.voxelsprocessed_rr,
+            voxelsprocessed_rr,
             self.paddedoutputdata,
         ) = tide_refineregressor.dorefine(
             self.paddedshiftedtcs,
@@ -276,17 +304,15 @@ class Refiner:
             rt_floattype=self.rt_floattype,
         )
         outputdict = {}
-        outputdict["refinemasksize_pass" + str(thepass)] = self.voxelsprocessed_rr
-        outputdict["refinemaskpct_pass" + str(thepass)] = (
-            100.0 * self.voxelsprocessed_rr / np.sum(self.fitmask)
-        )
+        outputdict["refinemasksize_pass" + str(thepass)] = voxelsprocessed_rr
+        outputdict["refinemaskpct_pass" + str(thepass)] = 100.0 * voxelsprocessed_rr / corrmasksize
         outputdict["refinelocationfails_pass" + str(thepass)] = self.locationfails
         outputdict["refineampfails_pass" + str(thepass)] = self.ampfails
         outputdict["refinelagfails_pass" + str(thepass)] = self.lagfails
         outputdict["refinesigmafails_pass" + str(thepass)] = self.sigmafails
 
         fmrifreq = 1.0 / fmritr
-        if self.voxelsprocessed_rr > 0:
+        if voxelsprocessed_rr > 0:
             paddednormoutputdata = tide_math.stdnormalize(
                 theprefilter.apply(fmrifreq, self.paddedoutputdata)
             )
@@ -426,14 +452,8 @@ class Refiner:
             stoprefining = True
             refinestopreason = "emptymask"
 
-        self.TimingLGR.info(
-            f"Regressor refinement end, pass {thepass}",
-            {
-                "message2": self.voxelsprocessed_rr,
-                "message3": "voxels",
-            },
-        )
         return (
+            voxelsprocessed_rr,
             outputdict,
             previousnormoutputdata,
             resampref_y,
@@ -442,4 +462,3 @@ class Refiner:
             refinestopreason,
             genlagtc,
         )
-        # We are done with refinement.

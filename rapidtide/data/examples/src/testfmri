@@ -1,0 +1,10 @@
+#!/bin/bash
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    --outputlevel max \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST
