@@ -1,10 +1,10 @@
 # Release history
 
 ## Version 3.0alpha12 (3/19/25)
-* (rapidtide) Added option to perform refine on last pass.
-* (rapidtide) Moved refinement out into its own class to make things more modular.
+* (rapidtide) Added option to perform regressor refinement on last pass.
+* (rapidtide) Moved regressor refinement out into its own class to make things more modular.
 * (refinedelay) Put in some experimental code to do multiderivative delay fits.  Currently doesn't work very well.
-* (tidepool) Changed default colormaps for similarity widty, MTT.
+* (tidepool) Changed default colormaps for similarity width, MTT.
 * (package) Made a script to compile qt templates.
 * (package) Added the ability to set value limits to some parser functions.
 
