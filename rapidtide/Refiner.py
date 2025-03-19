@@ -34,6 +34,9 @@ from rapidtide.tests.utils import mse
 
 
 class Refiner:
+
+    refinemaskvoxels = None
+
     def __init__(
         self,
         internalvalidfmrishape,
@@ -51,6 +54,7 @@ class Refiner:
         sigmathresh=1000.0,
         cleanrefined=False,
         bipolar=False,
+        fixdelay=False,
         includemask=None,
         excludemask=None,
         LGR=None,
@@ -96,6 +100,7 @@ class Refiner:
         self.sigmathresh = sigmathresh
         self.cleanrefined = cleanrefined
         self.bipolar = bipolar
+        self.fixdelay = fixdelay
         self.LGR = LGR
         self.nprocs = nprocs
         self.detrendorder = detrendorder
@@ -185,7 +190,7 @@ class Refiner:
     def makemask(self, lagstrengths, lagtimes, lagsigma, fitmask):
         # create the refinement mask
         (
-            dummy,
+            self.refinemaskvoxels,
             self.refinemask,
             self.locationfails,
             self.ampfails,
@@ -206,6 +211,8 @@ class Refiner:
             bipolar=self.bipolar,
             includemask=self.includemask,
             excludemask=self.excludemask,
+            fixdelay=self.fixdelay,
+            debug=self.debug,
         )
 
         if self.numinmask == 0:
@@ -239,6 +246,7 @@ class Refiner:
             showprogressbar=self.showprogressbar,
             chunksize=self.chunksize,
             padtrs=self.padtrs,
+            debug=self.debug,
             rt_floatset=self.rt_floatset,
             rt_floattype=self.rt_floattype,
         )

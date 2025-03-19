@@ -151,6 +151,9 @@ def alignvoxels(
     """
     inputshape = np.shape(fmridata)
     volumetotal = np.sum(lagmask)
+    if debug:
+        print("alignvoxels: {inputshape}")
+        print("volumetotal: {volumetotal}")
 
     # timeshift the valid voxels
     if nprocs > 1 or alwaysmultiproc:
@@ -253,6 +256,7 @@ def makerefinemask(
     bipolar=False,
     includemask=None,
     excludemask=None,
+    fixdelay=False,
     debug=False,
     rt_floatset=np.float64,
     rt_floattype="float64",
@@ -321,35 +325,45 @@ def makerefinemask(
         LGR.info(f"setting ampthresh to the {-100.0 * ampthresh}th percentile ({theampthresh})")
     else:
         theampthresh = ampthresh
+    if debug:
+        print(f"makerefinemask: {theampthresh=}")
     if bipolar:
         ampmask = np.where(np.fabs(lagstrengths) >= theampthresh, np.int16(1), np.int16(0))
     else:
         ampmask = np.where(lagstrengths >= theampthresh, np.int16(1), np.int16(0))
-    if lagmaskside == "upper":
-        delaymask = np.where(
-            (lagtimes - offsettime) > lagminthresh,
-            np.int16(1),
-            np.int16(0),
-        ) * np.where(
-            (lagtimes - offsettime) < lagmaxthresh,
-            np.int16(1),
-            np.int16(0),
-        )
-    elif lagmaskside == "lower":
-        delaymask = np.where(
-            (lagtimes - offsettime) < -lagminthresh,
-            np.int16(1),
-            np.int16(0),
-        ) * np.where(
-            (lagtimes - offsettime) > -lagmaxthresh,
-            np.int16(1),
-            np.int16(0),
-        )
+    if fixdelay:
+        delaymask = lagmask + 0
     else:
-        abslag = abs(lagtimes - offsettime)
-        delaymask = np.where(abslag > lagminthresh, np.int16(1), np.int16(0)) * np.where(
-            abslag < lagmaxthresh, np.int16(1), np.int16(0)
-        )
+        if lagmaskside == "upper":
+            delaymask = np.where(
+                (lagtimes - offsettime) > lagminthresh,
+                np.int16(1),
+                np.int16(0),
+            ) * np.where(
+                (lagtimes - offsettime) < lagmaxthresh,
+                np.int16(1),
+                np.int16(0),
+            )
+        elif lagmaskside == "lower":
+            delaymask = np.where(
+                (lagtimes - offsettime) < -lagminthresh,
+                np.int16(1),
+                np.int16(0),
+            ) * np.where(
+                (lagtimes - offsettime) > -lagmaxthresh,
+                np.int16(1),
+                np.int16(0),
+            )
+        else:
+            abslag = abs(lagtimes - offsettime)
+            delaymask = np.where(abslag > lagminthresh, np.int16(1), np.int16(0)) * np.where(
+                abslag < lagmaxthresh, np.int16(1), np.int16(0)
+            )
+        if debug:
+            print(f"makerefinemask: {lagmaskside=}")
+            print(f"makerefinemask: {lagminthresh=}")
+            print(f"makerefinemask: {lagmaxthresh=}")
+            print(f"makerefinemask: {offsettime=}")
     sigmamask = np.where(lagsigma < sigmathresh, np.int16(1), np.int16(0))
     locationmask = lagmask + 0
     if includemask is not None:

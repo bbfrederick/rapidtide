@@ -1752,8 +1752,9 @@ def rapidtide_main(argparsingfunc):
             sigmathresh=optiondict["sigmathresh"],
             cleanrefined=optiondict["cleanrefined"],
             bipolar=optiondict["bipolar"],
+            fixdelay=optiondict["fixdelay"],
             LGR=LGR,
-            nprocs=optiondict["nprocs"],
+            nprocs=optiondict["nprocs_refine"],
             detrendorder=optiondict["detrendorder"],
             alwaysmultiproc=optiondict["alwaysmultiproc"],
             showprogressbar=optiondict["showprogressbar"],
@@ -2861,6 +2862,10 @@ def rapidtide_main(argparsingfunc):
             # create the refinement mask
             LGR.info("making refine mask")
             createdmask = theRegressorRefiner.makemask(lagstrengths, lagtimes, lagsigma, fitmask)
+            print(f"Refine mask has {theRegressorRefiner.refinemaskvoxels} voxels")
+            if not createdmask:
+                print("no voxels qualify for refinement - exiting")
+                sys.exit()
 
             # align timecourses to prepare for refinement
             LGR.info("aligning timecourses")
@@ -3992,7 +3997,7 @@ def rapidtide_main(argparsingfunc):
                     lagstrengths[voxel],
                     sigfit,
                     neglogpmax=neglogpmax,
-                    debug=optiondict["focaldebug"],
+                    debug=optiondict["debug"],
                 )
             masklist += [
                 (
