@@ -46,7 +46,7 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.patchmatch as tide_patch
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.refinedelay as tide_refinedelay
-import rapidtide.Refiner as tide_refiner
+import rapidtide.RegressorRefiner as tide_regrefiner
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
@@ -1736,7 +1736,7 @@ def rapidtide_main(argparsingfunc):
         or optiondict["convergencethresh"] is not None
     ):
         # we will be doing regressor refinement, so set that up
-        theRegressorRefiner = tide_refiner.Refiner(
+        theRegressorRefiner = tide_regrefiner.RegressorRefiner(
             internalvalidfmrishape,
             internalvalidpaddedfmrishape,
             optiondict["pid"],

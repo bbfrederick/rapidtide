@@ -33,7 +33,7 @@ import rapidtide.util as tide_util
 from rapidtide.tests.utils import mse
 
 
-class Refiner:
+class RegressorRefiner:
 
     refinemaskvoxels = None
 
