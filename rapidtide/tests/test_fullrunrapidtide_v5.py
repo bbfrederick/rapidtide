@@ -35,7 +35,7 @@ def test_fullrunrapidtide_v5(debug=False, displayplots=False):
         "--passes",
         "2",
         "--numnull",
-        "0",
+        "10000",
         "--pickleft",
         "--norefinedelay",
         "--refineprenorm",

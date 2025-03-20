@@ -1,0 +1,11 @@
+#!/bin/bash
+
+rapidtide \
+	sub-RAPIDTIDETEST_cifti.ptseries.nii \
+        ../dst/sub-RAPIDTIDETEST5 \
+        --filterband lfo \
+        --searchrange -15 15 \
+        --passes 3 \
+        --globalmaskmethod variance \
+        --nprocs -1 \
+        --numnull 10000 
