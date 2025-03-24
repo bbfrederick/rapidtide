@@ -1426,6 +1426,8 @@ def writebidstsv(
     extraheaderinfo=None,
     compressed=True,
     columns=None,
+    xaxislabel="time",
+    yaxislabel="arbitrary value",
     starttime=0.0,
     append=False,
     colsinjson=True,
@@ -1447,6 +1449,8 @@ def writebidstsv(
     :param samplerate:
     :param compressed:
     :param columns:
+    :param xaxislabel:
+    :param yaxislabel:
     :param starttime:
     :param append:
     :param colsinjson:
@@ -1462,6 +1466,8 @@ def writebidstsv(
         print("\tsamplerate:", samplerate)
         print("\tcompressed:", compressed)
         print("\tcolumns:", columns)
+        print("\txaxislabel:", xaxislabel)
+        print("\tyaxislabel:", yaxislabel)
         print("\tstarttime:", starttime)
         print("\tappend:", append)
     if len(data.shape) == 1:
@@ -1538,6 +1544,8 @@ def writebidstsv(
     headerdict = {}
     headerdict["SamplingFrequency"] = float(samplerate)
     headerdict["StartTime"] = float(starttime)
+    headerdict["XAxisLabel"] = xaxislabel
+    headerdict["YAxisLabel"] = yaxislabel
     if colsinjson:
         if startcol == 0:
             headerdict["Columns"] = columns

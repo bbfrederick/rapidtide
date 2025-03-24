@@ -187,7 +187,13 @@ def trainratiotooffset(
             1.0 / (resampaxis[1] - resampaxis[0]),
             starttime=resampaxis[0],
             columns=["delay"],
-            extraheaderinfo={"Description": "The function mapping derivative ratio to delay"},
+            extraheaderinfo={
+                "Description": "The function mapping derivative ratio to delay",
+                "minratio": f"{resampaxis[0]}",
+                "maxratio": f"{resampaxis[-1]}",
+            },
+            xaxislabel="coefficientratio",
+            yaxislabel="time",
             append=False,
         )
 
