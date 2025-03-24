@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0alpha13 (3/23/25)
+* (rapidtide) Preserve the sign of the GLM fit R value.
+
 ## Version 3.0alpha12 (3/19/25)
 * (rapidtide) Added option to perform regressor refinement on last pass.
 * (rapidtide) Moved regressor refinement out into its own class to make things more modular.

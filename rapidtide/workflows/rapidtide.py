@@ -3428,7 +3428,7 @@ def rapidtide_main(argparsingfunc):
                 medfiltglmderivratios = np.zeros_like(glmderivratios)
                 filteredglmderivratios = np.zeros_like(glmderivratios)
                 delayoffsetMAD = np.zeros(optiondict["refineglmderivs"], dtype=float)
-                for i in range(args.refineglmderivs):
+                for i in range(optiondict["refineglmderivs"]):
                     (
                         medfiltglmderivratios[i, :],
                         filteredglmderivratios[i, :],
@@ -3437,7 +3437,7 @@ def rapidtide_main(argparsingfunc):
                         glmderivratios[i, :],
                         (xsize, ysize, numslices),
                         validvoxels,
-                        (xdim, ydim, slicedim),
+                        (xdim, ydim, slicethickness),
                         gausssigma=optiondict["delayoffsetgausssigma"],
                         patchthresh=optiondict["delaypatchthresh"],
                         fileiscifti=False,
@@ -3714,7 +3714,7 @@ def rapidtide_main(argparsingfunc):
                 "second",
                 "Lag time in seconds, refined",
             ),
-            (np.fabs(rvalue), "maxcorralt", "map", None, "R value of the GLM fit, with sign"),
+            (rvalue, "maxcorralt", "map", None, "R value of the GLM fit, with sign"),
         ]
         if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
             if optiondict["refineglmderivs"] > 1:
@@ -3840,7 +3840,7 @@ def rapidtide_main(argparsingfunc):
                 ]
             if optiondict["savenormalglmfiles"]:
                 maplist += [
-                    (np.fabs(rvalue), "lfofilterR", "map", None, "R value of the GLM fit"),
+                    (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
                     (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
                 ]
                 if optiondict["glmderivs"] > 0:
