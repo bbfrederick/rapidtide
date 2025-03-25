@@ -2,6 +2,7 @@
 
 rapidtide \
     --spatialfilt -1 \
+    --delayoffsetspatialfilt -1 \
     --nprocs -1 \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
