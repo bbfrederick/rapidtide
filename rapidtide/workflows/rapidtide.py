@@ -3155,7 +3155,7 @@ def rapidtide_main(argparsingfunc):
             tide_util.cleanup_shm(wpeak_shm)
 
     ####################################################
-    #  GLM filtering start
+    #  Linear regression filtering start
     ####################################################
     # Post refinement step 1 - GLM fitting, either to remove moving signal, or to calculate delayed CVR
     # write out the current version of the run options

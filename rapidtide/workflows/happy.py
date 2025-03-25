@@ -1728,7 +1728,7 @@ def happy_main(argparsingfunc):
             fitcoffs = np.zeros(timepoints, dtype=np.float64)
             fitNorm = np.zeros(timepoints, dtype=np.float64)
             datatoremove = 0.0 * fmri_data
-            print("Running spatial glm on", timepoints, "timepoints")
+            print("Running spatial regression on", timepoints, "timepoints")
             tide_linfitfiltpass.linfitfiltpass(
                 timepoints,
                 fmri_data[validlocs, :],
@@ -1788,7 +1788,7 @@ def happy_main(argparsingfunc):
             fitcoffs = np.zeros(numspatiallocs, dtype=np.float64)
             fitNorm = np.zeros(numspatiallocs, dtype=np.float64)
             datatoremove = 0.0 * fmri_data
-            print("Running temporal glm on", numvalidspatiallocs, "voxels")
+            print("Running temporal regression on", numvalidspatiallocs, "voxels")
             tide_linfitfiltpass.linfitfiltpass(
                 numvalidspatiallocs,
                 fmri_data[validlocs, :],
