@@ -160,7 +160,7 @@ def _get_parser():
             f"sets searchrange=({DEFAULT_DENOISING_LAGMIN}, {DEFAULT_DENOISING_LAGMAX}), "
             f"passes={DEFAULT_DENOISING_PASSES}, despeckle_passes={DEFAULT_DENOISING_DESPECKLE_PASSES}, "
             f"refineoffset=True, peakfittype={DEFAULT_DENOISING_PEAKFITTYPE}, "
-            f"gausssigma={DEFAULT_DENOISING_SPATIALFILT}, nofitfilt=True, doglmfilt=True. "
+            f"gausssigma={DEFAULT_DENOISING_SPATIALFILT}, nofitfilt=True, dolinfitfilt=True. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
         ),
@@ -176,7 +176,7 @@ def _get_parser():
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
             f"gausssigma={DEFAULT_DELAYMAPPING_SPATIALFILT}, "
             "refineoffset=True, refinedelay=True, outputlevel='normal', "
-            "doglmfilt=False. "
+            "dolinfitfilt=False. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
         ),
@@ -207,7 +207,7 @@ def _get_parser():
         help=(
             "Treat this run as an initial pass to locate good candidate voxels for global mean "
             "regressor generation.  This sets: passes=1, despecklepasses=0, "
-            "refinedespeckle=False, outputlevel='normal', doglmfilt=False, saveintermediatemaps=False."
+            "refinedespeckle=False, outputlevel='normal', dolinfitfilt=False, saveintermediatemaps=False."
         ),
         default=False,
     )
@@ -1171,7 +1171,7 @@ def _get_parser():
     glm = parser.add_argument_group("GLM noise removal options")
     glm.add_argument(
         "--noglm",
-        dest="doglmfilt",
+        dest="dolinfitfilt",
         action="store_false",
         help=(
             "Turn off GLM filtering to remove delayed "
@@ -2134,7 +2134,7 @@ def process_args(inputargs=None):
         args["refineoffset"] = True
         args["refinedelay"] = True
         args["outputlevel"] = "normal"
-        pf.setifnotset(args, "doglmfilt", True)
+        pf.setifnotset(args, "dolinfitfilt", True)
 
     if args["denoising"]:
         LGR.warning('Using "denoising" analysis mode. Overriding any affected arguments.')
@@ -2147,7 +2147,7 @@ def process_args(inputargs=None):
         args["refineoffset"] = True
         args["refinedelay"] = True
         args["zerooutbadfit"] = False
-        pf.setifnotset(args, "doglmfilt", True)
+        pf.setifnotset(args, "dolinfitfilt", True)
 
     if args["docvrmap"]:
         LGR.warning('Using "CVR" analysis mode. Overriding any affected arguments.')
@@ -2166,7 +2166,7 @@ def process_args(inputargs=None):
         args["preservefiltering"] = True
         args["passes"] = 1
         args["outputlevel"] = "min"
-        args["doglmfilt"] = False
+        args["dolinfitfilt"] = False
 
     if args["globalpreselect"]:
         LGR.warning('Using "globalpreselect" analysis mode. Overriding any affected arguments.')
@@ -2174,7 +2174,7 @@ def process_args(inputargs=None):
         args["despeckle_passes"] = 0
         args["refinedespeckle"] = False
         args["outputlevel"] = "normal"
-        pf.setifnotset(args, "doglmfilt", False)
+        pf.setifnotset(args, "dolinfitfilt", False)
         args["saveintermediatemaps"] = False
 
     # configure the filter

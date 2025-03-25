@@ -76,7 +76,7 @@ Contents
    usage_showhist.rst
    usage_spectrogram.rst
 
-   usage_glmfilt.rst
+   usage_linfitfilt.rst
    usage_atlasaverage.rst
    usage_ccorrica.rst
 

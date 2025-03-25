@@ -28,10 +28,10 @@ from rapidtide.workflows.parser_funcs import is_valid_file
 
 def _get_parser():
     """
-    Argument parser for glmfilt
+    Argument parser for linfitfilt
     """
     parser = argparse.ArgumentParser(
-        prog="glmfilt",
+        prog="linfitfilt",
         description="Fits and removes the effect of voxel specific and/or global regressors.",
         allow_abbrev=False,
     )
@@ -76,7 +76,7 @@ def _get_parser():
     return parser
 
 
-def glmfilt(inputfile, numskip, outputroot, evfilename, datamaskname, saveall=True):
+def linfitfilt(inputfile, numskip, outputroot, evfilename, datamaskname, saveall=True):
     # initialize some variables
     evdata = []
     evisnifti = []
@@ -245,7 +245,7 @@ def main():
         _get_parser().print_help()
         raise
 
-    glmfilt(
+    linfitfilt(
         args["inputfile"],
         args["numskip"],
         args["outputroot"],

@@ -1948,7 +1948,7 @@ def rapidtide_main(argparsingfunc):
             )
 
             # regress out
-            resampref_y, datatoremove, R, dummy = tide_fit.glmfilt(
+            resampref_y, datatoremove, R, dummy = tide_fit.linfitfilt(
                 resampref_y, shiftednoise, debug=True
             )
 
@@ -3161,8 +3161,8 @@ def rapidtide_main(argparsingfunc):
     # write out the current version of the run options
     optiondict["currentstage"] = "preglm"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
-    if optiondict["doglmfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
-        if optiondict["doglmfilt"]:
+    if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
+        if optiondict["dolinfitfilt"]:
             if optiondict["refinedelay"]:
                 TimingLGR.info("Setting up for delay refinement and GLM filtering")
                 LGR.info("\n\nDelay refinement and GLM filtering setup")
@@ -3305,13 +3305,13 @@ def rapidtide_main(argparsingfunc):
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for glm/delay refinement")
 
         if optiondict["memprofile"]:
-            if optiondict["doglmfilt"]:
+            if optiondict["dolinfitfilt"]:
                 memcheckpoint("about to start glm noise removal...")
             else:
                 memcheckpoint("about to start CVR magnitude estimation...")
         tide_util.logmem("before glm")
 
-        if optiondict["doglmfilt"]:
+        if optiondict["dolinfitfilt"]:
             mode = "glm"
             optiondict["glmthreshval"] = threshval
         else:
@@ -3459,7 +3459,7 @@ def rapidtide_main(argparsingfunc):
                     )
 
             namesuffix = "_desc-delayoffset_hist"
-            if optiondict["doglmfilt"]:
+            if optiondict["dolinfitfilt"]:
                 tide_stats.makeandsavehistogram(
                     delayoffset[np.where(fitmask > 0)],
                     optiondict["histlen"],
@@ -3476,8 +3476,8 @@ def rapidtide_main(argparsingfunc):
             ####################################################
 
         # now calculate the GLM or CVR map
-        if optiondict["doglmfilt"] or optiondict["docvrmap"]:
-            if optiondict["doglmfilt"]:
+        if optiondict["dolinfitfilt"] or optiondict["docvrmap"]:
+            if optiondict["dolinfitfilt"]:
                 TimingLGR.info("GLM filtering start")
                 LGR.info("\n\nGLM filtering")
             else:
@@ -3547,16 +3547,6 @@ def rapidtide_main(argparsingfunc):
             varchange = initialvariance * 0.0
             varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
 
-            """divlocs = np.where(finalrawvariance > 0.0)
-            rawvarchange = initialrawvariance * 0.0
-            rawvarchange[divlocs] = 100.0 * (
-                finalrawvariance[divlocs] / initialvariance[divlocs] - 1.0
-            )"""
-
-            del fmri_data_valid
-            if optiondict["sharedmem"]:
-                tide_util.cleanup_shm(fmri_data_valid_shm)
-
             LGR.info("End filtering operation")
             TimingLGR.info(
                 "GLM filtering end",
@@ -3608,7 +3598,7 @@ def rapidtide_main(argparsingfunc):
         thedict=optiondict,
     )
     namesuffix = "_desc-lfofilterR2_hist"
-    if optiondict["doglmfilt"]:
+    if optiondict["dolinfitfilt"]:
         tide_stats.makeandsavehistogram(
             r2value[np.where(fitmask > 0)],
             optiondict["histlen"],
@@ -3619,7 +3609,7 @@ def rapidtide_main(argparsingfunc):
             thedict=optiondict,
         )
     namesuffix = "_desc-lfofilterInbandVarianceChange_hist"
-    if optiondict["doglmfilt"]:
+    if optiondict["dolinfitfilt"]:
         tide_stats.makeandsavehistogram(
             varchange[np.where(fitmask > 0)],
             optiondict["histlen"],
@@ -3714,7 +3704,6 @@ def rapidtide_main(argparsingfunc):
                 "second",
                 "Lag time in seconds, refined",
             ),
-            (rvalue, "maxcorralt", "map", None, "R value of the GLM fit, with sign"),
         ]
         if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
             if optiondict["refineglmderivs"] > 1:
@@ -3803,8 +3792,8 @@ def rapidtide_main(argparsingfunc):
             tide_util.cleanup_shm(coherencepeakfreq_shm)
 
     # write the optional 3D maps that need to be remapped
-    if optiondict["doglmfilt"] or optiondict["docvrmap"]:
-        if optiondict["doglmfilt"]:
+    if optiondict["dolinfitfilt"] or optiondict["docvrmap"]:
+        if optiondict["dolinfitfilt"]:
             maplist = [
                 (
                     initialvariance,
@@ -3943,6 +3932,69 @@ def rapidtide_main(argparsingfunc):
             rt_floattype=rt_floattype,
             cifti_hdr=cifti_hdr,
         )
+
+        if optiondict["refinedelay"] and False:
+            # filter the fmri data to the lfo band
+            print("filtering fmri_data to sLFO band")
+            for i in range(fmri_data_valid.shape[0]):
+                fmri_data_valid[i, :] = theprefilter.apply(
+                    optiondict["fmrifreq"], fmri_data_valid[i, :]
+                )
+
+            print("rerunning glm to get filtered R value")
+            dummy, dummy, dummy = tide_glmfrommaps.glmfrommaps(
+                fmri_data_valid,
+                validvoxels,
+                initial_fmri_x,
+                lagstouse,
+                fitmask,
+                genlagtc,
+                mode,
+                outputname,
+                oversamptr,
+                glmmean,
+                rvalue,
+                r2value,
+                fitNorm[:, : optiondict["glmderivs"] + 1],
+                fitcoeff[:, : optiondict["glmderivs"] + 1],
+                movingsignal,
+                lagtc,
+                filtereddata,
+                LGR,
+                TimingLGR,
+                optiondict["glmthreshval"],
+                optiondict["saveminimumglmfiles"],
+                nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
+                nprocs_glm=optiondict["nprocs_glm"],
+                glmderivs=optiondict["glmderivs"],
+                mp_chunksize=optiondict["mp_chunksize"],
+                showprogressbar=optiondict["showprogressbar"],
+                alwaysmultiproc=optiondict["alwaysmultiproc"],
+                memprofile=optiondict["memprofile"],
+                debug=optiondict["debug"],
+            )
+
+            maplist = [
+                (rvalue, "maxcorralt", "map", None, "R value of the inband GLM fit, with sign"),
+            ]
+
+            tide_io.savemaplist(
+                outputname,
+                maplist,
+                validvoxels,
+                nativespaceshape,
+                theheader,
+                bidsbasedict,
+                textio=optiondict["textio"],
+                fileiscifti=fileiscifti,
+                rt_floattype=rt_floattype,
+                cifti_hdr=cifti_hdr,
+            )
+
+        del fmri_data_valid
+        if optiondict["sharedmem"]:
+            tide_util.cleanup_shm(fmri_data_valid_shm)
+
         del glmmean
         del rvalue
         del r2value
@@ -4133,7 +4185,7 @@ def rapidtide_main(argparsingfunc):
         cifti_hdr = None
 
     maplist = []
-    if optiondict["saveallglmfiles"] and (optiondict["doglmfilt"] or optiondict["docvrmap"]):
+    if optiondict["saveallglmfiles"] and (optiondict["dolinfitfilt"] or optiondict["docvrmap"]):
         if optiondict["glmderivs"] > 0:
             maplist += [
                 (
@@ -4171,7 +4223,7 @@ def rapidtide_main(argparsingfunc):
                 ),
             ]
 
-    if optiondict["doglmfilt"]:
+    if optiondict["dolinfitfilt"]:
         if optiondict["saveminimumglmfiles"]:
             maplist += [
                 (
@@ -4232,7 +4284,7 @@ def rapidtide_main(argparsingfunc):
     # clean up
     if optiondict["passes"] > 1:
         theRegressorRefiner.cleanup()
-    if optiondict["doglmfilt"]:
+    if optiondict["dolinfitfilt"]:
         del lagtc
         del filtereddata
         del movingsignal

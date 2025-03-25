@@ -16,11 +16,11 @@
 #   limitations under the License.
 #
 #
-import rapidtide.workflows.glmfilt as glmfilt_workflow
+import rapidtide.workflows.linfitfilt as linfitfilt_workflow
 
 
 def entrypoint():
-    glmfilt_workflow.main()
+    linfitfilt_workflow.main()
 
 
 if __name__ == "__main__":
