@@ -822,7 +822,7 @@ def retroregress(args):
             ]
         if args.savenormalglmfiles:
             maplist += [
-                (np.fabs(rvalue), "lfofilterR", "map", None, "R value of the GLM fit"),
+                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
                 (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
             ]
     else:
