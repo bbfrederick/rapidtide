@@ -520,7 +520,7 @@ your response.  If you are processing one of these experiments and get no result
 certainly the problem.
 
 The ``--nodenoise`` option disables data filtering.  If you are using rapidtide to estimate and remove low frequency
-noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal,
+noise from resting state or task fMRI data, the last step is to use a multiple regression filter to remove this circulatory signal,
 leaving "pure" neuronal signal, which you'll use in further analyses.  That's not relevant here - the signal you'd
 be removing is the one you care about. So this option skips that step to save time and disk space.
 
