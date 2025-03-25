@@ -33,7 +33,7 @@ def test_fullrunhappy_v1(debug=False, displayplots=False):
         os.path.join(get_test_temp_path(), "happyout1"),
         "--mklthreads",
         "-1",
-        "--spatialglm",
+        "--spatialregression",
         "--model",
         "model_revised",
     ]

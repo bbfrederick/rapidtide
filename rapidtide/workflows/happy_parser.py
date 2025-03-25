@@ -443,15 +443,15 @@ def _get_parser():
     # Output processing
     output_proc = parser.add_argument_group("Output processing")
     output_proc.add_argument(
-        "--spatialglm",
-        dest="dospatialglm",
+        "--spatialregression",
+        dest="dospatialregression",
         action="store_true",
         help="Generate framewise cardiac signal maps and filter them out of the input data. ",
         default=False,
     )
     output_proc.add_argument(
-        "--temporalglm",
-        dest="dotemporalglm",
+        "--temporalregression",
+        dest="dotemporalregression",
         action="store_true",
         help="Generate voxelwise aliased synthetic cardiac regressors and filter them out of the input data. ",
         default=False,

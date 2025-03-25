@@ -16,10 +16,10 @@ fi
 echo "Subject="${SUBJ}", RUN="${RUN}", PEDIR="${PEDIR}
 
 #    --denoisesourcefile=/data_in/HCP_1200/${SUBJ}/MNINonLinear/Results/rfMRI_${RUN}_${PEDIR}/rfMRI_${RUN}_${PEDIR}_hp2000_clean.nii.gz \
-mkdir -p /data_out/HCP_1200/minpreprocglm/${SUBJ}
+mkdir -p /data_out/HCP_1200/minpreprocslfofilt/${SUBJ}
 rapidtide \
     /data_in/HCP_1200/${SUBJ}/MNINonLinear/Results/rfMRI_${RUN}_${PEDIR}/rfMRI_${RUN}_${PEDIR}.nii.gz \
-    /data_out/HCP_1200/minpreprocglm/${SUBJ}/rapidtide_rfMRI_${RUN}_${PEDIR} \
+    /data_out/HCP_1200/minpreprocslfofilt/${SUBJ}/rapidtide_rfMRI_${RUN}_${PEDIR} \
     --despecklepasses 4 \
     --filterfreqs 0.009 0.15 \
     --searchrange -7.5 15.0 \

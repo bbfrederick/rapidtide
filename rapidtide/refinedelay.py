@@ -97,7 +97,7 @@ def trainratiotooffset(
     filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     sampletime = timeaxis[1] - timeaxis[0]
     optiondict = {
-        "glmthreshval": 0.0,
+        "regressfiltthreshval": 0.0,
         "saveminimumsLFOfiltfiles": False,
         "nprocs_makelaggedtcs": 1,
         "nprocs_regressionfilt": 1,
@@ -285,7 +285,7 @@ def getderivratios(
         filtereddata,
         LGR,
         TimingLGR,
-        optiondict["glmthreshval"],
+        optiondict["regressfiltthreshval"],
         optiondict["saveminimumsLFOfiltfiles"],
         nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
         nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],

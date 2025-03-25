@@ -15,7 +15,7 @@ fi
 
 echo "Subject="${SUBJ}", RUN="${RUN}", PEDIR="${PEDIR}
 
-mkdir -p /data_out/HCP_1200/minpreprocglm/${SUBJ}
+mkdir -p /data_out/HCP_1200/minpreprocslfofilt/${SUBJ}
 gmscalc \
     /data_out/HCP_1200/${SUBJ}/rapidtide_rfMRI_${RUN}_${PEDIR}_desc-lfofilterCleaned_bold.nii.gz
     /data_out/HCP_1200/fixglm/${SUBJ}/rapidtide_rfMRI_${RUN}_${PEDIR}_lfofilteredCleanedGMS \

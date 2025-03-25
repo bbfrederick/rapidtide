@@ -1310,7 +1310,7 @@ def derivativelinfitfilt(thedata, theevs, nderivs=1, debug=False):
 
 def expandedlinfitfilt(thedata, theevs, ncomps=1, debug=False):
     r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
-    its square, its cube, etc.).  Then perform a glm fit of thedata using the vectors
+    its square, its cube, etc.).  Then perform a multiple regression fit of thedata using the vectors
     in thenewevs and return the result.
 
     Parameters
@@ -1362,7 +1362,7 @@ def expandedlinfitfilt(thedata, theevs, ncomps=1, debug=False):
 
 
 def linfitfilt(thedata, theevs, returnintercept=False, debug=False):
-    r"""Performs a glm fit of thedata using the vectors in theevs
+    r"""Performs a multiple regression fit of thedata using the vectors in theevs
     and returns the result.
 
     Parameters

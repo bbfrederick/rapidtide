@@ -157,8 +157,8 @@ def happy_main(argparsingfunc):
             args.mklthreads = mklmaxthreads
         mkl.set_num_threads(args.mklthreads)
 
-    # if we are going to do a glm, make sure we are generating app matrix
-    if (args.dotemporalglm or args.dospatialglm) and args.cardcalconly:
+    # if we are going to do noise regression, make sure we are generating app matrix
+    if (args.dotemporalregression or args.dospatialregression) and args.cardcalconly:
         print("doing glm fit requires phase projection - setting cardcalconly to False")
         args.cardcalconly = False
 
@@ -1678,7 +1678,7 @@ def happy_main(argparsingfunc):
     )
 
     # now generate aliased cardiac signals and regress them out of the data
-    if args.dotemporalglm or args.dospatialglm:
+    if args.dotemporalregression or args.dospatialregression:
         # generate the signals
         timings.append(["Cardiac signal regression started", time.time(), None, None])
         tide_util.logmem("before cardiac regression")
@@ -1721,7 +1721,7 @@ def happy_main(argparsingfunc):
         validlocs = np.where(mask > 0)[0]
         numvalidspatiallocs = len(validlocs)
         threshval = 0.0
-        if args.dospatialglm:
+        if args.dospatialregression:
             meanvals = np.zeros(timepoints, dtype=np.float64)
             rvals = np.zeros(timepoints, dtype=np.float64)
             r2vals = np.zeros(timepoints, dtype=np.float64)
@@ -1781,7 +1781,7 @@ def happy_main(argparsingfunc):
                 ]
             )
 
-        if args.dotemporalglm:
+        if args.dotemporalregression:
             meanvals = np.zeros(numspatiallocs, dtype=np.float64)
             rvals = np.zeros(numspatiallocs, dtype=np.float64)
             r2vals = np.zeros(numspatiallocs, dtype=np.float64)

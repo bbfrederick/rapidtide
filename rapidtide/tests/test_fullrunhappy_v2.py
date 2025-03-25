@@ -40,7 +40,7 @@ def test_fullrunhappy_v2(debug=False, displayplots=False):
         "--model",
         "model_revised",
         "--fliparteries",
-        "--temporalglm",
+        "--temporalregression",
         "--cardiacfile",
         os.path.join(
             get_examples_path(),

@@ -80,7 +80,7 @@ def eval_refinedelay(
     padtime = sampletime * numpadtrs
     lagtcgenerator = tide_resample.FastResampler(timeaxis, sLFO, padtime=padtime)
 
-    # find the mapping of glm ratios to delays
+    # find the mapping of derivative ratios to delays
     tide_refinedelay.trainratiotooffset(
         lagtcgenerator,
         timeaxis,

@@ -29,7 +29,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser():
     """
-    Argument parser for glmfilt
+    Argument parser for stupidramtricks
     """
     parser = argparse.ArgumentParser(
         prog="stupidramtricks",
