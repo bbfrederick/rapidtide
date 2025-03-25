@@ -290,6 +290,11 @@ def cardiacfromimage(
     )
 
 
+def theCOM(X, data):
+    # return the center of mass
+    return np.sum(X * data) / np.sum(data)
+
+
 def savgolsmooth(data, smoothlen=101, polyorder=3):
     return savgol_filter(data, smoothlen, polyorder)
 

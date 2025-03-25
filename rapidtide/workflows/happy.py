@@ -438,6 +438,14 @@ def happy_main(argparsingfunc):
                 append=False,
                 debug=args.debug,
             )
+            tide_io.writebidstsv(
+                outputroot + "_desc-sliceresrespfromfmri_timeseries",
+                respfromfmri_sliceres,
+                slicesamplerate,
+                columns=["respfromfmri"],
+                append=False,
+                debug=args.debug,
+            )
 
         # stash away a copy of the waveform if we need it later
         raw_cardfromfmri_sliceres = np.array(cardfromfmri_sliceres)
@@ -469,6 +477,14 @@ def happy_main(argparsingfunc):
                     slicesamplerate,
                     columns=["cardiacfromfmri_censored"],
                     append=True,
+                    debug=args.debug,
+                )
+                tide_io.writebidstsv(
+                    outputroot + "_desc-sliceresrespfromfmri_timeseries",
+                    respfromfmri_sliceres * (1.0 - thebadcardpts),
+                    slicesamplerate,
+                    columns=["respfromfmri_censored"],
+                    append=False,
                     debug=args.debug,
                 )
         peakfreq_bold = happy_support.getcardcoeffs(
@@ -1370,11 +1386,14 @@ def happy_main(argparsingfunc):
                 )
                 wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float64)
                 wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
+                wavedelayCOM = np.zeros((xsize, ysize, numslices), dtype=np.float64)
+                wavedelayCOM_byslice = wavedelay.reshape((xsize * ysize, numslices))
                 waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float64)
                 waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
             else:
                 thecorrfunc *= 0.0
                 wavedelay *= 0.0
+                wavedelayCOM *= 0.0
                 waveamp *= 0.0
 
         # now project the data
@@ -1454,6 +1473,10 @@ def happy_main(argparsingfunc):
                         )[maxloc]
                         waveamp_byslice[theloc, theslice] = np.fabs(
                             thecorrfunc_byslice[theloc, theslice, maxloc]
+                        )
+                        wavedelayCOM_byslice[theloc, theslice] = happy_support.theCOM(
+                            thealiasedcorrx[corrstartloc : correndloc + 1],
+                            np.fabs(thecorrfunc_byslice[theloc, theslice, :]),
                         )
             else:
                 corrected_rawapp_byslice[validlocs, theslice, :] = rawapp_byslice[
@@ -1543,15 +1566,18 @@ def happy_main(argparsingfunc):
             theheader["pixdim"][4] = thealiasedcorrx[1] - thealiasedcorrx[0]
             corrfuncfilename = outputroot + "_desc-corrfunc_info"
             wavedelayfilename = outputroot + "_desc-wavedelay_map"
+            wavedelayCOMfilename = outputroot + "_desc-wavedelayCOM_map"
             waveampfilename = outputroot + "_desc-waveamp_map"
             bidsdict = bidsbasedict.copy()
             tide_io.writedicttojson(bidsdict, waveampfilename + ".json")
             bidsdict["Units"] = "second"
             tide_io.writedicttojson(bidsdict, corrfuncfilename + ".json")
             tide_io.writedicttojson(bidsdict, wavedelayfilename + ".json")
+            tide_io.writedicttojson(bidsdict, wavedelayCOMfilename + ".json")
             tide_io.savetonifti(thecorrfunc, theheader, corrfuncfilename)
             theheader["dim"][4] = 1
             tide_io.savetonifti(wavedelay, theheader, wavedelayfilename)
+            tide_io.savetonifti(wavedelayCOM, theheader, wavedelayCOMfilename)
             tide_io.savetonifti(waveamp, theheader, waveampfilename)
 
         # make and save a voxel intensity histogram
