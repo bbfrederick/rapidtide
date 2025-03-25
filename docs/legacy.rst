@@ -187,11 +187,11 @@ For compatibility with old workflows, rapidtide can be called using legacy synta
           -T                             - Save a table of lagtimes used
           -h HISTLEN                     - Change the histogram length to HISTLEN (default is
                                            100)
-          --glmsourcefile=FILE           - Regress delayed regressors out of FILE instead of the
+          --regressionsourcefile=FILE           - Regress delayed regressors out of FILE instead of the
                                            initial fmri file used to estimate delays
-          --noglm                        - Turn off GLM filtering to remove delayed regressor
+          --noglm                        - Turn off filtering to remove delayed regressor
                                            from each voxel (disables output of fitNorm)
-          --preservefiltering            - don't reread data prior to GLM
+          --preservefiltering            - don't reread data prior to performing final regression
 
       Miscellaneous options:
           --noprogressbar                - Disable progress bars - useful if saving output to files

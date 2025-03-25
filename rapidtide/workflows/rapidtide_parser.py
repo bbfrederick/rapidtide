@@ -1181,8 +1181,8 @@ def _get_parser():
         default=True,
     )
     glm.add_argument(
-        "--glmsourcefile",
-        dest="glmsourcefile",
+        "--denoisesourcefile",
+        dest="denoisesourcefile",
         action="store",
         type=lambda x: pf.is_valid_file(parser, x),
         metavar="FILE",

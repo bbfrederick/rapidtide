@@ -3164,10 +3164,10 @@ def rapidtide_main(argparsingfunc):
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
         if optiondict["dolinfitfilt"]:
             if optiondict["refinedelay"]:
-                TimingLGR.info("Setting up for delay refinement and GLM filtering")
+                TimingLGR.info("Setting up for delay refinement and sLFO filtering")
                 LGR.info("\n\nDelay refinement and GLM filtering setup")
             else:
-                TimingLGR.info("Setting up for GLM filtering")
+                TimingLGR.info("Setting up for sLFO filtering")
                 LGR.info("\n\nGLM filtering setup")
         elif optiondict["docvrmap"]:
             if optiondict["refinedelay"]:
@@ -3181,14 +3181,16 @@ def rapidtide_main(argparsingfunc):
             LGR.info("\n\nDelay refinement setup")
         if (
             (optiondict["gausssigma"] > 0.0)
-            or (optiondict["glmsourcefile"] is not None)
+            or (optiondict["denoisesourcefile"] is not None)
             or optiondict["docvrmap"]
         ):
-            if optiondict["glmsourcefile"] is not None:
-                LGR.info(f"reading in {optiondict['glmsourcefile']} for GLM filter, please wait")
-                sourcename = optiondict["glmsourcefile"]
+            if optiondict["denoisesourcefile"] is not None:
+                LGR.info(
+                    f"reading in {optiondict['denoisesourcefile']} for sLFO filter, please wait"
+                )
+                sourcename = optiondict["denoisesourcefile"]
             else:
-                LGR.info(f"rereading {fmrifilename} for GLM filter, please wait")
+                LGR.info(f"rereading {fmrifilename} for sLFO filter, please wait")
                 sourcename = fmrifilename
             if fileiscifti:
                 LGR.info("input file is CIFTI")

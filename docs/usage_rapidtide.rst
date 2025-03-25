@@ -465,7 +465,7 @@ FIX processed data.  So ideally, you would run rapidtide, and THEN FIX.  However
 is kind of a pain, there's a hack that capitalizes on the fact that all of these operations are linear.  You run
 rapidtide on the minimmally processed data, to accurately assess the sLFO regressor and time delays in each voxel,
 but you apply the final GLM to the FIX processed data, to remove the data that has the other denoising already done.
-This works very well!  To do this, you use the ``--glmsourcefile FILE`` option to specify the file you want to
+This works very well!  To do this, you use the ``--denoisesourcefile FILE`` option to specify the file you want to
 denoise.  The ``outputname_desc-lfofilterCleaned_bold.nii.gz`` file is the FIX file, with rapidtide denoising applied.
 
     ::
@@ -474,7 +474,7 @@ denoise.  The ``outputname_desc-lfofilterCleaned_bold.nii.gz`` file is the FIX f
             minimallyprocessedinputfmrifile \
             outputname \
             --denoising \
-            --glmsourcefile FIXprocessedfile
+            --denoisesourcefile FIXprocessedfile
 
 
 Mapping long time delays in response to a gas challenge experiment:
