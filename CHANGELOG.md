@@ -1,7 +1,8 @@
 # Release history
 
-## Version 3.0alpha13 (3/23/25)
+## Version 3.0alpha13 (3/25/25)
 * (rapidtide) Preserve the sign of the GLM fit R value.
+* (package) Clarified that the final sLFO removal filter does NOT use a GLM (the current filter is an OLS filter)
 
 ## Version 3.0alpha12 (3/19/25)
 * (rapidtide) Added option to perform regressor refinement on last pass.
