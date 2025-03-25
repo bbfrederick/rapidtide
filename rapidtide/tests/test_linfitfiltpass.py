@@ -20,7 +20,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-import rapidtide.glmpass as tide_glmpass
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
 from rapidtide.tests.utils import mse
 
 
@@ -41,7 +41,7 @@ def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):
     return thearray, xwaves, twaves
 
 
-def test_glmpass(debug=True, displayplots=False):
+def test_linfitfiltpass(debug=True, displayplots=False):
     np.random.seed(12345)
     xsize = 150
     xcycles = 7
@@ -117,7 +117,7 @@ def test_glmpass(debug=True, displayplots=False):
                         print(
                             f"confoundglm={confoundglm}, proc by {direction}, {procstring} proc, {maskstatus}"
                         )
-                    tide_glmpass.glmpass(
+                    tide_linfitfiltpass.linfitfiltpass(
                         xsize,
                         testarray,
                         thisthreshval,
@@ -148,4 +148,4 @@ def test_glmpass(debug=True, displayplots=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_glmpass(debug=True, displayplots=True)
+    test_linfitfiltpass(debug=True, displayplots=True)

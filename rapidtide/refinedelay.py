@@ -24,7 +24,7 @@ from statsmodels.robust import mad
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
-import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
+import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
 global ratiotooffsetfunc, maplimits
 
@@ -265,7 +265,7 @@ def getderivratios(
         print(f"{fitNorm.shape=}")
         print(f"{fitcoeff.shape=}")
         print(f"{glmderivs=}")
-    voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
+    voxelsprocessed_glm, regressorset, evset = tide_regressfrommaps.regressfrommaps(
         fmri_data_valid,
         validvoxels,
         initial_fmri_x,

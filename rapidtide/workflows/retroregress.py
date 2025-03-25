@@ -34,8 +34,8 @@ import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
 import rapidtide.workflows.parser_funcs as pf
+import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
 from .utils import setup_logger
 
@@ -65,7 +65,7 @@ def _get_parser():
     Argument parser for glmfilt
     """
     parser = argparse.ArgumentParser(
-        prog="retroglm",
+        prog="retroregress",
         description="Do the rapidtide GLM filtering using the maps generated from a previous analysis.",
         allow_abbrev=False,
     )
@@ -233,7 +233,7 @@ def _get_parser():
     return parser
 
 
-def retroglm(args):
+def retroregress(args):
     # get the pid of the parent process
     args.pid = os.getpid()
 
@@ -258,7 +258,7 @@ def retroglm(args):
         debug=args.debug,
     )
     TimingLGR.info("Start")
-    LGR.info(f"starting retroglm")
+    LGR.info(f"starting retroregress")
 
     # set some global values
     args.mindelay = DEFAULT_REFINEDELAYMINDELAY
@@ -309,7 +309,7 @@ def retroglm(args):
     runoptionsfile = f"{args.datafileroot}_desc-runoptions_info"
     therunoptions = tide_io.readoptionsfile(runoptionsfile)
     try:
-        candoretroglm = therunoptions["retroglmcompatible"]
+        candoretroregress = therunoptions["retroregresscompatible"]
     except KeyError:
         print(
             f"based on {runoptionsfile}, this rapidtide dataset does not support retrospective GLM calculation"
@@ -715,7 +715,7 @@ def retroglm(args):
         lagstouse_valid = lagtimesrefined_valid
     else:
         lagstouse_valid = lagtimes_valid
-    voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
+    voxelsprocessed_glm, regressorset, evset = tide_regressfrommaps.regressfrommaps(
         fmri_data_valid,
         validvoxels,
         initial_fmri_x,
@@ -1058,7 +1058,7 @@ def retroglm(args):
             )
         TimingLGR.info("Filtering for maxcorralt calculation complete")
         TimingLGR.info("GLM for maxcorralt calculation start")
-        voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
+        voxelsprocessed_glm, regressorset, evset = tide_regressfrommaps.regressfrommaps(
             fmri_data_valid,
             validvoxels,
             initial_fmri_x,
@@ -1144,8 +1144,8 @@ def retroglm(args):
     # read the runoptions file
     print("writing runoptions")
     if args.refinedelay:
-        therunoptions["retroglm_delayoffsetMAD"] = delayoffsetMAD
-    therunoptions["retroglm_runtime"] = time.strftime(
+        therunoptions["retroregress_delayoffsetMAD"] = delayoffsetMAD
+    therunoptions["retroregress_runtime"] = time.strftime(
         "%a, %d %b %Y %H:%M:%S %Z", time.localtime(time.time())
     )
 
@@ -1195,7 +1195,7 @@ def retroglm(args):
 
 def process_args(inputargs=None):
     """
-    Compile arguments for retroglm workflow.
+    Compile arguments for retroregress workflow.
     """
     args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
     return args

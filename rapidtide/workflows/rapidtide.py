@@ -37,9 +37,9 @@ import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
@@ -52,7 +52,7 @@ import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.wiener as tide_wiener
-import rapidtide.workflows.glmfrommaps as tide_glmfrommaps
+import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 from rapidtide.tests.utils import mse
 
 from .utils import setup_logger
@@ -889,7 +889,7 @@ def rapidtide_main(argparsingfunc):
             mergedregressorlabels,
             fmri_data_valid,
             confoundr2,
-        ) = tide_glmpass.confoundregress(
+        ) = tide_linfitfiltpass.confoundregress(
             mergedregressors,
             mergedregressorlabels,
             fmri_data_valid,
@@ -3493,7 +3493,7 @@ def rapidtide_main(argparsingfunc):
                 lagstouse = lagtimesrefined
             else:
                 lagstouse = lagtimes
-            voxelsprocessed_glm, regressorset, evset = tide_glmfrommaps.glmfrommaps(
+            voxelsprocessed_glm, regressorset, evset = tide_regressfrommaps.regressfrommaps(
                 fmri_data_valid,
                 validvoxels,
                 initial_fmri_x,
@@ -3942,7 +3942,7 @@ def rapidtide_main(argparsingfunc):
                 )
 
             print("rerunning glm to get filtered R value")
-            dummy, dummy, dummy = tide_glmfrommaps.glmfrommaps(
+            dummy, dummy, dummy = tide_regressfrommaps.regressfrommaps(
                 fmri_data_valid,
                 validvoxels,
                 initial_fmri_x,

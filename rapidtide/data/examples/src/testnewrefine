@@ -21,7 +21,7 @@ rapidtide \
     ../dst/sub-RAPIDTIDETEST_2deriv
 
 
-retroglm \
+retroregress \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_1deriv \
     --alternateoutput ../dst/retrotest_1to1 \
@@ -30,7 +30,7 @@ retroglm \
     --refineglmderivs 1 \
     --outputlevel max
 
-retroglm \
+retroregress \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_2deriv \
     --alternateoutput ../dst/retrotest_2to1 \
@@ -39,7 +39,7 @@ retroglm \
     --refineglmderivs 1 \
     --outputlevel max
 
-retroglm \
+retroregress \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_1deriv \
     --alternateoutput ../dst/retrotest_1to2 \

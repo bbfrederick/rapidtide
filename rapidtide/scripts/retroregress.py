@@ -17,11 +17,11 @@
 #
 #
 import rapidtide.workflows.parser_funcs as pf
-import rapidtide.workflows.retroglm as theworkflow
+import rapidtide.workflows.retroregress as theworkflow
 
 
 def entrypoint():
-    pf.generic_init(theworkflow._get_parser, theworkflow.retroglm)
+    pf.generic_init(theworkflow._get_parser, theworkflow.retroregress)
 
 
 if __name__ == "__main__":

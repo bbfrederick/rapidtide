@@ -24,8 +24,8 @@ import sys
 
 import numpy as np
 
-import rapidtide.glmpass as tide_glmpass
 import rapidtide.io as tide_io
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.makelaggedtcs as tide_makelagged
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
@@ -296,7 +296,7 @@ def retrolagtcs(args):
     if args.glmderivs > 0:
         if args.debug:
             print(f"adding derivatives up to order {args.glmderivs} prior to regression")
-        regressorset = tide_glmpass.makevoxelspecificderivs(lagtc, args.glmderivs)
+        regressorset = tide_linfitfiltpass.makevoxelspecificderivs(lagtc, args.glmderivs)
 
         if args.debug:
             print("going down the multiple EV path")

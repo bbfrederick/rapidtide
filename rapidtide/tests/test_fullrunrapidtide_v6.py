@@ -24,7 +24,7 @@ import matplotlib as mpl
 import rapidtide.io as tide_io
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-import rapidtide.workflows.retroglm as rapidtide_retroglm
+import rapidtide.workflows.retroregress as rapidtide_retroregress
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
@@ -66,7 +66,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--outputlevel",
         "max",
     ]
-    rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     inputargs = [
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
@@ -82,7 +82,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "max",
         "--nofilterwithrefineddelay",
     ]
-    rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     inputargs = [
         os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
@@ -98,7 +98,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "--outputlevel",
         "max",
     ]
-    rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     absthresh = 1e-10
     msethresh = 1e-12

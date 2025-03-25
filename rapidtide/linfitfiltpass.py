@@ -75,7 +75,7 @@ def _procOneGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="
         )
 
 
-def glmpass(
+def linfitfiltpass(
     numprocitems,
     fmri_data,
     threshval,
@@ -425,7 +425,7 @@ def confoundregress(
     numprocitems = thedataarray.shape[0]
     filtereddata = thedataarray * 0.0
     r2value = np.zeros(numprocitems)
-    numfiltered = glmpass(
+    numfiltered = linfitfiltpass(
         numprocitems,
         thedataarray,
         None,

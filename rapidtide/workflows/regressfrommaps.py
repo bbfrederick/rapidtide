@@ -19,8 +19,8 @@
 
 import numpy as np
 
-import rapidtide.glmpass as tide_glmpass
 import rapidtide.io as tide_io
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.makelaggedtcs as tide_makelagged
 import rapidtide.util as tide_util
 
@@ -54,7 +54,7 @@ def addmemprofiling(thefunc, memprofile, themessage):
         return thefunc
 
 
-def glmfrommaps(
+def regressfrommaps(
     fmri_data_valid,
     validvoxels,
     initial_fmri_x,
@@ -86,7 +86,7 @@ def glmfrommaps(
     debug=False,
 ):
     if debug:
-        print("GLMFROMMAPS: Starting")
+        print("regressfrommaps: Starting")
         print(f"{nprocs_makelaggedtcs=}")
         print(f"{nprocs_glm=}")
         print(f"{glmderivs=}")
@@ -150,18 +150,20 @@ def glmfrommaps(
     if TimingLGR is not None:
         TimingLGR.info("Start filtering operation")
     if memprofile:
-        glmpass_func = addmemprofiling(tide_glmpass.glmpass, memprofile, "before glmpass")
+        linfitfiltpass_func = addmemprofiling(
+            tide_linfitfiltpass.linfitfiltpass, memprofile, "before linfitfiltpass"
+        )
     else:
-        glmpass_func = tide_glmpass.glmpass
+        linfitfiltpass_func = tide_linfitfiltpass.linfitfiltpass
 
     if glmderivs > 0:
         if debug:
             print(f"adding derivatives up to order {glmderivs} prior to regression")
-        regressorset = tide_glmpass.makevoxelspecificderivs(lagtc, glmderivs)
+        regressorset = tide_linfitfiltpass.makevoxelspecificderivs(lagtc, glmderivs)
         baseev = rt_floatset(genlagtc.yfromx(initial_fmri_x))
-        evset = tide_glmpass.makevoxelspecificderivs(baseev.reshape((1, -1)), glmderivs).reshape(
-            (-1, 2)
-        )
+        evset = tide_linfitfiltpass.makevoxelspecificderivs(
+            baseev.reshape((1, -1)), glmderivs
+        ).reshape((-1, 2))
     else:
         if debug:
             print(f"using raw lagged regressors for regression")
@@ -170,7 +172,7 @@ def glmfrommaps(
 
     if debug:
         print(f"{regressorset.shape=}")
-    voxelsprocessed_glm = glmpass_func(
+    voxelsprocessed_glm = linfitfiltpass_func(
         numvalidspatiallocs,
         fmri_data_valid,
         glmthreshval,

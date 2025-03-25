@@ -30,10 +30,10 @@ from tqdm import tqdm
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.glmpass as tide_glmpass
 import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
@@ -244,7 +244,7 @@ def happy_main(argparsingfunc):
             order=args.motfilt_order,
         )
         (motionregressors, motionregressorlabels, filtereddata, confoundr2) = (
-            tide_glmpass.confoundregress(
+            tide_linfitfiltpass.confoundregress(
                 confoundregressors,
                 confoundregressorlabels,
                 fmri_data[validprojvoxels, :],
@@ -1729,7 +1729,7 @@ def happy_main(argparsingfunc):
             fitNorm = np.zeros(timepoints, dtype=np.float64)
             datatoremove = 0.0 * fmri_data
             print("Running spatial glm on", timepoints, "timepoints")
-            tide_glmpass.glmpass(
+            tide_linfitfiltpass.linfitfiltpass(
                 timepoints,
                 fmri_data[validlocs, :],
                 threshval,
@@ -1789,7 +1789,7 @@ def happy_main(argparsingfunc):
             fitNorm = np.zeros(numspatiallocs, dtype=np.float64)
             datatoremove = 0.0 * fmri_data
             print("Running temporal glm on", numvalidspatiallocs, "voxels")
-            tide_glmpass.glmpass(
+            tide_linfitfiltpass.linfitfiltpass(
                 numvalidspatiallocs,
                 fmri_data[validlocs, :],
                 threshval,

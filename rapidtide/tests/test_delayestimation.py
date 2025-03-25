@@ -24,8 +24,8 @@ import numpy as np
 
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.filter as tide_filt
-import rapidtide.glmpass as tide_glmpass
 import rapidtide.helper_classes as tide_classes
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.miscmath as tide_math
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
@@ -335,7 +335,7 @@ def test_delayestimation(displayplots=False, debug=False):
         filteredwaveforms[i, :] = theprefilter.apply(Fs, waveforms[i, :])
 
     for nprocs in [4, 1]:
-        voxelsprocessed_glm = tide_glmpass.glmpass(
+        voxelsprocessed_glm = tide_linfitfiltpass.linfitfiltpass(
             numlocs,
             waveforms[:, :],
             threshval,
@@ -366,7 +366,7 @@ def test_delayestimation(displayplots=False, debug=False):
         ax.legend()
         plt.show()
 
-        print(proctype, "glmpass", np.mean(diffsignal), np.max(np.fabs(diffsignal)))
+        print(proctype, "linfitfiltpass", np.mean(diffsignal), np.max(np.fabs(diffsignal)))
 
     # clean up shared memory
     tide_util.cleanup_shm(waveforms_shm)

@@ -2287,7 +2287,7 @@ def process_args(inputargs=None):
         args["territorymapincludevals"] = None
 
     # this is new enough to do retrospective GLM
-    args["retroglmcompatible"] = True
+    args["retroregresscompatible"] = True
 
     LGR.debug("\nafter postprocessing\n{}".format(args))
 
