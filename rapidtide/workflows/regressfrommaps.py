@@ -207,7 +207,7 @@ def regressfrommaps(
             starttime=0.0,
             columns=[f"removedbyglm"],
             extraheaderinfo={
-                "Description": "Variance over space of data removed by GLM filter at each timepoint"
+                "Description": "Variance over space of data removed by the sLFO filter at each timepoint"
             },
             append=False,
         )

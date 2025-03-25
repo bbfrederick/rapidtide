@@ -130,7 +130,7 @@ def _get_parser():
         choices=["min", "less", "normal", "more", "max"],
         help=(
             "The level of file output produced.  'min' produces only absolutely essential files, 'less' adds in "
-            "the GLM filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
+            "the sLFO filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
             "would typically want around for interactive data exploration, "
             "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
             "Selecting 'max' will produce ~3x your input datafile size as output.  "
@@ -172,7 +172,7 @@ def _get_parser():
         "--nofilterwithrefineddelay",
         dest="filterwithrefineddelay",
         action="store_false",
-        help=("Do not use the refined delay in GLM filter."),
+        help=("Do not use the refined delay in sLFO filter."),
         default=True,
     )
     parser.add_argument(

@@ -26,7 +26,9 @@ import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 
 
-def _procOneGLMItem(vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"):
+def _procOneRegressionFitItem(
+    vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"
+):
     # NOTE: if theevs is 2D, dimension 0 is number of points, dimension 1 is number of evs
     thefit, R2 = tide_fit.mlregress(theevs, thedata)
     if theevs.ndim > 1:
@@ -134,7 +136,7 @@ def linfitfiltpass(
                     if procbyvoxel:
                         if confoundglm:
                             outQ.put(
-                                _procOneGLMItem(
+                                _procOneRegressionFitItem(
                                     val,
                                     theevs,
                                     fmri_data[val, :],
@@ -144,7 +146,7 @@ def linfitfiltpass(
                             )
                         else:
                             outQ.put(
-                                _procOneGLMItem(
+                                _procOneRegressionFitItem(
                                     val,
                                     theevs[val, :],
                                     fmri_data[val, :],
@@ -155,7 +157,7 @@ def linfitfiltpass(
                     else:
                         if confoundglm:
                             outQ.put(
-                                _procOneGLMItem(
+                                _procOneRegressionFitItem(
                                     val,
                                     theevs,
                                     fmri_data[:, val],
@@ -165,7 +167,7 @@ def linfitfiltpass(
                             )
                         else:
                             outQ.put(
-                                _procOneGLMItem(
+                                _procOneRegressionFitItem(
                                     val,
                                     theevs[:, val],
                                     fmri_data[:, val],
@@ -253,7 +255,7 @@ def linfitfiltpass(
                             dummy,
                             dummy,
                             filtereddata[vox, :],
-                        ) = _procOneGLMItem(
+                        ) = _procOneRegressionFitItem(
                             vox,
                             theevs,
                             thedata,
@@ -270,7 +272,7 @@ def linfitfiltpass(
                             fitNorm[vox],
                             datatoremove[vox, :],
                             filtereddata[vox, :],
-                        ) = _procOneGLMItem(
+                        ) = _procOneRegressionFitItem(
                             vox,
                             theevs[vox, :],
                             thedata,
@@ -297,7 +299,7 @@ def linfitfiltpass(
                             dummy,
                             dummy,
                             filtereddata[:, timepoint],
-                        ) = _procOneGLMItem(
+                        ) = _procOneRegressionFitItem(
                             timepoint,
                             theevs,
                             thedata,
@@ -314,7 +316,7 @@ def linfitfiltpass(
                             fitNorm[timepoint],
                             datatoremove[:, timepoint],
                             filtereddata[:, timepoint],
-                        ) = _procOneGLMItem(
+                        ) = _procOneRegressionFitItem(
                             timepoint,
                             theevs[:, timepoint],
                             thedata,

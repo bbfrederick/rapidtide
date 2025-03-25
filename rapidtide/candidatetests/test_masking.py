@@ -43,13 +43,15 @@
 This will execute all the test methods and report any failures or errors. Make sure that the `masking_module` is correctly implemented and accessible in your environment for these tests to run successfully.
 """
 
-import unittest
-import numpy as np
-from unittest.mock import patch, MagicMock
 import bisect
+import unittest
+from unittest.mock import MagicMock, patch
+
+import numpy as np
 
 import rapidtide.maskutil
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
+
 
 class TestMaskingFunctions(unittest.TestCase):
     @patch('rapidtide.maskutil.resampmask')

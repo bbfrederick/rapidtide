@@ -77,7 +77,6 @@ from tensorflow.keras.layers import (
     TimeDistributed,
     UpSampling1D,
 )
-
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import RMSprop
 

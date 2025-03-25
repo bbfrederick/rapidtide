@@ -66,7 +66,7 @@ def gen_thermal_state():
     thegradient = Gradients["thermal"]
     thegradient["name"] = "thermal"
     return thegradient
-    #return Gradients["thermal"]
+    # return Gradients["thermal"]
 
 
 def gen_flame_state():
@@ -75,7 +75,7 @@ def gen_flame_state():
     thegradient = Gradients["flame"]
     thegradient["name"] = "flame"
     return thegradient
-    #return Gradients["flame"]
+    # return Gradients["flame"]
 
 
 def gen_yellowy_state():
@@ -84,7 +84,7 @@ def gen_yellowy_state():
     thegradient = Gradients["yellowy"]
     thegradient["name"] = "yellowy"
     return thegradient
-    #return Gradients["yellowy"]
+    # return Gradients["yellowy"]
 
 
 def gen_bipolar_state():
@@ -93,7 +93,7 @@ def gen_bipolar_state():
     thegradient = Gradients["bipolar"]
     thegradient["name"] = "bipolar"
     return thegradient
-    #return Gradients["bipolar"]
+    # return Gradients["bipolar"]
 
 
 def gen_spectrum_state():
@@ -102,7 +102,7 @@ def gen_spectrum_state():
     thegradient = Gradients["spectrum"]
     thegradient["name"] = "spectrum"
     return thegradient
-    #return Gradients["spectrum"]
+    # return Gradients["spectrum"]
 
 
 def gen_turbo_state():
@@ -111,7 +111,7 @@ def gen_turbo_state():
     thegradient = Gradients["turbo"]
     thegradient["name"] = "turbo"
     return thegradient
-    #return Gradients["turbo"]
+    # return Gradients["turbo"]
 
 
 def gen_gray_state():
@@ -142,7 +142,7 @@ def gen_viridis_state():
     thegradient = Gradients["viridis"]
     thegradient["name"] = "viridis"
     return thegradient
-    #return Gradients["viridis"]
+    # return Gradients["viridis"]
 
 
 def gen_inferno_state():
@@ -151,7 +151,7 @@ def gen_inferno_state():
     thegradient = Gradients["inferno"]
     thegradient["name"] = "inferno"
     return thegradient
-    #return Gradients["inferno"]
+    # return Gradients["inferno"]
 
 
 def gen_plasma_state():
@@ -160,7 +160,7 @@ def gen_plasma_state():
     thegradient = Gradients["plasma"]
     thegradient["name"] = "plasma"
     return thegradient
-    #return Gradients["plasma"]
+    # return Gradients["plasma"]
 
 
 def gen_magma_state():
@@ -169,7 +169,7 @@ def gen_magma_state():
     thegradient = Gradients["magma"]
     thegradient["name"] = "magma"
     return thegradient
-    #return Gradients["magma"]
+    # return Gradients["magma"]
 
 
 def gen_g2y2r_state():

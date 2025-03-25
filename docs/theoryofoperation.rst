@@ -144,7 +144,7 @@ There are 5 masks used:
    the next fitting pass
 4. The offset mask, which determines which voxels are used to estimate the "zero" time of
    the delay distribution
-5. The GLM mask, which determines which voxels have the rapidtide regressors removed
+5. The regression mask, which determines which voxels have the rapidtide regressors removed
 
 Below is a description of how this works currently.
 NB: this is not how I THOUGHT is worked - until I just looked at the code just now.
@@ -205,7 +205,7 @@ and use the voxels within the mask to generate a histogram of delay values.
 Calculate the offset of the peak of the delay histogram,
 and subtract this value from all delay values within the correlation mask.
 
-**For the GLM mask:**
+**For the regression mask:**
 Include all voxels, unless you are calculating a CVR map, in which case rates other than the TR.
 Therefore the first step in moving regressor processing is to resample the moving regressor
 estimate to match the (oversampled) data sample rate.
@@ -718,9 +718,9 @@ Since the operations are linear, the order shouldn't matter
 correlations by regressing out hemodynamic signal at the wrong time delay).
 Anyway, while it's not perfect, it's better than not doing it this way.
 
-Finally, if you don't want to do glm filtering at all
+Finally, if you don't want to do sLFO filtering at all
 (i.e. you only care about time delays, and want to minimize storage space),
-you can shut off the glm filtering with ``--noglm``.
+you can shut off the glm filtering with ``--nodenoise``.
 
 
 Delay refinement

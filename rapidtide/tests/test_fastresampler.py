@@ -23,8 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rapidtide.resample import FastResampler, FastResamplerFromFile
-from rapidtide.tests.utils import mse
-from rapidtide.tests.utils import get_test_temp_path
+from rapidtide.tests.utils import get_test_temp_path, mse
 
 
 def test_FastResampler(debug=False):

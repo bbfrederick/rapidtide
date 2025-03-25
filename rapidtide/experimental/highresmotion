@@ -19,19 +19,19 @@
 #       $Date: 2016/07/11 14:50:43 $
 #       $Id: showxcorr,v 1.41 2016/07/11 14:50:43 frederic Exp $
 #
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-import time
-import sys
 import os
 import platform
 import subprocess
+import sys
+import time
 
 import numpy as np
 import scipy as sp
 
-import rapidtide.io as tide_io
 import rapidtide.filter as tide_filt
+import rapidtide.io as tide_io
 
 
 def usage():

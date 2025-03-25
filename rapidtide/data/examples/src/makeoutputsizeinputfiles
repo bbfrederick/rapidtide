@@ -32,7 +32,7 @@ for LEVEL in min less normal more max
 do
     for NDERIVS in 0 1
     do
-        mkdir -p ../dst/nomotregress/${LEVEL}glm${NDERIVS}
+        mkdir -p ../dst/nomotregress/${LEVEL}slfofilt${NDERIVS}
         sbatch --mem=64G --time=90 --cpus-per-task 4 /cm/shared/miniforge3/envs/mic/bin/rapidtide \
             --nprocs 4 \
             --passes 3 \
@@ -40,6 +40,6 @@ do
             --regressderivs ${NDERIVS} \
             --searchrange -5 10 \
             /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz \
-            /home/frederic/code/rapidtide/rapidtide/data/examples/dst/nomotregress/${LEVEL}glm${NDERIVS}/sub-RAPIDTIDETEST
+            /home/frederic/code/rapidtide/rapidtide/data/examples/dst/nomotregress/${LEVEL}slfofilt${NDERIVS}/sub-RAPIDTIDETEST
     done
 done

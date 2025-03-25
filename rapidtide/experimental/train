@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import rapidtide.dlfilter as dlfilter
 import os
+
+import rapidtide.dlfilter as dlfilter
 
 num_pretrain_epochs = 5
 num_epochs = 5
