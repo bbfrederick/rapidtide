@@ -382,10 +382,10 @@ def rapidtide_main(argparsingfunc):
     else:
         optiondict["nprocs_makelaggedtcs"] = optiondict["nprocs"]
 
-    if optiondict["singleproc_glm"]:
-        optiondict["nprocs_glm"] = 1
+    if optiondict["singleproc_regressionfilt"]:
+        optiondict["nprocs_regressionfilt"] = 1
     else:
-        optiondict["nprocs_glm"] = optiondict["nprocs"]
+        optiondict["nprocs_regressionfilt"] = optiondict["nprocs"]
 
     # set the number of MKL threads to use
     if mklexists:
@@ -961,7 +961,7 @@ def rapidtide_main(argparsingfunc):
         )
         if optiondict["memprofile"]:
             memcheckpoint("...done")
-        tide_util.logmem("after confound glm filter")
+        tide_util.logmem("after confound sLFO filter")
 
         if optiondict["saveconfoundfiltered"]:
             if not optiondict["textio"]:
@@ -3157,18 +3157,18 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Linear regression filtering start
     ####################################################
-    # Post refinement step 1 - GLM fitting, either to remove moving signal, or to calculate delayed CVR
+    # Post refinement step 1 - regression fitting, either to remove moving signal, or to calculate delayed CVR
     # write out the current version of the run options
-    optiondict["currentstage"] = "preglm"
+    optiondict["currentstage"] = "presLFOfit"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
         if optiondict["dolinfitfilt"]:
             if optiondict["refinedelay"]:
                 TimingLGR.info("Setting up for delay refinement and sLFO filtering")
-                LGR.info("\n\nDelay refinement and GLM filtering setup")
+                LGR.info("\n\nDelay refinement and sLFO filtering setup")
             else:
                 TimingLGR.info("Setting up for sLFO filtering")
-                LGR.info("\n\nGLM filtering setup")
+                LGR.info("\n\nsLFO filtering setup")
         elif optiondict["docvrmap"]:
             if optiondict["refinedelay"]:
                 TimingLGR.info("Setting up for delay refinement and CVR map generation")
@@ -3237,28 +3237,30 @@ def rapidtide_main(argparsingfunc):
                 numpy2shared_func = addmemprofiling(
                     tide_util.numpy2shared,
                     optiondict["memprofile"],
-                    "before movetoshared (glm)",
+                    "before movetoshared (sLFO filter)",
                 )
                 fmri_data_valid, fmri_data_valid_shm = numpy2shared_func(
-                    fmri_data_valid, rt_floatset, name=f"fmri_data_valid_glm_{optiondict['pid']}"
+                    fmri_data_valid,
+                    rt_floatset,
+                    name=f"fmri_data_valid_regressionfilt_{optiondict['pid']}",
                 )
                 TimingLGR.info("End moving fmri_data to shared memory")
             del nim_data
 
-        # now allocate the arrays needed for GLM filtering
+        # now allocate the arrays needed for sLFO filtering
         if optiondict["refinedelay"]:
             derivaxissize = np.max(
-                [optiondict["refineglmderivs"] + 1, optiondict["glmderivs"] + 1]
+                [optiondict["refineregressderivs"] + 1, optiondict["regressderivs"] + 1]
             )
         else:
-            derivaxissize = optiondict["glmderivs"] + 1
+            derivaxissize = optiondict["regressderivs"] + 1
         internalvalidspaceshapederivs = (
             internalvalidspaceshape,
             derivaxissize,
         )
         if optiondict["sharedmem"]:
-            glmmean, glmmean_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name=f"glmmean_{optiondict['pid']}"
+            sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
+                internalvalidspaceshape, rt_outfloatset, name=f"sLFOfitmean_{optiondict['pid']}"
             )
             rvalue, rvalue_shm = tide_util.allocshared(
                 internalvalidspaceshape, rt_outfloatset, name=f"rvalue_{optiondict['pid']}"
@@ -3283,7 +3285,7 @@ def rapidtide_main(argparsingfunc):
             )
             ramlocation = "in shared memory"
         else:
-            glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+            sLFOfitmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
@@ -3293,8 +3295,8 @@ def rapidtide_main(argparsingfunc):
             filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
             ramlocation = "locally"
 
-        optiondict["totalglmbytes"] = (
-            glmmean.nbytes
+        optiondict["totalsLFOfilterbytes"] = (
+            sLFOfitmean.nbytes
             + rvalue.nbytes
             + r2value.nbytes
             + fitNorm.nbytes
@@ -3303,25 +3305,25 @@ def rapidtide_main(argparsingfunc):
             + lagtc.nbytes
             + filtereddata.nbytes
         )
-        thesize, theunit = tide_util.format_bytes(optiondict["totalglmbytes"])
-        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for glm/delay refinement")
+        thesize, theunit = tide_util.format_bytes(optiondict["totalsLFOfilterbytes"])
+        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for sLFO filter/delay refinement")
 
         if optiondict["memprofile"]:
             if optiondict["dolinfitfilt"]:
-                memcheckpoint("about to start glm noise removal...")
+                memcheckpoint("about to start sLFO noise removal...")
             else:
                 memcheckpoint("about to start CVR magnitude estimation...")
-        tide_util.logmem("before glm")
+        tide_util.logmem("before sLFO filter")
 
         if optiondict["dolinfitfilt"]:
             mode = "glm"
-            optiondict["glmthreshval"] = threshval
+            optiondict["regressfiltthreshval"] = threshval
         else:
             # set the threshval to zero
             mode = "cvrmap"
-            optiondict["glmthreshval"] = 0.0
+            optiondict["regressfiltthreshval"] = 0.0
         if optiondict["debug"]:
-            # dump the fmri input file going to glm
+            # dump the fmri input file going to sLFO filter
             if not optiondict["textio"]:
                 theheader = copy.deepcopy(nim_hdr)
                 if fileiscifti:
@@ -3342,7 +3344,7 @@ def rapidtide_main(argparsingfunc):
                     "datatofilter",
                     "bold",
                     None,
-                    "fMRI data that will be subjected to GLM filtering",
+                    "fMRI data that will be subjected to sLFO filtering",
                 ),
             ]
             tide_io.savemaplist(
@@ -3358,7 +3360,7 @@ def rapidtide_main(argparsingfunc):
                 cifti_hdr=cifti_hdr,
             )
 
-        # refine the delay value prior to calculating the GLM
+        # refine the delay value prior to calculating the sLFO filter
         if optiondict["refinedelay"]:
             TimingLGR.info("Delay refinement start")
             LGR.info("\n\nDelay refinement")
@@ -3366,7 +3368,7 @@ def rapidtide_main(argparsingfunc):
                 # set gausssigma automatically
                 optiondict["delayoffsetgausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
 
-            glmderivratios = tide_refinedelay.getderivratios(
+            regressderivratios = tide_refinedelay.getderivratios(
                 fmri_data_valid,
                 validvoxels,
                 initial_fmri_x,
@@ -3376,25 +3378,25 @@ def rapidtide_main(argparsingfunc):
                 mode,
                 outputname,
                 oversamptr,
-                glmmean,
+                sLFOfitmean,
                 rvalue,
                 r2value,
-                fitNorm[:, : (optiondict["refineglmderivs"] + 1)],
-                fitcoeff[:, : (optiondict["refineglmderivs"] + 1)],
+                fitNorm[:, : (optiondict["refineregressderivs"] + 1)],
+                fitcoeff[:, : (optiondict["refineregressderivs"] + 1)],
                 movingsignal,
                 lagtc,
                 filtereddata,
                 LGR,
                 TimingLGR,
                 optiondict,
-                glmderivs=optiondict["refineglmderivs"],
+                regressderivs=optiondict["refineregressderivs"],
                 debug=optiondict["debug"],
             )
 
-            if optiondict["refineglmderivs"] == 1:
-                medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
+            if optiondict["refineregressderivs"] == 1:
+                medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
                     tide_refinedelay.filterderivratios(
-                        glmderivratios,
+                        regressderivratios,
                         nativespaceshape,
                         validvoxels,
                         (xdim, ydim, slicethickness),
@@ -3408,7 +3410,7 @@ def rapidtide_main(argparsingfunc):
                 )
                 optiondict["delayoffsetMAD"] = delayoffsetMAD
 
-                # find the mapping of glm ratios to delays
+                # find the mapping of derivative ratios to delays
                 tide_refinedelay.trainratiotooffset(
                     genlagtc,
                     initial_fmri_x,
@@ -3421,22 +3423,24 @@ def rapidtide_main(argparsingfunc):
                 )
 
                 # now calculate the delay offsets
-                delayoffset = np.zeros_like(filteredglmderivratios)
+                delayoffset = np.zeros_like(filteredregressderivratios)
                 if optiondict["debug"]:
-                    print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
-                for i in range(filteredglmderivratios.shape[0]):
-                    delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+                    print(
+                        f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels"
+                    )
+                for i in range(filteredregressderivratios.shape[0]):
+                    delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
             else:
-                medfiltglmderivratios = np.zeros_like(glmderivratios)
-                filteredglmderivratios = np.zeros_like(glmderivratios)
-                delayoffsetMAD = np.zeros(optiondict["refineglmderivs"], dtype=float)
-                for i in range(optiondict["refineglmderivs"]):
+                medfiltregressderivratios = np.zeros_like(regressderivratios)
+                filteredregressderivratios = np.zeros_like(regressderivratios)
+                delayoffsetMAD = np.zeros(optiondict["refineregressderivs"], dtype=float)
+                for i in range(optiondict["refineregressderivs"]):
                     (
-                        medfiltglmderivratios[i, :],
-                        filteredglmderivratios[i, :],
+                        medfiltregressderivratios[i, :],
+                        filteredregressderivratios[i, :],
                         delayoffsetMAD[i],
                     ) = tide_refinedelay.filterderivratios(
-                        glmderivratios[i, :],
+                        regressderivratios[i, :],
                         (xsize, ysize, numslices),
                         validvoxels,
                         (xdim, ydim, slicethickness),
@@ -3450,12 +3454,14 @@ def rapidtide_main(argparsingfunc):
                     optiondict[f"delayoffsetMAD_{i + 1}"] = delayoffsetMAD[i]
 
                 # now calculate the delay offsets
-                delayoffset = np.zeros_like(filteredglmderivratios[0, :])
+                delayoffset = np.zeros_like(filteredregressderivratios[0, :])
                 if optiondict["debug"]:
-                    print(f"calculating delayoffsets for {filteredglmderivratios.shape[1]} voxels")
-                for i in range(filteredglmderivratios.shape[1]):
+                    print(
+                        f"calculating delayoffsets for {filteredregressderivratios.shape[1]} voxels"
+                    )
+                for i in range(filteredregressderivratios.shape[1]):
                     delayoffset[i] = tide_refinedelay.coffstodelay(
-                        filteredglmderivratios[:, i],
+                        filteredregressderivratios[:, i],
                         mindelay=optiondict["mindelay"],
                         maxdelay=optiondict["maxdelay"],
                     )
@@ -3467,7 +3473,7 @@ def rapidtide_main(argparsingfunc):
                     optiondict["histlen"],
                     1,
                     outputname + namesuffix,
-                    displaytitle="Histogram of delay offsets calculated from GLM",
+                    displaytitle="Histogram of delay offsets calculated from regression coefficients",
                     dictvarname="delayoffsethist",
                     thedict=optiondict,
                 )
@@ -3477,11 +3483,11 @@ def rapidtide_main(argparsingfunc):
             #  Delay refinement end
             ####################################################
 
-        # now calculate the GLM or CVR map
+        # now calculate the sLFO filter or CVR map
         if optiondict["dolinfitfilt"] or optiondict["docvrmap"]:
             if optiondict["dolinfitfilt"]:
-                TimingLGR.info("GLM filtering start")
-                LGR.info("\n\nGLM filtering")
+                TimingLGR.info("sLFO filtering start")
+                LGR.info("\n\nsLFO filtering")
             else:
                 TimingLGR.info("CVR map generation")
                 LGR.info("\n\nCVR mapping")
@@ -3490,46 +3496,48 @@ def rapidtide_main(argparsingfunc):
             # initialrawvariance = tide_math.imagevariance(fmri_data_valid, None, 1.0 / fmritr)
             initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
-            # now calculate the GLM
+            # now calculate the sLFO filter
             if optiondict["refinedelay"] and optiondict["filterwithrefineddelay"]:
                 lagstouse = lagtimesrefined
             else:
                 lagstouse = lagtimes
-            voxelsprocessed_glm, regressorset, evset = tide_regressfrommaps.regressfrommaps(
-                fmri_data_valid,
-                validvoxels,
-                initial_fmri_x,
-                lagstouse,
-                fitmask,
-                genlagtc,
-                mode,
-                outputname,
-                oversamptr,
-                glmmean,
-                rvalue,
-                r2value,
-                fitNorm[:, : optiondict["glmderivs"] + 1],
-                fitcoeff[:, : optiondict["glmderivs"] + 1],
-                movingsignal,
-                lagtc,
-                filtereddata,
-                LGR,
-                TimingLGR,
-                optiondict["glmthreshval"],
-                optiondict["saveminimumglmfiles"],
-                nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
-                nprocs_glm=optiondict["nprocs_glm"],
-                glmderivs=optiondict["glmderivs"],
-                mp_chunksize=optiondict["mp_chunksize"],
-                showprogressbar=optiondict["showprogressbar"],
-                alwaysmultiproc=optiondict["alwaysmultiproc"],
-                memprofile=optiondict["memprofile"],
-                debug=optiondict["debug"],
+            voxelsprocessed_regressionfilt, regressorset, evset = (
+                tide_regressfrommaps.regressfrommaps(
+                    fmri_data_valid,
+                    validvoxels,
+                    initial_fmri_x,
+                    lagstouse,
+                    fitmask,
+                    genlagtc,
+                    mode,
+                    outputname,
+                    oversamptr,
+                    sLFOfitmean,
+                    rvalue,
+                    r2value,
+                    fitNorm[:, : optiondict["regressderivs"] + 1],
+                    fitcoeff[:, : optiondict["regressderivs"] + 1],
+                    movingsignal,
+                    lagtc,
+                    filtereddata,
+                    LGR,
+                    TimingLGR,
+                    optiondict["regressfiltthreshval"],
+                    optiondict["saveminimumsLFOfiltfiles"],
+                    nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
+                    nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],
+                    regressderivs=optiondict["regressderivs"],
+                    mp_chunksize=optiondict["mp_chunksize"],
+                    showprogressbar=optiondict["showprogressbar"],
+                    alwaysmultiproc=optiondict["alwaysmultiproc"],
+                    memprofile=optiondict["memprofile"],
+                    debug=optiondict["debug"],
+                )
             )
 
             evcolnames = ["base"]
-            if optiondict["glmderivs"] > 0:
-                for i in range(1, optiondict["glmderivs"] + 1):
+            if optiondict["regressderivs"] > 0:
+                for i in range(1, optiondict["regressderivs"] + 1):
                     evcolnames.append(f"deriv_{str(i)}")
 
             tide_io.writebidstsv(
@@ -3537,7 +3545,7 @@ def rapidtide_main(argparsingfunc):
                 np.transpose(evset),
                 1.0 / fmritr,
                 columns=evcolnames,
-                extraheaderinfo={"Description": "GLM regressor set"},
+                extraheaderinfo={"Description": "sLFO filter regressor set"},
                 append=False,
             )
 
@@ -3551,18 +3559,18 @@ def rapidtide_main(argparsingfunc):
 
             LGR.info("End filtering operation")
             TimingLGR.info(
-                "GLM filtering end",
+                "sLFO filtering end",
                 {
-                    "message2": voxelsprocessed_glm,
+                    "message2": voxelsprocessed_regressionfilt,
                     "message3": "voxels",
                 },
             )
             if optiondict["memprofile"]:
                 memcheckpoint("...done")
-            tide_util.logmem("after glm filter")
+            tide_util.logmem("after sLFO filter")
             LGR.info("")
     ####################################################
-    #  GLM filtering end
+    #  sLFO filtering end
     ####################################################
 
     # Post refinement step 2 - make and save interesting histograms
@@ -3606,7 +3614,7 @@ def rapidtide_main(argparsingfunc):
             optiondict["histlen"],
             1,
             outputname + namesuffix,
-            displaytitle="Histogram of GLM filter R2 values",
+            displaytitle="Histogram of sLFO filter R2 values",
             dictvarname="R2hist",
             thedict=optiondict,
         )
@@ -3617,7 +3625,7 @@ def rapidtide_main(argparsingfunc):
             optiondict["histlen"],
             1,
             outputname + namesuffix,
-            displaytitle="Histogram of percent of inband variance removed by GLM filter",
+            displaytitle="Histogram of percent of inband variance removed by sLFO filter",
             dictvarname="varchangehist",
             thedict=optiondict,
         )
@@ -3708,53 +3716,53 @@ def rapidtide_main(argparsingfunc):
             ),
         ]
         if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
-            if optiondict["refineglmderivs"] > 1:
-                for i in range(optiondict["refineglmderivs"]):
+            if optiondict["refineregressderivs"] > 1:
+                for i in range(optiondict["refineregressderivs"]):
                     savelist += [
                         (
-                            glmderivratios[i, :],
-                            f"glmderivratios_{i}",
+                            regressderivratios[i, :],
+                            f"regressderivratios_{i}",
                             "map",
                             None,
                             f"Ratio of derivative {i + 1} of delayed sLFO to the delayed sLFO",
                         ),
                         (
-                            medfiltglmderivratios[i, :],
-                            f"medfiltglmderivratios_{i}",
+                            medfiltregressderivratios[i, :],
+                            f"medfiltregressderivratios_{i}",
                             "map",
                             None,
-                            f"Median filtered version of the glmderivratios_{i} map",
+                            f"Median filtered version of the regressderivratios_{i} map",
                         ),
                         (
-                            filteredglmderivratios[i, :],
-                            f"filteredglmderivratios_{i}",
+                            filteredregressderivratios[i, :],
+                            f"filteredregressderivratios_{i}",
                             "map",
                             None,
-                            f"glmderivratios_{i}, with outliers patched using median filtered data",
+                            f"regressderivratios_{i}, with outliers patched using median filtered data",
                         ),
                     ]
             else:
                 savelist += [
                     (
-                        glmderivratios,
-                        "glmderivratios",
+                        regressderivratios,
+                        "regressderivratios",
                         "map",
                         None,
                         "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
                     ),
                     (
-                        medfiltglmderivratios,
-                        "medfiltglmderivratios",
+                        medfiltregressderivratios,
+                        "medfiltregressderivratios",
                         "map",
                         None,
-                        "Median filtered version of the glmderivratios map",
+                        "Median filtered version of the regressderivratios map",
                     ),
                     (
-                        filteredglmderivratios,
-                        "filteredglmderivratios",
+                        filteredregressderivratios,
+                        "filteredregressderivratios",
                         "map",
                         None,
-                        "glmderivratios, with outliers patched using median filtered data",
+                        "regressderivratios, with outliers patched using median filtered data",
                     ),
                 ]
     if optiondict["calccoherence"]:
@@ -3819,22 +3827,22 @@ def rapidtide_main(argparsingfunc):
                     "Change in inband variance after filtering, in percent",
                 ),
             ]
-            if optiondict["saveminimumglmfiles"]:
+            if optiondict["saveminimumsLFOfiltfiles"]:
                 maplist += [
                     (
                         r2value,
                         "lfofilterR2",
                         "map",
                         None,
-                        "Squared R value of the GLM fit (proportion of variance explained)",
+                        "Squared R value of the sLFO fit (proportion of variance explained)",
                     ),
                 ]
-            if optiondict["savenormalglmfiles"]:
+            if optiondict["savenormalsLFOfiltfiles"]:
                 maplist += [
-                    (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
-                    (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
+                    (rvalue, "lfofilterR", "map", None, "R value of the sLFO fit"),
+                    (sLFOfitmean, "lfofilterMean", "map", None, "Intercept from sLFO fit"),
                 ]
-                if optiondict["glmderivs"] > 0:
+                if optiondict["regressderivs"] > 0:
                     maplist += [
                         (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
                         (
@@ -3845,7 +3853,7 @@ def rapidtide_main(argparsingfunc):
                             "Normalized fit coefficient",
                         ),
                     ]
-                    for thederiv in range(1, optiondict["glmderivs"] + 1):
+                    for thederiv in range(1, optiondict["regressderivs"] + 1):
                         maplist += [
                             (
                                 fitcoeff[:, thederiv],
@@ -3865,14 +3873,14 @@ def rapidtide_main(argparsingfunc):
                 else:
                     maplist += [
                         (
-                            fitcoeff[:, : optiondict["glmderivs"] + 1],
+                            fitcoeff[:, : optiondict["regressderivs"] + 1],
                             "lfofilterCoeff",
                             "map",
                             None,
                             "Fit coefficient",
                         ),
                         (
-                            fitNorm[:, : optiondict["glmderivs"] + 1],
+                            fitNorm[:, : optiondict["regressderivs"] + 1],
                             "lfofilterNorm",
                             "map",
                             None,
@@ -3903,15 +3911,15 @@ def rapidtide_main(argparsingfunc):
                     "Percentage of inband variance attributable to CVR regressor",
                 ),
             ]
-            if optiondict["savenormalglmfiles"]:
+            if optiondict["savenormalsLFOfiltfiles"]:
                 maplist = [
-                    (rvalue, "CVRR", "map", None, "R value of the GLM fit"),
+                    (rvalue, "CVRR", "map", None, "R value of the sLFO fit"),
                     (
                         r2value,
                         "CVRR2",
                         "map",
                         None,
-                        "Squared R value of the GLM fit (proportion of variance explained)",
+                        "Squared R value of the sLFO fit (proportion of variance explained)",
                     ),
                     (
                         fitcoeff,
@@ -3943,7 +3951,7 @@ def rapidtide_main(argparsingfunc):
                     optiondict["fmrifreq"], fmri_data_valid[i, :]
                 )
 
-            print("rerunning glm to get filtered R value")
+            print("rerunning sLFO fit to get filtered R value")
             dummy, dummy, dummy = tide_regressfrommaps.regressfrommaps(
                 fmri_data_valid,
                 validvoxels,
@@ -3954,21 +3962,21 @@ def rapidtide_main(argparsingfunc):
                 mode,
                 outputname,
                 oversamptr,
-                glmmean,
+                sLFOfitmean,
                 rvalue,
                 r2value,
-                fitNorm[:, : optiondict["glmderivs"] + 1],
-                fitcoeff[:, : optiondict["glmderivs"] + 1],
+                fitNorm[:, : optiondict["regressderivs"] + 1],
+                fitcoeff[:, : optiondict["regressderivs"] + 1],
                 movingsignal,
                 lagtc,
                 filtereddata,
                 LGR,
                 TimingLGR,
-                optiondict["glmthreshval"],
-                optiondict["saveminimumglmfiles"],
+                optiondict["regressfiltthreshval"],
+                optiondict["saveminimumsLFOfiltfiles"],
                 nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
-                nprocs_glm=optiondict["nprocs_glm"],
-                glmderivs=optiondict["glmderivs"],
+                nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],
+                regressderivs=optiondict["regressderivs"],
                 mp_chunksize=optiondict["mp_chunksize"],
                 showprogressbar=optiondict["showprogressbar"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
@@ -3977,7 +3985,7 @@ def rapidtide_main(argparsingfunc):
             )
 
             maplist = [
-                (rvalue, "maxcorralt", "map", None, "R value of the inband GLM fit, with sign"),
+                (rvalue, "maxcorralt", "map", None, "R value of the inband sLFO fit, with sign"),
             ]
 
             tide_io.savemaplist(
@@ -3997,7 +4005,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["sharedmem"]:
             tide_util.cleanup_shm(fmri_data_valid_shm)
 
-        del glmmean
+        del sLFOfitmean
         del rvalue
         del r2value
         del fitcoeff
@@ -4006,7 +4014,7 @@ def rapidtide_main(argparsingfunc):
         del finalvariance
         del varchange
         if optiondict["sharedmem"]:
-            tide_util.cleanup_shm(glmmean_shm)
+            tide_util.cleanup_shm(sLFOfitmean_shm)
             tide_util.cleanup_shm(rvalue_shm)
             tide_util.cleanup_shm(r2value_shm)
             tide_util.cleanup_shm(fitcoeff_shm)
@@ -4187,8 +4195,10 @@ def rapidtide_main(argparsingfunc):
         cifti_hdr = None
 
     maplist = []
-    if optiondict["saveallglmfiles"] and (optiondict["dolinfitfilt"] or optiondict["docvrmap"]):
-        if optiondict["glmderivs"] > 0:
+    if optiondict["saveallsLFOfiltfiles"] and (
+        optiondict["dolinfitfilt"] or optiondict["docvrmap"]
+    ):
+        if optiondict["regressderivs"] > 0:
             maplist += [
                 (
                     regressorset[:, :, 0],
@@ -4198,7 +4208,7 @@ def rapidtide_main(argparsingfunc):
                     "Shifted sLFO regressor to filter",
                 ),
             ]
-            for thederiv in range(1, optiondict["glmderivs"] + 1):
+            for thederiv in range(1, optiondict["regressderivs"] + 1):
                 maplist += [
                     (
                         regressorset[:, :, thederiv],
@@ -4226,7 +4236,7 @@ def rapidtide_main(argparsingfunc):
             ]
 
     if optiondict["dolinfitfilt"]:
-        if optiondict["saveminimumglmfiles"]:
+        if optiondict["saveminimumsLFOfiltfiles"]:
             maplist += [
                 (
                     filtereddata,

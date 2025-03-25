@@ -9,7 +9,7 @@ do
         --passes 3 \
         --outputlevel ${LEVEL} \
         --searchrange -5 10 \
-        --noglm \
+        --nodenoise \
         /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz \
         /home/frederic/code/rapidtide/rapidtide/data/examples/dst/nomotregress/${LEVEL}/sub-RAPIDTIDETEST
 done
@@ -22,7 +22,7 @@ do
         --passes 3 \
         --outputlevel ${LEVEL} \
         --searchrange -5 10 \
-        --noglm \
+        --nodenoise \
         --motionfile /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/Movement_Regressors.txt:0-5 \
         /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz \
         /home/frederic/code/rapidtide/rapidtide/data/examples/dst/motregress/${LEVEL}/sub-RAPIDTIDETEST
@@ -37,7 +37,7 @@ do
             --nprocs 4 \
             --passes 3 \
             --outputlevel ${LEVEL} \
-            --glmderivs ${NDERIVS} \
+            --regressderivs ${NDERIVS} \
             --searchrange -5 10 \
             /data2/HCP1200/100307/preproc/100307/MNINonLinear/Results/rfMRI_REST1_LR/rfMRI_REST1_LR.nii.gz \
             /home/frederic/code/rapidtide/rapidtide/data/examples/dst/nomotregress/${LEVEL}glm${NDERIVS}/sub-RAPIDTIDETEST

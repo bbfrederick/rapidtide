@@ -36,7 +36,7 @@ LGR = logging.getLogger("GENERAL")
 ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
-DEFAULT_GLMDERIVS = 0
+DEFAULT_REGRESSIONFILTDERIVS = 0
 
 
 def _get_parser():
@@ -76,15 +76,15 @@ def _get_parser():
         help="Output root.",
     )
     parser.add_argument(
-        "--glmderivs",
-        dest="glmderivs",
+        "--regressderivs",
+        dest="regressderivs",
         action="store",
         type=int,
         metavar="NDERIVS",
         help=(
-            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
+            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_REGRESSIONFILTDERIVS}"
         ),
-        default=DEFAULT_GLMDERIVS,
+        default=DEFAULT_REGRESSIONFILTDERIVS,
     )
     parser.add_argument(
         "--nprocs",
@@ -209,7 +209,7 @@ def retrolagtcs(args):
     internalvalidspaceshape = numvalidspatiallocs
     internalvalidspaceshapederivs = (
         internalvalidspaceshape,
-        args.glmderivs + 1,
+        args.regressderivs + 1,
     )
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
     if args.debug:
@@ -293,10 +293,10 @@ def retrolagtcs(args):
     theheader = copy.deepcopy(fmri_header)
     maplist = []
 
-    if args.glmderivs > 0:
+    if args.regressderivs > 0:
         if args.debug:
-            print(f"adding derivatives up to order {args.glmderivs} prior to regression")
-        regressorset = tide_linfitfiltpass.makevoxelspecificderivs(lagtc, args.glmderivs)
+            print(f"adding derivatives up to order {args.regressderivs} prior to regression")
+        regressorset = tide_linfitfiltpass.makevoxelspecificderivs(lagtc, args.regressderivs)
 
         if args.debug:
             print("going down the multiple EV path")
@@ -310,7 +310,7 @@ def retrolagtcs(args):
                 "Shifted sLFO regressor to filter",
             ),
         ]
-        for thederiv in range(1, args.glmderivs + 1):
+        for thederiv in range(1, args.regressderivs + 1):
             if args.debug:
                 print(f"{regressorset[:, :, thederiv].shape=}")
             maplist += [

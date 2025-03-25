@@ -37,6 +37,7 @@ import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
+from .rapidtide_parser import DEFAULT_REGRESSIONFILTDERIVS
 from .utils import setup_logger
 
 
@@ -51,13 +52,13 @@ LGR = logging.getLogger(__name__)
 ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
-DEFAULT_GLMDERIVS = 0
+DEFAULT_REGRESSIONFILTDERIVS = 0
 DEFAULT_PATCHTHRESH = 3.0
 DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
 DEFAULT_DELAYOFFSETSPATIALFILT = -1
-DEFAULT_REFINEGLMDERIVS = 1
+DEFAULT_REFINEREGRESSDERIVS = 1
 
 
 def _get_parser():
@@ -66,7 +67,7 @@ def _get_parser():
     """
     parser = argparse.ArgumentParser(
         prog="retroregress",
-        description="Do the rapidtide GLM filtering using the maps generated from a previous analysis.",
+        description="Do the rapidtide sLFO filtering using the maps generated from a previous analysis.",
         allow_abbrev=False,
     )
 
@@ -89,15 +90,15 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
-        "--glmderivs",
-        dest="glmderivs",
+        "--regressderivs",
+        dest="regressderivs",
         action="store",
         type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="NDERIVS",
         help=(
-            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
+            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_REGRESSIONFILTDERIVS}"
         ),
-        default=DEFAULT_GLMDERIVS,
+        default=DEFAULT_REGRESSIONFILTDERIVS,
     )
     parser.add_argument(
         "--nprocs",
@@ -218,16 +219,16 @@ def _get_parser():
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
     )
     experimental.add_argument(
-        "--refineglmderivs",
-        dest="refineglmderivs",
+        "--refineregressderivs",
+        dest="refineregressderivs",
         action="store",
         type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="NDERIVS",
         help=(
             f"When doing GLM for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
-            f"Default is {DEFAULT_REFINEGLMDERIVS}"
+            f"Default is {DEFAULT_REFINEREGRESSDERIVS}"
         ),
-        default=DEFAULT_REFINEGLMDERIVS,
+        default=DEFAULT_REFINEREGRESSDERIVS,
     )
 
     return parser
@@ -266,30 +267,30 @@ def retroregress(args):
     args.numpoints = DEFAULT_REFINEDELAYNUMPOINTS
 
     if args.outputlevel == "min":
-        args.saveminimumglmfiles = False
-        args.savenormalglmfiles = False
+        args.saveminimumsLFOfiltfiles = False
+        args.savenormalsLFOfiltfiles = False
         args.savemovingsignal = False
-        args.saveallglmfiles = False
+        args.saveallsLFOfiltfiles = False
     elif args.outputlevel == "less":
-        args.saveminimumglmfiles = True
-        args.savenormalglmfiles = False
+        args.saveminimumsLFOfiltfiles = True
+        args.savenormalsLFOfiltfiles = False
         args.savemovingsignal = False
-        args.saveallglmfiles = False
+        args.saveallsLFOfiltfiles = False
     elif args.outputlevel == "normal":
-        args.saveminimumglmfiles = True
-        args.savenormalglmfiles = True
+        args.saveminimumsLFOfiltfiles = True
+        args.savenormalsLFOfiltfiles = True
         args.savemovingsignal = False
-        args.saveallglmfiles = False
+        args.saveallsLFOfiltfiles = False
     elif args.outputlevel == "more":
-        args.saveminimumglmfiles = True
-        args.savenormalglmfiles = True
+        args.saveminimumsLFOfiltfiles = True
+        args.savenormalsLFOfiltfiles = True
         args.savemovingsignal = True
-        args.saveallglmfiles = False
+        args.saveallsLFOfiltfiles = False
     elif args.outputlevel == "max":
-        args.saveminimumglmfiles = True
-        args.savenormalglmfiles = True
+        args.saveminimumsLFOfiltfiles = True
+        args.savenormalsLFOfiltfiles = True
         args.savemovingsignal = True
-        args.saveallglmfiles = True
+        args.saveallsLFOfiltfiles = True
     else:
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()
@@ -330,7 +331,7 @@ def retroregress(args):
     else:
         rt_outfloattype = "float32"
         rt_outfloatset = np.float32
-    therunoptions["saveminimumglmfiles"] = args.saveminimumglmfiles
+    therunoptions["saveminimumsLFOfiltfiles"] = args.saveminimumsLFOfiltfiles
 
     # read the fmri input files
     print("reading fmrifile")
@@ -446,9 +447,9 @@ def retroregress(args):
         print(f"{numvalidspatiallocs=}")
     internalvalidspaceshape = numvalidspatiallocs
     if args.refinedelay:
-        derivaxissize = np.max([args.refineglmderivs + 1, args.glmderivs + 1])
+        derivaxissize = np.max([args.refineregressderivs + 1, args.regressderivs + 1])
     else:
-        derivaxissize = args.glmderivs + 1
+        derivaxissize = args.regressderivs + 1
     internalvalidspaceshapederivs = (
         internalvalidspaceshape,
         derivaxissize,
@@ -470,7 +471,9 @@ def retroregress(args):
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
-        glmmean, glmmean_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
+        sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
+            internalvalidspaceshape, rt_outfloatset
+        )
         rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloatset)
@@ -488,7 +491,7 @@ def retroregress(args):
     else:
         if args.debug:
             print("allocating memory")
-        glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        sLFOfitmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
@@ -499,7 +502,7 @@ def retroregress(args):
         ramlocation = "locally"
 
     totalbytes = (
-        glmmean.nbytes
+        sLFOfitmean.nbytes
         + rvalue.nbytes
         + r2value.nbytes
         + fitNorm.nbytes
@@ -518,10 +521,10 @@ def retroregress(args):
         print(f"{outputname=}")
     oversamptr = fmritr / oversampfactor
     try:
-        threshval = therunoptions["glmthreshval"]
+        threshval = therunoptions["regressfiltthreshval"]
     except KeyError:
         threshval = 0.0
-        therunoptions["glmthreshval"] = threshval
+        therunoptions["regressfiltthreshval"] = threshval
     mode = "glm"
 
     if args.debug or args.focaldebug:
@@ -556,7 +559,7 @@ def retroregress(args):
                 "inputdata",
                 "bold",
                 None,
-                "fMRI data that will be subjected to GLM filtering",
+                "fMRI data that will be subjected to sLFO filtering",
             ),
         ]
         tide_io.savemaplist(
@@ -583,7 +586,7 @@ def retroregress(args):
             args.delayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
 
         TimingLGR.info("Refinement calibration start")
-        glmderivratios = tide_refinedelay.getderivratios(
+        regressderivratios = tide_refinedelay.getderivratios(
             fmri_data_valid,
             validvoxels,
             initial_fmri_x,
@@ -593,25 +596,25 @@ def retroregress(args):
             mode,
             outputname,
             oversamptr,
-            glmmean,
+            sLFOfitmean,
             rvalue,
             r2value,
-            fitNorm[:, : (args.refineglmderivs + 1)],
-            fitcoeff[:, : (args.refineglmderivs + 1)],
+            fitNorm[:, : (args.refineregressderivs + 1)],
+            fitcoeff[:, : (args.refineregressderivs + 1)],
             movingsignal,
             lagtc,
             filtereddata,
             LGR,
             TimingLGR,
             therunoptions,
-            glmderivs=args.refineglmderivs,
+            regressderivs=args.refineregressderivs,
             debug=args.debug,
         )
 
-        if args.refineglmderivs == 1:
-            medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
+        if args.refineregressderivs == 1:
+            medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
                 tide_refinedelay.filterderivratios(
-                    glmderivratios,
+                    regressderivratios,
                     (xsize, ysize, numslices),
                     validvoxels,
                     (xdim, ydim, slicedim),
@@ -639,49 +642,51 @@ def retroregress(args):
 
             # now calculate the delay offsets
             TimingLGR.info("Calculating delay offsets")
-            delayoffset = np.zeros_like(filteredglmderivratios)
+            delayoffset = np.zeros_like(filteredregressderivratios)
             if args.focaldebug:
-                print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
-            for i in range(filteredglmderivratios.shape[0]):
-                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+                print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
+            for i in range(filteredregressderivratios.shape[0]):
+                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
                 """delayoffset[i] = tide_refinedelay.coffstodelay(
-                    np.asarray([filteredglmderivratios[i]]),
+                    np.asarray([filteredregressderivratios[i]]),
                     mindelay=args.mindelay,
                     maxdelay=args.maxdelay,
                 )"""
 
-            refinedvoxelstoreport = filteredglmderivratios.shape[0]
+            refinedvoxelstoreport = filteredregressderivratios.shape[0]
         else:
-            medfiltglmderivratios = np.zeros_like(glmderivratios)
-            filteredglmderivratios = np.zeros_like(glmderivratios)
-            delayoffsetMAD = np.zeros(args.refineglmderivs, dtype=float)
-            for i in range(args.refineglmderivs):
-                medfiltglmderivratios[i, :], filteredglmderivratios[i, :], delayoffsetMAD[i] = (
-                    tide_refinedelay.filterderivratios(
-                        glmderivratios[i, :],
-                        (xsize, ysize, numslices),
-                        validvoxels,
-                        (xdim, ydim, slicedim),
-                        gausssigma=args.delayoffsetgausssigma,
-                        patchthresh=args.delaypatchthresh,
-                        fileiscifti=False,
-                        textio=False,
-                        rt_floattype=rt_floattype,
-                        debug=args.debug,
-                    )
+            medfiltregressderivratios = np.zeros_like(regressderivratios)
+            filteredregressderivratios = np.zeros_like(regressderivratios)
+            delayoffsetMAD = np.zeros(args.refineregressderivs, dtype=float)
+            for i in range(args.refineregressderivs):
+                (
+                    medfiltregressderivratios[i, :],
+                    filteredregressderivratios[i, :],
+                    delayoffsetMAD[i],
+                ) = tide_refinedelay.filterderivratios(
+                    regressderivratios[i, :],
+                    (xsize, ysize, numslices),
+                    validvoxels,
+                    (xdim, ydim, slicedim),
+                    gausssigma=args.delayoffsetgausssigma,
+                    patchthresh=args.delaypatchthresh,
+                    fileiscifti=False,
+                    textio=False,
+                    rt_floattype=rt_floattype,
+                    debug=args.debug,
                 )
 
             # now calculate the delay offsets
-            delayoffset = np.zeros_like(filteredglmderivratios[0, :])
+            delayoffset = np.zeros_like(filteredregressderivratios[0, :])
             if args.debug:
-                print(f"calculating delayoffsets for {filteredglmderivratios.shape[1]} voxels")
-            for i in range(filteredglmderivratios.shape[1]):
+                print(f"calculating delayoffsets for {filteredregressderivratios.shape[1]} voxels")
+            for i in range(filteredregressderivratios.shape[1]):
                 delayoffset[i] = tide_refinedelay.coffstodelay(
-                    filteredglmderivratios[:, i],
+                    filteredregressderivratios[:, i],
                     mindelay=args.mindelay,
                     maxdelay=args.maxdelay,
                 )
-            refinedvoxelstoreport = filteredglmderivratios.shape[1]
+            refinedvoxelstoreport = filteredregressderivratios.shape[1]
 
         namesuffix = "_desc-delayoffset_hist"
         tide_stats.makeandsavehistogram(
@@ -710,12 +715,12 @@ def retroregress(args):
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     print("calling glmmfrommaps")
-    TimingLGR.info("Starting GLM filtering")
+    TimingLGR.info("Starting sLFO filtering")
     if args.refinedelay and args.filterwithrefineddelay:
         lagstouse_valid = lagtimesrefined_valid
     else:
         lagstouse_valid = lagtimes_valid
-    voxelsprocessed_glm, regressorset, evset = tide_regressfrommaps.regressfrommaps(
+    voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
         fmri_data_valid,
         validvoxels,
         initial_fmri_x,
@@ -725,29 +730,29 @@ def retroregress(args):
         mode,
         outputname,
         oversamptr,
-        glmmean,
+        sLFOfitmean,
         rvalue,
         r2value,
-        fitNorm[:, : args.glmderivs + 1],
-        fitcoeff[:, : args.glmderivs + 1],
+        fitNorm[:, : args.regressderivs + 1],
+        fitcoeff[:, : args.regressderivs + 1],
         movingsignal,
         lagtc,
         filtereddata,
         LGR,
         TimingLGR,
         threshval,
-        args.saveminimumglmfiles,
+        args.saveminimumsLFOfiltfiles,
         nprocs_makelaggedtcs=args.nprocs,
-        nprocs_glm=args.nprocs,
-        glmderivs=args.glmderivs,
+        nprocs_regressionfilt=args.nprocs,
+        regressderivs=args.regressderivs,
         showprogressbar=args.showprogressbar,
         debug=args.debug,
     )
-    print(f"filtered {voxelsprocessed_glm} voxels")
+    print(f"filtered {voxelsprocessed_regressionfilt} voxels")
     TimingLGR.info(
-        "GLM filtering done",
+        "sLFO filtering done",
         {
-            "message2": voxelsprocessed_glm,
+            "message2": voxelsprocessed_regressionfilt,
             "message3": "voxels",
         },
     )
@@ -810,7 +815,7 @@ def retroregress(args):
             #    "Change in total variance after filtering, in percent",
             # ),
         ]
-        if args.saveminimumglmfiles:
+        if args.saveminimumsLFOfiltfiles:
             maplist += [
                 (
                     r2value,
@@ -820,10 +825,10 @@ def retroregress(args):
                     "Squared R value of the GLM fit (proportion of variance explained)",
                 ),
             ]
-        if args.savenormalglmfiles:
+        if args.savenormalsLFOfiltfiles:
             maplist += [
                 (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
-                (glmmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
+                (sLFOfitmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
             ]
     else:
         maplist = [
@@ -831,7 +836,7 @@ def retroregress(args):
             (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
             (varchange, "CVRVariance", "map", None),
         ]
-        if args.savenormalglmfiles:
+        if args.savenormalsLFOfiltfiles:
             maplist += [
                 (rvalue, "CVRR", "map", None),
                 (r2value, "CVRR2", "map", None),
@@ -851,13 +856,13 @@ def retroregress(args):
             (corrmask_valid, "corrfitREAD", "mask", None, "Correlation mask used for calculation"),
             (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
         ]
-    if args.savenormalglmfiles:
-        if args.glmderivs > 0 or args.refinedelay:
+    if args.savenormalsLFOfiltfiles:
+        if args.regressderivs > 0 or args.refinedelay:
             maplist += [
                 (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
                 (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
             ]
-            for thederiv in range(1, args.glmderivs + 1):
+            for thederiv in range(1, args.regressderivs + 1):
                 maplist += [
                     (
                         fitcoeff[:, thederiv],
@@ -881,53 +886,53 @@ def retroregress(args):
             ]
 
     if args.refinedelay:
-        if args.refineglmderivs > 1:
-            for i in range(args.refineglmderivs):
+        if args.refineregressderivs > 1:
+            for i in range(args.refineregressderivs):
                 maplist += [
                     (
-                        glmderivratios[i, :],
-                        f"glmderivratios_{i}",
+                        regressderivratios[i, :],
+                        f"regressderivratios_{i}",
                         "map",
                         None,
                         f"Ratio of derivative {i+1} of delayed sLFO to the delayed sLFO",
                     ),
                     (
-                        medfiltglmderivratios[i, :],
-                        f"medfiltglmderivratios_{i}",
+                        medfiltregressderivratios[i, :],
+                        f"medfiltregressderivratios_{i}",
                         "map",
                         None,
-                        f"Median filtered version of the glmderivratios_{i} map",
+                        f"Median filtered version of the regressderivratios_{i} map",
                     ),
                     (
-                        filteredglmderivratios[i, :],
-                        f"filteredglmderivratios_{i}",
+                        filteredregressderivratios[i, :],
+                        f"filteredregressderivratios_{i}",
                         "map",
                         None,
-                        f"glmderivratios_{i}, with outliers patched using median filtered data",
+                        f"regressderivratios_{i}, with outliers patched using median filtered data",
                     ),
                 ]
         else:
             maplist += [
                 (
-                    glmderivratios,
-                    "glmderivratios",
+                    regressderivratios,
+                    "regressderivratios",
                     "map",
                     None,
                     "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
                 ),
                 (
-                    medfiltglmderivratios,
-                    "medfiltglmderivratios",
+                    medfiltregressderivratios,
+                    "medfiltregressderivratios",
                     "map",
                     None,
-                    "Median filtered version of the glmderivratios map",
+                    "Median filtered version of the regressderivratios map",
                 ),
                 (
-                    filteredglmderivratios,
-                    "filteredglmderivratios",
+                    filteredregressderivratios,
+                    "filteredregressderivratios",
                     "map",
                     None,
-                    "glmderivratios, with outliers patched using median filtered data",
+                    "regressderivratios, with outliers patched using median filtered data",
                 ),
             ]
         maplist += [
@@ -961,7 +966,7 @@ def retroregress(args):
     # write the 4D maps
     theheader = copy.deepcopy(fmri_header)
     maplist = []
-    if args.saveminimumglmfiles:
+    if args.saveminimumsLFOfiltfiles:
         maplist = [
             (
                 filtereddata,
@@ -982,8 +987,8 @@ def retroregress(args):
             )
         ]
 
-    if args.saveallglmfiles:
-        if args.glmderivs > 0:
+    if args.saveallsLFOfiltfiles:
+        if args.regressderivs > 0:
             if args.debug:
                 print("going down the multiple EV path")
                 print(f"{regressorset[:, :, 0].shape=}")
@@ -996,7 +1001,7 @@ def retroregress(args):
                     "Shifted sLFO regressor to filter",
                 ),
             ]
-            for thederiv in range(1, args.glmderivs + 1):
+            for thederiv in range(1, args.regressderivs + 1):
                 if args.debug:
                     print(f"{regressorset[:, :, thederiv].shape=}")
                 maplist += [
@@ -1058,7 +1063,7 @@ def retroregress(args):
             )
         TimingLGR.info("Filtering for maxcorralt calculation complete")
         TimingLGR.info("GLM for maxcorralt calculation start")
-        voxelsprocessed_glm, regressorset, evset = tide_regressfrommaps.regressfrommaps(
+        voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
             fmri_data_valid,
             validvoxels,
             initial_fmri_x,
@@ -1068,28 +1073,28 @@ def retroregress(args):
             mode,
             outputname,
             oversamptr,
-            glmmean,
+            sLFOfitmean,
             rvalue,
             r2value,
-            fitNorm[:, : args.glmderivs + 1],
-            fitcoeff[:, : args.glmderivs + 1],
+            fitNorm[:, : args.regressderivs + 1],
+            fitcoeff[:, : args.regressderivs + 1],
             movingsignal,
             lagtc,
             filtereddata,
             LGR,
             TimingLGR,
             threshval,
-            args.saveminimumglmfiles,
+            args.saveminimumsLFOfiltfiles,
             nprocs_makelaggedtcs=args.nprocs,
-            nprocs_glm=args.nprocs,
-            glmderivs=args.glmderivs,
+            nprocs_regressionfilt=args.nprocs,
+            regressderivs=args.regressderivs,
             showprogressbar=args.showprogressbar,
             debug=args.debug,
         )
         TimingLGR.info(
             "GLM for maxcorralt calculation done",
             {
-                "message2": voxelsprocessed_glm,
+                "message2": voxelsprocessed_regressionfilt,
                 "message3": "voxels",
             },
         )
@@ -1152,7 +1157,7 @@ def retroregress(args):
     # clean up shared memory
     if usesharedmem:
         TimingLGR.info("Shared memory cleanup start")
-        tide_util.cleanup_shm(glmmean_shm)
+        tide_util.cleanup_shm(sLFOfitmean_shm)
         tide_util.cleanup_shm(rvalue_shm)
         tide_util.cleanup_shm(r2value_shm)
         tide_util.cleanup_shm(fitNorm_shm)

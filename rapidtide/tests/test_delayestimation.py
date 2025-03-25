@@ -335,7 +335,7 @@ def test_delayestimation(displayplots=False, debug=False):
         filteredwaveforms[i, :] = theprefilter.apply(Fs, waveforms[i, :])
 
     for nprocs in [4, 1]:
-        voxelsprocessed_glm = tide_linfitfiltpass.linfitfiltpass(
+        voxelsprocessed_regressionfilt = tide_linfitfiltpass.linfitfiltpass(
             numlocs,
             waveforms[:, :],
             threshval,

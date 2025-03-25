@@ -79,8 +79,8 @@ DEFAULT_PEAKFIT_TYPE = "gauss"
 DEFAULT_REFINE_PRENORM = "var"
 DEFAULT_REFINE_WEIGHTING = "None"
 DEFAULT_REFINE_PCACOMPONENTS = 0.8
-DEFAULT_GLMDERIVS = 0
-DEFAULT_REFINEGLMDERIVS = 1
+DEFAULT_REGRESSIONFILTDERIVS = 0
+DEFAULT_REFINEREGRESSDERIVS = 1
 
 DEFAULT_DENOISING_LAGMIN = -10.0
 DEFAULT_DENOISING_LAGMAX = 10.0
@@ -193,7 +193,7 @@ def _get_parser():
             f"passes=1, despeckle_passes={DEFAULT_CVRMAPPING_DESPECKLE_PASSES}, "
             f"searchrange=({DEFAULT_CVRMAPPING_LAGMIN}, {DEFAULT_CVRMAPPING_LAGMAX}), "
             f"filterfreqs=({DEFAULT_CVRMAPPING_FILTER_LOWERPASS}, {DEFAULT_CVRMAPPING_FILTER_UPPERPASS}), "
-            "and calculates a voxelwise GLM using the optimally delayed "
+            "and calculates a voxelwise regression fit using the optimally delayed "
             "input regressor and the percent normalized, demeaned BOLD data as inputs. This map is output as "
             "(XXX_desc-CVR_map.nii.gz).  If no input regressor is supplied, this will generate an error.  "
             "These options can be overridden with the appropriate additional arguments."
@@ -1066,15 +1066,6 @@ def _get_parser():
         default=True,
     )
     reg_ref.add_argument(
-        "--pickleft",
-        dest="dummy",
-        action="store_true",
-        help=(
-            "DEPRECATED. pickleft is now on by default. Use 'nopickleft' to disable it instead."
-        ),
-        default=True,
-    )
-    reg_ref.add_argument(
         "--pickleftthresh",
         dest="pickleftthresh",
         action="store",
@@ -1167,20 +1158,20 @@ def _get_parser():
         default=DEFAULT_MAXPASSES,
     )
 
-    # GLM noise removal options
-    glm = parser.add_argument_group("GLM noise removal options")
-    glm.add_argument(
-        "--noglm",
+    # sLFO noise removal options
+    slfofilt = parser.add_argument_group("sLFO noise removal options")
+    slfofilt.add_argument(
+        "--nodenoise",
         dest="dolinfitfilt",
         action="store_false",
         help=(
-            "Turn off GLM filtering to remove delayed "
+            "Turn off regression filtering to remove delayed "
             "regressor from each voxel (disables output of "
             "fitNorm)."
         ),
         default=True,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--denoisesourcefile",
         dest="denoisesourcefile",
         action="store",
@@ -1193,48 +1184,39 @@ def _get_parser():
         ),
         default=None,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--preservefiltering",
         dest="preservefiltering",
         action="store_true",
-        help="Don't reread data prior to performing GLM.",
+        help="Don't reread data prior to performing sLFO filtering.",
         default=False,
     )
-    glm.add_argument(
-        "--glmderivs",
-        dest="glmderivs",
+    slfofilt.add_argument(
+        "--regressderivs",
+        dest="regressderivs",
         action="store",
         type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="NDERIVS",
         help=(
-            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
+            f"When doing final sLFO filtering, include derivatives up to NDERIVS order. Default is {DEFAULT_REGRESSIONFILTDERIVS}"
         ),
-        default=DEFAULT_GLMDERIVS,
+        default=DEFAULT_REGRESSIONFILTDERIVS,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--norefinedelay",
         dest="refinedelay",
         action="store_false",
-        help=("Do not calculate a refined delay map using GLM information."),
+        help=("Do not calculate a refined delay map using sLFO regression information."),
         default=True,
     )
-    glm.add_argument(
-        "--refinedelay",
-        dest="dummy",
-        action="store_true",
-        help=(
-            "Calculate a refined delay map using GLM information. ***DEPRECATED*** - this is now on by default."
-        ),
-        default=True,
-    )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--nofilterwithrefineddelay",
         dest="filterwithrefineddelay",
         action="store_false",
-        help=("Do not use the refined delay in GLM filter."),
+        help=("Do not use the refined delay in sLFO filter."),
         default=True,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--delaypatchthresh",
         dest="delaypatchthresh",
         action="store",
@@ -1246,7 +1228,7 @@ def _get_parser():
         ),
         default=DEFAULT_PATCHTHRESH,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--delayoffsetspatialfilt",
         dest="delayoffsetgausssigma",
         action="store",
@@ -1271,23 +1253,13 @@ def _get_parser():
         choices=["min", "less", "normal", "more", "max"],
         help=(
             "The level of file output produced.  'min' produces only absolutely essential files, 'less' adds in "
-            "the GLM filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
+            "the sLFO filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
             "would typically want around for interactive data exploration, "
             "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
             "Selecting 'max' will produce ~3x your input datafile size as output.  "
             f'Default is "{DEFAULT_OUTPUTLEVEL}."'
         ),
         default=DEFAULT_OUTPUTLEVEL,
-    )
-    output.add_argument(
-        "--nolimitoutput",
-        dest="limitoutput",
-        action="store_false",
-        help=(
-            "Save some of the large and rarely used files.  "
-            "NB: THIS IS NOW DEPRECATED: Use '--outputlevel max' instead."
-        ),
-        default=True,
     )
     output.add_argument(
         "--savelags",
@@ -1467,16 +1439,16 @@ def _get_parser():
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
     )
     experimental.add_argument(
-        "--refineglmderivs",
-        dest="refineglmderivs",
+        "--refineregressderivs",
+        dest="refineregressderivs",
         action="store",
         type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="NDERIVS",
         help=(
-            f"When doing GLM for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
-            f"Default is {DEFAULT_REFINEGLMDERIVS}"
+            f"When doing regression fit for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
+            f"Default is {DEFAULT_REFINEREGRESSDERIVS}"
         ),
-        default=DEFAULT_REFINEGLMDERIVS,
+        default=DEFAULT_REFINEREGRESSDERIVS,
     )
     experimental.add_argument(
         "--dofinalrefine",
@@ -1670,6 +1642,51 @@ def _get_parser():
         default=False,
     )
 
+    # Deprecated options
+    deprecated = parser.add_argument_group(
+        "Deprecated options.  These options will go away in the indeterminate future.  Don't use them."
+    )
+    deprecated.add_argument(
+        "--refinedelay",
+        dest="dummy",
+        action="store_true",
+        help=(
+            "Calculate a refined delay map using regression coefficient information. ***DEPRECATED***: refinedelay is now on by default."
+        ),
+        default=True,
+    )
+    deprecated.add_argument(
+        "--nolimitoutput",
+        dest="limitoutput",
+        action="store_false",
+        help=(
+            "Save some of the large and rarely used files.  "
+            "***DEPRECATED***: Use '--outputlevel max' instead."
+        ),
+        default=True,
+    )
+    deprecated.add_argument(
+        "--pickleft",
+        dest="dummy",
+        action="store_true",
+        help=(
+            "***DEPRECATED***: pickleft is now on by default. Use 'nopickleft' to disable it instead."
+        ),
+        default=True,
+    )
+    deprecated.add_argument(
+        "--noglm",
+        dest="dolinfitfilt",
+        action="store_false",
+        help=(
+            "Turn off regression filtering to remove delayed "
+            "regressor from each voxel (disables output of "
+            "fitNorm)."
+            "***DEPRECATED***: Use '--nodenoise' instead."
+        ),
+        default=True,
+    )
+
     # Debugging options
     debugging = parser.add_argument_group(
         "Debugging options.  You probably don't want to use any of these unless I ask you to to help diagnose a problem"
@@ -1759,10 +1776,10 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
-        "--singleproc_glm",
-        dest="singleproc_glm",
+        "--singleproc_regressionfilt",
+        dest="singleproc_regressionfilt",
         action="store_true",
-        help=("Force single proc path for glm."),
+        help=("Force single proc path for regression filtering."),
         default=False,
     )
     debugging.add_argument(
@@ -2211,50 +2228,50 @@ def process_args(inputargs=None):
         args["savecorrtimes"] = False
         args["savelagregressors"] = False
         args["savedespecklemasks"] = False
-        args["saveminimumglmfiles"] = False
-        args["savenormalglmfiles"] = False
+        args["saveminimumsLFOfiltfiles"] = False
+        args["savenormalsLFOfiltfiles"] = False
         args["savemovingsignal"] = False
-        args["saveallglmfiles"] = False
+        args["saveallsLFOfiltfiles"] = False
     elif args["outputlevel"] == "less":
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
         args["savecorrtimes"] = False
         args["savelagregressors"] = False
         args["savedespecklemasks"] = False
-        args["saveminimumglmfiles"] = True
-        args["savenormalglmfiles"] = False
+        args["saveminimumsLFOfiltfiles"] = True
+        args["savenormalsLFOfiltfiles"] = False
         args["savemovingsignal"] = False
-        args["saveallglmfiles"] = False
+        args["saveallsLFOfiltfiles"] = False
     elif args["outputlevel"] == "normal":
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
         args["savecorrtimes"] = False
         args["savelagregressors"] = False
         args["savedespecklemasks"] = False
-        args["saveminimumglmfiles"] = True
-        args["savenormalglmfiles"] = True
+        args["saveminimumsLFOfiltfiles"] = True
+        args["savenormalsLFOfiltfiles"] = True
         args["savemovingsignal"] = False
-        args["saveallglmfiles"] = False
+        args["saveallsLFOfiltfiles"] = False
     elif args["outputlevel"] == "more":
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
         args["savecorrtimes"] = False
         args["savelagregressors"] = True
         args["savedespecklemasks"] = False
-        args["saveminimumglmfiles"] = True
-        args["savenormalglmfiles"] = True
+        args["saveminimumsLFOfiltfiles"] = True
+        args["savenormalsLFOfiltfiles"] = True
         args["savemovingsignal"] = True
-        args["saveallglmfiles"] = False
+        args["saveallsLFOfiltfiles"] = False
     elif args["outputlevel"] == "max":
         args["saveconfoundfiltered"] = True
         args["savegaussout"] = True
         args["savecorrtimes"] = True
         args["savelagregressors"] = True
         args["savedespecklemasks"] = True
-        args["saveminimumglmfiles"] = True
-        args["savenormalglmfiles"] = True
+        args["saveminimumsLFOfiltfiles"] = True
+        args["savenormalsLFOfiltfiles"] = True
         args["savemovingsignal"] = True
-        args["saveallglmfiles"] = True
+        args["saveallsLFOfiltfiles"] = True
     else:
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()
@@ -2286,7 +2303,7 @@ def process_args(inputargs=None):
         args["territorymapname"] = None
         args["territorymapincludevals"] = None
 
-    # this is new enough to do retrospective GLM
+    # this is new enough to do retrospective regression filtering
     args["retroregresscompatible"] = True
 
     LGR.debug("\nafter postprocessing\n{}".format(args))

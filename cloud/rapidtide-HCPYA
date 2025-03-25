@@ -15,7 +15,7 @@ fi
 
 echo "Subject="${SUBJ}", RUN="${RUN}", PEDIR="${PEDIR}
 
-#    --glmsourcefile=/data_in/HCP_1200/${SUBJ}/MNINonLinear/Results/rfMRI_${RUN}_${PEDIR}/rfMRI_${RUN}_${PEDIR}_hp2000_clean.nii.gz \
+#    --denoisesourcefile=/data_in/HCP_1200/${SUBJ}/MNINonLinear/Results/rfMRI_${RUN}_${PEDIR}/rfMRI_${RUN}_${PEDIR}_hp2000_clean.nii.gz \
 mkdir -p /data_out/HCP_1200/minpreprocglm/${SUBJ}
 rapidtide \
     /data_in/HCP_1200/${SUBJ}/MNINonLinear/Results/rfMRI_${RUN}_${PEDIR}/rfMRI_${RUN}_${PEDIR}.nii.gz \

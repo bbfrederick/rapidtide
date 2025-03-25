@@ -33,4 +33,4 @@ rapidtide \
 	../dst/simfromfmri.nii.gz \
         ../dst/sub-SIMDATA \
         --nprocs -1 \
-        --passes 3 --noglm
+        --passes 3 --nodenoise

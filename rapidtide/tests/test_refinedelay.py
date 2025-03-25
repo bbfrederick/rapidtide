@@ -135,7 +135,7 @@ def eval_refinedelay(
 
     rt_floattype = "float64"
     rt_floatset = np.float64
-    glmmean = np.zeros(numlags, dtype=rt_floattype)
+    sLFOfitmean = np.zeros(numlags, dtype=rt_floattype)
     rvalue = np.zeros(numlags, dtype=rt_floattype)
     r2value = np.zeros(numlags, dtype=rt_floattype)
     fitNorm = np.zeros((numlags, 2), dtype=rt_floattype)
@@ -144,10 +144,10 @@ def eval_refinedelay(
     lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     optiondict = {
-        "glmthreshval": 0.0,
-        "saveminimumglmfiles": False,
+        "regressfiltthreshval": 0.0,
+        "saveminimumsLFOfiltfiles": False,
         "nprocs_makelaggedtcs": 1,
-        "nprocs_glm": 1,
+        "nprocs_regressionfilt": 1,
         "mp_chunksize": 1000,
         "showprogressbar": False,
         "alwaysmultiproc": False,
@@ -157,7 +157,7 @@ def eval_refinedelay(
         "textio": False,
     }
 
-    glmderivratios = tide_refinedelay.getderivratios(
+    regressderivratios = tide_refinedelay.getderivratios(
         fmridata,
         validvoxels,
         timeaxis,
@@ -167,7 +167,7 @@ def eval_refinedelay(
         "glm",
         "refinedelaytest",
         sampletime,
-        glmmean,
+        sLFOfitmean,
         rvalue,
         r2value,
         fitNorm[:, :2],
@@ -181,8 +181,8 @@ def eval_refinedelay(
         debug=debug,
     )
 
-    medfilt, filteredglmderivratios, themad = tide_refinedelay.filterderivratios(
-        glmderivratios,
+    medfilt, filteredregressderivratios, themad = tide_refinedelay.filterderivratios(
+        regressderivratios,
         nativespaceshape,
         validvoxels,
         (xdim, ydim, slicedim),
@@ -193,9 +193,9 @@ def eval_refinedelay(
         debug=debug,
     )
 
-    delayoffset = filteredglmderivratios * 0.0
-    for i in range(filteredglmderivratios.shape[0]):
-        delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+    delayoffset = filteredregressderivratios * 0.0
+    for i in range(filteredregressderivratios.shape[0]):
+        delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
 
     # do the tests
     msethresh = 0.1

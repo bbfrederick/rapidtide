@@ -64,7 +64,7 @@ def regressfrommaps(
     mode,
     outputname,
     oversamptr,
-    glmmean,
+    sLFOfitmean,
     rvalue,
     r2value,
     fitNorm,
@@ -74,11 +74,11 @@ def regressfrommaps(
     filtereddata,
     LGR,
     TimingLGR,
-    glmthreshval,
-    saveminimumglmfiles,
+    regressfiltthreshval,
+    saveminimumsLFOfiltfiles,
     nprocs_makelaggedtcs=1,
-    nprocs_glm=1,
-    glmderivs=0,
+    nprocs_regressionfilt=1,
+    regressderivs=0,
     mp_chunksize=50000,
     showprogressbar=True,
     alwaysmultiproc=False,
@@ -88,8 +88,8 @@ def regressfrommaps(
     if debug:
         print("regressfrommaps: Starting")
         print(f"{nprocs_makelaggedtcs=}")
-        print(f"{nprocs_glm=}")
-        print(f"{glmderivs=}")
+        print(f"{nprocs_regressionfilt=}")
+        print(f"{regressderivs=}")
         print(f"{mp_chunksize=}")
         print(f"{showprogressbar=}")
         print(f"{alwaysmultiproc=}")
@@ -97,7 +97,7 @@ def regressfrommaps(
         print(f"{mode=}")
         print(f"{outputname=}")
         print(f"{oversamptr=}")
-        print(f"{glmthreshval=}")
+        print(f"{regressfiltthreshval=}")
     rt_floatset = np.float64
     rt_floattype = "float64"
     numvalidspatiallocs = np.shape(validvoxels)[0]
@@ -156,13 +156,13 @@ def regressfrommaps(
     else:
         linfitfiltpass_func = tide_linfitfiltpass.linfitfiltpass
 
-    if glmderivs > 0:
+    if regressderivs > 0:
         if debug:
-            print(f"adding derivatives up to order {glmderivs} prior to regression")
-        regressorset = tide_linfitfiltpass.makevoxelspecificderivs(lagtc, glmderivs)
+            print(f"adding derivatives up to order {regressderivs} prior to regression")
+        regressorset = tide_linfitfiltpass.makevoxelspecificderivs(lagtc, regressderivs)
         baseev = rt_floatset(genlagtc.yfromx(initial_fmri_x))
         evset = tide_linfitfiltpass.makevoxelspecificderivs(
-            baseev.reshape((1, -1)), glmderivs
+            baseev.reshape((1, -1)), regressderivs
         ).reshape((-1, 2))
     else:
         if debug:
@@ -172,19 +172,19 @@ def regressfrommaps(
 
     if debug:
         print(f"{regressorset.shape=}")
-    voxelsprocessed_glm = linfitfiltpass_func(
+    voxelsprocessed_regressionfilt = linfitfiltpass_func(
         numvalidspatiallocs,
         fmri_data_valid,
-        glmthreshval,
+        regressfiltthreshval,
         regressorset,
-        glmmean,
+        sLFOfitmean,
         rvalue,
         r2value,
         fitcoeff,
         fitNorm,
         movingsignal,
         filtereddata,
-        nprocs=nprocs_glm,
+        nprocs=nprocs_regressionfilt,
         alwaysmultiproc=alwaysmultiproc,
         showprogressbar=showprogressbar,
         mp_chunksize=mp_chunksize,
@@ -199,7 +199,7 @@ def regressfrommaps(
     # determine what was removed
     removeddata = fmri_data_valid - filtereddata
     noiseremoved = np.var(removeddata, axis=0)
-    if saveminimumglmfiles:
+    if saveminimumsLFOfiltfiles:
         tide_io.writebidstsv(
             f"{outputname}_desc-lfofilterNoiseRemoved_timeseries",
             noiseremoved,
@@ -212,4 +212,4 @@ def regressfrommaps(
             append=False,
         )
 
-    return voxelsprocessed_glm, regressorset, evset
+    return voxelsprocessed_regressionfilt, regressorset, evset

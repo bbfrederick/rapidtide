@@ -19,7 +19,7 @@ docker run \
         /data/dst/sub-RAPIDTIDETEST \
         --passes 3 \
         --nprocs 4 \
-        --noglm
+        --nodenoise
 
 #docker run \
 #    --rm \
@@ -34,7 +34,7 @@ docker run \
 #        --disabledockermemfix \
 #        --passes 3 \
 #        --nprocs 4 \
-#        --noglm
+#        --nodenoise
 
 
 #docker run \

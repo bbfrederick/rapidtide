@@ -141,7 +141,9 @@ def stupidramtricks(args):
         fmridata, fmridata_shm = tide_util.numpy2shared(
             fmridata, rt_floatset, name=f"fmridata_{args.pid}"
         )
-        glmmean, glmmean_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
+        sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
+            internalvalidspaceshape, rt_outfloatset
+        )
         rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
         fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloatset)
@@ -160,7 +162,7 @@ def stupidramtricks(args):
     else:
         if args.debug:
             print("allocating memory")
-        glmmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+        sLFOfitmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
         fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
@@ -172,7 +174,7 @@ def stupidramtricks(args):
 
     totalbytes = (
         fmridata.nbytes
-        + glmmean.nbytes
+        + sLFOfitmean.nbytes
         + rvalue.nbytes
         + r2value.nbytes
         + fitNorm.nbytes
@@ -185,7 +187,7 @@ def stupidramtricks(args):
     thesize, theunit = tide_util.format_bytes(totalbytes)
     print(f"allocated {thesize:.3f} {theunit} {location}")
 
-    """glmderivratios = tide_refinedelay.getderivratios(
+    """regressderivratios = tide_refinedelay.getderivratios(
         fmri_data_valid,
         validvoxels,
         initial_fmri_x,
@@ -195,7 +197,7 @@ def stupidramtricks(args):
         mode,
         outputname,
         oversamptr,
-        glmmean,
+        sLFOfitmean,
         rvalue,
         r2value,
         fitNorm[:, :2],
@@ -212,7 +214,7 @@ def stupidramtricks(args):
     # clean up shared memory
     if args.usesharedmem:
         tide_util.cleanup_shm(fmridata_shm)
-        tide_util.cleanup_shm(glmmean_shm)
+        tide_util.cleanup_shm(sLFOfitmean_shm)
         tide_util.cleanup_shm(rvalue_shm)
         tide_util.cleanup_shm(r2value_shm)
         tide_util.cleanup_shm(fitNorm_shm)

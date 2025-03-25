@@ -62,7 +62,7 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         "1",
         "--despecklepasses",
         "3",
-        "--noglm",
+        "--nodenoise",
         "--norefinedelay",
         "--initialdelay",
         "0.0",
@@ -83,7 +83,7 @@ def test_fullrunrapidtide_v1(debug=False, displayplots=False):
         "1",
         "--despecklepasses",
         "3",
-        "--noglm",
+        "--nodenoise",
         "--initialdelay",
         os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1_desc-maxtime_map.nii.gz"),
     ]

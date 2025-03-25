@@ -167,7 +167,7 @@ What output level you use depends on what you are trying to do.  The vast majori
 estimating, extracting and refining the sLFO signal, and calculating the voxelwise blood arrival time delay and signal
 strength.  This produces a surprisingly small amount of data - the largest output files are the maps of the various
 hemodynamic parameters and some masks, each as large a single TR of the input data set.  So at a minimum (as in, you
-select ``"--outputlevel min"`` and do not run GLM denoising: ``"--noglm"``), you produce
+select ``"--outputlevel min"`` and do not run GLM denoising: ``"--nodenoise"``), you produce
 16 3D maps as NIFTI files, and a number of masks and timecourse files.  For a single resting state run in the HCP-YA
 dataset, this is ~13MB of data (compared to the input data file size of about 1GB).  If you want slightly more data
 to help you evaluate the fit quality, and make cool movies, you probably want to leave the outputlevel at the default of
@@ -500,7 +500,7 @@ For this type of analysis, a good place to start is the following:
             --searchrange -10 140 \
             --filterfreqs 0.0 0.01 \
             --ampthresh 0.2 \
-            --noglm \
+            --nodenoise \
             --nofitfilt
 
 The first option (``--numnull 0``), shuts off the calculation of the null correlation distribution.  This is used to
@@ -523,7 +523,7 @@ So if you use the default frequency settings, you will completely filter out you
 your response.  If you are processing one of these experiments and get no results whatsoever, this is almost
 certainly the problem.
 
-The ``--noglm`` option disables data filtering.  If you are using rapidtide to estimate and remove low frequency
+The ``--nodenoise`` option disables data filtering.  If you are using rapidtide to estimate and remove low frequency
 noise from resting state or task fMRI data, the last step is to use a glm filter to remove this circulatory signal,
 leaving "pure" neuronal signal, which you'll use in further analyses.  That's not relevant here - the signal you'd
 be removing is the one you care about. So this option skips that step to save time and disk space.

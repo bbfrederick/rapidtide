@@ -100,7 +100,7 @@ class DerivativeDelay:
         self, fmri_data_valid, validvoxels, initial_fmri_x, lagtimes_valid, corrmask_valid
     ):
         print("Refinement calibration start")
-        glmderivratios = tide_refinedelay.getderivratios(
+        regressderivratios = tide_refinedelay.getderivratios(
             fmri_data_valid,
             validvoxels,
             initial_fmri_x,
@@ -110,7 +110,7 @@ class DerivativeDelay:
             "glm",
             self.outputname,
             oversamptr,
-            glmmean,
+            sLFOfitmean,
             rvalue,
             r2value,
             fitNorm[:, : (self.numderivs + 1)],
@@ -121,15 +121,15 @@ class DerivativeDelay:
             LGR,
             TimingLGR,
             therunoptions,
-            glmderivs=self.numderivs,
+            regressderivs=self.numderivs,
             debug=self.debug,
         )
 
     def calibrate(self):
         if self.numderivs == 1:
-            medfiltglmderivratios, filteredglmderivratios, delayoffsetMAD = (
+            medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
                 tide_refinedelay.filterderivratios(
-                    glmderivratios,
+                    regressderivratios,
                     (xsize, ysize, numslices),
                     validvoxels,
                     (xdim, ydim, slicedim),
@@ -157,44 +157,46 @@ class DerivativeDelay:
 
             # now calculate the delay offsets
             TimingLGR.info("Calculating delay offsets")
-            delayoffset = np.zeros_like(filteredglmderivratios)
+            delayoffset = np.zeros_like(filteredregressderivratios)
             if args.focaldebug:
-                print(f"calculating delayoffsets for {filteredglmderivratios.shape[0]} voxels")
-            for i in range(filteredglmderivratios.shape[0]):
-                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
-            refinedvoxelstoreport = filteredglmderivratios.shape[0]
+                print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
+            for i in range(filteredregressderivratios.shape[0]):
+                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
+            refinedvoxelstoreport = filteredregressderivratios.shape[0]
         else:
-            medfiltglmderivratios = np.zeros_like(glmderivratios)
-            filteredglmderivratios = np.zeros_like(glmderivratios)
-            delayoffsetMAD = np.zeros(args.refineglmderivs, dtype=float)
-            for i in range(args.refineglmderivs):
-                medfiltglmderivratios[i, :], filteredglmderivratios[i, :], delayoffsetMAD[i] = (
-                    tide_refinedelay.filterderivratios(
-                        glmderivratios[i, :],
-                        (xsize, ysize, numslices),
-                        validvoxels,
-                        (xdim, ydim, slicedim),
-                        gausssigma=args.delayoffsetgausssigma,
-                        patchthresh=args.delaypatchthresh,
-                        fileiscifti=False,
-                        textio=False,
-                        rt_floattype=rt_floattype,
-                        debug=args.debug,
-                    )
+            medfiltregressderivratios = np.zeros_like(regressderivratios)
+            filteredregressderivratios = np.zeros_like(regressderivratios)
+            delayoffsetMAD = np.zeros(args.refineregressderivs, dtype=float)
+            for i in range(args.refineregressderivs):
+                (
+                    medfiltregressderivratios[i, :],
+                    filteredregressderivratios[i, :],
+                    delayoffsetMAD[i],
+                ) = tide_refinedelay.filterderivratios(
+                    regressderivratios[i, :],
+                    (xsize, ysize, numslices),
+                    validvoxels,
+                    (xdim, ydim, slicedim),
+                    gausssigma=args.delayoffsetgausssigma,
+                    patchthresh=args.delaypatchthresh,
+                    fileiscifti=False,
+                    textio=False,
+                    rt_floattype=rt_floattype,
+                    debug=args.debug,
                 )
 
     def getdelays(self):
         # now calculate the delay offsets
-        delayoffset = np.zeros_like(filteredglmderivratios[0, :])
+        delayoffset = np.zeros_like(filteredregressderivratios[0, :])
         if self.debug:
-            print(f"calculating delayoffsets for {filteredglmderivratios.shape[1]} voxels")
-        for i in range(filteredglmderivratios.shape[1]):
+            print(f"calculating delayoffsets for {filteredregressderivratios.shape[1]} voxels")
+        for i in range(filteredregressderivratios.shape[1]):
             delayoffset[i] = tide_refinedelay.coffstodelay(
-                filteredglmderivratios[:, i],
+                filteredregressderivratios[:, i],
                 mindelay=self.mindelay,
                 maxdelay=self.maxdelay,
             )
-        refinedvoxelstoreport = filteredglmderivratios.shape[1]
+        refinedvoxelstoreport = filteredregressderivratios.shape[1]
 
     def savestats(self):
         namesuffix = "_desc-delayoffset_hist"

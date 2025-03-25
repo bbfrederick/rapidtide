@@ -40,7 +40,7 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
         "pca",
         "--convergencethresh",
         "0.5",
-        "--noglm",
+        "--nodenoise",
         "--nprocs",
         "-1",
         "--similaritymetric",

@@ -13,4 +13,4 @@ retrolagtcs \
     ../dst/sub-RAPIDTIDETEST_1deriv_desc-maxtime_map.nii.gz \
     ../dst/sub-RAPIDTIDETEST_1deriv_desc-lagtcgenerator_timeseries \
     ../dst/retrolag_1deriv \
-    --glmderivs 1 
+    --regressderivs 1

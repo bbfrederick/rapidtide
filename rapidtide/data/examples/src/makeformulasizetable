@@ -18,14 +18,14 @@ do
             else
                 refinedelaystr="No"
             fi
-            for doglm in False True
+            for doslfofilt in False True
             do
-                if [ ${doglm} = "True" ]; then
-                    glmstr="Yes"
+                if [ ${doslfofilt} = "True" ]; then
+                    slfofiltstr="Yes"
                 else
-                    glmstr="No"
+                    slfofiltstr="No"
                 fi
-                for thisdir in ${outputlevel}*passesgt1-${passesgt1}_numnullgt0-False_doglm-${doglm}_domotion-False_doderivs-False_dodespeckle-False_dorefinedelay-${dorefinedelay}
+                for thisdir in ${outputlevel}*passesgt1-${passesgt1}_numnullgt0-False_doslfofilt-${doslfofilt}_domotion-False_doderivs-False_dodespeckle-False_dorefinedelay-${dorefinedelay}
                 do
                     rm -f greps
                     touch greps
@@ -41,7 +41,7 @@ do
                         if [ ${fmritrs} != "0" ]; then
                             outsize=${outsize}" + "${fmritrs}"*FMRISIZE"
                         fi
-                        echo '"'${outputlevel}'", "'${refinedelaystr}'", "'${glmstr}'",  "'${passesgt1str}'", "'${outsize}'"'
+                        echo '"'${outputlevel}'", "'${refinedelaystr}'", "'${slfofiltstr}'",  "'${passesgt1str}'", "'${outsize}'"'
                     fi
                 done
             done

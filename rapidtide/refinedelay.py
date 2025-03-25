@@ -45,7 +45,7 @@ def trainratiotooffset(
     numpoints=501,
     smoothpts=3,
     edgepad=5,
-    glmderivs=1,
+    regressderivs=1,
     debug=False,
 ):
     global ratiotooffsetfunc, maplimits
@@ -59,7 +59,7 @@ def trainratiotooffset(
         print("\tmaxdelay:", maxdelay)
         print("\tsmoothpts:", smoothpts)
         print("\tedgepad:", edgepad)
-        print("\tglmderivs:", glmderivs)
+        print("\tregressderivs:", regressderivs)
         print("\tlagtcgenerator:", lagtcgenerator)
     # make a delay map
     delaystep = (maxdelay - mindelay) / (numpoints - 1)
@@ -87,7 +87,7 @@ def trainratiotooffset(
         fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i])
 
     rt_floattype = "float64"
-    glmmean = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
+    sLFOfitmean = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
     rvalue = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
     r2value = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
     fitNorm = np.zeros((numpoints + 2 * edgepad, 2), dtype=rt_floattype)
@@ -98,9 +98,9 @@ def trainratiotooffset(
     sampletime = timeaxis[1] - timeaxis[0]
     optiondict = {
         "glmthreshval": 0.0,
-        "saveminimumglmfiles": False,
+        "saveminimumsLFOfiltfiles": False,
         "nprocs_makelaggedtcs": 1,
-        "nprocs_glm": 1,
+        "nprocs_regressionfilt": 1,
         "mp_chunksize": 1000,
         "showprogressbar": False,
         "alwaysmultiproc": False,
@@ -110,7 +110,7 @@ def trainratiotooffset(
         "textio": False,
     }
 
-    glmderivratios = getderivratios(
+    regressderivratios = getderivratios(
         fmridata,
         validvoxels,
         timeaxis,
@@ -120,7 +120,7 @@ def trainratiotooffset(
         "glm",
         "refinedelaytest",
         sampletime,
-        glmmean,
+        sLFOfitmean,
         rvalue,
         r2value,
         fitNorm[:, :2],
@@ -131,41 +131,41 @@ def trainratiotooffset(
         None,
         None,
         optiondict,
-        glmderivs=glmderivs,
+        regressderivs=regressderivs,
         debug=debug,
     )
     if debug:
         print("before trimming")
-        print(f"{glmderivratios.shape=}")
+        print(f"{regressderivratios.shape=}")
         print(f"{lagtimes.shape=}")
-    if glmderivs == 1:
-        smoothglmderivratios = tide_filt.unpadvec(
-            smooth(tide_filt.padvec(glmderivratios, padlen=20, padtype="constant"), smoothpts),
+    if regressderivs == 1:
+        smoothregressderivratios = tide_filt.unpadvec(
+            smooth(tide_filt.padvec(regressderivratios, padlen=20, padtype="constant"), smoothpts),
             padlen=20,
         )
-        glmderivratios = glmderivratios[edgepad:-edgepad]
-        smoothglmderivratios = smoothglmderivratios[edgepad:-edgepad]
+        regressderivratios = regressderivratios[edgepad:-edgepad]
+        smoothregressderivratios = smoothregressderivratios[edgepad:-edgepad]
     else:
-        smoothglmderivratios = np.zeros_like(glmderivratios)
-        for i in range(glmderivs):
-            smoothglmderivratios[i, :] = tide_filt.unpadvec(
+        smoothregressderivratios = np.zeros_like(regressderivratios)
+        for i in range(regressderivs):
+            smoothregressderivratios[i, :] = tide_filt.unpadvec(
                 smooth(
-                    tide_filt.padvec(glmderivratios[i, :], padlen=20, padtype="constant"),
+                    tide_filt.padvec(regressderivratios[i, :], padlen=20, padtype="constant"),
                     smoothpts,
                 ),
                 padlen=20,
             )
-        glmderivratios = glmderivratios[:, edgepad:-edgepad]
-        smoothglmderivratios = smoothglmderivratios[:, edgepad:-edgepad]
+        regressderivratios = regressderivratios[:, edgepad:-edgepad]
+        smoothregressderivratios = smoothregressderivratios[:, edgepad:-edgepad]
     lagtimes = lagtimes[edgepad:-edgepad]
     if debug:
         print("after trimming")
-        print(f"{glmderivratios.shape=}")
-        print(f"{smoothglmderivratios.shape=}")
+        print(f"{regressderivratios.shape=}")
+        print(f"{smoothregressderivratios.shape=}")
         print(f"{lagtimes.shape=}")
 
     # make sure the mapping function is legal
-    xaxis = smoothglmderivratios[::-1]
+    xaxis = smoothregressderivratios[::-1]
     yaxis = lagtimes[::-1]
     midpoint = int(len(xaxis) // 2)
     lowerlim = midpoint + 0
@@ -246,7 +246,7 @@ def getderivratios(
     mode,
     outputname,
     oversamptr,
-    glmmean,
+    sLFOfitmean,
     rvalue,
     r2value,
     fitNorm,
@@ -257,15 +257,15 @@ def getderivratios(
     LGR,
     TimingLGR,
     optiondict,
-    glmderivs=1,
+    regressderivs=1,
     debug=False,
 ):
     if debug:
         print("getderivratios")
         print(f"{fitNorm.shape=}")
         print(f"{fitcoeff.shape=}")
-        print(f"{glmderivs=}")
-    voxelsprocessed_glm, regressorset, evset = tide_regressfrommaps.regressfrommaps(
+        print(f"{regressderivs=}")
+    voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
         fmri_data_valid,
         validvoxels,
         initial_fmri_x,
@@ -275,7 +275,7 @@ def getderivratios(
         mode,
         outputname,
         oversamptr,
-        glmmean,
+        sLFOfitmean,
         rvalue,
         r2value,
         fitNorm,
@@ -286,10 +286,10 @@ def getderivratios(
         LGR,
         TimingLGR,
         optiondict["glmthreshval"],
-        optiondict["saveminimumglmfiles"],
+        optiondict["saveminimumsLFOfiltfiles"],
         nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
-        nprocs_glm=optiondict["nprocs_glm"],
-        glmderivs=glmderivs,
+        nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],
+        regressderivs=regressderivs,
         mp_chunksize=optiondict["mp_chunksize"],
         showprogressbar=optiondict["showprogressbar"],
         alwaysmultiproc=optiondict["alwaysmultiproc"],
@@ -298,19 +298,19 @@ def getderivratios(
     )
 
     # calculate the ratio of the first derivative to the main regressor
-    if glmderivs == 1:
-        glmderivratios = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
+    if regressderivs == 1:
+        regressderivratios = np.nan_to_num(fitcoeff[:, 1] / fitcoeff[:, 0])
     else:
         numvoxels = fitcoeff.shape[0]
-        glmderivratios = np.zeros((glmderivs, numvoxels), dtype=np.float64)
-        for i in range(glmderivs):
-            glmderivratios[i, :] = np.nan_to_num(fitcoeff[:, i + 1] / fitcoeff[:, 0])
+        regressderivratios = np.zeros((regressderivs, numvoxels), dtype=np.float64)
+        for i in range(regressderivs):
+            regressderivratios[i, :] = np.nan_to_num(fitcoeff[:, i + 1] / fitcoeff[:, 0])
 
-    return glmderivratios
+    return regressderivratios
 
 
 def filterderivratios(
-    glmderivratios,
+    regressderivratios,
     nativespaceshape,
     validvoxels,
     thedims,
@@ -329,32 +329,34 @@ def filterderivratios(
         print(f"\t{nativespaceshape=}")
 
     # filter the ratio to find weird values
-    themad = mad(glmderivratios).astype(np.float64)
-    print(f"MAD of GLM derivative ratios = {themad}")
+    themad = mad(regressderivratios).astype(np.float64)
+    print(f"MAD of regression fit derivative ratios = {themad}")
     outmaparray, internalspaceshape = tide_io.makedestarray(
         nativespaceshape,
         textio=textio,
         fileiscifti=fileiscifti,
         rt_floattype=rt_floattype,
     )
-    mappedglmderivratios = tide_io.populatemap(
-        glmderivratios,
+    mappedregressderivratios = tide_io.populatemap(
+        regressderivratios,
         internalspaceshape,
         validvoxels,
         outmaparray,
         debug=debug,
     )
     if textio or fileiscifti:
-        medfilt = glmderivratios
-        filteredarray = glmderivratios
+        medfilt = regressderivratios
+        filteredarray = regressderivratios
     else:
         if debug:
-            print(f"{glmderivratios.shape=}, {mappedglmderivratios.shape=}")
+            print(f"{regressderivratios.shape=}, {mappedregressderivratios.shape=}")
         medfilt = median_filter(
-            mappedglmderivratios.reshape(nativespaceshape), size=(3, 3, 3)
+            mappedregressderivratios.reshape(nativespaceshape), size=(3, 3, 3)
         ).reshape(internalspaceshape)[validvoxels]
         filteredarray = np.where(
-            np.fabs(glmderivratios - medfilt) > patchthresh * themad, medfilt, glmderivratios
+            np.fabs(regressderivratios - medfilt) > patchthresh * themad,
+            medfilt,
+            regressderivratios,
         )
         if gausssigma > 0:
             mappedfilteredarray = tide_io.populatemap(
