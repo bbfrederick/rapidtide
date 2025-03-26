@@ -25,6 +25,8 @@ rapidtide/tests/*.jpg
 rapidtide/tests/*.json
 rapidtide/tests/*.tsv.gz
 rapidtide/tests/*.nii.gz
+#rapidtide/tests/testdata/*
+rapidtide/tests/.coveragerc.*
 
 # some local test data
 rapidtide/data/examples/src/scratch
