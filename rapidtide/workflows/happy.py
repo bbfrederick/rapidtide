@@ -1387,7 +1387,7 @@ def happy_main(argparsingfunc):
                 wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float64)
                 wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
                 wavedelayCOM = np.zeros((xsize, ysize, numslices), dtype=np.float64)
-                wavedelayCOM_byslice = wavedelay.reshape((xsize * ysize, numslices))
+                wavedelayCOM_byslice = wavedelayCOM.reshape((xsize * ysize, numslices))
                 waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float64)
                 waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
             else:
