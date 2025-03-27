@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+#
+import numpy as np
+
+from nilearn import image
+from nilearn.plotting import plot_carpet
+import rapidtide.io as tide_io
+import rapidtide.maskutil as tide_mask
+import matplotlib.pyplot as plt
+
+
+SUBJ = "100206"
+SESS = "REST1"
+PEDIR= "RL"
+
+fileroot = "../dst/wintest"
+
+delayfile = f"{fileroot}_desc-windoweddelayoffset_info.nii.gz"
+(
+    delay_img,
+    delay,
+    delay_header,
+    delay_dims,
+    delay_sizes,
+) = tide_io.readfromnifti(delayfile)
+
+rfile = f"{fileroot}_desc-windowedregressr2values_info.nii.gz"
+(
+    r_img,
+    r,
+    r_header,
+    r_dims,
+    r_sizes,
+) = tide_io.readfromnifti(rfile)
+
+fitmaskfile = f"../dst/sub-RAPIDTIDETEST_desc-corrfit_mask.nii.gz"
+(
+    fitmask_img,
+    fitmask,
+    fitmask_header,
+    fitmask_dims,
+    fitmask_sizes,
+) = tide_io.readfromnifti(fitmaskfile)
+
+"""graymaskfile = f"/data/frederic/connectome/reanalysis/derivatives/rapidtide_5p0/{SUBJ}/{SUBJ}_rfMRI_{SESS}_{PEDIR}_5p0_desc-GM_mask.nii.gz"
+(
+    graymask_img,
+    graymask,
+    graymask_header,
+    graymask_dims,
+    graymask_sizes,
+) = tide_io.readfromnifti(graymaskfile)
+
+xsize, ysize, numslices, timepoints = tide_io.parseniftidims(graymask_dims)
+whitemaskfile = f"/data/frederic/connectome/reanalysis/derivatives/segmentations/{SUBJ}_resampled_wmparc.nii.gz"
+thevallist = tide_io.colspectolist("APARC_WHITE")
+print(thevallist)
+whitemask = tide_mask.readamask(whitemaskfile, graymask_header, xsize, valslist=tide_io.colspectolist("APARC_WHITE"))
+
+map_labels = {"Gray Matter": 1, "White Matter": 2}
+atlasdata = graymask.astype(int) * fitmask.astype(int) + whitemask.astype(int) * fitmask.astype(int) * 2
+discrete_atlas_img = image.new_img_like(fitmask_img, atlasdata)
+tide_io.savetonifti(atlasdata, delay_header, "graywhiteatlas")"""
+
+# plot_carpet can infer TR from the image header,
+# but preprocessing can often overwrite that particular header field,
+# so we will be explicit.
+fmritr, timepoints = tide_io.fmritimeinfo(delayfile)
+
+#fig, ax = plt.subplots(figsize=(10, 10))
+
+rlim = 0.5
+displayr = plot_carpet(
+    r_img,
+    fitmask_img,
+    t_r=fmritr,
+    vmin=0.0,
+    vmax=rlim,
+    standardize=False,
+    title="regression r value over time",
+)
+
+delaylim = 0.5
+displaydelay = plot_carpet(
+    delay_img,
+    fitmask_img,
+    t_r=fmritr,
+    vmin=-delaylim,
+    vmax=delaylim,
+    standardize=False,
+    title="delay offset over time",
+)
+
+plt.show()
