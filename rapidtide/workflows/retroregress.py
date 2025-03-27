@@ -335,10 +335,13 @@ def retroregress(args):
     try:
         candoretroregress = therunoptions["retroregresscompatible"]
     except KeyError:
-        print(
-            f"based on {runoptionsfile}, this rapidtide dataset does not support retrospective GLM calculation"
-        )
-        sys.exit()
+        try:
+            candoretroregress = therunoptions["retroglmcompatible"]
+        except KeyError:
+            print(
+                f"based on {runoptionsfile}, this rapidtide dataset does not support retrospective GLM calculation"
+            )
+            sys.exit()
 
     if therunoptions["internalprecision"] == "double":
         rt_floattype = "float64"
