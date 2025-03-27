@@ -3368,7 +3368,7 @@ def rapidtide_main(argparsingfunc):
                 # set gausssigma automatically
                 optiondict["delayoffsetgausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
 
-            regressderivratios = tide_refinedelay.getderivratios(
+            regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
                 fmri_data_valid,
                 validvoxels,
                 initial_fmri_x,

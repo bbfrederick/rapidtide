@@ -230,6 +230,15 @@ def _get_parser():
         ),
         default=DEFAULT_REFINEREGRESSDERIVS,
     )
+    parser.add_argument(
+        "--windowsize",
+        dest="windowsize",
+        action="store",
+        type=lambda x: pf.is_float(parser, x, minval=10.0),
+        metavar="SIZE",
+        help=("Do a segmented delay analysis with a window of size SIZE. "),
+        default=None,
+    )
 
     return parser
 
@@ -586,7 +595,7 @@ def retroregress(args):
             args.delayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
 
         TimingLGR.info("Refinement calibration start")
-        regressderivratios = tide_refinedelay.getderivratios(
+        regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
             fmri_data_valid,
             validvoxels,
             initial_fmri_x,
@@ -711,7 +720,217 @@ def retroregress(args):
         #  Delay refinement end
         ####################################################
 
-    # initialrawvariance = tide_math.imagevariance(fmri_data_valid, None, 1.0 / fmritr)
+    # windowed delay deviation estimation
+    if args.windowsize is not None:
+        if args.refinedelay:
+            lagstouse_valid = lagtimesrefined_valid
+        else:
+            lagstouse_valid = lagtimes_valid
+
+        print("\n\nWindowed delay estimation")
+        TimingLGR.info("Windowed delay estimation start")
+        LGR.info("\n\nWindowed delay estimation")
+
+        if args.delayoffsetgausssigma < 0.0:
+            # set gausssigma automatically
+            args.delayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
+
+        wintrs = int(np.round(args.windowsize / fmritr, 0))
+        wintrs += wintrs % 2
+        winskip = wintrs // 2
+        numtrs = fmri_data_valid.shape[1]
+        numwins = (numtrs // winskip) - 2
+
+        # allocate destination arrays
+        internalwinspaceshape = (numvalidspatiallocs, numwins)
+        internalwinspaceshapederivs = (
+            internalvalidspaceshape,
+            2,
+            numwins,
+        )
+        internalwinfmrishape = (numvalidspatiallocs, wintrs)
+        if args.debug or args.focaldebug:
+            print(f"window space shape = {internalwinspaceshape}")
+            print(f"internalwindowfmrishape shape = {internalwinfmrishape}")
+
+        windowedregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
+        windowedregressrvalues = np.zeros(internalwinspaceshape, dtype=float)
+        windowedmedfiltregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
+        windowedfilteredregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
+        windoweddelayoffset = np.zeros(internalwinspaceshape, dtype=float)
+        if usesharedmem:
+            if args.debug:
+                print("allocating shared memory")
+            winsLFOfitmean, winsLFOfitmean_shm = tide_util.allocshared(
+                internalwinspaceshape, rt_outfloatset
+            )
+            winrvalue, winrvalue_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
+            winr2value, winr2value_shm = tide_util.allocshared(
+                internalwinspaceshape, rt_outfloatset
+            )
+            winfitNorm, winfitNorm_shm = tide_util.allocshared(
+                internalwinspaceshapederivs, rt_outfloatset
+            )
+            winfitcoeff, winitcoeff_shm = tide_util.allocshared(
+                internalwinspaceshapederivs, rt_outfloatset
+            )
+            winmovingsignal, winmovingsignal_shm = tide_util.allocshared(
+                internalwinfmrishape, rt_outfloatset
+            )
+            winlagtc, winlagtc_shm = tide_util.allocshared(internalwinfmrishape, rt_floatset)
+            winfiltereddata, winfiltereddata_shm = tide_util.allocshared(
+                internalwinfmrishape, rt_outfloatset
+            )
+            ramlocation = "in shared memory"
+        else:
+            if args.debug:
+                print("allocating memory")
+            sLFOfitmean = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+            rvalue = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+            r2value = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+            fitNorm = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
+            fitcoeff = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
+            movingsignal = np.zeros(internalwinfmrishape, dtype=rt_outfloattype)
+            lagtc = np.zeros(internalwinfmrishape, dtype=rt_floattype)
+            filtereddata = np.zeros(internalwinfmrishape, dtype=rt_outfloattype)
+            ramlocation = "locally"
+        if args.debug:
+            print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
+        for thewin in range(numwins):
+            print(f"Processing window {thewin + 1} of {numwins}")
+            starttr = thewin * winskip
+            endtr = starttr + wintrs
+
+            windowedregressderivratios[:, thewin], windowedregressrvalues[:, thewin] = (
+                tide_refinedelay.getderivratios(
+                    fmri_data_valid,
+                    validvoxels,
+                    initial_fmri_x,
+                    lagstouse_valid,
+                    corrmask_valid,
+                    genlagtc,
+                    mode,
+                    outputname + f"win_{thewin}",
+                    oversamptr,
+                    winsLFOfitmean[:, thewin],
+                    winrvalue[:, thewin],
+                    winr2value[:, thewin],
+                    winfitNorm[:, :, thewin],
+                    winfitcoeff[:, :, thewin],
+                    winmovingsignal,
+                    winlagtc,
+                    winfiltereddata,
+                    LGR,
+                    TimingLGR,
+                    therunoptions,
+                    regressderivs=args.refineregressderivs,
+                    starttr=starttr,
+                    endtr=endtr,
+                    debug=args.debug,
+                )
+            )
+
+            (
+                windowedmedfiltregressderivratios[:, thewin],
+                windowedfilteredregressderivratios[:, thewin],
+                windoweddelayoffsetMAD,
+            ) = tide_refinedelay.filterderivratios(
+                windowedregressderivratios[:, thewin],
+                (xsize, ysize, numslices),
+                validvoxels,
+                (xdim, ydim, slicedim),
+                gausssigma=args.delayoffsetgausssigma,
+                patchthresh=args.delaypatchthresh,
+                fileiscifti=False,
+                textio=False,
+                rt_floattype=rt_floattype,
+                debug=args.debug,
+            )
+
+            # find the mapping of glm ratios to delays
+            tide_refinedelay.trainratiotooffset(
+                genlagtc,
+                initial_fmri_x[starttr:endtr],
+                outputname + f"win_{thewin}",
+                args.outputlevel,
+                mindelay=args.mindelay,
+                maxdelay=args.maxdelay,
+                numpoints=args.numpoints,
+                debug=args.debug,
+            )
+            TimingLGR.info("Refinement calibration end")
+
+            # now calculate the delay offsets
+            TimingLGR.info("Calculating delay offsets")
+            if args.focaldebug:
+                print(
+                    f"calculating delayoffsets for {windowedfilteredregressderivratios.shape[0]} voxels"
+                )
+            for i in range(windowedfilteredregressderivratios.shape[0]):
+                windoweddelayoffset[i, thewin] = tide_refinedelay.ratiotodelay(
+                    windowedfilteredregressderivratios[i, thewin]
+                )
+
+        namesuffix = f"_desc-delayoffsetwin{thewin}_hist"
+        tide_stats.makeandsavehistogram(
+            windoweddelayoffset[:, thewin],
+            therunoptions["histlen"],
+            1,
+            outputname + namesuffix,
+            displaytitle="Histogram of delay offsets calculated from GLM",
+            dictvarname="delayoffsethist",
+            thedict=None,
+        )
+        theheader = copy.deepcopy(fmri_header)
+        theheader["dim"][4] = numwins
+        theheader["pixdim"][4] = wintrs * fmritr / 2
+        maplist = [
+            (
+                windowedregressderivratios,
+                "windowedregressderivratios",
+                "info",
+                None,
+                f"Raw derivative ratios in each {wintrs * fmritr} second window",
+            ),
+            (
+                windowedregressrvalues,
+                "windowedregressrvalues",
+                "info",
+                None,
+                f"R values for regression in each {wintrs * fmritr} second window",
+            ),
+            (
+                windowedmedfiltregressderivratios,
+                "windowedmedfiltregressderivratios",
+                "info",
+                None,
+                f"Mediean filtered derivative ratios in each {wintrs * fmritr} second window",
+            ),
+            (
+                windowedfilteredregressderivratios,
+                "windowedfilteredregressderivratios",
+                "info",
+                None,
+                f"Filtered derivative ratios in each {wintrs * fmritr} second window",
+            ),
+            (
+                windoweddelayoffset,
+                "windoweddelayoffset",
+                "info",
+                None,
+                f"Delay offsets in each {wintrs * fmritr} second window",
+            ),
+        ]
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            (xsize, ysize, numslices, numwins),
+            theheader,
+            bidsbasedict,
+            debug=args.debug,
+        )
+
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
     print("calling glmmfrommaps")
@@ -1165,7 +1384,16 @@ def retroregress(args):
         tide_util.cleanup_shm(movingsignal_shm)
         tide_util.cleanup_shm(lagtc_shm)
         tide_util.cleanup_shm(filtereddata_shm)
-        TimingLGR.info("Shared memory cleanup complete")
+        if args.windowsize is not None:
+            tide_util.cleanup_shm(winsLFOfitmean_shm)
+            tide_util.cleanup_shm(winrvalue_shm)
+            tide_util.cleanup_shm(winr2value_shm)
+            tide_util.cleanup_shm(winfitNorm_shm)
+            tide_util.cleanup_shm(winitcoeff_shm)
+            tide_util.cleanup_shm(winmovingsignal_shm)
+            tide_util.cleanup_shm(winlagtc_shm)
+            tide_util.cleanup_shm(winfiltereddata_shm)
+    TimingLGR.info("Shared memory cleanup complete")
 
     # shut down logging
     TimingLGR.info("Done")

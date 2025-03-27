@@ -110,7 +110,7 @@ def trainratiotooffset(
         "textio": False,
     }
 
-    regressderivratios = getderivratios(
+    regressderivratios, regressrvalues = getderivratios(
         fmridata,
         validvoxels,
         timeaxis,
@@ -258,17 +258,26 @@ def getderivratios(
     TimingLGR,
     optiondict,
     regressderivs=1,
+    starttr=None,
+    endtr=None,
     debug=False,
 ):
+    if starttr is None:
+        starttr = 0
+    if endtr is None:
+        endtr = fmri_data_valid.shape[1]
     if debug:
         print("getderivratios")
         print(f"{fitNorm.shape=}")
         print(f"{fitcoeff.shape=}")
         print(f"{regressderivs=}")
+        print(f"{starttr=}")
+        print(f"{endtr=}")
+
     voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
-        fmri_data_valid,
+        fmri_data_valid[:, starttr:endtr],
         validvoxels,
-        initial_fmri_x,
+        initial_fmri_x[starttr:endtr],
         lagtimes,
         fitmask,
         genlagtc,
@@ -306,7 +315,7 @@ def getderivratios(
         for i in range(regressderivs):
             regressderivratios[i, :] = np.nan_to_num(fitcoeff[:, i + 1] / fitcoeff[:, 0])
 
-    return regressderivratios
+    return regressderivratios, rvalue
 
 
 def filterderivratios(

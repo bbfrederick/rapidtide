@@ -157,7 +157,7 @@ def eval_refinedelay(
         "textio": False,
     }
 
-    regressderivratios = tide_refinedelay.getderivratios(
+    regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
         fmridata,
         validvoxels,
         timeaxis,
