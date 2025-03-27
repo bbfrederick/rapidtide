@@ -328,20 +328,25 @@ def retroregress(args):
     else:
         usesharedmem = True
 
-    # read the runoptions file
+    # read the runoptions file, update if necessary
     print("reading runoptions")
     runoptionsfile = f"{args.datafileroot}_desc-runoptions_info"
     therunoptions = tide_io.readoptionsfile(runoptionsfile)
     try:
+        therunoptions["retroregresscompatible"] = therunoptions["retroglmcompatible"]
+    except KeyError:
+        pass
+    try:
+        therunoptions["nprocs_regressionfilt"] = therunoptions["nprocs_glmfilt"]
+    except KeyError:
+        pass
+    try:
         candoretroregress = therunoptions["retroregresscompatible"]
     except KeyError:
-        try:
-            candoretroregress = therunoptions["retroglmcompatible"]
-        except KeyError:
-            print(
-                f"based on {runoptionsfile}, this rapidtide dataset does not support retrospective GLM calculation"
-            )
-            sys.exit()
+        print(
+            f"based on {runoptionsfile}, this rapidtide dataset does not support retrospective GLM calculation"
+        )
+        sys.exit()
 
     if therunoptions["internalprecision"] == "double":
         rt_floattype = "float64"
