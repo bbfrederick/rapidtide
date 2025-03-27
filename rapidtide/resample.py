@@ -328,6 +328,9 @@ class FastResampler:
             pl.legend(("input", "hires"))
             pl.show()
 
+    def getdata(self):
+        return self.timeaxis, self.timecourse, self.hires_x, self.hires_y, 1.0 / self.initstep
+
     def info(self, prefix=""):
         print(f"{prefix}{self.timeaxis=}")
         print(f"{prefix}{self.timecourse=}")
