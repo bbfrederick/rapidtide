@@ -91,7 +91,7 @@ def linfitfiltpass(
     filtereddata,
     nprocs=1,
     alwaysmultiproc=False,
-    confoundglm=False,
+    confoundregress=False,
     procbyvoxel=True,
     showprogressbar=True,
     mp_chunksize=1000,
@@ -134,7 +134,7 @@ def linfitfiltpass(
 
                     # process and send the data
                     if procbyvoxel:
-                        if confoundglm:
+                        if confoundregress:
                             outQ.put(
                                 _procOneRegressionFitItem(
                                     val,
@@ -155,7 +155,7 @@ def linfitfiltpass(
                                 )
                             )
                     else:
-                        if confoundglm:
+                        if confoundregress:
                             outQ.put(
                                 _procOneRegressionFitItem(
                                     val,
@@ -193,7 +193,7 @@ def linfitfiltpass(
         # unpack the data
         itemstotal = 0
         if procbyvoxel:
-            if confoundglm:
+            if confoundregress:
                 for voxel in data_out:
                     r2value[voxel[0]] = voxel[3]
                     filtereddata[voxel[0], :] = voxel[7]
@@ -213,7 +213,7 @@ def linfitfiltpass(
                     filtereddata[voxel[0], :] = voxel[7]
                     itemstotal += 1
         else:
-            if confoundglm:
+            if confoundregress:
                 for timepoint in data_out:
                     r2value[timepoint[0]] = timepoint[3]
                     filtereddata[:, timepoint[0]] = timepoint[7]
@@ -245,7 +245,7 @@ def linfitfiltpass(
             ):
                 thedata = fmri_data[vox, :].copy()
                 if (themask is None) or (themask[vox] > 0):
-                    if confoundglm:
+                    if confoundregress:
                         (
                             dummy,
                             dummy,
@@ -289,7 +289,7 @@ def linfitfiltpass(
             ):
                 thedata = fmri_data[:, timepoint].copy()
                 if (themask is None) or (themask[timepoint] > 0):
-                    if confoundglm:
+                    if confoundregress:
                         (
                             dummy,
                             dummy,
@@ -439,7 +439,7 @@ def confoundregress(
         None,
         None,
         filtereddata,
-        confoundglm=True,
+        confoundregress=True,
         nprocs=nprocs,
         showprogressbar=showprogressbar,
         procbyvoxel=True,

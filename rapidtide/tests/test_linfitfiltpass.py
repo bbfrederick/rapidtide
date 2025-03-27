@@ -77,8 +77,8 @@ def test_linfitfiltpass(debug=True, displayplots=False):
     fitcoffs_x = np.zeros((xsize, tsize), dtype=np.float64)
     fitNorm_x = np.zeros((xsize, tsize), dtype=np.float64)
 
-    for confoundglm in [True, False]:
-        if confoundglm:
+    for confoundregress in [True, False]:
+        if confoundregress:
             twaveformrange = np.transpose(twaveforms[:6, :])
             xwaveformrange = xwaveforms[:, :6]
             print(f"{twaveformrange.shape=} - {xwaveformrange.shape=}")
@@ -115,7 +115,7 @@ def test_linfitfiltpass(debug=True, displayplots=False):
 
                     if debug:
                         print(
-                            f"confoundglm={confoundglm}, proc by {direction}, {procstring} proc, {maskstatus}"
+                            f"confoundregress={confoundregress}, proc by {direction}, {procstring} proc, {maskstatus}"
                         )
                     tide_linfitfiltpass.linfitfiltpass(
                         xsize,
@@ -132,7 +132,7 @@ def test_linfitfiltpass(debug=True, displayplots=False):
                         showprogressbar=False,
                         procbyvoxel=procbyvoxel,
                         nprocs=nprocs,
-                        confoundglm=confoundglm,
+                        confoundregress=confoundregress,
                     )
                     if displayplots:
                         plt.figure()
@@ -142,7 +142,7 @@ def test_linfitfiltpass(debug=True, displayplots=False):
                         plt.show()
                     if debug:
                         print(f"\tMSE: {mse(datatoremove, targetarray)}\n")
-                    if not confoundglm:
+                    if not confoundregress:
                         assert mse(datatoremove, targetarray) < 1e-3
 
 

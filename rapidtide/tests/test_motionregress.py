@@ -144,7 +144,7 @@ def test_motionregress(debug=False, displayplots=False):
                     None,
                     None,
                     filtereddata,
-                    confoundglm=True,
+                    confoundregress=True,
                     nprocs=1,
                     showprogressbar=debug,
                     procbyvoxel=True,

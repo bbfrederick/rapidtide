@@ -977,7 +977,7 @@ def retroregress(args):
 
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
-    print("calling glmmfrommaps")
+    print("calling regressfrommaps")
     TimingLGR.info("Starting sLFO filtering")
     if args.refinedelay and args.filterwithrefineddelay:
         lagstouse_valid = lagtimesrefined_valid

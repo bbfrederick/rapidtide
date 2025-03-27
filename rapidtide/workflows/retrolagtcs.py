@@ -250,7 +250,7 @@ def retrolagtcs(args):
         "CommandLineArgs": thecommandline,
     }
 
-    print("calling glmmfrommaps")
+    print("calling makelaggedtcs")
     voxelsprocessed_makelagged = tide_makelagged.makelaggedtcs(
         genlagtc,
         initial_fmri_x,

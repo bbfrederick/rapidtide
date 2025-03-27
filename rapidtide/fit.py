@@ -1415,7 +1415,7 @@ def linfitfilt(thedata, theevs, returnintercept=False, debug=False):
         return filtered, datatoremove, R2, retcoffs
 
 
-def confoundglm(
+def confoundregress(
     data,
     regressors,
     debug=False,

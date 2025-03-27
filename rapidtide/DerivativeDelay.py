@@ -142,7 +142,7 @@ class DerivativeDelay:
                 )
             )
 
-            # find the mapping of glm ratios to delays
+            # find the mapping of derivative ratios to delays
             tide_refinedelay.trainratiotooffset(
                 self.genlagtc,
                 initial_fmri_x,
@@ -205,7 +205,7 @@ class DerivativeDelay:
             therunoptions["histlen"],
             1,
             self.outputname + namesuffix,
-            displaytitle="Histogram of delay offsets calculated from GLM",
+            displaytitle="Histogram of delay offsets calculated from coefficient ratios",
             dictvarname="delayoffsethist",
             thedict=None,
         )
