@@ -334,12 +334,10 @@ def retroregress(args):
     therunoptions = tide_io.readoptionsfile(runoptionsfile)
     sublist = (
         ("retroglmcompatible", "retroregresscompatible"),
-        ("nprocs_glm", "nprocs_regressionfilt"),
-        ("singleproc_glm", "singleproc_regressionfilt"),
-        ("glmsourcefile", "denoisesourcefile"),
         ("glmthreshval", "regressfiltthreshval"),
     )
-
+    therunoptions["singleproc_regressionfilt"] = False
+    therunoptions["nprocs_regressionfilt"] = args.nprocs
     for subpair in sublist:
         try:
             therunoptions[subpair[1]] = therunoptions[subpair[0]]
