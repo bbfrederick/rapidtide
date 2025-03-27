@@ -187,7 +187,7 @@ def stupidramtricks(args):
     thesize, theunit = tide_util.format_bytes(totalbytes)
     print(f"allocated {thesize:.3f} {theunit} {location}")
 
-    """regressderivratios = tide_refinedelay.getderivratios(
+    """regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
         fmri_data_valid,
         validvoxels,
         initial_fmri_x,

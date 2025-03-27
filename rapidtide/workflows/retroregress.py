@@ -230,7 +230,7 @@ def _get_parser():
         ),
         default=DEFAULT_REFINEREGRESSDERIVS,
     )
-    parser.add_argument(
+    experimental.add_argument(
         "--windowsize",
         dest="windowsize",
         action="store",
@@ -238,6 +238,20 @@ def _get_parser():
         metavar="SIZE",
         help=("Do a segmented delay analysis with a window of size SIZE. "),
         default=None,
+    )
+    experimental.add_argument(
+        "--windelayoffsetspatialfilt",
+        dest="windelayoffsetgausssigma",
+        action="store",
+        type=float,
+        metavar="GAUSSSIGMA",
+        help=(
+            "Spatially filter fMRI data prior to calculating windowed delay offsets "
+            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
+            "to have rapidtide set it to half the mean voxel "
+            "dimension (a rule of thumb for a good value)."
+        ),
+        default=DEFAULT_DELAYOFFSETSPATIALFILT,
     )
 
     return parser
@@ -373,7 +387,7 @@ def retroregress(args):
     if not tide_io.checkspacematch(fmri_header, procmask_header):
         raise ValueError("procmask dimensions do not match fmri dimensions")
     procmask_spacebytime = procmask.reshape((numspatiallocs))
-    if args.debug or args.focaldebug:
+    if args.debug:
         print(f"{procmask_spacebytime.shape=}")
         print(f"{tide_stats.getmasksize(procmask_spacebytime)=}")
 
@@ -390,7 +404,7 @@ def retroregress(args):
     if not tide_io.checkspacematch(fmri_header, corrmask_header):
         raise ValueError("corrmask dimensions do not match fmri dimensions")
     corrmask_spacebytime = corrmask.reshape((numspatiallocs))
-    if args.debug or args.focaldebug:
+    if args.debug:
         print(f"{corrmask_spacebytime.shape=}")
         print(f"{tide_stats.getmasksize(corrmask_spacebytime)=}")
 
@@ -452,7 +466,7 @@ def retroregress(args):
     print("figuring out valid voxels")
     validvoxels = np.where(procmask_spacebytime > 0)[0]
     numvalidspatiallocs = np.shape(validvoxels)[0]
-    if args.debug or args.focaldebug:
+    if args.debug:
         print(f"{numvalidspatiallocs=}")
     internalvalidspaceshape = numvalidspatiallocs
     if args.refinedelay:
@@ -464,7 +478,7 @@ def retroregress(args):
         derivaxissize,
     )
     internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    if args.debug or args.focaldebug:
+    if args.debug:
         print(f"validvoxels shape = {numvalidspatiallocs}")
         print(f"internalvalidfmrishape shape = {internalvalidfmrishape}")
 
@@ -536,7 +550,7 @@ def retroregress(args):
         therunoptions["regressfiltthreshval"] = threshval
     mode = "glm"
 
-    if args.debug or args.focaldebug:
+    if args.debug:
         print(f"{validvoxels.shape=}")
         np.savetxt(f"{outputname}_validvoxels.txt", validvoxels)
 
@@ -652,7 +666,7 @@ def retroregress(args):
             # now calculate the delay offsets
             TimingLGR.info("Calculating delay offsets")
             delayoffset = np.zeros_like(filteredregressderivratios)
-            if args.focaldebug:
+            if args.debug:
                 print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
             for i in range(filteredregressderivratios.shape[0]):
                 delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
@@ -722,6 +736,9 @@ def retroregress(args):
 
     # windowed delay deviation estimation
     if args.windowsize is not None:
+        #########################
+        # Begin window processing
+        #########################
         if args.refinedelay:
             lagstouse_valid = lagtimesrefined_valid
         else:
@@ -731,9 +748,9 @@ def retroregress(args):
         TimingLGR.info("Windowed delay estimation start")
         LGR.info("\n\nWindowed delay estimation")
 
-        if args.delayoffsetgausssigma < 0.0:
+        if args.windelayoffsetgausssigma < 0.0:
             # set gausssigma automatically
-            args.delayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
+            args.windelayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
 
         wintrs = int(np.round(args.windowsize / fmritr, 0))
         wintrs += wintrs % 2
@@ -796,10 +813,18 @@ def retroregress(args):
             ramlocation = "locally"
         if args.debug:
             print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
+        thewindowprocoptions = therunoptions
+        if args.focaldebug:
+            thewindowprocoptions["saveminimumsLFOfiltfiles"] = True
+            winoutputlevel = "max"
+        else:
+            thewindowprocoptions["saveminimumsLFOfiltfiles"] = False
+            winoutputlevel = "min"
         for thewin in range(numwins):
             print(f"Processing window {thewin + 1} of {numwins}")
             starttr = thewin * winskip
             endtr = starttr + wintrs
+            winlabel = f"_win-{str(thewin + 1).zfill(3)}"
 
             windowedregressderivratios[:, thewin], windowedregressrvalues[:, thewin] = (
                 tide_refinedelay.getderivratios(
@@ -810,7 +835,7 @@ def retroregress(args):
                     corrmask_valid,
                     genlagtc,
                     mode,
-                    outputname + f"win_{thewin}",
+                    outputname + winlabel,
                     oversamptr,
                     winsLFOfitmean[:, thewin],
                     winrvalue[:, thewin],
@@ -822,7 +847,7 @@ def retroregress(args):
                     winfiltereddata,
                     LGR,
                     TimingLGR,
-                    therunoptions,
+                    thewindowprocoptions,
                     regressderivs=args.refineregressderivs,
                     starttr=starttr,
                     endtr=endtr,
@@ -839,7 +864,7 @@ def retroregress(args):
                 (xsize, ysize, numslices),
                 validvoxels,
                 (xdim, ydim, slicedim),
-                gausssigma=args.delayoffsetgausssigma,
+                gausssigma=args.windelayoffsetgausssigma,
                 patchthresh=args.delaypatchthresh,
                 fileiscifti=False,
                 textio=False,
@@ -851,8 +876,8 @@ def retroregress(args):
             tide_refinedelay.trainratiotooffset(
                 genlagtc,
                 initial_fmri_x[starttr:endtr],
-                outputname + f"win_{thewin}",
-                args.outputlevel,
+                outputname + winlabel,
+                winoutputlevel,
                 mindelay=args.mindelay,
                 maxdelay=args.maxdelay,
                 numpoints=args.numpoints,
@@ -886,11 +911,11 @@ def retroregress(args):
         theheader["pixdim"][4] = wintrs * fmritr / 2
         maplist = [
             (
-                windowedregressderivratios,
-                "windowedregressderivratios",
+                windoweddelayoffset,
+                "windoweddelayoffset",
                 "info",
                 None,
-                f"Raw derivative ratios in each {wintrs * fmritr} second window",
+                f"Delay offsets in each {wintrs * fmritr} second window",
             ),
             (
                 windowedregressrvalues,
@@ -899,28 +924,31 @@ def retroregress(args):
                 None,
                 f"R values for regression in each {wintrs * fmritr} second window",
             ),
-            (
-                windowedmedfiltregressderivratios,
-                "windowedmedfiltregressderivratios",
-                "info",
-                None,
-                f"Mediean filtered derivative ratios in each {wintrs * fmritr} second window",
-            ),
-            (
-                windowedfilteredregressderivratios,
-                "windowedfilteredregressderivratios",
-                "info",
-                None,
-                f"Filtered derivative ratios in each {wintrs * fmritr} second window",
-            ),
-            (
-                windoweddelayoffset,
-                "windoweddelayoffset",
-                "info",
-                None,
-                f"Delay offsets in each {wintrs * fmritr} second window",
-            ),
         ]
+        if args.focaldebug:
+            maplist += [
+                (
+                    windowedmedfiltregressderivratios,
+                    "windowedmedfiltregressderivratios",
+                    "info",
+                    None,
+                    f"Mediean filtered derivative ratios in each {wintrs * fmritr} second window",
+                ),
+                (
+                    windowedfilteredregressderivratios,
+                    "windowedfilteredregressderivratios",
+                    "info",
+                    None,
+                    f"Filtered derivative ratios in each {wintrs * fmritr} second window",
+                ),
+                (
+                    windowedregressderivratios,
+                    "windowedregressderivratios",
+                    "info",
+                    None,
+                    f"Raw derivative ratios in each {wintrs * fmritr} second window",
+                ),
+            ]
         tide_io.savemaplist(
             outputname,
             maplist,
@@ -930,6 +958,9 @@ def retroregress(args):
             bidsbasedict,
             debug=args.debug,
         )
+        #########################
+        # End window processing
+        #########################
 
     initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
 
