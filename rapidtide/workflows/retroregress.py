@@ -332,14 +332,21 @@ def retroregress(args):
     print("reading runoptions")
     runoptionsfile = f"{args.datafileroot}_desc-runoptions_info"
     therunoptions = tide_io.readoptionsfile(runoptionsfile)
-    try:
-        therunoptions["retroregresscompatible"] = therunoptions["retroglmcompatible"]
-    except KeyError:
-        pass
-    try:
-        therunoptions["nprocs_regressionfilt"] = therunoptions["nprocs_glmfilt"]
-    except KeyError:
-        pass
+    sublist = (
+        ("retroglmcompatible", "retroregresscompatible"),
+        ("nprocs_glm", "nprocs_regressionfilt"),
+        ("singleproc_glm", "singleproc_regressionfilt"),
+        ("glmsourcefile", "denoisesourcefile"),
+        ("glmthreshval", "regressfiltthreshval"),
+    )
+
+    for subpair in sublist:
+        try:
+            therunoptions[subpair[1]] = therunoptions[subpair[0]]
+            print(f"substituting {subpair[1]} for {subpair[0]} in runoptions")
+        except KeyError:
+            pass
+
     try:
         candoretroregress = therunoptions["retroregresscompatible"]
     except KeyError:
