@@ -1,7 +1,8 @@
 # Release history
 
-## Version 3.0alpha13 (3/25/25)
-* (rapidtide) Preserve the sign of the GLM fit R value.
+## Version 3.0alpha13 (3/25/27)
+* (rapidtide, retroglm) Preserve the sign of the GLM fit R value (it might be useful for distinguishing arterial blood).
+* (retroglm) Added some secret things, for secret purposes, to satisfy a question I had. More later.
 * (package) Clarified that the final sLFO removal filter does NOT use a GLM (the current filter is an OLS filter)
 
 ## Version 3.0alpha12 (3/19/25)
