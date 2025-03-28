@@ -892,7 +892,7 @@ def delayvar(args):
     Path(f"{outputname}_DELAYVARISRUNNING.txt").unlink()
 
     # create the finished file
-    Path(f"{outputname}_DELAYVAR.txt").touch()
+    Path(f"{outputname}_DELAYVARDONE.txt").touch()
 
 
 def process_args(inputargs=None):
