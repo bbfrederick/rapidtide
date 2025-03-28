@@ -36,6 +36,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
+import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
 from .utils import setup_logger
 
@@ -486,10 +487,12 @@ def delayvar(args):
     winskip = wintrs // 2
     numtrs = fmri_data_valid.shape[1]
     numwins = (numtrs // winskip) - 2
+    winspace = winskip * fmritr
+    winwidth = wintrs * fmritr
 
     # make a highpass filter
     if args.hpf:
-        hpfcutoff = 0.5 / (fmritr * wintrs)
+        hpfcutoff = 1.0 / winwidth
         thehpf = tide_filt.NoncausalFilter(
             "arb",
             transferfunc="trapezoidal",
@@ -726,7 +729,7 @@ def delayvar(args):
         tide_io.writebidstsv(
             f"{outputname}_desc-pcacomponents_timeseries",
             thecomponents,
-            2.0 / (wintrs * fmritr),
+            1.0 / winspace,
         )
         tide_io.writevec(
             100.0 * thefit.explained_variance_ratio_,
@@ -741,22 +744,75 @@ def delayvar(args):
     tide_io.writebidstsv(
         f"{outputname}_desc-systemiccomponent_timeseries",
         systemiccomp,
-        2.0 / (wintrs * fmritr),
+        1.0 / winspace,
     )
 
-    """(
-        mergedregressors,
-        mergedregressorlabels,
-        filtwindoweddelayoffset,
-        confoundr2,
-    ) = tide_linfitfiltpass.confoundregress(
-        systemiccomp.reshape(1, -1),
-        ["systemiccomponent"],
-        windoweddelayoffset,
-        fmritr,
-        nprocs=args.nprocs,
-        debug=args.focaldebug,
-    )"""
+    doregress = True
+    if doregress:
+        if usesharedmem:
+            if args.debug:
+                print("allocating shared memory")
+            systemicsLFOfitmean, systemicsLFOfitmean_shm = tide_util.allocshared(
+                internalwinspaceshape, rt_outfloatset
+            )
+            systemicrvalue, systemicrvalue_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
+            systemicr2value, systemicr2value_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
+            systemicfitNorm, systemicfitNorm_shm = tide_util.allocshared(
+                internalwinspaceshapederivs, rt_outfloatset
+            )
+            systemicfitcoeff, systemicitcoeff_shm = tide_util.allocshared(
+                internalwinspaceshapederivs, rt_outfloatset
+            )
+            systemicmovingsignal, systemicmovingsignal_shm = tide_util.allocshared(
+                internalwinspaceshape, rt_outfloatset
+            )
+            systemiclagtc, systemiclagtc_shm = tide_util.allocshared(internalwinspaceshape, rt_floatset)
+            systemicfiltereddata, systemicfiltereddata_shm = tide_util.allocshared(
+                internalwinspaceshape, rt_outfloatset
+            )
+        else:
+            if args.debug:
+                print("allocating memory")
+            systemicsLFOfitmean = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+            systemicrvalue = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+            systemicr2value = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+            systemicfitNorm = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
+            systemicfitcoeff = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
+            systemicmovingsignal = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+            systemiclagtc = np.zeros(internalwinspaceshape, dtype=rt_floattype)
+            systemicfiltereddata = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+
+        windowlocs = (
+                np.linspace(0.0, winspace * numwins, num=numwins, endpoint=False) + skiptime
+        )
+        voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
+            windoweddelayoffset,
+            validvoxels,
+            windowlocs,
+            0.0 * lagstouse_valid,
+            corrmask_valid,
+            genlagtc,
+            mode,
+            outputname,
+            oversamptr,
+            systemicsLFOfitmean,
+            systemicrvalue,
+            systemicr2value,
+            systemicfitNorm[:, :],
+            systemicfitcoeff[:, :],
+            systemicmovingsignal,
+            systemiclagtc,
+            systemicfiltereddata,
+            LGR,
+            TimingLGR,
+            threshval,
+            False,
+            nprocs_makelaggedtcs=args.nprocs,
+            nprocs_regressionfilt=args.nprocs,
+            regressderivs=1,
+            showprogressbar=args.showprogressbar,
+            debug=args.focaldebug,
+        )
 
     namesuffix = f"_desc-delayoffsetwin{thewin}_hist"
     tide_stats.makeandsavehistogram(
@@ -770,23 +826,40 @@ def delayvar(args):
     )
     theheader = copy.deepcopy(fmri_header)
     theheader["dim"][4] = numwins
-    theheader["pixdim"][4] = wintrs * fmritr / 2
+    theheader["pixdim"][4] = winspace
     maplist = [
         (
             windoweddelayoffset,
             "windoweddelayoffset",
             "info",
             None,
-            f"Delay offsets in each {wintrs * fmritr} second window",
+            f"Delay offsets in each {winspace} second window",
         ),
         (
             np.square(windowedregressrvalues),
             "windowedregressr2values",
             "info",
             None,
-            f"R2 values for regression in each {wintrs * fmritr} second window",
+            f"R2 values for regression in each {winspace} second window",
         ),
     ]
+    if doregress:
+        maplist += [
+            (
+                systemicfiltereddata,
+                "systemicfiltereddata",
+                "info",
+                None,
+                f"Systemic filtered delay offsets in each {winspace} second window",
+            ),
+            (
+                np.square(systemicr2value),
+                "systemicr2value",
+                "info",
+                None,
+                f"R2 values for systemic regression in each {winspace} second window",
+            ),
+        ]
     if reduceddata is not None:
         maplist += (
             (
@@ -794,7 +867,7 @@ def delayvar(args):
                 "windoweddelayoffsetPCA",
                 "info",
                 None,
-                f"PCA cleaned delay offsets in each {wintrs * fmritr} second window",
+                f"PCA cleaned delay offsets in each {winspace} second window",
             ),
         )
 
@@ -803,7 +876,7 @@ def delayvar(args):
         "filtwindoweddelayoffset",
         "info",
         None,
-        f"Delay offsets in each {wintrs * fmritr} second window with the systemic component removed",
+        f"Delay offsets in each {winspace} second window with the systemic component removed",
     ),"""
     if args.focaldebug:
         maplist += [
@@ -812,21 +885,21 @@ def delayvar(args):
                 "windowedmedfiltregressderivratios",
                 "info",
                 None,
-                f"Mediean filtered derivative ratios in each {wintrs * fmritr} second window",
+                f"Mediean filtered derivative ratios in each {winspace} second window",
             ),
             (
                 windowedfilteredregressderivratios,
                 "windowedfilteredregressderivratios",
                 "info",
                 None,
-                f"Filtered derivative ratios in each {wintrs * fmritr} second window",
+                f"Filtered derivative ratios in each {winspace} second window",
             ),
             (
                 windowedregressderivratios,
                 "windowedregressderivratios",
                 "info",
                 None,
-                f"Raw derivative ratios in each {wintrs * fmritr} second window",
+                f"Raw derivative ratios in each {winspace} second window",
             ),
         ]
     tide_io.savemaplist(
@@ -862,6 +935,15 @@ def delayvar(args):
         tide_util.cleanup_shm(winmovingsignal_shm)
         tide_util.cleanup_shm(winlagtc_shm)
         tide_util.cleanup_shm(winfiltereddata_shm)
+        if doregress:
+            tide_util.cleanup_shm(systemicsLFOfitmean_shm)
+            tide_util.cleanup_shm(systemicrvalue_shm)
+            tide_util.cleanup_shm(systemicr2value_shm)
+            tide_util.cleanup_shm(systemicfitNorm_shm)
+            tide_util.cleanup_shm(systemicitcoeff_shm)
+            tide_util.cleanup_shm(systemicmovingsignal_shm)
+            tide_util.cleanup_shm(systemiclagtc_shm)
+            tide_util.cleanup_shm(systemicfiltereddata_shm)
     TimingLGR.info("Shared memory cleanup complete")
 
     # shut down logging
