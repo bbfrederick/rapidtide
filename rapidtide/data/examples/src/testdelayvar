@@ -6,6 +6,9 @@ delayvar \
     --alternateoutput ../dst/delayvartest \
     --nprocs -1 \
     --nohpfilter \
+    --windowsize 15 \
+    --systemicfittype pca \
+    --pcacomponents 0.8 \
     --outputlevel max \
     --focaldebug \
     --windelayoffsetspatialfilt 3

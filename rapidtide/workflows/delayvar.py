@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+from scipy.stats import pearsonr
 from sklearn.decomposition import PCA
 
 import rapidtide.filter as tide_filt
@@ -58,6 +59,7 @@ DEFAULT_REFINEDELAYNUMPOINTS = 501
 DEFAULT_DELAYOFFSETSPATIALFILT = -1
 DEFAULT_WINDOWSIZE = 30.0
 DEFAULT_SYSTEMICFITTYPE = "mean"
+DEFAULT_PCACOMPONENTS = 1
 
 
 def _get_parser():
@@ -166,6 +168,14 @@ def _get_parser():
             f'Default is "{DEFAULT_SYSTEMICFITTYPE}".'
         ),
         default=DEFAULT_SYSTEMICFITTYPE,
+    )
+    parser.add_argument(
+        "--pcacomponents",
+        metavar="NCOMP",
+        dest="pcacomponents",
+        type=float,
+        help="Use NCOMP components for PCA fit of phase",
+        default=DEFAULT_PCACOMPONENTS,
     )
     parser.add_argument(
         "--debug",
@@ -332,7 +342,7 @@ def delayvar(args):
     )
 
     # create the canary file
-    Path(f"{outputname}_RETROISRUNNING.txt").touch()
+    Path(f"{outputname}_DELAYVARISRUNNING.txt").touch()
 
     if args.debug:
         print(f"{fmri_data.shape=}")
@@ -675,30 +685,56 @@ def delayvar(args):
         if thevar[vox] > 0.0:
             scaledvoxels[vox, :] = scaledvoxels[vox, :] / thevar[vox]
     if args.systemicfittype == "pca":
-        pcacomponents = 0.8
+        if args.pcacomponents < 0.0:
+            pcacomponents = "mle"
+        elif args.pcacomponents >= 1.0:
+            pcacomponents = int(np.round(args.pcacomponents))
+        elif args.pcacomponents == 0.0:
+            print("0.0 is not an allowed value for pcacomponents")
+            sys.exit()
+        else:
+            pcacomponents = args.pcacomponents
+
+        # use the method of "A novel perspective to calibrate temporal delays in cerebrovascular reactivity
+        # using hypercapnic and hyperoxic respiratory challenges". NeuroImage 187, 154?165 (2019).
+        print(f"performing pca refinement with pcacomponents set to {pcacomponents}")
         try:
             thefit = PCA(n_components=pcacomponents).fit(scaledvoxels)
         except ValueError:
             if pcacomponents == "mle":
-                LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
+                print("mle estimation failed - falling back to pcacomponents=0.8")
                 thefit = PCA(n_components=0.8).fit(scaledvoxels)
             else:
-                raise ValueError("unhandled math exception in PCA refinement - exiting")
-
-        varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
-        thetransform = thefit.transform(scaledvoxels)
-        if args.focaldebug:
-            print(f"PCA: {thetransform.shape=}")
-        systemiccomp = np.mean(thetransform, axis=0)
-        systemiccomp -= np.mean(systemiccomp)
-        if args.focaldebug:
-            print(f"PCA: {varex=}")
+                print("unhandled math exception in PCA refinement - exiting")
+                sys.exit()
         print(
             f"Using {len(thefit.components_)} component(s), accounting for "
-            f"{varex:.2f}% of the variance"
+            + f"{100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]}% of the variance"
+        )
+        reduceddata = thefit.inverse_transform(thefit.transform(scaledvoxels))
+        if args.focaldebug:
+            print("complex processing: reduceddata.shape =", scaledvoxels.shape)
+        pcadata = np.mean(reduceddata, axis=0)
+        averagedata = np.mean(windoweddelayoffset, axis=0)
+        thepxcorr = pearsonr(averagedata, pcadata)[0]
+        LGR.info(f"pca/avg correlation = {thepxcorr}")
+        if thepxcorr > 0.0:
+            systemiccomp = 1.0 * pcadata
+        else:
+            systemiccomp = -1.0 * pcadata
+        thecomponents = thefit.components_[:]
+        tide_io.writebidstsv(
+            f"{outputname}_desc-pcacomponents_timeseries",
+            thecomponents,
+            2.0 / (wintrs * fmritr),
+        )
+        tide_io.writevec(
+            100.0 * thefit.explained_variance_ratio_,
+            f"{outputname}_desc-pcaexplainedvarianceratio_info.tsv",
         )
     elif args.systemicfittype == "mean":
         systemiccomp = np.mean(scaledvoxels, axis=0)
+        reduceddata = None
     else:
         print("unhandled systemic filter type")
         sys.exit(0)
@@ -751,6 +787,17 @@ def delayvar(args):
             f"R2 values for regression in each {wintrs * fmritr} second window",
         ),
     ]
+    if reduceddata is not None:
+        maplist += (
+            (
+                reduceddata,
+                "windoweddelayoffsetPCA",
+                "info",
+                None,
+                f"PCA cleaned delay offsets in each {wintrs * fmritr} second window",
+            ),
+        )
+
     """(
         filtwindoweddelayoffset,
         "filtwindoweddelayoffset",
@@ -842,10 +889,10 @@ def delayvar(args):
             handler.close()
 
     # delete the canary file
-    Path(f"{outputname}_RETROISRUNNING.txt").unlink()
+    Path(f"{outputname}_DELAYVARISRUNNING.txt").unlink()
 
     # create the finished file
-    Path(f"{outputname}_RETRODONE.txt").touch()
+    Path(f"{outputname}_DELAYVAR.txt").touch()
 
 
 def process_args(inputargs=None):
