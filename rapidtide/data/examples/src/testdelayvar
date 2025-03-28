@@ -1,0 +1,11 @@
+#!/bin/bash
+
+delayvar \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST \
+    --alternateoutput ../dst/delayvartest \
+    --nprocs -1 \
+    --nohpfilter \
+    --outputlevel max \
+    --focaldebug \
+    --windelayoffsetspatialfilt 3

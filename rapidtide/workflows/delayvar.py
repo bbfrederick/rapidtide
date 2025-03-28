@@ -29,17 +29,13 @@ from sklearn.decomposition import PCA
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
-import rapidtide.linfitfiltpass as tide_linfitfiltpass
-import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
-import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
-from .rapidtide_parser import DEFAULT_REGRESSIONFILTDERIVS
 from .utils import setup_logger
 
 
@@ -60,7 +56,8 @@ DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
 DEFAULT_DELAYOFFSETSPATIALFILT = -1
-DEFAULT_REFINEREGRESSDERIVS = 1
+DEFAULT_WINDOWSIZE = 30.0
+DEFAULT_SYSTEMICFITTYPE = "mean"
 
 
 def _get_parser():
@@ -69,7 +66,7 @@ def _get_parser():
     """
     parser = argparse.ArgumentParser(
         prog="delayvar",
-        description="Do the rapidtide sLFO filtering using the maps generated from a previous analysis.",
+        description="Calculate variation in delay time over the course of an acquisition.",
         allow_abbrev=False,
     )
 
@@ -90,17 +87,6 @@ def _get_parser():
         type=str,
         help="Alternate output root (if not specified, will use the same root as the previous dataset).",
         default=None,
-    )
-    parser.add_argument(
-        "--regressderivs",
-        dest="regressderivs",
-        action="store",
-        type=lambda x: pf.is_int(parser, x, minval=0),
-        metavar="NDERIVS",
-        help=(
-            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_REGRESSIONFILTDERIVS}"
-        ),
-        default=DEFAULT_REGRESSIONFILTDERIVS,
     )
     parser.add_argument(
         "--nprocs",
@@ -148,33 +134,10 @@ def _get_parser():
         default=True,
     )
     parser.add_argument(
-        "--makepseudofile",
-        dest="makepseudofile",
-        action="store_true",
-        help=("Make a simulated input file from the mean and the movingsignal."),
-        default=False,
-    )
-    parser.add_argument(
-        "--norefinedelay",
-        dest="refinedelay",
+        "--nohpfilter",
+        dest="hpf",
         action="store_false",
-        help=("Do not calculate a refined delay map using GLM information."),
-        default=True,
-    )
-    parser.add_argument(
-        "--refinecorr",
-        dest="refinecorr",
-        action="store_true",
-        help=(
-            "Recalculate the maxcorr map using GLM coefficient of determination from bandpassed data."
-        ),
-        default=False,
-    )
-    parser.add_argument(
-        "--nofilterwithrefineddelay",
-        dest="filterwithrefineddelay",
-        action="store_false",
-        help=("Do not use the refined delay in sLFO filter."),
+        help=("Disable highpass filtering on data and regressor."),
         default=True,
     )
     parser.add_argument(
@@ -190,18 +153,19 @@ def _get_parser():
         default=DEFAULT_PATCHTHRESH,
     )
     parser.add_argument(
-        "--delayoffsetspatialfilt",
-        dest="delayoffsetgausssigma",
+        "--systemicfittype",
+        dest="systemicfittype",
         action="store",
-        type=float,
-        metavar="GAUSSSIGMA",
+        type=str,
+        choices=[
+            "mean",
+            "pca",
+        ],
         help=(
-            "Spatially filter fMRI data prior to calculating delay offsets "
-            "using GAUSSSIGMA in mm.  Set GAUSSSIGMA negative "
-            "to have rapidtide set it to half the mean voxel "
-            "dimension (a rule of thumb for a good value)."
+            f"Use mean or pca to fit the systemic variation in delay offset. "
+            f'Default is "{DEFAULT_SYSTEMICFITTYPE}".'
         ),
-        default=DEFAULT_DELAYOFFSETSPATIALFILT,
+        default=DEFAULT_SYSTEMICFITTYPE,
     )
     parser.add_argument(
         "--debug",
@@ -221,25 +185,15 @@ def _get_parser():
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
     )
     experimental.add_argument(
-        "--refineregressderivs",
-        dest="refineregressderivs",
-        action="store",
-        type=lambda x: pf.is_int(parser, x, minval=1),
-        metavar="NDERIVS",
-        help=(
-            f"When doing GLM for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
-            f"Default is {DEFAULT_REFINEREGRESSDERIVS}"
-        ),
-        default=DEFAULT_REFINEREGRESSDERIVS,
-    )
-    experimental.add_argument(
         "--windowsize",
         dest="windowsize",
         action="store",
         type=lambda x: pf.is_float(parser, x, minval=10.0),
         metavar="SIZE",
-        help=("Do a segmented delay analysis with a window of size SIZE. "),
-        default=None,
+        help=(
+            f"Set segmented delay analysis window size to SIZE seconds. Default is {DEFAULT_WINDOWSIZE}."
+        ),
+        default=DEFAULT_WINDOWSIZE,
     )
     experimental.add_argument(
         "--windelayoffsetspatialfilt",
@@ -424,7 +378,9 @@ def delayvar(args):
         print(f"{tide_stats.getmasksize(corrmask_spacebytime)=}")
 
     print("reading lagtimes")
-    lagtimesfile = f"{args.datafileroot}_desc-maxtime_map.nii.gz"
+    lagtimesfile = f"{args.datafileroot}_desc-maxtimerefined_map.nii.gz"
+    if not os.path.exists(lagtimesfile):
+        lagtimesfile = f"{args.datafileroot}_desc-maxtime_map.nii.gz"
     (
         lagtimes_input,
         lagtimes,
@@ -448,26 +404,6 @@ def delayvar(args):
         np.linspace(0.0, validtimepoints * fmritr, num=validtimepoints, endpoint=False) + skiptime
     )
 
-    if therunoptions["arbvec"] is not None:
-        # NOTE - this vector is LOWERPASS, UPPERPASS, LOWERSTOP, UPPERSTOP
-        # setfreqs expects LOWERSTOP, LOWERPASS, UPPERPASS, UPPERSTOP
-        theprefilter = tide_filt.NoncausalFilter(
-            "arb",
-            transferfunc=therunoptions["filtertype"],
-        )
-        theprefilter.setfreqs(
-            therunoptions["arbvec"][2],
-            therunoptions["arbvec"][0],
-            therunoptions["arbvec"][1],
-            therunoptions["arbvec"][3],
-        )
-    else:
-        theprefilter = tide_filt.NoncausalFilter(
-            therunoptions["filterband"],
-            transferfunc=therunoptions["filtertype"],
-            padtime=therunoptions["padseconds"],
-        )
-
     # read the lagtc generator file
     print("reading lagtc generator")
     lagtcgeneratorfile = f"{args.datafileroot}_desc-lagtcgenerator_timeseries"
@@ -483,19 +419,6 @@ def delayvar(args):
     numvalidspatiallocs = np.shape(validvoxels)[0]
     if args.debug:
         print(f"{numvalidspatiallocs=}")
-    internalvalidspaceshape = numvalidspatiallocs
-    if args.refinedelay:
-        derivaxissize = np.max([args.refineregressderivs + 1, args.regressderivs + 1])
-    else:
-        derivaxissize = args.regressderivs + 1
-    internalvalidspaceshapederivs = (
-        internalvalidspaceshape,
-        derivaxissize,
-    )
-    internalvalidfmrishape = (numvalidspatiallocs, np.shape(initial_fmri_x)[0])
-    if args.debug:
-        print(f"validvoxels shape = {numvalidspatiallocs}")
-        print(f"internalvalidfmrishape shape = {internalvalidfmrishape}")
 
     # slicing to valid voxels
     print("selecting valid voxels")
@@ -505,54 +428,6 @@ def delayvar(args):
     procmask_valid = procmask_spacebytime[validvoxels]
     if args.debug:
         print(f"{fmri_data_valid.shape=}")
-
-    if usesharedmem:
-        if args.debug:
-            print("allocating shared memory")
-        sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
-            internalvalidspaceshape, rt_outfloatset
-        )
-        rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloatset)
-        fitcoeff, fitcoeff_shm = tide_util.allocshared(
-            internalvalidspaceshapederivs, rt_outfloatset
-        )
-        movingsignal, movingsignal_shm = tide_util.allocshared(
-            internalvalidfmrishape, rt_outfloatset
-        )
-        lagtc, lagtc_shm = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
-        filtereddata, filtereddata_shm = tide_util.allocshared(
-            internalvalidfmrishape, rt_outfloatset
-        )
-        ramlocation = "in shared memory"
-    else:
-        if args.debug:
-            print("allocating memory")
-        sLFOfitmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-        fitcoeff = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-        movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-        lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-        filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-        ramlocation = "locally"
-
-    totalbytes = (
-        sLFOfitmean.nbytes
-        + rvalue.nbytes
-        + r2value.nbytes
-        + fitNorm.nbytes
-        + fitcoeff.nbytes
-        + movingsignal.nbytes
-        + lagtc.nbytes
-        + filtereddata.nbytes
-    )
-    thesize, theunit = tide_util.format_bytes(totalbytes)
-    ramstring = f"allocated {thesize:.3f} {theunit} {ramlocation}"
-    print(ramstring)
-    therunoptions["totalretrobytes"] = totalbytes
 
     oversampfactor = int(therunoptions["oversampfactor"])
     if args.debug:
@@ -585,870 +460,52 @@ def delayvar(args):
         "CommandLineArgs": thecommandline,
     }
 
-    if args.debug:
-        # dump the fmri input file going to glm
-        theheader = copy.deepcopy(fmri_header)
-        theheader["dim"][4] = validtimepoints
-        theheader["pixdim"][4] = fmritr
-
-        maplist = [
-            (
-                fmri_data_valid,
-                "inputdata",
-                "bold",
-                None,
-                "fMRI data that will be subjected to sLFO filtering",
-            ),
-        ]
-        tide_io.savemaplist(
-            outputname,
-            maplist,
-            validvoxels,
-            (xsize, ysize, numslices, validtimepoints),
-            theheader,
-            bidsbasedict,
-            textio=therunoptions["textio"],
-            fileiscifti=False,
-            rt_floattype=rt_floattype,
-            cifti_hdr=None,
-        )
-
-    # refine the delay value prior to calculating the GLM
-    if args.refinedelay:
-        print("\n\nDelay refinement")
-        TimingLGR.info("Delay refinement start")
-        LGR.info("\n\nDelay refinement")
-
-        if args.delayoffsetgausssigma < 0.0:
-            # set gausssigma automatically
-            args.delayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
-
-        TimingLGR.info("Refinement calibration start")
-        regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
-            fmri_data_valid,
-            validvoxels,
-            initial_fmri_x,
-            lagtimes_valid,
-            corrmask_valid,
-            genlagtc,
-            mode,
-            outputname,
-            oversamptr,
-            sLFOfitmean,
-            rvalue,
-            r2value,
-            fitNorm[:, : (args.refineregressderivs + 1)],
-            fitcoeff[:, : (args.refineregressderivs + 1)],
-            movingsignal,
-            lagtc,
-            filtereddata,
-            LGR,
-            TimingLGR,
-            therunoptions,
-            regressderivs=args.refineregressderivs,
-            debug=args.debug,
-        )
-
-        if args.refineregressderivs == 1:
-            medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
-                tide_refinedelay.filterderivratios(
-                    regressderivratios,
-                    (xsize, ysize, numslices),
-                    validvoxels,
-                    (xdim, ydim, slicedim),
-                    gausssigma=args.delayoffsetgausssigma,
-                    patchthresh=args.delaypatchthresh,
-                    fileiscifti=False,
-                    textio=False,
-                    rt_floattype=rt_floattype,
-                    debug=args.debug,
-                )
-            )
-
-            # find the mapping of glm ratios to delays
-            tide_refinedelay.trainratiotooffset(
-                genlagtc,
-                initial_fmri_x,
-                outputname,
-                args.outputlevel,
-                mindelay=args.mindelay,
-                maxdelay=args.maxdelay,
-                numpoints=args.numpoints,
-                debug=args.debug,
-            )
-            TimingLGR.info("Refinement calibration end")
-
-            # now calculate the delay offsets
-            TimingLGR.info("Calculating delay offsets")
-            delayoffset = np.zeros_like(filteredregressderivratios)
-            if args.debug:
-                print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
-            for i in range(filteredregressderivratios.shape[0]):
-                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
-                """delayoffset[i] = tide_refinedelay.coffstodelay(
-                    np.asarray([filteredregressderivratios[i]]),
-                    mindelay=args.mindelay,
-                    maxdelay=args.maxdelay,
-                )"""
-
-            refinedvoxelstoreport = filteredregressderivratios.shape[0]
-        else:
-            medfiltregressderivratios = np.zeros_like(regressderivratios)
-            filteredregressderivratios = np.zeros_like(regressderivratios)
-            delayoffsetMAD = np.zeros(args.refineregressderivs, dtype=float)
-            for i in range(args.refineregressderivs):
-                (
-                    medfiltregressderivratios[i, :],
-                    filteredregressderivratios[i, :],
-                    delayoffsetMAD[i],
-                ) = tide_refinedelay.filterderivratios(
-                    regressderivratios[i, :],
-                    (xsize, ysize, numslices),
-                    validvoxels,
-                    (xdim, ydim, slicedim),
-                    gausssigma=args.delayoffsetgausssigma,
-                    patchthresh=args.delaypatchthresh,
-                    fileiscifti=False,
-                    textio=False,
-                    rt_floattype=rt_floattype,
-                    debug=args.debug,
-                )
-
-            # now calculate the delay offsets
-            delayoffset = np.zeros_like(filteredregressderivratios[0, :])
-            if args.debug:
-                print(f"calculating delayoffsets for {filteredregressderivratios.shape[1]} voxels")
-            for i in range(filteredregressderivratios.shape[1]):
-                delayoffset[i] = tide_refinedelay.coffstodelay(
-                    filteredregressderivratios[:, i],
-                    mindelay=args.mindelay,
-                    maxdelay=args.maxdelay,
-                )
-            refinedvoxelstoreport = filteredregressderivratios.shape[1]
-
-        namesuffix = "_desc-delayoffset_hist"
-        tide_stats.makeandsavehistogram(
-            delayoffset,
-            therunoptions["histlen"],
-            1,
-            outputname + namesuffix,
-            displaytitle="Histogram of delay offsets calculated from GLM",
-            dictvarname="delayoffsethist",
-            thedict=None,
-        )
-        lagtimesrefined_valid = lagtimes_valid + delayoffset
-
-        TimingLGR.info(
-            "Delay offset calculation done",
-            {
-                "message2": refinedvoxelstoreport,
-                "message3": "voxels",
-            },
-        )
-        ####################################################
-        #  Delay refinement end
-        ####################################################
-
-    initialvariance = tide_math.imagevariance(fmri_data_valid, theprefilter, 1.0 / fmritr)
-
-    print("calling regressfrommaps")
-    TimingLGR.info("Starting sLFO filtering")
-    if args.refinedelay and args.filterwithrefineddelay:
-        lagstouse_valid = lagtimesrefined_valid
-    else:
-        lagstouse_valid = lagtimes_valid
-    voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
-        fmri_data_valid,
-        validvoxels,
-        initial_fmri_x,
-        lagstouse_valid,
-        corrmask_valid,
-        genlagtc,
-        mode,
-        outputname,
-        oversamptr,
-        sLFOfitmean,
-        rvalue,
-        r2value,
-        fitNorm[:, : args.regressderivs + 1],
-        fitcoeff[:, : args.regressderivs + 1],
-        movingsignal,
-        lagtc,
-        filtereddata,
-        LGR,
-        TimingLGR,
-        threshval,
-        args.saveminimumsLFOfiltfiles,
-        nprocs_makelaggedtcs=args.nprocs,
-        nprocs_regressionfilt=args.nprocs,
-        regressderivs=args.regressderivs,
-        showprogressbar=args.showprogressbar,
-        debug=args.debug,
-    )
-    print(f"filtered {voxelsprocessed_regressionfilt} voxels")
-    TimingLGR.info(
-        "sLFO filtering done",
-        {
-            "message2": voxelsprocessed_regressionfilt,
-            "message3": "voxels",
-        },
-    )
-    # finalrawvariance = tide_math.imagevariance(filtereddata, None, 1.0 / fmritr)
-    finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
-
-    divlocs = np.where(finalvariance > 0.0)
-    varchange = initialvariance * 0.0
-    varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
-
-    """divlocs = np.where(finalrawvariance > 0.0)
-    rawvarchange = initialrawvariance * 0.0
-    rawvarchange[divlocs] = 100.0 * (finalrawvariance[divlocs] / initialrawvariance[divlocs] - 1.0)"""
-
     # windowed delay deviation estimation
-    if args.windowsize is not None:
-        #########################
-        # Begin window processing
-        #########################
-        if args.refinedelay:
-            lagstouse_valid = lagtimesrefined_valid
-        else:
-            lagstouse_valid = lagtimes_valid
+    lagstouse_valid = lagtimes_valid
 
-        print("\n\nWindowed delay estimation")
-        TimingLGR.info("Windowed delay estimation start")
-        LGR.info("\n\nWindowed delay estimation")
+    print("\n\nWindowed delay estimation")
+    TimingLGR.info("Windowed delay estimation start")
+    LGR.info("\n\nWindowed delay estimation")
 
-        if args.windelayoffsetgausssigma < 0.0:
-            # set gausssigma automatically
-            args.windelayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
+    if args.windelayoffsetgausssigma < 0.0:
+        # set gausssigma automatically
+        args.windelayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
 
-        wintrs = int(np.round(args.windowsize / fmritr, 0))
-        wintrs += wintrs % 2
-        winskip = wintrs // 2
-        numtrs = fmri_data_valid.shape[1]
-        numwins = (numtrs // winskip) - 2
+    wintrs = int(np.round(args.windowsize / fmritr, 0))
+    wintrs += wintrs % 2
+    winskip = wintrs // 2
+    numtrs = fmri_data_valid.shape[1]
+    numwins = (numtrs // winskip) - 2
 
-        # make a highpass filter
-        hpfcutoff = 1.0 / wintrs
+    # make a highpass filter
+    if args.hpf:
+        hpfcutoff = 0.5 / (fmritr * wintrs)
         thehpf = tide_filt.NoncausalFilter(
             "arb",
             transferfunc="trapezoidal",
             padtime=30.0,
             padtype="reflect",
         )
-        thehpf.setfreqs(hpfcutoff * 0.95, hpfcutoff, 1.0e20, 1.0e20)
+        thehpf.setfreqs(hpfcutoff * 0.95, hpfcutoff, 0.15, 0.15)
 
-        # make a filetered lagtc generator
+    # make a filtered lagtc generator if necessary
+    if args.hpf:
         reference_x, reference_y, dummy, dummy, genlagsamplerate = genlagtc.getdata()
-        hpfgenlagtc = tide_resample.FastResampler(
+        genlagtc = tide_resample.FastResampler(
             reference_x,
-            reference_y,
+            thehpf.apply(genlagsamplerate, reference_y),
             padtime=therunoptions["fastresamplerpadtime"],
         )
-        # thehpf.apply(reference_y, genlagsamplerate),
-        # allocate destination arrays
-        internalwinspaceshape = (numvalidspatiallocs, numwins)
-        internalwinspaceshapederivs = (
-            internalvalidspaceshape,
-            2,
-            numwins,
-        )
-        internalwinfmrishape = (numvalidspatiallocs, wintrs)
-        if args.debug or args.focaldebug:
-            print(f"window space shape = {internalwinspaceshape}")
-            print(f"internalwindowfmrishape shape = {internalwinfmrishape}")
+        genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
 
-        windowedregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
-        windowedregressrvalues = np.zeros(internalwinspaceshape, dtype=float)
-        windowedmedfiltregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
-        windowedfilteredregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
-        windoweddelayoffset = np.zeros(internalwinspaceshape, dtype=float)
-        if usesharedmem:
-            if args.debug:
-                print("allocating shared memory")
-            winsLFOfitmean, winsLFOfitmean_shm = tide_util.allocshared(
-                internalwinspaceshape, rt_outfloatset
-            )
-            winrvalue, winrvalue_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
-            winr2value, winr2value_shm = tide_util.allocshared(
-                internalwinspaceshape, rt_outfloatset
-            )
-            winfitNorm, winfitNorm_shm = tide_util.allocshared(
-                internalwinspaceshapederivs, rt_outfloatset
-            )
-            winfitcoeff, winitcoeff_shm = tide_util.allocshared(
-                internalwinspaceshapederivs, rt_outfloatset
-            )
-            winmovingsignal, winmovingsignal_shm = tide_util.allocshared(
-                internalwinfmrishape, rt_outfloatset
-            )
-            winlagtc, winlagtc_shm = tide_util.allocshared(internalwinfmrishape, rt_floatset)
-            winfiltereddata, winfiltereddata_shm = tide_util.allocshared(
-                internalwinfmrishape, rt_outfloatset
-            )
-        else:
-            if args.debug:
-                print("allocating memory")
-            sLFOfitmean = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-            rvalue = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-            r2value = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-            fitNorm = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
-            fitcoeff = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
-            movingsignal = np.zeros(internalwinfmrishape, dtype=rt_outfloattype)
-            lagtc = np.zeros(internalwinfmrishape, dtype=rt_floattype)
-            filtereddata = np.zeros(internalwinfmrishape, dtype=rt_outfloattype)
-        if args.debug:
-            print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
-        thewindowprocoptions = therunoptions
+    # and filter the data if necessary
+    if args.hpf:
+        Fs = 1.0 / fmritr
+        print("highpass filtering fmri data")
+        for vox in range(fmri_data_valid.shape[0]):
+            fmri_data_valid[vox, :] = thehpf.apply(Fs, fmri_data_valid[vox, :])
         if args.focaldebug:
-            thewindowprocoptions["saveminimumsLFOfiltfiles"] = True
-            winoutputlevel = "max"
-        else:
-            thewindowprocoptions["saveminimumsLFOfiltfiles"] = False
-            winoutputlevel = "min"
-        for thewin in range(numwins):
-            print(f"Processing window {thewin + 1} of {numwins}")
-            starttr = thewin * winskip
-            endtr = starttr + wintrs
-            winlabel = f"_win-{str(thewin + 1).zfill(3)}"
-
-            windowedregressderivratios[:, thewin], windowedregressrvalues[:, thewin] = (
-                tide_refinedelay.getderivratios(
-                    fmri_data_valid,
-                    validvoxels,
-                    initial_fmri_x,
-                    lagstouse_valid,
-                    corrmask_valid,
-                    hpfgenlagtc,
-                    mode,
-                    outputname + winlabel,
-                    oversamptr,
-                    winsLFOfitmean[:, thewin],
-                    winrvalue[:, thewin],
-                    winr2value[:, thewin],
-                    winfitNorm[:, :, thewin],
-                    winfitcoeff[:, :, thewin],
-                    winmovingsignal,
-                    winlagtc,
-                    winfiltereddata,
-                    LGR,
-                    TimingLGR,
-                    thewindowprocoptions,
-                    regressderivs=args.refineregressderivs,
-                    starttr=starttr,
-                    endtr=endtr,
-                    debug=args.debug,
-                )
-            )
-
-            (
-                windowedmedfiltregressderivratios[:, thewin],
-                windowedfilteredregressderivratios[:, thewin],
-                windoweddelayoffsetMAD,
-            ) = tide_refinedelay.filterderivratios(
-                windowedregressderivratios[:, thewin],
-                (xsize, ysize, numslices),
-                validvoxels,
-                (xdim, ydim, slicedim),
-                gausssigma=args.windelayoffsetgausssigma,
-                patchthresh=args.delaypatchthresh,
-                fileiscifti=False,
-                textio=False,
-                rt_floattype=rt_floattype,
-                debug=args.debug,
-            )
-
-            # find the mapping of glm ratios to delays
-            tide_refinedelay.trainratiotooffset(
-                hpfgenlagtc,
-                initial_fmri_x[starttr:endtr],
-                outputname + winlabel,
-                winoutputlevel,
-                mindelay=args.mindelay,
-                maxdelay=args.maxdelay,
-                numpoints=args.numpoints,
-                debug=args.debug,
-            )
-            TimingLGR.info("Refinement calibration end")
-
-            # now calculate the delay offsets
-            TimingLGR.info("Calculating delay offsets")
-            if args.focaldebug:
-                print(
-                    f"calculating delayoffsets for {windowedfilteredregressderivratios.shape[0]} voxels"
-                )
-            for i in range(windowedfilteredregressderivratios.shape[0]):
-                windoweddelayoffset[i, thewin] = tide_refinedelay.ratiotodelay(
-                    windowedfilteredregressderivratios[i, thewin]
-                )
-
-        # now see if there are common timecourses in the delay offsets
-        pcacomponents = 0.8
-        themean = np.mean(windoweddelayoffset, axis=1)
-        thevar = np.var(windoweddelayoffset, axis=1)
-        scaledvoxels = windoweddelayoffset * 0.0
-        for vox in range(0, windoweddelayoffset.shape[0]):
-            scaledvoxels[vox, :] = windoweddelayoffset[vox, :] - themean[vox]
-            if thevar[vox] > 0.0:
-                scaledvoxels[vox, :] = scaledvoxels[vox, :] / thevar[vox]
-        try:
-            thefit = PCA(n_components=pcacomponents).fit(np.transpose(scaledvoxels))
-        except ValueError:
-            if pcacomponents == "mle":
-                LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
-                thefit = PCA(n_components=0.8).fit(np.transpose(scaledvoxels))
-            else:
-                raise ValueError("unhandled math exception in PCA refinement - exiting")
-
-        varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
-        thetransform = thefit.transform(np.transpose(scaledvoxels))
-        if args.focaldebug:
-            print(f"PCA: {thetransform.shape=}")
-        systemiccomp = np.mean(thetransform, axis=0)
-        systemiccomp -= np.mean(systemiccomp)
-        if args.focaldebug:
-            print(f"PCA: {varex=}")
-        print(
-            f"Using {len(thefit.components_)} component(s), accounting for "
-            f"{varex:.2f}% of the variance"
-        )
-        tide_io.writebidstsv(
-            f"{outputname}_desc-systemiccomponent_timeseries",
-            systemiccomp,
-            2.0 / (wintrs * fmritr),
-        )
-        (
-            mergedregressors,
-            mergedregressorlabels,
-            fmri_data_valid,
-            confoundr2,
-        ) = tide_linfitfiltpass.confoundregress(
-            systemiccomp,
-            ["systemiccomponent"],
-            fmri_data_valid,
-            fmritr,
-            nprocs=args.nprocs,
-        )
-
-        namesuffix = f"_desc-delayoffsetwin{thewin}_hist"
-        tide_stats.makeandsavehistogram(
-            windoweddelayoffset[:, thewin],
-            therunoptions["histlen"],
-            1,
-            outputname + namesuffix,
-            displaytitle="Histogram of delay offsets calculated from GLM",
-            dictvarname="delayoffsethist",
-            thedict=None,
-        )
-        theheader = copy.deepcopy(fmri_header)
-        theheader["dim"][4] = numwins
-        theheader["pixdim"][4] = wintrs * fmritr / 2
-        maplist = [
-            (
-                windoweddelayoffset,
-                "windoweddelayoffset",
-                "info",
-                None,
-                f"Delay offsets in each {wintrs * fmritr} second window",
-            ),
-            (
-                np.square(windowedregressrvalues),
-                "windowedregressr2values",
-                "info",
-                None,
-                f"R2 values for regression in each {wintrs * fmritr} second window",
-            ),
-        ]
-        if args.focaldebug:
-            maplist += [
-                (
-                    windowedmedfiltregressderivratios,
-                    "windowedmedfiltregressderivratios",
-                    "info",
-                    None,
-                    f"Mediean filtered derivative ratios in each {wintrs * fmritr} second window",
-                ),
-                (
-                    windowedfilteredregressderivratios,
-                    "windowedfilteredregressderivratios",
-                    "info",
-                    None,
-                    f"Filtered derivative ratios in each {wintrs * fmritr} second window",
-                ),
-                (
-                    windowedregressderivratios,
-                    "windowedregressderivratios",
-                    "info",
-                    None,
-                    f"Raw derivative ratios in each {wintrs * fmritr} second window",
-                ),
-            ]
-        tide_io.savemaplist(
-            outputname,
-            maplist,
-            validvoxels,
-            (xsize, ysize, numslices, numwins),
-            theheader,
-            bidsbasedict,
-            debug=args.debug,
-        )
-        #########################
-        # End window processing
-        #########################
-
-    # save outputs
-    TimingLGR.info("Starting output save")
-    theheader = copy.deepcopy(lagtimes_header)
-    if mode == "glm":
-        maplist = [
-            (
-                initialvariance,
-                "lfofilterInbandVarianceBefore",
-                "map",
-                None,
-                "Inband variance prior to filtering",
-            ),
-            (
-                finalvariance,
-                "lfofilterInbandVarianceAfter",
-                "map",
-                None,
-                "Inband variance after filtering",
-            ),
-            (
-                varchange,
-                "lfofilterInbandVarianceChange",
-                "map",
-                "percent",
-                "Change in inband variance after filtering, in percent",
-            ),
-            # (
-            #   initialrawvariance,
-            #    "lfofilterTotalVarianceBefore",
-            #    "map",
-            #    None,
-            #    "Total variance prior to filtering",
-            # ),
-            # (
-            #    finalrawvariance,
-            #    "lfofilterTotalVarianceAfter",
-            #    "map",
-            #    None,
-            #    "Total variance after filtering",
-            # ),
-            # (
-            #    rawvarchange,
-            #    "lfofilterTotalVarianceChange",
-            #    "map",
-            #    "percent",
-            #    "Change in total variance after filtering, in percent",
-            # ),
-        ]
-        if args.saveminimumsLFOfiltfiles:
-            maplist += [
-                (
-                    r2value,
-                    "lfofilterR2",
-                    "map",
-                    None,
-                    "Squared R value of the GLM fit (proportion of variance explained)",
-                ),
-            ]
-        if args.savenormalsLFOfiltfiles:
-            maplist += [
-                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
-                (sLFOfitmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
-            ]
-    else:
-        maplist = [
-            (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
-            (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
-            (varchange, "CVRVariance", "map", None),
-        ]
-        if args.savenormalsLFOfiltfiles:
-            maplist += [
-                (rvalue, "CVRR", "map", None),
-                (r2value, "CVRR2", "map", None),
-                (fitcoeff, "CVR", "map", "percent"),
-            ]
-    bidsdict = bidsbasedict.copy()
-
-    if args.debug or args.focaldebug:
-        maplist += [
-            (
-                lagtimes_valid,
-                "maxtimeREAD",
-                "map",
-                "second",
-                "Lag time in seconds used for calculation",
-            ),
-            (corrmask_valid, "corrfitREAD", "mask", None, "Correlation mask used for calculation"),
-            (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
-        ]
-    if args.savenormalsLFOfiltfiles:
-        if args.regressderivs > 0 or args.refinedelay:
-            maplist += [
-                (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
-                (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
-            ]
-            for thederiv in range(1, args.regressderivs + 1):
-                maplist += [
-                    (
-                        fitcoeff[:, thederiv],
-                        f"lfofilterCoeffDeriv{thederiv}",
-                        "map",
-                        None,
-                        f"Fit coefficient for temporal derivative {thederiv}",
-                    ),
-                    (
-                        fitNorm[:, thederiv],
-                        f"lfofilterNormDeriv{thederiv}",
-                        "map",
-                        None,
-                        f"Normalized fit coefficient for temporal derivative {thederiv}",
-                    ),
-                ]
-        else:
-            maplist += [
-                (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
-                (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
-            ]
-
-    if args.refinedelay:
-        if args.refineregressderivs > 1:
-            for i in range(args.refineregressderivs):
-                maplist += [
-                    (
-                        regressderivratios[i, :],
-                        f"regressderivratios_{i}",
-                        "map",
-                        None,
-                        f"Ratio of derivative {i+1} of delayed sLFO to the delayed sLFO",
-                    ),
-                    (
-                        medfiltregressderivratios[i, :],
-                        f"medfiltregressderivratios_{i}",
-                        "map",
-                        None,
-                        f"Median filtered version of the regressderivratios_{i} map",
-                    ),
-                    (
-                        filteredregressderivratios[i, :],
-                        f"filteredregressderivratios_{i}",
-                        "map",
-                        None,
-                        f"regressderivratios_{i}, with outliers patched using median filtered data",
-                    ),
-                ]
-        else:
-            maplist += [
-                (
-                    regressderivratios,
-                    "regressderivratios",
-                    "map",
-                    None,
-                    "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
-                ),
-                (
-                    medfiltregressderivratios,
-                    "medfiltregressderivratios",
-                    "map",
-                    None,
-                    "Median filtered version of the regressderivratios map",
-                ),
-                (
-                    filteredregressderivratios,
-                    "filteredregressderivratios",
-                    "map",
-                    None,
-                    "regressderivratios, with outliers patched using median filtered data",
-                ),
-            ]
-        maplist += [
-            (
-                delayoffset,
-                "delayoffset",
-                "map",
-                "second",
-                "Delay offset correction from delay refinement",
-            ),
-            (
-                lagtimesrefined_valid,
-                "maxtimerefined",
-                "map",
-                "second",
-                "Lag time in seconds, refined",
-            ),
-        ]
-
-    # write the 3D maps
-    tide_io.savemaplist(
-        outputname,
-        maplist,
-        validvoxels,
-        (xsize, ysize, numslices),
-        theheader,
-        bidsdict,
-        debug=args.debug,
-    )
-
-    # write the 4D maps
-    theheader = copy.deepcopy(fmri_header)
-    maplist = []
-    if args.saveminimumsLFOfiltfiles:
-        maplist = [
-            (
-                filtereddata,
-                "lfofilterCleaned",
-                "bold",
-                None,
-                "fMRI data with sLFO signal filtered out",
-            ),
-        ]
-    if args.savemovingsignal:
-        maplist += [
-            (
-                movingsignal,
-                "lfofilterRemoved",
-                "bold",
-                None,
-                "sLFO signal filtered out of this voxel",
-            )
-        ]
-
-    if args.saveallsLFOfiltfiles:
-        if args.regressderivs > 0:
-            if args.debug:
-                print("going down the multiple EV path")
-                print(f"{regressorset[:, :, 0].shape=}")
-            maplist += [
-                (
-                    regressorset[:, :, 0],
-                    "lfofilterEV",
-                    "bold",
-                    None,
-                    "Shifted sLFO regressor to filter",
-                ),
-            ]
-            for thederiv in range(1, args.regressderivs + 1):
-                if args.debug:
-                    print(f"{regressorset[:, :, thederiv].shape=}")
-                maplist += [
-                    (
-                        regressorset[:, :, thederiv],
-                        f"lfofilterEVDeriv{thederiv}",
-                        "bold",
-                        None,
-                        f"Time derivative {thederiv} of shifted sLFO regressor",
-                    ),
-                ]
-        else:
-            if args.debug:
-                print("going down the single EV path")
-            maplist += [
-                (
-                    regressorset,
-                    "lfofilterEV",
-                    "bold",
-                    None,
-                    "Shifted sLFO regressor to filter",
-                ),
-            ]
-    if args.makepseudofile:
-        print("reading mean image")
-        meanfile = f"{args.datafileroot}_desc-mean_map.nii.gz"
-        (
-            mean_input,
-            mean,
-            mean_header,
-            mean_dims,
-            mean_sizes,
-        ) = tide_io.readfromnifti(meanfile)
-        if not tide_io.checkspacematch(fmri_header, mean_header):
-            raise ValueError("mean dimensions do not match fmri dimensions")
-        if args.debug:
-            print(f"{mean.shape=}")
-        mean_spacebytime = mean.reshape((numspatiallocs))
-        if args.debug:
-            print(f"{mean_spacebytime.shape=}")
-        pseudofile = mean_spacebytime[validvoxels, None] + movingsignal[:, :]
-        maplist.append((pseudofile, "pseudofile", "bold", None, None))
-    tide_io.savemaplist(
-        outputname,
-        maplist,
-        validvoxels,
-        (xsize, ysize, numslices, validtimepoints),
-        theheader,
-        bidsdict,
-        debug=args.debug,
-    )
-    TimingLGR.info("Finishing output save")
-
-    if args.refinecorr:
-        TimingLGR.info("Filtering for maxcorralt calculation start")
-        for thevoxel in range(fmri_data_valid.shape[0]):
-            fmri_data_valid[thevoxel, :] = theprefilter.apply(
-                1.0 / fmritr, fmri_data_valid[thevoxel, :]
-            )
-        TimingLGR.info("Filtering for maxcorralt calculation complete")
-        TimingLGR.info("GLM for maxcorralt calculation start")
-        voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
-            fmri_data_valid,
-            validvoxels,
-            initial_fmri_x,
-            lagstouse_valid,
-            corrmask_valid,
-            genlagtc,
-            mode,
-            outputname,
-            oversamptr,
-            sLFOfitmean,
-            rvalue,
-            r2value,
-            fitNorm[:, : args.regressderivs + 1],
-            fitcoeff[:, : args.regressderivs + 1],
-            movingsignal,
-            lagtc,
-            filtereddata,
-            LGR,
-            TimingLGR,
-            threshval,
-            args.saveminimumsLFOfiltfiles,
-            nprocs_makelaggedtcs=args.nprocs,
-            nprocs_regressionfilt=args.nprocs,
-            regressderivs=args.regressderivs,
-            showprogressbar=args.showprogressbar,
-            debug=args.debug,
-        )
-        TimingLGR.info(
-            "GLM for maxcorralt calculation done",
-            {
-                "message2": voxelsprocessed_regressionfilt,
-                "message3": "voxels",
-            },
-        )
-
-        maplist = [
-            (
-                rvalue,
-                "maxcorralt",
-                "map",
-                None,
-                "R value for the lfo component of the delayed regressor, with sign",
-            ),
-        ]
-        theheader = copy.deepcopy(lagtimes_header)
-        tide_io.savemaplist(
-            outputname,
-            maplist,
-            validvoxels,
-            (xsize, ysize, numslices),
-            theheader,
-            bidsdict,
-            debug=args.debug,
-        )
-        if args.debug:
-            # dump the fmri input file going to glm
+            # dump the filtered fmri input file
             theheader = copy.deepcopy(fmri_header)
             theheader["dim"][4] = validtimepoints
             theheader["pixdim"][4] = fmritr
@@ -1456,10 +513,10 @@ def delayvar(args):
             maplist = [
                 (
                     fmri_data_valid,
-                    "prefilteredinputdata",
+                    "hpfinputdata",
                     "bold",
                     None,
-                    "fMRI data after temporal filtering",
+                    "fMRI data after highpass filtering",
                 ),
             ]
             tide_io.savemaplist(
@@ -1475,34 +532,289 @@ def delayvar(args):
                 cifti_hdr=None,
             )
 
+    # allocate destination arrays
+    internalwinspaceshape = (numvalidspatiallocs, numwins)
+    internalwinspaceshapederivs = (
+        numvalidspatiallocs,
+        2,
+        numwins,
+    )
+    internalwinfmrishape = (numvalidspatiallocs, wintrs)
+    if args.debug or args.focaldebug:
+        print(f"window space shape = {internalwinspaceshape}")
+        print(f"internalwindowfmrishape shape = {internalwinfmrishape}")
+
+    windowedregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
+    windowedregressrvalues = np.zeros(internalwinspaceshape, dtype=float)
+    windowedmedfiltregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
+    windowedfilteredregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
+    windoweddelayoffset = np.zeros(internalwinspaceshape, dtype=float)
+    if usesharedmem:
+        if args.debug:
+            print("allocating shared memory")
+        winsLFOfitmean, winsLFOfitmean_shm = tide_util.allocshared(
+            internalwinspaceshape, rt_outfloatset
+        )
+        winrvalue, winrvalue_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
+        winr2value, winr2value_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
+        winfitNorm, winfitNorm_shm = tide_util.allocshared(
+            internalwinspaceshapederivs, rt_outfloatset
+        )
+        winfitcoeff, winitcoeff_shm = tide_util.allocshared(
+            internalwinspaceshapederivs, rt_outfloatset
+        )
+        winmovingsignal, winmovingsignal_shm = tide_util.allocshared(
+            internalwinfmrishape, rt_outfloatset
+        )
+        winlagtc, winlagtc_shm = tide_util.allocshared(internalwinfmrishape, rt_floatset)
+        winfiltereddata, winfiltereddata_shm = tide_util.allocshared(
+            internalwinfmrishape, rt_outfloatset
+        )
+    else:
+        if args.debug:
+            print("allocating memory")
+        winsLFOfitmean = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+        winrvalue = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+        winr2value = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
+        winfitNorm = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
+        winfitcoeff = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
+        winmovingsignal = np.zeros(internalwinfmrishape, dtype=rt_outfloattype)
+        winlagtc = np.zeros(internalwinfmrishape, dtype=rt_floattype)
+        winfiltereddata = np.zeros(internalwinfmrishape, dtype=rt_outfloattype)
+    if args.debug:
+        print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
+    thewindowprocoptions = therunoptions
+    if args.focaldebug:
+        thewindowprocoptions["saveminimumsLFOfiltfiles"] = True
+        winoutputlevel = "max"
+    else:
+        thewindowprocoptions["saveminimumsLFOfiltfiles"] = False
+        winoutputlevel = "min"
+    for thewin in range(numwins):
+        print(f"Processing window {thewin + 1} of {numwins}")
+        starttr = thewin * winskip
+        endtr = starttr + wintrs
+        winlabel = f"_win-{str(thewin + 1).zfill(3)}"
+
+        windowedregressderivratios[:, thewin], windowedregressrvalues[:, thewin] = (
+            tide_refinedelay.getderivratios(
+                fmri_data_valid,
+                validvoxels,
+                initial_fmri_x,
+                lagstouse_valid,
+                corrmask_valid,
+                genlagtc,
+                mode,
+                outputname + winlabel,
+                oversamptr,
+                winsLFOfitmean[:, thewin],
+                winrvalue[:, thewin],
+                winr2value[:, thewin],
+                winfitNorm[:, :, thewin],
+                winfitcoeff[:, :, thewin],
+                winmovingsignal,
+                winlagtc,
+                winfiltereddata,
+                LGR,
+                TimingLGR,
+                thewindowprocoptions,
+                regressderivs=1,
+                starttr=starttr,
+                endtr=endtr,
+                debug=args.debug,
+            )
+        )
+
+        (
+            windowedmedfiltregressderivratios[:, thewin],
+            windowedfilteredregressderivratios[:, thewin],
+            windoweddelayoffsetMAD,
+        ) = tide_refinedelay.filterderivratios(
+            windowedregressderivratios[:, thewin],
+            (xsize, ysize, numslices),
+            validvoxels,
+            (xdim, ydim, slicedim),
+            gausssigma=args.windelayoffsetgausssigma,
+            patchthresh=args.delaypatchthresh,
+            fileiscifti=False,
+            textio=False,
+            rt_floattype=rt_floattype,
+            debug=args.debug,
+        )
+
+        # find the mapping of glm ratios to delays
+        tide_refinedelay.trainratiotooffset(
+            genlagtc,
+            initial_fmri_x[starttr:endtr],
+            outputname + winlabel,
+            winoutputlevel,
+            mindelay=args.mindelay,
+            maxdelay=args.maxdelay,
+            numpoints=args.numpoints,
+            debug=args.debug,
+        )
+        TimingLGR.info("Refinement calibration end")
+
+        # now calculate the delay offsets
+        TimingLGR.info("Calculating delay offsets")
+        if args.focaldebug:
+            print(
+                f"calculating delayoffsets for {windowedfilteredregressderivratios.shape[0]} voxels"
+            )
+        for i in range(windowedfilteredregressderivratios.shape[0]):
+            windoweddelayoffset[i, thewin] = tide_refinedelay.ratiotodelay(
+                windowedfilteredregressderivratios[i, thewin]
+            )
+
+    # now see if there are common timecourses in the delay offsets
+    themean = np.mean(windoweddelayoffset, axis=1)
+    thevar = np.var(windoweddelayoffset, axis=1)
+    scaledvoxels = windoweddelayoffset * 0.0
+    for vox in range(0, windoweddelayoffset.shape[0]):
+        scaledvoxels[vox, :] = windoweddelayoffset[vox, :] - themean[vox]
+        if thevar[vox] > 0.0:
+            scaledvoxels[vox, :] = scaledvoxels[vox, :] / thevar[vox]
+    if args.systemicfittype == "pca":
+        pcacomponents = 0.8
+        try:
+            thefit = PCA(n_components=pcacomponents).fit(scaledvoxels)
+        except ValueError:
+            if pcacomponents == "mle":
+                LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
+                thefit = PCA(n_components=0.8).fit(scaledvoxels)
+            else:
+                raise ValueError("unhandled math exception in PCA refinement - exiting")
+
+        varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
+        thetransform = thefit.transform(scaledvoxels)
+        if args.focaldebug:
+            print(f"PCA: {thetransform.shape=}")
+        systemiccomp = np.mean(thetransform, axis=0)
+        systemiccomp -= np.mean(systemiccomp)
+        if args.focaldebug:
+            print(f"PCA: {varex=}")
+        print(
+            f"Using {len(thefit.components_)} component(s), accounting for "
+            f"{varex:.2f}% of the variance"
+        )
+    elif args.systemicfittype == "mean":
+        systemiccomp = np.mean(scaledvoxels, axis=0)
+    else:
+        print("unhandled systemic filter type")
+        sys.exit(0)
+    tide_io.writebidstsv(
+        f"{outputname}_desc-systemiccomponent_timeseries",
+        systemiccomp,
+        2.0 / (wintrs * fmritr),
+    )
+
+    """(
+        mergedregressors,
+        mergedregressorlabels,
+        filtwindoweddelayoffset,
+        confoundr2,
+    ) = tide_linfitfiltpass.confoundregress(
+        systemiccomp.reshape(1, -1),
+        ["systemiccomponent"],
+        windoweddelayoffset,
+        fmritr,
+        nprocs=args.nprocs,
+        debug=args.focaldebug,
+    )"""
+
+    namesuffix = f"_desc-delayoffsetwin{thewin}_hist"
+    tide_stats.makeandsavehistogram(
+        windoweddelayoffset[:, thewin],
+        therunoptions["histlen"],
+        1,
+        outputname + namesuffix,
+        displaytitle="Histogram of delay offsets calculated from GLM",
+        dictvarname="delayoffsethist",
+        thedict=None,
+    )
+    theheader = copy.deepcopy(fmri_header)
+    theheader["dim"][4] = numwins
+    theheader["pixdim"][4] = wintrs * fmritr / 2
+    maplist = [
+        (
+            windoweddelayoffset,
+            "windoweddelayoffset",
+            "info",
+            None,
+            f"Delay offsets in each {wintrs * fmritr} second window",
+        ),
+        (
+            np.square(windowedregressrvalues),
+            "windowedregressr2values",
+            "info",
+            None,
+            f"R2 values for regression in each {wintrs * fmritr} second window",
+        ),
+    ]
+    """(
+        filtwindoweddelayoffset,
+        "filtwindoweddelayoffset",
+        "info",
+        None,
+        f"Delay offsets in each {wintrs * fmritr} second window with the systemic component removed",
+    ),"""
+    if args.focaldebug:
+        maplist += [
+            (
+                windowedmedfiltregressderivratios,
+                "windowedmedfiltregressderivratios",
+                "info",
+                None,
+                f"Mediean filtered derivative ratios in each {wintrs * fmritr} second window",
+            ),
+            (
+                windowedfilteredregressderivratios,
+                "windowedfilteredregressderivratios",
+                "info",
+                None,
+                f"Filtered derivative ratios in each {wintrs * fmritr} second window",
+            ),
+            (
+                windowedregressderivratios,
+                "windowedregressderivratios",
+                "info",
+                None,
+                f"Raw derivative ratios in each {wintrs * fmritr} second window",
+            ),
+        ]
+    tide_io.savemaplist(
+        outputname,
+        maplist,
+        validvoxels,
+        (xsize, ysize, numslices, numwins),
+        theheader,
+        bidsbasedict,
+        debug=args.debug,
+    )
+    #########################
+    # End window processing
+    #########################
+
+    # save outputs
+    TimingLGR.info("Starting output save")
+    bidsdict = bidsbasedict.copy()
+
     # read the runoptions file
     print("writing runoptions")
-    if args.refinedelay:
-        therunoptions["delayvar_delayoffsetMAD"] = delayoffsetMAD
     therunoptions["delayvar_runtime"] = time.strftime(
         "%a, %d %b %Y %H:%M:%S %Z", time.localtime(time.time())
     )
 
     # clean up shared memory
     if usesharedmem:
-        TimingLGR.info("Shared memory cleanup start")
-        tide_util.cleanup_shm(sLFOfitmean_shm)
-        tide_util.cleanup_shm(rvalue_shm)
-        tide_util.cleanup_shm(r2value_shm)
-        tide_util.cleanup_shm(fitNorm_shm)
-        tide_util.cleanup_shm(fitcoeff_shm)
-        tide_util.cleanup_shm(movingsignal_shm)
-        tide_util.cleanup_shm(lagtc_shm)
-        tide_util.cleanup_shm(filtereddata_shm)
-        if args.windowsize is not None:
-            tide_util.cleanup_shm(winsLFOfitmean_shm)
-            tide_util.cleanup_shm(winrvalue_shm)
-            tide_util.cleanup_shm(winr2value_shm)
-            tide_util.cleanup_shm(winfitNorm_shm)
-            tide_util.cleanup_shm(winitcoeff_shm)
-            tide_util.cleanup_shm(winmovingsignal_shm)
-            tide_util.cleanup_shm(winlagtc_shm)
-            tide_util.cleanup_shm(winfiltereddata_shm)
+        tide_util.cleanup_shm(winsLFOfitmean_shm)
+        tide_util.cleanup_shm(winrvalue_shm)
+        tide_util.cleanup_shm(winr2value_shm)
+        tide_util.cleanup_shm(winfitNorm_shm)
+        tide_util.cleanup_shm(winitcoeff_shm)
+        tide_util.cleanup_shm(winmovingsignal_shm)
+        tide_util.cleanup_shm(winlagtc_shm)
+        tide_util.cleanup_shm(winfiltereddata_shm)
     TimingLGR.info("Shared memory cleanup complete")
 
     # shut down logging
