@@ -418,10 +418,7 @@ def delayvar(args):
     # read the lagtc generator file
     print("reading lagtc generator")
     lagtcgeneratorfile = f"{args.datafileroot}_desc-lagtcgenerator_timeseries"
-    try:
-        thepadtime = therunoptions["fastresamplerpadtime"]
-    except KeyError:
-        thepadtime = therunoptions["padseconds"]
+    thepadtime = therunoptions["padseconds"]
     genlagtc = tide_resample.FastResamplerFromFile(lagtcgeneratorfile, padtime=thepadtime)
 
     # select the voxels in the mask
@@ -507,7 +504,7 @@ def delayvar(args):
         genlagtc = tide_resample.FastResampler(
             reference_x,
             thehpf.apply(genlagsamplerate, reference_y),
-            padtime=therunoptions["fastresamplerpadtime"],
+            padtime=thepadtime,
         )
         genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
 
