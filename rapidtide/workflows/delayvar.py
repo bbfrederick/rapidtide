@@ -713,6 +713,9 @@ def delayvar(args):
             + f"{100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]}% of the variance"
         )
         reduceddata = thefit.inverse_transform(thefit.transform(scaledvoxels))
+        # unscale the PCA cleaned data
+        for vox in range(0, windoweddelayoffset.shape[0]):
+            reduceddata[vox, :] = reduceddata[vox, :] * thevar[vox] + themean[vox]
         if args.focaldebug:
             print("complex processing: reduceddata.shape =", scaledvoxels.shape)
         # pcadata = np.mean(reduceddata, axis=0)
