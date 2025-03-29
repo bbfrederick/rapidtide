@@ -54,12 +54,12 @@ TimingLGR = logging.getLogger("TIMING")
 
 DEFAULT_REGRESSIONFILTDERIVS = 0
 DEFAULT_PATCHTHRESH = 3.0
-DEFAULT_REFINEDELAYMINDELAY = -5.0
-DEFAULT_REFINEDELAYMAXDELAY = 5.0
-DEFAULT_REFINEDELAYNUMPOINTS = 501
+DEFAULT_REFINEDELAYMINDELAY = -2.5
+DEFAULT_REFINEDELAYMAXDELAY = 2.5
+DEFAULT_REFINEDELAYNUMPOINTS = 201
 DEFAULT_DELAYOFFSETSPATIALFILT = -1
 DEFAULT_WINDOWSIZE = 30.0
-DEFAULT_SYSTEMICFITTYPE = "mean"
+DEFAULT_SYSTEMICFITTYPE = "pca"
 DEFAULT_PCACOMPONENTS = 1
 
 
@@ -175,7 +175,7 @@ def _get_parser():
         metavar="NCOMP",
         dest="pcacomponents",
         type=float,
-        help="Use NCOMP components for PCA fit of phase",
+        help="Use NCOMP components for PCA fit of delay offset.",
         default=DEFAULT_PCACOMPONENTS,
     )
     parser.add_argument(
@@ -515,8 +515,9 @@ def delayvar(args):
     if args.hpf:
         Fs = 1.0 / fmritr
         print("highpass filtering fmri data")
+        themean = fmri_data_valid.mean(axis=1)
         for vox in range(fmri_data_valid.shape[0]):
-            fmri_data_valid[vox, :] = thehpf.apply(Fs, fmri_data_valid[vox, :])
+            fmri_data_valid[vox, :] = thehpf.apply(Fs, fmri_data_valid[vox, :]) + themean[vox]
         if args.focaldebug:
             # dump the filtered fmri input file
             theheader = copy.deepcopy(fmri_header)
@@ -717,7 +718,8 @@ def delayvar(args):
         reduceddata = thefit.inverse_transform(thefit.transform(scaledvoxels))
         if args.focaldebug:
             print("complex processing: reduceddata.shape =", scaledvoxels.shape)
-        pcadata = np.mean(reduceddata, axis=0)
+        # pcadata = np.mean(reduceddata, axis=0)
+        pcadata = thefit.components_[0]
         averagedata = np.mean(windoweddelayoffset, axis=0)
         thepxcorr = pearsonr(averagedata, pcadata)[0]
         LGR.info(f"pca/avg correlation = {thepxcorr}")
@@ -747,7 +749,7 @@ def delayvar(args):
         1.0 / winspace,
     )
 
-    doregress = True
+    doregress = False
     if doregress:
         if usesharedmem:
             if args.debug:
@@ -755,8 +757,12 @@ def delayvar(args):
             systemicsLFOfitmean, systemicsLFOfitmean_shm = tide_util.allocshared(
                 internalwinspaceshape, rt_outfloatset
             )
-            systemicrvalue, systemicrvalue_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
-            systemicr2value, systemicr2value_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
+            systemicrvalue, systemicrvalue_shm = tide_util.allocshared(
+                internalwinspaceshape, rt_outfloatset
+            )
+            systemicr2value, systemicr2value_shm = tide_util.allocshared(
+                internalwinspaceshape, rt_outfloatset
+            )
             systemicfitNorm, systemicfitNorm_shm = tide_util.allocshared(
                 internalwinspaceshapederivs, rt_outfloatset
             )
@@ -766,7 +772,9 @@ def delayvar(args):
             systemicmovingsignal, systemicmovingsignal_shm = tide_util.allocshared(
                 internalwinspaceshape, rt_outfloatset
             )
-            systemiclagtc, systemiclagtc_shm = tide_util.allocshared(internalwinspaceshape, rt_floatset)
+            systemiclagtc, systemiclagtc_shm = tide_util.allocshared(
+                internalwinspaceshape, rt_floatset
+            )
             systemicfiltereddata, systemicfiltereddata_shm = tide_util.allocshared(
                 internalwinspaceshape, rt_outfloatset
             )
@@ -782,9 +790,7 @@ def delayvar(args):
             systemiclagtc = np.zeros(internalwinspaceshape, dtype=rt_floattype)
             systemicfiltereddata = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
 
-        windowlocs = (
-                np.linspace(0.0, winspace * numwins, num=numwins, endpoint=False) + skiptime
-        )
+        windowlocs = np.linspace(0.0, winspace * numwins, num=numwins, endpoint=False) + skiptime
         voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
             windoweddelayoffset,
             validvoxels,
@@ -860,6 +866,30 @@ def delayvar(args):
                 f"R2 values for systemic regression in each {winspace} second window",
             ),
         ]
+        if args.focaldebug:
+            maplist += [
+                (
+                    systemicsLFOfitmean,
+                    "systemicsLFOfitmean",
+                    "info",
+                    None,
+                    f"Constant coefficient for systemic filter",
+                ),
+                (
+                    systemicfitcoeff[:, 0],
+                    "systemiccoffEV0",
+                    "info",
+                    None,
+                    f"Coefficient 0 for systemic filter",
+                ),
+                (
+                    systemicfitcoeff[:, 1],
+                    "systemiccoffEV1",
+                    "info",
+                    None,
+                    f"Coefficient 1 for systemic filter",
+                ),
+            ]
     if reduceddata is not None:
         maplist += (
             (

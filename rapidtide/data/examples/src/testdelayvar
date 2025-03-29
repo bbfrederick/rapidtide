@@ -5,7 +5,6 @@ delayvar \
     ../dst/sub-RAPIDTIDETEST \
     --alternateoutput ../dst/delayvartest \
     --nprocs -1 \
-    --nohpfilter \
     --windowsize 20 \
     --systemicfittype pca \
     --pcacomponents 0.8 \
