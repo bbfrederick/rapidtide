@@ -4223,7 +4223,7 @@ def rapidtide_main(argparsingfunc):
                 (regressorset, "lfofilterEV", "bold", None, "Shifted sLFO regressor to filter"),
             ]
 
-    if optiondict["passes"] > 1:
+    if (optiondict["passes"] > 1) or optiondict["dofinalrefine"]:
         if optiondict["savelagregressors"]:
             maplist += [
                 (
