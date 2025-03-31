@@ -582,7 +582,7 @@ def delayvar(args):
         numwins,
     )
     internalwinfmrishape = (numvalidspatiallocs, wintrs)
-    if args.debug or args.focaldebug:
+    if args.debug:
         print(f"window space shape = {internalwinspaceshape}")
         print(f"internalwindowfmrishape shape = {internalwinfmrishape}")
 
@@ -626,7 +626,7 @@ def delayvar(args):
     if args.debug:
         print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
     thewindowprocoptions = therunoptions
-    if args.focaldebug:
+    if args.debug:
         thewindowprocoptions["saveminimumsLFOfiltfiles"] = True
         winoutputlevel = "max"
     else:
@@ -695,13 +695,13 @@ def delayvar(args):
             mindelay=args.mindelay,
             maxdelay=args.maxdelay,
             numpoints=args.numpoints,
-            debug=args.debug,
+            debug=args.focaldebug,
         )
         TimingLGR.info("Refinement calibration end")
 
         # now calculate the delay offsets
         TimingLGR.info("Calculating delay offsets")
-        if args.focaldebug:
+        if args.debug:
             print(
                 f"calculating delayoffsets for {windowedfilteredregressderivratios.shape[0]} voxels"
             )
@@ -749,7 +749,7 @@ def delayvar(args):
         # unscale the PCA cleaned data
         for vox in range(0, windoweddelayoffset.shape[0]):
             reduceddata[vox, :] = reduceddata[vox, :] * thevar[vox] + themean[vox]
-        if args.focaldebug:
+        if args.debug:
             print("complex processing: reduceddata.shape =", scaledvoxels.shape)
         # pcadata = np.mean(reduceddata, axis=0)
         pcadata = thefit.components_[0]
@@ -850,7 +850,7 @@ def delayvar(args):
             nprocs_regressionfilt=args.nprocs,
             regressderivs=1,
             showprogressbar=args.showprogressbar,
-            debug=args.focaldebug,
+            debug=args.debug,
         )
 
     namesuffix = f"_desc-delayoffsetwin{thewin}_hist"

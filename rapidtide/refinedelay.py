@@ -26,7 +26,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
-global ratiotooffsetfunc, maplimits
+global ratiotooffsetfunc, funcoffsets, maplimits
 
 
 def smooth(y, box_pts):
@@ -50,7 +50,7 @@ def trainratiotooffset(
     regressderivs=1,
     debug=False,
 ):
-    global ratiotooffsetfunc, maplimits
+    global ratiotooffsetfunc, funcoffsets, maplimits
 
     if debug:
         print("ratiotooffsetfunc:")
@@ -65,12 +65,9 @@ def trainratiotooffset(
         print("\tedgepad:", edgepad)
         print("\tregressderivs:", regressderivs)
         print("\tlagtcgenerator:", lagtcgenerator)
+
     # make a delay map
     delaystep = (maxdelay - mindelay) / (numpoints - 1)
-    if debug:
-        print(f"{delaystep=}")
-        print(f"{mindelay=}")
-        print(f"{maxdelay=}")
     lagtimes = np.linspace(
         mindelay - edgepad * delaystep,
         maxdelay + edgepad * delaystep,
@@ -80,6 +77,7 @@ def trainratiotooffset(
     if debug:
         print(f"{mindelay=}")
         print(f"{maxdelay=}")
+        print(f"{delaystep=}")
         print("lagtimes=", lagtimes)
 
     # set up for getratioderivs call
@@ -112,102 +110,124 @@ def trainratiotooffset(
     }
 
     if trainwidth > 0.0:
-        numsteps = int(trainwidth / trainstep)
-        numsteps += 1 - numsteps % 2  # force numsteps to be odd
-        numsteps = np.max((numsteps, 3))  # ensure at least 1 positive and 1 negative step
+        numoffsets = int(trainwidth / trainstep) + 1
+        numoffsets += 1 - numoffsets % 2  # force numoffsets to be odd
+        numoffsets = np.max((numoffsets, 3))  # ensure at least 1 positive and 1 negative step
         trainoffsets = (
-            np.linspace(0, numsteps * trainstep, numsteps, endpoint=True)
-            - (numsteps // 2) * trainstep
+            np.linspace(0, (numoffsets - 1) * trainstep, numoffsets, endpoint=True)
+            - (numoffsets // 2) * trainstep
         )
     else:
         trainoffsets = np.array([0.0], dtype=float)
     if debug:
         print("trainoffsets:", trainoffsets)
+    allsmoothregressderivratios = np.zeros((numpoints + 2 * edgepad, numoffsets), dtype=rt_floattype)
 
-    for i in range(len(trainoffsets)):
-        pass
+    for whichoffset in range(numoffsets):
+        thisoffset = trainoffsets[whichoffset]
 
-    # now make synthetic fMRI data
-    for i in range(numpoints + 2 * edgepad):
-        fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i])
+        # now make synthetic fMRI data
+        for i in range(numpoints + 2 * edgepad):
+            fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i] + thisoffset)
 
-    regressderivratios, regressrvalues = getderivratios(
-        fmridata,
-        validvoxels,
-        timeaxis,
-        0.0 * lagtimes,
-        fmrimask,
-        lagtcgenerator,
-        "glm",
-        "refinedelaytest",
-        sampletime,
-        sLFOfitmean,
-        rvalue,
-        r2value,
-        fitNorm[:, :2],
-        fitcoeff[:, :2],
-        movingsignal,
-        lagtc,
-        filtereddata,
-        None,
-        None,
-        optiondict,
-        regressderivs=regressderivs,
-        debug=debug,
-    )
-    if debug:
-        print("before trimming")
-        print(f"{regressderivratios.shape=}")
-        print(f"{lagtimes.shape=}")
-    if regressderivs == 1:
-        smoothregressderivratios = tide_filt.unpadvec(
-            smooth(tide_filt.padvec(regressderivratios, padlen=20, padtype="constant"), smoothpts),
-            padlen=20,
+        regressderivratios, regressrvalues = getderivratios(
+            fmridata,
+            validvoxels,
+            timeaxis + thisoffset,
+            0.0 * lagtimes,
+            fmrimask,
+            lagtcgenerator,
+            "glm",
+            "refinedelaytest",
+            sampletime,
+            sLFOfitmean,
+            rvalue,
+            r2value,
+            fitNorm[:, :2],
+            fitcoeff[:, :2],
+            movingsignal,
+            lagtc,
+            filtereddata,
+            None,
+            None,
+            optiondict,
+            regressderivs=regressderivs,
+            debug=debug,
         )
-        regressderivratios = regressderivratios[edgepad:-edgepad]
-        smoothregressderivratios = smoothregressderivratios[edgepad:-edgepad]
-    else:
-        smoothregressderivratios = np.zeros_like(regressderivratios)
-        for i in range(regressderivs):
-            smoothregressderivratios[i, :] = tide_filt.unpadvec(
-                smooth(
-                    tide_filt.padvec(regressderivratios[i, :], padlen=20, padtype="constant"),
-                    smoothpts,
-                ),
+        if debug:
+            print("before trimming")
+            print(f"{regressderivratios.shape=}")
+            print(f"{lagtimes.shape=}")
+        if regressderivs == 1:
+            smoothregressderivratios = tide_filt.unpadvec(
+                smooth(tide_filt.padvec(regressderivratios, padlen=20, padtype="constant"), smoothpts),
                 padlen=20,
             )
-        regressderivratios = regressderivratios[:, edgepad:-edgepad]
-        smoothregressderivratios = smoothregressderivratios[:, edgepad:-edgepad]
+            #regressderivratios = regressderivratios[edgepad:-edgepad]
+            allsmoothregressderivratios[:, whichoffset] = smoothregressderivratios + 0.0
+        else:
+            smoothregressderivratios = np.zeros_like(regressderivratios)
+            for i in range(regressderivs):
+                allsmoothregressderivratios[i, :] = tide_filt.unpadvec(
+                    smooth(
+                        tide_filt.padvec(regressderivratios[i, :], padlen=20, padtype="constant"),
+                        smoothpts,
+                    ),
+                    padlen=20,
+                )
+            #regressderivratios = regressderivratios[:, edgepad:-edgepad]
+            allsmoothregressderivratios = smoothregressderivratios + 0.0
+
+    allsmoothregressderivratios = allsmoothregressderivratios[edgepad:-edgepad, :]
     lagtimes = lagtimes[edgepad:-edgepad]
     if debug:
         print("after trimming")
         print(f"{regressderivratios.shape=}")
-        print(f"{smoothregressderivratios.shape=}")
+        print(f"{allsmoothregressderivratios.shape=}")
         print(f"{lagtimes.shape=}")
 
-    # make sure the mapping function is legal
-    xaxis = smoothregressderivratios[::-1]
-    yaxis = lagtimes[::-1]
-    midpoint = int(len(xaxis) // 2)
-    lowerlim = midpoint + 0
-    while (lowerlim > 1) and xaxis[lowerlim] > xaxis[lowerlim - 1]:
-        lowerlim -= 1
-    upperlim = midpoint + 0
-    while (upperlim < len(xaxis) - 2) and xaxis[upperlim] < xaxis[upperlim + 1]:
-        upperlim += 1
-    xaxis = xaxis[lowerlim : upperlim + 1]
-    yaxis = yaxis[lowerlim : upperlim + 1]
-    ratiotooffsetfunc = CubicSpline(xaxis, yaxis)
+    # find the minimum legal limits of the mapping function
+    highestlowerlim = 0
+    lowestupperlim = numpoints
+    for whichoffset in range(numoffsets):
+        xaxis = allsmoothregressderivratios[::-1, whichoffset]
+        yaxis = lagtimes[::-1]
+        midpoint = int(len(xaxis) // 2)
+        lowerlim = midpoint + 0
+        while (lowerlim > 1) and xaxis[lowerlim] > xaxis[lowerlim - 1]:
+            lowerlim -= 1
+        upperlim = midpoint + 0
+        while (upperlim < len(xaxis) - 2) and xaxis[upperlim] < xaxis[upperlim + 1]:
+            upperlim += 1
+        if lowerlim > highestlowerlim:
+            highestlowerlim = lowerlim
+        if upperlim < lowestupperlim:
+            lowestupperlim = upperlim
+
+    ratiotooffsetfunc = []
+    funcoffsets = []
+    for whichoffset in range(numoffsets):
+        xaxis = allsmoothregressderivratios[::-1, whichoffset]
+        yaxis = lagtimes[::-1]
+        xaxis = xaxis[highestlowerlim : lowestupperlim + 1]
+        yaxis = yaxis[highestlowerlim : lowestupperlim + 1]
+        ratiotooffsetfunc.append(CubicSpline(xaxis, yaxis))
+        funcoffsets.append(thisoffset)
     maplimits = (xaxis[0], xaxis[-1])
 
     if outputlevel != "min":
         resampaxis = np.linspace(xaxis[0], xaxis[-1], num=len(xaxis), endpoint=True)
+        outputfuncs = np.zeros((resampaxis.size[0], numoffsets), dtype=float)
+        colnames = []
+        for whichoffset in range(numoffsets):
+            colnames.append(f"{funcoffsets[whichoffset]}")
+            outputfuncs[:, whichoffset] = ratiotooffsetfunc[whichoffset](resampaxis)
         tide_io.writebidstsv(
             f"{outputname}_desc-ratiotodelayfunc_timeseries",
-            ratiotooffsetfunc(resampaxis),
+            outputfuncs,
             1.0 / (resampaxis[1] - resampaxis[0]),
             starttime=resampaxis[0],
-            columns=["delay"],
+            columns=colnames,
             extraheaderinfo={
                 "Description": "The function mapping derivative ratio to delay",
                 "minratio": f"{resampaxis[0]}",
@@ -219,14 +239,20 @@ def trainratiotooffset(
         )
 
 
-def ratiotodelay(theratio):
-    global ratiotooffsetfunc, maplimits
+def ratiotodelay(theratio, offset=0.0):
+    global ratiotooffsetfunc, funcoffsets, maplimits
+
+    # find the closest calculated offset
+    closestindex = 0
+    for offsetindex in range(len(funcoffsets)):
+        if np.fabs(funcoffsets[offsetindex] - offset) < np.fabs(funcoffsets[closestindex] - offset):
+            closestindex = offsetindex
     if theratio < maplimits[0]:
-        return ratiotooffsetfunc(maplimits[0])
+        return ratiotooffsetfunc[closestindex](maplimits[0]) + funcoffsets[closestindex]
     elif theratio > maplimits[1]:
-        return ratiotooffsetfunc(maplimits[1])
+        return ratiotooffsetfunc[closestindex](maplimits[1]) + funcoffsets[closestindex]
     else:
-        return ratiotooffsetfunc(theratio)
+        return ratiotooffsetfunc[closestindex](theratio) + funcoffsets[closestindex]
 
 
 def coffstodelay(thecoffs, mindelay=-3.0, maxdelay=3.0, debug=False):
