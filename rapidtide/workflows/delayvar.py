@@ -61,6 +61,8 @@ DEFAULT_DELAYOFFSETSPATIALFILT = -1
 DEFAULT_WINDOWSIZE = 30.0
 DEFAULT_SYSTEMICFITTYPE = "pca"
 DEFAULT_PCACOMPONENTS = 1
+DEFAULT_TRAINWIDTH = 0.0
+DEFAULT_TRAINSTEP = 0.5
 
 
 def _get_parser():
@@ -142,6 +144,35 @@ def _get_parser():
         action="store_false",
         help=("Disable highpass filtering on data and regressor."),
         default=True,
+    )
+    parser.add_argument(
+        "--trainwidth",
+        dest="trainwidth",
+        action="store",
+        type=float,
+        metavar="WIDTH",
+        help=(
+            "Train the ratio offset function over this range of central delays (in seconds).  The derivative "
+            "ratio calculation only works over a narrow range, so if the static offset is large, "
+            "you need to train the ratio calculation with a central delay close to that value. "
+            "Set negative to select the width automatically. "
+            f"Default is {DEFAULT_TRAINWIDTH}"
+        ),
+        default=DEFAULT_TRAINWIDTH,
+    )
+    parser.add_argument(
+        "--trainstep",
+        dest="trainstep",
+        action="store",
+        type=float,
+        metavar="STEP",
+        help=(
+            "Use this step size (in seconds) to span the training width.  The derivative "
+            "ratio calculation only works over a narrow range, so if the static offset is large, "
+            "you need to train the ratio calculation with a central delay close to that value. "
+            f"Default is {DEFAULT_TRAINSTEP}"
+        ),
+        default=DEFAULT_TRAINSTEP,
     )
     parser.add_argument(
         "--delaypatchthresh",
@@ -659,8 +690,8 @@ def delayvar(args):
             initial_fmri_x[starttr:endtr],
             outputname + winlabel,
             winoutputlevel,
-            trainwidth=0.0,
-            trainstep=0.5,
+            trainwidth=args.trainwidth,
+            trainstep=args.trainstep,
             mindelay=args.mindelay,
             maxdelay=args.maxdelay,
             numpoints=args.numpoints,
