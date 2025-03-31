@@ -591,6 +591,7 @@ def delayvar(args):
     windowedmedfiltregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
     windowedfilteredregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
     windoweddelayoffset = np.zeros(internalwinspaceshape, dtype=float)
+    windowedclosestoffset = np.zeros(internalwinspaceshape, dtype=float)
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
@@ -626,7 +627,7 @@ def delayvar(args):
     if args.debug:
         print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
     thewindowprocoptions = therunoptions
-    if args.debug:
+    if args.focaldebug:
         thewindowprocoptions["saveminimumsLFOfiltfiles"] = True
         winoutputlevel = "max"
     else:
@@ -706,8 +707,10 @@ def delayvar(args):
                 f"calculating delayoffsets for {windowedfilteredregressderivratios.shape[0]} voxels"
             )
         for i in range(windowedfilteredregressderivratios.shape[0]):
-            windoweddelayoffset[i, thewin] = tide_refinedelay.ratiotodelay(
-                windowedfilteredregressderivratios[i, thewin]
+            windoweddelayoffset[i, thewin], windowedclosestoffset[i, thewin] = (
+                tide_refinedelay.ratiotodelay(
+                    windowedfilteredregressderivratios[i, thewin], offset=lagstouse_valid[i]
+                )
             )
 
     # now see if there are common timecourses in the delay offsets
@@ -873,6 +876,13 @@ def delayvar(args):
             "info",
             None,
             f"Delay offsets in each {winspace} second window",
+        ),
+        (
+            windowedclosestoffset,
+            "windowedclosestoffset",
+            "info",
+            None,
+            f"Closest delay offsets in each {winspace} second window",
         ),
         (
             np.square(windowedregressrvalues),

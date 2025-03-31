@@ -659,7 +659,9 @@ def retroregress(args):
             if args.debug:
                 print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
             for i in range(filteredregressderivratios.shape[0]):
-                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
+                delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
+                    filteredregressderivratios[i]
+                )
                 """delayoffset[i] = tide_refinedelay.coffstodelay(
                     np.asarray([filteredregressderivratios[i]]),
                     mindelay=args.mindelay,

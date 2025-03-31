@@ -121,7 +121,9 @@ def trainratiotooffset(
         trainoffsets = np.array([0.0], dtype=float)
     if debug:
         print("trainoffsets:", trainoffsets)
-    allsmoothregressderivratios = np.zeros((numpoints + 2 * edgepad, numoffsets), dtype=rt_floattype)
+    allsmoothregressderivratios = np.zeros(
+        (numpoints + 2 * edgepad, numoffsets), dtype=rt_floattype
+    )
 
     for whichoffset in range(numoffsets):
         thisoffset = trainoffsets[whichoffset]
@@ -160,10 +162,12 @@ def trainratiotooffset(
             print(f"{lagtimes.shape=}")
         if regressderivs == 1:
             smoothregressderivratios = tide_filt.unpadvec(
-                smooth(tide_filt.padvec(regressderivratios, padlen=20, padtype="constant"), smoothpts),
+                smooth(
+                    tide_filt.padvec(regressderivratios, padlen=20, padtype="constant"), smoothpts
+                ),
                 padlen=20,
             )
-            #regressderivratios = regressderivratios[edgepad:-edgepad]
+            # regressderivratios = regressderivratios[edgepad:-edgepad]
             allsmoothregressderivratios[:, whichoffset] = smoothregressderivratios + 0.0
         else:
             smoothregressderivratios = np.zeros_like(regressderivratios)
@@ -175,7 +179,7 @@ def trainratiotooffset(
                     ),
                     padlen=20,
                 )
-            #regressderivratios = regressderivratios[:, edgepad:-edgepad]
+            # regressderivratios = regressderivratios[:, edgepad:-edgepad]
             allsmoothregressderivratios = smoothregressderivratios + 0.0
 
     allsmoothregressderivratios = allsmoothregressderivratios[edgepad:-edgepad, :]
@@ -212,19 +216,22 @@ def trainratiotooffset(
         xaxis = xaxis[highestlowerlim : lowestupperlim + 1]
         yaxis = yaxis[highestlowerlim : lowestupperlim + 1]
         ratiotooffsetfunc.append(CubicSpline(xaxis, yaxis))
-        funcoffsets.append(thisoffset)
+        funcoffsets.append(trainoffsets[whichoffset] + 0.0)
     maplimits = (xaxis[0], xaxis[-1])
 
     if outputlevel != "min":
         resampaxis = np.linspace(xaxis[0], xaxis[-1], num=len(xaxis), endpoint=True)
-        outputfuncs = np.zeros((resampaxis.size[0], numoffsets), dtype=float)
+        outputfuncs = np.zeros((resampaxis.size, numoffsets), dtype=float)
         colnames = []
         for whichoffset in range(numoffsets):
             colnames.append(f"{funcoffsets[whichoffset]}")
             outputfuncs[:, whichoffset] = ratiotooffsetfunc[whichoffset](resampaxis)
+        if debug:
+            print(f"{colnames=}")
+            print(f"{outputfuncs.shape=}")
         tide_io.writebidstsv(
             f"{outputname}_desc-ratiotodelayfunc_timeseries",
-            outputfuncs,
+            np.transpose(outputfuncs),
             1.0 / (resampaxis[1] - resampaxis[0]),
             starttime=resampaxis[0],
             columns=colnames,
@@ -244,15 +251,27 @@ def ratiotodelay(theratio, offset=0.0):
 
     # find the closest calculated offset
     closestindex = 0
-    for offsetindex in range(len(funcoffsets)):
-        if np.fabs(funcoffsets[offsetindex] - offset) < np.fabs(funcoffsets[closestindex] - offset):
+    for offsetindex in range(1, len(funcoffsets)):
+        if np.fabs(funcoffsets[offsetindex] - offset) < np.fabs(
+            funcoffsets[closestindex] - offset
+        ):
             closestindex = offsetindex
+    print(f"{offset=}, {closestindex=}, {funcoffsets[closestindex]=}")
     if theratio < maplimits[0]:
-        return ratiotooffsetfunc[closestindex](maplimits[0]) + funcoffsets[closestindex]
+        return (
+            ratiotooffsetfunc[closestindex](maplimits[0]) + funcoffsets[closestindex],
+            funcoffsets[closestindex],
+        )
     elif theratio > maplimits[1]:
-        return ratiotooffsetfunc[closestindex](maplimits[1]) + funcoffsets[closestindex]
+        return (
+            ratiotooffsetfunc[closestindex](maplimits[1]) + funcoffsets[closestindex],
+            funcoffsets[closestindex],
+        )
     else:
-        return ratiotooffsetfunc[closestindex](theratio) + funcoffsets[closestindex]
+        return (
+            ratiotooffsetfunc[closestindex](theratio) + funcoffsets[closestindex],
+            funcoffsets[closestindex],
+        )
 
 
 def coffstodelay(thecoffs, mindelay=-3.0, maxdelay=3.0, debug=False):
