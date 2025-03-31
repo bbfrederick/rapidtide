@@ -40,6 +40,8 @@ def trainratiotooffset(
     timeaxis,
     outputname,
     outputlevel,
+    trainwidth=0.0,
+    trainstep=0.5,
     mindelay=-3.0,
     maxdelay=3.0,
     numpoints=501,
@@ -55,6 +57,8 @@ def trainratiotooffset(
         lagtcgenerator.info(prefix="\t")
         print("\ttimeaxis:", timeaxis)
         print("\toutputname:", outputname)
+        print("\ttrainwidth:", trainwidth)
+        print("\ttrainstep:", trainstep)
         print("\tmindelay:", mindelay)
         print("\tmaxdelay:", maxdelay)
         print("\tsmoothpts:", smoothpts)
@@ -78,15 +82,12 @@ def trainratiotooffset(
         print(f"{maxdelay=}")
         print("lagtimes=", lagtimes)
 
-    # now make synthetic fMRI data
+    # set up for getratioderivs call
+    rt_floattype = "float64"
     internalvalidfmrishape = (numpoints + 2 * edgepad, timeaxis.shape[0])
     fmridata = np.zeros(internalvalidfmrishape, dtype=float)
     fmrimask = np.ones(numpoints + 2 * edgepad, dtype=float)
     validvoxels = np.where(fmrimask > 0)[0]
-    for i in range(numpoints + 2 * edgepad):
-        fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i])
-
-    rt_floattype = "float64"
     sLFOfitmean = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
     rvalue = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
     r2value = np.zeros(numpoints + 2 * edgepad, dtype=rt_floattype)
@@ -109,6 +110,10 @@ def trainratiotooffset(
         "fmrifreq": 1.0 / sampletime,
         "textio": False,
     }
+
+    # now make synthetic fMRI data
+    for i in range(numpoints + 2 * edgepad):
+        fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i])
 
     regressderivratios, regressrvalues = getderivratios(
         fmridata,

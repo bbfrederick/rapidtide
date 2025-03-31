@@ -659,6 +659,8 @@ def delayvar(args):
             initial_fmri_x[starttr:endtr],
             outputname + winlabel,
             winoutputlevel,
+            trainwidth=0.0,
+            trainstep=0.5,
             mindelay=args.mindelay,
             maxdelay=args.maxdelay,
             numpoints=args.numpoints,
