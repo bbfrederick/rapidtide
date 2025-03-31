@@ -111,6 +111,22 @@ def trainratiotooffset(
         "textio": False,
     }
 
+    if trainwidth > 0.0:
+        numsteps = int(trainwidth / trainstep)
+        numsteps += 1 - numsteps % 2  # force numsteps to be odd
+        numsteps = np.max((numsteps, 3))  # ensure at least 1 positive and 1 negative step
+        trainoffsets = (
+            np.linspace(0, numsteps * trainstep, numsteps, endpoint=True)
+            - (numsteps // 2) * trainstep
+        )
+    else:
+        trainoffsets = np.array([0.0], dtype=float)
+    if debug:
+        print("trainoffsets:", trainoffsets)
+
+    for i in range(len(trainoffsets)):
+        pass
+
     # now make synthetic fMRI data
     for i in range(numpoints + 2 * edgepad):
         fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i])
