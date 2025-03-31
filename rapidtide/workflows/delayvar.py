@@ -709,7 +709,9 @@ def delayvar(args):
         for i in range(windowedfilteredregressderivratios.shape[0]):
             windoweddelayoffset[i, thewin], windowedclosestoffset[i, thewin] = (
                 tide_refinedelay.ratiotodelay(
-                    windowedfilteredregressderivratios[i, thewin], offset=lagstouse_valid[i]
+                    windowedfilteredregressderivratios[i, thewin],
+                    offset=lagstouse_valid[i],
+                    debug=args.focaldebug,
                 )
             )
 

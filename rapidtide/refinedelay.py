@@ -119,6 +119,7 @@ def trainratiotooffset(
         )
     else:
         trainoffsets = np.array([0.0], dtype=float)
+        numoffsets = 1
     if debug:
         print("trainoffsets:", trainoffsets)
     allsmoothregressderivratios = np.zeros(
@@ -246,7 +247,7 @@ def trainratiotooffset(
         )
 
 
-def ratiotodelay(theratio, offset=0.0):
+def ratiotodelay(theratio, offset=0.0, debug=False):
     global ratiotooffsetfunc, funcoffsets, maplimits
 
     # find the closest calculated offset
@@ -256,21 +257,23 @@ def ratiotodelay(theratio, offset=0.0):
             funcoffsets[closestindex] - offset
         ):
             closestindex = offsetindex
-    print(f"{offset=}, {closestindex=}, {funcoffsets[closestindex]=}")
+    closestoffset = funcoffsets[closestindex]
+    if debug:
+        print(f"{offset=}, {closestindex=}, {closestoffset=}")
     if theratio < maplimits[0]:
         return (
-            ratiotooffsetfunc[closestindex](maplimits[0]) + funcoffsets[closestindex],
-            funcoffsets[closestindex],
+            ratiotooffsetfunc[closestindex](maplimits[0]) + closestoffset,
+            closestoffset,
         )
     elif theratio > maplimits[1]:
         return (
-            ratiotooffsetfunc[closestindex](maplimits[1]) + funcoffsets[closestindex],
-            funcoffsets[closestindex],
+            ratiotooffsetfunc[closestindex](maplimits[1]) + closestoffset,
+            closestoffset,
         )
     else:
         return (
-            ratiotooffsetfunc[closestindex](theratio) + funcoffsets[closestindex],
-            funcoffsets[closestindex],
+            ratiotooffsetfunc[closestindex](theratio) + closestoffset,
+            closestoffset,
         )
 
 

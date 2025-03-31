@@ -33,14 +33,14 @@ closestfile = f"{fileroot}_desc-windowedclosestoffset_info.nii.gz"
     closest_sizes,
 ) = tide_io.readfromnifti(closestfile)
 
-#filtfile = f"{fileroot}_desc-systemicfiltereddata_info.nii.gz"
-#(
-#    filt_img,
-#    filt,
-#    filt_header,
-#    filt_dims,
-#    filt_sizes,
-#) = tide_io.readfromnifti(filtfile)
+filtfile = f"{fileroot}_desc-systemicfiltereddata_info.nii.gz"
+(
+    filt_img,
+    filt,
+    filt_header,
+    filt_dims,
+    filt_sizes,
+) = tide_io.readfromnifti(filtfile)
 
 
 rfile = f"{fileroot}_desc-windowedregressr2values_info.nii.gz"
