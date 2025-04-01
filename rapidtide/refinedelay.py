@@ -198,7 +198,6 @@ def trainratiotooffset(
     lowestupperlim = numpoints
     for whichoffset in range(numoffsets):
         xaxis = allsmoothregressderivratios[::-1, whichoffset]
-        yaxis = lagtimes[::-1]
         midpoint = int(len(xaxis) // 2)
         lowerlim = midpoint + 0
         while (lowerlim > 1) and xaxis[lowerlim] > xaxis[lowerlim - 1]:
