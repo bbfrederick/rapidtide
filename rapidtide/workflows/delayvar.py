@@ -512,9 +512,9 @@ def delayvar(args):
         pct02,
         pct98,
     ) = tide_stats.getfracvals(lagstouse_valid, [0.02, 0.98], debug=args.debug)
-    if args.lagmin == -1:
+    if args.lagmin == -999:
         args.lagmin = np.round(pct02 / args.trainstep, 0) * args.trainstep
-    if args.lagmax == -1:
+    if args.lagmax == -999:
         args.lagmax = np.round(pct98 / args.trainstep, 0) * args.trainstep
 
     print("\n\nWindowed delay estimation")

@@ -7,7 +7,7 @@ delayvar \
     --nprocs -1 \
     --windowsize 20 \
     --systemicfittype pca \
-    --trainrange -2.0 4.0 \
+    --trainrange -999 -999 \
     --pcacomponents 0.8 \
     --outputlevel max \
     --focaldebug \
