@@ -27,6 +27,7 @@ from pathlib import Path
 import numpy as np
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA
+from tf_keras.src.dtensor.integration_test_utils import train_step
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -61,7 +62,8 @@ DEFAULT_DELAYOFFSETSPATIALFILT = -1
 DEFAULT_WINDOWSIZE = 30.0
 DEFAULT_SYSTEMICFITTYPE = "pca"
 DEFAULT_PCACOMPONENTS = 1
-DEFAULT_TRAINWIDTH = 0.0
+DEFAULT_LAGMIN = 0.0
+DEFAULT_LAGMAX = 0.0
 DEFAULT_TRAINSTEP = 0.5
 
 
@@ -146,19 +148,19 @@ def _get_parser():
         default=True,
     )
     parser.add_argument(
-        "--trainwidth",
-        dest="trainwidth",
-        action="store",
+        "--trainrange",
+        dest="lag_extrema",
+        action=pf.IndicateSpecifiedAction,
+        nargs=2,
         type=float,
-        metavar="WIDTH",
+        metavar=("LAGMIN", "LAGMAX"),
         help=(
-            "Train the ratio offset function over this range of central delays (in seconds).  The derivative "
+            "Set the range of delay offset center frequencies to span LAGMIN to LAGMAX. The derivative "
             "ratio calculation only works over a narrow range, so if the static offset is large, "
             "you need to train the ratio calculation with a central delay close to that value. "
-            "Set negative to select the width automatically. "
-            f"Default is {DEFAULT_TRAINWIDTH}"
+            f"LAGMAX.  Default is {DEFAULT_LAGMIN} to {DEFAULT_LAGMAX} seconds. "
         ),
-        default=DEFAULT_TRAINWIDTH,
+        default=(DEFAULT_LAGMIN, DEFAULT_LAGMAX),
     )
     parser.add_argument(
         "--trainstep",
@@ -258,6 +260,9 @@ def _get_parser():
 def delayvar(args):
     # get the pid of the parent process
     args.pid = os.getpid()
+
+    args.lagmin = args.lag_extrema[0]
+    args.lagmax = args.lag_extrema[1]
 
     # specify the output name
     if args.alternateoutput is None:
@@ -502,6 +507,16 @@ def delayvar(args):
     # windowed delay deviation estimation
     lagstouse_valid = lagtimes_valid
 
+    # find the robust range of the static delays
+    (
+        pct02,
+        pct98,
+    ) = tide_stats.getfracvals(lagstouse_valid, [0.02, 0.98], debug=args.debug)
+    if args.lagmin == -1:
+        args.lagmin = np.round(pct02 / args.trainstep, 0) * args.trainstep
+    if args.lagmax == -1:
+        args.lagmax = np.round(pct98 / args.trainstep, 0) * args.trainstep
+
     print("\n\nWindowed delay estimation")
     TimingLGR.info("Windowed delay estimation start")
     LGR.info("\n\nWindowed delay estimation")
@@ -691,7 +706,8 @@ def delayvar(args):
             initial_fmri_x[starttr:endtr],
             outputname + winlabel,
             winoutputlevel,
-            trainwidth=args.trainwidth,
+            lagmin=args.lagmin,
+            lagmax=args.lagmax,
             trainstep=args.trainstep,
             mindelay=args.mindelay,
             maxdelay=args.maxdelay,

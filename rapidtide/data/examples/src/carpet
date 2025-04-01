@@ -110,26 +110,25 @@ displaydelay = plot_carpet(
     title="delay offset over time",
 )
 
-closestlim = 1.5
 displayclosest = plot_carpet(
     closest_img,
     fitmask_img,
     t_r=fmritr,
-    vmin=-closestlim,
-    vmax=closestlim,
+    vmin=-2.0,
+    vmax=4.0,
     standardize=False,
     title="closest offset over time",
 )
 
-delaylim = 0.5
-displayfilt = plot_carpet(
-    filt_img,
-    fitmask_img,
-    t_r=fmritr,
-    vmin=-delaylim,
-    vmax=delaylim,
-    standardize=False,
-    title="systemic filtered delay offset over time",
-)
+#delaylim = 0.5
+#displayfilt = plot_carpet(
+#    filt_img,
+#    fitmask_img,
+#   t_r=fmritr,
+#   vmin=-delaylim,
+#   vmax=delaylim,
+#   standardize=False,
+#   title="systemic filtered delay offset over time",
+#
 
 plt.show()

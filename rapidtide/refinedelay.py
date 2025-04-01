@@ -40,7 +40,8 @@ def trainratiotooffset(
     timeaxis,
     outputname,
     outputlevel,
-    trainwidth=0.0,
+    lagmin=0.0,
+    lagmax=0.0,
     trainstep=0.5,
     mindelay=-3.0,
     maxdelay=3.0,
@@ -57,7 +58,8 @@ def trainratiotooffset(
         lagtcgenerator.info(prefix="\t")
         print("\ttimeaxis:", timeaxis)
         print("\toutputname:", outputname)
-        print("\ttrainwidth:", trainwidth)
+        print("\tlagmin:", lagmin)
+        print("\tlagmax:", lagmax)
         print("\ttrainstep:", trainstep)
         print("\tmindelay:", mindelay)
         print("\tmaxdelay:", maxdelay)
@@ -109,13 +111,13 @@ def trainratiotooffset(
         "textio": False,
     }
 
-    if trainwidth > 0.0:
-        numoffsets = int(trainwidth / trainstep) + 1
-        numoffsets += 1 - numoffsets % 2  # force numoffsets to be odd
-        numoffsets = np.max((numoffsets, 3))  # ensure at least 1 positive and 1 negative step
+    if lagmax - lagmin > 0.0:
+        numnegoffsets = np.max((-int(np.round(lagmin / trainstep, 0)), 1))
+        numposoffsets = np.max((int(np.round(lagmax / trainstep, 0)), 1))
+        numoffsets = numnegoffsets + 1 + numposoffsets
         trainoffsets = (
             np.linspace(0, (numoffsets - 1) * trainstep, numoffsets, endpoint=True)
-            - (numoffsets // 2) * trainstep
+            - numnegoffsets * trainstep
         )
     else:
         trainoffsets = np.array([0.0], dtype=float)
