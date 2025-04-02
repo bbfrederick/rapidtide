@@ -198,7 +198,7 @@ since you can't use voxels where rapidtide was not run to do refinement.
 If ``--offsetinclude MASK[:VALSPEC]`` is specified, include all voxels selected by ``MASK[:VALSPEC]``.
 If it is not specified, include all voxels in the correlation mask.
 Then if ``--offsetexclude MASK[:VALSPEC]`` is specified,
-remove any voxels selected by`` MASK[:VALSPEC]`` from the mask.
+remove any voxels selected by ``MASK[:VALSPEC]`` from the mask.
 If it is not specified, don't change the mask.
 Then multiply by the correlation mask,
 and use the voxels within the mask to generate a histogram of delay values.
@@ -681,6 +681,12 @@ specified by ``--maxpasses MAX`` (default is 15).
    you can set the number of passes to a higher value.
 
    The same logic applies to ``--despecklepasses``.
+
+
+Delay Refinement
+^^^^^^^^^^^^^^^^
+
+This is a new capability added in v3.0.
 
 
 Regress Out the Moving Signal

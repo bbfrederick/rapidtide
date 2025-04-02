@@ -40,9 +40,9 @@ def trainratiotooffset(
     timeaxis,
     outputname,
     outputlevel,
-    lagmin=0.0,
-    lagmax=0.0,
-    trainstep=0.5,
+    trainlagmin=0.0,
+    trainlagmax=0.0,
+    trainlagstep=0.5,
     mindelay=-3.0,
     maxdelay=3.0,
     numpoints=501,
@@ -58,9 +58,9 @@ def trainratiotooffset(
         lagtcgenerator.info(prefix="\t")
         print("\ttimeaxis:", timeaxis)
         print("\toutputname:", outputname)
-        print("\tlagmin:", lagmin)
-        print("\tlagmax:", lagmax)
-        print("\ttrainstep:", trainstep)
+        print("\ttrainlagmin:", trainlagmin)
+        print("\ttrainlagmax:", trainlagmax)
+        print("\ttrainlagstep:", trainlagstep)
         print("\tmindelay:", mindelay)
         print("\tmaxdelay:", maxdelay)
         print("\tsmoothpts:", smoothpts)
@@ -111,13 +111,13 @@ def trainratiotooffset(
         "textio": False,
     }
 
-    if lagmax - lagmin > 0.0:
-        numnegoffsets = np.max((-int(np.round(lagmin / trainstep, 0)), 1))
-        numposoffsets = np.max((int(np.round(lagmax / trainstep, 0)), 1))
+    if trainlagmax - trainlagmin > 0.0:
+        numnegoffsets = np.max((-int(np.round(trainlagmin / trainlagstep, 0)), 1))
+        numposoffsets = np.max((int(np.round(trainlagmax / trainlagstep, 0)), 1))
         numoffsets = numnegoffsets + 1 + numposoffsets
         trainoffsets = (
-            np.linspace(0, (numoffsets - 1) * trainstep, numoffsets, endpoint=True)
-            - numnegoffsets * trainstep
+            np.linspace(0, (numoffsets - 1) * trainlagstep, numoffsets, endpoint=True)
+            - numnegoffsets * trainlagstep
         )
     else:
         trainoffsets = np.array([0.0], dtype=float)
@@ -127,6 +127,7 @@ def trainratiotooffset(
     allsmoothregressderivratios = np.zeros(
         (numpoints + 2 * edgepad, numoffsets), dtype=rt_floattype
     )
+    theEVs = np.zeros((numoffsets, timeaxis.shape[0]), dtype=float)
 
     for whichoffset in range(numoffsets):
         thisoffset = trainoffsets[whichoffset]
@@ -134,6 +135,8 @@ def trainratiotooffset(
         # now make synthetic fMRI data
         for i in range(numpoints + 2 * edgepad):
             fmridata[i, :] = lagtcgenerator.yfromx(timeaxis - lagtimes[i] + thisoffset)
+
+        theEVs[whichoffset, :] = lagtcgenerator.yfromx(timeaxis + thisoffset)
 
         regressderivratios, regressrvalues = getderivratios(
             fmridata,
@@ -246,6 +249,19 @@ def trainratiotooffset(
             yaxislabel="time",
             append=False,
         )
+        if numoffsets > 1:
+            print(f"{theEVs.shape=}, {numoffsets=}, {(numoffsets>1)=}")
+            tide_io.writebidstsv(
+                f"{outputname}_desc-trainratioEV_timeseries",
+                theEVs,
+                1.0/(trainoffsets[1] - trainoffsets[0]),
+                starttime=trainoffsets[0],
+                columns=colnames,
+                extraheaderinfo={
+                    "Description": f"EVs used for each offset"
+                },
+                append=False,
+            )
 
 
 def ratiotodelay(theratio, offset=0.0, debug=False):
@@ -259,8 +275,6 @@ def ratiotodelay(theratio, offset=0.0, debug=False):
         ):
             closestindex = offsetindex
     closestoffset = funcoffsets[closestindex]
-    if debug:
-        print(f"{offset=}, {closestindex=}, {closestoffset=}")
     if theratio < maplimits[0]:
         return (
             ratiotooffsetfunc[closestindex](maplimits[0]) + closestoffset,
