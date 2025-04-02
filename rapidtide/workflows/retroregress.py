@@ -295,7 +295,29 @@ def retroregress(args):
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()
 
+    # save the raw and formatted command lines
+    argstowrite = sys.argv
     thecommandline = " ".join(sys.argv[1:])
+    tide_io.writevec([thecommandline], f"{outputname}_retrocommandline.txt")
+    formattedcommandline = []
+    for thetoken in argstowrite[0:3]:
+        formattedcommandline.append(thetoken)
+    for thetoken in argstowrite[3:]:
+        if thetoken[0:2] == "--":
+            formattedcommandline.append(thetoken)
+        else:
+            formattedcommandline[-1] += " " + thetoken
+    for i in range(len(formattedcommandline)):
+        if i > 0:
+            prefix = "    "
+        else:
+            prefix = ""
+        if i < len(formattedcommandline) - 1:
+            suffix = " \\"
+        else:
+            suffix = ""
+        formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
+    tide_io.writevec(formattedcommandline, f"{outputname}_retroformattedcommandline.txt")
 
     if args.nprocs < 1:
         args.nprocs = tide_multiproc.maxcpus()
