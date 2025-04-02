@@ -171,12 +171,12 @@ whereas ``--corrmask mymask.nii.gz`` would include any non-zero voxels in mymask
 .. tip::
 
    The ``--brainmask`` argument will automatically set all five of these masks,
-   but each can be overridden with the individual mask parameters.
+   but each can be overridden by specifying individual mask parameters on the command line.
 
 .. tip::
 
    The ``--graymattermask`` argument will automatically set both the global mean mask and the offset mask,
-   but each can be overridden with the individual mask parameters.
+   but each can be overridden by specifying individual mask parameters on the command line.
 
 **For the global mean mask:**
 If ``--globalmeaninclude MASK[:VALSPEC]`` is specified, include all voxels selected by ``MASK[:VALSPEC]``.
