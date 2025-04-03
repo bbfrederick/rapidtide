@@ -607,14 +607,16 @@ def rapidtide_main(argparsingfunc):
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
 
     # detect zero mean data
-    optiondict["dataiszeromean"] = checkforzeromean(fmri_data)
+    if not optiondict["dataiszeromean"]:
+        # check anyway
+        optiondict["dataiszeromean"] = checkforzeromean(fmri_data)
+
     if optiondict["dataiszeromean"]:
         LGR.warning(
             "WARNING: dataset is zero mean - forcing variance masking and no refine prenormalization. "
             "Consider specifying a global mean and correlation mask."
         )
         optiondict["refineprenorm"] = "None"
-        optiondict["globalmaskmethod"] = "variance"
 
     # reformat the brain mask, if it exists
     if brainmask is None:
@@ -716,12 +718,10 @@ def rapidtide_main(argparsingfunc):
         corrmask[np.where(datarange == 0)] = 0.0
     else:
         # check to see if the data has been demeaned
-        meanim = np.mean(fmri_data, axis=1)
-        stdim = np.std(fmri_data, axis=1)
         if fileiscifti:
             corrmask = np.uint(nim_data[:, 0] * 0 + 1)
         else:
-            if (np.mean(stdim) < np.mean(meanim)) and not optiondict["nirs"]:
+            if optiondict["dataiszeromean"]:
                 LGR.verbose("generating correlation mask from mean image")
                 corrmask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
             else:
