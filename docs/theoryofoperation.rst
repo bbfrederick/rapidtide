@@ -125,7 +125,8 @@ In order to perform this task, rapidtide does a number of things:
 7. Repeat steps 3-7 as needed.
 8. Parametrize the similarity between the moving signal and each voxels'
    timecourse, and save these metrics.
-9. Optionally regress the voxelwise time delayed moving signal out of the original dataset.
+9. Refine the time delay estimate using the linear regression coefficient method.
+10. Optionally regress the voxelwise time delayed moving signal out of the original dataset.
 
 Each of these steps (and substeps) has nuances which will be discussed below.
 
