@@ -478,7 +478,8 @@ by fitting the set of null correlations to a Johnson SB distribution
 Time delay determination
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is the core of the program, that actually does the delay determination.
+This is the core of the program, that actually does the delay determination (mostly - see the :ref:`Delay Refinement`
+section near the end of this page).
 It's currently divided into two parts -
 calculation of a time dependent similarity function between the sLFO regressor and each voxel
 (currently using one of three methods),
