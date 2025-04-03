@@ -508,6 +508,7 @@ workflows:
       - test_py312:
           requires:
             - build_py312
+      - build_py313
       - test_py313:
           requires:
             - build_py313
