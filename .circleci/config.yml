@@ -167,6 +167,38 @@ jobs:
           paths:
             - "/opt/conda/envs/py312_env"
 
+  build_py313:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    resource_class: medium
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-313-{{ checksum "pyproject.toml" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py313_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py313_env
+            else
+                conda create -n py313_env python=3.13 -yq
+                source activate py313_env
+                pip install --upgrade "setuptools>=54"
+                pip install --upgrade pip
+                pip install --upgrade distlib
+                pip install .[tests,doc]
+            fi
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-313-{{ checksum "pyproject.toml" }}
+          paths:
+            - "/opt/conda/envs/py313_env"
+
 
   test_py39:
     working_directory: /tmp/src/rapidtide
@@ -369,6 +401,45 @@ jobs:
           path: test-results
 
 
+  test_py313:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    parallelism: 4
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-313-{{ checksum "pyproject.toml" }}
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq curl gpg 
+            source activate py313_env
+            pip install --upgrade pytest
+            pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
+            pytest \
+                $TESTFILES \
+                -W ignore \
+                --ignore=rapidtide/candidatetests \
+                --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+
+
   build_docs:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -437,6 +508,9 @@ workflows:
       - test_py312:
           requires:
             - build_py312
+      - test_py313:
+          requires:
+            - build_py313
       #- style_check:
       #    requires:
       #      - build_py311

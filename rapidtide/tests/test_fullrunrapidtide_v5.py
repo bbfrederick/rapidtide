@@ -25,11 +25,19 @@ import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
-def test_fullrunrapidtide_v5(debug=False, displayplots=False):
+def test_fullrunrapidtide_v5(debug=False, local=False, displayplots=False):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     # run rapidtide
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_cifti.ptseries.nii"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST5"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_cifti.ptseries.nii"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST5"),
         "--nprocs",
         "-1",
         "--passes",
@@ -46,4 +54,4 @@ def test_fullrunrapidtide_v5(debug=False, displayplots=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_fullrunrapidtide_v5(debug=True, displayplots=True)
+    test_fullrunrapidtide_v5(debug=True, local=True, displayplots=True)

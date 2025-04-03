@@ -25,16 +25,24 @@ import rapidtide.workflows.happy_parser as happy_parser
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
-def test_fullrunhappy_v2(debug=False, displayplots=False):
+def test_fullrunhappy_v2(debug=False, local=False, displayplots=False):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     # run happy
     inputargs = [
-        os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz"),
-        os.path.join(get_examples_path(), "sub-HAPPYTEST.json"),
-        os.path.join(get_test_temp_path(), "happyout2"),
+        os.path.join(exampleroot, "sub-HAPPYTEST.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTEST.json"),
+        os.path.join(testtemproot, "happyout2"),
         "--estweights",
-        os.path.join(get_examples_path(), "sub-HAPPYTEST_smallmask.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
         "--projmask",
-        os.path.join(get_examples_path(), "sub-HAPPYTEST_smallmask.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
         "--mklthreads",
         "-1",
         "--model",
@@ -43,7 +51,7 @@ def test_fullrunhappy_v2(debug=False, displayplots=False):
         "--temporalregression",
         "--cardiacfile",
         os.path.join(
-            get_examples_path(),
+            exampleroot,
             "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri_dlfiltered",
         ),
         "--increaseoutputlevel",
@@ -54,4 +62,4 @@ def test_fullrunhappy_v2(debug=False, displayplots=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_fullrunhappy_v2(debug=True, displayplots=True)
+    test_fullrunhappy_v2(debug=True, local=True, displayplots=True)
