@@ -97,6 +97,7 @@ def linfitfiltpass(
     mp_chunksize=1000,
     rt_floatset=np.float64,
     rt_floattype="float64",
+    verbose=True,
     debug=False,
 ):
     inputshape = np.shape(fmri_data)
@@ -184,6 +185,7 @@ def linfitfiltpass(
             GLM_consumer,
             inputshape,
             themask,
+            verbose=verbose,
             nprocs=nprocs,
             procbyvoxel=procbyvoxel,
             showprogressbar=showprogressbar,

@@ -10,5 +10,4 @@ delayvar \
     --trainrange -999 -999 \
     --pcacomponents 0.8 \
     --outputlevel max \
-    --focaldebug \
     --windelayoffsetspatialfilt 3

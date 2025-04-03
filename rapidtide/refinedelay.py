@@ -49,6 +49,7 @@ def trainratiotooffset(
     smoothpts=3,
     edgepad=5,
     regressderivs=1,
+    verbose=False,
     debug=False,
 ):
     global ratiotooffsetfunc, funcoffsets, maplimits
@@ -129,6 +130,13 @@ def trainratiotooffset(
     )
     theEVs = np.zeros((numoffsets, timeaxis.shape[0]), dtype=float)
 
+    if verbose:
+        thisLGR = LGR
+        thisTimingLGR = TimingLGR
+    else:
+        thisLGR = None
+        thisTimingLGR = None
+
     for whichoffset in range(numoffsets):
         thisoffset = trainoffsets[whichoffset]
 
@@ -156,8 +164,8 @@ def trainratiotooffset(
             movingsignal,
             lagtc,
             filtereddata,
-            None,
-            None,
+            thisLGR,
+            thisTimingLGR,
             optiondict,
             regressderivs=regressderivs,
             debug=debug,
@@ -254,12 +262,10 @@ def trainratiotooffset(
             tide_io.writebidstsv(
                 f"{outputname}_desc-trainratioEV_timeseries",
                 theEVs,
-                1.0/(trainoffsets[1] - trainoffsets[0]),
+                1.0 / (trainoffsets[1] - trainoffsets[0]),
                 starttime=trainoffsets[0],
                 columns=colnames,
-                extraheaderinfo={
-                    "Description": f"EVs used for each offset"
-                },
+                extraheaderinfo={"Description": f"EVs used for each offset"},
                 append=False,
             )
 
@@ -412,6 +418,7 @@ def filterderivratios(
     fileiscifti=False,
     textio=False,
     rt_floattype="float64",
+    verbose=True,
     debug=False,
 ):
 
@@ -423,7 +430,8 @@ def filterderivratios(
 
     # filter the ratio to find weird values
     themad = mad(regressderivratios).astype(np.float64)
-    print(f"MAD of regression fit derivative ratios = {themad}")
+    if verbose:
+        print(f"MAD of regression fit derivative ratios = {themad}")
     outmaparray, internalspaceshape = tide_io.makedestarray(
         nativespaceshape,
         textio=textio,

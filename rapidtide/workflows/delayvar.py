@@ -212,6 +212,13 @@ def _get_parser():
         default=DEFAULT_PCACOMPONENTS,
     )
     parser.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help=("Be wicked chatty."),
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -642,17 +649,30 @@ def delayvar(args):
     if args.debug:
         print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
     thewindowprocoptions = therunoptions
+    if args.verbose:
+        thewindowprocoptions["showprogressbar"] = True
+    else:
+        thewindowprocoptions["showprogressbar"] = False
     if args.focaldebug:
         thewindowprocoptions["saveminimumsLFOfiltfiles"] = True
         winoutputlevel = "max"
     else:
         thewindowprocoptions["saveminimumsLFOfiltfiles"] = False
         winoutputlevel = "min"
+
+    # Now get the derivative ratios the individual windows
+    print("Finding derivative ratios:")
     for thewin in range(numwins):
-        print(f"Processing window {thewin + 1} of {numwins}")
+        print(f"\tProcessing window {thewin + 1} of {numwins}")
         starttr = thewin * winskip
         endtr = starttr + wintrs
         winlabel = f"_win-{str(thewin + 1).zfill(3)}"
+        if args.verbose:
+            thisLGR = LGR
+            thisTimingLGR = TimingLGR
+        else:
+            thisLGR = None
+            thisTimingLGR = None
 
         windowedregressderivratios[:, thewin], windowedregressrvalues[:, thewin] = (
             tide_refinedelay.getderivratios(
@@ -673,8 +693,8 @@ def delayvar(args):
                 winmovingsignal,
                 winlagtc,
                 winfiltereddata,
-                LGR,
-                TimingLGR,
+                thisLGR,
+                thisTimingLGR,
                 thewindowprocoptions,
                 regressderivs=1,
                 starttr=starttr,
@@ -683,6 +703,10 @@ def delayvar(args):
             )
         )
 
+    # Filter the derivative ratios
+    print("Filtering derivative ratios:")
+    for thewin in range(numwins):
+        print(f"\tProcessing window {thewin + 1} of {numwins}")
         (
             windowedmedfiltregressderivratios[:, thewin],
             windowedfilteredregressderivratios[:, thewin],
@@ -697,9 +721,14 @@ def delayvar(args):
             fileiscifti=False,
             textio=False,
             rt_floattype=rt_floattype,
+            verbose=args.verbose,
             debug=args.debug,
         )
 
+    # Train the ratio offsets
+    print("Training ratio offsets:")
+    for thewin in range(numwins):
+        print(f"\tProcessing window {thewin + 1} of {numwins}")
         # find the mapping of glm ratios to delays
         tide_refinedelay.trainratiotooffset(
             genlagtc,
@@ -712,11 +741,15 @@ def delayvar(args):
             mindelay=args.mindelay,
             maxdelay=args.maxdelay,
             numpoints=args.numpoints,
+            verbose=args.verbose,
             debug=args.focaldebug,
         )
         TimingLGR.info("Refinement calibration end")
 
-        # now calculate the delay offsets
+    # now calculate the delay offsets
+    print("Calculating delay offsets:")
+    for thewin in range(numwins):
+        print(f"\tProcessing window {thewin + 1} of {numwins}")
         TimingLGR.info("Calculating delay offsets")
         if args.debug:
             print(
