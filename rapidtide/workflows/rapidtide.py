@@ -727,7 +727,9 @@ def rapidtide_main(argparsingfunc):
             else:
                 LGR.verbose("generating correlation mask from std image")
                 corrmask = np.uint16(
-                    tide_stats.makemask(stdim, threshpct=optiondict["corrmaskthreshpct"])
+                    tide_stats.makemask(
+                        np.std(fmri_data, axis=1), threshpct=optiondict["corrmaskthreshpct"]
+                    )
                 )
     if internalbrainmask is not None:
         corrmask = internalbrainmask
