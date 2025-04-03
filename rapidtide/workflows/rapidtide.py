@@ -718,7 +718,7 @@ def rapidtide_main(argparsingfunc):
         corrmask[np.where(datarange == 0)] = 0.0
     else:
         # check to see if the data has been demeaned
-        if fileiscifti:
+        if fileiscifti or optiondict["textio"]:
             corrmask = np.uint(nim_data[:, 0] * 0 + 1)
         else:
             if optiondict["dataiszeromean"]:
