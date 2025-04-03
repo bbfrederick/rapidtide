@@ -686,7 +686,72 @@ specified by ``--maxpasses MAX`` (default is 15).
 Delay Refinement
 ^^^^^^^^^^^^^^^^
 
-This is a new capability added in v3.0.
+This is new to rapidtide 3.0.  I've added a new method for refining the delay time estimate in
+every voxel based on linear regression coefficients.  To the best of my knowledge, this is something I came up
+with (well not entirely, but this application).
+
+I spend a lot of time thinking about delay estimation, and realized that when
+doing the final noise regression, if you add a time derivative of the sLFO regressor, you can account for
+small time delays (misalignment of the EV with the timecourse being fit) so that the model fits better.
+This is a well known trick in fMRI analysis - I certainly didn't come up with that.  As we remember from
+freshman physics, you can extrapolate a signal using a Taylor series approximation.
+Which is to say, if you know the value of a function at a time t, and the value of the derivative,
+and the second
+derivative, and so on, you can calculate the signal at another point t + delta t by using a
+weighted sum of those  values.  Neat!  Even more neat is that for sufficiently small values of
+delta t, you can get a pretty good approximation using just the function and it's first derivative.
+
+As always, there are some complications:
+
+    * The mapping between fit coefficient ratio and time delay depends on the function, so it needs
+      to be determined for each regressor.  It's linear for very small delay value, and then the
+      mapping diverges (in a regressor specific way) as the delay increases.
+
+    * As I mentioned, this only works for "small" delay times.  What is small?  For LFO signals
+      in the 0.01 to 0.15 Hz band, this is only really good for about +/-3-5 seconds of offset
+      (and the linear region is only about +/-0.75 seconds (which is why we can't use this method
+      for the initial delay estimation, only for tuning).  The mapping function ends up being
+      sigmoid - you can't really calculate the delay from the ratio when the slope gets close to zero.
+      When that happens depends on the specific regressor, but you can pretty much always do the
+      mapping out to about +/-3.5 seconds.
+
+
+But this comes with some neat advantages, too:
+
+    * Unlike fitting the correlation function, this actually works BETTER for discriminating
+      small delays near zero.
+
+    * This is fairly immune to noise - there's no peak fitting step, so baseline roll and all of
+      that just isn't an issue.
+
+    * Also unlike fitting the correlation function, this works pretty well even over short
+      windows (more on this later).
+
+
+What is this good for?  Well, one thing I have found is that rapidtide gets much better fits if you
+use a fairly strong spatial smoothing filter (5mm gaussian kernel).  That's great for getting rid
+of a lot of the annoying speckling in the delay maps, but the result is that you lose a lot of fine
+detail in the delay map (which is obvious when you think about it). BUT - we know that delay varies
+relatively smoothly in real brains, so the smoothed delay values, while maybe not exactly right in
+most voxels, aren't far off.  So the delay in any voxel will likely be within +/-3 seconds of the smoothed
+value in every voxel, so the ratio-of-fit-derivatives method will be able to fit the difference, which
+you can then apply as an offset to find the exact delay in every voxel with much higher spatial resolution.
+Neat, huh?
+
+I've added a postprocessing step that calculates the offset in delay from the final maxtime map generated in the
+iterative delay/sLFO regressor fitting process, which when added to the maxtime map gives you a tweaked, somewhat
+better delay estimate in every voxel.  So you can run the initial estimation steps on
+spatially smoothed, high SNR data to get a nice, stable estimate of delays, and a good refined sLFO regressor, then
+hone in on the exact delay right at the end.
+
+This is the first pass at putting this into the program.  Probably the best thing to do is add this step into the main
+iterative estimation loop, and start from very smooth data in the first steps, then reduce the smoothing in subsequent
+passes.  Given that the prerelease cycle has already taken 5 months, I'll probably add that in 3.1.
+
+For now, you can play with this feature and compare the ``XXX_desc-maxtimerefined`` map to the ``XXX_desc-maxtime``
+map and see if that gets you excited!  Delay refinement is quick, and on by default.  You can turn it off if it offends
+you, but if nothing else, it does improve the denoising quality, so I'd suggest leaving it on (sLFO regression uses
+the maxtimerefined map to generate voxel specific regressors if it exists).
 
 
 Regress Out the Moving Signal
@@ -728,44 +793,6 @@ Finally, if you don't want to do sLFO filtering at all
 (i.e. you only care about time delays, and want to minimize storage space),
 you can shut off the glm filtering with ``--nodenoise``.
 
-
-Delay refinement
-^^^^^^^^^^^^^^^^
-
-This is new to rapidtide 3.0.  I've added a new method for refining the delay time estimate in
-every voxel based on the filtering step.  To the best of my knowledge, this is something I came up
-with (well not entirely, but this application).
-
-As we remember from freshman physics, you can extrapolate a signal using a Taylor series approximation.
-Which is to say, if you know the value of a function at a time t, and the value of the derivative,
-and the second
-derivative, and so on, you can calculate the signal at another point t + delta t by using a
-weighted sum of those  values.  Neat!  Even more neat is that for sufficiently small values of
-delta t, you can get a pretty good approximation using just the function and it's first derivative.
-
-As always, there are some complications:
-
-    * The mapping between fit coefficient ratio and time delay depends on the function, so it needs
-      to be determined for each regressor.  It's linear for very small delay value, and then the
-      mapping diverges (in a regressor specific way) as the delay increases.
-
-    * As I mentioned, this only works for "small" delay times.  What is small?  For LFO signals
-      in the 0.01 to 0.15 Hz band, this is only really good for about +/-3-5 seconds of offset
-      (and the linear region is only about +/-0.75 seconds (which is why we can't use this method
-      for the initial delay estimation, only for tuning).  The mapping function ends up being
-      sigmoid - you can't really calculate the delay from the ratio when the slope gets close to zero.
-      When that happens depends on the specific regressor, but you can pretty much always do the
-      mapping out to about +/-3.5 seconds.
-
-What is this good for?  Well, one thing I have found is that rapidtide gets much better fits if you
-use a fairly strong spatial smoothing filter (5mm gaussian kernel).  That's great for getting rid
-of a lot of the annoying speckling in the delay maps, but the result is that you lose a lot of fine
-detail in the delay map (which is obvious when you think about it). BUT - we know that delay varies
-relatively smoothly in real brains, so the smoothed delay values, while maybe not exactly right in
-most voxels, aren't far off.  So the delay in any voxel will be within +/-3 seconds of the smoothed
-value in every voxel, so the ratio-of-fit-derivatives method will be able to fit the difference, which
-you can then apply as an offset to find the exact delay in every voxel with much higher spatial resolution.
-Neat, huh?
 
 
 References
