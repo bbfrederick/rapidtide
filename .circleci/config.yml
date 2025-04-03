@@ -213,7 +213,8 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-39-{{ checksum "pyproject.toml" }}
       - run:
-          name: Run tests
+          no_output_timeout: 15m
+          name: Run tests on py3.9
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
@@ -251,7 +252,8 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-310-{{ checksum "pyproject.toml" }}
       - run:
-          name: Run tests
+          no_output_timeout: 15m
+          name: Run tests on py3.10
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
@@ -288,7 +290,8 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:
-          name: Run tests
+          no_output_timeout: 15m
+          name: Run tests on py3.11 with options
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
@@ -329,7 +332,8 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:
-          name: Coverage
+          no_output_timeout: 15m
+          name: Run coverage test on py3.11
           file: rapidtide/coverage.xml
           command:  |
             apt-get update
@@ -375,7 +379,8 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-312-{{ checksum "pyproject.toml" }}
       - run:
-          name: Run tests
+          no_output_timeout: 15m
+          name: Run tests on py3.12
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
@@ -414,7 +419,8 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-313-{{ checksum "pyproject.toml" }}
       - run:
-          name: Run tests
+          no_output_timeout: 15m
+          name: Run tests on py3.13
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
