@@ -77,8 +77,8 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
                 pbar.update(1)
                 if numreturned > remainder - 1:
                     break
-
-    print()
+    if showprogressbar:
+        print()
 
     return data_out
 
