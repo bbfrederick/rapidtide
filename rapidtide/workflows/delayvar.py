@@ -559,7 +559,7 @@ def delayvar(args):
             thehpf.apply(genlagsamplerate, reference_y),
             padtime=thepadtime,
         )
-        genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
+        genlagtc.save(f"{outputname}_desc-hpflagtcgenerator_timeseries")
 
     # and filter the data if necessary
     if args.hpf:
@@ -702,6 +702,27 @@ def delayvar(args):
                 debug=args.debug,
             )
         )
+        if args.focaldebug:
+            theheader = copy.deepcopy(fmri_header)
+            theheader["dim"][4] = wintrs
+            maplist = [
+                (
+                    winlagtc,
+                    "windowedlagtcs",
+                    "bold",
+                    None,
+                    f"Lagtcs in each {winspace} second window",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputname + winlabel,
+                maplist,
+                validvoxels,
+                (xsize, ysize, numslices, wintrs),
+                theheader,
+                bidsbasedict,
+                debug=args.debug,
+            )
 
     # Filter the derivative ratios
     print("Filtering derivative ratios:")
@@ -729,6 +750,9 @@ def delayvar(args):
     print("Training ratio offsets:")
     for thewin in range(numwins):
         print(f"\tProcessing window {thewin + 1} of {numwins}")
+        starttr = thewin * winskip
+        endtr = starttr + wintrs
+        winlabel = f"_win-{str(thewin + 1).zfill(3)}"
         # find the mapping of glm ratios to delays
         tide_refinedelay.trainratiotooffset(
             genlagtc,
@@ -750,6 +774,7 @@ def delayvar(args):
     print("Calculating delay offsets:")
     for thewin in range(numwins):
         print(f"\tProcessing window {thewin + 1} of {numwins}")
+        winlabel = f"_win-{str(thewin + 1).zfill(3)}"
         TimingLGR.info("Calculating delay offsets")
         if args.debug:
             print(
@@ -763,6 +788,16 @@ def delayvar(args):
                     debug=args.focaldebug,
                 )
             )
+        namesuffix = "_desc-delayoffset_hist"
+        tide_stats.makeandsavehistogram(
+            windoweddelayoffset[:, thewin],
+            therunoptions["histlen"],
+            1,
+            outputname + winlabel + namesuffix,
+            displaytitle="Histogram of delay offsets calculated from GLM",
+            dictvarname="delayoffsethist",
+            thedict=None,
+        )
 
     # now see if there are common timecourses in the delay offsets
     themean = np.mean(windoweddelayoffset, axis=1)
@@ -907,16 +942,6 @@ def delayvar(args):
             debug=args.debug,
         )
 
-    namesuffix = f"_desc-delayoffsetwin{thewin}_hist"
-    tide_stats.makeandsavehistogram(
-        windoweddelayoffset[:, thewin],
-        therunoptions["histlen"],
-        1,
-        outputname + namesuffix,
-        displaytitle="Histogram of delay offsets calculated from GLM",
-        dictvarname="delayoffsethist",
-        thedict=None,
-    )
     theheader = copy.deepcopy(fmri_header)
     theheader["dim"][4] = numwins
     theheader["pixdim"][4] = winspace

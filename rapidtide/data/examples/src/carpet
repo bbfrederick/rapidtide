@@ -15,7 +15,7 @@ PEDIR= "RL"
 
 fileroot = "../dst/delayvartest"
 
-delayfile = f"{fileroot}_desc-windoweddelayoffset_info.nii.gz"
+delayfile = f"{fileroot}_desc-windoweddelayoffsetPCA_info.nii.gz"
 (
     delay_img,
     delay,
@@ -104,8 +104,8 @@ displaydelay = plot_carpet(
     delay_img,
     fitmask_img,
     t_r=fmritr,
-    vmin=-delaylim,
-    vmax=delaylim,
+    vmin=-2.0,
+    vmax=4.0,
     standardize=False,
     title="delay offset over time",
 )
