@@ -49,6 +49,8 @@ def trainratiotooffset(
     smoothpts=3,
     edgepad=5,
     regressderivs=1,
+    LGR=None,
+    TimingLGR=None,
     verbose=False,
     debug=False,
 ):
@@ -130,7 +132,7 @@ def trainratiotooffset(
     )
     theEVs = np.zeros((numoffsets, timeaxis.shape[0]), dtype=float)
 
-    if verbose:
+    if verbose and (LGR is not None):
         thisLGR = LGR
         thisTimingLGR = TimingLGR
     else:
@@ -281,19 +283,33 @@ def ratiotodelay(theratio, offset=0.0, debug=False):
         ):
             closestindex = offsetindex
     closestoffset = funcoffsets[closestindex]
-    if theratio < maplimits[0]:
+    distance = np.fabs(funcoffsets[closestindex] - offset)
+    """if (maplimits[0] < theratio < maplimits[1]) and (
+        distance < (funcoffsets[1] - funcoffsets[0]) / 2
+    ):
         return (
-            ratiotooffsetfunc[closestindex](maplimits[0]) + closestoffset,
-            closestoffset,
-        )
-    elif theratio > maplimits[1]:
-        return (
-            ratiotooffsetfunc[closestindex](maplimits[1]) + closestoffset,
+            ratiotooffsetfunc[closestindex](theratio) + (offset - closestoffset),
             closestoffset,
         )
     else:
         return (
-            ratiotooffsetfunc[closestindex](theratio) + closestoffset,
+            0.0,
+            closestoffset,
+        )"""
+
+    if theratio < maplimits[0]:
+        return (
+            ratiotooffsetfunc[closestindex](maplimits[0]) + (offset - closestoffset),
+            closestoffset,
+        )
+    elif theratio > maplimits[1]:
+        return (
+            ratiotooffsetfunc[closestindex](maplimits[1]),
+            closestoffset,
+        )
+    else:
+        return (
+            ratiotooffsetfunc[closestindex](theratio),
             closestoffset,
         )
 
