@@ -1,0 +1,31 @@
+# Release history
+
+## Version 3.0RC1 (4/8/25)
+rapidtide:
+* Reorganized and renamed some command line options and adjusted the default values - NOTE: some of these are breaking changes - where possible, I've added deprecation warnings.
+* Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
+* Mask setting has been streamlined and made somewhat more robust.  This should give you better fits with less tweaking.
+* I've implemented a new delay refinement step using the ratio of linear fit coefficients.  This seems to be very robust and powerful, so this will trickle into other new functions over time.
+* Enhanced fit failure reporting, to make debugging bad fits a bit easier.
+* The ``--fixdelay`` option has been split into two options.  ``--initialdelay DELAY`` lets you specify either a float that sets the starting delay for every voxel to that value, or a 3D file specifying the initial delay for each voxel.  ``--nodelayfit`` determines whether the delay can be adjusted from its initial value.  Closes https://github.com/bbfrederick/rapidtide/issues/171. KNOWN ISSUE:  If you supply an initial delay map, instead of using the global mean, rapidtide should use the delays to make your first stage regressor.  Currently that is not the case.
+* Now outputs a map of fit significance (-log10(p)).  In response to https://github.com/bbfrederick/rapidtide/issues/174.
+
+happy:
+* Trying out some new approaches for aliased correlation.
+* Put in some initial support for multiecho data.
+* Fixed a major bug in motion filtering (thank you to Sukru Demiral for reporting it!)
+
+tidepool:
+* You can now load multiple datasets from the command line using  ``--dataset DATASET1 DATASET2...``.  You can add datasets and switch between them using the File menu.
+* Added a new "big" template to let you see more information at once.  Select with ``--uistyle big``.
+* Supports pyqt6.
+* Lots of bug fixes, code cleanup, and QOL improvements.
+
+* (atlasaverage) Added the ability to segment a template atlas based on values of the map being summarized.
+* (reference) Constructed a new version of the JHU LVL1 atlas where each territory is split into an early and late subterritory, based on the median delay in the HCP-YA dataset.
+
+Documentation:
+* Expanded the rapidtide theory of operation section a lot.
+* Significantly beefed up happy section.
+* tidepool's documentation has been updated to reflect the current state of the program.
+* General cleanup and modernization.

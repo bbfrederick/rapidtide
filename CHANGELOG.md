@@ -3,6 +3,7 @@
 ## Version 3.0alpha14 (4/8/25)
 * (rapidtide) Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
 * (retroregress) Some bugfixes.
+* (atlasaverage) 4D file timecourse output is now a BIDS compliant json/tsv.gz pair, with timecourse labels, if desired.
 * (delayvar) Secret bugfixes.
 * (package) Fixed definition of ``APARC_WHITE`` to add cerebral white matter (oops!).
 * (package) Made it easier to run local tests.
