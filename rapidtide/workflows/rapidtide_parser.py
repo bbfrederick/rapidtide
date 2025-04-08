@@ -386,8 +386,8 @@ def _get_parser():
         dest="dataiszeromean",
         action="store_true",
         help=(
-            "Assume that the fMRI data is zero mean (this will be the case if you used AFNI for preprocessing.  "
-            "This affects how masks are generated.  Rapidtide will attempt to detect this, but set explicity "
+            "Assume that the fMRI data is zero mean (this will be the case if you used AFNI for preprocessing).  "
+            "This affects how masks are generated.  Rapidtide will attempt to detect this, but set explicitly "
             "if you know this is the case."
         ),
         default=False,
