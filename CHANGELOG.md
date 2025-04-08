@@ -8,8 +8,9 @@
 * (package) Made it easier to run local tests.
 * (docs) Expanded theory of operation section.
 
-## Version 3.0alpha13 (3/25/25)
+## Version 3.0alpha13 (3/31/27)
 * (rapidtide, retroregress) Preserve the sign of the sLFO filter fit R value (it might be useful for distinguishing arterial blood).
+* (rapidtide) Fixed a bug with --dofinalrefine - now the shiftedtcs file IS written.
 * (delayvar) New secret program, for secret purposes, to satisfy a secret question I had. More later.
 * (package) Clarified that the final sLFO removal filter does NOT use a GLM (the current filter is an OLS filter) by renaming routines and command line options.
 
