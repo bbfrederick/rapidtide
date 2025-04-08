@@ -705,6 +705,7 @@ def delayvar(args):
         if args.focaldebug:
             theheader = copy.deepcopy(fmri_header)
             theheader["dim"][4] = wintrs
+            theheader["toffset"] = winwidth / 2.0
             maplist = [
                 (
                     winlagtc,
@@ -945,6 +946,7 @@ def delayvar(args):
     theheader = copy.deepcopy(fmri_header)
     theheader["dim"][4] = numwins
     theheader["pixdim"][4] = winspace
+    theheader["toffset"] = winwidth / 2.0
     maplist = [
         (
             windoweddelayoffset,
