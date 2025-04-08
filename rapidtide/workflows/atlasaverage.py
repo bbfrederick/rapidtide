@@ -224,11 +224,9 @@ def atlasaverage(args):
         sys.exit()
 
     print("reshaping")
-    xsize = thedims[1]
-    ysize = thedims[2]
-    numslices = thedims[3]
-    numtimepoints = thedims[4]
-    numvoxels = int(xsize) * int(ysize) * int(numslices)
+    xdim, ydim, numslices, numtimepoints = tide_io.parseniftidims(thedims)
+    xsize, ysize, slicethickness, tr = tide_io.parseniftisizes(thesizes)
+    numvoxels = int(xdim) * int(ydim) * int(numslices)
 
     templatevoxels = np.reshape(template_data, numvoxels).astype(int)
     inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
@@ -273,7 +271,7 @@ def atlasaverage(args):
         themask = themask * includemask.reshape((numvoxels))
         if args.debug:
             tide_io.savetonifti(
-                includemask.reshape((xsize, ysize, numslices)),
+                includemask.reshape((xdim, ydim, numslices)),
                 template_hdr,
                 f"{args.outputroot}_includemask",
             )
@@ -281,7 +279,7 @@ def atlasaverage(args):
         themask = themask * (1 - excludemask.reshape((numvoxels)))
         if args.debug:
             tide_io.savetonifti(
-                excludemask.reshape((xsize, ysize, numslices)),
+                excludemask.reshape((xdim, ydim, numslices)),
                 template_hdr,
                 f"{args.outputroot}_excludemask",
             )
@@ -289,7 +287,7 @@ def atlasaverage(args):
         themask = themask * extramask.reshape((numvoxels))
         if args.debug:
             tide_io.savetonifti(
-                extramask.reshape((xsize, ysize, numslices)),
+                extramask.reshape((xdim, ydim, numslices)),
                 template_hdr,
                 f"{args.outputroot}_extramask",
             )
@@ -348,7 +346,13 @@ def atlasaverage(args):
                 )
         if args.debug:
             print("timecourses shape:", timecourses.shape)
-        tide_io.writenpvecs(timecourses, args.outputroot)
+        # tide_io.writenpvecs(timecourses, args.outputroot)
+        tide_io.writebidstsv(
+            args.outputroot,
+            timecourses,
+            1.0 / tr,
+            yaxislabel="delay offset",
+        )
     else:
         print("processing 3D input file")
         outputvoxels = inputvoxels * 0.0
@@ -416,19 +420,19 @@ def atlasaverage(args):
                 segmentedatlasvoxels += scratchvoxels
         template_hdr["dim"][4] = 1
         tide_io.savetonifti(
-            outputvoxels.reshape((xsize, ysize, numslices)),
+            outputvoxels.reshape((xdim, ydim, numslices)),
             template_hdr,
             args.outputroot,
         )
         tide_io.savetonifti(
-            segmentedatlasvoxels.reshape((xsize, ysize, numslices)),
+            segmentedatlasvoxels.reshape((xdim, ydim, numslices)),
             template_hdr,
             args.outputroot + "_percentiles",
         )
 
         if args.includename is not None or args.excludename is not None:
             tide_io.savetonifti(
-                (templatevoxels * themask).reshape((xsize, ysize, numslices)),
+                (templatevoxels * themask).reshape((xdim, ydim, numslices)),
                 template_hdr,
                 f"{args.outputroot}_maskedatlas",
             )
