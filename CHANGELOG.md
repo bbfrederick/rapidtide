@@ -1,9 +1,11 @@
 # Release history
 
-## Version 3.0alpha14 (4/3/25)
+## Version 3.0alpha14 (4/8/25)
 * (rapidtide) Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
 * (retroregress) Some bugfixes.
+* (delayvar) Secret bugfixes.
 * (package) Fixed definition of ``APARC_WHITE`` to add cerebral white matter (oops!).
+* (package) Made it easier to run local tests.
 * (docs) Expanded theory of operation section.
 
 ## Version 3.0alpha13 (3/25/25)
