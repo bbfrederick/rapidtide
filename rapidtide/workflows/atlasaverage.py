@@ -136,6 +136,12 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
+        "--regionnamefile",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help=("The name of of a text file containing the names of the regions, one per line.  "),
+        default=None,
+    )
+    parser.add_argument(
         "--includemask",
         dest="includespec",
         metavar="MASK[:VALSPEC]",
@@ -292,6 +298,14 @@ def atlasaverage(args):
                 f"{args.outputroot}_extramask",
             )
 
+    # get the region names
+    if args.regionnamefile is None:
+        regionnames = []
+        for regnum in range(1, numregions + 1):
+            regionnames.append(f"region{regnum}")
+    else:
+        regionnames = tide_io.readvec(args.regionnamefile).aslist()
+
     # decide what regions we will summarize
     if args.regionlistfile is None:
         numregions = np.max(templatevoxels)
@@ -299,6 +313,7 @@ def atlasaverage(args):
     else:
         regionlist = tide_io.readvec(args.regionlistfile).astype(int)
         numregions = len(regionlist)
+
     timecourses = np.zeros((numregions, numtimepoints), dtype="float")
     print(f"{numregions=}, {regionlist=}")
 
@@ -346,11 +361,11 @@ def atlasaverage(args):
                 )
         if args.debug:
             print("timecourses shape:", timecourses.shape)
-        # tide_io.writenpvecs(timecourses, args.outputroot)
         tide_io.writebidstsv(
             args.outputroot,
             timecourses,
             1.0 / tr,
+            columns=regionnames,
             yaxislabel="delay offset",
         )
     else:
