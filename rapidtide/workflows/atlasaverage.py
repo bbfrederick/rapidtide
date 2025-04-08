@@ -136,9 +136,12 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
-        "--regionnamefile",
+        "--regionlabelfile",
         type=lambda x: pf.is_valid_file(parser, x),
-        help=("The name of of a text file containing the names of the regions, one per line.  "),
+        help=(
+            "The name of of a text file containing the labels of the regions, one per line.  The first line is "
+            "the label integer value 1, etc."
+        ),
         default=None,
     )
     parser.add_argument(
@@ -299,12 +302,13 @@ def atlasaverage(args):
             )
 
     # get the region names
-    if args.regionnamefile is None:
-        regionnames = []
+    if args.regionlabelfile is None:
+        regionlabels = []
+        numregions = np.max(templatevoxels)
         for regnum in range(1, numregions + 1):
-            regionnames.append(f"region{regnum}")
+            regionlabels.append(f"region{regnum}")
     else:
-        regionnames = tide_io.readvecs(args.regionnamefile).aslist()
+        regionlabels = tide_io.readlabels(args.regionlabelfile)
 
     # decide what regions we will summarize
     if args.regionlistfile is None:
@@ -365,7 +369,7 @@ def atlasaverage(args):
             args.outputroot,
             timecourses,
             1.0 / tr,
-            columns=regionnames,
+            columns=regionlabels,
             yaxislabel="delay offset",
         )
     else:
