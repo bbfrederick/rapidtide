@@ -304,7 +304,7 @@ def atlasaverage(args):
         for regnum in range(1, numregions + 1):
             regionnames.append(f"region{regnum}")
     else:
-        regionnames = tide_io.readvec(args.regionnamefile).aslist()
+        regionnames = tide_io.readvecs(args.regionnamefile).aslist()
 
     # decide what regions we will summarize
     if args.regionlistfile is None:
