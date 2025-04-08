@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 #   limitations under the License.
 #
 #
-import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.delayvar as theworkflow
+import rapidtide.workflows.parser_funcs as pf
 
 
 def entrypoint():

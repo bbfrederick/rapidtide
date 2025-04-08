@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 #   limitations under the License.
 #
 #
-"""This module contains all an alternate filter routine
-
-"""
+"""This module contains all an alternate filter routine"""
 import tensorflow as tf
 from tensorflow.keras.layers import (
     Dense,

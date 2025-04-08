@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -161,6 +161,7 @@ class Timecourse:
 
 class Overlay:
     "Store a data overlay and some information about it"
+
     LUTname = None
 
     def __init__(
@@ -489,6 +490,7 @@ class Overlay:
 
 class RapidtideDataset:
     "Store all the data associated with a rapidtide dataset"
+
     fileroot = None
     focusregressor = None
     regressorfilterlimits = None

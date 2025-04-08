@@ -706,7 +706,7 @@ delta t, you can get a pretty good approximation using just the function and it'
 As always, there are some complications:
 
     * The mapping between fit coefficient ratio and time delay depends on the function, so it needs
-      to be determined for each regressor.  It's linear for very small delay value, and then the
+      to be determined for each regressor.  It's linear for very small delay values, and then the
       mapping diverges (in a regressor specific way) as the delay increases.
 
     * As I mentioned, this only works for "small" delay times.  What is small?  For LFO signals
@@ -793,7 +793,7 @@ Anyway, while it's not perfect, it's better than not doing it this way.
 
 Finally, if you don't want to do sLFO filtering at all
 (i.e. you only care about time delays, and want to minimize storage space),
-you can shut off the glm filtering with ``--nodenoise``.
+you can shut off the final sLFO filtering with ``--nodenoise``.
 
 
 

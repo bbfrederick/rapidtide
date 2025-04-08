@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -262,6 +262,7 @@ def selectDataset(thesubject):
 
 class xyztlocation(QtWidgets.QWidget):
     "Manage a location in time and space"
+
     updatedXYZ = QtCore.pyqtSignal()
     updatedT = QtCore.pyqtSignal()
     movieTimer = QtCore.QTimer()
