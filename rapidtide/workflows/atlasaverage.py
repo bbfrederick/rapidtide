@@ -305,8 +305,9 @@ def atlasaverage(args):
     if args.regionlabelfile is None:
         regionlabels = []
         numregions = np.max(templatevoxels)
+        numdigits = int(np.log10(numregions)) + 1
         for regnum in range(1, numregions + 1):
-            regionlabels.append(f"region{regnum}")
+            regionlabels.append(f"region_{str(regnum).zfill(numdigits)}")
     else:
         regionlabels = tide_io.readlabels(args.regionlabelfile)
 
@@ -317,6 +318,10 @@ def atlasaverage(args):
     else:
         regionlist = tide_io.readvec(args.regionlistfile).astype(int)
         numregions = len(regionlist)
+        newlabels = []
+        for theregion in range(numregions):
+            newlabels.append(regionlabels[theregion])
+        regionlabels = newlabels
 
     timecourses = np.zeros((numregions, numtimepoints), dtype="float")
     print(f"{numregions=}, {regionlist=}")
