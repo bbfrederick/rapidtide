@@ -25,13 +25,21 @@ import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
-def test_fullrunrapidtide_v3(debug=False, displayplots=False):
+def test_fullrunrapidtide_v3(debug=False, local=False, displayplots=False):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     # run rapidtide
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST3"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST3"),
         "--corrmask",
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_restrictedmask.nii.gz:1"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz:1"),
         "--maxpasses",
         "2",
         "--numnull",
@@ -60,7 +68,7 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
         "R",
         "--regressor",
         os.path.join(
-            get_examples_path(),
+            exampleroot,
             "sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3",
         ),
     ]
@@ -71,4 +79,4 @@ def test_fullrunrapidtide_v3(debug=False, displayplots=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_fullrunrapidtide_v3(debug=True, displayplots=True)
+    test_fullrunrapidtide_v3(debug=True, local=True, displayplots=True)

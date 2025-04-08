@@ -195,7 +195,9 @@ def eval_refinedelay(
 
     delayoffset = filteredregressderivratios * 0.0
     for i in range(filteredregressderivratios.shape[0]):
-        delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
+        delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
+            filteredregressderivratios[i]
+        )
 
     # do the tests
     msethresh = 0.1

@@ -77,8 +77,8 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chu
                 pbar.update(1)
                 if numreturned > remainder - 1:
                     break
-
-    print()
+    if showprogressbar:
+        print()
 
     return data_out
 
@@ -88,6 +88,7 @@ def run_multiproc(
     inputshape,
     maskarray,
     nprocs=1,
+    verbose=True,
     procbyvoxel=True,
     showprogressbar=True,
     chunksize=1000,
@@ -105,13 +106,6 @@ def run_multiproc(
         workers = [ctx.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
         # signal.signal(signal.SIGINT, original_sigint_handler)
     else:
-        """# try adding this magic incantation to get coverage to record multiprocessing properly
-        # This fails for python 3.8 and above
-        try:
-            from pytest_cov.embed import cleanup
-        except ImportError:
-            cleanup = None
-        """
         cleanup = None  # just disable this for now
         inQ = mp.Queue()
         outQ = mp.Queue()
@@ -141,7 +135,8 @@ def run_multiproc(
             data_in.append(d)
         elif maskarray[d] > 0.5:
             data_in.append(d)
-    print("processing", len(data_in), procunit + " with", n_workers, "processes")
+    if verbose:
+        print("processing", len(data_in), procunit + " with", n_workers, "processes")
     data_out = _process_data(
         data_in, inQ, outQ, showprogressbar=showprogressbar, chunksize=chunksize
     )
@@ -162,6 +157,7 @@ def run_multithread(
     consumerfunc,
     inputshape,
     maskarray,
+    verbose=True,
     nprocs=1,
     procbyvoxel=True,
     showprogressbar=True,
@@ -197,7 +193,8 @@ def run_multithread(
             data_in.append(d)
         elif maskarray[d] > 0:
             data_in.append(d)
-    print("processing", len(data_in), procunit + " with", n_workers, "threads")
+    if verbose:
+        print("processing", len(data_in), procunit + " with", n_workers, "threads")
     data_out = _process_data(
         data_in, inQ, outQ, showprogressbar=showprogressbar, chunksize=chunksize
     )

@@ -257,6 +257,7 @@ def retrolagtcs(args):
         procmask_valid,
         lagtimes_valid,
         lagtc,
+        LGR=LGR,
         nprocs=args.nprocs,
         showprogressbar=args.showprogressbar,
     )

@@ -607,14 +607,16 @@ def rapidtide_main(argparsingfunc):
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
 
     # detect zero mean data
-    optiondict["dataiszeromean"] = checkforzeromean(fmri_data)
+    if not optiondict["dataiszeromean"]:
+        # check anyway
+        optiondict["dataiszeromean"] = checkforzeromean(fmri_data)
+
     if optiondict["dataiszeromean"]:
         LGR.warning(
             "WARNING: dataset is zero mean - forcing variance masking and no refine prenormalization. "
             "Consider specifying a global mean and correlation mask."
         )
         optiondict["refineprenorm"] = "None"
-        optiondict["globalmaskmethod"] = "variance"
 
     # reformat the brain mask, if it exists
     if brainmask is None:
@@ -716,18 +718,18 @@ def rapidtide_main(argparsingfunc):
         corrmask[np.where(datarange == 0)] = 0.0
     else:
         # check to see if the data has been demeaned
-        meanim = np.mean(fmri_data, axis=1)
-        stdim = np.std(fmri_data, axis=1)
-        if fileiscifti:
+        if fileiscifti or optiondict["textio"]:
             corrmask = np.uint(nim_data[:, 0] * 0 + 1)
         else:
-            if (np.mean(stdim) < np.mean(meanim)) and not optiondict["nirs"]:
+            if optiondict["dataiszeromean"]:
                 LGR.verbose("generating correlation mask from mean image")
                 corrmask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
             else:
                 LGR.verbose("generating correlation mask from std image")
                 corrmask = np.uint16(
-                    tide_stats.makemask(stdim, threshpct=optiondict["corrmaskthreshpct"])
+                    tide_stats.makemask(
+                        np.std(fmri_data, axis=1), threshpct=optiondict["corrmaskthreshpct"]
+                    )
                 )
     if internalbrainmask is not None:
         corrmask = internalbrainmask
@@ -3429,7 +3431,9 @@ def rapidtide_main(argparsingfunc):
                         f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels"
                     )
                 for i in range(filteredregressderivratios.shape[0]):
-                    delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
+                    delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
+                        filteredregressderivratios[i]
+                    )
             else:
                 medfiltregressderivratios = np.zeros_like(regressderivratios)
                 filteredregressderivratios = np.zeros_like(regressderivratios)

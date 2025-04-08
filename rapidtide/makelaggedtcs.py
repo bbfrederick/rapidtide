@@ -24,8 +24,6 @@ from tqdm import tqdm
 
 import rapidtide.multiproc as tide_multiproc
 
-LGR = logging.getLogger("GENERAL")
-
 
 def _procOneVoxelMakelagtc(
     vox,
@@ -51,6 +49,7 @@ def makelaggedtcs(
     lagmask,
     lagtimes,
     lagtc,
+    LGR=None,
     nprocs=1,
     alwaysmultiproc=False,
     showprogressbar=True,
@@ -90,6 +89,7 @@ def makelaggedtcs(
             makelagtc_consumer,
             inputshape,
             lagmask,
+            verbose=(LGR is not None),
             nprocs=nprocs,
             showprogressbar=showprogressbar,
             chunksize=chunksize,
@@ -127,13 +127,16 @@ def makelaggedtcs(
                 )
                 volumetotal += 1
 
-    LGR.info(f"\nLagged timecourses created for {volumetotal} voxels")
+    if LGR is not None:
+        LGR.info(f"\nLagged timecourses created for {volumetotal} voxels")
 
     # garbage collect
     uncollected = gc.collect()
     if uncollected != 0:
-        LGR.info(f"garbage collected - unable to collect {uncollected} objects")
+        if LGR is not None:
+            LGR.info(f"garbage collected - unable to collect {uncollected} objects")
     else:
-        LGR.info("garbage collected")
+        if LGR is not None:
+            LGR.info("garbage collected")
 
     return volumetotal

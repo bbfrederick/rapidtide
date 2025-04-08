@@ -15,7 +15,7 @@ PEDIR= "RL"
 
 fileroot = "../dst/delayvartest"
 
-delayfile = f"{fileroot}_desc-windoweddelayoffset_info.nii.gz"
+delayfile = f"{fileroot}_desc-windoweddelayoffsetPCA_info.nii.gz"
 (
     delay_img,
     delay,
@@ -24,14 +24,23 @@ delayfile = f"{fileroot}_desc-windoweddelayoffset_info.nii.gz"
     delay_sizes,
 ) = tide_io.readfromnifti(delayfile)
 
-filtfile = f"{fileroot}_desc-systemicfiltereddata_info.nii.gz"
+closestfile = f"{fileroot}_desc-windowedclosestoffset_info.nii.gz"
 (
-    filt_img,
-    filt,
-    filt_header,
-    filt_dims,
-    filt_sizes,
-) = tide_io.readfromnifti(filtfile)
+    closest_img,
+    closest,
+    closest_header,
+    closest_dims,
+    closest_sizes,
+) = tide_io.readfromnifti(closestfile)
+
+#filtfile = f"{fileroot}_desc-systemicfiltereddata_info.nii.gz"
+#(
+    #filt_img,
+    #filt,
+    #filt_header,
+    #filt_dims,
+    #filt_sizes,
+#) = tide_io.readfromnifti(filtfile)
 
 
 rfile = f"{fileroot}_desc-windowedregressr2values_info.nii.gz"
@@ -95,21 +104,31 @@ displaydelay = plot_carpet(
     delay_img,
     fitmask_img,
     t_r=fmritr,
-    vmin=-delaylim,
-    vmax=delaylim,
+    vmin=-2.0,
+    vmax=4.0,
     standardize=False,
     title="delay offset over time",
 )
 
-delaylim = 0.5
-displayfilt = plot_carpet(
-    filt_img,
+displayclosest = plot_carpet(
+    closest_img,
     fitmask_img,
     t_r=fmritr,
-    vmin=-delaylim,
-    vmax=delaylim,
+    vmin=-2.0,
+    vmax=4.0,
     standardize=False,
-    title="systemic filtered delay offset over time",
+    title="closest offset over time",
 )
+
+#delaylim = 0.5
+#displayfilt = plot_carpet(
+#    filt_img,
+#    fitmask_img,
+#   t_r=fmritr,
+#   vmin=-delaylim,
+#   vmax=delaylim,
+#   standardize=False,
+#   title="systemic filtered delay offset over time",
+#
 
 plt.show()

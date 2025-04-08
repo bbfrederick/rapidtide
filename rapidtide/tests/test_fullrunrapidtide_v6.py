@@ -28,11 +28,19 @@ import rapidtide.workflows.retroregress as rapidtide_retroregress
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
-def test_fullrunrapidtide_v6(debug=False, displayplots=False):
+def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     # run rapidtide
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--spatialfilt",
         "2",
         "--simcalcrange",
@@ -54,10 +62,10 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
-        os.path.join(get_test_temp_path(), "2deriv"),
+        os.path.join(testtemproot, "2deriv"),
         "--nprocs",
         "-1",
         "--regressderivs",
@@ -69,10 +77,10 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
     rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
-        os.path.join(get_test_temp_path(), "1deriv_refined_corrected"),
+        os.path.join(testtemproot, "1deriv_refined_corrected"),
         "--nprocs",
         "1",
         "--regressderivs",
@@ -85,10 +93,10 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
     rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
-        os.path.join(get_test_temp_path(), "concordance"),
+        os.path.join(testtemproot, "concordance"),
         "--nprocs",
         "-1",
         "--regressderivs",
@@ -118,8 +126,8 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "lfofilterR",
     ]:
         print(f"Testing map={map}")
-        filename1 = os.path.join(get_test_temp_path(), f"sub-RAPIDTIDETEST6_desc-{map}_map.nii.gz")
-        filename2 = os.path.join(get_test_temp_path(), f"concordance_desc-{map}_map.nii.gz")
+        filename1 = os.path.join(testtemproot, f"sub-RAPIDTIDETEST6_desc-{map}_map.nii.gz")
+        filename2 = os.path.join(testtemproot, f"concordance_desc-{map}_map.nii.gz")
         assert tide_io.checkniftifilematch(
             filename1,
             filename2,
@@ -132,4 +140,4 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_fullrunrapidtide_v6(debug=True, displayplots=True)
+    test_fullrunrapidtide_v6(debug=True, local=True, displayplots=True)

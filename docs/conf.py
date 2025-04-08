@@ -65,6 +65,7 @@ add_module_names = True
 # ones.
 extensions = [
     "sphinx.ext.todo",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.coverage",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",

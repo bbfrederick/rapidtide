@@ -161,7 +161,9 @@ class DerivativeDelay:
             if args.focaldebug:
                 print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
             for i in range(filteredregressderivratios.shape[0]):
-                delayoffset[i] = tide_refinedelay.ratiotodelay(filteredregressderivratios[i])
+                delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
+                    filteredregressderivratios[i]
+                )
             refinedvoxelstoreport = filteredregressderivratios.shape[0]
         else:
             medfiltregressderivratios = np.zeros_like(regressderivratios)

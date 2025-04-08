@@ -1,10 +1,18 @@
 # Release history
 
+## Version 3.0alpha14 (4/8/25)
+* (rapidtide) Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
+* (retroregress) Some bugfixes.
+* (delayvar) Secret bugfixes.
+* (package) Fixed definition of ``APARC_WHITE`` to add cerebral white matter (oops!).
+* (package) Made it easier to run local tests.
+* (docs) Expanded theory of operation section.
+
 ## Version 3.0alpha13 (3/31/27)
-* (rapidtide, retroglm) Preserve the sign of the GLM fit R value (it might be useful for distinguishing arterial blood).
+* (rapidtide, retroregress) Preserve the sign of the sLFO filter fit R value (it might be useful for distinguishing arterial blood).
 * (rapidtide) Fixed a bug with --dofinalrefine - now the shiftedtcs file IS written.
-* (delayvar) New secret program, for secret purposes, to satisfy a question I had. More later.
-* (package) Clarified that the final sLFO removal filter does NOT use a GLM (the current filter is an OLS filter)
+* (delayvar) New secret program, for secret purposes, to satisfy a secret question I had. More later.
+* (package) Clarified that the final sLFO removal filter does NOT use a GLM (the current filter is an OLS filter) by renaming routines and command line options.
 
 ## Version 3.0alpha12 (3/19/25)
 * (rapidtide) Added option to perform regressor refinement on last pass.

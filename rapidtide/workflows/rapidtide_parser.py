@@ -70,7 +70,6 @@ DEFAULT_MAXPASSES = 15
 DEFAULT_REFINE_TYPE = "pca"
 DEFAULT_INTERPTYPE = "univariate"
 DEFAULT_WINDOW_TYPE = "hamming"
-DEFAULT_GLOBALMASK_METHOD = "mean"
 DEFAULT_GLOBALSIGNAL_METHOD = "sum"
 DEFAULT_CORRWEIGHTING = "phat"
 DEFAULT_CORRTYPE = "linear"
@@ -240,7 +239,7 @@ def _get_parser():
         action="store_true",
         help=(
             "This is a NIRS analysis - this is a macro that "
-            "sets nothresh, refineprenorm=var, ampthresh=0.7, and "
+            "sets nothresh, dataiszeromean=True, refineprenorm=var, ampthresh=0.7, and "
             "lagminthresh=0.1. "
         ),
         default=False,
@@ -382,6 +381,17 @@ def _get_parser():
         ),
         default=False,
     )
+    preproc.add_argument(
+        "--dataiszeromean",
+        dest="dataiszeromean",
+        action="store_true",
+        help=(
+            "Assume that the fMRI data is zero mean (this will be the case if you used AFNI for preprocessing).  "
+            "This affects how masks are generated.  Rapidtide will attempt to detect this, but set explicitly "
+            "if you know this is the case."
+        ),
+        default=False,
+    )
 
     # Add filter options
     pf.addfilteropts(parser, filtertarget="data and regressors", details=True)
@@ -443,19 +453,6 @@ def _get_parser():
             "is enabled by default."
         ),
         default=False,
-    )
-    preproc.add_argument(
-        "--globalmaskmethod",
-        dest="globalmaskmethod",
-        action="store",
-        type=str,
-        choices=["mean", "variance"],
-        help=(
-            "Select whether to use timecourse mean or variance to "
-            "mask voxels prior to generating global mean. "
-            f'Default is "{DEFAULT_GLOBALMASK_METHOD}".'
-        ),
-        default=DEFAULT_GLOBALMASK_METHOD,
     )
     preproc.add_argument(
         "--globalmeaninclude",
@@ -2211,6 +2208,7 @@ def process_args(inputargs=None):
         LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
         args["nothresh"] = True
         pf.setifnotset(args, "preservefiltering", False)
+        args["dataiszeromean"] = True
         args["refineprenorm"] = "var"
         args["ampthresh"] = 0.7
         args["ampthreshfromsig"] = False

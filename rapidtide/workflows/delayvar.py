@@ -27,6 +27,7 @@ from pathlib import Path
 import numpy as np
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA
+from tf_keras.src.dtensor.integration_test_utils import train_step
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -61,7 +62,8 @@ DEFAULT_DELAYOFFSETSPATIALFILT = -1
 DEFAULT_WINDOWSIZE = 30.0
 DEFAULT_SYSTEMICFITTYPE = "pca"
 DEFAULT_PCACOMPONENTS = 1
-DEFAULT_TRAINWIDTH = 0.0
+DEFAULT_LAGMIN = 0.0
+DEFAULT_LAGMAX = 0.0
 DEFAULT_TRAINSTEP = 0.5
 
 
@@ -146,19 +148,19 @@ def _get_parser():
         default=True,
     )
     parser.add_argument(
-        "--trainwidth",
-        dest="trainwidth",
-        action="store",
+        "--trainrange",
+        dest="lag_extrema",
+        action=pf.IndicateSpecifiedAction,
+        nargs=2,
         type=float,
-        metavar="WIDTH",
+        metavar=("LAGMIN", "LAGMAX"),
         help=(
-            "Train the ratio offset function over this range of central delays (in seconds).  The derivative "
+            "Set the range of delay offset center frequencies to span LAGMIN to LAGMAX. The derivative "
             "ratio calculation only works over a narrow range, so if the static offset is large, "
             "you need to train the ratio calculation with a central delay close to that value. "
-            "Set negative to select the width automatically. "
-            f"Default is {DEFAULT_TRAINWIDTH}"
+            f"LAGMAX.  Default is {DEFAULT_LAGMIN} to {DEFAULT_LAGMAX} seconds. "
         ),
-        default=DEFAULT_TRAINWIDTH,
+        default=(DEFAULT_LAGMIN, DEFAULT_LAGMAX),
     )
     parser.add_argument(
         "--trainstep",
@@ -210,6 +212,13 @@ def _get_parser():
         default=DEFAULT_PCACOMPONENTS,
     )
     parser.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help=("Be wicked chatty."),
+        default=False,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -258,6 +267,9 @@ def _get_parser():
 def delayvar(args):
     # get the pid of the parent process
     args.pid = os.getpid()
+
+    args.lagmin = args.lag_extrema[0]
+    args.lagmax = args.lag_extrema[1]
 
     # specify the output name
     if args.alternateoutput is None:
@@ -502,6 +514,16 @@ def delayvar(args):
     # windowed delay deviation estimation
     lagstouse_valid = lagtimes_valid
 
+    # find the robust range of the static delays
+    (
+        pct02,
+        pct98,
+    ) = tide_stats.getfracvals(lagstouse_valid, [0.02, 0.98], debug=args.debug)
+    if args.lagmin == -999:
+        args.lagmin = np.round(pct02 / args.trainstep, 0) * args.trainstep
+    if args.lagmax == -999:
+        args.lagmax = np.round(pct98 / args.trainstep, 0) * args.trainstep
+
     print("\n\nWindowed delay estimation")
     TimingLGR.info("Windowed delay estimation start")
     LGR.info("\n\nWindowed delay estimation")
@@ -537,7 +559,7 @@ def delayvar(args):
             thehpf.apply(genlagsamplerate, reference_y),
             padtime=thepadtime,
         )
-        genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
+        genlagtc.save(f"{outputname}_desc-hpflagtcgenerator_timeseries")
 
     # and filter the data if necessary
     if args.hpf:
@@ -582,7 +604,7 @@ def delayvar(args):
         numwins,
     )
     internalwinfmrishape = (numvalidspatiallocs, wintrs)
-    if args.debug or args.focaldebug:
+    if args.debug:
         print(f"window space shape = {internalwinspaceshape}")
         print(f"internalwindowfmrishape shape = {internalwinfmrishape}")
 
@@ -591,6 +613,7 @@ def delayvar(args):
     windowedmedfiltregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
     windowedfilteredregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
     windoweddelayoffset = np.zeros(internalwinspaceshape, dtype=float)
+    windowedclosestoffset = np.zeros(internalwinspaceshape, dtype=float)
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
@@ -626,17 +649,30 @@ def delayvar(args):
     if args.debug:
         print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
     thewindowprocoptions = therunoptions
+    if args.verbose:
+        thewindowprocoptions["showprogressbar"] = True
+    else:
+        thewindowprocoptions["showprogressbar"] = False
     if args.focaldebug:
         thewindowprocoptions["saveminimumsLFOfiltfiles"] = True
         winoutputlevel = "max"
     else:
         thewindowprocoptions["saveminimumsLFOfiltfiles"] = False
         winoutputlevel = "min"
+
+    # Now get the derivative ratios the individual windows
+    print("Finding derivative ratios:")
     for thewin in range(numwins):
-        print(f"Processing window {thewin + 1} of {numwins}")
+        print(f"\tProcessing window {thewin + 1} of {numwins}")
         starttr = thewin * winskip
         endtr = starttr + wintrs
         winlabel = f"_win-{str(thewin + 1).zfill(3)}"
+        if args.verbose:
+            thisLGR = LGR
+            thisTimingLGR = TimingLGR
+        else:
+            thisLGR = None
+            thisTimingLGR = None
 
         windowedregressderivratios[:, thewin], windowedregressrvalues[:, thewin] = (
             tide_refinedelay.getderivratios(
@@ -657,8 +693,8 @@ def delayvar(args):
                 winmovingsignal,
                 winlagtc,
                 winfiltereddata,
-                LGR,
-                TimingLGR,
+                thisLGR,
+                thisTimingLGR,
                 thewindowprocoptions,
                 regressderivs=1,
                 starttr=starttr,
@@ -666,7 +702,33 @@ def delayvar(args):
                 debug=args.debug,
             )
         )
+        if args.focaldebug:
+            theheader = copy.deepcopy(fmri_header)
+            theheader["dim"][4] = wintrs
+            theheader["toffset"] = winwidth / 2.0
+            maplist = [
+                (
+                    winlagtc,
+                    "windowedlagtcs",
+                    "bold",
+                    None,
+                    f"Lagtcs in each {winspace} second window",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputname + winlabel,
+                maplist,
+                validvoxels,
+                (xsize, ysize, numslices, wintrs),
+                theheader,
+                bidsbasedict,
+                debug=args.debug,
+            )
 
+    # Filter the derivative ratios
+    print("Filtering derivative ratios:")
+    for thewin in range(numwins):
+        print(f"\tProcessing window {thewin + 1} of {numwins}")
         (
             windowedmedfiltregressderivratios[:, thewin],
             windowedfilteredregressderivratios[:, thewin],
@@ -681,34 +743,62 @@ def delayvar(args):
             fileiscifti=False,
             textio=False,
             rt_floattype=rt_floattype,
+            verbose=args.verbose,
             debug=args.debug,
         )
 
+    # Train the ratio offsets
+    print("Training ratio offsets:")
+    for thewin in range(numwins):
+        print(f"\tProcessing window {thewin + 1} of {numwins}")
+        starttr = thewin * winskip
+        endtr = starttr + wintrs
+        winlabel = f"_win-{str(thewin + 1).zfill(3)}"
         # find the mapping of glm ratios to delays
         tide_refinedelay.trainratiotooffset(
             genlagtc,
             initial_fmri_x[starttr:endtr],
             outputname + winlabel,
             winoutputlevel,
-            trainwidth=args.trainwidth,
-            trainstep=args.trainstep,
+            trainlagmin=args.lagmin,
+            trainlagmax=args.lagmax,
+            trainlagstep=args.trainstep,
             mindelay=args.mindelay,
             maxdelay=args.maxdelay,
             numpoints=args.numpoints,
-            debug=args.debug,
+            verbose=args.verbose,
+            debug=args.focaldebug,
         )
         TimingLGR.info("Refinement calibration end")
 
-        # now calculate the delay offsets
+    # now calculate the delay offsets
+    print("Calculating delay offsets:")
+    for thewin in range(numwins):
+        print(f"\tProcessing window {thewin + 1} of {numwins}")
+        winlabel = f"_win-{str(thewin + 1).zfill(3)}"
         TimingLGR.info("Calculating delay offsets")
-        if args.focaldebug:
+        if args.debug:
             print(
                 f"calculating delayoffsets for {windowedfilteredregressderivratios.shape[0]} voxels"
             )
         for i in range(windowedfilteredregressderivratios.shape[0]):
-            windoweddelayoffset[i, thewin] = tide_refinedelay.ratiotodelay(
-                windowedfilteredregressderivratios[i, thewin]
+            (windoweddelayoffset[i, thewin], windowedclosestoffset[i, thewin]) = (
+                tide_refinedelay.ratiotodelay(
+                    windowedfilteredregressderivratios[i, thewin],
+                    offset=lagstouse_valid[i],
+                    debug=args.focaldebug,
+                )
             )
+        namesuffix = "_desc-delayoffset_hist"
+        tide_stats.makeandsavehistogram(
+            windoweddelayoffset[:, thewin],
+            therunoptions["histlen"],
+            1,
+            outputname + winlabel + namesuffix,
+            displaytitle="Histogram of delay offsets calculated from GLM",
+            dictvarname="delayoffsethist",
+            thedict=None,
+        )
 
     # now see if there are common timecourses in the delay offsets
     themean = np.mean(windoweddelayoffset, axis=1)
@@ -749,7 +839,7 @@ def delayvar(args):
         # unscale the PCA cleaned data
         for vox in range(0, windoweddelayoffset.shape[0]):
             reduceddata[vox, :] = reduceddata[vox, :] * thevar[vox] + themean[vox]
-        if args.focaldebug:
+        if args.debug:
             print("complex processing: reduceddata.shape =", scaledvoxels.shape)
         # pcadata = np.mean(reduceddata, axis=0)
         pcadata = thefit.components_[0]
@@ -850,22 +940,13 @@ def delayvar(args):
             nprocs_regressionfilt=args.nprocs,
             regressderivs=1,
             showprogressbar=args.showprogressbar,
-            debug=args.focaldebug,
+            debug=args.debug,
         )
 
-    namesuffix = f"_desc-delayoffsetwin{thewin}_hist"
-    tide_stats.makeandsavehistogram(
-        windoweddelayoffset[:, thewin],
-        therunoptions["histlen"],
-        1,
-        outputname + namesuffix,
-        displaytitle="Histogram of delay offsets calculated from GLM",
-        dictvarname="delayoffsethist",
-        thedict=None,
-    )
     theheader = copy.deepcopy(fmri_header)
     theheader["dim"][4] = numwins
     theheader["pixdim"][4] = winspace
+    theheader["toffset"] = winwidth / 2.0
     maplist = [
         (
             windoweddelayoffset,
@@ -873,6 +954,13 @@ def delayvar(args):
             "info",
             None,
             f"Delay offsets in each {winspace} second window",
+        ),
+        (
+            windowedclosestoffset,
+            "windowedclosestoffset",
+            "info",
+            None,
+            f"Closest delay offsets in each {winspace} second window",
         ),
         (
             np.square(windowedregressrvalues),
