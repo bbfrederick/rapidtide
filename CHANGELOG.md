@@ -1,5 +1,10 @@
 # Release history
 
+## Version 3.0alpha15 (4/10/25)
+* (rapidtide) Fixed a bug in masking logic introduced in last version.
+* (rapidtide) Pullled regressor cleaning steps out into a separate routine.
+* (rapidtide) Removed unused "noiseregressor" code.  Its functionality is now covered with confound regression.
+
 ## Version 3.0alpha14 (4/8/25)
 * (rapidtide) Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
 * (retroregress) Some bugfixes.
