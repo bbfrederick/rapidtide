@@ -3625,6 +3625,8 @@ def rapidtide_main(argparsingfunc):
                 memcheckpoint("...done")
             tide_util.logmem("after sLFO filter")
             LGR.info("")
+    else:
+        outfmriarray = None
     ####################################################
     #  sLFO filtering end
     ####################################################
