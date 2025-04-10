@@ -1516,68 +1516,6 @@ def _get_parser():
         help=("Attempt to detect and remove respiratory signal that strays into " "the LFO band."),
         default=False,
     )
-
-    """experimental.add_argument(
-        "--noisetimecourse",
-        dest="noisetimecoursespec",
-        metavar="FILENAME[:VALSPEC]",
-        help=(
-            "Find and remove any instance of the timecourse supplied from any regressors used for analysis. "
-            "(if VALSPEC is given, and there are multiple timecourses in the file, use the indicated timecourse."
-            "This can be the name of the regressor if it's in the file, or the column number). "
-        ),
-        default=None,
-    )
-    noise_group = experimental.add_mutually_exclusive_group()
-    noise_group.add_argument(
-        "--noisefreq",
-        dest="noisefreq",
-        action="store",
-        type=lambda x: pf.is_float(parser, x, minval=0.0),
-        metavar="FREQ",
-        help=(
-            "Noise timecourse in file has sample "
-            "frequency FREQ (default is 1/tr) "
-            "NB: --noisefreq and --noisetstep) "
-            "are two ways to specify the same thing."
-        ),
-        default="auto",
-    )
-    noise_group.add_argument(
-        "--noisetstep",
-        dest="noisefreq",
-        action="store",
-        type=lambda x: pf.invert_float(parser, x),
-        metavar="TSTEP",
-        help=(
-            "Noise timecourse in file has sample "
-            "frequency FREQ (default is 1/tr) "
-            "NB: --noisefreq and --noisetstep) "
-            "are two ways to specify the same thing."
-        ),
-        default="auto",
-    )
-    experimental.add_argument(
-        "--noisestart",
-        dest="noisestarttime",
-        action="store",
-        type=float,
-        metavar="START",
-        help=(
-            "The time delay in seconds into the noise timecourse "
-            "file, corresponding in the first TR of the fMRI "
-            "file (default is 0.0)."
-        ),
-        default=0.0,
-    )
-    experimental.add_argument(
-        "--noiseinvert",
-        dest="noiseinvert",
-        action="store_true",
-        help=("Invert noise regressor prior to alignment."),
-        default=False,
-    )"""
-
     experimental.add_argument(
         "--acfix",
         dest="fix_autocorrelation",
@@ -1854,8 +1792,6 @@ def process_args(inputargs=None):
     args["absmaxsigma"] = 10000.0
     # width of the reference autocorrelation function
     args["absminsigma"] = 0.05
-    # search window width for noise regressor mutual information function
-    # args["noisesearchwindow"] = 30.0
     # number of MADs away from the median to consider an outlier
     args["sigdistoutlierfac"] = 10.0
 
@@ -1989,18 +1925,6 @@ def process_args(inputargs=None):
         args["inputfreq_nondefault"] = False
     else:
         args["inputfreq_nondefault"] = True
-
-    """if args["noisetimecoursespec"] is not None:
-        (
-            args["noisetimecoursename"],
-            args["noisetimecoursevals"],
-        ) = tide_io.parsefilespec(args["noisetimecoursespec"])
-    else:
-        args["noisetimecoursename"] = None
-        args["noisetimecoursevals"] = None
-
-    if args["noisefreq"] == "auto":
-        args["noisefreq"] = 1.0 / fmri_tr"""
 
     # mask processing
     if args["corrmaskincludespec"] is not None:
