@@ -1517,7 +1517,7 @@ def _get_parser():
         default=False,
     )
 
-    experimental.add_argument(
+    """experimental.add_argument(
         "--noisetimecourse",
         dest="noisetimecoursespec",
         metavar="FILENAME[:VALSPEC]",
@@ -1576,7 +1576,7 @@ def _get_parser():
         action="store_true",
         help=("Invert noise regressor prior to alignment."),
         default=False,
-    )
+    )"""
 
     experimental.add_argument(
         "--acfix",
@@ -1855,7 +1855,7 @@ def process_args(inputargs=None):
     # width of the reference autocorrelation function
     args["absminsigma"] = 0.05
     # search window width for noise regressor mutual information function
-    args["noisesearchwindow"] = 30.0
+    # args["noisesearchwindow"] = 30.0
     # number of MADs away from the median to consider an outlier
     args["sigdistoutlierfac"] = 10.0
 
@@ -1990,7 +1990,7 @@ def process_args(inputargs=None):
     else:
         args["inputfreq_nondefault"] = True
 
-    if args["noisetimecoursespec"] is not None:
+    """if args["noisetimecoursespec"] is not None:
         (
             args["noisetimecoursename"],
             args["noisetimecoursevals"],
@@ -2000,7 +2000,7 @@ def process_args(inputargs=None):
         args["noisetimecoursevals"] = None
 
     if args["noisefreq"] == "auto":
-        args["noisefreq"] = 1.0 / fmri_tr
+        args["noisefreq"] = 1.0 / fmri_tr"""
 
     # mask processing
     if args["corrmaskincludespec"] is not None:

@@ -52,6 +52,7 @@ import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.wiener as tide_wiener
+import rapidtide.workflows.cleanregressor as tide_cleanregressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 from rapidtide.tests.utils import mse
 
@@ -721,7 +722,7 @@ def rapidtide_main(argparsingfunc):
         if fileiscifti or optiondict["textio"]:
             corrmask = np.uint(nim_data[:, 0] * 0 + 1)
         else:
-            if optiondict["dataiszeromean"]:
+            if not optiondict["dataiszeromean"]:
                 LGR.verbose("generating correlation mask from mean image")
                 corrmask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
             else:
@@ -1150,57 +1151,57 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"the input timecourse start time is {inputstarttime}")
 
     # if there is an externally specified noise regressor, read it in here
-    if optiondict["noisetimecoursespec"] is not None:
-        noisetimecoursespec = optiondict["noisetimecoursespec"]
-        LGR.info(f"using externally supplied noise regressor {noisetimecoursespec}")
-        (
-            filenoisefreq,
-            filenoisestarttime,
-            dummy,
-            noisevec,
-            dummy,
-            dummy,
-        ) = tide_io.readvectorsfromtextfile(optiondict["noisetimecoursespec"], onecol=True)
-        if optiondict["noiseinvert"]:
-            noisevec = noisevec * -1.0
-        noisefreq = optiondict["noisefreq"]
-        noisestarttime = optiondict["noisestarttime"]
-        if noisefreq is None:
-            if filenoisefreq is not None:
-                noisefreq = filenoisefreq
-            else:
-                noisefreq = 1.0 / fmritr
-            LGR.warning(f"no regressor frequency specified - defaulting to {noisefreq} (1/tr)")
-        if noisestarttime is None:
-            if filenoisestarttime is not None:
-                noisestarttime = filenoisestarttime
-            else:
-                LGR.warning("no regressor start time specified - defaulting to 0.0")
-                noisestarttime = 0.0
-        noiseperiod = 1.0 / noisefreq
-        numnoise = len(noisevec)
-        optiondict["noisefreq"] = noisefreq
-        optiondict["noisestarttime"] = noisestarttime
-        LGR.debug(
-            "Noise timecourse start time, end time, and step: {:.3f}, {:.3f}, {:.3f}".format(
-                -noisestarttime, noisestarttime + numnoise * noiseperiod, noiseperiod
-            )
-        )
-        noise_x = np.arange(0.0, numnoise) * noiseperiod - noisestarttime
-        noise_y = noisevec[0:numnoise] - np.mean(noisevec[0:numnoise])
-        # write out the noise regressor as read
-        tide_io.writebidstsv(
-            f"{outputname}_desc-initialnoiseregressor_timeseries",
-            noise_y,
-            noisefreq,
-            starttime=-noisestarttime,
-            columns=["prefilt"],
-            append=False,
-        )
-        LGR.verbose("noise vector")
-        LGR.verbose(f"length: {len(noisevec)}")
-        LGR.verbose(f"noise freq: {noisefreq}")
-        LGR.verbose(f"noise start time: {noisestarttime:.3f}")
+    # if optiondict["noisetimecoursespec"] is not None:
+    #    noisetimecoursespec = optiondict["noisetimecoursespec"]
+    #    LGR.info(f"using externally supplied noise regressor {noisetimecoursespec}")
+    #   (
+    #        filenoisefreq,
+    #        filenoisestarttime,
+    #        dummy,
+    #       noisevec,
+    #       dummy,
+    #        dummy,
+    #    ) = tide_io.readvectorsfromtextfile(optiondict["noisetimecoursespec"], onecol=True)
+    #    if optiondict["noiseinvert"]:
+    #        noisevec = noisevec * -1.0
+    #    noisefreq = optiondict["noisefreq"]
+    #    noisestarttime = optiondict["noisestarttime"]
+    #    if noisefreq is None:
+    #        if filenoisefreq is not None:
+    #            noisefreq = filenoisefreq
+    #        else:
+    #            noisefreq = 1.0 / fmritr
+    #        LGR.warning(f"no regressor frequency specified - defaulting to {noisefreq} (1/tr)")
+    #    if noisestarttime is None:
+    #        if filenoisestarttime is not None:
+    #            noisestarttime = filenoisestarttime
+    #        else:
+    #            LGR.warning("no regressor start time specified - defaulting to 0.0")
+    #            noisestarttime = 0.0
+    #    noiseperiod = 1.0 / noisefreq
+    #    numnoise = len(noisevec)
+    #    optiondict["noisefreq"] = noisefreq
+    #    optiondict["noisestarttime"] = noisestarttime
+    #    LGR.debug(
+    #        "Noise timecourse start time, end time, and step: {:.3f}, {:.3f}, {:.3f}".format(
+    #            -noisestarttime, noisestarttime + numnoise * noiseperiod, noiseperiod
+    #        )
+    #    )
+    #    noise_x = np.arange(0.0, numnoise) * noiseperiod - noisestarttime
+    #    noise_y = noisevec[0:numnoise] - np.mean(noisevec[0:numnoise])
+    #    # write out the noise regressor as read
+    #    tide_io.writebidstsv(
+    #        f"{outputname}_desc-initialnoiseregressor_timeseries",
+    #        noise_y,
+    #        noisefreq,
+    #        starttime=-noisestarttime,
+    #        columns=["prefilt"],
+    #        append=False,
+    #    )
+    #    LGR.verbose("noise vector")
+    #    LGR.verbose(f"length: {len(noisevec)}")
+    #    LGR.verbose(f"noise freq: {noisefreq}")
+    #    LGR.verbose(f"noise start time: {noisestarttime:.3f}")
 
     # generate the time axes
     fmrifreq = 1.0 / fmritr
@@ -1278,8 +1279,8 @@ def rapidtide_main(argparsingfunc):
         reference_y = -np.gradient(reference_y_classfilter)
     else:
         reference_y = reference_y_classfilter
-    if optiondict["noisetimecoursespec"] is not None:
-        noise_y = theprefilter.apply(noisefreq, noise_y)
+    # if optiondict["noisetimecoursespec"] is not None:
+    #    noise_y = theprefilter.apply(noisefreq, noise_y)
 
     # write out the reference regressor used
     tide_io.writebidstsv(
@@ -1306,7 +1307,7 @@ def rapidtide_main(argparsingfunc):
             debug=optiondict["debug"],
         )
         reference_y = rt_floatset(reference_y_filt.real)
-        if optiondict["noisetimecoursespec"] is not None:
+        """if optiondict["noisetimecoursespec"] is not None:
             noise_y_filt = tide_filt.dolptrapfftfilt(
                 noisefreq,
                 0.25 * fmrifreq,
@@ -1325,7 +1326,7 @@ def rapidtide_main(argparsingfunc):
                 starttime=-noisestarttime,
                 columns=["postfilt"],
                 append=True,
-            )
+            )"""
 
     warnings.filterwarnings("ignore", "Casting*")
 
@@ -1359,7 +1360,7 @@ def rapidtide_main(argparsingfunc):
             order=optiondict["detrendorder"],
             demean=optiondict["dodemean"],
         )
-        if optiondict["noisetimecoursespec"] is not None:
+        """if optiondict["noisetimecoursespec"] is not None:
             if optiondict["detrendorder"] > 0:
                 resampnoise_y = tide_fit.detrend(
                     tide_resample.doresample(
@@ -1373,7 +1374,7 @@ def rapidtide_main(argparsingfunc):
                     ),
                     order=optiondict["detrendorder"],
                     demean=optiondict["dodemean"],
-                )
+                )"""
 
     else:
         resampnonosref_y = tide_resample.doresample(
@@ -1390,7 +1391,7 @@ def rapidtide_main(argparsingfunc):
             padlen=int(oversampfreq * optiondict["padseconds"]),
             method=optiondict["interptype"],
         )
-        if optiondict["noisetimecoursespec"] is not None:
+        """if optiondict["noisetimecoursespec"] is not None:
             resampnoise_y = tide_resample.doresample(
                 noise_x,
                 noise_y,
@@ -1398,7 +1399,7 @@ def rapidtide_main(argparsingfunc):
                 padlen=int(oversampfreq * optiondict["padseconds"]),
                 padtype="zero",
                 method=optiondict["interptype"],
-            )
+            )"""
 
     LGR.debug(
         f"{len(os_fmri_x)} "
@@ -1460,7 +1461,7 @@ def rapidtide_main(argparsingfunc):
     else:
         tmaskos_y = None
 
-    if optiondict["noisetimecoursespec"] is not None:
+    """if optiondict["noisetimecoursespec"] is not None:
         tide_io.writebidstsv(
             f"{outputname}_desc-noiseregressor_timeseries",
             tide_math.stdnormalize(resampnonosref_y),
@@ -1474,7 +1475,7 @@ def rapidtide_main(argparsingfunc):
             oversampfreq,
             columns=["oversampled"],
             append=False,
-        )
+        )"""
 
     (
         optiondict["kurtosis_reference_pass1"],
@@ -1666,7 +1667,7 @@ def rapidtide_main(argparsingfunc):
     print(f"allocated {thesize:.3f} {theunit} {ramlocation} for correlation")
     tide_util.logmem("after correlation array allocation")
 
-    # if there is a fixed delay map, read it in
+    # if there is an initial delay map, read it in
     if optiondict["initialdelayvalue"] is not None:
         try:
             theinitialdelay = float(optiondict["initialdelayvalue"])
@@ -1701,9 +1702,10 @@ def rapidtide_main(argparsingfunc):
         + 30.0
         + np.abs(optiondict["offsettime"])
     )
-    LGR.info(f"setting up fast resampling with padtime = {optiondict['fastresamplerpadtime']}")
     numpadtrs = int(optiondict["fastresamplerpadtime"] // fmritr)
     optiondict["fastresamplerpadtime"] = fmritr * numpadtrs
+    LGR.info(f"setting up fast resampling with padtime = {optiondict['fastresamplerpadtime']}")
+
     genlagtc = tide_resample.FastResampler(
         reference_x, reference_y, padtime=optiondict["fastresamplerpadtime"]
     )
@@ -1731,13 +1733,14 @@ def rapidtide_main(argparsingfunc):
         2 * numpadtrs + np.shape(initial_fmri_x)[0],
     )
 
+    # prepare for regressor refinement, if we're doing it
     if (
         optiondict["passes"] > 1
         or optiondict["globalpreselect"]
         or optiondict["dofinalrefine"]
         or optiondict["convergencethresh"] is not None
     ):
-        # we will be doing regressor refinement, so set that up
+        # we will be doing regressor refinement, so configure the refiner
         theRegressorRefiner = tide_regrefiner.RegressorRefiner(
             internalvalidfmrishape,
             internalvalidpaddedfmrishape,
@@ -1778,8 +1781,6 @@ def rapidtide_main(argparsingfunc):
             debug=optiondict["debug"],
         )
 
-    outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
-
     # cycle over all voxels
     refine = True
     LGR.verbose(f"refine is set to {refine}")
@@ -1789,7 +1790,7 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"edgebufferfrac set to {optiondict['edgebufferfrac']}")
 
     # initialize the correlation fitter
-    thefitter = tide_classes.SimilarityFunctionFitter(
+    theFitter = tide_classes.SimilarityFunctionFitter(
         lagmod=optiondict["lagmod"],
         lthreshval=optiondict["lthreshval"],
         uthreshval=optiondict["uthreshval"],
@@ -1915,7 +1916,48 @@ def rapidtide_main(argparsingfunc):
         )
 
         # Step -1 - check the regressor for periodic components in the passband
-        dolagmod = True
+        passsuffix = "_pass" + str(thepass)
+        (
+            cleaned_resampref_y,
+            cleaned_referencetc,
+            cleaned_nonosreferencetc,
+            optiondict["despeckle_thresh"],
+            optiondict["acsidelobeamp" + passsuffix],
+            optiondict["acsidelobelag" + passsuffix],
+            optiondict["lagmod"],
+            optiondict["acwidth"],
+            optiondict["absmaxsigma"],
+        ) = tide_cleanregressor.cleanregressor(
+            outputname,
+            thepass,
+            referencetc,
+            resampref_y,
+            resampnonosref_y,
+            fmrifreq,
+            oversampfreq,
+            osvalidsimcalcstart,
+            osvalidsimcalcend,
+            lagmininpts,
+            lagmaxinpts,
+            theFitter,
+            theCorrelator,
+            optiondict["lagmin"],
+            optiondict["lagmax"],
+            LGR=LGR,
+            check_autocorrelation=optiondict["check_autocorrelation"],
+            fix_autocorrelation=optiondict["fix_autocorrelation"],
+            despeckle_thresh=optiondict["despeckle_thresh"],
+            lthreshval=optiondict["lthreshval"],
+            fixdelay=optiondict["fixdelay"],
+            detrendorder=optiondict["detrendorder"],
+            windowfunc=optiondict["windowfunc"],
+            respdelete=optiondict["respdelete"],
+            debug=optiondict["debug"],
+            rt_floattype=rt_floattype,
+            rt_floatset=rt_floatset,
+        )
+
+        """dolagmod = True
         doreferencenotch = True
         if optiondict["respdelete"]:
             resptracker = tide_classes.FrequencyTracker(nperseg=64)
@@ -1993,7 +2035,7 @@ def rapidtide_main(argparsingfunc):
             thexcorr, accheckcorrscale, dummy = theCorrelator.run(
                 resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1]
             )
-            thefitter.setcorrtimeaxis(accheckcorrscale)
+            theFitter.setcorrtimeaxis(accheckcorrscale)
             (
                 dummy,
                 dummy,
@@ -2005,7 +2047,7 @@ def rapidtide_main(argparsingfunc):
                 dummy,
             ) = tide_simfuncfit.onesimfuncfit(
                 thexcorr,
-                thefitter,
+                theFitter,
                 despeckle_thresh=optiondict["despeckle_thresh"],
                 lthreshval=optiondict["lthreshval"],
                 fixdelay=optiondict["fixdelay"],
@@ -2050,13 +2092,13 @@ def rapidtide_main(argparsingfunc):
                     f"seconds ({1.0 / sidelobetime} Hz)..."
                 )
                 # bidsify
-                """tide_io.writebidstsv(
-                    f"{outputname}_desc-movingregressor_timeseries",
-                    tide_math.stdnormalize(resampnonosref_y),
-                    1.0 / fmritr,
-                    columns=["pass1"],
-                    append=False,
-                )"""
+                # tide_io.writebidstsv(
+                #    f"{outputname}_desc-movingregressor_timeseries",
+                #    tide_math.stdnormalize(resampnonosref_y),
+                #    1.0 / fmritr,
+                #    columns=["pass1"],
+                #    append=False,
+                # )
                 tide_io.writenpvecs(
                     np.array([sidelobetime]),
                     f"{outputname}_autocorr_sidelobetime" + passsuffix + ".txt",
@@ -2135,7 +2177,7 @@ def rapidtide_main(argparsingfunc):
                 resampref_y, windowfunc="None", detrendorder=optiondict["detrendorder"]
             )
             cleaned_referencetc = 1.0 * referencetc
-            cleaned_nonosreferencetc = 1.0 * resampnonosref_y
+            cleaned_nonosreferencetc = 1.0 * resampnonosref_y"""
 
         # Step 0 - estimate significance
         if optiondict["numestreps"] > 0:
@@ -2172,7 +2214,7 @@ def rapidtide_main(argparsingfunc):
             theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
             theMutualInformationator.setreftc(cleaned_resampref_y)
             dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
-            thefitter.setcorrtimeaxis(trimmedcorrscale)
+            theFitter.setcorrtimeaxis(trimmedcorrscale)
 
             # parallel path for mutual information
             if optiondict["similaritymetric"] == "mutualinfo":
@@ -2184,7 +2226,7 @@ def rapidtide_main(argparsingfunc):
                 cleaned_resampref_y,
                 oversampfreq,
                 theSimFunc,
-                thefitter,
+                theFitter,
                 numestreps=optiondict["numestreps"],
                 nprocs=optiondict["nprocs_getNullDist"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
@@ -2286,11 +2328,13 @@ def rapidtide_main(argparsingfunc):
                     "message3": "repetitions",
                 },
             )
-
         # write out the current version of the run options
         optiondict["currentstage"] = f"precorrelation_pass{thepass}"
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
+        ########################
+        # Delay estimation start
+        ########################
         # Step 1 - Correlation step
         if optiondict["similaritymetric"] == "mutualinfo":
             similaritytype = "Mutual information"
@@ -2448,8 +2492,8 @@ def rapidtide_main(argparsingfunc):
         fitcorr_func = addmemprofiling(
             tide_simfuncfit.fitcorr, optiondict["memprofile"], "before fitcorr"
         )
-        thefitter.setfunctype(optiondict["similaritymetric"])
-        thefitter.setcorrtimeaxis(trimmedcorrscale)
+        theFitter.setfunctype(optiondict["similaritymetric"])
+        theFitter.setcorrtimeaxis(trimmedcorrscale)
 
         # use initial lags if this is a hybrid fit
         if optiondict["similaritymetric"] == "hybrid" and thepeakdict is not None:
@@ -2460,7 +2504,7 @@ def rapidtide_main(argparsingfunc):
         disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
         voxelsprocessed_fc = fitcorr_func(
             trimmedcorrscale,
-            thefitter,
+            theFitter,
             corrout,
             fitmask,
             failreason,
@@ -2526,7 +2570,7 @@ def rapidtide_main(argparsingfunc):
                         disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
                         voxelsprocessed_thispass = fitcorr_func(
                             trimmedcorrscale,
-                            thefitter,
+                            theFitter,
                             corrout,
                             fitmask,
                             failreason,
@@ -2742,6 +2786,9 @@ def rapidtide_main(argparsingfunc):
 
             # now shift the patches to align with the majority of the image
             tide_patch.interppatch(lagtimes, patchmap[validvoxels])
+        ########################
+        # Delay estimation end
+        ########################
 
         # Step 2d - make a rank order map
         timepercentile = (
@@ -3324,9 +3371,11 @@ def rapidtide_main(argparsingfunc):
             # set the threshval to zero
             mode = "cvrmap"
             optiondict["regressfiltthreshval"] = 0.0
+
         if optiondict["debug"]:
             # dump the fmri input file going to sLFO filter
             if not optiondict["textio"]:
+                outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
                 theheader = copy.deepcopy(nim_hdr)
                 if fileiscifti:
                     timeindex = theheader["dim"][0] - 1
@@ -3339,6 +3388,7 @@ def rapidtide_main(argparsingfunc):
             else:
                 theheader = None
                 cifti_hdr = None
+                outfmriarray = None
 
             maplist = [
                 (
@@ -3361,6 +3411,8 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype=rt_floattype,
                 cifti_hdr=cifti_hdr,
             )
+        else:
+            outfmriarray = None
 
         # refine the delay value prior to calculating the sLFO filter
         if optiondict["refinedelay"]:
@@ -4184,6 +4236,8 @@ def rapidtide_main(argparsingfunc):
         tide_util.cleanup_shm(outcorrarray_shm)
 
     # now save all the files that are of the same length as the input data file and masked
+    if outfmriarray is None:
+        outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
     if not optiondict["textio"]:
         theheader = copy.deepcopy(nim_hdr)
         if fileiscifti:
