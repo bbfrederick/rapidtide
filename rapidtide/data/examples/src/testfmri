@@ -7,5 +7,6 @@ rapidtide \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
     --outputlevel max \
+    --peakfittype None \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+    ../dst/sub-RAPIDTIDETEST_nopeakfit
