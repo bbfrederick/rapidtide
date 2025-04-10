@@ -27,5 +27,9 @@ tidepool:
 Documentation:
 * Expanded the rapidtide theory of operation section a lot.
 * Significantly beefed up happy section.
-* tidepool's documentation has been expanded and updated to reflect the new capabilities.
+* tidepool's documentation has been updated to reflect the current state of the program.
 * General cleanup and revision to match the current state of the package.
+
+Package:
+* Lots of code cleanup and reorganization to make functions more modular.
+* Lots and lots of bug fixes.
