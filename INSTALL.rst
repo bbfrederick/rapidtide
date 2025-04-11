@@ -42,7 +42,7 @@ Installing with pip from pypi
 
 This assumes you have a working python installation, and if you use virtual
 environments, you've set one up and activated it.  Once that's all ready, you can simply install
-with pip (this will pull everything it needs from pypi.org, the Python Package Index:
+with pip (this will pull everything it needs from pypi.org, the Python Package Index):
 
 ::
 
