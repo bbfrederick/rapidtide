@@ -108,7 +108,6 @@ def trainratiotooffset(
         "mp_chunksize": 1000,
         "showprogressbar": False,
         "alwaysmultiproc": False,
-        "memprofile": False,
         "focaldebug": debug,
         "fmrifreq": 1.0 / sampletime,
         "textio": False,
@@ -408,7 +407,6 @@ def getderivratios(
         mp_chunksize=optiondict["mp_chunksize"],
         showprogressbar=optiondict["showprogressbar"],
         alwaysmultiproc=optiondict["alwaysmultiproc"],
-        memprofile=optiondict["memprofile"],
         debug=debug,
     )
 

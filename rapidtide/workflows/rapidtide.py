@@ -65,30 +65,9 @@ try:
 except ImportError:
     mklexists = False
 
-try:
-    from memory_profiler import profile
-
-    memprofilerexists = True
-except ImportError:
-    memprofilerexists = False
-
 LGR = logging.getLogger("GENERAL")
 ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
-
-
-def conditionalprofile():
-    def resdec(f):
-        if memprofilerexists:
-            return profile(f)
-        return f
-
-    return resdec
-
-
-@conditionalprofile()
-def memcheckpoint(message):
-    LGR.info(message)
 
 
 def getglobalsignal(
@@ -158,14 +137,6 @@ def getglobalsignal(
     if debug:
         print(f"getglobalsignal: {globalmean=}")
     return tide_math.stdnormalize(globalmean), themask
-
-
-def addmemprofiling(thefunc, memprofile, themessage):
-    tide_util.logmem(themessage)
-    if memprofile:
-        return profile(thefunc, precision=2)
-    else:
-        return thefunc
 
 
 def checkforzeromean(thedataset):
@@ -825,10 +796,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["sharedmem"]:
         LGR.info("moving fmri data to shared memory")
         TimingLGR.verbose("Start moving fmri_data to shared memory")
-        numpy2shared_func = addmemprofiling(
-            tide_util.numpy2shared, optiondict["memprofile"], "before fmri data move"
-        )
-        fmri_data_valid, fmri_data_valid_shm = numpy2shared_func(
+        fmri_data_valid, fmri_data_valid_shm = tide_util.numpy2shared(
             fmri_data_valid, rt_floatset, name=f"fmri_data_valid_{optiondict['pid']}"
         )
         TimingLGR.verbose("End moving fmri_data to shared memory")
@@ -962,8 +930,6 @@ def rapidtide_main(argparsingfunc):
             },
             append=False,
         )
-        if optiondict["memprofile"]:
-            memcheckpoint("...done")
         tide_util.logmem("after confound sLFO filter")
 
         if optiondict["saveconfoundfiltered"]:
@@ -1695,11 +1661,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict["echocancel"]:
         LGR.info("\n\nEcho cancellation")
         TimingLGR.info("Echo cancellation start")
-        calcsimilaritypass_func = addmemprofiling(
-            tide_calcsimfunc.correlationpass,
-            optiondict["memprofile"],
-            "before correlationpass",
-        )
 
         referencetc = tide_math.corrnormalize(
             resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1],
@@ -1712,7 +1673,7 @@ def rapidtide_main(argparsingfunc):
             voxelsprocessed_echo,
             theglobalmaxlist,
             trimmedcorrscale,
-        ) = calcsimilaritypass_func(
+        ) = tide_calcsimfunc.correlationpass(
             fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             referencetc,
             theCorrelator,
@@ -1845,11 +1806,6 @@ def rapidtide_main(argparsingfunc):
         if optiondict["numestreps"] > 0:
             TimingLGR.info(f"Significance estimation start, pass {thepass}")
             LGR.info(f"\n\nSignificance estimation, pass {thepass}")
-            getNullDistributionData_func = addmemprofiling(
-                tide_nullsimfunc.getNullDistributionDatax,
-                optiondict["memprofile"],
-                "before getnulldistristributiondata",
-            )
             if optiondict["checkpoint"]:
                 # bidsify
                 """tide_io.writebidstsv(
@@ -1884,7 +1840,7 @@ def rapidtide_main(argparsingfunc):
             else:
                 theSimFunc = theCorrelator
             disablemkl(optiondict["nprocs_getNullDist"], debug=threaddebug)
-            simdistdata = getNullDistributionData_func(
+            simdistdata = tide_nullsimfunc.getNullDistributionDatax(
                 cleaned_resampref_y,
                 oversampfreq,
                 theSimFunc,
@@ -2006,11 +1962,6 @@ def rapidtide_main(argparsingfunc):
             similaritytype = "MI enhanced correlation"
         LGR.info(f"\n\n{similaritytype} calculation, pass {thepass}")
         TimingLGR.info(f"{similaritytype} calculation start, pass {thepass}")
-        calcsimilaritypass_func = addmemprofiling(
-            tide_calcsimfunc.correlationpass,
-            optiondict["memprofile"],
-            "before correlationpass",
-        )
 
         disablemkl(optiondict["nprocs_calcsimilarity"], debug=threaddebug)
         if optiondict["similaritymetric"] == "mutualinfo":
@@ -2019,7 +1970,7 @@ def rapidtide_main(argparsingfunc):
                 voxelsprocessed_cp,
                 theglobalmaxlist,
                 trimmedcorrscale,
-            ) = calcsimilaritypass_func(
+            ) = tide_calcsimfunc.correlationpass(
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 theMutualInformationator,
@@ -2043,7 +1994,7 @@ def rapidtide_main(argparsingfunc):
                 voxelsprocessed_cp,
                 theglobalmaxlist,
                 trimmedcorrscale,
-            ) = calcsimilaritypass_func(
+            ) = tide_calcsimfunc.correlationpass(
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 theCorrelator,
@@ -2104,14 +2055,9 @@ def rapidtide_main(argparsingfunc):
         if optiondict["similaritymetric"] == "hybrid":
             LGR.info(f"\n\nPeak prefit calculation, pass {thepass}")
             TimingLGR.info(f"Peak prefit calculation start, pass {thepass}")
-            peakevalpass_func = addmemprofiling(
-                tide_peakeval.peakevalpass,
-                optiondict["memprofile"],
-                "before peakevalpass",
-            )
 
             disablemkl(optiondict["nprocs_peakeval"], debug=threaddebug)
-            voxelsprocessed_pe, thepeakdict = peakevalpass_func(
+            voxelsprocessed_pe, thepeakdict = tide_peakeval.peakevalpass(
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
                 initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
@@ -2151,9 +2097,7 @@ def rapidtide_main(argparsingfunc):
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
         LGR.info(f"\n\nTime lag estimation pass {thepass}")
         TimingLGR.info(f"Time lag estimation start, pass {thepass}")
-        fitcorr_func = addmemprofiling(
-            tide_simfuncfit.fitcorr, optiondict["memprofile"], "before fitcorr"
-        )
+
         theFitter.setfunctype(optiondict["similaritymetric"])
         theFitter.setcorrtimeaxis(trimmedcorrscale)
 
@@ -2164,7 +2108,7 @@ def rapidtide_main(argparsingfunc):
             initlags = None
 
         disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
-        voxelsprocessed_fc = fitcorr_func(
+        voxelsprocessed_fc = tide_simfuncfit.fitcorr(
             trimmedcorrscale,
             theFitter,
             corrout,
@@ -2230,7 +2174,7 @@ def rapidtide_main(argparsingfunc):
                     if lastnumdespeckled > numdespeckled > 0:
                         lastnumdespeckled = numdespeckled
                         disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
-                        voxelsprocessed_thispass = fitcorr_func(
+                        voxelsprocessed_thispass = tide_simfuncfit.fitcorr(
                             trimmedcorrscale,
                             theFitter,
                             corrout,
@@ -2756,13 +2700,8 @@ def rapidtide_main(argparsingfunc):
         thesize, theunit = tide_util.format_bytes(optiondict["totalcoherencebytes"])
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for coherence calculation")
 
-        coherencepass_func = addmemprofiling(
-            tide_calccoherence.coherencepass,
-            optiondict["memprofile"],
-            "before coherencepass",
-        )
         disablemkl(1, debug=threaddebug)
-        voxelsprocessed_coherence = coherencepass_func(
+        voxelsprocessed_coherence = tide_calccoherence.coherencepass(
             fmri_data_valid,
             theCoherer,
             coherencefunc,
@@ -2836,12 +2775,7 @@ def rapidtide_main(argparsingfunc):
         thesize, theunit = tide_util.format_bytes(optiondict["totalwienerbytes"])
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for wiener deconvolution")
 
-        wienerpass_func = addmemprofiling(
-            tide_wiener.wienerpass,
-            optiondict["memprofile"],
-            "before wienerpass",
-        )
-        voxelsprocessed_wiener = wienerpass_func(
+        voxelsprocessed_wiener = tide_wiener.wienerpass(
             numspatiallocs,
             fmri_data_valid,
             threshval,
@@ -2945,12 +2879,7 @@ def rapidtide_main(argparsingfunc):
                 tide_util.cleanup_shm(fmri_data_valid_shm)
                 LGR.info("moving fmri data to shared memory")
                 TimingLGR.info("Start moving fmri_data to shared memory")
-                numpy2shared_func = addmemprofiling(
-                    tide_util.numpy2shared,
-                    optiondict["memprofile"],
-                    "before movetoshared (sLFO filter)",
-                )
-                fmri_data_valid, fmri_data_valid_shm = numpy2shared_func(
+                fmri_data_valid, fmri_data_valid_shm = tide_util.numpy2shared(
                     fmri_data_valid,
                     rt_floatset,
                     name=f"fmri_data_valid_regressionfilt_{optiondict['pid']}",
@@ -3018,12 +2947,6 @@ def rapidtide_main(argparsingfunc):
         )
         thesize, theunit = tide_util.format_bytes(optiondict["totalsLFOfilterbytes"])
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for sLFO filter/delay refinement")
-
-        if optiondict["memprofile"]:
-            if optiondict["dolinfitfilt"]:
-                memcheckpoint("about to start sLFO noise removal...")
-            else:
-                memcheckpoint("about to start CVR magnitude estimation...")
         tide_util.logmem("before sLFO filter")
 
         if optiondict["dolinfitfilt"]:
@@ -3248,7 +3171,6 @@ def rapidtide_main(argparsingfunc):
                     mp_chunksize=optiondict["mp_chunksize"],
                     showprogressbar=optiondict["showprogressbar"],
                     alwaysmultiproc=optiondict["alwaysmultiproc"],
-                    memprofile=optiondict["memprofile"],
                     debug=optiondict["debug"],
                 )
             )
@@ -3283,8 +3205,6 @@ def rapidtide_main(argparsingfunc):
                     "message3": "voxels",
                 },
             )
-            if optiondict["memprofile"]:
-                memcheckpoint("...done")
             tide_util.logmem("after sLFO filter")
             LGR.info("")
     else:
@@ -3700,7 +3620,6 @@ def rapidtide_main(argparsingfunc):
                 mp_chunksize=optiondict["mp_chunksize"],
                 showprogressbar=optiondict["showprogressbar"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
-                memprofile=optiondict["memprofile"],
                 debug=optiondict["debug"],
             )
 

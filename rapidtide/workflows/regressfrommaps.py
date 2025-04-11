@@ -24,35 +24,6 @@ import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.makelaggedtcs as tide_makelagged
 import rapidtide.util as tide_util
 
-try:
-    from memory_profiler import profile
-
-    memprofilerexists = True
-except ImportError:
-    memprofilerexists = False
-
-
-def conditionalprofile():
-    def resdec(f):
-        if memprofilerexists:
-            return profile(f)
-        return f
-
-    return resdec
-
-
-@conditionalprofile()
-def memcheckpoint(message):
-    pass
-
-
-def addmemprofiling(thefunc, memprofile, themessage):
-    if memprofile:
-        return profile(thefunc, precision=2)
-    else:
-        tide_util.logmem(themessage)
-        return thefunc
-
 
 def regressfrommaps(
     fmri_data_valid,
@@ -82,7 +53,6 @@ def regressfrommaps(
     mp_chunksize=50000,
     showprogressbar=True,
     alwaysmultiproc=False,
-    memprofile=False,
     debug=False,
 ):
     if debug:
@@ -93,7 +63,6 @@ def regressfrommaps(
         print(f"{mp_chunksize=}")
         print(f"{showprogressbar=}")
         print(f"{alwaysmultiproc=}")
-        print(f"{memprofile=}")
         print(f"{mode=}")
         print(f"{outputname=}")
         print(f"{oversamptr=}")
@@ -107,15 +76,8 @@ def regressfrommaps(
         LGR.info("Start lagged timecourse creation")
     if TimingLGR is not None:
         TimingLGR.info("Start lagged timecourse creation")
-    if memprofile:
-        makelagged_func = addmemprofiling(
-            tide_makelagged.makelaggedtcs,
-            memprofile,
-            "before making lagged timecourses",
-        )
-    else:
-        makelagged_func = tide_makelagged.makelaggedtcs
-    voxelsprocessed_makelagged = makelagged_func(
+
+    voxelsprocessed_makelagged = tide_makelagged.makelaggedtcs(
         genlagtc,
         initial_fmri_x,
         fitmask,
@@ -150,12 +112,6 @@ def regressfrommaps(
         LGR.info("Start filtering operation")
     if TimingLGR is not None:
         TimingLGR.info("Start filtering operation")
-    if memprofile:
-        linfitfiltpass_func = addmemprofiling(
-            tide_linfitfiltpass.linfitfiltpass, memprofile, "before linfitfiltpass"
-        )
-    else:
-        linfitfiltpass_func = tide_linfitfiltpass.linfitfiltpass
 
     if regressderivs > 0:
         if debug:
@@ -173,7 +129,7 @@ def regressfrommaps(
 
     if debug:
         print(f"{regressorset.shape=}")
-    voxelsprocessed_regressionfilt = linfitfiltpass_func(
+    voxelsprocessed_regressionfilt = tide_linfitfiltpass.linfitfiltpass(
         numvalidspatiallocs,
         fmri_data_valid,
         regressfiltthreshval,

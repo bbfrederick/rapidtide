@@ -45,13 +45,6 @@ if pyfftwpresent:
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 try:
-    from memory_profiler import profile
-
-    memprofilerexists = True
-except ImportError:
-    memprofilerexists = False
-
-try:
     from numba import jit
 except ImportError:
     donotusenumba = True

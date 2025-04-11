@@ -151,7 +151,6 @@ def eval_refinedelay(
         "mp_chunksize": 1000,
         "showprogressbar": False,
         "alwaysmultiproc": False,
-        "memprofile": False,
         "focaldebug": debug,
         "fmrifreq": Fs,
         "textio": False,

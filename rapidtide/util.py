@@ -47,13 +47,6 @@ donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
 try:
-    from memory_profiler import profile
-
-    memprofilerexists = True
-except ImportError:
-    memprofilerexists = False
-
-try:
     from numba import jit
 except ImportError:
     donotusenumba = True
@@ -69,12 +62,6 @@ else:
 
 
 def checkimports(optiondict):
-    if memprofilerexists:
-        print("memprofiler exists")
-    else:
-        print("memprofiler does not exist")
-    optiondict["memprofilerexists"] = memprofilerexists
-
     if pyfftwpresent:
         print("pfftw exists")
     else:
