@@ -39,8 +39,7 @@ class VoxelData:
     numspatiallocs = None
     nativespaceshape = None
     cifti_hdr = None
-    native = None
-    voxelbytime = None
+    resident = False
 
     def __init__(
         self,
@@ -51,10 +50,13 @@ class VoxelData:
     ):
 
         self.filename = filename
+        self.readdata(timestep, validstart, validend)
 
+    def readdata(self, timestep, validstart, validend):
         if tide_io.checkiftext(self.filename):
             self.filetype = "text"
             self.nim_data = tide_io.readvecs(self.filename)
+            self.nim = None
             self.nim_hdr = None
             self.nim_affine = None
             self.theshape = np.shape(self.nim_data)
@@ -119,9 +121,18 @@ class VoxelData:
         if timestep > 0.0:
             self.timestep = timestep
 
-        self.setvalidstartend(validstart, validend)
+        self.setvalidtimes(validstart, validend)
+        self.resident = True
 
-    def setvalidstartend(self, validstart, validend):
+    def unload(self):
+        del self.nim_data
+        del self.nim
+        self.resident = False
+
+    def reload(self):
+        pass
+
+    def setvalidtimes(self, validstart, validend):
         if validstart is None:
             self.validstart = 0
         else:
@@ -131,8 +142,11 @@ class VoxelData:
         else:
             self.validend = validend
 
-        self.native = self.nim_data[:, :, :, self.validstart : self.validend + 1]
-        self.voxelbytime = self.native.reshape(self.numspatiallocs, -1)
+    def getnative(self):
+        return self.nim_data[:, :, :, self.validstart : self.validend + 1]
+
+    def getvoxelbytime(self):
+        return self.getnative().reshape(self.numspatiallocs, -1)
 
     def smooth(
         self,

@@ -374,85 +374,16 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     #  Read data
     ####################################################
-    # open the fmri datafile
+    # read the fmri datafile
     tide_util.logmem("before reading in input data")
     theinputdata = tide_voxelData.VoxelData(inputdatafilename, timestep=optiondict["realtr"])
-    """if tide_io.checkiftext(inputdatafilename):
-        LGR.debug("input file is text - all I/O will be to text files")
-        optiondict["textio"] = True
-        if optiondict["gausssigma"] > 0.0:
-            optiondict["gausssigma"] = 0.0
-            LGR.info("gaussian spatial filter disabled for text input files")
-    else:
-        optiondict["textio"] = False
-
-    if optiondict["textio"]:
-        nim_data = tide_io.readvecs(inputdatafilename)
-        nim_hdr = None
-        nim_affine = None
-        theshape = np.shape(nim_data)
-        xsize = theshape[0]
-        ysize = 1
-        numslices = 1
-        fileiscifti = False
-        timepoints = theshape[1]
-        thesizes = [0, int(xsize), 1, 1, int(timepoints)]
-        numspatiallocs = int(xsize)
-        nativespaceshape = xsize
-        cifti_hdr = None
-    else:
-        fileiscifti = tide_io.checkifcifti(inputdatafilename)
-        if fileiscifti:
-            LGR.debug("input file is CIFTI")
-            (
-                dummy,
-                cifti_hdr,
-                nim_data,
-                nim_hdr,
-                thedims,
-                thesizes,
-                dummy,
-            ) = tide_io.readfromcifti(inputdatafilename)
-            nim_affine = None
-            timepoints = nim_data.shape[1]
-            numspatiallocs = nim_data.shape[0]
-            LGR.debug(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
-            nativespaceshape = (1, 1, 1, 1, numspatiallocs)
-        else:
-            LGR.debug("input file is NIFTI")
-            nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(inputdatafilename)
-            nim_affine = nim.affine
-            xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
-            numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-            cifti_hdr = None
-            nativespaceshape = (xsize, ysize, numslices)
-        xdim, ydim, slicethickness, dummy = tide_io.parseniftisizes(thesizes)
-
-    # correct some fields if necessary
-    if fileiscifti:
-        fmritr = 0.72  # this is wrong and is a hack until I can parse CIFTI XML
-    else:
-        if optiondict["textio"]:
-            if optiondict["realtr"] <= 0.0:
-                raise ValueError(
-                    "for text file data input, you must use the -t option to set the timestep"
-                )
-        else:
-            if nim_hdr.get_xyzt_units()[1] == "msec":
-                fmritr = thesizes[4] / 1000.0
-            else:
-                fmritr = thesizes[4]
-    if optiondict["realtr"] > 0.0:
-        fmritr = optiondict["realtr"]"""
     nim = theinputdata.nim
     nim_data = theinputdata.nim_data
     nim_hdr = theinputdata.nim_hdr
     nim_affine = theinputdata.nim_affine
     theshape = theinputdata.theshape
-    xsize = theinputdata.xsize
-    ysize = theinputdata.ysize
-    numslices = theinputdata.numslices
-    timepoints = theinputdata.timepoints
+    thedims = theinputdata.thedims
+    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
     thesizes = theinputdata.thesizes
     xdim, ydim, slicethickness, dummy = tide_io.parseniftisizes(thesizes)
     numspatiallocs = theinputdata.numspatiallocs
@@ -556,61 +487,12 @@ def rapidtide_main(argparsingfunc):
         premasktissueonly=optiondict["premasktissueonly"],
         showprogressbar=optiondict["showprogressbar"],
     )
-
-    """if fileiscifti:
-        optiondict["gausssigma"] = 0.0
-    if optiondict["gausssigma"] < 0.0 and not optiondict["textio"]:
-        # set gausssigma automatically
-        optiondict["gausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
     if optiondict["gausssigma"] > 0.0:
-        # premask data if requested
-        if optiondict["premask"]:
-            if optiondict["premasktissueonly"]:
-                if (graymask is not None) and (whitemask is not None):
-                    multmask = graymask + whitemask
-                else:
-                    raise ValueError(
-                        "ERROR: graymask and whitemask must be defined to use premasktissueonly - exiting"
-                    )
-            else:
-                if brainmask is not None:
-                    multmask = brainmask
-                else:
-                    raise ValueError("ERROR: brainmask must be defined to use premask - exiting")
-            LGR.info(f"premasking timepoints {validstart} to {validend}")
-            for i in tqdm(
-                range(validstart, validend + 1),
-                desc="Timepoint",
-                unit="timepoints",
-                disable=(not optiondict["showprogressbar"]),
-            ):
-                nim_data[:, :, :, i] *= multmask
-
-        # this is where you'd slice time correct
-        # but we don't anymore
-
-        # now apply the filter
-        LGR.info(
-            f"applying gaussian spatial filter to timepoints {validstart} "
-            f"to {validend} with sigma={optiondict['gausssigma']}"
-        )
-        for i in tqdm(
-            range(validstart, validend + 1),
-            desc="Timepoint",
-            unit="timepoints",
-            disable=(not optiondict["showprogressbar"]),
-        ):
-            nim_data[:, :, :, i] = tide_filt.ssmooth(
-                xdim,
-                ydim,
-                slicethickness,
-                optiondict["gausssigma"],
-                nim_data[:, :, :, i],
-            )
-        TimingLGR.info("End 3D smoothing")"""
+        TimingLGR.info("End 3D smoothing")
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
-    fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
+    # fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
+    fmri_data = theinputdata.getvoxelbytime()
 
     # detect zero mean data
     if not optiondict["dataiszeromean"]:
