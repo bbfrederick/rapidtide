@@ -828,7 +828,7 @@ def rapidtide_main(argparsingfunc):
     else:
         doconfounds = False
 
-    # now actually do the filtering
+    # now actually do the confound filtering
     if domotion or doconfounds:
         LGR.info("Doing confound filtering")
         TimingLGR.verbose("Confound filtering start")
