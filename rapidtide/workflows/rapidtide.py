@@ -51,6 +51,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
+import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
@@ -221,7 +222,7 @@ def rapidtide_main(argparsingfunc):
     optiondict["Description"] = (
         "A detailed dump of all internal variables in the program.  Useful for debugging and data provenance."
     )
-    fmrifilename = optiondict["in_file"]
+    inputdatafilename = optiondict["in_file"]
     outputname = optiondict["outputname"]
     regressorfilename = optiondict["regressorfile"]
 
@@ -374,8 +375,9 @@ def rapidtide_main(argparsingfunc):
     #  Read data
     ####################################################
     # open the fmri datafile
-    tide_util.logmem("before reading in fmri data")
-    if tide_io.checkiftext(fmrifilename):
+    tide_util.logmem("before reading in input data")
+    theinputdata = tide_voxelData.VoxelData(inputdatafilename, timestep=optiondict["realtr"])
+    """if tide_io.checkiftext(inputdatafilename):
         LGR.debug("input file is text - all I/O will be to text files")
         optiondict["textio"] = True
         if optiondict["gausssigma"] > 0.0:
@@ -385,7 +387,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["textio"] = False
 
     if optiondict["textio"]:
-        nim_data = tide_io.readvecs(fmrifilename)
+        nim_data = tide_io.readvecs(inputdatafilename)
         nim_hdr = None
         nim_affine = None
         theshape = np.shape(nim_data)
@@ -399,7 +401,7 @@ def rapidtide_main(argparsingfunc):
         nativespaceshape = xsize
         cifti_hdr = None
     else:
-        fileiscifti = tide_io.checkifcifti(fmrifilename)
+        fileiscifti = tide_io.checkifcifti(inputdatafilename)
         if fileiscifti:
             LGR.debug("input file is CIFTI")
             (
@@ -410,18 +412,16 @@ def rapidtide_main(argparsingfunc):
                 thedims,
                 thesizes,
                 dummy,
-            ) = tide_io.readfromcifti(fmrifilename)
+            ) = tide_io.readfromcifti(inputdatafilename)
             nim_affine = None
-            optiondict["isgrayordinate"] = True
             timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
             LGR.debug(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
             nativespaceshape = (1, 1, 1, 1, numspatiallocs)
         else:
             LGR.debug("input file is NIFTI")
-            nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
+            nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(inputdatafilename)
             nim_affine = nim.affine
-            optiondict["isgrayordinate"] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)
             cifti_hdr = None
@@ -443,7 +443,31 @@ def rapidtide_main(argparsingfunc):
             else:
                 fmritr = thesizes[4]
     if optiondict["realtr"] > 0.0:
-        fmritr = optiondict["realtr"]
+        fmritr = optiondict["realtr"]"""
+    nim = theinputdata.nim
+    nim_data = theinputdata.nim_data
+    nim_hdr = theinputdata.nim_hdr
+    nim_affine = theinputdata.nim_affine
+    theshape = theinputdata.theshape
+    xsize = theinputdata.xsize
+    ysize = theinputdata.ysize
+    numslices = theinputdata.numslices
+    timepoints = theinputdata.timepoints
+    thesizes = theinputdata.thesizes
+    xdim, ydim, slicethickness, dummy = tide_io.parseniftisizes(thesizes)
+    numspatiallocs = theinputdata.numspatiallocs
+    nativespaceshape = theinputdata.nativespaceshape
+    cifti_hdr = theinputdata.cifti_hdr
+    fmritr = theinputdata.timestep
+    if theinputdata.filetype == "cifti":
+        fileiscifti = True
+        optiondict["textio"] = False
+    elif theinputdata.filetype == "text":
+        fileiscifti = False
+        optiondict["textio"] = True
+    else:
+        fileiscifti = False
+        optiondict["textio"] = False
 
     # check to see if we need to adjust the oversample factor
     if optiondict["oversampfactor"] < 0:
@@ -523,7 +547,17 @@ def rapidtide_main(argparsingfunc):
     whitemask = anatomicmasks[2]
 
     # do spatial filtering if requested
-    if fileiscifti:
+    optiondict["gausssigma"] = theinputdata.smooth(
+        optiondict["gausssigma"],
+        brainmask=brainmask,
+        graymask=graymask,
+        whitemask=whitemask,
+        premask=optiondict["premask"],
+        premasktissueonly=optiondict["premasktissueonly"],
+        showprogressbar=optiondict["showprogressbar"],
+    )
+
+    """if fileiscifti:
         optiondict["gausssigma"] = 0.0
     if optiondict["gausssigma"] < 0.0 and not optiondict["textio"]:
         # set gausssigma automatically
@@ -573,7 +607,7 @@ def rapidtide_main(argparsingfunc):
                 optiondict["gausssigma"],
                 nim_data[:, :, :, i],
             )
-        TimingLGR.info("End 3D smoothing")
+        TimingLGR.info("End 3D smoothing")"""
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
@@ -1950,6 +1984,13 @@ def rapidtide_main(argparsingfunc):
         optiondict["currentstage"] = f"precorrelation_pass{thepass}"
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
+        # tide_delayestimate.estimateDelay(
+        #    fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
+        #    initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+        #    os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
+        #    theMutualInformationator,
+        #    thepass,
+        # )
         ########################
         # Delay estimation start
         ########################
@@ -2835,8 +2876,8 @@ def rapidtide_main(argparsingfunc):
                 )
                 sourcename = optiondict["denoisesourcefile"]
             else:
-                LGR.info(f"rereading {fmrifilename} for sLFO filter, please wait")
-                sourcename = fmrifilename
+                LGR.info(f"rereading {inputdatafilename} for sLFO filter, please wait")
+                sourcename = inputdatafilename
             if fileiscifti:
                 LGR.info("input file is CIFTI")
                 (
