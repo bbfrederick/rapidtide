@@ -377,6 +377,7 @@ def rapidtide_main(argparsingfunc):
     # read the fmri datafile
     tide_util.logmem("before reading in input data")
     theinputdata = tide_voxelData.VoxelData(inputdatafilename, timestep=optiondict["realtr"])
+    theinputdata.summarize()
     nim = theinputdata.nim
     nim_data = theinputdata.nim_data
     nim_hdr = theinputdata.nim_hdr

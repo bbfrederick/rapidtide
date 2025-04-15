@@ -39,6 +39,7 @@ class VoxelData:
     numspatiallocs = None
     nativespaceshape = None
     cifti_hdr = None
+    filetype = None
     resident = False
 
     def __init__(
@@ -209,3 +210,23 @@ class VoxelData:
                     self.nim_data[:, :, :, i],
                 )
         return gausssigma
+
+    def summarize(self):
+        print("Voxel data summary:")
+        print(f"\t{self.nim=}")
+        print(f"\t{self.nim_data.shape=}")
+        print(f"\t{self.nim_hdr=}")
+        print(f"\t{self.nim_affine=}")
+        print(f"\t{self.theshape=}")
+        print(f"\t{self.xsize=}")
+        print(f"\t{self.ysize=}")
+        print(f"\t{self.numslices=}")
+        print(f"\t{self.timepoints=}")
+        print(f"\t{self.timestep=}")
+        print(f"\t{self.thesizes=}")
+        print(f"\t{self.thedims=}")
+        print(f"\t{self.numspatiallocs=}")
+        print(f"\t{self.nativespaceshape=}")
+        print(f"\t{self.cifti_hdr=}")
+        print(f"\t{self.filetype=}")
+        print(f"\t{self.resident=}")
