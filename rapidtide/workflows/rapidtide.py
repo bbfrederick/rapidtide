@@ -383,11 +383,9 @@ def rapidtide_main(argparsingfunc):
     nim_data = theinputdata.nim_data
     nim_hdr = theinputdata.nim_hdr
     nim_affine = theinputdata.nim_affine
-    theshape = theinputdata.theshape
-    thedims = theinputdata.thedims
-    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+    xsize, ysize, numslices, timepoints = theinputdata.getdims()
     thesizes = theinputdata.thesizes
-    xdim, ydim, slicethickness, dummy = tide_io.parseniftisizes(thesizes)
+    xdim, ydim, slicethickness, fmritr = theinputdata.getsizes()
     numspatiallocs = theinputdata.numspatiallocs
     nativespaceshape = theinputdata.nativespaceshape
     cifti_hdr = theinputdata.cifti_hdr

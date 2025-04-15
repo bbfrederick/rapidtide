@@ -36,6 +36,9 @@ class VoxelData:
     ysize = None
     numslices = None
     timepoints = None
+    xdim = None
+    ydim = None
+    slicethickness = None
     timestep = None
     thesizes = None
     thedims = None
@@ -62,8 +65,6 @@ class VoxelData:
 
         if tide_io.checkiftext(self.filename):
             self.filetype = "text"
-            # self.nim_data = tide_io.readvecs(self.filename)
-            # self.nim = None
             self.nim_hdr = None
             self.nim_affine = None
             self.theshape = np.shape(self.nim_data)
@@ -79,24 +80,12 @@ class VoxelData:
         else:
             if tide_io.checkifcifti(self.filename):
                 self.filetype = "cifti"
-                """(
-                    dummy,
-                    self.cifti_hdr,
-                    self.nim_data,
-                    self.nim_hdr,
-                    self.thedims,
-                    self.thesizes,
-                    dummy,
-                ) = tide_io.readfromcifti(self.filename)"""
                 self.nim_affine = None
                 self.timepoints = self.nim_data.shape[1]
                 self.numspatiallocs = self.nim_data.shape[0]
                 self.nativespaceshape = (1, 1, 1, 1, self.numspatiallocs)
             else:
                 self.filetype = "nifti"
-                """self.nim, self.nim_data, self.nim_hdr, self.thedims, self.thesizes = (
-                    tide_io.readfromnifti(self.filename)
-                )"""
                 self.nim_affine = self.nim.affine
                 self.xsize, self.ysize, self.numslices, self.timepoints = tide_io.parseniftidims(
                     self.thedims
@@ -130,6 +119,12 @@ class VoxelData:
 
         self.setvalidtimes(validstart, validend)
         self.resident = True
+
+    def getsizes(self):
+        return self.xdim, self.ydim, self.slicethickness, self.timestep
+
+    def getdims(self):
+        return self.xsize, self.ysize, self.numslices, self.timepoints
 
     def unload(self):
         del self.nim_data
@@ -180,7 +175,10 @@ class VoxelData:
     def getnative(self):
         if not self.resident:
             self.load()
-        return self.nim_data[:, :, :, self.validstart : self.validend + 1]
+        if self.filetype == "nifti":
+            return self.nim_data[:, :, :, self.validstart : self.validend + 1]
+        else:
+            return self.nim_data[:, self.validstart: self.validend + 1]
 
     def getvoxelbytime(self):
         return self.getnative().reshape(self.numspatiallocs, -1)
