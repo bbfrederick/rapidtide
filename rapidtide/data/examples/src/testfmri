@@ -8,4 +8,4 @@ rapidtide \
     --outputlevel max \
     --acfix \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_acfix
+    ../dst/sub-RAPIDTIDETEST_main
