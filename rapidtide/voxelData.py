@@ -236,6 +236,7 @@ class VoxelData:
                 f"applying gaussian spatial filter to timepoints {self.validstart} "
                 f"to {self.validend} with sigma={gausssigma}"
             )
+            sourcedata = self.getnative()
             for i in tqdm(
                 range(self.validstart, self.validend + 1),
                 desc="Timepoint",
@@ -247,7 +248,7 @@ class VoxelData:
                     self.ydim,
                     self.slicethickness,
                     gausssigma,
-                    self.nim_data[:, :, :, i],
+                    sourcedata[:, :, :, i],
                 )
         return gausssigma
 

@@ -380,7 +380,6 @@ def rapidtide_main(argparsingfunc):
     if optiondict["debug"]:
         theinputdata.summarize()
     nim = theinputdata.nim
-    nim_data = theinputdata.nim_data
     nim_hdr = theinputdata.nim_hdr
     nim_affine = theinputdata.nim_affine
     xsize, ysize, numslices, timepoints = theinputdata.getdims()
@@ -493,7 +492,6 @@ def rapidtide_main(argparsingfunc):
         TimingLGR.info("End 3D smoothing")
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
-    # fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
     fmri_data = theinputdata.getvoxelbytime()
     print(f"{fmri_data.shape=}")
 
@@ -610,7 +608,7 @@ def rapidtide_main(argparsingfunc):
     else:
         # check to see if the data has been demeaned
         if fileiscifti or optiondict["textio"]:
-            corrmask = np.uint(nim_data[:, 0] * 0 + 1)
+            corrmask = np.uint(theinputdata.getvoxelbytime()[:, 0] * 0 + 1)
         else:
             if not optiondict["dataiszeromean"]:
                 LGR.verbose("generating correlation mask from mean image")
@@ -902,11 +900,11 @@ def rapidtide_main(argparsingfunc):
     # get rid of memory we aren't using
     tide_util.logmem("before purging full sized fmri data")
     meanvalue = np.mean(
-        nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
+        theinputdata.getvoxelbytime(),
         axis=1,
     )
     stddevvalue = np.std(
-        nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1],
+        theinputdata.getvoxelbytime(),
         axis=1,
     )
     covvalue = np.where(meanvalue > 0.0, stddevvalue / meanvalue, 0.0)
@@ -2496,57 +2494,6 @@ def rapidtide_main(argparsingfunc):
             )
             for key, value in outputdict.items():
                 optiondict[key] = value
-
-        """if optiondict["saveintermediatemaps"]:
-            if not optiondict["textio"]:
-                theheader = copy.deepcopy(nim_hdr)
-                if fileiscifti:
-                    timeindex = theheader["dim"][0] - 1
-                    spaceindex = theheader["dim"][0]
-                    theheader["dim"][timeindex] = 1
-                    theheader["dim"][spaceindex] = numspatiallocs
-                else:
-                    theheader["dim"][0] = 3
-                    theheader["dim"][4] = 1
-                    theheader["pixdim"][4] = 1.0
-            bidspasssuffix = f"_intermediatedata-pass{thepass}"
-            maplist = [
-                (fitmask, "corrfit", "mask", None, "Voxels where correlation value was fit"),
-                (
-                    failreason,
-                    "corrfitfailreason",
-                    "info",
-                    None,
-                    "Result codes for correlation fit",
-                ),
-            ]
-            if optiondict["savedespecklemasks"] and (optiondict["despeckle_passes"] > 0):
-                maplist.append(
-                    (
-                        despecklesavemask,
-                        "despecklemask",
-                        "map",
-                        None,
-                        "Voxels that underwent despeckling",
-                    )
-                )
-            if thepass < optiondict["passes"]:
-                maplist.append(
-                    (refinemask, "refinemask", "map", None, "Voxels used for regressor refinement")
-                )
-            tide_io.savemaplist(
-                f"{outputname}{bidspasssuffix}",
-                maplist,
-                validvoxels,
-                nativespaceshape,
-                theheader,
-                bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
-                rt_floattype=rt_floattype,
-                cifti_hdr=cifti_hdr,
-            )"""
-
         # We are done with refinement.
 
     if optiondict["convergencethresh"] is None:
@@ -2762,34 +2709,14 @@ def rapidtide_main(argparsingfunc):
             or (optiondict["denoisesourcefile"] is not None)
             or optiondict["docvrmap"]
         ):
-            """if optiondict["denoisesourcefile"] is not None:
+            if optiondict["denoisesourcefile"] is not None:
                 LGR.info(
                     f"reading in {optiondict['denoisesourcefile']} for sLFO filter, please wait"
                 )
                 sourcename = optiondict["denoisesourcefile"]
-            else:
-                LGR.info(f"rereading {inputdatafilename} for sLFO filter, please wait")
-                sourcename = inputdatafilename
-            if fileiscifti:
-                LGR.info("input file is CIFTI")
-                (
-                    dummy,
-                    cifti_hdr,
-                    nim_data,
-                    nim_hdr,
-                    thedims,
-                    thesizes,
-                    dummy,
-                ) = tide_io.readfromcifti(sourcename)
-            else:
-                if optiondict["textio"]:
-                    nim_data = tide_io.readvecs(sourcename)
-                else:
-                    nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(sourcename)
+                theinputdata = tide_voxelData.VoxelData(sourcename, timestep=optiondict["realtr"])
+                #theinputdata.setvalidvoxels(validvoxels)
 
-            fmri_data_valid = (
-                nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
-            )[validvoxels, :] + 0.0"""
             fmri_data_valid = theinputdata.getvalidvoxels() + 0.0
 
             if optiondict["docvrmap"]:
@@ -2819,7 +2746,7 @@ def rapidtide_main(argparsingfunc):
                     name=f"fmri_data_valid_regressionfilt_{optiondict['pid']}",
                 )
                 TimingLGR.info("End moving fmri_data to shared memory")
-            del nim_data
+            theinputdata.unload()
 
         # now allocate the arrays needed for sLFO filtering
         if optiondict["refinedelay"]:
