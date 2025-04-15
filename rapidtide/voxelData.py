@@ -172,7 +172,12 @@ class VoxelData:
         self.validvoxels = validvoxels
         self.numvalidspatiallocs = np.shape(self.validvoxels)[0]
 
-    def getnative(self):
+    def native(self):
+        if not self.resident:
+            self.load()
+        return self.nim_data
+
+    def nativetrimmed(self):
         if not self.resident:
             self.load()
         if self.filetype == "nifti":
@@ -180,14 +185,14 @@ class VoxelData:
         else:
             return self.nim_data[:, self.validstart: self.validend + 1]
 
-    def getvoxelbytime(self):
-        return self.getnative().reshape(self.numspatiallocs, -1)
+    def voxelbytime(self):
+        return self.nativetrimmed().reshape(self.numspatiallocs, -1)
 
     def getvalidvoxels(self):
         if self.validvoxels is None:
-            return self.getvoxelbytime()
+            return self.voxelbytime()
         else:
-            return self.getvoxelbytime()[self.validvoxels, :]
+            return self.voxelbytime()[self.validvoxels, :]
 
     def smooth(
         self,
@@ -236,7 +241,7 @@ class VoxelData:
                 f"applying gaussian spatial filter to timepoints {self.validstart} "
                 f"to {self.validend} with sigma={gausssigma}"
             )
-            sourcedata = self.getnative()
+            sourcedata = self.native()
             for i in tqdm(
                 range(self.validstart, self.validend + 1),
                 desc="Timepoint",

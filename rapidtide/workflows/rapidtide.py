@@ -492,7 +492,7 @@ def rapidtide_main(argparsingfunc):
         TimingLGR.info("End 3D smoothing")
 
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
-    fmri_data = theinputdata.getvoxelbytime()
+    fmri_data = theinputdata.voxelbytime()
     print(f"{fmri_data.shape=}")
 
     # detect zero mean data
@@ -608,7 +608,7 @@ def rapidtide_main(argparsingfunc):
     else:
         # check to see if the data has been demeaned
         if fileiscifti or optiondict["textio"]:
-            corrmask = np.uint(theinputdata.getvoxelbytime()[:, 0] * 0 + 1)
+            corrmask = np.uint(theinputdata.voxelbytime()[:, 0] * 0 + 1)
         else:
             if not optiondict["dataiszeromean"]:
                 LGR.verbose("generating correlation mask from mean image")
@@ -900,11 +900,11 @@ def rapidtide_main(argparsingfunc):
     # get rid of memory we aren't using
     tide_util.logmem("before purging full sized fmri data")
     meanvalue = np.mean(
-        theinputdata.getvoxelbytime(),
+        theinputdata.voxelbytime(),
         axis=1,
     )
     stddevvalue = np.std(
-        theinputdata.getvoxelbytime(),
+        theinputdata.voxelbytime(),
         axis=1,
     )
     covvalue = np.where(meanvalue > 0.0, stddevvalue / meanvalue, 0.0)
@@ -2715,7 +2715,9 @@ def rapidtide_main(argparsingfunc):
                 )
                 sourcename = optiondict["denoisesourcefile"]
                 theinputdata = tide_voxelData.VoxelData(sourcename, timestep=optiondict["realtr"])
-                #theinputdata.setvalidvoxels(validvoxels)
+                theinputdata.summarize()
+                theinputdata.setvalidvoxels(validvoxels)
+                theinputdata.summarize()
 
             fmri_data_valid = theinputdata.getvalidvoxels() + 0.0
 
