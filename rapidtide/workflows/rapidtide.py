@@ -2716,6 +2716,7 @@ def rapidtide_main(argparsingfunc):
                 sourcename = optiondict["denoisesourcefile"]
                 theinputdata = tide_voxelData.VoxelData(sourcename, timestep=optiondict["realtr"])
                 theinputdata.summarize()
+                theinputdata.setvalidtimes(validstart, validend)
                 theinputdata.setvalidvoxels(validvoxels)
                 theinputdata.summarize()
 
