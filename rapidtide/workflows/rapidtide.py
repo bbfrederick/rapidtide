@@ -771,6 +771,13 @@ def rapidtide_main(argparsingfunc):
             append=False,
         )
 
+        if optiondict["focaldebug"]:
+            print(f"{mergedregressors.shape=}")
+            print(f"{mergedregressorlabels}")
+            print(f"{fmri_data_valid.shape=}")
+            print(f"{fmritr=}")
+            print(f"{validstart=}")
+            print(f"{validend=}")
         disablemkl(optiondict["nprocs_confoundregress"], debug=threaddebug)
         (
             mergedregressors,
