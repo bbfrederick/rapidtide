@@ -377,7 +377,8 @@ def rapidtide_main(argparsingfunc):
     # read the fmri datafile
     tide_util.logmem("before reading in input data")
     theinputdata = tide_voxelData.VoxelData(inputdatafilename, timestep=optiondict["realtr"])
-    theinputdata.summarize()
+    if optiondict["debug"]:
+        theinputdata.summarize()
     nim = theinputdata.nim
     nim_data = theinputdata.nim_data
     nim_hdr = theinputdata.nim_hdr
@@ -426,6 +427,8 @@ def rapidtide_main(argparsingfunc):
         raise ValueError(
             f"magnitude of lagmax exceeds {(validend - validstart + 1) * fmritr / 2.0} - invalid"
         )
+    # trim the fmri data to the limits
+    theinputdata.setvalidtimes(validstart, validend)
 
     # determine the valid timepoints
     validtimepoints = validend - validstart + 1
@@ -494,6 +497,7 @@ def rapidtide_main(argparsingfunc):
     # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     # fmri_data = nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
     fmri_data = theinputdata.getvoxelbytime()
+    print(f"{fmri_data.shape=}")
 
     # detect zero mean data
     if not optiondict["dataiszeromean"]:
@@ -668,7 +672,8 @@ def rapidtide_main(argparsingfunc):
         np.savetxt(f"{outputname}_validvoxels.txt", validvoxels)
     numvalidspatiallocs = np.shape(validvoxels)[0]
     LGR.debug(f"validvoxels shape = {numvalidspatiallocs}")
-    fmri_data_valid = fmri_data[validvoxels, :] + 0.0
+    theinputdata.setvalidvoxels(validvoxels)
+    fmri_data_valid = theinputdata.getvalidvoxels() + 0.0
     LGR.verbose(
         f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}"
     )
@@ -926,8 +931,7 @@ def rapidtide_main(argparsingfunc):
     )
 
     # get rid of more memory we aren't using
-    del fmri_data
-    del nim_data
+    theinputdata.unload()
     uncollected = gc.collect()
     if uncollected != 0:
         print(f"garbage collected - unable to collect {uncollected} objects")
@@ -2760,7 +2764,7 @@ def rapidtide_main(argparsingfunc):
             or (optiondict["denoisesourcefile"] is not None)
             or optiondict["docvrmap"]
         ):
-            if optiondict["denoisesourcefile"] is not None:
+            """if optiondict["denoisesourcefile"] is not None:
                 LGR.info(
                     f"reading in {optiondict['denoisesourcefile']} for sLFO filter, please wait"
                 )
@@ -2787,7 +2791,8 @@ def rapidtide_main(argparsingfunc):
 
             fmri_data_valid = (
                 nim_data.reshape((numspatiallocs, timepoints))[:, validstart : validend + 1]
-            )[validvoxels, :] + 0.0
+            )[validvoxels, :] + 0.0"""
+            fmri_data_valid = theinputdata.getvalidvoxels() + 0.0
 
             if optiondict["docvrmap"]:
                 # percent normalize the fmri data

@@ -17,6 +17,9 @@
 #
 #
 import numpy as np
+from tf_keras.src.layers.preprocessing.benchmarks.index_lookup_forward_benchmark import (
+    get_vocab,
+)
 from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
@@ -38,6 +41,7 @@ class VoxelData:
     thedims = None
     numspatiallocs = None
     nativespaceshape = None
+    validvoxels = None
     cifti_hdr = None
     filetype = None
     resident = False
@@ -54,10 +58,12 @@ class VoxelData:
         self.readdata(timestep, validstart, validend)
 
     def readdata(self, timestep, validstart, validend):
+        self.load()
+
         if tide_io.checkiftext(self.filename):
             self.filetype = "text"
-            self.nim_data = tide_io.readvecs(self.filename)
-            self.nim = None
+            # self.nim_data = tide_io.readvecs(self.filename)
+            # self.nim = None
             self.nim_hdr = None
             self.nim_affine = None
             self.theshape = np.shape(self.nim_data)
@@ -73,7 +79,7 @@ class VoxelData:
         else:
             if tide_io.checkifcifti(self.filename):
                 self.filetype = "cifti"
-                (
+                """(
                     dummy,
                     self.cifti_hdr,
                     self.nim_data,
@@ -81,16 +87,16 @@ class VoxelData:
                     self.thedims,
                     self.thesizes,
                     dummy,
-                ) = tide_io.readfromcifti(self.filename)
+                ) = tide_io.readfromcifti(self.filename)"""
                 self.nim_affine = None
                 self.timepoints = self.nim_data.shape[1]
                 self.numspatiallocs = self.nim_data.shape[0]
                 self.nativespaceshape = (1, 1, 1, 1, self.numspatiallocs)
             else:
                 self.filetype = "nifti"
-                self.nim, self.nim_data, self.nim_hdr, self.thedims, self.thesizes = (
+                """self.nim, self.nim_data, self.nim_hdr, self.thedims, self.thesizes = (
                     tide_io.readfromnifti(self.filename)
-                )
+                )"""
                 self.nim_affine = self.nim.affine
                 self.xsize, self.ysize, self.numslices, self.timepoints = tide_io.parseniftidims(
                     self.thedims
@@ -130,8 +136,32 @@ class VoxelData:
         del self.nim
         self.resident = False
 
-    def reload(self):
-        pass
+    def load(self):
+        if self.filetype is not None:
+            print("reloading non-resident data")
+        else:
+            print(f"loading data from {self.filename}")
+        if tide_io.checkiftext(self.filename):
+            self.nim_data = tide_io.readvecs(self.filename)
+            self.nim = None
+        else:
+            if tide_io.checkifcifti(self.filename):
+                self.filetype = "cifti"
+                (
+                    dummy,
+                    self.cifti_hdr,
+                    self.nim_data,
+                    self.nim_hdr,
+                    self.thedims,
+                    self.thesizes,
+                    dummy,
+                ) = tide_io.readfromcifti(self.filename)
+                self.nim = None
+            else:
+                self.nim, self.nim_data, self.nim_hdr, self.thedims, self.thesizes = (
+                    tide_io.readfromnifti(self.filename)
+                )
+        self.resident = True
 
     def setvalidtimes(self, validstart, validend):
         if validstart is None:
@@ -143,11 +173,23 @@ class VoxelData:
         else:
             self.validend = validend
 
+    def setvalidvoxels(self, validvoxels):
+        self.validvoxels = validvoxels
+        self.numvalidspatiallocs = np.shape(self.validvoxels)[0]
+
     def getnative(self):
+        if not self.resident:
+            self.load()
         return self.nim_data[:, :, :, self.validstart : self.validend + 1]
 
     def getvoxelbytime(self):
         return self.getnative().reshape(self.numspatiallocs, -1)
+
+    def getvalidvoxels(self):
+        if self.validvoxels is None:
+            return self.getvoxelbytime()
+        else:
+            return self.getvoxelbytime()[self.validvoxels, :]
 
     def smooth(
         self,
