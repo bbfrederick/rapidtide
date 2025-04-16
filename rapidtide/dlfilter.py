@@ -1255,7 +1255,7 @@ def prep(
 
     """
 
-    searchstring = os.path.join(thedatadir, "*_" + "_desc-stdrescardfromfmri_timeseries.json")
+    searchstring = os.path.join(thedatadir, "*_desc-stdrescardfromfmri_timeseries.json")
 
     # find matched files
     matchedfilelist, tclen = getmatchedfiles(
