@@ -1,9 +1,14 @@
 # Release history
 
-## Version 3.0alpha15 (4/10/25)
+## Version 3.0alpha15 (4/16/25)
 * (rapidtide) Fixed a bug in masking logic introduced in last version.
 * (rapidtide) Pullled regressor cleaning steps out into a separate routine.
 * (rapidtide) Removed unused "noiseregressor" code.  Its functionality is now covered with confound regression.
+* (rapidtide) Removed memory profiling code that relied on an unsupported library.
+* (rapidtide) Defined a new class to handle the input data.  This simplifies a lot of internal operations.
+* (happy) Updated deep learning filter code and saved models for better tensorflow 2 compatibility.
+* (docs) Updated installation instructions.
+* (package) Updated copyright notices.
 
 ## Version 3.0alpha14 (4/8/25)
 * (rapidtide) Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
