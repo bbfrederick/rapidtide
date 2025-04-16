@@ -61,7 +61,7 @@ from tf_keras.layers import (
     UpSampling1D,
 )
 from tf_keras.models import Model, Sequential, load_model
-from tf_keras.optimizers import RMSprop
+from tf_keras.optimizers.legacy import RMSprop
 
 import rapidtide.io as tide_io
 
