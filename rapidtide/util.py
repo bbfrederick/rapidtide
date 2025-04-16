@@ -35,6 +35,13 @@ import pandas as pd
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
 
+try:
+    import mkl
+
+    mklexists = True
+except ImportError:
+    mklexists = False
+
 LGR = logging.getLogger(__name__)
 TimingLGR = logging.getLogger("TIMING")
 MemoryLGR = logging.getLogger("MEMORY")
@@ -104,6 +111,21 @@ def conditionaljit2():
 def disablenumba():
     global donotusenumba
     donotusenumba = True
+
+
+def disablemkl(numprocs, debug=False):
+    if mklexists:
+        if numprocs > 1:
+            if debug:
+                print("disablemkl: setting threads to 1")
+            mkl.set_num_threads(1)
+
+
+def enablemkl(numthreads, debug=False):
+    if mklexists:
+        if debug:
+            print(f"enablemkl: setting threads to {numthreads}")
+        mkl.set_num_threads(numthreads)
 
 
 # --------------------------- Utility functions -------------------------------------------------
