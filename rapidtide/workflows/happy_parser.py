@@ -144,7 +144,7 @@ def _get_parser():
     )
     preprocessing_opts.add_argument(
         "--motionfile",
-        dest="motionfilename",
+        dest="motionfilespec",
         metavar="MOTFILE",
         help=(
             "Read 6 columns of motion regressors out of MOTFILE file (.par or BIDS .json) "
