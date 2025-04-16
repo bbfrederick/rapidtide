@@ -238,11 +238,15 @@ class DeepLearningFilter:
                 countlim=self.countlim,
             )
 
+    @tf.function
+    def predict_model(self, X):
+        return self.model(X, training=False)
+
     def evaluate(self):
         self.lossfilename = os.path.join(self.modelname, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
-        YPred = self.model.predict(self.val_x, verbose=0)
+        YPred = self.predict_model(self.val_x).numpy()
 
         error = self.val_y - YPred
         self.pred_error = np.mean(np.square(error))
@@ -348,39 +352,39 @@ class DeepLearningFilter:
         self.intermediatemodelpath = os.path.join(
             self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.h5"
         )
+        train_dataset = (
+            tf.data.Dataset.from_tensor_slices((self.train_x, self.train_y))
+            .shuffle(2048)
+            .batch(1024)
+        )
+        val_dataset = tf.data.Dataset.from_tensor_slices((self.val_x, self.val_y)).batch(1024)
         if self.usetensorboard:
             tensorboard = TensorBoard(
-                log_dir=self.intermediatemodelpath + "logs/{}".format(time())
+                log_dir=os.path.join(self.intermediatemodelpath, "logs", str(int(time.time())))
             )
             self.model.fit(self.train_x, self.train_y, verbose=1, callbacks=[tensorboard])
         else:
             if self.num_pretrain_epochs > 0:
                 LGR.info("pretraining model to reproduce input data")
                 self.history = self.model.fit(
-                    self.train_y,
-                    self.train_y,
-                    batch_size=1024,
+                    train_dataset,
+                    validation_data=val_dataset,
                     epochs=self.num_pretrain_epochs,
-                    shuffle=True,
                     verbose=1,
                     callbacks=[
                         TerminateOnNaN(),
-                        ModelCheckpoint(self.intermediatemodelpath),
+                        ModelCheckpoint(self.intermediatemodelpath, save_format="keras"),
                     ],
-                    validation_data=(self.val_y, self.val_y),
                 )
             self.history = self.model.fit(
-                self.train_x,
-                self.train_y,
-                batch_size=1024,
+                train_dataset,
+                validation_data=val_dataset,
                 epochs=self.num_epochs,
-                shuffle=True,
                 verbose=1,
                 callbacks=[
                     TerminateOnNaN(),
-                    ModelCheckpoint(self.intermediatemodelpath),
+                    ModelCheckpoint(self.intermediatemodelpath, save_format="keras"),
                 ],
-                validation_data=(self.val_x, self.val_y),
             )
         self.savemodel()
         self.trained = True
@@ -403,7 +407,7 @@ class DeepLearningFilter:
             for i in range(X.shape[0]):
                 X[i, :, 0] = scaleddata[i : i + self.window_size]
 
-        Y = self.model.predict(X, verbose=0)
+        Y = self.predict_model(X).numpy()
         for i in range(X.shape[0]):
             predicteddata[i : i + self.window_size] += Y[i, :, 0]
 
