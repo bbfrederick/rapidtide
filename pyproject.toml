@@ -36,7 +36,7 @@ dependencies = [
   'requests',
   'statsmodels',
   'pywavelets',
-  'tensorflow >= 2.10.0, < 2.19.0',
+  'tensorflow >= 2.10.0',
   'tf-keras',
   'tqdm',
   'versioneer',
