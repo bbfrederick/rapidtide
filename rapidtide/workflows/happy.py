@@ -990,6 +990,24 @@ def happy_main(argparsingfunc):
                     append=True,
                     debug=args.debug,
                 )
+                badpointlist_stdres = np.round(
+                    tide_resample.arbresample(
+                        badpointlist,
+                        slicesamplerate,
+                        args.stdfreq,
+                        decimate=True,
+                        debug=False,
+                    ),
+                    0,
+                )
+                tide_io.writebidstsv(
+                    outputroot + "_desc-stdrescardfromfmri_timeseries",
+                    badpointlist_stdres,
+                    args.stdfreq,
+                    columns=["badpts"],
+                    append=True,
+                    debug=args.debug,
+                )
 
         #  extract the fundamental
         if args.forcedhr is not None:
