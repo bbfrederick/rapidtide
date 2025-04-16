@@ -21,6 +21,7 @@ import argparse
 import numpy as np
 
 import rapidtide.io as tide_io
+import rapidtide.multiproc as tide_multiproc
 import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
@@ -121,7 +122,20 @@ def _get_parser():
         ),
         default=1,
     )
-
+    performance_opts.add_argument(
+        "--nprocs",
+        dest="nprocs",
+        action="store",
+        metavar="NPROCS",
+        type=lambda x: pf.is_int(parser, x),
+        help=(
+            "Use NPROCS CPUs to accelerate processing (defaults to 1 - more "
+            "CPUs up to the number of cores can accelerate processing a lot, but "
+            "you need to remember to ask for this many CPUs on clusters.)  Entering a mulitprocessor "
+            "routine disables mklthreads (otherwise there's chaos)."
+        ),
+        default=1,
+    )
     # Preprocessing
     preprocessing_opts = parser.add_argument_group("Preprocessing")
     preprocessing_opts.add_argument(
@@ -720,7 +734,6 @@ def process_args(inputargs=None):
     args.outputlevel = 1
     args.maskthreshpct = 10.0
     args.domadnorm = True
-    args.nprocs = 1
     args.verbose = False
     args.smoothlen = 101
     args.envthresh = 0.2
@@ -739,10 +752,15 @@ def process_args(inputargs=None):
     if args.disablenotch:
         args.notchpct = None
 
+    # process motionfile information
     if args.motionfilespec is not None:
         (args.motionfilename, args.motionfilecolspec) = tide_io.parsefilespec(args.motionfilespec)
     else:
         args.motionfilename = None
+
+    # set the number of worker processes if multiprocessing
+    if args.nprocs < 1:
+        args.nprocs = tide_multiproc.maxcpus()
 
     # process infotags
     args = pf.postprocesstagopts(args)
