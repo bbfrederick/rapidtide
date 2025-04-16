@@ -205,7 +205,6 @@ def happy_main(argparsingfunc):
     tide_util.logmem("before mask creation")
     # mask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
     mask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
-    validvoxels = np.where(mask > 0)[0]
     theheader = copy.deepcopy(nim_hdr)
     theheader["dim"][4] = 1
     timings.append(["Mask created", time.time(), None, None])
@@ -253,6 +252,7 @@ def happy_main(argparsingfunc):
                 tcstart=args.motskip,
                 tchp=args.motionhp,
                 tclp=args.motionlp,
+                nprocs=args.nprocs,
             )
         )
         if confoundr2 is None:
@@ -272,6 +272,17 @@ def happy_main(argparsingfunc):
             columns=motionregressorlabels,
             append=False,
             debug=args.debug,
+        )
+        # save motionr2 map
+        theheader = copy.deepcopy(nim_hdr)
+        theheader["dim"][4] = 1
+        motionr2filename = outputroot + "_desc-motionr2_map"
+        bidsdict = bidsbasedict.copy()
+        tide_io.writedicttojson(bidsdict, motionr2filename + ".json")
+        outarray = np.zeros((xsize, ysize, numslices), dtype=float)
+        outarray.reshape(numspatiallocs)[validprojvoxels] = confoundr2
+        tide_io.savetonifti(
+            outarray.reshape((xsize, ysize, numslices)), theheader, motionr2filename
         )
         if args.savemotionglmfilt:
             motionfilteredfilename = outputroot + "_desc-motionfiltered_bold"
