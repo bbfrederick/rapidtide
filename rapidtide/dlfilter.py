@@ -1033,7 +1033,7 @@ def targettoinput(name, targetfrag="xyz", inputfrag="abc"):
     return name.replace(targetfrag, inputfrag)
 
 
-def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc"):
+def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False):
     # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
     LGR.debug(f"searchstring: {searchstring} -> {fromfile}")
@@ -1219,13 +1219,14 @@ def prep(
     endskip=200,
     excludebysubject=True,
     thesuffix="sliceres",
-    thedatadir="/data1/frederic/test/output",
+    thedatadir="/data/frederic/physioconn/output_2025",
     inputfrag="abc",
     targetfrag="xyz",
     dofft=False,
     readlim=None,
     readskip=None,
     countlim=None,
+    debug=False,
 ):
     """
     prep - reads in training and validation data for 1D filter
@@ -1254,7 +1255,7 @@ def prep(
 
     """
 
-    searchstring = os.path.join(thedatadir, "*_" + targetfrag + "_" + thesuffix + ".txt")
+    searchstring = os.path.join(thedatadir, "*_" + "_desc-stdrescardfromfmri_timeseries.json")
 
     # find matched files
     matchedfilelist, tclen = getmatchedfiles(
@@ -1262,6 +1263,7 @@ def prep(
         usebadpts=usebadpts,
         targetfrag=targetfrag,
         inputfrag=inputfrag,
+        debug=debug,
     )
 
     # read in the data from the matched files
