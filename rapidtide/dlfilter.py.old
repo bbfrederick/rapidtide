@@ -16,6 +16,11 @@
 #   limitations under the License.
 #
 #
+"""
+Created on Sat Jul 28 23:01:07 2018
+
+@author: neuro
+"""
 import glob
 import logging
 import os
@@ -36,6 +41,7 @@ with warnings.catch_warnings():
     else:
         pyfftwpresent = True
 
+
 from scipy import fftpack
 from statsmodels.robust.scale import mad
 
@@ -43,37 +49,39 @@ if pyfftwpresent:
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
 
-import tensorflow as tf
-from tf_keras.callbacks import ModelCheckpoint, TensorBoard, TerminateOnNaN
-from tf_keras.layers import (
-    LSTM,
-    Activation,
-    BatchNormalization,
-    Bidirectional,
-    Concatenate,
-    Convolution1D,
-    Dense,
-    Dropout,
-    GlobalMaxPool1D,
-    Input,
-    MaxPooling1D,
-    TimeDistributed,
-    UpSampling1D,
-)
-from tf_keras.models import Model, Sequential, load_model
-from tf_keras.optimizers import RMSprop
-
 import rapidtide.io as tide_io
 
 LGR = logging.getLogger("GENERAL")
 LGR.debug("setting backend to Agg")
 mpl.use("Agg")
 
-# Disable GPU if desired
-try:
-    tf.config.set_visible_devices([], "GPU")
-except Exception as e:
-    LGR.warning(f"Failed to disable GPU: {e}")
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+import tensorflow as tf
+
+tf.config.set_visible_devices([], "GPU")
+
+# import tensorflow.compat.v1 as tf
+
+LGR.debug("using tensorflow v2x")
+# tf.disable_v2_behavior()
+from tensorflow.keras.callbacks import ModelCheckpoint, TerminateOnNaN
+from tensorflow.keras.layers import (
+    LSTM,
+    Activation,
+    BatchNormalization,
+    Bidirectional,
+    Convolution1D,
+    Dense,
+    Dropout,
+    GlobalMaxPool1D,
+    MaxPooling1D,
+    TimeDistributed,
+    UpSampling1D,
+)
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.optimizers import RMSprop
 
 LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
 
@@ -238,15 +246,11 @@ class DeepLearningFilter:
                 countlim=self.countlim,
             )
 
-    @tf.function
-    def predict_model(self, X):
-        return self.model(X, training=False)
-
     def evaluate(self):
         self.lossfilename = os.path.join(self.modelname, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
-        YPred = self.predict_model(self.val_x).numpy()
+        YPred = self.model.predict(self.val_x, verbose=0)
 
         error = self.val_y - YPred
         self.pred_error = np.mean(np.square(error))
@@ -352,39 +356,39 @@ class DeepLearningFilter:
         self.intermediatemodelpath = os.path.join(
             self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.h5"
         )
-        train_dataset = (
-            tf.data.Dataset.from_tensor_slices((self.train_x, self.train_y))
-            .shuffle(2048)
-            .batch(1024)
-        )
-        val_dataset = tf.data.Dataset.from_tensor_slices((self.val_x, self.val_y)).batch(1024)
         if self.usetensorboard:
             tensorboard = TensorBoard(
-                log_dir=os.path.join(self.intermediatemodelpath, "logs", str(int(time.time())))
+                log_dir=self.intermediatemodelpath + "logs/{}".format(time())
             )
             self.model.fit(self.train_x, self.train_y, verbose=1, callbacks=[tensorboard])
         else:
             if self.num_pretrain_epochs > 0:
                 LGR.info("pretraining model to reproduce input data")
                 self.history = self.model.fit(
-                    train_dataset,
-                    validation_data=val_dataset,
+                    self.train_y,
+                    self.train_y,
+                    batch_size=1024,
                     epochs=self.num_pretrain_epochs,
+                    shuffle=True,
                     verbose=1,
                     callbacks=[
                         TerminateOnNaN(),
-                        ModelCheckpoint(self.intermediatemodelpath, save_format="keras"),
+                        ModelCheckpoint(self.intermediatemodelpath),
                     ],
+                    validation_data=(self.val_y, self.val_y),
                 )
             self.history = self.model.fit(
-                train_dataset,
-                validation_data=val_dataset,
+                self.train_x,
+                self.train_y,
+                batch_size=1024,
                 epochs=self.num_epochs,
+                shuffle=True,
                 verbose=1,
                 callbacks=[
                     TerminateOnNaN(),
-                    ModelCheckpoint(self.intermediatemodelpath, save_format="keras"),
+                    ModelCheckpoint(self.intermediatemodelpath),
                 ],
+                validation_data=(self.val_x, self.val_y),
             )
         self.savemodel()
         self.trained = True
@@ -407,7 +411,7 @@ class DeepLearningFilter:
             for i in range(X.shape[0]):
                 X[i, :, 0] = scaleddata[i : i + self.window_size]
 
-        Y = self.predict_model(X).numpy()
+        Y = self.model.predict(X, verbose=0)
         for i in range(X.shape[0]):
             predicteddata[i : i + self.window_size] += Y[i, :, 0]
 
@@ -482,9 +486,9 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         input_seq = Input(shape=(inputlen, self.input_width))
 
         # 1-D convolution and global max-pooling
-        convolved = Convolution1D(
-            filters=self.num_filters, kernel_size=kernelsize, padding="same", activation="tanh"
-        )(input_seq)
+        convolved = Conv1D(self.num_filters, kernelsize, padding="same", activation="tanh")(
+            input_seq
+        )
         processed = GlobalMaxPool1D()(convolved)
 
         # dense layer with dropout regularization

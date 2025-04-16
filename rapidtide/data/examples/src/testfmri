@@ -9,3 +9,4 @@ rapidtide \
     --acfix \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_main
+    

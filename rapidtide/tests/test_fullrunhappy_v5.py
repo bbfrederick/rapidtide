@@ -39,8 +39,6 @@ def test_fullrunhappy_v4(debug=False, local=False, displayplots=False):
         os.path.join(exampleroot, "sub-HAPPYTEST.nii.gz"),
         os.path.join(exampleroot, "sub-HAPPYTEST.json"),
         os.path.join(testtemproot, "happyout5"),
-        "--model",
-        "model_revised",
         "--motionfile",
         os.path.join(exampleroot, "sub-HAPPYTEST_mcf.par"),
         "--nomotderiv",

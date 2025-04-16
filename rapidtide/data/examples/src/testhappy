@@ -65,5 +65,4 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    --spatialregression \
     ../dst/happy

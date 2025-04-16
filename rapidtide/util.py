@@ -279,6 +279,20 @@ def isexecutable(command):
         )
 
 
+def makeadir(pathname):
+    try:
+        os.makedirs(pathname)
+    except OSError:
+        if os.path.exists(pathname):
+            # We are nearly safe
+            return True
+        else:
+            # There was an error on creation, so make sure we know about it
+            print("ERROR: ", pathname, " does not exist, and could not create it")
+            return False
+    return True
+
+
 def findreferencedir():
     # Get the list of directories
     site_packages_dirs = site.getsitepackages()

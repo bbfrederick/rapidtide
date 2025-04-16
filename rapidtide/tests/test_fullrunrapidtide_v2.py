@@ -83,6 +83,8 @@ def test_fullrunrapidtide_v2(debug=False, local=False, displayplots=False):
         "var",
         "--motionfile",
         os.path.join(exampleroot, "fakemotion.par"),
+        "--denoisesourcefile",
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
     ]
     if debug:
         print(inputargs)

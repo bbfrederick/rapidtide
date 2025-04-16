@@ -46,7 +46,7 @@ def test_fullrunhappy_v3(debug=False, local=False, displayplots=False):
         "--mklthreads",
         "-1",
         "--model",
-        "model_revised",
+        "model_revised_tf2",
         "--cardcalconly",
     ]
     # "--motionfile",
