@@ -602,6 +602,15 @@ def happy_main(argparsingfunc):
                 )
                 thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
                 thedlfilter.loadmodel(args.modelname)
+                updatemodels = False
+                if updatemodels:
+                    updatedmodelname = f"{args.modelname}_tf2"
+                    newmodeldir = os.path.join(
+                        "/Users/frederic/code/rapidtide/rapidtide/data/models", updatedmodelname
+                    )
+                    print(f"creating {newmodeldir}")
+                    tide_util.makeadir(newmodeldir)
+                    thedlfilter.savemodel(altname=newmodeldir)
                 infodict["dlfiltermodel"] = args.modelname
                 normdlfilteredcard_stdres = thedlfilter.apply(normcardfromfmri_stdres)
                 dlfilteredcard_stdres = thedlfilter.apply(cardfromfmri_stdres)

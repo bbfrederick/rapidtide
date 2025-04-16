@@ -24,6 +24,7 @@ import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
+DEFAULT_DL_MODEL = "model_revised_tf2"
 
 
 def _get_parser():
@@ -99,10 +100,10 @@ def _get_parser():
         dest="modelname",
         metavar="MODELNAME",
         help=(
-            "Use model MODELNAME for dl filter (default is model_revised - "
+            f"Use model MODELNAME for dl filter (default is {DEFAULT_DL_MODEL} - "
             "from the revised NeuroImage paper.) "
         ),
-        default="model_revised",
+        default=DEFAULT_DL_MODEL,
     )
 
     # Performance
