@@ -307,17 +307,22 @@ class DeepLearningFilter:
         self.infodict["prediction_error"] = self.pred_error
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
 
-    def savemodel(self, usehdf=True):
+    def savemodel(self, altname=None, usehdf=True):
+        if altname is None:
+            modelsavename = self.modelname
+        else:
+            modelsavename = altname
+
         if usehdf:
             # save the trained model as a single hdf file
-            self.model.save(os.path.join(self.modelname, "model.h5"))
+            self.model.save(os.path.join(modelsavename, "model.h5"))
         else:
             # save the model structure to JSON
             model_json = self.model.to_json()
-            with open(os.path.join(self.modelname, "model.json"), "w") as json_file:
+            with open(os.path.join(modelsavename, "model.json"), "w") as json_file:
                 json_file.write(model_json)
             # save the weights to hdf
-            self.model.save_weights(os.path.join(self.modelname, "model_weights.h5"))
+            self.model.save_weights(os.path.join(modelsavename, "model_weights.h5"))
 
     def loadmodel(self, modelname, usehdf=True, verbose=False):
         # read in the data
