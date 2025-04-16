@@ -1038,7 +1038,8 @@ def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="
     fromfile = sorted(glob.glob(searchstring))
     print(f"searchstring: {searchstring} -> {fromfile}")
 
-    # make sure all files exist
+    # make sure all timecourses exist
+    # we need cardiacfromfmri_25.0Hz as x, normpleth as y, and perhaps badpts
     matchedfilelist = []
     for targetname in fromfile:
         if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag)):
