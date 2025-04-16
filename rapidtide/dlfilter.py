@@ -1036,7 +1036,7 @@ def targettoinput(name, targetfrag="xyz", inputfrag="abc"):
 def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False):
     # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
-    LGR.debug(f"searchstring: {searchstring} -> {fromfile}")
+    print(f"searchstring: {searchstring} -> {fromfile}")
 
     # make sure all files exist
     matchedfilelist = []
