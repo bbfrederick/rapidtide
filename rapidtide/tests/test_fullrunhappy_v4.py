@@ -46,7 +46,7 @@ def test_fullrunhappy_v4(debug=False, local=False, displayplots=False):
         "--mklthreads",
         "-1",
         "--model",
-        "model_revised",
+        "model_revised_tf2",
         "--motionfile",
         os.path.join(exampleroot, "sub-HAPPYTEST_mcf.par"),
         "--aliasedcorrelation",
