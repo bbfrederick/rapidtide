@@ -739,6 +739,11 @@ def process_args(inputargs=None):
     if args.disablenotch:
         args.notchpct = None
 
+    if args.motionfilespec is not None:
+        (args.motionfilename, args.motionfilecolspec) = tide_io.parsefilespec(args.motionfilespec)
+    else:
+        args.motionfilename = None
+
     # process infotags
     args = pf.postprocesstagopts(args)
 

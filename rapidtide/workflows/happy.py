@@ -235,13 +235,14 @@ def happy_main(argparsingfunc):
     # filter out motion regressors here
     if args.motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
-        motiondict = tide_io.readmotion(args.motionfilename, tr=tr)
+        motiondict = tide_io.readmotion(args.motionfilename, tr=tr, colspec=args.motionfilecolspec)
         confoundregressors, confoundregressorlabels = tide_fit.calcexpandedregressors(
             motiondict,
             labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
             deriv=args.motfilt_deriv,
             order=args.motfilt_order,
         )
+        tide_util.disablemkl(args.nprocs)
         (motionregressors, motionregressorlabels, filtereddata, confoundr2) = (
             tide_linfitfiltpass.confoundregress(
                 confoundregressors,
@@ -255,6 +256,7 @@ def happy_main(argparsingfunc):
                 nprocs=args.nprocs,
             )
         )
+        tide_util.enablemkl(args.mklthreads)
         if confoundr2 is None:
             print("There are no nonzero confound regressors - exiting")
             sys.exit()
@@ -383,6 +385,7 @@ def happy_main(argparsingfunc):
         # now get an estimate of the cardiac signal
         print("estimating cardiac signal from fmri data")
         tide_util.logmem("before cardiacfromimage")
+        tide_util.disablemkl(args.nprocs)
         (
             cardfromfmri_sliceres,
             cardfromfmri_normfac,
@@ -413,6 +416,7 @@ def happy_main(argparsingfunc):
             debug=args.debug,
             verbose=args.verbose,
         )
+        tide_util.enablemkl(args.mklthreads)
         timings.append(
             [
                 "Cardiac signal generated from image data" + passstring,
@@ -1775,6 +1779,7 @@ def happy_main(argparsingfunc):
             fitNorm = np.zeros(timepoints, dtype=np.float64)
             datatoremove = 0.0 * fmri_data
             print("Running spatial regression on", timepoints, "timepoints")
+            tide_util.disablemkl(args.nprocs)
             tide_linfitfiltpass.linfitfiltpass(
                 timepoints,
                 fmri_data[validlocs, :],
@@ -1791,6 +1796,7 @@ def happy_main(argparsingfunc):
                 procbyvoxel=False,
                 nprocs=args.nprocs,
             )
+            tide_util.enablemkl(args.mklthreads)
             print(datatoremove.shape, cardiacnoise.shape, fitcoffs.shape)
             # datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
             filtereddata = fmri_data - datatoremove
@@ -1835,6 +1841,7 @@ def happy_main(argparsingfunc):
             fitNorm = np.zeros(numspatiallocs, dtype=np.float64)
             datatoremove = 0.0 * fmri_data
             print("Running temporal regression on", numvalidspatiallocs, "voxels")
+            tide_util.disablemkl(args.nprocs)
             tide_linfitfiltpass.linfitfiltpass(
                 numvalidspatiallocs,
                 fmri_data[validlocs, :],
@@ -1850,6 +1857,7 @@ def happy_main(argparsingfunc):
                 procbyvoxel=True,
                 nprocs=args.nprocs,
             )
+            tide_util.enablemkl(args.mklthreads)
             datatoremove[validlocs, :] = np.multiply(
                 cardiacnoise[validlocs, :], fitcoffs[validlocs, None]
             )
