@@ -65,4 +65,11 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
+    --model ~/code/rapidtide/rapidtide/experimental/model_cnn_w128_l4_fn10_fl5_e50_t4.0_ct0.6_s20_d1_relu_normaligned \
+    ../dst/happy_newmodel
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
     ../dst/happy
+

@@ -125,6 +125,7 @@ class DeepLearningFilter:
         thedatadir="/Users/frederic/Documents/MR_data/physioconn/timecourses",
         inputfrag="abc",
         targetfrag="xyz",
+        corrthresh=0.5,
         excludebysubject=True,
         startskip=200,
         endskip=200,
@@ -152,6 +153,7 @@ class DeepLearningFilter:
         self.thedatadir = thedatadir
         self.modelpath = modelpath
         LGR.info(f"modeldir from DeepLearningFilter: {self.modelpath}")
+        self.corrthresh = corrthresh
         self.excludethresh = excludethresh
         self.readlim = readlim
         self.readskip = readskip
@@ -172,6 +174,7 @@ class DeepLearningFilter:
         self.infodict["window_size"] = self.window_size
         self.infodict["usebadpts"] = self.usebadpts
         self.infodict["dofft"] = self.dofft
+        self.infodict["corrthresh"] = self.corrthresh
         self.infodict["excludethresh"] = self.excludethresh
         self.infodict["num_pretrain_epochs"] = self.num_pretrain_epochs
         self.infodict["num_epochs"] = self.num_epochs
@@ -205,6 +208,7 @@ class DeepLearningFilter:
                 targetfrag=self.targetfrag,
                 startskip=self.startskip,
                 endskip=self.endskip,
+                corrthresh=self.corrthresh,
                 step=self.step,
                 dofft=self.dofft,
                 usebadpts=self.usebadpts,
@@ -231,6 +235,7 @@ class DeepLearningFilter:
                 targetfrag=self.targetfrag,
                 startskip=self.startskip,
                 endskip=self.endskip,
+                corrthresh=self.corrthresh,
                 step=self.step,
                 dofft=self.dofft,
                 usebadpts=self.usebadpts,
@@ -462,6 +467,7 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
                 "fl" + str(self.kernel_size),
                 "e" + str(self.num_epochs),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 "d" + str(self.dilation_rate),
                 self.activation,
@@ -538,6 +544,7 @@ class CNNDLFilter(DeepLearningFilter):
                 "fl" + str(self.kernel_size),
                 "e" + str(self.num_epochs),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 "d" + str(self.dilation_rate),
                 self.activation,
@@ -609,6 +616,7 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
                 "en" + str(self.encoding_dim),
                 "e" + str(self.num_epochs),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -696,6 +704,7 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
                 "fl" + str(self.kernel_size),
                 "e" + str(self.num_epochs),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -833,6 +842,7 @@ class LSTMDLFilter(DeepLearningFilter):
                 "rd" + str(self.dropout_rate),
                 "e" + str(self.num_epochs),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
             ]
         )
@@ -893,6 +903,7 @@ class HybridDLFilter(DeepLearningFilter):
                 "rd" + str(self.dropout_rate),
                 "e" + str(self.num_epochs),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -1046,8 +1057,14 @@ def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="ab
     # we need cardiacfromfmri_25.0Hz as x, normpleth as y, and perhaps badpts
     matchedfilelist = []
     for targetname in fromfile:
-        matchedfilelist.append(targetname)
-        LGR.debug(matchedfilelist[-1])
+        infofile = targetname.replace("_desc-stdrescardfromfmri_timeseries", "_info")
+        if os.path.isfile(infofile):
+            matchedfilelist.append(targetname)
+            print(f"{targetname} is complete")
+            LGR.debug(matchedfilelist[-1])
+        else:
+            print(f"{targetname} is incomplete")
+    print(f"found {len(matchedfilelist)} matched files")
 
     # find out how long the files are
     (
@@ -1075,6 +1092,7 @@ def readindata(
     usebadpts=False,
     startskip=0,
     endskip=0,
+    corrthresh=0.5,
     readlim=None,
     readskip=None,
 ):
@@ -1098,12 +1116,22 @@ def readindata(
     # now read the data in
     count = 0
     LGR.info("checking data")
+    lowcorrfiles = []
     nanfiles = []
     shortfiles = []
     strangemagfiles = []
     for i in range(readskip, readskip + s):
+        lowcorrfound = False
         nanfound = False
         LGR.info(f"processing {matchedfilelist[i]}")
+
+        # read the info dict first
+        infodict = tide_io.readdictfromjson(
+            matchedfilelist[i].replace("_desc-stdrescardfromfmri_timeseries", "_info")
+        )
+        if infodict["corrcoeff_raw2pleth"] < corrthresh:
+            lowcorrfound = True
+            lowcorrfiles.append(matchedfilelist[i])
         (
             samplerate,
             starttime,
@@ -1161,14 +1189,30 @@ def readindata(
             and (not nanfound)
             and (not shortfound)
             and (not strangefound)
+            and (not lowcorrfound)
         ):
             x1[:tclen, count] = tempx[:tclen]
             y1[:tclen, count] = tempy[:tclen]
             names.append(matchedfilelist[i])
+            print(f"{matchedfilelist[i]} included:")
             if usebadpts:
                 bad1[:tclen, count] = inputarray[2, :]
             count += 1
+        else:
+            print(f"{matchedfilelist[i]} excluded:")
+            if ntempx < tclen:
+                print("\tx data too short")
+            if ntempy < tclen:
+                print("\ty data too short")
+            print(f"\t{nanfound=}")
+            print(f"\t{shortfound=}")
+            print(f"\t{strangefound=}")
+            print(f"\t{lowcorrfound=}")
     LGR.info(f"{count} runs pass file length check")
+    if len(lowcorrfiles) > 0:
+        LGR.info("files with low raw/pleth correlations:")
+        for thefile in lowcorrfiles:
+            LGR.info(f"\t{thefile}")
     if len(nanfiles) > 0:
         LGR.info("files with NaNs:")
         for thefile in nanfiles:
@@ -1182,6 +1226,7 @@ def readindata(
         for thefile in strangemagfiles:
             LGR.info(f"\t{thefile}")
 
+    print(f"training set contains {count} runs of length {tclen}")
     if usebadpts:
         return (
             x1[startskip:-endskip, :count],
@@ -1209,6 +1254,7 @@ def prep(
     thedatadir="/data/frederic/physioconn/output_2025",
     inputfrag="abc",
     targetfrag="xyz",
+    corrthresh=0.5,
     dofft=False,
     readlim=None,
     readskip=None,
@@ -1231,6 +1277,7 @@ def prep(
     thedatadir
     inputfrag
     targetfrag
+    corrthresh
     dofft
     readlim
     readskip
@@ -1242,7 +1289,7 @@ def prep(
 
     """
 
-    searchstring = os.path.join(thedatadir, "*_desc-stdrescardfromfmri_timeseries.json")
+    searchstring = os.path.join(thedatadir, "*", "*_desc-stdrescardfromfmri_timeseries.json")
 
     # find matched files
     matchedfilelist, tclen = getmatchedtcs(
@@ -1252,7 +1299,7 @@ def prep(
         inputfrag=inputfrag,
         debug=debug,
     )
-    print("matchedfilelist", matchedfilelist)
+    # print("matchedfilelist", matchedfilelist)
     print("tclen", tclen)
 
     # read in the data from the matched files
@@ -1260,6 +1307,7 @@ def prep(
         x, y, names, bad = readindata(
             matchedfilelist,
             tclen,
+            corrthresh=corrthresh,
             targetfrag=targetfrag,
             inputfrag=inputfrag,
             usebadpts=True,
@@ -1272,6 +1320,7 @@ def prep(
         x, y, names = readindata(
             matchedfilelist,
             tclen,
+            corrthresh=corrthresh,
             targetfrag=targetfrag,
             inputfrag=inputfrag,
             startskip=startskip,
