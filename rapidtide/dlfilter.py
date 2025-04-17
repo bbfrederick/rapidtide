@@ -350,7 +350,7 @@ class DeepLearningFilter:
 
     def train(self):
         self.intermediatemodelpath = os.path.join(
-            self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.h5"
+            self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.keras"
         )
         train_dataset = (
             tf.data.Dataset.from_tensor_slices((self.train_x, self.train_y))
