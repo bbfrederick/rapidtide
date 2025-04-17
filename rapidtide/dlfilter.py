@@ -1047,7 +1047,7 @@ def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="ab
 
     # find out how long the files are
     inputarray = tide_io.readbidstsv(
-        matchedfilelist[i], colspec=["cardiacfromfmri_25.0Hz", "normpleth"]
+        matchedfilelist[0], colspec=["cardiacfromfmri_25.0Hz", "normpleth"]
     )
     print(f"{inputarray.shape=}")
     tclen = inputarray.shape[0]
