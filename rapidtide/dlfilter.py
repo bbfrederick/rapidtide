@@ -1046,7 +1046,14 @@ def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="ab
         LGR.debug(matchedfilelist[-1])
 
     # find out how long the files are
-    inputarray = tide_io.readbidstsv(
+    (
+        samplerate,
+        starttime,
+        columns,
+        inputarray,
+        compression,
+        columnsource,
+    ) = tide_io.readbidstsv(
         matchedfilelist[0],
         colspec="cardiacfromfmri_25.0Hz,normpleth",
     )
@@ -1093,7 +1100,14 @@ def readindata(
     for i in range(readskip, readskip + s):
         nanfound = False
         LGR.info(f"processing {matchedfilelist[i]}")
-        inputarray = tide_io.readbidstsv(
+        (
+            samplerate,
+            starttime,
+            columns,
+            inputarray,
+            compression,
+            columnsource,
+        ) = tide_io.readbidstsv(
             matchedfilelist[i],
             colspec="cardiacfromfmri_25.0Hz,normpleth,badpts",
         )
