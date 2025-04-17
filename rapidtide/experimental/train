@@ -30,9 +30,9 @@ excludebysubject = False
 
 thiscomputer = os.uname().nodename
 print("thiscomputer:", thiscomputer)
-if thiscomputer.startswith("bbf-tbmbp"):
+if thiscomputer.startswith("bbf-m1mbp14.local"):
     print("setting up to run on mac")
-    thedatadir = "/Users/frederic/Documents/MR_data/physioconn/timecourses"
+    thedatadir = "/Users/frederic/Dropbox_PHC/physioconn/output_2025"
 elif thiscomputer.startswith("DESKTOP"):
     print("setting up to run on windows bash")
     thedatadir = "/home/frederic/Dropbox/timecourses"
