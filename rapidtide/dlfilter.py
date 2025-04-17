@@ -70,6 +70,9 @@ LGR.debug("setting backend to Agg")
 mpl.use("Agg")
 
 # Disable GPU if desired
+# figure out what sorts of devices we have
+physical_devices = tf.config.list_physical_devices()
+print(physical_devices)
 try:
     tf.config.set_visible_devices([], "GPU")
 except Exception as e:
