@@ -1036,7 +1036,8 @@ def targettoinput(name, targetfrag="xyz", inputfrag="abc"):
 def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False):
     # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
-    print(f"searchstring: {searchstring} -> {fromfile}")
+    if debug:
+        print(f"searchstring: {searchstring} -> {fromfile}")
 
     # make sure all timecourses exist
     # we need cardiacfromfmri_25.0Hz as x, normpleth as y, and perhaps badpts
@@ -1058,7 +1059,7 @@ def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="ab
         colspec="cardiacfromfmri_25.0Hz,normpleth",
     )
     print(f"{inputarray.shape=}")
-    tclen = inputarray.shape[0]
+    tclen = inputarray.shape[1]
     LGR.info(f"tclen set to {tclen}")
     return matchedfilelist, tclen
 
@@ -1248,6 +1249,8 @@ def prep(
         inputfrag=inputfrag,
         debug=debug,
     )
+    print("matchedfilelist", matchedfilelist)
+    print("tclen", tclen)
 
     # read in the data from the matched files
     if usebadpts:
