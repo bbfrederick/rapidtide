@@ -1042,35 +1042,15 @@ def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="ab
     # we need cardiacfromfmri_25.0Hz as x, normpleth as y, and perhaps badpts
     matchedfilelist = []
     for targetname in fromfile:
-        if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag)):
-            if usebadpts:
-                if os.path.isfile(
-                    tobadpts(targetname.replace("alignedpleth", "pleth"))
-                ) and os.path.isfile(
-                    tobadpts(
-                        targettoinput(
-                            targetname,
-                            targetfrag=targetfrag,
-                            inputfrag=inputfrag,
-                        )
-                    )
-                ):
-                    matchedfilelist.append(targetname)
-                    LGR.debug(matchedfilelist[-1])
-            else:
-                matchedfilelist.append(targetname)
-                LGR.debug(matchedfilelist[-1])
-    if usebadpts:
-        LGR.info(f"{len(matchedfilelist)} runs pass all 4 files present check")
-    else:
-        LGR.info(f"{len(matchedfilelist)} runs pass both files present check")
+        matchedfilelist.append(targetname)
+        LGR.debug(matchedfilelist[-1])
 
     # find out how long the files are
-    tempy = np.loadtxt(matchedfilelist[0])
-    tempx = np.loadtxt(
-        targettoinput(matchedfilelist[0], targetfrag=targetfrag, inputfrag=inputfrag)
+    inputarray = tide_io.readbidstsv(
+        matchedfilelist[i], colspec=["cardiacfromfmri_25.0Hz", "normpleth"]
     )
-    tclen = np.min([tempx.shape[0], tempy.shape[0]])
+    print(f"{inputarray.shape=}")
+    tclen = inputarray.shape[0]
     LGR.info(f"tclen set to {tclen}")
     return matchedfilelist, tclen
 
