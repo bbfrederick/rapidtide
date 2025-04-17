@@ -1111,8 +1111,8 @@ def readindata(
             matchedfilelist[i],
             colspec="cardiacfromfmri_25.0Hz,normpleth,badpts",
         )
-        tempy = inputarray[:, 1]
-        tempx = inputarray[:, 0]
+        tempy = inputarray[1, :]
+        tempx = inputarray[0, :]
 
         if np.any(np.isnan(tempy)):
             LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
@@ -1162,7 +1162,7 @@ def readindata(
             y1[:tclen, count] = tempy[:tclen]
             names.append(matchedfilelist[i])
             if usebadpts:
-                bad1[:tclen, count] = inputarray[:, 2]
+                bad1[:tclen, count] = inputarray[2, :]
             count += 1
     LGR.info(f"{count} runs pass file length check")
     if len(nanfiles) > 0:
