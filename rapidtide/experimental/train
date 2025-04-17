@@ -15,6 +15,7 @@ kernel_size = 9
 dropout_rate = 0.3
 dofft = False
 nettype = "cnn"
+nettype = "convautoencoder"
 activation = "relu"
 usebadpts = False
 countlim = None
@@ -170,6 +171,8 @@ elif nettype == "hybrid":
         num_units=num_units,
         invert=invert,
     )
+else:
+    print(f"{nettype} is not a valid nettype!")
 
 thefilter.initialize()
 thefilter.loaddata()

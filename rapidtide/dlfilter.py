@@ -73,10 +73,10 @@ mpl.use("Agg")
 # figure out what sorts of devices we have
 physical_devices = tf.config.list_physical_devices()
 print(physical_devices)
-try:
-    tf.config.set_visible_devices([], "GPU")
-except Exception as e:
-    LGR.warning(f"Failed to disable GPU: {e}")
+# try:
+#    tf.config.set_visible_devices([], "GPU")
+# except Exception as e:
+#    LGR.warning(f"Failed to disable GPU: {e}")
 
 LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
 
@@ -739,7 +739,7 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.model.add(Activation(self.activation))
         self.model.add(MaxPooling1D(2, padding="same"))
 
-        layersize = self.windowsize
+        layersize = self.window_size
         nfilters = self.num_filters
         num_encodinglayers = 3
         num_decodinglayers = 3
