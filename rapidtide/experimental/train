@@ -5,7 +5,7 @@ import os
 import rapidtide.dlfilter as tide_dlfilter
 
 num_pretrain_epochs = 5
-num_epochs = 5
+num_epochs = 50
 excludethresh = 4.0
 window_size = 256
 num_layers = 4
@@ -30,7 +30,7 @@ excludebysubject = False
 
 thiscomputer = os.uname().nodename
 print("thiscomputer:", thiscomputer)
-if thiscomputer.startswith("bbf-m1mbp14.local"):
+if thiscomputer.startswith("bbf-"):
     print("setting up to run on mac")
     thedatadir = "/Users/frederic/Dropbox_PHC/physioconn/output_2025"
 elif thiscomputer.startswith("DESKTOP"):
@@ -38,7 +38,7 @@ elif thiscomputer.startswith("DESKTOP"):
     thedatadir = "/home/frederic/Dropbox/timecourses"
 else:
     print("setting up to run on mclean cluster")
-    thedatadir = "/data/frederic/physioconn/output_pass2"
+    thedatadir = "/data/frederic/physioconn/output_2025"
 
 
 if nettype == "cnn":
