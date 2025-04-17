@@ -1109,7 +1109,7 @@ def readindata(
             columnsource,
         ) = tide_io.readbidstsv(
             matchedfilelist[i],
-            colspec="cardiacfromfmri_25.0Hz,normpleth,badpts",
+            colspec="cardiacfromfmri_25.0Hz,normpleth",
         )
         tempy = inputarray[1, :]
         tempx = inputarray[0, :]
