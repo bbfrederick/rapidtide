@@ -1033,7 +1033,7 @@ def targettoinput(name, targetfrag="xyz", inputfrag="abc"):
     return name.replace(targetfrag, inputfrag)
 
 
-def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False):
+def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False):
     # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
     print(f"searchstring: {searchstring} -> {fromfile}")
@@ -1112,14 +1112,12 @@ def readindata(
     for i in range(readskip, readskip + s):
         nanfound = False
         LGR.info(f"processing {matchedfilelist[i]}")
-        tempy = np.loadtxt(matchedfilelist[i])
-        tempx = np.loadtxt(
-            targettoinput(
-                matchedfilelist[i],
-                targetfrag=targetfrag,
-                inputfrag=inputfrag,
-            )
+        inputarray = tide_io.readbidstsv(
+            matchedfilelist[i], colspec=["cardiacfromfmri_25.0Hz", "normpleth", "badpts"]
         )
+        tempy = inputarray[:, 1]
+        tempx = inputarray[:, 0]
+
         if np.any(np.isnan(tempy)):
             LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
             nanfound = True
@@ -1133,23 +1131,23 @@ def readindata(
             nanfiles.append(nan_fname)
         strangefound = False
         if not (0.5 < np.std(tempx) < 20.0):
-            strange_fname = targettoinput(
-                matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
+            strange_fname = matchedfilelist[i]
+            LGR.info(
+                f"file {strange_fname} has an extreme cardiacfromfmri standard deviation - discarding"
             )
-            LGR.info(f"file {strange_fname} has an extreme standard deviation - discarding")
             strangefound = True
             strangemagfiles.append(strange_fname)
         if not (0.5 < np.std(tempy) < 20.0):
-            LGR.info(f"file {matchedfilelist[i]} has an extreme standard deviation - discarding")
+            LGR.info(
+                f"file {matchedfilelist[i]} has an extreme normpleth standard deviation - discarding"
+            )
             strangefound = True
             strangemagfiles.append(matchedfilelist[i])
         shortfound = False
         ntempx = tempx.shape[0]
         ntempy = tempy.shape[0]
         if ntempx < tclen:
-            short_fname = targettoinput(
-                matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-            )
+            short_fname = matchedfilelist[i]
             LGR.info(f"file {short_fname} is short - discarding")
             shortfound = True
             shortfiles.append(short_fname)
@@ -1168,19 +1166,7 @@ def readindata(
             y1[:tclen, count] = tempy[:tclen]
             names.append(matchedfilelist[i])
             if usebadpts:
-                tempbad1 = np.loadtxt(
-                    tobadpts(matchedfilelist[i].replace("alignedpleth", "pleth"))
-                )
-                tempbad2 = np.loadtxt(
-                    tobadpts(
-                        targettoinput(
-                            matchedfilelist[i],
-                            targetfrag=targetfrag,
-                            inputfrag=inputfrag,
-                        )
-                    )
-                )
-                bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (1.0 - tempbad2[:tclen])
+                bad1[:tclen, count] = inputarray[:, 2]
             count += 1
     LGR.info(f"{count} runs pass file length check")
     if len(nanfiles) > 0:
@@ -1259,7 +1245,7 @@ def prep(
     searchstring = os.path.join(thedatadir, "*_desc-stdrescardfromfmri_timeseries.json")
 
     # find matched files
-    matchedfilelist, tclen = getmatchedfiles(
+    matchedfilelist, tclen = getmatchedtcs(
         searchstring,
         usebadpts=usebadpts,
         targetfrag=targetfrag,
