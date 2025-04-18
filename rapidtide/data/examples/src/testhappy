@@ -74,6 +74,12 @@ happy \
     --model ~/code/rapidtide/rapidtide/experimental/model_cnn_w128_l4_fn10_fl5_e10_t4.0_ct0.6_s20_d1_relu_normaligned \
     ../dst/happy_newmodelk5
 
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --model ~/code/rapidtide/rapidtide/experimental/model_convautoencoder_w128_en16_fn256_fl9_e5_t4.0_ct0.6_s20_relu_normaligned \
+    ../dst/happy_newmodelconvauto
+
 #happy \
     #sub-HAPPYTEST.nii.gz \
     #sub-HAPPYTEST.json \

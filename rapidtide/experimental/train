@@ -5,13 +5,13 @@ import os
 import rapidtide.dlfilter as tide_dlfilter
 
 num_pretrain_epochs = 5
-num_epochs = 10
+num_epochs = 5
 excludethresh = 4.0
-corrthresh = 0.6
+corrthresh = 0.72
 window_size = 128
 num_layers = 4
-num_filters = 10
-kernel_size = 9
+num_filters = 5
+kernel_size = 5
 dropout_rate = 0.3
 dofft = False
 nettype = "cnn"
