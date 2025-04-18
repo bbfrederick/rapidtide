@@ -77,7 +77,7 @@ happy \
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    --model ~/code/rapidtide/rapidtide/experimental/model_convautoencoder_w128_en16_fn32_fl5_e15_t4.0_ct0.72_s20_relu_normaligned \
+    --model ~/code/rapidtide/rapidtide/experimental/model_convautoencoder_w128_en16_fn32_fl5_e40_t4.0_ct0.72_s20_relu_normaligned \
     ../dst/happy_newmodelconvauto
 
 #happy \

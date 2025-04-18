@@ -780,6 +780,75 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.model.compile(optimizer="adam", loss="mse")
 
 
+class CRNNDLFilter(DeepLearningFilter):
+    def __init__(self, encoding_dim=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
+        self.encoding_dim = encoding_dim
+        self.kernel_size = kernel_size
+        self.dilation_rate = dilation_rate
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["nettype"] = "autoencoder"
+        self.infodict["encoding_dim"] = self.encoding_dim
+        super(ConvAutoencoderDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = "_".join(
+            [
+                "model",
+                "convautoencoder",
+                "w" + str(self.window_size),
+                "en" + str(self.encoding_dim),
+                "fl" + str(self.kernel_size),
+                "e" + str(self.num_epochs),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        input_layer = Input(shape=(self.window_size, self.inputsize))
+        x = input_layer
+
+        # Convolutional front-end: feature extraction
+        x = Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding="same")(
+            x
+        )
+        x = BatchNormalization()(x)
+        x = Dropout(rate=self.dropout_rate)(x)
+        x = Activation(self.activation)(x)
+
+        x = Convolution1D(
+            filters=self.num_filters * 2, kernel_size=self.kernel_size, padding="same"
+        )(x)
+        x = BatchNormalization()(x)
+        x = Dropout(rate=self.dropout_rate)(x)
+        x = Activation(self.activation)(x)
+
+        # Recurrent layer: temporal modeling
+        x = Bidirectional(LSTM(units=self.encoding_dim, return_sequences=True))(x)
+
+        # Output mapping to inputsize channels
+        output_layer = Dense(self.inputsize)(x)
+
+        # Model definition
+        self.model = Model(inputs=input_layer, outputs=output_layer)
+        self.model.compile(optimizer="adam", loss="mse")
+
+
 class LSTMDLFilter(DeepLearningFilter):
     def __init__(self, num_units=16, *args, **kwargs):
         self.num_units = num_units

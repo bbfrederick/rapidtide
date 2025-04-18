@@ -15,7 +15,7 @@ kernel_size = 5
 dropout_rate = 0.3
 dofft = False
 nettype = "cnn"
-nettype = "convautoencoder"
+nettype = "crnn
 activation = "relu"
 usebadpts = False
 countlim = None
@@ -47,6 +47,31 @@ print(f"will look for input data in {thedatadir}")
 
 if nettype == "cnn":
     thefilter = tide_dlfilter.CNNDLFilter(
+        num_epochs=num_epochs,
+        startskip=startskip,
+        endskip=endskip,
+        step=step,
+        excludethresh=excludethresh,
+        corrthresh=corrthresh,
+        excludebysubject=excludebysubject,
+        window_size=window_size,
+        num_layers=num_layers,
+        dropout_rate=dropout_rate,
+        usebadpts=usebadpts,
+        readlim=readlim,
+        readskip=readskip,
+        countlim=countlim,
+        thedatadir=thedatadir,
+        inputfrag="cardfromfmri",
+        targetfrag="normpleth",
+        namesuffix="normaligned",
+        activation=activation,
+        num_filters=num_filters,
+        kernel_size=kernel_size,
+        debug=debug,
+    )
+elif nettype == "crnn":
+    thefilter = tide_dlfilter.CRNNDLFilter(
         num_epochs=num_epochs,
         startskip=startskip,
         endskip=endskip,
