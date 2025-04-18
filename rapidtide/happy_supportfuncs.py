@@ -535,6 +535,29 @@ def approximateentropy(waveform, m, r):
     return abs(_phi(m + 1) - _phi(m))
 
 
+def summarizerun(theinfodict, getkeys=False):
+    keylist = [
+        "corrcoeff_raw2pleth",
+        "corrcoeff_filt2pleth",
+        "E_sqi_mean_pleth",
+        "E_sqi_mean_bold",
+        "S_sqi_mean_pleth",
+        "S_sqi_mean_bold",
+        "K_sqi_mean_pleth",
+        "K_sqi_mean_bold",
+    ]
+    if getkeys:
+        return ",".join(keylist)
+    else:
+        outputline = []
+        for thekey in keylist:
+            try:
+                outputline.append(str(theinfodict[thekey]))
+            except KeyError:
+                outputline.append("")
+        return ",".join(outputline)
+
+
 def entropy(waveform):
     return -np.sum(np.square(waveform) * np.nan_to_num(np.log2(np.square(waveform))))
 
@@ -632,17 +655,23 @@ def calcplethquality(
         E_waveform[i] = approximateentropy(dt_waveform[startpt : endpt + 1], 2, r)
 
     S_sqi_mean = np.mean(S_waveform)
+    S_sqi_median = np.median(S_waveform)
     S_sqi_std = np.std(S_waveform)
     K_sqi_mean = np.mean(K_waveform)
+    K_sqi_median = np.median(K_waveform)
     K_sqi_std = np.std(K_waveform)
     E_sqi_mean = np.mean(E_waveform)
+    E_sqi_median = np.median(E_waveform)
     E_sqi_std = np.std(E_waveform)
 
     infodict["S_sqi_mean" + suffix] = S_sqi_mean
+    infodict["S_sqi_median" + suffix] = S_sqi_median
     infodict["S_sqi_std" + suffix] = S_sqi_std
     infodict["K_sqi_mean" + suffix] = K_sqi_mean
+    infodict["K_sqi_median" + suffix] = K_sqi_median
     infodict["K_sqi_std" + suffix] = K_sqi_std
     infodict["E_sqi_mean" + suffix] = E_sqi_mean
+    infodict["E_sqi_median" + suffix] = E_sqi_median
     infodict["E_sqi_std" + suffix] = E_sqi_std
 
     if outputlevel > 1:
