@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for MODEL in model_crnn_tf2 model_revised_tf2 model_serdar_tf2
+do
+    applydlfilter \
+        ../dst/happy_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
+        ../dst/test_${MODEL}.txt \
+        --model ~/code/rapidtide/rapidtide/data/models/${MODEL}
+done
+
+showtc ../dst/test_model*txt

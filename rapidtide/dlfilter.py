@@ -333,7 +333,11 @@ class DeepLearningFilter:
             self.config = self.model.get_config()
         except OSError:
             # load in the model with weights from hdf
-            self.model = load_model(os.path.join(self.modelpath, modelname, "model.h5"))
+            try:
+                self.model = load_model(os.path.join(self.modelpath, modelname, "model.h5"))
+            except OSError:
+                print(f"Could not load {modelname}")
+                sys.exit()
 
         if verbose:
             self.model.summary()
