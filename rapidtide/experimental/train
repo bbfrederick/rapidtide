@@ -5,7 +5,7 @@ import os
 import rapidtide.dlfilter as tide_dlfilter
 
 num_pretrain_epochs = 5
-num_epochs = 5
+num_epochs = 15
 excludethresh = 4.0
 corrthresh = 0.72
 window_size = 128
