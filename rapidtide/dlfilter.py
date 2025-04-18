@@ -44,6 +44,7 @@ if pyfftwpresent:
     pyfftw.interfaces.cache.enable()
 
 import tensorflow as tf
+import tf_keras.backend as K
 from tf_keras.callbacks import ModelCheckpoint, TensorBoard, TerminateOnNaN
 from tf_keras.layers import (
     LSTM,
@@ -725,64 +726,57 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
-        self.model = Sequential()
+        input_layer = Input(shape=(self.window_size, self.inputsize))
+        x = input_layer
 
-        # Input convolution
-        self.model.add(
-            Convolution1D(
-                filters=self.num_filters,
-                kernel_size=self.kernel_size,
-                padding="same",
-                input_shape=(self.window_size, self.inputsize),
-            )
+        # Initial conv block
+        x = Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding="same")(
+            x
         )
-        self.model.add(BatchNormalization())
-        self.model.add(Dropout(rate=self.dropout_rate))
-        self.model.add(Activation(self.activation))
-        self.model.add(MaxPooling1D(2, padding="same"))
+        x = BatchNormalization()(x)
+        x = Dropout(rate=self.dropout_rate)(x)
+        x = Activation(self.activation)(x)
+        x = MaxPooling1D(pool_size=2, padding="same")(x)
 
-        # Encoder: progressively reduce temporal resolution and increase channels
         layersize = self.window_size
         nfilters = self.num_filters
         filter_list = []
-        for _ in range(3):  # 3 encoding layers
+
+        # Encoding path (3 layers)
+        for _ in range(3):
             layersize = int(np.ceil(layersize / 2))
             nfilters *= 2
             filter_list.append(nfilters)
-            self.model.add(
-                Convolution1D(filters=nfilters, kernel_size=self.kernel_size, padding="same")
-            )
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
-            self.model.add(MaxPooling1D(2, padding="same"))
+            x = Convolution1D(filters=nfilters, kernel_size=self.kernel_size, padding="same")(x)
+            x = BatchNormalization()(x)
+            x = Dropout(rate=self.dropout_rate)(x)
+            x = Activation(self.activation)(x)
+            x = MaxPooling1D(pool_size=2, padding="same")(x)
 
-        # Bottleneck: encode to low-dim vector
-        self.model.add(Flatten())
-        self.model.add(Dense(self.encoding_dim, activation=self.activation, name="encoded"))
+        # Save shape for reshaping later
+        shape_before_flatten = K.int_shape(x)[1:]  # (timesteps, channels)
 
-        # Decoder: upsample from bottleneck
-        bottleneck_shape = (layersize, filter_list[-1])
-        self.model.add(Dense(np.prod(bottleneck_shape), activation=self.activation))
-        self.model.add(Reshape(bottleneck_shape))
+        # Bottleneck
+        x = Flatten()(x)
+        x = Dense(self.encoding_dim, activation=self.activation, name="encoded")(x)
+        x = Dense(np.prod(shape_before_flatten), activation=self.activation)(x)
+        x = Reshape(shape_before_flatten)(x)
 
-        # Decoder layers: mirror encoder
+        # Decoding path (mirror)
         for filters in reversed(filter_list):
             layersize *= 2
-            self.model.add(UpSampling1D(2))
-            self.model.add(
-                Convolution1D(filters=filters, kernel_size=self.kernel_size, padding="same")
-            )
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
+            x = UpSampling1D(size=2)(x)
+            x = Convolution1D(filters=filters, kernel_size=self.kernel_size, padding="same")(x)
+            x = BatchNormalization()(x)
+            x = Dropout(rate=self.dropout_rate)(x)
+            x = Activation(self.activation)(x)
 
-        # Final upsample to original size if needed
-        self.model.add(UpSampling1D(2))
-        self.model.add(
-            Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")
-        )
+        # Final upsampling (to match initial maxpool)
+        x = UpSampling1D(size=2)(x)
+        x = Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")(x)
 
+        output_layer = x
+        self.model = Model(inputs=input_layer, outputs=output_layer)
         self.model.compile(optimizer="adam", loss="mse")
 
 
