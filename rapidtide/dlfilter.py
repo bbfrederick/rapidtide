@@ -785,7 +785,6 @@ class CRNNDLFilter(DeepLearningFilter):
         self.encoding_dim = encoding_dim
         self.kernel_size = kernel_size
         self.dilation_rate = dilation_rate
-        self.infodict["num_filters"] = self.num_filters
         self.infodict["kernel_size"] = self.kernel_size
         self.infodict["nettype"] = "autoencoder"
         self.infodict["encoding_dim"] = self.encoding_dim
