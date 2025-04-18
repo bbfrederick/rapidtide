@@ -16,7 +16,7 @@ safezone
 v2changes
 
 # experimental directory
-#rapidtide/experimental
+rapidtide/experimental/model_*
 
 # any generated test data
 rapidtide/data/examples/dst/*
