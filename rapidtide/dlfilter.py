@@ -781,20 +781,24 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
 
 
 class CRNNDLFilter(DeepLearningFilter):
-    def __init__(self, encoding_dim=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
-        self.encoding_dim = encoding_dim
+    def __init__(
+        self, encoding_dim=10, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs
+    ):
+        self.num_filters = num_filters
         self.kernel_size = kernel_size
         self.dilation_rate = dilation_rate
+        self.encoding_dim = encoding_dim
+        self.infodict["nettype"] = "cnn"
+        self.infodict["num_filters"] = self.num_filters
         self.infodict["kernel_size"] = self.kernel_size
-        self.infodict["nettype"] = "autoencoder"
         self.infodict["encoding_dim"] = self.encoding_dim
-        super(ConvAutoencoderDLFilter, self).__init__(*args, **kwargs)
+        super(CRNNDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
         self.modelname = "_".join(
             [
                 "model",
-                "convautoencoder",
+                "crnn",
                 "w" + str(self.window_size),
                 "en" + str(self.encoding_dim),
                 "fl" + str(self.kernel_size),
