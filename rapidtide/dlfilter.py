@@ -54,9 +54,11 @@ from tf_keras.layers import (
     Convolution1D,
     Dense,
     Dropout,
+    Flatten,
     GlobalMaxPool1D,
     Input,
     MaxPooling1D,
+    Reshape,
     TimeDistributed,
     UpSampling1D,
 )
@@ -725,13 +727,13 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
     def makenet(self):
         self.model = Sequential()
 
-        # make the input layer
+        # Input convolution
         self.model.add(
             Convolution1D(
                 filters=self.num_filters,
                 kernel_size=self.kernel_size,
                 padding="same",
-                input_shape=(None, self.inputsize),
+                input_shape=(self.window_size, self.inputsize),
             )
         )
         self.model.add(BatchNormalization())
@@ -739,16 +741,14 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.model.add(Activation(self.activation))
         self.model.add(MaxPooling1D(2, padding="same"))
 
+        # Encoder: progressively reduce temporal resolution and increase channels
         layersize = self.window_size
         nfilters = self.num_filters
-        num_encodinglayers = 3
-        num_decodinglayers = 3
-        layerprops = [(layersize, nfilters)]
-        # make the encoding layers
-        for i in range(num_encodinglayers):
-            layersize = int(layersize // 2)
+        filter_list = []
+        for _ in range(3):  # 3 encoding layers
+            layersize = int(np.ceil(layersize / 2))
             nfilters *= 2
-            LGR.info(f"input layer size: {layersize}, nfilters: {nfilters}")
+            filter_list.append(nfilters)
             self.model.add(
                 Convolution1D(filters=nfilters, kernel_size=self.kernel_size, padding="same")
             )
@@ -757,69 +757,32 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             self.model.add(Activation(self.activation))
             self.model.add(MaxPooling1D(2, padding="same"))
 
-        # make the decoding layers
-        for i in range(num_decodinglayers):
-            self.model.add(UpSampling1D(2))
+        # Bottleneck: encode to low-dim vector
+        self.model.add(Flatten())
+        self.model.add(Dense(self.encoding_dim, activation=self.activation, name="encoded"))
+
+        # Decoder: upsample from bottleneck
+        bottleneck_shape = (layersize, filter_list[-1])
+        self.model.add(Dense(np.prod(bottleneck_shape), activation=self.activation))
+        self.model.add(Reshape(bottleneck_shape))
+
+        # Decoder layers: mirror encoder
+        for filters in reversed(filter_list):
             layersize *= 2
-            nfilters = int(nfilters // 2)
-            LGR.info(f"input layer size: {layersize}")
-            self.model.add(
-                Convolution1D(
-                    filters=self.num_filters,
-                    kernel_size=self.kernel_size,
-                    padding="same",
-                )
-            )
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
-
-        # make the intermediate encoding layers
-        for i in range(1, self.num_layers - 1):
-            LGR.info(f"input layer size: {layersize}")
-            self.model.add(
-                Convolution1D(
-                    filters=self.num_filters,
-                    kernel_size=self.kernel_size,
-                    padding="same",
-                )
-            )
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
-            self.model.add(MaxPooling1D(2, padding="same"))
-            layersize = int(layersize // 2)
-
-        # make the encoding layer
-        LGR.info(f"input layer size: {layersize}")
-        self.model.add(
-            Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding="same")
-        )
-        self.model.add(BatchNormalization())
-        self.model.add(Dropout(rate=self.dropout_rate))
-        self.model.add(Activation(self.activation))
-
-        # make the intermediate decoding layers
-        for i in range(1, self.num_layers):
             self.model.add(UpSampling1D(2))
-            layersize = layersize * 2
-            LGR.info(f"input layer size: {layersize}")
             self.model.add(
-                Convolution1D(
-                    filters=self.num_filters,
-                    kernel_size=self.kernel_size,
-                    padding="same",
-                )
+                Convolution1D(filters=filters, kernel_size=self.kernel_size, padding="same")
             )
             self.model.add(BatchNormalization())
             self.model.add(Dropout(rate=self.dropout_rate))
             self.model.add(Activation(self.activation))
 
-        # make the output layer
-        LGR.info(f"input layer size: {layersize}")
+        # Final upsample to original size if needed
+        self.model.add(UpSampling1D(2))
         self.model.add(
             Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")
         )
+
         self.model.compile(optimizer="adam", loss="mse")
 
 
