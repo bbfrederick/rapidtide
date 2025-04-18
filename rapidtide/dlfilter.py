@@ -45,7 +45,12 @@ if pyfftwpresent:
 
 import tensorflow as tf
 import tf_keras.backend as K
-from tf_keras.callbacks import ModelCheckpoint, TensorBoard, TerminateOnNaN
+from tf_keras.callbacks import (
+    EarlyStopping,
+    ModelCheckpoint,
+    TensorBoard,
+    TerminateOnNaN,
+)
 from tf_keras.layers import (
     LSTM,
     Activation,
@@ -391,6 +396,11 @@ class DeepLearningFilter:
                     callbacks=[
                         TerminateOnNaN(),
                         ModelCheckpoint(self.intermediatemodelpath, save_format="keras"),
+                        EarlyStopping(
+                            monitor="val_loss",  # or 'val_mae', etc.
+                            patience=10,  # number of epochs to wait
+                            restore_best_weights=True,
+                        ),
                     ],
                 )
             self.history = self.model.fit(
@@ -401,6 +411,11 @@ class DeepLearningFilter:
                 callbacks=[
                     TerminateOnNaN(),
                     ModelCheckpoint(self.intermediatemodelpath, save_format="keras"),
+                    EarlyStopping(
+                        monitor="val_loss",  # or 'val_mae', etc.
+                        patience=10,  # number of epochs to wait
+                        restore_best_weights=True,
+                    ),
                 ],
             )
         self.savemodel()
