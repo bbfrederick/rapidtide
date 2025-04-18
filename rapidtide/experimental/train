@@ -260,3 +260,6 @@ def main():
             encoding_dim=encoding_dim,
             excludebysubject=excludebysubject,
         )
+
+if __name__ == "__main__":
+    main()
