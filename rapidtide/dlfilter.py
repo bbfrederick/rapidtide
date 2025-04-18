@@ -68,6 +68,8 @@ from tf_keras.optimizers.legacy import RMSprop
 
 import rapidtide.io as tide_io
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 LGR = logging.getLogger("GENERAL")
 LGR.debug("setting backend to Agg")
 mpl.use("Agg")
