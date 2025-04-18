@@ -8,7 +8,7 @@ import rapidtide.dlfilter as tide_dlfilter
 def dotraining(
     thedatadir,
     num_pretrain_epochs=5,
-    num_epochs=40,
+    num_epochs=1,
     excludethresh=4.0,
     corrthresh=0.72,
     window_size=128,
@@ -156,7 +156,6 @@ def dotraining(
             num_units=num_units,
         )
     elif nettype == "hybrid":
-        num_layers = 10
         thefilter = tide_dlfilter.HybridDLFilter(
             num_epochs=num_epochs,
             startskip=startskip,
@@ -230,6 +229,7 @@ def main():
 
     # train some crnns
     """nettype = "crnn"
+    num_epochs = 50
     for num_filters in [5, 7, 9, 11]:
         dotraining(
             thedatadir,
