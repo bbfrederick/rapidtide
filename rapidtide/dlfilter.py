@@ -807,6 +807,7 @@ class CRNNDLFilter(DeepLearningFilter):
                 "crnn",
                 "w" + str(self.window_size),
                 "en" + str(self.encoding_dim),
+                "fn" + str(self.num_filters),
                 "fl" + str(self.kernel_size),
                 "e" + str(self.num_epochs),
                 "t" + str(self.excludethresh),
