@@ -1,1 +1,0 @@
-model_crnn_w128_en10_fl5_e40_t4.0_ct0.72_s20_relu_normaligned: Prediction Error: 0.13127621255487706 Raw Error: 0.3111796744389883

@@ -1,1 +1,0 @@
-model_convautoencoder_w128_en16_fn32_fl5_e40_t4.0_ct0.72_s20_relu_normaligned: Prediction Error: 0.4152777485022516 Raw Error: 0.3187236585604317

@@ -257,12 +257,47 @@ def main():
             step=step,
             encoding_dim=encoding_dim,
             excludebysubject=excludebysubject,
-        )"""
+        )
 
     # train convolutional autoencoder
     nettype = "convautoencoder"
     num_epochs = 100
     for num_filters in [16, 24, 32, 40]:
+        dotraining(
+            thedatadir,
+            num_pretrain_epochs=num_pretrain_epochs,
+            num_epochs=num_epochs,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            window_size=window_size,
+            num_layers=num_layers,
+            num_filters=num_filters,
+            kernel_size=kernel_size,
+            dropout_rate=dropout_rate,
+            dofft=dofft,
+            nettype=nettype,
+            activation=activation,
+            usebadpts=usebadpts,
+            countlim=countlim,
+            readlim=readlim,
+            readskip=readskip,
+            num_units=num_units,
+            debug=debug,
+            invert=invert,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            encoding_dim=encoding_dim,
+            excludebysubject=excludebysubject,
+        )"""
+
+    # train CNN
+    nettype = "cnn"
+    num_epochs = 100
+    kernel_size = 5
+    num_layers = 21
+    num_filters = 50
+    for window_size in [32, 48, 64, 80, 96, 112, 128]:
         dotraining(
             thedatadir,
             num_pretrain_epochs=num_pretrain_epochs,

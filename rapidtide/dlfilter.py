@@ -1146,6 +1146,7 @@ def readindata(
     corrthresh=0.5,
     readlim=None,
     readskip=None,
+    debug=False,
 ):
     LGR.info(
         "readindata called with usebadpts, startskip, endskip, readlim, readskip, targetfrag, inputfrag = "
@@ -1245,7 +1246,8 @@ def readindata(
             x1[:tclen, count] = tempx[:tclen]
             y1[:tclen, count] = tempy[:tclen]
             names.append(matchedfilelist[i])
-            print(f"{matchedfilelist[i]} included:")
+            if debug:
+                print(f"{matchedfilelist[i]} included:")
             if usebadpts:
                 bad1[:tclen, count] = inputarray[2, :]
             count += 1

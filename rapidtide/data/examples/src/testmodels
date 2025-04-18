@@ -1,11 +1,19 @@
 #!/bin/bash
 
-for MODEL in model_crnn_tf2 model_revised_tf2 model_serdar_tf2
+PCDIR=/Users/frederic/Dropbox_PHC/physioconn/output_2025
+
+#./144125/144125_REST1_RL_info.json,0.7202007666318957,0.8433922959142652,0.1885880669098923,0.16165008008446202,0.6377615782804948,-0.08267147123355054,2.6174440579296476,2.0755666381391205
+#./144125/144125_REST1_LR_info.json,0.808565698536329,0.9092988425552718,0.1964254075310612,0.14474567837066749,0.6483316301973894,-0.1649780161060566,2.675852113898243,1.9540795999118095
+#./144125/144125_REST2_RL_info.json,0.8797561606112176,0.9399168800183665,0.10131674249235224,0.14794551115545787,0.6022251227345572,-0.11661211769010084,2.594834129016148,1.9613812654056964
+#./144125/144125_REST2_LR_info.json,0.8945024253604358,0.9870236312805825,0.11015444842855743,0.15346602449619334,0.6273109523220333,-0.17124563603244516,2.3826604881557882,1.9571315095343715
+
+#for MODEL in model_revised_tf2 model_serdar_tf2 model_convautoencoder_en16_fn16 model_convautoencoder_en16_fn24 model_convautoencoder_en16_fn32
+for MODEL in model_convautoencoder_en16_fn16 model_convautoencoder_en16_fn24 model_convautoencoder_en16_fn32
 do
     applydlfilter \
-        ../dst/happy_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
+        ${PCDIR}/144125/144125_REST1_LR_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
         ../dst/test_${MODEL}.txt \
         --model ~/code/rapidtide/rapidtide/data/models/${MODEL}
 done
 
-showtc ../dst/test_model*txt
+showtc ../dst/test_model*txt --format separate

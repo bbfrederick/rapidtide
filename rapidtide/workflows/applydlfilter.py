@@ -126,8 +126,6 @@ def applydlfilter(args):
     )
     thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
     thedlfilter.loadmodel(args.model)
-    model = thedlfilter.model
-    window_size = thedlfilter.window_size
     usebadpts = thedlfilter.usebadpts
 
     badpts = None
@@ -146,7 +144,6 @@ def applydlfilter(args):
         # read in the data
         if args.verbose:
             print("reading in", infilename)
-        # fmridata = tide_io.readvec(infilename)
         (
             thesamplerate,
             thestarttime,
@@ -155,13 +152,16 @@ def applydlfilter(args):
             compressed,
             filetype,
         ) = tide_io.readvectorsfromtextfile(infilename, onecol=True, debug=args.verbose)
-
+        if args.verbose:
+            print("data is read")
         if thesamplerate != 25.0:
             print("sampling rate", thesamplerate)
             sys.exit()
         if args.verbose:
             print("filtering...")
         predicteddata = thedlfilter.apply(fmridata, badpts=badpts)
+        if args.verbose:
+            print("done...")
 
         if args.verbose:
             print("writing to", outfilenamelist[idx])
