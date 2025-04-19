@@ -485,7 +485,7 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
             [
                 "model",
                 "multiscalecnn",
-                "w" + str(self.window_size),
+                "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers),
                 "fn" + str(self.num_filters),
                 "fl" + str(self.kernel_size),
@@ -562,7 +562,7 @@ class CNNDLFilter(DeepLearningFilter):
             [
                 "model",
                 "cnn",
-                "w" + str(self.window_size),
+                "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers),
                 "fn" + str(self.num_filters),
                 "fl" + str(self.kernel_size),
@@ -636,7 +636,7 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
             [
                 "model",
                 "denseautoencoder",
-                "w" + str(self.window_size),
+                "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim),
                 "e" + str(self.num_epochs),
                 "t" + str(self.excludethresh),
@@ -722,7 +722,7 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             [
                 "model",
                 "convautoencoder",
-                "w" + str(self.window_size),
+                "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim),
                 "fn" + str(self.num_filters),
                 "fl" + str(self.kernel_size),
@@ -820,7 +820,7 @@ class CRNNDLFilter(DeepLearningFilter):
             [
                 "model",
                 "crnn",
-                "w" + str(self.window_size),
+                "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim),
                 "fn" + str(self.num_filters),
                 "fl" + str(self.kernel_size),
@@ -886,7 +886,7 @@ class LSTMDLFilter(DeepLearningFilter):
             [
                 "model",
                 "lstm",
-                "w" + str(self.window_size),
+                "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers),
                 "nu" + str(self.num_units),
                 "d" + str(self.dropout_rate),
@@ -945,7 +945,7 @@ class HybridDLFilter(DeepLearningFilter):
             [
                 "model",
                 "hybrid",
-                "w" + str(self.window_size),
+                "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers),
                 "fn" + str(self.num_filters),
                 "fl" + str(self.kernel_size),
