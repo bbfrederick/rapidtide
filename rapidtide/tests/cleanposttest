@@ -17,5 +17,5 @@
 #
 
 rm tmp/*
-rm testdata/*
+#rm testdata/*
 rm .coveragerc.*

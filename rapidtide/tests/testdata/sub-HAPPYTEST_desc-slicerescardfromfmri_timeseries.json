@@ -1,0 +1,11 @@
+{
+    "Columns":[
+        "cardiacfromfmri",
+        "cardiacfromfmri_dlfiltered",
+        "badpts",
+        "envelope",
+        "instphase_unwrapped"
+    ],
+    "SamplingFrequency":13.793103845167682,
+    "StartTime":0.0
+}
