@@ -295,10 +295,10 @@ def main():
     nettype = "cnn"
     num_epochs = 100
     kernel_size = 5
-    num_layers = 21
-    num_filters = 50
-    window_size = 32
-    for num_filters in [35, 40, 45, 50, 55, 60, 65]:
+    num_layers = 13
+    num_filters = 20
+    window_size = 64
+    for kernel_size in [3, 4, 5, 6, 7, 8, 9]:
         dotraining(
             thedatadir,
             num_pretrain_epochs=num_pretrain_epochs,
