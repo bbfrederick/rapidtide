@@ -1,0 +1,6 @@
+#!/bin/bash
+
+#SBATCH --mem=16G
+#SBATCH --gres=gpu:1
+
+/home/frederic/.conda/envs/tftest/bin/python /home/frederic/code/rapidtide/rapidtide/experimental/train
