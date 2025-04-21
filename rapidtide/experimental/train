@@ -227,8 +227,9 @@ def main():
     encoding_dim = 16
     excludebysubject = False
 
+    """
     # train some crnns
-    """nettype = "crnn"
+    nettype = "crnn"
     num_epochs = 50
     for num_filters in [5, 7, 9, 11]:
         dotraining(
@@ -258,11 +259,15 @@ def main():
             encoding_dim=encoding_dim,
             excludebysubject=excludebysubject,
         )
+    """
 
     # train convolutional autoencoder
     nettype = "convautoencoder"
     num_epochs = 100
-    for num_filters in [16, 24, 32, 40]:
+    kernel_size = 8
+    num_filters = 20
+    window_size = 64
+    for encoding_dim in [4, 6, 8, 10, 12]:
         dotraining(
             thedatadir,
             num_pretrain_epochs=num_pretrain_epochs,
@@ -289,8 +294,9 @@ def main():
             step=step,
             encoding_dim=encoding_dim,
             excludebysubject=excludebysubject,
-        )"""
+        )
 
+    """
     # train CNN
     nettype = "cnn"
     num_epochs = 100
@@ -326,6 +332,7 @@ def main():
             encoding_dim=encoding_dim,
             excludebysubject=excludebysubject,
         )
+    """
 
 
 if __name__ == "__main__":
