@@ -1,27 +1,27 @@
-What's new
-----------
+What\'s new
+-----------
 
 Version 3.0 summary:
 ^^^^^^^^^^^^^^^^^^^^
 
 The 3.0 release has a lot of improvements and bugfixes across almost all of the programs in the package, and the
-documentation.  Although I've been trying to get the release out for almost 5 months by squashing bugs and all, I
+documentation.  Although I\'ve been trying to get the release out for almost 5 months by squashing bugs and all, I
 keep getting distracted adding things and trying new ideas, which leads to new debugging cycles.  One major goal was
 to try to get most of the workflow breaking interface changes in by 3.0, then get it stable, then release, but a) I
 have almost certainly missed some, either in implementation or documentation, and b) until more people start using
 this, there will almost certainly be some bugs that should be obvious to me, but are not.  So I am just going to
-say it's different enough from what I was doing before to call it a release and be done, and we'll go from here.
+say it\'s different enough from what I was doing before to call it a release and be done, and we\'ll go from here.
 Here are some of the major changes:
 
 Rapidtide
 """""""""
-* Reorganized and renamed some command line options and adjusted the default values - NOTE: some of these are breaking changes - where possible, I've added deprecation warnings.  Some biggies:
+* Reorganized and renamed some command line options and adjusted the default values - NOTE: some of these are breaking changes - where possible, I\'ve added deprecation warnings.  Some biggies:
 
     - You now have very granular control over which files are saved using the ``--outputlevel LEVEL`` option.  As a result, ``--nolimitoutput`` and a few other flags are no longer used.
     - The final noise removal filter has not been a glm filter for quite some time, so all the options and files associated with sLFO filtering have been renamed.   Use ``--nodenoise`` to turn sLFO filtering off.
     - ``--pickleft`` is on by default.  Use ``--nopickleft`` to turn it off.
 
-* I've implemented a new delay refinement step using the ratio of linear fit coefficients.  This seems to be very robust and powerful to improve delay estimation, so this will trickle into other new functions over time.
+* I\'ve implemented a new delay refinement step using the ratio of linear fit coefficients.  This seems to be very robust and powerful to improve delay estimation, so this will trickle into other new functions over time.
 * Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
 * Mask setting has been streamlined and made somewhat more robust.  This should give you better fits with less tweaking.
 * Enhanced fit failure reporting, to make debugging bad fits a bit easier.
@@ -35,8 +35,8 @@ Retroregress
 
 Happy
 """""
-* I'm trying out some new approaches for aliased correlation which might produce better phase projection movies.
-* I've put in some initial support for multiecho data.  Currently it seems that processing the first echo on it's own gives very good results, but there should be some improvement with smart combinations.
+* I\'m trying out some new approaches for aliased correlation which might produce better phase projection movies.
+* I\'ve put in some initial support for multiecho data.  Currently it seems that processing the first echo on its own gives very good results, but there should be some improvement with smart combinations.
 * Fixed a major bug in motion filtering (thank you to Sukru Demiral for reporting it!)
 * Updated all the deep learning code and saved models for improved tensorflow 2 compatibility (loading models started to throw weird errors in tensorflow 2.19.0).
 
@@ -57,7 +57,7 @@ Documentation
 """""""""""""
 * Expanded the rapidtide theory of operation section a lot.
 * Significantly beefed up happy section.
-* tidepool's documentation has been updated to reflect the current state of the program.
+* tidepool\'s documentation has been updated to reflect the current state of the program.
 * General cleanup and revision to match the current state of the package.
 
 
