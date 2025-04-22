@@ -141,14 +141,12 @@ new features and bug fixes!
 
 Python version compatibility
 ============================
-I switched over a while ago to using Python 3 as my daily driver, so I know
-that everything works there. However, I know that a lot of people can\'t
-or won\'t switch from Python 2x, so I kept Python 2.7 compatibility for
-quite some time.
-
-That said, the writing is on the wall, and since I depend on a number of
-packages that have dropped Python 2.x support, as of 2.0, so has rapidtide. However,
-as of version 1.9.0 I\'m also releasing the code in a docker
+Since I depend on a number of
+packages that have dropped Python 2.x support, as of rapidtide 2.0, so did rapidtide. And given that I use fairly
+modern constructs, I don't support anything prior to Python 3.9.  The current UPPER limit is 3.12, because
+tensorflow (needed for happy) does not yet support 3.13 or later.  In 2025, I don't imagine
+anybody is running rapidtide on a system that can't upgrade to a modern Python, but if you are,
+as of version 1.9.0 the package is also available in a docker
 container (fredericklab/rapidtide), which has everything nicely installed in
 a fully configured Python 3 environment, so there\'s really no need for me continue 2.x
 support.  So now it's f-strings all the way, kids!
