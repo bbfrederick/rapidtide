@@ -1,19 +1,26 @@
 # Release history
 
-## Version 3.0RC1 (4/8/25)
+## Version 3.0 (4/22/25)
+NOTE: The 3.0 release has a lot of improvements and bugfixes across almost all of the programs in the package, and the documentation.  Although I've been trying to get the release out for almost 6 months by squashing bugs and all, I keep adding things and trying new ideas.  I tried to get most of the workflow breaking changes in by 3.0, but a) I have almost certainly missed some, either in implementation or documentation, and b) until more people start using this, there will almost certainly be some bugs that should be obvious to me, but are not.  So I am just going to call it a release and be done, and we'll go from here.  Enjoy!
+
 rapidtide:
-* Reorganized and renamed some command line options and adjusted the default values - NOTE: some of these are breaking changes - where possible, I've added deprecation warnings.
+* Reorganized and renamed some command line options and adjusted the default values - NOTE: some of these are breaking changes - where possible, I've added deprecation warnings.  Some biggies:
+    - ``--pickleft`` is on by default.  Use ``--nopickleft`` to turn it off.
+    - ``--nolimitoutput`` is no longer used - you can set which files are saved using the much more granular ``--outputlevel LEVEL`` options.
+    - The final noise removal filter has not been a glm filter for quite some time, so all the options and files associated with sLFO filtering have been renamed.   Use ``--nodenoise`` to turn sLFO filtering off.
+* I've implemented a new delay refinement step using the ratio of linear fit coefficients.  This seems to be very robust and powerful to improve delay estimation, so this will trickle into other new functions over time.
 * Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
 * Mask setting has been streamlined and made somewhat more robust.  This should give you better fits with less tweaking.
-* I've implemented a new delay refinement step using the ratio of linear fit coefficients.  This seems to be very robust and powerful to improve delay estimation, so this will trickle into other new functions over time.
 * Enhanced fit failure reporting, to make debugging bad fits a bit easier.
 * The ``--fixdelay`` option has been split into two options.  ``--initialdelay DELAY`` lets you specify either a float that sets the starting delay for every voxel to that value, or a 3D file specifying the initial delay for each voxel.  ``--nodelayfit`` determines whether the delay can be adjusted from its initial value.  Closes https://github.com/bbfrederick/rapidtide/issues/171. KNOWN ISSUE:  If you supply an initial delay map, instead of using the global mean, rapidtide should use the delays to make your first stage regressor.  Currently that is not the case.
 * Now outputs a map of fit significance (-log10(p)).  In response to https://github.com/bbfrederick/rapidtide/issues/174.
+* There has been a lot of modularization and reorganization internally so that I can try out some new workflows that I think will be more robust to weird data.
 
 happy:
 * Trying out some new approaches for aliased correlation.
 * Put in some initial support for multiecho data.
 * Fixed a major bug in motion filtering (thank you to Sukru Demiral for reporting it!)
+* Updated all the deep learning code and saved models for improved tensorflow 2 compatibility (loading models started to throw weird errors in tensorflow 2.19.0).
 
 tidepool:
 * You can now load multiple datasets from the command line using  ``--dataset DATASET1 DATASET2...``.  You can add datasets and switch between them using the File menu.
