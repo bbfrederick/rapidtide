@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0 (4/22/25)
+* (documentation) Added summary of 3.0 changes, fixed a few typos.
+
 ## Version 3.0alpha15 (4/22/25)
 * (rapidtide) Fixed a bug in masking logic introduced in last version.
 * (rapidtide) Pullled regressor cleaning steps out into a separate routine.
