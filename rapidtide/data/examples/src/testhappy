@@ -70,8 +70,8 @@ happy \
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    --model ~/code/rapidtide/rapidtide/data/models/model_crnn_tf2 \
-    ../dst/happy_crnn
+    --model ~/code/rapidtide/rapidtide/data/models/model_cnn_w064_l13_fn20_fl08 \
+    ../dst/happy_newcnn
 
 #happy \
     #sub-HAPPYTEST.nii.gz \
