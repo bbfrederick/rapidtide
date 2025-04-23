@@ -115,7 +115,7 @@ This will use the most recent version on dockerhub, which is built automatically
 NOTE: I don't advise doing this unless you're helping debug something - 
 there's no guarantee that "latest" is functional at any given time.
 
-Now that the file is downloaded, you can run and rapidtide command in the Docker container.  For example, to run a simple
+Now that the file is downloaded, you can run any rapidtide command in the Docker container.  For example, to run a simple
 rapidtide analysis, you would use the following command (you can do this all in one step - it will just integrate the
 first pull into the run time if the version you request hasn't already been downloaded).
 
