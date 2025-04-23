@@ -1,7 +1,7 @@
 # Release history
 
 ## Version 3.0.1 (4/23/25)
-* (documentation) As anyone could have predicted, I missed a bunch of weird errors in the "Theory of Operation" section.  These are now fixed.  This doesn't change any code - mostly affects online documentation.
+* (documentation) I missed a bunch of weird errors in the "Theory of Operation" section.  Are you surprised?  I'm not surprised.  You shouldn't be either.  These are now fixed.  This doesn't change any code - mostly affects online documentation.
 
 ## Version 3.0 (4/22/25)
 * (documentation) Added summary of 3.0 changes, fixed a few typos.
