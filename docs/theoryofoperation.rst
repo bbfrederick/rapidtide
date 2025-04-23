@@ -141,14 +141,14 @@ There are 5 masks used:
    are used to generate the initial global mean regressor
 2. The correlation mask, which determines which voxels you actually calculate
    rapidtide fits in (what you are describing here)
-3. The refine mean mask, which selects which voxels are used to generate a refined regressor for
+3. The refine mask, which selects which voxels are used to generate a refined regressor for
    the next fitting pass
 4. The offset mask, which determines which voxels are used to estimate the "zero" time of
    the delay distribution
 5. The regression mask, which determines which voxels have the rapidtide regressors removed
 
 Below is a description of how this works currently.
-NB: this is not how I THOUGHT is worked - until I just looked at the code just now.
+NB: this is not how I THOUGHT is worked - until I looked at the code while writing this.
 It built up over time, and evolved into something that was not quite what I designed.
 I'm going to fix it up, but this what it's doing as of 2.6.1,
 which works most of the time, but may not be what you want.
@@ -207,14 +207,9 @@ Calculate the offset of the peak of the delay histogram,
 and subtract this value from all delay values within the correlation mask.
 
 **For the regression mask:**
-Include all voxels, unless you are calculating a CVR map, in which case rates other than the TR.
-Therefore the first step in moving regressor processing is to resample the moving regressor
-estimate to match the (oversampled) data sample rate.
-
-**Temporal filtering:**
-By default, all data and moving regressors are temporally bandpass filtered to 0.009-0.15 Hz
-(our standard definition of the LFO band).
-This can be overridden with ``--filterband`` and ``--filterfreqs`` command line options.
+Include all voxels, unless you are calculating a CVR map, in which case
+only perform the calculation on voxels exceeding 25% of the robust mean
+value (this is weird and will change).
 
 Depending on your data (including pathology),
 and what you want to accomplish, using the default correlation mask is not ideal.
@@ -237,7 +232,7 @@ leading to increasing heterogeneity between vascular territories
 So the global mean may be made up of several pools of blood,
 delayed by up to several seconds relative to each other,
 leading to weird autocorrelation in the global mean
-(essentially, confusing echoes of the moving signal)
+(essentially, echoes of the moving signal)
 that can confuse my delay finding algorithm,
 because it invalidates my assumption that the global mean is a good initial estimate of the
 "true" moving regressor.
@@ -265,7 +260,7 @@ For an Alzheimer's study that I am currently working on,
 we ended up starting only from blood in right and left cerebellar gray matter
 (freesurfer aparc+aseg regions 8 and 47)
 on the theory that if circulation in your cerebellum is too messed up,
-you're dead, so would not be in the dataset.
+you're dead, so you would not be in the dataset.
 That made our delay estimates work a lot better.
 So we used the freesurfer parcellations from fMRIPrep, transformed to standard space,
 to do that preselection,
@@ -388,6 +383,8 @@ First of all, spectral analysis of the sLFO signal allows us to
 determine if the signal may be problematic.
 Rapidtide checks the autocorrelation function of the sLFO signal for large sidelobes
 with periods within the delay search window and issues a warning when these signals are present.
+If you select the ``--acfix`` option, it will try to remove the problematic sidelobes.  (ASIDE: For some
+reason, this is not the default behavior, but I can't remember why.  It seems to work fine.)
 Then after delay maps are calculated,
 they are processed with an iterative despeckling process analogous to phase unwrapping.
 The delay of each voxel is compared to the median delay of its neighbors.
@@ -400,8 +397,10 @@ A more general solution to the problem of non-uniform spectra will likely improv
 Another method I've recently implemented is "regressor weighting" the correlation function -
 since we do correlation in the spectral domain,
 you can normalize the power spectrum magnitude by the power spectrum of the sLFO regressor -
-this deemphasizes spectral peaks.
-It helps, but it's not a magic wand.
+this deemphasizes spectral peaks.  One relatively
+recent change to rapidtide is that the default correlation weighting (set with the ``--corrweighting`` flag) is set to
+"phat", which flattens the magnitude spectrum of the correlation function in an attempt to tamp down periodic
+signals.  It helps, but it's not a magic wand.
 
 **Echo cancellation:**
 One thing that I keep thinking about is that in the case of pathology causing disparate delay pools,
@@ -430,7 +429,7 @@ Spatial filtering works for that -
 for the most part, the delay time varies quite smoothly over space,
 since capillary blood (to which we are most sensitive) moves in a pretty orderly fashion.
 Even a small amount of smoothing is sufficient to boost the quality of the delay maps a lot.
-A Gaussian kernel with a radius of ~1/2 the average voxel
+A Gaussian kernel with a sigma of ~1/2 the average voxel
 dimension in all three axes turns out to be pretty good.
 Use ``--spatialfilt SIGMA`` to set the filtering.
 Set SIGMA to -1 to have it set automatically as described above (default),
@@ -438,13 +437,24 @@ or set SIGMA to the kernel size in mm.
 SIGMA=0 turns spatial filtering off.
 
 **Mask, trim to size and reshape:**
-Select only the voxels and timpoints that are going to be processed,
+Select only the voxels and timepoints that are going to be processed,
 as specified by the spatial masks, and the ``--numskip`` and ``--timerange`` options,
 and reformat the remaining data into a voxel by time array.
 This simplifies all of the subsequent processing.
 Spatial filtering (done previously) and despeckling
 (managed by mapping lag data back to x, y, z space to check against neighbors)
 are the only operations that require us to know the spatial relationship between voxels.
+
+**Limit the timepoints used for delay estimation:**
+Another relatively new feature which came out of the analyses we did for Cole Korponay's 2024 paper on connectivity
+inflation (see :footcite:t:`korponay2024nathumbeh`) is the ability to limit which time points are used in calculating
+the delay time.  We found that in most fMRI scans, the strength of the sLFO signal increases over time (due to
+subject arousal, and as a result, respiration rate, falling over time), so you have a lot more signal to work with
+later in the scan.  Also, people seem to take a really long time to settle down after a scan starts (there is a LOT
+of signal instability in the first 70 seconds or so of the HCP-YA resting state fMRI scans).  For both of these reasons
+you can use ``--simcalcrange START END`` to select the timepoints used for estimating time delay.  Note that sLFO
+filtering is still applied to the ENTIRE timecourse - you don't want to throw away potentially good data.  It's just that
+for the purposes of estimating delay, you're better off being pretty ruthless about excluding early timepoints.
 
 
 Significance threshold estimation
@@ -457,12 +467,12 @@ Estimating the significance threshold for the fitted crosscorrelation measuremen
 straightforward.
 While there is a standard relationship to convert correlation coefficient R to p for
 a given timecourse length,
-this assumes that you performing a Pearsonn correlation of truly random signals
+this assumes that you performing a Pearson correlation of truly random signals
 (i.e. Gaussian random signals with white noise power spectra).
 But the sLFO signals are severely band limited, so if you use these formulae,
 you will dramatically overestimate the significance of your correlations.
 Moreover, we are selecting the peak of a crosscorrelation over a range of delays,
-which will further inflate the values.
+which will systematically inflate the values.
 There are analytical ways of adjusting for this, but they are tedious -
 Monte Carlo simulation by performing and fitting a set of crosscorrelations of the sLFO
 regressor with scrambled,
@@ -736,9 +746,9 @@ of a lot of the annoying speckling in the delay maps, but the result is that you
 detail in the delay map (which is obvious when you think about it). BUT - we know that delay varies
 relatively smoothly in real brains, so the smoothed delay values, while maybe not exactly right in
 most voxels, aren't far off.  So the delay in any voxel will likely be within +/-3 seconds of the smoothed
-value in every voxel, so the ratio-of-fit-derivatives method will be able to fit the difference, which
+value in every voxel, therefore the ratio-of-fit-derivatives method will be able to fit the difference, which
 you can then apply as an offset to find the exact delay in every voxel with much higher spatial resolution.
-Neat, huh?
+Spiffy, huh?
 
 I've added a postprocessing step that calculates the offset in delay from the final maxtime map generated in the
 iterative delay/sLFO regressor fitting process, which when added to the maxtime map gives you a tweaked, somewhat
@@ -777,7 +787,7 @@ Alternately, instead of loading the original file, you can load a _different_ fi
 and denoise that instead.
 Why would you want to do that?
 This is here for a very particular reason.
-HCP data uses FIX, a really spiffy ICA noise removal tool that cleans things up quite a bit.
+HCP data uses FIX, a really high-end ICA noise removal tool that cleans things up quite a bit.
 However, as mentioned above in the rapidtide usage section,
 it does tend to remove a lot of hemodynamic signal in some regions,
 particularly around the superior sagittal sinus.
