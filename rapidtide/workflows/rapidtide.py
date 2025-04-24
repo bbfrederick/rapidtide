@@ -227,7 +227,7 @@ def rapidtide_main(argparsingfunc):
         gc.enable()
         print("turning on garbage collection")
 
-    # if running in Docker or Apptainer/Singularity, this is necessary to enforce memory limits properly
+    # If running in Docker or Apptainer/Singularity, this is necessary to enforce memory limits properly
     # otherwise likely to  error out in gzip.py or at voxelnormalize step.  But do nothing if running in CircleCI
     # because it does NOT like you messing with the container.
     optiondict["containertype"] = tide_util.checkifincontainer()
@@ -476,7 +476,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["gausssigma"] > 0.0:
         TimingLGR.info("End 3D smoothing")
 
-    # reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
+    # Reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     fmri_data = theinputdata.voxelbytime()
     print(f"{fmri_data.shape=}")
 
