@@ -1,3 +1,11 @@
+..
+   Headings are organized in this manner:
+   =====
+   -----
+   ^^^^^
+   """""
+   '''''
+
 What\'s new
 -----------
 
