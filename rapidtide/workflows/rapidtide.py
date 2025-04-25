@@ -473,7 +473,7 @@ def rapidtide_main(argparsingfunc):
         TimingLGR.info("End 3D smoothing")
 
     # Reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
-    fmri_data = theinputdata.voxelbytime()
+    fmri_data = theinputdata.byvoxel()
     print(f"{fmri_data.shape=}")
 
     # detect zero mean data
@@ -589,11 +589,13 @@ def rapidtide_main(argparsingfunc):
     else:
         # check to see if the data has been demeaned
         if fileiscifti or optiondict["textio"]:
-            corrmask = np.uint(theinputdata.voxelbytime()[:, 0] * 0 + 1)
+            corrmask = np.uint(theinputdata.byvoxel()[:, 0] * 0 + 1)
         else:
             if not optiondict["dataiszeromean"]:
                 LGR.verbose("generating correlation mask from mean image")
-                corrmask = np.uint16(tide_mask.makeepimask(theinputdata.nim).dataobj.reshape(numspatiallocs))
+                corrmask = np.uint16(
+                    tide_mask.makeepimask(theinputdata.nim).dataobj.reshape(numspatiallocs)
+                )
             else:
                 LGR.verbose("generating correlation mask from std image")
                 corrmask = np.uint16(
@@ -650,7 +652,7 @@ def rapidtide_main(argparsingfunc):
     numvalidspatiallocs = np.shape(validvoxels)[0]
     LGR.debug(f"validvoxels shape = {numvalidspatiallocs}")
     theinputdata.setvalidvoxels(validvoxels)
-    fmri_data_valid = theinputdata.getvalidvoxels() + 0.0
+    fmri_data_valid = theinputdata.validdata() + 0.0
     LGR.verbose(
         f"original size = {np.shape(fmri_data)}, trimmed size = {np.shape(fmri_data_valid)}"
     )
@@ -881,11 +883,11 @@ def rapidtide_main(argparsingfunc):
     # get rid of memory we aren't using
     tide_util.logmem("before purging full sized fmri data")
     meanvalue = np.mean(
-        theinputdata.voxelbytime(),
+        theinputdata.byvoxel(),
         axis=1,
     )
     stddevvalue = np.std(
-        theinputdata.voxelbytime(),
+        theinputdata.byvoxel(),
         axis=1,
     )
     covvalue = np.where(meanvalue > 0.0, stddevvalue / meanvalue, 0.0)
@@ -2699,7 +2701,7 @@ def rapidtide_main(argparsingfunc):
                 theinputdata.setvalidtimes(validstart, validend)
                 theinputdata.setvalidvoxels(validvoxels)
 
-            fmri_data_valid = theinputdata.getvalidvoxels() + 0.0
+            fmri_data_valid = theinputdata.validdata() + 0.0
 
             if optiondict["docvrmap"]:
                 # percent normalize the fmri data

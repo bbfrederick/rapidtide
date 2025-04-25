@@ -39,6 +39,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
+import rapidtide.voxelData as tide_voxelData
 
 from .utils import setup_logger
 
@@ -179,33 +180,23 @@ def happy_main(argparsingfunc):
 
     # read in the image data
     tide_util.logmem("before reading in fmri data")
-    nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
-    input_data = tide_classes.fMRIDataset(nim_data, numskip=args.numskip)
-    timepoints = input_data.timepoints
-    xsize = input_data.xsize
-    ysize = input_data.ysize
-    numslices = input_data.numslices
-
-    xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
-    spaceunit, timeunit = nim_hdr.get_xyzt_units()
-    if timeunit == "msec":
-        tr /= 1000.0
+    input_data = tide_voxelData.VoxelData(fmrifilename, validstart=args.numskip)
+    xsize, ysize, numslices, timepoints = input_data.getdims()
+    xdim, ydim, slicethickness, tr = input_data.getsizes()
+    numspatiallocs = input_data.numspatiallocs
     mrsamplerate = 1.0 / tr
     print("tr is", tr, "seconds, mrsamplerate is", "{:.3f}".format(mrsamplerate))
-    numspatiallocs = int(xsize) * int(ysize) * int(numslices)
     infodict["tr"] = tr
     infodict["mrsamplerate"] = mrsamplerate
     timings.append(["Image data read in", time.time(), None, None])
 
     # remap to space by time
-    fmri_data = input_data.byvol()
-    del nim_data
+    fmri_data = input_data.byvoxel()
 
     # make and save a mask of the voxels to process based on image intensity
     tide_util.logmem("before mask creation")
-    # mask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
-    mask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
-    theheader = copy.deepcopy(nim_hdr)
+    mask = np.uint16(tide_mask.makeepimask(input_data.nim).dataobj.reshape(numspatiallocs))
+    theheader = copy.deepcopy(input_data.nim_hdr)
     theheader["dim"][4] = 1
     timings.append(["Mask created", time.time(), None, None])
     if args.outputlevel > 0:
@@ -220,7 +211,7 @@ def happy_main(argparsingfunc):
     if args.projmaskname is not None:
         tide_util.logmem("before reading in projmask")
         projmask = happy_support.readextmask(
-            args.projmaskname, nim_hdr, xsize, ysize, numslices, args.debug
+            args.projmaskname, input_data.nim_hdr, xsize, ysize, numslices, args.debug
         )
         # * np.float64(mask_byslice)
         projmask_byslice = projmask.reshape(xsize * ysize, numslices)
@@ -276,7 +267,7 @@ def happy_main(argparsingfunc):
             debug=args.debug,
         )
         # save motionr2 map
-        theheader = copy.deepcopy(nim_hdr)
+        theheader = copy.deepcopy(input_data.nim_hdr)
         theheader["dim"][4] = 1
         motionr2filename = outputroot + "_desc-motionr2_map"
         bidsdict = bidsbasedict.copy()
@@ -329,7 +320,7 @@ def happy_main(argparsingfunc):
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
     # save means, medians, and mads
-    theheader = copy.deepcopy(nim_hdr)
+    theheader = copy.deepcopy(input_data.nim_hdr)
     theheader["dim"][4] = 1
     meansfilename = outputroot + "_desc-means_map"
     mediansfilename = outputroot + "_desc-medians_map"
@@ -349,7 +340,7 @@ def happy_main(argparsingfunc):
     if args.estweightsname is not None:
         tide_util.logmem("before reading in estweights")
         estweights = happy_support.readextmask(
-            args.estweightsname, nim_hdr, xsize, ysize, numslices, args.debug
+            args.estweightsname, input_data.nim_hdr, xsize, ysize, numslices, args.debug
         )
         estweights_byslice = estweights.reshape(xsize * ysize, numslices)
         print("using estweights from file", args.estweightsname)
@@ -432,7 +423,7 @@ def happy_main(argparsingfunc):
         )
         if (thispass == 0) and args.doupsampling:
             happy_support.upsampleimage(
-                input_data, nim_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot
+                input_data, input_data.nim_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot
             )
             sys.exit(0)
 
@@ -1139,6 +1130,10 @@ def happy_main(argparsingfunc):
             tide_io.writedict(infodict, outputroot + "_info.txt")
 
         # interpolate the instantaneous phase
+        print(f"{tr=}")
+        print(f"{timepoints=}")
+        print(f"{numsteps=}")
+        print(f"{args.upsamplefac=}")
         upsampledslicetimeaxis = np.linspace(
             0.0,
             tr * timepoints,
@@ -1561,7 +1556,7 @@ def happy_main(argparsingfunc):
         # calculate the flow field from the normapp
         if args.doflowfields:
             print("calculating flow fields")
-            flowhdr = copy.deepcopy(nim_hdr)
+            flowhdr = copy.deepcopy(input_data.nim_hdr)
             flowhdr["dim"][4] = 3
             flowhdr["toffset"] = 0
             flowhdr["pixdim"][4] = 1
@@ -1577,7 +1572,7 @@ def happy_main(argparsingfunc):
             print(f"flow field shape: {flowfield.shape}")
 
         # save the analytic phase projection image
-        theheader = copy.deepcopy(nim_hdr)
+        theheader = copy.deepcopy(input_data.nim_hdr)
         theheader["dim"][4] = args.destpoints
         theheader["toffset"] = -np.pi
         theheader["pixdim"][4] = 2.0 * np.pi / args.destpoints
@@ -1602,7 +1597,7 @@ def happy_main(argparsingfunc):
         timings.append(["Phase projected data saved" + passstring, time.time(), None, None])
 
         if args.doaliasedcorrelation and thispass == numpasses - 1:
-            theheader = copy.deepcopy(nim_hdr)
+            theheader = copy.deepcopy(input_data.nim_hdr)
             theheader["dim"][4] = aliasedcorrelationpts
             theheader["toffset"] = 0.0
             theheader["pixdim"][4] = thealiasedcorrx[1] - thealiasedcorrx[0]
@@ -1689,7 +1684,7 @@ def happy_main(argparsingfunc):
         risediff = (maxphase - minphase) * vesselmask
         arteries = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmask, 0)
         veins = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmask, 0)
-        theheader = copy.deepcopy(nim_hdr)
+        theheader = copy.deepcopy(input_data.nim_hdr)
         theheader["dim"][4] = 1
         if thispass == numpasses - 1:
             vesselmaskfilename = outputroot + "_desc-vessels_mask"
@@ -1765,7 +1760,7 @@ def happy_main(argparsingfunc):
                 cardiacnoise_byslice[validlocs, theslice, t] = rawapp_byslice[
                     validlocs, theslice, phaseindices_byslice[validlocs, theslice, t]
                 ]
-        theheader = copy.deepcopy(nim_hdr)
+        theheader = copy.deepcopy(input_data.nim_hdr)
         timings.append(["Cardiac signal generated", time.time(), None, None])
         if args.savecardiacnoise:
             cardiacnoisefilename = outputroot + "_desc-cardiacnoise_info"
@@ -1829,7 +1824,7 @@ def happy_main(argparsingfunc):
             tide_io.writevec(fitcoffs, outputroot + "_fitcoff.txt")
             tide_io.writevec(meanvals, outputroot + "_fitmean.txt")
             tide_io.writevec(rvals, outputroot + "_fitR.txt")
-            theheader = copy.deepcopy(nim_hdr)
+            theheader = copy.deepcopy(input_data.nim_hdr)
             cardfiltresultfilename = outputroot + "_desc-cardfiltResult_bold"
             cardfiltremovedfilename = outputroot + "_desc-cardfiltRemoved_bold"
             tide_io.savetonifti(
@@ -1888,7 +1883,7 @@ def happy_main(argparsingfunc):
                     "voxels",
                 ]
             )
-            theheader = copy.deepcopy(nim_hdr)
+            theheader = copy.deepcopy(input_data.nim_hdr)
             theheader["dim"][4] = 1
             cardfiltcoeffsfilename = outputroot + "_desc-cardfiltCoeffs_map"
             cardfiltmeanfilename = outputroot + "_desc-cardfiltMean_map"
@@ -1907,7 +1902,7 @@ def happy_main(argparsingfunc):
                 rvals.reshape((xsize, ysize, numslices)), theheader, cardfiltRfilename
             )
 
-            theheader = copy.deepcopy(nim_hdr)
+            theheader = copy.deepcopy(input_data.nim_hdr)
             cardfiltresultfilename = outputroot + "_desc-cardfiltResult_bold"
             cardfiltremovedfilename = outputroot + "_desc-cardfiltRemoved_bold"
             tide_io.savetonifti(

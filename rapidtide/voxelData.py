@@ -42,6 +42,7 @@ class VoxelData:
     timestep = None
     thesizes = None
     thedims = None
+    numslicelocs = None
     numspatiallocs = None
     nativespaceshape = None
     validvoxels = None
@@ -71,7 +72,8 @@ class VoxelData:
             self.xsize = self.theshape[0]
             self.ysize = 1
             self.numslices = 1
-            self.timepoints = self.theshape[1]
+            self.numslicelocs = None
+            self.timepoints = int(self.theshape[1])
             self.thesizes = [0, int(self.xsize), 1, 1, int(self.timepoints)]
             self.toffset = 0.0
             self.numspatiallocs = int(self.xsize)
@@ -81,7 +83,8 @@ class VoxelData:
             if tide_io.checkifcifti(self.filename):
                 self.filetype = "cifti"
                 self.nim_affine = None
-                self.timepoints = self.nim_data.shape[1]
+                self.numslicelocs = None
+                self.timepoints = int(self.nim_data.shape[1])
                 self.numspatiallocs = self.nim_data.shape[0]
                 self.nativespaceshape = (1, 1, 1, 1, self.numspatiallocs)
             else:
@@ -90,6 +93,7 @@ class VoxelData:
                 self.xsize, self.ysize, self.numslices, self.timepoints = tide_io.parseniftidims(
                     self.thedims
                 )
+                self.numslicelocs = int(self.xsize) * int(self.ysize)
                 self.numspatiallocs = int(self.xsize) * int(self.ysize) * int(self.numslices)
                 self.cifti_hdr = None
                 self.nativespaceshape = (self.xsize, self.ysize, self.numslices)
@@ -172,27 +176,36 @@ class VoxelData:
         self.validvoxels = validvoxels
         self.numvalidspatiallocs = np.shape(self.validvoxels)[0]
 
-    def native(self):
+    def byvol(self):
         if not self.resident:
             self.load()
         return self.nim_data
 
-    def nativetrimmed(self):
+    def byvoltrimmed(self):
         if not self.resident:
             self.load()
         if self.filetype == "nifti":
             return self.nim_data[:, :, :, self.validstart : self.validend + 1]
         else:
-            return self.nim_data[:, self.validstart: self.validend + 1]
+            return self.nim_data[:, self.validstart : self.validend + 1]
 
-    def voxelbytime(self):
-        return self.nativetrimmed().reshape(self.numspatiallocs, -1)
+    def byvoxel(self):
+        return self.byvoltrimmed().reshape(self.numspatiallocs, -1)
 
-    def getvalidvoxels(self):
+    def byslice(self):
+        return self.byvoltrimmed().reshape(self.numslicelocs, self.numslices, -1)
+
+    def validdata(self):
         if self.validvoxels is None:
-            return self.voxelbytime()
+            return self.byvoxel()
         else:
-            return self.voxelbytime()[self.validvoxels, :]
+            return self.byvoxel()[self.validvoxels, :]
+
+    # def validdatabyslice(self):
+    #    if self.validvoxels is None:
+    #       return self.byslice()
+    #    else:
+    #        return self.byvoxel()[self.validvoxels, :].reshape(self.numslicelocs, self.numslices, -1)
 
     def smooth(
         self,
@@ -241,7 +254,7 @@ class VoxelData:
                 f"applying gaussian spatial filter to timepoints {self.validstart} "
                 f"to {self.validend} with sigma={gausssigma}"
             )
-            sourcedata = self.native()
+            sourcedata = self.byvol()
             for i in tqdm(
                 range(self.validstart, self.validend + 1),
                 desc="Timepoint",
@@ -271,6 +284,7 @@ class VoxelData:
         print(f"\t{self.timestep=}")
         print(f"\t{self.thesizes=}")
         print(f"\t{self.thedims=}")
+        print(f"\t{self.numslicelocs=}")
         print(f"\t{self.numspatiallocs=}")
         print(f"\t{self.nativespaceshape=}")
         print(f"\t{self.cifti_hdr=}")

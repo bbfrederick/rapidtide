@@ -139,7 +139,7 @@ def parseniftidims(thedims):
     nx, ny, nz, nt : int
         Number of points along each dimension
     """
-    return thedims[1], thedims[2], thedims[3], thedims[4]
+    return int(thedims[1]), int(thedims[2]), int(thedims[3]), int(thedims[4])
 
 
 # sizes are the mapping between voxels and physical coordinates
