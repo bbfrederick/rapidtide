@@ -35,6 +35,7 @@ class VoxelData:
     ysize = None
     numslices = None
     timepoints = None
+    realtimepoints = None
     xdim = None
     ydim = None
     slicethickness = None
@@ -173,6 +174,7 @@ class VoxelData:
             self.validend = self.timepoints - 1
         else:
             self.validend = validend
+        self.realtimepoints = self.validend - self.validstart + 1
 
     def setvalidvoxels(self, validvoxels):
         self.validvoxels = validvoxels

@@ -181,7 +181,8 @@ def happy_main(argparsingfunc):
     # read in the image data
     tide_util.logmem("before reading in fmri data")
     input_data = tide_voxelData.VoxelData(fmrifilename, validstart=args.numskip)
-    xsize, ysize, numslices, timepoints = input_data.getdims()
+    xsize, ysize, numslices, dummy = input_data.getdims()
+    timepoints = input_data.realtimepoints
     xdim, ydim, slicethickness, tr = input_data.getsizes()
     numspatiallocs = input_data.numspatiallocs
     mrsamplerate = 1.0 / tr
