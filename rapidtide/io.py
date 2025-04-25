@@ -328,8 +328,6 @@ def savemaplist(
     theheader,
     bidsbasedict,
     filetype="nifti",
-    textio=False,
-    fileiscifti=False,
     rt_floattype="float64",
     cifti_hdr=None,
     savejson=True,
@@ -363,7 +361,7 @@ def savemaplist(
             bidsdict["Units"] = theunit
         if thedescription is not None:
             bidsdict["Description"] = thedescription
-        if textio:
+        if filetype == "text":
             writenpvecs(
                 outmaparray.reshape(destshape),
                 f"{outputname}_{mapsuffix}.txt",

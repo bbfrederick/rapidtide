@@ -588,7 +588,7 @@ def rapidtide_main(argparsingfunc):
         corrmask[np.where(datarange == 0)] = 0.0
     else:
         # check to see if the data has been demeaned
-        if theinputdata.filetype is not "nifti":
+        if theinputdata.filetype != "nifti":
             corrmask = np.uint(theinputdata.byvoxel()[:, 0] * 0 + 1)
         else:
             if not optiondict["dataiszeromean"]:
