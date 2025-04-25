@@ -263,32 +263,30 @@ def niftihdrfromarray(data):
 
 def makedestarray(
     destshape,
-    textio=False,
-    fileiscifti=False,
+    filetype="nifti",
     rt_floattype="float64",
 ):
-    if textio:
+    if filetype == "text":
         try:
             internalspaceshape = destshape[0]
             timedim = destshape[1]
         except TypeError:
             internalspaceshape = destshape
             timedim = None
-    else:
-        if fileiscifti:
-            spaceindex = len(destshape) - 1
-            timeindex = spaceindex - 1
-            internalspaceshape = destshape[spaceindex]
-            if destshape[timeindex] > 1:
-                timedim = destshape[timeindex]
-            else:
-                timedim = None
+    elif filetype == "cifti":
+        spaceindex = len(destshape) - 1
+        timeindex = spaceindex - 1
+        internalspaceshape = destshape[spaceindex]
+        if destshape[timeindex] > 1:
+            timedim = destshape[timeindex]
         else:
-            internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
-            if len(destshape) == 3:
-                timedim = None
-            else:
-                timedim = destshape[3]
+            timedim = None
+    else:
+        internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
+        if len(destshape) == 3:
+            timedim = None
+        else:
+            timedim = destshape[3]
     if timedim is None:
         outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     else:
@@ -329,6 +327,7 @@ def savemaplist(
     destshape,
     theheader,
     bidsbasedict,
+    filetype="nifti",
     textio=False,
     fileiscifti=False,
     rt_floattype="float64",
@@ -338,8 +337,7 @@ def savemaplist(
 ):
     outmaparray, internalspaceshape = makedestarray(
         destshape,
-        textio=textio,
-        fileiscifti=fileiscifti,
+        filetype=filetype,
         rt_floattype=rt_floattype,
     )
     for themap, mapsuffix, maptype, theunit, thedescription in maplist:

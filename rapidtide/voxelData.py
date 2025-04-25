@@ -110,6 +110,7 @@ class VoxelData:
     numslicelocs = None
     numspatiallocs = None
     nativespaceshape = None
+    nativefmrishape = None
     validvoxels = None
     cifti_hdr = None
     filetype = None
@@ -261,6 +262,12 @@ class VoxelData:
         else:
             self.validend = validend
         self.realtimepoints = self.validend - self.validstart + 1
+        if self.filetype == "nifti":
+            self.nativefmrishape = (self.xsize, self.ysize, self.numslices, self.realtimepoints)
+        elif self.filetype == "cifti":
+            self.nativefmrishape = (1, 1, 1, self.realtimepoints, self.numspatiallocs)
+        else:
+            self.nativefmrishape = (self.xsize, self.realtimepoints)
 
     def setvalidvoxels(self, validvoxels):
         self.validvoxels = validvoxels

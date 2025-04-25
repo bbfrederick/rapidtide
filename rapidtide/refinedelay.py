@@ -429,8 +429,7 @@ def filterderivratios(
     thedims,
     patchthresh=3.0,
     gausssigma=0,
-    fileiscifti=False,
-    textio=False,
+    filetype="nifti",
     rt_floattype="float64",
     verbose=True,
     debug=False,
@@ -448,8 +447,7 @@ def filterderivratios(
         print(f"MAD of regression fit derivative ratios = {themad}")
     outmaparray, internalspaceshape = tide_io.makedestarray(
         nativespaceshape,
-        textio=textio,
-        fileiscifti=fileiscifti,
+        filetype=filetype,
         rt_floattype=rt_floattype,
     )
     mappedregressderivratios = tide_io.populatemap(
@@ -459,7 +457,7 @@ def filterderivratios(
         outmaparray,
         debug=debug,
     )
-    if textio or fileiscifti:
+    if filetype != "nifti":
         medfilt = regressderivratios
         filteredarray = regressderivratios
     else:

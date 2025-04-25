@@ -588,7 +588,7 @@ def rapidtide_main(argparsingfunc):
         corrmask[np.where(datarange == 0)] = 0.0
     else:
         # check to see if the data has been demeaned
-        if fileiscifti or optiondict["textio"]:
+        if theinputdata.filetype is not "nifti":
             corrmask = np.uint(theinputdata.byvoxel()[:, 0] * 0 + 1)
         else:
             if not optiondict["dataiszeromean"]:
@@ -636,7 +636,7 @@ def rapidtide_main(argparsingfunc):
         corrmask *= 0
         corrmask += 1
         threshval = -10000000.0
-    if not (fileiscifti or optiondict["textio"]):
+    if theinputdata.filetype == "nifti":
         theheader = theinputdata.copyheader(numtimepoints=1)
         savename = f"{outputname}_desc-processed_mask"
         tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, savename)
@@ -809,8 +809,7 @@ def rapidtide_main(argparsingfunc):
             nativespaceshape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
         )
@@ -839,25 +838,6 @@ def rapidtide_main(argparsingfunc):
 
         if optiondict["saveconfoundfiltered"]:
             theheader = theinputdata.copyheader(numtimepoints=validtimepoints, tr=fmritr)
-            if optiondict["textio"]:
-                cifti_hdr = None
-            """if not optiondict["textio"]:
-                theheader = theinputdata.copyheader()
-                if fileiscifti:
-                    nativefmrishape = (1, 1, 1, validtimepoints, numspatiallocs)
-                    timeindex = theheader["dim"][0] - 1
-                    spaceindex = theheader["dim"][0]
-                    theheader["dim"][timeindex] = validtimepoints
-                    theheader["dim"][spaceindex] = numspatiallocs
-                else:
-                    nativefmrishape = (xsize, ysize, numslices, validtimepoints)
-                    theheader["dim"][4] = validtimepoints
-                    theheader["pixdim"][4] = fmritr
-            else:
-                nativefmrishape = (xsize, validtimepoints)
-                theheader = None
-                cifti_hdr = None"""
-
             maplist = [
                 (
                     fmri_data_valid,
@@ -871,11 +851,10 @@ def rapidtide_main(argparsingfunc):
                 outputname,
                 maplist,
                 validvoxels,
-                nativefmrishape,
+                theinputdata.nativefmrishape,
                 theheader,
                 bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=theinputdata.cifti_hdr,
             )
@@ -937,16 +916,6 @@ def rapidtide_main(argparsingfunc):
 
         # save the meanmask
         theheader = theinputdata.copyheader(numtimepoints=1)
-        """if not optiondict["textio"]:
-            if fileiscifti:
-                timeindex = theheader["dim"][0] - 1
-                spaceindex = theheader["dim"][0]
-                theheader["dim"][timeindex] = 1
-                theheader["dim"][spaceindex] = numspatiallocs
-            else:
-                theheader["dim"][0] = 3
-                theheader["dim"][4] = 1
-                theheader["pixdim"][4] = 1.0"""
         masklist = [(meanmask, "globalmean", "mask", None, "Voxels used to calculate global mean")]
         tide_io.savemaplist(
             outputname,
@@ -955,8 +924,7 @@ def rapidtide_main(argparsingfunc):
             nativespaceshape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
         )
@@ -1437,16 +1405,6 @@ def rapidtide_main(argparsingfunc):
                 initialdelay_sizes,
             ) = tide_io.readfromnifti(optiondict["initialdelayvalue"])
             theheader = theinputdata.copyheader(numtimepoints=1)
-            """if not optiondict["textio"]:
-                if fileiscifti:
-                    timeindex = theheader["dim"][0] - 1
-                    spaceindex = theheader["dim"][0]
-                    theheader["dim"][timeindex] = 1
-                    theheader["dim"][spaceindex] = numspatiallocs
-                else:
-                    theheader["dim"][0] = 3
-                    theheader["dim"][4] = 1
-                    theheader["pixdim"][4] = 1.0"""
             if not tide_io.checkspacematch(theheader, initialdelay_header):
                 raise ValueError("fixed delay map dimensions do not match fmri dimensions")
             theinitialdelay = initialdelay.reshape(numspatiallocs)[validvoxels]
@@ -2166,8 +2124,7 @@ def rapidtide_main(argparsingfunc):
                         nativespaceshape,
                         theheader,
                         bidsbasedict,
-                        textio=optiondict["textio"],
-                        fileiscifti=fileiscifti,
+                        filetype=theinputdata.filetype,
                         rt_floattype=rt_floattype,
                         cifti_hdr=theinputdata.cifti_hdr,
                     )
@@ -2204,8 +2161,7 @@ def rapidtide_main(argparsingfunc):
                 nativespaceshape,
                 theheader,
                 bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=theinputdata.cifti_hdr,
             )
@@ -2237,8 +2193,7 @@ def rapidtide_main(argparsingfunc):
                     nativespaceshape,
                     theheader,
                     bidsbasedict,
-                    textio=optiondict["textio"],
-                    fileiscifti=fileiscifti,
+                    filetype=theinputdata.filetype,
                     rt_floattype=rt_floattype,
                     cifti_hdr=theinputdata.cifti_hdr,
                 )
@@ -2262,8 +2217,7 @@ def rapidtide_main(argparsingfunc):
                     nativespaceshape,
                     theheader,
                     bidsbasedict,
-                    textio=optiondict["textio"],
-                    fileiscifti=fileiscifti,
+                    filetype=theinputdata.filetype,
                     rt_floattype=rt_floattype,
                     cifti_hdr=theinputdata.cifti_hdr,
                 )
@@ -2298,8 +2252,7 @@ def rapidtide_main(argparsingfunc):
                     nativespaceshape,
                     theheader,
                     bidsbasedict,
-                    textio=optiondict["textio"],
-                    fileiscifti=fileiscifti,
+                    filetype=theinputdata.filetype,
                     rt_floattype=rt_floattype,
                     cifti_hdr=theinputdata.cifti_hdr,
                 )
@@ -2316,17 +2269,7 @@ def rapidtide_main(argparsingfunc):
         )
 
         if optiondict["saveintermediatemaps"]:
-            if not optiondict["textio"]:
-                theheader = theinputdata.copyheader(numtimepoints=1)
-                """if fileiscifti:
-                    timeindex = theheader["dim"][0] - 1
-                    spaceindex = theheader["dim"][0]
-                    theheader["dim"][timeindex] = 1
-                    theheader["dim"][spaceindex] = numspatiallocs
-                else:
-                    theheader["dim"][0] = 3
-                    theheader["dim"][4] = 1
-                    theheader["pixdim"][4] = 1.0"""
+            theheader = theinputdata.copyheader(numtimepoints=1)
             bidspasssuffix = f"_intermediatedata-pass{thepass}"
             maplist = [
                 (lagtimes, "maxtime", "map", "second", "Lag time in seconds"),
@@ -2347,8 +2290,7 @@ def rapidtide_main(argparsingfunc):
                 nativespaceshape,
                 theheader,
                 bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=theinputdata.cifti_hdr,
             )
@@ -2586,19 +2528,6 @@ def rapidtide_main(argparsingfunc):
             tr=coherencefreqstep,
             toffset=coherencefreqstart,
         )
-        """if not optiondict["textio"]:
-
-            theheader["toffset"] = coherencefreqstart
-            theheader["pixdim"][4] = coherencefreqstep
-            if fileiscifti:
-                timeindex = theheader["dim"][0] - 1
-                spaceindex = theheader["dim"][0]
-                theheader["dim"][timeindex] = coherencefreqaxissize
-                theheader["dim"][spaceindex] = numspatiallocs
-            else:
-                theheader["dim"][0] = 3
-                theheader["dim"][4] = coherencefreqaxissize
-                theheader["pixdim"][4] = 1.0"""
         maplist = [(coherencefunc, "coherence", "info", None, "Coherence function")]
         tide_io.savemaplist(
             outputname,
@@ -2607,8 +2536,7 @@ def rapidtide_main(argparsingfunc):
             nativecoherenceshape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
         )
@@ -2814,17 +2742,8 @@ def rapidtide_main(argparsingfunc):
                 theheader = theinputdata.copyheader(
                     numtimepoints=np.shape(outfmriarray)[1], tr=fmritr
                 )
-                """if fileiscifti:
-                    timeindex = theheader["dim"][0] - 1
-                    spaceindex = theheader["dim"][0]
-                    theheader["dim"][timeindex] = np.shape(outfmriarray)[1]
-                    theheader["dim"][spaceindex] = numspatiallocs
-                else:
-                    theheader["dim"][4] = np.shape(outfmriarray)[1]
-                    theheader["pixdim"][4] = fmritr"""
             else:
                 theheader = None
-                cifti_hdr = None
                 outfmriarray = None
 
             maplist = [
@@ -2843,8 +2762,7 @@ def rapidtide_main(argparsingfunc):
                 nativefmrishape,
                 theheader,
                 bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=theinputdata.cifti_hdr,
             )
@@ -2893,8 +2811,7 @@ def rapidtide_main(argparsingfunc):
                         (xdim, ydim, slicethickness),
                         gausssigma=optiondict["delayoffsetgausssigma"],
                         patchthresh=optiondict["delaypatchthresh"],
-                        fileiscifti=fileiscifti,
-                        textio=optiondict["textio"],
+                        filetype=theinputdata.filetype,
                         rt_floattype="float64",
                         debug=optiondict["debug"],
                     )
@@ -2939,8 +2856,7 @@ def rapidtide_main(argparsingfunc):
                         (xdim, ydim, slicethickness),
                         gausssigma=optiondict["delayoffsetgausssigma"],
                         patchthresh=optiondict["delaypatchthresh"],
-                        fileiscifti=False,
-                        textio=False,
+                        filetype=theinputdata.filetype,
                         rt_floattype=rt_floattype,
                         debug=optiondict["debug"],
                     )
@@ -3151,23 +3067,6 @@ def rapidtide_main(argparsingfunc):
     # write the 3D maps that need to be remapped
     TimingLGR.info("Start saving maps")
     theheader = theinputdata.copyheader(numtimepoints=1)
-    if optiondict["textio"]:
-        cifti_hdr = None
-    """if not optiondict["textio"]:
-        theheader = theinputdata.copyheader()
-        if fileiscifti:
-            timeindex = theheader["dim"][0] - 1
-            spaceindex = theheader["dim"][0]
-            theheader["dim"][timeindex] = 1
-            theheader["dim"][spaceindex] = numspatiallocs
-        else:
-            theheader["dim"][0] = 3
-            theheader["dim"][4] = 1
-            theheader["pixdim"][4] = 1.0
-    else:
-        theheader = None
-        cifti_hdr = None"""
-
     savelist = [
         (lagtimes, "maxtime", "map", "second", "Lag time in seconds"),
         (
@@ -3272,8 +3171,7 @@ def rapidtide_main(argparsingfunc):
         nativespaceshape,
         theheader,
         bidsbasedict,
-        textio=optiondict["textio"],
-        fileiscifti=fileiscifti,
+        filetype=theinputdata.filetype,
         rt_floattype=rt_floattype,
         cifti_hdr=theinputdata.cifti_hdr,
     )
@@ -3432,8 +3330,7 @@ def rapidtide_main(argparsingfunc):
             nativespaceshape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
         )
@@ -3489,8 +3386,7 @@ def rapidtide_main(argparsingfunc):
                 nativespaceshape,
                 theheader,
                 bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=theinputdata.cifti_hdr,
             )
@@ -3533,8 +3429,7 @@ def rapidtide_main(argparsingfunc):
         nativespaceshape,
         theheader,
         bidsbasedict,
-        textio=optiondict["textio"],
-        fileiscifti=fileiscifti,
+        filetype=theinputdata.filetype,
         rt_floattype=rt_floattype,
         cifti_hdr=theinputdata.cifti_hdr,
     )
@@ -3572,8 +3467,7 @@ def rapidtide_main(argparsingfunc):
             nativespaceshape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
         )
@@ -3602,8 +3496,7 @@ def rapidtide_main(argparsingfunc):
             nativespaceshape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
         )
@@ -3618,23 +3511,6 @@ def rapidtide_main(argparsingfunc):
 
     # now do the 4D maps of the similarity function and friends
     theheader = theinputdata.copyheader(numtimepoints=np.shape(outcorrarray)[1], tr=corrtr)
-    if optiondict["textio"]:
-        cifti_hdr = None
-    """if not optiondict["textio"]:
-        theheader = theinputdata.copyheader()
-        theheader["toffset"] = corrscale[corrorigin - lagmininpts]
-        if fileiscifti:
-            timeindex = theheader["dim"][0] - 1
-            spaceindex = theheader["dim"][0]
-            theheader["dim"][timeindex] = np.shape(outcorrarray)[1]
-            theheader["dim"][spaceindex] = numspatiallocs
-        else:
-            theheader["dim"][4] = np.shape(outcorrarray)[1]
-            theheader["pixdim"][4] = corrtr
-    else:
-        theheader = None
-        cifti_hdr = None"""
-
     if (
         optiondict["savecorrout"]
         or (optiondict["outputlevel"] != "min")
@@ -3661,8 +3537,7 @@ def rapidtide_main(argparsingfunc):
             nativecorrshape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
         )
@@ -3680,22 +3555,6 @@ def rapidtide_main(argparsingfunc):
     if outfmriarray is None:
         outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
     theheader = theinputdata.copyheader(numtimepoints=np.shape(outfmriarray)[1], tr=fmritr)
-    if optiondict["textio"]:
-        cifti_hdr = None
-    """if not optiondict["textio"]:
-        theheader = theinputdata.copyheader()
-        if fileiscifti:
-            timeindex = theheader["dim"][0] - 1
-            spaceindex = theheader["dim"][0]
-            theheader["dim"][timeindex] = np.shape(outfmriarray)[1]
-            theheader["dim"][spaceindex] = numspatiallocs
-        else:
-            theheader["dim"][4] = np.shape(outfmriarray)[1]
-            theheader["pixdim"][4] = fmritr
-    else:
-        theheader = None
-        cifti_hdr = None"""
-
     maplist = []
     if optiondict["saveallsLFOfiltfiles"] and (
         optiondict["dolinfitfilt"] or optiondict["docvrmap"]
@@ -3789,8 +3648,7 @@ def rapidtide_main(argparsingfunc):
             nativefmrishape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
         )

@@ -740,8 +740,6 @@ def delayvar(args):
             (xdim, ydim, slicedim),
             gausssigma=args.windelayoffsetgausssigma,
             patchthresh=args.delaypatchthresh,
-            fileiscifti=False,
-            textio=False,
             rt_floattype=rt_floattype,
             verbose=args.verbose,
             debug=args.debug,

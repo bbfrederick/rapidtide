@@ -186,8 +186,6 @@ def eval_refinedelay(
         validvoxels,
         (xdim, ydim, slicedim),
         patchthresh=3.0,
-        fileiscifti=False,
-        textio=False,
         rt_floattype="float64",
         debug=debug,
     )
