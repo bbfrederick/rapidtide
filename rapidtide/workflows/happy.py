@@ -1584,7 +1584,7 @@ def happy_main(argparsingfunc):
         risediff = (maxphase - minphase) * vesselmask
         arteries = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmask, 0)
         veins = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmask, 0)
-        theheader = input_data.copyheader(numtimpoints=1)
+        theheader = input_data.copyheader(numtimepoints=1)
         if thispass == numpasses - 1:
             vesselmaskfilename = outputroot + "_desc-vessels_mask"
             minphasefilename = outputroot + "_desc-minphase_map"
