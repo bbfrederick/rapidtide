@@ -23,6 +23,71 @@ from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
+import rapidtide.util as tide_util
+
+
+class dataVolume:
+    xsize = None
+    ysize = None
+    numslices = None
+    numspatiallocs = None
+    timepoints = None
+    dtype = None
+    dimensions = None
+    data = None
+    data_shm = None
+    thepid = None
+
+    def __init__(
+        self,
+        shape,
+        shared=False,
+        dtype=np.float64,
+        thepid=0,
+    ):
+        if len(shape) == 3:
+            self.xsize = int(shape[0])
+            self.ysize = int(shape[1])
+            self.numslices = int(shape[2])
+            self.timepoints = 1
+            self.dimensions = 3
+        elif len(shape) == 4:
+            self.xsize = int(shape[0])
+            self.ysize = int(shape[1])
+            self.numslices = int(shape[2])
+            self.timepoints = int(shape[3])
+            self.dimensions = 4
+        else:
+            print(f"illegal shape: {shape}")
+        self.numspatiallocs = self.xsize * self.ysize * self.numslices
+        self.dtype = dtype
+        if not shared:
+            self.data = np.zeros(shape, dtype=dtype)
+        else:
+            self.data, self.data_shm = tide_util.allocshared(
+                shape, self.dtype, name=f"filtereddata_{thepid}"
+            )
+        return self.data
+
+    def byvol(self):
+        return self.data
+
+    def byslice(self):
+        if self.dimensions == 3:
+            return self.data.reshape(self.xsize * self.ysize, -1)
+        else:
+            return self.data.reshape(self.xsize * self.ysize, self.numslices, -1)
+
+    def byvoxel(self):
+        if self.dimensions == 3:
+            return self.data.reshape(self.numspatiallocs)
+        else:
+            return self.data.reshape(self.numspatiallocs, -1)
+
+    def destroy(self):
+        del self.data
+        if self.data_shm is not None:
+            tide_util.cleanup_shm(self.data_shm)
 
 
 class VoxelData:
@@ -124,8 +189,20 @@ class VoxelData:
         self.setvalidtimes(validstart, validend)
         self.resident = True
 
-    def getheader(self):
-        return copy.deepcopy(self.nim_hdr)
+    def copyheader(self, numtimepoints=None, tr=None, toffset=None):
+        thisheader = copy.deepcopy(self.nim_hdr)
+        if numtimepoints is not None:
+            thisheader["dim"][4] = numtimepoints
+            if numtimepoints > 1:
+                thisheader["dim"][0] = 4
+            else:
+                thisheader["dim"][0] = 3
+                thisheader["pixdim"][4] = 1.0
+        if toffset is not None:
+            thisheader["toffset"] = toffset
+        if tr is not None:
+            thisheader["pixdim"][4] = tr
+        return thisheader
 
     def getsizes(self):
         return self.xdim, self.ydim, self.slicethickness, self.timestep

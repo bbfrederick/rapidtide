@@ -637,10 +637,7 @@ def rapidtide_main(argparsingfunc):
         corrmask += 1
         threshval = -10000000.0
     if not (fileiscifti or optiondict["textio"]):
-        theheader = theinputdata.getheader()
-        theheader["dim"][0] = 3
-        theheader["dim"][4] = 1
-        theheader["pixdim"][4] = 1.0
+        theheader = theinputdata.copyheader(numtimepoints=1)
         savename = f"{outputname}_desc-processed_mask"
         tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, savename)
 
@@ -842,7 +839,7 @@ def rapidtide_main(argparsingfunc):
 
         if optiondict["saveconfoundfiltered"]:
             if not optiondict["textio"]:
-                theheader = theinputdata.getheader()
+                theheader = theinputdata.copyheader()
                 if fileiscifti:
                     nativefmrishape = (1, 1, 1, validtimepoints, numspatiallocs)
                     timeindex = theheader["dim"][0] - 1
@@ -934,7 +931,7 @@ def rapidtide_main(argparsingfunc):
         inputperiod = meanperiod
         inputstarttime = meanstarttime
         inputvec = meanvec
-        theheader = theinputdata.getheader()
+        theheader = theinputdata.copyheader()
 
         # save the meanmask
         if not optiondict["textio"]:
@@ -1436,7 +1433,7 @@ def rapidtide_main(argparsingfunc):
                 initialdelay_dims,
                 initialdelay_sizes,
             ) = tide_io.readfromnifti(optiondict["initialdelayvalue"])
-            theheader = theinputdata.getheader()
+            theheader = theinputdata.copyheader()
             if not optiondict["textio"]:
                 if fileiscifti:
                     timeindex = theheader["dim"][0] - 1
@@ -2317,7 +2314,7 @@ def rapidtide_main(argparsingfunc):
 
         if optiondict["saveintermediatemaps"]:
             if not optiondict["textio"]:
-                theheader = theinputdata.getheader()
+                theheader = theinputdata.copyheader()
                 if fileiscifti:
                     timeindex = theheader["dim"][0] - 1
                     spaceindex = theheader["dim"][0]
@@ -2582,7 +2579,7 @@ def rapidtide_main(argparsingfunc):
 
         # save the results of the calculations
         if not optiondict["textio"]:
-            theheader = theinputdata.getheader()
+            theheader = theinputdata.copyheader()
             theheader["toffset"] = coherencefreqstart
             theheader["pixdim"][4] = coherencefreqstep
             if fileiscifti:
@@ -2806,7 +2803,7 @@ def rapidtide_main(argparsingfunc):
             # dump the fmri input file going to sLFO filter
             if not optiondict["textio"]:
                 outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
-                theheader = theinputdata.getheader()
+                theheader = theinputdata.copyheader()
                 if fileiscifti:
                     timeindex = theheader["dim"][0] - 1
                     spaceindex = theheader["dim"][0]
@@ -3144,7 +3141,7 @@ def rapidtide_main(argparsingfunc):
     # write the 3D maps that need to be remapped
     TimingLGR.info("Start saving maps")
     if not optiondict["textio"]:
-        theheader = theinputdata.getheader()
+        theheader = theinputdata.copyheader()
         if fileiscifti:
             timeindex = theheader["dim"][0] - 1
             spaceindex = theheader["dim"][0]
@@ -3608,7 +3605,7 @@ def rapidtide_main(argparsingfunc):
 
     # now do the 4D maps of the similarity function and friends
     if not optiondict["textio"]:
-        theheader = theinputdata.getheader()
+        theheader = theinputdata.copyheader()
         theheader["toffset"] = corrscale[corrorigin - lagmininpts]
         if fileiscifti:
             timeindex = theheader["dim"][0] - 1
@@ -3667,7 +3664,7 @@ def rapidtide_main(argparsingfunc):
     if outfmriarray is None:
         outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
     if not optiondict["textio"]:
-        theheader = theinputdata.getheader()
+        theheader = theinputdata.copyheader()
         if fileiscifti:
             timeindex = theheader["dim"][0] - 1
             spaceindex = theheader["dim"][0]

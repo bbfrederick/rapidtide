@@ -1001,13 +1001,10 @@ def circularderivs(timecourse):
 def phaseproject(
     input_data,
     demeandata_byslice,
-    waveamp_byslice,
-    thecorrfunc_byslice,
-    wavedelay_byslice,
-    corrected_rawapp_byslice,
     means_byslice,
     rawapp_byslice,
     app_byslice,
+    normapp_byslice,
     weights_byslice,
     cine_byslice,
     projmask_byslice,
@@ -1015,12 +1012,20 @@ def phaseproject(
     proctrs,
     thispass,
     args,
+    sliceoffsets,
     cardphasevals,
     outphases,
     appsmoothingfilter,
     phaseFs,
+    thecorrfunc_byslice,
+    waveamp_byslice,
+    wavedelay_byslice,
+    wavedelayCOM_byslice,
+    corrected_rawapp_byslice,
     corrstartloc,
     correndloc,
+    thealiasedcorrx,
+    theAliasedCorrelator,
 ):
     xsize, ysize, numslices, timepoints = input_data.getdims()
     fmri_data_byslice = input_data.byslice()
@@ -1098,7 +1103,7 @@ def phaseproject(
                     waveamp_byslice[theloc, theslice] = np.fabs(
                         thecorrfunc_byslice[theloc, theslice, maxloc]
                     )
-                    wavedelayCOM_byslice[theloc, theslice] = happy_support.theCOM(
+                    wavedelayCOM_byslice[theloc, theslice] = theCOM(
                         thealiasedcorrx[corrstartloc : correndloc + 1],
                         np.fabs(thecorrfunc_byslice[theloc, theslice, :]),
                     )
@@ -1128,6 +1133,7 @@ def phaseproject(
         normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
             app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
         )
+    return appflips_byslice
 
 
 def upsampleimage(input_data, numsteps, sliceoffsets, slicesamplerate, outputroot):
