@@ -192,6 +192,7 @@ def happy_main(argparsingfunc):
 
     # remap to space by time
     fmri_data = input_data.byvoxel()
+    print("fmri_data has shape", fmri_data.shape)
 
     # make and save a mask of the voxels to process based on image intensity
     tide_util.logmem("before mask creation")
@@ -278,6 +279,7 @@ def happy_main(argparsingfunc):
             outarray.reshape((xsize, ysize, numslices)), theheader, motionr2filename
         )
         if args.savemotionglmfilt:
+            print("prior to save - fmri_data has shape", fmri_data.shape)
             motionfilteredfilename = outputroot + "_desc-motionfiltered_bold"
             bidsdict = bidsbasedict.copy()
             bidsdict["Units"] = "second"
@@ -423,7 +425,7 @@ def happy_main(argparsingfunc):
         )
         if (thispass == 0) and args.doupsampling:
             happy_support.upsampleimage(
-                input_data, input_data.nim_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot
+                input_data, numsteps, sliceoffsets, slicesamplerate, outputroot
             )
             sys.exit(0)
 
@@ -1230,32 +1232,6 @@ def happy_main(argparsingfunc):
         # now do the phase projection
         #
         #
-        """app, rawapp, corrected_rawapp, normapp, weights, cine, derivatives = (
-            happy_support.phaseproject(
-                demeandata,
-                means,
-                args.destpoints,
-                numsteps,
-                timings,
-                cardfromfmri_sliceres,
-                instantaneous_cardiacphase,
-                thispass,
-                numpasses,
-                args,
-                outputroot,
-                slicesamplerate,
-                pleth_sliceres,
-                mrsamplerate,
-                projmask_byslice,
-                cardphasevals,
-                thetimes,
-                centric=True,
-                passstring="",
-                badpointlist=None,
-                congridbins=3.0,
-                gridkernel="kaiser",
-            )
-        )"""
         app_byslice = app.reshape((xsize * ysize, numslices, args.destpoints))
         rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, args.destpoints))
         corrected_rawapp_byslice = corrected_rawapp.reshape(
