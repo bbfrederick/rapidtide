@@ -16,10 +16,9 @@
 #   limitations under the License.
 #
 #
+import copy
+
 import numpy as np
-from tf_keras.src.layers.preprocessing.benchmarks.index_lookup_forward_benchmark import (
-    get_vocab,
-)
 from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
@@ -123,6 +122,9 @@ class VoxelData:
 
         self.setvalidtimes(validstart, validend)
         self.resident = True
+
+    def getheader(self):
+        return copy.deepcopy(self.nim_hdr)
 
     def getsizes(self):
         return self.xdim, self.ydim, self.slicethickness, self.timestep

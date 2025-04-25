@@ -196,7 +196,7 @@ def happy_main(argparsingfunc):
     # make and save a mask of the voxels to process based on image intensity
     tide_util.logmem("before mask creation")
     mask = np.uint16(tide_mask.makeepimask(input_data.nim).dataobj.reshape(numspatiallocs))
-    theheader = copy.deepcopy(input_data.nim_hdr)
+    theheader = input_data.getheader()
     theheader["dim"][4] = 1
     timings.append(["Mask created", time.time(), None, None])
     if args.outputlevel > 0:
@@ -267,7 +267,7 @@ def happy_main(argparsingfunc):
             debug=args.debug,
         )
         # save motionr2 map
-        theheader = copy.deepcopy(input_data.nim_hdr)
+        theheader = input_data.getheader()
         theheader["dim"][4] = 1
         motionr2filename = outputroot + "_desc-motionr2_map"
         bidsdict = bidsbasedict.copy()
@@ -320,7 +320,7 @@ def happy_main(argparsingfunc):
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 
     # save means, medians, and mads
-    theheader = copy.deepcopy(input_data.nim_hdr)
+    theheader = input_data.getheader()
     theheader["dim"][4] = 1
     meansfilename = outputroot + "_desc-means_map"
     mediansfilename = outputroot + "_desc-medians_map"
@@ -1556,7 +1556,7 @@ def happy_main(argparsingfunc):
         # calculate the flow field from the normapp
         if args.doflowfields:
             print("calculating flow fields")
-            flowhdr = copy.deepcopy(input_data.nim_hdr)
+            flowhdr = input_data.getheader()
             flowhdr["dim"][4] = 3
             flowhdr["toffset"] = 0
             flowhdr["pixdim"][4] = 1
@@ -1572,7 +1572,7 @@ def happy_main(argparsingfunc):
             print(f"flow field shape: {flowfield.shape}")
 
         # save the analytic phase projection image
-        theheader = copy.deepcopy(input_data.nim_hdr)
+        theheader = input_data.getheader()
         theheader["dim"][4] = args.destpoints
         theheader["toffset"] = -np.pi
         theheader["pixdim"][4] = 2.0 * np.pi / args.destpoints
@@ -1597,7 +1597,7 @@ def happy_main(argparsingfunc):
         timings.append(["Phase projected data saved" + passstring, time.time(), None, None])
 
         if args.doaliasedcorrelation and thispass == numpasses - 1:
-            theheader = copy.deepcopy(input_data.nim_hdr)
+            theheader = input_data.getheader()
             theheader["dim"][4] = aliasedcorrelationpts
             theheader["toffset"] = 0.0
             theheader["pixdim"][4] = thealiasedcorrx[1] - thealiasedcorrx[0]
@@ -1684,7 +1684,7 @@ def happy_main(argparsingfunc):
         risediff = (maxphase - minphase) * vesselmask
         arteries = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmask, 0)
         veins = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmask, 0)
-        theheader = copy.deepcopy(input_data.nim_hdr)
+        theheader = input_data.getheader()
         theheader["dim"][4] = 1
         if thispass == numpasses - 1:
             vesselmaskfilename = outputroot + "_desc-vessels_mask"
@@ -1760,7 +1760,7 @@ def happy_main(argparsingfunc):
                 cardiacnoise_byslice[validlocs, theslice, t] = rawapp_byslice[
                     validlocs, theslice, phaseindices_byslice[validlocs, theslice, t]
                 ]
-        theheader = copy.deepcopy(input_data.nim_hdr)
+        theheader = input_data.getheader()
         timings.append(["Cardiac signal generated", time.time(), None, None])
         if args.savecardiacnoise:
             cardiacnoisefilename = outputroot + "_desc-cardiacnoise_info"
@@ -1824,7 +1824,7 @@ def happy_main(argparsingfunc):
             tide_io.writevec(fitcoffs, outputroot + "_fitcoff.txt")
             tide_io.writevec(meanvals, outputroot + "_fitmean.txt")
             tide_io.writevec(rvals, outputroot + "_fitR.txt")
-            theheader = copy.deepcopy(input_data.nim_hdr)
+            theheader = input_data.getheader()
             cardfiltresultfilename = outputroot + "_desc-cardfiltResult_bold"
             cardfiltremovedfilename = outputroot + "_desc-cardfiltRemoved_bold"
             tide_io.savetonifti(
@@ -1883,7 +1883,7 @@ def happy_main(argparsingfunc):
                     "voxels",
                 ]
             )
-            theheader = copy.deepcopy(input_data.nim_hdr)
+            theheader = input_data.getheader()
             theheader["dim"][4] = 1
             cardfiltcoeffsfilename = outputroot + "_desc-cardfiltCoeffs_map"
             cardfiltmeanfilename = outputroot + "_desc-cardfiltMean_map"
@@ -1902,7 +1902,7 @@ def happy_main(argparsingfunc):
                 rvals.reshape((xsize, ysize, numslices)), theheader, cardfiltRfilename
             )
 
-            theheader = copy.deepcopy(input_data.nim_hdr)
+            theheader = input_data.getheader()
             cardfiltresultfilename = outputroot + "_desc-cardfiltResult_bold"
             cardfiltremovedfilename = outputroot + "_desc-cardfiltRemoved_bold"
             tide_io.savetonifti(
