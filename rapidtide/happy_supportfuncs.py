@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2018-2024 Blaise Frederick
+#   Copyright 2018-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -134,6 +134,27 @@ def calc_3d_optical_flow(video, projmask, flowhdr, outputroot, window_size=3, de
     return flow_vectors
 
 
+def phasejolt(phaseimage):
+
+    # Compute the gradient of the window in x, y, and z directions
+    grad_x, grad_y, grad_z = np.gradient(phaseimage)
+
+    # Now compute the second order gradients of the window in x, y, and z directions
+    grad_xx, grad_xy, grad_xz = np.gradient(grad_x)
+    grad_yx, grad_yy, grad_yz = np.gradient(grad_y)
+    grad_zx, grad_zy, grad_zz = np.gradient(grad_z)
+
+    # Calculate our metrics of interest
+    jump = (np.fabs(grad_x) + np.fabs(grad_y) + np.fabs(grad_z)) / 3.0
+    jolt = (
+        (np.fabs(grad_xx) + np.fabs(grad_xy) + np.fabs(grad_xz))
+        + (np.fabs(grad_yx) + np.fabs(grad_yy) + np.fabs(grad_yz))
+        + (np.fabs(grad_zx) + np.fabs(grad_zy) + np.fabs(grad_zz))
+    ) / 9.0
+    laplacian = grad_xx + grad_yy + grad_zz
+    return (jump, jolt, laplacian)
+
+
 def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
     total = 0.0
     if phases is None:
@@ -145,7 +166,7 @@ def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
 
 def cardiacfromimage(
     normdata_byslice,
-    estmask_byslice,
+    estweights_byslice,
     numslices,
     timepoints,
     tr,
@@ -182,7 +203,7 @@ def cardiacfromimage(
 
     # make sure there is an appflips array
     if appflips_byslice is None:
-        appflips_byslice = estmask_byslice * 0.0 + 1.0
+        appflips_byslice = estweights_byslice * 0.0 + 1.0
     else:
         if arteriesonly:
             appflips_byslice[np.where(appflips_byslice > 0.0)] = 0.0
@@ -196,22 +217,22 @@ def cardiacfromimage(
     if not verbose:
         print("Averaging slices...")
     if fliparteries:
-        thismask_byslice = appflips_byslice.astype(np.int64) * estmask_byslice
+        theseweights_byslice = appflips_byslice.astype(np.float64) * estweights_byslice
     else:
-        thismask_byslice = estmask_byslice
+        theseweights_byslice = estweights_byslice
     for theslice in range(numslices):
         if verbose:
             print("Averaging slice", theslice)
         if usemask:
-            validestvoxels = np.where(np.abs(thismask_byslice[:, theslice]) > 0)[0]
+            validestvoxels = np.where(np.abs(theseweights_byslice[:, theslice]) > 0)[0]
         else:
-            validestvoxels = np.where(np.abs(thismask_byslice[:, theslice] >= 0))[0]
+            validestvoxels = np.where(np.abs(theseweights_byslice[:, theslice] >= 0))[0]
         if len(validestvoxels) > 0:
             if madnorm:
                 sliceavs[theslice, :], slicenorms[theslice] = tide_math.madnormalize(
                     np.mean(
                         normdata_byslice[validestvoxels, theslice, :]
-                        * thismask_byslice[validestvoxels, theslice, np.newaxis],
+                        * theseweights_byslice[validestvoxels, theslice, np.newaxis],
                         axis=0,
                     ),
                     returnnormfac=True,
@@ -219,7 +240,7 @@ def cardiacfromimage(
             else:
                 sliceavs[theslice, :] = np.mean(
                     normdata_byslice[validestvoxels, theslice, :]
-                    * thismask_byslice[validestvoxels, theslice, np.newaxis],
+                    * theseweights_byslice[validestvoxels, theslice, np.newaxis],
                     axis=0,
                 )
                 slicenorms[theslice] = 1.0
@@ -267,6 +288,11 @@ def cardiacfromimage(
         cycleaverage,
         slicenorms,
     )
+
+
+def theCOM(X, data):
+    # return the center of mass
+    return np.sum(X * data) / np.sum(data)
 
 
 def savgolsmooth(data, smoothlen=101, polyorder=3):
@@ -509,6 +535,29 @@ def approximateentropy(waveform, m, r):
     return abs(_phi(m + 1) - _phi(m))
 
 
+def summarizerun(theinfodict, getkeys=False):
+    keylist = [
+        "corrcoeff_raw2pleth",
+        "corrcoeff_filt2pleth",
+        "E_sqi_mean_pleth",
+        "E_sqi_mean_bold",
+        "S_sqi_mean_pleth",
+        "S_sqi_mean_bold",
+        "K_sqi_mean_pleth",
+        "K_sqi_mean_bold",
+    ]
+    if getkeys:
+        return ",".join(keylist)
+    else:
+        outputline = []
+        for thekey in keylist:
+            try:
+                outputline.append(str(theinfodict[thekey]))
+            except KeyError:
+                outputline.append("")
+        return ",".join(outputline)
+
+
 def entropy(waveform):
     return -np.sum(np.square(waveform) * np.nan_to_num(np.log2(np.square(waveform))))
 
@@ -606,17 +655,23 @@ def calcplethquality(
         E_waveform[i] = approximateentropy(dt_waveform[startpt : endpt + 1], 2, r)
 
     S_sqi_mean = np.mean(S_waveform)
+    S_sqi_median = np.median(S_waveform)
     S_sqi_std = np.std(S_waveform)
     K_sqi_mean = np.mean(K_waveform)
+    K_sqi_median = np.median(K_waveform)
     K_sqi_std = np.std(K_waveform)
     E_sqi_mean = np.mean(E_waveform)
+    E_sqi_median = np.median(E_waveform)
     E_sqi_std = np.std(E_waveform)
 
     infodict["S_sqi_mean" + suffix] = S_sqi_mean
+    infodict["S_sqi_median" + suffix] = S_sqi_median
     infodict["S_sqi_std" + suffix] = S_sqi_std
     infodict["K_sqi_mean" + suffix] = K_sqi_mean
+    infodict["K_sqi_median" + suffix] = K_sqi_median
     infodict["K_sqi_std" + suffix] = K_sqi_std
     infodict["E_sqi_mean" + suffix] = E_sqi_mean
+    infodict["E_sqi_median" + suffix] = E_sqi_median
     infodict["E_sqi_std" + suffix] = E_sqi_std
 
     if outputlevel > 1:
@@ -1241,6 +1296,8 @@ def phaseproject(
         normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
             app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
         )
+    return app, rawapp, corrected_rawapp, normapp, weights, cine, derivatives
+
 
 def upsampleimage(input_data, input_hdr, numsteps, sliceoffsets, slicesamplerate, outputroot):
     fmri_data = input_data.byvol()
@@ -1252,9 +1309,7 @@ def upsampleimage(input_data, input_hdr, numsteps, sliceoffsets, slicesamplerate
     # allocate the image
     print(f"upsampling fmri data by a factor of {numsteps}")
     upsampleimage = np.zeros((xsize, ysize, numslices, numsteps * timepoints), dtype=float)
-    upsampleimage_byslice = upsampleimage.reshape(
-        xsize * ysize, numslices, numsteps * timepoints
-    )
+    upsampleimage_byslice = upsampleimage.reshape(xsize * ysize, numslices, numsteps * timepoints)
 
     # demean the raw data
     meanfmri = fmri_data.mean(axis=1)
@@ -1263,7 +1318,7 @@ def upsampleimage(input_data, input_hdr, numsteps, sliceoffsets, slicesamplerate
     # drop in the raw data
     for theslice in range(numslices):
         upsampleimage[
-        :, :, theslice, sliceoffsets[theslice]: timepoints * numsteps: numsteps
+            :, :, theslice, sliceoffsets[theslice] : timepoints * numsteps : numsteps
         ] = demeaned_data.reshape((xsize, ysize, numslices, timepoints))[:, :, theslice, :]
 
     upsampleimage_byslice = upsampleimage.reshape(xsize * ysize, numslices, timepoints * numsteps)

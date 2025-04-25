@@ -1,6 +1,6 @@
 [build-system]
-requires = ['setuptools>=42', 'cffi>=1.0.0', 'versioneer[toml]']
-build-backend = 'setuptools.build_meta'
+requires = ['setuptools>=42', 'cffi>=1.0.0', 'versioneer[toml]==0.29']
+build-backend = "setuptools.build_meta"
 
 [project]
 name = 'rapidtide'
@@ -29,20 +29,19 @@ dependencies = [
   'scikit-learn',
   'nibabel',
   'nilearn',
-  'matplotlib>=3.3.0',
-  'pyqtgraph>=0.13.4',
+  'matplotlib >= 3.3.0',
+  'pyqtgraph >= 0.13.4',
   'pyqt6-sip',
   'pyqt6',
   'requests',
   'statsmodels',
   'pywavelets',
-  'tensorflow>=2.10.0',
+  'tensorflow >= 2.10.0',
   'tf-keras',
   'tqdm',
   'versioneer',
 ]
-#dynamic = ['version', 'license', 'keywords']
-dynamic = ['version']
+dynamic = ["version"]
 authors = [
     {name = 'Blaise deB. Frederick', email='blaise.frederick@gmail.com'},
     {name = 'Taylor Salo'},
@@ -89,6 +88,7 @@ calcicc = 'rapidtide.scripts.calcicc:entrypoint'
 calctexticc = 'rapidtide.scripts.calctexticc:entrypoint'
 calcttest = 'rapidtide.scripts.calcttest:entrypoint'
 ccorrica = 'rapidtide.scripts.ccorrica:entrypoint'
+delayvar = 'rapidtide.scripts.delayvar:entrypoint'
 diffrois = 'rapidtide.scripts.diffrois:entrypoint'
 endtidalproc = 'rapidtide.scripts.endtidalproc:entrypoint'
 fdica = 'rapidtide.scripts.fdica:entrypoint'
@@ -96,13 +96,13 @@ filtnifti = 'rapidtide.scripts.filtnifti:entrypoint'
 filttc = 'rapidtide.scripts.filttc:entrypoint'
 fingerprint = 'rapidtide.scripts.fingerprint:entrypoint'
 fixtr = 'rapidtide.scripts.fixtr:entrypoint'
-glmfilt = 'rapidtide.scripts.glmfilt:entrypoint'
 gmscalc = 'rapidtide.scripts.gmscalc:entrypoint'
 happy = 'rapidtide.scripts.happy:entrypoint'
 happy2std = 'rapidtide.scripts.happy2std:entrypoint'
 happywarp = 'rapidtide.scripts.happywarp:entrypoint'
 histnifti = 'rapidtide.scripts.histnifti:entrypoint'
 histtc = 'rapidtide.scripts.histtc:entrypoint'
+linfitfilt = 'rapidtide.scripts.linfitfilt:entrypoint'
 localflow = 'rapidtide.scripts.localflow:entrypoint'
 mergequality = 'rapidtide.scripts.mergequality:entrypoint'
 pairproc = 'rapidtide.scripts.pairproc:entrypoint'
@@ -117,7 +117,7 @@ rapidtide = 'rapidtide.scripts.rapidtide:entrypoint'
 rapidtide2std = 'rapidtide.scripts.rapidtide2std:entrypoint'
 resamplenifti = 'rapidtide.scripts.resamplenifti:entrypoint'
 resampletc = 'rapidtide.scripts.resampletc:entrypoint'
-retroglm = 'rapidtide.scripts.retroglm:entrypoint'
+retroregress = 'rapidtide.scripts.retroregress:entrypoint'
 retrolagtcs = 'rapidtide.scripts.retrolagtcs:entrypoint'
 roisummarize = 'rapidtide.scripts.roisummarize:entrypoint'
 runqualitycheck = 'rapidtide.scripts.runqualitycheck:entrypoint'

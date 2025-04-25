@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.fit as tide_fit
-import rapidtide.glmpass as tide_glmpass
 import rapidtide.io as tide_io
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
 from rapidtide.tests.utils import mse
 
 
@@ -132,7 +132,7 @@ def test_motionregress(debug=False, displayplots=False):
                 numprocitems = thedataarray.shape[0]
                 filtereddata = thedataarray * 0.0
                 r2value = np.zeros(numprocitems)
-                dummy = tide_glmpass.glmpass(
+                dummy = tide_linfitfiltpass.linfitfiltpass(
                     numprocitems,
                     thedataarray,
                     None,
@@ -144,7 +144,7 @@ def test_motionregress(debug=False, displayplots=False):
                     None,
                     None,
                     filtereddata,
-                    confoundglm=True,
+                    confoundregress=True,
                     nprocs=1,
                     showprogressbar=debug,
                     procbyvoxel=True,

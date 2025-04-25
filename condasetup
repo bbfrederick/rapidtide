@@ -1,11 +1,12 @@
 #!/bin/bash
 
-conda create --name mic python==3.12
-conda activate mic
+conda create --name micfix "python<3.13"
+conda init
+conda activate micfix
 mamba install \
     numpy \
     scipy \
-    matplotlib>=3.3.0 \
+    "matplotlib>=3.3.0" \
     pandas \
     pyarrow \
     statsmodels \
@@ -17,7 +18,7 @@ mamba install \
     pywavelets \
     pyqt6 \
     pyqt6-sip \
-    pyqtgraph>=0.13.4 \
+    "pyqtgraph>=0.13.4" \
     tqdm
 
 mamba install tensorflow keras

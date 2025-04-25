@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#   "Output level", "Motion regression", "GLM?", "Refinement?", "Derivatives", "Size in bytes"
+#   "Output level", "Motion regression", "sLFO filtering?", "Refinement?", "Derivatives", "Size in bytes"
 #   "min", "No", "No", "", "13M"
 #   "min", "Yes", "No", "", "15M"
 #   "min", "No", "Yes", "0", "1.1G"
@@ -19,33 +19,33 @@
 #   "max", "No", "Yes", "1", "5.2G"
 
 
-echo '"Output level", "Motion regression", "GLM?", "Derivatives", "Size in bytes"'			>  outputsizes.txt
+echo '"Output level", "Motion regression", "sLFO filtering?", "Derivatives", "Size in bytes"'		>  outputsizes.txt
 echo '"min", "No", "No", "", "'`du -sh ../dst/nomotregress/min | awk '{print $1}'`'"'			>> outputsizes.txt
 echo '"min", "Yes", "No", "", "'`du -sh ../dst/motregress/min  | awk '{print $1}'`'"'			>> outputsizes.txt
-echo '"min", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/minglm0  | awk '{print $1}'`'"'		>> outputsizes.txt
-echo '"min", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/minglm1  | awk '{print $1}'`'"'		>> outputsizes.txt
+echo '"min", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/minslfofilt0  | awk '{print $1}'`'"'	>> outputsizes.txt
+echo '"min", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/minslfofilt1  | awk '{print $1}'`'"'	>> outputsizes.txt
 
 echo '"less", "No", "No", "", "'`du -sh ../dst/nomotregress/less | awk '{print $1}'`'"'			>> outputsizes.txt
 echo '"less", "Yes", "No", "", "'`du -sh ../dst/motregress/less  | awk '{print $1}'`'"'			>> outputsizes.txt
-echo '"less", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/lessglm0  | awk '{print $1}'`'"'		>> outputsizes.txt
-echo '"less", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/lessglm1  | awk '{print $1}'`'"'		>> outputsizes.txt
+echo '"less", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/lessslfofilt0  | awk '{print $1}'`'"'	>> outputsizes.txt
+echo '"less", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/lessslfofilt1  | awk '{print $1}'`'"'	>> outputsizes.txt
 
 echo '"less", "No", "No", "", "'`du -sh ../dst/nomotregress/less | awk '{print $1}'`'"'			>> outputsizes.txt
 echo '"less", "Yes", "No", "", "'`du -sh ../dst/motregress/less  | awk '{print $1}'`'"'			>> outputsizes.txt
-echo '"less", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/lessglm0  | awk '{print $1}'`'"'		>> outputsizes.txt
-echo '"less", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/lessglm1  | awk '{print $1}'`'"'		>> outputsizes.txt
+echo '"less", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/lessslfofilt0  | awk '{print $1}'`'"'	>> outputsizes.txt
+echo '"less", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/lessslfofilt1  | awk '{print $1}'`'"'	>> outputsizes.txt
 
 echo '"normal", "No", "No", "", "'`du -sh ../dst/nomotregress/normal | awk '{print $1}'`'"'		>> outputsizes.txt
 echo '"normal", "Yes", "No", "", "'`du -sh ../dst/motregress/normal  | awk '{print $1}'`'"'		>> outputsizes.txt
-echo '"normal", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/normalglm0  | awk '{print $1}'`'"'	>> outputsizes.txt
-echo '"normal", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/normalglm1  | awk '{print $1}'`'"'	>> outputsizes.txt
+echo '"normal", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/normalslfofilt0  | awk '{print $1}'`'"'	>> outputsizes.txt
+echo '"normal", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/normalslfofilt1  | awk '{print $1}'`'"'	>> outputsizes.txt
 
 echo '"more", "No", "No", "", "'`du -sh ../dst/nomotregress/more | awk '{print $1}'`'"'			>> outputsizes.txt
 echo '"more", "Yes", "No", "", "'`du -sh ../dst/motregress/more  | awk '{print $1}'`'"'			>> outputsizes.txt
-echo '"more", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/moreglm0  | awk '{print $1}'`'"'		>> outputsizes.txt
-echo '"more", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/moreglm1  | awk '{print $1}'`'"'		>> outputsizes.txt
+echo '"more", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/moreslfofilt0  | awk '{print $1}'`'"'	>> outputsizes.txt
+echo '"more", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/moreslfofilt1  | awk '{print $1}'`'"'	>> outputsizes.txt
 
 echo '"max", "No", "No", "", "'`du -sh ../dst/nomotregress/max | awk '{print $1}'`'"'			>> outputsizes.txt
 echo '"max", "Yes", "No", "", "'`du -sh ../dst/motregress/max  | awk '{print $1}'`'"'			>> outputsizes.txt
-echo '"max", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/maxglm0  | awk '{print $1}'`'"'		>> outputsizes.txt
-echo '"max", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/maxglm1  | awk '{print $1}'`'"'		>> outputsizes.txt
+echo '"max", "No", "Yes", "0", "'`du -sh ../dst/nomotregress/maxslfofilt0  | awk '{print $1}'`'"'	>> outputsizes.txt
+echo '"max", "No", "Yes", "1", "'`du -sh ../dst/nomotregress/maxslfofilt1  | awk '{print $1}'`'"'	>> outputsizes.txt

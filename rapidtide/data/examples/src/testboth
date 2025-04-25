@@ -10,7 +10,7 @@ rapidtide \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST
 
-retroglm \
+retroregress \
     --nprocs -1 \
     --alternateoutput ../dst/sub-RETROTEST_refined \
     --makepseudofile \

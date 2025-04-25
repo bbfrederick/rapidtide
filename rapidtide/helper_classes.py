@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -691,6 +691,7 @@ class SimilarityFunctionFitter:
     FML_FITWIDTHHIGH = np.uint32(0x0800)
     FML_FITLAGLOW = np.uint32(0x1000)
     FML_FITLAGHIGH = np.uint32(0x2000)
+    FML_FITALGOFAIL = np.uint32(0x0400)
     FML_FITFAIL = (
         FML_FITAMPLOW
         | FML_FITAMPHIGH
@@ -698,6 +699,7 @@ class SimilarityFunctionFitter:
         | FML_FITWIDTHHIGH
         | FML_FITLAGLOW
         | FML_FITLAGHIGH
+        | FML_FITALGOFAIL
     )
 
     def __init__(
@@ -873,6 +875,8 @@ class SimilarityFunctionFitter:
             reasons.append("Fit Lag too low")
         if failreason.astype(np.uint32) & self.FML_FITLAGHIGH:
             reasons.append("Fit Lag too high")
+        if failreason.astype(np.uint32) & self.FML_FITALGOFAIL:
+            reasons.append("Nonlinear fit failed")
 
         if len(reasons) > 0:
             return ", ".join(reasons)
@@ -1119,6 +1123,7 @@ class SimilarityFunctionFitter:
                     maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
                     maxsigma = plsq[2]
                 except:
+                    failreason |= self.FML_FITALGOFAIL
                     maxval = np.float64(0.0)
                     maxlag = np.float64(0.0)
                     maxsigma = np.float64(0.0)
@@ -1139,6 +1144,7 @@ class SimilarityFunctionFitter:
                     maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
                     maxsigma = plsq[2]
                 except:
+                    failreason |= self.FML_FITALGOFAIL
                     maxval = np.float64(0.0)
                     maxlag = np.float64(0.0)
                     maxsigma = np.float64(0.0)
@@ -1173,6 +1179,7 @@ class SimilarityFunctionFitter:
                         print("poly coffs:", a, b, c)
                         print("maxlag, maxval, maxsigma:", maxlag, maxval, maxsigma)
                 except np.lib.polynomial.RankWarning:
+                    failreason |= self.FML_FITALGOFAIL
                     maxlag = 0.0
                     maxval = 0.0
                     maxsigma = 0.0
@@ -1219,6 +1226,7 @@ class SimilarityFunctionFitter:
                 # different rules for mutual information peaks
                 if ((maxval - baseline) < self.lthreshval * baselinedev) or (maxval < baseline):
                     failreason |= self.FML_FITAMPLOW
+                    maxval_init = 0.0
                     if self.debug:
                         if (maxval - baseline) < self.lthreshval * baselinedev:
                             print(
@@ -1229,7 +1237,6 @@ class SimilarityFunctionFitter:
                             )
                         if maxval < baseline:
                             print("FITAMPLOW: maxval < baseline:", maxval, baseline)
-                    maxval_init = 0.0
                     if self.debug:
                         print("bad fit amp: maxval is lower than lower limit")
             if (self.lagmin > maxlag) or (maxlag > self.lagmax):
@@ -1269,6 +1276,8 @@ class SimilarityFunctionFitter:
             maxsigma = np.float64(maxsigma_init)
             if failreason != self.FML_NOERROR:
                 maskval = np.uint16(0)
+            else:
+                maskval = np.uint16(1)
 
         if self.debug or self.displayplots:
             print(

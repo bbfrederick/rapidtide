@@ -1,0 +1,9 @@
+#!/bin/bash
+
+pyuic5 tidepoolTemplate.ui > tidepoolTemplate.py
+pyuic5 tidepoolTemplate_alt.ui > tidepoolTemplate_alt.py
+pyuic5 tidepoolTemplate_big.ui > tidepoolTemplate_big.py
+
+pyuic6 tidepoolTemplate.ui > tidepoolTemplate_qt6.py
+pyuic6 tidepoolTemplate_alt.ui > tidepoolTemplate_alt_qt6.py
+pyuic6 tidepoolTemplate_big.ui > tidepoolTemplate_big_qt6.py

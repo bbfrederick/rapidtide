@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1373</width>
-    <height>815</height>
+    <width>1375</width>
+    <height>805</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>256</width>
-    <height>256</height>
+    <width>1375</width>
+    <height>805</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>1400</width>
-    <height>16777215</height>
+    <width>1375</width>
+    <height>805</height>
    </size>
   </property>
   <property name="sizeIncrement">
@@ -83,7 +83,7 @@
      <item row="2" column="2">
       <layout class="QGridLayout" name="gridLayout_2">
        <property name="sizeConstraint">
-        <enum>QLayout::SetMaximumSize</enum>
+        <enum>QLayout::SizeConstraint::SetMaximumSize</enum>
        </property>
        <item row="0" column="1">
         <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -91,7 +91,7 @@
           <number>0</number>
          </property>
          <property name="sizeConstraint">
-          <enum>QLayout::SetFixedSize</enum>
+          <enum>QLayout::SizeConstraint::SetFixedSize</enum>
          </property>
          <property name="topMargin">
           <number>5</number>
@@ -102,7 +102,7 @@
          <item>
           <widget class="QDoubleSpinBox" name="dispmax_doubleSpinBox">
            <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
            </property>
            <property name="decimals">
             <number>3</number>
@@ -152,7 +152,7 @@
          <item>
           <widget class="QDoubleSpinBox" name="dispmin_doubleSpinBox">
            <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
            </property>
            <property name="decimals">
             <number>3</number>
@@ -201,7 +201,7 @@
           </size>
          </property>
          <property name="resizeAnchor">
-          <enum>QGraphicsView::AnchorViewCenter</enum>
+          <enum>QGraphicsView::ViewportAnchor::AnchorViewCenter</enum>
          </property>
         </widget>
        </item>
@@ -211,7 +211,7 @@
           <number>0</number>
          </property>
          <property name="sizeConstraint">
-          <enum>QLayout::SetMinimumSize</enum>
+          <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
          </property>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -482,10 +482,10 @@
         </size>
        </property>
        <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+        <enum>QFrame::Shape::NoFrame</enum>
        </property>
        <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <set>Qt::AlignmentFlag::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -516,10 +516,10 @@
         </size>
        </property>
        <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+        <enum>QFrame::Shape::NoFrame</enum>
        </property>
        <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <set>Qt::AlignmentFlag::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -550,13 +550,13 @@
         </size>
        </property>
        <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+        <enum>QFrame::Shape::NoFrame</enum>
        </property>
        <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <set>Qt::AlignmentFlag::AlignCenter</set>
        </property>
        <property name="viewportUpdateMode">
-        <enum>QGraphicsView::SmartViewportUpdate</enum>
+        <enum>QGraphicsView::ViewportUpdateMode::SmartViewportUpdate</enum>
        </property>
       </widget>
      </item>
@@ -608,6 +608,7 @@
      </property>
      <property name="font">
       <font>
+       <family>.AppleSystemUIFont</family>
        <pointsize>10</pointsize>
       </font>
      </property>
@@ -646,10 +647,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QRadioButton" name="overlay_radioButton_01">
@@ -663,6 +664,7 @@
      </property>
      <property name="font">
       <font>
+       <family>.AppleSystemUIFont</family>
        <pointsize>10</pointsize>
       </font>
      </property>
@@ -687,6 +689,7 @@
      </property>
      <property name="font">
       <font>
+       <family>.AppleSystemUIFont</family>
        <pointsize>10</pointsize>
       </font>
      </property>
@@ -708,6 +711,7 @@
      </property>
      <property name="font">
       <font>
+       <family>.AppleSystemUIFont</family>
        <pointsize>10</pointsize>
       </font>
      </property>
@@ -729,6 +733,7 @@
      </property>
      <property name="font">
       <font>
+       <family>.AppleSystemUIFont</family>
        <pointsize>10</pointsize>
       </font>
      </property>
@@ -772,6 +777,7 @@
      </property>
      <property name="font">
       <font>
+       <family>.AppleSystemUIFont</family>
        <pointsize>10</pointsize>
       </font>
      </property>
@@ -793,6 +799,7 @@
      </property>
      <property name="font">
       <font>
+       <family>.AppleSystemUIFont</family>
        <pointsize>10</pointsize>
       </font>
      </property>
@@ -814,6 +821,7 @@
      </property>
      <property name="font">
       <font>
+       <family>.AppleSystemUIFont</family>
        <pointsize>10</pointsize>
       </font>
      </property>
@@ -852,10 +860,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="GraphicsLayoutWidget" name="overlay_graphicsView_06">
@@ -886,10 +894,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="GraphicsLayoutWidget" name="overlay_graphicsView_03">
@@ -920,10 +928,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="GraphicsLayoutWidget" name="overlay_graphicsView_08">
@@ -954,10 +962,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="GraphicsLayoutWidget" name="overlay_graphicsView_05">
@@ -988,10 +996,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="GraphicsLayoutWidget" name="overlay_graphicsView_02">
@@ -1022,10 +1030,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="GraphicsLayoutWidget" name="overlay_graphicsView_07">
@@ -1056,10 +1064,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <zorder>overlay_graphicsView_04</zorder>
@@ -1184,7 +1192,7 @@
       </rect>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="decimals">
       <number>0</number>
@@ -1218,7 +1226,7 @@
       </rect>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="decimals">
       <number>3</number>
@@ -1252,7 +1260,7 @@
       </rect>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="decimals">
       <number>0</number>
@@ -1268,7 +1276,7 @@
       </rect>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="decimals">
       <number>3</number>
@@ -1284,7 +1292,7 @@
       </rect>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="decimals">
       <number>0</number>
@@ -1300,7 +1308,7 @@
       </rect>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="decimals">
       <number>3</number>
@@ -1342,7 +1350,7 @@
       </rect>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="decimals">
       <number>3</number>
@@ -1358,7 +1366,7 @@
       </rect>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="decimals">
       <number>0</number>
@@ -1387,7 +1395,7 @@
       </rect>
      </property>
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
     </widget>
     <widget class="QLabel" name="label_10">
@@ -1654,7 +1662,7 @@
        <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -1685,7 +1693,7 @@
       <string>Timecourse (seconds)</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
     <widget class="QLabel" name="label_12">
@@ -1706,7 +1714,7 @@
       <string>Power spectrum (Hz)</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
     </widget>
    </widget>
@@ -1756,7 +1764,9 @@
      </property>
      <property name="font">
       <font>
-       <family>Courier</family>
+       <family>Courier New</family>
+       <pointsize>11</pointsize>
+       <bold>true</bold>
       </font>
      </property>
     </widget>
@@ -1838,8 +1848,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1373</width>
-     <height>22</height>
+     <width>1375</width>
+     <height>24</height>
     </rect>
    </property>
   </widget>

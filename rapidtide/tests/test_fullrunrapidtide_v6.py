@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -24,15 +24,23 @@ import matplotlib as mpl
 import rapidtide.io as tide_io
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-import rapidtide.workflows.retroglm as rapidtide_retroglm
+import rapidtide.workflows.retroregress as rapidtide_retroregress
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
-def test_fullrunrapidtide_v6(debug=False, displayplots=False):
+def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     # run rapidtide
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--spatialfilt",
         "2",
         "--simcalcrange",
@@ -44,7 +52,7 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "1",
         "--despecklepasses",
         "3",
-        "--glmderivs",
+        "--regressderivs",
         "0",
         "--delaypatchthresh",
         "4.0",
@@ -54,59 +62,59 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
-        os.path.join(get_test_temp_path(), "2deriv"),
+        os.path.join(testtemproot, "2deriv"),
         "--nprocs",
         "-1",
-        "--glmderivs",
+        "--regressderivs",
         "2",
         "--makepseudofile",
         "--outputlevel",
         "max",
     ]
-    rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
-        os.path.join(get_test_temp_path(), "1deriv_refined_corrected"),
+        os.path.join(testtemproot, "1deriv_refined_corrected"),
         "--nprocs",
         "1",
-        "--glmderivs",
+        "--regressderivs",
         "1",
         "--makepseudofile",
         "--outputlevel",
         "max",
         "--nofilterwithrefineddelay",
     ]
-    rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     inputargs = [
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz"),
-        os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST6"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
-        os.path.join(get_test_temp_path(), "concordance"),
+        os.path.join(testtemproot, "concordance"),
         "--nprocs",
         "-1",
-        "--glmderivs",
+        "--regressderivs",
         "0",
         "--delaypatchthresh",
         "4.0",
         "--outputlevel",
         "max",
     ]
-    rapidtide_retroglm.retroglm(rapidtide_retroglm.process_args(inputargs=inputargs))
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     absthresh = 1e-10
     msethresh = 1e-12
     spacetolerance = 1e-3
     for map in [
-        "glmderivratios",
-        "medfiltglmderivratios",
-        "filteredglmderivratios",
+        "regressderivratios",
+        "medfiltregressderivratios",
+        "filteredregressderivratios",
         "maxtimerefined",
         "lfofilterInbandVarianceBefore",
         "lfofilterInbandVarianceAfter",
@@ -118,8 +126,8 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
         "lfofilterR",
     ]:
         print(f"Testing map={map}")
-        filename1 = os.path.join(get_test_temp_path(), f"sub-RAPIDTIDETEST6_desc-{map}_map.nii.gz")
-        filename2 = os.path.join(get_test_temp_path(), f"concordance_desc-{map}_map.nii.gz")
+        filename1 = os.path.join(testtemproot, f"sub-RAPIDTIDETEST6_desc-{map}_map.nii.gz")
+        filename2 = os.path.join(testtemproot, f"concordance_desc-{map}_map.nii.gz")
         assert tide_io.checkniftifilematch(
             filename1,
             filename2,
@@ -132,4 +140,4 @@ def test_fullrunrapidtide_v6(debug=False, displayplots=False):
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_fullrunrapidtide_v6(debug=True, displayplots=True)
+    test_fullrunrapidtide_v6(debug=True, local=True, displayplots=True)

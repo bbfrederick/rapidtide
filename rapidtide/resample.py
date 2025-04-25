@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -327,6 +327,9 @@ class FastResampler:
             pl.plot(timeaxis, timecourse, self.hires_x, self.hires_y)
             pl.legend(("input", "hires"))
             pl.show()
+
+    def getdata(self):
+        return self.timeaxis, self.timecourse, self.hires_x, self.hires_y, 1.0 / self.initstep
 
     def info(self, prefix=""):
         print(f"{prefix}{self.timeaxis=}")

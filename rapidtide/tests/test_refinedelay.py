@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ def eval_refinedelay(
     padtime = sampletime * numpadtrs
     lagtcgenerator = tide_resample.FastResampler(timeaxis, sLFO, padtime=padtime)
 
-    # find the mapping of glm ratios to delays
+    # find the mapping of derivative ratios to delays
     tide_refinedelay.trainratiotooffset(
         lagtcgenerator,
         timeaxis,
@@ -135,7 +135,7 @@ def eval_refinedelay(
 
     rt_floattype = "float64"
     rt_floatset = np.float64
-    glmmean = np.zeros(numlags, dtype=rt_floattype)
+    sLFOfitmean = np.zeros(numlags, dtype=rt_floattype)
     rvalue = np.zeros(numlags, dtype=rt_floattype)
     r2value = np.zeros(numlags, dtype=rt_floattype)
     fitNorm = np.zeros((numlags, 2), dtype=rt_floattype)
@@ -144,20 +144,19 @@ def eval_refinedelay(
     lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
     optiondict = {
-        "glmthreshval": 0.0,
-        "saveminimumglmfiles": False,
+        "regressfiltthreshval": 0.0,
+        "saveminimumsLFOfiltfiles": False,
         "nprocs_makelaggedtcs": 1,
-        "nprocs_glm": 1,
+        "nprocs_regressionfilt": 1,
         "mp_chunksize": 1000,
         "showprogressbar": False,
         "alwaysmultiproc": False,
-        "memprofile": False,
         "focaldebug": debug,
         "fmrifreq": Fs,
         "textio": False,
     }
 
-    glmderivratios = tide_refinedelay.getderivratios(
+    regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
         fmridata,
         validvoxels,
         timeaxis,
@@ -167,7 +166,7 @@ def eval_refinedelay(
         "glm",
         "refinedelaytest",
         sampletime,
-        glmmean,
+        sLFOfitmean,
         rvalue,
         r2value,
         fitNorm[:, :2],
@@ -181,8 +180,8 @@ def eval_refinedelay(
         debug=debug,
     )
 
-    medfilt, filteredglmderivratios, themad = tide_refinedelay.filterderivratios(
-        glmderivratios,
+    medfilt, filteredregressderivratios, themad = tide_refinedelay.filterderivratios(
+        regressderivratios,
         nativespaceshape,
         validvoxels,
         (xdim, ydim, slicedim),
@@ -193,9 +192,11 @@ def eval_refinedelay(
         debug=debug,
     )
 
-    delayoffset = filteredglmderivratios * 0.0
-    for i in range(filteredglmderivratios.shape[0]):
-        delayoffset[i] = tide_refinedelay.ratiotodelay(filteredglmderivratios[i])
+    delayoffset = filteredregressderivratios * 0.0
+    for i in range(filteredregressderivratios.shape[0]):
+        delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
+            filteredregressderivratios[i]
+        )
 
     # do the tests
     msethresh = 0.1

@@ -1,7 +1,8 @@
 #!/cm/shared/anaconda3/envs/tensorflowgpu/bin/python
 
-import tensorflow as tf
 import os
+
+import tensorflow as tf
 
 thisnode = os.uname().nodename
 print('thisnode:', thisnode)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -355,7 +355,7 @@ def savemaplist(
             themap,
             internalspaceshape,
             validvoxels,
-            outmaparray,
+            outmaparray.astype(themap.dtype),
             debug=False,
         )
 
@@ -1426,6 +1426,8 @@ def writebidstsv(
     extraheaderinfo=None,
     compressed=True,
     columns=None,
+    xaxislabel="time",
+    yaxislabel="arbitrary value",
     starttime=0.0,
     append=False,
     colsinjson=True,
@@ -1447,6 +1449,8 @@ def writebidstsv(
     :param samplerate:
     :param compressed:
     :param columns:
+    :param xaxislabel:
+    :param yaxislabel:
     :param starttime:
     :param append:
     :param colsinjson:
@@ -1462,6 +1466,8 @@ def writebidstsv(
         print("\tsamplerate:", samplerate)
         print("\tcompressed:", compressed)
         print("\tcolumns:", columns)
+        print("\txaxislabel:", xaxislabel)
+        print("\tyaxislabel:", yaxislabel)
         print("\tstarttime:", starttime)
         print("\tappend:", append)
     if len(data.shape) == 1:
@@ -1538,6 +1544,8 @@ def writebidstsv(
     headerdict = {}
     headerdict["SamplingFrequency"] = float(samplerate)
     headerdict["StartTime"] = float(starttime)
+    headerdict["XAxisLabel"] = xaxislabel
+    headerdict["YAxisLabel"] = yaxislabel
     if colsinjson:
         if startcol == 0:
             headerdict["Columns"] = columns
@@ -1991,8 +1999,11 @@ def colspectolist(colspec, debug=False):
         ("APARC_SUBCORTGRAY", "8-13,17-20,26-28,47-56,58-60,96,97"),
         ("APARC_CORTGRAY", "1000-1035,2000-2035"),
         ("APARC_GRAY", "8-13,17-20,26-28,47-56,58-60,96,97,1000-1035,2000-2035"),
-        ("APARC_WHITE", "2,7,41,46,177,219"),
-        ("APARC_ALLBUTCSF", "2,7-13,17-20,26-28,41,46-56,58-60,96,97,177,219,1000-1035,2000-2035"),
+        ("APARC_WHITE", "2,7,41,46,177,219,3000-3035,4000-4035,5001,5002"),
+        (
+            "APARC_ALLBUTCSF",
+            "2,7-13,17-20,26-28,41,46-56,58-60,96,97,177,219,1000-1035,2000-2035,3000-3035,4000-4035,5001,5002",
+        ),
         ("SSEG_GRAY", "3,8,10-13,16-18,26,42,47,49-54,58"),
         ("SSEG_WHITE", "2,7,41,46"),
     )

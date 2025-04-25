@@ -1,0 +1,22 @@
+#!/bin/bash
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --passes 1 \
+    --nodelayfit \
+    --focaldebug \
+    --dofinalrefine \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_firstpass
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --nodelayfit \
+    --regressor ../dst/sub-RAPIDTIDETEST_firstpass_desc-refinedmovingregressor_timeseries.json:filtered_pass1 \
+    --initialdelay ../dst/sub-RAPIDTIDETEST_firstpass_desc-maxtimerefined_map.nii.gz \
+    --dofinalrefine \
+    --passes 1 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_secondpass

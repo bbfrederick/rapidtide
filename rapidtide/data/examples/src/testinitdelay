@@ -1,0 +1,19 @@
+#!/bin/bash
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_defaultfilt
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    --regressor ../dst/sub-RAPIDTIDETEST_defaultfilt_desc-movingregressor_timeseries.json:pass3 \
+    --initialdelay ../dst/sub-RAPIDTIDETEST_defaultfilt_desc-maxtimerefined_map.nii.gz \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_startfromlast

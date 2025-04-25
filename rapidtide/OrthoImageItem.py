@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 """
 A widget for orthographically displaying 3 and 4 dimensional data
 """
-
-import copy
 import os
 
 import numpy as np
@@ -33,6 +31,14 @@ try:
     PILexists = True
 except ImportError:
     PILexists = False
+
+try:
+    from PyQt6.QtCore import QT_VERSION_STR
+except ImportError:
+    pyqtversion = 5
+else:
+    pyqtversion = 6
+print(f"using {pyqtversion=}")
 
 
 def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
@@ -68,7 +74,16 @@ def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
     return thecolorbarfgwin, thecolorbarbgwin, theviewbox, colorbarvals
 
 
-def newViewWindow(view, left, top, impixpervoxx, impixpervoxy, imgsize, enableMouse=False):
+def setupViewWindow(
+    view,
+    left,
+    top,
+    impixpervoxx,
+    impixpervoxy,
+    imgsize,
+    enableMouse=False,
+):
+
     theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
     theviewbox.setAspectLocked()
     theviewbox.setRange(QtCore.QRectF(0, 0, imgsize, imgsize), padding=0.0, disableAutoRange=True)
@@ -146,6 +161,17 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.offsetx = self.imgsize * (0.5 - self.xfov / (2.0 * self.maxfov))
         self.offsety = self.imgsize * (0.5 - self.yfov / (2.0 * self.maxfov))
         self.offsetz = self.imgsize * (0.5 - self.zfov / (2.0 * self.maxfov))
+        self.axviewbox = None
+        self.corviewbox = None
+        self.sagviewbox = None
+        self.axviewwin = None
+        self.corviewwin = None
+        self.sagviewwin = None
+        self.axviewbgwin = None
+        self.corviewbgwin = None
+        self.sagviewbgwin = None
+        self.debug = True
+        self.arrangement = arrangement
 
         if self.verbose > 1:
             print("OrthoImageItem initialization:")
@@ -162,7 +188,6 @@ class OrthoImageItem(QtWidgets.QWidget):
             print("    Offsets:", self.offsetx, self.offsety, self.offsetz)
         self.buttonisdown = False
 
-        self.arrangement = arrangement
         self.axview.setBackground(None)
         self.axview.setRange(padding=0.0)
         self.axview.ci.layout.setContentsMargins(0, 0, 0, 0)
@@ -182,7 +207,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.axviewvLine,
             self.axviewhLine,
             self.axviewbox,
-        ) = newViewWindow(
+        ) = setupViewWindow(
             self.axview,
             self.offsetx,
             self.offsety,
@@ -197,7 +222,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.corviewvLine,
             self.corviewhLine,
             self.corviewbox,
-        ) = newViewWindow(
+        ) = setupViewWindow(
             self.corview,
             self.offsetx,
             self.offsetz,
@@ -212,7 +237,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             self.sagviewvLine,
             self.sagviewhLine,
             self.sagviewbox,
-        ) = newViewWindow(
+        ) = setupViewWindow(
             self.sagview,
             self.offsety,
             self.offsetz,
@@ -495,7 +520,10 @@ class OrthoImageItem(QtWidgets.QWidget):
         if self.verbose > 1:
             print("saving main window")
         mydialog = QtWidgets.QFileDialog()
-        options = mydialog.Options()
+        if pyqtversion == 5:
+            options = mydialog.Options()
+        else:
+            options = mydialog.options()
         thedir = str(
             mydialog.getExistingDirectory(options=options, caption="Image output directory")
         )

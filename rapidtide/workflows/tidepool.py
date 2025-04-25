@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -23,19 +23,19 @@ A simple GUI for looking at the results of a rapidtide analysis
 import argparse
 import os
 import sys
+from functools import partial
 
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from nibabel.affines import apply_affine
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
-from statsmodels.robust.scale import mad
 
 import rapidtide.util as tide_util
 from rapidtide.Colortables import *
 from rapidtide.helper_classes import SimilarityFunctionFitter
 from rapidtide.OrthoImageItem import OrthoImageItem
-from rapidtide.RapidtideDataset import RapidtideDataset
+from rapidtide.RapidtideDataset import RapidtideDataset, check_rt_spatialmatch
 from rapidtide.workflows.atlasaverage import summarizevoxels
 
 try:
@@ -85,7 +85,11 @@ def _get_parser():
     )
     parser.add_argument(
         "--dataset",
-        help="Use this dataset (skip initial selection step)",
+        nargs="*",
+        help=(
+            "Specify one or more dataset root names (skip initial selection step).  The root name is the entire path "
+            "to the rapidtide output data (including the underscore) that precedes 'desc-maxtime_map.nii.gz'"
+        ),
         dest="datafileroot",
         default=None,
     )
@@ -99,11 +103,16 @@ def _get_parser():
         "--maskname", help="Set geometric mask image", dest="geommaskname", default=None
     )
     parser.add_argument(
-        "--oldstyle",
-        help="Use the old style layout",
-        dest="compact",
-        action="store_false",
-        default=True,
+        "--uistyle",
+        action="store",
+        type=str,
+        choices=["normal", "big"],
+        help=(
+            "Set the window layout style.  The 'normal' uistyle loads 8 data maps into display panes, "
+            "and fits comfortably on the screen of a 14in MacbookPro screen.  The 'big' uistyle has 16 display "
+            "panes, and fits on a 16in MBP screen.  Default is 'normal'."
+        ),
+        default="normal",
     )
     parser.add_argument(
         "--verbosity",
@@ -111,14 +120,99 @@ def _get_parser():
         dest="verbose",
         metavar="VERBOSITY",
         type=int,
-        default=1,
+        default=0,
+    )
+    parser.add_argument(
+        "--ignoredimmatch",
+        help="Do not check to see if dataset sizes match.  This is almost certainly a terrible idea.",
+        dest="ignoredimmatch",
+        action="store_true",
+        default=False,
     )
 
     return parser
 
 
-def selectFile():
-    global datafileroot
+def addDataset(
+    thisdatafileroot,
+    anatname=None,
+    geommaskname=None,
+    userise=False,
+    usecorrout=True,
+    useatlas=False,
+    forcetr=False,
+    forceoffset=False,
+    offsettime=0.0,
+    ignoredimmatch=False,
+):
+    global currentdataset, thesubjects, whichsubject, datafileroots
+    global verbosity
+
+    print("Loading", thisdatafileroot)
+    thissubject = RapidtideDataset(
+        "main",
+        thisdatafileroot,
+        anatname=anatname,
+        geommaskname=geommaskname,
+        userise=userise,
+        usecorrout=usecorrout,
+        useatlas=useatlas,
+        forcetr=forcetr,
+        forceoffset=forceoffset,
+        offsettime=offsettime,
+        verbose=verbosity,
+    )
+    if len(thesubjects) > 0:
+        # check to see that the dimensions match
+        dimmatch, sizematch, spacematch, affinematch = check_rt_spatialmatch(
+            thissubject, thesubjects[0]
+        )
+        if dimmatch or ignoredimmatch:
+            thesubjects.append(thissubject)
+        else:
+            print(f"dataset {thisdatafileroot} does not match loaded data - skipping")
+    else:
+        thesubjects.append(thissubject)
+
+    # list the datasets
+    for idx, subject in enumerate(thesubjects):
+        print(f"subject {idx}: {subject.fileroot}")
+
+
+def updateFileMenu():
+    global thesubjects, whichsubject
+    global fileMenu, sel_open
+    global sel_files
+
+    if pyqtversion == 5:
+        qactionfunc = QtWidgets.QAction
+    else:
+        qactionfunc = QtGui.QAction
+
+    # scrub file menu
+    if sel_files is not None:
+        for sel_file in sel_files:
+            fileMenu.removeAction(sel_file)
+            del sel_file
+
+    # now build it back
+    if len(thesubjects) > 0:
+        sel_files = []
+        for idx, subject in enumerate(thesubjects):
+            if idx == whichsubject:
+                indicator = "\u2714 "
+            else:
+                indicator = "  "
+            sel_files.append(qactionfunc(indicator + subject.fileroot, win))
+            sel_files[-1].triggered.connect(partial(selectDataset, idx))
+            fileMenu.addAction(sel_files[-1])
+
+
+def datasetPicker():
+    global currentdataset, thesubjects, whichsubject, datafileroots
+    global ui, win, defaultdict, overlagGraphicsViews
+    global verbosity
+
     mydialog = QtWidgets.QFileDialog()
     if pyqtversion == 5:
         options = mydialog.Options()
@@ -134,10 +228,41 @@ def selectFile():
         datafileroot = str(lagfilename[:bidsstartloc])
     else:
         datafileroot = str(lagfilename[: lagfilename.find("lagtimes.nii.gz")])
+    datafileroots.append(datafileroot)
+    addDataset(datafileroots[-1])
+    whichsubject = len(thesubjects) - 1
+    selectDataset(whichsubject)
+
+    # update the file menu
+    updateFileMenu()
+
+
+def selectDataset(thesubject):
+    global currentdataset, thesubjects, whichsubject, datafileroots
+    global ui, win, defaultdict, overlagGraphicsViews
+    global verbosity, uiinitialized
+
+    whichsubject = thesubject
+    if uiinitialized:
+        thesubjects[whichsubject].setfocusregressor(currentdataset.focusregressor)
+        thesubjects[whichsubject].setfocusmap(currentdataset.focusmap)
+    currentdataset = thesubjects[whichsubject]
+    activateDataset(
+        currentdataset,
+        ui,
+        win,
+        defaultdict,
+        overlayGraphicsViews,
+        verbosity=verbosity,
+    )
+
+    # update the file menu
+    updateFileMenu()
 
 
 class xyztlocation(QtWidgets.QWidget):
     "Manage a location in time and space"
+
     updatedXYZ = QtCore.pyqtSignal()
     updatedT = QtCore.pyqtSignal()
     movieTimer = QtCore.QTimer()
@@ -301,10 +426,17 @@ class xyztlocation(QtWidgets.QWidget):
         # print('resetting T spinbox values')
         if self.TPosSpinBox is not None:
             self.TPosSpinBox.setValue(self.tpos)
+            self.TPosSpinBox.setRange(0, self.tdim - 1)
         if self.TCoordSpinBox is not None:
             self.TCoordSpinBox.setValue(self.tcoord)
+            tllcoord = self.tr2real(0)
+            tulcoord = self.tr2real(self.tdim - 1)
+            tmin = np.min([tllcoord, tulcoord])
+            tmax = np.max([tllcoord, tulcoord])
+            self.TCoordSpinBox.setRange(tmin, tmax)
         if self.TimeSlider is not None:
             self.TimeSlider.setValue((self.tpos))
+            self.TimeSlider.setRange(0, self.tdim - 1)
         # print('done resetting T spinbox values')
         self.updatedT.emit()
 
@@ -336,6 +468,8 @@ class xyztlocation(QtWidgets.QWidget):
         self.updateXYZValues(emitsignal=emitsignal)
 
     def setTpos(self, tpos):
+        if tpos > self.tdim:
+            tpos = self.tdim
         if self.tpos != tpos:
             self.tpos = tpos
             self.tcoord = self.tr2real(self.tpos)
@@ -456,7 +590,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.movieTimer.start(int(self.frametime))
 
 
-def logstatus(thetextbox, thetext):
+def logStatus(thetextbox, thetext):
     if pyqtversion == 5:
         thetextbox.moveCursor(QtGui.QTextCursor.End)
     thetextbox.insertPlainText(thetext + "\n")
@@ -662,6 +796,8 @@ def updateRegressor():
         size = [upperlim - lowerlim, tctop - tcbottom]
         therectangle = RectangleItem(bottomleft, size)
         regressor_ax.addItem(therectangle)
+    else:
+        print("currentdataset.focusregressor is None!")
 
 
 def updateRegressorSpectrum():
@@ -695,7 +831,7 @@ def updateRegressorSpectrum():
 
 
 def calcAtlasStats():
-    global overlays, datafileroot, atlasstats, averagingmode, currentdataset
+    global overlays, atlasstats, averagingmode, currentdataset
     global atlasaveragingdone
     print("in calcAtlasStats")
     methodlist = ["mean", "median", "std", "MAD", "CoV"]
@@ -742,7 +878,7 @@ def calcAtlasStats():
             df = pd.DataFrame(data=d)
             df = df[cols]
             df.to_csv(
-                datafileroot + currentdataset.atlasname + "_" + thestat + ".txt",
+                currentdataset.fileroot + currentdataset.atlasname + "_" + thestat + ".txt",
                 sep="\t",
                 index=False,
             )
@@ -752,7 +888,7 @@ def calcAtlasStats():
 
 
 def updateAtlasStats():
-    global overlays, datafileroot, atlasstats, averagingmode, currentdataset
+    global overlays, atlasstats, averagingmode, currentdataset
     print("in updateAtlasStats")
     if "atlas" in overlays and (averagingmode is not None):
         for idx, themap in enumerate(currentdataset.loadedfuncmaps):
@@ -786,7 +922,7 @@ def updateAveragingMode():
     print("in updateAveragingMode")
     if ("atlas" in overlays) and (not atlasaveragingdone):
         calcAtlasStats()
-        set_atlasmask()
+        setAtlasMask()
     if ("atlas" in overlays) and False:
         updateAtlasStats()
     if averagingmode is not None:
@@ -853,7 +989,7 @@ def MAD_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def transparency_checkbox_clicked():
+def transparencyCheckboxClicked():
     global LUT_alpha, LUT_endalpha, ui, overlays, currentdataset
     global verbosity
 
@@ -949,146 +1085,58 @@ def rainbow_radioButton_clicked(enabled):
         updateLUT()
 
 
-def set_atlasmask():
+def setMask(maskname):
+    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
+    maskinfodicts = {}
+    maskinfodicts["nomask"] = {
+        "msg": "Disabling functional mask",
+        "label": "No mask",
+    }
+    maskinfodicts["meanmask"] = {
+        "msg": "Mean regressor seed mask",
+        "label": "Mean mask",
+    }
+    maskinfodicts["lagmask"] = {
+        "msg": "Using valid fit points as functional mask",
+        "label": "Valid mask",
+    }
+    maskinfodicts["brainmask"] = {
+        "msg": "Externally provided brain mask",
+        "label": "Brain mask",
+    }
+    maskinfodicts["refinemask"] = {
+        "msg": "Voxel refinement mask",
+        "label": "Refine mask",
+    }
+    maskinfodicts["preselectmask"] = {
+        "msg": "Preselected mean regressor seed mask",
+        "label": "Preselect mask",
+    }
+    for pval in [0.05, 0.01, 0.005, 0.001]:
+        maskinfodicts[f"p_lt_{(str(pval) + '0').replace('.','p')[0:5]}_mask"] = {
+            "msg": f"Setting functional mask to p<{str(pval)}",
+            "label": f"p<{str(pval)}",
+        }
+    print(maskinfodicts[maskname]["msg"])
+    ui.setMask_Button.setText(maskinfodicts[maskname]["label"])
+    currentdataset.setFuncMaskName(maskname)
+    for themap in currentdataset.loadedfuncmaps:
+        if maskname == "nomask":
+            overlays[themap].setFuncMask(None)
+        else:
+            overlays[themap].setFuncMask(overlays[maskname].data)
+    atlasaveragingdone = False
+    updateAveragingMode()
+    updateUI(callingfunc=f"setMask({maskname})", orthoimages=True, histogram=True)
+
+
+def setAtlasMask():
     global overlays, loadedfuncmaps, ui, currentdataset
     print("Using all defined atlas regions as functional mask")
     ui.setMask_Button.setText("Valid mask")
     for themap in currentdataset.loadedfuncmaps:
         overlays[themap].setFuncMask(overlays["atlasmask"].data)
-    updateUI(callingfunc="set_atlasmask", orthoimages=True, histogram=True)
-
-
-def set_lagmask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("Using valid fit points as functional mask")
-    ui.setMask_Button.setText("Valid mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["lagmask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_lagmask()", orthoimages=True, histogram=True)
-
-
-def set_refinemask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("Voxel refinement mask")
-    ui.setMask_Button.setText("Refine mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["refinemask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_refinemask", orthoimages=True, histogram=True)
-
-
-def set_meanmask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("Mean regressor seed mask")
-    ui.setMask_Button.setText("Mean mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["meanmask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_meanmask", orthoimages=True, histogram=True)
-
-
-def set_preselectmask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("Preselected mean regressor seed mask")
-    ui.setMask_Button.setText("Preselect mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["preselectmask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_preselectmask", orthoimages=True, histogram=True)
-
-
-def set_nomask():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("disabling functional mask")
-    ui.setMask_Button.setText("No Mask")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(None)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_nomask", orthoimages=True, histogram=True)
-
-
-def set_0p05():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("setting functional mask to p<0.05")
-    ui.setMask_Button.setText("p<0.05")
-    # overlays['jit_mask'] = tide_stats.makepmask(overlays['lagstrengths'], 0.05, sighistfit, onesided=True)
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["p_lt_0p050_mask"].data)
-        # overlays[themap].setFuncMask(overlays['jit_mask'].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_0p05", orthoimages=True, histogram=True)
-
-
-def set_0p01():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("setting functional mask to p<0.01")
-    ui.setMask_Button.setText("p<0.01")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["p_lt_0p010_mask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_0p01", orthoimages=True, histogram=True)
-
-
-def set_0p005():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("setting functional mask to p<0.005")
-    ui.setMask_Button.setText("p<0.005")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["p_lt_0p005_mask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_0p005", orthoimages=True, histogram=True)
-
-
-def set_0p001():
-    global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
-    print("setting functional mask to p<0.001")
-    ui.setMask_Button.setText("p<0.001")
-    for themap in currentdataset.loadedfuncmaps:
-        overlays[themap].setFuncMask(overlays["p_lt_0p001_mask"].data)
-    atlasaveragingdone = False
-    updateAveragingMode()
-    updateUI(callingfunc="set_0p001", orthoimages=True, histogram=True)
-
-
-def overlay_radioButton_01_clicked(enabled):
-    overlay_radioButton_clicked(0, enabled)
-
-
-def overlay_radioButton_02_clicked(enabled):
-    overlay_radioButton_clicked(1, enabled)
-
-
-def overlay_radioButton_03_clicked(enabled):
-    overlay_radioButton_clicked(2, enabled)
-
-
-def overlay_radioButton_04_clicked(enabled):
-    overlay_radioButton_clicked(3, enabled)
-
-
-def overlay_radioButton_05_clicked(enabled):
-    overlay_radioButton_clicked(4, enabled)
-
-
-def overlay_radioButton_06_clicked(enabled):
-    overlay_radioButton_clicked(5, enabled)
-
-
-def overlay_radioButton_07_clicked(enabled):
-    overlay_radioButton_clicked(6, enabled)
-
-
-def overlay_radioButton_08_clicked(enabled):
-    overlay_radioButton_clicked(7, enabled)
+    updateUI(callingfunc="setAtlasMask", orthoimages=True, histogram=True)
 
 
 def overlay_radioButton_clicked(which, enabled):
@@ -1104,17 +1152,22 @@ def overlay_radioButton_clicked(which, enabled):
                 currentdataset.setfocusmap(panetomap[which] + "_atlasstat")
             else:
                 currentdataset.setfocusmap(panetomap[which])
+                thedispmin = overlays[currentdataset.focusmap].dispmin
+                thedispmax = overlays[currentdataset.focusmap].dispmax
             if verbosity > 1:
-                print("currentdataset.focusmap set to ", currentdataset.focusmap)
-            if overlays[currentdataset.focusmap].lut_state == gen_gray_state():
+                print(f"currentdataset.focusmap set to {currentdataset.focusmap}")
+                print(
+                    f"overlays[currentdataset.focusmap].LUTname set to {overlays[currentdataset.focusmap].LUTname}"
+                )
+            if overlays[currentdataset.focusmap].LUTname == "gray":
                 ui.gray_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_thermal_state():
+            elif overlays[currentdataset.focusmap].LUTname == "thermal":
                 ui.thermal_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_plasma_state():
+            elif overlays[currentdataset.focusmap].LUTname == "plasma":
                 ui.plasma_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_viridis_state():
+            elif overlays[currentdataset.focusmap].LUTname == "viridis":
                 ui.viridis_radioButton.setChecked(True)
-            elif overlays[currentdataset.focusmap].lut_state == gen_turbo_state():
+            elif overlays[currentdataset.focusmap].LUTname == "turbo":
                 ui.turbo_radioButton.setChecked(True)
             else:
                 ui.rainbow_radioButton.setChecked(True)
@@ -1130,7 +1183,9 @@ def overlay_radioButton_clicked(which, enabled):
                 overlays[currentdataset.focusmap].tr,
                 overlays[currentdataset.focusmap].toffset,
             )
-
+            overlays[currentdataset.focusmap].dispmin = thedispmin
+            overlays[currentdataset.focusmap].dispmax = thedispmax
+            updateDispLimits()
             updateUI(
                 callingfunc="overlay_radioButton_clicked",
                 histogram=True,
@@ -1261,7 +1316,7 @@ def updateOrthoImages():
     global maps
     global panetomap
     global ui
-    global mainwin, orthoimages
+    global mainwin, orthoimagedict
     global currentloc
     # global updateTimecoursePlot
     global xdim, ydim, zdim
@@ -1270,8 +1325,8 @@ def updateOrthoImages():
 
     for thismap in panetomap:
         if thismap != "":
-            orthoimages[thismap].setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos)
-            orthoimages[thismap].setTpos(currentloc.tpos)
+            orthoimagedict[thismap].setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos)
+            orthoimagedict[thismap].setTpos(currentloc.tpos)
     mainwin.setMap(overlays[currentdataset.focusmap])
     mainwin.setTpos(currentloc.tpos)
     mainwin.updateAllViews()
@@ -1283,11 +1338,12 @@ def printfocusvals():
     global ui, overlays, currentdataset
     global currentloc
     global simfuncFitter
-    logstatus(
+    logStatus(
         ui.logOutput,
         "\n\nValues at location "
         + "{0},{1},{2}".format(currentloc.xpos, currentloc.ypos, currentloc.zpos),
     )
+    indentstring = "   "
     for key in overlays:
         # print(key, overlays[key].report)
         if key != "mnibrainmask":
@@ -1299,96 +1355,394 @@ def printfocusvals():
                 if key != "atlas":
                     if key != "failimage":
                         outstring = (
-                            "\t"
+                            indentstring
                             + str(overlays[key].label.ljust(26))
                             + str(":")
                             + "{:.3f}".format(round(focusval, 3))
                         )
-                        logstatus(ui.logOutput, outstring)
+                        logStatus(ui.logOutput, outstring)
                     else:
                         if focusval > 0.0:
                             if simfuncFitter is not None:
                                 failstring = simfuncFitter.diagnosefail(np.uint32(focusval))
                                 outstring = (
-                                    "\t"
+                                    indentstring
                                     + str(overlays[key].label.ljust(26))
                                     + str(":\n\t    ")
                                     + failstring.replace(", ", "\n\t    ")
                                 )
-                                logstatus(ui.logOutput, outstring)
+                                logStatus(ui.logOutput, outstring)
                 else:
                     outstring = (
-                        "\t"
+                        indentstring
                         + str(overlays[key].label.ljust(26))
                         + str(":")
                         + str(currentdataset.atlaslabels[int(focusval) - 1])
                     )
-                    logstatus(ui.logOutput, outstring)
+                    logStatus(ui.logOutput, outstring)
 
 
-def prefilt_radioButton_clicked(enabled):
+def regressor_radioButton_clicked(theregressor, enabled):
     global currentdataset
-    currentdataset.setfocusregressor("prefilt")
+    currentdataset.setfocusregressor(theregressor)
     updateRegressor()
     updateRegressorSpectrum()
 
 
-def postfilt_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("postfilt")
-    updateRegressor()
-    updateRegressorSpectrum()
+def activateDataset(currentdataset, ui, win, defaultdict, overlayGraphicsViews, verbosity=0):
+    global regressors, overlays
+    global mainwin
+    global xdim, ydim, zdim, tdim, xpos, ypos, zpos, tpos
+    global timeaxis
+    global usecorrout
+    global orthoimagedict
+    global panesinitialized, uiinitialized
+    global currentloc
+
+    if uiinitialized:
+        currentloc.xdim = currentdataset.xdim
+        currentloc.ydim = currentdataset.ydim
+        currentloc.xdim = currentdataset.zdim
+        currentloc.tdim = currentdataset.tdim
+        currentloc.setTpos(currentloc.tpos)
+
+    if verbosity > 1:
+        print("getting regressors")
+    regressors = currentdataset.getregressors()
+
+    if verbosity > 1:
+        print("getting overlays")
+    overlays = currentdataset.getoverlays()
+    try:
+        test = overlays["corrout"].display_state
+    except KeyError:
+        usecorrout = False
+
+    # activate the appropriate regressor radio buttons
+    if verbosity > 1:
+        print("activating radio buttons")
+    if "prefilt" in regressors.keys():
+        ui.prefilt_radioButton.setDisabled(False)
+        ui.prefilt_radioButton.show()
+    else:
+        ui.prefilt_radioButton.setDisabled(True)
+        ui.prefilt_radioButton.hide()
+    if "postfilt" in regressors.keys():
+        ui.postfilt_radioButton.setDisabled(False)
+        ui.postfilt_radioButton.show()
+    else:
+        ui.postfilt_radioButton.setDisabled(True)
+        ui.postfilt_radioButton.hide()
+    if "pass1" in regressors.keys():
+        ui.pass1_radioButton.setDisabled(False)
+        ui.pass1_radioButton.show()
+    else:
+        ui.pass1_radioButton.setDisabled(True)
+        ui.pass1_radioButton.hide()
+    if "pass2" in regressors.keys():
+        ui.pass2_radioButton.setDisabled(False)
+        ui.pass2_radioButton.show()
+    else:
+        ui.pass2_radioButton.setDisabled(True)
+        ui.pass2_radioButton.hide()
+    if "pass3" in regressors.keys():
+        ui.pass3_radioButton.setDisabled(False)
+        ui.pass3_radioButton.setText("Pass " + regressors["pass3"].label[4:])
+        ui.pass3_radioButton.show()
+    else:
+        ui.pass3_radioButton.setDisabled(True)
+        ui.pass3_radioButton.setText("")
+        ui.pass3_radioButton.hide()
+    if "pass4" in regressors.keys():
+        ui.pass4_radioButton.setDisabled(False)
+        ui.pass4_radioButton.setText("Pass " + regressors["pass4"].label[4:])
+        ui.pass4_radioButton.show()
+    else:
+        ui.pass4_radioButton.setDisabled(True)
+        ui.pass4_radioButton.setText("")
+        ui.pass4_radioButton.hide()
+
+    win.setWindowTitle("TiDePool - " + currentdataset.fileroot[:-1])
+
+    # read in the significance distribution
+    if os.path.isfile(currentdataset.fileroot + "sigfit.txt"):
+        sighistfitname = currentdataset.fileroot + "sigfit.txt"
+    else:
+        sighistfitname = None
+
+    #  This is currently very broken, so it's disabled
+    # if sighistfitname is not None:
+    #    thepcts = np.array([0.95, 0.99, 0.995, 0.999])
+    #    thervals = tide_stats.rfromp(sighistfitname, thepcts)
+    #    tide_stats.printthresholds(thepcts, thervals, 'Crosscorrelation significance thresholds from data:')
+
+    # set the background image
+    if "anatomic" in overlays:
+        bgmap = "anatomic"
+    else:
+        bgmap = None
+
+    # set up the timecourse plot window
+    if verbosity > 1:
+        print("setting up timecourse plot window")
+    xpos = int(currentdataset.xdim) // 2
+    ypos = int(currentdataset.ydim) // 2
+    zpos = int(currentdataset.zdim) // 2
+    if usecorrout:
+        timeaxis = (
+            np.linspace(
+                0.0,
+                overlays["corrout"].tdim * overlays["corrout"].tr,
+                num=overlays["corrout"].tdim,
+                endpoint=False,
+            )
+            + overlays["corrout"].toffset
+        )
+    else:
+        timeaxis = (
+            np.linspace(
+                0.0,
+                overlays[currentdataset.focusmap].tdim * overlays[currentdataset.focusmap].tr,
+                num=overlays[currentdataset.focusmap].tdim,
+                endpoint=False,
+            )
+            + overlays[currentdataset.focusmap].toffset
+        )
+    tpos = 0
+
+    # set position and scale of images
+    if verbosity > 1:
+        print("setting position and scale of images")
+    lg_imgsize = 256.0
+    sm_imgsize = 32.0
+    xfov = currentdataset.xdim * currentdataset.xsize
+    yfov = currentdataset.ydim * currentdataset.ysize
+    zfov = currentdataset.zdim * currentdataset.zsize
+    maxfov = np.max([xfov, yfov, zfov])
+    # scalefacx = (lg_imgsize / maxfov) * currentdataset.xsize
+    # scalefacy = (lg_imgsize / maxfov) * currentdataset.ysize
+    # scalefacz = (lg_imgsize / maxfov) * currentdataset.zsize
+
+    if verbosity > 1:
+        print("setting overlay defaults")
+    for themap in currentdataset.allloadedmaps + currentdataset.loadedfuncmasks:
+        overlays[themap].setLUT(
+            defaultdict[themap]["colormap"], alpha=LUT_alpha, endalpha=LUT_endalpha
+        )
+        overlays[themap].setisdisplayed(defaultdict[themap]["display"])
+        overlays[themap].setLabel(defaultdict[themap]["label"])
+    if verbosity > 1:
+        print("done setting overlay defaults")
+
+    if verbosity > 1:
+        print("setting geometric masks")
+    if "geommask" in overlays:
+        thegeommask = overlays["geommask"].data
+        if verbosity > 1:
+            print("setting geometric mask")
+    else:
+        thegeommask = None
+        if verbosity > 1:
+            print("setting geometric mask to None")
+
+    for theoverlay in currentdataset.loadedfuncmaps:
+        overlays[theoverlay].setGeomMask(thegeommask)
+    if verbosity > 1:
+        print("done setting geometric masks")
+
+    if verbosity > 1:
+        print("setting functional masks")
+        print(currentdataset.loadedfuncmaps)
+    for theoverlay in currentdataset.loadedfuncmaps:
+        if theoverlay != "failimage":
+            if "p_lt_0p050_mask" in overlays and False:  # disable this BBF 2/8/18
+                overlays[theoverlay].setFuncMask(overlays["p_lt_0p050_mask"].data)
+                ui.setMask_Button.setText("p<0.05")
+            else:
+                overlays[theoverlay].setFuncMask(overlays["lagmask"].data)
+                ui.setMask_Button.setText("Valid mask")
+    if verbosity > 1:
+        print("done setting functional masks")
+
+    if "anatomic" in overlays:
+        overlays["anatomic"].setFuncMask(None)
+        overlays["anatomic"].setGeomMask(None)
+
+    if "atlas" in overlays:
+        overlays["atlas"].setGeomMask(thegeommask)
+        overlays["atlas"].setFuncMask(overlays["atlasmask"].data)
+
+    if not panesinitialized:
+        if verbosity > 0:
+            for theoverlay in overlays:
+                overlays[theoverlay].summarize()
+
+    if verbosity > 1:
+        print("focusmap is:", currentdataset.focusmap, "bgmap is:", bgmap)
+    if not panesinitialized:
+        if bgmap is None:
+            mainwin = OrthoImageItem(
+                overlays[currentdataset.focusmap],
+                ui.main_graphicsView_ax,
+                ui.main_graphicsView_cor,
+                ui.main_graphicsView_sag,
+                imgsize=lg_imgsize,
+                enableMouse=True,
+                verbose=verbosity,
+            )
+        else:
+            mainwin = OrthoImageItem(
+                overlays[currentdataset.focusmap],
+                ui.main_graphicsView_ax,
+                ui.main_graphicsView_cor,
+                ui.main_graphicsView_sag,
+                bgmap=overlays[bgmap],
+                imgsize=lg_imgsize,
+                enableMouse=True,
+                verbose=verbosity,
+            )
+    else:
+        mainwin.setMap(overlays[currentdataset.focusmap])
+
+    availablepanes = len(overlayGraphicsViews)
+    if verbosity > 0:
+        print(f"loading {availablepanes} available panes")
+    numnotloaded = 0
+    numloaded = 0
+    if not panesinitialized:
+        orthoimagedict = {}
+        for idx, themap in enumerate(currentdataset.dispmaps):
+            if overlays[themap].display_state:
+                if (numloaded > availablepanes - 1) or (
+                    (numloaded > availablepanes - 2) and (themap != "corrout")
+                ):
+                    if verbosity > 1:
+                        print(
+                            f"skipping map {themap}({idx}): out of display panes ({numloaded=}, {availablepanes=})"
+                        )
+                    numnotloaded += 1
+                else:
+                    if verbosity > 1:
+                        print(
+                            f"loading map {themap}=({idx}) into pane {numloaded} of {availablepanes}"
+                        )
+                    if bgmap is None:
+                        loadpane(
+                            overlays[themap],
+                            numloaded,
+                            overlayGraphicsViews,
+                            overlaybuttons,
+                            panetomap,
+                            orthoimagedict,
+                            sm_imgsize=sm_imgsize,
+                        )
+                    else:
+                        loadpane(
+                            overlays[themap],
+                            numloaded,
+                            overlayGraphicsViews,
+                            overlaybuttons,
+                            panetomap,
+                            orthoimagedict,
+                            bgmap=overlays[bgmap],
+                            sm_imgsize=sm_imgsize,
+                        )
+                    numloaded += 1
+            else:
+                if verbosity > 1:
+                    print("not loading map ", themap, "(", idx, "): display_state is False")
+    else:
+        for thismap in panetomap:
+            if thismap != "":
+                try:
+                    orthoimagedict[thismap].setMap(overlays[thismap])
+                except KeyError:
+                    pass
+    if verbosity > 1:
+        print("done loading panes")
+    if numnotloaded > 0:
+        print("WARNING:", numnotloaded, "maps could not be loaded - not enough panes")
+
+    # record that we've been through once
+    panesinitialized = True
+
+    if uiinitialized:
+        # update the windows
+        updateUI(
+            callingfunc="activateDataset",
+            orthoimages=True,
+            histogram=True,
+        )
+
+        # update the regressor
+        updateRegressor()
+        updateRegressorSpectrum()
+
+        # update the mask menu
+        if currentdataset.funcmaskname is not None:
+            print(f"updating the mask menu to {currentdataset.funcmaskname}")
+            setMask(currentdataset.funcmaskname)
 
 
-def pass1_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("pass1")
-    updateRegressor()
-    updateRegressorSpectrum()
-
-
-def pass2_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("pass2")
-    updateRegressor()
-    updateRegressorSpectrum()
-
-
-def pass3_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("pass3")
-    updateRegressor()
-    updateRegressorSpectrum()
-
-
-def pass4_radioButton_clicked(enabled):
-    global currentdataset
-    currentdataset.setfocusregressor("pass4")
-    updateRegressor()
-    updateRegressorSpectrum()
+def loadpane(
+    themap,
+    thepane,
+    view,
+    button,
+    panemap,
+    orthoimagedict,
+    bgmap=None,
+    sm_imgsize=32.0,
+):
+    if themap.display_state:
+        if bgmap is None:
+            orthoimagedict[themap.name] = OrthoImageItem(
+                themap,
+                view[thepane],
+                view[thepane],
+                view[thepane],
+                button=button[thepane],
+                imgsize=sm_imgsize,
+                verbose=verbosity,
+            )
+        else:
+            orthoimagedict[themap.name] = OrthoImageItem(
+                themap,
+                view[thepane],
+                view[thepane],
+                view[thepane],
+                button=button[thepane],
+                bgmap=bgmap,
+                imgsize=sm_imgsize,
+                verbose=verbosity,
+            )
+        panemap[thepane] = themap.name
 
 
 def tidepool(args):
     global vLine
     global ui, win
+    global fileMenu, sel_open, sel_files
     global movierunning
-    global focusmap, bgmap
+    global focusmap, bgmap, focusregressor
     global maps
     global roi
     global overlays, regressors, regressorfilterlimits, regressorsimcalclimits, loadedfuncmaps, atlasstats, averagingmode
-    global mainwin, orthoimages, overlaybuttons, panetomap
+    global mainwin, orthoimagedict, overlaybuttons, panetomap
     global img_colorbar, LUT_alpha, LUT_endalpha
     global lg_imgsize, scalefacx, scalefacy, scalefacz
     global xdim, ydim, zdim, tdim, xpos, ypos, zpos, tpos
     global xsize, ysize, zsize, tr
     global timeaxis
+    global usecorrout
     global buttonisdown
     global imageadj
     global harvestcolormaps
-    global datafileroot
     global atlasaveragingdone
-    global currentdataset
+    global currentdataset, thesubjects, whichsubject, datafileroots
+    global defaultdict, overlayGraphicsViews
     global verbosity
+    global panesinitialized, uiinitialized
     global simfuncFitter
     global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption
 
@@ -1414,20 +1768,28 @@ def tidepool(args):
     tpos = 0
     verbosity = 0
     simfuncFitter = None
+    datafileroots = []
+    panesinitialized = False
+    uiinitialized = False
+    sel_files = None
 
     if pyqtversion == 5:
-        if args.compact:
+        if args.uistyle == "normal":
             import rapidtide.tidepoolTemplate_alt as uiTemplate
+        elif args.uistyle == "big":
+            import rapidtide.tidepoolTemplate_big as uiTemplate
         else:
             import rapidtide.tidepoolTemplate as uiTemplate
     else:
-        if args.compact:
+        if args.uistyle == "normal":
             import rapidtide.tidepoolTemplate_alt_qt6 as uiTemplate
+        elif args.uistyle == "big":
+            import rapidtide.tidepoolTemplate_big_qt6 as uiTemplate
         else:
             import rapidtide.tidepoolTemplate_qt6 as uiTemplate
 
     verbosity = args.verbose
-    print(f"verbosity: {args.verbose}")
+    print(f"verbosity: {verbosity}")
 
     anatname = args.anatname
     if anatname is not None:
@@ -1441,11 +1803,9 @@ def tidepool(args):
     else:
         geommaskname = None
 
-    datafileroot = args.datafileroot
-    if datafileroot is not None:
-        print("using ", datafileroot, " as the root file name ")
-    else:
-        datafileroot = ""
+    if args.datafileroot is not None:
+        print("using ", args.datafileroot, " as the root file name list")
+        datafileroots = args.datafileroot
 
     if args.offsettime is not None:
         forceoffset = True
@@ -1475,12 +1835,19 @@ def tidepool(args):
     win.show()
     win.setWindowTitle("TiDePool")
 
-    # get inputfile root name if necessary
-    if datafileroot == "":
-        selectFile()
-    if datafileroot == "":
-        print("No input file specified - exiting.")
-        sys.exit()
+    # create the menu bar
+    print("creating menu bar")
+    menuBar = win.menuBar()
+    fileMenu = menuBar.addMenu("File")
+    if pyqtversion == 5:
+        qactionfunc = QtWidgets.QAction
+    else:
+        qactionfunc = QtGui.QAction
+    sel_open = qactionfunc("Add dataset...", win)
+    sel_open.triggered.connect(datasetPicker)
+    fileMenu.addAction(sel_open)
+    fileMenu.addSeparator()
+    print("done creating menu bar")
 
     # wire up the ortho image windows for mouse interaction
     vb_colorbar = pg.ViewBox(enableMouse=False)
@@ -1508,6 +1875,10 @@ def tidepool(args):
     if harvestcolormaps:
         ui.largeimage_horizontalLayout.addWidget(imageadj)
 
+    if args.uistyle == "big":
+        extramaps = True
+    else:
+        extramaps = False
     defaultdict = {
         "lagmask": {
             "colormap": gen_gray_state(),
@@ -1536,6 +1907,12 @@ def tidepool(args):
         "preselectmask": {
             "colormap": gen_gray_state(),
             "label": "Global mean preselect mask",
+            "display": False,
+            "funcmask": None,
+        },
+        "brainmask": {
+            "colormap": gen_gray_state(),
+            "label": "Brain mask",
             "display": False,
             "funcmask": None,
         },
@@ -1583,13 +1960,13 @@ def tidepool(args):
         },
         "lagtimes": {
             "colormap": gen_viridis_state(),
-            "label": "Lag times",
+            "label": "Lag time",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "lagtimesrefined": {
             "colormap": gen_viridis_state(),
-            "label": "Refineed lag times",
+            "label": "Refined lag time",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
@@ -1606,20 +1983,50 @@ def tidepool(args):
             "funcmask": "p_lt_0p050_mask",
         },
         "lagsigma": {
-            "colormap": gen_spectrum_state(),
+            "colormap": gen_plasma_state(),
             "label": "Similarity width",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
         "MTT": {
-            "colormap": gen_spectrum_state(),
+            "colormap": gen_plasma_state(),
             "label": "MTT",
-            "display": True,
+            "display": extramaps,
             "funcmask": "p_lt_0p050_mask",
         },
         "R2": {
             "colormap": gen_thermal_state(),
-            "label": "R2",
+            "label": "GLM Fit R2",
+            "display": extramaps,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "CoV": {
+            "colormap": gen_thermal_state(),
+            "label": "Coefficient of variation",
+            "display": True,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "confoundR2": {
+            "colormap": gen_thermal_state(),
+            "label": "Confound Fit R2",
+            "display": extramaps,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "varBefore": {
+            "colormap": gen_thermal_state(),
+            "label": "LFO variance before GLM",
+            "display": extramaps,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "varAfter": {
+            "colormap": gen_thermal_state(),
+            "label": "LFO variance after GLM",
+            "display": extramaps,
+            "funcmask": "p_lt_0p050_mask",
+        },
+        "varChange": {
+            "colormap": gen_thermal_state(),
+            "label": "LFO variance decrease %",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
@@ -1632,7 +2039,7 @@ def tidepool(args):
         "fitNorm": {
             "colormap": gen_thermal_state(),
             "label": "fitNorm",
-            "display": True,
+            "display": False,
             "funcmask": "p_lt_0p050_mask",
         },
         "gaussout": {
@@ -1644,7 +2051,7 @@ def tidepool(args):
         "failimage": {
             "colormap": gen_spectrum_state(),
             "label": "Fit failure reason",
-            "display": False,
+            "display": extramaps,
             "funcmask": None,
         },
         "anatomic": {
@@ -1667,8 +2074,8 @@ def tidepool(args):
         },
         "neglog10p": {
             "colormap": gen_thermal_state(),
-            "label": "Correlation fit significance",
-            "display": True,
+            "label": "Correlation fit -log10p",
+            "display": extramaps,
             "funcmask": "None",
         },
         "delayoffset": {
@@ -1723,7 +2130,7 @@ def tidepool(args):
     ui.rainbow_radioButton.clicked.connect(rainbow_radioButton_clicked)
 
     # wire up the transparency checkbox
-    ui.transparency_checkBox.stateChanged.connect(transparency_checkbox_clicked)
+    ui.transparency_checkBox.stateChanged.connect(transparencyCheckboxClicked)
 
     overlaybuttons = [
         ui.overlay_radioButton_01,
@@ -1735,14 +2142,21 @@ def tidepool(args):
         ui.overlay_radioButton_07,
         ui.overlay_radioButton_08,
     ]
-    overlaybuttons[0].clicked.connect(overlay_radioButton_01_clicked)
-    overlaybuttons[1].clicked.connect(overlay_radioButton_02_clicked)
-    overlaybuttons[2].clicked.connect(overlay_radioButton_03_clicked)
-    overlaybuttons[3].clicked.connect(overlay_radioButton_04_clicked)
-    overlaybuttons[4].clicked.connect(overlay_radioButton_05_clicked)
-    overlaybuttons[5].clicked.connect(overlay_radioButton_06_clicked)
-    overlaybuttons[6].clicked.connect(overlay_radioButton_07_clicked)
-    overlaybuttons[7].clicked.connect(overlay_radioButton_08_clicked)
+    if args.uistyle == "big":
+        overlaybuttons += [
+            ui.overlay_radioButton_09,
+            ui.overlay_radioButton_10,
+            ui.overlay_radioButton_11,
+            ui.overlay_radioButton_12,
+            ui.overlay_radioButton_13,
+            ui.overlay_radioButton_14,
+            ui.overlay_radioButton_15,
+            ui.overlay_radioButton_16,
+        ]
+    for i in range(len(overlaybuttons)):
+        clickfunc = partial(overlay_radioButton_clicked, i)
+        overlaybuttons[i].clicked.connect(clickfunc)
+
     for button in overlaybuttons:
         button.setDisabled(True)
         button.hide()
@@ -1757,7 +2171,17 @@ def tidepool(args):
         ui.overlay_graphicsView_07,
         ui.overlay_graphicsView_08,
     ]
-
+    if args.uistyle == "big":
+        overlayGraphicsViews += [
+            ui.overlay_graphicsView_09,
+            ui.overlay_graphicsView_10,
+            ui.overlay_graphicsView_11,
+            ui.overlay_graphicsView_12,
+            ui.overlay_graphicsView_13,
+            ui.overlay_graphicsView_14,
+            ui.overlay_graphicsView_15,
+            ui.overlay_graphicsView_16,
+        ]
     panetomap = []
 
     for theview in overlayGraphicsViews:
@@ -1765,40 +2189,56 @@ def tidepool(args):
         theview.hide()
 
     # define things for the popup mask menu
-    popMenu = QtWidgets.QMenu(win)
+    popMaskMenu = QtWidgets.QMenu(win)
     if pyqtversion == 5:
         qactionfunc = QtWidgets.QAction
     else:
         qactionfunc = QtGui.QAction
     sel_nomask = qactionfunc("No mask", win)
-    sel_nomask.triggered.connect(set_nomask)
     sel_lagmask = qactionfunc("Valid fit", win)
-    sel_lagmask.triggered.connect(set_lagmask)
+    sel_brainmask = qactionfunc("Externally provided brain mask", win)
     sel_refinemask = qactionfunc("Voxels used in refine", win)
     sel_meanmask = qactionfunc("Voxels used in mean regressor calculation", win)
     sel_preselectmask = qactionfunc(
         "Voxels chosen for the mean regressor calculation in the preselect pass", win
     )
-    sel_refinemask.triggered.connect(set_refinemask)
-    sel_meanmask.triggered.connect(set_meanmask)
-    sel_preselectmask.triggered.connect(set_preselectmask)
     sel_0p05 = qactionfunc("p<0.05", win)
-    sel_0p05.triggered.connect(set_0p05)
     sel_0p01 = qactionfunc("p<0.01", win)
-    sel_0p01.triggered.connect(set_0p01)
     sel_0p005 = qactionfunc("p<0.005", win)
-    sel_0p005.triggered.connect(set_0p005)
     sel_0p001 = qactionfunc("p<0.001", win)
-    sel_0p001.triggered.connect(set_0p001)
-    popMenu.addAction(sel_nomask)
+
+    sel_nomask.triggered.connect(partial(setMask, "nomask"))
+    sel_lagmask.triggered.connect(partial(setMask, "lagmask"))
+    sel_brainmask.triggered.connect(partial(setMask, "brainmask"))
+    sel_refinemask.triggered.connect(partial(setMask, "refinemask"))
+    sel_meanmask.triggered.connect(partial(setMask, "meanmask"))
+    sel_preselectmask.triggered.connect(partial(setMask, "preselectmask"))
+    sel_0p05.triggered.connect(partial(setMask, "p_lt_0p050_mask"))
+    sel_0p01.triggered.connect(partial(setMask, "p_lt_0p010_mask"))
+    sel_0p005.triggered.connect(partial(setMask, "p_lt_0p005_mask"))
+    sel_0p001.triggered.connect(partial(setMask, "p_lt_0p001_mask"))
+    popMaskMenu.addAction(sel_nomask)
     numspecial = 0
 
-    def on_context_menu(point):
+    # configure the mask selection popup menu
+    def on_mask_context_menu(point):
         # show context menu
-        popMenu.exec(ui.setMask_Button.mapToGlobal(point))
+        popMaskMenu.exec(ui.setMask_Button.mapToGlobal(point))
 
     ui.setMask_Button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
-    ui.setMask_Button.customContextMenuRequested.connect(on_context_menu)
+    ui.setMask_Button.customContextMenuRequested.connect(on_mask_context_menu)
+
+    # configure the file selection popup menu
+    def on_file_context_menu(point):
+        # show context menu
+        popMaskMenu.exec(ui.setFile_Button.mapToGlobal(point))
+
+    try:
+        ui.setFile_Button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        ui.setFile_Button.customContextMenuRequested.connect(on_file_context_menu)
+        setfilebuttonexists = True
+    except AttributeError:
+        setfilebuttonexists = False
 
     # wire up the regressor selection radio buttons
     regressorbuttons = [
@@ -1809,13 +2249,12 @@ def tidepool(args):
         ui.pass3_radioButton,
         ui.pass4_radioButton,
     ]
-
-    ui.prefilt_radioButton.clicked.connect(prefilt_radioButton_clicked)
-    ui.postfilt_radioButton.clicked.connect(postfilt_radioButton_clicked)
-    ui.pass1_radioButton.clicked.connect(pass1_radioButton_clicked)
-    ui.pass2_radioButton.clicked.connect(pass2_radioButton_clicked)
-    ui.pass3_radioButton.clicked.connect(pass3_radioButton_clicked)
-    ui.pass4_radioButton.clicked.connect(pass4_radioButton_clicked)
+    ui.prefilt_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "prefilt"))
+    ui.postfilt_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "postfilt"))
+    ui.pass1_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "pass1"))
+    ui.pass2_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "pass2"))
+    ui.pass3_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "pass3"))
+    ui.pass4_radioButton.clicked.connect(partial(regressor_radioButton_clicked, "pass4"))
 
     for thebutton in regressorbuttons:
         thebutton.setDisabled(True)
@@ -1823,263 +2262,41 @@ def tidepool(args):
 
     # read in all the datasets
     thesubjects = []
-
-    thesubjects.append(
-        RapidtideDataset(
-            "main",
-            datafileroot,
-            anatname=anatname,
-            geommaskname=geommaskname,
-            userise=userise,
-            usecorrout=usecorrout,
-            useatlas=useatlas,
-            forcetr=forcetr,
-            forceoffset=forceoffset,
-            offsettime=offsettime,
-            verbose=args.verbose,
-        )
-    )
-    currentdataset = thesubjects[-1]
-    print("loading datasets...")
-
-    print("getting regressors")
-    regressors = currentdataset.getregressors()
-
-    print("getting overlays")
-    overlays = currentdataset.getoverlays()
-    try:
-        test = overlays["corrout"].display_state
-    except KeyError:
-        usecorrout = False
-
-    # activate the appropriate regressor radio buttons
-    print("activating radio buttons")
-    if "prefilt" in regressors.keys():
-        ui.prefilt_radioButton.setDisabled(False)
-        ui.prefilt_radioButton.show()
-    if "postfilt" in regressors.keys():
-        ui.postfilt_radioButton.setDisabled(False)
-        ui.postfilt_radioButton.show()
-    if "pass1" in regressors.keys():
-        ui.pass1_radioButton.setDisabled(False)
-        ui.pass1_radioButton.show()
-    if "pass2" in regressors.keys():
-        ui.pass2_radioButton.setDisabled(False)
-        ui.pass2_radioButton.show()
-    if "pass3" in regressors.keys():
-        ui.pass3_radioButton.setDisabled(False)
-        ui.pass3_radioButton.setText("Pass " + regressors["pass3"].label[4:])
-        ui.pass3_radioButton.show()
-    if "pass4" in regressors.keys():
-        ui.pass4_radioButton.setDisabled(False)
-        ui.pass4_radioButton.setText("Pass " + regressors["pass4"].label[4:])
-        ui.pass4_radioButton.show()
-
-    win.setWindowTitle("TiDePool - " + datafileroot[:-1])
-
-    # read in the significance distribution
-    if os.path.isfile(datafileroot + "sigfit.txt"):
-        sighistfitname = datafileroot + "sigfit.txt"
-    else:
-        sighistfitname = None
-
-    #  This is currently very broken, so it's disabled
-    # if sighistfitname is not None:
-    #    thepcts = np.array([0.95, 0.99, 0.995, 0.999])
-    #    thervals = tide_stats.rfromp(sighistfitname, thepcts)
-    #    tide_stats.printthresholds(thepcts, thervals, 'Crosscorrelation significance thresholds from data:')
-
-    # set the background image
-    if "anatomic" in overlays:
-        bgmap = "anatomic"
-    else:
-        bgmap = None
-
-    # set up the timecourse plot window
-    print("setting up timecourse plot window")
-    xpos = int(currentdataset.xdim) // 2
-    ypos = int(currentdataset.ydim) // 2
-    zpos = int(currentdataset.zdim) // 2
-    if usecorrout:
-        timeaxis = (
-            np.linspace(
-                0.0,
-                overlays["corrout"].tdim * overlays["corrout"].tr,
-                num=overlays["corrout"].tdim,
-                endpoint=False,
+    whichsubject = 0
+    if len(datafileroots) > 0:
+        print("loading prespecified datasets...")
+        for thisdatafileroot in datafileroots:
+            addDataset(
+                thisdatafileroot,
+                anatname=anatname,
+                geommaskname=geommaskname,
+                userise=userise,
+                usecorrout=usecorrout,
+                useatlas=useatlas,
+                forcetr=forcetr,
+                forceoffset=forceoffset,
+                offsettime=offsettime,
+                ignoredimmatch=args.ignoredimmatch,
             )
-            + overlays["corrout"].toffset
+        currentdataset = thesubjects[whichsubject]
+        activateDataset(
+            currentdataset,
+            ui,
+            win,
+            defaultdict,
+            overlayGraphicsViews,
+            verbosity=verbosity,
         )
+        # update the file menu
+        updateFileMenu()
     else:
-        timeaxis = (
-            np.linspace(
-                0.0,
-                overlays[currentdataset.focusmap].tdim * overlays[currentdataset.focusmap].tr,
-                num=overlays[currentdataset.focusmap].tdim,
-                endpoint=False,
-            )
-            + overlays[currentdataset.focusmap].toffset
-        )
-    tpos = 0
+        # get inputfile root name if necessary
+        datasetPicker()
 
-    # set position and scale of images
-    print("setting position and scale of images")
-    lg_imgsize = 256.0
-    sm_imgsize = 32.0
-    xfov = currentdataset.xdim * currentdataset.xsize
-    yfov = currentdataset.ydim * currentdataset.ysize
-    zfov = currentdataset.zdim * currentdataset.zsize
-    maxfov = np.max([xfov, yfov, zfov])
-    scalefacx = (lg_imgsize / maxfov) * currentdataset.xsize
-    scalefacy = (lg_imgsize / maxfov) * currentdataset.ysize
-    scalefacz = (lg_imgsize / maxfov) * currentdataset.zsize
-
-    if verbosity > 1:
-        print("setting overlay defaults")
-    for themap in currentdataset.allloadedmaps + currentdataset.loadedfuncmasks:
-        overlays[themap].setLUT(
-            defaultdict[themap]["colormap"], alpha=LUT_alpha, endalpha=LUT_endalpha
-        )
-        overlays[themap].setisdisplayed(defaultdict[themap]["display"])
-        overlays[themap].setLabel(defaultdict[themap]["label"])
-    if verbosity > 1:
-        print("done setting overlay defaults")
-
-    if verbosity > 1:
-        print("setting geometric masks")
-    if "geommask" in overlays:
-        thegeommask = overlays["geommask"].data
-        if verbosity > 1:
-            print("setting geometric mask")
-    else:
-        thegeommask = None
-        if verbosity > 1:
-            print("setting geometric mask to None")
-
-    for theoverlay in currentdataset.loadedfuncmaps:
-        overlays[theoverlay].setGeomMask(thegeommask)
-    if verbosity > 1:
-        print("done setting geometric masks")
-
-    if verbosity > 1:
-        print("setting functional masks")
-        print(currentdataset.loadedfuncmaps)
-    for theoverlay in currentdataset.loadedfuncmaps:
-        if theoverlay != "failimage":
-            if "p_lt_0p050_mask" in overlays and False:  # disable this BBF 2/8/18
-                overlays[theoverlay].setFuncMask(overlays["p_lt_0p050_mask"].data)
-                ui.setMask_Button.setText("p<0.05")
-            else:
-                overlays[theoverlay].setFuncMask(overlays["lagmask"].data)
-                ui.setMask_Button.setText("Valid mask")
-    if verbosity > 1:
-        print("done setting functional masks")
-
-    if "anatomic" in overlays:
-        overlays["anatomic"].setFuncMask(None)
-        overlays["anatomic"].setGeomMask(None)
-
-    if "atlas" in overlays:
-        overlays["atlas"].setGeomMask(thegeommask)
-        overlays["atlas"].setFuncMask(overlays["atlasmask"].data)
-
-    if args.verbose > 0:
-        for theoverlay in overlays:
-            overlays[theoverlay].summarize()
-
-    def loadpane(themap, thepane, view, button, panemap, orthoimages, bgmap=None):
-        if themap.display_state:
-            if bgmap is None:
-                orthoimages[themap.name] = OrthoImageItem(
-                    themap,
-                    view[thepane],
-                    view[thepane],
-                    view[thepane],
-                    button=button[thepane],
-                    imgsize=sm_imgsize,
-                    verbose=verbosity,
-                )
-            else:
-                orthoimages[themap.name] = OrthoImageItem(
-                    themap,
-                    view[thepane],
-                    view[thepane],
-                    view[thepane],
-                    button=button[thepane],
-                    bgmap=bgmap,
-                    imgsize=sm_imgsize,
-                    verbose=verbosity,
-                )
-            panemap[thepane] = themap.name
-
-    if verbosity > 1:
-        print("focusmap is:", currentdataset.focusmap, "bgmap is:", bgmap)
-    if bgmap is None:
-        mainwin = OrthoImageItem(
-            overlays[currentdataset.focusmap],
-            ui.main_graphicsView_ax,
-            ui.main_graphicsView_cor,
-            ui.main_graphicsView_sag,
-            imgsize=lg_imgsize,
-            enableMouse=True,
-            verbose=verbosity,
-        )
-    else:
-        mainwin = OrthoImageItem(
-            overlays[currentdataset.focusmap],
-            ui.main_graphicsView_ax,
-            ui.main_graphicsView_cor,
-            ui.main_graphicsView_sag,
-            bgmap=overlays[bgmap],
-            imgsize=lg_imgsize,
-            enableMouse=True,
-            verbose=verbosity,
-        )
-
-    orthoimages = {}
-    if verbosity > 1:
-        print("loading panes")
-    availablepanes = len(overlayGraphicsViews)
-    numnotloaded = 0
-    numloaded = 0
-    for idx, themap in enumerate(currentdataset.dispmaps):
-        if overlays[themap].display_state:
-            if (numloaded > availablepanes - 1) or (
-                (numloaded > availablepanes - 2) and (themap != "corrout")
-            ):
-                if verbosity > 1:
-                    print("skipping map ", themap, "(", idx, "): out of display panes")
-                numnotloaded += 1
-            else:
-                if verbosity > 1:
-                    print("loading map ", themap, "(", idx, ") into pane ", numloaded)
-                if bgmap is None:
-                    loadpane(
-                        overlays[themap],
-                        numloaded,
-                        overlayGraphicsViews,
-                        overlaybuttons,
-                        panetomap,
-                        orthoimages,
-                    )
-                else:
-                    loadpane(
-                        overlays[themap],
-                        numloaded,
-                        overlayGraphicsViews,
-                        overlaybuttons,
-                        panetomap,
-                        orthoimages,
-                        bgmap=overlays[bgmap],
-                    )
-                numloaded += 1
-        else:
-            if verbosity > 1:
-                print("not loading map ", themap, "(", idx, "): display_state is False")
-    if verbosity > 1:
-        print("done loading panes")
-    if numnotloaded > 0:
-        print("WARNING:", numnotloaded, "maps could not be loaded - not enough panes")
+    # check to see that something is loaded
+    if len(thesubjects) == 0:
+        print("No input datasets specified - exiting.")
+        sys.exit()
 
     # wire up the display range controls
     ui.resetDispLimits_Button.clicked.connect(resetDispLimits)
@@ -2181,29 +2398,32 @@ def tidepool(args):
     if verbosity > 1:
         print("loadedfuncmasks", currentdataset.loadedfuncmasks)
     if len(currentdataset.loadedfuncmasks) > 0:
-        popMenu.addSeparator()
+        popMaskMenu.addSeparator()
         if "lagmask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_lagmask)
+            popMaskMenu.addAction(sel_lagmask)
+            numspecial += 1
+        if "brainmask" in currentdataset.loadedfuncmasks:
+            popMaskMenu.addAction(sel_brainmask)
             numspecial += 1
         if "refinemask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_refinemask)
+            popMaskMenu.addAction(sel_refinemask)
             numspecial += 1
         if "meanmask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_meanmask)
+            popMaskMenu.addAction(sel_meanmask)
             numspecial += 1
         if "preselectmask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_preselectmask)
+            popMaskMenu.addAction(sel_preselectmask)
             numspecial += 1
         if numspecial > 0:
-            popMenu.addSeparator()
+            popMaskMenu.addSeparator()
         if "p_lt_0p050_mask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_0p05)
+            popMaskMenu.addAction(sel_0p05)
         if "p_lt_0p010_mask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_0p01)
+            popMaskMenu.addAction(sel_0p01)
         if "p_lt_0p005_mask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_0p005)
+            popMaskMenu.addAction(sel_0p005)
         if "p_lt_0p001_mask" in currentdataset.loadedfuncmasks:
-            popMenu.addAction(sel_0p001)
+            popMaskMenu.addAction(sel_0p001)
 
     # initialize the location picker
     global currentloc
@@ -2242,12 +2462,19 @@ def tidepool(args):
     # timecourse_ax.enableAutoRange()
 
     # select the first pane
-    overlay_radioButton_01_clicked(True)
+    overlay_radioButton_clicked(0, True)
 
     # have to do this after the windows are created
     imageadj.sigGradientChanged.connect(updateLUT)
 
     updateUI(callingfunc="main thread", orthoimages=True, focusvals=True)
     updateRegressor()
+    updateRegressorSpectrum()
+    uiinitialized = True
+
+    # for profiling
+    """for i in range(20):
+        selectDataset((i + 1) % 2)
+    sys.exit(0)"""
 
     QtWidgets.QApplication.instance().exec()

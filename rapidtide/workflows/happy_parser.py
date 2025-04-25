@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2019-2024 Blaise Frederick
+#   Copyright 2019-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -21,7 +21,11 @@ import argparse
 import numpy as np
 
 import rapidtide.io as tide_io
+import rapidtide.multiproc as tide_multiproc
 import rapidtide.workflows.parser_funcs as pf
+
+DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
+DEFAULT_DL_MODEL = "model_revised_tf2"
 
 
 def _get_parser():
@@ -97,10 +101,10 @@ def _get_parser():
         dest="modelname",
         metavar="MODELNAME",
         help=(
-            "Use model MODELNAME for dl filter (default is model_revised - "
+            f"Use model MODELNAME for dl filter (default is {DEFAULT_DL_MODEL} - "
             "from the revised NeuroImage paper.) "
         ),
-        default="model_revised",
+        default=DEFAULT_DL_MODEL,
     )
 
     # Performance
@@ -118,7 +122,20 @@ def _get_parser():
         ),
         default=1,
     )
-
+    performance_opts.add_argument(
+        "--nprocs",
+        dest="nprocs",
+        action="store",
+        metavar="NPROCS",
+        type=lambda x: pf.is_int(parser, x),
+        help=(
+            "Use NPROCS CPUs to accelerate processing (defaults to 1 - more "
+            "CPUs up to the number of cores can accelerate processing a lot, but "
+            "you need to remember to ask for this many CPUs on clusters.)  Entering a mulitprocessor "
+            "routine disables mklthreads (otherwise there's chaos)."
+        ),
+        default=1,
+    )
     # Preprocessing
     preprocessing_opts = parser.add_argument_group("Preprocessing")
     preprocessing_opts.add_argument(
@@ -141,7 +158,7 @@ def _get_parser():
     )
     preprocessing_opts.add_argument(
         "--motionfile",
-        dest="motionfilename",
+        dest="motionfilespec",
         metavar="MOTFILE",
         help=(
             "Read 6 columns of motion regressors out of MOTFILE file (.par or BIDS .json) "
@@ -206,10 +223,10 @@ def _get_parser():
     # Cardiac estimation tuning
     cardiac_est_tuning = parser.add_argument_group("Cardiac estimation tuning")
     cardiac_est_tuning.add_argument(
-        "--estmask",
-        dest="estmaskname",
+        "--estweights",
+        dest="estweightsname",
         action="store",
-        metavar="MASKNAME",
+        metavar="WEIGHTSNAME",
         help=(
             "Generation of cardiac waveform from data will be restricted to "
             "voxels in MASKNAME and weighted by the mask intensity.  If this is "
@@ -441,15 +458,15 @@ def _get_parser():
     # Output processing
     output_proc = parser.add_argument_group("Output processing")
     output_proc.add_argument(
-        "--spatialglm",
-        dest="dospatialglm",
+        "--spatialregression",
+        dest="dospatialregression",
         action="store_true",
         help="Generate framewise cardiac signal maps and filter them out of the input data. ",
         default=False,
     )
     output_proc.add_argument(
-        "--temporalglm",
-        dest="dotemporalglm",
+        "--temporalregression",
+        dest="dotemporalregression",
         action="store_true",
         help="Generate voxelwise aliased synthetic cardiac regressors and filter them out of the input data. ",
         default=False,
@@ -545,6 +562,15 @@ def _get_parser():
         action="store_true",
         help="Attempt to calculate absolute delay using an aliased correlation (experimental).",
         default=False,
+    )
+    misc_opts.add_argument(
+        "--aliasedcorrelationwidth",
+        dest="aliasedcorrelationwidth",
+        metavar="WIDTH",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        help=f"Width of the aliased correlation calculation (default is {DEFAULT_ALIASEDCORRELATIONWIDTH}). ",
+        default=DEFAULT_ALIASEDCORRELATIONWIDTH,
     )
     misc_opts.add_argument(
         "--upsample",
@@ -708,14 +734,12 @@ def process_args(inputargs=None):
     args.outputlevel = 1
     args.maskthreshpct = 10.0
     args.domadnorm = True
-    args.nprocs = 1
     args.verbose = False
     args.smoothlen = 101
     args.envthresh = 0.2
     args.upsamplefac = 100
     args.centric = True
     args.pulsereconstepsize = 0.01
-    args.aliasedcorrelationwidth = 3.0
     args.unnormvesselmap = True
     args.histlen = 100
     args.softvesselfrac = 0.4
@@ -727,6 +751,16 @@ def process_args(inputargs=None):
     # deal with notch filter logic
     if args.disablenotch:
         args.notchpct = None
+
+    # process motionfile information
+    if args.motionfilespec is not None:
+        (args.motionfilename, args.motionfilecolspec) = tide_io.parsefilespec(args.motionfilespec)
+    else:
+        args.motionfilename = None
+
+    # set the number of worker processes if multiprocessing
+    if args.nprocs < 1:
+        args.nprocs = tide_multiproc.maxcpus()
 
     # process infotags
     args = pf.postprocesstagopts(args)

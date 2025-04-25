@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import nibabel as nib
+import numpy as np
+from sklearn.cluster import KMeans
+
+# === Settings ===
+maskpath = "./HCP1200v2_binmask_2mm.nii.gz"
+delaypath = "./HCP1200v2_maxtime_2mm.nii.gz"
+strengthpath = "./HCP1200v2_maxcorr_2mm.nii.gz"
+output_root = "./globalmask_300ROIs_equalsize"
+n_clusters = 300
+n_runs = 25
+
+# === Load Binary Mask ===
+mask_img = nib.load(maskpath)
+mask_data = mask_img.get_fdata()
+affine = mask_img.affine
+
+# === Load strength data ===
+strength_img = nib.load(strengthpath)
+strength_data = strength_img.get_fdata()
+
+# === Load delay data ===
+delay_img = nib.load(delaypath)
+delay_data = delay_img.get_fdata()
+
+# === Get Coordinates of Nonzero Voxels ===
+x, y, z = np.where(mask_data > 0)
+coords = np.vstack((x, y, z, delay_data[x, y, z], strength_data[x, y, z])).T
+
+for therun in range(n_runs):
+    # === KMeans Clustering ===
+    print("⏳ Running KMeans...")
+    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans.fit(coords)
+    labels = kmeans.labels_
+    
+    # === Create New Atlas ===
+    new_atlas = np.zeros_like(mask_data)
+    for i, coord in enumerate(coords):
+        new_atlas[int(coord[0]), int(coord[1]), int(coord[2])] = labels[i] + 1  # Label from 1 to 300
+    
+    # === Save New Atlas ===
+    new_img = nib.Nifti1Image(new_atlas, affine)
+    nib.save(new_img, f"{output_root}_{str(therun).zfill(2)}.nii.gz")
+
+print(f"\n✅ Saved new 300-ROI atlas to: {output_path}")

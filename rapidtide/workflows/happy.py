@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2018-2024 Blaise Frederick
+#   Copyright 2018-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ from tqdm import tqdm
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.glmpass as tide_glmpass
 import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
@@ -157,8 +157,8 @@ def happy_main(argparsingfunc):
             args.mklthreads = mklmaxthreads
         mkl.set_num_threads(args.mklthreads)
 
-    # if we are going to do a glm, make sure we are generating app matrix
-    if (args.dotemporalglm or args.dospatialglm) and args.cardcalconly:
+    # if we are going to do noise regression, make sure we are generating app matrix
+    if (args.dotemporalregression or args.dospatialregression) and args.cardcalconly:
         print("doing glm fit requires phase projection - setting cardcalconly to False")
         args.cardcalconly = False
 
@@ -205,7 +205,6 @@ def happy_main(argparsingfunc):
     tide_util.logmem("before mask creation")
     # mask = np.uint16(masking.compute_epi_mask(nim).dataobj.reshape(numspatiallocs))
     mask = np.uint16(tide_mask.makeepimask(nim).dataobj.reshape(numspatiallocs))
-    validvoxels = np.where(mask > 0)[0]
     theheader = copy.deepcopy(nim_hdr)
     theheader["dim"][4] = 1
     timings.append(["Mask created", time.time(), None, None])
@@ -236,15 +235,16 @@ def happy_main(argparsingfunc):
     # filter out motion regressors here
     if args.motionfilename is not None:
         timings.append(["Motion filtering start", time.time(), None, None])
-        motiondict = tide_io.readmotion(args.motionfilename, tr=tr)
+        motiondict = tide_io.readmotion(args.motionfilename, tr=tr, colspec=args.motionfilecolspec)
         confoundregressors, confoundregressorlabels = tide_fit.calcexpandedregressors(
             motiondict,
             labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
             deriv=args.motfilt_deriv,
             order=args.motfilt_order,
         )
+        tide_util.disablemkl(args.nprocs)
         (motionregressors, motionregressorlabels, filtereddata, confoundr2) = (
-            tide_glmpass.confoundregress(
+            tide_linfitfiltpass.confoundregress(
                 confoundregressors,
                 confoundregressorlabels,
                 fmri_data[validprojvoxels, :],
@@ -253,8 +253,10 @@ def happy_main(argparsingfunc):
                 tcstart=args.motskip,
                 tchp=args.motionhp,
                 tclp=args.motionlp,
+                nprocs=args.nprocs,
             )
         )
+        tide_util.enablemkl(args.mklthreads)
         if confoundr2 is None:
             print("There are no nonzero confound regressors - exiting")
             sys.exit()
@@ -272,6 +274,17 @@ def happy_main(argparsingfunc):
             columns=motionregressorlabels,
             append=False,
             debug=args.debug,
+        )
+        # save motionr2 map
+        theheader = copy.deepcopy(nim_hdr)
+        theheader["dim"][4] = 1
+        motionr2filename = outputroot + "_desc-motionr2_map"
+        bidsdict = bidsbasedict.copy()
+        tide_io.writedicttojson(bidsdict, motionr2filename + ".json")
+        outarray = np.zeros((xsize, ysize, numslices), dtype=float)
+        outarray.reshape(numspatiallocs)[validprojvoxels] = confoundr2
+        tide_io.savetonifti(
+            outarray.reshape((xsize, ysize, numslices)), theheader, motionr2filename
         )
         if args.savemotionglmfilt:
             motionfilteredfilename = outputroot + "_desc-motionfiltered_bold"
@@ -330,30 +343,32 @@ def happy_main(argparsingfunc):
     tide_io.savetonifti(mads.reshape((xsize, ysize, numslices)), theheader, madsfilename)
 
     # read in estimation mask if present. Otherwise, otherwise use intensity mask.
-    infodict["estmaskname"] = args.estmaskname
+    infodict["estweightsname"] = args.estweightsname
     if args.debug:
-        print(args.estmaskname)
-    if args.estmaskname is not None:
-        tide_util.logmem("before reading in estmask")
-        estmask = happy_support.readextmask(
-            args.estmaskname, nim_hdr, xsize, ysize, numslices, args.debug
+        print(args.estweightsname)
+    if args.estweightsname is not None:
+        tide_util.logmem("before reading in estweights")
+        estweights = happy_support.readextmask(
+            args.estweightsname, nim_hdr, xsize, ysize, numslices, args.debug
         )
-        # * np.float64(mask_byslice)
-        estmask_byslice = estmask.reshape(xsize * ysize, numslices)
-        print("using estmask from file", args.estmaskname)
+        estweights_byslice = estweights.reshape(xsize * ysize, numslices)
+        print("using estweights from file", args.estweightsname)
         numpasses = 1
     else:
         # just fall back to the intensity mask
-        estmask_byslice = mask_byslice.astype("float64")
+        estweights_byslice = mask_byslice.astype("float64")
         numpasses = 2
         print("Not using separate estimation mask - doing initial estimate using intensity mask")
-    if args.fliparteries:
-        # add another pass to refine the waveform after getting the new appflips
+
+    # add another pass to refine the waveform after getting the new appflips
+    if args.fliparteries or args.doaliasedcorrelation:
         numpasses += 1
-        print("Adding a pass to regenerate cardiac waveform using better appflips")
+        print("Adding a pass to regenerate cardiac waveform using better vessel specification")
 
     # output mask size
-    print(f"estmask has {len(np.where(estmask_byslice[:, :] > 0)[0])} voxels above threshold.")
+    print(
+        f"estweights has {len(np.where(estweights_byslice[:, :] > 0)[0])} voxels above threshold."
+    )
 
     infodict["numpasses"] = numpasses
 
@@ -370,6 +385,7 @@ def happy_main(argparsingfunc):
         # now get an estimate of the cardiac signal
         print("estimating cardiac signal from fmri data")
         tide_util.logmem("before cardiacfromimage")
+        tide_util.disablemkl(args.nprocs)
         (
             cardfromfmri_sliceres,
             cardfromfmri_normfac,
@@ -382,7 +398,7 @@ def happy_main(argparsingfunc):
             slicenorms,
         ) = happy_support.cardiacfromimage(
             normdata_byslice,
-            estmask_byslice,
+            estweights_byslice,
             numslices,
             timepoints,
             tr,
@@ -400,6 +416,7 @@ def happy_main(argparsingfunc):
             debug=args.debug,
             verbose=args.verbose,
         )
+        tide_util.enablemkl(args.mklthreads)
         timings.append(
             [
                 "Cardiac signal generated from image data" + passstring,
@@ -436,6 +453,14 @@ def happy_main(argparsingfunc):
                 append=False,
                 debug=args.debug,
             )
+            tide_io.writebidstsv(
+                outputroot + "_desc-sliceresrespfromfmri_timeseries",
+                respfromfmri_sliceres,
+                slicesamplerate,
+                columns=["respfromfmri"],
+                append=False,
+                debug=args.debug,
+            )
 
         # stash away a copy of the waveform if we need it later
         raw_cardfromfmri_sliceres = np.array(cardfromfmri_sliceres)
@@ -467,6 +492,14 @@ def happy_main(argparsingfunc):
                     slicesamplerate,
                     columns=["cardiacfromfmri_censored"],
                     append=True,
+                    debug=args.debug,
+                )
+                tide_io.writebidstsv(
+                    outputroot + "_desc-sliceresrespfromfmri_timeseries",
+                    respfromfmri_sliceres * (1.0 - thebadcardpts),
+                    slicesamplerate,
+                    columns=["respfromfmri_censored"],
+                    append=False,
                     debug=args.debug,
                 )
         peakfreq_bold = happy_support.getcardcoeffs(
@@ -584,6 +617,15 @@ def happy_main(argparsingfunc):
                 )
                 thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
                 thedlfilter.loadmodel(args.modelname)
+                updatemodels = False
+                if updatemodels:
+                    updatedmodelname = f"{args.modelname}_tf2"
+                    newmodeldir = os.path.join(
+                        "/Users/frederic/code/rapidtide/rapidtide/data/models", updatedmodelname
+                    )
+                    print(f"creating {newmodeldir}")
+                    tide_util.makeadir(newmodeldir)
+                    thedlfilter.savemodel(altname=newmodeldir)
                 infodict["dlfiltermodel"] = args.modelname
                 normdlfilteredcard_stdres = thedlfilter.apply(normcardfromfmri_stdres)
                 dlfilteredcard_stdres = thedlfilter.apply(cardfromfmri_stdres)
@@ -948,6 +990,24 @@ def happy_main(argparsingfunc):
                     append=True,
                     debug=args.debug,
                 )
+                badpointlist_stdres = np.round(
+                    tide_resample.arbresample(
+                        badpointlist,
+                        slicesamplerate,
+                        args.stdfreq,
+                        decimate=True,
+                        debug=False,
+                    ),
+                    0,
+                )
+                tide_io.writebidstsv(
+                    outputroot + "_desc-stdrescardfromfmri_timeseries",
+                    badpointlist_stdres,
+                    args.stdfreq,
+                    columns=["badpts"],
+                    append=True,
+                    debug=args.debug,
+                )
 
         #  extract the fundamental
         if args.forcedhr is not None:
@@ -1156,20 +1216,12 @@ def happy_main(argparsingfunc):
         # construct the destination arrays
         tide_util.logmem("before making destination arrays")
         app = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        app_byslice = app.reshape((xsize * ysize, numslices, args.destpoints))
         cine = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        cine_byslice = cine.reshape((xsize * ysize, numslices, args.destpoints))
         rawapp = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, args.destpoints))
         corrected_rawapp = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        corrected_rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, args.destpoints))
         normapp = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        normapp_byslice = normapp.reshape((xsize * ysize, numslices, args.destpoints))
         weights = np.zeros((xsize, ysize, numslices, args.destpoints), dtype=np.float64)
-        weight_byslice = weights.reshape((xsize * ysize, numslices, args.destpoints))
         derivatives = np.zeros((xsize, ysize, numslices, 4), dtype=np.float64)
-        derivatives_byslice = derivatives.reshape((xsize * ysize, numslices, 4))
-
         timings.append(["Output arrays allocated" + passstring, time.time(), None, None])
 
         if args.centric:
@@ -1183,6 +1235,42 @@ def happy_main(argparsingfunc):
         # now do the phase projection
         #
         #
+        """app, rawapp, corrected_rawapp, normapp, weights, cine, derivatives = (
+            happy_support.phaseproject(
+                demeandata,
+                means,
+                args.destpoints,
+                numsteps,
+                timings,
+                cardfromfmri_sliceres,
+                instantaneous_cardiacphase,
+                thispass,
+                numpasses,
+                args,
+                outputroot,
+                slicesamplerate,
+                pleth_sliceres,
+                mrsamplerate,
+                projmask_byslice,
+                cardphasevals,
+                thetimes,
+                centric=True,
+                passstring="",
+                badpointlist=None,
+                congridbins=3.0,
+                gridkernel="kaiser",
+            )
+        )"""
+        app_byslice = app.reshape((xsize * ysize, numslices, args.destpoints))
+        rawapp_byslice = rawapp.reshape((xsize * ysize, numslices, args.destpoints))
+        corrected_rawapp_byslice = corrected_rawapp.reshape(
+            (xsize * ysize, numslices, args.destpoints)
+        )
+        normapp_byslice = normapp.reshape((xsize * ysize, numslices, args.destpoints))
+        weights_byslice = weights.reshape((xsize * ysize, numslices, args.destpoints))
+        cine_byslice = cine.reshape((xsize * ysize, numslices, args.destpoints))
+        derivatives_byslice = derivatives.reshape((xsize * ysize, numslices, 4))
+
         demeandata_byslice = demeandata.reshape((xsize * ysize, numslices, timepoints))
         means_byslice = means.reshape((xsize * ysize, numslices))
 
@@ -1201,7 +1289,7 @@ def happy_main(argparsingfunc):
             procpoints = np.where(censorpoints < 1)[0]
 
         # do phase averaging
-        app_bypoint, weight_bypoint = happy_support.cardiaccycleaverage(
+        app_bypoint, weights_bypoint = happy_support.cardiaccycleaverage(
             instantaneous_cardiacphase,
             outphases,
             cardfromfmri_sliceres,
@@ -1223,7 +1311,7 @@ def happy_main(argparsingfunc):
             )
             tide_io.writebidstsv(
                 outputroot + "_desc-cardiaccycleweightfromfmri_timeseries",
-                weight_bypoint,
+                weights_bypoint,
                 1.0 / (outphases[1] - outphases[0]),
                 starttime=outphases[0],
                 columns=["cardiaccycleweightfromfmri"],
@@ -1280,7 +1368,7 @@ def happy_main(argparsingfunc):
         outtimes = np.linspace(
             0.0, maxtime, num=int(maxtime / args.pulsereconstepsize), endpoint=False
         )
-        atp_bypoint, atpweight_bypoint = happy_support.cardiaccycleaverage(
+        atp_bypoint, atpweights_bypoint = happy_support.cardiaccycleaverage(
             instantaneous_cardiactime,
             outtimes,
             cardfromfmri_sliceres,
@@ -1311,13 +1399,14 @@ def happy_main(argparsingfunc):
         appsmoothingfilter.setfreqs(0.0, 0.0, phaseFc, phaseFc)
 
         # setup for aliased correlation if we're going to do it
-        if args.doaliasedcorrelation and (thispass == numpasses - 1):
+        if args.doaliasedcorrelation:
             if args.cardiacfilename and False:
                 signal_sliceres = pleth_sliceres
-                # signal_stdres = pleth_stdres
             else:
                 signal_sliceres = cardfromfmri_sliceres
-                # signal_stdres = dlfilteredcard_stdres
+
+            # zero out bad points
+            signal_sliceres *= 1.0 - badpointlist
 
             theAliasedCorrelator = tide_corr.AliasedCorrelator(
                 signal_sliceres,
@@ -1330,16 +1419,24 @@ def happy_main(argparsingfunc):
             )
             correndloc = tide_util.valtoindex(thealiasedcorrx, args.aliasedcorrelationwidth / 2.0)
             aliasedcorrelationpts = correndloc - corrstartloc + 1
-            thecorrfunc = np.zeros(
-                (xsize, ysize, numslices, aliasedcorrelationpts), dtype=np.float64
-            )
-            thecorrfunc_byslice = thecorrfunc.reshape(
-                (xsize * ysize, numslices, aliasedcorrelationpts)
-            )
-            wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float64)
-            wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
-            waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float64)
-            waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
+            if thispass == 0:
+                thecorrfunc = np.zeros(
+                    (xsize, ysize, numslices, aliasedcorrelationpts), dtype=np.float64
+                )
+                thecorrfunc_byslice = thecorrfunc.reshape(
+                    (xsize * ysize, numslices, aliasedcorrelationpts)
+                )
+                wavedelay = np.zeros((xsize, ysize, numslices), dtype=np.float64)
+                wavedelay_byslice = wavedelay.reshape((xsize * ysize, numslices))
+                wavedelayCOM = np.zeros((xsize, ysize, numslices), dtype=np.float64)
+                wavedelayCOM_byslice = wavedelayCOM.reshape((xsize * ysize, numslices))
+                waveamp = np.zeros((xsize, ysize, numslices), dtype=np.float64)
+                waveamp_byslice = waveamp.reshape((xsize * ysize, numslices))
+            else:
+                thecorrfunc *= 0.0
+                wavedelay *= 0.0
+                wavedelayCOM *= 0.0
+                waveamp *= 0.0
 
         # now project the data
         fmri_data_byslice = input_data.byslice()
@@ -1366,20 +1463,21 @@ def happy_main(argparsingfunc):
                         cyclic=True,
                     )
                     for i in range(len(theindices)):
-                        weight_byslice[validlocs, theslice, theindices[i]] += theweights[i]
+                        weights_byslice[validlocs, theslice, theindices[i]] += theweights[i]
                         # rawapp_byslice[validlocs, theslice, theindices[i]] += (
                         #    theweights[i] * filteredmr
                         # )
                         rawapp_byslice[validlocs, theslice, theindices[i]] += filteredmr
                         cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
                 for d in range(args.destpoints):
-                    if weight_byslice[validlocs[0], theslice, d] == 0.0:
-                        weight_byslice[validlocs, theslice, d] = 1.0
+                    if weights_byslice[validlocs[0], theslice, d] == 0.0:
+                        weights_byslice[validlocs, theslice, d] = 1.0
                 rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-                    rawapp_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :]
+                    rawapp_byslice[validlocs, theslice, :]
+                    / weights_byslice[validlocs, theslice, :]
                 )
                 cine_byslice[validlocs, theslice, :] = np.nan_to_num(
-                    cine_byslice[validlocs, theslice, :] / weight_byslice[validlocs, theslice, :]
+                    cine_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
                 )
             else:
                 rawapp_byslice[:, theslice, :] = 0.0
@@ -1404,7 +1502,7 @@ def happy_main(argparsingfunc):
                 corrected_rawapp_byslice[validlocs, theslice, :] = (
                     rawapp_byslice[validlocs, theslice, :] - timecoursemean
                 ) * appflips_byslice[validlocs, theslice, None] + timecoursemean
-                if args.doaliasedcorrelation and (thispass == numpasses - 1):
+                if args.doaliasedcorrelation and (thispass > 0):
                     for theloc in validlocs:
                         thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
                             -appflips_byslice[theloc, theslice]
@@ -1415,14 +1513,18 @@ def happy_main(argparsingfunc):
                         wavedelay_byslice[theloc, theslice] = (
                             thealiasedcorrx[corrstartloc : correndloc + 1]
                         )[maxloc]
-                        waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[
-                            theloc, theslice, maxloc
-                        ]
+                        waveamp_byslice[theloc, theslice] = np.fabs(
+                            thecorrfunc_byslice[theloc, theslice, maxloc]
+                        )
+                        wavedelayCOM_byslice[theloc, theslice] = happy_support.theCOM(
+                            thealiasedcorrx[corrstartloc : correndloc + 1],
+                            np.fabs(thecorrfunc_byslice[theloc, theslice, :]),
+                        )
             else:
                 corrected_rawapp_byslice[validlocs, theslice, :] = rawapp_byslice[
                     validlocs, theslice, :
                 ]
-                if args.doaliasedcorrelation and (thispass == numpasses - 1):
+                if args.doaliasedcorrelation and (thispass > 0):
                     for theloc in validlocs:
                         thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
                             -demeandata_byslice[theloc, theslice, :],
@@ -1432,9 +1534,9 @@ def happy_main(argparsingfunc):
                         wavedelay_byslice[theloc, theslice] = (
                             thealiasedcorrx[corrstartloc : correndloc + 1]
                         )[maxloc]
-                        waveamp_byslice[theloc, theslice] = thecorrfunc_byslice[
-                            theloc, theslice, maxloc
-                        ]
+                        waveamp_byslice[theloc, theslice] = np.fabs(
+                            thecorrfunc_byslice[theloc, theslice, maxloc]
+                        )
             timecoursemin = np.min(
                 corrected_rawapp_byslice[validlocs, theslice, :], axis=1
             ).reshape((-1, 1))
@@ -1506,15 +1608,18 @@ def happy_main(argparsingfunc):
             theheader["pixdim"][4] = thealiasedcorrx[1] - thealiasedcorrx[0]
             corrfuncfilename = outputroot + "_desc-corrfunc_info"
             wavedelayfilename = outputroot + "_desc-wavedelay_map"
+            wavedelayCOMfilename = outputroot + "_desc-wavedelayCOM_map"
             waveampfilename = outputroot + "_desc-waveamp_map"
             bidsdict = bidsbasedict.copy()
             tide_io.writedicttojson(bidsdict, waveampfilename + ".json")
             bidsdict["Units"] = "second"
             tide_io.writedicttojson(bidsdict, corrfuncfilename + ".json")
             tide_io.writedicttojson(bidsdict, wavedelayfilename + ".json")
+            tide_io.writedicttojson(bidsdict, wavedelayCOMfilename + ".json")
             tide_io.savetonifti(thecorrfunc, theheader, corrfuncfilename)
             theheader["dim"][4] = 1
             tide_io.savetonifti(wavedelay, theheader, wavedelayfilename)
+            tide_io.savetonifti(wavedelayCOM, theheader, wavedelayCOMfilename)
             tide_io.savetonifti(waveamp, theheader, waveampfilename)
 
         # make and save a voxel intensity histogram
@@ -1607,8 +1712,18 @@ def happy_main(argparsingfunc):
                 tide_io.savetonifti(veins, theheader, veinmapfilename)
         timings.append(["Masks saved" + passstring, time.time(), None, None])
 
+        # save the mask we used for this pass
+        tide_io.savetonifti(
+            estweights_byslice.reshape((xsize, ysize, numslices)),
+            theheader,
+            f"{outputroot}_desc-estweightspass{thispass}_map",
+        )
+
         # now get ready to start again with a new mask
-        estmask_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
+        if args.doaliasedcorrelation and thispass > 0:
+            estweights_byslice = waveamp_byslice * vesselmask.reshape((xsize * ysize, numslices))
+        else:
+            estweights_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
 
     # save a vessel image
     if args.unnormvesselmap:
@@ -1631,7 +1746,7 @@ def happy_main(argparsingfunc):
     )
 
     # now generate aliased cardiac signals and regress them out of the data
-    if args.dotemporalglm or args.dospatialglm:
+    if args.dotemporalregression or args.dospatialregression:
         # generate the signals
         timings.append(["Cardiac signal regression started", time.time(), None, None])
         tide_util.logmem("before cardiac regression")
@@ -1674,15 +1789,16 @@ def happy_main(argparsingfunc):
         validlocs = np.where(mask > 0)[0]
         numvalidspatiallocs = len(validlocs)
         threshval = 0.0
-        if args.dospatialglm:
+        if args.dospatialregression:
             meanvals = np.zeros(timepoints, dtype=np.float64)
             rvals = np.zeros(timepoints, dtype=np.float64)
             r2vals = np.zeros(timepoints, dtype=np.float64)
             fitcoffs = np.zeros(timepoints, dtype=np.float64)
             fitNorm = np.zeros(timepoints, dtype=np.float64)
             datatoremove = 0.0 * fmri_data
-            print("Running spatial glm on", timepoints, "timepoints")
-            tide_glmpass.glmpass(
+            print("Running spatial regression on", timepoints, "timepoints")
+            tide_util.disablemkl(args.nprocs)
+            tide_linfitfiltpass.linfitfiltpass(
                 timepoints,
                 fmri_data[validlocs, :],
                 threshval,
@@ -1698,6 +1814,7 @@ def happy_main(argparsingfunc):
                 procbyvoxel=False,
                 nprocs=args.nprocs,
             )
+            tide_util.enablemkl(args.mklthreads)
             print(datatoremove.shape, cardiacnoise.shape, fitcoffs.shape)
             # datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
             filtereddata = fmri_data - datatoremove
@@ -1734,15 +1851,16 @@ def happy_main(argparsingfunc):
                 ]
             )
 
-        if args.dotemporalglm:
+        if args.dotemporalregression:
             meanvals = np.zeros(numspatiallocs, dtype=np.float64)
             rvals = np.zeros(numspatiallocs, dtype=np.float64)
             r2vals = np.zeros(numspatiallocs, dtype=np.float64)
             fitcoffs = np.zeros(numspatiallocs, dtype=np.float64)
             fitNorm = np.zeros(numspatiallocs, dtype=np.float64)
             datatoremove = 0.0 * fmri_data
-            print("Running temporal glm on", numvalidspatiallocs, "voxels")
-            tide_glmpass.glmpass(
+            print("Running temporal regression on", numvalidspatiallocs, "voxels")
+            tide_util.disablemkl(args.nprocs)
+            tide_linfitfiltpass.linfitfiltpass(
                 numvalidspatiallocs,
                 fmri_data[validlocs, :],
                 threshval,
@@ -1757,6 +1875,7 @@ def happy_main(argparsingfunc):
                 procbyvoxel=True,
                 nprocs=args.nprocs,
             )
+            tide_util.enablemkl(args.mklthreads)
             datatoremove[validlocs, :] = np.multiply(
                 cardiacnoise[validlocs, :], fitcoffs[validlocs, None]
             )

@@ -34,7 +34,9 @@ datavec = amp1 * evs[:, 0] + amp2 * evs[:, 1] + amp3 * evs[:, 2] + intercept
 noisevec = noiseamp * np.random.rand(arrlen)
 invec = datavec + noisevec
 
-filtered, datatoremove, R, outcoffs, outintercept = tide_fit.glmfilt(invec, evs, returnintercept=True, debug=True)
+filtered, datatoremove, R, outcoffs, outintercept = tide_fit.linfitfilt(
+    invec, evs, returnintercept=True, debug=True
+)
 
 incoffs = [amp1, amp2, amp3]
 coffdiffs = outcoffs - incoffs
@@ -58,7 +60,7 @@ plt.plot(datavec - datatoremove + offset)
 print(R)
 plt.show()
 
-filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec, evs[:, 0], debug=True)
+filtered, datatoremove, R, coffs = tide_fit.linfitfilt(invec, evs[:, 0], debug=True)
 
 """
 offset = 0.0
@@ -80,7 +82,7 @@ invec2 = (
     + noiseamp * np.random.rand(arrlen)
 )
 
-filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec2, evs, debug=True)
+filtered, datatoremove, R, coffs = tide_fit.linfitfilt(invec2, evs, debug=True)
 
 """
 offset = 0.0
@@ -95,7 +97,7 @@ print(R)
 plt.show()
 """
 
-filtered, thenewevs, datatoremove, R, coffs = tide_fit.expandedglmfilt(
+filtered, thenewevs, datatoremove, R, coffs = tide_fit.expandedlinfitfilt(
     invec2, evs, ncomps=3, debug=True
 )
 
@@ -116,7 +118,7 @@ print(R)
 plt.show()
 """
 
-filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec2, thenewevs, debug=True)
+filtered, datatoremove, R, coffs = tide_fit.linfitfilt(invec2, thenewevs, debug=True)
 """
 offset = 0.0
 plt.plot(invec2 + offset)
@@ -138,7 +140,7 @@ alignedev, maxdelay, maxval, failreason = tide_corr.aligntcwithref(
     verbose=True,
 )
 print(f"{maxdelay=}, {maxval=}, {failreason=}")
-filtered, datatoremove, R, coffs = tide_fit.glmfilt(invec3, alignedev, debug=True)
+filtered, datatoremove, R, coffs = tide_fit.linfitfilt(invec3, alignedev, debug=True)
 offset = 0.0
 plt.plot(evs[:, 0])
 offset += 1.0

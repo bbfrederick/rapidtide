@@ -1,8 +1,76 @@
 # Release history
 
-## Version 3.0alpha7 (2/4/25)
+## Version 3.0.1 (4/23/25)
+* (documentation) I missed a bunch of weird errors in the "Theory of Operation" section.  Are you surprised?  I'm not surprised.  You shouldn't be either.  These are now fixed.  This doesn't change any code - mostly affects online documentation.
+
+## Version 3.0 (4/22/25)
+* (documentation) Added summary of 3.0 changes, fixed a few typos.
+
+## Version 3.0alpha15 (4/22/25)
+* (rapidtide) Fixed a bug in masking logic introduced in last version.
+* (rapidtide) Pullled regressor cleaning steps out into a separate routine.
+* (rapidtide) Removed unused "noiseregressor" code.  Its functionality is now covered with confound regression.
+* (rapidtide) Removed memory profiling code that relied on an unsupported library.
+* (rapidtide) Defined a new class to handle the input data.  This simplifies a lot of internal operations.
+* (happy) Updated deep learning filter training and inference code, and saved models, for better tensorflow 2 compatibility.
+* (docs) Updated installation instructions.
+* (package) Updated copyright notices.
+
+## Version 3.0alpha14 (4/8/25)
+* (rapidtide) Rationalized handling of zero-mean data - now use the ``--dataiszeromean`` argument to tell rapidtide how to make masks.  ``--globalmaskmethod`` no longer exists.
+* (retroregress) Some bugfixes.
+* (atlasaverage) 4D file timecourse output is now a BIDS compliant json/tsv.gz pair, with timecourse labels, if desired.
+* (delayvar) Secret bugfixes.
+* (package) Fixed definition of ``APARC_WHITE`` to add cerebral white matter (oops!).
+* (package) Made it easier to run local tests.
+* (docs) Expanded theory of operation section.
+
+## Version 3.0alpha13 (3/31/27)
+* (rapidtide, retroregress) Preserve the sign of the sLFO filter fit R value (it might be useful for distinguishing arterial blood).
+* (rapidtide) Fixed a bug with --dofinalrefine - now the shiftedtcs file IS written.
+* (delayvar) New secret program, for secret purposes, to satisfy a secret question I had. More later.
+* (package) Clarified that the final sLFO removal filter does NOT use a GLM (the current filter is an OLS filter) by renaming routines and command line options.
+
+## Version 3.0alpha12 (3/19/25)
+* (rapidtide) Added option to perform regressor refinement on last pass.
+* (rapidtide) Moved regressor refinement out into its own class to make things more modular.
+* (refinedelay) Put in some experimental code to do multiderivative delay fits.  Currently doesn't work very well.
+* (tidepool) Changed default colormaps for similarity width, MTT.
+* (package) Made a script to compile qt templates.
+* (package) Added the ability to set value limits to some parser functions.
+
+## Version 3.0alpha11 (3/5/25)
+* (tidepool) Substantial speed improvement switching datasets.
+* (tidepool) Colormap radio button is now set correctly.
+* (tidepool) Mask menu label is now set correctly when restoring a loaded dataset.
+* (versioneer) Updated to 0.29.
+* (docs) tidepool's documentation has been updated to reflect the current state of the program.
+
+## Version 3.0alpha10 (2/28/25)
+* (tidepool) Full support for multiple concurrent datasets.  Dataset loading and selection is now done through the File menu.
+* (tidepool) Load additional informational maps, and somewhat more intelligently.
+* (tidepool) Fixed pane loading to use all available panes.
+* (tidepool) Fixed image saving under pyqt6.
+* (tidepool) For the regressor spectrum, only do FFT of the portion of the regressor used for similarity calculation.
+
+## Version 3.0alpha9 (2/26/25)
+* (rapidtide) Fixed the calculation of the regressor autocorrelation width (used in estimating MTT).
+* (tidepool) First working version that allows loading multiple files. Use ``--dataset DATASET1 DATASET2...``.
+* (tidepool) Added new "big" template to let you see more information at once.  Select with ``--uistyle big``.
+* (tidepool) Pretty significant code cleanup under the hood.
+
+## Version 3.0alpha8 (2/20/25)
+* (rapidtide) Enhanced fit failure reporting.
+* (rapidtide) Fixed map output type for non-float maps.
+* (tidepool) Clarify how you specify the dataset name in the help text.
+* (tidepool) Fixed some typos in outputs.
+* (tidepool) Made some internal changes in preparation for allowing loading multiple files.
+
+## Version 3.0alpha7 (2/11/25)
+* (happy) Trying out some new approaches for aliased correlation.
 * (happy) Put in some initial support for multiecho data.
 * (happy) Updated argument parser.
+* (package) Various modernizations and cleanups.
 
 ## Version 3.0alpha6 (1/28/25)
 * (happy) Fixed a major bug in motion filtering (thank you to Sukru Demiral for reporting it!)

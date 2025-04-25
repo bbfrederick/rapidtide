@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 import scipy.special as sps
+import statsmodels.api as sm
 import tqdm
 from numpy.polynomial import Polynomial
 from scipy.optimize import curve_fit
@@ -39,13 +40,6 @@ MAXLINES = 10000000
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from memory_profiler import profile
-
-    memprofilerexists = True
-except ImportError:
-    memprofilerexists = False
-
 try:
     from numba import jit
 except ImportError:
@@ -1105,6 +1099,37 @@ def mlproject(thefit, theevs, intercept):
     return thedest
 
 
+def olsregress(X, y, intercept=True, debug=False):
+    """
+
+    Parameters
+    ----------
+    X
+    y
+    intercept
+
+    Returns
+    -------
+
+    """
+    """Return the coefficients from a multiple linear regression, along with R, the coefficient of determination.
+
+    X: The independent variables (nxp).
+    y: The dependent variable (1xn or nx1).
+    intercept: Specifies whether or not the slope intercept should be considered.
+
+    The routine computes the coefficients (b_0, b_1, ..., b_p) from the data (x,y) under
+    the assumption that y = b0 + b_1 * x_1 + b_2 * x_2 + ... + b_p * x_p.
+
+    If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
+    """
+    if intercept:
+        X = sm.add_constant(X, prepend=True)
+    model = sm.OLS(y, exog=X)
+    thefit = model.fit()
+    return thefit.params, np.sqrt(thefit.rsquared)
+
+
 def mlregress(X, y, intercept=True, debug=False):
     """
 
@@ -1223,9 +1248,9 @@ def calcexpandedregressors(
     return outputregressors, outlabels
 
 
-def derivativeglmfilt(thedata, theevs, nderivs=1, debug=False):
+def derivativelinfitfilt(thedata, theevs, nderivs=1, debug=False):
     r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
-    its square, its cube, etc.).  Then perform a glm fit of thedata using the vectors
+    its square, its cube, etc.).  Then perform a linear fit of thedata using the vectors
     in thenewevs and return the result.
 
     Parameters
@@ -1269,16 +1294,16 @@ def derivativeglmfilt(thedata, theevs, nderivs=1, debug=False):
     if debug:
         print(f"{nderivs=}")
         print(f"{thenewevs.shape=}")
-    filtered, datatoremove, R, coffs = glmfilt(thedata, thenewevs, debug=debug)
+    filtered, datatoremove, R, coffs = linfitfilt(thedata, thenewevs, debug=debug)
     if debug:
         print(f"{R=}")
 
     return filtered, thenewevs, datatoremove, R, coffs
 
 
-def expandedglmfilt(thedata, theevs, ncomps=1, debug=False):
+def expandedlinfitfilt(thedata, theevs, ncomps=1, debug=False):
     r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
-    its square, its cube, etc.).  Then perform a glm fit of thedata using the vectors
+    its square, its cube, etc.).  Then perform a multiple regression fit of thedata using the vectors
     in thenewevs and return the result.
 
     Parameters
@@ -1322,15 +1347,15 @@ def expandedglmfilt(thedata, theevs, ncomps=1, debug=False):
     if debug:
         print(f"{ncomps=}")
         print(f"{thenewevs.shape=}")
-    filtered, datatoremove, R, coffs = glmfilt(thedata, thenewevs, debug=debug)
+    filtered, datatoremove, R, coffs = linfitfilt(thedata, thenewevs, debug=debug)
     if debug:
         print(f"{R=}")
 
     return filtered, thenewevs, datatoremove, R, coffs
 
 
-def glmfilt(thedata, theevs, returnintercept=False, debug=False):
-    r"""Performs a glm fit of thedata using the vectors in theevs
+def linfitfilt(thedata, theevs, returnintercept=False, debug=False):
+    r"""Performs a multiple regression fit of thedata using the vectors in theevs
     and returns the result.
 
     Parameters
@@ -1383,7 +1408,7 @@ def glmfilt(thedata, theevs, returnintercept=False, debug=False):
         return filtered, datatoremove, R2, retcoffs
 
 
-def confoundglm(
+def confoundregress(
     data,
     regressors,
     debug=False,

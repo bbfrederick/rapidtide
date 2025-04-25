@@ -1,0 +1,1 @@
+model_cnn_w064_l13_fn20_fl08_e100_t4.0_ct0.72_s20_d1_relu_normaligned: Prediction Error: 0.1203965516546574 Raw Error: 0.3173622005504527

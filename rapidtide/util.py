@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -26,8 +26,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from multiprocessing import RawArray, shared_memory
-from os.path import split
+from multiprocessing import shared_memory
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,6 +34,13 @@ import pandas as pd
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
+
+try:
+    import mkl
+
+    mklexists = True
+except ImportError:
+    mklexists = False
 
 LGR = logging.getLogger(__name__)
 TimingLGR = logging.getLogger("TIMING")
@@ -47,13 +53,6 @@ MAXLINES = 10000000
 donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from memory_profiler import profile
-
-    memprofilerexists = True
-except ImportError:
-    memprofilerexists = False
-
 try:
     from numba import jit
 except ImportError:
@@ -70,12 +69,6 @@ else:
 
 
 def checkimports(optiondict):
-    if memprofilerexists:
-        print("memprofiler exists")
-    else:
-        print("memprofiler does not exist")
-    optiondict["memprofilerexists"] = memprofilerexists
-
     if pyfftwpresent:
         print("pfftw exists")
     else:
@@ -118,6 +111,21 @@ def conditionaljit2():
 def disablenumba():
     global donotusenumba
     donotusenumba = True
+
+
+def disablemkl(numprocs, debug=False):
+    if mklexists:
+        if numprocs > 1:
+            if debug:
+                print("disablemkl: setting threads to 1")
+            mkl.set_num_threads(1)
+
+
+def enablemkl(numthreads, debug=False):
+    if mklexists:
+        if debug:
+            print(f"enablemkl: setting threads to {numthreads}")
+        mkl.set_num_threads(numthreads)
 
 
 # --------------------------- Utility functions -------------------------------------------------
@@ -291,6 +299,20 @@ def isexecutable(command):
             os.access(os.path.join(path, command), os.X_OK)
             for path in os.environ["PATH"].split(os.pathsep)
         )
+
+
+def makeadir(pathname):
+    try:
+        os.makedirs(pathname)
+    except OSError:
+        if os.path.exists(pathname):
+            # We are nearly safe
+            return True
+        else:
+            # There was an error on creation, so make sure we know about it
+            print("ERROR: ", pathname, " does not exist, and could not create it")
+            return False
+    return True
 
 
 def findreferencedir():

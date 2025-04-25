@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -39,6 +39,34 @@ atlases = {
 }
 
 
+def check_rt_spatialmatch(dataset1, dataset2):
+    if (
+        (dataset1.xdim == dataset2.xdim)
+        and (dataset1.ydim == dataset2.ydim)
+        and (dataset1.zdim == dataset2.zdim)
+    ):
+        dimmatch = True
+    else:
+        dimmatch = False
+    if (
+        (dataset1.xsize == dataset2.xsize)
+        and (dataset1.ysize == dataset2.ysize)
+        and (dataset1.zsize == dataset2.zsize)
+    ):
+        sizematch = True
+    else:
+        sizematch = False
+    if dataset1.space == dataset2.space:
+        spacematch = True
+    else:
+        spacematch = False
+    if dataset1.affine == dataset2.affine:
+        affinematch = True
+    else:
+        affinematch = False
+    return dimmatch, sizematch, spacematch, affinematch
+
+
 class Timecourse:
     "Store a timecourse and some information about it"
 
@@ -53,6 +81,7 @@ class Timecourse:
         label=None,
         report=False,
         isbids=False,
+        limits=None,
         verbose=0,
     ):
         self.verbose = verbose
@@ -63,6 +92,7 @@ class Timecourse:
         self.displaysamplerate = displaysamplerate
         self.starttime = starttime
         self.isbids = isbids
+        self.limits = limits
 
         if label is None:
             self.label = name
@@ -89,11 +119,21 @@ class Timecourse:
         self.timeaxis = (
             np.linspace(0.0, self.length, num=self.length, endpoint=False) / self.samplerate
         ) - self.starttime
+        if self.limits is not None:
+            startpoint = np.max((int(np.round(self.limits[0] * self.samplerate, 0)), 0))
+            endpoint = np.min((int(np.round(self.limits[1] * self.samplerate, 0)), self.length))
+        else:
+            startpoint = 0
+            endpoint = self.length
         self.specaxis, self.specdata = tide_filt.spectrum(
-            tide_math.corrnormalize(self.timedata), self.samplerate
+            tide_math.corrnormalize(self.timedata[startpoint:endpoint]), self.samplerate
         )
-        self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(self.timedata)
-        self.skewness, self.skewness_z, self.skewness_p = tide_stats.skewnessstats(self.timedata)
+        self.kurtosis, self.kurtosis_z, self.kurtosis_p = tide_stats.kurtosisstats(
+            self.timedata[startpoint:endpoint]
+        )
+        self.skewness, self.skewness_z, self.skewness_p = tide_stats.skewnessstats(
+            self.timedata[startpoint:endpoint]
+        )
 
         if self.verbose > 1:
             print("Timecourse data range:", np.min(self.timedata), np.max(self.timedata))
@@ -122,6 +162,8 @@ class Timecourse:
 class Overlay:
     "Store a data overlay and some information about it"
 
+    LUTname = None
+
     def __init__(
         self,
         name,
@@ -135,6 +177,7 @@ class Overlay:
         alpha=128,
         endalpha=0,
         display_state=True,
+        invertonload=False,
         isaMask=False,
         init_LUT=True,
         verbose=1,
@@ -152,6 +195,8 @@ class Overlay:
         self.namebase = namebase
         if self.verbose > 1:
             print("reading map ", self.name, " from ", self.filename, "...")
+        self.maskhash = 0
+        self.invertonload = invertonload
         self.readImageData(isaMask=isaMask)
         self.mask = None
         self.maskeddata = None
@@ -159,6 +204,8 @@ class Overlay:
         self.setGeomMask(geommask, maskdata=False)
         self.maskData()
         self.updateStats()
+        self.dispmin = self.robustmin
+        self.dispmax = self.robustmax
         if init_LUT:
             self.gradient = getagradient()
             self.lut_state = lut_state
@@ -233,6 +280,7 @@ class Overlay:
 
     def updateStats(self):
         calcmaskeddata = self.data[np.where(self.mask != 0)]
+
         self.minval = calcmaskeddata.min()
         self.maxval = calcmaskeddata.max()
         (
@@ -242,12 +290,11 @@ class Overlay:
             self.pct75,
             self.robustmax,
         ) = tide_stats.getfracvals(calcmaskeddata, [0.02, 0.25, 0.5, 0.75, 0.98], nozero=False)
-        self.dispmin = self.robustmin
-        self.dispmax = self.robustmax
         self.histy, self.histx = np.histogram(
             calcmaskeddata, bins=np.linspace(self.minval, self.maxval, 200)
         )
         self.quartiles = [self.pct25, self.pct50, self.pct75]
+
         if self.verbose > 1:
             print(
                 self.name,
@@ -270,6 +317,8 @@ class Overlay:
         self.nim, self.data, self.header, self.dims, self.sizes = tide_io.readfromnifti(
             self.filename
         )
+        if self.invertonload:
+            self.data *= -1.0
         if isaMask:
             if self.filevals is None:
                 self.data[np.where(self.data < 0.5)] = 0.0
@@ -358,9 +407,17 @@ class Overlay:
 
     def maskData(self):
         self.mask = self.geommask * self.funcmask
-        self.maskeddata = self.data.copy()
-        self.maskeddata[np.where(self.mask < 0.5)] = 0.0
-        self.updateStats()
+        maskhash = hash(self.mask.tostring())
+        # these operations are expensive, so only do them if the mask is changed
+        if (maskhash == self.maskhash) and (self.verbose > 1):
+            print("mask has not changed")
+        else:
+            if self.verbose > 1:
+                print("mask changed - recalculating")
+            self.maskeddata = self.data.copy()
+            self.maskeddata[np.where(self.mask < 0.5)] = 0.0
+            self.updateStats()
+            self.maskhash = maskhash
 
     def setReport(self, report):
         self.report = report
@@ -389,6 +446,7 @@ class Overlay:
             self.lut_state = setendalpha(lut_state, endalpha)
         self.gradient.restoreState(self.lut_state)
         self.theLUT = self.gradient.getLookupTable(512, alpha=True)
+        self.LUTname = lut_state["name"]
 
     def setisdisplayed(self, display_state):
         self.display_state = display_state
@@ -432,6 +490,8 @@ class Overlay:
 
 class RapidtideDataset:
     "Store all the data associated with a rapidtide dataset"
+
+    fileroot = None
     focusregressor = None
     regressorfilterlimits = None
     regressorsimcalclimits = None
@@ -451,6 +511,8 @@ class RapidtideDataset:
     ysize = 0.0
     zsize = 0.0
     tr = 0.0
+    space = None
+    affine = None
 
     def __init__(
         self,
@@ -458,6 +520,7 @@ class RapidtideDataset:
         fileroot,
         anatname=None,
         geommaskname=None,
+        funcmaskname=None,
         graymaskspec=None,
         whitemaskspec=None,
         userise=False,
@@ -469,13 +532,14 @@ class RapidtideDataset:
         coordinatespace="unspecified",
         offsettime=0.0,
         init_LUT=True,
-        verbose=1,
+        verbose=0,
     ):
         self.verbose = verbose
         self.name = name
         self.fileroot = fileroot
         self.anatname = anatname
         self.geommaskname = geommaskname
+        self.funcmaskname = funcmaskname
         self.graymaskspec = graymaskspec
         self.whitemaskspec = whitemaskspec
         self.userise = userise
@@ -525,6 +589,7 @@ class RapidtideDataset:
                     label=thisregressor[1],
                     starttime=thisregressor[5],
                     isbids=self.bidsformat,
+                    limits=self.regressorsimcalclimits,
                     verbose=self.verbose,
                 )
                 if theregressor.timedata is not None:
@@ -542,6 +607,7 @@ class RapidtideDataset:
                     )
 
     def _loadfuncmaps(self):
+        mapstoinvert = ["varChange"]
         self.loadedfuncmaps = []
         xdim = 0
         ydim = 0
@@ -557,12 +623,17 @@ class RapidtideDataset:
                         " exists - reading...",
                     )
                 thepath, thebase = os.path.split(self.fileroot)
+                if mapname in mapstoinvert:
+                    invertthismap = True
+                else:
+                    invertthismap = False
                 self.overlays[mapname] = Overlay(
                     mapname,
                     self.fileroot + mapfilename + ".nii.gz",
                     thebase,
                     init_LUT=self.init_LUT,
                     report=True,
+                    invertonload=invertthismap,
                     verbose=self.verbose,
                 )
                 if xdim == 0:
@@ -1057,7 +1128,11 @@ class RapidtideDataset:
         return self.regressors
 
     def setfocusregressor(self, whichregressor):
-        self.focusregressor = whichregressor
+        try:
+            testregressor = self.regressors[whichregressor]
+            self.focusregressor = whichregressor
+        except KeyError:
+            self.focusregressor = "prefilt"
 
     def setupoverlays(self):
         # load the overlays
@@ -1073,6 +1148,11 @@ class RapidtideDataset:
                 ["lagsigma", "desc-maxwidth_map"],
                 ["MTT", "desc-MTT_map"],
                 ["R2", "desc-lfofilterR2_map"],
+                ["CoV", "desc-CoV_map"],
+                ["confoundR2", "desc-confoundfilterR2_map"],
+                ["varBefore", "desc-lfofilterInbandVarianceBefore_map"],
+                ["varAfter", "desc-lfofilterInbandVarianceAfter_map"],
+                ["varChange", "desc-lfofilterInbandVarianceChange_map"],
                 ["fitNorm", "desc-lfofilterNorm_map"],
                 ["fitcoff", "desc-lfofilterCoeff_map"],
                 ["neglog10p", "desc-neglog10p_map"],
@@ -1165,6 +1245,7 @@ class RapidtideDataset:
                 ["lagmask", "desc-corrfit_mask"],
                 ["refinemask", "desc-refine_mask"],
                 ["meanmask", "desc-globalmean_mask"],
+                ["brainmask", "desc-brainmask_mask"],
                 ["preselectmask", "desc-globalmeanpreselect_mask"],
             ]
             if not ("neglog10p" in self.loadedfuncmaps):
@@ -1286,4 +1367,11 @@ class RapidtideDataset:
         return self.overlays
 
     def setfocusmap(self, whichmap):
-        self.focusmap = whichmap
+        try:
+            testmap = self.overlays[whichmap]
+            self.focusmap = whichmap
+        except KeyError:
+            self.focusmap = "lagtimes"
+
+    def setFuncMaskName(self, maskname):
+        self.funcmaskname = maskname

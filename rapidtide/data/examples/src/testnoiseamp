@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import rapidtide.miscmath as tide_math
-import rapidtide.io as tide_io
 import matplotlib.pyplot as plt
 
+import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 
 windowsize = 40.0
 samplerate, starttime, inputdata = tide_io.readcolfrombidstsv("../dst/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json", columnname="pass3")

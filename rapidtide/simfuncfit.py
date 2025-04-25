@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ def onesimfuncfit(
 ):
     if initiallag is not None:
         thefitter.setguess(True, maxguess=initiallag)
-        widthmax = despeckle_thresh
+        thefitter.setrange(-despeckle_thresh / 2.0, despeckle_thresh / 2.0)
     else:
         thefitter.setguess(False)
 

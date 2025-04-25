@@ -1,0 +1,49 @@
+#!/bin/bash
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    --outputlevel max \
+    --refineregressderivs 1 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_1deriv
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --searchrange -5 20 \
+    --simcalcrange 50 -1 \
+    --outputlevel max \
+    --refineregressderivs 2 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_2deriv
+
+
+retroregress \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_1deriv \
+    --alternateoutput ../dst/retrotest_1to1 \
+    --nprocs -1 \
+    --regressderivs 0 \
+    --refineregressderivs 1 \
+    --outputlevel max
+
+retroregress \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_2deriv \
+    --alternateoutput ../dst/retrotest_2to1 \
+    --nprocs -1 \
+    --regressderivs 0 \
+    --refineregressderivs 1 \
+    --outputlevel max
+
+retroregress \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_1deriv \
+    --alternateoutput ../dst/retrotest_1to2 \
+    --nprocs -1 \
+    --regressderivs 0 \
+    --refineregressderivs 2 \
+    --outputlevel max

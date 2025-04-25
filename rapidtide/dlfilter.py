@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
 #   limitations under the License.
 #
 #
-"""
-Created on Sat Jul 28 23:01:07 2018
-
-@author: neuro
-"""
 import glob
 import logging
 import os
@@ -41,7 +36,6 @@ with warnings.catch_warnings():
     else:
         pyfftwpresent = True
 
-
 from scipy import fftpack
 from statsmodels.robust.scale import mad
 
@@ -49,37 +43,50 @@ if pyfftwpresent:
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
 
+import tensorflow as tf
+import tf_keras.backend as K
+from tf_keras.callbacks import (
+    EarlyStopping,
+    ModelCheckpoint,
+    TensorBoard,
+    TerminateOnNaN,
+)
+from tf_keras.layers import (
+    LSTM,
+    Activation,
+    BatchNormalization,
+    Bidirectional,
+    Concatenate,
+    Convolution1D,
+    Dense,
+    Dropout,
+    Flatten,
+    GlobalMaxPool1D,
+    Input,
+    MaxPooling1D,
+    Reshape,
+    TimeDistributed,
+    UpSampling1D,
+)
+from tf_keras.models import Model, Sequential, load_model
+from tf_keras.optimizers.legacy import RMSprop
+
 import rapidtide.io as tide_io
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 LGR = logging.getLogger("GENERAL")
 LGR.debug("setting backend to Agg")
 mpl.use("Agg")
 
-os.environ["TF_USE_LEGACY_KERAS"] = "1"
-os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
-import tensorflow.compat.v1 as tf
-
-LGR.debug("using tensorflow v2x")
-# tf.disable_v2_behavior()
-from tensorflow.keras.callbacks import ModelCheckpoint, TerminateOnNaN
-from tensorflow.keras.layers import (
-    LSTM,
-    Activation,
-    BatchNormalization,
-    Bidirectional,
-    Convolution1D,
-    Dense,
-    Dropout,
-    GlobalMaxPool1D,
-    MaxPooling1D,
-    TimeDistributed,
-    UpSampling1D,
-)
-
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.optimizers import RMSprop
+# Disable GPU if desired
+# figure out what sorts of devices we have
+physical_devices = tf.config.list_physical_devices()
+print(physical_devices)
+# try:
+#    tf.config.set_visible_devices([], "GPU")
+# except Exception as e:
+#    LGR.warning(f"Failed to disable GPU: {e}")
 
 LGR.debug(f"tensorflow version: >>>{tf.__version__}<<<")
 
@@ -109,7 +116,6 @@ class DeepLearningFilter:
     model = None
     modelpath = None
     inputsize = None
-    usehdf = True
     infodict = {}
 
     def __init__(
@@ -126,10 +132,10 @@ class DeepLearningFilter:
         usebadpts=False,
         thesuffix="25.0Hz",
         modelpath=".",
-        usehdf=True,
         thedatadir="/Users/frederic/Documents/MR_data/physioconn/timecourses",
         inputfrag="abc",
         targetfrag="xyz",
+        corrthresh=0.5,
         excludebysubject=True,
         startskip=200,
         endskip=200,
@@ -152,12 +158,12 @@ class DeepLearningFilter:
             self.inputsize = 1
         self.activation = activation
         self.modelroot = modelroot
-        self.usehdf = usehdf
         self.dofft = dofft
         self.thesuffix = thesuffix
         self.thedatadir = thedatadir
         self.modelpath = modelpath
         LGR.info(f"modeldir from DeepLearningFilter: {self.modelpath}")
+        self.corrthresh = corrthresh
         self.excludethresh = excludethresh
         self.readlim = readlim
         self.readskip = readskip
@@ -178,6 +184,7 @@ class DeepLearningFilter:
         self.infodict["window_size"] = self.window_size
         self.infodict["usebadpts"] = self.usebadpts
         self.infodict["dofft"] = self.dofft
+        self.infodict["corrthresh"] = self.corrthresh
         self.infodict["excludethresh"] = self.excludethresh
         self.infodict["num_pretrain_epochs"] = self.num_pretrain_epochs
         self.infodict["num_epochs"] = self.num_epochs
@@ -211,6 +218,7 @@ class DeepLearningFilter:
                 targetfrag=self.targetfrag,
                 startskip=self.startskip,
                 endskip=self.endskip,
+                corrthresh=self.corrthresh,
                 step=self.step,
                 dofft=self.dofft,
                 usebadpts=self.usebadpts,
@@ -237,6 +245,7 @@ class DeepLearningFilter:
                 targetfrag=self.targetfrag,
                 startskip=self.startskip,
                 endskip=self.endskip,
+                corrthresh=self.corrthresh,
                 step=self.step,
                 dofft=self.dofft,
                 usebadpts=self.usebadpts,
@@ -247,11 +256,15 @@ class DeepLearningFilter:
                 countlim=self.countlim,
             )
 
+    @tf.function
+    def predict_model(self, X):
+        return self.model(X, training=False)
+
     def evaluate(self):
         self.lossfilename = os.path.join(self.modelname, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
-        YPred = self.model.predict(self.val_x, verbose=0)
+        YPred = self.predict_model(self.val_x).numpy()
 
         error = self.val_y - YPred
         self.pred_error = np.mean(np.square(error))
@@ -308,30 +321,29 @@ class DeepLearningFilter:
         self.infodict["prediction_error"] = self.pred_error
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
 
-    def savemodel(self, usehdf=True):
-        if usehdf:
-            # save the trained model as a single hdf file
-            self.model.save(os.path.join(self.modelname, "model.h5"))
+    def savemodel(self, altname=None):
+        if altname is None:
+            modelsavename = self.modelname
         else:
-            # save the model structure to JSON
-            model_json = self.model.to_json()
-            with open(os.path.join(self.modelname, "model.json"), "w") as json_file:
-                json_file.write(model_json)
-            # save the weights to hdf
-            self.model.save_weights(os.path.join(self.modelname, "model_weights.h5"))
+            modelsavename = altname
+        LGR.info(f"saving {modelsavename}")
+        self.model.save(os.path.join(modelsavename, "model.keras"))
 
-    def loadmodel(self, modelname, usehdf=True, verbose=False):
+    def loadmodel(self, modelname, verbose=False):
         # read in the data
         LGR.info(f"loading {modelname}")
-
-        if usehdf:
+        try:
+            # load the keras format model if it exists
+            self.model = load_model(os.path.join(self.modelpath, modelname, "model.keras"))
+            self.config = self.model.get_config()
+        except OSError:
             # load in the model with weights from hdf
-            self.model = load_model(os.path.join(self.modelpath, modelname, "model.h5"))
-        else:
-            with open(os.path.join(self.modelname, "model.json"), "r") as json_file:
-                loaded_model_json = json_file.read()
-            self.model = model_from_json(loaded_model_json)
-            self.model.load_weights(os.path.join(self.modelname, "model_weights.h5"))
+            try:
+                self.model = load_model(os.path.join(self.modelpath, modelname, "model.h5"))
+            except OSError:
+                print(f"Could not load {modelname}")
+                sys.exit()
+
         if verbose:
             self.model.summary()
 
@@ -339,6 +351,8 @@ class DeepLearningFilter:
         self.infodict = tide_io.readdictfromjson(
             os.path.join(self.modelpath, modelname, "model_meta.json")
         )
+        if verbose:
+            print(self.infodict)
         self.window_size = self.infodict["window_size"]
         self.usebadpts = self.infodict["usebadpts"]
 
@@ -351,52 +365,60 @@ class DeepLearningFilter:
         self.getname()
         self.makenet()
         self.model.summary()
-        self.savemodel(usehdf=True)
-        self.savemodel(usehdf=False)
+        self.savemodel()
         self.initmetadata()
         self.initialized = True
         self.trained = False
 
     def train(self):
         self.intermediatemodelpath = os.path.join(
-            self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.h5"
+            self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.keras"
         )
+        train_dataset = (
+            tf.data.Dataset.from_tensor_slices((self.train_x, self.train_y))
+            .shuffle(2048)
+            .batch(1024)
+        )
+        val_dataset = tf.data.Dataset.from_tensor_slices((self.val_x, self.val_y)).batch(1024)
         if self.usetensorboard:
             tensorboard = TensorBoard(
-                log_dir=self.intermediatemodelpath + "logs/{}".format(time())
+                log_dir=os.path.join(self.intermediatemodelpath, "logs", str(int(time.time())))
             )
             self.model.fit(self.train_x, self.train_y, verbose=1, callbacks=[tensorboard])
         else:
             if self.num_pretrain_epochs > 0:
                 LGR.info("pretraining model to reproduce input data")
                 self.history = self.model.fit(
-                    self.train_y,
-                    self.train_y,
-                    batch_size=1024,
+                    train_dataset,
+                    validation_data=val_dataset,
                     epochs=self.num_pretrain_epochs,
-                    shuffle=True,
                     verbose=1,
                     callbacks=[
                         TerminateOnNaN(),
-                        ModelCheckpoint(self.intermediatemodelpath),
+                        ModelCheckpoint(self.intermediatemodelpath, save_format="keras"),
+                        EarlyStopping(
+                            monitor="val_loss",  # or 'val_mae', etc.
+                            patience=10,  # number of epochs to wait
+                            restore_best_weights=True,
+                        ),
                     ],
-                    validation_data=(self.val_y, self.val_y),
                 )
             self.history = self.model.fit(
-                self.train_x,
-                self.train_y,
-                batch_size=1024,
+                train_dataset,
+                validation_data=val_dataset,
                 epochs=self.num_epochs,
-                shuffle=True,
                 verbose=1,
                 callbacks=[
                     TerminateOnNaN(),
-                    ModelCheckpoint(self.intermediatemodelpath),
+                    ModelCheckpoint(self.intermediatemodelpath, save_format="keras"),
+                    EarlyStopping(
+                        monitor="val_loss",  # or 'val_mae', etc.
+                        patience=10,  # number of epochs to wait
+                        restore_best_weights=True,
+                    ),
                 ],
-                validation_data=(self.val_x, self.val_y),
             )
-        self.savemodel(usehdf=True)
-        self.savemodel(usehdf=False)
+        self.savemodel()
         self.trained = True
 
     def apply(self, inputdata, badpts=None):
@@ -417,7 +439,7 @@ class DeepLearningFilter:
             for i in range(X.shape[0]):
                 X[i, :, 0] = scaleddata[i : i + self.window_size]
 
-        Y = self.model.predict(X, verbose=0)
+        Y = self.predict_model(X).numpy()
         for i in range(X.shape[0]):
             predicteddata[i : i + self.window_size] += Y[i, :, 0]
 
@@ -463,12 +485,13 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
             [
                 "model",
                 "multiscalecnn",
-                "w" + str(self.window_size),
-                "l" + str(self.num_layers),
-                "fn" + str(self.num_filters),
-                "fl" + str(self.kernel_size),
-                "e" + str(self.num_epochs),
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 "d" + str(self.dilation_rate),
                 self.activation,
@@ -492,9 +515,9 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         input_seq = Input(shape=(inputlen, self.input_width))
 
         # 1-D convolution and global max-pooling
-        convolved = Conv1D(self.num_filters, kernelsize, padding="same", activation="tanh")(
-            input_seq
-        )
+        convolved = Convolution1D(
+            filters=self.num_filters, kernel_size=kernelsize, padding="same", activation="tanh"
+        )(input_seq)
         processed = GlobalMaxPool1D()(convolved)
 
         # dense layer with dropout regularization
@@ -539,12 +562,13 @@ class CNNDLFilter(DeepLearningFilter):
             [
                 "model",
                 "cnn",
-                "w" + str(self.window_size),
-                "l" + str(self.num_layers),
-                "fn" + str(self.num_filters),
-                "fl" + str(self.kernel_size),
-                "e" + str(self.num_epochs),
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 "d" + str(self.dilation_rate),
                 self.activation,
@@ -612,10 +636,11 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
             [
                 "model",
                 "denseautoencoder",
-                "w" + str(self.window_size),
-                "en" + str(self.encoding_dim),
-                "e" + str(self.num_epochs),
+                "w" + str(self.window_size).zfill(3),
+                "en" + str(self.encoding_dim).zfill(3),
+                "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -697,12 +722,13 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             [
                 "model",
                 "convautoencoder",
-                "w" + str(self.window_size),
-                "en" + str(self.encoding_dim),
-                "fn" + str(self.num_filters),
-                "fl" + str(self.kernel_size),
-                "e" + str(self.num_epochs),
+                "w" + str(self.window_size).zfill(3),
+                "en" + str(self.encoding_dim).zfill(3),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -721,103 +747,130 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
-        self.model = Sequential()
+        input_layer = Input(shape=(self.window_size, self.inputsize))
+        x = input_layer
 
-        # make the input layer
-        self.model.add(
-            Convolution1D(
-                filters=self.num_filters,
-                kernel_size=self.kernel_size,
-                padding="same",
-                input_shape=(None, self.inputsize),
-            )
+        # Initial conv block
+        x = Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding="same")(
+            x
         )
-        self.model.add(BatchNormalization())
-        self.model.add(Dropout(rate=self.dropout_rate))
-        self.model.add(Activation(self.activation))
-        self.model.add(MaxPooling1D(2, padding="same"))
+        x = BatchNormalization()(x)
+        x = Dropout(rate=self.dropout_rate)(x)
+        x = Activation(self.activation)(x)
+        x = MaxPooling1D(pool_size=2, padding="same")(x)
 
-        layersize = self.windowsize
+        layersize = self.window_size
         nfilters = self.num_filters
-        num_encodinglayers = 3
-        num_decodinglayers = 3
-        layerprops = [(layersize, nfilters)]
-        # make the encoding layers
-        for i in range(num_encodinglayers):
-            layersize = int(layersize // 2)
+        filter_list = []
+
+        # Encoding path (3 layers)
+        for _ in range(3):
+            layersize = int(np.ceil(layersize / 2))
             nfilters *= 2
-            LGR.info(f"input layer size: {layersize}, nfilters: {nfilters}")
-            self.model.add(
-                Convolution1D(filters=nfilters, kernel_size=self.kernel_size, padding="same")
-            )
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
-            self.model.add(MaxPooling1D(2, padding="same"))
+            filter_list.append(nfilters)
+            x = Convolution1D(filters=nfilters, kernel_size=self.kernel_size, padding="same")(x)
+            x = BatchNormalization()(x)
+            x = Dropout(rate=self.dropout_rate)(x)
+            x = Activation(self.activation)(x)
+            x = MaxPooling1D(pool_size=2, padding="same")(x)
 
-        # make the decoding layers
-        for i in range(num_decodinglayers):
-            self.model.add(UpSampling1D(2))
+        # Save shape for reshaping later
+        shape_before_flatten = K.int_shape(x)[1:]  # (timesteps, channels)
+
+        # Bottleneck
+        x = Flatten()(x)
+        x = Dense(self.encoding_dim, activation=self.activation, name="encoded")(x)
+        x = Dense(np.prod(shape_before_flatten), activation=self.activation)(x)
+        x = Reshape(shape_before_flatten)(x)
+
+        # Decoding path (mirror)
+        for filters in reversed(filter_list):
             layersize *= 2
-            nfilters = int(nfilters // 2)
-            LGR.info(f"input layer size: {layersize}")
-            self.model.add(
-                Convolution1D(
-                    filters=self.num_filters,
-                    kernel_size=self.kernel_size,
-                    padding="same",
-                )
-            )
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
+            x = UpSampling1D(size=2)(x)
+            x = Convolution1D(filters=filters, kernel_size=self.kernel_size, padding="same")(x)
+            x = BatchNormalization()(x)
+            x = Dropout(rate=self.dropout_rate)(x)
+            x = Activation(self.activation)(x)
 
-        # make the intermediate encoding layers
-        for i in range(1, self.num_layers - 1):
-            LGR.info(f"input layer size: {layersize}")
-            self.model.add(
-                Convolution1D(
-                    filters=self.num_filters,
-                    kernel_size=self.kernel_size,
-                    padding="same",
-                )
-            )
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
-            self.model.add(MaxPooling1D(2, padding="same"))
-            layersize = int(layersize // 2)
+        # Final upsampling (to match initial maxpool)
+        x = UpSampling1D(size=2)(x)
+        x = Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")(x)
 
-        # make the encoding layer
-        LGR.info(f"input layer size: {layersize}")
-        self.model.add(
-            Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding="same")
+        output_layer = x
+        self.model = Model(inputs=input_layer, outputs=output_layer)
+        self.model.compile(optimizer="adam", loss="mse")
+
+
+class CRNNDLFilter(DeepLearningFilter):
+    def __init__(
+        self, encoding_dim=10, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs
+    ):
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.dilation_rate = dilation_rate
+        self.encoding_dim = encoding_dim
+        self.infodict["nettype"] = "cnn"
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["encoding_dim"] = self.encoding_dim
+        super(CRNNDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = "_".join(
+            [
+                "model",
+                "crnn",
+                "w" + str(self.window_size).zfill(3),
+                "en" + str(self.encoding_dim).zfill(3),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
+                "s" + str(self.step),
+                self.activation,
+            ]
         )
-        self.model.add(BatchNormalization())
-        self.model.add(Dropout(rate=self.dropout_rate))
-        self.model.add(Activation(self.activation))
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
 
-        # make the intermediate decoding layers
-        for i in range(1, self.num_layers):
-            self.model.add(UpSampling1D(2))
-            layersize = layersize * 2
-            LGR.info(f"input layer size: {layersize}")
-            self.model.add(
-                Convolution1D(
-                    filters=self.num_filters,
-                    kernel_size=self.kernel_size,
-                    padding="same",
-                )
-            )
-            self.model.add(BatchNormalization())
-            self.model.add(Dropout(rate=self.dropout_rate))
-            self.model.add(Activation(self.activation))
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
 
-        # make the output layer
-        LGR.info(f"input layer size: {layersize}")
-        self.model.add(
-            Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")
+    def makenet(self):
+        input_layer = Input(shape=(self.window_size, self.inputsize))
+        x = input_layer
+
+        # Convolutional front-end: feature extraction
+        x = Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding="same")(
+            x
         )
+        x = BatchNormalization()(x)
+        x = Dropout(rate=self.dropout_rate)(x)
+        x = Activation(self.activation)(x)
+
+        x = Convolution1D(
+            filters=self.num_filters * 2, kernel_size=self.kernel_size, padding="same"
+        )(x)
+        x = BatchNormalization()(x)
+        x = Dropout(rate=self.dropout_rate)(x)
+        x = Activation(self.activation)(x)
+
+        # Recurrent layer: temporal modeling
+        x = Bidirectional(LSTM(units=self.encoding_dim, return_sequences=True))(x)
+
+        # Output mapping to inputsize channels
+        output_layer = Dense(self.inputsize)(x)
+
+        # Model definition
+        self.model = Model(inputs=input_layer, outputs=output_layer)
         self.model.compile(optimizer="adam", loss="mse")
 
 
@@ -833,13 +886,14 @@ class LSTMDLFilter(DeepLearningFilter):
             [
                 "model",
                 "lstm",
-                "w" + str(self.window_size),
-                "l" + str(self.num_layers),
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
                 "nu" + str(self.num_units),
                 "d" + str(self.dropout_rate),
                 "rd" + str(self.dropout_rate),
-                "e" + str(self.num_epochs),
+                "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
             ]
         )
@@ -891,15 +945,16 @@ class HybridDLFilter(DeepLearningFilter):
             [
                 "model",
                 "hybrid",
-                "w" + str(self.window_size),
-                "l" + str(self.num_layers),
-                "fn" + str(self.num_filters),
-                "fl" + str(self.kernel_size),
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
                 "nu" + str(self.num_units),
                 "d" + str(self.dropout_rate),
                 "rd" + str(self.dropout_rate),
-                "e" + str(self.num_epochs),
+                "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -1043,43 +1098,39 @@ def targettoinput(name, targetfrag="xyz", inputfrag="abc"):
     return name.replace(targetfrag, inputfrag)
 
 
-def getmatchedfiles(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc"):
+def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False):
     # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
-    LGR.debug(f"searchstring: {searchstring} -> {fromfile}")
+    if debug:
+        print(f"searchstring: {searchstring} -> {fromfile}")
 
-    # make sure all files exist
+    # make sure all timecourses exist
+    # we need cardiacfromfmri_25.0Hz as x, normpleth as y, and perhaps badpts
     matchedfilelist = []
     for targetname in fromfile:
-        if os.path.isfile(targettoinput(targetname, targetfrag=targetfrag, inputfrag=inputfrag)):
-            if usebadpts:
-                if os.path.isfile(
-                    tobadpts(targetname.replace("alignedpleth", "pleth"))
-                ) and os.path.isfile(
-                    tobadpts(
-                        targettoinput(
-                            targetname,
-                            targetfrag=targetfrag,
-                            inputfrag=inputfrag,
-                        )
-                    )
-                ):
-                    matchedfilelist.append(targetname)
-                    LGR.debug(matchedfilelist[-1])
-            else:
-                matchedfilelist.append(targetname)
-                LGR.debug(matchedfilelist[-1])
-    if usebadpts:
-        LGR.info(f"{len(matchedfilelist)} runs pass all 4 files present check")
-    else:
-        LGR.info(f"{len(matchedfilelist)} runs pass both files present check")
+        infofile = targetname.replace("_desc-stdrescardfromfmri_timeseries", "_info")
+        if os.path.isfile(infofile):
+            matchedfilelist.append(targetname)
+            print(f"{targetname} is complete")
+            LGR.debug(matchedfilelist[-1])
+        else:
+            print(f"{targetname} is incomplete")
+    print(f"found {len(matchedfilelist)} matched files")
 
     # find out how long the files are
-    tempy = np.loadtxt(matchedfilelist[0])
-    tempx = np.loadtxt(
-        targettoinput(matchedfilelist[0], targetfrag=targetfrag, inputfrag=inputfrag)
+    (
+        samplerate,
+        starttime,
+        columns,
+        inputarray,
+        compression,
+        columnsource,
+    ) = tide_io.readbidstsv(
+        matchedfilelist[0],
+        colspec="cardiacfromfmri_25.0Hz,normpleth",
     )
-    tclen = np.min([tempx.shape[0], tempy.shape[0]])
+    print(f"{inputarray.shape=}")
+    tclen = inputarray.shape[1]
     LGR.info(f"tclen set to {tclen}")
     return matchedfilelist, tclen
 
@@ -1092,8 +1143,10 @@ def readindata(
     usebadpts=False,
     startskip=0,
     endskip=0,
+    corrthresh=0.5,
     readlim=None,
     readskip=None,
+    debug=False,
 ):
     LGR.info(
         "readindata called with usebadpts, startskip, endskip, readlim, readskip, targetfrag, inputfrag = "
@@ -1115,20 +1168,36 @@ def readindata(
     # now read the data in
     count = 0
     LGR.info("checking data")
+    lowcorrfiles = []
     nanfiles = []
     shortfiles = []
     strangemagfiles = []
     for i in range(readskip, readskip + s):
+        lowcorrfound = False
         nanfound = False
         LGR.info(f"processing {matchedfilelist[i]}")
-        tempy = np.loadtxt(matchedfilelist[i])
-        tempx = np.loadtxt(
-            targettoinput(
-                matchedfilelist[i],
-                targetfrag=targetfrag,
-                inputfrag=inputfrag,
-            )
+
+        # read the info dict first
+        infodict = tide_io.readdictfromjson(
+            matchedfilelist[i].replace("_desc-stdrescardfromfmri_timeseries", "_info")
         )
+        if infodict["corrcoeff_raw2pleth"] < corrthresh:
+            lowcorrfound = True
+            lowcorrfiles.append(matchedfilelist[i])
+        (
+            samplerate,
+            starttime,
+            columns,
+            inputarray,
+            compression,
+            columnsource,
+        ) = tide_io.readbidstsv(
+            matchedfilelist[i],
+            colspec="cardiacfromfmri_25.0Hz,normpleth",
+        )
+        tempy = inputarray[1, :]
+        tempx = inputarray[0, :]
+
         if np.any(np.isnan(tempy)):
             LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
             nanfound = True
@@ -1142,23 +1211,23 @@ def readindata(
             nanfiles.append(nan_fname)
         strangefound = False
         if not (0.5 < np.std(tempx) < 20.0):
-            strange_fname = targettoinput(
-                matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
+            strange_fname = matchedfilelist[i]
+            LGR.info(
+                f"file {strange_fname} has an extreme cardiacfromfmri standard deviation - discarding"
             )
-            LGR.info(f"file {strange_fname} has an extreme standard deviation - discarding")
             strangefound = True
             strangemagfiles.append(strange_fname)
         if not (0.5 < np.std(tempy) < 20.0):
-            LGR.info(f"file {matchedfilelist[i]} has an extreme standard deviation - discarding")
+            LGR.info(
+                f"file {matchedfilelist[i]} has an extreme normpleth standard deviation - discarding"
+            )
             strangefound = True
             strangemagfiles.append(matchedfilelist[i])
         shortfound = False
         ntempx = tempx.shape[0]
         ntempy = tempy.shape[0]
         if ntempx < tclen:
-            short_fname = targettoinput(
-                matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-            )
+            short_fname = matchedfilelist[i]
             LGR.info(f"file {short_fname} is short - discarding")
             shortfound = True
             shortfiles.append(short_fname)
@@ -1172,26 +1241,31 @@ def readindata(
             and (not nanfound)
             and (not shortfound)
             and (not strangefound)
+            and (not lowcorrfound)
         ):
             x1[:tclen, count] = tempx[:tclen]
             y1[:tclen, count] = tempy[:tclen]
             names.append(matchedfilelist[i])
+            if debug:
+                print(f"{matchedfilelist[i]} included:")
             if usebadpts:
-                tempbad1 = np.loadtxt(
-                    tobadpts(matchedfilelist[i].replace("alignedpleth", "pleth"))
-                )
-                tempbad2 = np.loadtxt(
-                    tobadpts(
-                        targettoinput(
-                            matchedfilelist[i],
-                            targetfrag=targetfrag,
-                            inputfrag=inputfrag,
-                        )
-                    )
-                )
-                bad1[:tclen, count] = 1.0 - (1.0 - tempbad1[:tclen]) * (1.0 - tempbad2[:tclen])
+                bad1[:tclen, count] = inputarray[2, :]
             count += 1
+        else:
+            print(f"{matchedfilelist[i]} excluded:")
+            if ntempx < tclen:
+                print("\tx data too short")
+            if ntempy < tclen:
+                print("\ty data too short")
+            print(f"\t{nanfound=}")
+            print(f"\t{shortfound=}")
+            print(f"\t{strangefound=}")
+            print(f"\t{lowcorrfound=}")
     LGR.info(f"{count} runs pass file length check")
+    if len(lowcorrfiles) > 0:
+        LGR.info("files with low raw/pleth correlations:")
+        for thefile in lowcorrfiles:
+            LGR.info(f"\t{thefile}")
     if len(nanfiles) > 0:
         LGR.info("files with NaNs:")
         for thefile in nanfiles:
@@ -1205,6 +1279,7 @@ def readindata(
         for thefile in strangemagfiles:
             LGR.info(f"\t{thefile}")
 
+    print(f"training set contains {count} runs of length {tclen}")
     if usebadpts:
         return (
             x1[startskip:-endskip, :count],
@@ -1229,13 +1304,15 @@ def prep(
     endskip=200,
     excludebysubject=True,
     thesuffix="sliceres",
-    thedatadir="/data1/frederic/test/output",
+    thedatadir="/data/frederic/physioconn/output_2025",
     inputfrag="abc",
     targetfrag="xyz",
+    corrthresh=0.5,
     dofft=False,
     readlim=None,
     readskip=None,
     countlim=None,
+    debug=False,
 ):
     """
     prep - reads in training and validation data for 1D filter
@@ -1253,6 +1330,7 @@ def prep(
     thedatadir
     inputfrag
     targetfrag
+    corrthresh
     dofft
     readlim
     readskip
@@ -1264,21 +1342,25 @@ def prep(
 
     """
 
-    searchstring = os.path.join(thedatadir, "*_" + targetfrag + "_" + thesuffix + ".txt")
+    searchstring = os.path.join(thedatadir, "*", "*_desc-stdrescardfromfmri_timeseries.json")
 
     # find matched files
-    matchedfilelist, tclen = getmatchedfiles(
+    matchedfilelist, tclen = getmatchedtcs(
         searchstring,
         usebadpts=usebadpts,
         targetfrag=targetfrag,
         inputfrag=inputfrag,
+        debug=debug,
     )
+    # print("matchedfilelist", matchedfilelist)
+    print("tclen", tclen)
 
     # read in the data from the matched files
     if usebadpts:
         x, y, names, bad = readindata(
             matchedfilelist,
             tclen,
+            corrthresh=corrthresh,
             targetfrag=targetfrag,
             inputfrag=inputfrag,
             usebadpts=True,
@@ -1291,6 +1373,7 @@ def prep(
         x, y, names = readindata(
             matchedfilelist,
             tclen,
+            corrthresh=corrthresh,
             targetfrag=targetfrag,
             inputfrag=inputfrag,
             startskip=startskip,

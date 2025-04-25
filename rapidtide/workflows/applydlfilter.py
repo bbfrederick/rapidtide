@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import rapidtide.correlate as tide_corr
 import rapidtide.dlfilter as tide_dlfilt
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
@@ -87,65 +88,6 @@ def _get_parser():
     return parser
 
 
-def checkcardmatch(reference, candidate, samplerate, refine=True, zeropadding=0, debug=False):
-    thecardfilt = tide_filt.NoncausalFilter(filtertype="cardiac")
-    trimlength = np.min([len(reference), len(candidate)])
-    thexcorr = tide_corr.fastcorrelate(
-        tide_math.corrnormalize(
-            thecardfilt.apply(samplerate, reference),
-            detrendorder=3,
-            windowfunc="hamming",
-        )[:trimlength],
-        tide_math.corrnormalize(
-            thecardfilt.apply(samplerate, candidate),
-            detrendorder=3,
-            windowfunc="hamming",
-        )[:trimlength],
-        usefft=True,
-        zeropadding=zeropadding,
-    )
-    xcorrlen = len(thexcorr)
-    sampletime = 1.0 / samplerate
-    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
-    searchrange = 5.0
-    trimstart = tide_util.valtoindex(xcorr_x, -2.0 * searchrange)
-    trimend = tide_util.valtoindex(xcorr_x, 2.0 * searchrange)
-    (
-        maxindex,
-        maxdelay,
-        maxval,
-        maxsigma,
-        maskval,
-        failreason,
-        peakstart,
-        peakend,
-    ) = tide_fit.findmaxlag_gauss(
-        xcorr_x[trimstart:trimend],
-        thexcorr[trimstart:trimend],
-        -searchrange,
-        searchrange,
-        3.0,
-        refine=refine,
-        zerooutbadfit=False,
-        useguess=False,
-        fastgauss=False,
-        displayplots=False,
-    )
-    if debug:
-        print(
-            "CORRELATION: maxindex, maxdelay, maxval, maxsigma, maskval, failreason, peakstart, peakend:",
-            maxindex,
-            maxdelay,
-            maxval,
-            maxsigma,
-            maskval,
-            failreason,
-            peakstart,
-            peakend,
-        )
-    return maxval, maxdelay, failreason
-
-
 def applydlfilter(args):
     if args.display:
         import matplotlib as mpl
@@ -184,8 +126,6 @@ def applydlfilter(args):
     )
     thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
     thedlfilter.loadmodel(args.model)
-    model = thedlfilter.model
-    window_size = thedlfilter.window_size
     usebadpts = thedlfilter.usebadpts
 
     badpts = None
@@ -204,17 +144,32 @@ def applydlfilter(args):
         # read in the data
         if args.verbose:
             print("reading in", infilename)
-        fmridata = tide_io.readvec(infilename)
-
+        (
+            thesamplerate,
+            thestarttime,
+            thecolumns,
+            fmridata,
+            compressed,
+            filetype,
+        ) = tide_io.readvectorsfromtextfile(infilename, onecol=True, debug=args.verbose)
+        if args.verbose:
+            print("data is read")
+        if thesamplerate != 25.0:
+            print("sampling rate", thesamplerate)
+            sys.exit()
         if args.verbose:
             print("filtering...")
         predicteddata = thedlfilter.apply(fmridata, badpts=badpts)
+        if args.verbose:
+            print("done...")
 
         if args.verbose:
             print("writing to", outfilenamelist[idx])
         tide_io.writevec(predicteddata, outfilenamelist[idx])
 
-        maxval, maxdelay, failreason = checkcardmatch(fmridata, predicteddata, 25.0, debug=False)
+        maxval, maxdelay, failreason = happy_support.checkcardmatch(
+            fmridata, predicteddata, 25.0, debug=False
+        )
         print(infilename, "max correlation input to output:", maxval)
 
         if args.display:

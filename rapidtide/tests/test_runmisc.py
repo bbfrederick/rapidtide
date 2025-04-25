@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import matplotlib as mpl
 
 import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.showtc as showtc
-from rapidtide.tests.utils import get_examples_path
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
 def test_runmisc(debug=False, displayplots=False):
@@ -35,7 +35,7 @@ def test_runmisc(debug=False, displayplots=False):
         "--sampletime",
         "12.5",
         "--tofile",
-        "showtcout1.jpg",
+        os.path.join(get_test_temp_path(), "showtcout1.jpg"),
         "--starttime",
         "100",
         "--endtime",
@@ -55,7 +55,7 @@ def test_runmisc(debug=False, displayplots=False):
         "--displaytype",
         "power",
         "--tofile",
-        "showtcout2.jpg",
+        os.path.join(get_test_temp_path(), "showtcout2.jpg"),
         "--noxax",
         "--noyax",
         "--nolegend",
@@ -90,7 +90,7 @@ def test_runmisc(debug=False, displayplots=False):
         "--displaytype",
         "phase",
         "--tofile",
-        "showtcout3.jpg",
+        os.path.join(get_test_temp_path(), "showtcout3.jpg"),
     ]
     pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
 

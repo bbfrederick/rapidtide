@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -28,14 +28,6 @@ import numpy as np
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
-
-try:
-    from memory_profiler import profile
-
-    memprofilerexists = True
-except ImportError:
-    memprofilerexists = False
-
 
 # Create a sentinel.
 # from https://stackoverflow.com/questions/58594956/find-out-which-arguments-were-passed-explicitly-in-argparse
@@ -70,7 +62,6 @@ DEFAULT_MAXPASSES = 15
 DEFAULT_REFINE_TYPE = "pca"
 DEFAULT_INTERPTYPE = "univariate"
 DEFAULT_WINDOW_TYPE = "hamming"
-DEFAULT_GLOBALMASK_METHOD = "mean"
 DEFAULT_GLOBALSIGNAL_METHOD = "sum"
 DEFAULT_CORRWEIGHTING = "phat"
 DEFAULT_CORRTYPE = "linear"
@@ -79,7 +70,8 @@ DEFAULT_PEAKFIT_TYPE = "gauss"
 DEFAULT_REFINE_PRENORM = "var"
 DEFAULT_REFINE_WEIGHTING = "None"
 DEFAULT_REFINE_PCACOMPONENTS = 0.8
-DEFAULT_GLMDERIVS = 0
+DEFAULT_REGRESSIONFILTDERIVS = 0
+DEFAULT_REFINEREGRESSDERIVS = 1
 
 DEFAULT_DENOISING_LAGMIN = -10.0
 DEFAULT_DENOISING_LAGMAX = 10.0
@@ -159,7 +151,7 @@ def _get_parser():
             f"sets searchrange=({DEFAULT_DENOISING_LAGMIN}, {DEFAULT_DENOISING_LAGMAX}), "
             f"passes={DEFAULT_DENOISING_PASSES}, despeckle_passes={DEFAULT_DENOISING_DESPECKLE_PASSES}, "
             f"refineoffset=True, peakfittype={DEFAULT_DENOISING_PEAKFITTYPE}, "
-            f"gausssigma={DEFAULT_DENOISING_SPATIALFILT}, nofitfilt=True, doglmfilt=True. "
+            f"gausssigma={DEFAULT_DENOISING_SPATIALFILT}, nofitfilt=True, dolinfitfilt=True. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
         ),
@@ -175,7 +167,7 @@ def _get_parser():
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
             f"gausssigma={DEFAULT_DELAYMAPPING_SPATIALFILT}, "
             "refineoffset=True, refinedelay=True, outputlevel='normal', "
-            "doglmfilt=False. "
+            "dolinfitfilt=False. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
         ),
@@ -192,7 +184,7 @@ def _get_parser():
             f"passes=1, despeckle_passes={DEFAULT_CVRMAPPING_DESPECKLE_PASSES}, "
             f"searchrange=({DEFAULT_CVRMAPPING_LAGMIN}, {DEFAULT_CVRMAPPING_LAGMAX}), "
             f"filterfreqs=({DEFAULT_CVRMAPPING_FILTER_LOWERPASS}, {DEFAULT_CVRMAPPING_FILTER_UPPERPASS}), "
-            "and calculates a voxelwise GLM using the optimally delayed "
+            "and calculates a voxelwise regression fit using the optimally delayed "
             "input regressor and the percent normalized, demeaned BOLD data as inputs. This map is output as "
             "(XXX_desc-CVR_map.nii.gz).  If no input regressor is supplied, this will generate an error.  "
             "These options can be overridden with the appropriate additional arguments."
@@ -206,7 +198,7 @@ def _get_parser():
         help=(
             "Treat this run as an initial pass to locate good candidate voxels for global mean "
             "regressor generation.  This sets: passes=1, despecklepasses=0, "
-            "refinedespeckle=False, outputlevel='normal', doglmfilt=False, saveintermediatemaps=False."
+            "refinedespeckle=False, outputlevel='normal', dolinfitfilt=False, saveintermediatemaps=False."
         ),
         default=False,
     )
@@ -239,7 +231,7 @@ def _get_parser():
         action="store_true",
         help=(
             "This is a NIRS analysis - this is a macro that "
-            "sets nothresh, refineprenorm=var, ampthresh=0.7, and "
+            "sets nothresh, dataiszeromean=True, refineprenorm=var, ampthresh=0.7, and "
             "lagminthresh=0.1. "
         ),
         default=False,
@@ -309,7 +301,7 @@ def _get_parser():
         dest="realtr",
         action="store",
         metavar="TSTEP",
-        type=lambda x: pf.is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x, minval=0.0),
         help=(
             "Set the timestep of the data file to TSTEP. "
             "This will override the TR in an "
@@ -381,6 +373,17 @@ def _get_parser():
         ),
         default=False,
     )
+    preproc.add_argument(
+        "--dataiszeromean",
+        dest="dataiszeromean",
+        action="store_true",
+        help=(
+            "Assume that the fMRI data is zero mean (this will be the case if you used AFNI for preprocessing).  "
+            "This affects how masks are generated.  Rapidtide will attempt to detect this, but set explicitly "
+            "if you know this is the case."
+        ),
+        default=False,
+    )
 
     # Add filter options
     pf.addfilteropts(parser, filtertarget="data and regressors", details=True)
@@ -395,7 +398,7 @@ def _get_parser():
         "--detrendorder",
         dest="detrendorder",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="ORDER",
         help=(f"Set order of trend removal (0 to disable). Default is {DEFAULT_DETREND_ORDER}."),
         default=DEFAULT_DETREND_ORDER,
@@ -442,19 +445,6 @@ def _get_parser():
             "is enabled by default."
         ),
         default=False,
-    )
-    preproc.add_argument(
-        "--globalmaskmethod",
-        dest="globalmaskmethod",
-        action="store",
-        type=str,
-        choices=["mean", "variance"],
-        help=(
-            "Select whether to use timecourse mean or variance to "
-            "mask voxels prior to generating global mean. "
-            f'Default is "{DEFAULT_GLOBALMASK_METHOD}".'
-        ),
-        default=DEFAULT_GLOBALMASK_METHOD,
     )
     preproc.add_argument(
         "--globalmeaninclude",
@@ -514,7 +504,7 @@ def _get_parser():
         "--confoundpowers",
         dest="confound_power",
         metavar="N",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=1),
         help=(
             "Include powers of each confound regressor up to order N. Default is 1 (no expansion). "
         ),
@@ -580,7 +570,7 @@ def _get_parser():
         "--numskip",
         dest="preprocskip",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="SKIP",
         help=(
             "SKIP TRs were previously deleted during "
@@ -672,7 +662,7 @@ def _get_parser():
         "--regressorfreq",
         dest="inputfreq",
         action="store",
-        type=lambda x: pf.is_float(parser, x),
+        type=lambda x: pf.is_float(parser, x, minval=0.0),
         metavar="FREQ",
         help=(
             "Probe regressor in file has sample "
@@ -888,7 +878,7 @@ def _get_parser():
         "--despecklepasses",
         dest="despeckle_passes",
         action=pf.IndicateSpecifiedAction,
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="PASSES",
         help=(
             "Detect and refit suspect correlations to "
@@ -943,7 +933,7 @@ def _get_parser():
         "--passes",
         dest="passes",
         action=pf.IndicateSpecifiedAction,
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="PASSES",
         help=("Set the number of processing passes to PASSES.  " f"Default is {DEFAULT_PASSES}."),
         default=DEFAULT_PASSES,
@@ -1065,15 +1055,6 @@ def _get_parser():
         default=True,
     )
     reg_ref.add_argument(
-        "--pickleft",
-        dest="dummy",
-        action="store_true",
-        help=(
-            "DEPRECATED. pickleft is now on by default. Use 'nopickleft' to disable it instead."
-        ),
-        default=True,
-    )
-    reg_ref.add_argument(
         "--pickleftthresh",
         dest="pickleftthresh",
         action="store",
@@ -1157,7 +1138,7 @@ def _get_parser():
         "--maxpasses",
         dest="maxpasses",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="MAXPASSES",
         help=(
             "Terminate refinement after MAXPASSES passes, whether or not convergence has occurred. "
@@ -1166,22 +1147,22 @@ def _get_parser():
         default=DEFAULT_MAXPASSES,
     )
 
-    # GLM noise removal options
-    glm = parser.add_argument_group("GLM noise removal options")
-    glm.add_argument(
-        "--noglm",
-        dest="doglmfilt",
+    # sLFO noise removal options
+    slfofilt = parser.add_argument_group("sLFO noise removal options")
+    slfofilt.add_argument(
+        "--nodenoise",
+        dest="dolinfitfilt",
         action="store_false",
         help=(
-            "Turn off GLM filtering to remove delayed "
+            "Turn off regression filtering to remove delayed "
             "regressor from each voxel (disables output of "
             "fitNorm)."
         ),
         default=True,
     )
-    glm.add_argument(
-        "--glmsourcefile",
-        dest="glmsourcefile",
+    slfofilt.add_argument(
+        "--denoisesourcefile",
+        dest="denoisesourcefile",
         action="store",
         type=lambda x: pf.is_valid_file(parser, x),
         metavar="FILE",
@@ -1192,46 +1173,39 @@ def _get_parser():
         ),
         default=None,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--preservefiltering",
         dest="preservefiltering",
         action="store_true",
-        help="Don't reread data prior to performing GLM.",
+        help="Don't reread data prior to performing sLFO filtering.",
         default=False,
     )
-    glm.add_argument(
-        "--glmderivs",
-        dest="glmderivs",
+    slfofilt.add_argument(
+        "--regressderivs",
+        dest="regressderivs",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="NDERIVS",
         help=(
-            f"When doing final GLM, include derivatives up to NDERIVS order. Default is {DEFAULT_GLMDERIVS}"
+            f"When doing final sLFO filtering, include derivatives up to NDERIVS order. Default is {DEFAULT_REGRESSIONFILTDERIVS}"
         ),
-        default=DEFAULT_GLMDERIVS,
+        default=DEFAULT_REGRESSIONFILTDERIVS,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--norefinedelay",
         dest="refinedelay",
         action="store_false",
-        help=("Do not calculate a refined delay map using GLM information."),
+        help=("Do not calculate a refined delay map using sLFO regression information."),
         default=True,
     )
-    glm.add_argument(
-        "--refinedelay",
-        dest="dummy",
-        action="store_true",
-        help=("Calculate a refined delay map using GLM information. ***DEPRECATED*** - this is now on by default."),
-        default=True,
-    )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--nofilterwithrefineddelay",
         dest="filterwithrefineddelay",
         action="store_false",
-        help=("Do not use the refined delay in GLM filter."),
+        help=("Do not use the refined delay in sLFO filter."),
         default=True,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--delaypatchthresh",
         dest="delaypatchthresh",
         action="store",
@@ -1243,7 +1217,7 @@ def _get_parser():
         ),
         default=DEFAULT_PATCHTHRESH,
     )
-    glm.add_argument(
+    slfofilt.add_argument(
         "--delayoffsetspatialfilt",
         dest="delayoffsetgausssigma",
         action="store",
@@ -1268,23 +1242,13 @@ def _get_parser():
         choices=["min", "less", "normal", "more", "max"],
         help=(
             "The level of file output produced.  'min' produces only absolutely essential files, 'less' adds in "
-            "the GLM filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
+            "the sLFO filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
             "would typically want around for interactive data exploration, "
             "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
             "Selecting 'max' will produce ~3x your input datafile size as output.  "
             f'Default is "{DEFAULT_OUTPUTLEVEL}."'
         ),
         default=DEFAULT_OUTPUTLEVEL,
-    )
-    output.add_argument(
-        "--nolimitoutput",
-        dest="limitoutput",
-        action="store_false",
-        help=(
-            "Save some of the large and rarely used files.  "
-            "NB: THIS IS NOW DEPRECATED: Use '--outputlevel max' instead."
-        ),
-        default=True,
     )
     output.add_argument(
         "--savelags",
@@ -1297,7 +1261,7 @@ def _get_parser():
         "--histlen",  # was -h
         dest="histlen",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=5),
         metavar="HISTLEN",
         help=(f"Change the histogram length to HISTLEN.  Default is {DEFAULT_HISTLEN}."),
         default=DEFAULT_HISTLEN,
@@ -1349,7 +1313,7 @@ def _get_parser():
         "--mklthreads",
         dest="mklthreads",
         action="store",
-        type=int,
+        type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="MKLTHREADS",
         help=(
             "If mkl library is installed, use no more than MKLTHREADS worker "
@@ -1450,18 +1414,30 @@ def _get_parser():
         help=("Disable use of shared memory for large array storage."),
         default=True,
     )
-    misc.add_argument(
-        "--memprofile",
-        dest="memprofile",
-        action="store_true",
-        help=("Enable memory profiling - " "warning: this slows things down a lot."),
-        default=False,
-    )
     pf.addtagopts(misc)
 
     # Experimental options (not fully tested, may not work)
     experimental = parser.add_argument_group(
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
+    )
+    experimental.add_argument(
+        "--refineregressderivs",
+        dest="refineregressderivs",
+        action="store",
+        type=lambda x: pf.is_int(parser, x, minval=1),
+        metavar="NDERIVS",
+        help=(
+            f"When doing regression fit for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
+            f"Default is {DEFAULT_REFINEREGRESSDERIVS}"
+        ),
+        default=DEFAULT_REFINEREGRESSDERIVS,
+    )
+    experimental.add_argument(
+        "--dofinalrefine",
+        dest="dofinalrefine",
+        action="store_true",
+        help=("Do regressor refinement on the final pass."),
+        default=False,
     )
     experimental.add_argument(
         "--territorymap",
@@ -1525,68 +1501,6 @@ def _get_parser():
         help=("Attempt to detect and remove respiratory signal that strays into " "the LFO band."),
         default=False,
     )
-
-    experimental.add_argument(
-        "--noisetimecourse",
-        dest="noisetimecoursespec",
-        metavar="FILENAME[:VALSPEC]",
-        help=(
-            "Find and remove any instance of the timecourse supplied from any regressors used for analysis. "
-            "(if VALSPEC is given, and there are multiple timecourses in the file, use the indicated timecourse."
-            "This can be the name of the regressor if it's in the file, or the column number). "
-        ),
-        default=None,
-    )
-    noise_group = experimental.add_mutually_exclusive_group()
-    noise_group.add_argument(
-        "--noisefreq",
-        dest="noisefreq",
-        action="store",
-        type=lambda x: pf.is_float(parser, x),
-        metavar="FREQ",
-        help=(
-            "Noise timecourse in file has sample "
-            "frequency FREQ (default is 1/tr) "
-            "NB: --noisefreq and --noisetstep) "
-            "are two ways to specify the same thing."
-        ),
-        default="auto",
-    )
-    noise_group.add_argument(
-        "--noisetstep",
-        dest="noisefreq",
-        action="store",
-        type=lambda x: pf.invert_float(parser, x),
-        metavar="TSTEP",
-        help=(
-            "Noise timecourse in file has sample "
-            "frequency FREQ (default is 1/tr) "
-            "NB: --noisefreq and --noisetstep) "
-            "are two ways to specify the same thing."
-        ),
-        default="auto",
-    )
-    experimental.add_argument(
-        "--noisestart",
-        dest="noisestarttime",
-        action="store",
-        type=float,
-        metavar="START",
-        help=(
-            "The time delay in seconds into the noise timecourse "
-            "file, corresponding in the first TR of the fMRI "
-            "file (default is 0.0)."
-        ),
-        default=0.0,
-    )
-    experimental.add_argument(
-        "--noiseinvert",
-        dest="noiseinvert",
-        action="store_true",
-        help=("Invert noise regressor prior to alignment."),
-        default=False,
-    )
-
     experimental.add_argument(
         "--acfix",
         dest="fix_autocorrelation",
@@ -1646,6 +1560,51 @@ def _get_parser():
         action="store_true",
         help=("Perform patch shift correction."),
         default=False,
+    )
+
+    # Deprecated options
+    deprecated = parser.add_argument_group(
+        "Deprecated options.  These options will go away in the indeterminate future.  Don't use them."
+    )
+    deprecated.add_argument(
+        "--refinedelay",
+        dest="dummy",
+        action="store_true",
+        help=(
+            "Calculate a refined delay map using regression coefficient information. ***DEPRECATED***: refinedelay is now on by default."
+        ),
+        default=True,
+    )
+    deprecated.add_argument(
+        "--nolimitoutput",
+        dest="limitoutput",
+        action="store_false",
+        help=(
+            "Save some of the large and rarely used files.  "
+            "***DEPRECATED***: Use '--outputlevel max' instead."
+        ),
+        default=True,
+    )
+    deprecated.add_argument(
+        "--pickleft",
+        dest="dummy",
+        action="store_true",
+        help=(
+            "***DEPRECATED***: pickleft is now on by default. Use 'nopickleft' to disable it instead."
+        ),
+        default=True,
+    )
+    deprecated.add_argument(
+        "--noglm",
+        dest="dolinfitfilt",
+        action="store_false",
+        help=(
+            "Turn off regression filtering to remove delayed "
+            "regressor from each voxel (disables output of "
+            "fitNorm)."
+            "***DEPRECATED***: Use '--nodenoise' instead."
+        ),
+        default=True,
     )
 
     # Debugging options
@@ -1737,10 +1696,10 @@ def _get_parser():
         default=False,
     )
     debugging.add_argument(
-        "--singleproc_glm",
-        dest="singleproc_glm",
+        "--singleproc_regressionfilt",
+        dest="singleproc_regressionfilt",
         action="store_true",
-        help=("Force single proc path for glm."),
+        help=("Force single proc path for regression filtering."),
         default=False,
     )
     debugging.add_argument(
@@ -1818,8 +1777,6 @@ def process_args(inputargs=None):
     args["absmaxsigma"] = 10000.0
     # width of the reference autocorrelation function
     args["absminsigma"] = 0.05
-    # search window width for noise regressor mutual information function
-    args["noisesearchwindow"] = 30.0
     # number of MADs away from the median to consider an outlier
     args["sigdistoutlierfac"] = 10.0
 
@@ -1953,18 +1910,6 @@ def process_args(inputargs=None):
         args["inputfreq_nondefault"] = False
     else:
         args["inputfreq_nondefault"] = True
-
-    if args["noisetimecoursespec"] is not None:
-        (
-            args["noisetimecoursename"],
-            args["noisetimecoursevals"],
-        ) = tide_io.parsefilespec(args["noisetimecoursespec"])
-    else:
-        args["noisetimecoursename"] = None
-        args["noisetimecoursevals"] = None
-
-    if args["noisefreq"] == "auto":
-        args["noisefreq"] = 1.0 / fmri_tr
 
     # mask processing
     if args["corrmaskincludespec"] is not None:
@@ -2112,7 +2057,7 @@ def process_args(inputargs=None):
         args["refineoffset"] = True
         args["refinedelay"] = True
         args["outputlevel"] = "normal"
-        pf.setifnotset(args, "doglmfilt", True)
+        pf.setifnotset(args, "dolinfitfilt", True)
 
     if args["denoising"]:
         LGR.warning('Using "denoising" analysis mode. Overriding any affected arguments.')
@@ -2125,7 +2070,7 @@ def process_args(inputargs=None):
         args["refineoffset"] = True
         args["refinedelay"] = True
         args["zerooutbadfit"] = False
-        pf.setifnotset(args, "doglmfilt", True)
+        pf.setifnotset(args, "dolinfitfilt", True)
 
     if args["docvrmap"]:
         LGR.warning('Using "CVR" analysis mode. Overriding any affected arguments.')
@@ -2144,7 +2089,7 @@ def process_args(inputargs=None):
         args["preservefiltering"] = True
         args["passes"] = 1
         args["outputlevel"] = "min"
-        args["doglmfilt"] = False
+        args["dolinfitfilt"] = False
 
     if args["globalpreselect"]:
         LGR.warning('Using "globalpreselect" analysis mode. Overriding any affected arguments.')
@@ -2152,7 +2097,7 @@ def process_args(inputargs=None):
         args["despeckle_passes"] = 0
         args["refinedespeckle"] = False
         args["outputlevel"] = "normal"
-        pf.setifnotset(args, "doglmfilt", False)
+        pf.setifnotset(args, "dolinfitfilt", False)
         args["saveintermediatemaps"] = False
 
     # configure the filter
@@ -2172,6 +2117,7 @@ def process_args(inputargs=None):
         LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
         args["nothresh"] = True
         pf.setifnotset(args, "preservefiltering", False)
+        args["dataiszeromean"] = True
         args["refineprenorm"] = "var"
         args["ampthresh"] = 0.7
         args["ampthreshfromsig"] = False
@@ -2189,59 +2135,53 @@ def process_args(inputargs=None):
         args["savecorrtimes"] = False
         args["savelagregressors"] = False
         args["savedespecklemasks"] = False
-        args["saveminimumglmfiles"] = False
-        args["savenormalglmfiles"] = False
+        args["saveminimumsLFOfiltfiles"] = False
+        args["savenormalsLFOfiltfiles"] = False
         args["savemovingsignal"] = False
-        args["saveallglmfiles"] = False
+        args["saveallsLFOfiltfiles"] = False
     elif args["outputlevel"] == "less":
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
         args["savecorrtimes"] = False
         args["savelagregressors"] = False
         args["savedespecklemasks"] = False
-        args["saveminimumglmfiles"] = True
-        args["savenormalglmfiles"] = False
+        args["saveminimumsLFOfiltfiles"] = True
+        args["savenormalsLFOfiltfiles"] = False
         args["savemovingsignal"] = False
-        args["saveallglmfiles"] = False
+        args["saveallsLFOfiltfiles"] = False
     elif args["outputlevel"] == "normal":
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
         args["savecorrtimes"] = False
         args["savelagregressors"] = False
         args["savedespecklemasks"] = False
-        args["saveminimumglmfiles"] = True
-        args["savenormalglmfiles"] = True
+        args["saveminimumsLFOfiltfiles"] = True
+        args["savenormalsLFOfiltfiles"] = True
         args["savemovingsignal"] = False
-        args["saveallglmfiles"] = False
+        args["saveallsLFOfiltfiles"] = False
     elif args["outputlevel"] == "more":
         args["saveconfoundfiltered"] = False
         args["savegaussout"] = False
         args["savecorrtimes"] = False
         args["savelagregressors"] = True
         args["savedespecklemasks"] = False
-        args["saveminimumglmfiles"] = True
-        args["savenormalglmfiles"] = True
+        args["saveminimumsLFOfiltfiles"] = True
+        args["savenormalsLFOfiltfiles"] = True
         args["savemovingsignal"] = True
-        args["saveallglmfiles"] = False
+        args["saveallsLFOfiltfiles"] = False
     elif args["outputlevel"] == "max":
         args["saveconfoundfiltered"] = True
         args["savegaussout"] = True
         args["savecorrtimes"] = True
         args["savelagregressors"] = True
         args["savedespecklemasks"] = True
-        args["saveminimumglmfiles"] = True
-        args["savenormalglmfiles"] = True
+        args["saveminimumsLFOfiltfiles"] = True
+        args["savenormalsLFOfiltfiles"] = True
         args["savemovingsignal"] = True
-        args["saveallglmfiles"] = True
+        args["saveallsLFOfiltfiles"] = True
     else:
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()
-
-    # disable memory profiling if necessary
-    if not memprofilerexists:
-        if args["memprofile"]:
-            LGR.info("memprofiler is not installed - disabling memory profiling")
-            args["memprofile"] = False
 
     # dispersion calculation
     args["dispersioncalc_lower"] = args["lagmin"]
@@ -2264,8 +2204,8 @@ def process_args(inputargs=None):
         args["territorymapname"] = None
         args["territorymapincludevals"] = None
 
-    # this is new enough to do retrospective GLM
-    args["retroglmcompatible"] = True
+    # this is new enough to do retrospective regression filtering
+    args["retroregresscompatible"] = True
 
     LGR.debug("\nafter postprocessing\n{}".format(args))
 

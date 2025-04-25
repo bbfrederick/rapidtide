@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2024 Blaise Frederick
+#   Copyright 2016-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -136,6 +136,15 @@ def _get_parser():
         default=None,
     )
     parser.add_argument(
+        "--regionlabelfile",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help=(
+            "The name of of a text file containing the labels of the regions, one per line.  The first line is "
+            "the label integer value 1, etc."
+        ),
+        default=None,
+    )
+    parser.add_argument(
         "--includemask",
         dest="includespec",
         metavar="MASK[:VALSPEC]",
@@ -224,11 +233,9 @@ def atlasaverage(args):
         sys.exit()
 
     print("reshaping")
-    xsize = thedims[1]
-    ysize = thedims[2]
-    numslices = thedims[3]
-    numtimepoints = thedims[4]
-    numvoxels = int(xsize) * int(ysize) * int(numslices)
+    xdim, ydim, numslices, numtimepoints = tide_io.parseniftidims(thedims)
+    xsize, ysize, slicethickness, tr = tide_io.parseniftisizes(thesizes)
+    numvoxels = int(xdim) * int(ydim) * int(numslices)
 
     templatevoxels = np.reshape(template_data, numvoxels).astype(int)
     inputvoxels = np.reshape(input_data, (numvoxels, numtimepoints))
@@ -273,7 +280,7 @@ def atlasaverage(args):
         themask = themask * includemask.reshape((numvoxels))
         if args.debug:
             tide_io.savetonifti(
-                includemask.reshape((xsize, ysize, numslices)),
+                includemask.reshape((xdim, ydim, numslices)),
                 template_hdr,
                 f"{args.outputroot}_includemask",
             )
@@ -281,7 +288,7 @@ def atlasaverage(args):
         themask = themask * (1 - excludemask.reshape((numvoxels)))
         if args.debug:
             tide_io.savetonifti(
-                excludemask.reshape((xsize, ysize, numslices)),
+                excludemask.reshape((xdim, ydim, numslices)),
                 template_hdr,
                 f"{args.outputroot}_excludemask",
             )
@@ -289,10 +296,20 @@ def atlasaverage(args):
         themask = themask * extramask.reshape((numvoxels))
         if args.debug:
             tide_io.savetonifti(
-                extramask.reshape((xsize, ysize, numslices)),
+                extramask.reshape((xdim, ydim, numslices)),
                 template_hdr,
                 f"{args.outputroot}_extramask",
             )
+
+    # get the region names
+    if args.regionlabelfile is None:
+        regionlabels = []
+        numregions = np.max(templatevoxels)
+        numdigits = int(np.log10(numregions)) + 1
+        for regnum in range(1, numregions + 1):
+            regionlabels.append(f"region_{str(regnum).zfill(numdigits)}")
+    else:
+        regionlabels = tide_io.readlabels(args.regionlabelfile)
 
     # decide what regions we will summarize
     if args.regionlistfile is None:
@@ -301,6 +318,11 @@ def atlasaverage(args):
     else:
         regionlist = tide_io.readvec(args.regionlistfile).astype(int)
         numregions = len(regionlist)
+        newlabels = []
+        for theregion in range(numregions):
+            newlabels.append(regionlabels[theregion])
+        regionlabels = newlabels
+
     timecourses = np.zeros((numregions, numtimepoints), dtype="float")
     print(f"{numregions=}, {regionlist=}")
 
@@ -348,7 +370,13 @@ def atlasaverage(args):
                 )
         if args.debug:
             print("timecourses shape:", timecourses.shape)
-        tide_io.writenpvecs(timecourses, args.outputroot)
+        tide_io.writebidstsv(
+            args.outputroot,
+            timecourses,
+            1.0 / tr,
+            columns=regionlabels,
+            yaxislabel="delay offset",
+        )
     else:
         print("processing 3D input file")
         outputvoxels = inputvoxels * 0.0
@@ -416,19 +444,19 @@ def atlasaverage(args):
                 segmentedatlasvoxels += scratchvoxels
         template_hdr["dim"][4] = 1
         tide_io.savetonifti(
-            outputvoxels.reshape((xsize, ysize, numslices)),
+            outputvoxels.reshape((xdim, ydim, numslices)),
             template_hdr,
             args.outputroot,
         )
         tide_io.savetonifti(
-            segmentedatlasvoxels.reshape((xsize, ysize, numslices)),
+            segmentedatlasvoxels.reshape((xdim, ydim, numslices)),
             template_hdr,
             args.outputroot + "_percentiles",
         )
 
         if args.includename is not None or args.excludename is not None:
             tide_io.savetonifti(
-                (templatevoxels * themask).reshape((xsize, ysize, numslices)),
+                (templatevoxels * themask).reshape((xdim, ydim, numslices)),
                 template_hdr,
                 f"{args.outputroot}_maskedatlas",
             )

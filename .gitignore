@@ -5,6 +5,7 @@ DATE
 changecalls
 
 .circleci/*.safe
+.run
 
 # mac desktop files
 .DS_Store
@@ -15,7 +16,7 @@ safezone
 v2changes
 
 # experimental directory
-#rapidtide/experimental
+rapidtide/experimental/model_*
 
 # any generated test data
 rapidtide/data/examples/dst/*
@@ -24,6 +25,8 @@ rapidtide/tests/*.jpg
 rapidtide/tests/*.json
 rapidtide/tests/*.tsv.gz
 rapidtide/tests/*.nii.gz
+#rapidtide/tests/testdata/*
+rapidtide/tests/.coveragerc.*
 
 # some local test data
 rapidtide/data/examples/src/scratch

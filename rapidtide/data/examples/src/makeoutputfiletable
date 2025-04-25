@@ -49,11 +49,23 @@ def makecleanoutputdir(pathname):
     return True
 
 
-def dirfromoptions(level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay):
-    return f"{level}_passesgt1-{passesgt1}_numnullgt0-{numnullgt0}_doglm-{doglm}_domotion-{domotion}_doderivs-{doderivs}_dodespeckle-{dodespeckle}_dorefinedelay-{dorefinedelay}"
+def dirfromoptions(
+    level, passesgt1, numnullgt0, doslfofilt, domotion, doderivs, dodespeckle, dorefinedelay
+):
+    return f"{level}_passesgt1-{passesgt1}_numnullgt0-{numnullgt0}_doslfofilt-{doslfofilt}_domotion-{domotion}_doderivs-{doderivs}_dodespeckle-{dodespeckle}_dorefinedelay-{dorefinedelay}"
 
 
-def runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay):
+def runrapidtide(
+    outputdir,
+    level,
+    passesgt1,
+    numnullgt0,
+    doslfofilt,
+    domotion,
+    doderivs,
+    dodespeckle,
+    dorefinedelay,
+):
     # run rapidtide
     if passesgt1:
         npasses = 2
@@ -83,10 +95,10 @@ def runrapidtide(outputdir, level, passesgt1, numnullgt0, doglm, domotion, doder
         inputargs += ["--motionfile", "fakemotion.par"]
     if not dodespeckle:
         inputargs += ["--despecklepasses", "0"]
-    if not doglm:
-        inputargs += ["--noglm"]
+    if not doslfofilt:
+        inputargs += ["--nodenoise"]
     if doderivs:
-        inputargs += ["--glmderivs", "1"]
+        inputargs += ["--regressderivs", "1"]
     if dorefinedelay:
         inputargs += ["--refinedelay"]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
@@ -120,7 +132,7 @@ def listfiles(outputdir, fileroots, runinfo, debug=False):
                 fileroots[basename]["level"] = runinfo[0]
                 fileroots[basename]["passesgt1"] = runinfo[1]
                 fileroots[basename]["numnullgt0"] = runinfo[2]
-                fileroots[basename]["doglm"] = runinfo[3]
+                fileroots[basename]["doslfofilt"] = runinfo[3]
                 fileroots[basename]["domotion"] = runinfo[4]
                 fileroots[basename]["doderivs"] = runinfo[5]
                 fileroots[basename]["dodespeckle"] = runinfo[6]
@@ -183,20 +195,53 @@ if __name__ == "__main__":
     genfiles = True
 
     fileroots = {}
-    for level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay in runinfo:
+    for (
+        level,
+        passesgt1,
+        numnullgt0,
+        doslfofilt,
+        domotion,
+        doderivs,
+        dodespeckle,
+        dorefinedelay,
+    ) in runinfo:
         subdir = dirfromoptions(
-            level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay
+            level,
+            passesgt1,
+            numnullgt0,
+            doslfofilt,
+            domotion,
+            doderivs,
+            dodespeckle,
+            dorefinedelay,
         )
         outputdir = os.path.join("..", "dst", "scratch", subdir)
         if genfiles:
             makecleanoutputdir(outputdir)
             runrapidtide(
-                outputdir, level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay
+                outputdir,
+                level,
+                passesgt1,
+                numnullgt0,
+                doslfofilt,
+                domotion,
+                doderivs,
+                dodespeckle,
+                dorefinedelay,
             )
         listfiles(
             outputdir,
             fileroots,
-            (level, passesgt1, numnullgt0, doglm, domotion, doderivs, dodespeckle, dorefinedelay),
+            (
+                level,
+                passesgt1,
+                numnullgt0,
+                doslfofilt,
+                domotion,
+                doderivs,
+                dodespeckle,
+                dorefinedelay,
+            ),
             debug=False,
         )
 
@@ -224,21 +269,25 @@ if __name__ == "__main__":
                 existstring = "Present if refinedelay is enabled and outputlevel is \u2265 normal"
         elif fileroots[key]["dodespeckle"]:
             existstring = "Present if despecklepasses > 0 (default) and outputlevel is max"
-        elif fileroots[key]["doglm"]:
+        elif fileroots[key]["doslfofilt"]:
             if fileroots[key]["doderivs"]:
-                existstring = (
-                    "Present if GLM is enabled (default), glmderivs > 0, and outputlevel is max"
-                )
+                existstring = "Present if sLFO filtering is enabled (default), regressderivs > 0, and outputlevel is max"
             elif fileroots[key]["level"] == "min":
-                existstring = "Present if GLM is enabled (default)"
+                existstring = "Present if sLFO filtering is enabled (default)"
             elif fileroots[key]["level"] == "less":
-                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 less"
+                existstring = (
+                    "Present if sLFO filtering is enabled (default) and outputlevel is \u2265 less"
+                )
             elif fileroots[key]["level"] == "normal":
-                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 normal"
+                existstring = "Present if sLFO filtering is enabled (default) and outputlevel is \u2265 normal"
             elif fileroots[key]["level"] == "more":
-                existstring = "Present if GLM is enabled (default) and outputlevel is \u2265 more"
+                existstring = (
+                    "Present if sLFO filtering is enabled (default) and outputlevel is \u2265 more"
+                )
             elif fileroots[key]["level"] == "max":
-                existstring = "Present if GLM is enabled (default) and outputlevel is max"
+                existstring = (
+                    "Present if sLFO filtering is enabled (default) and outputlevel is max"
+                )
             else:
                 print("you shouldn't be able to get here")
         elif fileroots[key]["level"] == "min":
