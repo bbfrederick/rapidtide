@@ -190,19 +190,28 @@ class VoxelData:
         self.resident = True
 
     def copyheader(self, numtimepoints=None, tr=None, toffset=None):
-        thisheader = copy.deepcopy(self.nim_hdr)
-        if numtimepoints is not None:
-            thisheader["dim"][4] = numtimepoints
-            if numtimepoints > 1:
-                thisheader["dim"][0] = 4
+        if self.filetype == "text":
+            return None
+        else:
+            thisheader = copy.deepcopy(self.nim_hdr)
+            if self.filetype == "cifti":
+                timeindex = thisheader["dim"][0] - 1
+                spaceindex = thisheader["dim"][0]
+                thisheader["dim"][timeindex] = numtimepoints
+                thisheader["dim"][spaceindex] = self.numspatiallocs
             else:
-                thisheader["dim"][0] = 3
-                thisheader["pixdim"][4] = 1.0
-        if toffset is not None:
-            thisheader["toffset"] = toffset
-        if tr is not None:
-            thisheader["pixdim"][4] = tr
-        return thisheader
+                if numtimepoints is not None:
+                    thisheader["dim"][4] = numtimepoints
+                    if numtimepoints > 1:
+                        thisheader["dim"][0] = 4
+                    else:
+                        thisheader["dim"][0] = 3
+                        thisheader["pixdim"][4] = 1.0
+                if toffset is not None:
+                    thisheader["toffset"] = toffset
+                if tr is not None:
+                    thisheader["pixdim"][4] = tr
+            return thisheader
 
     def getsizes(self):
         return self.xdim, self.ydim, self.slicethickness, self.timestep
