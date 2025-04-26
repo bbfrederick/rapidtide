@@ -382,13 +382,10 @@ def delayvar(args):
 
     # read the fmri input files
     print("reading fmrifile")
-    # fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
-    #    args.fmrifile
-    # )
     theinputdata = tide_voxelData.VoxelData(args.fmrifile)
     xsize, ysize, numslices, timepoints = theinputdata.getdims()
     xdim, ydim, slicethickness, fmritr = theinputdata.getsizes()
-    fmri_header = theinputdata.getheader()
+    fmri_header = theinputdata.copyheader()
     fmri_data = theinputdata.data
     numspatiallocs = theinputdata.numspatiallocs
 
@@ -397,9 +394,6 @@ def delayvar(args):
 
     if args.debug:
         print(f"{fmri_data.shape=}")
-    # xdim, ydim, slicethickness, fmritr = tide_io.parseniftisizes(fmri_sizes)
-    # xsize, ysize, numslices, timepoints = tide_io.parseniftidims(fmri_dims)
-    # numspatiallocs = int(xsize) * int(ysize) * int(numslices)
     fmri_data_spacebytime = fmri_data.reshape((numspatiallocs, timepoints))
     if args.debug:
         print(f"{fmri_data_spacebytime.shape=}")
