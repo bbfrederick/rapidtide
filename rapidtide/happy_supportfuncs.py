@@ -1175,8 +1175,8 @@ def upsampleimage(input_data, numsteps, sliceoffsets, slicesamplerate, outputroo
             )
             upsampleimage_byslice[thexyvoxel, :, thetimepoint] = 1.0 * theinterps
 
-    theheader = input_data.getheader()
-    theheader["dim"][4] = timepoints * numsteps
-    theheader["pixdim"][4] = 1.0 / slicesamplerate
+    theheader = input_data.copyheader(
+        numtimepoints=(timepoints * numsteps), tr=(1.0 / slicesamplerate)
+    )
     tide_io.savetonifti(upsampleimage, theheader, outputroot + "_upsampled")
     print("upsampling complete")
