@@ -1,5 +1,11 @@
 # Release history
 
+## Version 3.0.2 (4/26/25)
+* (rapidtide) Leaned harder into using the voxelData class, and beefed up its capabilities.
+* (happy) Updated to use voxelData.
+* (happy) Moved phase projection to an external routine.
+* (documentation) Fixed a few more typos.
+
 ## Version 3.0.1 (4/23/25)
 * (documentation) I missed a bunch of weird errors in the "Theory of Operation" section.  Are you surprised?  I'm not surprised.  You shouldn't be either.  These are now fixed.  This doesn't change any code - mostly affects online documentation.
 
