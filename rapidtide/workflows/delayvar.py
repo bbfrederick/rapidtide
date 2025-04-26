@@ -386,7 +386,7 @@ def delayvar(args):
     xsize, ysize, numslices, timepoints = theinputdata.getdims()
     xdim, ydim, slicethickness, fmritr = theinputdata.getsizes()
     fmri_header = theinputdata.copyheader()
-    fmri_data = theinputdata.data
+    fmri_data = theinputdata.byvol()
     numspatiallocs = theinputdata.numspatiallocs
 
     # create the canary file
@@ -394,7 +394,7 @@ def delayvar(args):
 
     if args.debug:
         print(f"{fmri_data.shape=}")
-    fmri_data_spacebytime = fmri_data.reshape((numspatiallocs, timepoints))
+    fmri_data_spacebytime = theinputdata.byvoxel()
     if args.debug:
         print(f"{fmri_data_spacebytime.shape=}")
 
