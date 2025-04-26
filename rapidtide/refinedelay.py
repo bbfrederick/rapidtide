@@ -110,7 +110,6 @@ def trainratiotooffset(
         "alwaysmultiproc": False,
         "focaldebug": debug,
         "fmrifreq": 1.0 / sampletime,
-        "textio": False,
     }
 
     if trainlagmax - trainlagmin > 0.0:

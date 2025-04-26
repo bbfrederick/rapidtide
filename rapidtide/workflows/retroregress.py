@@ -34,6 +34,7 @@ import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
+import rapidtide.voxelData as tide_voxelData
 import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
@@ -370,18 +371,24 @@ def retroregress(args):
 
     # read the fmri input files
     print("reading fmrifile")
-    fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
-        args.fmrifile
-    )
+    # fmri_input, fmri_data, fmri_header, fmri_dims, fmri_sizes = tide_io.readfromnifti(
+    #    args.fmrifile
+    # )
+    theinputdata = tide_voxelData.VoxelData(args.fmrifile)
+    xsize, ysize, numslices, timepoints = theinputdata.getdims()
+    xdim, ydim, slicethickness, fmritr = theinputdata.getsizes()
+    fmri_header = theinputdata.getheader()
+    fmri_data = theinputdata.data
+    numspatiallocs = theinputdata.numspatiallocs
 
     # create the canary file
     Path(f"{outputname}_RETROISRUNNING.txt").touch()
 
     if args.debug:
         print(f"{fmri_data.shape=}")
-    xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(fmri_sizes)
-    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(fmri_dims)
-    numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+    # xdim, ydim, slicethickness, fmritr = tide_io.parseniftisizes(fmri_sizes)
+    # xsize, ysize, numslices, timepoints = tide_io.parseniftidims(fmri_dims)
+    # numspatiallocs = int(xsize) * int(ysize) * int(numslices)
     fmri_data_spacebytime = fmri_data.reshape((numspatiallocs, timepoints))
     if args.debug:
         print(f"{fmri_data_spacebytime.shape=}")
@@ -604,8 +611,7 @@ def retroregress(args):
             (xsize, ysize, numslices, validtimepoints),
             theheader,
             bidsbasedict,
-            textio=therunoptions["textio"],
-            fileiscifti=False,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=None,
         )
@@ -618,7 +624,7 @@ def retroregress(args):
 
         if args.delayoffsetgausssigma < 0.0:
             # set gausssigma automatically
-            args.delayoffsetgausssigma = np.mean([xdim, ydim, slicedim]) / 2.0
+            args.delayoffsetgausssigma = np.mean([xdim, ydim, slicethickness]) / 2.0
 
         TimingLGR.info("Refinement calibration start")
         regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
@@ -652,7 +658,7 @@ def retroregress(args):
                     regressderivratios,
                     (xsize, ysize, numslices),
                     validvoxels,
-                    (xdim, ydim, slicedim),
+                    (xdim, ydim, slicethickness),
                     gausssigma=args.delayoffsetgausssigma,
                     patchthresh=args.delaypatchthresh,
                     rt_floattype=rt_floattype,
@@ -702,7 +708,7 @@ def retroregress(args):
                     regressderivratios[i, :],
                     (xsize, ysize, numslices),
                     validvoxels,
-                    (xdim, ydim, slicedim),
+                    (xdim, ydim, slicethickness),
                     gausssigma=args.delayoffsetgausssigma,
                     patchthresh=args.delaypatchthresh,
                     rt_floattype=rt_floattype,
@@ -1172,8 +1178,7 @@ def retroregress(args):
                 (xsize, ysize, numslices, validtimepoints),
                 theheader,
                 bidsbasedict,
-                textio=therunoptions["textio"],
-                fileiscifti=False,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=None,
             )

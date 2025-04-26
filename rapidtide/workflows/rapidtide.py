@@ -370,6 +370,7 @@ def rapidtide_main(argparsingfunc):
     numspatiallocs = theinputdata.numspatiallocs
     nativespaceshape = theinputdata.nativespaceshape
     fmritr = theinputdata.timestep
+    optiondict["filetype"] = theinputdata.filetype
     if theinputdata.filetype == "cifti":
         fileiscifti = True
         optiondict["textio"] = False
@@ -445,7 +446,7 @@ def rapidtide_main(argparsingfunc):
                     optiondict[thisanatomic[0]],
                     theinputdata.nim_hdr,
                     xsize,
-                    istext=optiondict["textio"],
+                    istext=(theinputdata.filetype == "text"),
                     valslist=optiondict[thisanatomic[1]],
                     maskname=thisanatomic[2],
                     tolerance=optiondict["spatialtolerance"],
@@ -510,7 +511,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["globalmeanexcludevals"],
         theinputdata.nim_hdr,
         numspatiallocs,
-        istext=optiondict["textio"],
+        istext=(theinputdata.filetype == "text"),
         tolerance=optiondict["spatialtolerance"],
     )
     if internalinvbrainmask is not None:
@@ -527,7 +528,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["refineexcludevals"],
         theinputdata.nim_hdr,
         numspatiallocs,
-        istext=optiondict["textio"],
+        istext=(theinputdata.filetype == "text"),
         tolerance=optiondict["spatialtolerance"],
     )
     if internalinvbrainmask is not None:
@@ -544,7 +545,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["offsetexcludevals"],
         theinputdata.nim_hdr,
         numspatiallocs,
-        istext=optiondict["textio"],
+        istext=(theinputdata.filetype == "text"),
         tolerance=optiondict["spatialtolerance"],
     )
     if internalinvbrainmask is not None:
@@ -563,7 +564,7 @@ def rapidtide_main(argparsingfunc):
             optiondict["corrmaskincludename"],
             theinputdata.nim_hdr,
             xsize,
-            istext=optiondict["textio"],
+            istext=(theinputdata.filetype == "text"),
             valslist=optiondict["corrmaskincludevals"],
             maskname="correlation",
             tolerance=optiondict["spatialtolerance"],
@@ -573,7 +574,7 @@ def rapidtide_main(argparsingfunc):
 
         # last line sanity check - if data is 0 over all time in a voxel, force corrmask to zero.
         datarange = np.max(fmri_data, axis=1) - np.min(fmri_data, axis=1)
-        if optiondict["textio"]:
+        if theinputdata.filetype == "text":
             tide_io.writenpvecs(
                 datarange.reshape((numspatiallocs)),
                 f"{outputname}_motionr2.txt",
@@ -789,8 +790,8 @@ def rapidtide_main(argparsingfunc):
             },
         )
         # save the confound filter R2 map
-        if not optiondict["textio"]:
-            if fileiscifti:
+        if theinputdata.filetype != "text":
+            if theinputdata.filetype == "cifti":
                 timeindex = theheader["dim"][0] - 1
                 spaceindex = theheader["dim"][0]
                 theheader["dim"][timeindex] = 1
@@ -1353,10 +1354,10 @@ def rapidtide_main(argparsingfunc):
     tide_util.logmem("after main array allocation")
 
     corroutlen = np.shape(trimmedcorrscale)[0]
-    if optiondict["textio"]:
+    if theinputdata.filetype == "text":
         nativecorrshape = (xsize, corroutlen)
     else:
-        if fileiscifti:
+        if theinputdata.filetype == "cifti":
             nativecorrshape = (1, 1, 1, corroutlen, numspatiallocs)
         else:
             nativecorrshape = (xsize, ysize, numslices, corroutlen)
@@ -1434,9 +1435,9 @@ def rapidtide_main(argparsingfunc):
         - fmritr * numpadtrs
     )
 
-    if optiondict["textio"]:
+    if theinputdata.filetype == "text":
         nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
-    elif fileiscifti:
+    elif theinputdata.filetype == "cifti":
         nativefmrishape = (1, 1, 1, np.shape(initial_fmri_x)[0], numspatiallocs)
     else:
         nativefmrishape = (xsize, ysize, numslices, np.shape(initial_fmri_x)[0])
@@ -1906,7 +1907,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["checkpoint"]:
             outcorrarray[:, :] = 0.0
             outcorrarray[validvoxels, :] = corrout[:, :]
-            if optiondict["textio"]:
+            if theinputdata.filetype == "text":
                 tide_io.writenpvecs(
                     outcorrarray.reshape(nativecorrshape),
                     f"{outputname}_corrout_prefit_pass" + str(thepass) + ".txt",
@@ -2098,8 +2099,8 @@ def rapidtide_main(argparsingfunc):
                     internaldespeckleincludemask[validvoxels] == 0.0, 0, 1
                 )
                 if thepass == optiondict["passes"]:
-                    if not optiondict["textio"]:
-                        if fileiscifti:
+                    if theinputdata.filetype != "text":
+                        if theinputdata.filetype == "cifti":
                             timeindex = theheader["dim"][0] - 1
                             spaceindex = theheader["dim"][0]
                             theheader["dim"][timeindex] = 1
@@ -2470,10 +2471,10 @@ def rapidtide_main(argparsingfunc):
             coherencefreqstep,
             coherencefreqaxissize,
         ) = theCoherer.getaxisinfo()
-        if optiondict["textio"]:
+        if theinputdata.filetype == "text":
             nativecoherenceshape = (xsize, coherencefreqaxissize)
         else:
-            if fileiscifti:
+            if theinputdata.filetype == "cifti":
                 nativecoherenceshape = (1, 1, 1, coherencefreqaxissize, numspatiallocs)
             else:
                 nativecoherenceshape = (xsize, ysize, numslices, coherencefreqaxissize)
@@ -2737,7 +2738,7 @@ def rapidtide_main(argparsingfunc):
 
         if optiondict["debug"]:
             # dump the fmri input file going to sLFO filter
-            if not optiondict["textio"]:
+            if theinputdata.filetype != "text":
                 outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
                 theheader = theinputdata.copyheader(
                     numtimepoints=np.shape(outfmriarray)[1], tr=fmritr
@@ -2773,7 +2774,7 @@ def rapidtide_main(argparsingfunc):
         if optiondict["refinedelay"]:
             TimingLGR.info("Delay refinement start")
             LGR.info("\n\nDelay refinement")
-            if optiondict["delayoffsetgausssigma"] < 0.0 and not optiondict["textio"]:
+            if optiondict["delayoffsetgausssigma"] < 0.0 and theinputdata.filetype != "text":
                 # set gausssigma automatically
                 optiondict["delayoffsetgausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
 

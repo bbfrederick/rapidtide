@@ -153,7 +153,6 @@ def eval_refinedelay(
         "alwaysmultiproc": False,
         "focaldebug": debug,
         "fmrifreq": Fs,
-        "textio": False,
     }
 
     regressderivratios, regressrvalues = tide_refinedelay.getderivratios(

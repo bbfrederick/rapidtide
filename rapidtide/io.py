@@ -370,7 +370,7 @@ def savemaplist(
             savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
             if savejson:
                 writedicttojson(bidsdict, savename + ".json")
-            if not fileiscifti:
+            if filetype == "nifti":
                 savetonifti(outmaparray.reshape(destshape), theheader, savename)
             else:
                 isseries = len(outmaparray.shape) != 1
