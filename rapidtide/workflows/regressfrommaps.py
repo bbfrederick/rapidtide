@@ -108,12 +108,6 @@ def regressfrommaps(
             },
         )
 
-    # and do the filtering
-    if LGR is not None:
-        LGR.info("Start filtering operation")
-    if TimingLGR is not None:
-        TimingLGR.info("Start filtering operation")
-
     if regressderivs > 0:
         if debug:
             print(f"adding derivatives up to order {regressderivs} prior to regression")
@@ -127,12 +121,19 @@ def regressfrommaps(
             print(f"using raw lagged regressors for regression")
         regressorset = lagtc
         evset = rt_floatset(genlagtc.yfromx(initial_fmri_x))
+    if debug:
+        print(f"{regressorset.shape=}")
 
     if saveEVsandquit:
         return 0, regressorset, evset
 
-    if debug:
-        print(f"{regressorset.shape=}")
+    # now do the filtering
+    if LGR is not None:
+        LGR.info("Start filtering operation")
+    if TimingLGR is not None:
+        TimingLGR.info("Start filtering operation")
+
+
     voxelsprocessed_regressionfilt = tide_linfitfiltpass.linfitfiltpass(
         numvalidspatiallocs,
         fmri_data_valid,

@@ -793,7 +793,403 @@ def retroregress(args):
         debug=args.debug,
     )
 
-    if args.saveEVsandquit:
+    if not args.saveEVsandquit:
+        print(f"filtered {voxelsprocessed_regressionfilt} voxels")
+        TimingLGR.info(
+            "sLFO filtering done",
+            {
+                "message2": voxelsprocessed_regressionfilt,
+                "message3": "voxels",
+            },
+        )
+        # finalrawvariance = tide_math.imagevariance(filtereddata, None, 1.0 / fmritr)
+        finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
+
+        divlocs = np.where(finalvariance > 0.0)
+        varchange = initialvariance * 0.0
+        varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
+
+        """divlocs = np.where(finalrawvariance > 0.0)
+        rawvarchange = initialrawvariance * 0.0
+        rawvarchange[divlocs] = 100.0 * (finalrawvariance[divlocs] / initialrawvariance[divlocs] - 1.0)"""
+
+        # save outputs
+        TimingLGR.info("Starting output save")
+        theheader = copy.deepcopy(lagtimes_header)
+        if mode == "glm":
+            maplist = [
+                (
+                    initialvariance,
+                    "lfofilterInbandVarianceBefore",
+                    "map",
+                    None,
+                    "Inband variance prior to filtering",
+                ),
+                (
+                    finalvariance,
+                    "lfofilterInbandVarianceAfter",
+                    "map",
+                    None,
+                    "Inband variance after filtering",
+                ),
+                (
+                    varchange,
+                    "lfofilterInbandVarianceChange",
+                    "map",
+                    "percent",
+                    "Change in inband variance after filtering, in percent",
+                ),
+                # (
+                #   initialrawvariance,
+                #    "lfofilterTotalVarianceBefore",
+                #    "map",
+                #    None,
+                #    "Total variance prior to filtering",
+                # ),
+                # (
+                #    finalrawvariance,
+                #    "lfofilterTotalVarianceAfter",
+                #    "map",
+                #    None,
+                #    "Total variance after filtering",
+                # ),
+                # (
+                #    rawvarchange,
+                #    "lfofilterTotalVarianceChange",
+                #    "map",
+                #    "percent",
+                #    "Change in total variance after filtering, in percent",
+                # ),
+            ]
+            if args.saveminimumsLFOfiltfiles:
+                maplist += [
+                    (
+                        r2value,
+                        "lfofilterR2",
+                        "map",
+                        None,
+                        "Squared R value of the GLM fit (proportion of variance explained)",
+                    ),
+                ]
+            if args.savenormalsLFOfiltfiles:
+                maplist += [
+                    (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
+                    (sLFOfitmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
+                ]
+        else:
+            maplist = [
+                (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
+                (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
+                (varchange, "CVRVariance", "map", None),
+            ]
+            if args.savenormalsLFOfiltfiles:
+                maplist += [
+                    (rvalue, "CVRR", "map", None),
+                    (r2value, "CVRR2", "map", None),
+                    (fitcoeff, "CVR", "map", "percent"),
+                ]
+        bidsdict = bidsbasedict.copy()
+
+        if args.debug or args.focaldebug:
+            maplist += [
+                (
+                    lagtimes_valid,
+                    "maxtimeREAD",
+                    "map",
+                    "second",
+                    "Lag time in seconds used for calculation",
+                ),
+                (corrmask_valid, "corrfitREAD", "mask", None, "Correlation mask used for calculation"),
+                (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
+            ]
+        if args.savenormalsLFOfiltfiles:
+            if args.regressderivs > 0 or args.refinedelay:
+                maplist += [
+                    (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
+                    (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
+                ]
+                for thederiv in range(1, args.regressderivs + 1):
+                    maplist += [
+                        (
+                            fitcoeff[:, thederiv],
+                            f"lfofilterCoeffDeriv{thederiv}",
+                            "map",
+                            None,
+                            f"Fit coefficient for temporal derivative {thederiv}",
+                        ),
+                        (
+                            fitNorm[:, thederiv],
+                            f"lfofilterNormDeriv{thederiv}",
+                            "map",
+                            None,
+                            f"Normalized fit coefficient for temporal derivative {thederiv}",
+                        ),
+                    ]
+            else:
+                maplist += [
+                    (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
+                    (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
+                ]
+
+        if args.refinedelay:
+            if args.refineregressderivs > 1:
+                for i in range(args.refineregressderivs):
+                    maplist += [
+                        (
+                            regressderivratios[i, :],
+                            f"regressderivratios_{i}",
+                            "map",
+                            None,
+                            f"Ratio of derivative {i+1} of delayed sLFO to the delayed sLFO",
+                        ),
+                        (
+                            medfiltregressderivratios[i, :],
+                            f"medfiltregressderivratios_{i}",
+                            "map",
+                            None,
+                            f"Median filtered version of the regressderivratios_{i} map",
+                        ),
+                        (
+                            filteredregressderivratios[i, :],
+                            f"filteredregressderivratios_{i}",
+                            "map",
+                            None,
+                            f"regressderivratios_{i}, with outliers patched using median filtered data",
+                        ),
+                    ]
+            else:
+                maplist += [
+                    (
+                        regressderivratios,
+                        "regressderivratios",
+                        "map",
+                        None,
+                        "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
+                    ),
+                    (
+                        medfiltregressderivratios,
+                        "medfiltregressderivratios",
+                        "map",
+                        None,
+                        "Median filtered version of the regressderivratios map",
+                    ),
+                    (
+                        filteredregressderivratios,
+                        "filteredregressderivratios",
+                        "map",
+                        None,
+                        "regressderivratios, with outliers patched using median filtered data",
+                    ),
+                ]
+            maplist += [
+                (
+                    delayoffset,
+                    "delayoffset",
+                    "map",
+                    "second",
+                    "Delay offset correction from delay refinement",
+                ),
+                (
+                    lagtimesrefined_valid,
+                    "maxtimerefined",
+                    "map",
+                    "second",
+                    "Lag time in seconds, refined",
+                ),
+            ]
+
+        # write the 3D maps
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
+
+        # write the 4D maps
+        theheader = theinputdata.copyheader()
+        maplist = []
+        if args.saveminimumsLFOfiltfiles:
+            maplist = [
+                (
+                    filtereddata,
+                    "lfofilterCleaned",
+                    "bold",
+                    None,
+                    "fMRI data with sLFO signal filtered out",
+                ),
+            ]
+        if args.savemovingsignal:
+            maplist += [
+                (
+                    movingsignal,
+                    "lfofilterRemoved",
+                    "bold",
+                    None,
+                    "sLFO signal filtered out of this voxel",
+                )
+            ]
+
+        if args.saveallsLFOfiltfiles:
+            if args.regressderivs > 0:
+                if args.debug:
+                    print("going down the multiple EV path")
+                    print(f"{regressorset[:, :, 0].shape=}")
+                maplist += [
+                    (
+                        regressorset[:, :, 0],
+                        "lfofilterEV",
+                        "bold",
+                        None,
+                        "Shifted sLFO regressor to filter",
+                    ),
+                ]
+                for thederiv in range(1, args.regressderivs + 1):
+                    if args.debug:
+                        print(f"{regressorset[:, :, thederiv].shape=}")
+                    maplist += [
+                        (
+                            regressorset[:, :, thederiv],
+                            f"lfofilterEVDeriv{thederiv}",
+                            "bold",
+                            None,
+                            f"Time derivative {thederiv} of shifted sLFO regressor",
+                        ),
+                    ]
+            else:
+                if args.debug:
+                    print("going down the single EV path")
+                maplist += [
+                    (
+                        regressorset,
+                        "lfofilterEV",
+                        "bold",
+                        None,
+                        "Shifted sLFO regressor to filter",
+                    ),
+                ]
+        if args.makepseudofile:
+            print("reading mean image")
+            meanfile = f"{args.datafileroot}_desc-mean_map.nii.gz"
+            (
+                mean_input,
+                mean,
+                mean_header,
+                mean_dims,
+                mean_sizes,
+            ) = tide_io.readfromnifti(meanfile)
+            if not tide_io.checkspacematch(fmri_header, mean_header):
+                raise ValueError("mean dimensions do not match fmri dimensions")
+            if args.debug:
+                print(f"{mean.shape=}")
+            mean_spacebytime = mean.reshape((numspatiallocs))
+            if args.debug:
+                print(f"{mean_spacebytime.shape=}")
+            pseudofile = mean_spacebytime[validvoxels, None] + movingsignal[:, :]
+            maplist.append((pseudofile, "pseudofile", "bold", None, None))
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            (xsize, ysize, numslices, validtimepoints),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
+        TimingLGR.info("Finishing output save")
+
+        if args.refinecorr:
+            TimingLGR.info("Filtering for maxcorralt calculation start")
+            for thevoxel in range(fmri_data_valid.shape[0]):
+                fmri_data_valid[thevoxel, :] = theprefilter.apply(
+                    1.0 / fmritr, fmri_data_valid[thevoxel, :]
+                )
+            TimingLGR.info("Filtering for maxcorralt calculation complete")
+            TimingLGR.info("GLM for maxcorralt calculation start")
+            voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
+                fmri_data_valid,
+                validvoxels,
+                initial_fmri_x,
+                lagstouse_valid,
+                corrmask_valid,
+                genlagtc,
+                mode,
+                outputname,
+                oversamptr,
+                sLFOfitmean,
+                rvalue,
+                r2value,
+                fitNorm[:, : args.regressderivs + 1],
+                fitcoeff[:, : args.regressderivs + 1],
+                movingsignal,
+                lagtc,
+                filtereddata,
+                LGR,
+                TimingLGR,
+                threshval,
+                args.saveminimumsLFOfiltfiles,
+                nprocs_makelaggedtcs=args.nprocs,
+                nprocs_regressionfilt=args.nprocs,
+                regressderivs=args.regressderivs,
+                showprogressbar=args.showprogressbar,
+                debug=args.debug,
+            )
+            TimingLGR.info(
+                "GLM for maxcorralt calculation done",
+                {
+                    "message2": voxelsprocessed_regressionfilt,
+                    "message3": "voxels",
+                },
+            )
+
+            maplist = [
+                (
+                    rvalue,
+                    "maxcorralt",
+                    "map",
+                    None,
+                    "R value for the lfo component of the delayed regressor, with sign",
+                ),
+            ]
+            theheader = copy.deepcopy(lagtimes_header)
+            tide_io.savemaplist(
+                outputname,
+                maplist,
+                validvoxels,
+                (xsize, ysize, numslices),
+                theheader,
+                bidsdict,
+                debug=args.debug,
+            )
+            if args.debug:
+                # dump the fmri input file going to glm
+                theheader = theinputdata.copyheader(numtimepoints=validtimepoints, tr=fmritr)
+
+                maplist = [
+                    (
+                        fmri_data_valid,
+                        "prefilteredinputdata",
+                        "bold",
+                        None,
+                        "fMRI data after temporal filtering",
+                    ),
+                ]
+                tide_io.savemaplist(
+                    outputname,
+                    maplist,
+                    validvoxels,
+                    (xsize, ysize, numslices, validtimepoints),
+                    theheader,
+                    bidsbasedict,
+                    filetype=theinputdata.filetype,
+                    rt_floattype=rt_floattype,
+                    cifti_hdr=None,
+                )
+    else:
+        # We are terminating early because we only want the regressors
         # write the EVs
         theheader = theinputdata.copyheader()
         maplist = []
@@ -845,411 +1241,8 @@ def retroregress(args):
             debug=args.debug,
         )
 
-        # delete the canary file
-        Path(f"{outputname}_RETROISRUNNING.txt").unlink()
 
-        # create the finished file
-        Path(f"{outputname}_RETRODONE.txt").touch()
-
-        # bail
-        sys.exit(1)
-
-    print(f"filtered {voxelsprocessed_regressionfilt} voxels")
-    TimingLGR.info(
-        "sLFO filtering done",
-        {
-            "message2": voxelsprocessed_regressionfilt,
-            "message3": "voxels",
-        },
-    )
-    # finalrawvariance = tide_math.imagevariance(filtereddata, None, 1.0 / fmritr)
-    finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
-
-    divlocs = np.where(finalvariance > 0.0)
-    varchange = initialvariance * 0.0
-    varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
-
-    """divlocs = np.where(finalrawvariance > 0.0)
-    rawvarchange = initialrawvariance * 0.0
-    rawvarchange[divlocs] = 100.0 * (finalrawvariance[divlocs] / initialrawvariance[divlocs] - 1.0)"""
-
-    # save outputs
-    TimingLGR.info("Starting output save")
-    theheader = copy.deepcopy(lagtimes_header)
-    if mode == "glm":
-        maplist = [
-            (
-                initialvariance,
-                "lfofilterInbandVarianceBefore",
-                "map",
-                None,
-                "Inband variance prior to filtering",
-            ),
-            (
-                finalvariance,
-                "lfofilterInbandVarianceAfter",
-                "map",
-                None,
-                "Inband variance after filtering",
-            ),
-            (
-                varchange,
-                "lfofilterInbandVarianceChange",
-                "map",
-                "percent",
-                "Change in inband variance after filtering, in percent",
-            ),
-            # (
-            #   initialrawvariance,
-            #    "lfofilterTotalVarianceBefore",
-            #    "map",
-            #    None,
-            #    "Total variance prior to filtering",
-            # ),
-            # (
-            #    finalrawvariance,
-            #    "lfofilterTotalVarianceAfter",
-            #    "map",
-            #    None,
-            #    "Total variance after filtering",
-            # ),
-            # (
-            #    rawvarchange,
-            #    "lfofilterTotalVarianceChange",
-            #    "map",
-            #    "percent",
-            #    "Change in total variance after filtering, in percent",
-            # ),
-        ]
-        if args.saveminimumsLFOfiltfiles:
-            maplist += [
-                (
-                    r2value,
-                    "lfofilterR2",
-                    "map",
-                    None,
-                    "Squared R value of the GLM fit (proportion of variance explained)",
-                ),
-            ]
-        if args.savenormalsLFOfiltfiles:
-            maplist += [
-                (rvalue, "lfofilterR", "map", None, "R value of the GLM fit"),
-                (sLFOfitmean, "lfofilterMean", "map", None, "Intercept from GLM fit"),
-            ]
-    else:
-        maplist = [
-            (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
-            (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
-            (varchange, "CVRVariance", "map", None),
-        ]
-        if args.savenormalsLFOfiltfiles:
-            maplist += [
-                (rvalue, "CVRR", "map", None),
-                (r2value, "CVRR2", "map", None),
-                (fitcoeff, "CVR", "map", "percent"),
-            ]
-    bidsdict = bidsbasedict.copy()
-
-    if args.debug or args.focaldebug:
-        maplist += [
-            (
-                lagtimes_valid,
-                "maxtimeREAD",
-                "map",
-                "second",
-                "Lag time in seconds used for calculation",
-            ),
-            (corrmask_valid, "corrfitREAD", "mask", None, "Correlation mask used for calculation"),
-            (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
-        ]
-    if args.savenormalsLFOfiltfiles:
-        if args.regressderivs > 0 or args.refinedelay:
-            maplist += [
-                (fitcoeff[:, 0], "lfofilterCoeff", "map", None, "Fit coefficient"),
-                (fitNorm[:, 0], "lfofilterNorm", "map", None, "Normalized fit coefficient"),
-            ]
-            for thederiv in range(1, args.regressderivs + 1):
-                maplist += [
-                    (
-                        fitcoeff[:, thederiv],
-                        f"lfofilterCoeffDeriv{thederiv}",
-                        "map",
-                        None,
-                        f"Fit coefficient for temporal derivative {thederiv}",
-                    ),
-                    (
-                        fitNorm[:, thederiv],
-                        f"lfofilterNormDeriv{thederiv}",
-                        "map",
-                        None,
-                        f"Normalized fit coefficient for temporal derivative {thederiv}",
-                    ),
-                ]
-        else:
-            maplist += [
-                (fitcoeff, "lfofilterCoeff", "map", None, "Fit coefficient"),
-                (fitNorm, "lfofilterNorm", "map", None, "Normalized fit coefficient"),
-            ]
-
-    if args.refinedelay:
-        if args.refineregressderivs > 1:
-            for i in range(args.refineregressderivs):
-                maplist += [
-                    (
-                        regressderivratios[i, :],
-                        f"regressderivratios_{i}",
-                        "map",
-                        None,
-                        f"Ratio of derivative {i+1} of delayed sLFO to the delayed sLFO",
-                    ),
-                    (
-                        medfiltregressderivratios[i, :],
-                        f"medfiltregressderivratios_{i}",
-                        "map",
-                        None,
-                        f"Median filtered version of the regressderivratios_{i} map",
-                    ),
-                    (
-                        filteredregressderivratios[i, :],
-                        f"filteredregressderivratios_{i}",
-                        "map",
-                        None,
-                        f"regressderivratios_{i}, with outliers patched using median filtered data",
-                    ),
-                ]
-        else:
-            maplist += [
-                (
-                    regressderivratios,
-                    "regressderivratios",
-                    "map",
-                    None,
-                    "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
-                ),
-                (
-                    medfiltregressderivratios,
-                    "medfiltregressderivratios",
-                    "map",
-                    None,
-                    "Median filtered version of the regressderivratios map",
-                ),
-                (
-                    filteredregressderivratios,
-                    "filteredregressderivratios",
-                    "map",
-                    None,
-                    "regressderivratios, with outliers patched using median filtered data",
-                ),
-            ]
-        maplist += [
-            (
-                delayoffset,
-                "delayoffset",
-                "map",
-                "second",
-                "Delay offset correction from delay refinement",
-            ),
-            (
-                lagtimesrefined_valid,
-                "maxtimerefined",
-                "map",
-                "second",
-                "Lag time in seconds, refined",
-            ),
-        ]
-
-    # write the 3D maps
-    tide_io.savemaplist(
-        outputname,
-        maplist,
-        validvoxels,
-        (xsize, ysize, numslices),
-        theheader,
-        bidsdict,
-        debug=args.debug,
-    )
-
-    # write the 4D maps
-    theheader = theinputdata.copyheader()
-    maplist = []
-    if args.saveminimumsLFOfiltfiles:
-        maplist = [
-            (
-                filtereddata,
-                "lfofilterCleaned",
-                "bold",
-                None,
-                "fMRI data with sLFO signal filtered out",
-            ),
-        ]
-    if args.savemovingsignal:
-        maplist += [
-            (
-                movingsignal,
-                "lfofilterRemoved",
-                "bold",
-                None,
-                "sLFO signal filtered out of this voxel",
-            )
-        ]
-
-    if args.saveallsLFOfiltfiles:
-        if args.regressderivs > 0:
-            if args.debug:
-                print("going down the multiple EV path")
-                print(f"{regressorset[:, :, 0].shape=}")
-            maplist += [
-                (
-                    regressorset[:, :, 0],
-                    "lfofilterEV",
-                    "bold",
-                    None,
-                    "Shifted sLFO regressor to filter",
-                ),
-            ]
-            for thederiv in range(1, args.regressderivs + 1):
-                if args.debug:
-                    print(f"{regressorset[:, :, thederiv].shape=}")
-                maplist += [
-                    (
-                        regressorset[:, :, thederiv],
-                        f"lfofilterEVDeriv{thederiv}",
-                        "bold",
-                        None,
-                        f"Time derivative {thederiv} of shifted sLFO regressor",
-                    ),
-                ]
-        else:
-            if args.debug:
-                print("going down the single EV path")
-            maplist += [
-                (
-                    regressorset,
-                    "lfofilterEV",
-                    "bold",
-                    None,
-                    "Shifted sLFO regressor to filter",
-                ),
-            ]
-    if args.makepseudofile:
-        print("reading mean image")
-        meanfile = f"{args.datafileroot}_desc-mean_map.nii.gz"
-        (
-            mean_input,
-            mean,
-            mean_header,
-            mean_dims,
-            mean_sizes,
-        ) = tide_io.readfromnifti(meanfile)
-        if not tide_io.checkspacematch(fmri_header, mean_header):
-            raise ValueError("mean dimensions do not match fmri dimensions")
-        if args.debug:
-            print(f"{mean.shape=}")
-        mean_spacebytime = mean.reshape((numspatiallocs))
-        if args.debug:
-            print(f"{mean_spacebytime.shape=}")
-        pseudofile = mean_spacebytime[validvoxels, None] + movingsignal[:, :]
-        maplist.append((pseudofile, "pseudofile", "bold", None, None))
-    tide_io.savemaplist(
-        outputname,
-        maplist,
-        validvoxels,
-        (xsize, ysize, numslices, validtimepoints),
-        theheader,
-        bidsdict,
-        debug=args.debug,
-    )
-    TimingLGR.info("Finishing output save")
-
-    if args.refinecorr:
-        TimingLGR.info("Filtering for maxcorralt calculation start")
-        for thevoxel in range(fmri_data_valid.shape[0]):
-            fmri_data_valid[thevoxel, :] = theprefilter.apply(
-                1.0 / fmritr, fmri_data_valid[thevoxel, :]
-            )
-        TimingLGR.info("Filtering for maxcorralt calculation complete")
-        TimingLGR.info("GLM for maxcorralt calculation start")
-        voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
-            fmri_data_valid,
-            validvoxels,
-            initial_fmri_x,
-            lagstouse_valid,
-            corrmask_valid,
-            genlagtc,
-            mode,
-            outputname,
-            oversamptr,
-            sLFOfitmean,
-            rvalue,
-            r2value,
-            fitNorm[:, : args.regressderivs + 1],
-            fitcoeff[:, : args.regressderivs + 1],
-            movingsignal,
-            lagtc,
-            filtereddata,
-            LGR,
-            TimingLGR,
-            threshval,
-            args.saveminimumsLFOfiltfiles,
-            nprocs_makelaggedtcs=args.nprocs,
-            nprocs_regressionfilt=args.nprocs,
-            regressderivs=args.regressderivs,
-            showprogressbar=args.showprogressbar,
-            debug=args.debug,
-        )
-        TimingLGR.info(
-            "GLM for maxcorralt calculation done",
-            {
-                "message2": voxelsprocessed_regressionfilt,
-                "message3": "voxels",
-            },
-        )
-
-        maplist = [
-            (
-                rvalue,
-                "maxcorralt",
-                "map",
-                None,
-                "R value for the lfo component of the delayed regressor, with sign",
-            ),
-        ]
-        theheader = copy.deepcopy(lagtimes_header)
-        tide_io.savemaplist(
-            outputname,
-            maplist,
-            validvoxels,
-            (xsize, ysize, numslices),
-            theheader,
-            bidsdict,
-            debug=args.debug,
-        )
-        if args.debug:
-            # dump the fmri input file going to glm
-            theheader = theinputdata.copyheader(numtimepoints=validtimepoints, tr=fmritr)
-
-            maplist = [
-                (
-                    fmri_data_valid,
-                    "prefilteredinputdata",
-                    "bold",
-                    None,
-                    "fMRI data after temporal filtering",
-                ),
-            ]
-            tide_io.savemaplist(
-                outputname,
-                maplist,
-                validvoxels,
-                (xsize, ysize, numslices, validtimepoints),
-                theheader,
-                bidsbasedict,
-                filetype=theinputdata.filetype,
-                rt_floattype=rt_floattype,
-                cifti_hdr=None,
-            )
-
-    # read the runoptions file
+    # write the runoptions file
     print("writing runoptions")
     if args.refinedelay:
         therunoptions["retroregress_delayoffsetMAD"] = delayoffsetMAD
