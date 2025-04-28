@@ -17,7 +17,6 @@
 #
 #
 import os
-import subprocess
 
 import matplotlib as mpl
 

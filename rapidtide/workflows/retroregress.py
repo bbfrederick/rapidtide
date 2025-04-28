@@ -298,14 +298,14 @@ def retroregress(args):
         args.savemovingsignal = True
         args.saveallsLFOfiltfiles = True
         args.saveEVsandquit = False
-    if args.outputlevel == "onlyregressors":
+    elif args.outputlevel == "onlyregressors":
         args.saveminimumsLFOfiltfiles = False
         args.savenormalsLFOfiltfiles = False
         args.savemovingsignal = False
         args.saveallsLFOfiltfiles = False
         args.saveEVsandquit = True
     else:
-        print(f"illegal output level {args['outputlevel']}")
+        print(f"illegal output level {args.outputlevel}")
         sys.exit()
 
     # save the raw and formatted command lines
