@@ -1,8 +1,8 @@
 # Release history
 
-## Version 3.0.2 (4/26/25)
+## Version 3.0.2 (4/28/25)
 * (rapidtide) Leaned harder into using the voxelData class, and beefed up its capabilities.
-* (retroregress) Added a new argument to ``--outputlevel``, ``regressoronly``.  When selected, retroregress generates the voxel specific sLFO regressor(s), saves them, and exits.  This option exists so that you can use the rapidtide voxel specific sLFO regressors in an external processing routine such as XCP-D without extraneous data storage or processing time. 
+* (retroregress) Added a new argument to ``--outputlevel``, ``onlyregressors``.  When selected, retroregress generates the voxel specific sLFO regressor(s), saves them, and exits.  This option exists so that you can use the rapidtide voxel specific sLFO regressors in an external processing routine such as XCP-D without extraneous data storage or processing time. 
 * (happy) Updated to use voxelData.
 * (happy) Moved phase projection to an external routine.
 * (documentation) Fixed a few more typos.
