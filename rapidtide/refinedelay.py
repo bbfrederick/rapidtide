@@ -232,7 +232,7 @@ def trainratiotooffset(
         funcoffsets.append(trainoffsets[whichoffset] + 0.0)
     maplimits = (xaxis[0], xaxis[-1])
 
-    if outputlevel != "min":
+    if outputlevel != "min" and outputlevel != "onlyregressors":
         resampaxis = np.linspace(xaxis[0], xaxis[-1], num=len(xaxis), endpoint=True)
         outputfuncs = np.zeros((resampaxis.size, numoffsets), dtype=float)
         colnames = []

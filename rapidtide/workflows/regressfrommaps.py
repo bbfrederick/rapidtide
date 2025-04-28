@@ -53,6 +53,7 @@ def regressfrommaps(
     mp_chunksize=50000,
     showprogressbar=True,
     alwaysmultiproc=False,
+    saveEVsandquit=False,
     debug=False,
 ):
     if debug:
@@ -126,6 +127,9 @@ def regressfrommaps(
             print(f"using raw lagged regressors for regression")
         regressorset = lagtc
         evset = rt_floatset(genlagtc.yfromx(initial_fmri_x))
+
+    if saveEVsandquit:
+        return 0, regressorset, evset
 
     if debug:
         print(f"{regressorset.shape=}")

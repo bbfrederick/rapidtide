@@ -128,13 +128,14 @@ def _get_parser():
         dest="outputlevel",
         action="store",
         type=str,
-        choices=["min", "less", "normal", "more", "max"],
+        choices=["min", "less", "normal", "more", "max", "onlyregressors"],
         help=(
             "The level of file output produced.  'min' produces only absolutely essential files, 'less' adds in "
             "the sLFO filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
             "would typically want around for interactive data exploration, "
             "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
-            "Selecting 'max' will produce ~3x your input datafile size as output.  "
+            "Selecting 'max' will produce ~3x your input datafile size as output.  'onlyregressors' will ONLY generate the "
+            "voxelwise timecourses to filter and save them without actually running the filter. "
             f'Default is "normal".'
         ),
         default="normal",
@@ -272,26 +273,37 @@ def retroregress(args):
         args.savenormalsLFOfiltfiles = False
         args.savemovingsignal = False
         args.saveallsLFOfiltfiles = False
+        args.saveEVsandquit = False
     elif args.outputlevel == "less":
         args.saveminimumsLFOfiltfiles = True
         args.savenormalsLFOfiltfiles = False
         args.savemovingsignal = False
         args.saveallsLFOfiltfiles = False
+        args.saveEVsandquit = False
     elif args.outputlevel == "normal":
         args.saveminimumsLFOfiltfiles = True
         args.savenormalsLFOfiltfiles = True
         args.savemovingsignal = False
         args.saveallsLFOfiltfiles = False
+        args.saveEVsandquit = False
     elif args.outputlevel == "more":
         args.saveminimumsLFOfiltfiles = True
         args.savenormalsLFOfiltfiles = True
         args.savemovingsignal = True
         args.saveallsLFOfiltfiles = False
+        args.saveEVsandquit = False
     elif args.outputlevel == "max":
         args.saveminimumsLFOfiltfiles = True
         args.savenormalsLFOfiltfiles = True
         args.savemovingsignal = True
         args.saveallsLFOfiltfiles = True
+        args.saveEVsandquit = False
+    if args.outputlevel == "onlyregressors":
+        args.saveminimumsLFOfiltfiles = False
+        args.savenormalsLFOfiltfiles = False
+        args.savemovingsignal = False
+        args.saveallsLFOfiltfiles = False
+        args.saveEVsandquit = True
     else:
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()
@@ -585,9 +597,7 @@ def retroregress(args):
 
     if args.debug:
         # dump the fmri input file going to glm
-        theheader = copy.deepcopy(fmri_header)
-        theheader["dim"][4] = validtimepoints
-        theheader["pixdim"][4] = fmritr
+        theheader = theinputdata.copyheader(numtimepoints=validtimepoints, tr=fmritr)
 
         maplist = [
             (
@@ -721,16 +731,17 @@ def retroregress(args):
                 )
             refinedvoxelstoreport = filteredregressderivratios.shape[1]
 
-        namesuffix = "_desc-delayoffset_hist"
-        tide_stats.makeandsavehistogram(
-            delayoffset,
-            therunoptions["histlen"],
-            1,
-            outputname + namesuffix,
-            displaytitle="Histogram of delay offsets calculated from GLM",
-            dictvarname="delayoffsethist",
-            thedict=None,
-        )
+        if not args.saveEVsandquit:
+            namesuffix = "_desc-delayoffset_hist"
+            tide_stats.makeandsavehistogram(
+                delayoffset,
+                therunoptions["histlen"],
+                1,
+                outputname + namesuffix,
+                displaytitle="Histogram of delay offsets calculated from GLM",
+                dictvarname="delayoffsethist",
+                thedict=None,
+            )
         lagtimesrefined_valid = lagtimes_valid + delayoffset
 
         TimingLGR.info(
@@ -778,8 +789,71 @@ def retroregress(args):
         nprocs_regressionfilt=args.nprocs,
         regressderivs=args.regressderivs,
         showprogressbar=args.showprogressbar,
+        saveEVsandquit=args.saveEVsandquit,
         debug=args.debug,
     )
+
+    if args.saveEVsandquit:
+        # write the EVs
+        theheader = theinputdata.copyheader()
+        maplist = []
+        if args.regressderivs > 0:
+            if args.debug:
+                print("going down the multiple EV path")
+                print(f"{regressorset[:, :, 0].shape=}")
+            maplist += [
+                (
+                    regressorset[:, :, 0],
+                    "lfofilterEV",
+                    "bold",
+                    None,
+                    "Shifted sLFO regressor to filter",
+                ),
+            ]
+            for thederiv in range(1, args.regressderivs + 1):
+                if args.debug:
+                    print(f"{regressorset[:, :, thederiv].shape=}")
+                maplist += [
+                    (
+                        regressorset[:, :, thederiv],
+                        f"lfofilterEVDeriv{thederiv}",
+                        "bold",
+                        None,
+                        f"Time derivative {thederiv} of shifted sLFO regressor",
+                    ),
+                ]
+        else:
+            if args.debug:
+                print("going down the single EV path")
+            maplist += [
+                (
+                    regressorset,
+                    "lfofilterEV",
+                    "bold",
+                    None,
+                    "Shifted sLFO regressor to filter",
+                ),
+            ]
+        bidsdict = bidsbasedict.copy()
+        tide_io.savemaplist(
+            outputname,
+            maplist,
+            validvoxels,
+            (xsize, ysize, numslices, validtimepoints),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
+
+        # delete the canary file
+        Path(f"{outputname}_RETROISRUNNING.txt").unlink()
+
+        # create the finished file
+        Path(f"{outputname}_RETRODONE.txt").touch()
+
+        # bail
+        sys.exit()
+
     print(f"filtered {voxelsprocessed_regressionfilt} voxels")
     TimingLGR.info(
         "sLFO filtering done",
@@ -996,7 +1070,7 @@ def retroregress(args):
     )
 
     # write the 4D maps
-    theheader = copy.deepcopy(fmri_header)
+    theheader = theinputdata.copyheader()
     maplist = []
     if args.saveminimumsLFOfiltfiles:
         maplist = [
@@ -1152,9 +1226,7 @@ def retroregress(args):
         )
         if args.debug:
             # dump the fmri input file going to glm
-            theheader = copy.deepcopy(fmri_header)
-            theheader["dim"][4] = validtimepoints
-            theheader["pixdim"][4] = fmritr
+            theheader = theinputdata.copyheader(numtimepoints=validtimepoints, tr=fmritr)
 
             maplist = [
                 (

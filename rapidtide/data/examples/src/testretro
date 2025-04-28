@@ -1,25 +1,21 @@
 #!/bin/bash
 
-#rapidtide \
-#    --nprocs -1 \
-#    --passes 3 \
-#    --refinetype unweighted_average \
-#    --numnull 0 \
-#    --outputlevel max \
-#    --regressderivs 1 \
-#    sub-RAPIDTIDETEST.nii.gz \
-#    ../dst/sub-RAPIDTIDETEST
+rapidtide \
+    --nprocs -1 \
+    --passes 3 \
+    --outputlevel max \
+    --regressderivs 1 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST
 
 ##retroregress sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv --nprocs -1 
 
 retroregress \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST \
-    --alternateoutput ../dst/wintest \
+    --alternateoutput ../dst/specialtest \
     --nprocs -1 \
-    --outputlevel max \
-    --focaldebug \
-    --delayoffsetspatialfilt -1 
+    --outputlevel onlyregressors
 
 #retroregress sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv_refined --nprocs -1 --regressderivs 0 --makepseudofile --outputlevel max --refinedelay --nofilterwithrefineddelay
 #retroregress sub-RAPIDTIDETEST.nii.gz ../dst/sub-RAPIDTIDETEST --alternateoutput ../dst/0deriv_refinedfit --nprocs -1 --regressderivs 0 --makepseudofile --outputlevel max --refinedelay
