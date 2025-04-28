@@ -852,7 +852,7 @@ def retroregress(args):
         Path(f"{outputname}_RETRODONE.txt").touch()
 
         # bail
-        sys.exit()
+        sys.exit(1)
 
     print(f"filtered {voxelsprocessed_regressionfilt} voxels")
     TimingLGR.info(
