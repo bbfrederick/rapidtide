@@ -135,8 +135,6 @@ class DerivativeDelay:
                     (xdim, ydim, slicedim),
                     gausssigma=args.delayoffsetgausssigma,
                     patchthresh=args.delaypatchthresh,
-                    fileiscifti=False,
-                    textio=False,
                     rt_floattype=rt_floattype,
                     debug=args.debug,
                 )
@@ -181,8 +179,6 @@ class DerivativeDelay:
                     (xdim, ydim, slicedim),
                     gausssigma=args.delayoffsetgausssigma,
                     patchthresh=args.delaypatchthresh,
-                    fileiscifti=False,
-                    textio=False,
                     rt_floattype=rt_floattype,
                     debug=args.debug,
                 )

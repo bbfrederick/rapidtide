@@ -153,7 +153,6 @@ def eval_refinedelay(
         "alwaysmultiproc": False,
         "focaldebug": debug,
         "fmrifreq": Fs,
-        "textio": False,
     }
 
     regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
@@ -186,8 +185,6 @@ def eval_refinedelay(
         validvoxels,
         (xdim, ydim, slicedim),
         patchthresh=3.0,
-        fileiscifti=False,
-        textio=False,
         rt_floattype="float64",
         debug=debug,
     )

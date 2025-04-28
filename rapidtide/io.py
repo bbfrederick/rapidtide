@@ -139,7 +139,7 @@ def parseniftidims(thedims):
     nx, ny, nz, nt : int
         Number of points along each dimension
     """
-    return thedims[1], thedims[2], thedims[3], thedims[4]
+    return int(thedims[1]), int(thedims[2]), int(thedims[3]), int(thedims[4])
 
 
 # sizes are the mapping between voxels and physical coordinates
@@ -263,32 +263,30 @@ def niftihdrfromarray(data):
 
 def makedestarray(
     destshape,
-    textio=False,
-    fileiscifti=False,
+    filetype="nifti",
     rt_floattype="float64",
 ):
-    if textio:
+    if filetype == "text":
         try:
             internalspaceshape = destshape[0]
             timedim = destshape[1]
         except TypeError:
             internalspaceshape = destshape
             timedim = None
-    else:
-        if fileiscifti:
-            spaceindex = len(destshape) - 1
-            timeindex = spaceindex - 1
-            internalspaceshape = destshape[spaceindex]
-            if destshape[timeindex] > 1:
-                timedim = destshape[timeindex]
-            else:
-                timedim = None
+    elif filetype == "cifti":
+        spaceindex = len(destshape) - 1
+        timeindex = spaceindex - 1
+        internalspaceshape = destshape[spaceindex]
+        if destshape[timeindex] > 1:
+            timedim = destshape[timeindex]
         else:
-            internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
-            if len(destshape) == 3:
-                timedim = None
-            else:
-                timedim = destshape[3]
+            timedim = None
+    else:
+        internalspaceshape = int(destshape[0]) * int(destshape[1]) * int(destshape[2])
+        if len(destshape) == 3:
+            timedim = None
+        else:
+            timedim = destshape[3]
     if timedim is None:
         outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     else:
@@ -329,8 +327,7 @@ def savemaplist(
     destshape,
     theheader,
     bidsbasedict,
-    textio=False,
-    fileiscifti=False,
+    filetype="nifti",
     rt_floattype="float64",
     cifti_hdr=None,
     savejson=True,
@@ -338,8 +335,7 @@ def savemaplist(
 ):
     outmaparray, internalspaceshape = makedestarray(
         destshape,
-        textio=textio,
-        fileiscifti=fileiscifti,
+        filetype=filetype,
         rt_floattype=rt_floattype,
     )
     for themap, mapsuffix, maptype, theunit, thedescription in maplist:
@@ -365,7 +361,7 @@ def savemaplist(
             bidsdict["Units"] = theunit
         if thedescription is not None:
             bidsdict["Description"] = thedescription
-        if textio:
+        if filetype == "text":
             writenpvecs(
                 outmaparray.reshape(destshape),
                 f"{outputname}_{mapsuffix}.txt",
@@ -374,7 +370,7 @@ def savemaplist(
             savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
             if savejson:
                 writedicttojson(bidsdict, savename + ".json")
-            if not fileiscifti:
+            if filetype == "nifti":
                 savetonifti(outmaparray.reshape(destshape), theheader, savename)
             else:
                 isseries = len(outmaparray.shape) != 1

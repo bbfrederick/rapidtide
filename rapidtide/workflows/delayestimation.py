@@ -130,7 +130,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
     if optiondict["checkpoint"]:
         outcorrarray[:, :] = 0.0
         outcorrarray[validvoxels, :] = corrout[:, :]
-        if optiondict["textio"]:
+        if theinputdata.filetype == "text":
             tide_io.writenpvecs(
                 outcorrarray.reshape(nativecorrshape),
                 f"{outputname}_corrout_prefit_pass" + str(thepass) + ".txt",
@@ -320,8 +320,8 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
         if optiondict["savedespecklemasks"] and (optiondict["despeckle_passes"] > 0):
             despecklesavemask = np.where(internaldespeckleincludemask[validvoxels] == 0.0, 0, 1)
             if thepass == optiondict["passes"]:
-                if not optiondict["textio"]:
-                    if fileiscifti:
+                if theinputdata.filetype != "text":
+                    if theinputdata.filetype == "cifti":
                         timeindex = theheader["dim"][0] - 1
                         spaceindex = theheader["dim"][0]
                         theheader["dim"][timeindex] = 1
@@ -346,8 +346,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                     nativespaceshape,
                     theheader,
                     bidsbasedict,
-                    textio=optiondict["textio"],
-                    fileiscifti=fileiscifti,
+                    filetype=theinputdata.filetype,
                     rt_floattype=rt_floattype,
                     cifti_hdr=cifti_hdr,
                 )
@@ -384,8 +383,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
             nativespaceshape,
             theheader,
             bidsbasedict,
-            textio=optiondict["textio"],
-            fileiscifti=fileiscifti,
+            filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=cifti_hdr,
         )
@@ -417,8 +415,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                 nativespaceshape,
                 theheader,
                 bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=cifti_hdr,
             )
@@ -442,8 +439,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                 nativespaceshape,
                 theheader,
                 bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=cifti_hdr,
             )
@@ -478,8 +474,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                 nativespaceshape,
                 theheader,
                 bidsbasedict,
-                textio=optiondict["textio"],
-                fileiscifti=fileiscifti,
+                filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
                 cifti_hdr=cifti_hdr,
             )
