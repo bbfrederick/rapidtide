@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0.3 (4/29/25)
+* (rapidtide) shiftedtcs file is now written during each pass if ``--saveintermediatemaps`` is set and ``--outputlevel`` is ``more`` or ``max`` (in response to a feature request).
+
 ## Version 3.0.2 (4/28/25)
 * (retroregress) Added a new argument to ``--outputlevel``, ``onlyregressors``.  When selected, retroregress generates the voxel specific sLFO regressor(s), saves them, and exits.  This option exists so that you can use the rapidtide voxel specific sLFO regressors in an external processing routine such as XCP-D without extraneous data storage or processing time. 
 * (rapidtide) Leaned harder into using the voxelData class, and beefed up its capabilities.
