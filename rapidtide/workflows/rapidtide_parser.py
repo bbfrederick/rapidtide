@@ -29,6 +29,7 @@ import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
+
 # Create a sentinel.
 # from https://stackoverflow.com/questions/58594956/find-out-which-arguments-were-passed-explicitly-in-argparse
 class _Sentinel:
@@ -1270,7 +1271,7 @@ def _get_parser():
         "--saveintermediatemaps",
         dest="saveintermediatemaps",
         action="store_true",
-        help="Save lag times, strengths, widths, and mask for each pass.",
+        help="Save lag times, strengths, widths, mask (and shiftedtcs, if they'd normally be saved) for each pass.",
         default=False,
     )
     output.add_argument(

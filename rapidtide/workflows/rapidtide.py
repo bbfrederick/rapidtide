@@ -2420,7 +2420,34 @@ def rapidtide_main(argparsingfunc):
             )
             for key, value in outputdict.items():
                 optiondict[key] = value
-        # We are done with refinement.
+
+            # Save shifted timecourses for César
+            if optiondict["saveintermediatemaps"] and optiondict["savelagregressors"]:
+                theheader = theinputdata.copyheader()
+                bidspasssuffix = f"_intermediatedata-pass{thepass}"
+                maplist = [
+                    (
+                        (theRegressorRefiner.getpaddedshiftedtcs())[:, numpadtrs:-numpadtrs],
+                        "shiftedtcs",
+                        "bold",
+                        None,
+                        "The filtered input fMRI data, in voxels used for refinement, time shifted by the negated delay in every voxel so that the moving blood component is aligned.",
+                    ),
+                ]
+                tide_io.savemaplist(
+                    f"{outputname}{bidspasssuffix}",
+                    maplist,
+                    validvoxels,
+                    nativefmrishape,
+                    theheader,
+                    bidsbasedict,
+                    filetype=theinputdata.filetype,
+                    rt_floattype=rt_floattype,
+                    cifti_hdr=theinputdata.cifti_hdr,
+                    debug=True,
+                )
+            # We are done with refinement.
+        # End of main pass loop
 
     if optiondict["convergencethresh"] is None:
         optiondict["actual_passes"] = optiondict["passes"]
