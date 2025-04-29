@@ -128,6 +128,7 @@ class VoxelData:
         self.readdata(timestep, validstart, validend)
 
     def readdata(self, timestep, validstart, validend):
+        # load the data
         self.load()
 
         if tide_io.checkiftext(self.filename):
