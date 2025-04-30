@@ -852,7 +852,7 @@ def rapidtide_main(argparsingfunc):
             f"{outputname}_desc-anatomic_timeseries",
             grayvec,
             1.0 / fmritr,
-            olumns=["GM_raw"],
+            columns=["GM_raw"],
             extraheaderinfo={
                 "Description": "The anatomic regressors",
             },
@@ -877,7 +877,7 @@ def rapidtide_main(argparsingfunc):
             f"{outputname}_desc-anatomic_timeseries",
             whitevec,
             1.0 / fmritr,
-            olumns=["WM_raw"],
+            columns=["WM_raw"],
             extraheaderinfo={
                 "Description": "The anatomic regressors",
             },
@@ -902,7 +902,7 @@ def rapidtide_main(argparsingfunc):
             f"{outputname}_desc-anatomic_timeseries",
             whitevec,
             1.0 / fmritr,
-            olumns=["CSF_raw"],
+            columns=["CSF_raw"],
             extraheaderinfo={
                 "Description": "The anatomic regressors",
             },
@@ -3437,7 +3437,7 @@ def rapidtide_main(argparsingfunc):
                 f"{outputname}_desc-anatomic_timeseries",
                 meanvec,
                 1.0 / fmritr,
-                olumns=["globalmean_postrt"],
+                columns=["globalmean_postrt"],
                 extraheaderinfo={
                     "Description": "The anatomic regressors",
                 },
@@ -3456,7 +3456,7 @@ def rapidtide_main(argparsingfunc):
                     f"{outputname}_desc-anatomic_timeseries",
                     graymattervec,
                     1.0 / fmritr,
-                    olumns=["GM_postrt"],
+                    columns=["GM_postrt"],
                     extraheaderinfo={
                         "Description": "The anatomic regressors",
                     },
@@ -3476,7 +3476,7 @@ def rapidtide_main(argparsingfunc):
                     f"{outputname}_desc-anatomic_timeseries",
                     whitemattervec,
                     1.0 / fmritr,
-                    olumns=["WM_postrt"],
+                    columns=["WM_postrt"],
                     extraheaderinfo={
                         "Description": "The anatomic regressors",
                     },
@@ -3496,7 +3496,7 @@ def rapidtide_main(argparsingfunc):
                     f"{outputname}_desc-anatomic_timeseries",
                     csfvec,
                     1.0 / fmritr,
-                    olumns=["CSF_postrt"],
+                    columns=["CSF_postrt"],
                     extraheaderinfo={
                         "Description": "The anatomic regressors",
                     },
