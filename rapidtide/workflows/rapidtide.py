@@ -71,80 +71,6 @@ ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
 
-def getregionsignal(
-    indata,
-    includemask=None,
-    excludemask=None,
-    signalgenmethod="sum",
-    pcacomponents=0.8,
-    debug=False,
-):
-    # Start with all voxels
-    themask = indata[:, 0] * 0 + 1
-
-    # modify the mask if needed
-    if includemask is not None:
-        themask = themask * includemask
-    if excludemask is not None:
-        themask = themask * (1 - excludemask)
-
-    # combine all the voxels using one of the three methods
-    global rt_floatset, rt_floattype
-    globalmean = rt_floatset(indata[0, :])
-    thesize = np.shape(themask)
-    numvoxelsused = int(np.sum(np.where(themask > 0.0, 1, 0)))
-    selectedvoxels = indata[np.where(themask > 0.0), :][0]
-    if debug:
-        print(f"getregionsignal: {selectedvoxels.shape=}")
-    LGR.info(f"constructing global mean signal using {signalgenmethod}")
-    if signalgenmethod == "sum":
-        globalmean = np.mean(selectedvoxels, axis=0)
-        globalmean -= np.mean(globalmean)
-    elif signalgenmethod == "meanscale":
-        themean = np.mean(indata, axis=1)
-        for vox in range(0, thesize[0]):
-            if themask[vox] > 0.0:
-                if themean[vox] != 0.0:
-                    globalmean += indata[vox, :] / themean[vox] - 1.0
-    elif signalgenmethod == "pca":
-        themean = np.mean(indata, axis=1)
-        thevar = np.var(indata, axis=1)
-        scaledvoxels = selectedvoxels * 0.0
-        for vox in range(0, selectedvoxels.shape[0]):
-            scaledvoxels[vox, :] = selectedvoxels[vox, :] - themean[vox]
-            if thevar[vox] > 0.0:
-                scaledvoxels[vox, :] = selectedvoxels[vox, :] / thevar[vox]
-        try:
-            thefit = PCA(n_components=pcacomponents).fit(np.transpose(scaledvoxels))
-        except ValueError:
-            if pcacomponents == "mle":
-                LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
-                thefit = PCA(n_components=0.8).fit(np.transpose(scaledvoxels))
-            else:
-                raise ValueError("unhandled math exception in PCA refinement - exiting")
-
-        varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
-        thetransform = thefit.transform(np.transpose(scaledvoxels))
-        if debug:
-            print(f"getregionsignal: {thetransform.shape=}")
-        globalmean = np.mean(thetransform, axis=0)
-        globalmean -= np.mean(globalmean)
-        if debug:
-            print(f"getregionsignal: {varex=}")
-        LGR.info(
-            f"Using {len(thefit.components_)} component(s), accounting for "
-            f"{varex:.2f}% of the variance"
-        )
-    elif signalgenmethod == "random":
-        globalmean = np.random.standard_normal(size=len(globalmean))
-    else:
-        raise ValueError(f"illegal signal generation method: {signalgenmethod}")
-    LGR.info(f"used {numvoxelsused} voxels to calculate global mean signal")
-    if debug:
-        print(f"getregionsignal: {globalmean=}")
-    return tide_math.stdnormalize(globalmean), themask
-
-
 def checkforzeromean(thedataset):
     themean = np.mean(thedataset, axis=1)
     thestd = np.std(thedataset, axis=1)
@@ -887,7 +813,7 @@ def rapidtide_main(argparsingfunc):
     meanfreq = 1.0 / fmritr
     meanperiod = 1.0 * fmritr
     meanstarttime = 0.0
-    meanvec, meanmask = getregionsignal(
+    meanvec, meanmask = tide_mask.getregionsignal(
         fmri_data,
         includemask=internalglobalmeanincludemask,
         excludemask=internalglobalmeanexcludemask,
