@@ -834,12 +834,12 @@ def rapidtide_main(argparsingfunc):
         append=False,
     )
 
-    if graymattermask is None:
-        internalgraymattermask = None
+    if graymask is None:
+        internalgraymask = None
     else:
-        internalgraymattermask = graymattermask.reshape((numspatiallocs))
+        internalgraymask = graymask.reshape((numspatiallocs))
         if internalbrainmask is not None:
-            internalgraymattermask *= internalbrainmask
+            internalgraymask *= internalbrainmask
         grayvec, dummy = tide_mask.getregionsignal(
             fmri_data,
             includemask=internalgraymask,
@@ -859,12 +859,12 @@ def rapidtide_main(argparsingfunc):
             append=True,
         )
 
-    if whitemattermask is None:
-        internalwhitemattermask = None
+    if whitemask is None:
+        internalwhitemask = None
     else:
-        internalwhitemattermask = whitemattermask.reshape((numspatiallocs))
+        internalwhitemask = whitemask.reshape((numspatiallocs))
         if internalbrainmask is not None:
-            internalwhitemattermask *= internalbrainmask
+            internalwhitemask *= internalbrainmask
         whitevec, dummy = tide_mask.getregionsignal(
             fmri_data,
             includemask=internalwhitemask,
@@ -3443,10 +3443,10 @@ def rapidtide_main(argparsingfunc):
                 },
                 append=True,
             )
-            if graymattermask is not None:
+            if graymask is not None:
                 graymattervec, dummy = tide_mask.getregionsignal(
                     fmri_data,
-                    includemask=internalgraymattermask,
+                    includemask=internalgraymask,
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
@@ -3463,10 +3463,10 @@ def rapidtide_main(argparsingfunc):
                     append=True,
                 )
 
-            if whitemattermask is not None:
+            if whitemask is not None:
                 whitemattervec, dummy = tide_mask.getregionsignal(
                     fmri_data,
-                    includemask=internalwhitemattermask,
+                    includemask=internalwhitemask,
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
