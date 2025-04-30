@@ -21,8 +21,10 @@ import logging
 
 import numpy as np
 from nilearn import masking
+from sklearn.decomposition import PCA
 
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
 
 LGR = logging.getLogger("GENERAL")
@@ -186,6 +188,8 @@ def getregionsignal(
     excludemask=None,
     signalgenmethod="sum",
     pcacomponents=0.8,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
     debug=False,
 ):
     # Start with all voxels
@@ -198,7 +202,6 @@ def getregionsignal(
         themask = themask * (1 - excludemask)
 
     # combine all the voxels using one of the three methods
-    global rt_floatset, rt_floattype
     globalmean = rt_floatset(indata[0, :])
     thesize = np.shape(themask)
     numvoxelsused = int(np.sum(np.where(themask > 0.0, 1, 0)))

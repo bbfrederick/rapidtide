@@ -819,6 +819,8 @@ def rapidtide_main(argparsingfunc):
         excludemask=internalglobalmeanexcludemask,
         signalgenmethod=optiondict["globalsignalmethod"],
         pcacomponents=optiondict["globalpcacomponents"],
+        rt_floatset=rt_floatset,
+        rt_floattype=rt_floattype,
         debug=False,
     )
 
@@ -3473,7 +3475,11 @@ def rapidtide_main(argparsingfunc):
     del fitmask
 
     # now do the 4D maps of the similarity function and friends
-    theheader = theinputdata.copyheader(numtimepoints=np.shape(outcorrarray)[1], tr=corrtr)
+    theheader = theinputdata.copyheader(
+        numtimepoints=np.shape(outcorrarray)[1],
+        tr=corrtr,
+        toffset=(corrscale[corrorigin - lagmininpts]),
+    )
     if (
         optiondict["savecorrout"]
         or (optiondict["outputlevel"] != "min")

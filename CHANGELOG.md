@@ -1,6 +1,7 @@
 # Release history
 
 ## Version 3.0.3 (4/30/25)
+* (rapidtide, rapidtide) Fixed a serious cosmetic bug in corrout files introduced in v3.0.2 - teoffset was not being set properly by rapidtide, so the tidepool similarity function display was very wrong.
 * (rapidtide) shiftedtcs file is now written during each pass if ``--saveintermediatemaps`` is set and ``--outputlevel`` is ``more`` or ``max`` (in response to a feature request).
 * (rapidtide) Added back the ability to have integral powers of the motion regressors.
 * (rapidtide) Added the ability to specify a CSF mask.
