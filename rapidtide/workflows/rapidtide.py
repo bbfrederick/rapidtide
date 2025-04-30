@@ -3424,7 +3424,7 @@ def rapidtide_main(argparsingfunc):
             )
 
             meanvec, meanmask = tide_mask.getregionsignal(
-                fmri_data,
+                filtereddata,
                 includemask=internalglobalmeanincludemask,
                 excludemask=internalglobalmeanexcludemask,
                 signalgenmethod=optiondict["globalsignalmethod"],
@@ -3445,7 +3445,7 @@ def rapidtide_main(argparsingfunc):
             )
             if graymask is not None:
                 graymattervec, dummy = tide_mask.getregionsignal(
-                    fmri_data,
+                    filtereddata,
                     includemask=internalgraymask,
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
@@ -3465,7 +3465,7 @@ def rapidtide_main(argparsingfunc):
 
             if whitemask is not None:
                 whitemattervec, dummy = tide_mask.getregionsignal(
-                    fmri_data,
+                    filtereddata,
                     includemask=internalwhitemask,
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
@@ -3485,7 +3485,7 @@ def rapidtide_main(argparsingfunc):
 
             if csfmask is not None:
                 csfvec, dummy = tide_mask.getregionsignal(
-                    fmri_data,
+                    filtereddata,
                     includemask=internalcsfmask,
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
