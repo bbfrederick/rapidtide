@@ -293,6 +293,19 @@ def _get_parser():
         ),
         default=None,
     )
+    anatomy.add_argument(
+        "--csfmask",
+        dest="csfincludespec",
+        metavar="MASK[:VALSPEC]",
+        help=(
+            "This specifies a CSF mask registered to the input functional data.  "
+            "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
+            "voxels with value > 0.1 are used.  "
+            "This currently isn't used for anything, but rapidtide will keep track of it and might use if for something "
+            "in a later version."
+        ),
+        default=None,
+    )
 
     # Preprocessing options
     preproc = parser.add_argument_group("Preprocessing options")
@@ -479,6 +492,16 @@ def _get_parser():
             "out of the data prior to analysis. "
         ),
         default=None,
+    )
+    preproc.add_argument(
+        "--motpowers",
+        dest="mot_power",
+        metavar="N",
+        type=lambda x: pf.is_int(parser, x, minval=1),
+        help=(
+            "Include powers of each motion regressor up to order N. Default is 1 (no expansion). "
+        ),
+        default=1,
     )
     preproc.add_argument(
         "--nomotderiv",
@@ -1976,6 +1999,17 @@ def process_args(inputargs=None):
     else:
         args["whitematterincludename"] = None
         args["whitematterincludevals"] = None
+
+    if args["csfincludespec"] is not None:
+        (
+            args["csfincludename"],
+            args["csfincludevals"],
+        ) = tide_io.processnamespec(
+            args["csfincludespec"], "Including voxels where ", "in CSF mask."
+        )
+    else:
+        args["csfincludename"] = None
+        args["csfincludevals"] = None
 
     if args["globalmeanincludespec"] is not None:
         (

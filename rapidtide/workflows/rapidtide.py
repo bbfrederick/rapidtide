@@ -71,8 +71,13 @@ ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
 
-def getglobalsignal(
-    indata, optiondict, includemask=None, excludemask=None, pcacomponents=0.8, debug=False
+def getregionsignal(
+    indata,
+    includemask=None,
+    excludemask=None,
+    signalgenmethod="sum",
+    pcacomponents=0.8,
+    debug=False,
 ):
     # Start with all voxels
     themask = indata[:, 0] * 0 + 1
@@ -90,18 +95,18 @@ def getglobalsignal(
     numvoxelsused = int(np.sum(np.where(themask > 0.0, 1, 0)))
     selectedvoxels = indata[np.where(themask > 0.0), :][0]
     if debug:
-        print(f"getglobalsignal: {selectedvoxels.shape=}")
-    LGR.info(f"constructing global mean signal using {optiondict['globalsignalmethod']}")
-    if optiondict["globalsignalmethod"] == "sum":
+        print(f"getregionsignal: {selectedvoxels.shape=}")
+    LGR.info(f"constructing global mean signal using {signalgenmethod}")
+    if signalgenmethod == "sum":
         globalmean = np.mean(selectedvoxels, axis=0)
         globalmean -= np.mean(globalmean)
-    elif optiondict["globalsignalmethod"] == "meanscale":
+    elif signalgenmethod == "meanscale":
         themean = np.mean(indata, axis=1)
         for vox in range(0, thesize[0]):
             if themask[vox] > 0.0:
                 if themean[vox] != 0.0:
                     globalmean += indata[vox, :] / themean[vox] - 1.0
-    elif optiondict["globalsignalmethod"] == "pca":
+    elif signalgenmethod == "pca":
         themean = np.mean(indata, axis=1)
         thevar = np.var(indata, axis=1)
         scaledvoxels = selectedvoxels * 0.0
@@ -121,22 +126,22 @@ def getglobalsignal(
         varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
         thetransform = thefit.transform(np.transpose(scaledvoxels))
         if debug:
-            print(f"getglobalsignal: {thetransform.shape=}")
+            print(f"getregionsignal: {thetransform.shape=}")
         globalmean = np.mean(thetransform, axis=0)
         globalmean -= np.mean(globalmean)
         if debug:
-            print(f"getglobalsignal: {varex=}")
+            print(f"getregionsignal: {varex=}")
         LGR.info(
             f"Using {len(thefit.components_)} component(s), accounting for "
             f"{varex:.2f}% of the variance"
         )
-    elif optiondict["globalsignalmethod"] == "random":
+    elif signalgenmethod == "random":
         globalmean = np.random.standard_normal(size=len(globalmean))
     else:
-        raise ValueError(f"illegal globalsignalmethod: {optiondict['globalsignalmethod']}")
+        raise ValueError(f"illegal signal generation method: {signalgenmethod}")
     LGR.info(f"used {numvoxelsused} voxels to calculate global mean signal")
     if debug:
-        print(f"getglobalsignal: {globalmean=}")
+        print(f"getregionsignal: {globalmean=}")
     return tide_math.stdnormalize(globalmean), themask
 
 
@@ -437,6 +442,7 @@ def rapidtide_main(argparsingfunc):
         ["brainmaskincludename", "brainmaskincludevals", "brainmask"],
         ["graymatterincludename", "graymatterincludevals", "graymattermask"],
         ["whitematterincludename", "whitematterincludevals", "whitemattermask"],
+        ["csfincludename", "csfincludevals", "csfmask"],
     ]
     anatomicmasks = []
     for thisanatomic in anatomiclist:
@@ -459,6 +465,7 @@ def rapidtide_main(argparsingfunc):
     brainmask = anatomicmasks[0]
     graymask = anatomicmasks[1]
     whitemask = anatomicmasks[2]
+    csfmask = anatomicmasks[3]
 
     # do spatial filtering if requested
     optiondict["gausssigma"] = theinputdata.smooth(
@@ -710,7 +717,7 @@ def rapidtide_main(argparsingfunc):
             ),
             labels=["xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot"],
             deriv=optiondict["mot_deriv"],
-            order=1,
+            order=optiondict["mot_power"],
         )
         domotion = True
     else:
@@ -880,11 +887,11 @@ def rapidtide_main(argparsingfunc):
     meanfreq = 1.0 / fmritr
     meanperiod = 1.0 * fmritr
     meanstarttime = 0.0
-    meanvec, meanmask = getglobalsignal(
+    meanvec, meanmask = getregionsignal(
         fmri_data,
-        optiondict,
         includemask=internalglobalmeanincludemask,
         excludemask=internalglobalmeanexcludemask,
+        signalgenmethod=optiondict["globalsignalmethod"],
         pcacomponents=optiondict["globalpcacomponents"],
         debug=False,
     )
@@ -3450,6 +3457,8 @@ def rapidtide_main(argparsingfunc):
         maplist.append((graymask, "GM", "mask", None, "Gray matter mask"))
     if whitemask is not None:
         maplist.append((whitemask, "WM", "mask", None, "White matter mask"))
+    if csfmask is not None:
+        maplist.append((csfmask, "CSF", "mask", None, "CSF mask"))
     tide_io.savemaplist(
         outputname,
         maplist,
