@@ -422,7 +422,7 @@ def rapidtide_main(argparsingfunc):
         )
         optiondict["refineprenorm"] = "None"
 
-    # reformat the brain mask, if it exists
+    # reformat the anatomic masks, if they exist
     if brainmask is None:
         invbrainmask = None
 
@@ -823,6 +823,91 @@ def rapidtide_main(argparsingfunc):
         rt_floattype=rt_floattype,
         debug=False,
     )
+    tide_io.writebidstsv(
+        f"{outputname}_desc-anatomic_timeseries",
+        meanvec,
+        1.0 / fmritr,
+        columns=["globalmean_raw"],
+        extraheaderinfo={
+            "Description": "The anatomic regressors",
+        },
+        append=False,
+    )
+
+    if graymattermask is None:
+        internalgraymattermask = None
+    else:
+        internalgraymattermask = graymattermask.reshape((numspatiallocs))
+        if internalbrainmask is not None:
+            internalgraymattermask *= internalbrainmask
+        grayvec, dummy = tide_mask.getregionsignal(
+            fmri_data,
+            includemask=internalgraymask,
+            signalgenmethod="sum",
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype,
+            debug=False,
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-anatomic_timeseries",
+            grayvec,
+            1.0 / fmritr,
+            olumns=["GM_raw"],
+            extraheaderinfo={
+                "Description": "The anatomic regressors",
+            },
+            append=True,
+        )
+
+    if whitemattermask is None:
+        internalwhitemattermask = None
+    else:
+        internalwhitemattermask = whitemattermask.reshape((numspatiallocs))
+        if internalbrainmask is not None:
+            internalwhitemattermask *= internalbrainmask
+        whitevec, dummy = tide_mask.getregionsignal(
+            fmri_data,
+            includemask=internalwhitemask,
+            signalgenmethod="sum",
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype,
+            debug=False,
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-anatomic_timeseries",
+            whitevec,
+            1.0 / fmritr,
+            olumns=["WM_raw"],
+            extraheaderinfo={
+                "Description": "The anatomic regressors",
+            },
+            append=True,
+        )
+
+    if csfmask is None:
+        internalcsfmask = None
+    else:
+        internalcsfmask = csfmask.reshape((numspatiallocs))
+        if internalbrainmask is not None:
+            internalcsfmask *= internalbrainmask
+        csfvec, dummy = tide_mask.getregionsignal(
+            fmri_data,
+            includemask=internalcsfmask,
+            signalgenmethod="sum",
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype,
+            debug=False,
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-anatomic_timeseries",
+            whitevec,
+            1.0 / fmritr,
+            olumns=["CSF_raw"],
+            extraheaderinfo={
+                "Description": "The anatomic regressors",
+            },
+            append=True,
+        )
 
     # get rid of more memory we aren't using
     theinputdata.unload()
@@ -3337,6 +3422,86 @@ def rapidtide_main(argparsingfunc):
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
                 debug=optiondict["debug"],
             )
+
+            meanvec, meanmask = tide_mask.getregionsignal(
+                fmri_data,
+                includemask=internalglobalmeanincludemask,
+                excludemask=internalglobalmeanexcludemask,
+                signalgenmethod=optiondict["globalsignalmethod"],
+                pcacomponents=optiondict["globalpcacomponents"],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+                debug=False,
+            )
+            tide_io.writebidstsv(
+                f"{outputname}_desc-anatomic_timeseries",
+                meanvec,
+                1.0 / fmritr,
+                olumns=["globalmean_postrt"],
+                extraheaderinfo={
+                    "Description": "The anatomic regressors",
+                },
+                append=True,
+            )
+            if graymattermask is not None:
+                graymattervec, dummy = tide_mask.getregionsignal(
+                    fmri_data,
+                    includemask=internalgraymattermask,
+                    signalgenmethod="sum",
+                    rt_floatset=rt_floatset,
+                    rt_floattype=rt_floattype,
+                    debug=False,
+                )
+                tide_io.writebidstsv(
+                    f"{outputname}_desc-anatomic_timeseries",
+                    graymattervec,
+                    1.0 / fmritr,
+                    olumns=["GM_postrt"],
+                    extraheaderinfo={
+                        "Description": "The anatomic regressors",
+                    },
+                    append=True,
+                )
+
+            if whitemattermask is not None:
+                whitemattervec, dummy = tide_mask.getregionsignal(
+                    fmri_data,
+                    includemask=internalwhitemattermask,
+                    signalgenmethod="sum",
+                    rt_floatset=rt_floatset,
+                    rt_floattype=rt_floattype,
+                    debug=False,
+                )
+                tide_io.writebidstsv(
+                    f"{outputname}_desc-anatomic_timeseries",
+                    whitemattervec,
+                    1.0 / fmritr,
+                    olumns=["WM_postrt"],
+                    extraheaderinfo={
+                        "Description": "The anatomic regressors",
+                    },
+                    append=True,
+                )
+
+            if csfmask is not None:
+                csfvec, dummy = tide_mask.getregionsignal(
+                    fmri_data,
+                    includemask=internalcsfmask,
+                    signalgenmethod="sum",
+                    rt_floatset=rt_floatset,
+                    rt_floattype=rt_floattype,
+                    debug=False,
+                )
+                tide_io.writebidstsv(
+                    f"{outputname}_desc-anatomic_timeseries",
+                    csfvec,
+                    1.0 / fmritr,
+                    olumns=["CSF_postrt"],
+                    extraheaderinfo={
+                        "Description": "The anatomic regressors",
+                    },
+                    append=True,
+                )
 
             maplist = [
                 (rvalue, "maxcorralt", "map", None, "R value of the inband sLFO fit, with sign"),
