@@ -9,6 +9,7 @@ rapidtide \
     --acfix \
     --saveintermediatemaps \
     --dofinalrefine \
+    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_acfix
     

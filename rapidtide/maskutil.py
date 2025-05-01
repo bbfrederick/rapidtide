@@ -188,6 +188,7 @@ def getregionsignal(
     excludemask=None,
     signalgenmethod="sum",
     pcacomponents=0.8,
+    signame="global mean",
     rt_floatset=np.float64,
     rt_floattype="float64",
     debug=False,
@@ -251,7 +252,7 @@ def getregionsignal(
         globalmean = np.random.standard_normal(size=len(globalmean))
     else:
         raise ValueError(f"illegal signal generation method: {signalgenmethod}")
-    LGR.info(f"used {numvoxelsused} voxels to calculate global mean signal")
+    LGR.info(f"used {numvoxelsused} voxels to calculate {signame} signal")
     if debug:
         print(f"getregionsignal: {globalmean=}")
     return tide_math.stdnormalize(globalmean), themask

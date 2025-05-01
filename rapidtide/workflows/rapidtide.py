@@ -819,6 +819,7 @@ def rapidtide_main(argparsingfunc):
         excludemask=internalglobalmeanexcludemask,
         signalgenmethod=optiondict["globalsignalmethod"],
         pcacomponents=optiondict["globalpcacomponents"],
+        signame="global mean",
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
         debug=False,
@@ -844,6 +845,7 @@ def rapidtide_main(argparsingfunc):
             fmri_data,
             includemask=internalgraymask,
             signalgenmethod="sum",
+            signame="gray matter",
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
             debug=False,
@@ -869,6 +871,7 @@ def rapidtide_main(argparsingfunc):
             fmri_data,
             includemask=internalwhitemask,
             signalgenmethod="sum",
+            signame="white matter",
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
             debug=False,
@@ -894,6 +897,7 @@ def rapidtide_main(argparsingfunc):
             fmri_data,
             includemask=internalcsfmask,
             signalgenmethod="sum",
+            signame="CSF",
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
             debug=False,
@@ -3021,7 +3025,7 @@ def rapidtide_main(argparsingfunc):
                     "message3": "voxels",
                 },
             )
-            meanvec, meanmask = tide_mask.getregionsignal(
+            """meanvec, meanmask = tide_mask.getregionsignal(
                 filtereddata,
                 includemask=internalglobalmeanincludemask[validvoxels],
                 excludemask=internalglobalmeanexcludemask[validvoxels],
@@ -3097,7 +3101,7 @@ def rapidtide_main(argparsingfunc):
                         "Description": "The anatomic regressors",
                     },
                     append=True,
-                )
+                )"""
             tide_util.logmem("after sLFO filter")
             LGR.info("")
     else:
