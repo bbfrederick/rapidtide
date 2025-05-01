@@ -25,9 +25,17 @@ import rapidtide.io as tide_io
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
-def test_io(debug=True, displayplots=False):
+def test_io(debug=True, local=False, displayplots=False):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     # create outputdir if it doesn't exist
-    create_dir(get_test_temp_path())
+    create_dir(testtemproot)
 
     # test checkifnifti
     assert tide_io.checkifnifti("test.nii") == True
@@ -88,12 +96,12 @@ def test_io(debug=True, displayplots=False):
     # test fmritimeinfo
     fmritimeinfothresh = 1e-2
     tr, timepoints = tide_io.fmritimeinfo(
-        os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz")
+        os.path.join(exampleroot, "sub-HAPPYTEST.nii.gz")
     )
     assert np.fabs(tr - 1.16) < fmritimeinfothresh
     assert timepoints == 110
     tr, timepoints = tide_io.fmritimeinfo(
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz")
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz")
     )
     assert np.fabs(tr - 1.5) < fmritimeinfothresh
     assert timepoints == 260
@@ -101,10 +109,10 @@ def test_io(debug=True, displayplots=False):
     # test niftifile reading
     sizethresh = 1e-3
     happy_img, happy_data, happy_hdr, happydims, happysizes = tide_io.readfromnifti(
-        os.path.join(get_examples_path(), "sub-HAPPYTEST.nii.gz")
+        os.path.join(exampleroot, "sub-HAPPYTEST.nii.gz")
     )
     fmri_img, fmri_data, fmri_hdr, fmridims, fmrisizes = tide_io.readfromnifti(
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST.nii.gz")
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz")
     )
     targetdims = [4, 65, 89, 64, 110, 1, 1, 1]
     targetsizes = [-1.00, 2.39583, 2.395830, 2.4, 1.16, 0.00, 0.00, 0.00]
@@ -120,7 +128,7 @@ def test_io(debug=True, displayplots=False):
     # test file writing
     datathresh = 2e-3  # relaxed threshold because sub-RAPIDTIDETEST has been converted to INT16
     tide_io.savetonifti(
-        fmri_data, fmri_hdr, os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST_copy.nii.gz")
+        fmri_data, fmri_hdr, os.path.join(testtemproot, "sub-RAPIDTIDETEST_copy.nii.gz")
     )
     (
         fmricopy_img,
@@ -128,7 +136,7 @@ def test_io(debug=True, displayplots=False):
         fmricopy_hdr,
         fmricopydims,
         fmricopysizes,
-    ) = tide_io.readfromnifti(os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST_copy.nii.gz"))
+    ) = tide_io.readfromnifti(os.path.join(testtemproot, "sub-RAPIDTIDETEST_copy.nii.gz"))
     assert tide_io.checkspacematch(fmri_hdr, fmricopy_hdr)
     assert tide_io.checktimematch(fmridims, fmridims)
     assert mse(fmri_data, fmricopy_data) < datathresh
@@ -141,10 +149,10 @@ def test_io(debug=True, displayplots=False):
 
     # test writing and reading text files
     debug = False
-    DESTDIR = get_test_temp_path()
-    SOURCEDIR = get_examples_path()
+    DESTDIR = testtemproot
+    SOURCEDIR = exampleroot
     EPSILON = 1e-5
-    numpoints = 10
+    numpoints = 100
     the2darray = np.zeros((6, numpoints), dtype=float)
     the2darray[0, :] = np.linspace(0, 1.0, numpoints, endpoint=False)
     the2darray[1, :] = np.sin(the2darray[0, :] * 2.0 * np.pi)
@@ -174,7 +182,7 @@ def test_io(debug=True, displayplots=False):
         ["plaintsv", True, ".tsv.gz"],
     ]
 
-    print("writing files")
+    print("writing files as a unit")
     for thistest in thetests:
         thetype = thistest[0]
         compressed = thistest[1]
@@ -215,6 +223,43 @@ def test_io(debug=True, displayplots=False):
             compressed=compressed,
             filetype=thetype,
             lineend="",
+            debug=debug,
+        )
+
+    theappendtests = [
+        ["bidscontinuous", False, ".tsv"],
+        ["bidscontinuous", True, ".tsv.gz"],
+    ]
+
+    print("writing files with append")
+    for thistest in theappendtests:
+        thetype = thistest[0]
+        compressed = thistest[1]
+        if compressed:
+            compname = "compressed"
+        else:
+            compname = "uncompressed"
+
+        print(f"{the2darray.shape=}")
+        thefileroot = os.path.join(DESTDIR, f"testout_withcol_{thetype}_{compname}")
+        print(f"\t writing: {thefileroot}")
+        tide_io.writebidstsv(
+            thefileroot + "_append",
+            the2darray[:5, :],
+            inputsamplerate,
+            starttime=inputstarttime,
+            columns=thecols[:5],
+            compressed=compressed,
+            debug=debug,
+        )
+        tide_io.writebidstsv(
+            thefileroot + "_append",
+            the2darray[5, :],
+            inputsamplerate,
+            starttime=inputstarttime,
+            columns=[thecols[5]],
+            compressed=compressed,
+            append=True,
             debug=debug,
         )
 
@@ -456,4 +501,4 @@ def test_io(debug=True, displayplots=False):
 
 
 if __name__ == "__main__":
-    test_io(debug=True, displayplots=True)
+    test_io(debug=True, local=True, displayplots=True)
