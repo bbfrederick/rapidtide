@@ -3023,8 +3023,8 @@ def rapidtide_main(argparsingfunc):
             )
             meanvec, meanmask = tide_mask.getregionsignal(
                 filtereddata,
-                includemask=internalglobalmeanincludemask,
-                excludemask=internalglobalmeanexcludemask,
+                includemask=internalglobalmeanincludemask[validvoxels],
+                excludemask=internalglobalmeanexcludemask[validvoxels],
                 signalgenmethod=optiondict["globalsignalmethod"],
                 pcacomponents=optiondict["globalpcacomponents"],
                 rt_floatset=rt_floatset,
@@ -3044,7 +3044,7 @@ def rapidtide_main(argparsingfunc):
             if graymask is not None:
                 graymattervec, dummy = tide_mask.getregionsignal(
                     filtereddata,
-                    includemask=internalgraymask,
+                    includemask=internalgraymask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
@@ -3063,7 +3063,7 @@ def rapidtide_main(argparsingfunc):
             if whitemask is not None:
                 whitemattervec, dummy = tide_mask.getregionsignal(
                     filtereddata,
-                    includemask=internalwhitemask,
+                    includemask=internalwhitemask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
@@ -3082,7 +3082,7 @@ def rapidtide_main(argparsingfunc):
             if csfmask is not None:
                 csfvec, dummy = tide_mask.getregionsignal(
                     filtereddata,
-                    includemask=internalcsfmask,
+                    includemask=internalcsfmask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
