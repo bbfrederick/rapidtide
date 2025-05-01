@@ -822,12 +822,12 @@ def rapidtide_main(argparsingfunc):
         signame="global mean",
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
-        debug=False,
+        debug=optiondict["focaldebug"],
     )
     tide_io.writebidstsv(
         f"{outputname}_desc-anatomic_timeseries",
         meanvec,
-        1.0 / fmritr,
+        meanfreq,
         columns=["globalmean_raw"],
         extraheaderinfo={
             "Description": "The anatomic regressors",
@@ -839,16 +839,15 @@ def rapidtide_main(argparsingfunc):
         internalgraymask = None
     else:
         internalgraymask = graymask.reshape((numspatiallocs))
-        if internalbrainmask is not None:
-            internalgraymask *= internalbrainmask
         grayvec, dummy = tide_mask.getregionsignal(
             fmri_data,
             includemask=internalgraymask,
+            excludemask=internalinvbrainmask,
             signalgenmethod="sum",
             signame="gray matter",
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
-            debug=False,
+            debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-anatomic_timeseries",
@@ -865,16 +864,15 @@ def rapidtide_main(argparsingfunc):
         internalwhitemask = None
     else:
         internalwhitemask = whitemask.reshape((numspatiallocs))
-        if internalbrainmask is not None:
-            internalwhitemask *= internalbrainmask
         whitevec, dummy = tide_mask.getregionsignal(
             fmri_data,
             includemask=internalwhitemask,
+            excludemask=internalinvbrainmask,
             signalgenmethod="sum",
             signame="white matter",
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
-            debug=False,
+            debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-anatomic_timeseries",
@@ -891,16 +889,15 @@ def rapidtide_main(argparsingfunc):
         internalcsfmask = None
     else:
         internalcsfmask = csfmask.reshape((numspatiallocs))
-        if internalbrainmask is not None:
-            internalcsfmask *= internalbrainmask
         csfvec, dummy = tide_mask.getregionsignal(
             fmri_data,
             includemask=internalcsfmask,
+            excludemask=internalinvbrainmask,
             signalgenmethod="sum",
             signame="CSF",
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
-            debug=False,
+            debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-anatomic_timeseries",
@@ -3049,6 +3046,7 @@ def rapidtide_main(argparsingfunc):
                 graymattervec, dummy = tide_mask.getregionsignal(
                     filtereddata,
                     includemask=internalgraymask[validvoxels],
+                    excludemask=internalinvbrainmask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
@@ -3068,6 +3066,7 @@ def rapidtide_main(argparsingfunc):
                 whitemattervec, dummy = tide_mask.getregionsignal(
                     filtereddata,
                     includemask=internalwhitemask[validvoxels],
+                    excludemask=internalinvbrainmask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
@@ -3087,6 +3086,7 @@ def rapidtide_main(argparsingfunc):
                 csfvec, dummy = tide_mask.getregionsignal(
                     filtereddata,
                     includemask=internalcsfmask[validvoxels],
+                    excludemask=internalinvbrainmask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
