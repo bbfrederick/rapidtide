@@ -44,7 +44,7 @@ LGR = logging.getLogger(__name__)
 DEFAULT_SPATIALFILT = -1
 DEFAULT_HISTLEN = 101
 DEFAULT_DETREND_ORDER = 3
-DEFAULT_GLOBAL_PCACOMPONENTS = 0.8
+DEFAULT_INITREGRESSOR_PCACOMPONENTS = 0.8
 DEFAULT_CORRMASK_THRESHPCT = 1.0
 DEFAULT_MUTUALINFO_SMOOTHINGTIME = 3.0
 DEFAULT_LAGMIN = -30.0
@@ -63,7 +63,7 @@ DEFAULT_MAXPASSES = 15
 DEFAULT_REFINE_TYPE = "pca"
 DEFAULT_INTERPTYPE = "univariate"
 DEFAULT_WINDOW_TYPE = "hamming"
-DEFAULT_GLOBALSIGNAL_METHOD = "sum"
+DEFAULT_INITREGRESSOR_METHOD = "sum"
 DEFAULT_CORRWEIGHTING = "phat"
 DEFAULT_CORRTYPE = "linear"
 DEFAULT_SIMILARITYMETRIC = "correlation"
@@ -194,7 +194,7 @@ def _get_parser():
     )
     analysis_type.add_argument(
         "--globalpreselect",
-        dest="globalpreselect",
+        dest="initregressorpreselect",
         action="store_true",
         help=(
             "Treat this run as an initial pass to locate good candidate voxels for global mean "
@@ -260,7 +260,7 @@ def _get_parser():
             "2) decide which voxels in which to calculate delays, "
             "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
             "to remove sLFO signal. "
-            "Setting --globalmeaninclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
+            "Setting --initregressorinclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
             "override this for the given include mask."
         ),
         default=None,
@@ -275,7 +275,7 @@ def _get_parser():
             "voxels with value > 0.1 are used.  If this option is set, "
             "rapidtide will use voxels in the gray matter mask to 1) calculate the initial global mean regressor, "
             "and 2) for determining the zero time offset value. "
-            "Setting --globalmeaninclude or --offsetinclude explicitly will override this for "
+            "Setting --initregressorinclude or --offsetinclude explicitly will override this for "
             "the given include mask."
         ),
         default=None,
@@ -451,7 +451,7 @@ def _get_parser():
     )
     preproc.add_argument(
         "--globalmean",
-        dest="useglobalref",
+        dest="useinitregressorref",
         action="store_true",
         help=(
             "Generate a global mean regressor and use that as the reference "
@@ -462,10 +462,10 @@ def _get_parser():
     )
     preproc.add_argument(
         "--globalmeaninclude",
-        dest="globalmeanincludespec",
+        dest="initregressorincludespec",
         metavar="MASK[:VALSPEC]",
         help=(
-            "Only use voxels in mask file NAME for global regressor "
+            "Only use voxels in mask file NAME for the initial regressor "
             "generation (if VALSPEC is given, only voxels "
             "with integral values listed in VALSPEC are used)."
         ),
@@ -473,10 +473,10 @@ def _get_parser():
     )
     preproc.add_argument(
         "--globalmeanexclude",
-        dest="globalmeanexcludespec",
+        dest="initregressorexcludespec",
         metavar="MASK[:VALSPEC]",
         help=(
-            "Do not use voxels in mask file NAME for global regressor "
+            "Do not use voxels in mask file NAME for the initial regressor "
             "generation (if VALSPEC is given, only voxels "
             "with integral values listed in VALSPEC are excluded)."
         ),
@@ -554,32 +554,32 @@ def _get_parser():
     )
     preproc.add_argument(
         "--globalsignalmethod",
-        dest="globalsignalmethod",
+        dest="initregressorsignalmethod",
         action="store",
         type=str,
         choices=["sum", "meanscale", "pca", "random"],
         help=(
-            "The method for constructing the initial global signal regressor - straight summation, "
-            "mean scaling each voxel prior to summation, MLE PCA of the voxels in the global signal mask, "
+            "The method for constructing the initial signal regressor - straight summation, "
+            "mean scaling each voxel prior to summation, MLE PCA of the voxels in the initial regressor mask, "
             "or initializing using random noise."
-            f'Default is "{DEFAULT_GLOBALSIGNAL_METHOD}."'
+            f'Default is "{DEFAULT_INITREGRESSOR_METHOD}."'
         ),
-        default=DEFAULT_GLOBALSIGNAL_METHOD,
+        default=DEFAULT_INITREGRESSOR_METHOD,
     )
     preproc.add_argument(
         "--globalpcacomponents",
-        dest="globalpcacomponents",
+        dest="initregressorpcacomponents",
         action="store",
         type=float,
         metavar="VALUE",
         help=(
-            "Number of PCA components used for estimating the global signal.  If VALUE >= 1, will retain this"
+            "Number of PCA components used for estimating the initial regressor.  If VALUE >= 1, will retain this"
             "many components.  If "
             "0.0 < VALUE < 1.0, enough components will be retained to explain the fraction VALUE of the "
             "total variance. If VALUE is negative, the number of components will be to retain will be selected "
-            f"automatically using the MLE method.  Default is {DEFAULT_GLOBAL_PCACOMPONENTS}."
+            f"automatically using the MLE method.  Default is {DEFAULT_INITREGRESSOR_PCACOMPONENTS}."
         ),
-        default=DEFAULT_GLOBAL_PCACOMPONENTS,
+        default=DEFAULT_INITREGRESSOR_PCACOMPONENTS,
     )
     preproc.add_argument(
         "--slicetimes",
@@ -1962,8 +1962,8 @@ def process_args(inputargs=None):
         args["brainmaskincludename"] = None
         args["brainmaskincludevals"] = None
 
-    # if graymatterincludespec is set, set globalmeaninclude, offsetinclude to it.
-    graymasks = ["globalmean", "offset"]
+    # if graymatterincludespec is set, set initregressorinclude, offsetinclude to it.
+    graymasks = ["initregressor", "offset"]
     if args["graymatterincludespec"] is not None:
         (
             args["graymatterincludename"],
@@ -2011,26 +2011,28 @@ def process_args(inputargs=None):
         args["csfincludename"] = None
         args["csfincludevals"] = None
 
-    if args["globalmeanincludespec"] is not None:
+    if args["initregressorincludespec"] is not None:
         (
-            args["globalmeanincludename"],
-            args["globalmeanincludevals"],
+            args["initregressorincludename"],
+            args["initregressorincludevals"],
         ) = tide_io.processnamespec(
-            args["globalmeanincludespec"], "Including voxels where ", "in global mean."
+            args["initregressorincludespec"],
+            "Including voxels where ",
+            "in initial regressor calculation.",
         )
 
-    if args["globalmeanexcludespec"] is not None:
+    if args["initregressorexcludespec"] is not None:
         (
-            args["globalmeanexcludename"],
-            args["globalmeanexcludevals"],
+            args["initregressorexcludename"],
+            args["initregressorexcludevals"],
         ) = tide_io.processnamespec(
-            args["globalmeanexcludespec"],
+            args["initregressorexcludespec"],
             "Excluding voxels where ",
-            "from global mean.",
+            "from initial regressor calculation.",
         )
     else:
-        args["globalmeanexcludename"] = None
-        args["globalmeanexcludevals"] = None
+        args["initregressorexcludename"] = None
+        args["initregressorexcludevals"] = None
 
     if args["refineincludespec"] is not None:
         (
@@ -2126,7 +2128,7 @@ def process_args(inputargs=None):
         args["outputlevel"] = "min"
         args["dolinfitfilt"] = False
 
-    if args["globalpreselect"]:
+    if args["initregressorpreselect"]:
         LGR.warning('Using "globalpreselect" analysis mode. Overriding any affected arguments.')
         args["passes"] = 1
         args["despeckle_passes"] = 0
@@ -2233,7 +2235,7 @@ def process_args(inputargs=None):
             args["territorymapname"],
             args["territorymapincludevals"],
         ) = tide_io.processnamespec(
-            args["territorymap"], "Including voxels where ", "in global mean."
+            args["territorymap"], "Including voxels where ", "in initial regressor calculation."
         )
     else:
         args["territorymapname"] = None

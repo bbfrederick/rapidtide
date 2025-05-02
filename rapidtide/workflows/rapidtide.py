@@ -436,22 +436,24 @@ def rapidtide_main(argparsingfunc):
     # read in the optional masks
     tide_util.logmem("before setting masks")
 
-    internalglobalmeanincludemask, internalglobalmeanexcludemask, dummy = tide_mask.getmaskset(
-        "global mean",
-        optiondict["globalmeanincludename"],
-        optiondict["globalmeanincludevals"],
-        optiondict["globalmeanexcludename"],
-        optiondict["globalmeanexcludevals"],
-        theinputdata.nim_hdr,
-        numspatiallocs,
-        istext=(theinputdata.filetype == "text"),
-        tolerance=optiondict["spatialtolerance"],
+    internalinitregressorincludemask, internalinitregressorexcludemask, dummy = (
+        tide_mask.getmaskset(
+            "global mean",
+            optiondict["initregressorincludename"],
+            optiondict["initregressorincludevals"],
+            optiondict["initregressorexcludename"],
+            optiondict["initregressorexcludevals"],
+            theinputdata.nim_hdr,
+            numspatiallocs,
+            istext=(theinputdata.filetype == "text"),
+            tolerance=optiondict["spatialtolerance"],
+        )
     )
     if internalinvbrainmask is not None:
-        if internalglobalmeanexcludemask is not None:
-            internalglobalmeanexcludemask *= internalinvbrainmask
+        if internalinitregressorexcludemask is not None:
+            internalinitregressorexcludemask *= internalinvbrainmask
         else:
-            internalglobalmeanexcludemask = internalinvbrainmask
+            internalinitregressorexcludemask = internalinvbrainmask
 
     internalrefineincludemask, internalrefineexcludemask, dummy = tide_mask.getmaskset(
         "refine",
@@ -815,24 +817,44 @@ def rapidtide_main(argparsingfunc):
     meanstarttime = 0.0
     meanvec, meanmask = tide_mask.getregionsignal(
         fmri_data,
-        includemask=internalglobalmeanincludemask,
-        excludemask=internalglobalmeanexcludemask,
-        signalgenmethod=optiondict["globalsignalmethod"],
-        pcacomponents=optiondict["globalpcacomponents"],
-        signame="global mean",
+        includemask=internalinitregressorincludemask,
+        excludemask=internalinitregressorexcludemask,
+        signalgenmethod=optiondict["initregressorsignalmethod"],
+        pcacomponents=optiondict["initregressorpcacomponents"],
+        signame="initial regressor",
         rt_floatset=rt_floatset,
         debug=optiondict["focaldebug"],
     )
     tide_io.writebidstsv(
-        f"{outputname}_desc-anatomic_timeseries",
+        f"{outputname}_desc-regional_timeseries",
         meanvec,
         meanfreq,
-        columns=["globalmean_raw"],
+        columns=["initregressorregion_raw"],
         extraheaderinfo={
-            "Description": "The anatomic regressors",
+            "Description": "Regional timecourse averages",
         },
         append=False,
     )
+
+    if brainmask is not None:
+        brainvec, dummy = tide_mask.getregionsignal(
+            fmri_data,
+            includemask=internalbrainmask,
+            signalgenmethod="sum",
+            signame="whole brain",
+            rt_floatset=rt_floatset,
+            debug=optiondict["focaldebug"],
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-regional_timeseries",
+            brainvec,
+            meanfreq,
+            columns=["brain_raw"],
+            extraheaderinfo={
+                "Description": "Regional timecourse averages",
+            },
+            append=True,
+        )
 
     if graymask is None:
         internalgraymask = None
@@ -848,12 +870,12 @@ def rapidtide_main(argparsingfunc):
             debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
-            f"{outputname}_desc-anatomic_timeseries",
+            f"{outputname}_desc-regional_timeseries",
             grayvec,
             meanfreq,
             columns=["GM_raw"],
             extraheaderinfo={
-                "Description": "The anatomic regressors",
+                "Description": "Regional timecourse averages",
             },
             append=True,
         )
@@ -872,12 +894,12 @@ def rapidtide_main(argparsingfunc):
             debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
-            f"{outputname}_desc-anatomic_timeseries",
+            f"{outputname}_desc-regional_timeseries",
             whitevec,
             meanfreq,
             columns=["WM_raw"],
             extraheaderinfo={
-                "Description": "The anatomic regressors",
+                "Description": "Regional timecourse averages",
             },
             append=True,
         )
@@ -896,12 +918,12 @@ def rapidtide_main(argparsingfunc):
             debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
-            f"{outputname}_desc-anatomic_timeseries",
+            f"{outputname}_desc-regional_timeseries",
             csfvec,
             meanfreq,
             columns=["CSF_raw"],
             extraheaderinfo={
-                "Description": "The anatomic regressors",
+                "Description": "Regional timecourse averages",
             },
             append=True,
         )
@@ -920,12 +942,12 @@ def rapidtide_main(argparsingfunc):
     TimingLGR.info("Start of reference prep")
     if regressorfilename is None:
         LGR.info("no regressor file specified - will use the global mean regressor")
-        optiondict["useglobalref"] = True
+        optiondict["useinitregressorref"] = True
     else:
-        optiondict["useglobalref"] = False
+        optiondict["useinitregressorref"] = False
 
     # now set the regressor that we'll use
-    if optiondict["useglobalref"]:
+    if optiondict["useinitregressorref"]:
         LGR.verbose("using global mean as probe regressor")
         inputfreq = meanfreq
         inputperiod = meanperiod
@@ -934,7 +956,9 @@ def rapidtide_main(argparsingfunc):
 
         # save the meanmask
         theheader = theinputdata.copyheader(numtimepoints=1)
-        masklist = [(meanmask, "globalmean", "mask", None, "Voxels used to calculate global mean")]
+        masklist = [
+            (meanmask, "initregressor", "mask", None, "Voxels used to calculate initial regressor")
+        ]
         tide_io.savemaplist(
             outputname,
             masklist,
@@ -985,7 +1009,7 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"input freq: {inputfreq}")
     LGR.verbose(f"input start time: {inputstarttime:.3f}")
 
-    if not optiondict["useglobalref"]:
+    if not optiondict["useinitregressorref"]:
         globalcorrx, globalcorry, dummy, dummy = tide_corr.arbcorr(
             meanvec, meanfreq, inputvec, inputfreq, start2=(inputstarttime)
         )
@@ -1469,7 +1493,7 @@ def rapidtide_main(argparsingfunc):
     # prepare for regressor refinement, if we're doing it
     if (
         optiondict["passes"] > 1
-        or optiondict["globalpreselect"]
+        or optiondict["initregressorpreselect"]
         or optiondict["dofinalrefine"]
         or optiondict["convergencethresh"] is not None
     ):
@@ -2320,7 +2344,7 @@ def rapidtide_main(argparsingfunc):
         if (
             thepass < optiondict["passes"]
             or optiondict["convergencethresh"] is not None
-            or optiondict["globalpreselect"]
+            or optiondict["initregressorpreselect"]
             or optiondict["dofinalrefine"]
         ):
             LGR.info(f"\n\nRegressor refinement, pass {thepass}")
@@ -3018,25 +3042,52 @@ def rapidtide_main(argparsingfunc):
                     "message3": "voxels",
                 },
             )
+            if internalinitregressorincludemask is not None:
+                thisincludemask = internalinitregressorincludemask[validvoxels]
+            else:
+                thisincludemask = None
+            if internalinitregressorexcludemask is not None:
+                thisexcludemask = internalinitregressorexcludemask[validvoxels]
+            else:
+                thisexcludemask = None
+
             meanvec, meanmask = tide_mask.getregionsignal(
                 filtereddata,
-                includemask=internalglobalmeanincludemask[validvoxels],
-                excludemask=internalglobalmeanexcludemask[validvoxels],
-                signalgenmethod=optiondict["globalsignalmethod"],
-                pcacomponents=optiondict["globalpcacomponents"],
+                includemask=thisincludemask,
+                excludemask=thisexcludemask,
+                signalgenmethod=optiondict["initregressorsignalmethod"],
+                pcacomponents=optiondict["initregressorpcacomponents"],
                 rt_floatset=rt_floatset,
                 debug=False,
             )
             tide_io.writebidstsv(
-                f"{outputname}_desc-anatomic_timeseries",
+                f"{outputname}_desc-regional_timeseries",
                 meanvec,
                 meanfreq,
-                columns=["globalmean_postrt"],
+                columns=["initregressorregion_postrt"],
                 extraheaderinfo={
-                    "Description": "The anatomic regressors",
+                    "Description": "Regional timecourse averages",
                 },
                 append=True,
             )
+            if brainmask is not None:
+                brainvec, dummy = tide_mask.getregionsignal(
+                    filtereddata,
+                    includemask=internalbrainmask[validvoxels],
+                    signalgenmethod="sum",
+                    rt_floatset=rt_floatset,
+                    debug=False,
+                )
+                tide_io.writebidstsv(
+                    f"{outputname}_desc-regional_timeseries",
+                    brainvec,
+                    meanfreq,
+                    columns=["brain_postrt"],
+                    extraheaderinfo={
+                        "Description": "Regional timecourse averages",
+                    },
+                    append=True,
+                )
             if graymask is not None:
                 graymattervec, dummy = tide_mask.getregionsignal(
                     filtereddata,
@@ -3047,12 +3098,12 @@ def rapidtide_main(argparsingfunc):
                     debug=False,
                 )
                 tide_io.writebidstsv(
-                    f"{outputname}_desc-anatomic_timeseries",
+                    f"{outputname}_desc-regional_timeseries",
                     graymattervec,
                     meanfreq,
                     columns=["GM_postrt"],
                     extraheaderinfo={
-                        "Description": "The anatomic regressors",
+                        "Description": "Regional timecourse averages",
                     },
                     append=True,
                 )
@@ -3066,12 +3117,12 @@ def rapidtide_main(argparsingfunc):
                     debug=False,
                 )
                 tide_io.writebidstsv(
-                    f"{outputname}_desc-anatomic_timeseries",
+                    f"{outputname}_desc-regional_timeseries",
                     whitemattervec,
                     meanfreq,
                     columns=["WM_postrt"],
                     extraheaderinfo={
-                        "Description": "The anatomic regressors",
+                        "Description": "Regional timecourse averages",
                     },
                     append=True,
                 )
@@ -3085,12 +3136,12 @@ def rapidtide_main(argparsingfunc):
                     debug=False,
                 )
                 tide_io.writebidstsv(
-                    f"{outputname}_desc-anatomic_timeseries",
+                    f"{outputname}_desc-regional_timeseries",
                     csfvec,
                     meanfreq,
                     columns=["CSF_postrt"],
                     extraheaderinfo={
-                        "Description": "The anatomic regressors",
+                        "Description": "Regional timecourse averages",
                     },
                     append=True,
                 )
@@ -3596,15 +3647,15 @@ def rapidtide_main(argparsingfunc):
         )
         del masklist
 
-    if (optiondict["passes"] > 1 or optiondict["globalpreselect"]) and optiondict[
+    if (optiondict["passes"] > 1 or optiondict["initregressorpreselect"]) and optiondict[
         "refinestopreason"
     ] != "emptymask":
         refinemask = theRegressorRefiner.getrefinemask()
-        if optiondict["globalpreselect"]:
+        if optiondict["initregressorpreselect"]:
             masklist = [
                 (
                     refinemask,
-                    "globalmeanpreselect",
+                    "initregressorpreselect",
                     "mask",
                     None,
                     "I really don't know what this file is for",
