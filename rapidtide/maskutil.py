@@ -69,8 +69,16 @@ def readamask(
     thresh=None,
     maskname="the",
     tolerance=1.0e-3,
+    debug=False,
 ):
     LGR.debug(f"readamask called with filename: {maskfilename} vals: {valslist}")
+    if debug:
+        print("getmaskset:")
+        print(f"{maskname=}")
+        print(f"\tincludefilename={maskfilename}")
+        print(f"\tincludevals={valslist}")
+        print(f"\t{istext=}")
+        print(f"\t{tolerance=}")
     if istext:
         maskarray = tide_io.readvecs(maskfilename).astype("uint16")
         theshape = np.shape(maskarray)
@@ -111,10 +119,23 @@ def getmaskset(
     extramaskthresh=0.1,
     istext=False,
     tolerance=1.0e-3,
+    debug=False,
 ):
     internalincludemask = None
     internalexcludemask = None
     internalextramask = None
+
+    if debug:
+        print("getmaskset:")
+        print(f"{maskname=}")
+        print(f"\t{includename=}")
+        print(f"\t{includevals=}")
+        print(f"\t{excludename=}")
+        print(f"\t{excludevals=}")
+        print(f"\t{istext=}")
+        print(f"\t{tolerance=}")
+        print(f"\t{extramask=}")
+        print(f"\t{extramaskthresh=}")
 
     if includename is not None:
         LGR.info(f"constructing {maskname} include mask")
