@@ -260,7 +260,7 @@ def _get_parser():
             "2) decide which voxels in which to calculate delays, "
             "3) refine the regressor at the end of each pass, 4) determine the zero time offset value, and 5) process "
             "to remove sLFO signal. "
-            "Setting --initregressorinclude, --refineinclude, --corrmaskinclude or --offsetinclude explicitly will "
+            "Setting --initregressorinclude, --corrmaskinclude, --refineinclude or --offsetinclude explicitly will "
             "override this for the given include mask."
         ),
         default=None,
@@ -288,8 +288,8 @@ def _get_parser():
             "This specifies a white matter mask registered to the input functional data.  "
             "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
             "voxels with value > 0.1 are used.  "
-            "This currently isn't used for anything, but rapidtide will keep track of it and might use if for something "
-            "in a later version."
+            "This will be used to calculate the white matter timecourse before running rapidtide, and after sLFO "
+            "filtering (if enabled)."
         ),
         default=None,
     )
@@ -301,8 +301,8 @@ def _get_parser():
             "This specifies a CSF mask registered to the input functional data.  "
             "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
             "voxels with value > 0.1 are used.  "
-            "This currently isn't used for anything, but rapidtide will keep track of it and might use if for something "
-            "in a later version."
+            "This will be used to calculate the CSF timecourse before running rapidtide, and after sLFO "
+            "filtering (if enabled)."
         ),
         default=None,
     )
@@ -1935,20 +1935,27 @@ def process_args(inputargs=None):
     else:
         args["inputfreq_nondefault"] = True
 
-    # mask processing
-    if args["corrmaskincludespec"] is not None:
-        (
-            args["corrmaskincludename"],
-            args["corrmaskincludevals"],
-        ) = tide_io.processnamespec(
-            args["corrmaskincludespec"],
-            "Including voxels where ",
-            "in correlation calculations.",
-        )
-    else:
-        args["corrmaskincludename"] = None
+    # initial mask values from anatomical images (before any overrides)
+    for key in [
+        "corrmaskincludename",
+        "corrmaskincludevals",
+        "initregressorexcludename",
+        "initregressorexcludevals",
+        "initregressorexcludename",
+        "initregressorexcludevals",
+        "refineincludename",
+        "refineincludevals",
+        "refineexcludename",
+        "refineexcludevals",
+        "offsetincludename",
+        "offsetincludevals",
+        "offsetexcludename",
+        "offsetexcludevals",
+    ]:
+        args[key] = None
 
-    # if brainmaskincludespec is set, set corrmaskinclude to it.
+    # if brainmaskincludespec is set, set initregressorinclude, corrmaskinclude, refineinclude, and offsetinclude to it.
+    brainmasks = ["initregressor", "corrmask", "refine", "offset"]
     if args["brainmaskincludespec"] is not None:
         (
             args["brainmaskincludename"],
@@ -1958,6 +1965,15 @@ def process_args(inputargs=None):
         )
         if not os.path.isfile(args["brainmaskincludename"]):
             raise FileNotFoundError(f"file {args['brainmaskincludename']} does not exist.")
+        for masktype in brainmasks:
+            (
+                args[f"{masktype}includename"],
+                args[f"{masktype}includevals"],
+            ) = (
+                args["brainmaskincludename"],
+                args["brainmaskincludevals"],
+            )
+            print(f"setting {masktype}include mask to gray matter mask")
     else:
         args["brainmaskincludename"] = None
         args["brainmaskincludevals"] = None
@@ -1985,9 +2001,6 @@ def process_args(inputargs=None):
     else:
         args["graymatterincludename"] = None
         args["graymatterincludevals"] = None
-        for masktype in graymasks:
-            args[f"{masktype}includename"] = None
-            args[f"{masktype}includevals"] = None
 
     if args["whitematterincludespec"] is not None:
         (
@@ -2011,6 +2024,17 @@ def process_args(inputargs=None):
         args["csfincludename"] = None
         args["csfincludevals"] = None
 
+    # individual mask processing (including overrides)
+    if args["corrmaskincludespec"] is not None:
+        (
+            args["corrmaskincludename"],
+            args["corrmaskincludevals"],
+        ) = tide_io.processnamespec(
+            args["corrmaskincludespec"],
+            "Including voxels where ",
+            "in correlation calculations.",
+        )
+
     if args["initregressorincludespec"] is not None:
         (
             args["initregressorincludename"],
@@ -2030,9 +2054,6 @@ def process_args(inputargs=None):
             "Excluding voxels where ",
             "from initial regressor calculation.",
         )
-    else:
-        args["initregressorexcludename"] = None
-        args["initregressorexcludevals"] = None
 
     if args["refineincludespec"] is not None:
         (
@@ -2041,9 +2062,6 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["refineincludespec"], "Including voxels where ", "in refinement."
         )
-    else:
-        args["refineincludename"] = None
-        args["refineincludevals"] = None
 
     if args["refineexcludespec"] is not None:
         (
@@ -2052,9 +2070,6 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["refineexcludespec"], "Excluding voxels where ", "from refinement."
         )
-    else:
-        args["refineexcludename"] = None
-        args["refineexcludevals"] = None
 
     if args["offsetincludespec"] is not None:
         (
@@ -2071,9 +2086,6 @@ def process_args(inputargs=None):
         ) = tide_io.processnamespec(
             args["offsetexcludespec"], "Excluding voxels where ", "from offset calculation."
         )
-    else:
-        args["offsetexcludename"] = None
-        args["offsetexcludevals"] = None
 
     # motion processing
     if args["motionfilespec"] is not None:

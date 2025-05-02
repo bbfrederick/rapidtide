@@ -382,6 +382,7 @@ def rapidtide_main(argparsingfunc):
                     valslist=optiondict[thisanatomic[1]],
                     maskname=thisanatomic[2],
                     tolerance=optiondict["spatialtolerance"],
+                    debug=optiondict["focaldebug"],
                 )
             )
             anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
@@ -447,6 +448,7 @@ def rapidtide_main(argparsingfunc):
             numspatiallocs,
             istext=(theinputdata.filetype == "text"),
             tolerance=optiondict["spatialtolerance"],
+            debug=optiondict["focaldebug"],
         )
     )
     if internalinvbrainmask is not None:
@@ -465,6 +467,7 @@ def rapidtide_main(argparsingfunc):
         numspatiallocs,
         istext=(theinputdata.filetype == "text"),
         tolerance=optiondict["spatialtolerance"],
+        debug=optiondict["focaldebug"],
     )
     if internalinvbrainmask is not None:
         if internalrefineexcludemask is not None:
@@ -482,6 +485,7 @@ def rapidtide_main(argparsingfunc):
         numspatiallocs,
         istext=(theinputdata.filetype == "text"),
         tolerance=optiondict["spatialtolerance"],
+        debug=optiondict["focaldebug"],
     )
     if internalinvbrainmask is not None:
         if internaloffsetexcludemask is not None:
@@ -503,6 +507,7 @@ def rapidtide_main(argparsingfunc):
             valslist=optiondict["corrmaskincludevals"],
             maskname="correlation",
             tolerance=optiondict["spatialtolerance"],
+            debug=optiondict["focaldebug"],
         )
 
         corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
@@ -539,8 +544,8 @@ def rapidtide_main(argparsingfunc):
                         np.std(fmri_data, axis=1), threshpct=optiondict["corrmaskthreshpct"]
                     )
                 )
-    if internalbrainmask is not None:
-        corrmask = internalbrainmask
+        if internalbrainmask is not None:
+            corrmask = internalbrainmask
     if tide_stats.getmasksize(corrmask) == 0:
         raise ValueError("ERROR: there are no voxels in the correlation mask - exiting")
 
@@ -688,7 +693,7 @@ def rapidtide_main(argparsingfunc):
             append=False,
         )
 
-        if optiondict["focaldebug"]:
+        if optiondict["debug"]:
             print(f"{mergedregressors.shape=}")
             print(f"{mergedregressorlabels}")
             print(f"{fmri_data_valid.shape=}")
@@ -823,7 +828,7 @@ def rapidtide_main(argparsingfunc):
         pcacomponents=optiondict["initregressorpcacomponents"],
         signame="initial regressor",
         rt_floatset=rt_floatset,
-        debug=optiondict["focaldebug"],
+        debug=optiondict["debug"],
     )
     tide_io.writebidstsv(
         f"{outputname}_desc-regional_timeseries",
@@ -843,7 +848,7 @@ def rapidtide_main(argparsingfunc):
             signalgenmethod="sum",
             signame="whole brain",
             rt_floatset=rt_floatset,
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-regional_timeseries",
@@ -867,7 +872,7 @@ def rapidtide_main(argparsingfunc):
             signalgenmethod="sum",
             signame="gray matter",
             rt_floatset=rt_floatset,
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-regional_timeseries",
@@ -891,7 +896,7 @@ def rapidtide_main(argparsingfunc):
             signalgenmethod="sum",
             signame="white matter",
             rt_floatset=rt_floatset,
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-regional_timeseries",
@@ -915,7 +920,7 @@ def rapidtide_main(argparsingfunc):
             signalgenmethod="sum",
             signame="CSF",
             rt_floatset=rt_floatset,
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-regional_timeseries",
