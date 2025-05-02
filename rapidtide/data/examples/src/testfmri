@@ -9,11 +9,11 @@ rapidtide \
     --focaldebug \
     --acfix \
     --dofinalrefine \
-    --singleproc_calcsimilarity \
     --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
     --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --globalmeaninclude sub-RAPIDTIDETEST_brainmask.nii.gz \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST
+    #--singleproc_calcsimilarity \
+    #--globalmeaninclude sub-RAPIDTIDETEST_brainmask.nii.gz \
