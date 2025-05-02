@@ -310,7 +310,7 @@ class MutualInformationator(SimilarityFunctionator):
     def run(self, thetc, locs=None, trim=True, gettimeaxis=True):
         if len(thetc) != len(self.reftc):
             print(
-                "timecourses are of different sizes:",
+                "MutualInformationator: timecourses are of different sizes:",
                 len(thetc),
                 "!=",
                 len(self.reftc),
@@ -434,7 +434,7 @@ class Correlator(SimilarityFunctionator):
     def run(self, thetc, trim=True):
         if len(thetc) != len(self.reftc):
             print(
-                "timecourses are of different sizes:",
+                "Correlator: timecourses are of different sizes:",
                 len(thetc),
                 "!=",
                 len(self.reftc),
@@ -580,7 +580,7 @@ class Coherer:
     def run(self, thetc, trim=True, alt=False):
         if len(thetc) != len(self.reftc):
             print(
-                "timecourses are of different sizes:",
+                "Coherer: timecourses are of different sizes:",
                 len(thetc),
                 "!=",
                 len(self.reftc),
