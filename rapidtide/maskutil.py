@@ -190,7 +190,6 @@ def getregionsignal(
     pcacomponents=0.8,
     signame="global mean",
     rt_floatset=np.float64,
-    rt_floattype="float64",
     debug=False,
 ):
     # Start with all voxels

@@ -821,7 +821,6 @@ def rapidtide_main(argparsingfunc):
         pcacomponents=optiondict["globalpcacomponents"],
         signame="global mean",
         rt_floatset=rt_floatset,
-        rt_floattype=rt_floattype,
         debug=optiondict["focaldebug"],
     )
     tide_io.writebidstsv(
@@ -846,13 +845,12 @@ def rapidtide_main(argparsingfunc):
             signalgenmethod="sum",
             signame="gray matter",
             rt_floatset=rt_floatset,
-            rt_floattype=rt_floattype,
             debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-anatomic_timeseries",
             grayvec,
-            1.0 / fmritr,
+            meanfreq,
             columns=["GM_raw"],
             extraheaderinfo={
                 "Description": "The anatomic regressors",
@@ -871,13 +869,12 @@ def rapidtide_main(argparsingfunc):
             signalgenmethod="sum",
             signame="white matter",
             rt_floatset=rt_floatset,
-            rt_floattype=rt_floattype,
             debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-anatomic_timeseries",
             whitevec,
-            1.0 / fmritr,
+            meanfreq,
             columns=["WM_raw"],
             extraheaderinfo={
                 "Description": "The anatomic regressors",
@@ -896,13 +893,12 @@ def rapidtide_main(argparsingfunc):
             signalgenmethod="sum",
             signame="CSF",
             rt_floatset=rt_floatset,
-            rt_floattype=rt_floattype,
             debug=optiondict["focaldebug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-anatomic_timeseries",
-            whitevec,
-            1.0 / fmritr,
+            csfvec,
+            meanfreq,
             columns=["CSF_raw"],
             extraheaderinfo={
                 "Description": "The anatomic regressors",
@@ -3022,20 +3018,19 @@ def rapidtide_main(argparsingfunc):
                     "message3": "voxels",
                 },
             )
-            """meanvec, meanmask = tide_mask.getregionsignal(
+            meanvec, meanmask = tide_mask.getregionsignal(
                 filtereddata,
                 includemask=internalglobalmeanincludemask[validvoxels],
                 excludemask=internalglobalmeanexcludemask[validvoxels],
                 signalgenmethod=optiondict["globalsignalmethod"],
                 pcacomponents=optiondict["globalpcacomponents"],
                 rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
                 debug=False,
             )
             tide_io.writebidstsv(
                 f"{outputname}_desc-anatomic_timeseries",
                 meanvec,
-                1.0 / fmritr,
+                meanfreq,
                 columns=["globalmean_postrt"],
                 extraheaderinfo={
                     "Description": "The anatomic regressors",
@@ -3049,13 +3044,12 @@ def rapidtide_main(argparsingfunc):
                     excludemask=internalinvbrainmask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
                     debug=False,
                 )
                 tide_io.writebidstsv(
                     f"{outputname}_desc-anatomic_timeseries",
                     graymattervec,
-                    1.0 / fmritr,
+                    meanfreq,
                     columns=["GM_postrt"],
                     extraheaderinfo={
                         "Description": "The anatomic regressors",
@@ -3069,13 +3063,12 @@ def rapidtide_main(argparsingfunc):
                     excludemask=internalinvbrainmask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
                     debug=False,
                 )
                 tide_io.writebidstsv(
                     f"{outputname}_desc-anatomic_timeseries",
                     whitemattervec,
-                    1.0 / fmritr,
+                    meanfreq,
                     columns=["WM_postrt"],
                     extraheaderinfo={
                         "Description": "The anatomic regressors",
@@ -3089,19 +3082,18 @@ def rapidtide_main(argparsingfunc):
                     excludemask=internalinvbrainmask[validvoxels],
                     signalgenmethod="sum",
                     rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
                     debug=False,
                 )
                 tide_io.writebidstsv(
                     f"{outputname}_desc-anatomic_timeseries",
                     csfvec,
-                    1.0 / fmritr,
+                    meanfreq,
                     columns=["CSF_postrt"],
                     extraheaderinfo={
                         "Description": "The anatomic regressors",
                     },
                     append=True,
-                )"""
+                )
             tide_util.logmem("after sLFO filter")
             LGR.info("")
     else:
