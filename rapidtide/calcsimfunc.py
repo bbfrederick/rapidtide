@@ -69,6 +69,7 @@ def correlationpass(
     chunksize=1000,
     rt_floatset=np.float64,
     rt_floattype="float64",
+    debug=False,
 ):
     """
 
@@ -96,6 +97,8 @@ def correlationpass(
     -------
 
     """
+    if debug:
+        print(f"calling setreftc in calcsimfunc with length {len(referencetc)}")
     theCorrelator.setreftc(referencetc)
     theCorrelator.setlimits(lagmininpts, lagmaxinpts)
 

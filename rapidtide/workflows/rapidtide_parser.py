@@ -273,9 +273,8 @@ def _get_parser():
             "This specifies a gray matter mask registered to the input functional data.  "
             "If VALSPEC is given, only voxels in the mask with integral values listed in VALSPEC are used, otherwise "
             "voxels with value > 0.1 are used.  If this option is set, "
-            "rapidtide will use voxels in the gray matter mask to 1) calculate the initial global mean regressor, "
-            "and 2) for determining the zero time offset value. "
-            "Setting --initregressorinclude or --offsetinclude explicitly will override this for "
+            "rapidtide will use voxels in the gray matter mask to calculate the initial global mean regressor. "
+            "Setting --initregressorinclude  explicitly will override this for "
             "the given include mask."
         ),
         default=None,
@@ -1979,7 +1978,8 @@ def process_args(inputargs=None):
         args["brainmaskincludevals"] = None
 
     # if graymatterincludespec is set, set initregressorinclude, offsetinclude to it.
-    graymasks = ["initregressor", "offset"]
+    # graymasks = ["initregressor", "offset"]
+    graymasks = ["initregressor"]
     if args["graymatterincludespec"] is not None:
         (
             args["graymatterincludename"],

@@ -1299,6 +1299,10 @@ def rapidtide_main(argparsingfunc):
         corrpadding=optiondict["corrpadding"],
         debug=optiondict["debug"],
     )
+    if optiondict["focaldebug"]:
+        print(
+            f"calling setreftc during intialization with length {optiondict['oversampfactor'] * validtimepoints}"
+        )
     theCorrelator.setreftc(
         np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float64)
     )
@@ -1713,6 +1717,10 @@ def rapidtide_main(argparsingfunc):
             rt_floattype=rt_floattype,
             rt_floatset=rt_floatset,
         )
+        if optiondict["focaldebug"]:
+            print(
+                f"after cleanregressor: {len(referencetc)=}, {len(cleaned_referencetc)=}, {osvalidsimcalcstart=}, {osvalidsimcalcend=}, {lagmininpts=}, {lagmaxinpts=}"
+            )
 
         # Step 0 - estimate significance
         if optiondict["numestreps"] > 0:
@@ -1740,6 +1748,10 @@ def rapidtide_main(argparsingfunc):
                     f"{outputname}_options_pregetnull_pass" + str(thepass) + ".json",
                 )
             theCorrelator.setlimits(lagmininpts, lagmaxinpts)
+            if optiondict["focaldebug"]:
+                print(
+                    f"calling setreftc prior to significance estimation with length {len(cleaned_resampref_y)}"
+                )
             theCorrelator.setreftc(cleaned_resampref_y)
             theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
             theMutualInformationator.setreftc(cleaned_resampref_y)
@@ -1907,6 +1919,7 @@ def rapidtide_main(argparsingfunc):
                 chunksize=optiondict["mp_chunksize"],
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
+                debug=optiondict["focaldebug"],
             )
         else:
             (
@@ -1931,6 +1944,7 @@ def rapidtide_main(argparsingfunc):
                 chunksize=optiondict["mp_chunksize"],
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
+                debug=optiondict["focaldebug"],
             )
         tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
 
@@ -2365,7 +2379,7 @@ def rapidtide_main(argparsingfunc):
                     LGR.warning(
                         "NB: cannot exclude voxels from offset calculation mask - including for this pass"
                     )
-                    offsetmask = fitmask
+                    offsetmask = fitmask + 0
 
                 peaklag, dummy, dummy = tide_stats.gethistprops(
                     lagtimes[np.where(offsetmask > 0)],
