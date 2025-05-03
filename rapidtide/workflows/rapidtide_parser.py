@@ -1938,8 +1938,8 @@ def process_args(inputargs=None):
     for key in [
         "corrmaskincludename",
         "corrmaskincludevals",
-        "initregressorexcludename",
-        "initregressorexcludevals",
+        "initregressorincludename",
+        "initregressorincludevals",
         "initregressorexcludename",
         "initregressorexcludevals",
         "refineincludename",
