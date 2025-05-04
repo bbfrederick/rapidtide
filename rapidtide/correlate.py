@@ -86,11 +86,12 @@ def disablenumba():
 def check_autocorrelation(
     corrscale,
     thexcorr,
-    delta=0.1,
+    delta=0.05,
     acampthresh=0.1,
     aclagthresh=10.0,
     displayplots=False,
     detrendorder=1,
+    debug=False,
 ):
     """Check for autocorrelation in an array.
 
@@ -110,10 +111,23 @@ def check_autocorrelation(
     sidelobetime
     sidelobeamp
     """
+    if debug:
+        print("check_autocorrelation:")
+        print(f"delta: {delta}")
+        print(f"acampthresh: {acampthresh}")
+        print(f"aclagthresh: {aclagthresh}")
+        print(f"displayplots: {displayplots}")
     lookahead = 2
+    if displayplots:
+        print(f"check_autocorrelation: {displayplots=}")
+        plt.plot(corrscale, thexcorr)
+        plt.show()
     peaks = tide_fit.peakdetect(thexcorr, x_axis=corrscale, delta=delta, lookahead=lookahead)
     maxpeaks = np.asarray(peaks[0], dtype="float64")
     if len(peaks[0]) > 0:
+        if debug:
+            print(f"found {len(peaks[0])} peaks")
+            print(peaks)
         LGR.debug(peaks)
         zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
         for i in range(zeropkindex + 1, maxpeaks.shape[0]):
@@ -155,6 +169,9 @@ def check_autocorrelation(
                     )
                     plt.show()
                 return sidelobetime, sidelobeamp
+    else:
+        if debug:
+            print("no peaks found")
     return None, None
 
 

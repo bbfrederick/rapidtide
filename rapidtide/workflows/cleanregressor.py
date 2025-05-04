@@ -51,10 +51,32 @@ def cleanregressor(
     detrendorder=3,
     windowfunc="hamming",
     respdelete=False,
+    displayplots=False,
     debug=False,
     rt_floattype="float64",
     rt_floatset=np.float64,
 ):
+    # print debugging info
+    if debug:
+        print("cleanregressor:")
+        print(f"\t{thepass=}")
+        print(f"\t{lagmininpts=}")
+        print(f"\t{lagmaxinpts=}")
+        print(f"\t{lagmin=}")
+        print(f"\t{lagmax=}")
+        print(f"\t{detrendorder=}")
+        print(f"\t{windowfunc=}")
+        print(f"\t{respdelete=}")
+        print(f"\t{check_autocorrelation=}")
+        print(f"\t{fix_autocorrelation=}")
+        print(f"\t{despeckle_thresh=}")
+        print(f"\t{lthreshval=}")
+        print(f"\t{fixdelay=}")
+        print(f"\t{check_autocorrelation=}")
+        print(f"\t{displayplots=}")
+        print(f"\t{rt_floattype=}")
+        print(f"\t{rt_floatset=}")
+
     # check the regressor for periodic components in the passband
     dolagmod = True
     doreferencenotch = True
@@ -121,21 +143,33 @@ def cleanregressor(
                 f"searching for sidelobes with amplitude > {theampthresh} "
                 f"with abs(lag) < {thelagthresh} s"
             )
+        if debug:
+            print(
+                (
+                    f"searching for sidelobes with amplitude > {theampthresh} "
+                    f"with abs(lag) < {thelagthresh} s"
+                )
+            )
         sidelobetime, sidelobeamp = tide_corr.check_autocorrelation(
             accheckcorrscale,
             thexcorr,
             acampthresh=theampthresh,
             aclagthresh=thelagthresh,
             detrendorder=detrendorder,
+            displayplots=displayplots,
+            debug=debug,
         )
+        if debug:
+            print(f"check_autocorrelation returned: {sidelobetime=}, {sidelobeamp=}")
         absmaxsigma = acwidth * 10.0
         passsuffix = "_pass" + str(thepass)
         if sidelobetime is not None:
             despeckle_thresh = np.max([despeckle_thresh, sidelobetime / 2.0])
-            LGR.warning(
-                f"\n\nWARNING: check_autocorrelation found bad sidelobe at {sidelobetime} "
-                f"seconds ({1.0 / sidelobetime} Hz)..."
-            )
+            if LGR is not None:
+                LGR.warning(
+                    f"\n\nWARNING: check_autocorrelation found bad sidelobe at {sidelobetime} "
+                    f"seconds ({1.0 / sidelobetime} Hz)..."
+                )
             # bidsify
             """tide_io.writebidstsv(
                 f"{outputname}_desc-movingregressor_timeseries",
@@ -160,7 +194,7 @@ def cleanregressor(
                         LGR.info("removing spectral component at sidelobe frequency")
                     acstopfreq = 1.0 / sidelobetime
                     acfixfilter = tide_filt.NoncausalFilter(
-                        debug=debug,
+                        debug=False,
                     )
                     acfixfilter.settype("arb_stop")
                     acfixfilter.setfreqs(
@@ -222,6 +256,9 @@ def cleanregressor(
             cleaned_referencetc = 1.0 * referencetc
             cleaned_nonosreferencetc = 1.0 * resampnonosref_y
     else:
+        sidelobetime = None
+        sidelobeamp = None
+        lagmod = 1000.0
         acwidth = None
         absmaxsigma = None
         cleaned_resampref_y = 1.0 * tide_math.corrnormalize(

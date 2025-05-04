@@ -23,6 +23,7 @@ import numpy as np
 
 import rapidtide.filter as tide_filt
 import rapidtide.helper_classes as tide_classes
+import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
@@ -39,15 +40,19 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
 
     outputname = os.path.join(testtemproot, "cleanregressortest")
     thepass = 1
+    padtrs = 30
     fmrifreq = 1.0
     oversampfac = 2
     oversampfreq = oversampfac * fmrifreq
     theprefilter = tide_filt.NoncausalFilter("lfo")
-    lagmin = -5
-    lagmax = 5
+    lagmin = -30
+    lagmax = 30
     lagmininpts = int((lagmin * oversampfreq) - 0.5)
     lagmaxinpts = int((lagmax * oversampfreq) + 0.5)
     lagmod = 1000.0
+    noiseamp = 0.25
+    detrendorder = 3
+    windowfunc = "hamming"
 
     tclen = 500
     osvalidsimcalcstart = 0
@@ -65,64 +70,104 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
         lagmin=lagmin,
         lagmax=lagmax,
         debug=debug,
+        allowhighfitamps=True,
+        enforcethresh=False,
         zerooutbadfit=False,
     )
 
     # make a reference timecourse
     rng = np.random.default_rng(seed=1234)
-    resampnonosref_y = theprefilter.apply(oversampfreq, rng.normal(loc=0.0, scale=1.0, size=tclen))
-    resampref_y = tide_resample.upsample(resampnonosref_y, fmrifreq, oversampfreq)
-    theCorrelator.setreftc(resampnonosref_y)
-    referencetc = resampref_y
+    basewave = theprefilter.apply(fmrifreq, rng.normal(loc=0.0, scale=1.0, size=tclen))
+    noisewave = rng.normal(loc=0.0, scale=noiseamp, size=tclen)
+    theparamsets = [
+        [2.0, 0.0, False, 0],
+        [2.5, 0.8, True, 0],
+        [5.0, 0.5, True, 0],
+        [7.5, 0.25, True, 100],
+        [10.0, 0.1, True, 0],
+    ]
+    for paramset in theparamsets:
+        echotime = paramset[0]
+        echoamp = paramset[1]
+        check_autocorrelation = paramset[2]
+        osvalidsimcalcstart = paramset[3]
+        if debug:
+            print(
+                "**********Start******************************************************************"
+            )
+            print(f"{echotime=}, {echoamp=}, {check_autocorrelation=}, {osvalidsimcalcstart=}")
+            print(
+                "*********************************************************************************"
+            )
+        theechotc, dummy, dummy, dummy = tide_resample.timeshift(
+            basewave, echotime * oversampfreq, padtrs, doplot=displayplots, debug=debug
+        )
+        resampnonosref_y = basewave + echoamp * theechotc + noisewave
+        resampref_y = tide_resample.upsample(resampnonosref_y, fmrifreq, oversampfreq)
+        theCorrelator.setreftc(resampnonosref_y)
+        referencetc = tide_math.corrnormalize(
+            resampref_y[osvalidsimcalcstart:],
+            detrendorder=detrendorder,
+            windowfunc=windowfunc,
+        )
 
-    resampref_y = tide_resample.upsample(resampnonosref_y, fmrifreq, oversampfreq)
+        resampref_y = tide_resample.upsample(resampnonosref_y, fmrifreq, oversampfreq)
 
-    (
-        cleaned_resampref_y,
-        cleaned_referencetc,
-        cleaned_nonosreferencetc,
-        despeckle_thresh,
-        sidelobeamp,
-        sidelobetime,
-        lagmod,
-        acwidth,
-        absmaxsigma,
-    ) = tide_cleanregressor.cleanregressor(
-        outputname,
-        thepass,
-        referencetc,
-        resampref_y,
-        resampnonosref_y,
-        fmrifreq,
-        oversampfreq,
-        osvalidsimcalcstart,
-        osvalidsimcalcend,
-        lagmininpts,
-        lagmaxinpts,
-        theFitter,
-        theCorrelator,
-        lagmin,
-        lagmax,
-        LGR=None,
-        check_autocorrelation=True,
-        fix_autocorrelation=True,
-        despeckle_thresh=5.0,
-        lthreshval=0.0,
-        fixdelay=False,
-        detrendorder=3,
-        windowfunc="hamming",
-        respdelete=False,
-        debug=False,
-        rt_floattype="float64",
-        rt_floatset=np.float64,
-    )
-
-    print(f"{despeckle_thresh=}")
-    print(f"{sidelobeamp=}")
-    print(f"{sidelobetime=}")
-    print(f"{lagmod=}")
-    print(f"{acwidth=}")
-    print(f"{absmaxsigma=}")
+        (
+            cleaned_resampref_y,
+            cleaned_referencetc,
+            cleaned_nonosreferencetc,
+            despeckle_thresh,
+            sidelobeamp,
+            sidelobetime,
+            lagmod,
+            acwidth,
+            absmaxsigma,
+        ) = tide_cleanregressor.cleanregressor(
+            outputname,
+            thepass,
+            referencetc,
+            resampref_y,
+            resampnonosref_y,
+            fmrifreq,
+            oversampfreq,
+            osvalidsimcalcstart,
+            osvalidsimcalcend,
+            lagmininpts,
+            lagmaxinpts,
+            theFitter,
+            theCorrelator,
+            lagmin,
+            lagmax,
+            LGR=None,
+            check_autocorrelation=check_autocorrelation,
+            fix_autocorrelation=True,
+            despeckle_thresh=5.0,
+            lthreshval=0.0,
+            fixdelay=False,
+            detrendorder=detrendorder,
+            windowfunc=windowfunc,
+            respdelete=False,
+            displayplots=displayplots,
+            debug=debug,
+            rt_floattype="float64",
+            rt_floatset=np.float64,
+        )
+        print(f"\t{check_autocorrelation=}")
+        print(f"\t{despeckle_thresh=}")
+        print(f"\t{sidelobeamp=}")
+        print(f"\t{sidelobetime=}")
+        print(f"\t{lagmod=}")
+        print(f"\t{acwidth=}")
+        print(f"\t{absmaxsigma=}")
+        if debug:
+            print(
+                "*********************************************************************************"
+            )
+            print(f"{echotime=}, {echoamp=}, {check_autocorrelation=}, {osvalidsimcalcstart=}")
+            print(
+                "**************End****************************************************************"
+            )
 
 
 if __name__ == "__main__":

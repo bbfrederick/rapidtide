@@ -1076,7 +1076,7 @@ class SimilarityFunctionFitter:
                     maxval_init = 0.0
                     if self.debug:
                         print("bad initial amp:", maxval_init, "is less than 0.0")
-                if maxval_init > 1.0:
+                if (maxval_init > 1.0) and self.enforcethresh:
                     failreason |= self.FML_INITAMPHIGH
                     maxval_init = 1.0
                     if self.debug:
