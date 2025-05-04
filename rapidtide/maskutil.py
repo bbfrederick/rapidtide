@@ -276,3 +276,42 @@ def getregionsignal(
     if debug:
         print(f"getregionsignal: {globalmean=}")
     return tide_math.stdnormalize(globalmean), themask
+
+
+def saveregionaltimeseries(
+    tcdesc,
+    tcname,
+    fmridata,
+    includemask,
+    fmrifreq,
+    outputname,
+    initfile=False,
+    excludemask=None,
+    filedesc="regional",
+    suffix="",
+    signalgenmethod="sum",
+    pcacomponents=0.8,
+    rt_floatset=np.float64,
+    debug=False,
+):
+    thetimecourse, themask = getregionsignal(
+        fmridata,
+        includemask=includemask,
+        excludemask=excludemask,
+        signalgenmethod=signalgenmethod,
+        pcacomponents=pcacomponents,
+        signame=tcdesc,
+        rt_floatset=rt_floatset,
+        debug=debug,
+    )
+    tide_io.writebidstsv(
+        f"{outputname}_desc-{filedesc}_timeseries",
+        thetimecourse,
+        fmrifreq,
+        columns=[f"{tcname}{suffix}"],
+        extraheaderinfo={
+            "Description": "Regional timecourse averages",
+        },
+        append=(not initfile),
+    )
+    return thetimecourse, themask

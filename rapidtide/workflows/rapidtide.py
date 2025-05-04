@@ -820,117 +820,84 @@ def rapidtide_main(argparsingfunc):
     meanfreq = 1.0 / fmritr
     meanperiod = 1.0 * fmritr
     meanstarttime = 0.0
-    meanvec, meanmask = tide_mask.getregionsignal(
+    meanvec, meanmask = tide_mask.saveregionaltimeseries(
+        "initial regressor",
+        "startregressormask",
         fmri_data,
-        includemask=internalinitregressorincludemask,
-        excludemask=internalinitregressorexcludemask,
+        internalinitregressorincludemask,
+        meanfreq,
+        outputname,
+        initfile=True,
         signalgenmethod=optiondict["initregressorsignalmethod"],
         pcacomponents=optiondict["initregressorpcacomponents"],
-        signame="initial regressor",
-        rt_floatset=rt_floatset,
+        excludemask=internalinitregressorexcludemask,
+        filedesc="regionalprefilter",
+        suffix="",
         debug=optiondict["debug"],
-    )
-    tide_io.writebidstsv(
-        f"{outputname}_desc-regional_timeseries",
-        meanvec,
-        meanfreq,
-        columns=["initregressorregion_raw"],
-        extraheaderinfo={
-            "Description": "Regional timecourse averages",
-        },
-        append=False,
     )
 
     if brainmask is not None:
-        brainvec, dummy = tide_mask.getregionsignal(
+        brainvec, dummy = tide_mask.saveregionaltimeseries(
+            "whole brain",
+            "brain",
             fmri_data,
-            includemask=internalbrainmask,
-            signalgenmethod="sum",
-            signame="whole brain",
-            rt_floatset=rt_floatset,
-            debug=optiondict["debug"],
-        )
-        tide_io.writebidstsv(
-            f"{outputname}_desc-regional_timeseries",
-            brainvec,
+            internalbrainmask,
             meanfreq,
-            columns=["brain_raw"],
-            extraheaderinfo={
-                "Description": "Regional timecourse averages",
-            },
-            append=True,
+            outputname,
+            filedesc="regionalprefilter",
+            suffix="",
+            debug=optiondict["debug"],
         )
 
     if graymask is None:
         internalgraymask = None
     else:
         internalgraymask = graymask.reshape((numspatiallocs))
-        grayvec, dummy = tide_mask.getregionsignal(
+        grayvec, dummy = tide_mask.saveregionaltimeseries(
+            "gray matter",
+            "GM",
             fmri_data,
-            includemask=internalgraymask,
-            excludemask=internalinvbrainmask,
-            signalgenmethod="sum",
-            signame="gray matter",
-            rt_floatset=rt_floatset,
-            debug=optiondict["debug"],
-        )
-        tide_io.writebidstsv(
-            f"{outputname}_desc-regional_timeseries",
-            grayvec,
+            internalgraymask,
             meanfreq,
-            columns=["GM_raw"],
-            extraheaderinfo={
-                "Description": "Regional timecourse averages",
-            },
-            append=True,
+            outputname,
+            excludemask=internalinvbrainmask,
+            filedesc="regionalprefilter",
+            suffix="",
+            debug=optiondict["debug"],
         )
 
     if whitemask is None:
         internalwhitemask = None
     else:
         internalwhitemask = whitemask.reshape((numspatiallocs))
-        whitevec, dummy = tide_mask.getregionsignal(
+        whitevec, dummy = tide_mask.saveregionaltimeseries(
+            "white matter",
+            "WM",
             fmri_data,
-            includemask=internalwhitemask,
-            excludemask=internalinvbrainmask,
-            signalgenmethod="sum",
-            signame="white matter",
-            rt_floatset=rt_floatset,
-            debug=optiondict["debug"],
-        )
-        tide_io.writebidstsv(
-            f"{outputname}_desc-regional_timeseries",
-            whitevec,
+            internalwhitemask,
             meanfreq,
-            columns=["WM_raw"],
-            extraheaderinfo={
-                "Description": "Regional timecourse averages",
-            },
-            append=True,
+            outputname,
+            excludemask=internalinvbrainmask,
+            filedesc="regionalprefilter",
+            suffix="",
+            debug=optiondict["debug"],
         )
 
     if csfmask is None:
         internalcsfmask = None
     else:
         internalcsfmask = csfmask.reshape((numspatiallocs))
-        csfvec, dummy = tide_mask.getregionsignal(
+        csfvec, dummy = tide_mask.saveregionaltimeseries(
+            "CSF",
+            "CSF",
             fmri_data,
-            includemask=internalcsfmask,
-            excludemask=internalinvbrainmask,
-            signalgenmethod="sum",
-            signame="CSF",
-            rt_floatset=rt_floatset,
-            debug=optiondict["debug"],
-        )
-        tide_io.writebidstsv(
-            f"{outputname}_desc-regional_timeseries",
-            csfvec,
+            internalcsfmask,
             meanfreq,
-            columns=["CSF_raw"],
-            extraheaderinfo={
-                "Description": "Regional timecourse averages",
-            },
-            append=True,
+            outputname,
+            excludemask=internalinvbrainmask,
+            filedesc="regionalprefilter",
+            suffix="",
+            debug=optiondict["debug"],
         )
 
     # get rid of more memory we aren't using
@@ -3070,99 +3037,69 @@ def rapidtide_main(argparsingfunc):
             else:
                 thisexcludemask = None
 
-            meanvec, meanmask = tide_mask.getregionsignal(
+            meanvec, meanmask = tide_mask.saveregionaltimeseries(
+                "initial regressor",
+                "startregressormask",
                 filtereddata,
-                includemask=thisincludemask,
-                excludemask=thisexcludemask,
-                signalgenmethod=optiondict["initregressorsignalmethod"],
-                pcacomponents=optiondict["initregressorpcacomponents"],
-                rt_floatset=rt_floatset,
-                debug=False,
-            )
-            tide_io.writebidstsv(
-                f"{outputname}_desc-regional_timeseries",
-                meanvec,
+                thisincludemask,
                 meanfreq,
-                columns=["initregressorregion_postrt"],
-                extraheaderinfo={
-                    "Description": "Regional timecourse averages",
-                },
-                append=True,
+                outputname,
+                initfile=True,
+                excludemask=thisexcludemask,
+                filedesc="regionalpostfilter",
+                suffix="",
+                debug=optiondict["debug"],
             )
             if brainmask is not None:
-                brainvec, dummy = tide_mask.getregionsignal(
+                brainvec, dummy = tide_mask.saveregionaltimeseries(
+                    "whole brain",
+                    "brain",
                     filtereddata,
-                    includemask=internalbrainmask[validvoxels],
-                    signalgenmethod="sum",
-                    rt_floatset=rt_floatset,
-                    debug=False,
-                )
-                tide_io.writebidstsv(
-                    f"{outputname}_desc-regional_timeseries",
-                    brainvec,
+                    internalbrainmask[validvoxels],
                     meanfreq,
-                    columns=["brain_postrt"],
-                    extraheaderinfo={
-                        "Description": "Regional timecourse averages",
-                    },
-                    append=True,
+                    outputname,
+                    filedesc="regionalpostfilter",
+                    suffix="",
+                    debug=optiondict["debug"],
                 )
             if graymask is not None:
-                graymattervec, dummy = tide_mask.getregionsignal(
+                grayvec, dummy = tide_mask.saveregionaltimeseries(
+                    "gray matter",
+                    "GM",
                     filtereddata,
-                    includemask=internalgraymask[validvoxels],
-                    excludemask=internalinvbrainmask[validvoxels],
-                    signalgenmethod="sum",
-                    rt_floatset=rt_floatset,
-                    debug=False,
-                )
-                tide_io.writebidstsv(
-                    f"{outputname}_desc-regional_timeseries",
-                    graymattervec,
+                    internalgraymask[validvoxels],
                     meanfreq,
-                    columns=["GM_postrt"],
-                    extraheaderinfo={
-                        "Description": "Regional timecourse averages",
-                    },
-                    append=True,
+                    outputname,
+                    excludemask=internalinvbrainmask[validvoxels],
+                    filedesc="regionalpostfilter",
+                    suffix="",
+                    debug=optiondict["debug"],
                 )
             if whitemask is not None:
-                whitemattervec, dummy = tide_mask.getregionsignal(
+                whitevec, dummy = tide_mask.saveregionaltimeseries(
+                    "white matter",
+                    "WM",
                     filtereddata,
-                    includemask=internalwhitemask[validvoxels],
-                    excludemask=internalinvbrainmask[validvoxels],
-                    signalgenmethod="sum",
-                    rt_floatset=rt_floatset,
-                    debug=False,
-                )
-                tide_io.writebidstsv(
-                    f"{outputname}_desc-regional_timeseries",
-                    whitemattervec,
+                    internalwhitemask[validvoxels],
                     meanfreq,
-                    columns=["WM_postrt"],
-                    extraheaderinfo={
-                        "Description": "Regional timecourse averages",
-                    },
-                    append=True,
+                    outputname,
+                    excludemask=internalinvbrainmask[validvoxels],
+                    filedesc="regionalpostfilter",
+                    suffix="",
+                    debug=optiondict["debug"],
                 )
             if csfmask is not None:
-                csfvec, dummy = tide_mask.getregionsignal(
+                grayvec, dummy = tide_mask.saveregionaltimeseries(
+                    "CSF",
+                    "CSF",
                     filtereddata,
-                    includemask=internalcsfmask[validvoxels],
-                    excludemask=internalinvbrainmask[validvoxels],
-                    signalgenmethod="sum",
-                    rt_floatset=rt_floatset,
-                    debug=False,
-                )
-                tide_io.writebidstsv(
-                    f"{outputname}_desc-regional_timeseries",
-                    csfvec,
+                    internalcsfmask[validvoxels],
                     meanfreq,
-                    columns=["CSF_postrt"],
-                    extraheaderinfo={
-                        "Description": "Regional timecourse averages",
-                    },
-                    append=True,
+                    outputname,
+                    excludemask=internalinvbrainmask[validvoxels],
+                    filedesc="regionalpostfilter",
+                    suffix="",
+                    debug=optiondict["debug"],
                 )
             tide_util.logmem("after sLFO filter")
             LGR.info("")

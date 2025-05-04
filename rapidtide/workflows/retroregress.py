@@ -28,6 +28,7 @@ import numpy as np
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
+import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.refinedelay as tide_refinedelay
@@ -802,16 +803,138 @@ def retroregress(args):
                 "message3": "voxels",
             },
         )
-        # finalrawvariance = tide_math.imagevariance(filtereddata, None, 1.0 / fmritr)
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
 
         divlocs = np.where(finalvariance > 0.0)
         varchange = initialvariance * 0.0
         varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
 
-        """divlocs = np.where(finalrawvariance > 0.0)
-        rawvarchange = initialrawvariance * 0.0
-        rawvarchange[divlocs] = 100.0 * (finalrawvariance[divlocs] / initialrawvariance[divlocs] - 1.0)"""
+        # save regional timecourses if masks are defined
+        # read in the anatomic masks
+        anatomiclist = [
+            ["brainmaskincludename", "brainmaskincludevals", "brainmask"],
+            ["graymatterincludename", "graymatterincludevals", "graymattermask"],
+            ["whitematterincludename", "whitematterincludevals", "whitemattermask"],
+            ["csfincludename", "csfincludevals", "csfmask"],
+        ]
+        anatomicmasks = []
+        for thisanatomic in anatomiclist:
+            if therunoptions[thisanatomic[0]] is not None:
+                anatomicmasks.append(
+                    tide_mask.readamask(
+                        therunoptions[thisanatomic[0]],
+                        theinputdata.nim_hdr,
+                        xsize,
+                        istext=(theinputdata.filetype == "text"),
+                        valslist=therunoptions[thisanatomic[1]],
+                        maskname=thisanatomic[2],
+                        tolerance=therunoptions["spatialtolerance"],
+                        debug=args.focaldebug,
+                    )
+                )
+                anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
+            else:
+                anatomicmasks.append(None)
+        brainmask = anatomicmasks[0]
+        graymask = anatomicmasks[1]
+        whitemask = anatomicmasks[2]
+        csfmask = anatomicmasks[3]
+
+        """if internalinitregressorincludemask is not None:
+            thisincludemask = internalinitregressorincludemask[validvoxels]
+        else:
+            thisincludemask = None
+        if internalinitregressorexcludemask is not None:
+            thisexcludemask = internalinitregressorexcludemask[validvoxels]
+        else:
+            thisexcludemask = None
+
+        meanvec, meanmask = tide_mask.saveregionaltimeseries(
+            "initial regressor",
+            "startregressormask",
+            filtereddata,
+            thisincludemask,
+            1.0 / fmritr,
+            outputname,
+            initfile=True,
+            excludemask=thisexcludemask,
+            filedesc="regionalpostfilter",
+            suffix="",
+            debug=args.debug,
+        )"""
+        # reformat the anatomic masks, if they exist
+        if brainmask is None:
+            invbrainmask = None
+
+            internalbrainmask = None
+            internalinvbrainmask = None
+        else:
+            invbrainmask = 1 - brainmask
+            internalbrainmask = brainmask.reshape((numspatiallocs))
+            internalinvbrainmask = invbrainmask.reshape((numspatiallocs))
+        if graymask is None:
+            internalgraymask = None
+        else:
+            internalgraymask = graymask.reshape((numspatiallocs))
+        if whitemask is None:
+            internalwhitemask = None
+        else:
+            internalwhitemask = whitemask.reshape((numspatiallocs))
+        if csfmask is None:
+            internalcsfmask = None
+        else:
+            internalcsfmask = csfmask.reshape((numspatiallocs))
+        if brainmask is not None:
+            brainvec, dummy = tide_mask.saveregionaltimeseries(
+                "whole brain",
+                "brain",
+                filtereddata,
+                internalbrainmask[validvoxels],
+                1.0 / fmritr,
+                outputname,
+                filedesc="regionalpostfilter",
+                suffix="",
+                debug=args.debug,
+            )
+        if graymask is not None:
+            grayvec, dummy = tide_mask.saveregionaltimeseries(
+                "gray matter",
+                "GM",
+                filtereddata,
+                internalgraymask[validvoxels],
+                1.0 / fmritr,
+                outputname,
+                excludemask=internalinvbrainmask[validvoxels],
+                filedesc="regionalpostfilter",
+                suffix="",
+                debug=args.debug,
+            )
+        if whitemask is not None:
+            whitevec, dummy = tide_mask.saveregionaltimeseries(
+                "white matter",
+                "WM",
+                filtereddata,
+                internalwhitemask[validvoxels],
+                1.0 / fmritr,
+                outputname,
+                excludemask=internalinvbrainmask[validvoxels],
+                filedesc="regionalpostfilter",
+                suffix="",
+                debug=args.debug,
+            )
+        if csfmask is not None:
+            grayvec, dummy = tide_mask.saveregionaltimeseries(
+                "CSF",
+                "CSF",
+                filtereddata,
+                internalcsfmask[validvoxels],
+                1.0 / fmritr,
+                outputname,
+                excludemask=internalinvbrainmask[validvoxels],
+                filedesc="regionalpostfilter",
+                suffix="",
+                debug=args.debug,
+            )
 
         # save outputs
         TimingLGR.info("Starting output save")
@@ -899,8 +1022,20 @@ def retroregress(args):
                     "second",
                     "Lag time in seconds used for calculation",
                 ),
-                (corrmask_valid, "corrfitREAD", "mask", None, "Correlation mask used for calculation"),
-                (procmask_valid, "processedREAD", "mask", None, "Processed mask used for calculation"),
+                (
+                    corrmask_valid,
+                    "corrfitREAD",
+                    "mask",
+                    None,
+                    "Correlation mask used for calculation",
+                ),
+                (
+                    procmask_valid,
+                    "processedREAD",
+                    "mask",
+                    None,
+                    "Processed mask used for calculation",
+                ),
             ]
         if args.savenormalsLFOfiltfiles:
             if args.regressderivs > 0 or args.refinedelay:
@@ -1109,33 +1244,35 @@ def retroregress(args):
                 )
             TimingLGR.info("Filtering for maxcorralt calculation complete")
             TimingLGR.info("GLM for maxcorralt calculation start")
-            voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
-                fmri_data_valid,
-                validvoxels,
-                initial_fmri_x,
-                lagstouse_valid,
-                corrmask_valid,
-                genlagtc,
-                mode,
-                outputname,
-                oversamptr,
-                sLFOfitmean,
-                rvalue,
-                r2value,
-                fitNorm[:, : args.regressderivs + 1],
-                fitcoeff[:, : args.regressderivs + 1],
-                movingsignal,
-                lagtc,
-                filtereddata,
-                LGR,
-                TimingLGR,
-                threshval,
-                args.saveminimumsLFOfiltfiles,
-                nprocs_makelaggedtcs=args.nprocs,
-                nprocs_regressionfilt=args.nprocs,
-                regressderivs=args.regressderivs,
-                showprogressbar=args.showprogressbar,
-                debug=args.debug,
+            voxelsprocessed_regressionfilt, regressorset, evset = (
+                tide_regressfrommaps.regressfrommaps(
+                    fmri_data_valid,
+                    validvoxels,
+                    initial_fmri_x,
+                    lagstouse_valid,
+                    corrmask_valid,
+                    genlagtc,
+                    mode,
+                    outputname,
+                    oversamptr,
+                    sLFOfitmean,
+                    rvalue,
+                    r2value,
+                    fitNorm[:, : args.regressderivs + 1],
+                    fitcoeff[:, : args.regressderivs + 1],
+                    movingsignal,
+                    lagtc,
+                    filtereddata,
+                    LGR,
+                    TimingLGR,
+                    threshval,
+                    args.saveminimumsLFOfiltfiles,
+                    nprocs_makelaggedtcs=args.nprocs,
+                    nprocs_regressionfilt=args.nprocs,
+                    regressderivs=args.regressderivs,
+                    showprogressbar=args.showprogressbar,
+                    debug=args.debug,
+                )
             )
             TimingLGR.info(
                 "GLM for maxcorralt calculation done",
@@ -1240,7 +1377,6 @@ def retroregress(args):
             bidsdict,
             debug=args.debug,
         )
-
 
     # write the runoptions file
     print("writing runoptions")
