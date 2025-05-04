@@ -23,6 +23,7 @@ import matplotlib as mpl
 import rapidtide.qualitycheck as rapidtide_quality
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
+import rapidtide.workflows.retroregress as rapidtide_retroregress
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
@@ -56,6 +57,50 @@ def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
     rapidtide_quality.qualitycheck(os.path.join(testtemproot, "sub-RAPIDTIDETEST1"))
 
+    # test anatomic masks
+    inputargs = [
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST_seg"),
+        "--nprocs",
+        "-1",
+        "--passes",
+        "3",
+        "--brainmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz"),
+        "--graymattermask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY"),
+        "--whitemattermask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE"),
+        "--csfmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF"),
+    ]
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+
+    inputargs = [
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST_seg"),
+        "--alternateoutput",
+        os.path.join(testtemproot, "segtest"),
+        "--nprocs",
+        "-1",
+        "--outputlevel",
+        "max",
+    ]
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
+
+    inputargs = [
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETEST_seg"),
+        "--alternateoutput",
+        os.path.join(testtemproot, "regressoronly"),
+        "--nprocs",
+        "-1",
+        "--outputlevel",
+        "onlyregressors",
+    ]
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
+
+    # test fixval
     inputargs = [
         os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST1_fixval"),

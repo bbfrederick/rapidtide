@@ -26,7 +26,7 @@ import rapidtide.helper_classes as tide_classes
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
-from rapidtide.tests.utils import get_examples_path, get_test_temp_path
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path, mse
 
 
 def test_cleanregressor(debug=False, local=False, displayplots=False):
@@ -166,6 +166,10 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
         print(f"\t{lagmod=}")
         print(f"\t{acwidth=}")
         print(f"\t{absmaxsigma=}")
+        assert len(referencetc) == len(cleaned_referencetc)
+        assert len(resampref_y) == len(cleaned_resampref_y)
+        assert len(resampnonosref_y) == len(cleaned_nonosreferencetc)
+
         if debug:
             print(
                 "*********************************************************************************"
