@@ -209,7 +209,7 @@ def cleanregressor(
                         detrendorder=detrendorder,
                     )
                     cleaned_referencetc = tide_math.corrnormalize(
-                        cleaned_resampref_y,
+                        cleaned_resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1],
                         detrendorder=detrendorder,
                         windowfunc=windowfunc,
                     )

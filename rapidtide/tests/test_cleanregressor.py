@@ -153,6 +153,12 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
             rt_floattype="float64",
             rt_floatset=np.float64,
         )
+        print(f"\t{len(referencetc)=}")
+        print(f"\t{len(resampref_y)=}")
+        print(f"\t{len(resampnonosref_y)=}")
+        print(f"\t{len(cleaned_resampref_y)=}")
+        print(f"\t{len(cleaned_referencetc)=}")
+        print(f"\t{len(cleaned_nonosreferencetc)=}")
         print(f"\t{check_autocorrelation=}")
         print(f"\t{despeckle_thresh=}")
         print(f"\t{sidelobeamp=}")
