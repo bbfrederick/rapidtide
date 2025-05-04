@@ -1,7 +1,10 @@
 # Release history
 
-## Version 3.0.3 (4/30/25)
-* (rapidtide, rapidtide) Fixed a serious cosmetic bug in corrout files introduced in v3.0.2 - teoffset was not being set properly by rapidtide, so the tidepool similarity function display was very wrong.
+## Version 3.0.3 (5/4/25)
+* (rapidtide, retroregress) If you supply a brain, GM, WM, or CSF mask, rapidtide extracts the matching timecourse from the mask at startup, and after filtering, if it's done.  retroregress extracts the timecourses after filtering.
+* (rapidtide) Fixed mask logic when gray matter mask is provided.
+* (rapidtide) Fixed a crash when ``--acfix`` is selected and a bad sidelobe is encountered if the similarity calculation range is not the entire timecourse (THAT was hard to pin down...).
+* (rapidtide, tidepool) Fixed a serious cosmetic bug in corrout files introduced in v3.0.2 - teoffset was not being set properly by rapidtide, so the tidepool similarity function display was very wrong.
 * (rapidtide) shiftedtcs file is now written during each pass if ``--saveintermediatemaps`` is set and ``--outputlevel`` is ``more`` or ``max`` (in response to a feature request).
 * (rapidtide) Added back the ability to have integral powers of the motion regressors.
 * (rapidtide) Added the ability to specify a CSF mask.

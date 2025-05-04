@@ -205,6 +205,8 @@ def getmaskset(
 
 def getregionsignal(
     indata,
+    filter=None,
+    Fs=1.0,
     includemask=None,
     excludemask=None,
     signalgenmethod="sum",
@@ -273,6 +275,8 @@ def getregionsignal(
     else:
         raise ValueError(f"illegal signal generation method: {signalgenmethod}")
     LGR.info(f"used {numvoxelsused} voxels to calculate {signame} signal")
+    if filter is not None:
+        globalmean = filter.apply(Fs, globalmean)
     if debug:
         print(f"getregionsignal: {globalmean=}")
     return tide_math.stdnormalize(globalmean), themask
@@ -285,6 +289,7 @@ def saveregionaltimeseries(
     includemask,
     fmrifreq,
     outputname,
+    filter=None,
     initfile=False,
     excludemask=None,
     filedesc="regional",
@@ -296,6 +301,8 @@ def saveregionaltimeseries(
 ):
     thetimecourse, themask = getregionsignal(
         fmridata,
+        filter=filter,
+        Fs=fmrifreq,
         includemask=includemask,
         excludemask=excludemask,
         signalgenmethod=signalgenmethod,
