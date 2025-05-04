@@ -1268,7 +1268,7 @@ def rapidtide_main(argparsingfunc):
     )
     if optiondict["focaldebug"]:
         print(
-            f"calling setreftc during intialization with length {optiondict['oversampfactor'] * validtimepoints}"
+            f"calling setreftc during initialization with length {optiondict['oversampfactor'] * validtimepoints}"
         )
     theCorrelator.setreftc(
         np.zeros((optiondict["oversampfactor"] * validtimepoints), dtype=np.float64)
