@@ -1935,12 +1935,15 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
 
 def parsefilespec(filespec, debug=False):
     inputlist = filespec.split(":")
-    if len(inputlist) < 2:
-        inputlist.append([None])
     if debug:
         print(f"PARSEFILESPEC: input string >>>{filespec}<<<")
         print(f"PARSEFILESPEC: platform is {platform.system()}")
-    if filespec[1] == ":" and platform.system() == "Windows":
+
+    specialcase = False
+    if len(inputlist) > 1:
+        if filespec[1] == ":" and platform.system() == "Windows":
+            specialcase = True
+    if specialcase:
         thefilename = ":".join([inputlist[0], inputlist[1]])
         if len(inputlist) == 3:
             thecolspec = inputlist[2]
