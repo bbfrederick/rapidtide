@@ -820,6 +820,10 @@ def retroregress(args):
         ]
         anatomicmasks = []
         for thisanatomic in anatomiclist:
+            try:
+                thename = therunoptions[thisanatomic[0]]
+            except KeyError:
+                therunoptions[thisanatomic[0]] = None
             if therunoptions[thisanatomic[0]] is not None:
                 anatomicmasks.append(
                     tide_mask.readamask(
