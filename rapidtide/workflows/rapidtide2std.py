@@ -187,8 +187,10 @@ def rapidtide2std(args):
 
     thefmrimaps = [
         "desc-maxtime_map",
+        "desc-maxtimerefined_map",
         "desc-timepercentile_map",
         "desc-maxcorr_map",
+        "desc-maxcorrrefined_map",
         "desc-maxwidth_map",
         "desc-MTT_map",
         "desc-corrfit_mask",

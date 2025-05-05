@@ -164,13 +164,13 @@ def _get_parser():
         default=True,
     )
     parser.add_argument(
-        "--refinecorr",
+        "--norefinecorr",
         dest="refinecorr",
-        action="store_true",
+        action="store_false",
         help=(
-            "Recalculate the maxcorr map using GLM coefficient of determination from bandpassed data."
+            "Don't recalculate the maxcorr map using GLM coefficient of determination from bandpassed data."
         ),
-        default=False,
+        default=True,
     )
     parser.add_argument(
         "--nofilterwithrefineddelay",
@@ -1242,13 +1242,13 @@ def retroregress(args):
         TimingLGR.info("Finishing output save")
 
         if args.refinecorr:
-            TimingLGR.info("Filtering for maxcorralt calculation start")
+            TimingLGR.info("Filtering for maxcorrrefined calculation start")
             for thevoxel in range(fmri_data_valid.shape[0]):
                 fmri_data_valid[thevoxel, :] = theprefilter.apply(
                     1.0 / fmritr, fmri_data_valid[thevoxel, :]
                 )
-            TimingLGR.info("Filtering for maxcorralt calculation complete")
-            TimingLGR.info("GLM for maxcorralt calculation start")
+            TimingLGR.info("Filtering for maxcorrrefined calculation complete")
+            TimingLGR.info("GLM for maxcorrrefined calculation start")
             voxelsprocessed_regressionfilt, regressorset, evset = (
                 tide_regressfrommaps.regressfrommaps(
                     fmri_data_valid,
@@ -1280,7 +1280,7 @@ def retroregress(args):
                 )
             )
             TimingLGR.info(
-                "GLM for maxcorralt calculation done",
+                "GLM for maxcorrrefined calculation done",
                 {
                     "message2": voxelsprocessed_regressionfilt,
                     "message3": "voxels",
@@ -1290,7 +1290,7 @@ def retroregress(args):
             maplist = [
                 (
                     rvalue,
-                    "maxcorralt",
+                    "maxcorrrefined",
                     "map",
                     None,
                     "R value for the lfo component of the delayed regressor, with sign",

@@ -3504,7 +3504,13 @@ def rapidtide_main(argparsingfunc):
             )
 
             maplist = [
-                (rvalue, "maxcorralt", "map", None, "R value of the inband sLFO fit, with sign"),
+                (
+                    rvalue,
+                    "maxcorrrefined",
+                    "map",
+                    None,
+                    "R value of the inband sLFO fit, with sign",
+                ),
             ]
 
             tide_io.savemaplist(
