@@ -3463,7 +3463,7 @@ def rapidtide_main(argparsingfunc):
             cifti_hdr=theinputdata.cifti_hdr,
         )
 
-        if optiondict["refinedelay"] and False:
+        if optiondict["refinedelay"]:
             # filter the fmri data to the lfo band
             print("filtering fmri_data to sLFO band")
             for i in range(fmri_data_valid.shape[0]):
