@@ -1935,6 +1935,8 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
 
 def parsefilespec(filespec, debug=False):
     inputlist = filespec.split(":")
+    if len(inputlist) < 2:
+        inputlist.append([None])
     if debug:
         print(f"PARSEFILESPEC: input string >>>{filespec}<<<")
         print(f"PARSEFILESPEC: platform is {platform.system()}")
