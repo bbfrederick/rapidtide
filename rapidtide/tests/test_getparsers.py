@@ -74,7 +74,7 @@ from rapidtide.workflows.tcfrom3col import _get_parser as tcfrom3col_getparser
 from rapidtide.workflows.variabilityizer import _get_parser as variabilityizer_getparser
 
 
-def main():
+def test_parsers(debug=False):
     parserlist = [ adjustoffset_getparser,
         aligntcs_getparser,
         applydlfilter_getparser,
@@ -131,8 +131,10 @@ def main():
         variabilityizer_getparser ]
 
     for thegetparser in parserlist:
-        thisparser = thegetparser()
+        theusage = thegetparser().format_help()
+        if debug:
+            print(theusage)
 
 
 if __name__ == "__main__":
-    main()
+    test_parsers(debug=True)
