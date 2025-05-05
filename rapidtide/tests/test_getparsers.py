@@ -71,7 +71,6 @@ from rapidtide.workflows.spectrogram import _get_parser as spectrogram_getparser
 from rapidtide.workflows.synthASL import _get_parser as synthASL_getparser
 from rapidtide.workflows.tcfrom2col import _get_parser as tcfrom2col_getparser
 from rapidtide.workflows.tcfrom3col import _get_parser as tcfrom3col_getparser
-from rapidtide.workflows.tidepool import _get_parser as tidepool_getparser
 from rapidtide.workflows.variabilityizer import _get_parser as variabilityizer_getparser
 
 
@@ -129,7 +128,6 @@ def main():
         synthASL_getparser,
         tcfrom2col_getparser,
         tcfrom3col_getparser,
-        tidepool_getparser,
         variabilityizer_getparser ]
 
     for thegetparser in parserlist:
