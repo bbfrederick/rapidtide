@@ -59,7 +59,9 @@ def main(runninglocally=False):
         verbose=verbose,
     )
 
+    print("getting overlays")
     theoverlays = thesubject.getoverlays()
+    print("getting regressors")
     theregressors = thesubject.getregressors()
 
     assert thesubject.focusregressor == "prefilt"

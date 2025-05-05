@@ -276,6 +276,7 @@ class Overlay:
             label=newlabel,
             report=self.report,
             init_LUT=init_LUT,
+            verbose=self.verbose,
         )
 
     def updateStats(self):
