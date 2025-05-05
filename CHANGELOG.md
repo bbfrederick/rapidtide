@@ -1,5 +1,9 @@
 # Release history
 
+## Version 3.0.4 (5/5/25)
+* (package) Version works again!  Thank you Chris (https://github.com/effigies)!
+* (package) Added a few more tests to catch edge cases that showed up in testing fmripost-rapidtide.
+
 ## Version 3.0.3 (5/4/25)
 * (rapidtide, retroregress) If you supply a brain, GM, WM, or CSF mask, rapidtide extracts the matching timecourse from the mask at startup, and after filtering, if it's done.  retroregress extracts the timecourses after filtering.
 * (rapidtide) Fixed mask logic when gray matter mask is provided.
