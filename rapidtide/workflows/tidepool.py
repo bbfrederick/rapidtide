@@ -1982,6 +1982,12 @@ def tidepool(args):
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
+        "lagstrengthsrefined": {
+            "colormap": gen_thermal_state(),
+            "label": "Refined similarity coefficient",
+            "display": True,
+            "funcmask": "p_lt_0p050_mask",
+        },
         "lagsigma": {
             "colormap": gen_plasma_state(),
             "label": "Similarity width",

@@ -1146,6 +1146,7 @@ class RapidtideDataset:
                 ["lagtimesrefined", "desc-maxtimerefined_map"],
                 ["timepercentile", "desc-timepercentile_map"],
                 ["lagstrengths", "desc-maxcorr_map"],
+                ["lagstrengthsrefined", "desc-maxcorrrefined_map"],
                 ["lagsigma", "desc-maxwidth_map"],
                 ["MTT", "desc-MTT_map"],
                 ["R2", "desc-lfofilterR2_map"],
