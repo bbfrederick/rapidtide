@@ -23,7 +23,6 @@ import matplotlib as mpl
 import rapidtide.qualitycheck as rapidtide_quality
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-import rapidtide.workflows.retroregress as rapidtide_retroregress
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
@@ -56,7 +55,6 @@ def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
     rapidtide_quality.qualitycheck(os.path.join(testtemproot, "sub-RAPIDTIDETEST1"))
-
 
     # test fixval
     inputargs = [
