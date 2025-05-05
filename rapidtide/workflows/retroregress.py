@@ -20,6 +20,7 @@ import argparse
 import copy
 import logging
 import os
+import platform
 import sys
 import time
 from pathlib import Path
@@ -1385,6 +1386,14 @@ def retroregress(args):
     therunoptions["retroregress_runtime"] = time.strftime(
         "%a, %d %b %Y %H:%M:%S %Z", time.localtime(time.time())
     )
+    (
+        therunoptions["retroregress_release_version"],
+        therunoptions["retroregress_git_sha"],
+        therunoptions["retroregress_git_date"],
+        therunoptions["retroregress_git_isdirty"],
+    ) = tide_util.version()
+    therunoptions["retroregress_python_version"] = str(sys.version_info)
+    therunoptions["retroregress_nodename"] = platform.node()
 
     # clean up shared memory
     if usesharedmem:
