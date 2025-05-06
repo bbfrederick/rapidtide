@@ -1,6 +1,8 @@
 # Release history
 
 ## Version 3.0.4 (5/5/25)
+* (rapidtide, retrotregress, tidepool) Support for maxcorrrefined map.
+* (retroregress) Gracefully handles missing mask names in runoptions file.
 * (package) Version works again!  Thank you Chris (https://github.com/effigies)!
 * (package) Added a few more tests to catch edge cases that showed up in testing fmripost-rapidtide.
 
