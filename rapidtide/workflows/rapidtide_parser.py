@@ -1916,7 +1916,7 @@ def process_args(inputargs=None):
 
     if args["in_file"].endswith("txt") and args["realtr"] == "auto":
         raise ValueError(
-            "Either --datatstep or --datafreq must be provided " "if data file is a text file."
+            "Either --datatstep or --datafreq must be provided if data file is a text file."
         )
 
     if args["realtr"] != "auto":
@@ -1925,7 +1925,7 @@ def process_args(inputargs=None):
         if tide_io.checkifcifti(args["in_file"]):
             fmri_tr, dummy = tide_io.getciftitr(nib.load(args["in_file"]).header)
         else:
-            fmri_tr = nib.load(args["in_file"]).header.get_zooms()[3]
+            fmri_tr, dummy = tide_io.fmritimeinfo(args["in_file"])
     args["realtr"] = fmri_tr
 
     if args["inputfreq"] == "auto":
