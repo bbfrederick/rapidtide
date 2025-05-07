@@ -1426,6 +1426,8 @@ def writebidstsv(
     yaxislabel="arbitrary value",
     starttime=0.0,
     append=False,
+    samplerate_tolerance=1e-6,
+    starttime_tolerance=1e-6,
     colsinjson=True,
     colsintsv=False,
     omitjson=False,
@@ -1498,8 +1500,8 @@ def writebidstsv(
                 )
             compressed = incompressed
             if (
-                (insamplerate == samplerate)
-                and (instarttime == starttime)
+                np.fabs(insamplerate - samplerate) < samplerate_tolerance
+                and np.fabs(instarttime - starttime) < starttime_tolerance
                 and reshapeddata.shape[1] == indata.shape[1]
             ):
                 startcol = len(incolumns)
