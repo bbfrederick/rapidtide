@@ -53,46 +53,44 @@ def _get_parser():
 
     for band in ["lfo", "resp", "cardiac"]:
         parser.add_argument(
-            "--" + band + "pctfile",
-            dest=(band + "pctfile"),
+            f"--{band}pctfile",
+            dest=(f"{band}pctfile"),
             action="store",
             type=lambda x: pf.is_valid_file(parser, x),
             metavar="FILE",
-            help=(
-                "3D NIFTI file with the " + band + " amplitude in percent of mean at every point"
-            ),
+            help=(f"3D NIFTI file with the {band} amplitude in percent of mean at every point"),
             default=None,
         )
         parser.add_argument(
-            "--" + band + "lagfile",
-            dest=(band + "lagfile"),
+            f"--{band}lagfile",
+            dest=(f"{band}lagfile"),
             action="store",
             type=lambda x: pf.is_valid_file(parser, x),
             metavar="FILE",
-            help=("3D NIFTI file with the " + band + " delay value in seconds at every point"),
+            help=(f"3D NIFTI file with the {band} delay value in seconds at every point"),
             default=None,
         )
         parser.add_argument(
-            "--" + band + "regressor",
-            dest=(band + "regressor"),
+            f"--{band}regressor",
+            dest=(f"{band}regressor"),
             action="store",
             type=lambda x: pf.is_valid_file(parser, x),
             metavar="FILE",
-            help=("The LFO regressor text file"),
+            help=(f"The {band} regressor text file"),
             default=None,
         )
         parser.add_argument(
-            "--" + band + "samprate",
-            dest=(band + "samprate"),
+            f"--{band}samprate",
+            dest=(f"{band}samprate"),
             action="store",
             type=float,
             metavar="SAMPRATE",
-            help=("The sample rate of the LFO regressor file, in Hz"),
+            help=(f"The sample rate of the {band} regressor file, in Hz"),
             default=None,
         )
         parser.add_argument(
-            "--" + band + "starttime",
-            dest=(band + "starttime"),
+            f"--{band}starttime",
+            dest=(f"{band}starttime"),
             action="store",
             type=float,
             metavar="STARTTIME",
@@ -317,7 +315,7 @@ def simdata(args):
         sliceoffsettimes *= fmritr
 
     nim_fmri, fmridata, fmriheader, fmridims, fmrisizes = tide_io.readfromnifti(args.fmrifilename)
-    print("fmri data: ", numtrs, " timepoints, tr = ", fmritr)
+    print(f"fmri data: {numtrs} timepoints, tr = {fmritr}")
 
     # prepare the output timepoints
     initial_fmri_x = (
@@ -328,12 +326,8 @@ def simdata(args):
     )
     print("length of fmri after removing skip:", len(initial_fmri_x))
     print(
-        "fmri time has length",
-        len(initial_fmri_x),
-        "and runs runs from ",
-        initial_fmri_x[0],
-        " to ",
-        initial_fmri_x[-1],
+        f"fmri time has length {len(initial_fmri_x)}",
+        f"and runs runs from {initial_fmri_x[0]} to {initial_fmri_x[-1]}",
     )
 
     # read in the immean file
