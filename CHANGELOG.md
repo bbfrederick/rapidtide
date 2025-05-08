@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0.5 (5/7/25)
+* (rapidtide) Loosened the sample rate matching when appending timecourses to files, and read NIFTI tr values using modern header features.  This should help address https://github.com/bbfrederick/rapidtide/issues/205 (thank you to https://github.com/phildeming for finding this).
+
 ## Version 3.0.4 (5/5/25)
 * (rapidtide, retrotregress, tidepool) Support for maxcorrrefined map.
 * (retroregress) Gracefully handles missing mask names in runoptions file.
