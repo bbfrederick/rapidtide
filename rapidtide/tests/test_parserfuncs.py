@@ -16,10 +16,26 @@
 #   limitations under the License.
 #
 #
-import os
 import argparse
+import os
+
+import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
+
+
+def proccolspec(thecolspec):
+    if thecolspec is not None:
+        # see if this is a numeric or text list
+        tokenlist = (thecolspec.split(",")[0]).split("-")
+        try:
+            firstelement = int(tokenlist[0])
+            return tide_io.colspectolist(thecolspec)
+        except ValueError:
+            return thecolspec.split(",")
+    else:
+        return [None]
+
 
 def _get_parser():
     """
@@ -41,7 +57,7 @@ def _get_parser():
     return parser
 
 
-def test_parserfuncs(debug=False, local=False, displayplots=False):
+def test_parserfuncs(debug=False, local=False):
     # set input and output directories
     if local:
         exampleroot = "../data/examples/src"
@@ -50,21 +66,36 @@ def test_parserfuncs(debug=False, local=False, displayplots=False):
         exampleroot = get_examples_path()
         testtemproot = get_test_temp_path()
 
-
     theparser = _get_parser()
 
-    filename = os.path.join(exampleroot,"sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json")
-    retval = pf.is_valid_file(theparser, filename)
-    print(filename, retval)
-
-    #filename = os.path.join(exampleroot,"sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseriesxyz.json")
-    #retval = pf.is_valid_file(theparser, filename)
-    #print(filename, retval)
-
-    filename = os.path.join(exampleroot,"sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:acolname")
-    retval = pf.is_valid_file(theparser, filename)
-    print(filename, retval)
+    testvecs = [
+        ["sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json", [None]],
+        [
+            "sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:acolname",
+            ["acolname"],
+        ],
+        [
+            "sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:acolname,bcolname",
+            ["acolname", "bcolname"],
+        ],
+        [
+            "sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.tsv.gz:1,2,5-10",
+            [1, 2, 5, 6, 7, 8, 9, 10],
+        ],
+        [
+            "sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:3,2,7,5-10,6-11",
+            [2, 3, 5, 6, 7, 8, 9, 10, 11],
+        ],
+    ]
+    for infile, expectedcols in testvecs:
+        filename = os.path.join(exampleroot, infile)
+        retval = pf.is_valid_file(theparser, filename)
+        thename, thecolspec = tide_io.parsefilespec(retval)
+        collist = proccolspec(thecolspec)
+        if debug:
+            print(filename, retval, thename, thecolspec, collist)
+        assert collist == expectedcols
 
 
 if __name__ == "__main__":
-    test_parserfuncs(debug=True, local=True, displayplots=True)
+    test_parserfuncs(debug=True, local=True)
