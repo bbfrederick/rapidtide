@@ -156,8 +156,7 @@ def ccorrica(args):
         else:
             Fs = args.samplerate
     else:
-        if args.samplerate != "auto":
-            Fs = args.samplerate
+        Fs = samplerate
 
     sampletime = 1.0 / Fs
     thedims = tcdata.shape

@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0.6 (5/7/25)
+* (ccorrica) Samplerate is now set properly if input is a BIDS tsv file.
+
 ## Version 3.0.5 (5/7/25)
 * (rapidtide) Loosened the sample rate matching when appending timecourses to files, and read NIFTI tr values using modern header features.  This should help address https://github.com/bbfrederick/rapidtide/issues/205 (thank you to https://github.com/phildeming for finding this).
 

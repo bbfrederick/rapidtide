@@ -21,3 +21,25 @@ atlasaverage \
     --extramask /opt/fsl-latest/data/standard/MNI152_T1_1mm_brain_mask.nii.gz \
     --summarymethod median \
     --headerline
+
+atlasaverage \
+    sub-RAPIDTIDETEST.nii.gz \
+    sub-RAPIDTIDETEST_dseg.nii.gz \
+    ../dst/synthsegaverages \
+    --ignorezeros \
+    --numpercentiles 3 \
+    --includemask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --regionlabelfile dseglabels.txt \
+    --summarymethod mean 
+
+atlasaverage \
+    sub-RAPIDTIDETEST.nii.gz \
+    sub-RAPIDTIDETEST_dseg.nii.gz \
+    ../dst/synthsegaverages_pctnorm \
+    --normmethod pct \
+    --ignorezeros \
+    --numpercentiles 3 \
+    --includemask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --regionlabelfile dseglabels.txt \
+    --summarymethod mean 
+
