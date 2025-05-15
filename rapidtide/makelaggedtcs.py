@@ -26,14 +26,20 @@ import rapidtide.genericmultiproc as tide_genericmultiproc
 def _procOneVoxelMakelagtc(
     vox,
     voxelargs,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-    debug=False,
+    **kwargs,
 ):
     # unpack arguments
+    options = {
+        "rt_floatset": np.float64,
+        "debug": False,
+    }
+    options.update(kwargs)
+    rt_floatset = options["rt_floatset"]
+    debug = options["debug"]
     (lagtcgenerator, thelag, timeaxis) = voxelargs
     if debug:
         print(f"{vox=}, {thelag=}, {timeaxis=}")
+
     # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
     #  potential answer - tried adding, results are terrible.
     thelagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis - thelag))
@@ -90,8 +96,7 @@ def makelaggedtcs(
         alwaysmultiproc,
         showprogressbar,
         chunksize,
-        rt_floatset,
-        rt_floattype,
+        rt_floatset=rt_floatset,
     )
     if LGR is not None:
         LGR.info(f"\nLagged timecourses created for {volumetotal} voxels")

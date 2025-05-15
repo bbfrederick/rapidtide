@@ -36,16 +36,26 @@ LGR = logging.getLogger("GENERAL")
 
 def _procOneVoxelTimeShift(
     vox,
-    fmritc,
-    lagtime,
-    padtrs,
-    fmritr,
-    detrendorder=1,
-    offsettime=0.0,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-    debug=False,
+    voxelargs,
+    **kwargs,
 ):
+    options = {
+        "detrendorder": 1,
+        "offsettime": 0.0,
+        "debug": False,
+    }
+    options.update(kwargs)
+    detrendorder = options["detrendorder"]
+    offsettime = options["offsettime"]
+    debug = options["debug"]
+    if debug:
+        print(f"{detrendorder=} {offsettime=}")
+    (
+        fmritc,
+        lagtime,
+        padtrs,
+        fmritr,
+    ) = voxelargs
     if detrendorder > 0:
         normtc = tide_fit.detrend(fmritc, order=detrendorder, demean=True)
     else:
@@ -191,8 +201,9 @@ def alignvoxels(
         alwaysmultiproc,
         showprogressbar,
         chunksize,
-        rt_floatset,
-        rt_floattype,
+        detrendorder=detrendorder,
+        offsettime=offsettime,
+        debug=debug,
     )
 
     LGR.info(

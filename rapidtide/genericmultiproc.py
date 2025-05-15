@@ -38,9 +38,8 @@ def run_multiproc(
     alwaysmultiproc,
     showprogressbar,
     chunksize,
-    rt_floatset,
-    rt_floattype,
     debug=False,
+    **kwargs,
 ):
     if debug:
         print(f"{len(voxelproducts)=}, {voxelproducts[0].shape}")
@@ -61,9 +60,8 @@ def run_multiproc(
                         voxelfunc(
                             val,
                             packfunc(val, voxelargs),
-                            rt_floatset=rt_floatset,
-                            rt_floattype=rt_floattype,
                             debug=debug,
+                            **kwargs,
                         )
                     )
                 except Exception as e:
@@ -103,9 +101,8 @@ def run_multiproc(
                 returnvals = voxelfunc(
                     vox,
                     packfunc(vox, voxelargs),
-                    rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
                     debug=debug,
+                    **kwargs,
                 )
                 unpackfunc(returnvals, voxelproducts)
                 volumetotal += 1
