@@ -21,9 +21,8 @@ import logging
 import warnings
 
 import numpy as np
-from tqdm import tqdm
 
-import rapidtide.multiproc as tide_multiproc
+import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.resample as tide_resample
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -32,23 +31,48 @@ LGR = logging.getLogger("GENERAL")
 
 def _procOneVoxelCorrelation(
     vox,
-    thetc,
-    theCorrelator,
-    fmri_x,
-    fmritc,
-    os_fmri_x,
-    oversampfactor=1,
-    interptype="univariate",
-    rt_floatset=np.float64,
-    rt_floattype="float64",
+    voxelargs,
+    **kwargs,
 ):
+    options = {
+        "oversampfactor": 1,
+        "interptype": "univariate",
+        "debug": False,
+    }
+    options.update(kwargs)
+    oversampfactor = options["oversampfactor"]
+    interptype = options["interptype"]
+    debug = options["debug"]
+    if debug:
+        print(f"{oversampfactor=} {interptype=}")
+    (thetc, theCorrelator, fmri_x, fmritc, os_fmri_x, theglobalmaxlist, thexcorr_y) = voxelargs
     if oversampfactor >= 1:
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
         thetc[:] = fmritc
     thexcorr_y, thexcorr_x, theglobalmax = theCorrelator.run(thetc)
+    # print(f"_procOneVoxelCorrelation: {thexcorr_x=}")
 
-    return vox, np.mean(thetc), thexcorr_y, thexcorr_x, theglobalmax
+    return vox, np.mean(thetc), thexcorr_y, thexcorr_x, theglobalmax, theglobalmaxlist
+
+
+def _packvoxeldata(voxnum, voxelargs):
+    return [
+        voxelargs[0],
+        voxelargs[1],
+        voxelargs[2],
+        (voxelargs[3])[voxnum, :],
+        voxelargs[4],
+        voxelargs[5],
+        voxelargs[6],
+    ]
+
+
+def _unpackvoxeldata(retvals, voxelproducts):
+    (voxelproducts[0])[retvals[0]] = retvals[1]
+    (voxelproducts[1])[retvals[0], :] = retvals[2]
+    voxelproducts[2] = retvals[3]
+    (voxelproducts[3]).append(retvals[4] + 0)
 
 
 def correlationpass(
@@ -101,87 +125,45 @@ def correlationpass(
         print(f"calling setreftc in calcsimfunc with length {len(referencetc)}")
     theCorrelator.setreftc(referencetc)
     theCorrelator.setlimits(lagmininpts, lagmaxinpts)
-
-    inputshape = np.shape(fmridata)
-    volumetotal = 0
     thetc = np.zeros(np.shape(os_fmri_x), dtype=rt_floattype)
     theglobalmaxlist = []
-    if nprocs > 1 or alwaysmultiproc:
-        # define the consumer function here so it inherits most of the arguments
-        def correlation_consumer(inQ, outQ):
-            while True:
-                try:
-                    # get a new message
-                    val = inQ.get()
 
-                    # this is the 'TERM' signal
-                    if val is None:
-                        break
+    # generate a corrscale of the correct length
+    dummy = np.zeros(100, dtype=rt_floattype)
+    dummy, dummy, dummy, thecorrscale, dummy, dummy = _procOneVoxelCorrelation(
+        0,
+        _packvoxeldata(
+            0, [thetc, theCorrelator, fmri_x, fmridata, os_fmri_x, theglobalmaxlist, dummy]
+        ),
+        oversampfactor=oversampfactor,
+        interptype=interptype,
+    )
 
-                    # process and send the data
-                    outQ.put(
-                        _procOneVoxelCorrelation(
-                            val,
-                            thetc,
-                            theCorrelator,
-                            fmri_x,
-                            fmridata[val, :],
-                            os_fmri_x,
-                            oversampfactor=oversampfactor,
-                            interptype=interptype,
-                            rt_floatset=rt_floatset,
-                            rt_floattype=rt_floattype,
-                        )
-                    )
+    inputshape = np.shape(fmridata)
+    voxelargs = [thetc, theCorrelator, fmri_x, fmridata, os_fmri_x, theglobalmaxlist, thecorrscale]
+    voxelfunc = _procOneVoxelCorrelation
+    packfunc = _packvoxeldata
+    unpackfunc = _unpackvoxeldata
+    voxeltargets = [meanval, corrout, thecorrscale, theglobalmaxlist]
+    voxelmask = fmridata[:, 0] * 0.0 + 1
 
-                except Exception as e:
-                    print("error!", e)
-                    break
-
-        data_out = tide_multiproc.run_multiproc(
-            correlation_consumer,
-            inputshape,
-            None,
-            nprocs=nprocs,
-            showprogressbar=showprogressbar,
-            chunksize=chunksize,
-        )
-
-        # unpack the data
-        volumetotal = 0
-        for voxel in data_out:
-            meanval[voxel[0]] = voxel[1]
-            corrout[voxel[0], :] = voxel[2]
-            thecorrscale = voxel[3]
-            theglobalmaxlist.append(voxel[4] + 0)
-            volumetotal += 1
-        del data_out
-    else:
-        for vox in tqdm(
-            range(0, inputshape[0]),
-            desc="Voxel",
-            disable=(not showprogressbar),
-        ):
-            (
-                dummy,
-                meanval[vox],
-                corrout[vox, :],
-                thecorrscale,
-                theglobalmax,
-            ) = _procOneVoxelCorrelation(
-                vox,
-                thetc,
-                theCorrelator,
-                fmri_x,
-                fmridata[vox, :],
-                os_fmri_x,
-                oversampfactor=oversampfactor,
-                interptype=interptype,
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
-            )
-            theglobalmaxlist.append(theglobalmax + 0)
-            volumetotal += 1
+    volumetotal = tide_genericmultiproc.run_multiproc(
+        voxelfunc,
+        packfunc,
+        unpackfunc,
+        voxelargs,
+        voxeltargets,
+        inputshape,
+        voxelmask,
+        LGR,
+        nprocs,
+        alwaysmultiproc,
+        showprogressbar,
+        chunksize,
+        oversampfactor=oversampfactor,
+        interptype=interptype,
+        debug=debug,
+    )
     LGR.info(f"\nSimilarity function calculated on {volumetotal} voxels")
 
     # garbage collect

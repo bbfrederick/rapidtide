@@ -10,6 +10,6 @@ rapidtide \
     --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+    --singleproc_calcsimilarity \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST
-#    --singleproc_makelaggedtcs \
