@@ -83,7 +83,6 @@ def run_multiproc(
         for returnvals in data_out:
             volumetotal += 1
             unpackfunc(returnvals, voxelproducts)
-            # (voxelproducts[0])[returnvals[0], :] = returnvals[1]
         del data_out
     else:
         volumetotal = 0
