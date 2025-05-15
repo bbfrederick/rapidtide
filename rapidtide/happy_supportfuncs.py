@@ -29,6 +29,7 @@ from tqdm import tqdm
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
@@ -364,7 +365,51 @@ def getcardcoeffs(
     return peakfreq
 
 
-def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showprogressbar=False):
+def _procOneVoxelDetrend(
+    vox,
+    voxelargs,
+    **kwargs,
+):
+    # unpack arguments
+    options = {
+        "detrendorder": 1,
+        "debug": False,
+    }
+    options.update(kwargs)
+    detrendorder = options["detrendorder"]
+    debug = options["debug"]
+    [fmri_voxeldata] = voxelargs
+    if debug:
+        print(f"{vox=}, {fmri_voxeldata.shape=}")
+
+    detrended_voxeldata = tide_fit.detrend(fmri_voxeldata, order=detrendorder, demean=False)
+
+    return (
+        vox,
+        detrended_voxeldata,
+    )
+
+
+def _packDetrendvoxeldata(voxnum, voxelargs):
+    return [(voxelargs[0])[voxnum, :]]
+
+
+def _unpackDetrendvoxeldata(retvals, voxelproducts):
+    (voxelproducts[0])[retvals[0], :] = retvals[1]
+
+
+def normalizevoxels(
+    fmri_data,
+    detrendorder,
+    validvoxels,
+    time,
+    timings,
+    LGR=None,
+    nprocs=1,
+    alwaysmultiproc=False,
+    showprogressbar=True,
+    chunksize=1000,
+):
     print("Normalizing voxels...")
     normdata = fmri_data * 0.0
     demeandata = fmri_data * 0.0
@@ -373,17 +418,33 @@ def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showpro
     numspatiallocs = fmri_data.shape[0]
     if detrendorder > 0:
         print("Detrending to order", detrendorder, "...")
-        for idx, thevox in enumerate(
-            tqdm(
-                validvoxels,
-                desc="Voxel",
-                unit="voxels",
-                disable=(not showprogressbar),
-            )
-        ):
-            fmri_data[thevox, :] = tide_fit.detrend(
-                fmri_data[thevox, :], order=detrendorder, demean=False
-            )
+        inputshape = fmri_data.shape
+        voxelargs = [
+            fmri_data,
+        ]
+        voxelfunc = _procOneVoxelDetrend
+        packfunc = _packDetrendvoxeldata
+        unpackfunc = _unpackDetrendvoxeldata
+        voxelmask = fmri_data[:, 0] * 0.0
+        voxelmask[validvoxels] = 1
+        voxeltargets = [fmri_data]
+
+        numspatiallocs = tide_genericmultiproc.run_multiproc(
+            voxelfunc,
+            packfunc,
+            unpackfunc,
+            voxelargs,
+            voxeltargets,
+            inputshape,
+            voxelmask,
+            LGR,
+            nprocs,
+            alwaysmultiproc,
+            showprogressbar,
+            chunksize,
+            order=detrendorder,
+        )
+
         timings.append(["Detrending finished", time.time(), numspatiallocs, "voxels"])
         print(" done")
 
