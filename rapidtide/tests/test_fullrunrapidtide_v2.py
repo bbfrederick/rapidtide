@@ -68,6 +68,7 @@ def test_fullrunrapidtide_v2(debug=False, local=False, displayplots=False):
         "--outputlevel",
         "max",
         "--calccoherence",
+        "--cleanrefined",
         "--dispersioncalc",
         "--nprocs",
         "1",
