@@ -26,7 +26,7 @@ from rapidtide.RapidtideDataset import RapidtideDataset
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
-def main(runninglocally=False):
+def main(runninglocally=False, debug=False):
     # initialize default values
     if runninglocally:
         datafileroot = "../data/examples/dst/sub-RAPIDTIDETEST_"
@@ -74,4 +74,4 @@ def main(runninglocally=False):
 
 
 if __name__ == "__main__":
-    main(runninglocally=True)
+    main(runninglocally=True, debug=True)
