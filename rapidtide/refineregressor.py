@@ -181,7 +181,6 @@ def alignvoxels(
         paddedshiftedtcs,
         paddedweights,
     ]
-    volumetotal = np.sum(lagmask)
     if debug:
         print("alignvoxels: {inputshape}")
         print("volumetotal: {volumetotal}")

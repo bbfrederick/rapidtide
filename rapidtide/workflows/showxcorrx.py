@@ -684,17 +684,15 @@ def showxcorrx(args):
     if args.numestreps > 0:
         # generate a list of correlations from shuffled data
         print("calculating null crosscorrelations")
-        corrlist = tide_nullsimfunc.getNullDistributionDatax(
-            filtereddata2,
+        corrlist = tide_nullsimfunc.getNullDistributionData(
             args.samplerate,
             theCorrelator,
             thexsimfuncfitter,
+            None,
             numestreps=args.numestreps,
-            despeckle_thresh=1000.0,
             showprogressbar=args.showprogressbar,
             permutationmethod=args.permutationmethod,
             nprocs=args.nprocs,
-            fixdelay=False,
         )
 
         # calculate percentiles for the crosscorrelation from the distribution data
@@ -717,17 +715,15 @@ def showxcorrx(args):
             )
 
         print("calculating null Pearson correlations")
-        corrlist_pear = tide_nullsimfunc.getNullDistributionDatax(
-            filtereddata2,
+        corrlist_pear = tide_nullsimfunc.getNullDistributionData(
             args.samplerate,
             theCorrelator,
             thexsimfuncfitter,
+            None,
             numestreps=args.numestreps,
-            despeckle_thresh=1000.0,
             showprogressbar=args.showprogressbar,
             permutationmethod=args.permutationmethod,
             nprocs=args.nprocs,
-            fixdelay=True,
         )
 
         # calculate significance for the pearson correlation

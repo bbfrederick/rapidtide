@@ -128,14 +128,11 @@ def test_nullsimfunc(debug=False, displayplots=False):
     histograms = []
     for thenprocs in [1, -1]:
         for i in range(numpasses):
-            corrlist = tide_nullsimfunc.getNullDistributionDatax(
-                sourcedata,
+            corrlist = tide_nullsimfunc.getNullDistributionData(
                 Fs,
                 theCorrelator,
                 thefitter,
-                despeckle_thresh=5.0,
-                fixdelay=False,
-                initialdelayvalue=0.0,
+                None,
                 numestreps=optiondict["numestreps"],
                 nprocs=thenprocs,
                 showprogressbar=optiondict["showprogressbar"],

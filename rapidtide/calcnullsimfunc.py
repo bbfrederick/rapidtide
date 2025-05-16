@@ -16,34 +16,41 @@
 #   limitations under the License.
 #
 #
-import os
 import sys
-import time
+
 
 import numpy as np
-from tqdm import tqdm
+
 
 import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
-import rapidtide.multiproc as tide_multiproc
+import rapidtide.genericmultiproc as tide_genericmultiproc
 
 
 # note: rawtimecourse has been filtered, but NOT windowed
 def _procOneNullCorrelationx(
-    normalizedreftc,
-    rawtcfft_r,
-    rawtcfft_ang,
-    Fs,
-    theCorrelator,
-    thefitter,
-    despeckle_thresh=5.0,
-    fixdelay=False,
-    initialdelayvalue=0.0,
-    permutationmethod="shuffle",
-    disablethresholds=False,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
+    vox,
+    voxelargs,
+    **kwargs,
 ):
+
+    options = {
+        "permutationmethod": "shuffle",
+        "debug": False,
+    }
+    options.update(kwargs)
+    permutationmethod = options["permutationmethod"]
+    debug = options["debug"]
+    if debug:
+        print(f"{permutationmethod=}")
+    (
+        normalizedreftc,
+        rawtcfft_r,
+        rawtcfft_ang,
+        theCorrelator,
+        thefitter,
+    ) = voxelargs
+
     # make a shuffled copy of the regressors
     if permutationmethod == "shuffle":
         permutedtc = np.random.permutation(normalizedreftc)
@@ -71,17 +78,22 @@ def _procOneNullCorrelationx(
         peakend,
     ) = thefitter.fit(thexcorr_y)
 
-    return maxval
+    return vox, maxval
 
 
-def getNullDistributionDatax(
-    rawtimecourse,
+def _packvoxeldata(voxnum, voxelargs):
+    return [voxelargs[0], voxelargs[1], voxelargs[2], voxelargs[3], voxelargs[4]]
+
+
+def _unpackvoxeldata(retvals, voxelproducts):
+    (voxelproducts[0])[retvals[0]] = retvals[1]
+
+
+def getNullDistributionData(
     Fs,
     theCorrelator,
     thefitter,
-    despeckle_thresh=5.0,
-    fixdelay=False,
-    initialdelayvalue=0.0,
+    LGR,
     numestreps=0,
     nprocs=1,
     alwaysmultiproc=False,
@@ -90,12 +102,16 @@ def getNullDistributionDatax(
     permutationmethod="shuffle",
     rt_floatset=np.float64,
     rt_floattype="float64",
+    debug=False,
 ):
     r"""Calculate a set of null correlations to determine the distribution of correlation values.  This can
     be used to find the spurious correlation threshold
 
     Parameters
     ----------
+    Fs: float
+        The sample frequency of rawtimecourse, in Hz
+
     rawtimecourse : 1D numpy array
         The test regressor.  This should be filtered to the desired bandwidth, but NOT windowed.
         :param rawtimecourse:
@@ -105,9 +121,6 @@ def getNullDistributionDatax(
 
     filterfunc: function
         This is a preconfigured NoncausalFilter function which is used to filter data to the desired bandwidth
-
-    Fs: float
-        The sample frequency of rawtimecourse, in Hz
 
     corrorigin: int
         The bin number in the correlation timescale corresponding to 0.0 seconds delay
@@ -129,91 +142,32 @@ def getNullDistributionDatax(
         ),
     )
     rawtcfft_r, rawtcfft_ang = tide_filt.polarfft(normalizedreftc)
-    if nprocs > 1 or alwaysmultiproc:
-        # define the consumer function here so it inherits most of the arguments
-        def nullCorrelation_consumer(inQ, outQ):
-            np.random.seed((os.getpid() * int(time.time())) % 123456789)
-            while True:
-                try:
-                    # get a new message
-                    val = inQ.get()
+    corrlist = np.zeros((numestreps), dtype=rt_floattype)
+    voxelmask = np.ones((numestreps), dtype=rt_floattype)
+    voxelargs = [normalizedreftc, rawtcfft_r, rawtcfft_ang, theCorrelator, thefitter]
+    voxelfunc = _procOneNullCorrelationx
+    packfunc = _packvoxeldata
+    unpackfunc = _unpackvoxeldata
+    voxeltargets = [
+        corrlist,
+    ]
 
-                    # this is the 'TERM' signal
-                    if val is None:
-                        break
-
-                    # process and send the data
-                    outQ.put(
-                        _procOneNullCorrelationx(
-                            normalizedreftc,
-                            rawtcfft_r,
-                            rawtcfft_ang,
-                            Fs,
-                            theCorrelator,
-                            thefitter,
-                            despeckle_thresh=despeckle_thresh,
-                            fixdelay=fixdelay,
-                            initialdelayvalue=initialdelayvalue,
-                            permutationmethod=permutationmethod,
-                            rt_floatset=rt_floatset,
-                            rt_floattype=rt_floattype,
-                        )
-                    )
-
-                except Exception as e:
-                    print("error!", e)
-                    break
-
-        data_out = tide_multiproc.run_multiproc(
-            nullCorrelation_consumer,
-            inputshape,
-            None,
-            nprocs=nprocs,
-            showprogressbar=showprogressbar,
-            chunksize=chunksize,
-        )
-
-        # unpack the data
-        corrlist = np.asarray(data_out, dtype=rt_floattype)
-    else:
-        corrlist = np.zeros((numestreps), dtype=rt_floattype)
-
-        for i in tqdm(
-            range(0, numestreps),
-            desc="Sham correlation",
-            unit="correlations",
-            disable=(not showprogressbar),
-        ):
-            # make a shuffled copy of the regressors
-            if permutationmethod == "shuffle":
-                permutedtc = np.random.permutation(normalizedreftc)
-            elif permutationmethod == "phaserandom":
-                permutedtc = tide_filt.ifftfrompolar(
-                    rawtcfft_r, np.random.permutation(rawtcfft_ang)
-                )
-            else:
-                print("illegal shuffling method")
-                sys.exit()
-
-            # crosscorrelate with original, fit, and return the maximum value, and add it to the list
-            thexcorr = _procOneNullCorrelationx(
-                normalizedreftc,
-                rawtcfft_r,
-                rawtcfft_ang,
-                Fs,
-                theCorrelator,
-                thefitter,
-                despeckle_thresh=despeckle_thresh,
-                fixdelay=fixdelay,
-                initialdelayvalue=initialdelayvalue,
-                permutationmethod=permutationmethod,
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
-            )
-            corrlist[i] = thexcorr
-
-        # jump to line after progress bar
-        print()
+    volumetotal = tide_genericmultiproc.run_multiproc(
+        voxelfunc,
+        packfunc,
+        unpackfunc,
+        voxelargs,
+        voxeltargets,
+        inputshape,
+        voxelmask,
+        LGR,
+        nprocs,
+        alwaysmultiproc,
+        showprogressbar,
+        chunksize,
+        permutationmethod=permutationmethod,
+        debug=debug,
+    )
 
     # return the distribution data
     numnonzero = len(np.where(corrlist != 0.0)[0])

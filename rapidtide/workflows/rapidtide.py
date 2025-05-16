@@ -1731,18 +1731,17 @@ def rapidtide_main(argparsingfunc):
             else:
                 theSimFunc = theCorrelator
             tide_util.disablemkl(optiondict["nprocs_getNullDist"], debug=threaddebug)
-            simdistdata = tide_nullsimfunc.getNullDistributionDatax(
-                cleaned_resampref_y,
+            simdistdata = tide_nullsimfunc.getNullDistributionData(
                 oversampfreq,
                 theSimFunc,
                 theFitter,
+                LGR,
                 numestreps=optiondict["numestreps"],
                 nprocs=optiondict["nprocs_getNullDist"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
                 showprogressbar=optiondict["showprogressbar"],
                 chunksize=optiondict["mp_chunksize"],
                 permutationmethod=optiondict["permutationmethod"],
-                fixdelay=optiondict["fixdelay"],
                 rt_floatset=np.float64,
                 rt_floattype="float64",
             )
