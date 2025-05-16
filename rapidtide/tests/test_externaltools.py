@@ -39,7 +39,10 @@ def test_externaltools(debug=False, local=False):
 
     if not local:
         os.environ["FSLDIR"] = "/plausible_FSLDIR"
-        
+
+    thefsldir = tide_exttools.fslinfo()
+    if debug:
+        print(f"{thefsldir=}")
 
     fslexists, c3dexists, antsexists = tide_exttools.whatexists()
     if debug:
@@ -52,6 +55,9 @@ def test_externaltools(debug=False, local=False):
     tide_exttools.runflirt(
         "inputname", "targetname", "xform", "outputname", warpfile="thewarp", fake=True
     )
+    tide_exttools.runflirt("inputname", "targetname", "xform", "outputname", fake=True)
+
+    tide_exttools.n4correct("inputname", "outputdir", fake=True)
 
     tide_exttools.antsapply(
         "inputname", "targetname", "outputroot", ["transform1", "transform2"], fake=True
