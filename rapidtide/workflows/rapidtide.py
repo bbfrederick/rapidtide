@@ -16,7 +16,6 @@
 #   limitations under the License.
 #
 #
-import copy
 import gc
 import logging
 import os
@@ -28,8 +27,7 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 from scipy.stats import rankdata
-from sklearn.decomposition import PCA
-from tqdm import tqdm
+
 
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
@@ -55,7 +53,6 @@ import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
-from rapidtide.tests.utils import mse
 
 from .utils import setup_logger
 
