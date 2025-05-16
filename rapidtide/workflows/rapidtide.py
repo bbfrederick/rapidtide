@@ -2572,8 +2572,6 @@ def rapidtide_main(argparsingfunc):
             chunksize=optiondict["mp_chunksize"],
             nprocs=1,
             alwaysmultiproc=optiondict["alwaysmultiproc"],
-            rt_floatset=rt_floatset,
-            rt_floattype=rt_floattype,
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
 
