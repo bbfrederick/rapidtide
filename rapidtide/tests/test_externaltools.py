@@ -37,6 +37,10 @@ def test_externaltools(debug=False, local=False):
     if debug:
         print(f"{thefsldir=}")
 
+    if not local:
+        os.environ["FSLDIR"] = "/plausible_FSLDIR"
+        
+
     fslexists, c3dexists, antsexists = tide_exttools.whatexists()
     if debug:
         print(f"{fslexists=}, {c3dexists=}, {antsexists=}")
