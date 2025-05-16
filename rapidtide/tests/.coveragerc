@@ -12,6 +12,7 @@ omit =
     ../wiener2.py
     ../tidepoolTemplate.py
     ../tidepoolTemplate_alt.py
+    ../notreadyforprimetime/*
 
 [report]
 exclude_lines = 
