@@ -1091,15 +1091,30 @@ def phaseproject(
     xsize, ysize, numslices, timepoints = input_data.getdims()
     fmri_data_byslice = input_data.byslice()
 
+    # first find the validlocs for each slice
+    validlocslist = []
+    if args.verbose:
+        print("Finding validlocs")
     for theslice in tqdm(
         range(numslices),
         desc="Slice",
         unit="slices",
         disable=(not args.showprogressbar),
     ):
-        if args.verbose:
-            print("Phase projecting for slice", theslice)
-        validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
+
+        validlocslist.append(np.where(projmask_byslice[:, theslice] > 0)[0])
+
+    if args.verbose:
+        print("Phase projecting")
+    for theslice in tqdm(
+        range(numslices),
+        desc="Slice",
+        unit="slices",
+        disable=(not args.showprogressbar),
+    ):
+        # first project
+
+        validlocs = validlocslist[theslice]
         # indexlist = range(0, len(cardphasevals[theslice, :]))
         if len(validlocs) > 0:
             for t in proctrs:
@@ -1133,7 +1148,16 @@ def phaseproject(
             rawapp_byslice[:, theslice, :] = 0.0
             cine_byslice[:, theslice, :] = 0.0
 
-        # smooth the projected data along the time dimension
+    if args.verbose:
+        print("Smoothing")
+    for theslice in tqdm(
+        range(numslices),
+        desc="Slice",
+        unit="slices",
+        disable=(not args.showprogressbar),
+    ):
+        # now smooth the projected data along the time dimension
+        validlocs = validlocslist[theslice]
         if args.smoothapp:
             for loc in validlocs:
                 rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(
@@ -1146,6 +1170,18 @@ def phaseproject(
             -derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0
         )
         timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
+
+    # now do the flips
+    if args.verbose:
+        print("Doing flips")
+    for theslice in tqdm(
+        range(numslices),
+        desc="Slice",
+        unit="slices",
+        disable=(not args.showprogressbar),
+    ):
+        # ow do the flips
+        validlocs = validlocslist[theslice]
         if args.fliparteries:
             corrected_rawapp_byslice[validlocs, theslice, :] = (
                 rawapp_byslice[validlocs, theslice, :] - timecoursemean
