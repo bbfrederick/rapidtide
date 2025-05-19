@@ -1059,6 +1059,55 @@ def circularderivs(timecourse):
     )
 
 
+def projectslice(
+    demeandata_byslice,
+    fmri_data_byslice,
+    validlocs,
+    proctrs,
+    theslice,
+    weights_byslice,
+    cine_byslice,
+    rawapp_byslice,
+    outphases,
+    cardphasevals,
+    congridbins,
+    gridkernel,
+    destpoints,
+):
+
+    if len(validlocs) > 0:
+        for t in proctrs:
+            filteredmr = -demeandata_byslice[validlocs, theslice, t]
+            cinemr = fmri_data_byslice[validlocs, theslice, t]
+            thevals, theweights, theindices = tide_resample.congrid(
+                outphases,
+                cardphasevals[theslice, t],
+                1.0,
+                congridbins,
+                kernel=gridkernel,
+                cyclic=True,
+            )
+            for i in range(len(theindices)):
+                weights_byslice[validlocs, theslice, theindices[i]] += theweights[i]
+                # rawapp_byslice[validlocs, theslice, theindices[i]] += (
+                #    theweights[i] * filteredmr
+                # )
+                rawapp_byslice[validlocs, theslice, theindices[i]] += filteredmr
+                cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
+        for d in range(destpoints):
+            if weights_byslice[validlocs[0], theslice, d] == 0.0:
+                weights_byslice[validlocs, theslice, d] = 1.0
+        rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
+            rawapp_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
+        )
+        cine_byslice[validlocs, theslice, :] = np.nan_to_num(
+            cine_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
+        )
+    else:
+        rawapp_byslice[:, theslice, :] = 0.0
+        cine_byslice[:, theslice, :] = 0.0
+
+
 def phaseproject(
     input_data,
     demeandata_byslice,
@@ -1112,8 +1161,7 @@ def phaseproject(
         unit="slices",
         disable=(not args.showprogressbar),
     ):
-        # first project
-
+        # first
         validlocs = validlocslist[theslice]
         # indexlist = range(0, len(cardphasevals[theslice, :]))
         if len(validlocs) > 0:
