@@ -1111,6 +1111,41 @@ def phaseprojectpass(
             rawapp_byslice[:, theslice, :] = 0.0
             cine_byslice[:, theslice, :] = 0.0
 
+def _procOneSliceSmoothing(slice, sliceargs, **kwargs):
+    options = {
+        "debug": False,
+    }
+    options.update(kwargs)
+    debug = options["debug"]
+    (validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice) = sliceargs
+    # now smooth the projected data along the time dimension
+    validlocs = validlocslist[slice]
+    if len(validlocs) > 0:
+        for loc in validlocs:
+            rawapp_byslice[loc, slice, :] = appsmoothingfilter.apply(
+                phaseFs, rawapp_byslice[loc, slice, :]
+            )
+            derivatives_byslice[loc, slice, :] = circularderivs(
+                rawapp_byslice[loc, slice, :]
+            )
+
+def _packslicedataSliceSmoothing(slicenum, sliceargs):
+    return [
+        sliceargs[0],
+        sliceargs[1],
+        sliceargs[2],
+        (sliceargs[3])[slicenum, :],
+        sliceargs[4],
+        sliceargs[5],
+        sliceargs[6],
+    ]
+
+
+def _unpackvoxeldata(retvals, voxelproducts):
+    (voxelproducts[0])[retvals[0]] = retvals[1]
+    (voxelproducts[1])[retvals[0], :] = retvals[2]
+    voxelproducts[2] = retvals[3]
+    (voxelproducts[3]).append(retvals[4] + 0)
 def tcsmoothingpass(numslices,validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice, showprogressbar=True):
     for theslice in tqdm(
             range(numslices),
@@ -1187,46 +1222,6 @@ def phaseproject(
         args.destpoints,
         showprogressbar=args.showprogressbar,
     )
-    """
-    for theslice in tqdm(
-        range(numslices),
-        desc="Slice",
-        unit="slices",
-        disable=(not args.showprogressbar),
-    ):
-        validlocs = validlocslist[theslice]
-        # indexlist = range(0, len(cardphasevals[theslice, :]))
-        if len(validlocs) > 0:
-            for t in proctrs:
-                filteredmr = -demeandata_byslice[validlocs, theslice, t]
-                cinemr = fmri_data_byslice[validlocs, theslice, t]
-                thevals, theweights, theindices = tide_resample.congrid(
-                    outphases,
-                    cardphasevals[theslice, t],
-                    1.0,
-                    args.congridbins,
-                    kernel=args.gridkernel,
-                    cyclic=True,
-                )
-                for i in range(len(theindices)):
-                    weights_byslice[validlocs, theslice, theindices[i]] += theweights[i]
-                    # rawapp_byslice[validlocs, theslice, theindices[i]] += (
-                    #    theweights[i] * filteredmr
-                    # )
-                    rawapp_byslice[validlocs, theslice, theindices[i]] += filteredmr
-                    cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
-            for d in range(args.destpoints):
-                if weights_byslice[validlocs[0], theslice, d] == 0.0:
-                    weights_byslice[validlocs, theslice, d] = 1.0
-            rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-                rawapp_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
-            )
-            cine_byslice[validlocs, theslice, :] = np.nan_to_num(
-                cine_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
-            )
-        else:
-            rawapp_byslice[:, theslice, :] = 0.0
-            cine_byslice[:, theslice, :] = 0.0"""
 
     # smooth the phase projection, if requested
     if args.smoothapp:
@@ -1239,22 +1234,6 @@ def phaseproject(
             phaseFs,
             derivatives_byslice,
             showprogressbar=args.showprogressbar)
-        """for theslice in tqdm(
-            range(numslices),
-            desc="Slice",
-            unit="slices",
-            disable=(not args.showprogressbar),
-        ):
-            # now smooth the projected data along the time dimension
-            validlocs = validlocslist[theslice]
-            if len(validlocs) > 0:
-                for loc in validlocs:
-                    rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(
-                        phaseFs, rawapp_byslice[loc, theslice, :]
-                    )
-                    derivatives_byslice[loc, theslice, :] = circularderivs(
-                        rawapp_byslice[loc, theslice, :]
-                    )"""
 
     # now do the flips
     print("Doing flips")
