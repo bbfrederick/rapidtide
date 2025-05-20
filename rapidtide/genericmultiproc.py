@@ -91,9 +91,9 @@ def run_multiproc(
     else:
         volumetotal = 0
         for vox in tqdm(
-            range(0, inputshape[0]),
+            range(0, inputshape[indexaxis]),
             desc="Voxel",
-            unit="voxels",
+            unit=procunit,
             disable=(not showprogressbar),
         ):
             if voxelmask[vox] > 0:
