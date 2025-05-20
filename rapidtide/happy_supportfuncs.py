@@ -1111,6 +1111,7 @@ def phaseprojectpass(
             rawapp_byslice[:, theslice, :] = 0.0
             cine_byslice[:, theslice, :] = 0.0
 
+
 def _procOneSliceSmoothing(slice, sliceargs, **kwargs):
     options = {
         "debug": False,
@@ -1125,33 +1126,63 @@ def _procOneSliceSmoothing(slice, sliceargs, **kwargs):
             rawapp_byslice[loc, slice, :] = appsmoothingfilter.apply(
                 phaseFs, rawapp_byslice[loc, slice, :]
             )
-            derivatives_byslice[loc, slice, :] = circularderivs(
-                rawapp_byslice[loc, slice, :]
-            )
+            derivatives_byslice[loc, slice, :] = circularderivs(rawapp_byslice[loc, slice, :])
+
 
 def _packslicedataSliceSmoothing(slicenum, sliceargs):
     return [
         sliceargs[0],
         sliceargs[1],
         sliceargs[2],
-        (sliceargs[3])[slicenum, :],
+        sliceargs[3],
         sliceargs[4],
-        sliceargs[5],
-        sliceargs[6],
     ]
 
 
-def _unpackvoxeldata(retvals, voxelproducts):
-    (voxelproducts[0])[retvals[0]] = retvals[1]
-    (voxelproducts[1])[retvals[0], :] = retvals[2]
-    voxelproducts[2] = retvals[3]
-    (voxelproducts[3]).append(retvals[4] + 0)
-def tcsmoothingpass(numslices,validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice, showprogressbar=True):
+def _unpackslicedataSliceSmoothing(retvals, voxelproducts):
+    pass
+
+
+def tcsmoothingpass(
+    numslices,
+    validlocslist,
+    rawapp_byslice,
+    appsmoothingfilter,
+    phaseFs,
+    derivatives_byslice,
+    nprocs=1,
+    alwaysmultiproc=False,
+    showprogressbar=True,
+    debug=False,
+):
+    inputshape = np.array([numslices, len(rawapp_byslice[0, 0, :])])
+    sliceargs = [validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice]
+    slicefunc = _procOneSliceSmoothing
+    packfunc = _packslicedataSliceSmoothing
+    unpackfunc = _unpackslicedataSliceSmoothing
+    slicetargets = []
+    slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
+
+    """slicetotal = tide_genericmultiproc.run_multiproc(
+        slicefunc,
+        packfunc,
+        unpackfunc,
+        sliceargs,
+        slicetargets,
+        inputshape,
+        slicemask,
+        None,
+        nprocs,
+        alwaysmultiproc,
+        showprogressbar,
+        16,
+        debug=debug,
+    )"""
     for theslice in tqdm(
-            range(numslices),
-            desc="Slice",
-            unit="slices",
-            disable=(not showprogressbar),
+        range(numslices),
+        desc="Slice",
+        unit="slices",
+        disable=(not showprogressbar),
     ):
         # now smooth the projected data along the time dimension
         validlocs = validlocslist[theslice]
@@ -1233,7 +1264,9 @@ def phaseproject(
             appsmoothingfilter,
             phaseFs,
             derivatives_byslice,
-            showprogressbar=args.showprogressbar)
+            nprocs=args.nprocs,
+            showprogressbar=args.showprogressbar,
+        )
 
     # now do the flips
     print("Doing flips")
@@ -1249,7 +1282,9 @@ def phaseproject(
             appflips_byslice = np.where(
                 -derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0
             )
-            timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
+            timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape(
+                (-1, 1)
+            )
             if args.fliparteries:
                 corrected_rawapp_byslice[validlocs, theslice, :] = (
                     rawapp_byslice[validlocs, theslice, :] - timecoursemean
@@ -1289,9 +1324,9 @@ def phaseproject(
                         waveamp_byslice[theloc, theslice] = np.fabs(
                             thecorrfunc_byslice[theloc, theslice, maxloc]
                         )
-            timecoursemin = np.min(corrected_rawapp_byslice[validlocs, theslice, :], axis=1).reshape(
-                (-1, 1)
-            )
+            timecoursemin = np.min(
+                corrected_rawapp_byslice[validlocs, theslice, :], axis=1
+            ).reshape((-1, 1))
             app_byslice[validlocs, theslice, :] = (
                 corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
             )
