@@ -1,6 +1,6 @@
 # Release history
 
-## Version 3.0.6 (5/7/25)
+## Version 3.0.6 (5/20/25)
 * (rapidtide) Made a generic, reusable multiprocessing module and moved many functions over to it.
 * (ccorrica) Samplerate is now set properly if input is a BIDS tsv file.
 * (package) Added tests.
