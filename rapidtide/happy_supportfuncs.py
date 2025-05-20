@@ -370,8 +370,8 @@ def normalizevoxels(
     validvoxels,
     time,
     timings,
+    LGR=None,
     nprocs=1,
-    alwaysmultiproc=False,
     showprogressbar=False,
 ):
     print("Normalizing voxels...")
