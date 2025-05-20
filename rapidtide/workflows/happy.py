@@ -1359,7 +1359,7 @@ def happy_main(argparsingfunc):
             )
 
         if not args.verbose:
-            print("Phase projecting...")
+            print("Setting up for phase projection...")
 
         # make a lowpass filter for the projected data. Limit frequency to 3 cycles per 2pi (1/6th Fs)
         phaseFs = 1.0 / phasestep
