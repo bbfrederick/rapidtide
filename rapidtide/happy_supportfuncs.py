@@ -1127,6 +1127,7 @@ def _procOneSliceSmoothing(slice, sliceargs, **kwargs):
                 phaseFs, rawapp_byslice[loc, slice, :]
             )
             derivatives_byslice[loc, slice, :] = circularderivs(rawapp_byslice[loc, slice, :])
+    return slice, rawapp_byslice[:, slice, :], derivatives_byslice[:, slice, :]
 
 
 def _packslicedataSliceSmoothing(slicenum, sliceargs):
@@ -1140,7 +1141,8 @@ def _packslicedataSliceSmoothing(slicenum, sliceargs):
 
 
 def _unpackslicedataSliceSmoothing(retvals, voxelproducts):
-    pass
+    (voxelproducts[0])[:, retvals[0], :] = retvals[1]
+    (voxelproducts[1])[:, retvals[0], :] = retvals[2]
 
 
 def tcsmoothingpass(
@@ -1155,15 +1157,15 @@ def tcsmoothingpass(
     showprogressbar=True,
     debug=False,
 ):
-    inputshape = np.array([numslices, len(rawapp_byslice[0, 0, :])])
+    inputshape = rawapp_byslice.shape
     sliceargs = [validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice]
     slicefunc = _procOneSliceSmoothing
     packfunc = _packslicedataSliceSmoothing
     unpackfunc = _unpackslicedataSliceSmoothing
-    slicetargets = []
+    slicetargets = [rawapp_byslice, derivatives_byslice]
     slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
 
-    """slicetotal = tide_genericmultiproc.run_multiproc(
+    slicetotal = tide_genericmultiproc.run_multiproc(
         slicefunc,
         packfunc,
         unpackfunc,
@@ -1176,24 +1178,30 @@ def tcsmoothingpass(
         alwaysmultiproc,
         showprogressbar,
         16,
+        indexaxis=1,
+        procunit="slices",
         debug=debug,
-    )"""
-    for theslice in tqdm(
+    )
+
+    """for theslice in tqdm(
         range(numslices),
         desc="Slice",
         unit="slices",
         disable=(not showprogressbar),
     ):
+        slicenum, rawapp_byslice[:, theslice, :], derivatives_byslice[:, theslice, :] = (
+            _procOneSliceSmoothing(theslice, sliceargs)
+        )
         # now smooth the projected data along the time dimension
-        validlocs = validlocslist[theslice]
-        if len(validlocs) > 0:
-            for loc in validlocs:
-                rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(
-                    phaseFs, rawapp_byslice[loc, theslice, :]
-                )
-                derivatives_byslice[loc, theslice, :] = circularderivs(
-                    rawapp_byslice[loc, theslice, :]
-                )
+        #validlocs = validlocslist[theslice]
+        #if len(validlocs) > 0:
+        #    for loc in validlocs:
+        #        rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(
+        #            phaseFs, rawapp_byslice[loc, theslice, :]
+        #        )
+        #        derivatives_byslice[loc, theslice, :] = circularderivs(
+        #            rawapp_byslice[loc, theslice, :]
+        #        )"""
 
 
 def phaseproject(
