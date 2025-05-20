@@ -106,6 +106,12 @@ def linfitfiltpass(
         print(f"{fmri_data.shape=}")
         print(f"{threshval=}")
         print(f"{theevs.shape=}")
+    if procbyvoxel:
+        indexaxis = 0
+        procunit = "voxels"
+    else:
+        indexaxis = 1
+        procunit = "timepoints"
     if threshval is None:
         themask = None
     else:
@@ -187,7 +193,8 @@ def linfitfiltpass(
             themask,
             verbose=verbose,
             nprocs=nprocs,
-            procbyvoxel=procbyvoxel,
+            indexaxis=indexaxis,
+            procunit=procunit,
             showprogressbar=showprogressbar,
             chunksize=mp_chunksize,
         )

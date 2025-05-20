@@ -45,6 +45,7 @@ def test_FastResampler(debug=False):
     if debug:
         print(f"{genlaggedtc.initstart=}, {genlaggedtc.initend=}, {genlaggedtc.initstep=}")
         print(f"{genlaggedtc.hiresstart=}, {genlaggedtc.hiresend=}, {genlaggedtc.hiresstep=}")
+    genlaggedtc.info()
 
     # save and reload with another name
     resamplername = os.path.join(get_test_temp_path(), "savedresampler")

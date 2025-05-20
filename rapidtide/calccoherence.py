@@ -21,17 +21,28 @@ import logging
 import warnings
 
 import numpy as np
-from tqdm import tqdm
 
-import rapidtide.multiproc as tide_multiproc
+import rapidtide.genericmultiproc as tide_genericmultiproc
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelCoherence(
-    vox, theCoherer, fmritc, alt=False, rt_floatset=np.float64, rt_floattype="float64"
+    vox,
+    voxelargs,
+    **kwargs,
 ):
+    options = {
+        "alt": False,
+        "debug": False,
+    }
+    options.update(kwargs)
+    alt = options["alt"]
+    debug = options["debug"]
+    (theCoherer, fmritc) = voxelargs
+    if debug:
+        print(f"{alt=}")
     if alt:
         (
             thecoherence_y,
@@ -53,6 +64,19 @@ def _procOneVoxelCoherence(
     )
 
 
+def _packvoxeldata(voxnum, voxelargs):
+    return [
+        voxelargs[0],
+        (voxelargs[1])[voxnum, :],
+    ]
+
+
+def _unpackvoxeldata(retvals, voxelproducts):
+    (voxelproducts[0])[retvals[0]] = retvals[2]
+    (voxelproducts[1])[retvals[0]] = retvals[3]
+    (voxelproducts[2])[retvals[0]] = retvals[4]
+
+
 def coherencepass(
     fmridata,
     theCoherer,
@@ -64,8 +88,7 @@ def coherencepass(
     nprocs=1,
     alwaysmultiproc=False,
     showprogressbar=True,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
+    debug=False,
 ):
     """
 
@@ -88,74 +111,29 @@ def coherencepass(
 
     """
     inputshape = np.shape(fmridata)
-    volumetotal = 0
-    if nprocs > 1 or alwaysmultiproc:
-        # define the consumer function here so it inherits most of the arguments
-        def coherence_consumer(inQ, outQ):
-            while True:
-                try:
-                    # get a new message
-                    val = inQ.get()
+    voxelargs = [theCoherer, fmridata]
+    voxelfunc = _procOneVoxelCoherence
+    packfunc = _packvoxeldata
+    unpackfunc = _unpackvoxeldata
+    voxeltargets = [coherencefunc, coherencepeakval, coherencepeakfreq]
+    voxelmask = fmridata[:, 0] * 0.0 + 1
 
-                    # this is the 'TERM' signal
-                    if val is None:
-                        break
-
-                    # process and send the data
-                    outQ.put(
-                        _procOneVoxelCoherence(
-                            val,
-                            theCoherer,
-                            fmridata[val, :],
-                            alt=alt,
-                            rt_floatset=rt_floatset,
-                            rt_floattype=rt_floattype,
-                        )
-                    )
-
-                except Exception as e:
-                    print("error!", e)
-                    break
-
-        data_out = tide_multiproc.run_multiproc(
-            coherence_consumer,
-            inputshape,
-            None,
-            nprocs=nprocs,
-            showprogressbar=showprogressbar,
-            chunksize=chunksize,
-        )
-
-        # unpack the data
-        volumetotal = 0
-        for voxel in data_out:
-            coherencefunc[voxel[0], :] = voxel[2] + 0.0
-            coherencepeakval[voxel[0]] = voxel[3] + 0.0
-            coherencepeakfreq[voxel[0]] = voxel[4] + 0.0
-            volumetotal += 1
-        del data_out
-    else:
-        for vox in tqdm(
-            range(0, inputshape[0]),
-            desc="Voxel",
-            unit="voxels",
-            disable=(not showprogressbar),
-        ):
-            (
-                dummy,
-                dummy,
-                coherencefunc[vox],
-                coherencepeakval[vox],
-                coherencepeakfreq[vox],
-            ) = _procOneVoxelCoherence(
-                vox,
-                theCoherer,
-                fmridata[vox, :],
-                alt=alt,
-                rt_floatset=rt_floatset,
-                rt_floattype=rt_floattype,
-            )
-            volumetotal += 1
+    volumetotal = tide_genericmultiproc.run_multiproc(
+        voxelfunc,
+        packfunc,
+        unpackfunc,
+        voxelargs,
+        voxeltargets,
+        inputshape,
+        voxelmask,
+        LGR,
+        nprocs,
+        alwaysmultiproc,
+        showprogressbar,
+        chunksize,
+        alt=alt,
+        debug=debug,
+    )
     LGR.info(f"\nCoherence performed on {volumetotal} voxels")
 
     # garbage collect

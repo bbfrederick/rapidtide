@@ -23,12 +23,11 @@ import sys
 import numpy as np
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA, FastICA
-from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
+import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
-import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 
@@ -37,15 +36,26 @@ LGR = logging.getLogger("GENERAL")
 
 def _procOneVoxelTimeShift(
     vox,
-    fmritc,
-    lagtime,
-    padtrs,
-    fmritr,
-    detrendorder=1,
-    offsettime=0.0,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
+    voxelargs,
+    **kwargs,
 ):
+    options = {
+        "detrendorder": 1,
+        "offsettime": 0.0,
+        "debug": False,
+    }
+    options.update(kwargs)
+    detrendorder = options["detrendorder"]
+    offsettime = options["offsettime"]
+    debug = options["debug"]
+    if debug:
+        print(f"{detrendorder=} {offsettime=}")
+    (
+        fmritc,
+        lagtime,
+        padtrs,
+        fmritr,
+    ) = voxelargs
     if detrendorder > 0:
         normtc = tide_fit.detrend(fmritc, order=detrendorder, demean=True)
     else:
@@ -55,6 +65,17 @@ def _procOneVoxelTimeShift(
         normtc, shifttr, padtrs
     )
     return vox, shiftedtc, weights, paddedshiftedtc, paddedweights
+
+
+def _packvoxeldata(voxnum, voxelargs):
+    return [(voxelargs[0])[voxnum, :], (voxelargs[1])[voxnum], voxelargs[2], voxelargs[3]]
+
+
+def _unpackvoxeldata(retvals, voxelproducts):
+    (voxelproducts[0])[retvals[0], :] = retvals[1]
+    (voxelproducts[1])[retvals[0], :] = retvals[2]
+    (voxelproducts[2])[retvals[0], :] = retvals[3]
+    (voxelproducts[3])[retvals[0], :] = retvals[4]
 
 
 def alignvoxels(
@@ -150,83 +171,40 @@ def alignvoxels(
         Mask of voxels used for refinement
     """
     inputshape = np.shape(fmridata)
-    volumetotal = np.sum(lagmask)
+    voxelargs = [fmridata, lagtimes, padtrs, fmritr]
+    voxelfunc = _procOneVoxelTimeShift
+    packfunc = _packvoxeldata
+    unpackfunc = _unpackvoxeldata
+    voxeltargets = [
+        shiftedtcs,
+        weights,
+        paddedshiftedtcs,
+        paddedweights,
+    ]
     if debug:
         print("alignvoxels: {inputshape}")
         print("volumetotal: {volumetotal}")
 
     # timeshift the valid voxels
-    if nprocs > 1 or alwaysmultiproc:
-        # define the consumer function here so it inherits most of the arguments
-        def timeshift_consumer(inQ, outQ):
-            while True:
-                try:
-                    # get a new message
-                    val = inQ.get()
+    # NOTE need to figure out how to use kwargs to pass extra arguments
+    volumetotal = tide_genericmultiproc.run_multiproc(
+        voxelfunc,
+        packfunc,
+        unpackfunc,
+        voxelargs,
+        voxeltargets,
+        inputshape,
+        lagmask,
+        LGR,
+        nprocs,
+        alwaysmultiproc,
+        showprogressbar,
+        chunksize,
+        detrendorder=detrendorder,
+        offsettime=offsettime,
+        debug=debug,
+    )
 
-                    # this is the 'TERM' signal
-                    if val is None:
-                        break
-
-                    # process and send the data
-                    outQ.put(
-                        _procOneVoxelTimeShift(
-                            val,
-                            fmridata[val, :],
-                            lagtimes[val],
-                            padtrs,
-                            fmritr,
-                            detrendorder=detrendorder,
-                            offsettime=offsettime,
-                            rt_floatset=rt_floatset,
-                            rt_floattype=rt_floattype,
-                        )
-                    )
-
-                except Exception as e:
-                    print("error!", e)
-                    break
-
-        data_out = tide_multiproc.run_multiproc(
-            timeshift_consumer,
-            inputshape,
-            lagmask,
-            nprocs=nprocs,
-            showprogressbar=showprogressbar,
-            chunksize=chunksize,
-        )
-
-        # unpack the data
-        for voxel in data_out:
-            shiftedtcs[voxel[0], :] = voxel[1]
-            weights[voxel[0], :] = voxel[2]
-            paddedshiftedtcs[voxel[0], :] = voxel[3]
-            paddedweights[voxel[0], :] = voxel[4]
-        del data_out
-
-    else:
-        for vox in tqdm(
-            range(0, inputshape[0]),
-            desc="Voxel timeshifts",
-            unit="voxels",
-            disable=(not showprogressbar),
-        ):
-            if lagmask[vox] > 0.5:
-                retvals = _procOneVoxelTimeShift(
-                    vox,
-                    fmridata[vox, :],
-                    lagtimes[vox],
-                    padtrs,
-                    fmritr,
-                    detrendorder=detrendorder,
-                    offsettime=offsettime,
-                    rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
-                )
-                shiftedtcs[retvals[0], :] = retvals[1]
-                weights[retvals[0], :] = retvals[2]
-                paddedshiftedtcs[retvals[0], :] = retvals[3]
-                paddedweights[retvals[0], :] = retvals[4]
     LGR.info(
         "Timeshift applied to " + str(int(volumetotal)) + " voxels",
     )

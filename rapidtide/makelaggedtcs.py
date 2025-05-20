@@ -17,30 +17,45 @@
 #
 #
 import gc
-import logging
 
 import numpy as np
-from tqdm import tqdm
 
-import rapidtide.multiproc as tide_multiproc
+import rapidtide.genericmultiproc as tide_genericmultiproc
 
 
 def _procOneVoxelMakelagtc(
     vox,
-    lagtcgenerator,
-    maxlag,
-    timeaxis,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
+    voxelargs,
+    **kwargs,
 ):
+    # unpack arguments
+    options = {
+        "rt_floatset": np.float64,
+        "debug": False,
+    }
+    options.update(kwargs)
+    rt_floatset = options["rt_floatset"]
+    debug = options["debug"]
+    (lagtcgenerator, thelag, timeaxis) = voxelargs
+    if debug:
+        print(f"{vox=}, {thelag=}, {timeaxis=}")
+
     # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
     #  potential answer - tried adding, results are terrible.
-    thelagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis - maxlag))
+    thelagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis - thelag))
 
     return (
         vox,
-        thelagtc,
+        (thelagtc),
     )
+
+
+def _packvoxeldata(voxnum, voxelargs):
+    return [voxelargs[0], (voxelargs[1])[voxnum], voxelargs[2]]
+
+
+def _unpackvoxeldata(retvals, voxelproducts):
+    (voxelproducts[0])[retvals[0], :] = retvals[1]
 
 
 def makelaggedtcs(
@@ -58,75 +73,31 @@ def makelaggedtcs(
     rt_floattype="float64",
 ):
     inputshape = lagtc.shape
-    if nprocs > 1 or alwaysmultiproc:
-        # define the consumer function here so it inherits most of the arguments
-        def makelagtc_consumer(inQ, outQ):
-            while True:
-                try:
-                    # get a new message
-                    val = inQ.get()
+    voxelargs = [
+        lagtcgenerator,
+        lagtimes,
+        timeaxis,
+    ]
+    voxelfunc = _procOneVoxelMakelagtc
+    packfunc = _packvoxeldata
+    unpackfunc = _unpackvoxeldata
+    voxeltargets = [lagtc]
 
-                    # this is the 'TERM' signal
-                    if val is None:
-                        break
-
-                    # process and send the data
-                    outQ.put(
-                        _procOneVoxelMakelagtc(
-                            val,
-                            lagtcgenerator,
-                            lagtimes[val],
-                            timeaxis,
-                            rt_floatset=rt_floatset,
-                            rt_floattype=rt_floattype,
-                        )
-                    )
-                except Exception as e:
-                    print("error!", e)
-                    break
-
-        data_out = tide_multiproc.run_multiproc(
-            makelagtc_consumer,
-            inputshape,
-            lagmask,
-            verbose=(LGR is not None),
-            nprocs=nprocs,
-            showprogressbar=showprogressbar,
-            chunksize=chunksize,
-        )
-
-        # unpack the data
-        volumetotal = 0
-        for voxel in data_out:
-            volumetotal += 1
-            lagtc[voxel[0], :] = voxel[1]
-        del data_out
-    else:
-        volumetotal = 0
-        for vox in tqdm(
-            range(0, inputshape[0]),
-            desc="Voxel",
-            unit="voxels",
-            disable=(not showprogressbar),
-        ):
-            if lagmask[vox] > 0:
-                dothisone = True
-            else:
-                dothisone = False
-            if dothisone:
-                (
-                    dummy,
-                    lagtc[vox, :],
-                ) = _procOneVoxelMakelagtc(
-                    vox,
-                    lagtcgenerator,
-                    lagtimes[vox],
-                    timeaxis,
-                    rt_floatset=rt_floatset,
-                    rt_floattype=rt_floattype,
-                )
-                volumetotal += 1
-
+    volumetotal = tide_genericmultiproc.run_multiproc(
+        voxelfunc,
+        packfunc,
+        unpackfunc,
+        voxelargs,
+        voxeltargets,
+        inputshape,
+        lagmask,
+        LGR,
+        nprocs,
+        alwaysmultiproc,
+        showprogressbar,
+        chunksize,
+        rt_floatset=rt_floatset,
+    )
     if LGR is not None:
         LGR.info(f"\nLagged timecourses created for {volumetotal} voxels")
 

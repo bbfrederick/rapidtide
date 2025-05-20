@@ -1810,7 +1810,7 @@ def process_args(inputargs=None):
     args["hardlimit"] = True
     # The fraction of the main peak over which points are included in the peak
     args["searchfrac"] = 0.5
-    args["mp_chunksize"] = 50000
+    args["mp_chunksize"] = 500
     args["patchminsize"] = DEFAULT_PATCHMINSIZE
     args["patchfwhm"] = DEFAULT_PATCHFWHM
 

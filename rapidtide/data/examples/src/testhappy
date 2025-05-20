@@ -65,13 +65,14 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy
+    ../dst/happy \
+    --nprocs -1
 
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    --model ~/code/rapidtide/rapidtide/data/models/model_cnn_w064_l13_fn20_fl08 \
-    ../dst/happy_newcnn
+#happy \
+    #sub-HAPPYTEST.nii.gz \
+    #sub-HAPPYTEST.json \
+    #--model ~/code/rapidtide/rapidtide/data/models/model_cnn_w064_l13_fn20_fl08 \
+    #../dst/happy_newcnn
 
 #happy \
     #sub-HAPPYTEST.nii.gz \

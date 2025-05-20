@@ -22,7 +22,6 @@ import numpy as np
 import rapidtide.io as tide_io
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.makelaggedtcs as tide_makelagged
-import rapidtide.util as tide_util
 
 
 def regressfrommaps(
@@ -132,7 +131,6 @@ def regressfrommaps(
         LGR.info("Start filtering operation")
     if TimingLGR is not None:
         TimingLGR.info("Start filtering operation")
-
 
     voxelsprocessed_regressionfilt = tide_linfitfiltpass.linfitfiltpass(
         numvalidspatiallocs,

@@ -36,7 +36,7 @@ def maxcpus(reservecpu=True):
         return mp.cpu_count()
 
 
-def _process_data(data_in, inQ, outQ, showprogressbar=True, reportstep=1000, chunksize=10000):
+def _process_data(data_in, inQ, outQ, showprogressbar=True, chunksize=10000):
     # send pos/data to workers
     data_out = []
     totalnum = len(data_in)
@@ -89,7 +89,8 @@ def run_multiproc(
     maskarray,
     nprocs=1,
     verbose=True,
-    procbyvoxel=True,
+    indexaxis=0,
+    procunit="voxels",
     showprogressbar=True,
     chunksize=1000,
 ):
@@ -112,13 +113,6 @@ def run_multiproc(
         workers = [mp.Process(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
     for i, w in enumerate(workers):
         w.start()
-
-    if procbyvoxel:
-        indexaxis = 0
-        procunit = "voxels"
-    else:
-        indexaxis = 1
-        procunit = "timepoints"
 
     # check that the mask array matches the index dimension
     if maskarray is not None:
@@ -159,7 +153,8 @@ def run_multithread(
     maskarray,
     verbose=True,
     nprocs=1,
-    procbyvoxel=True,
+    indexaxis=0,
+    procunit="voxels",
     showprogressbar=True,
     chunksize=1000,
 ):
@@ -170,13 +165,6 @@ def run_multithread(
     workers = [thread.Thread(target=consumerfunc, args=(inQ, outQ)) for i in range(n_workers)]
     for i, w in enumerate(workers):
         w.start()
-
-    if procbyvoxel:
-        indexaxis = 0
-        procunit = "voxels"
-    else:
-        indexaxis = 1
-        procunit = "timepoints"
 
     # check that the mask array matches the index dimension
     if maskarray is not None:

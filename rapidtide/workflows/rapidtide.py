@@ -16,7 +16,6 @@
 #   limitations under the License.
 #
 #
-import copy
 import gc
 import logging
 import os
@@ -28,8 +27,7 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 from scipy.stats import rankdata
-from sklearn.decomposition import PCA
-from tqdm import tqdm
+
 
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
@@ -55,7 +53,6 @@ import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
-from rapidtide.tests.utils import mse
 
 from .utils import setup_logger
 
@@ -1731,18 +1728,17 @@ def rapidtide_main(argparsingfunc):
             else:
                 theSimFunc = theCorrelator
             tide_util.disablemkl(optiondict["nprocs_getNullDist"], debug=threaddebug)
-            simdistdata = tide_nullsimfunc.getNullDistributionDatax(
-                cleaned_resampref_y,
+            simdistdata = tide_nullsimfunc.getNullDistributionData(
                 oversampfreq,
                 theSimFunc,
                 theFitter,
+                LGR,
                 numestreps=optiondict["numestreps"],
                 nprocs=optiondict["nprocs_getNullDist"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
                 showprogressbar=optiondict["showprogressbar"],
                 chunksize=optiondict["mp_chunksize"],
                 permutationmethod=optiondict["permutationmethod"],
-                fixdelay=optiondict["fixdelay"],
                 rt_floatset=np.float64,
                 rt_floattype="float64",
             )
@@ -2572,8 +2568,6 @@ def rapidtide_main(argparsingfunc):
             chunksize=optiondict["mp_chunksize"],
             nprocs=1,
             alwaysmultiproc=optiondict["alwaysmultiproc"],
-            rt_floatset=rt_floatset,
-            rt_floattype=rt_floattype,
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
 
