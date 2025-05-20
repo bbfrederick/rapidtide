@@ -364,7 +364,16 @@ def getcardcoeffs(
     return peakfreq
 
 
-def normalizevoxels(fmri_data, detrendorder, validvoxels, time, timings, showprogressbar=False):
+def normalizevoxels(
+    fmri_data,
+    detrendorder,
+    validvoxels,
+    time,
+    timings,
+    nprocs=1,
+    alwaysmultiproc=False,
+    showprogressbar=False,
+):
     print("Normalizing voxels...")
     normdata = fmri_data * 0.0
     demeandata = fmri_data * 0.0
