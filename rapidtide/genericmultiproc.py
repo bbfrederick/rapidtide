@@ -38,6 +38,8 @@ def run_multiproc(
     alwaysmultiproc,
     showprogressbar,
     chunksize,
+    indexaxis=0,
+    procunit="voxels",
     debug=False,
     **kwargs,
 ):
@@ -72,6 +74,8 @@ def run_multiproc(
             theconsumerfunc,
             inputshape,
             voxelmask,
+            indexaxis=indexaxis,
+            procunit=procunit,
             verbose=(LGR is not None),
             nprocs=nprocs,
             showprogressbar=showprogressbar,

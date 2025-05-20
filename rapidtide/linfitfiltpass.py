@@ -110,9 +110,13 @@ def linfitfiltpass(
         themask = None
     else:
         if procbyvoxel:
+            indexaxis = 0
+            procunit = "voxels"
             meanim = np.mean(fmri_data, axis=1)
             stdim = np.std(fmri_data, axis=1)
         else:
+            indexaxis = 1
+            procunit = "timepoints"
             meanim = np.mean(fmri_data, axis=0)
             stdim = np.std(fmri_data, axis=0)
         if np.mean(stdim) < np.mean(meanim):
@@ -187,7 +191,8 @@ def linfitfiltpass(
             themask,
             verbose=verbose,
             nprocs=nprocs,
-            procbyvoxel=procbyvoxel,
+            indexaxis=indexaxis,
+            procunit=procunit,
             showprogressbar=showprogressbar,
             chunksize=mp_chunksize,
         )
