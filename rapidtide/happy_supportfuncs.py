@@ -373,16 +373,18 @@ def _procOneVoxelDetrend(
     # unpack arguments
     options = {
         "detrendorder": 1,
+        "demean": False,
         "debug": False,
     }
     options.update(kwargs)
     detrendorder = options["detrendorder"]
+    demean = options["demean"]
     debug = options["debug"]
     [fmri_voxeldata] = voxelargs
     if debug:
         print(f"{vox=}, {fmri_voxeldata.shape=}")
 
-    detrended_voxeldata = tide_fit.detrend(fmri_voxeldata, order=detrendorder, demean=False)
+    detrended_voxeldata = tide_fit.detrend(fmri_voxeldata, order=detrendorder, demean=demean)
 
     return (
         vox,
@@ -443,6 +445,7 @@ def normalizevoxels(
             showprogressbar,
             chunksize,
             order=detrendorder,
+            demean=False,
         )
 
         timings.append(["Detrending finished", time.time(), numspatiallocs, "voxels"])
@@ -1165,7 +1168,7 @@ def tcsmoothingpass(
     slicetargets = [rawapp_byslice, derivatives_byslice]
     slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
 
-    slicetotal = tide_genericmultiproc.run_multiproc(
+    """slicetotal = tide_genericmultiproc.run_multiproc(
         slicefunc,
         packfunc,
         unpackfunc,
@@ -1181,9 +1184,9 @@ def tcsmoothingpass(
         indexaxis=1,
         procunit="slices",
         debug=debug,
-    )
+    )"""
 
-    """for theslice in tqdm(
+    for theslice in tqdm(
         range(numslices),
         desc="Slice",
         unit="slices",
@@ -1193,15 +1196,15 @@ def tcsmoothingpass(
             _procOneSliceSmoothing(theslice, sliceargs)
         )
         # now smooth the projected data along the time dimension
-        #validlocs = validlocslist[theslice]
-        #if len(validlocs) > 0:
+        # validlocs = validlocslist[theslice]
+        # if len(validlocs) > 0:
         #    for loc in validlocs:
         #        rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(
         #            phaseFs, rawapp_byslice[loc, theslice, :]
         #        )
         #        derivatives_byslice[loc, theslice, :] = circularderivs(
         #            rawapp_byslice[loc, theslice, :]
-        #        )"""
+        #        )
 
 
 def phaseproject(
