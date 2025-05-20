@@ -87,8 +87,6 @@ def test_linfitfiltpass(debug=True, displayplots=False):
             xwaveformrange = xwaveforms
         for procbyvoxel in [True, False]:
             if procbyvoxel:
-                indexaxis = 0
-                procunit = "voxels"
                 waveforms = twaveformrange
                 meanvals = meanvals_x
                 rvals = rvals_x
@@ -97,8 +95,6 @@ def test_linfitfiltpass(debug=True, displayplots=False):
                 fitNorm = fitNorm_x
                 direction = "space"
             else:
-                indexaxis = 1
-                procunit = "timepoints"
                 waveforms = xwaveformrange
                 meanvals = meanvals_t
                 rvals = rvals_t
@@ -134,8 +130,7 @@ def test_linfitfiltpass(debug=True, displayplots=False):
                         datatoremove,
                         filtereddata,
                         showprogressbar=False,
-                        indexaxis=indexaxis,
-                        procunit=procunit,
+                        procbyvoxel=procbyvoxel,
                         nprocs=nprocs,
                         confoundregress=confoundregress,
                     )
