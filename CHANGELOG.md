@@ -2,7 +2,6 @@
 
 ## Version 3.0.6 (5/7/25)
 * (rapidtide) Made a generic, reusable multiprocessing module and moved many functions over to it.
-* (happy) Implemented multiprocessing for detrending.
 * (ccorrica) Samplerate is now set properly if input is a BIDS tsv file.
 * (package) Added tests.
 

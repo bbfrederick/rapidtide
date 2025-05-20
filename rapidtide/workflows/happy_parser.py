@@ -608,13 +608,6 @@ def _get_parser():
         default=False,
     )
     debug_opts.add_argument(
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        help="Be more chatty.",
-        default=False,
-    )
-    debug_opts.add_argument(
         "--nodetrend",
         dest="detrendorder",
         action="store",
@@ -741,6 +734,7 @@ def process_args(inputargs=None):
     args.outputlevel = 1
     args.maskthreshpct = 10.0
     args.domadnorm = True
+    args.verbose = False
     args.smoothlen = 101
     args.envthresh = 0.2
     args.upsamplefac = 100
