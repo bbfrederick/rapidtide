@@ -308,7 +308,7 @@ def happy_main(argparsingfunc):
 
     # normalize the input data
     tide_util.logmem("before normalization")
-    normdata, demeandata, means, medians, mads = happy_support.normalizevoxels(
+    normdata, demeandata, means, medians, mads = happy_support.normalizevoxels_nmp(
         fmri_data,
         args.detrendorder,
         validprojvoxels,

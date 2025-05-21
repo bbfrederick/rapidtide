@@ -461,6 +461,48 @@ def normalizevoxels(
     return normdata, demeandata, means, medians, mads
 
 
+def normalizevoxels_nmp(
+    fmri_data,
+    detrendorder,
+    validvoxels,
+    time,
+    timings,
+    LGR=None,
+    nprocs=1,
+    showprogressbar=False,
+):
+    print("Normalizing voxels...")
+    normdata = fmri_data * 0.0
+    demeandata = fmri_data * 0.0
+    starttime = time.time()
+    # detrend if we are going to
+    numspatiallocs = fmri_data.shape[0]
+    if detrendorder > 0:
+        print("Detrending to order", detrendorder, "...")
+        for idx, thevox in enumerate(
+            tqdm(
+                validvoxels,
+                desc="Voxel",
+                unit="voxels",
+                disable=(not showprogressbar),
+            )
+        ):
+            fmri_data[thevox, :] = tide_fit.detrend(
+                fmri_data[thevox, :], order=detrendorder, demean=False
+            )
+        timings.append(["Detrending finished", time.time(), numspatiallocs, "voxels"])
+        print(" done")
+
+    means = np.mean(fmri_data[:, :], axis=1).flatten()
+    demeandata[validvoxels, :] = fmri_data[validvoxels, :] - means[validvoxels, None]
+    normdata[validvoxels, :] = np.nan_to_num(demeandata[validvoxels, :] / means[validvoxels, None])
+    medians = np.median(normdata[:, :], axis=1).flatten()
+    mads = mad(normdata[:, :], axis=1).flatten()
+    timings.append(["Normalization finished", time.time(), numspatiallocs, "voxels"])
+    print("Normalization took", "{:.3f}".format(time.time() - starttime), "seconds")
+    return normdata, demeandata, means, medians, mads
+
+
 def cleanphysio(
     Fs, physiowaveform, cutoff=0.4, thresh=0.2, nyquist=None, iscardiac=True, debug=False
 ):
@@ -1062,6 +1104,82 @@ def circularderivs(timecourse):
     )
 
 
+def _procOnePhaseProject(slice, sliceargs, **kwargs):
+    options = {
+        "debug": False,
+    }
+    options.update(kwargs)
+    debug = options["debug"]
+    (
+        validlocslist,
+        proctrs,
+        demeandata_byslice,
+        fmri_data_byslice,
+        outphases,
+        cardphasevals,
+        congridbins,
+        gridkernel,
+        weights_byslice,
+        cine_byslice,
+        destpoints,
+        rawapp_byslice,
+    ) = sliceargs
+    # now smooth the projected data along the time dimension
+    validlocs = validlocslist[slice]
+    if len(validlocs) > 0:
+        for t in proctrs:
+            filteredmr = -demeandata_byslice[validlocs, slice, t]
+            cinemr = fmri_data_byslice[validlocs, slice, t]
+            thevals, theweights, theindices = tide_resample.congrid(
+                outphases,
+                cardphasevals[slice, t],
+                1.0,
+                congridbins,
+                kernel=gridkernel,
+                cyclic=True,
+            )
+            for i in range(len(theindices)):
+                weights_byslice[validlocs, slice, theindices[i]] += theweights[i]
+                rawapp_byslice[validlocs, slice, theindices[i]] += filteredmr
+                cine_byslice[validlocs, slice, theindices[i]] += theweights[i] * cinemr
+        for d in range(destpoints):
+            if weights_byslice[validlocs[0], slice, d] == 0.0:
+                weights_byslice[validlocs, slice, d] = 1.0
+        rawapp_byslice[validlocs, slice, :] = np.nan_to_num(
+            rawapp_byslice[validlocs, slice, :] / weights_byslice[validlocs, slice, :]
+        )
+        cine_byslice[validlocs, slice, :] = np.nan_to_num(
+            cine_byslice[validlocs, slice, :] / weights_byslice[validlocs, slice, :]
+        )
+    else:
+        rawapp_byslice[:, slice, :] = 0.0
+        cine_byslice[:, slice, :] = 0.0
+
+    return slice, rawapp_byslice[:, slice, :], cine_byslice[:, slice, :]
+
+
+def _packslicedataPhaseProject(slicenum, sliceargs):
+    return [
+        sliceargs[0],
+        sliceargs[1],
+        sliceargs[2],
+        sliceargs[3],
+        sliceargs[4],
+        sliceargs[5],
+        sliceargs[6],
+        sliceargs[7],
+        sliceargs[8],
+        sliceargs[9],
+        sliceargs[10],
+        sliceargs[11],
+    ]
+
+
+def _unpackslicedataPhaseProject(retvals, voxelproducts):
+    (voxelproducts[0])[:, retvals[0], :] = retvals[1]
+    (voxelproducts[1])[:, retvals[0], :] = retvals[2]
+
+
 def phaseprojectpass(
     numslices,
     demeandata_byslice,
@@ -1076,9 +1194,51 @@ def phaseprojectpass(
     congridbins,
     gridkernel,
     destpoints,
+    nprocs=1,
+    alwaysmultiproc=False,
     showprogressbar=True,
+    debug=False,
 ):
-    for theslice in tqdm(
+    inputshape = rawapp_byslice.shape
+    sliceargs = [
+        validlocslist,
+        proctrs,
+        demeandata_byslice,
+        fmri_data_byslice,
+        outphases,
+        cardphasevals,
+        congridbins,
+        gridkernel,
+        weights_byslice,
+        cine_byslice,
+        destpoints,
+        rawapp_byslice,
+    ]
+    slicefunc = _procOnePhaseProject
+    packfunc = _packslicedataPhaseProject
+    unpackfunc = _unpackslicedataPhaseProject
+    slicetargets = [rawapp_byslice, cine_byslice]
+    slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
+
+    slicetotal = tide_genericmultiproc.run_multiproc(
+        slicefunc,
+        packfunc,
+        unpackfunc,
+        sliceargs,
+        slicetargets,
+        inputshape,
+        slicemask,
+        None,
+        nprocs,
+        alwaysmultiproc,
+        showprogressbar,
+        16,
+        indexaxis=1,
+        procunit="slices",
+        debug=debug,
+    )
+
+    """for theslice in tqdm(
         range(numslices),
         desc="Slice",
         unit="slices",
@@ -1112,7 +1272,7 @@ def phaseprojectpass(
             )
         else:
             rawapp_byslice[:, theslice, :] = 0.0
-            cine_byslice[:, theslice, :] = 0.0
+            cine_byslice[:, theslice, :] = 0.0"""
 
 
 def _procOneSliceSmoothing(slice, sliceargs, **kwargs):
@@ -1168,7 +1328,7 @@ def tcsmoothingpass(
     slicetargets = [rawapp_byslice, derivatives_byslice]
     slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
 
-    """slicetotal = tide_genericmultiproc.run_multiproc(
+    slicetotal = tide_genericmultiproc.run_multiproc(
         slicefunc,
         packfunc,
         unpackfunc,
@@ -1184,27 +1344,7 @@ def tcsmoothingpass(
         indexaxis=1,
         procunit="slices",
         debug=debug,
-    )"""
-
-    for theslice in tqdm(
-        range(numslices),
-        desc="Slice",
-        unit="slices",
-        disable=(not showprogressbar),
-    ):
-        slicenum, rawapp_byslice[:, theslice, :], derivatives_byslice[:, theslice, :] = (
-            _procOneSliceSmoothing(theslice, sliceargs)
-        )
-        # now smooth the projected data along the time dimension
-        # validlocs = validlocslist[theslice]
-        # if len(validlocs) > 0:
-        #    for loc in validlocs:
-        #        rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(
-        #            phaseFs, rawapp_byslice[loc, theslice, :]
-        #        )
-        #        derivatives_byslice[loc, theslice, :] = circularderivs(
-        #            rawapp_byslice[loc, theslice, :]
-        #        )
+    )
 
 
 def phaseproject(
@@ -1262,6 +1402,7 @@ def phaseproject(
         args.congridbins,
         args.gridkernel,
         args.destpoints,
+        nprocs=args.nprocs,
         showprogressbar=args.showprogressbar,
     )
 
@@ -1344,6 +1485,144 @@ def phaseproject(
             normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
                 app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
             )
+    return appflips_byslice
+
+
+def phaseproject_nmp(
+    input_data,
+    demeandata_byslice,
+    means_byslice,
+    rawapp_byslice,
+    app_byslice,
+    normapp_byslice,
+    weights_byslice,
+    cine_byslice,
+    projmask_byslice,
+    derivatives_byslice,
+    proctrs,
+    thispass,
+    args,
+    sliceoffsets,
+    cardphasevals,
+    outphases,
+    appsmoothingfilter,
+    phaseFs,
+    thecorrfunc_byslice,
+    waveamp_byslice,
+    wavedelay_byslice,
+    wavedelayCOM_byslice,
+    corrected_rawapp_byslice,
+    corrstartloc,
+    correndloc,
+    thealiasedcorrx,
+    theAliasedCorrelator,
+):
+    xsize, ysize, numslices, timepoints = input_data.getdims()
+    fmri_data_byslice = input_data.byslice()
+
+    for theslice in tqdm(
+        range(numslices),
+        desc="Slice",
+        unit="slices",
+        disable=(not args.showprogressbar),
+    ):
+        if args.verbose:
+            print("Phase projecting for slice", theslice)
+        validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
+        # indexlist = range(0, len(cardphasevals[theslice, :]))
+        if len(validlocs) > 0:
+            for t in proctrs:
+                filteredmr = -demeandata_byslice[validlocs, theslice, t]
+                cinemr = fmri_data_byslice[validlocs, theslice, t]
+                thevals, theweights, theindices = tide_resample.congrid(
+                    outphases,
+                    cardphasevals[theslice, t],
+                    1.0,
+                    args.congridbins,
+                    kernel=args.gridkernel,
+                    cyclic=True,
+                )
+                for i in range(len(theindices)):
+                    weights_byslice[validlocs, theslice, theindices[i]] += theweights[i]
+                    # rawapp_byslice[validlocs, theslice, theindices[i]] += (
+                    #    theweights[i] * filteredmr
+                    # )
+                    rawapp_byslice[validlocs, theslice, theindices[i]] += filteredmr
+                    cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
+            for d in range(args.destpoints):
+                if weights_byslice[validlocs[0], theslice, d] == 0.0:
+                    weights_byslice[validlocs, theslice, d] = 1.0
+            rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
+                rawapp_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
+            )
+            cine_byslice[validlocs, theslice, :] = np.nan_to_num(
+                cine_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
+            )
+        else:
+            rawapp_byslice[:, theslice, :] = 0.0
+            cine_byslice[:, theslice, :] = 0.0
+
+        # smooth the projected data along the time dimension
+        if args.smoothapp:
+            for loc in validlocs:
+                rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(
+                    phaseFs, rawapp_byslice[loc, theslice, :]
+                )
+                derivatives_byslice[loc, theslice, :] = circularderivs(
+                    rawapp_byslice[loc, theslice, :]
+                )
+        appflips_byslice = np.where(
+            -derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0
+        )
+        timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
+        if args.fliparteries:
+            corrected_rawapp_byslice[validlocs, theslice, :] = (
+                rawapp_byslice[validlocs, theslice, :] - timecoursemean
+            ) * appflips_byslice[validlocs, theslice, None] + timecoursemean
+            if args.doaliasedcorrelation and (thispass > 0):
+                for theloc in validlocs:
+                    thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
+                        -appflips_byslice[theloc, theslice]
+                        * demeandata_byslice[theloc, theslice, :],
+                        int(sliceoffsets[theslice]),
+                    )[corrstartloc : correndloc + 1]
+                    maxloc = np.argmax(thecorrfunc_byslice[theloc, theslice, :])
+                    wavedelay_byslice[theloc, theslice] = (
+                        thealiasedcorrx[corrstartloc : correndloc + 1]
+                    )[maxloc]
+                    waveamp_byslice[theloc, theslice] = np.fabs(
+                        thecorrfunc_byslice[theloc, theslice, maxloc]
+                    )
+                    wavedelayCOM_byslice[theloc, theslice] = theCOM(
+                        thealiasedcorrx[corrstartloc : correndloc + 1],
+                        np.fabs(thecorrfunc_byslice[theloc, theslice, :]),
+                    )
+        else:
+            corrected_rawapp_byslice[validlocs, theslice, :] = rawapp_byslice[
+                validlocs, theslice, :
+            ]
+            if args.doaliasedcorrelation and (thispass > 0):
+                for theloc in validlocs:
+                    thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
+                        -demeandata_byslice[theloc, theslice, :],
+                        int(sliceoffsets[theslice]),
+                    )[corrstartloc : correndloc + 1]
+                    maxloc = np.argmax(np.abs(thecorrfunc_byslice[theloc, theslice, :]))
+                    wavedelay_byslice[theloc, theslice] = (
+                        thealiasedcorrx[corrstartloc : correndloc + 1]
+                    )[maxloc]
+                    waveamp_byslice[theloc, theslice] = np.fabs(
+                        thecorrfunc_byslice[theloc, theslice, maxloc]
+                    )
+        timecoursemin = np.min(corrected_rawapp_byslice[validlocs, theslice, :], axis=1).reshape(
+            (-1, 1)
+        )
+        app_byslice[validlocs, theslice, :] = (
+            corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
+        )
+        normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
+            app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
+        )
     return appflips_byslice
 
 
