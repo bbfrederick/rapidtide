@@ -74,7 +74,7 @@ happy \
     --mpdetrend \
     ../dst/happy_mpdetrend \
     --nprocs -1
-    
+
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \

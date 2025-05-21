@@ -314,6 +314,7 @@ def happy_main(argparsingfunc):
         validprojvoxels,
         time,
         timings,
+        mpcode=args.mpdetrend,
         LGR=None,
         nprocs=args.nprocs,
         showprogressbar=args.showprogressbar,
