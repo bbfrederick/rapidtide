@@ -1136,7 +1136,7 @@ def _procOnePhaseProject(slice, sliceargs, **kwargs):
         rawapp_byslice[:, slice, :] = 0.0
         cine_byslice[:, slice, :] = 0.0
 
-    return slice, rawapp_byslice[:, slice, :], cine_byslice[:, slice, :], weights_byslice[:, slice, :]
+    return slice, rawapp_byslice[:, slice, :], cine_byslice[:, slice, :], weights_byslice[:, slice, :], validlocs
 
 
 def _packslicedataPhaseProject(slicenum, sliceargs):
@@ -1157,9 +1157,9 @@ def _packslicedataPhaseProject(slicenum, sliceargs):
 
 
 def _unpackslicedataPhaseProject(retvals, voxelproducts):
-    (voxelproducts[0])[:, retvals[0], :] = retvals[1]
-    (voxelproducts[1])[:, retvals[0], :] = retvals[2]
-    (voxelproducts[2])[:, retvals[0], :] = retvals[3]
+    (voxelproducts[0])[retvals[4], retvals[0], :] = (retvals[1])[retvals[4], :]
+    (voxelproducts[1])[retvals[4], retvals[0], :] = (retvals[2])[retvals[4], :]
+    (voxelproducts[2])[retvals[4], retvals[0], :] = (retvals[3])[retvals[4], :]
 
 
 def phaseprojectpass(
