@@ -34,6 +34,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
+import rapidtide.genericmultiproc as tide_genericmultiproc
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
