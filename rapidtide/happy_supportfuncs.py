@@ -29,12 +29,12 @@ from tqdm import tqdm
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-import rapidtide.genericmultiproc as tide_genericmultiproc
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -365,6 +365,41 @@ def getcardcoeffs(
     return peakfreq
 
 
+def _procOneVoxelDetrend(
+    vox,
+    voxelargs,
+    **kwargs,
+):
+    # unpack arguments
+    options = {
+        "detrendorder": 1,
+        "demean": False,
+        "debug": False,
+    }
+    options.update(kwargs)
+    detrendorder = options["detrendorder"]
+    demean = options["demean"]
+    debug = options["debug"]
+    [fmri_voxeldata] = voxelargs
+    if debug:
+        print(f"{vox=}, {detrendorder=}, {demean=}, {fmri_voxeldata.shape=}")
+
+    detrended_voxeldata = tide_fit.detrend(fmri_voxeldata, order=detrendorder, demean=demean)
+
+    return (
+        vox,
+        detrended_voxeldata,
+    )
+
+
+def _packDetrendvoxeldata(voxnum, voxelargs):
+    return [(voxelargs[0])[voxnum, :]]
+
+
+def _unpackDetrendvoxeldata(retvals, voxelproducts):
+    (voxelproducts[0])[retvals[0], :] = retvals[1]
+
+
 def normalizevoxels(
     fmri_data,
     detrendorder,
@@ -372,9 +407,12 @@ def normalizevoxels(
     time,
     timings,
     LGR=None,
-    mpcode=False,
+    mpcode=True,
     nprocs=1,
-    showprogressbar=False,
+    alwaysmultiproc=False,
+    showprogressbar=True,
+    chunksize=1000,
+    debug=False,
 ):
     print("Normalizing voxels...")
     normdata = fmri_data * 0.0
@@ -385,6 +423,8 @@ def normalizevoxels(
     if detrendorder > 0:
         print("Detrending to order", detrendorder, "...")
         if mpcode:
+            if debug:
+                print(f"detrend multiproc path: {detrendorder=}")
             inputshape = fmri_data.shape
             voxelargs = [
                 fmri_data,
@@ -409,10 +449,13 @@ def normalizevoxels(
                 alwaysmultiproc,
                 showprogressbar,
                 chunksize,
-                order=detrendorder,
+                debug=debug,
+                detrendorder=detrendorder,
                 demean=False,
             )
         else:
+            if debug:
+                print(f"detrend nonmultiproc path: {detrendorder=}")
             for idx, thevox in enumerate(
                     tqdm(
                         validvoxels,
@@ -1132,7 +1175,7 @@ def phaseprojectpass(
     congridbins,
     gridkernel,
     destpoints,
-    mpcode=True,
+    mpcode=False,
     nprocs=1,
     alwaysmultiproc=False,
     showprogressbar=True,
@@ -1369,103 +1412,63 @@ def phaseproject(
         unit="slices",
         disable=(not args.showprogressbar),
     ):
-        if args.verbose:
-            print("Phase projecting for slice", theslice)
-        validlocs = np.where(projmask_byslice[:, theslice] > 0)[0]
-        # indexlist = range(0, len(cardphasevals[theslice, :]))
+        # now do the flips
+        validlocs = validlocslist[theslice]
         if len(validlocs) > 0:
-            for t in proctrs:
-                filteredmr = -demeandata_byslice[validlocs, theslice, t]
-                cinemr = fmri_data_byslice[validlocs, theslice, t]
-                thevals, theweights, theindices = tide_resample.congrid(
-                    outphases,
-                    cardphasevals[theslice, t],
-                    1.0,
-                    args.congridbins,
-                    kernel=args.gridkernel,
-                    cyclic=True,
-                )
-                for i in range(len(theindices)):
-                    weights_byslice[validlocs, theslice, theindices[i]] += theweights[i]
-                    # rawapp_byslice[validlocs, theslice, theindices[i]] += (
-                    #    theweights[i] * filteredmr
-                    # )
-                    rawapp_byslice[validlocs, theslice, theindices[i]] += filteredmr
-                    cine_byslice[validlocs, theslice, theindices[i]] += theweights[i] * cinemr
-            for d in range(args.destpoints):
-                if weights_byslice[validlocs[0], theslice, d] == 0.0:
-                    weights_byslice[validlocs, theslice, d] = 1.0
-            rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-                rawapp_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
+            appflips_byslice = np.where(
+                -derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0
             )
-            cine_byslice[validlocs, theslice, :] = np.nan_to_num(
-                cine_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
+            timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape(
+                (-1, 1)
             )
-        else:
-            rawapp_byslice[:, theslice, :] = 0.0
-            cine_byslice[:, theslice, :] = 0.0
-
-        # smooth the projected data along the time dimension
-        if args.smoothapp:
-            for loc in validlocs:
-                rawapp_byslice[loc, theslice, :] = appsmoothingfilter.apply(
-                    phaseFs, rawapp_byslice[loc, theslice, :]
-                )
-                derivatives_byslice[loc, theslice, :] = circularderivs(
-                    rawapp_byslice[loc, theslice, :]
-                )
-        appflips_byslice = np.where(
-            -derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0
-        )
-        timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape((-1, 1))
-        if args.fliparteries:
-            corrected_rawapp_byslice[validlocs, theslice, :] = (
-                rawapp_byslice[validlocs, theslice, :] - timecoursemean
-            ) * appflips_byslice[validlocs, theslice, None] + timecoursemean
-            if args.doaliasedcorrelation and (thispass > 0):
-                for theloc in validlocs:
-                    thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
-                        -appflips_byslice[theloc, theslice]
-                        * demeandata_byslice[theloc, theslice, :],
-                        int(sliceoffsets[theslice]),
-                    )[corrstartloc : correndloc + 1]
-                    maxloc = np.argmax(thecorrfunc_byslice[theloc, theslice, :])
-                    wavedelay_byslice[theloc, theslice] = (
-                        thealiasedcorrx[corrstartloc : correndloc + 1]
-                    )[maxloc]
-                    waveamp_byslice[theloc, theslice] = np.fabs(
-                        thecorrfunc_byslice[theloc, theslice, maxloc]
-                    )
-                    wavedelayCOM_byslice[theloc, theslice] = theCOM(
-                        thealiasedcorrx[corrstartloc : correndloc + 1],
-                        np.fabs(thecorrfunc_byslice[theloc, theslice, :]),
-                    )
-        else:
-            corrected_rawapp_byslice[validlocs, theslice, :] = rawapp_byslice[
-                validlocs, theslice, :
-            ]
-            if args.doaliasedcorrelation and (thispass > 0):
-                for theloc in validlocs:
-                    thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
-                        -demeandata_byslice[theloc, theslice, :],
-                        int(sliceoffsets[theslice]),
-                    )[corrstartloc : correndloc + 1]
-                    maxloc = np.argmax(np.abs(thecorrfunc_byslice[theloc, theslice, :]))
-                    wavedelay_byslice[theloc, theslice] = (
-                        thealiasedcorrx[corrstartloc : correndloc + 1]
-                    )[maxloc]
-                    waveamp_byslice[theloc, theslice] = np.fabs(
-                        thecorrfunc_byslice[theloc, theslice, maxloc]
-                    )
-        timecoursemin = np.min(corrected_rawapp_byslice[validlocs, theslice, :], axis=1).reshape(
-            (-1, 1)
-        )
-        app_byslice[validlocs, theslice, :] = (
-            corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
-        )
-        normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-            app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
-        )
+            if args.fliparteries:
+                corrected_rawapp_byslice[validlocs, theslice, :] = (
+                    rawapp_byslice[validlocs, theslice, :] - timecoursemean
+                ) * appflips_byslice[validlocs, theslice, None] + timecoursemean
+                if args.doaliasedcorrelation and (thispass > 0):
+                    for theloc in validlocs:
+                        thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
+                            -appflips_byslice[theloc, theslice]
+                            * demeandata_byslice[theloc, theslice, :],
+                            int(sliceoffsets[theslice]),
+                        )[corrstartloc : correndloc + 1]
+                        maxloc = np.argmax(thecorrfunc_byslice[theloc, theslice, :])
+                        wavedelay_byslice[theloc, theslice] = (
+                            thealiasedcorrx[corrstartloc : correndloc + 1]
+                        )[maxloc]
+                        waveamp_byslice[theloc, theslice] = np.fabs(
+                            thecorrfunc_byslice[theloc, theslice, maxloc]
+                        )
+                        wavedelayCOM_byslice[theloc, theslice] = theCOM(
+                            thealiasedcorrx[corrstartloc : correndloc + 1],
+                            np.fabs(thecorrfunc_byslice[theloc, theslice, :]),
+                        )
+            else:
+                corrected_rawapp_byslice[validlocs, theslice, :] = rawapp_byslice[
+                    validlocs, theslice, :
+                ]
+                if args.doaliasedcorrelation and (thispass > 0):
+                    for theloc in validlocs:
+                        thecorrfunc_byslice[theloc, theslice, :] = theAliasedCorrelator.apply(
+                            -demeandata_byslice[theloc, theslice, :],
+                            int(sliceoffsets[theslice]),
+                        )[corrstartloc : correndloc + 1]
+                        maxloc = np.argmax(np.abs(thecorrfunc_byslice[theloc, theslice, :]))
+                        wavedelay_byslice[theloc, theslice] = (
+                            thealiasedcorrx[corrstartloc : correndloc + 1]
+                        )[maxloc]
+                        waveamp_byslice[theloc, theslice] = np.fabs(
+                            thecorrfunc_byslice[theloc, theslice, maxloc]
+                        )
+            timecoursemin = np.min(
+                corrected_rawapp_byslice[validlocs, theslice, :], axis=1
+            ).reshape((-1, 1))
+            app_byslice[validlocs, theslice, :] = (
+                corrected_rawapp_byslice[validlocs, theslice, :] - timecoursemin
+            )
+            normapp_byslice[validlocs, theslice, :] = np.nan_to_num(
+                app_byslice[validlocs, theslice, :] / means_byslice[validlocs, theslice, None]
+            )
     return appflips_byslice
 
 

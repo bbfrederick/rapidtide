@@ -314,10 +314,10 @@ def happy_main(argparsingfunc):
         validprojvoxels,
         time,
         timings,
-        mpcode=args.mpdetrend,
         LGR=None,
         nprocs=args.nprocs,
         showprogressbar=args.showprogressbar,
+        debug=args.debug,
     )
     normdata_byslice = normdata.reshape((xsize * ysize, numslices, timepoints))
 

@@ -693,13 +693,6 @@ def _get_parser():
         default=0,
     )
     debug_opts.add_argument(
-        "--mpdetrend",
-        dest="mpdetrend",
-        action="store_true",
-        help="Use experimental multiproc detrending. Do NOT do this if you aren't me.",
-        default=False,
-    )
-    debug_opts.add_argument(
         "--mpphaseproject",
         dest="mpphaseproject",
         action="store_true",
