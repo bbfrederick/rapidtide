@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.0.7 (5/21/25)
+* (happy) Implemented multiprocessing for detrending, phase projection, and phase projection smoothing.
+
 ## Version 3.0.6 (5/21/25)
 * (rapidtide) Made a generic, reusable multiprocessing module and moved many functions over to it.
 * (ccorrica) Samplerate is now set properly if input is a BIDS tsv file.
