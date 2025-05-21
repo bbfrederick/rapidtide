@@ -65,7 +65,7 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy \
+    ../dst/happy_original \
     --nprocs -1
 
 #happy \
