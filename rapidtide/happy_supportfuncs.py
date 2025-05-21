@@ -1136,7 +1136,7 @@ def _procOnePhaseProject(slice, sliceargs, **kwargs):
         rawapp_byslice[:, slice, :] = 0.0
         cine_byslice[:, slice, :] = 0.0
 
-    return slice, rawapp_byslice[:, slice, :], cine_byslice[:, slice, :]
+    return slice, rawapp_byslice[:, slice, :], cine_byslice[:, slice, :], weights_byslice[:, slice, :]
 
 
 def _packslicedataPhaseProject(slicenum, sliceargs):
@@ -1159,6 +1159,7 @@ def _packslicedataPhaseProject(slicenum, sliceargs):
 def _unpackslicedataPhaseProject(retvals, voxelproducts):
     (voxelproducts[0])[:, retvals[0], :] = retvals[1]
     (voxelproducts[1])[:, retvals[0], :] = retvals[2]
+    (voxelproducts[2])[:, retvals[0], :] = retvals[3]
 
 
 def phaseprojectpass(
@@ -1200,7 +1201,7 @@ def phaseprojectpass(
         slicefunc = _procOnePhaseProject
         packfunc = _packslicedataPhaseProject
         unpackfunc = _unpackslicedataPhaseProject
-        slicetargets = [rawapp_byslice, cine_byslice]
+        slicetargets = [rawapp_byslice, cine_byslice, weights_byslice]
         slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
 
         slicetotal = tide_genericmultiproc.run_multiproc(
