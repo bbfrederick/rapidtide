@@ -65,7 +65,29 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy \
+    ../dst/happy_vanilla \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --mpdetrend \
+    ../dst/happy_mpdetrend \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --mpphaseproject \
+    ../dst/happy_mpphaseproj \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --mpdetrend \
+    --mpphaseproject \
+    ../dst/happy_mpdetrend_mpphaseproj \
     --nprocs -1
 
 #happy \
