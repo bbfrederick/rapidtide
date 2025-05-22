@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rapidtide.resample import congrid
+from rapidtide.happy_supportfuncs import preloadcongrid
 from rapidtide.tests.utils import mse
 
 
@@ -74,86 +75,74 @@ def test_congrid(debug=False, displayplots=False):
         weights = np.zeros((gridlen), dtype=float)
         griddeddata = np.zeros((gridlen), dtype=float)
 
-        for gridkernel in kernellist:
-            for congridbins in binslist:
-                print("about to grid")
+        for prefill in [True, False]:
+            for gridkernel in kernellist:
+                for congridbins in binslist:
+                    print("about to grid")
 
-                # reinitialize grid outputs
-                weights *= 0.0
-                griddeddata *= 0.0
+                    # reinitialize grid outputs
+                    weights *= 0.0
+                    griddeddata *= 0.0
 
-                for i in range(numsamples):
-                    thevals, theweights, theindices = congrid(
-                        gridaxis,
-                        testvals[i],
-                        funcvalue2(testvals[i], frequency=cycles),
-                        congridbins,
-                        kernel=gridkernel,
-                        debug=False,
-                    )
-                    for i in range(len(theindices)):
-                        weights[theindices[i]] += theweights[i]
-                        griddeddata[theindices[i]] += thevals[i]
-
-                griddeddata = np.where(weights > 0.0, griddeddata / weights, 0.0)
-
-                target = np.float64(gridaxis * 0.0)
-                for i in range(len(gridaxis)):
-                    target[i] = funcvalue2(gridaxis[i], frequency=cycles)
-
-                print("gridding done")
-                print("debug:", debug)
-
-                # plot if we are doing that
-                if displayplots:
-                    offset = 0.0
-                    legend = []
-                    plt.plot(sourceaxis, timecoursein)
-                    legend.append("Original")
-                    # offset += 1.0
-                    plt.plot(gridaxis, target + offset)
-                    legend.append("Target")
-                    # offset += 1.0
-                    plt.plot(gridaxis, griddeddata + offset)
-                    legend.append("Gridded")
-                    plt.plot(gridaxis, weights)
-                    legend.append("Weights")
-                    plt.legend(legend)
-                    plt.show()
-
-                # do the tests
-                msethresh = 6.0e-2
-                themse = mse(target, griddeddata)
-                if debug:
-                    if themse >= msethresh:
-                        extra = "FAIL"
-                    else:
-                        extra = ""
-                    print(
-                        "mse for",
-                        cycles,
-                        "cycles:",
-                        gridkernel,
-                        str(congridbins),
-                        ":",
-                        themse,
-                        extra,
-                    )
-                    outputlines.append(
-                        " ".join(
-                            [
-                                "mse for",
-                                str(cycles),
-                                "cycles:",
-                                gridkernel,
-                                str(congridbins),
-                                ":",
-                                str(themse),
-                            ]
+                    if prefill:
+                        preloadcongrid(
+                            gridaxis, congridbins, gridkernel=gridkernel, cyclic=True, debug=False
                         )
-                    )
-                if not debug:
-                    assert themse < msethresh
+                    for i in range(numsamples):
+                        thevals, theweights, theindices = congrid(
+                            gridaxis,
+                            testvals[i],
+                            funcvalue2(testvals[i], frequency=cycles),
+                            congridbins,
+                            kernel=gridkernel,
+                            debug=False,
+                        )
+                        for i in range(len(theindices)):
+                            weights[theindices[i]] += theweights[i]
+                            griddeddata[theindices[i]] += thevals[i]
+
+                    griddeddata = np.where(weights > 0.0, griddeddata / weights, 0.0)
+
+                    target = np.float64(gridaxis * 0.0)
+                    for i in range(len(gridaxis)):
+                        target[i] = funcvalue2(gridaxis[i], frequency=cycles)
+
+                    print("gridding done")
+                    print("debug:", debug)
+
+                    # plot if we are doing that
+                    if displayplots:
+                        offset = 0.0
+                        legend = []
+                        plt.plot(sourceaxis, timecoursein)
+                        legend.append("Original")
+                        # offset += 1.0
+                        plt.plot(gridaxis, target + offset)
+                        legend.append("Target")
+                        # offset += 1.0
+                        plt.plot(gridaxis, griddeddata + offset)
+                        legend.append("Gridded")
+                        plt.plot(gridaxis, weights)
+                        legend.append("Weights")
+                        plt.legend(legend)
+                        plt.show()
+
+                    # do the tests
+                    msethresh = 6.0e-2
+                    themse = mse(target, griddeddata)
+                    if debug:
+                        if themse >= msethresh:
+                            extra = "FAIL"
+                        else:
+                            extra = ""
+                        print(
+                            f"mse for {cycles} cycles: {prefill=}, {gridkernel} {congridbins}: {themse} {extra}"
+                        )
+                        outputlines.append(
+                            f"mse for {cycles} cycles: {prefill=}, {gridkernel} {congridbins}: {themse}"
+                        )
+                    if not debug:
+                        assert themse < msethresh
     if debug:
         for theline in outputlines:
             print(theline)
