@@ -382,7 +382,7 @@ def _procOneVoxelDetrend(
     debug = options["debug"]
     [fmri_voxeldata] = voxelargs
     if debug:
-        print(f"{vox=}, {fmri_voxeldata.shape=}")
+        print(f"{vox=}, {detrendorder=}, {demean=}, {fmri_voxeldata.shape=}")
 
     detrended_voxeldata = tide_fit.detrend(fmri_voxeldata, order=detrendorder, demean=demean)
 
@@ -407,11 +407,12 @@ def normalizevoxels(
     time,
     timings,
     LGR=None,
-    mpcode=False,
+    mpcode=True,
     nprocs=1,
     alwaysmultiproc=False,
     showprogressbar=True,
     chunksize=1000,
+    debug=False,
 ):
     print("Normalizing voxels...")
     normdata = fmri_data * 0.0
@@ -422,6 +423,8 @@ def normalizevoxels(
     if detrendorder > 0:
         print("Detrending to order", detrendorder, "...")
         if mpcode:
+            if debug:
+                print(f"detrend multiproc path: {detrendorder=}")
             inputshape = fmri_data.shape
             voxelargs = [
                 fmri_data,
@@ -446,17 +449,20 @@ def normalizevoxels(
                 alwaysmultiproc,
                 showprogressbar,
                 chunksize,
-                order=detrendorder,
+                debug=debug,
+                detrendorder=detrendorder,
                 demean=False,
             )
         else:
+            if debug:
+                print(f"detrend nonmultiproc path: {detrendorder=}")
             for idx, thevox in enumerate(
-                    tqdm(
-                        validvoxels,
-                        desc="Voxel",
-                        unit="voxels",
-                        disable=(not showprogressbar),
-                    )
+                tqdm(
+                    validvoxels,
+                    desc="Voxel",
+                    unit="voxels",
+                    disable=(not showprogressbar),
+                )
             ):
                 fmri_data[thevox, :] = tide_fit.detrend(
                     fmri_data[thevox, :], order=detrendorder, demean=False
@@ -475,7 +481,6 @@ def normalizevoxels(
     timings.append(["Normalization finished", time.time(), numspatiallocs, "voxels"])
     print("Normalization took", "{:.3f}".format(time.time() - starttime), "seconds")
     return normdata, demeandata, means, medians, mads
-
 
 
 def cleanphysio(
@@ -1041,6 +1046,7 @@ def cardiaccycleaverage(
     congridbins,
     gridkernel,
     centric,
+    cache=True,
     cyclic=True,
 ):
     rawapp_bypoint = np.zeros(len(destinationphases), dtype=np.float64)
@@ -1052,13 +1058,14 @@ def cardiaccycleaverage(
             1.0,
             congridbins,
             kernel=gridkernel,
+            cache=cache,
             cyclic=cyclic,
         )
         for i in range(len(theindices)):
             weight_bypoint[theindices[i]] += theweights[i]
             rawapp_bypoint[theindices[i]] += theweights[i] * waveform[t]
     rawapp_bypoint = np.where(
-        weight_bypoint > np.max(weight_bypoint) / 50.0,
+        weight_bypoint > (np.max(weight_bypoint) / 50.0),
         np.nan_to_num(rawapp_bypoint / weight_bypoint),
         0.0,
     )
@@ -1081,9 +1088,11 @@ def circularderivs(timecourse):
 
 def _procOnePhaseProject(slice, sliceargs, **kwargs):
     options = {
+        "cache": True,
         "debug": False,
     }
     options.update(kwargs)
+    cache = options["cache"]
     debug = options["debug"]
     (
         validlocslist,
@@ -1111,6 +1120,7 @@ def _procOnePhaseProject(slice, sliceargs, **kwargs):
                 1.0,
                 congridbins,
                 kernel=gridkernel,
+                cache=cache,
                 cyclic=True,
             )
             for i in range(len(theindices)):
@@ -1130,7 +1140,13 @@ def _procOnePhaseProject(slice, sliceargs, **kwargs):
         rawapp_byslice[:, slice, :] = 0.0
         cine_byslice[:, slice, :] = 0.0
 
-    return slice, rawapp_byslice[:, slice, :], cine_byslice[:, slice, :]
+    return (
+        slice,
+        rawapp_byslice[:, slice, :],
+        cine_byslice[:, slice, :],
+        weights_byslice[:, slice, :],
+        validlocs,
+    )
 
 
 def _packslicedataPhaseProject(slicenum, sliceargs):
@@ -1151,8 +1167,28 @@ def _packslicedataPhaseProject(slicenum, sliceargs):
 
 
 def _unpackslicedataPhaseProject(retvals, voxelproducts):
-    (voxelproducts[0])[:, retvals[0], :] = retvals[1]
-    (voxelproducts[1])[:, retvals[0], :] = retvals[2]
+    (voxelproducts[0])[retvals[4], retvals[0], :] = (retvals[1])[retvals[4], :]
+    (voxelproducts[1])[retvals[4], retvals[0], :] = (retvals[2])[retvals[4], :]
+    (voxelproducts[2])[retvals[4], retvals[0], :] = (retvals[3])[retvals[4], :]
+
+
+def preloadcongrid(outphases, congridbins, gridkernel="kaiser", cyclic=True, debug=False):
+    outphasestep = outphases[1] - outphases[0]
+    outphasecenter = outphases[int(len(outphases) / 2)]
+    fillargs = outphasestep * (
+        np.linspace(-0.5, 0.5, 10001, endpoint=True, dtype=float) + outphasecenter
+    )
+    for thearg in fillargs:
+        dummy, dummy, dummy = tide_resample.congrid(
+            outphases,
+            thearg,
+            1.0,
+            congridbins,
+            kernel=gridkernel,
+            cyclic=cyclic,
+            cache=True,
+            debug=debug,
+        )
 
 
 def phaseprojectpass(
@@ -1169,10 +1205,11 @@ def phaseprojectpass(
     congridbins,
     gridkernel,
     destpoints,
-    mpcode=True,
+    mpcode=False,
     nprocs=1,
     alwaysmultiproc=False,
     showprogressbar=True,
+    cache=True,
     debug=False,
 ):
     if mpcode:
@@ -1194,7 +1231,7 @@ def phaseprojectpass(
         slicefunc = _procOnePhaseProject
         packfunc = _packslicedataPhaseProject
         unpackfunc = _unpackslicedataPhaseProject
-        slicetargets = [rawapp_byslice, cine_byslice]
+        slicetargets = [rawapp_byslice, cine_byslice, weights_byslice]
         slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
 
         slicetotal = tide_genericmultiproc.run_multiproc(
@@ -1209,9 +1246,10 @@ def phaseprojectpass(
             nprocs,
             alwaysmultiproc,
             showprogressbar,
-            16,
+            8,
             indexaxis=1,
             procunit="slices",
+            cache=cache,
             debug=debug,
         )
     else:
@@ -1233,6 +1271,8 @@ def phaseprojectpass(
                         congridbins,
                         kernel=gridkernel,
                         cyclic=True,
+                        cache=cache,
+                        debug=debug,
                     )
                     for i in range(len(theindices)):
                         weights_byslice[validlocs, theslice, theindices[i]] += theweights[i]
@@ -1242,7 +1282,8 @@ def phaseprojectpass(
                     if weights_byslice[validlocs[0], theslice, d] == 0.0:
                         weights_byslice[validlocs, theslice, d] = 1.0
                 rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-                    rawapp_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
+                    rawapp_byslice[validlocs, theslice, :]
+                    / weights_byslice[validlocs, theslice, :]
                 )
                 cine_byslice[validlocs, theslice, :] = np.nan_to_num(
                     cine_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
@@ -1379,6 +1420,7 @@ def phaseproject(
         args.congridbins,
         args.gridkernel,
         args.destpoints,
+        cache=args.congridcache,
         mpcode=args.mpphaseproject,
         nprocs=args.nprocs,
         showprogressbar=args.showprogressbar,

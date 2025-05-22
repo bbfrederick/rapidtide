@@ -608,13 +608,6 @@ def _get_parser():
         default=False,
     )
     debug_opts.add_argument(
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        help="Be more chatty.",
-        default=False,
-    )
-    debug_opts.add_argument(
         "--nodetrend",
         dest="detrendorder",
         action="store",
@@ -700,18 +693,32 @@ def _get_parser():
         default=0,
     )
     debug_opts.add_argument(
-        "--mpdetrend",
+        "--nompdetrend",
         dest="mpdetrend",
-        action="store_true",
-        help="Use experimental multiproc detrending. Do NOT do this if you aren't me.",
-        default=False,
+        action="store_false",
+        help="Disable multiproc detrending.",
+        default=True,
     )
     debug_opts.add_argument(
-        "--mpphaseproject",
+        "--nompphaseproject",
         dest="mpphaseproject",
-        action="store_true",
-        help="Use experimental multiproc phase projection. Do NOT do this if you aren't me.",
-        default=False,
+        action="store_false",
+        help="Disable multiproc phase projection.",
+        default=True,
+    )
+    debug_opts.add_argument(
+        "--noprefillcongrid",
+        dest="preloadcongrid",
+        action="store_false",
+        help="Don't prefill the congrid value cache.",
+        default=True,
+    )
+    debug_opts.add_argument(
+        "--nocongridcache",
+        dest="congridcache",
+        action="store_false",
+        help="Disable the congrid value cache completely.",
+        default=True,
     )
 
     return parser
@@ -755,6 +762,7 @@ def process_args(inputargs=None):
     args.outputlevel = 1
     args.maskthreshpct = 10.0
     args.domadnorm = True
+    args.verbose = False
     args.smoothlen = 101
     args.envthresh = 0.2
     args.upsamplefac = 100
