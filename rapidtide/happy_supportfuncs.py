@@ -457,12 +457,12 @@ def normalizevoxels(
             if debug:
                 print(f"detrend nonmultiproc path: {detrendorder=}")
             for idx, thevox in enumerate(
-                    tqdm(
-                        validvoxels,
-                        desc="Voxel",
-                        unit="voxels",
-                        disable=(not showprogressbar),
-                    )
+                tqdm(
+                    validvoxels,
+                    desc="Voxel",
+                    unit="voxels",
+                    disable=(not showprogressbar),
+                )
             ):
                 fmri_data[thevox, :] = tide_fit.detrend(
                     fmri_data[thevox, :], order=detrendorder, demean=False
@@ -481,7 +481,6 @@ def normalizevoxels(
     timings.append(["Normalization finished", time.time(), numspatiallocs, "voxels"])
     print("Normalization took", "{:.3f}".format(time.time() - starttime), "seconds")
     return normdata, demeandata, means, medians, mads
-
 
 
 def cleanphysio(
@@ -1064,7 +1063,7 @@ def cardiaccycleaverage(
             weight_bypoint[theindices[i]] += theweights[i]
             rawapp_bypoint[theindices[i]] += theweights[i] * waveform[t]
     rawapp_bypoint = np.where(
-        weight_bypoint > np.max(weight_bypoint) / 50.0,
+        weight_bypoint > (np.max(weight_bypoint) / 50.0),
         np.nan_to_num(rawapp_bypoint / weight_bypoint),
         0.0,
     )
@@ -1136,7 +1135,13 @@ def _procOnePhaseProject(slice, sliceargs, **kwargs):
         rawapp_byslice[:, slice, :] = 0.0
         cine_byslice[:, slice, :] = 0.0
 
-    return slice, rawapp_byslice[:, slice, :], cine_byslice[:, slice, :], weights_byslice[:, slice, :], validlocs
+    return (
+        slice,
+        rawapp_byslice[:, slice, :],
+        cine_byslice[:, slice, :],
+        weights_byslice[:, slice, :],
+        validlocs,
+    )
 
 
 def _packslicedataPhaseProject(slicenum, sliceargs):
@@ -1160,6 +1165,24 @@ def _unpackslicedataPhaseProject(retvals, voxelproducts):
     (voxelproducts[0])[retvals[4], retvals[0], :] = (retvals[1])[retvals[4], :]
     (voxelproducts[1])[retvals[4], retvals[0], :] = (retvals[2])[retvals[4], :]
     (voxelproducts[2])[retvals[4], retvals[0], :] = (retvals[3])[retvals[4], :]
+
+
+def preloadcongrid(outphases, congridbins, gridkernel="kaiser", cyclic=True, debug=False):
+    outphasestep = outphases[1] - outphases[0]
+    outphasecenter = outphases[int(len(outphases) / 2)]
+    fillargs = outphasestep * (
+        np.linspace(-0.5, 0.5, 1001, endpoint=True, dtype=float) + outphasecenter
+    )
+    for thearg in fillargs:
+        dummy, dummy, dummy = tide_resample.congrid(
+            outphases,
+            thearg,
+            1.0,
+            congridbins,
+            kernel=gridkernel,
+            cyclic=cyclic,
+            debug=debug,
+        )
 
 
 def phaseprojectpass(
@@ -1216,7 +1239,7 @@ def phaseprojectpass(
             nprocs,
             alwaysmultiproc,
             showprogressbar,
-            16,
+            8,
             indexaxis=1,
             procunit="slices",
             debug=debug,
@@ -1240,6 +1263,7 @@ def phaseprojectpass(
                         congridbins,
                         kernel=gridkernel,
                         cyclic=True,
+                        debug=debug,
                     )
                     for i in range(len(theindices)):
                         weights_byslice[validlocs, theslice, theindices[i]] += theweights[i]
@@ -1249,7 +1273,8 @@ def phaseprojectpass(
                     if weights_byslice[validlocs[0], theslice, d] == 0.0:
                         weights_byslice[validlocs, theslice, d] = 1.0
                 rawapp_byslice[validlocs, theslice, :] = np.nan_to_num(
-                    rawapp_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]
+                    rawapp_byslice[validlocs, theslice, :]
+                    / weights_byslice[validlocs, theslice, :]
                 )
                 cine_byslice[validlocs, theslice, :] = np.nan_to_num(
                     cine_byslice[validlocs, theslice, :] / weights_byslice[validlocs, theslice, :]

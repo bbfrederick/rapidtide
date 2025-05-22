@@ -72,6 +72,14 @@ happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     --mpphaseproject \
+    --gridbins 1.5 \
+    ../dst/happy_mpdetrend_mpphaseproj_1p5 \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --mpphaseproject \
     ../dst/happy_mpdetrend_mpphaseproj \
     --nprocs -1
 

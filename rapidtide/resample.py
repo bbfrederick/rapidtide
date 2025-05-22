@@ -124,7 +124,9 @@ congridyvals["kernel"] = "kaiser"
 congridyvals["width"] = 3.0
 
 
-def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
+def congrid(
+    xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False, onlykeynotices=True
+):
     """
     Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel of width 'width'.  Grid
     parameters are cached for performance.
@@ -164,10 +166,10 @@ def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
 
     if (congridyvals["kernel"] != kernel) or (congridyvals["width"] != width):
         if congridyvals["kernel"] != kernel:
-            if debug:
+            if debug and not onlykeynotices:
                 print(congridyvals["kernel"], "!=", kernel)
         if congridyvals["width"] != width:
-            if debug:
+            if debug and not onlykeynotices:
                 print(congridyvals["width"], "!=", width)
         if debug:
             print("(re)initializing congridyvals")
@@ -229,7 +231,7 @@ def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
         startpt = int(center - widthinpts // 2)
         indices = range(startpt, startpt + widthinpts)
         indices = np.remainder(indices, len(xaxis))
-        if debug:
+        if debug and not onlykeynotices:
             print("center, offset, indices, yvals", center, offset, indices, yvals)
         return val * yvals, yvals, indices
     else:
@@ -255,9 +257,9 @@ def congrid(xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False):
                 print("illegal kernel value in congrid - exiting")
                 sys.exit()
             yvals = congridyvals[offsetkey]
-            if debug:
+            if debug and not onlykeynotices:
                 print("xvals, yvals", xvals, yvals)
-        if debug:
+        if debug and not onlykeynotices:
             print("center, offset, indices, yvals", center, offset, indices, yvals)
         return val * yvals, yvals, indices
 

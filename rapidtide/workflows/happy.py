@@ -315,6 +315,7 @@ def happy_main(argparsingfunc):
         time,
         timings,
         LGR=None,
+        mpcode=args.mpdetrend,
         nprocs=args.nprocs,
         showprogressbar=args.showprogressbar,
         debug=args.debug,
@@ -1258,6 +1259,14 @@ def happy_main(argparsingfunc):
             proctrs = np.where(censortrs < 1)[0]
             procpoints = np.where(censorpoints < 1)[0]
 
+        # preload congrid
+        if args.preloadcongrid:
+            print("preloading congrid")
+            happy_support.preloadcongrid(
+                outphases, args.congridbins, gridkernel=args.gridkernel, cyclic=True, debug=False
+            )
+            print("done")
+
         # do phase averaging
         app_bypoint, weights_bypoint = happy_support.cardiaccycleaverage(
             instantaneous_cardiacphase,
@@ -1418,6 +1427,7 @@ def happy_main(argparsingfunc):
             theAliasedCorrelator = None
 
         # now project the data
+
         appflips_byslice = happy_support.phaseproject(
             input_data,
             demeandata_byslice,
