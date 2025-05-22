@@ -1,102 +1,61 @@
 #!/bin/csh -f
 
-#happy \
-#    ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/100206_3T_rfMRI_REST1_LR.nii.gz \
-#    ~/Dropbox_PHC/MR_data_2/physioconn/rfMRI_REST1_LR/slicetimes.txt \
-#    ~/Dropbox_PHC/MR_data_2/physioconn/happytest/happyarm \
-#    --mklthreads -1 \
-#    --infotag tag1 value1 \
-#    --infotag tag2 value2 \
-#    --model model_revised
-
-#happy \
-    #sub-HAPPYTEST.nii.gz \
-    #sub-HAPPYTEST.json \
-    #../dst/happy \
-    #--mklthreads 8 \
-    #--model model_revised \
-    #--spatialglm --aliasedcorrelation
-
-
-#happy \
-#    sub-HAPPYTEST.nii.gz \
-#    sub-HAPPYTEST.json \
-#    ../dst/happy_2comp \
-#    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
-#    --mklthreads 8 \
-#    --hilbertcomponents 2 \
-#    --model model_revised
-#
-#happy \
-#    sub-HAPPYTEST.nii.gz \
-#    sub-HAPPYTEST.json \
-#    ../dst/happy_3comp \
-#    --cardiacfile happystdres_bids.tsv:normcardiac_25.0Hz \
-#    --mklthreads 8 \
-#    --hilbertcomponents 3 \
-#    --model model_revised
-
-#happy_legacy \
-    #sub-HAPPYTEST.nii.gz \
-    #sub-HAPPYTEST.json \
-    #../dst/happy_normaltest \
-    #--mklthreads=8 \
-    #--model=model_revised \
-    #--outputbins=40 \
-    #--gridbins=3.5 \
-    #--stdfreq=20.0 \
-    #--estmask=happytestvesselmask.nii.gz \
-    #--minhr=46 \
-    #--maxhr=131.2 \
-    #--minhrfilt=45.5 \
-    #--maxhrfilt=800.0 \
-    #--envcutoff=0.45 \
-    #--notchwidth=1.25 \
-    #--cardiacfile=happytestpleth.txt \
-    #--cardiacfreq=20.0 \
-    #--cardiacstart=0.0 \
-    #--aliasedcorrelation \
-    #--increaseoutputlevel \
-    #--increaseoutputlevel \
-    #--decreaseoutputlevel \
-    #--dodlfilter
-
-
-#happy \
-    #sub-HAPPYTEST.nii.gz \
-    #sub-HAPPYTEST.json \
-    #../dst/happy_vanilla \
-    #--nprocs -1
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy_vanilla \
+    --nprocs 1
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     --mpphaseproject \
-    --gridbins 1.5 \
-    ../dst/happy_mpdetrend_mpphaseproj_1p5 \
+    ../dst/happy_mpphaseproj \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --mpdetrend \
+    ../dst/happy_mpdetrend \
     --nprocs -1
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     --mpphaseproject \
+    --mpdetrend \
     ../dst/happy_mpdetrend_mpphaseproj \
     --nprocs -1
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_mpdetrend \
+    --prefillcongrid \
+    ../dst/happy_vanilla_prefill \
+    --nprocs 1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --prefillcongrid \
+    --mpphaseproject \
+    ../dst/happy_mpphaseproj_prefill \
     --nprocs -1
 
-#happy \
-    #sub-HAPPYTEST.nii.gz \
-    #sub-HAPPYTEST.json \
-    #--model ~/code/rapidtide/rapidtide/data/models/model_cnn_w064_l13_fn20_fl08 \
-    #../dst/happy_newcnn
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --prefillcongrid \
+    --mpdetrend \
+    ../dst/happy_mpdetrend_prefill \
+    --nprocs -1
 
-#happy \
-    #sub-HAPPYTEST.nii.gz \
-    #sub-HAPPYTEST.json \
-    #../dst/happy
-#
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    --prefillcongrid \
+    --mpphaseproject \
+    --mpdetrend \
+    ../dst/happy_mpdetrend_mpphaseproj_prefill \
+    --nprocs -1

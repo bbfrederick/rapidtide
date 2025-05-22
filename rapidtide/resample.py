@@ -193,7 +193,7 @@ def congrid(
 
     # find the closest grid point to the target location, calculate relative offsets from this point
     center = tide_util.valtoindex(xaxis, loc)
-    offset = np.fmod(np.round((loc - xaxis[center]) / xstep, 3), 1.0)  # will vary from -0.5 to 0.5
+    offset = np.fmod(np.round((loc - xaxis[center]) / xstep, 4), 1.0)  # will vary from -0.5 to 0.5
     if cyclic:
         if center == len(xaxis) - 1 and offset > 0.5:
             center = 0

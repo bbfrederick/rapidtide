@@ -1171,7 +1171,7 @@ def preloadcongrid(outphases, congridbins, gridkernel="kaiser", cyclic=True, deb
     outphasestep = outphases[1] - outphases[0]
     outphasecenter = outphases[int(len(outphases) / 2)]
     fillargs = outphasestep * (
-        np.linspace(-0.5, 0.5, 1001, endpoint=True, dtype=float) + outphasecenter
+        np.linspace(-0.5, 0.5, 10001, endpoint=True, dtype=float) + outphasecenter
     )
     for thearg in fillargs:
         dummy, dummy, dummy = tide_resample.congrid(

@@ -707,7 +707,7 @@ def _get_parser():
         default=False,
     )
     debug_opts.add_argument(
-        "--preloadcongrid",
+        "--prefillcongrid",
         dest="preloadcongrid",
         action="store_true",
         help="Prefill the congrid value cache.",
