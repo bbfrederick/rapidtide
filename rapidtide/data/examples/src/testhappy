@@ -1,61 +1,76 @@
 #!/bin/csh -f
 
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happy_vanilla \
-    --nprocs 1
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    ../dst/happy_vanilla \
+#    --nprocs 1
+
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    --mpphaseproject \
+#    ../dst/happy_mpphaseproj \
+#    --nprocs -1
+
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    --mpdetrend \
+#    ../dst/happy_mpdetrend \
+#    --nprocs -1
+
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    --mpphaseproject \
+#    --mpdetrend \
+#    ../dst/happy_mpdetrend_mpphaseproj \
+#    --nprocs -1
+
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    --prefillcongrid \
+#    ../dst/happy_vanilla_prefill \
+#    --nprocs 1
+
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    --prefillcongrid \
+#    --mpphaseproject \
+#    ../dst/happy_mpphaseproj_prefill \
+#    --nprocs -1
+
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    --prefillcongrid \
+#    --mpdetrend \
+#    ../dst/happy_mpdetrend_prefill \
+#    --nprocs -1
+
+#happy \
+#    sub-HAPPYTEST.nii.gz \
+#    sub-HAPPYTEST.json \
+#    --prefillcongrid \
+#    --mpphaseproject \
+#    --mpdetrend \
+#    ../dst/happy_mpdetrend_mpphaseproj_prefill \
+#    --nprocs -1
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     --mpphaseproject \
-    ../dst/happy_mpphaseproj \
-    --nprocs -1
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
     --mpdetrend \
-    ../dst/happy_mpdetrend \
+    --nocongridcache \
+    ../dst/happy_mpdetrend_mpphaseproj_nocache \
     --nprocs -1
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    --mpphaseproject \
-    --mpdetrend \
-    ../dst/happy_mpdetrend_mpphaseproj \
-    --nprocs -1
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    --prefillcongrid \
-    ../dst/happy_vanilla_prefill \
-    --nprocs 1
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    --prefillcongrid \
-    --mpphaseproject \
-    ../dst/happy_mpphaseproj_prefill \
-    --nprocs -1
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    --prefillcongrid \
-    --mpdetrend \
-    ../dst/happy_mpdetrend_prefill \
-    --nprocs -1
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    --prefillcongrid \
-    --mpphaseproject \
-    --mpdetrend \
-    ../dst/happy_mpdetrend_mpphaseproj_prefill \
+    ../dst/happy_newdefaults \
     --nprocs -1

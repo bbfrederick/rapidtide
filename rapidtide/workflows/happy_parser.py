@@ -693,25 +693,32 @@ def _get_parser():
         default=0,
     )
     debug_opts.add_argument(
-        "--mpdetrend",
+        "--nompdetrend",
         dest="mpdetrend",
-        action="store_true",
-        help="Use experimental multiproc detrending. Do NOT do this if you aren't me.",
-        default=False,
+        action="store_false",
+        help="Disable multiproc detrending.",
+        default=True,
     )
     debug_opts.add_argument(
-        "--mpphaseproject",
+        "--nompphaseproject",
         dest="mpphaseproject",
-        action="store_true",
-        help="Use experimental multiproc phase projection. Do NOT do this if you aren't me.",
-        default=False,
+        action="store_false",
+        help="Disable multiproc phase projection.",
+        default=True,
     )
     debug_opts.add_argument(
-        "--prefillcongrid",
+        "--noprefillcongrid",
         dest="preloadcongrid",
-        action="store_true",
-        help="Prefill the congrid value cache.",
-        default=False,
+        action="store_false",
+        help="Don't prefill the congrid value cache.",
+        default=True,
+    )
+    debug_opts.add_argument(
+        "--nocongridcache",
+        dest="congridcache",
+        action="store_false",
+        help="Disable the congrid value cache completely.",
+        default=True,
     )
 
     return parser

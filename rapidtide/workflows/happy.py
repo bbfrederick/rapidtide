@@ -1261,7 +1261,7 @@ def happy_main(argparsingfunc):
 
         # preload congrid
         if args.preloadcongrid:
-            print("preloading congrid")
+            print("Preloading congrid values...")
             happy_support.preloadcongrid(
                 outphases, args.congridbins, gridkernel=args.gridkernel, cyclic=True, debug=False
             )
@@ -1276,6 +1276,7 @@ def happy_main(argparsingfunc):
             args.congridbins,
             args.gridkernel,
             args.centric,
+            cache=args.congridcache,
             cyclic=True,
         )
         if thispass == numpasses - 1:

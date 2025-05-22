@@ -125,7 +125,15 @@ congridyvals["width"] = 3.0
 
 
 def congrid(
-    xaxis, loc, val, width, kernel="kaiser", cyclic=True, debug=False, onlykeynotices=True
+    xaxis,
+    loc,
+    val,
+    width,
+    kernel="kaiser",
+    cache=True,
+    cyclic=True,
+    debug=False,
+    onlykeynotices=True,
 ):
     """
     Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel of width 'width'.  Grid
@@ -226,8 +234,9 @@ def congrid(
                 )
                 + offset
             )
-            congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
-            yvals = congridyvals[offsetkey]
+            yvals = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, width]))
+            if cache:
+                congridyvals[offsetkey] = 1.0 * yvals
         startpt = int(center - widthinpts // 2)
         indices = range(startpt, startpt + widthinpts)
         indices = np.remainder(indices, len(xaxis))
@@ -247,16 +256,15 @@ def congrid(
             xvals = indices - center + offset
             if kernel == "gauss":
                 sigma = optsigma[kernelindex]
-                congridyvals[offsetkey] = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, sigma]))
+                yvals = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, sigma]))
             elif kernel == "kaiser":
                 beta = optbeta[kernelindex]
-                congridyvals[offsetkey] = tide_fit.kaiserbessel_eval(
-                    xvals, np.array([beta, width / 2.0])
-                )
+                yvals = tide_fit.kaiserbessel_eval(xvals, np.array([beta, width / 2.0]))
             else:
                 print("illegal kernel value in congrid - exiting")
                 sys.exit()
-            yvals = congridyvals[offsetkey]
+            if cache:
+                congridyvals[offsetkey] = 1.0 * yvals
             if debug and not onlykeynotices:
                 print("xvals, yvals", xvals, yvals)
         if debug and not onlykeynotices:

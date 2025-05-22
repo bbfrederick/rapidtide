@@ -1046,6 +1046,7 @@ def cardiaccycleaverage(
     congridbins,
     gridkernel,
     centric,
+    cache=True,
     cyclic=True,
 ):
     rawapp_bypoint = np.zeros(len(destinationphases), dtype=np.float64)
@@ -1057,6 +1058,7 @@ def cardiaccycleaverage(
             1.0,
             congridbins,
             kernel=gridkernel,
+            cache=cache,
             cyclic=cyclic,
         )
         for i in range(len(theindices)):
@@ -1086,9 +1088,11 @@ def circularderivs(timecourse):
 
 def _procOnePhaseProject(slice, sliceargs, **kwargs):
     options = {
+        "cache": True,
         "debug": False,
     }
     options.update(kwargs)
+    cache = options["cache"]
     debug = options["debug"]
     (
         validlocslist,
@@ -1116,6 +1120,7 @@ def _procOnePhaseProject(slice, sliceargs, **kwargs):
                 1.0,
                 congridbins,
                 kernel=gridkernel,
+                cache=cache,
                 cyclic=True,
             )
             for i in range(len(theindices)):
@@ -1181,6 +1186,7 @@ def preloadcongrid(outphases, congridbins, gridkernel="kaiser", cyclic=True, deb
             congridbins,
             kernel=gridkernel,
             cyclic=cyclic,
+            cache=True,
             debug=debug,
         )
 
@@ -1203,6 +1209,7 @@ def phaseprojectpass(
     nprocs=1,
     alwaysmultiproc=False,
     showprogressbar=True,
+    cache=True,
     debug=False,
 ):
     if mpcode:
@@ -1242,6 +1249,7 @@ def phaseprojectpass(
             8,
             indexaxis=1,
             procunit="slices",
+            cache=cache,
             debug=debug,
         )
     else:
@@ -1263,6 +1271,7 @@ def phaseprojectpass(
                         congridbins,
                         kernel=gridkernel,
                         cyclic=True,
+                        cache=cache,
                         debug=debug,
                     )
                     for i in range(len(theindices)):
@@ -1411,6 +1420,7 @@ def phaseproject(
         args.congridbins,
         args.gridkernel,
         args.destpoints,
+        cache=args.congridcache,
         mpcode=args.mpphaseproject,
         nprocs=args.nprocs,
         showprogressbar=args.showprogressbar,
