@@ -24,7 +24,7 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-from tqdm import tqdm
+from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
@@ -1245,7 +1245,9 @@ def happy_main(argparsingfunc):
         demeandata_byslice = demeandata.reshape((xsize * ysize, numslices, timepoints))
         means_byslice = means.reshape((xsize * ysize, numslices))
 
-        timings.append(["Phase projection to image started" + passstring, time.time(), None, None])
+        timings.append(
+            ["Phase projection to image prep started" + passstring, time.time(), None, None]
+        )
         print("Starting phase projection")
         proctrs = range(timepoints)  # proctrs is the list of all fmri trs to be projected
         procpoints = range(
@@ -1369,9 +1371,122 @@ def happy_main(argparsingfunc):
                 debug=args.debug,
             )
 
+        timings.append(
+            ["Phase projection to image prep ended" + passstring, time.time(), None, None]
+        )
         if not args.verbose:
             print("Setting up for phase projection...")
 
+        # make a vessel map using Wright's method
+        if args.wrightiterations > 0:
+            timings.append(
+                [
+                    "Wright mask generation started" + passstring,
+                    time.time(),
+                    None,
+                    None,
+                ]
+            )
+            wrightcorrs = happy_support.wrightmap(
+                input_data,
+                demeandata_byslice,
+                rawapp_byslice,
+                projmask_byslice,
+                outphases,
+                cardphasevals,
+                proctrs,
+                args.congridbins,
+                args.gridkernel,
+                args.destpoints,
+                iterations=args.wrightiterations,
+                nprocs=args.nprocs,
+                verbose=False,
+                debug=args.debug,
+            )
+
+            """wrightcorrs_byslice = np.zeros((xsize * ysize, numslices, args.wrightiterations))
+            # first find the validlocs for each slice
+            validlocslist = []
+            if args.verbose:
+                print("Finding validlocs")
+            for theslice in range(numslices):
+                validlocslist.append(np.where(projmask_byslice[:, theslice] > 0)[0])
+            for theiteration in range(args.wrightiterations):
+                print("wrightiteration = ", theiteration)
+                # split timecourse into two sets
+                scrambledprocs = np.random.permutation(proctrs)
+                proctrs1 = scrambledprocs[: int(len(scrambledprocs) // 2)]
+                proctrs2 = scrambledprocs[int(len(scrambledprocs) // 2) :]
+    
+                # phase project each slice
+                print("Phase projecting")
+                rawapp_byslice1 = rawapp_byslice * 0.0
+                cine_byslice1 = cine_byslice * 0.0
+                weights_byslice1 = weights_byslice * 0.0
+                happy_support.phaseprojectpass(
+                    numslices,
+                    demeandata_byslice,
+                    input_data.byslice(),
+                    validlocslist,
+                    proctrs1,
+                    weights_byslice1,
+                    cine_byslice1,
+                    rawapp_byslice1,
+                    outphases,
+                    cardphasevals,
+                    args.congridbins,
+                    args.gridkernel,
+                    args.destpoints,
+                    cache=args.congridcache,
+                    mpcode=args.mpphaseproject,
+                    nprocs=args.nprocs,
+                    showprogressbar=False,
+                )
+                rawapp_byslice2 = rawapp_byslice * 0.0
+                cine_byslice2 = cine_byslice * 0.0
+                weights_byslice2 = weights_byslice * 0.0
+                happy_support.phaseprojectpass(
+                    numslices,
+                    demeandata_byslice,
+                    input_data.byslice(),
+                    validlocslist,
+                    proctrs2,
+                    weights_byslice2,
+                    cine_byslice2,
+                    rawapp_byslice2,
+                    outphases,
+                    cardphasevals,
+                    args.congridbins,
+                    args.gridkernel,
+                    args.destpoints,
+                    cache=args.congridcache,
+                    mpcode=args.mpphaseproject,
+                    nprocs=args.nprocs,
+                    showprogressbar=False,
+                )
+                for theslice in range(numslices):
+                    for thepoint in validlocslist[theslice]:
+                        theR, thep = pearsonr(
+                            rawapp_byslice1[thepoint, theslice, :],
+                            rawapp_byslice2[thepoint, theslice, :],
+                        )
+                        wrightcorrs_byslice[thepoint, theslice, theiteration] = theR
+            print(f"{wrightcorrs_byslice.shape=}")
+            wrightcorrs = np.mean(wrightcorrs_byslice, axis=2).reshape(xsize, ysize, numslices)"""
+            theheader = input_data.copyheader(numtimepoints=1)
+            wrightfilename = f"{outputroot}_desc-wrightcorrspass{thispass + 1}_map"
+            tide_io.writedicttojson(bidsbasedict, wrightfilename + ".json")
+            tide_io.savetonifti(wrightcorrs, theheader, wrightfilename)
+            timings.append(
+                [
+                    "Wright mask generation completed" + passstring,
+                    time.time(),
+                    None,
+                    None,
+                ]
+            )
+
+        timings.append(["Phase projection to image started" + passstring, time.time(), None, None])
         # make a lowpass filter for the projected data. Limit frequency to 3 cycles per 2pi (1/6th Fs)
         phaseFs = 1.0 / phasestep
         phaseFc = phaseFs / 6.0
@@ -1428,7 +1543,6 @@ def happy_main(argparsingfunc):
             theAliasedCorrelator = None
 
         # now project the data
-
         appflips_byslice = happy_support.phaseproject(
             input_data,
             demeandata_byslice,

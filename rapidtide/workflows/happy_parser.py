@@ -593,6 +593,14 @@ def _get_parser():
         help="Will disable showing progress bars (helpful if stdout is going to a file). ",
         default=True,
     )
+    misc_opts.add_argument(
+        "--wrightiterations",
+        dest="wrightiterations",
+        action="store",
+        type=lambda x: pf.is_int(parser, x),
+        help="Number of iterations for calculating Wright map. Set to 0 to disable.",
+        default=0,
+    )
     pf.addtagopts(
         misc_opts,
         helptext="Additional key, value pairs to add to the info json file (useful for tracking analyses).",

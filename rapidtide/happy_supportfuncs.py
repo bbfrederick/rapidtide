@@ -22,7 +22,7 @@ import warnings
 
 import numpy as np
 from scipy.signal import savgol_filter, welch
-from scipy.stats import kurtosis, skew
+from scipy.stats import kurtosis, skew, pearsonr
 from statsmodels.robust import mad
 from tqdm import tqdm
 
@@ -1508,6 +1508,45 @@ def phaseproject(
     return appflips_byslice
 
 
+def findvessels(
+    app,
+    normapp,
+    validlocs,
+    numspatiallocs,
+    outputroot,
+    unnormvesselmap,
+    destpoints,
+    softvesselfrac,
+    histlen,
+    outputlevel,
+    debug=False,
+):
+    if unnormvesselmap:
+        app2d = app.reshape((numspatiallocs, destpoints))
+    else:
+        app2d = normapp.reshape((numspatiallocs, destpoints))
+    histinput = app2d[validlocs, :].reshape((len(validlocs), destpoints))
+    if outputlevel > 0:
+        namesuffix = "_desc-apppeaks_hist"
+        tide_stats.makeandsavehistogram(
+            histinput,
+            histlen,
+            0,
+            outputroot + namesuffix,
+            debug=debug,
+        )
+
+    # find vessel thresholds
+    tide_util.logmem("before making vessel masks")
+    hardvesselthresh = tide_stats.getfracvals(np.max(histinput, axis=1), [0.98])[0] / 2.0
+    softvesselthresh = softvesselfrac * hardvesselthresh
+    print(
+        "hard, soft vessel thresholds set to",
+        "{:.3f}".format(hardvesselthresh),
+        "{:.3f}".format(softvesselthresh),
+    )
+
+
 def upsampleimage(input_data, numsteps, sliceoffsets, slicesamplerate, outputroot):
     fmri_data = input_data.byvol()
     timepoints = input_data.timepoints
@@ -1552,3 +1591,93 @@ def upsampleimage(input_data, numsteps, sliceoffsets, slicesamplerate, outputroo
     )
     tide_io.savetonifti(upsampleimage, theheader, outputroot + "_upsampled")
     print("upsampling complete")
+
+
+def wrightmap(
+    input_data,
+    demeandata_byslice,
+    rawapp_byslice,
+    projmask_byslice,
+    outphases,
+    cardphasevals,
+    proctrs,
+    congridbins,
+    gridkernel,
+    destpoints,
+    iterations=100,
+    nprocs=-1,
+    verbose=False,
+    debug=False,
+):
+    xsize = input_data.xsize
+    ysize = input_data.ysize
+    numslices = input_data.numslices
+    # make a vessel map using Wright's method
+    wrightcorrs_byslice = np.zeros((xsize * ysize, numslices, iterations))
+    # first find the validlocs for each slice
+    validlocslist = []
+    if verbose:
+        print("Finding validlocs")
+    for theslice in range(numslices):
+        validlocslist.append(np.where(projmask_byslice[:, theslice] > 0)[0])
+    for theiteration in range(iterations):
+        print(f"wright iteration: {theiteration + 1} of {iterations}")
+        # split timecourse into two sets
+        scrambledprocs = np.random.permutation(proctrs)
+        proctrs1 = scrambledprocs[: int(len(scrambledprocs) // 2)]
+        proctrs2 = scrambledprocs[int(len(scrambledprocs) // 2) :]
+        if debug:
+            print(f"{proctrs1=}, {proctrs2=}")
+
+        # phase project each slice
+        rawapp_byslice1 = rawapp_byslice * 0.0
+        cine_byslice1 = rawapp_byslice * 0.0
+        weights_byslice1 = rawapp_byslice * 0.0
+        phaseprojectpass(
+            numslices,
+            demeandata_byslice,
+            input_data.byslice(),
+            validlocslist,
+            proctrs1,
+            weights_byslice1,
+            cine_byslice1,
+            rawapp_byslice1,
+            outphases,
+            cardphasevals,
+            congridbins,
+            gridkernel,
+            destpoints,
+            nprocs=nprocs,
+            showprogressbar=False,
+        )
+        rawapp_byslice2 = rawapp_byslice * 0.0
+        cine_byslice2 = rawapp_byslice * 0.0
+        weights_byslice2 = rawapp_byslice * 0.0
+        phaseprojectpass(
+            numslices,
+            demeandata_byslice,
+            input_data.byslice(),
+            validlocslist,
+            proctrs2,
+            weights_byslice2,
+            cine_byslice2,
+            rawapp_byslice2,
+            outphases,
+            cardphasevals,
+            congridbins,
+            gridkernel,
+            destpoints,
+            nprocs=nprocs,
+            showprogressbar=False,
+        )
+        for theslice in range(numslices):
+            for thepoint in validlocslist[theslice]:
+                theR, thep = pearsonr(
+                    rawapp_byslice1[thepoint, theslice, :],
+                    rawapp_byslice2[thepoint, theslice, :],
+                )
+                if debug:
+                    print("theR = ", theR)
+                wrightcorrs_byslice[thepoint, theslice, theiteration] = theR
+    wrightcorrs = np.mean(wrightcorrs_byslice, axis=2).reshape(xsize, ysize, numslices)
+    return wrightcorrs
