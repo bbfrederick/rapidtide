@@ -1672,12 +1672,12 @@ def wrightmap(
         )
         for theslice in range(numslices):
             for thepoint in validlocslist[theslice]:
-                theR, thep = pearsonr(
+                theRvalue, thepvalue = pearsonr(
                     rawapp_byslice1[thepoint, theslice, :],
                     rawapp_byslice2[thepoint, theslice, :],
                 )
                 if debug:
-                    print("theR = ", theR)
-                wrightcorrs_byslice[thepoint, theslice, theiteration] = theR
+                    print("theRvalue = ", theRvalue)
+                wrightcorrs_byslice[thepoint, theslice, theiteration] = theRvalue
     wrightcorrs = np.mean(wrightcorrs_byslice, axis=2).reshape(xsize, ysize, numslices)
     return wrightcorrs
