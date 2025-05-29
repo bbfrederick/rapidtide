@@ -60,17 +60,18 @@
 #    ../dst/happy_mpdetrend_mpphaseproj_prefill \
 #    --nprocs -1
 
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    --mpphaseproject \
-    --mpdetrend \
-    --nocongridcache \
-    ../dst/happy_mpdetrend_mpphaseproj_nocache \
-    --nprocs -1
+#happy \
+    #sub-HAPPYTEST.nii.gz \
+    #sub-HAPPYTEST.json \
+    #--mpphaseproject \
+    #--mpdetrend \
+    #--nocongridcache \
+    #../dst/happy_mpdetrend_mpphaseproj_nocache \
+    #--nprocs -1
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy_newdefaults \
+    --aliasedcorrelation \
     --nprocs -1
