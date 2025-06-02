@@ -103,8 +103,9 @@ def cleanregressor(
         theCorrelator.setlimits(acmininpts, acmaxinpts)
         # theCorrelator.setlimits(lagmininpts, lagmaxinpts)
         print("check_autocorrelation:", acmininpts, acmaxinpts, lagmininpts, lagmaxinpts)
-        thexcorr, accheckcorrscale, dummy = theCorrelator.run(
-            resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1]
+        thexcorr, accheckcorrscale, theglobalmax = theCorrelator.run(
+            resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1],
+            trim=False,
         )
         theFitter.setcorrtimeaxis(accheckcorrscale)
         (
