@@ -310,8 +310,16 @@ def showarbcorr(args):
     endtime2 = starttime2 + len(inputdata2) / Fs2
     print(f"inputdata2 goes from {starttime2} to {endtime2}")
 
-    trimdata1 = inputdata1
-    trimdata2 = inputdata2
+    matchedinput1, matchedinput2, commonFs = tide_corr.matchsamplerates(
+        inputdata1,
+        Fs1,
+        inputdata2,
+        Fs2,
+        method="univariate",
+        debug=args.debug,
+    )
+    trimdata1 = matchedinput1
+    trimdata2 = matchedinput2
 
     if args.trimdata:
         minlen = np.min([len(trimdata1), len(trimdata2)])
@@ -328,12 +336,12 @@ def showarbcorr(args):
         if args.verbose:
             print("filtering to ", theprefilter.gettype(), " band")
     filtereddata1 = tide_math.corrnormalize(
-        theprefilter.apply(Fs1, trimdata1),
+        theprefilter.apply(commonFs, trimdata1),
         detrendorder=args.detrendorder,
         windowfunc=args.windowfunc,
     )
     filtereddata2 = tide_math.corrnormalize(
-        theprefilter.apply(Fs2, trimdata2),
+        theprefilter.apply(commonFs, trimdata2),
         detrendorder=args.detrendorder,
         windowfunc=args.windowfunc,
     )
@@ -345,9 +353,9 @@ def showarbcorr(args):
         print(f"{Fs1=}, {Fs2=}, {starttime1=}, {starttime2=}, {args.windowfunc=}")
     xcorr_x, thexcorr, corrFs, zeroloc = tide_corr.arbcorr(
         filtereddata1,
-        Fs1,
+        commonFs,
         filtereddata2,
-        Fs2,
+        commonFs,
         start1=starttime1,
         start2=starttime2,
         windowfunc=args.windowfunc,
