@@ -387,6 +387,7 @@ def showarbcorr(args):
     thexcorr_trim = thexcorr[lowerlim:upperlim]
     print("trimmed Correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
+    print(f"{len(filtereddata1)=}, {len(filtereddata2)=}")
     thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
     # initialize the correlation fitter
