@@ -297,6 +297,8 @@ def showarbcorr(args):
         sys.exit()
     if starttime1 == None:
         starttime1 = 0.0
+    endtime1 = starttime1 + len(inputdata1) / Fs1
+    print(f"inputdata1 goes from {starttime1} to {endtime1}")
 
     if args.samplerate2 is not None:
         Fs2 = args.samplerate2
@@ -305,6 +307,8 @@ def showarbcorr(args):
         sys.exit()
     if starttime2 == None:
         starttime2 = 0.0
+    endtime2 = starttime2 + len(inputdata2) / Fs2
+    print(f"inputdata2 goes from {starttime2} to {endtime2}")
 
     trimdata1 = inputdata1
     trimdata2 = inputdata2

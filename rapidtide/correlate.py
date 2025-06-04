@@ -761,6 +761,29 @@ class AliasedCorrelator:
         return corrfunc
 
 
+def matchsamplerates(
+    input1,
+    Fs1,
+    input2,
+    Fs2,
+    method="univariate",
+    debug=False,
+):
+    if Fs1 > Fs2:
+        corrFs = Fs1
+        matchedinput1 = input1
+        matchedinput2 = tide_resample.upsample(input2, Fs2, corrFs, method=method, debug=debug)
+    elif Fs2 > Fs1:
+        corrFs = Fs2
+        matchedinput1 = tide_resample.upsample(input1, Fs1, corrFs, method=method, debug=debug)
+        matchedinput2 = input2
+    else:
+        corrFs = Fs2
+        matchedinput1 = input1
+        matchedinput2 = input2
+    return matchedinput1, matchedinput2, corrFs
+
+
 def arbcorr(
     input1,
     Fs1,
@@ -771,20 +794,16 @@ def arbcorr(
     windowfunc="hamming",
     method="univariate",
     debug=False,
-):
-    """Calculate something."""
-    if Fs1 > Fs2:
-        corrFs = Fs1
-        matchedinput1 = input1
-        matchedinput2 = tide_resample.upsample(input2, Fs2, corrFs, method=method, debug=debug)
-    elif Fs2 > Fs1:
-        corrFs = Fs2
-        matchedinput1 = tide_resample.upsample(input1, Fs1, corrFs, method=method, debug=debug)
-        matchedinput2 = input2
-    else:
-        corrFs = Fs1
-        matchedinput1 = input1
-        matchedinput2 = input2
+)
+    # upsample to the higher frequency of the two
+    matchedinput1, matchedinput2, corrFs = matchsamplerates(
+        input1,
+        Fs1,
+        input2,
+        Fs2,
+        method=method,
+        debug=debug,
+    )
     norm1 = tide_math.corrnormalize(matchedinput1, detrendorder=1, windowfunc=windowfunc)
     norm2 = tide_math.corrnormalize(matchedinput2, detrendorder=1, windowfunc=windowfunc)
     thexcorr_y = signal.fftconvolve(norm1, norm2[::-1], mode="full")
