@@ -794,7 +794,7 @@ def arbcorr(
     windowfunc="hamming",
     method="univariate",
     debug=False,
-)
+):
     # upsample to the higher frequency of the two
     matchedinput1, matchedinput2, corrFs = matchsamplerates(
         input1,
