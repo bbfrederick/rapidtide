@@ -96,8 +96,8 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          sbom: false
-          provenance: false
+          sbom: true
+          provenance: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: fredericklab/rapidtide:latest
