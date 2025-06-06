@@ -34,31 +34,32 @@ docker run \
         /data/src/sub-RAPIDTIDETEST.nii.gz \
         /data/dst/sub-RAPIDTIDETEST_disabledockermemfix \
         --passes 3 \
-        --nprocs 4 \
+        --nprocs -1 \
         --nodenoise
 
 
-docker run \
-    --rm \
-    --ipc host \
-    --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
-    -it \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:${VERSION} \
-    happy \
-        /data/src/sub-HAPPYTEST.nii.gz \
-        /data/src/sub-HAPPYTEST.json \
-        /data/dst/sub-HAPPYTEST \
-        --model model_revised_tf2 \
-        --mklthreads -1 
-        --nprocs -1 
+#docker run \
+    #--rm \
+    #--ipc host \
+    #--mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
+    #-it \
+    #-v /tmp/.X11-unix:/tmp/.X11-unix \
+    #-u rapidtide fredericklab/rapidtide:${VERSION} \
+    #happy \
+        #/data/src/sub-HAPPYTEST.nii.gz \
+        #/data/src/sub-HAPPYTEST.json \
+        #/data/dst/sub-HAPPYTEST \
+        #--model model_revised_tf2 \
+        #--mklthreads -1 
+        #--nprocs -1 
 
 
 docker run \
     --network host\
     --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
+    --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
     -it \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide:${VERSION} \
-    tidepool --dataset /data/rapidtide/data/examples/dst/sub-RAPIDTIDETEST_
+    tidepool --dataset /data/dst/sub-RAPIDTIDETEST_
