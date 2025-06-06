@@ -57,7 +57,6 @@ docker run \
 docker run \
     --network host\
     --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
-    --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
     -it \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
