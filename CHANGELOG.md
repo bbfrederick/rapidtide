@@ -1,9 +1,10 @@
 # Release history
 
-## Version 3.0.7 (5/21/25)
+## Version 3.0.7 (6/5/25)
 * (happy) Implemented multiprocessing for detrending, phase projection, and phase projection smoothing.
 * (happy) Early implementation of Wright's method for finding vessels.
 * (rapidtide) Save the full autocorrelation function of the probe regressor at each pass.
+* (Docker) Turned on provenance and sbom in Docker builds.
 
 ## Version 3.0.6 (5/21/25)
 * (rapidtide) Made a generic, reusable multiprocessing module and moved many functions over to it.
