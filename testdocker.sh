@@ -35,7 +35,7 @@ docker run \
     -u rapidtide fredericklab/rapidtide:${VERSION} \
     rapidtide \
         /data/src/sub-RAPIDTIDETEST.nii.gz \
-        /data/dst/sub-RAPIDTIDETEST_disabledockermemfix \
+        /data/dst/sub-RAPIDTIDETEST \
         --passes 3 \
         --nprocs -1 \
         --nodenoise
