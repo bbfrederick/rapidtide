@@ -7,6 +7,19 @@ VERSION=latest
 xhost +
 
 docker pull fredericklab/rapidtide:${VERSION}
+#docker run \
+#    --rm \
+#    --ipc host \
+#    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
+#    -it \
+#    -v /tmp/.X11-unix:/tmp/.X11-unix \
+#    -u rapidtide fredericklab/rapidtide:${VERSION} \
+#    /cloud/mount-and-run rapidtide \
+#        /data/src/sub-RAPIDTIDETEST.nii.gz \
+#        /data/dst/sub-RAPIDTIDETEST \
+#        --passes 3 \
+#        --nprocs 4 
+
 docker run \
     --rm \
     --ipc host \
@@ -14,42 +27,27 @@ docker run \
     -it \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide:${VERSION} \
-    /cloud/mount-and-run rapidtide \
+    rapidtide \
         /data/src/sub-RAPIDTIDETEST.nii.gz \
-        /data/dst/sub-RAPIDTIDETEST \
+        /data/dst/sub-RAPIDTIDETEST_nocloud \
         --passes 3 \
         --nprocs 4 \
         --nodenoise
 
-#docker run \
-#    --rm \
-#    --ipc host \
-#    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
-#    -it \
-#    -v /tmp/.X11-unix:/tmp/.X11-unix \
-#    -u rapidtide fredericklab/rapidtide:${VERSION} \
-#    rapidtide \
-#        /data/src/sub-RAPIDTIDETEST.nii.gz \
-#        /data/dst/sub-RAPIDTIDETEST_disabledockermemfix \
-#        --disabledockermemfix \
-#        --passes 3 \
-#        --nprocs 4 \
-#        --nodenoise
 
-
-#docker run \
-#    --rm \
-#    --ipc host \
-#    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
-#    -it \
-#    -v /tmp/.X11-unix:/tmp/.X11-unix \
-#    -u rapidtide fredericklab/rapidtide:${VERSION} \
-#    happy \
-#        /data/src/sub-HAPPYTEST.nii.gz \
-#        /data/src/sub-HAPPYTEST.json \
-#        /data/dst/sub-HAPPYTEST \
-#        --model model_revised \
-#        --mklthreads -1 
+docker run \
+    --rm \
+    --ipc host \
+    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
+    -it \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -u rapidtide fredericklab/rapidtide:${VERSION} \
+    happy \
+        /data/src/sub-HAPPYTEST.nii.gz \
+        /data/src/sub-HAPPYTEST.json \
+        /data/dst/sub-HAPPYTEST \
+        --model model_revised \
+        --mklthreads -1 
 
 #docker run \
 #    --rm \
