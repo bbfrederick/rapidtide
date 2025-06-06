@@ -1,19 +1,16 @@
 #!/bin/bash
 
-DATADIR=/Users/frederic/code/rapidtide/rapidtide/data/examples
-
 MYIPADDRESS=`ifconfig en0 | grep 'inet ' | awk '{print $2}'`
-VERSION=latest-release
+VERSION=latest
 
 # allow network connections in Xquartz Security settings
 xhost +
 
 docker pull fredericklab/rapidtide:${VERSION}
-
 docker run \
     --rm \
     --ipc host \
-    --mount type=bind,source=${DATADIR},destination=/data \
+    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
     -it \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide:${VERSION} \
@@ -27,13 +24,14 @@ docker run \
 #docker run \
 #    --rm \
 #    --ipc host \
-#    --mount type=bind,source=${DATADIR},destination=/data \
+#    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
 #    -it \
 #    -v /tmp/.X11-unix:/tmp/.X11-unix \
 #    -u rapidtide fredericklab/rapidtide:${VERSION} \
 #    rapidtide \
 #        /data/src/sub-RAPIDTIDETEST.nii.gz \
-#        /data/dst/sub-RAPIDTIDETEST \
+#        /data/dst/sub-RAPIDTIDETEST_disabledockermemfix \
+#        --disabledockermemfix \
 #        --passes 3 \
 #        --nprocs 4 \
 #        --nodenoise
@@ -50,14 +48,13 @@ docker run \
 #        /data/src/sub-HAPPYTEST.nii.gz \
 #        /data/src/sub-HAPPYTEST.json \
 #        /data/dst/sub-HAPPYTEST \
-#        --model model_revised_tf2 \
-#        --mklthreads -1 \
-#        --nprocs 4 \
+#        --model model_revised \
+#        --mklthreads -1 
 
 #docker run \
 #    --rm \
 #    --ipc host \
-#    --mount type=bind,source=${DATADIR},destination=/data \
+#    --mount type=bind,source=/Users/frederic/code/rapidtide/rapidtide/data/examples,destination=/data \
 #    -it \
 #    -v /tmp/.X11-unix:/tmp/.X11-unix \
 #    -u rapidtide fredericklab/rapidtide:${VERSION} \
