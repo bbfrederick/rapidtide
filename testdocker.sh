@@ -9,7 +9,7 @@ VERSION=latest
 xhost +
 
 # make sure the test data is installed
-pushd ${DATADIR}/rapidtide/data/examples/src;installtestdatahere;popd
+pushd ${DATADIR}/rapidtide/data/examples/src;./installtestdatahere;popd
 
 docker pull fredericklab/rapidtide:${VERSION}
 #docker run \
@@ -26,19 +26,20 @@ docker pull fredericklab/rapidtide:${VERSION}
 #        --nprocs 4 \
 #        --nodenoise
 
-docker run \
-    --rm \
-    --ipc host \
-    --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
-    -it \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:${VERSION} \
-    rapidtide \
-        /data/src/sub-RAPIDTIDETEST.nii.gz \
-        /data/dst/sub-RAPIDTIDETEST \
-        --passes 3 \
-        --nprocs -1 \
-        --nodenoise
+
+#docker run \
+#    --rm \
+#    --ipc host \
+#    --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
+#    -it \
+#    -v /tmp/.X11-unix:/tmp/.X11-unix \
+#    -u rapidtide fredericklab/rapidtide:${VERSION} \
+#    rapidtide \
+#        /data/src/sub-RAPIDTIDETEST.nii.gz \
+#        /data/dst/sub-RAPIDTIDETEST \
+#        --passes 3 \
+#        --nprocs -1 \
+#        --nodenoise
 
 
 #docker run \
