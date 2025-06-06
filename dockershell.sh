@@ -1,6 +1,10 @@
 #!/bin/bash
 
-VERSION=latest
+DATADIR=/Users/frederic/code/rapidtide/rapidtide/data/examples
+
+VERSION=latest-release
 
 docker pull fredericklab/rapidtide:${VERSION}
-docker run -it fredericklab/rapidtide:${VERSION} bash
+docker run \
+    -it fredericklab/rapidtide:${VERSION} \
+    bash
