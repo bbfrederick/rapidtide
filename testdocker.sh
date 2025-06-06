@@ -8,6 +8,9 @@ VERSION=latest
 # allow network connections in Xquartz Security settings
 xhost +
 
+# make sure the test data is installed
+pushd ${DATADIR}/rapidtide/data/examples/src;installtestdatahere;popd
+
 docker pull fredericklab/rapidtide:${VERSION}
 #docker run \
 #    --rm \
