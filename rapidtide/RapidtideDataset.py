@@ -903,6 +903,23 @@ class RapidtideDataset:
                 print("using ", self.fileroot + "meanvalue.nii.gz", " as background")
             # allloadedmaps.append('anatomic')
             return True
+        elif os.path.isfile(self.fileroot + "desc-unfiltmean_map.nii.gz"):
+            thepath, thebase = os.path.split(self.fileroot)
+            self.overlays["anatomic"] = Overlay(
+                "anatomic",
+                self.fileroot + "desc-unfiltmean_map.nii.gz",
+                thebase,
+                init_LUT=self.init_LUT,
+                verbose=self.verbose,
+            )
+            if self.verbose > 1:
+                print(
+                    "using ",
+                    self.fileroot + "desc-unfiltmean_map.nii.gz",
+                    " as background",
+                )
+            # allloadedmaps.append('anatomic')
+            return True
         elif os.path.isfile(self.fileroot + "desc-mean_map.nii.gz"):
             thepath, thebase = os.path.split(self.fileroot)
             self.overlays["anatomic"] = Overlay(
