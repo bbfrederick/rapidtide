@@ -288,7 +288,7 @@ class VoxelData:
         if not self.resident:
             self.load()
         if self.filetype == "nifti":
-            if self.dimensions == 4:
+            if self.dimensions == 4 or self.filetype == "cifti" or self.filetype == "text":
                 return self.nim_data[:, :, :, self.validstart : self.validend + 1]
             else:
                 return self.nim_data[:, :, :]
@@ -296,13 +296,13 @@ class VoxelData:
             return self.nim_data[:, self.validstart : self.validend + 1]
 
     def byvoxel(self):
-        if self.dimensions == 4:
+        if self.dimensions == 4 or self.filetype == "cifti" or self.filetype == "text":
             return self.byvoltrimmed().reshape(self.numspatiallocs, -1)
         else:
             return self.byvoltrimmed().reshape(self.numspatiallocs)
 
     def byslice(self):
-        if self.dimensions == 4:
+        if self.dimensions == 4 or self.filetype == "cifti" or self.filetype == "text":
             return self.byvoltrimmed().reshape(self.numslicelocs, self.numslices, -1)
         else:
             return self.byvoltrimmed().reshape(self.numslicelocs, self.numslices)
