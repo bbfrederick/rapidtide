@@ -391,10 +391,11 @@ def rapidtide_main(argparsingfunc):
     csfmask = anatomicmasks[3]
 
     # do spatial filtering if requested
-    unfiltmeanvalue = np.mean(
-        theinputdata.byvoxel(),
-        axis=1,
-    )
+    if theinputdata.filetype == "nifti":
+        unfiltmeanvalue = np.mean(
+            theinputdata.byvoxel(),
+            axis=1,
+        )
     optiondict["gausssigma"] = theinputdata.smooth(
         optiondict["gausssigma"],
         brainmask=brainmask,
@@ -3542,6 +3543,8 @@ def rapidtide_main(argparsingfunc):
             tide_util.cleanup_shm(fitNorm_shm)
 
     # write the 3D maps that don't need to be remapped
+    if theinputdata.filetype != "nifti":
+        unfiltmeanvalue = meanvalue
     maplist = [
         (unfiltmeanvalue, "unfiltmean", "map", None, "Voxelwise mean of fmri data before smoothing"),
         (meanvalue, "mean", "map", None, "Voxelwise mean of fmri data"),
