@@ -28,7 +28,6 @@ import numpy as np
 from scipy import ndimage
 from scipy.stats import rankdata
 
-
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
@@ -392,6 +391,10 @@ def rapidtide_main(argparsingfunc):
     csfmask = anatomicmasks[3]
 
     # do spatial filtering if requested
+    unfiltmeanvalue = np.mean(
+        theinputdata.byvoxel(),
+        axis=1,
+    )
     optiondict["gausssigma"] = theinputdata.smooth(
         optiondict["gausssigma"],
         brainmask=brainmask,
@@ -3540,6 +3543,7 @@ def rapidtide_main(argparsingfunc):
 
     # write the 3D maps that don't need to be remapped
     maplist = [
+        (unfiltmeanvalue, "unfiltmean", "map", None, "Voxelwise mean of fmri data before smoothing"),
         (meanvalue, "mean", "map", None, "Voxelwise mean of fmri data"),
         (stddevvalue, "std", "map", None, "Voxelwise standard deviation of fmri data"),
         (covvalue, "CoV", "map", None, "Voxelwise coefficient of variation of fmri data"),
@@ -3564,6 +3568,7 @@ def rapidtide_main(argparsingfunc):
         cifti_hdr=theinputdata.cifti_hdr,
     )
     del meanvalue
+    del unfiltmeanvalue
 
     if optiondict["numestreps"] > 0:
         masklist = []
