@@ -100,6 +100,7 @@ class VoxelData:
     ysize = None
     numslices = None
     timepoints = None
+    dimensions = None
     realtimepoints = None
     xdim = None
     ydim = None
@@ -160,6 +161,10 @@ class VoxelData:
                 self.xsize, self.ysize, self.numslices, self.timepoints = tide_io.parseniftidims(
                     self.thedims
                 )
+                if self.timepoints == 1:
+                    self.dimensions = 3
+                else:
+                    self.dimensions = 4
                 self.numslicelocs = int(self.xsize) * int(self.ysize)
                 self.numspatiallocs = int(self.xsize) * int(self.ysize) * int(self.numslices)
                 self.cifti_hdr = None
@@ -283,15 +288,24 @@ class VoxelData:
         if not self.resident:
             self.load()
         if self.filetype == "nifti":
-            return self.nim_data[:, :, :, self.validstart : self.validend + 1]
+            if self.dimensions == 4:
+                return self.nim_data[:, :, :, self.validstart : self.validend + 1]
+            else:
+                return self.nim_data[:, :, :]
         else:
             return self.nim_data[:, self.validstart : self.validend + 1]
 
     def byvoxel(self):
-        return self.byvoltrimmed().reshape(self.numspatiallocs, -1)
+        if self.dimensions == 4:
+            return self.byvoltrimmed().reshape(self.numspatiallocs, -1)
+        else:
+            return self.byvoltrimmed().reshape(self.numspatiallocs)
 
     def byslice(self):
-        return self.byvoltrimmed().reshape(self.numslicelocs, self.numslices, -1)
+        if self.dimensions == 4:
+            return self.byvoltrimmed().reshape(self.numslicelocs, self.numslices, -1)
+        else:
+            return self.byvoltrimmed().reshape(self.numslicelocs, self.numslices)
 
     def validdata(self):
         if self.validvoxels is None:
