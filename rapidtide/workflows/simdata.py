@@ -20,6 +20,7 @@ import argparse
 
 from matplotlib.pyplot import *
 
+import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
@@ -38,8 +39,16 @@ def _get_parser():
     )
 
     # Required arguments
-    parser.add_argument("fmritr", type=lambda x: pf.is_float(parser, x, minval=0.0), help="TR of the simulated data, in seconds.")
-    parser.add_argument("numtrs", type=lambda x: pf.is_int(parser, x, minval=1), help="Number of TRs in the simulated data.")
+    parser.add_argument(
+        "fmritr",
+        type=lambda x: pf.is_float(parser, x, minval=0.0),
+        help="TR of the simulated data, in seconds.",
+    )
+    parser.add_argument(
+        "numtrs",
+        type=lambda x: pf.is_int(parser, x, minval=1),
+        help="Number of TRs in the simulated data.",
+    )
     pf.addreqinputniftifile(
         parser, "immeanfilename", addedtext="3D file with the mean value for each voxel"
     )
@@ -68,7 +77,9 @@ def _get_parser():
             action="store",
             type=lambda x: pf.is_valid_file(parser, x),
             metavar="FILE",
-            help=(f"3D NIFTI file with the {band} amplitude expressed as the percentage of inband variance accounted for by the regressor"),
+            help=(
+                f"3D NIFTI file with the {band} amplitude expressed as the percentage of inband variance accounted for by the regressor"
+            ),
             default=None,
         )
         bandopts.add_argument(
@@ -147,7 +158,9 @@ def _get_parser():
         action="store",
         type=float,
         metavar="LEVEL",
-        help=("The variance of the voxel specific noise.  Default is 0.0"),
+        help=(
+            "The variance of the voxel specific noise, as percent of the voxel mean.  Default is 0.0"
+        ),
         default=0.0,
     )
     parser.add_argument(
@@ -235,6 +248,7 @@ def prepareband(
         if not tide_io.checkspacedimmatch(pctdims, simdatadims):
             print(regressorname, "pct file does not match fmri")
             exit()
+        pctdata /= 100.0
     nim_lag, lagdata, lagheader, lagdims, lagsizes = tide_io.readfromnifti(lagfile)
     if not tide_io.checkspacedimmatch(lagdims, simdatadims):
         print(regressorname, "lag file does not match fmri")
@@ -247,28 +261,44 @@ def prepareband(
 
 
 def fmrisignal(
+    Fs,
     times,
     meanvalue,
     dolfo=False,
     lfowave=None,
     lfomag=None,
     lfodelay=None,
+    lfonoise=0.0,
+    lfofilter=None,
     doresp=False,
     respwave=None,
     respmag=None,
     respdelay=None,
+    respnoise=0.0,
+    respfilter=None,
     docardiac=False,
     cardiacwave=None,
     cardiacmag=None,
     cardiacdelay=None,
+    cardiacnoise=0.0,
+    cardiacfilter=None,
 ):
     thesignal = np.zeros((len(times)), dtype=float)
     if dolfo:
-        thesignal += meanvalue * (lfomag / 100.0) * lfowave.yfromx(times - lfodelay)
+        thesignal += meanvalue * (
+            lfomag * lfowave.yfromx(times - lfodelay)
+            + lfonoise * lfofilter.apply(Fs, np.random.standard_normal(len(times)))
+        )
     if doresp:
-        thesignal += meanvalue * (respmag / 100.0) * respwave.yfromx(times - respdelay)
+        thesignal += meanvalue * (
+            respmag * respwave.yfromx(times - respdelay)
+            + respnoise * respfilter.apply(Fs, np.random.standard_normal(len(times)))
+        )
     if docardiac:
-        thesignal += meanvalue * (cardiacmag / 100.0) * cardiacwave.yfromx(times - cardiacdelay)
+        thesignal += meanvalue * (
+            cardiacmag * cardiacwave.yfromx(times - cardiacdelay)
+            + cardiacnoise * cardiacfilter.apply(Fs, np.random.standard_normal(len(times)))
+        )
     return thesignal + meanvalue
 
 
@@ -277,34 +307,38 @@ def simdata(args):
     lfopctdata = None
     lfolagdata = None
     lfogenerator = None
+    lfofilter = None
 
     resppctdata = None
     resplagdata = None
     respgenerator = None
+    respfilter = None
 
     cardiacpctdata = None
     cardiaclagdata = None
     cardiacgenerator = None
+    cardiacfilter = None
 
     # check for complete information
     if (
-        ((args.lfopctfile is None) and (args.lfosignalfraction is None))
+        ((args.lfopctfile is None) and (args.lfosigfracfile is None))
         or (args.lfolagfile is None)
         or (args.lforegressor is None)
         or ((args.lfosamprate is None) and (tide_io.parsefilespec(args.lforegressor)[1] is None))
     ):
         print("lfopctfile:", args.lfopctfile)
-        print("lfosignalfraction:", args.lfosignalfraction)
+        print("lfosigfracfile:", args.lfosigfracfile)
         print("lfolagfile:", args.lfolagfile)
         print("lforegressor:", args.lforegressor)
         print("lfopctsamprate:", args.lfosamprate)
         dolfo = False
     else:
         dolfo = True
+        lfofilter = tide_filt.NoncausalFilter("lfo")
         print("LFO information is complete, will be included.")
 
     if (
-        ((args.resppctfile is None) and (args.respsignalfraction is None))
+        ((args.resppctfile is None) and (args.respsigfracfile is None))
         or (args.resplagfile is None)
         or (args.respregressor is None)
         or ((args.respsamprate is None) and (tide_io.parsefilespec(args.respregressor)[1] is None))
@@ -312,10 +346,11 @@ def simdata(args):
         doresp = False
     else:
         doresp = True
+        respfilter = tide_filt.NoncausalFilter("resp")
         print("Respiratory information is complete, will be included.")
 
     if (
-        ((args.cardiacpctfile is None) and (args.cardiacsignalfraction is None))
+        ((args.cardiacpctfile is None) and (args.cardiacsigfracfile is None))
         or (args.cardiaclagfile is None)
         or (args.cardiacregressor is None)
         or (
@@ -326,6 +361,7 @@ def simdata(args):
         docardiac = False
     else:
         docardiac = True
+        cardiacfilter = tide_filt.NoncausalFilter("cardiac")
         print("Cardiac information is complete, will be included.")
     if not (dolfo or doresp or docardiac):
         print(
@@ -339,7 +375,10 @@ def simdata(args):
     # prepare the output timepoints
     initial_fmri_x = (
         np.linspace(
-            0.0, args.fmritr * (args.numtrs - args.numskip), num=(args.numtrs - args.numskip), endpoint=False
+            0.0,
+            args.fmritr * (args.numtrs - args.numskip),
+            num=(args.numtrs - args.numskip),
+            endpoint=False,
         )
         + args.fmritr * args.numskip
     )
@@ -355,7 +394,9 @@ def simdata(args):
     immeandata = theimmeandata.byvol()
 
     # now set up the simulated data array
-    simdataheader = theimmeandata.copyheader(numtimepoints=len(initial_fmri_x), tr=args.fmritr, toffset=args.numskip * args.fmritr)
+    simdataheader = theimmeandata.copyheader(
+        numtimepoints=len(initial_fmri_x), tr=args.fmritr, toffset=args.numskip * args.fmritr
+    )
     simdatadims = simdataheader["dim"].copy()
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(simdatadims)
     simdata = np.zeros((xsize, ysize, numslices, timepoints), dtype="float")
@@ -378,7 +419,7 @@ def simdata(args):
         lfopctdata, lfopctscale, lfolagdata, lfogenerator = prepareband(
             simdatadims,
             args.lfopctfile,
-            args.lfosignalfraction,
+            args.lfosigfracfile,
             args.lfolagfile,
             args.lforegressor,
             args.lfosamprate,
@@ -391,7 +432,7 @@ def simdata(args):
         resppctdata, resppctscale, resplagdata, respgenerator = prepareband(
             simdatadims,
             args.resppctfile,
-            args.respsignalfraction,
+            args.respsigfracfile,
             args.resplagfile,
             args.respregressor,
             args.respsamprate,
@@ -404,7 +445,7 @@ def simdata(args):
         cardiacpctdata, cardiacpctscale, cardiaclagdata, cardiacgenerator = prepareband(
             simdatadims,
             args.cardiacpctfile,
-            args.cardiacsignalfraction,
+            args.cardiacsigfracfile,
             args.cardiaclagfile,
             args.cardiacregressor,
             args.cardiacsamprate,
@@ -429,42 +470,64 @@ def simdata(args):
                 # add in the signals
                 if dolfo:
                     lfopct = lfopctdata[i, j, k]
+                    if lfopctscale:
+                        lfonoise = 0.0
+                    else:
+                        lfonoise = 1.0 - lfopct
                     lfolag = lfolagdata[i, j, k]
                 else:
                     lfopct = 0.0
                     lfolag = 0.0
+                    lfonoise = 0.0
                 if doresp:
                     resppct = resppctdata[i, j, k]
+                    if resppctscale:
+                        respnoise = 0.0
+                    else:
+                        respnoise = 1.0 - resppct
                     resplag = resplagdata[i, j, k]
                 else:
                     resppct = 0.0
                     resplag = 0.0
+                    respnoise = 0.0
                 if docardiac:
                     cardiacpct = cardiacpctdata[i, j, k]
+                    if cardiacpctscale:
+                        cardiacnoise = 0.0
+                    else:
+                        cardiacnoise = 1.0 - cardiacpct
                     cardiaclag = cardiaclagdata[i, j, k]
                 else:
                     cardiacpct = 0.0
                     cardiaclag = 0.0
+                    cardiacnoise = 0.0
 
                 simdata[i, j, k, :] = (
                     fmrisignal(
+                        (1.0 / args.fmritr),
                         fmri_x_slice,
                         immeandata[i, j, k],
                         dolfo=dolfo,
                         lfowave=lfogenerator,
                         lfomag=lfopct,
                         lfodelay=lfolag,
+                        lfonoise=lfonoise,
+                        lfofilter=lfofilter,
                         doresp=doresp,
                         respwave=respgenerator,
                         respmag=resppct,
                         respdelay=resplag,
+                        respnoise=respnoise,
+                        respfilter=respfilter,
                         docardiac=docardiac,
                         cardiacwave=cardiacgenerator,
                         cardiacmag=cardiacpct,
                         cardiacdelay=cardiaclag,
+                        cardiacnoise=cardiacnoise,
+                        cardiacfilter=cardiacfilter,
                     )
                     + theglobalnoise
-                    + thevoxelnoise
+                    + (thevoxelnoise) / 100.0 * immeandata[i, j, k]
                 )
 
     tide_io.savetonifti(simdata, simdataheader, args.outputroot)

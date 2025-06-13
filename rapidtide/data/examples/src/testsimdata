@@ -1,5 +1,26 @@
 #!/bin/bash
 
+#rapidtide \
+#    --spatialfilt -1 \
+#    --nprocs -1 \
+#    --searchrange -5 20 \
+#    --simcalcrange 50 -1 \
+#    --outputlevel more \
+#    --nofitfilt \
+#    --corrtype linear \
+#    sub-RAPIDTIDETEST.nii.gz \
+#    ../dst/sub-RAPIDTIDETEST
+
+simdata \
+    1.5 \
+    260 \
+    ../dst/sub-RAPIDTIDETEST_desc-unfiltmean_map.nii.gz \
+    ../dst/simulatedfmri_vn05 \
+    --lfopctfile ../dst/sub-RAPIDTIDETEST_desc-maxcorr_map.nii.gz \
+    --lfolagfile ../dst/sub-RAPIDTIDETEST_desc-maxtimerefined_map.nii.gz \
+    --lforegressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
+    --voxelnoiselevel 5.0
+
 rapidtide \
     --spatialfilt -1 \
     --nprocs -1 \
@@ -8,15 +29,15 @@ rapidtide \
     --outputlevel more \
     --nofitfilt \
     --corrtype linear \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+    ../dst/simulatedfmri_vn05.nii.gz \
+    ../dst/simrapidtide_vn05
 
 simdata \
     1.5 \
     260 \
     ../dst/sub-RAPIDTIDETEST_desc-unfiltmean_map.nii.gz \
-    ../dst/simulatedfmri \
-    --lfopctfile ../dst/sub-RAPIDTIDETEST_desc-corrfit_mask.nii.gz \
+    ../dst/simulatedfmri_sigfrac \
+    --lfosignalfraction ../dst/sub-RAPIDTIDETEST_desc-lfofilterInbandVarianceChange_map.nii.gz \
     --lfolagfile ../dst/sub-RAPIDTIDETEST_desc-maxtimerefined_map.nii.gz \
     --lforegressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 
 
@@ -28,5 +49,5 @@ rapidtide \
     --outputlevel more \
     --nofitfilt \
     --corrtype linear \
-    ../dst/simulatedfmri.nii.gz \
-    ../dst/simrapidtide
+    ../dst/simulatedfmri_sigfrac.nii.gz \
+    ../dst/simrapidtide_sigfrac
