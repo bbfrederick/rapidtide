@@ -1261,7 +1261,6 @@ class RapidtideDataset:
         # then the functional masks
         if self.bidsformat:
             self.funcmasks = [
-                ["processedmask", "desc-processed_mask"]
                 ["lagmask", "desc-corrfit_mask"],
                 ["refinemask", "desc-refine_mask"],
                 ["meanmask", "desc-globalmean_mask"],
