@@ -742,7 +742,8 @@ def rapidtide_main(argparsingfunc):
                 theheader["dim"][4] = 1
                 theheader["pixdim"][4] = 1.0
         maplist = [
-            (confoundr2, "confoundfilterR2", "map", None, "R2 of the motion/confound regression")
+            (corrmask, "validvoxels", "mask", None, "All voxels that are to be processed"),
+            (confoundr2, "confoundfilterR2", "map", None, "R2 of the motion/confound regression"),
         ]
         tide_io.savemaplist(
             outputname,
@@ -3549,7 +3550,13 @@ def rapidtide_main(argparsingfunc):
     if theinputdata.filetype != "nifti":
         unfiltmeanvalue = meanvalue
     maplist = [
-        (unfiltmeanvalue, "unfiltmean", "map", None, "Voxelwise mean of fmri data before smoothing"),
+        (
+            unfiltmeanvalue,
+            "unfiltmean",
+            "map",
+            None,
+            "Voxelwise mean of fmri data before smoothing",
+        ),
         (meanvalue, "mean", "map", None, "Voxelwise mean of fmri data"),
         (stddevvalue, "std", "map", None, "Voxelwise standard deviation of fmri data"),
         (covvalue, "CoV", "map", None, "Voxelwise coefficient of variation of fmri data"),
