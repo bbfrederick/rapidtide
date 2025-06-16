@@ -629,7 +629,6 @@ def rapidtide_main(argparsingfunc):
         )
     else:
         internaloffsetexcludemask_valid = None
-
     tide_util.logmem("after selecting valid voxels")
 
     # move fmri_data_valid into shared memory
@@ -742,7 +741,6 @@ def rapidtide_main(argparsingfunc):
                 theheader["dim"][4] = 1
                 theheader["pixdim"][4] = 1.0
         maplist = [
-            (corrmask, "validvoxels", "mask", None, "All voxels that are to be processed"),
             (confoundr2, "confoundfilterR2", "map", None, "R2 of the motion/confound regression"),
         ]
         tide_io.savemaplist(
@@ -2657,9 +2655,10 @@ def rapidtide_main(argparsingfunc):
     optiondict["currentstage"] = "presLFOfit"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
-        sLFOfiltmask = fitmask + 0.0
-        if optiondict["nosLFOfiltmask"]:
-            sLFOfiltmask = sLFOfiltmask * 0.0 + 1.0
+        if optiondict["sLFOfiltmask"]:
+            sLFOfiltmask = fitmask + 0.0
+        else:
+            sLFOfiltmask = fitmask * 0.0 + 1.0
         if optiondict["dolinfitfilt"]:
             if optiondict["refinedelay"]:
                 TimingLGR.info("Setting up for delay refinement and sLFO filtering")

@@ -1463,10 +1463,10 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
-        "--nosLFOfiltmask",
-        dest="nosLFOfiltmask",
+        "--sLFOfiltmask",
+        dest="sLFOfiltmask",
         action="store_true",
-        help=("Don't spatially limit sLFO filter to fit voxels."),
+        help=("Limit sLFO filter to fit voxels."),
         default=False,
     )
     experimental.add_argument(

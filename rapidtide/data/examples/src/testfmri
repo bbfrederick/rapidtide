@@ -6,6 +6,7 @@ rapidtide \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
     --outputlevel more \
+    --sLFOfiltmask \
     --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
     --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
@@ -20,7 +21,6 @@ rapidtide \
     --searchrange -5 20 \
     --simcalcrange 50 -1 \
     --outputlevel more \
-    --nosLFOfiltmask \
     --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
     --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
