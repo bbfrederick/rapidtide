@@ -1463,6 +1463,13 @@ def _get_parser():
         default=False,
     )
     experimental.add_argument(
+        "--nosLFOfiltmask",
+        dest="nosLFOfiltmask",
+        action="store_true",
+        help=("Don't spatially limit sLFO filter to fit voxels."),
+        default=False,
+    )
+    experimental.add_argument(
         "--territorymap",
         dest="territorymap",
         metavar="MAP[:VALSPEC]",

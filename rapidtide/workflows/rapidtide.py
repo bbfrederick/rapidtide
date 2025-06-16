@@ -2656,6 +2656,9 @@ def rapidtide_main(argparsingfunc):
     optiondict["currentstage"] = "presLFOfit"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
+        sLFOfiltmask = fitmask + 0.0
+        if optiondict["nosLFOfiltmask"]:
+            sLFOfiltmask = sLFOfiltmask * 0.0 + 1.0
         if optiondict["dolinfitfilt"]:
             if optiondict["refinedelay"]:
                 TimingLGR.info("Setting up for delay refinement and sLFO filtering")
@@ -2835,7 +2838,7 @@ def rapidtide_main(argparsingfunc):
                 validvoxels,
                 initial_fmri_x,
                 lagtimes,
-                fitmask,
+                sLFOfiltmask,
                 genlagtc,
                 mode,
                 outputname,
@@ -2931,7 +2934,7 @@ def rapidtide_main(argparsingfunc):
             namesuffix = "_desc-delayoffset_hist"
             if optiondict["dolinfitfilt"]:
                 tide_stats.makeandsavehistogram(
-                    delayoffset[np.where(fitmask > 0)],
+                    delayoffset[np.where(sLFOfiltmask > 0)],
                     optiondict["histlen"],
                     1,
                     outputname + namesuffix,
@@ -2969,7 +2972,7 @@ def rapidtide_main(argparsingfunc):
                     validvoxels,
                     initial_fmri_x,
                     lagstouse,
-                    fitmask,
+                    sLFOfiltmask,
                     genlagtc,
                     mode,
                     outputname,
@@ -3475,7 +3478,7 @@ def rapidtide_main(argparsingfunc):
                 validvoxels,
                 initial_fmri_x,
                 lagstouse,
-                fitmask,
+                sLFOfiltmask,
                 genlagtc,
                 mode,
                 outputname,
