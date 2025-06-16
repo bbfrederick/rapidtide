@@ -219,6 +219,13 @@ def _get_parser():
         help=("Output lots of helpful information on a limited subset of operations."),
         default=False,
     )
+    parser.add_argument(
+        "--sLFOfiltmask",
+        dest="sLFOfiltmask",
+        action="store_true",
+        help=("Limit sLFO filter to fit voxels."),
+        default=False,
+    )
     experimental = parser.add_argument_group(
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
     )
@@ -515,6 +522,10 @@ def retroregress(args):
     lagtimes_valid = lagtimes_spacebytime[validvoxels]
     corrmask_valid = corrmask_spacebytime[validvoxels]
     procmask_valid = procmask_spacebytime[validvoxels]
+    if args.sLFOfiltmask:
+        sLFOfiltmask_valid = corrmask_spacebytime[validvoxels] + 0.0
+    else:
+        sLFOfiltmask_valid = corrmask_spacebytime[validvoxels] * 0.0 + 1.0
     if args.debug:
         print(f"{fmri_data_valid.shape=}")
 
@@ -638,7 +649,7 @@ def retroregress(args):
             validvoxels,
             initial_fmri_x,
             lagtimes_valid,
-            corrmask_valid,
+            sLFOfiltmask_valid,
             genlagtc,
             mode,
             outputname,
@@ -770,7 +781,7 @@ def retroregress(args):
         validvoxels,
         initial_fmri_x,
         lagstouse_valid,
-        corrmask_valid,
+        sLFOfiltmask_valid,
         genlagtc,
         mode,
         outputname,
@@ -1032,6 +1043,13 @@ def retroregress(args):
                     "corrfitREAD",
                     "mask",
                     None,
+                    "Correlation mask read for calculation",
+                ),
+                (
+                    sLFOfiltmask_valid,
+                    "corrfitUSED",
+                    "mask",
+                    None,
                     "Correlation mask used for calculation",
                 ),
                 (
@@ -1255,7 +1273,7 @@ def retroregress(args):
                     validvoxels,
                     initial_fmri_x,
                     lagstouse_valid,
-                    corrmask_valid,
+                    sLFOfiltmask_valid,
                     genlagtc,
                     mode,
                     outputname,

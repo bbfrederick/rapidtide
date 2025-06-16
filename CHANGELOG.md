@@ -2,6 +2,7 @@
 
 ## Version 3.0.7.1 (6/16/25)
 * (rapidtide) Disabled sLFO filtering by default.  Use ``sLFOfiltmask`` to turn it on.
+* (retroregress) Synced with sLFO filtering changes to rapidtide.
 
 ## Version 3.0.7 (6/16/25)
 * (rapidtide) Save the full autocorrelation function of the probe regressor at each pass.
