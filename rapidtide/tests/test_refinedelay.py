@@ -36,6 +36,7 @@ def eval_refinedelay(
     tclengthinsecs=300.0,
     mindelay=-5.0,
     maxdelay=5.0,
+    lagpad=0.0,
     numpoints=501,
     smoothpts=3,
     nativespaceshape=(10, 10, 10),
@@ -43,8 +44,17 @@ def eval_refinedelay(
     padtime=30.0,
     noiselevel=0.0,
     outputsuffix="",
+    local=False,
     debug=False,
 ):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
 
@@ -84,7 +94,7 @@ def eval_refinedelay(
     tide_refinedelay.trainratiotooffset(
         lagtcgenerator,
         timeaxis,
-        os.path.join(get_test_temp_path(), "refinedelaytest" + outputsuffix),
+        os.path.join(testtemproot, "refinedelaytest" + outputsuffix),
         "norm",
         mindelay=mindelay,
         maxdelay=maxdelay,
@@ -95,7 +105,7 @@ def eval_refinedelay(
 
     # make a delay map
     numlags = nativespaceshape[0] * nativespaceshape[1] * nativespaceshape[2]
-    lagtimes = np.linspace(mindelay, maxdelay, numlags, endpoint=True)
+    lagtimes = np.linspace(mindelay - lagpad, maxdelay + lagpad, numlags, endpoint=True)
     if debug:
         print("    lagtimes=", lagtimes)
 
@@ -120,7 +130,7 @@ def eval_refinedelay(
 
     # make a fake header
     nim, nim_data, nim_hdr, thedims, thesizes = tide_io.readfromnifti(
-        os.path.join(get_examples_path(), "sub-RAPIDTIDETEST_brainmask.nii.gz")
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz")
     )
     xdim, ydim, slicedim, fmritr = tide_io.parseniftisizes(thesizes)
     theheader = copy.copy(nim_hdr)
@@ -212,7 +222,7 @@ def eval_refinedelay(
         plt.show()
 
 
-def test_refinedelay(displayplots=False, debug=False):
+def test_refinedelay(displayplots=False, local=False, debug=False):
     for noiselevel in np.linspace(0.0, 0.5, num=5, endpoint=True):
         eval_refinedelay(
             sampletime=0.72,
@@ -225,6 +235,7 @@ def test_refinedelay(displayplots=False, debug=False):
             displayplots=displayplots,
             outputsuffix="_1",
             noiselevel=noiselevel,
+            local=local,
             debug=debug,
         )
     eval_refinedelay(
@@ -237,6 +248,7 @@ def test_refinedelay(displayplots=False, debug=False):
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         outputsuffix="_2",
+        local=local,
         debug=debug,
     )
     eval_refinedelay(
@@ -249,6 +261,7 @@ def test_refinedelay(displayplots=False, debug=False):
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         outputsuffix="_3",
+        local=local,
         debug=debug,
     )
     eval_refinedelay(
@@ -261,6 +274,7 @@ def test_refinedelay(displayplots=False, debug=False):
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         outputsuffix="_1p5_501_3",
+        local=local,
         debug=debug,
     )
     eval_refinedelay(
@@ -273,10 +287,11 @@ def test_refinedelay(displayplots=False, debug=False):
         nativespaceshape=(10, 10, 10),
         displayplots=displayplots,
         outputsuffix="_3p0_501_3",
+        local=local,
         debug=debug,
     )
 
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_refinedelay(displayplots=True, debug=True)
+    test_refinedelay(displayplots=True, local=True, debug=True)
