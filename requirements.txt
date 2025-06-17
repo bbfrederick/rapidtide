@@ -127,7 +127,7 @@ pillow==11.0.0
     #   imageio
     #   matplotlib
     #   scikit-image
-protobuf==4.25.5
+protobuf==4.25.8
     # via
     #   tensorboard
     #   tensorflow
