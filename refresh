@@ -4,7 +4,7 @@
 git pull
 
 # remove any previously installed versions
-cleandirs
+./cleandirs
 
 # install the package
 #pip install -e .
