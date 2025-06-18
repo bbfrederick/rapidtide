@@ -2,7 +2,7 @@
 
 DATADIR=/Users/frederic/code/rapidtide
 
-MYIPADDRESS=`ifconfig en0 | grep 'inet ' | awk '{print $2}'`
+MYIPADDRESS=$(ifconfig en0 | grep 'inet ' | awk '{print $2}')
 VERSION=latest
 
 # allow network connections in Xquartz Security settings
@@ -59,7 +59,7 @@ docker pull fredericklab/rapidtide:${VERSION}
 
 
 docker run \
-    --network host\
+    --network host \
     --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
     -it \
     -e DISPLAY=${MYIPADDRESS}:0 \

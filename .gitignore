@@ -55,6 +55,9 @@ getphase.py
 # PyCharm files
 .idea
 
+# VSCode files
+.vscode
+
 # any local safety copies
 *.safe
 */*.safe

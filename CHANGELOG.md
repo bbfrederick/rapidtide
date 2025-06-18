@@ -1,10 +1,20 @@
 # Release history
 
-## Version 3.0.7 (6/5/25)
-* (happy) Implemented multiprocessing for detrending, phase projection, and phase projection smoothing.
-* (happy) Early implementation of Wright's method for finding vessels.
+## Version 3.0.7.1 (6/16/25)
+* (rapidtide) Disabled sLFO filtering by default.  Use ``sLFOfiltmask`` to turn it on.
+* (retroregress) Synced with sLFO filtering changes to rapidtide.
+
+## Version 3.0.7 (6/16/25)
 * (rapidtide) Save the full autocorrelation function of the probe regressor at each pass.
+* (rapidtide) Now save a version of the mean fMRI image prior to filtering
+* (rapidtide) Added the ability to disable masking of sLFO filter. Use ``--nosLFOfiltmask`` to disable.
+* (happy) Implemented multiprocessing for detrending, phase projection, and phase projection smoothing.
+* (happy) Precache convolution gridding kernel outputs to improve repeatability.
+* (happy) Early implementation of Wright's method for finding vessels.
+* (showarbcorr) Fixed some internal issues.
+* (simdata) Many changes to finetune the simulation and make the output more realistic.  Still in progress.
 * (Docker) Turned on provenance and sbom in Docker builds.
+* (package) Accepted several dependabot PRs.
 
 ## Version 3.0.6 (5/21/25)
 * (rapidtide) Made a generic, reusable multiprocessing module and moved many functions over to it.

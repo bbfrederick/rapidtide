@@ -282,18 +282,6 @@ def ratiotodelay(theratio, offset=0.0, debug=False):
             closestindex = offsetindex
     closestoffset = funcoffsets[closestindex]
     distance = np.fabs(funcoffsets[closestindex] - offset)
-    """if (maplimits[0] < theratio < maplimits[1]) and (
-        distance < (funcoffsets[1] - funcoffsets[0]) / 2
-    ):
-        return (
-            ratiotooffsetfunc[closestindex](theratio) + (offset - closestoffset),
-            closestoffset,
-        )
-    else:
-        return (
-            0.0,
-            closestoffset,
-        )"""
 
     if theratio < maplimits[0]:
         return (
@@ -302,7 +290,7 @@ def ratiotodelay(theratio, offset=0.0, debug=False):
         )
     elif theratio > maplimits[1]:
         return (
-            ratiotooffsetfunc[closestindex](maplimits[1]),
+            ratiotooffsetfunc[closestindex](maplimits[1]) - (offset - closestoffset),
             closestoffset,
         )
     else:

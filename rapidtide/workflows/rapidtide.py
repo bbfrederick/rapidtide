@@ -28,7 +28,6 @@ import numpy as np
 from scipy import ndimage
 from scipy.stats import rankdata
 
-
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
@@ -392,6 +391,11 @@ def rapidtide_main(argparsingfunc):
     csfmask = anatomicmasks[3]
 
     # do spatial filtering if requested
+    if theinputdata.filetype == "nifti":
+        unfiltmeanvalue = np.mean(
+            theinputdata.byvoxel(),
+            axis=1,
+        )
     optiondict["gausssigma"] = theinputdata.smooth(
         optiondict["gausssigma"],
         brainmask=brainmask,
@@ -625,7 +629,6 @@ def rapidtide_main(argparsingfunc):
         )
     else:
         internaloffsetexcludemask_valid = None
-
     tide_util.logmem("after selecting valid voxels")
 
     # move fmri_data_valid into shared memory
@@ -738,7 +741,7 @@ def rapidtide_main(argparsingfunc):
                 theheader["dim"][4] = 1
                 theheader["pixdim"][4] = 1.0
         maplist = [
-            (confoundr2, "confoundfilterR2", "map", None, "R2 of the motion/confound regression")
+            (confoundr2, "confoundfilterR2", "map", None, "R2 of the motion/confound regression"),
         ]
         tide_io.savemaplist(
             outputname,
@@ -2652,6 +2655,10 @@ def rapidtide_main(argparsingfunc):
     optiondict["currentstage"] = "presLFOfit"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
+        if optiondict["sLFOfiltmask"]:
+            sLFOfiltmask = fitmask + 0.0
+        else:
+            sLFOfiltmask = fitmask * 0.0 + 1.0
         if optiondict["dolinfitfilt"]:
             if optiondict["refinedelay"]:
                 TimingLGR.info("Setting up for delay refinement and sLFO filtering")
@@ -2831,7 +2838,7 @@ def rapidtide_main(argparsingfunc):
                 validvoxels,
                 initial_fmri_x,
                 lagtimes,
-                fitmask,
+                sLFOfiltmask,
                 genlagtc,
                 mode,
                 outputname,
@@ -2927,7 +2934,7 @@ def rapidtide_main(argparsingfunc):
             namesuffix = "_desc-delayoffset_hist"
             if optiondict["dolinfitfilt"]:
                 tide_stats.makeandsavehistogram(
-                    delayoffset[np.where(fitmask > 0)],
+                    delayoffset[np.where(sLFOfiltmask > 0)],
                     optiondict["histlen"],
                     1,
                     outputname + namesuffix,
@@ -2965,7 +2972,7 @@ def rapidtide_main(argparsingfunc):
                     validvoxels,
                     initial_fmri_x,
                     lagstouse,
-                    fitmask,
+                    sLFOfiltmask,
                     genlagtc,
                     mode,
                     outputname,
@@ -3471,7 +3478,7 @@ def rapidtide_main(argparsingfunc):
                 validvoxels,
                 initial_fmri_x,
                 lagstouse,
-                fitmask,
+                sLFOfiltmask,
                 genlagtc,
                 mode,
                 outputname,
@@ -3539,7 +3546,16 @@ def rapidtide_main(argparsingfunc):
             tide_util.cleanup_shm(fitNorm_shm)
 
     # write the 3D maps that don't need to be remapped
+    if theinputdata.filetype != "nifti":
+        unfiltmeanvalue = meanvalue
     maplist = [
+        (
+            unfiltmeanvalue,
+            "unfiltmean",
+            "map",
+            None,
+            "Voxelwise mean of fmri data before smoothing",
+        ),
         (meanvalue, "mean", "map", None, "Voxelwise mean of fmri data"),
         (stddevvalue, "std", "map", None, "Voxelwise standard deviation of fmri data"),
         (covvalue, "CoV", "map", None, "Voxelwise coefficient of variation of fmri data"),
@@ -3564,6 +3580,7 @@ def rapidtide_main(argparsingfunc):
         cifti_hdr=theinputdata.cifti_hdr,
     )
     del meanvalue
+    del unfiltmeanvalue
 
     if optiondict["numestreps"] > 0:
         masklist = []
