@@ -40,15 +40,14 @@ import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.refinedelay as tide_refinedelay
-import rapidtide.RegressorRefiner as tide_regrefiner
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
-import rapidtide.workflows.estimateDelay as tide_delayestimation
-import rapidtide.workflows.refineRegressor as tide_refineregressor
+import rapidtide.workflows.estimateDelay as tide_estimateDelay
+import rapidtide.workflows.refineRegressor as tide_refineRegressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
 from .utils import setup_logger
@@ -1472,7 +1471,7 @@ def rapidtide_main(argparsingfunc):
         or optiondict["convergencethresh"] is not None
     ):
         # we will be doing regressor refinement, so configure the refiner
-        theRegressorRefiner = tide_regrefiner.RegressorRefiner(
+        theRegressorRefiner = tide_refineRegressor.RegressorRefiner(
             internalvalidfmrishape,
             internalvalidpaddedfmrishape,
             optiondict["pid"],
@@ -1838,7 +1837,7 @@ def rapidtide_main(argparsingfunc):
         optiondict["currentstage"] = f"precorrelation_pass{thepass}"
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
-        internaldespeckleincludemask = tide_delayestimation.estimateDelay(
+        internaldespeckleincludemask = tide_estimateDelay.estimateDelay(
             fmri_data_valid,
             validsimcalcstart,
             validsimcalcend,
@@ -2373,35 +2372,40 @@ def rapidtide_main(argparsingfunc):
             or optiondict["initregressorpreselect"]
             or optiondict["dofinalrefine"]
         ):
-            tide_refineregressor.refineRegressor(
-                LGR,
-                TimingLGR,
-                thepass,
-                optiondict,
-                fitmask,
-                internaloffsetincludemask_valid,
-                internaloffsetexcludemask_valid,
-                internalrefineincludemask_valid,
-                internalrefineexcludemask_valid,
-                internaldespeckleincludemask,
-                validvoxels,
-                theRegressorRefiner,
-                lagtimes,
-                lagstrengths,
-                lagsigma,
-                fmri_data_valid,
-                fmritr,
-                R2,
-                theprefilter,
-                previousnormoutputdata,
-                theinputdata,
-                numpadtrs,
-                outputname,
-                nativefmrishape,
-                bidsbasedict,
-                rt_floatset=np.float64,
-                rt_floattype="float64",
-            )
+            (
+                resampref_y,
+                resampnonosref_y,
+                stoprefining,
+                refinestopreason,
+                genlagtc) = tide_refineRegressor.refineRegressor(
+                    LGR,
+                    TimingLGR,
+                    thepass,
+                    optiondict,
+                    fitmask,
+                    internaloffsetincludemask_valid,
+                    internaloffsetexcludemask_valid,
+                    internalrefineincludemask_valid,
+                    internalrefineexcludemask_valid,
+                    internaldespeckleincludemask,
+                    validvoxels,
+                    theRegressorRefiner,
+                    lagtimes,
+                    lagstrengths,
+                    lagsigma,
+                    fmri_data_valid,
+                    fmritr,
+                    R2,
+                    theprefilter,
+                    previousnormoutputdata,
+                    theinputdata,
+                    numpadtrs,
+                    outputname,
+                    nativefmrishape,
+                    bidsbasedict,
+                    rt_floatset=np.float64,
+                    rt_floattype="float64",
+                )
             """LGR.info(f"\n\nRegressor refinement, pass {thepass}")
             TimingLGR.info(f"Regressor refinement start, pass {thepass}")
             if optiondict["refineoffset"]:

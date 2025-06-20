@@ -17,7 +17,7 @@
 #
 #
 """
-A class to impmement regressor refinement
+A class to implement regressor refinement
 """
 import copy
 
