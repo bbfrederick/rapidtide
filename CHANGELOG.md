@@ -1,5 +1,10 @@
 # Release history
 
+## Version 3.0.8 (6/20/25)
+* (rapidtide) Split coarse delay estimation and refinement out into separate workflows.
+* (docs) Some improvement to the tidepool section.
+* (package) Accepted several dependabot PRs.
+
 ## Version 3.0.7.1 (6/16/25)
 * (rapidtide) Disabled sLFO filtering by default.  Use ``sLFOfiltmask`` to turn it on.
 * (retroregress) Synced with sLFO filtering changes to rapidtide.

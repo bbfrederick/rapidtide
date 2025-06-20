@@ -33,9 +33,9 @@ from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 import rapidtide.util as tide_util
 from rapidtide.Colortables import *
-from rapidtide.helper_classes import SimilarityFunctionFitter
 from rapidtide.OrthoImageItem import OrthoImageItem
 from rapidtide.RapidtideDataset import RapidtideDataset, check_rt_spatialmatch
+from rapidtide.simFuncClasses import SimilarityFunctionFitter
 from rapidtide.workflows.atlasaverage import summarizevoxels
 
 try:
