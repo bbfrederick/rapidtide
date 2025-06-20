@@ -16,14 +16,16 @@
 #   limitations under the License.
 #
 #
-import argparse
-import sys
-
 import numpy as np
-from scipy.stats import skew
+from scipy import ndimage
 
+import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.io as tide_io
-import rapidtide.workflows.parser_funcs as pf
+import rapidtide.patchmatch as tide_patch
+import rapidtide.peakeval as tide_peakeval
+import rapidtide.simfuncfit as tide_simfuncfit
+import rapidtide.stats as tide_stats
+import rapidtide.util as tide_util
 
 try:
     import mkl
@@ -48,7 +50,52 @@ def enablemkl(numthreads, debug=False):
         mkl.set_num_threads(numthreads)
 
 
-def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationator, thepass):
+def estimateDelay(
+    fmri_data_valid,
+    validsimcalcstart,
+    validsimcalcend,
+    osvalidsimcalcstart,
+    osvalidsimcalcend,
+    initial_fmri_x,
+    os_fmri_x,
+    theCorrelator,
+    theMutualInformationator,
+    cleaned_referencetc,
+    corrout,
+    meanval,
+    corrscale,
+    outputname,
+    outcorrarray,
+    validvoxels,
+    nativecorrshape,
+    nativespaceshape,
+    bidsbasedict,
+    numspatiallocs,
+    gaussout,
+    theinitialdelay,
+    windowout,
+    R2,
+    thesizes,
+    internalspaceshape,
+    numvalidspatiallocs,
+    theinputdata,
+    theheader,
+    theFitter,
+    fitmask,
+    lagtimes,
+    lagstrengths,
+    lagsigma,
+    failreason,
+    outmaparray,
+    lagmininpts,
+    lagmaxinpts,
+    thepass,
+    optiondict,
+    LGR,
+    TimingLGR,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+):
     # Step 1 - Correlation step
     if optiondict["similaritymetric"] == "mutualinfo":
         similaritytype = "Mutual information"
@@ -59,7 +106,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
     LGR.info(f"\n\n{similaritytype} calculation, pass {thepass}")
     TimingLGR.info(f"{similaritytype} calculation start, pass {thepass}")
 
-    disablemkl(optiondict["nprocs_calcsimilarity"], debug=threaddebug)
+    tide_util.disablemkl(optiondict["nprocs_calcsimilarity"], debug=optiondict["threaddebug"])
     if optiondict["similaritymetric"] == "mutualinfo":
         theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
         (
@@ -67,11 +114,11 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
             theglobalmaxlist,
             trimmedcorrscale,
         ) = tide_calcsimfunc.correlationpass(
-            voxeldata,
+            fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             cleaned_referencetc,
             theMutualInformationator,
-            datatimeaxis,
-            osdatatimeaxis,
+            initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
             lagmininpts,
             lagmaxinpts,
             corrout,
@@ -84,6 +131,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
             chunksize=optiondict["mp_chunksize"],
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
+            debug=optiondict["focaldebug"],
         )
     else:
         (
@@ -91,11 +139,11 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
             theglobalmaxlist,
             trimmedcorrscale,
         ) = tide_calcsimfunc.correlationpass(
-            voxeldata,
+            fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             cleaned_referencetc,
             theCorrelator,
-            datatimeaxis,
-            osdatatimeaxis,
+            initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
             lagmininpts,
             lagmaxinpts,
             corrout,
@@ -108,8 +156,9 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
             chunksize=optiondict["mp_chunksize"],
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
+            debug=optiondict["focaldebug"],
         )
-    enablemkl(optiondict["mklthreads"], debug=threaddebug)
+    tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
     for i in range(len(theglobalmaxlist)):
         theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]] - optiondict["simcalcoffset"]
@@ -152,12 +201,12 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
         LGR.info(f"\n\nPeak prefit calculation, pass {thepass}")
         TimingLGR.info(f"Peak prefit calculation start, pass {thepass}")
 
-        disablemkl(optiondict["nprocs_peakeval"], debug=threaddebug)
+        tide_util.disablemkl(optiondict["nprocs_peakeval"], debug=optiondict["threaddebug"])
         voxelsprocessed_pe, thepeakdict = tide_peakeval.peakevalpass(
-            voxeldata,
+            fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             cleaned_referencetc,
-            datatimeaxis,
-            osdatatimeaxis,
+            initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
             theMutualInformationator,
             trimmedcorrscale,
             corrout,
@@ -171,7 +220,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
-        enablemkl(optiondict["mklthreads"], debug=threaddebug)
+        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
         TimingLGR.info(
             f"Peak prefit end, pass {thepass}",
@@ -203,7 +252,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
     else:
         initlags = None
 
-    disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
+    tide_util.disablemkl(optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"])
     voxelsprocessed_fc = tide_simfuncfit.fitcorr(
         trimmedcorrscale,
         theFitter,
@@ -229,7 +278,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
     )
-    enablemkl(optiondict["mklthreads"], debug=threaddebug)
+    tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
     TimingLGR.info(
         f"Time lag estimation end, pass {thepass}",
@@ -269,7 +318,9 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                 numdespeckled = len(np.where(initlags != -1000000.0)[0])
                 if lastnumdespeckled > numdespeckled > 0:
                     lastnumdespeckled = numdespeckled
-                    disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
+                    tide_util.disablemkl(
+                        optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"]
+                    )
                     voxelsprocessed_thispass = tide_simfuncfit.fitcorr(
                         trimmedcorrscale,
                         theFitter,
@@ -295,7 +346,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                         rt_floatset=rt_floatset,
                         rt_floattype=rt_floattype,
                     )
-                    enablemkl(optiondict["mklthreads"], debug=threaddebug)
+                    tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
                     voxelsprocessed_fc_ds += voxelsprocessed_thispass
                     optiondict[
@@ -348,7 +399,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                     bidsbasedict,
                     filetype=theinputdata.filetype,
                     rt_floattype=rt_floattype,
-                    cifti_hdr=cifti_hdr,
+                    cifti_hdr=theinputdata.cifti_hdr,
                 )
         LGR.info(
             f"\n\n{voxelsprocessed_fc_ds} voxels despeckled in "
@@ -385,15 +436,15 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
             bidsbasedict,
             filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
-            cifti_hdr=cifti_hdr,
+            cifti_hdr=theinputdata.cifti_hdr,
         )
 
         # create list of anomalous 3D regions that don't match surroundings
-        if nim_affine is not None:
+        if theinputdata.nim_affine is not None:
             # make an atlas of anomalous patches - each patch shares the same integer value
             step1 = tide_patch.calc_DoG(
                 outmaparray.reshape(nativespaceshape).copy(),
-                nim_affine,
+                theinputdata.nim_affine,
                 thesizes,
                 fwhm=optiondict["patchfwhm"],
                 ratioopt=False,
@@ -417,7 +468,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                 bidsbasedict,
                 filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
-                cifti_hdr=cifti_hdr,
+                cifti_hdr=theinputdata.cifti_hdr,
             )
             step2 = tide_patch.invertedflood3D(
                 step1,
@@ -441,7 +492,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                 bidsbasedict,
                 filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
-                cifti_hdr=cifti_hdr,
+                cifti_hdr=theinputdata.cifti_hdr,
             )
 
             patchmap = tide_patch.separateclusters(
@@ -451,7 +502,7 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
             )
             # patchmap = tide_patch.getclusters(
             #   outmaparray.reshape(nativespaceshape),
-            #    nim_affine,
+            #    theinputdata.nim_affine,
             #    thesizes,
             #    fwhm=optiondict["patchfwhm"],
             #    ratioopt=True,
@@ -476,8 +527,10 @@ def estimateDelay(voxeldata, datatimeaxis, osdatatimeaxis, theMutualInformationa
                 bidsbasedict,
                 filetype=theinputdata.filetype,
                 rt_floattype=rt_floattype,
-                cifti_hdr=cifti_hdr,
+                cifti_hdr=theinputdata.cifti_hdr,
             )
 
         # now shift the patches to align with the majority of the image
         tide_patch.interppatch(lagtimes, patchmap[validvoxels])
+
+        return internaldespeckleincludemask

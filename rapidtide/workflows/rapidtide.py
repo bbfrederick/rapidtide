@@ -25,7 +25,6 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-from scipy import ndimage
 from scipy.stats import rankdata
 
 import rapidtide.calccoherence as tide_calccoherence
@@ -40,17 +39,16 @@ import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.patchmatch as tide_patch
-import rapidtide.peakeval as tide_peakeval
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.RegressorRefiner as tide_regrefiner
 import rapidtide.resample as tide_resample
-import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
+import rapidtide.workflows.estimateDelay as tide_delayestimation
+import rapidtide.workflows.refineRegressor as tide_refineregressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
 from .utils import setup_logger
@@ -117,8 +115,8 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
 
 
 def rapidtide_main(argparsingfunc):
-    threaddebug = False
     optiondict, theprefilter = argparsingfunc
+    optiondict["threaddebug"] = False
 
     optiondict["nodename"] = platform.node()
 
@@ -277,7 +275,7 @@ def rapidtide_main(argparsingfunc):
         mklmaxthreads = mkl.get_max_threads()
         if not (1 <= optiondict["mklthreads"] <= mklmaxthreads):
             optiondict["mklthreads"] = mklmaxthreads
-        tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
         LGR.info(f"using {optiondict['mklthreads']} MKL threads")
 
     # Generate MemoryLGR output file with column names
@@ -700,7 +698,7 @@ def rapidtide_main(argparsingfunc):
             print(f"{fmritr=}")
             print(f"{validstart=}")
             print(f"{validend=}")
-        tide_util.disablemkl(optiondict["nprocs_confoundregress"], debug=threaddebug)
+        tide_util.disablemkl(optiondict["nprocs_confoundregress"], debug=optiondict["threaddebug"])
         (
             mergedregressors,
             mergedregressorlabels,
@@ -717,7 +715,7 @@ def rapidtide_main(argparsingfunc):
             orthogonalize=optiondict["orthogonalize"],
             showprogressbar=optiondict["showprogressbar"],
         )
-        tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
         if confoundr2 is None:
             print("There are no nonzero confound regressors - exiting")
             sys.exit()
@@ -1551,7 +1549,7 @@ def rapidtide_main(argparsingfunc):
             windowfunc=optiondict["windowfunc"],
         )
 
-        tide_util.disablemkl(optiondict["nprocs_calcsimilarity"], debug=threaddebug)
+        tide_util.disablemkl(optiondict["nprocs_calcsimilarity"], debug=optiondict["threaddebug"])
         (
             voxelsprocessed_echo,
             theglobalmaxlist,
@@ -1575,7 +1573,7 @@ def rapidtide_main(argparsingfunc):
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
-        tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]] - optiondict["simcalcoffset"]
@@ -1730,7 +1728,7 @@ def rapidtide_main(argparsingfunc):
                 theSimFunc = theMutualInformationator
             else:
                 theSimFunc = theCorrelator
-            tide_util.disablemkl(optiondict["nprocs_getNullDist"], debug=threaddebug)
+            tide_util.disablemkl(optiondict["nprocs_getNullDist"], debug=optiondict["threaddebug"])
             simdistdata = tide_nullsimfunc.getNullDistributionData(
                 oversampfreq,
                 theSimFunc,
@@ -1745,7 +1743,7 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=np.float64,
                 rt_floattype="float64",
             )
-            tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+            tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
             tide_io.writebidstsv(
                 f"{outputname}_desc-simdistdata_info",
@@ -1840,14 +1838,53 @@ def rapidtide_main(argparsingfunc):
         optiondict["currentstage"] = f"precorrelation_pass{thepass}"
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
-        # tide_delayestimate.estimateDelay(
-        #    fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
-        #    initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
-        #    os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
-        #    theMutualInformationator,
-        #    thepass,
-        # )
-        ########################
+        internaldespeckleincludemask = tide_delayestimation.estimateDelay(
+            fmri_data_valid,
+            validsimcalcstart,
+            validsimcalcend,
+            osvalidsimcalcstart,
+            osvalidsimcalcend,
+            initial_fmri_x,
+            os_fmri_x,
+            theCorrelator,
+            theMutualInformationator,
+            cleaned_referencetc,
+            corrout,
+            meanval,
+            corrscale,
+            outputname,
+            outcorrarray,
+            validvoxels,
+            nativecorrshape,
+            nativespaceshape,
+            bidsbasedict,
+            numspatiallocs,
+            gaussout,
+            theinitialdelay,
+            windowout,
+            R2,
+            thesizes,
+            internalspaceshape,
+            numvalidspatiallocs,
+            theinputdata,
+            theheader,
+            theFitter,
+            fitmask,
+            lagtimes,
+            lagstrengths,
+            lagsigma,
+            failreason,
+            outmaparray,
+            lagmininpts,
+            lagmaxinpts,
+            thepass,
+            optiondict,
+            LGR,
+            TimingLGR,
+            rt_floatset=np.float64,
+            rt_floattype="float64",
+        )
+        """########################
         # Delay estimation start
         ########################
         # Step 1 - Correlation step
@@ -1860,7 +1897,7 @@ def rapidtide_main(argparsingfunc):
         LGR.info(f"\n\n{similaritytype} calculation, pass {thepass}")
         TimingLGR.info(f"{similaritytype} calculation start, pass {thepass}")
 
-        tide_util.disablemkl(optiondict["nprocs_calcsimilarity"], debug=threaddebug)
+        tide_util.disablemkl(optiondict["nprocs_calcsimilarity"], debug=optiondict["threaddebug"])
         if optiondict["similaritymetric"] == "mutualinfo":
             theMutualInformationator.setlimits(lagmininpts, lagmaxinpts)
             (
@@ -1912,7 +1949,7 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype=rt_floattype,
                 debug=optiondict["focaldebug"],
             )
-        tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
         for i in range(len(theglobalmaxlist)):
             theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]] - optiondict["simcalcoffset"]
@@ -1955,7 +1992,7 @@ def rapidtide_main(argparsingfunc):
             LGR.info(f"\n\nPeak prefit calculation, pass {thepass}")
             TimingLGR.info(f"Peak prefit calculation start, pass {thepass}")
 
-            tide_util.disablemkl(optiondict["nprocs_peakeval"], debug=threaddebug)
+            tide_util.disablemkl(optiondict["nprocs_peakeval"], debug=optiondict["threaddebug"])
             voxelsprocessed_pe, thepeakdict = tide_peakeval.peakevalpass(
                 fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 cleaned_referencetc,
@@ -1974,7 +2011,7 @@ def rapidtide_main(argparsingfunc):
                 rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
             )
-            tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+            tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
             TimingLGR.info(
                 f"Peak prefit end, pass {thepass}",
@@ -2006,7 +2043,7 @@ def rapidtide_main(argparsingfunc):
         else:
             initlags = None
 
-        tide_util.disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
+        tide_util.disablemkl(optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"])
         voxelsprocessed_fc = tide_simfuncfit.fitcorr(
             trimmedcorrscale,
             theFitter,
@@ -2032,7 +2069,7 @@ def rapidtide_main(argparsingfunc):
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
-        tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
         TimingLGR.info(
             f"Time lag estimation end, pass {thepass}",
@@ -2072,7 +2109,9 @@ def rapidtide_main(argparsingfunc):
                     numdespeckled = len(np.where(initlags != -1000000.0)[0])
                     if lastnumdespeckled > numdespeckled > 0:
                         lastnumdespeckled = numdespeckled
-                        tide_util.disablemkl(optiondict["nprocs_fitcorr"], debug=threaddebug)
+                        tide_util.disablemkl(
+                            optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"]
+                        )
                         voxelsprocessed_thispass = tide_simfuncfit.fitcorr(
                             trimmedcorrscale,
                             theFitter,
@@ -2098,7 +2137,9 @@ def rapidtide_main(argparsingfunc):
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
-                        tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+                        tide_util.enablemkl(
+                            optiondict["mklthreads"], debug=optiondict["threaddebug"]
+                        )
 
                         voxelsprocessed_fc_ds += voxelsprocessed_thispass
                         optiondict[
@@ -2288,7 +2329,7 @@ def rapidtide_main(argparsingfunc):
             tide_patch.interppatch(lagtimes, patchmap[validvoxels])
         ########################
         # Delay estimation end
-        ########################
+        #######################"""  #
 
         # Step 2d - make a rank order map
         timepercentile = (
@@ -2332,7 +2373,36 @@ def rapidtide_main(argparsingfunc):
             or optiondict["initregressorpreselect"]
             or optiondict["dofinalrefine"]
         ):
-            LGR.info(f"\n\nRegressor refinement, pass {thepass}")
+            tide_refineregressor.refineRegressor(
+                LGR,
+                TimingLGR,
+                thepass,
+                optiondict,
+                fitmask,
+                internaloffsetincludemask_valid,
+                internaloffsetexcludemask_valid,
+                internalrefineincludemask_valid,
+                internalrefineexcludemask_valid,
+                internaldespeckleincludemask,
+                validvoxels,
+                theRegressorRefiner,
+                lagtimes,
+                lagstrengths,
+                lagsigma,
+                fmri_data_valid,
+                fmritr,
+                R2,
+                theprefilter,
+                previousnormoutputdata,
+                theinputdata,
+                numpadtrs,
+                outputname,
+                nativefmrishape,
+                bidsbasedict,
+                rt_floatset=np.float64,
+                rt_floattype="float64",
+            )
+            """LGR.info(f"\n\nRegressor refinement, pass {thepass}")
             TimingLGR.info(f"Regressor refinement start, pass {thepass}")
             if optiondict["refineoffset"]:
                 # check that we won't end up excluding all voxels from offset calculation before accepting mask
@@ -2407,11 +2477,11 @@ def rapidtide_main(argparsingfunc):
 
             # align timecourses to prepare for refinement
             LGR.info("aligning timecourses")
-            tide_util.disablemkl(optiondict["nprocs_refine"], debug=threaddebug)
+            tide_util.disablemkl(optiondict["nprocs_refine"], debug=optiondict["threaddebug"])
             voxelsprocessed_rra = theRegressorRefiner.alignvoxels(
                 fmri_data_valid, fmritr, lagtimes
             )
-            tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+            tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
             LGR.info(f"align complete: {voxelsprocessed_rra=}")
 
             # prenormalize
@@ -2472,7 +2542,7 @@ def rapidtide_main(argparsingfunc):
                     cifti_hdr=theinputdata.cifti_hdr,
                     debug=True,
                 )
-            # We are done with refinement.
+            # We are done with refinement."""
         # End of main pass loop
 
     if optiondict["convergencethresh"] is None:
@@ -2559,7 +2629,7 @@ def rapidtide_main(argparsingfunc):
         thesize, theunit = tide_util.format_bytes(optiondict["totalcoherencebytes"])
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for coherence calculation")
 
-        tide_util.disablemkl(1, debug=threaddebug)
+        tide_util.disablemkl(1, debug=optiondict["threaddebug"])
         voxelsprocessed_coherence = tide_calccoherence.coherencepass(
             fmri_data_valid,
             theCoherer,
@@ -2572,7 +2642,7 @@ def rapidtide_main(argparsingfunc):
             nprocs=1,
             alwaysmultiproc=optiondict["alwaysmultiproc"],
         )
-        tide_util.enablemkl(optiondict["mklthreads"], debug=threaddebug)
+        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
         # save the results of the calculations
         theheader = theinputdata.copyheader(
