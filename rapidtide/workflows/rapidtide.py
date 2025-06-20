@@ -295,15 +295,6 @@ def rapidtide_main(argparsingfunc):
     nativespaceshape = theinputdata.nativespaceshape
     fmritr = theinputdata.timestep
     optiondict["filetype"] = theinputdata.filetype
-    if theinputdata.filetype == "cifti":
-        fileiscifti = True
-        optiondict["textio"] = False
-    elif theinputdata.filetype == "text":
-        fileiscifti = False
-        optiondict["textio"] = True
-    else:
-        fileiscifti = False
-        optiondict["textio"] = False
 
     # check to see if we need to adjust the oversample factor
     if optiondict["oversampfactor"] < 0:

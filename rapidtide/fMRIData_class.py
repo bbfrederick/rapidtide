@@ -16,21 +16,9 @@
 #   limitations under the License.
 #
 #
-import sys
-import warnings
-
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy as sp
-from numpy.polynomial import Polynomial
-from scipy.optimize import curve_fit
-from statsmodels.robust import mad
 
-import rapidtide.correlate as tide_corr
-import rapidtide.filter as tide_filt
-import rapidtide.fit as tide_fit
-import rapidtide.miscmath as tide_math
-import rapidtide.util as tide_util
+import rapidtide.io as tide_io
 
 
 class fMRIData:
@@ -42,9 +30,7 @@ class fMRIData:
     mask = None
     validvoxels = None
     filename = None
-    textio = False
-    fileiscifti = False
-    fileisnifti = False
+    filetype = None
 
     def __init__(
         self,
@@ -110,53 +96,48 @@ class fMRIData:
         ####################################################
         #  Read data
         ####################################################
-        # open the fmri datafil
+        # open the fmri datafile
         if tide_io.checkiftext(self.filename):
-            self.textio = True
-        else:
-            self.textio = False
-
-        if self.textio:
+            self.filetype = "text"
             self.data = tide_io.readvecs(self.filename)
             self.header = None
             theshape = np.shape(nim_data)
             self.xsize = theshape[0]
             self.ysize = 1
             self.numslices = 1
-            self.fileiscifti = False
             self.timepoints = theshape[1]
             self.thesizes = [0, int(self.xsize), 1, 1, int(self.timepoints)]
             self.numspatiallocs = int(self.xsize)
             self.nativespaceshape = self.xsize
             self.cifti_hdr = None
+        elif tide_io.checkifcifti(self.filename):
+            self.filetype = "cifti"
+            (
+                cifti,
+                cifti_hdr,
+                self.data,
+                self.header,
+                thedims,
+                thesizes,
+                dummy,
+            ) = tide_io.readfromcifti(self.filename)
+            self.isgrayordinate = True
+            self.timepoints = nim_data.shape[1]
+            numspatiallocs = nim_data.shape[0]
+            LGR.debug(
+                f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs"
+            )
+            slicesize = numspatiallocs
+            nativespaceshape = (1, 1, 1, 1, numspatiallocs)
         else:
-            self.fileiscifti = tide_io.checkifcifti(self.filename)
-            if self.fileiscifti:
-                (
-                    cifti,
-                    cifti_hdr,
-                    self.data,
-                    self.header,
-                    thedims,
-                    thesizes,
-                    dummy,
-                ) = tide_io.readfromcifti(self.filename)
-                self.isgrayordinate = True
-                self.timepoints = nim_data.shape[1]
-                numspatiallocs = nim_data.shape[0]
-                LGR.debug(
-                    f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs"
-                )
-                slicesize = numspatiallocs
-                nativespaceshape = (1, 1, 1, 1, numspatiallocs)
-            else:
-                LGR.debug("input file is NIFTI")
-                nim, self.data, self.header, thedims, thesizes = tide_io.readfromnifti(
-                    fmrifilename
-                )
-                optiondict["isgrayordinate"] = False
-                xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
-                numspatiallocs = int(xsize) * int(ysize) * int(numslices)
-                cifti_hdr = None
-                nativespaceshape = (xsize, ysize, numslices)
+            self.filetype = "nifti"
+            LGR.debug("input file is NIFTI")
+            nim, self.data, self.header, thedims, thesizes = tide_io.readfromnifti(
+                fmrifilename
+            )
+            optiondict["isgrayordinate"] = False
+            xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+            numspatiallocs = int(xsize) * int(ysize) * int(numslices)
+            cifti_hdr = None
+            nativespaceshape = (xsize, ysize, numslices)
             xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
