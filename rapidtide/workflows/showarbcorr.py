@@ -23,9 +23,9 @@ import numpy as np
 from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr
-import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
+import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -391,7 +391,7 @@ def showarbcorr(args):
     thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
     # initialize the correlation fitter
-    thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
+    thexsimfuncfitter = tide_simFuncClasses.SimilarityFunctionFitter(
         corrtimeaxis=xcorr_x,
         lagmin=args.lagmin,
         lagmax=args.lagmax,

@@ -28,10 +28,10 @@ from scipy.stats import pearsonr
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
-import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.peakeval as tide_peakeval
+import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
@@ -459,7 +459,7 @@ def showxcorrx(args):
             thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
     # initialize the Correlator and MutualInformationator
-    theCorrelator = tide_classes.Correlator(
+    theCorrelator = tide_simFuncClasses.Correlator(
         Fs=args.samplerate,
         ncprefilter=theprefilter,
         detrendorder=args.detrendorder,
@@ -469,7 +469,7 @@ def showxcorrx(args):
         debug=args.debug,
     )
     theCorrelator.setreftc(trimdata2 * flipfac)
-    theMutualInformationator = tide_classes.MutualInformationator(
+    theMutualInformationator = tide_simFuncClasses.MutualInformationator(
         Fs=args.samplerate,
         smoothingtime=args.smoothingtime,
         ncprefilter=theprefilter,
@@ -559,7 +559,7 @@ def showxcorrx(args):
 
     if args.similaritymetric == "mutualinfo":
         # initialize the similarity function fitter
-        themifitter = tide_classes.SimilarityFunctionFitter(
+        themifitter = tide_simFuncClasses.SimilarityFunctionFitter(
             corrtimeaxis=MI_x_trim,
             lagmin=args.lagmin,
             lagmax=args.lagmax,
@@ -574,7 +574,7 @@ def showxcorrx(args):
         maxdelaymi = MI_x_trim[np.argmax(theMI_trim)]
     else:
         # initialize the correlation fitter
-        thexsimfuncfitter = tide_classes.SimilarityFunctionFitter(
+        thexsimfuncfitter = tide_simFuncClasses.SimilarityFunctionFitter(
             corrtimeaxis=xcorr_x,
             lagmin=args.lagmin,
             lagmax=args.lagmax,

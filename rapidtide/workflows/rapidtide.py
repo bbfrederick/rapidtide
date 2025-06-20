@@ -41,6 +41,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
+import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
@@ -1243,7 +1244,7 @@ def rapidtide_main(argparsingfunc):
     #  Set up for the delay finding/refinement passes
     ####################################################
     # initialize the Correlator
-    theCorrelator = tide_classes.Correlator(
+    theCorrelator = tide_simFuncClasses.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
         negativegradient=optiondict["negativegradient"],
@@ -1276,7 +1277,7 @@ def rapidtide_main(argparsingfunc):
     dummy, trimmedcorrscale, dummy = theCorrelator.getfunction()
 
     # initialize the MutualInformationator
-    theMutualInformationator = tide_classes.MutualInformationator(
+    theMutualInformationator = tide_simFuncClasses.MutualInformationator(
         Fs=oversampfreq,
         smoothingtime=optiondict["smoothingtime"],
         ncprefilter=theprefilter,
@@ -1511,7 +1512,7 @@ def rapidtide_main(argparsingfunc):
     LGR.verbose(f"edgebufferfrac set to {optiondict['edgebufferfrac']}")
 
     # initialize the correlation fitter
-    theFitter = tide_classes.SimilarityFunctionFitter(
+    theFitter = tide_simFuncClasses.SimilarityFunctionFitter(
         lagmod=optiondict["lagmod"],
         lthreshval=optiondict["lthreshval"],
         uthreshval=optiondict["uthreshval"],

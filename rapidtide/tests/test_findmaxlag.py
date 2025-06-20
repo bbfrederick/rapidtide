@@ -24,8 +24,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.fit as tide_fit
-import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
+import rapidtide.simFuncClasses as tide_simFuncClasses
 from rapidtide.tests.utils import get_examples_path
 
 
@@ -101,7 +101,7 @@ def test_findmaxlag(displayplots=False, debug=False):
         fmlc_lfailreasons = np.zeros(len(testlags), dtype=np.uint16)
 
         # initialize the correlation fitter
-        thefitter = tide_classes.SimilarityFunctionFitter(
+        thefitter = tide_simFuncClasses.SimilarityFunctionFitter(
             corrtimeaxis=xvecs,
             lagmin=lagmin,
             lagmax=lagmax,

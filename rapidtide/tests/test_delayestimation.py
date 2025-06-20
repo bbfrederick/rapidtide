@@ -24,11 +24,11 @@ import numpy as np
 
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.filter as tide_filt
-import rapidtide.helper_classes as tide_classes
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.miscmath as tide_math
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
+import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
 
@@ -130,7 +130,7 @@ def test_delayestimation(displayplots=False, debug=False):
     # set up theCorrelator
     if debug:
         print("\n\nsetting up theCorrelator")
-    theCorrelator = tide_classes.Correlator(
+    theCorrelator = tide_simFuncClasses.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
         detrendorder=detrendorder,
@@ -152,7 +152,7 @@ def test_delayestimation(displayplots=False, debug=False):
     # set up theMutualInformationator
     if debug:
         print("\n\nsetting up theMutualInformationator")
-    theMutualInformationator = tide_classes.MutualInformationator(
+    theMutualInformationator = tide_simFuncClasses.MutualInformationator(
         Fs=oversampfreq,
         smoothingtime=smoothingtime,
         ncprefilter=theprefilter,
@@ -170,7 +170,7 @@ def test_delayestimation(displayplots=False, debug=False):
     # set up thefitter
     if debug:
         print("\n\nsetting up thefitter")
-    thefitter = tide_classes.SimilarityFunctionFitter(
+    thefitter = tide_simFuncClasses.SimilarityFunctionFitter(
         lagmod=lagmod,
         lthreshval=0.0,
         uthreshval=1.0,

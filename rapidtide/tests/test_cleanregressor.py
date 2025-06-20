@@ -22,9 +22,9 @@ import matplotlib as mpl
 import numpy as np
 
 import rapidtide.filter as tide_filt
-import rapidtide.helper_classes as tide_classes
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
+import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path, mse
 
@@ -58,14 +58,14 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
     osvalidsimcalcstart = 0
     osvalidsimcalcend = tclen * oversampfac
 
-    theCorrelator = tide_classes.Correlator(
+    theCorrelator = tide_simFuncClasses.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
         detrendorder=1,
         windowfunc="hamming",
         corrweighting="phat",
     )
-    theFitter = tide_classes.SimilarityFunctionFitter(
+    theFitter = tide_simFuncClasses.SimilarityFunctionFitter(
         lagmod=lagmod,
         lagmin=lagmin,
         lagmax=lagmax,

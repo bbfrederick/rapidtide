@@ -24,8 +24,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.fit as tide_fit
-import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
+import rapidtide.simFuncClasses as tide_classes
 from rapidtide.tests.utils import get_examples_path
 
 

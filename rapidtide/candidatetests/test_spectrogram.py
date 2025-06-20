@@ -19,8 +19,7 @@ import numpy as np
 import scipy as sp
 
 from rapidtide.filter import NoncausalFilter
-from rapidtide.helper_classes import FrequencyTracker
-from rapidtide.io import writevec
+from rapidtide.simFuncClasses import FrequencyTracker
 from rapidtide.util import valtoindex
 
 

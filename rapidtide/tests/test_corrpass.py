@@ -23,8 +23,8 @@ import numpy as np
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
-import rapidtide.helper_classes as tide_classes
 import rapidtide.resample as tide_resample
+import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.simfuncfit as tide_simfuncfit
 from rapidtide.tests.utils import mse
 
@@ -133,7 +133,7 @@ def test_calcsimfunc(debug=False, displayplots=False):
     }
 
     theprefilter = tide_filt.NoncausalFilter("lfo")
-    theCorrelator = tide_classes.Correlator(
+    theCorrelator = tide_simFuncClasses.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
         detrendorder=optiondict["detrendorder"],
@@ -141,7 +141,7 @@ def test_calcsimfunc(debug=False, displayplots=False):
         corrweighting=optiondict["corrweighting"],
     )
 
-    thefitter = tide_classes.SimilarityFunctionFitter(
+    thefitter = tide_simFuncClasses.SimilarityFunctionFitter(
         lagmod=optiondict["lagmod"],
         lthreshval=optiondict["lthreshval"],
         uthreshval=optiondict["uthreshval"],

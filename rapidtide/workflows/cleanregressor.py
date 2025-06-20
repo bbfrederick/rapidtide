@@ -20,9 +20,9 @@ import numpy as np
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
-import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
+import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.simfuncfit as tide_simfuncfit
 
 
@@ -81,7 +81,7 @@ def cleanregressor(
     dolagmod = True
     doreferencenotch = True
     if respdelete:
-        resptracker = tide_classes.FrequencyTracker(nperseg=64)
+        resptracker = tide_simFuncClasses.FrequencyTracker(nperseg=64)
         thetimes, thefreqs = resptracker.track(resampref_y, oversampfreq)
         tide_io.writevec(thefreqs, f"{outputname}_peakfreaks_pass{thepass}.txt")
         resampref_y = resptracker.clean(resampref_y, oversampfreq, thetimes, thefreqs)
