@@ -63,7 +63,8 @@ The mask button (below the "Smart" button) indicates what mask to apply when dis
 By default, this is the "Valid" mask - all voxels where the rapidtide fit converged.  Right
 clicking on this button gives you a popup window which allows you to select from several other
 masks, including no mask, the voxels used to set the initial regressor, the voxels used in the
-final refinement pass, and a range of significance values for the rapidtide fit.
+final refinement pass, the voxels in an externally provided brain mask (if specified),
+and a range of significance values for the rapidtide fit.
 
 
 .. image:: images/tidepool_maskselect.jpg
