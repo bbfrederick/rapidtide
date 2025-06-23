@@ -1469,11 +1469,11 @@ def getpeaks(xvals, yvals, xrange=None, bipolar=False, displayplots=False):
         peaks = np.concatenate((peaks, negpeaks))
     procpeaks = []
     if xrange is None:
-        lagmin = xvals[0]
-        lagmax = xvals[-1]
+        lagmin = xvals[0] + 0.0
+        lagmax = xvals[-1] + 0.0
     else:
-        lagmin = xrange[0]
-        lagmax = xrange[1]
+        lagmin = xrange[0] + 0.0
+        lagmax = xrange[1] + 0.0
     originloc = tide_util.valtoindex(xvals, 0.0, discrete=False)
     for thepeak in peaks:
         if lagmin <= xvals[thepeak] <= lagmax:

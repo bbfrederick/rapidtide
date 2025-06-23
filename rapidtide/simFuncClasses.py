@@ -60,8 +60,8 @@ class SimilarityFunctionator:
     ):
         self.setFs(Fs)
         self.similarityfuncorigin = similarityfuncorigin
-        self.lagmininpts = lagmininpts
-        self.lagmaxinpts = lagmaxinpts
+        self.lagmininpts = lagmininpts + 0
+        self.lagmaxinpts = lagmaxinpts + 0
         self.ncprefilter = ncprefilter
         self.negativegradient = negativegradient
         self.reftc = reftc
@@ -70,7 +70,7 @@ class SimilarityFunctionator:
         self.debug = debug
         if self.reftc is not None:
             self.setreftc(self.reftc)
-            self.reftcstart = reftcstart
+            self.reftcstart = reftcstart + 0.0
 
     def setFs(self, Fs):
         self.Fs = Fs
@@ -443,7 +443,7 @@ class SimilarityFunctionFitter:
         hardlimit
         bipolar: boolean
             If true find the correlation peak with the maximum absolute value, regardless of sign
-        threshval
+        lthreshval
         uthreshval
         debug
         zerooutbadfit
@@ -467,14 +467,14 @@ class SimilarityFunctionFitter:
             Specify the search range for lag peaks, in seconds
         """
         self.setcorrtimeaxis(corrtimeaxis)
-        self.lagmin = lagmin
-        self.lagmax = lagmax
-        self.absmaxsigma = absmaxsigma
-        self.absminsigma = absminsigma
+        self.lagmin = lagmin + 0.0
+        self.lagmax = lagmax + 0.0
+        self.absmaxsigma = absmaxsigma + 0.0
+        self.absminsigma = absminsigma + 0.0
         self.hardlimit = hardlimit
         self.bipolar = bipolar
-        self.lthreshval = lthreshval
-        self.uthreshval = uthreshval
+        self.lthreshval = lthreshval + 0.0
+        self.uthreshval = uthreshval + 0.0
         self.debug = debug
         if functype == "correlation" or functype == "mutualinfo":
             self.functype = functype
@@ -483,10 +483,10 @@ class SimilarityFunctionFitter:
             sys.exit()
         self.peakfittype = peakfittype
         self.zerooutbadfit = zerooutbadfit
-        self.maxguess = maxguess
+        self.maxguess = maxguess + 0.0
         self.useguess = useguess
-        self.searchfrac = searchfrac
-        self.lagmod = lagmod
+        self.searchfrac = searchfrac + 0.0
+        self.lagmod = lagmod + 0.0
         self.enforcethresh = enforcethresh
         self.allowhighfitamps = allowhighfitamps
         self.displayplots = displayplots

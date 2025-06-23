@@ -2652,6 +2652,7 @@ def rapidtide_main(argparsingfunc):
     # put some quality metrics into the info structure
     histpcts = [0.02, 0.25, 0.5, 0.75, 0.98]
     thetimepcts = tide_stats.getfracvals(lagtimes[np.where(fitmask > 0)], histpcts, nozero=False)
+    therefinedtimepcts = tide_stats.getfracvals(lagtimesrefined[np.where(fitmask > 0)], histpcts, nozero=False)
     thestrengthpcts = tide_stats.getfracvals(
         lagstrengths[np.where(fitmask > 0)], histpcts, nozero=False
     )
@@ -2659,6 +2660,9 @@ def rapidtide_main(argparsingfunc):
     for i in range(len(histpcts)):
         optiondict[f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
             thetimepcts[i]
+        )
+        optiondict[f"lagtimesrefined_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+            therefinedtimepcts[i]
         )
         optiondict[f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
             thestrengthpcts[i]
