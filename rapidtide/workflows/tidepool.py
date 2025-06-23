@@ -2002,7 +2002,7 @@ def tidepool(args):
         },
         "R2": {
             "colormap": gen_thermal_state(),
-            "label": "GLM Fit R2",
+            "label": "sLFO Fit R2",
             "display": extramaps,
             "funcmask": "p_lt_0p050_mask",
         },
@@ -2020,13 +2020,13 @@ def tidepool(args):
         },
         "varBefore": {
             "colormap": gen_thermal_state(),
-            "label": "LFO variance before GLM",
+            "label": "LFO variance before filtering",
             "display": extramaps,
             "funcmask": "p_lt_0p050_mask",
         },
         "varAfter": {
             "colormap": gen_thermal_state(),
-            "label": "LFO variance after GLM",
+            "label": "LFO variance after filtering",
             "display": extramaps,
             "funcmask": "p_lt_0p050_mask",
         },
@@ -2074,7 +2074,7 @@ def tidepool(args):
         },
         "fitcoff": {
             "colormap": gen_thermal_state(),
-            "label": "GLM fit coefficient",
+            "label": "sLFO fit coefficient",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
