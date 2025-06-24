@@ -138,33 +138,33 @@ class RegressorRefiner:
         self.excludemask = excludemask
 
     def _allocatemem(self, pid):
+        self.shiftedtcs, self.shiftedtcs_shm = tide_util.allocarray(
+            self.internalvalidfmrishape,
+            self.rt_floattype,
+            shared=self.sharedmem,
+            name=f"shiftedtcs_{pid}",
+        )
+        self.weights, self.weights_shm = tide_util.allocarray(
+            self.internalvalidfmrishape,
+            self.rt_floattype,
+            shared=self.sharedmem,
+            name=f"weights_{pid}",
+        )
+        self.paddedshiftedtcs, self.paddedshiftedtcs_shm = tide_util.allocarray(
+            self.internalvalidpaddedfmrishape,
+            self.rt_floattype,
+            shared=self.sharedmem,
+            name=f"paddedshiftedtcs_{pid}",
+        )
+        self.paddedweights, self.paddedweights_shm = tide_util.allocarray(
+            self.internalvalidpaddedfmrishape,
+            self.rt_floattype,
+            shared=self.sharedmem,
+            name=f"paddedweights_{pid}",
+        )
         if self.sharedmem:
-            self.shiftedtcs, self.shiftedtcs_shm = tide_util.allocshared(
-                self.internalvalidfmrishape, self.rt_floatset, name=f"shiftedtcs_{pid}"
-            )
-            self.weights, self.weights_shm = tide_util.allocshared(
-                self.internalvalidfmrishape, self.rt_floatset, name=f"weights_{pid}"
-            )
-            self.paddedshiftedtcs, self.paddedshiftedtcs_shm = tide_util.allocshared(
-                self.internalvalidpaddedfmrishape,
-                self.rt_floatset,
-                name=f"paddedshiftedtcs_{pid}",
-            )
-            self.paddedweights, self.paddedweights_shm = tide_util.allocshared(
-                self.internalvalidpaddedfmrishape,
-                self.rt_floatset,
-                name=f"paddedweights_{pid}",
-            )
             ramlocation = "in shared memory"
         else:
-            self.shiftedtcs = np.zeros(self.internalvalidfmrishape, dtype=self.rt_floattype)
-            self.weights = np.zeros(self.internalvalidfmrishape, dtype=self.rt_floattype)
-            self.paddedshiftedtcs = np.zeros(
-                self.internalvalidpaddedfmrishape, dtype=self.rt_floattype
-            )
-            self.paddedweights = np.zeros(
-                self.internalvalidpaddedfmrishape, dtype=self.rt_floattype
-            )
             ramlocation = "locally"
         totalrefinementbytes = (
             self.shiftedtcs.nbytes

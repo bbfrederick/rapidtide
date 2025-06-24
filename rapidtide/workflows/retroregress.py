@@ -529,37 +529,29 @@ def retroregress(args):
     if args.debug:
         print(f"{fmri_data_valid.shape=}")
 
+        sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
+            internalvalidspaceshape, rt_outfloattype, shared=usesharedmem
+        )
+        rvalue, rvalue_shm = tide_util.allocarray(internalvalidspaceshape, rt_outfloattype, shared=usesharedmem)
+        r2value, r2value_shm = tide_util.allocarray(internalvalidspaceshape, rt_outfloattype, shared=usesharedmem)
+        fitNorm, fitNorm_shm = tide_util.allocarray(internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem)
+        fitcoeff, fitcoeff_shm = tide_util.allocarray(
+            internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
+        )
+        movingsignal, movingsignal_shm = tide_util.allocarray(
+            internalvalidfmrishape, rt_outfloattype, shared=usesharedmem
+        )
+        lagtc, lagtc_shm = tide_util.allocarray(internalvalidfmrishape, rt_floattype, shared=usesharedmem)
+        filtereddata, filtereddata_shm = tide_util.allocarray(
+            internalvalidfmrishape, rt_outfloattype, shared=usesharedmem
+        )
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
-        sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
-            internalvalidspaceshape, rt_outfloatset
-        )
-        rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloatset)
-        fitcoeff, fitcoeff_shm = tide_util.allocshared(
-            internalvalidspaceshapederivs, rt_outfloatset
-        )
-        movingsignal, movingsignal_shm = tide_util.allocshared(
-            internalvalidfmrishape, rt_outfloatset
-        )
-        lagtc, lagtc_shm = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
-        filtereddata, filtereddata_shm = tide_util.allocshared(
-            internalvalidfmrishape, rt_outfloatset
-        )
         ramlocation = "in shared memory"
     else:
         if args.debug:
             print("allocating memory")
-        sLFOfitmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-        fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-        fitcoeff = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-        movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-        lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-        filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
         ramlocation = "locally"
 
     totalbytes = (

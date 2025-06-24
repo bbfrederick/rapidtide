@@ -226,15 +226,14 @@ def retrolagtcs(args):
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
-        fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloatset)
-        fitcoeff, fitcoeff_shm = tide_util.allocshared(
-            internalvalidspaceshapederivs, rt_outfloatset
-        )
-        lagtc, lagtc_shm = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
     else:
         if args.debug:
             print("allocating memory")
-        lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
+    fitNorm, fitNorm_shm = tide_util.allocarray(internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem)
+    fitcoeff, fitcoeff_shm = tide_util.allocarray(
+        internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
+    )
+    lagtc, lagtc_shm = tide_util.allocarray(internalvalidfmrishape, rt_floattype, shared=usesharedmem)
 
     outputpath = os.path.dirname(args.outputroot)
     rawsources = [

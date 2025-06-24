@@ -614,38 +614,32 @@ def delayvar(args):
     windowedfilteredregressderivratios = np.zeros(internalwinspaceshape, dtype=float)
     windoweddelayoffset = np.zeros(internalwinspaceshape, dtype=float)
     windowedclosestoffset = np.zeros(internalwinspaceshape, dtype=float)
+
+    winsLFOfitmean, winsLFOfitmean_shm = tide_util.allocarray(
+        internalwinspaceshape, rt_outfloattype, shared=usesharedmem
+    )
+    winrvalue, winrvalue_shm = tide_util.allocarray(internalwinspaceshape, rt_outfloattype, shared=usesharedmem)
+    winr2value, winr2value_shm = tide_util.allocarray(internalwinspaceshape, rt_outfloattype, shared=usesharedmem)
+    winfitNorm, winfitNorm_shm = tide_util.allocarray(
+        internalwinspaceshapederivs, rt_outfloattype, shared=usesharedmem
+    )
+    winfitcoeff, winitcoeff_shm = tide_util.allocarray(
+        internalwinspaceshapederivs, rt_outfloattype, shared=usesharedmem
+    )
+    winmovingsignal, winmovingsignal_shm = tide_util.allocarray(
+        internalwinfmrishape, rt_outfloattype, shared=usesharedmem
+    )
+    winlagtc, winlagtc_shm = tide_util.allocarray(internalwinfmrishape, rt_floattype, shared=usesharedmem)
+    winfiltereddata, winfiltereddata_shm = tide_util.allocarray(
+        internalwinfmrishape, rt_outfloattype, shared=usesharedmem
+    )
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
-        winsLFOfitmean, winsLFOfitmean_shm = tide_util.allocshared(
-            internalwinspaceshape, rt_outfloatset
-        )
-        winrvalue, winrvalue_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
-        winr2value, winr2value_shm = tide_util.allocshared(internalwinspaceshape, rt_outfloatset)
-        winfitNorm, winfitNorm_shm = tide_util.allocshared(
-            internalwinspaceshapederivs, rt_outfloatset
-        )
-        winfitcoeff, winitcoeff_shm = tide_util.allocshared(
-            internalwinspaceshapederivs, rt_outfloatset
-        )
-        winmovingsignal, winmovingsignal_shm = tide_util.allocshared(
-            internalwinfmrishape, rt_outfloatset
-        )
-        winlagtc, winlagtc_shm = tide_util.allocshared(internalwinfmrishape, rt_floatset)
-        winfiltereddata, winfiltereddata_shm = tide_util.allocshared(
-            internalwinfmrishape, rt_outfloatset
-        )
     else:
         if args.debug:
             print("allocating memory")
-        winsLFOfitmean = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-        winrvalue = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-        winr2value = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-        winfitNorm = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
-        winfitcoeff = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
-        winmovingsignal = np.zeros(internalwinfmrishape, dtype=rt_outfloattype)
-        winlagtc = np.zeros(internalwinfmrishape, dtype=rt_floattype)
-        winfiltereddata = np.zeros(internalwinfmrishape, dtype=rt_outfloattype)
+
     if args.debug:
         print(f"wintrs={wintrs}, winskip={winskip}, numtrs={numtrs}, numwins={numwins}")
     thewindowprocoptions = therunoptions
@@ -872,44 +866,36 @@ def delayvar(args):
 
     doregress = False
     if doregress:
+        systemicsLFOfitmean, systemicsLFOfitmean_shm = tide_util.allocarray(
+            internalwinspaceshape, rt_outfloattype, shared=usesharedmem
+        )
+        systemicrvalue, systemicrvalue_shm = tide_util.allocarray(
+            internalwinspaceshape, rt_outfloattype, shared=usesharedmem
+        )
+        systemicr2value, systemicr2value_shm = tide_util.allocarray(
+            internalwinspaceshape, rt_outfloattype, shared=usesharedmem
+        )
+        systemicfitNorm, systemicfitNorm_shm = tide_util.allocarray(
+            internalwinspaceshapederivs, rt_outfloattype, shared=usesharedmem
+        )
+        systemicfitcoeff, systemicitcoeff_shm = tide_util.allocarray(
+            internalwinspaceshapederivs, rt_outfloattype, shared=usesharedmem
+        )
+        systemicmovingsignal, systemicmovingsignal_shm = tide_util.allocarray(
+            internalwinspaceshape, rt_outfloattype, shared=usesharedmem
+        )
+        systemiclagtc, systemiclagtc_shm = tide_util.allocarray(
+            internalwinspaceshape, rt_floattype, shared=usesharedmem
+        )
+        systemicfiltereddata, systemicfiltereddata_shm = tide_util.allocarray(
+            internalwinspaceshape, rt_outfloattype, shared=usesharedmem
+        )
         if usesharedmem:
             if args.debug:
                 print("allocating shared memory")
-            systemicsLFOfitmean, systemicsLFOfitmean_shm = tide_util.allocshared(
-                internalwinspaceshape, rt_outfloatset
-            )
-            systemicrvalue, systemicrvalue_shm = tide_util.allocshared(
-                internalwinspaceshape, rt_outfloatset
-            )
-            systemicr2value, systemicr2value_shm = tide_util.allocshared(
-                internalwinspaceshape, rt_outfloatset
-            )
-            systemicfitNorm, systemicfitNorm_shm = tide_util.allocshared(
-                internalwinspaceshapederivs, rt_outfloatset
-            )
-            systemicfitcoeff, systemicitcoeff_shm = tide_util.allocshared(
-                internalwinspaceshapederivs, rt_outfloatset
-            )
-            systemicmovingsignal, systemicmovingsignal_shm = tide_util.allocshared(
-                internalwinspaceshape, rt_outfloatset
-            )
-            systemiclagtc, systemiclagtc_shm = tide_util.allocshared(
-                internalwinspaceshape, rt_floatset
-            )
-            systemicfiltereddata, systemicfiltereddata_shm = tide_util.allocshared(
-                internalwinspaceshape, rt_outfloatset
-            )
         else:
             if args.debug:
                 print("allocating memory")
-            systemicsLFOfitmean = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-            systemicrvalue = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-            systemicr2value = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-            systemicfitNorm = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
-            systemicfitcoeff = np.zeros(internalwinspaceshapederivs, dtype=rt_outfloattype)
-            systemicmovingsignal = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
-            systemiclagtc = np.zeros(internalwinspaceshape, dtype=rt_floattype)
-            systemicfiltereddata = np.zeros(internalwinspaceshape, dtype=rt_outfloattype)
 
         windowlocs = np.linspace(0.0, winspace * numwins, num=numwins, endpoint=False) + skiptime
         voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(

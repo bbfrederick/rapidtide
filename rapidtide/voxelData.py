@@ -61,12 +61,9 @@ class dataVolume:
             print(f"illegal shape: {shape}")
         self.numspatiallocs = self.xsize * self.ysize * self.numslices
         self.dtype = dtype
-        if not shared:
-            self.data = np.zeros(shape, dtype=dtype)
-        else:
-            self.data, self.data_shm = tide_util.allocshared(
-                shape, self.dtype, name=f"filtereddata_{thepid}"
-            )
+        self.data, self.data_shm = tide_util.allocarray(
+            shape, self.dtype, shared=shared, name=f"filtereddata_{thepid}"
+        )
         return self.data
 
     def byvol(self):
