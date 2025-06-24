@@ -208,10 +208,10 @@ def fitcorr(
                         break
 
                     # process and send the data
-                    if (lagmask is None) or (initiallags is None):
+                    if (themask is None) or (initiallags is None):
                         thislag = None
                     else:
-                        if lagmask[val] > 0:
+                        if themask[val] > 0:
                             thislag = initiallags[val]
                         else:
                             thislag = None
@@ -289,32 +289,23 @@ def fitcorr(
             unit="voxels",
             disable=(not showprogressbar),
         ):
-            if themask is None:
-                dothisone = True
+            # process and send the data
+            if (themask is None) or (initiallags is None):
                 thislag = None
-            elif themask[vox] > 0:
                 dothisone = True
-                thislag = initiallags[vox]
             else:
-                dothisone = False
-                thislag = None
+                if themask[vox] > 0:
+                    thislag = initiallags[vox]
+                    dothisone = True
+                else:
+                    thislag = None
+                    dothisone = False
             if isinstance(initialdelayvalue, np.ndarray):
                 thisinitialdelayvalue = initialdelayvalue[vox]
             else:
                 thisinitialdelayvalue = initialdelayvalue
             if dothisone:
-                (
-                    dummy,
-                    volumetotalinc,
-                    lagtimes[vox],
-                    lagstrengths[vox],
-                    lagsigma[vox],
-                    gaussout[vox, :],
-                    windowout[vox, :],
-                    R2[vox],
-                    lagmask[vox],
-                    failreason,
-                ) = _procOneVoxelFitcorr(
+                voxel = _procOneVoxelFitcorr(
                     vox,
                     corrout[vox, :],
                     thefitter,
@@ -326,28 +317,37 @@ def fitcorr(
                     rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
                 )
-                volumetotal += volumetotalinc
                 if (
                     thefitter.FML_INITAMPLOW
                     | thefitter.FML_INITAMPHIGH
                     | thefitter.FML_FITAMPLOW
                     | thefitter.FML_FITAMPHIGH
-                ) & failreason:
+                ) & voxel[9]:
                     ampfails += 1
-                if (thefitter.FML_INITWIDTHLOW | thefitter.FML_FITWIDTHLOW) & failreason:
+                if (thefitter.FML_INITWIDTHLOW | thefitter.FML_FITWIDTHLOW) & voxel[9]:
                     lowwidthfails += 1
-                if (thefitter.FML_INITWIDTHHIGH | thefitter.FML_FITWIDTHHIGH) & failreason:
+                if (thefitter.FML_INITWIDTHHIGH | thefitter.FML_FITWIDTHHIGH) & voxel[9]:
                     highwidthfails += 1
-                if (thefitter.FML_INITLAGLOW | thefitter.FML_INITLAGHIGH) & failreason:
+                if (thefitter.FML_INITLAGLOW | thefitter.FML_FITLAGLOW) & voxel[9]:
                     lowlagfails += 1
-                if (thefitter.FML_INITLAGLOW | thefitter.FML_FITLAGLOW) & failreason:
-                    lowlagfails += 1
-                if (thefitter.FML_INITLAGHIGH | thefitter.FML_FITLAGHIGH) & failreason:
+                if (thefitter.FML_INITLAGHIGH | thefitter.FML_FITLAGHIGH) & voxel[9]:
                     highlagfails += 1
-                if thefitter.FML_INITFAIL & failreason:
+                if thefitter.FML_INITFAIL & voxel[9]:
                     initfails += 1
-                if thefitter.FML_FITFAIL & failreason:
+                if thefitter.FML_FITFAIL & voxel[9]:
                     fitfails += 1
+
+                # if this is a despeckle pass, only accept the new values if the fit did not fail
+                if (voxel[9] == 0) or not despeckling:
+                    volumetotal += voxel[1]
+                    lagtimes[vox] = voxel[2]
+                    lagstrengths[vox] = voxel[3]
+                    lagsigma[vox] = voxel[4]
+                    gaussout[vox, :] = voxel[5]
+                    windowout[vox, :] = voxel[6]
+                    R2[vox] = voxel[7]
+                    lagmask[vox] = voxel[8]
+                    failimage[vox] = voxel[9] & 0xFFFF
 
     LGR.info(f"\nSimilarity function fitted in {volumetotal} voxels")
     LGR.info(
