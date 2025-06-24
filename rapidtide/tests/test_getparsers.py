@@ -33,18 +33,24 @@ from rapidtide.workflows.filtnifti import _get_parser as filtnifti_getparser
 from rapidtide.workflows.filttc import _get_parser as filttc_getparser
 from rapidtide.workflows.fixtr import _get_parser as fixtr_getparser
 from rapidtide.workflows.gmscalc import _get_parser as gmscalc_getparser
-from rapidtide.workflows.happy_parser import _get_parser as happy_parser_getparser
 from rapidtide.workflows.happy2std import _get_parser as happy2std_getparser
+from rapidtide.workflows.happy_parser import _get_parser as happy_parser_getparser
 from rapidtide.workflows.histnifti import _get_parser as histnifti_getparser
 from rapidtide.workflows.histtc import _get_parser as histtc_getparser
 from rapidtide.workflows.linfitfilt import _get_parser as linfitfilt_getparser
 from rapidtide.workflows.localflow import _get_parser as localflow_getparser
 from rapidtide.workflows.mergequality import _get_parser as mergequality_getparser
-from rapidtide.workflows.niftidecomp import _get_parser_temporal as niftidecomp_getparser_temporal
-from rapidtide.workflows.niftidecomp import _get_parser_spatial as niftidecomp_getparser_spatial
+from rapidtide.workflows.niftidecomp import (
+    _get_parser_spatial as niftidecomp_getparser_spatial,
+)
+from rapidtide.workflows.niftidecomp import (
+    _get_parser_temporal as niftidecomp_getparser_temporal,
+)
 from rapidtide.workflows.niftistats import _get_parser as niftistats_getparser
 from rapidtide.workflows.pairproc import _get_parser as pairproc_getparser
-from rapidtide.workflows.pairwisemergenifti import _get_parser as pairwisemergenifti_getparser
+from rapidtide.workflows.pairwisemergenifti import (
+    _get_parser as pairwisemergenifti_getparser,
+)
 from rapidtide.workflows.physiofreq import _get_parser as physiofreq_getparser
 from rapidtide.workflows.pixelcomp import _get_parser as pixelcomp_getparser
 from rapidtide.workflows.plethquality import _get_parser as plethquality_getparser
@@ -75,7 +81,8 @@ from rapidtide.workflows.variabilityizer import _get_parser as variabilityizer_g
 
 
 def test_parsers(debug=False):
-    parserlist = [ adjustoffset_getparser,
+    parserlist = [
+        adjustoffset_getparser,
         aligntcs_getparser,
         applydlfilter_getparser,
         atlasaverage_getparser,
@@ -128,7 +135,8 @@ def test_parsers(debug=False):
         synthASL_getparser,
         tcfrom2col_getparser,
         tcfrom3col_getparser,
-        variabilityizer_getparser ]
+        variabilityizer_getparser,
+    ]
 
     for thegetparser in parserlist:
         theusage = thegetparser().format_help()

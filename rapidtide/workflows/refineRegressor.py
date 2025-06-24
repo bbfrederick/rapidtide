@@ -32,6 +32,8 @@ from rapidtide.tests.utils import mse
 """
 A class to implement regressor refinement
 """
+
+
 class RegressorRefiner:
 
     refinemaskvoxels = None
@@ -631,4 +633,4 @@ def refineRegressor(
             debug=True,
         )
 
-    return resampref_y,resampnonosref_y,stoprefining,refinestopreason,genlagtc
+    return resampref_y, resampnonosref_y, stoprefining, refinestopreason, genlagtc

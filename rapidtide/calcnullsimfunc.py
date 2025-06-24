@@ -18,13 +18,11 @@
 #
 import sys
 
-
 import numpy as np
 
-
 import rapidtide.filter as tide_filt
-import rapidtide.miscmath as tide_math
 import rapidtide.genericmultiproc as tide_genericmultiproc
+import rapidtide.miscmath as tide_math
 
 
 # note: rawtimecourse has been filtered, but NOT windowed

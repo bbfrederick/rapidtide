@@ -20,8 +20,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rapidtide.resample import congrid
 from rapidtide.happy_supportfuncs import preloadcongrid
+from rapidtide.resample import congrid
 from rapidtide.tests.utils import mse
 
 

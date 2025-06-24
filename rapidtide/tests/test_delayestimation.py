@@ -360,10 +360,10 @@ def test_delayestimation(displayplots=False, debug=False):
         diffsignal = filtereddata
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
-        #ax.plot(oversamptimepoints, referencetc, label="referencetc")
+        # ax.plot(oversamptimepoints, referencetc, label="referencetc")
         ax.plot(timepoints, waveforms[refnum, :], label="waveform")
         ax.plot(timepoints, fitcoff[refnum] * movingsignal[refnum, :], label="movingsignal")
-        #ax.plot(timepoints, filtereddata[refnum, :], label="filtereddata")
+        # ax.plot(timepoints, filtereddata[refnum, :], label="filtereddata")
         ax.legend()
         plt.show()
 

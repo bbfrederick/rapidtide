@@ -328,7 +328,3 @@ class Coherer:
             else:
                 self.themax = np.argmax(self.thecoherence)
                 return self.thecoherence, self.freqaxis, self.themax
-
-
-
-

@@ -1,6 +1,7 @@
 # Stub file to call setuptools.setup with versioneer hooks
 from setuptools import setup
-from versioneer import get_version, get_cmdclass
+
+from versioneer import get_cmdclass, get_version
 
 setup(
     version=get_version(),

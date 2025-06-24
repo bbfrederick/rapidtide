@@ -22,8 +22,8 @@ import matplotlib as mpl
 
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 import rapidtide.workflows.retroregress as rapidtide_retroregress
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
 def test_fullrunrapidtide_v3(debug=False, local=False, displayplots=False):
@@ -86,6 +86,7 @@ def test_fullrunrapidtide_v3(debug=False, local=False, displayplots=False):
         "onlyregressors",
     ]
     rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
+
 
 if __name__ == "__main__":
     mpl.use("TkAgg")

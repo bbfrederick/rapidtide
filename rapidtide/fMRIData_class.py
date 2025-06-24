@@ -124,17 +124,13 @@ class fMRIData:
             self.isgrayordinate = True
             self.timepoints = nim_data.shape[1]
             numspatiallocs = nim_data.shape[0]
-            LGR.debug(
-                f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs"
-            )
+            LGR.debug(f"cifti file has {timepoints} timepoints, {numspatiallocs} numspatiallocs")
             slicesize = numspatiallocs
             nativespaceshape = (1, 1, 1, 1, numspatiallocs)
         else:
             self.filetype = "nifti"
             LGR.debug("input file is NIFTI")
-            nim, self.data, self.header, thedims, thesizes = tide_io.readfromnifti(
-                fmrifilename
-            )
+            nim, self.data, self.header, thedims, thesizes = tide_io.readfromnifti(fmrifilename)
             optiondict["isgrayordinate"] = False
             xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
             numspatiallocs = int(xsize) * int(ysize) * int(numslices)

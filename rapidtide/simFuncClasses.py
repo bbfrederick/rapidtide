@@ -1019,6 +1019,7 @@ class SimilarityFunctionFitter:
             peakend,
         )
 
+
 class FrequencyTracker:
     freqs = None
     times = None
