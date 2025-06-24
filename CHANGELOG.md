@@ -2,6 +2,7 @@
 
 ## Version 3.0.8 (6/20/25)
 * (rapidtide) Split coarse delay estimation and refinement out into separate workflows.
+* (rapidtide) Fix https://github.com/bbfrederick/rapidtide/issues/213 (thanks to https://github.com/tomosumi for reporting the bug).
 * (docs) Some improvement to the tidepool section.
 * (package) Accepted several dependabot PRs.
 

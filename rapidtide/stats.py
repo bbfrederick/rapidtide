@@ -269,7 +269,7 @@ def sigFromDistributionData(
     # check to make sure there are nonzero values first
     if len(np.where(vallist != 0.0)[0]) == 0:
         print("no nonzero values - skipping percentile calculation")
-        return None, 0, 0
+        return None, None, None
     thehistogram, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = makehistogram(
         np.abs(vallist), histlen, therange=[0.0, 1.0]
     )
@@ -300,7 +300,10 @@ def sigFromDistributionData(
         pcts_fit = getfracvalsfromfit(histfit, thepercentiles)
         return pcts_data, pcts_fit, histfit
     else:
-        return pcts_data, 0, 0
+        pcts_fit = []
+        for i in len(pcts_data):
+            pcts_fit.append(None)
+        return pcts_data, pcts_fit, None
 
 
 global neglogpfromr_interpolator, minrforneglogp, maxrforneglogp

@@ -1774,6 +1774,8 @@ def rapidtide_main(argparsingfunc):
                 twotail=optiondict["bipolar"],
                 nozero=optiondict["nohistzero"],
             )
+            if sigfit is None:
+                optiondict["ampthreshfromsig"] = False
             if pcts is not None:
                 for i in range(len(thepvalnames)):
                     optiondict[
@@ -2652,17 +2654,15 @@ def rapidtide_main(argparsingfunc):
     # put some quality metrics into the info structure
     histpcts = [0.02, 0.25, 0.5, 0.75, 0.98]
     thetimepcts = tide_stats.getfracvals(lagtimes[np.where(fitmask > 0)], histpcts, nozero=False)
-    therefinedtimepcts = tide_stats.getfracvals(lagtimesrefined[np.where(fitmask > 0)], histpcts, nozero=False)
     thestrengthpcts = tide_stats.getfracvals(
         lagstrengths[np.where(fitmask > 0)], histpcts, nozero=False
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
+    if optiondict["refinedelay"]:
+        therefinedtimepcts = tide_stats.getfracvals(lagtimesrefined[np.where(fitmask > 0)], histpcts, nozero=False)
     for i in range(len(histpcts)):
         optiondict[f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
             thetimepcts[i]
-        )
-        optiondict[f"lagtimesrefined_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
-            therefinedtimepcts[i]
         )
         optiondict[f"lagstrengths_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
             thestrengthpcts[i]
@@ -2670,6 +2670,10 @@ def rapidtide_main(argparsingfunc):
         optiondict[f"lagsigma_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
             thesigmapcts[i]
         )
+        if optiondict["refinedelay"]:
+            optiondict[f"lagtimesrefined_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
+                therefinedtimepcts[i]
+            )
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 
@@ -3069,27 +3073,28 @@ def rapidtide_main(argparsingfunc):
     if optiondict["numestreps"] > 0:
         masklist = []
 
-        # we can only calculate this map if we have enough data for a good fit
+        # we can only calculate this map if we have enough data for a good fit, and the fit succeeded
         if optiondict["numestreps"] >= 1000:
-            neglogpmax = np.log10(optiondict["numestreps"])
-            # generate a neglogp map
-            neglog10pmap = lagstrengths * 0.0
-            for voxel in range(neglog10pmap.shape[0]):
-                neglog10pmap[voxel] = tide_stats.neglog10pfromr(
-                    lagstrengths[voxel],
-                    sigfit,
-                    neglogpmax=neglogpmax,
-                    debug=optiondict["debug"],
-                )
-            masklist += [
-                (
-                    neglog10pmap.copy(),
-                    "neglog10p",
-                    "map",
-                    None,
-                    f"Negative log(10) of the p value of the r at each voxel",
-                )
-            ]
+            if sigfit is not None:
+                neglogpmax = np.log10(optiondict["numestreps"])
+                # generate a neglogp map
+                neglog10pmap = lagstrengths * 0.0
+                for voxel in range(neglog10pmap.shape[0]):
+                    neglog10pmap[voxel] = tide_stats.neglog10pfromr(
+                        lagstrengths[voxel],
+                        sigfit,
+                        neglogpmax=neglogpmax,
+                        debug=optiondict["debug"],
+                    )
+                masklist += [
+                    (
+                        neglog10pmap.copy(),
+                        "neglog10p",
+                        "map",
+                        None,
+                        f"Negative log(10) of the p value of the r at each voxel",
+                    )
+                ]
 
         tide_io.savemaplist(
             outputname,
