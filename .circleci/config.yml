@@ -82,8 +82,8 @@ jobs:
           root: /tmp
           paths:
               - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311-{{ checksum "pyproject.toml" }}
+      #- restore_cache:  # ensure this step occurs *before* installing dependencies
+      #    key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
