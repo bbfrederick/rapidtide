@@ -6,7 +6,8 @@
 * (rapidtide) Split regressor refinement out into a separate workflow.
 * (rapidtide) Fix https://github.com/bbfrederick/rapidtide/issues/213 (thanks to https://github.com/tomosumi for reporting the bug).
 * (docs) Some improvement to the tidepool section.
-* (package) Resolved incompatibilty of statsmodels and scipy>1.15.3.
+* (package) Made a more streamlined interface for allocating shared memory.
+* (package) Resolved incompatibility of statsmodels and scipy>1.15.3.
 * (package) Accepted several dependabot PRs.
 
 ## Version 3.0.7.1 (6/16/25)

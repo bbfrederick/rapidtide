@@ -92,6 +92,7 @@ def linfitfiltpass(
     nprocs=1,
     alwaysmultiproc=False,
     confoundregress=False,
+    ratiosonly=False,
     procbyvoxel=True,
     showprogressbar=True,
     mp_chunksize=1000,
@@ -207,6 +208,18 @@ def linfitfiltpass(
                     r2value[voxel[0]] = voxel[3]
                     filtereddata[voxel[0], :] = voxel[7]
                     itemstotal += 1
+            elif ratiosonly:
+                for voxel in data_out:
+                    meanvalue[voxel[0]] = voxel[1]
+                    rvalue[voxel[0]] = voxel[2]
+                    r2value[voxel[0]] = voxel[3]
+                    if theevs.ndim > 1:
+                        fitcoeff[voxel[0], :] = voxel[4]
+                        fitNorm[voxel[0], :] = voxel[5]
+                    else:
+                        fitcoeff[voxel[0]] = voxel[4]
+                        fitNorm[voxel[0]] = voxel[5]
+                    itemstotal += 1
             else:
                 for voxel in data_out:
                     meanvalue[voxel[0]] = voxel[1]
@@ -226,6 +239,18 @@ def linfitfiltpass(
                 for timepoint in data_out:
                     r2value[timepoint[0]] = timepoint[3]
                     filtereddata[:, timepoint[0]] = timepoint[7]
+                    itemstotal += 1
+            elif ratiosonly:
+                for timepoint in data_out:
+                    meanvalue[timepoint[0]] = timepoint[1]
+                    rvalue[timepoint[0]] = timepoint[2]
+                    r2value[timepoint[0]] = timepoint[3]
+                    if theevs.ndim > 1:
+                        fitcoeff[:, timepoint[0]] = timepoint[4]
+                        fitNorm[:, timepoint[0]] = timepoint[5]
+                    else:
+                        fitcoeff[timepoint[0]] = timepoint[4]
+                        fitNorm[timepoint[0]] = timepoint[5]
                     itemstotal += 1
             else:
                 for timepoint in data_out:
@@ -271,6 +296,23 @@ def linfitfiltpass(
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
+                    elif ratiosonly:
+                        (
+                            dummy,
+                            meanvalue[vox],
+                            rvalue[vox],
+                            r2value[vox],
+                            fitcoeff[vox],
+                            fitNorm[vox],
+                            dummy,
+                            dummy,
+                        ) = _procOneRegressionFitItem(
+                            vox,
+                            theevs[vox, :],
+                            thedata,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
                     else:
                         (
                             dummy,
@@ -311,6 +353,23 @@ def linfitfiltpass(
                         ) = _procOneRegressionFitItem(
                             timepoint,
                             theevs,
+                            thedata,
+                            rt_floatset=rt_floatset,
+                            rt_floattype=rt_floattype,
+                        )
+                    elif ratiosonly:
+                        (
+                            dummy,
+                            meanvalue[timepoint],
+                            rvalue[timepoint],
+                            r2value[timepoint],
+                            fitcoeff[timepoint],
+                            fitNorm[timepoint],
+                            dummy,
+                            dummy,
+                        ) = _procOneRegressionFitItem(
+                            timepoint,
+                            theevs[:, timepoint],
                             thedata,
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,

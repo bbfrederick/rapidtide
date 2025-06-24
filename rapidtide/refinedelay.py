@@ -394,6 +394,7 @@ def getderivratios(
         mp_chunksize=optiondict["mp_chunksize"],
         showprogressbar=optiondict["showprogressbar"],
         alwaysmultiproc=optiondict["alwaysmultiproc"],
+        ratiosonly=True,
         debug=debug,
     )
 

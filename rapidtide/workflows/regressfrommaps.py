@@ -53,6 +53,7 @@ def regressfrommaps(
     showprogressbar=True,
     alwaysmultiproc=False,
     saveEVsandquit=False,
+    ratiosonly=False,
     debug=False,
 ):
     if debug:
@@ -144,6 +145,7 @@ def regressfrommaps(
         fitNorm,
         movingsignal,
         filtereddata,
+        ratiosonly=ratiosonly,
         nprocs=nprocs_regressionfilt,
         alwaysmultiproc=alwaysmultiproc,
         showprogressbar=showprogressbar,
@@ -158,19 +160,20 @@ def regressfrommaps(
         fitcoeff *= 100.0
 
     # determine what was removed
-    removeddata = fmri_data_valid - filtereddata
-    noiseremoved = np.var(removeddata, axis=0)
-    if saveminimumsLFOfiltfiles:
-        tide_io.writebidstsv(
-            f"{outputname}_desc-lfofilterNoiseRemoved_timeseries",
-            noiseremoved,
-            1.0 / oversamptr,
-            starttime=0.0,
-            columns=[f"removedbyglm"],
-            extraheaderinfo={
-                "Description": "Variance over space of data removed by the sLFO filter at each timepoint"
-            },
-            append=False,
-        )
+    if not ratiosonly:
+        removeddata = fmri_data_valid - filtereddata
+        noiseremoved = np.var(removeddata, axis=0)
+        if saveminimumsLFOfiltfiles:
+            tide_io.writebidstsv(
+                f"{outputname}_desc-lfofilterNoiseRemoved_timeseries",
+                noiseremoved,
+                1.0 / oversamptr,
+                starttime=0.0,
+                columns=[f"removedbyglm"],
+                extraheaderinfo={
+                    "Description": "Variance over space of data removed by the sLFO filter at each timepoint"
+                },
+                append=False,
+            )
 
     return voxelsprocessed_regressionfilt, regressorset, evset

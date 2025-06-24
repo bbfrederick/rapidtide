@@ -2220,7 +2220,7 @@ def rapidtide_main(argparsingfunc):
                 TimingLGR.info("End moving fmri_data to shared memory")
             theinputdata.unload()
 
-        # now allocate the arrays needed for sLFO filtering
+        # allocate the arrays needed for sLFO filtering
         if optiondict["refinedelay"]:
             derivaxissize = np.max(
                 [optiondict["refineregressderivs"] + 1, optiondict["regressderivs"] + 1]
@@ -2262,17 +2262,17 @@ def rapidtide_main(argparsingfunc):
             shared=optiondict["sharedmem"],
             name=f"fitcoeff_{optiondict['pid']}",
         )
-        movingsignal, movingsignal_shm = tide_util.allocarray(
-            internalvalidfmrishape,
-            rt_outfloattype,
-            shared=optiondict["sharedmem"],
-            name=f"movingsignal_{optiondict['pid']}",
-        )
         lagtc, lagtc_shm = tide_util.allocarray(
             internalvalidfmrishape,
             rt_floattype,
             shared=optiondict["sharedmem"],
             name=f"lagtc_{optiondict['pid']}",
+        )
+        movingsignal, movingsignal_shm = tide_util.allocarray(
+            internalvalidfmrishape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"movingsignal_{optiondict['pid']}",
         )
         filtereddata, filtereddata_shm = tide_util.allocarray(
             internalvalidfmrishape,
@@ -2371,9 +2371,9 @@ def rapidtide_main(argparsingfunc):
                 r2value,
                 fitNorm,
                 fitcoeff,
-                movingsignal,
+                None,
                 lagtc,
-                filtereddata,
+                None,
                 outputname,
                 validvoxels,
                 nativespaceshape,
