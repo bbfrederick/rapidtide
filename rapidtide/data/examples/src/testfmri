@@ -1,15 +1,20 @@
 #!/bin/bash
 
-rapidtide \
-    --spatialfilt -1 \
-    --nprocs -1 \
-    --searchrange -5 20 \
-    --simcalcrange 50 -1 \
-    --outputlevel more \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+for similaritymetric in correlation mutualinfo hybrid
+do
+    rapidtide \
+        --spatialfilt -1 \
+        --nprocs -1 \
+        --searchrange -5 20 \
+        --simcalcrange 50 -1 \
+        --outputlevel more \
+        --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
+        --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+        --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
+        --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+        --cleanrefined \
+        --nofitfilt \
+        --similaritymetric ${similaritymetric} \
+        sub-RAPIDTIDETEST.nii.gz \
+        ../dst/sub-RAPIDTIDETEST_${similaritymetric}
+done
