@@ -1,6 +1,7 @@
 #!/bin/bash
 
-for similaritymetric in correlation mutualinfo hybrid
+#for similaritymetric in correlation mutualinfo hybrid
+for similaritymetric in correlation 
 do
     rapidtide \
         --spatialfilt -1 \
