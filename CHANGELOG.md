@@ -1,9 +1,12 @@
 # Release history
 
 ## Version 3.0.8 (6/20/25)
-* (rapidtide) Split coarse delay estimation and refinement out into separate workflows.
+* (rapidtide) Split coarse delay estimation and fitting out into a separate workflow.
+* (rapidtide) Split delay refinement out into a separate workflow.
+* (rapidtide) Split regressor refinement out into a separate workflow.
 * (rapidtide) Fix https://github.com/bbfrederick/rapidtide/issues/213 (thanks to https://github.com/tomosumi for reporting the bug).
 * (docs) Some improvement to the tidepool section.
+* (package) Resolved incompatibilty of statsmodels and scipy>1.15.3.
 * (package) Accepted several dependabot PRs.
 
 ## Version 3.0.7.1 (6/16/25)
