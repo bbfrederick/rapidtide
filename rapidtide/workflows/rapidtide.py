@@ -47,7 +47,8 @@ import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
-import rapidtide.workflows.estimateDelay as tide_estimateDelay
+import rapidtide.workflows.estimateDelayMap as tide_estimateDelayMap
+import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.refineRegressor as tide_refineRegressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
@@ -1832,7 +1833,7 @@ def rapidtide_main(argparsingfunc):
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
         # step 1 - do the initial delay estimation
-        internaldespeckleincludemask = tide_estimateDelay.estimateDelay(
+        internaldespeckleincludemask = tide_estimateDelayMap.estimateDelay(
             fmri_data_valid,
             validsimcalcstart,
             validsimcalcend,
@@ -1879,6 +1880,8 @@ def rapidtide_main(argparsingfunc):
             rt_floattype="float64",
         )
 
+        # refine delay
+
         # Step 2d - make a rank order map
         timepercentile = (
             100.0 * (rankdata(lagtimes, method="dense") - 1) / (numvalidspatiallocs - 1)
@@ -1921,12 +1924,8 @@ def rapidtide_main(argparsingfunc):
             or optiondict["initregressorpreselect"]
             or optiondict["dofinalrefine"]
         ):
-            (
-                resampref_y,
-                resampnonosref_y,
-                stoprefining,
-                refinestopreason,
-                genlagtc) = tide_refineRegressor.refineRegressor(
+            (resampref_y, resampnonosref_y, stoprefining, refinestopreason, genlagtc) = (
+                tide_refineRegressor.refineRegressor(
                     LGR,
                     TimingLGR,
                     thepass,
@@ -1955,6 +1954,7 @@ def rapidtide_main(argparsingfunc):
                     rt_floatset=np.float64,
                     rt_floattype="float64",
                 )
+            )
         # End of main pass loop
 
     if optiondict["convergencethresh"] is None:
@@ -2214,42 +2214,107 @@ def rapidtide_main(argparsingfunc):
             internalvalidspaceshape,
             derivaxissize,
         )
-        if optiondict["sharedmem"]:
-            sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name=f"sLFOfitmean_{optiondict['pid']}"
+
+        if False:
+            sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
+                internalvalidspaceshape,
+                rt_outfloattype,
+                shared=optiondict["sharedmem"],
+                name=f"sLFOfitmean_{optiondict['pid']}",
             )
-            rvalue, rvalue_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name=f"rvalue_{optiondict['pid']}"
+            rvalue, rvalue_shm = tide_util.allocarray(
+                internalvalidspaceshape,
+                rt_outfloattype,
+                shared=optiondict["sharedmem"],
+                name=f"rvalue_{optiondict['pid']}",
             )
-            r2value, r2value_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name=f"r2value_{optiondict['pid']}"
+            r2value, r2value_shm = tide_util.allocarray(
+                internalvalidspaceshape,
+                rt_outfloattype,
+                shared=optiondict["sharedmem"],
+                name=f"r2value_{optiondict['pid']}",
             )
-            fitNorm, fitNorm_shm = tide_util.allocshared(
-                internalvalidspaceshapederivs, rt_outfloatset, name=f"fitNorm_{optiondict['pid']}"
+            fitNorm, fitNorm_shm = tide_util.allocarray(
+                internalvalidspaceshapederivs,
+                rt_outfloattype,
+                shared=optiondict["sharedmem"],
+                name=f"fitNorm_{optiondict['pid']}",
             )
-            fitcoeff, fitcoeff_shm = tide_util.allocshared(
-                internalvalidspaceshapederivs, rt_outfloatset, name=f"fitcoeff_{optiondict['pid']}"
+            fitcoeff, fitcoeff_shm = tide_util.allocarray(
+                internalvalidspaceshapederivs,
+                rt_outfloattype,
+                shared=optiondict["sharedmem"],
+                name=f"fitcoeff_{optiondict['pid']}",
             )
-            movingsignal, movingsignal_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_outfloatset, name=f"movingsignal_{optiondict['pid']}"
+            movingsignal, movingsignal_shm = tide_util.allocarray(
+                internalvalidfmrishape,
+                rt_outfloattype,
+                shared=optiondict["sharedmem"],
+                name=f"movingsignal_{optiondict['pid']}",
             )
-            lagtc, lagtc_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_floatset, name=f"lagtc_{optiondict['pid']}"
+            lagtc, lagtc_shm = tide_util.allocarray(
+                internalvalidfmrishape,
+                rt_floattype,
+                shared=optiondict["sharedmem"],
+                name=f"lagtc_{optiondict['pid']}",
             )
-            filtereddata, filtereddata_shm = tide_util.allocshared(
-                internalvalidfmrishape, rt_outfloatset, name=f"filtereddata_{optiondict['pid']}"
+            filtereddata, filtereddata_shm = tide_util.allocarray(
+                internalvalidfmrishape,
+                rt_outfloattype,
+                shared=optiondict["sharedmem"],
+                name=f"filtereddata_{optiondict['pid']}",
             )
-            ramlocation = "in shared memory"
+            if optiondict["sharedmem"]:
+                ramlocation = "in shared memory"
+            else:
+                ramlocation = "locally"
         else:
-            sLFOfitmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-            rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-            r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-            fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-            fitcoeff = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-            movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-            lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-            filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-            ramlocation = "locally"
+            if optiondict["sharedmem"]:
+                sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
+                    internalvalidspaceshape,
+                    rt_outfloatset,
+                    name=f"sLFOfitmean_{optiondict['pid']}",
+                )
+                rvalue, rvalue_shm = tide_util.allocshared(
+                    internalvalidspaceshape, rt_outfloatset, name=f"rvalue_{optiondict['pid']}"
+                )
+                r2value, r2value_shm = tide_util.allocshared(
+                    internalvalidspaceshape, rt_outfloatset, name=f"r2value_{optiondict['pid']}"
+                )
+                fitNorm, fitNorm_shm = tide_util.allocshared(
+                    internalvalidspaceshapederivs,
+                    rt_outfloatset,
+                    name=f"fitNorm_{optiondict['pid']}",
+                )
+                fitcoeff, fitcoeff_shm = tide_util.allocshared(
+                    internalvalidspaceshapederivs,
+                    rt_outfloatset,
+                    name=f"fitcoeff_{optiondict['pid']}",
+                )
+                movingsignal, movingsignal_shm = tide_util.allocshared(
+                    internalvalidfmrishape,
+                    rt_outfloatset,
+                    name=f"movingsignal_{optiondict['pid']}",
+                )
+                lagtc, lagtc_shm = tide_util.allocshared(
+                    internalvalidfmrishape, rt_floatset, name=f"lagtc_{optiondict['pid']}"
+                )
+                filtereddata, filtereddata_shm = tide_util.allocshared(
+                    internalvalidfmrishape,
+                    rt_outfloatset,
+                    name=f"filtereddata_{optiondict['pid']}",
+                )
+                ramlocation = "in shared memory"
+            else:
+                sLFOfitmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+                rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+                r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
+                fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
+                fitcoeff = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
+                movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+                lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
+                filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
+                ramlocation = "locally"
 
         optiondict["totalsLFOfilterbytes"] = (
             sLFOfitmean.nbytes
@@ -2314,116 +2379,154 @@ def rapidtide_main(argparsingfunc):
             if optiondict["delayoffsetgausssigma"] < 0.0 and theinputdata.filetype != "text":
                 # set gausssigma automatically
                 optiondict["delayoffsetgausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
-
-            regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
-                fmri_data_valid,
-                validvoxels,
-                initial_fmri_x,
-                lagtimes,
-                sLFOfiltmask,
-                genlagtc,
-                mode,
-                outputname,
-                oversamptr,
-                sLFOfitmean,
-                rvalue,
-                r2value,
-                fitNorm[:, : (optiondict["refineregressderivs"] + 1)],
-                fitcoeff[:, : (optiondict["refineregressderivs"] + 1)],
-                movingsignal,
-                lagtc,
-                filtereddata,
-                LGR,
-                TimingLGR,
-                optiondict,
-                regressderivs=optiondict["refineregressderivs"],
-                debug=optiondict["debug"],
-            )
-
-            if optiondict["refineregressderivs"] == 1:
-                medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
-                    tide_refinedelay.filterderivratios(
-                        regressderivratios,
-                        nativespaceshape,
-                        validvoxels,
-                        (xdim, ydim, slicethickness),
-                        gausssigma=optiondict["delayoffsetgausssigma"],
-                        patchthresh=optiondict["delaypatchthresh"],
-                        filetype=theinputdata.filetype,
-                        rt_floattype="float64",
-                        debug=optiondict["debug"],
-                    )
-                )
-                optiondict["delayoffsetMAD"] = delayoffsetMAD
-
-                # find the mapping of derivative ratios to delays
-                tide_refinedelay.trainratiotooffset(
-                    genlagtc,
+            if False:
+                (
+                    delayoffset,
+                    regressderivratios,
+                    medfiltregressderivratios,
+                    filteredregressderivratios,
+                ) = tide_refineDelayMap.refineDelay(
+                    fmri_data_valid,
                     initial_fmri_x,
+                    xdim,
+                    ydim,
+                    slicethickness,
+                    xsize,
+                    ysize,
+                    numslices,
+                    sLFOfiltmask,
+                    genlagtc,
+                    mode,
+                    oversamptr,
+                    sLFOfitmean,
+                    rvalue,
+                    r2value,
+                    fitNorm,
+                    fitcoeff,
+                    movingsignal,
+                    lagtc,
+                    filtereddata,
                     outputname,
-                    optiondict["outputlevel"],
-                    mindelay=optiondict["mindelay"],
-                    maxdelay=optiondict["maxdelay"],
-                    numpoints=optiondict["numpoints"],
+                    validvoxels,
+                    nativespaceshape,
+                    theinputdata,
+                    lagtimes,
+                    optiondict,
+                    LGR,
+                    TimingLGR,
+                    rt_floatset=np.float64,
+                    rt_floattype="float64",
+                )
+            else:
+                regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
+                    fmri_data_valid,
+                    validvoxels,
+                    initial_fmri_x,
+                    lagtimes,
+                    sLFOfiltmask,
+                    genlagtc,
+                    mode,
+                    outputname,
+                    oversamptr,
+                    sLFOfitmean,
+                    rvalue,
+                    r2value,
+                    fitNorm[:, : (optiondict["refineregressderivs"] + 1)],
+                    fitcoeff[:, : (optiondict["refineregressderivs"] + 1)],
+                    movingsignal,
+                    lagtc,
+                    filtereddata,
+                    LGR,
+                    TimingLGR,
+                    optiondict,
+                    regressderivs=optiondict["refineregressderivs"],
                     debug=optiondict["debug"],
                 )
 
-                # now calculate the delay offsets
-                delayoffset = np.zeros_like(filteredregressderivratios)
-                if optiondict["debug"]:
-                    print(
-                        f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels"
+                if optiondict["refineregressderivs"] == 1:
+                    medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
+                        tide_refinedelay.filterderivratios(
+                            regressderivratios,
+                            nativespaceshape,
+                            validvoxels,
+                            (xdim, ydim, slicethickness),
+                            gausssigma=optiondict["delayoffsetgausssigma"],
+                            patchthresh=optiondict["delaypatchthresh"],
+                            filetype=theinputdata.filetype,
+                            rt_floattype="float64",
+                            debug=optiondict["debug"],
+                        )
                     )
-                for i in range(filteredregressderivratios.shape[0]):
-                    delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
-                        filteredregressderivratios[i]
-                    )
-            else:
-                medfiltregressderivratios = np.zeros_like(regressderivratios)
-                filteredregressderivratios = np.zeros_like(regressderivratios)
-                delayoffsetMAD = np.zeros(optiondict["refineregressderivs"], dtype=float)
-                for i in range(optiondict["refineregressderivs"]):
-                    (
-                        medfiltregressderivratios[i, :],
-                        filteredregressderivratios[i, :],
-                        delayoffsetMAD[i],
-                    ) = tide_refinedelay.filterderivratios(
-                        regressderivratios[i, :],
-                        (xsize, ysize, numslices),
-                        validvoxels,
-                        (xdim, ydim, slicethickness),
-                        gausssigma=optiondict["delayoffsetgausssigma"],
-                        patchthresh=optiondict["delaypatchthresh"],
-                        filetype=theinputdata.filetype,
-                        rt_floattype=rt_floattype,
-                        debug=optiondict["debug"],
-                    )
-                    optiondict[f"delayoffsetMAD_{i + 1}"] = delayoffsetMAD[i]
+                    optiondict["delayoffsetMAD"] = delayoffsetMAD
 
-                # now calculate the delay offsets
-                delayoffset = np.zeros_like(filteredregressderivratios[0, :])
-                if optiondict["debug"]:
-                    print(
-                        f"calculating delayoffsets for {filteredregressderivratios.shape[1]} voxels"
-                    )
-                for i in range(filteredregressderivratios.shape[1]):
-                    delayoffset[i] = tide_refinedelay.coffstodelay(
-                        filteredregressderivratios[:, i],
+                    # find the mapping of derivative ratios to delays
+                    tide_refinedelay.trainratiotooffset(
+                        genlagtc,
+                        initial_fmri_x,
+                        outputname,
+                        optiondict["outputlevel"],
                         mindelay=optiondict["mindelay"],
                         maxdelay=optiondict["maxdelay"],
+                        numpoints=optiondict["numpoints"],
+                        debug=optiondict["debug"],
                     )
 
-            namesuffix = "_desc-delayoffset_hist"
-            if optiondict["dolinfitfilt"]:
-                tide_stats.makeandsavehistogram(
-                    delayoffset[np.where(sLFOfiltmask > 0)],
-                    optiondict["histlen"],
-                    1,
-                    outputname + namesuffix,
-                    displaytitle="Histogram of delay offsets calculated from regression coefficients",
-                    dictvarname="delayoffsethist",
-                    thedict=optiondict,
-                )
+                    # now calculate the delay offsets
+                    delayoffset = np.zeros_like(filteredregressderivratios)
+                    if optiondict["debug"]:
+                        print(
+                            f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels"
+                        )
+                    for i in range(filteredregressderivratios.shape[0]):
+                        delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
+                            filteredregressderivratios[i]
+                        )
+                else:
+                    medfiltregressderivratios = np.zeros_like(regressderivratios)
+                    filteredregressderivratios = np.zeros_like(regressderivratios)
+                    delayoffsetMAD = np.zeros(optiondict["refineregressderivs"], dtype=float)
+                    for i in range(optiondict["refineregressderivs"]):
+                        (
+                            medfiltregressderivratios[i, :],
+                            filteredregressderivratios[i, :],
+                            delayoffsetMAD[i],
+                        ) = tide_refinedelay.filterderivratios(
+                            regressderivratios[i, :],
+                            (xsize, ysize, numslices),
+                            validvoxels,
+                            (xdim, ydim, slicethickness),
+                            gausssigma=optiondict["delayoffsetgausssigma"],
+                            patchthresh=optiondict["delaypatchthresh"],
+                            filetype=theinputdata.filetype,
+                            rt_floattype=rt_floattype,
+                            debug=optiondict["debug"],
+                        )
+                        optiondict[f"delayoffsetMAD_{i + 1}"] = delayoffsetMAD[i]
+
+                    # now calculate the delay offsets
+                    delayoffset = np.zeros_like(filteredregressderivratios[0, :])
+                    if optiondict["debug"]:
+                        print(
+                            f"calculating delayoffsets for {filteredregressderivratios.shape[1]} voxels"
+                        )
+                    for i in range(filteredregressderivratios.shape[1]):
+                        delayoffset[i] = tide_refinedelay.coffstodelay(
+                            filteredregressderivratios[:, i],
+                            mindelay=optiondict["mindelay"],
+                            maxdelay=optiondict["maxdelay"],
+                        )
+
+                namesuffix = "_desc-delayoffset_hist"
+                if optiondict["dolinfitfilt"]:
+                    tide_stats.makeandsavehistogram(
+                        delayoffset[np.where(sLFOfiltmask > 0)],
+                        optiondict["histlen"],
+                        1,
+                        outputname + namesuffix,
+                        displaytitle="Histogram of delay offsets calculated from regression coefficients",
+                        dictvarname="delayoffsethist",
+                        thedict=optiondict,
+                    )
             lagtimesrefined = lagtimes + delayoffset
 
             ####################################################
@@ -2659,7 +2762,9 @@ def rapidtide_main(argparsingfunc):
     )
     thesigmapcts = tide_stats.getfracvals(lagsigma[np.where(fitmask > 0)], histpcts, nozero=False)
     if optiondict["refinedelay"]:
-        therefinedtimepcts = tide_stats.getfracvals(lagtimesrefined[np.where(fitmask > 0)], histpcts, nozero=False)
+        therefinedtimepcts = tide_stats.getfracvals(
+            lagtimesrefined[np.where(fitmask > 0)], histpcts, nozero=False
+        )
     for i in range(len(histpcts)):
         optiondict[f"lagtimes_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
             thetimepcts[i]
@@ -2671,9 +2776,9 @@ def rapidtide_main(argparsingfunc):
             thesigmapcts[i]
         )
         if optiondict["refinedelay"]:
-            optiondict[f"lagtimesrefined_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"] = (
-                therefinedtimepcts[i]
-            )
+            optiondict[
+                f"lagtimesrefined_{str(int(np.round(100 * histpcts[i], 0))).zfill(2)}pct"
+            ] = therefinedtimepcts[i]
     optiondict["fitmasksize"] = np.sum(fitmask)
     optiondict["fitmaskpct"] = 100.0 * optiondict["fitmasksize"] / optiondict["corrmasksize"]
 

@@ -1106,6 +1106,13 @@ def allocshared(theshape, thetype, name=None):
     return outarray, shm  # Return both the array and the shared memory object
 
 
+def allocarray(theshape, thetype, shared=False, name=None):
+    if shared:
+        return allocshared(theshape, thetype, name)
+    else:
+        return np.zeros(theshape, dtype=thetype), None
+
+
 def cleanup_shm(shm):
     # Cleanup
     pass
