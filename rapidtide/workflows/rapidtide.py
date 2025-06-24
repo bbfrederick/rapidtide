@@ -1373,26 +1373,35 @@ def rapidtide_main(argparsingfunc):
     LGR.debug(
         f"allocating memory for correlation arrays {internalcorrshape} {internalvalidcorrshape}"
     )
+    corrout, corrout_shm = tide_util.allocarray(
+        internalvalidcorrshape,
+        rt_floatset,
+        shared=optiondict["sharedmem"],
+        name=f"corrout_{optiondict['pid']}",
+    )
+    gaussout, gaussout_shm = tide_util.allocarray(
+        internalvalidcorrshape,
+        rt_floatset,
+        shared=optiondict["sharedmem"],
+        name=f"gaussout_{optiondict['pid']}",
+    )
+    windowout, windowout_shm = tide_util.allocarray(
+        internalvalidcorrshape,
+        rt_floatset,
+        shared=optiondict["sharedmem"],
+        name=f"windowout_{optiondict['pid']}",
+    )
+    outcorrarray, outcorrarray_shm = tide_util.allocarray(
+        internalcorrshape,
+        rt_floatset,
+        shared=optiondict["sharedmem"],
+        name=f"outcorrarray_{optiondict['pid']}",
+    )
     if optiondict["sharedmem"]:
-        corrout, corrout_shm = tide_util.allocshared(
-            internalvalidcorrshape, rt_floatset, name=f"corrout_{optiondict['pid']}"
-        )
-        gaussout, gaussout_shm = tide_util.allocshared(
-            internalvalidcorrshape, rt_floatset, name=f"gaussout_{optiondict['pid']}"
-        )
-        windowout, windowout_shm = tide_util.allocshared(
-            internalvalidcorrshape, rt_floatset, name=f"windowout_{optiondict['pid']}"
-        )
-        outcorrarray, outcorrarray_shm = tide_util.allocshared(
-            internalcorrshape, rt_floatset, name=f"outcorrarray_{optiondict['pid']}"
-        )
         ramlocation = "in shared memory"
     else:
-        corrout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
-        gaussout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
-        windowout = np.zeros(internalvalidcorrshape, dtype=rt_floattype)
-        outcorrarray = np.zeros(internalcorrshape, dtype=rt_floattype)
         ramlocation = "locally"
+
     optiondict["totalcorrelationbytes"] = (
         corrout.nbytes + gaussout.nbytes + windowout.nbytes + outcorrarray.nbytes
     )
@@ -2017,23 +2026,27 @@ def rapidtide_main(argparsingfunc):
         internalvalidcoherenceshape = (numvalidspatiallocs, coherencefreqaxissize)
 
         # now allocate the arrays needed for the coherence calculation
+        coherencefunc, coherencefunc_shm = tide_util.allocarray(
+            internalvalidcoherenceshape,
+            rt_outfloatset,
+            shared=optiondict["sharedmem"],
+            name=f"coherencefunc_{optiondict['pid']}",
+        )
+        coherencepeakval, coherencepeakval_shm = tide_util.allocarray(
+            numvalidspatiallocs,
+            rt_outfloatset,
+            shared=optiondict["sharedmem"],
+            name=f"coherencepeakval_{optiondict['pid']}",
+        )
+        coherencepeakfreq, coherencepeakfreq_shm = tide_util.allocarray(
+            numvalidspatiallocs,
+            rt_outfloatset,
+            shared=optiondict["sharedmem"],
+            name=f"coherencepeakfreq_{optiondict['pid']}",
+        )
         if optiondict["sharedmem"]:
-            coherencefunc, coherencefunc_shm = tide_util.allocshared(
-                internalvalidcoherenceshape,
-                rt_outfloatset,
-                name=f"coherencefunc_{optiondict['pid']}",
-            )
-            coherencepeakval, coherencepeakval_shm = tide_util.allocshared(
-                numvalidspatiallocs, rt_outfloatset, name=f"coherencepeakval_{optiondict['pid']}"
-            )
-            coherencepeakfreq, coherencepeakfreq_shm = tide_util.allocshared(
-                numvalidspatiallocs, rt_outfloatset, name=f"coherencepeakfreq_{optiondict['pid']}"
-            )
             ramlocation = "in shared memory"
         else:
-            coherencefunc = np.zeros(internalvalidcoherenceshape, dtype=rt_outfloattype)
-            coherencepeakval = np.zeros(numvalidspatiallocs, dtype=rt_outfloattype)
-            coherencepeakfreq = np.zeros(numvalidspatiallocs, dtype=rt_outfloattype)
             ramlocation = "locally"
         optiondict["totalcoherencebytes"] = (
             coherencefunc.nbytes + coherencepeakval.nbytes + coherencepeakfreq.nbytes
@@ -2089,17 +2102,21 @@ def rapidtide_main(argparsingfunc):
         LGR.info("\n\nWiener deconvolution")
 
         # now allocate the arrays needed for Wiener deconvolution
+        wienerdeconv, wienerdeconv_shm = tide_util.allocarray(
+            internalvalidspaceshape,
+            rt_outfloatset,
+            shared=optiondict["sharedmem"],
+            name=f"wienerdeconv_{optiondict['pid']}",
+        )
+        wpeak, wpeak_shm = tide_util.allocarray(
+            internalvalidspaceshape,
+            rt_outfloatset,
+            shared=optiondict["sharedmem"],
+            name=f"wpeak_{optiondict['pid']}",
+        )
         if optiondict["sharedmem"]:
-            wienerdeconv, wienerdeconv_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name=f"wienerdeconv_{optiondict['pid']}"
-            )
-            wpeak, wpeak_shm = tide_util.allocshared(
-                internalvalidspaceshape, rt_outfloatset, name=f"wpeak_{optiondict['pid']}"
-            )
             ramlocation = "in shared memory"
         else:
-            wienerdeconv = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-            wpeak = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
             ramlocation = "locally"
         optiondict["totalwienerbytes"] = wienerdeconv.nbytes + wpeak.nbytes
         thesize, theunit = tide_util.format_bytes(optiondict["totalwienerbytes"])
@@ -2215,106 +2232,58 @@ def rapidtide_main(argparsingfunc):
             derivaxissize,
         )
 
-        if False:
-            sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
-                internalvalidspaceshape,
-                rt_outfloattype,
-                shared=optiondict["sharedmem"],
-                name=f"sLFOfitmean_{optiondict['pid']}",
-            )
-            rvalue, rvalue_shm = tide_util.allocarray(
-                internalvalidspaceshape,
-                rt_outfloattype,
-                shared=optiondict["sharedmem"],
-                name=f"rvalue_{optiondict['pid']}",
-            )
-            r2value, r2value_shm = tide_util.allocarray(
-                internalvalidspaceshape,
-                rt_outfloattype,
-                shared=optiondict["sharedmem"],
-                name=f"r2value_{optiondict['pid']}",
-            )
-            fitNorm, fitNorm_shm = tide_util.allocarray(
-                internalvalidspaceshapederivs,
-                rt_outfloattype,
-                shared=optiondict["sharedmem"],
-                name=f"fitNorm_{optiondict['pid']}",
-            )
-            fitcoeff, fitcoeff_shm = tide_util.allocarray(
-                internalvalidspaceshapederivs,
-                rt_outfloattype,
-                shared=optiondict["sharedmem"],
-                name=f"fitcoeff_{optiondict['pid']}",
-            )
-            movingsignal, movingsignal_shm = tide_util.allocarray(
-                internalvalidfmrishape,
-                rt_outfloattype,
-                shared=optiondict["sharedmem"],
-                name=f"movingsignal_{optiondict['pid']}",
-            )
-            lagtc, lagtc_shm = tide_util.allocarray(
-                internalvalidfmrishape,
-                rt_floattype,
-                shared=optiondict["sharedmem"],
-                name=f"lagtc_{optiondict['pid']}",
-            )
-            filtereddata, filtereddata_shm = tide_util.allocarray(
-                internalvalidfmrishape,
-                rt_outfloattype,
-                shared=optiondict["sharedmem"],
-                name=f"filtereddata_{optiondict['pid']}",
-            )
-            if optiondict["sharedmem"]:
-                ramlocation = "in shared memory"
-            else:
-                ramlocation = "locally"
+        sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
+            internalvalidspaceshape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"sLFOfitmean_{optiondict['pid']}",
+        )
+        rvalue, rvalue_shm = tide_util.allocarray(
+            internalvalidspaceshape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"rvalue_{optiondict['pid']}",
+        )
+        r2value, r2value_shm = tide_util.allocarray(
+            internalvalidspaceshape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"r2value_{optiondict['pid']}",
+        )
+        fitNorm, fitNorm_shm = tide_util.allocarray(
+            internalvalidspaceshapederivs,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"fitNorm_{optiondict['pid']}",
+        )
+        fitcoeff, fitcoeff_shm = tide_util.allocarray(
+            internalvalidspaceshapederivs,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"fitcoeff_{optiondict['pid']}",
+        )
+        movingsignal, movingsignal_shm = tide_util.allocarray(
+            internalvalidfmrishape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"movingsignal_{optiondict['pid']}",
+        )
+        lagtc, lagtc_shm = tide_util.allocarray(
+            internalvalidfmrishape,
+            rt_floattype,
+            shared=optiondict["sharedmem"],
+            name=f"lagtc_{optiondict['pid']}",
+        )
+        filtereddata, filtereddata_shm = tide_util.allocarray(
+            internalvalidfmrishape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"filtereddata_{optiondict['pid']}",
+        )
+        if optiondict["sharedmem"]:
+            ramlocation = "in shared memory"
         else:
-            if optiondict["sharedmem"]:
-                sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
-                    internalvalidspaceshape,
-                    rt_outfloatset,
-                    name=f"sLFOfitmean_{optiondict['pid']}",
-                )
-                rvalue, rvalue_shm = tide_util.allocshared(
-                    internalvalidspaceshape, rt_outfloatset, name=f"rvalue_{optiondict['pid']}"
-                )
-                r2value, r2value_shm = tide_util.allocshared(
-                    internalvalidspaceshape, rt_outfloatset, name=f"r2value_{optiondict['pid']}"
-                )
-                fitNorm, fitNorm_shm = tide_util.allocshared(
-                    internalvalidspaceshapederivs,
-                    rt_outfloatset,
-                    name=f"fitNorm_{optiondict['pid']}",
-                )
-                fitcoeff, fitcoeff_shm = tide_util.allocshared(
-                    internalvalidspaceshapederivs,
-                    rt_outfloatset,
-                    name=f"fitcoeff_{optiondict['pid']}",
-                )
-                movingsignal, movingsignal_shm = tide_util.allocshared(
-                    internalvalidfmrishape,
-                    rt_outfloatset,
-                    name=f"movingsignal_{optiondict['pid']}",
-                )
-                lagtc, lagtc_shm = tide_util.allocshared(
-                    internalvalidfmrishape, rt_floatset, name=f"lagtc_{optiondict['pid']}"
-                )
-                filtereddata, filtereddata_shm = tide_util.allocshared(
-                    internalvalidfmrishape,
-                    rt_outfloatset,
-                    name=f"filtereddata_{optiondict['pid']}",
-                )
-                ramlocation = "in shared memory"
-            else:
-                sLFOfitmean = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-                rvalue = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-                r2value = np.zeros(internalvalidspaceshape, dtype=rt_outfloattype)
-                fitNorm = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-                fitcoeff = np.zeros(internalvalidspaceshapederivs, dtype=rt_outfloattype)
-                movingsignal = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-                lagtc = np.zeros(internalvalidfmrishape, dtype=rt_floattype)
-                filtereddata = np.zeros(internalvalidfmrishape, dtype=rt_outfloattype)
-                ramlocation = "locally"
+            ramlocation = "locally"
 
         optiondict["totalsLFOfilterbytes"] = (
             sLFOfitmean.nbytes
@@ -2379,156 +2348,44 @@ def rapidtide_main(argparsingfunc):
             if optiondict["delayoffsetgausssigma"] < 0.0 and theinputdata.filetype != "text":
                 # set gausssigma automatically
                 optiondict["delayoffsetgausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
-            if False:
-                (
-                    delayoffset,
-                    regressderivratios,
-                    medfiltregressderivratios,
-                    filteredregressderivratios,
-                ) = tide_refineDelayMap.refineDelay(
-                    fmri_data_valid,
-                    initial_fmri_x,
-                    xdim,
-                    ydim,
-                    slicethickness,
-                    xsize,
-                    ysize,
-                    numslices,
-                    sLFOfiltmask,
-                    genlagtc,
-                    mode,
-                    oversamptr,
-                    sLFOfitmean,
-                    rvalue,
-                    r2value,
-                    fitNorm,
-                    fitcoeff,
-                    movingsignal,
-                    lagtc,
-                    filtereddata,
-                    outputname,
-                    validvoxels,
-                    nativespaceshape,
-                    theinputdata,
-                    lagtimes,
-                    optiondict,
-                    LGR,
-                    TimingLGR,
-                    rt_floatset=np.float64,
-                    rt_floattype="float64",
-                )
-            else:
-                regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
-                    fmri_data_valid,
-                    validvoxels,
-                    initial_fmri_x,
-                    lagtimes,
-                    sLFOfiltmask,
-                    genlagtc,
-                    mode,
-                    outputname,
-                    oversamptr,
-                    sLFOfitmean,
-                    rvalue,
-                    r2value,
-                    fitNorm[:, : (optiondict["refineregressderivs"] + 1)],
-                    fitcoeff[:, : (optiondict["refineregressderivs"] + 1)],
-                    movingsignal,
-                    lagtc,
-                    filtereddata,
-                    LGR,
-                    TimingLGR,
-                    optiondict,
-                    regressderivs=optiondict["refineregressderivs"],
-                    debug=optiondict["debug"],
-                )
-
-                if optiondict["refineregressderivs"] == 1:
-                    medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
-                        tide_refinedelay.filterderivratios(
-                            regressderivratios,
-                            nativespaceshape,
-                            validvoxels,
-                            (xdim, ydim, slicethickness),
-                            gausssigma=optiondict["delayoffsetgausssigma"],
-                            patchthresh=optiondict["delaypatchthresh"],
-                            filetype=theinputdata.filetype,
-                            rt_floattype="float64",
-                            debug=optiondict["debug"],
-                        )
-                    )
-                    optiondict["delayoffsetMAD"] = delayoffsetMAD
-
-                    # find the mapping of derivative ratios to delays
-                    tide_refinedelay.trainratiotooffset(
-                        genlagtc,
-                        initial_fmri_x,
-                        outputname,
-                        optiondict["outputlevel"],
-                        mindelay=optiondict["mindelay"],
-                        maxdelay=optiondict["maxdelay"],
-                        numpoints=optiondict["numpoints"],
-                        debug=optiondict["debug"],
-                    )
-
-                    # now calculate the delay offsets
-                    delayoffset = np.zeros_like(filteredregressderivratios)
-                    if optiondict["debug"]:
-                        print(
-                            f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels"
-                        )
-                    for i in range(filteredregressderivratios.shape[0]):
-                        delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
-                            filteredregressderivratios[i]
-                        )
-                else:
-                    medfiltregressderivratios = np.zeros_like(regressderivratios)
-                    filteredregressderivratios = np.zeros_like(regressderivratios)
-                    delayoffsetMAD = np.zeros(optiondict["refineregressderivs"], dtype=float)
-                    for i in range(optiondict["refineregressderivs"]):
-                        (
-                            medfiltregressderivratios[i, :],
-                            filteredregressderivratios[i, :],
-                            delayoffsetMAD[i],
-                        ) = tide_refinedelay.filterderivratios(
-                            regressderivratios[i, :],
-                            (xsize, ysize, numslices),
-                            validvoxels,
-                            (xdim, ydim, slicethickness),
-                            gausssigma=optiondict["delayoffsetgausssigma"],
-                            patchthresh=optiondict["delaypatchthresh"],
-                            filetype=theinputdata.filetype,
-                            rt_floattype=rt_floattype,
-                            debug=optiondict["debug"],
-                        )
-                        optiondict[f"delayoffsetMAD_{i + 1}"] = delayoffsetMAD[i]
-
-                    # now calculate the delay offsets
-                    delayoffset = np.zeros_like(filteredregressderivratios[0, :])
-                    if optiondict["debug"]:
-                        print(
-                            f"calculating delayoffsets for {filteredregressderivratios.shape[1]} voxels"
-                        )
-                    for i in range(filteredregressderivratios.shape[1]):
-                        delayoffset[i] = tide_refinedelay.coffstodelay(
-                            filteredregressderivratios[:, i],
-                            mindelay=optiondict["mindelay"],
-                            maxdelay=optiondict["maxdelay"],
-                        )
-
-                namesuffix = "_desc-delayoffset_hist"
-                if optiondict["dolinfitfilt"]:
-                    tide_stats.makeandsavehistogram(
-                        delayoffset[np.where(sLFOfiltmask > 0)],
-                        optiondict["histlen"],
-                        1,
-                        outputname + namesuffix,
-                        displaytitle="Histogram of delay offsets calculated from regression coefficients",
-                        dictvarname="delayoffsethist",
-                        thedict=optiondict,
-                    )
+            (
+                delayoffset,
+                regressderivratios,
+                medfiltregressderivratios,
+                filteredregressderivratios,
+            ) = tide_refineDelayMap.refineDelay(
+                fmri_data_valid,
+                initial_fmri_x,
+                xdim,
+                ydim,
+                slicethickness,
+                xsize,
+                ysize,
+                numslices,
+                sLFOfiltmask,
+                genlagtc,
+                mode,
+                oversamptr,
+                sLFOfitmean,
+                rvalue,
+                r2value,
+                fitNorm,
+                fitcoeff,
+                movingsignal,
+                lagtc,
+                filtereddata,
+                outputname,
+                validvoxels,
+                nativespaceshape,
+                theinputdata,
+                lagtimes,
+                optiondict,
+                LGR,
+                TimingLGR,
+                rt_floatset=np.float64,
+                rt_floattype="float64",
+            )
             lagtimesrefined = lagtimes + delayoffset
-
             ####################################################
             #  Delay refinement end
             ####################################################
