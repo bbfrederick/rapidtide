@@ -11,6 +11,7 @@ rapidtide \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --cleanrefined \
+    --calccoherence \
     --nofitfilt \
     --similaritymetric correlation \
     sub-RAPIDTIDETEST.nii.gz \
