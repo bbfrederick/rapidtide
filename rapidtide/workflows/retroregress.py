@@ -32,12 +32,12 @@ import rapidtide.io as tide_io
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
 import rapidtide.workflows.parser_funcs as pf
+import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 
 from .rapidtide_parser import DEFAULT_REGRESSIONFILTDERIVS
@@ -622,7 +622,51 @@ def retroregress(args):
             # set gausssigma automatically
             args.delayoffsetgausssigma = np.mean([xdim, ydim, slicethickness]) / 2.0
 
-        TimingLGR.info("Refinement calibration start")
+            (
+                delayoffset,
+                regressderivratios,
+                medfiltregressderivratios,
+                filteredregressderivratios,
+                delayoffsetMAD,
+            ) = tide_refineDelayMap.refineDelay(
+                fmri_data_valid,
+                initial_fmri_x,
+                xdim,
+                ydim,
+                slicethickness,
+                sLFOfiltmask_valid,
+                genlagtc,
+                mode,
+                oversamptr,
+                sLFOfitmean,
+                rvalue,
+                r2value,
+                fitNorm,
+                fitcoeff,
+                lagtc,
+                outputname,
+                validvoxels,
+                theinputdata.nativespaceshape,
+                theinputdata,
+                lagtimes,
+                therunoptions,
+                LGR,
+                TimingLGR,
+                outputlevel=args.outputlevel,
+                gausssigma=args.delayoffsetgausssigma,
+                patchthresh=args.delaypatchthresh,
+                mindelay=args.mindelay,
+                maxdelay=args.maxdelay,
+                numpoints=args.numpoints,
+                histlen=therunoptions["histlen"],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+                debug=args.debug,
+            )
+
+        refinedvoxelstoreport = filteredregressderivratios.shape[0]
+
+        """TimingLGR.info("Refinement calibration start")
         regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
             fmri_data_valid,
             validvoxels,
@@ -683,11 +727,11 @@ def retroregress(args):
             delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
                 filteredregressderivratios[i]
             )
-            """delayoffset[i] = tide_refinedelay.coffstodelay(
-                np.asarray([filteredregressderivratios[i]]),
-                mindelay=args.mindelay,
-                maxdelay=args.maxdelay,
-            )"""
+            #delayoffset[i] = tide_refinedelay.coffstodelay(
+            #    np.asarray([filteredregressderivratios[i]]),
+            #   mindelay=args.mindelay,
+            #    maxdelay=args.maxdelay,
+            #)
 
         refinedvoxelstoreport = filteredregressderivratios.shape[0]
 
@@ -701,7 +745,7 @@ def retroregress(args):
                 displaytitle="Histogram of delay offsets calculated from GLM",
                 dictvarname="delayoffsethist",
                 thedict=None,
-            )
+            )"""
         lagtimesrefined_valid = lagtimes_valid + delayoffset
 
         TimingLGR.info(
