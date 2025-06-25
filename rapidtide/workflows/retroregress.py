@@ -636,7 +636,6 @@ def retroregress(args):
                 slicethickness,
                 sLFOfiltmask_valid,
                 genlagtc,
-                mode,
                 oversamptr,
                 sLFOfitmean,
                 rvalue,

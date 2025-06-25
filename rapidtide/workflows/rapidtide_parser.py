@@ -1443,6 +1443,13 @@ def _get_parser():
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
     )
     experimental.add_argument(
+        "--refinedelayeachpass",
+        dest="refinedelayeachpass",
+        action="store_true",
+        help=("Do delay refinement in each pass."),
+        default=False,
+    )
+    experimental.add_argument(
         "--dofinalrefine",
         dest="dofinalrefine",
         action="store_true",

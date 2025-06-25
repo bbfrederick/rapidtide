@@ -1952,6 +1952,59 @@ def rapidtide_main(argparsingfunc):
         )
 
         # refine delay
+        if optiondict["refinedelayeachpass"]:
+            if optiondict["delayoffsetgausssigma"] < 0.0 and theinputdata.filetype != "text":
+                # set gausssigma automatically
+                optiondict["delayoffsetgausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
+
+            if optiondict["sLFOfiltmask"]:
+                sLFOfiltmask = fitmask + 0.0
+            else:
+                sLFOfiltmask = fitmask * 0.0 + 1.0
+
+            optiondict["regressfiltthreshval"] = 0.0
+
+            (
+                delayoffset,
+                regressderivratios,
+                medfiltregressderivratios,
+                filteredregressderivratios,
+                optiondict["delayoffsetMAD"],
+            ) = tide_refineDelayMap.refineDelay(
+                fmri_data_valid,
+                initial_fmri_x,
+                xdim,
+                ydim,
+                slicethickness,
+                sLFOfiltmask,
+                genlagtc,
+                oversamptr,
+                sLFOfitmean,
+                rvalue,
+                r2value,
+                fitNorm,
+                fitcoeff,
+                lagtc,
+                outputname,
+                validvoxels,
+                nativespaceshape,
+                theinputdata,
+                lagtimes,
+                optiondict,
+                LGR,
+                TimingLGR,
+                outputlevel=optiondict["outputlevel"],
+                gausssigma=optiondict["delayoffsetgausssigma"],
+                patchthresh=optiondict["delaypatchthresh"],
+                mindelay=optiondict["mindelay"],
+                maxdelay=optiondict["maxdelay"],
+                numpoints=optiondict["numpoints"],
+                histlen=optiondict["histlen"],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+                debug=optiondict["debug"],
+            )
+            lagtimes[:] = lagtimes + delayoffset
 
         # Step 2d - make a rank order map
         timepercentile = (
@@ -2301,10 +2354,7 @@ def rapidtide_main(argparsingfunc):
         else:
             ramlocation = "locally"
 
-        optiondict["totalsLFOfilterbytes"] = (
-            movingsignal.nbytes
-            + filtereddata.nbytes
-        )
+        optiondict["totalsLFOfilterbytes"] = movingsignal.nbytes + filtereddata.nbytes
         thesize, theunit = tide_util.format_bytes(optiondict["totalsLFOfilterbytes"])
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for sLFO filter")
         tide_util.logmem("before sLFO filter")
@@ -2374,7 +2424,6 @@ def rapidtide_main(argparsingfunc):
                 slicethickness,
                 sLFOfiltmask,
                 genlagtc,
-                mode,
                 oversamptr,
                 sLFOfitmean,
                 rvalue,
