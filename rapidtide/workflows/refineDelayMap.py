@@ -57,7 +57,8 @@ def refineDelay(
     rt_floattype="float64",
     debug=False,
 ):
-    # refine the delay value prior to calculating the sLFO filter
+    # do the calibration
+    TimingLGR.info("Refinement calibration start")
     regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
         fmri_data_valid,
         validvoxels,
