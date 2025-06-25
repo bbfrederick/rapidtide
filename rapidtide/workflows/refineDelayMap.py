@@ -46,8 +46,16 @@ def refineDelay(
     optiondict,
     LGR,
     TimingLGR,
+    outputlevel="normal",
+    gausssigma=-1,
+    patchthresh=3.0,
+    mindelay=-5.0,
+    maxdelay=5.0,
+    numpoints=501,
+    histlen=101,
     rt_floatset=np.float64,
     rt_floattype="float64",
+    debug=False,
 ):
     # refine the delay value prior to calculating the sLFO filter
     regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
@@ -63,8 +71,8 @@ def refineDelay(
         sLFOfitmean,
         rvalue,
         r2value,
-        fitNorm[:, : 2],
-        fitcoeff[:, : 2],
+        fitNorm[:, :2],
+        fitcoeff[:, :2],
         None,
         lagtc,
         None,
@@ -72,7 +80,7 @@ def refineDelay(
         TimingLGR,
         optiondict,
         regressderivs=1,
-        debug=optiondict["debug"],
+        debug=debug,
     )
 
     medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
@@ -81,30 +89,29 @@ def refineDelay(
             nativespaceshape,
             validvoxels,
             (xdim, ydim, slicethickness),
-            gausssigma=optiondict["delayoffsetgausssigma"],
-            patchthresh=optiondict["delaypatchthresh"],
+            gausssigma=gausssigma,
+            patchthresh=patchthresh,
             filetype=theinputdata.filetype,
-            rt_floattype="float64",
-            debug=optiondict["debug"],
+            rt_floattype=rt_floattype,
+            debug=debug,
         )
     )
-    optiondict["delayoffsetMAD"] = delayoffsetMAD
 
     # find the mapping of derivative ratios to delays
     tide_refinedelay.trainratiotooffset(
         genlagtc,
         initial_fmri_x,
         outputname,
-        optiondict["outputlevel"],
-        mindelay=optiondict["mindelay"],
-        maxdelay=optiondict["maxdelay"],
-        numpoints=optiondict["numpoints"],
-        debug=optiondict["debug"],
+        outputlevel,
+        mindelay=mindelay,
+        maxdelay=maxdelay,
+        numpoints=numpoints,
+        debug=debug,
     )
 
     # now calculate the delay offsets
     delayoffset = np.zeros_like(filteredregressderivratios)
-    if optiondict["debug"]:
+    if debug:
         print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
     for i in range(filteredregressderivratios.shape[0]):
         delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
@@ -112,15 +119,20 @@ def refineDelay(
         )
 
     namesuffix = "_desc-delayoffset_hist"
-    if optiondict["dolinfitfilt"]:
-        tide_stats.makeandsavehistogram(
-            delayoffset[np.where(sLFOfiltmask > 0)],
-            optiondict["histlen"],
-            1,
-            outputname + namesuffix,
-            displaytitle="Histogram of delay offsets calculated from regression coefficients",
-            dictvarname="delayoffsethist",
-            thedict=optiondict,
-        )
+    tide_stats.makeandsavehistogram(
+        delayoffset[np.where(sLFOfiltmask > 0)],
+        histlen,
+        1,
+        outputname + namesuffix,
+        displaytitle="Histogram of delay offsets calculated from regression coefficients",
+        dictvarname="delayoffsethist",
+        thedict=optiondict,
+    )
 
-    return delayoffset, regressderivratios, medfiltregressderivratios, filteredregressderivratios
+    return (
+        delayoffset,
+        regressderivratios,
+        medfiltregressderivratios,
+        filteredregressderivratios,
+        delayoffsetMAD,
+    )

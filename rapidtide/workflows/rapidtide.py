@@ -1464,7 +1464,6 @@ def rapidtide_main(argparsingfunc):
         2 * numpadtrs + np.shape(initial_fmri_x)[0],
     )
 
-
     # now do the arrays for delay refinement
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
         if optiondict["refinedelay"]:
@@ -1527,7 +1526,6 @@ def rapidtide_main(argparsingfunc):
         thesize, theunit = tide_util.format_bytes(optiondict["totalRefineDelaybytes"])
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for delay refinement")
         tide_util.logmem("after derivative delay/sLFO filter array allocation")
-
 
     # prepare for regressor refinement, if we're doing it
     if (
@@ -2364,6 +2362,7 @@ def rapidtide_main(argparsingfunc):
                 regressderivratios,
                 medfiltregressderivratios,
                 filteredregressderivratios,
+                optiondict["delayoffsetMAD"],
             ) = tide_refineDelayMap.refineDelay(
                 fmri_data_valid,
                 initial_fmri_x,
@@ -2388,8 +2387,16 @@ def rapidtide_main(argparsingfunc):
                 optiondict,
                 LGR,
                 TimingLGR,
+                outputlevel=optiondict["outputlevel"],
+                gausssigma=optiondict["delayoffsetgausssigma"],
+                patchthresh=optiondict["delaypatchthresh"],
+                mindelay=optiondict["mindelay"],
+                maxdelay=optiondict["maxdelay"],
+                numpoints=optiondict["numpoints"],
+                histlen=optiondict["histlen"],
                 rt_floatset=np.float64,
                 rt_floattype="float64",
+                debug=optiondict["debug"],
             )
             lagtimesrefined = lagtimes + delayoffset
             ####################################################
