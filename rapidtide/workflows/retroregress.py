@@ -648,7 +648,7 @@ def retroregress(args):
                 validvoxels,
                 theinputdata.nativespaceshape,
                 theinputdata,
-                lagtimes,
+                lagtimes_valid,
                 therunoptions,
                 LGR,
                 TimingLGR,
@@ -666,86 +666,6 @@ def retroregress(args):
 
         refinedvoxelstoreport = filteredregressderivratios.shape[0]
 
-        """TimingLGR.info("Refinement calibration start")
-        regressderivratios, regressrvalues = tide_refinedelay.getderivratios(
-            fmri_data_valid,
-            validvoxels,
-            initial_fmri_x,
-            lagtimes_valid,
-            sLFOfiltmask_valid,
-            genlagtc,
-            mode,
-            outputname,
-            oversamptr,
-            sLFOfitmean,
-            rvalue,
-            r2value,
-            fitNorm[:, : 2],
-            fitcoeff[:, : 2],
-            movingsignal,
-            lagtc,
-            filtereddata,
-            LGR,
-            TimingLGR,
-            therunoptions,
-            regressderivs=1,
-            debug=args.debug,
-        )
-
-        medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
-            tide_refinedelay.filterderivratios(
-                regressderivratios,
-                (xsize, ysize, numslices),
-                validvoxels,
-                (xdim, ydim, slicethickness),
-                gausssigma=args.delayoffsetgausssigma,
-                patchthresh=args.delaypatchthresh,
-                rt_floattype=rt_floattype,
-                debug=args.debug,
-            )
-        )
-
-        # find the mapping of glm ratios to delays
-        tide_refinedelay.trainratiotooffset(
-            genlagtc,
-            initial_fmri_x,
-            outputname,
-            args.outputlevel,
-            mindelay=args.mindelay,
-            maxdelay=args.maxdelay,
-            numpoints=args.numpoints,
-            debug=args.debug,
-        )
-        TimingLGR.info("Refinement calibration end")
-
-        # now calculate the delay offsets
-        TimingLGR.info("Calculating delay offsets")
-        delayoffset = np.zeros_like(filteredregressderivratios)
-        if args.debug:
-            print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
-        for i in range(filteredregressderivratios.shape[0]):
-            delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
-                filteredregressderivratios[i]
-            )
-            #delayoffset[i] = tide_refinedelay.coffstodelay(
-            #    np.asarray([filteredregressderivratios[i]]),
-            #   mindelay=args.mindelay,
-            #    maxdelay=args.maxdelay,
-            #)
-
-        refinedvoxelstoreport = filteredregressderivratios.shape[0]
-
-        if not args.saveEVsandquit:
-            namesuffix = "_desc-delayoffset_hist"
-            tide_stats.makeandsavehistogram(
-                delayoffset,
-                therunoptions["histlen"],
-                1,
-                outputname + namesuffix,
-                displaytitle="Histogram of delay offsets calculated from GLM",
-                dictvarname="delayoffsethist",
-                thedict=None,
-            )"""
         lagtimesrefined_valid = lagtimes_valid + delayoffset
 
         TimingLGR.info(
