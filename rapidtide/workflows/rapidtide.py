@@ -39,7 +39,6 @@ import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.maskutil as tide_mask
 import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
-import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.stats as tide_stats
@@ -1465,6 +1464,71 @@ def rapidtide_main(argparsingfunc):
         2 * numpadtrs + np.shape(initial_fmri_x)[0],
     )
 
+
+    # now do the arrays for delay refinement
+    if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
+        if optiondict["refinedelay"]:
+            derivaxissize = np.max([2, optiondict["regressderivs"] + 1])
+        else:
+            derivaxissize = optiondict["regressderivs"] + 1
+        internalvalidspaceshapederivs = (
+            internalvalidspaceshape,
+            derivaxissize,
+        )
+        sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
+            internalvalidspaceshape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"sLFOfitmean_{optiondict['pid']}",
+        )
+        rvalue, rvalue_shm = tide_util.allocarray(
+            internalvalidspaceshape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"rvalue_{optiondict['pid']}",
+        )
+        r2value, r2value_shm = tide_util.allocarray(
+            internalvalidspaceshape,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"r2value_{optiondict['pid']}",
+        )
+        fitNorm, fitNorm_shm = tide_util.allocarray(
+            internalvalidspaceshapederivs,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"fitNorm_{optiondict['pid']}",
+        )
+        fitcoeff, fitcoeff_shm = tide_util.allocarray(
+            internalvalidspaceshapederivs,
+            rt_outfloattype,
+            shared=optiondict["sharedmem"],
+            name=f"fitcoeff_{optiondict['pid']}",
+        )
+        lagtc, lagtc_shm = tide_util.allocarray(
+            internalvalidfmrishape,
+            rt_floattype,
+            shared=optiondict["sharedmem"],
+            name=f"lagtc_{optiondict['pid']}",
+        )
+        if optiondict["sharedmem"]:
+            ramlocation = "in shared memory"
+        else:
+            ramlocation = "locally"
+
+        optiondict["totalRefineDelaybytes"] = (
+            sLFOfitmean.nbytes
+            + rvalue.nbytes
+            + r2value.nbytes
+            + fitNorm.nbytes
+            + fitcoeff.nbytes
+            + lagtc.nbytes
+        )
+        thesize, theunit = tide_util.format_bytes(optiondict["totalRefineDelaybytes"])
+        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for delay refinement")
+        tide_util.logmem("after derivative delay/sLFO filter array allocation")
+
+
     # prepare for regressor refinement, if we're doing it
     if (
         optiondict["passes"] > 1
@@ -2221,53 +2285,6 @@ def rapidtide_main(argparsingfunc):
             theinputdata.unload()
 
         # allocate the arrays needed for sLFO filtering
-        if optiondict["refinedelay"]:
-            derivaxissize = np.max(
-                [2, optiondict["regressderivs"] + 1]
-            )
-        else:
-            derivaxissize = optiondict["regressderivs"] + 1
-        internalvalidspaceshapederivs = (
-            internalvalidspaceshape,
-            derivaxissize,
-        )
-
-        sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
-            internalvalidspaceshape,
-            rt_outfloattype,
-            shared=optiondict["sharedmem"],
-            name=f"sLFOfitmean_{optiondict['pid']}",
-        )
-        rvalue, rvalue_shm = tide_util.allocarray(
-            internalvalidspaceshape,
-            rt_outfloattype,
-            shared=optiondict["sharedmem"],
-            name=f"rvalue_{optiondict['pid']}",
-        )
-        r2value, r2value_shm = tide_util.allocarray(
-            internalvalidspaceshape,
-            rt_outfloattype,
-            shared=optiondict["sharedmem"],
-            name=f"r2value_{optiondict['pid']}",
-        )
-        fitNorm, fitNorm_shm = tide_util.allocarray(
-            internalvalidspaceshapederivs,
-            rt_outfloattype,
-            shared=optiondict["sharedmem"],
-            name=f"fitNorm_{optiondict['pid']}",
-        )
-        fitcoeff, fitcoeff_shm = tide_util.allocarray(
-            internalvalidspaceshapederivs,
-            rt_outfloattype,
-            shared=optiondict["sharedmem"],
-            name=f"fitcoeff_{optiondict['pid']}",
-        )
-        lagtc, lagtc_shm = tide_util.allocarray(
-            internalvalidfmrishape,
-            rt_floattype,
-            shared=optiondict["sharedmem"],
-            name=f"lagtc_{optiondict['pid']}",
-        )
         movingsignal, movingsignal_shm = tide_util.allocarray(
             internalvalidfmrishape,
             rt_outfloattype,
@@ -2286,17 +2303,11 @@ def rapidtide_main(argparsingfunc):
             ramlocation = "locally"
 
         optiondict["totalsLFOfilterbytes"] = (
-            sLFOfitmean.nbytes
-            + rvalue.nbytes
-            + r2value.nbytes
-            + fitNorm.nbytes
-            + fitcoeff.nbytes
-            + movingsignal.nbytes
-            + lagtc.nbytes
+            movingsignal.nbytes
             + filtereddata.nbytes
         )
         thesize, theunit = tide_util.format_bytes(optiondict["totalsLFOfilterbytes"])
-        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for sLFO filter/delay refinement")
+        print(f"allocated {thesize:.3f} {theunit} {ramlocation} for sLFO filter")
         tide_util.logmem("before sLFO filter")
 
         if optiondict["dolinfitfilt"]:
@@ -2359,9 +2370,6 @@ def rapidtide_main(argparsingfunc):
                 xdim,
                 ydim,
                 slicethickness,
-                xsize,
-                ysize,
-                numslices,
                 sLFOfiltmask,
                 genlagtc,
                 mode,
@@ -2371,9 +2379,7 @@ def rapidtide_main(argparsingfunc):
                 r2value,
                 fitNorm,
                 fitcoeff,
-                None,
                 lagtc,
-                None,
                 outputname,
                 validvoxels,
                 nativespaceshape,
