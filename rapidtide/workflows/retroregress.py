@@ -516,22 +516,22 @@ def retroregress(args):
     if args.debug:
         print(f"{fmri_data_valid.shape=}")
 
-        sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
-            internalvalidspaceshape, rt_outfloattype, shared=usesharedmem
-        )
-        rvalue, rvalue_shm = tide_util.allocarray(internalvalidspaceshape, rt_outfloattype, shared=usesharedmem)
-        r2value, r2value_shm = tide_util.allocarray(internalvalidspaceshape, rt_outfloattype, shared=usesharedmem)
-        fitNorm, fitNorm_shm = tide_util.allocarray(internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem)
-        fitcoeff, fitcoeff_shm = tide_util.allocarray(
-            internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
-        )
-        movingsignal, movingsignal_shm = tide_util.allocarray(
-            internalvalidfmrishape, rt_outfloattype, shared=usesharedmem
-        )
-        lagtc, lagtc_shm = tide_util.allocarray(internalvalidfmrishape, rt_floattype, shared=usesharedmem)
-        filtereddata, filtereddata_shm = tide_util.allocarray(
-            internalvalidfmrishape, rt_outfloattype, shared=usesharedmem
-        )
+    sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
+        internalvalidspaceshape, rt_outfloattype, shared=usesharedmem
+    )
+    rvalue, rvalue_shm = tide_util.allocarray(internalvalidspaceshape, rt_outfloattype, shared=usesharedmem)
+    r2value, r2value_shm = tide_util.allocarray(internalvalidspaceshape, rt_outfloattype, shared=usesharedmem)
+    fitNorm, fitNorm_shm = tide_util.allocarray(internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem)
+    fitcoeff, fitcoeff_shm = tide_util.allocarray(
+        internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
+    )
+    movingsignal, movingsignal_shm = tide_util.allocarray(
+        internalvalidfmrishape, rt_outfloattype, shared=usesharedmem
+    )
+    lagtc, lagtc_shm = tide_util.allocarray(internalvalidfmrishape, rt_floattype, shared=usesharedmem)
+    filtereddata, filtereddata_shm = tide_util.allocarray(
+        internalvalidfmrishape, rt_outfloattype, shared=usesharedmem
+    )
     if usesharedmem:
         if args.debug:
             print("allocating shared memory")
