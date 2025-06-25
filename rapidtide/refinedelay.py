@@ -359,12 +359,12 @@ def getderivratios(
     if endtr is None:
         endtr = fmri_data_valid.shape[1]
     if debug:
-        print("getderivratios")
-        print(f"{fitNorm.shape=}")
-        print(f"{fitcoeff.shape=}")
-        print(f"{regressderivs=}")
-        print(f"{starttr=}")
-        print(f"{endtr=}")
+        print("getderivratios: Starting")
+        print(f"\t{fitNorm.shape=}")
+        print(f"\t{fitcoeff.shape=}")
+        print(f"\t{regressderivs=}")
+        print(f"\t{starttr=}")
+        print(f"\t{endtr=}")
 
     voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
         fmri_data_valid[:, starttr:endtr],
@@ -407,6 +407,8 @@ def getderivratios(
         for i in range(regressderivs):
             regressderivratios[i, :] = np.nan_to_num(fitcoeff[:, i + 1] / fitcoeff[:, 0])
 
+    if debug:
+        print("getderivratios: End\n\n")
     return regressderivratios, rvalue
 
 

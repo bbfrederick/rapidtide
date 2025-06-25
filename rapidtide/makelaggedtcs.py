@@ -71,7 +71,14 @@ def makelaggedtcs(
     chunksize=1000,
     rt_floatset=np.float64,
     rt_floattype="float64",
+    debug=False,
 ):
+    if debug:
+        print("makelaggedtcs: Starting")
+        print(f"\t{lagtc.shape=}")
+        print(f"\t{lagtimes.shape=}")
+        print(f"\t{timeaxis.shape=}")
+
     inputshape = lagtc.shape
     voxelargs = [
         lagtcgenerator,
@@ -109,5 +116,8 @@ def makelaggedtcs(
     else:
         if LGR is not None:
             LGR.info("garbage collected")
+
+    if debug:
+        print("makelaggedtcs: End\n\n")
 
     return volumetotal

@@ -58,16 +58,16 @@ def regressfrommaps(
 ):
     if debug:
         print("regressfrommaps: Starting")
-        print(f"{nprocs_makelaggedtcs=}")
-        print(f"{nprocs_regressionfilt=}")
-        print(f"{regressderivs=}")
-        print(f"{mp_chunksize=}")
-        print(f"{showprogressbar=}")
-        print(f"{alwaysmultiproc=}")
-        print(f"{mode=}")
-        print(f"{outputname=}")
-        print(f"{oversamptr=}")
-        print(f"{regressfiltthreshval=}")
+        print(f"\t{nprocs_makelaggedtcs=}")
+        print(f"\t{nprocs_regressionfilt=}")
+        print(f"\t{regressderivs=}")
+        print(f"\t{mp_chunksize=}")
+        print(f"\t{showprogressbar=}")
+        print(f"\t{alwaysmultiproc=}")
+        print(f"\t{mode=}")
+        print(f"\t{outputname=}")
+        print(f"\t{oversamptr=}")
+        print(f"\t{regressfiltthreshval=}")
     rt_floatset = np.float64
     rt_floattype = "float64"
     numvalidspatiallocs = np.shape(validvoxels)[0]
@@ -91,12 +91,13 @@ def regressfrommaps(
         chunksize=mp_chunksize,
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
+        debug=debug,
     )
     if debug:
-        print(f"{lagtimes.shape=}")
+        print(f"\t{lagtimes.shape=}")
         threshmask = np.where(fitmask > 0, 1, 0)
-        print(f"{np.sum(threshmask)} nonzero mask voxels")
-        print(f"after makelaggedtcs: shifted {voxelsprocessed_makelagged} timecourses")
+        print(f"\t{np.sum(threshmask)} nonzero mask voxels")
+        print(f"\tafter makelaggedtcs: shifted {voxelsprocessed_makelagged} timecourses")
     if LGR is not None:
         LGR.info("End lagged timecourse creation")
     if TimingLGR is not None:
@@ -153,6 +154,7 @@ def regressfrommaps(
         mp_chunksize=mp_chunksize,
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
+        debug=debug,
     )
 
     if mode == "cvrmap":
@@ -175,5 +177,8 @@ def regressfrommaps(
                 },
                 append=False,
             )
+
+    if debug:
+        print("regressfrommaps: End\n\n")
 
     return voxelsprocessed_regressionfilt, regressorset, evset
