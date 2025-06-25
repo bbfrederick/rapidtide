@@ -2354,9 +2354,11 @@ def rapidtide_main(argparsingfunc):
         if optiondict["refinedelay"]:
             TimingLGR.info("Delay refinement start")
             LGR.info("\n\nDelay refinement")
+
             if optiondict["delayoffsetgausssigma"] < 0.0 and theinputdata.filetype != "text":
                 # set gausssigma automatically
                 optiondict["delayoffsetgausssigma"] = np.mean([xdim, ydim, slicethickness]) / 2.0
+
             (
                 delayoffset,
                 regressderivratios,
@@ -2394,8 +2396,8 @@ def rapidtide_main(argparsingfunc):
                 maxdelay=optiondict["maxdelay"],
                 numpoints=optiondict["numpoints"],
                 histlen=optiondict["histlen"],
-                rt_floatset=np.float64,
-                rt_floattype="float64",
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
                 debug=optiondict["debug"],
             )
             lagtimesrefined = lagtimes + delayoffset
