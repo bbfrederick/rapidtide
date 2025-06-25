@@ -2126,7 +2126,7 @@ def rapidtide_main(argparsingfunc):
             alt=True,
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],
-            nprocs=1,
+            nprocs=optiondict["nprocs"],
             alwaysmultiproc=optiondict["alwaysmultiproc"],
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
@@ -2188,6 +2188,7 @@ def rapidtide_main(argparsingfunc):
             numspatiallocs,
             fmri_data_valid,
             threshval,
+            lagtc,
             optiondict,
             wienerdeconv,
             wpeak,
