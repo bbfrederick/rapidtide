@@ -2223,7 +2223,7 @@ def rapidtide_main(argparsingfunc):
         # allocate the arrays needed for sLFO filtering
         if optiondict["refinedelay"]:
             derivaxissize = np.max(
-                [optiondict["refineregressderivs"] + 1, optiondict["regressderivs"] + 1]
+                [2, optiondict["regressderivs"] + 1]
             )
         else:
             derivaxissize = optiondict["regressderivs"] + 1
@@ -2689,55 +2689,29 @@ def rapidtide_main(argparsingfunc):
             ),
         ]
         if (optiondict["outputlevel"] != "min") and (optiondict["outputlevel"] != "less"):
-            if optiondict["refineregressderivs"] > 1:
-                for i in range(optiondict["refineregressderivs"]):
-                    savelist += [
-                        (
-                            regressderivratios[i, :],
-                            f"regressderivratios_{i}",
-                            "map",
-                            None,
-                            f"Ratio of derivative {i + 1} of delayed sLFO to the delayed sLFO",
-                        ),
-                        (
-                            medfiltregressderivratios[i, :],
-                            f"medfiltregressderivratios_{i}",
-                            "map",
-                            None,
-                            f"Median filtered version of the regressderivratios_{i} map",
-                        ),
-                        (
-                            filteredregressderivratios[i, :],
-                            f"filteredregressderivratios_{i}",
-                            "map",
-                            None,
-                            f"regressderivratios_{i}, with outliers patched using median filtered data",
-                        ),
-                    ]
-            else:
-                savelist += [
-                    (
-                        regressderivratios,
-                        "regressderivratios",
-                        "map",
-                        None,
-                        "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
-                    ),
-                    (
-                        medfiltregressderivratios,
-                        "medfiltregressderivratios",
-                        "map",
-                        None,
-                        "Median filtered version of the regressderivratios map",
-                    ),
-                    (
-                        filteredregressderivratios,
-                        "filteredregressderivratios",
-                        "map",
-                        None,
-                        "regressderivratios, with outliers patched using median filtered data",
-                    ),
-                ]
+            savelist += [
+                (
+                    regressderivratios,
+                    "regressderivratios",
+                    "map",
+                    None,
+                    "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
+                ),
+                (
+                    medfiltregressderivratios,
+                    "medfiltregressderivratios",
+                    "map",
+                    None,
+                    "Median filtered version of the regressderivratios map",
+                ),
+                (
+                    filteredregressderivratios,
+                    "filteredregressderivratios",
+                    "map",
+                    None,
+                    "regressderivratios, with outliers patched using median filtered data",
+                ),
+            ]
     if optiondict["calccoherence"]:
         savelist += [
             (coherencepeakval, "coherencepeakval", "map", None, "Coherence peak value"),

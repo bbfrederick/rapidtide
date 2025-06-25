@@ -72,7 +72,6 @@ DEFAULT_REFINE_PRENORM = "var"
 DEFAULT_REFINE_WEIGHTING = "None"
 DEFAULT_REFINE_PCACOMPONENTS = 0.8
 DEFAULT_REGRESSIONFILTDERIVS = 0
-DEFAULT_REFINEREGRESSDERIVS = 1
 
 DEFAULT_DENOISING_LAGMIN = -10.0
 DEFAULT_DENOISING_LAGMAX = 10.0
@@ -1444,18 +1443,6 @@ def _get_parser():
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
     )
     experimental.add_argument(
-        "--refineregressderivs",
-        dest="refineregressderivs",
-        action="store",
-        type=lambda x: pf.is_int(parser, x, minval=1),
-        metavar="NDERIVS",
-        help=(
-            f"When doing regression fit for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
-            f"Default is {DEFAULT_REFINEREGRESSDERIVS}"
-        ),
-        default=DEFAULT_REFINEREGRESSDERIVS,
-    )
-    experimental.add_argument(
         "--dofinalrefine",
         dest="dofinalrefine",
         action="store_true",
@@ -1484,38 +1471,11 @@ def _get_parser():
         default=None,
     )
     experimental.add_argument(
-        "--psdfilter",
-        dest="psdfilter",
-        action="store_true",
-        help=("Apply a PSD weighted Wiener filter to shifted timecourses prior to refinement."),
-        default=False,
-    )
-    experimental.add_argument(
         "--wiener",
         dest="dodeconv",
         action="store_true",
         help=("Do Wiener deconvolution to find voxel transfer function."),
         default=False,
-    )
-    experimental.add_argument(
-        "--corrbaselinespatialsigma",
-        dest="corrbaselinespatialsigma",
-        action="store",
-        type=float,
-        metavar="SIGMA",
-        help=("Spatial lowpass kernel, in mm, for filtering the correlation function baseline. "),
-        default=0.0,
-    )
-    experimental.add_argument(
-        "--corrbaselinetemphpfcutoff",
-        dest="corrbaselinetemphpfcutoff",
-        action="store",
-        type=float,
-        metavar="FREQ",
-        help=(
-            "Temporal highpass cutoff, in Hz, for filtering the correlation function baseline. "
-        ),
-        default=0.0,
     )
     experimental.add_argument(
         "--echocancel",

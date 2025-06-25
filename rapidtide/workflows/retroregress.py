@@ -61,7 +61,6 @@ DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
 DEFAULT_REFINEDELAYNUMPOINTS = 501
 DEFAULT_DELAYOFFSETSPATIALFILT = -1
-DEFAULT_REFINEREGRESSDERIVS = 1
 
 
 def _get_parser():
@@ -228,18 +227,6 @@ def _get_parser():
     )
     experimental = parser.add_argument_group(
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
-    )
-    experimental.add_argument(
-        "--refineregressderivs",
-        dest="refineregressderivs",
-        action="store",
-        type=lambda x: pf.is_int(parser, x, minval=1),
-        metavar="NDERIVS",
-        help=(
-            f"When doing GLM for delay refinement, include derivatives up to NDERIVS order. Must be 1 or more.  "
-            f"Default is {DEFAULT_REFINEREGRESSDERIVS}"
-        ),
-        default=DEFAULT_REFINEREGRESSDERIVS,
     )
 
     return parser
@@ -504,7 +491,7 @@ def retroregress(args):
         print(f"{numvalidspatiallocs=}")
     internalvalidspaceshape = numvalidspatiallocs
     if args.refinedelay:
-        derivaxissize = np.max([args.refineregressderivs + 1, args.regressderivs + 1])
+        derivaxissize = np.max([2, args.regressderivs + 1])
     else:
         derivaxissize = args.regressderivs + 1
     internalvalidspaceshapederivs = (
@@ -649,92 +636,60 @@ def retroregress(args):
             sLFOfitmean,
             rvalue,
             r2value,
-            fitNorm[:, : (args.refineregressderivs + 1)],
-            fitcoeff[:, : (args.refineregressderivs + 1)],
+            fitNorm[:, : 2],
+            fitcoeff[:, : 2],
             movingsignal,
             lagtc,
             filtereddata,
             LGR,
             TimingLGR,
             therunoptions,
-            regressderivs=args.refineregressderivs,
+            regressderivs=1,
             debug=args.debug,
         )
 
-        if args.refineregressderivs == 1:
-            medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
-                tide_refinedelay.filterderivratios(
-                    regressderivratios,
-                    (xsize, ysize, numslices),
-                    validvoxels,
-                    (xdim, ydim, slicethickness),
-                    gausssigma=args.delayoffsetgausssigma,
-                    patchthresh=args.delaypatchthresh,
-                    rt_floattype=rt_floattype,
-                    debug=args.debug,
-                )
-            )
-
-            # find the mapping of glm ratios to delays
-            tide_refinedelay.trainratiotooffset(
-                genlagtc,
-                initial_fmri_x,
-                outputname,
-                args.outputlevel,
-                mindelay=args.mindelay,
-                maxdelay=args.maxdelay,
-                numpoints=args.numpoints,
+        medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = (
+            tide_refinedelay.filterderivratios(
+                regressderivratios,
+                (xsize, ysize, numslices),
+                validvoxels,
+                (xdim, ydim, slicethickness),
+                gausssigma=args.delayoffsetgausssigma,
+                patchthresh=args.delaypatchthresh,
+                rt_floattype=rt_floattype,
                 debug=args.debug,
             )
-            TimingLGR.info("Refinement calibration end")
+        )
 
-            # now calculate the delay offsets
-            TimingLGR.info("Calculating delay offsets")
-            delayoffset = np.zeros_like(filteredregressderivratios)
-            if args.debug:
-                print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
-            for i in range(filteredregressderivratios.shape[0]):
-                delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
-                    filteredregressderivratios[i]
-                )
-                """delayoffset[i] = tide_refinedelay.coffstodelay(
-                    np.asarray([filteredregressderivratios[i]]),
-                    mindelay=args.mindelay,
-                    maxdelay=args.maxdelay,
-                )"""
+        # find the mapping of glm ratios to delays
+        tide_refinedelay.trainratiotooffset(
+            genlagtc,
+            initial_fmri_x,
+            outputname,
+            args.outputlevel,
+            mindelay=args.mindelay,
+            maxdelay=args.maxdelay,
+            numpoints=args.numpoints,
+            debug=args.debug,
+        )
+        TimingLGR.info("Refinement calibration end")
 
-            refinedvoxelstoreport = filteredregressderivratios.shape[0]
-        else:
-            medfiltregressderivratios = np.zeros_like(regressderivratios)
-            filteredregressderivratios = np.zeros_like(regressderivratios)
-            delayoffsetMAD = np.zeros(args.refineregressderivs, dtype=float)
-            for i in range(args.refineregressderivs):
-                (
-                    medfiltregressderivratios[i, :],
-                    filteredregressderivratios[i, :],
-                    delayoffsetMAD[i],
-                ) = tide_refinedelay.filterderivratios(
-                    regressderivratios[i, :],
-                    (xsize, ysize, numslices),
-                    validvoxels,
-                    (xdim, ydim, slicethickness),
-                    gausssigma=args.delayoffsetgausssigma,
-                    patchthresh=args.delaypatchthresh,
-                    rt_floattype=rt_floattype,
-                    debug=args.debug,
-                )
+        # now calculate the delay offsets
+        TimingLGR.info("Calculating delay offsets")
+        delayoffset = np.zeros_like(filteredregressderivratios)
+        if args.debug:
+            print(f"calculating delayoffsets for {filteredregressderivratios.shape[0]} voxels")
+        for i in range(filteredregressderivratios.shape[0]):
+            delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
+                filteredregressderivratios[i]
+            )
+            """delayoffset[i] = tide_refinedelay.coffstodelay(
+                np.asarray([filteredregressderivratios[i]]),
+                mindelay=args.mindelay,
+                maxdelay=args.maxdelay,
+            )"""
 
-            # now calculate the delay offsets
-            delayoffset = np.zeros_like(filteredregressderivratios[0, :])
-            if args.debug:
-                print(f"calculating delayoffsets for {filteredregressderivratios.shape[1]} voxels")
-            for i in range(filteredregressderivratios.shape[1]):
-                delayoffset[i] = tide_refinedelay.coffstodelay(
-                    filteredregressderivratios[:, i],
-                    mindelay=args.mindelay,
-                    maxdelay=args.maxdelay,
-                )
-            refinedvoxelstoreport = filteredregressderivratios.shape[1]
+        refinedvoxelstoreport = filteredregressderivratios.shape[0]
 
         if not args.saveEVsandquit:
             namesuffix = "_desc-delayoffset_hist"
@@ -1082,56 +1037,28 @@ def retroregress(args):
                 ]
 
         if args.refinedelay:
-            if args.refineregressderivs > 1:
-                for i in range(args.refineregressderivs):
-                    maplist += [
-                        (
-                            regressderivratios[i, :],
-                            f"regressderivratios_{i}",
-                            "map",
-                            None,
-                            f"Ratio of derivative {i+1} of delayed sLFO to the delayed sLFO",
-                        ),
-                        (
-                            medfiltregressderivratios[i, :],
-                            f"medfiltregressderivratios_{i}",
-                            "map",
-                            None,
-                            f"Median filtered version of the regressderivratios_{i} map",
-                        ),
-                        (
-                            filteredregressderivratios[i, :],
-                            f"filteredregressderivratios_{i}",
-                            "map",
-                            None,
-                            f"regressderivratios_{i}, with outliers patched using median filtered data",
-                        ),
-                    ]
-            else:
-                maplist += [
-                    (
-                        regressderivratios,
-                        "regressderivratios",
-                        "map",
-                        None,
-                        "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
-                    ),
-                    (
-                        medfiltregressderivratios,
-                        "medfiltregressderivratios",
-                        "map",
-                        None,
-                        "Median filtered version of the regressderivratios map",
-                    ),
-                    (
-                        filteredregressderivratios,
-                        "filteredregressderivratios",
-                        "map",
-                        None,
-                        "regressderivratios, with outliers patched using median filtered data",
-                    ),
-                ]
             maplist += [
+                (
+                    regressderivratios,
+                    "regressderivratios",
+                    "map",
+                    None,
+                    "Ratio of the first derivative of delayed sLFO to the delayed sLFO",
+                ),
+                (
+                    medfiltregressderivratios,
+                    "medfiltregressderivratios",
+                    "map",
+                    None,
+                    "Median filtered version of the regressderivratios map",
+                ),
+                (
+                    filteredregressderivratios,
+                    "filteredregressderivratios",
+                    "map",
+                    None,
+                    "regressderivratios, with outliers patched using median filtered data",
+                ),
                 (
                     delayoffset,
                     "delayoffset",
