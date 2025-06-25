@@ -17,4 +17,4 @@
 #
 
 rm tmp/*
-rm .coveragerc.*
+rm .coverage.*
