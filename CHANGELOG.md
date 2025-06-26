@@ -1,12 +1,13 @@
 # Release history
 
-## Version 3.0.8 (6/20/25)
+## Version 3.0.8 (6/26/25)
 * (rapidtide) Fix https://github.com/bbfrederick/rapidtide/issues/213 (thanks to https://github.com/tomosumi for reporting the bug).
 * (rapidtide) Split coarse delay estimation and fitting out into a separate workflow.
 * (rapidtide) Split delay refinement out into a separate workflow.
 * (rapidtide) Split regressor refinement out into a separate workflow.
+* (rapidtide) All this is in preparation for a new, modular workflow with more flexible control of the fitting process.  It's not done yet, butthis is getting all internal code blocks ready for it.  I want to pause here to make sure I haven't broken anything (all the automated tests pass, but I want to be careful).
 * (docs) Some improvement to the tidepool section.
-* (package) Made a more streamlined interface for allocating shared memory.
+* (package) Made a more streamlined and rational interface for allocating shared memory.
 * (package) Resolved incompatibility of statsmodels and scipy>1.15.3.
 * (package) Accepted several dependabot PRs.
 
