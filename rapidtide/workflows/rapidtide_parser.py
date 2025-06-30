@@ -96,6 +96,8 @@ DEFAULT_OUTPUTLEVEL = "normal"
 
 DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
 
+DEFAULT_COARSEDELAY_TYPE = "simfunc"
+
 DEFAULT_PATCHTHRESH = 3.0
 DEFAULT_REFINEDELAYMINDELAY = -5.0
 DEFAULT_REFINEDELAYMAXDELAY = 5.0
@@ -1441,6 +1443,18 @@ def _get_parser():
     # Experimental options (not fully tested, may not work)
     experimental = parser.add_argument_group(
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
+    )
+    experimental.add_argument(
+        "--coarsedelaytype",
+        dest="coarsedelaytype",
+        action="store",
+        type=str,
+        choices=["simfunc", "linfit"],
+        help=(
+            "Method to generate coarse delay map. "
+            f'Default is "{DEFAULT_COARSEDELAY_TYPE}".'
+        ),
+        default=DEFAULT_COARSEDELAY_TYPE,
     )
     experimental.add_argument(
         "--refinedelayeachpass",

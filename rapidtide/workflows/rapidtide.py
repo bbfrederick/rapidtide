@@ -46,10 +46,11 @@ import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
-import rapidtide.workflows.estimateDelayMap as tide_estimateDelayMap
+import rapidtide.workflows.linfitDelayMap as tide_linfitDelayMap
 import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.refineRegressor as tide_refineRegressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
+import rapidtide.workflows.simfuncDelayMap as tide_simfuncDelayMap
 
 from .utils import setup_logger
 
@@ -1904,52 +1905,104 @@ def rapidtide_main(argparsingfunc):
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
         # step 1 - do the initial delay estimation
-        internaldespeckleincludemask = tide_estimateDelayMap.estimateDelay(
-            fmri_data_valid,
-            validsimcalcstart,
-            validsimcalcend,
-            osvalidsimcalcstart,
-            osvalidsimcalcend,
-            initial_fmri_x,
-            os_fmri_x,
-            theCorrelator,
-            theMutualInformationator,
-            cleaned_referencetc,
-            corrout,
-            meanval,
-            corrscale,
-            outputname,
-            outcorrarray,
-            validvoxels,
-            nativecorrshape,
-            nativespaceshape,
-            bidsbasedict,
-            numspatiallocs,
-            gaussout,
-            theinitialdelay,
-            windowout,
-            R2,
-            thesizes,
-            internalspaceshape,
-            numvalidspatiallocs,
-            theinputdata,
-            theheader,
-            theFitter,
-            fitmask,
-            lagtimes,
-            lagstrengths,
-            lagsigma,
-            failreason,
-            outmaparray,
-            lagmininpts,
-            lagmaxinpts,
-            thepass,
-            optiondict,
-            LGR,
-            TimingLGR,
-            rt_floatset=np.float64,
-            rt_floattype="float64",
-        )
+        if optiondict["coarsedelaytype"] == "simfunc":
+            internaldespeckleincludemask = tide_simfuncDelayMap.simfuncDelay(
+                fmri_data_valid,
+                validsimcalcstart,
+                validsimcalcend,
+                osvalidsimcalcstart,
+                osvalidsimcalcend,
+                initial_fmri_x,
+                os_fmri_x,
+                theCorrelator,
+                theMutualInformationator,
+                cleaned_referencetc,
+                corrout,
+                meanval,
+                corrscale,
+                outputname,
+                outcorrarray,
+                validvoxels,
+                nativecorrshape,
+                nativespaceshape,
+                bidsbasedict,
+                numspatiallocs,
+                gaussout,
+                theinitialdelay,
+                windowout,
+                R2,
+                thesizes,
+                internalspaceshape,
+                numvalidspatiallocs,
+                theinputdata,
+                theheader,
+                theFitter,
+                fitmask,
+                lagtimes,
+                lagstrengths,
+                lagsigma,
+                failreason,
+                outmaparray,
+                lagmininpts,
+                lagmaxinpts,
+                thepass,
+                optiondict,
+                LGR,
+                TimingLGR,
+                rt_floatset=np.float64,
+                rt_floattype="float64",
+            )
+        elif optiondict["coarsedelaytype"] == "linfit":
+            tide_linfitDelayMap.linfitDelay(
+                fmri_data_valid,
+                validsimcalcstart,
+                validsimcalcend,
+                osvalidsimcalcstart,
+                osvalidsimcalcend,
+                initial_fmri_x,
+                os_fmri_x,
+                theCorrelator,
+                theMutualInformationator,
+                cleaned_referencetc,
+                corrout,
+                meanval,
+                corrscale,
+                outputname,
+                outcorrarray,
+                validvoxels,
+                nativecorrshape,
+                nativespaceshape,
+                bidsbasedict,
+                numspatiallocs,
+                gaussout,
+                theinitialdelay,
+                windowout,
+                R2,
+                thesizes,
+                internalspaceshape,
+                numvalidspatiallocs,
+                theinputdata,
+                theheader,
+                theFitter,
+                fitmask,
+                lagtimes,
+                lagstrengths,
+                lagsigma,
+                failreason,
+                outmaparray,
+                lagmininpts,
+                lagmaxinpts,
+                thepass,
+                optiondict,
+                LGR,
+                TimingLGR,
+                rt_floatset=np.float64,
+                rt_floattype="float64",
+            )
+            optiondict["despeckle_passes"] = 0
+        else:
+            print("unknown coarsedelay type")
+            sys.exit(1)
 
         # refine delay
         if optiondict["refinedelayeachpass"]:
