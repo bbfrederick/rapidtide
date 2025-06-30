@@ -97,6 +97,7 @@ DEFAULT_OUTPUTLEVEL = "normal"
 DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
 
 DEFAULT_COARSEDELAY_TYPE = "simfunc"
+DEFAULT_RIPTIDESTEP = 1.5
 
 DEFAULT_PATCHTHRESH = 3.0
 DEFAULT_REFINEDELAYMINDELAY = -5.0
@@ -1455,6 +1456,15 @@ def _get_parser():
             f'Default is "{DEFAULT_COARSEDELAY_TYPE}".'
         ),
         default=DEFAULT_COARSEDELAY_TYPE,
+    )
+    output.add_argument(
+        "--riptidestep",  # was -h
+        dest="riptidestep",
+        action="store",
+        type=lambda x: pf.is_float(parser, x, maxval=5.0),
+        metavar="STEP",
+        help=(f"Timestep between RIPTiDe regressors, in seconds.  Default is {DEFAULT_RIPTIDESTEP}."),
+        default=DEFAULT_RIPTIDESTEP,
     )
     experimental.add_argument(
         "--refinedelayeachpass",
