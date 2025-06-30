@@ -1,11 +1,14 @@
 # Release history
 
+## Version 3.0.9 (7/1/25)
+* (rapidtide) Added an alternative method for coarse delay estimation (set ``--coarsedelaytype linfit`` to select).  This uses a fit to a set of delayed regressors (actually, this is the original RIPTiDe method from ~2010).
+
 ## Version 3.0.8 (6/26/25)
 * (rapidtide) Fix https://github.com/bbfrederick/rapidtide/issues/213 (thanks to https://github.com/tomosumi for reporting the bug).
 * (rapidtide) Split coarse delay estimation and fitting out into a separate workflow.
 * (rapidtide) Split delay refinement out into a separate workflow.
 * (rapidtide) Split regressor refinement out into a separate workflow.
-* (rapidtide) All this is in preparation for a new, modular workflow with more flexible control of the fitting process.  It's not done yet, butthis is getting all internal code blocks ready for it.  I want to pause here to make sure I haven't broken anything (all the automated tests pass, but I want to be careful).
+* (rapidtide) All this is in preparation for a new, modular workflow with more flexible control of the fitting process.  It's not done yet, but this is getting all internal code blocks ready for it.  I want to pause here to make sure I haven't broken anything (all the automated tests pass, but I want to be careful).
 * (docs) Some improvement to the tidepool section.
 * (package) Made a more streamlined and rational interface for allocating shared memory.
 * (package) Resolved incompatibility of statsmodels and scipy>1.15.3.
