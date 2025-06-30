@@ -50,7 +50,7 @@ def enablemkl(numthreads, debug=False):
         mkl.set_num_threads(numthreads)
 
 
-def estimateDelay(
+def simfuncDelay(
     fmri_data_valid,
     validsimcalcstart,
     validsimcalcend,
