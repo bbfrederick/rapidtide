@@ -30,6 +30,7 @@ rapidtide \
     --nofitfilt \
     --refinedelayeachpass \
     --similaritymetric correlation \
+    --coarsedelaytype linfit \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_passrefine
 
