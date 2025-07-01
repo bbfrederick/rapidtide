@@ -26,7 +26,7 @@ import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
 
 
-def fitDelayFunc(
+def fitSimFunc(
     fmri_data_valid,
     validsimcalcstart,
     validsimcalcend,
