@@ -24,6 +24,7 @@ import rapidtide.patchmatch as tide_patch
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
+import rapidtide.resample as tide_resample
 
 
 def fitSimFunc(
@@ -65,6 +66,7 @@ def fitSimFunc(
     LGR,
     TimingLGR,
     simplefit=False,
+    upsampfac=8,
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
@@ -109,14 +111,17 @@ def fitSimFunc(
         thepeakdict = None
 
     if simplefit:
+        basedelay = trimmedcorrscale[0]
+        delaystep = (trimmedcorrscale[1] - trimmedcorrscale[0]) / upsampfac
         for thevox in range(numvalidspatiallocs):
             fitmask[thevox] = 1
+            upsampcorrout = tide_resample.upsample(corrout[thevox,:],1, upsampfac, intfac=True, dofilt=False)
             if optiondict["bipolar"]:
-                thismax = np.argmax(np.fabs(corrout[thevox, :]))
+                thismax = np.argmax(np.fabs(upsampcorrout))
             else:
-                thismax = np.argmax(corrout[thevox, :])
-            lagtimes[thevox] = trimmedcorrscale[thismax]
-            lagstrengths[thevox] = corrout[thevox, thismax]
+                thismax = np.argmax(upsampcorrout)
+            lagtimes[thevox] = basedelay + thismax * delaystep
+            lagstrengths[thevox] = upsampcorrout[thismax]
             lagsigma[thevox] = 1.0
         internaldespeckleincludemask = None
     else:

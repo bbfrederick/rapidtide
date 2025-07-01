@@ -597,7 +597,7 @@ def arbresample(
         return resampled
 
 
-def upsample(inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, debug=False):
+def upsample(inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, dofilt=True, debug=False):
     starttime = time.time()
     if Fs_higher <= Fs_init:
         print("upsample: target frequency must be higher than initial frequency")
@@ -607,19 +607,19 @@ def upsample(inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, d
     orig_x = np.linspace(0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False)
     endpoint = orig_x[-1] - orig_x[0]
     ts_higher = 1.0 / Fs_higher
-    numresamppts = int(endpoint // ts_higher + 1)
     if intfac:
         numresamppts = int(Fs_higher // Fs_init) * len(inputdata)
     else:
         numresamppts = int(endpoint // ts_higher + 1)
     upsampled_x = np.arange(0.0, ts_higher * numresamppts, ts_higher)
     upsampled_y = doresample(orig_x, inputdata, upsampled_x, method=method)
-    initfilter = tide_filt.NoncausalFilter(
-        filtertype="arb", transferfunc="trapezoidal", debug=debug
-    )
-    stopfreq = np.min([1.1 * Fs_init / 2.0, Fs_higher / 2.0])
-    initfilter.setfreqs(0.0, 0.0, Fs_init / 2.0, stopfreq)
-    upsampled_y = initfilter.apply(Fs_higher, upsampled_y)
+    if dofilt:
+        initfilter = tide_filt.NoncausalFilter(
+            filtertype="arb", transferfunc="trapezoidal", debug=debug
+        )
+        stopfreq = np.min([1.1 * Fs_init / 2.0, Fs_higher / 2.0])
+        initfilter.setfreqs(0.0, 0.0, Fs_init / 2.0, stopfreq)
+        upsampled_y = initfilter.apply(Fs_higher, upsampled_y)
     if debug:
         print("upsampling took", time.time() - starttime, "seconds")
     return upsampled_y
