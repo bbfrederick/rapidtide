@@ -103,6 +103,7 @@ def linfitDelay(
     thepass,
     LGR,
     TimingLGR,
+    bipolar=False,
     mklthreads=1,
     nprocs=1,
     alwaysmultiproc=False,
@@ -162,7 +163,10 @@ def linfitDelay(
 
     for thevox in range(numvalidspatiallocs):
         fitmask[thevox] = 1
-        thismax = np.argmax(np.fabs(corrout[thevox, :]))
+        if bipolar:
+            thismax = np.argmax(np.fabs(corrout[thevox, :]))
+        else:
+            thismax = np.argmax(corrout[thevox, :])
         lagtimes[thevox] = delayvals[thismax]
         lagstrengths[thevox] = corrout[thevox, thismax]
         lagsigma[thevox] = 1.0
