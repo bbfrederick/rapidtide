@@ -1,25 +1,9 @@
 #!/bin/bash
 
-#rapidtide \
-#    --spatialfilt -1 \
-#    --nprocs -1 \
-#    --searchrange -5 20 \
-#    --simcalcrange 50 -1 \
-#    --outputlevel more \
-#    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-#    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-#    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-#    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-#    --cleanrefined \
-#    --nofitfilt \
-#    --similaritymetric correlation \
-#    sub-RAPIDTIDETEST.nii.gz \
-#    ../dst/sub-RAPIDTIDETEST
-
 rapidtide \
-    --spatialfilt 3 \
+    --spatialfilt 2.5 \
     --nprocs -1 \
-    --searchrange -5 20 \
+    --searchrange -5 30 \
     --simcalcrange 50 -1 \
     --outputlevel more \
     --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
@@ -29,9 +13,29 @@ rapidtide \
     --cleanrefined \
     --nofitfilt \
     --refinedelayeachpass \
+    --coarsedelaytype simfunc \
     --similaritymetric correlation \
-    --coarsedelaytype linfit \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_passrefine
+    ../dst/sub-RAPIDTIDETEST_simfunc
 
-tidepool --uistyle big --dataset ../dst/sub-RAPIDTIDETEST_ ../dst/sub-RAPIDTIDETEST_passrefine_
+rapidtide \
+    --spatialfilt 2.5 \
+    --nprocs -1 \
+    --searchrange -5 30 \
+    --simcalcrange 50 -1 \
+    --outputlevel more \
+    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
+    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
+    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+    --cleanrefined \
+    --nofitfilt \
+    --refinedelayeachpass \
+    --coarsedelaytype linfit \
+    --riptidestep 2.0 \
+    --ampthresh 0.0 \
+    --numnull 0 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_riptide
+
+tidepool --uistyle big --dataset ../dst/sub-RAPIDTIDETEST_simfunc_ ../dst/sub-RAPIDTIDETEST_riptide_
