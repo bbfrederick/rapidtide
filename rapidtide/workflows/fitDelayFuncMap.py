@@ -296,6 +296,8 @@ def fitDelayFunc(
                     "message3": "voxels",
                 },
             )
+        else:
+            internaldespeckleincludemask = None
 
         # Patch shifting
         if optiondict["patchshift"]:
