@@ -2220,6 +2220,13 @@ def process_args(inputargs=None):
         print(f"illegal output level {args['outputlevel']}")
         sys.exit()
 
+    # make the pass options dictionary
+    args["passoptions"] = [
+        {"similaritymetric": "riptide",},
+        {"similaritymetric": "correlation", },
+        {"similaritymetric": "correlation", },
+    ]
+
     # dispersion calculation
     args["dispersioncalc_lower"] = args["lagmin"]
     args["dispersioncalc_upper"] = args["lagmax"]
