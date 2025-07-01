@@ -1346,6 +1346,29 @@ def rapidtide_main(argparsingfunc):
             append=False,
         )
 
+    # prepare for fast resampling
+    optiondict["fastresamplerpadtime"] = (
+        max((-optiondict["lagmin"], optiondict["lagmax"]))
+        + 30.0
+        + np.abs(optiondict["offsettime"])
+    )
+    numpadtrs = int(optiondict["fastresamplerpadtime"] // fmritr)
+    optiondict["fastresamplerpadtime"] = fmritr * numpadtrs
+    LGR.info(f"setting up fast resampling with padtime = {optiondict['fastresamplerpadtime']}")
+
+    genlagtc = tide_resample.FastResampler(
+        reference_x, reference_y, padtime=optiondict["fastresamplerpadtime"]
+    )
+    genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
+    if optiondict["debug"]:
+        genlagtc.info()
+    totalpadlen = validtimepoints + 2 * numpadtrs
+    paddedinitial_fmri_x = (
+        np.linspace(0.0, totalpadlen * fmritr, num=totalpadlen, endpoint=False)
+        + skiptime
+        - fmritr * numpadtrs
+    )
+
     # allocate all the data arrays
     tide_util.logmem("before main array allocation")
     internalspaceshape = numspatiallocs
@@ -1360,7 +1383,30 @@ def rapidtide_main(argparsingfunc):
     outmaparray = np.zeros(internalspaceshape, dtype=rt_floattype)
     tide_util.logmem("after main array allocation")
 
-    corroutlen = np.shape(trimmedcorrscale)[0]
+    if optiondict["coarsedelaytype"] == "linfit":
+        riptideregressorset, riptidedelays = tide_linfitDelayMap.makeRIPTiDeRegressors(
+            initial_fmri_x,
+            optiondict["lagmin"],
+            optiondict["lagmax"],
+            genlagtc,
+            LGR,
+            targetstep=optiondict["riptidestep"],
+            edgepad=3,
+            showprogressbar=optiondict["showprogressbar"],
+            chunksize=optiondict["mp_chunksize"],
+            nprocs=optiondict["nprocs"],
+            alwaysmultiproc=optiondict["alwaysmultiproc"],
+            rt_floatset=rt_floatset,
+            rt_floattype=rt_floattype,
+            debug=optiondict["debug"],
+        )
+        numriptideregressors = riptideregressorset.shape[0]
+        corroutlen = numriptideregressors
+    else:
+        riptideregressorset = None
+        numriptideregressors = 0
+        corroutlen = np.shape(trimmedcorrscale)[0]
+
     if theinputdata.filetype == "text":
         nativecorrshape = (xsize, corroutlen)
     else:
@@ -1373,6 +1419,7 @@ def rapidtide_main(argparsingfunc):
     LGR.debug(
         f"allocating memory for correlation arrays {internalcorrshape} {internalvalidcorrshape}"
     )
+
     corrout, corrout_shm = tide_util.allocarray(
         internalvalidcorrshape,
         rt_floatset,
@@ -1428,29 +1475,6 @@ def rapidtide_main(argparsingfunc):
     else:
         theinitialdelay = None
 
-    # prepare for fast resampling
-    optiondict["fastresamplerpadtime"] = (
-        max((-optiondict["lagmin"], optiondict["lagmax"]))
-        + 30.0
-        + np.abs(optiondict["offsettime"])
-    )
-    numpadtrs = int(optiondict["fastresamplerpadtime"] // fmritr)
-    optiondict["fastresamplerpadtime"] = fmritr * numpadtrs
-    LGR.info(f"setting up fast resampling with padtime = {optiondict['fastresamplerpadtime']}")
-
-    genlagtc = tide_resample.FastResampler(
-        reference_x, reference_y, padtime=optiondict["fastresamplerpadtime"]
-    )
-    genlagtc.save(f"{outputname}_desc-lagtcgenerator_timeseries")
-    if optiondict["debug"]:
-        genlagtc.info()
-    totalpadlen = validtimepoints + 2 * numpadtrs
-    paddedinitial_fmri_x = (
-        np.linspace(0.0, totalpadlen * fmritr, num=totalpadlen, endpoint=False)
-        + skiptime
-        - fmritr * numpadtrs
-    )
-
     if theinputdata.filetype == "text":
         nativefmrishape = (xsize, np.shape(initial_fmri_x)[0])
     elif theinputdata.filetype == "cifti":
@@ -1468,9 +1492,9 @@ def rapidtide_main(argparsingfunc):
     # now do the arrays for delay refinement
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
         if optiondict["refinedelay"]:
-            derivaxissize = np.max([2, optiondict["regressderivs"] + 1])
+            derivaxissize = np.max([2, numriptideregressors, optiondict["regressderivs"] + 1])
         else:
-            derivaxissize = optiondict["regressderivs"] + 1
+            derivaxissize = np.max([numriptideregressors, optiondict["regressderivs"] + 1])
         internalvalidspaceshapederivs = (
             internalvalidspaceshape,
             derivaxissize,
@@ -1954,29 +1978,56 @@ def rapidtide_main(argparsingfunc):
             )
         elif optiondict["coarsedelaytype"] == "linfit":
             tide_linfitDelayMap.linfitDelay(
+                numvalidspatiallocs,
                 fmri_data_valid,
-                initial_fmri_x,
+                fitmask,
+                lagtimes,
+                lagstrengths,
+                lagsigma,
+                corrout,
+                riptideregressorset,
+                riptidedelays,
+                sLFOfitmean,
+                rvalue,
+                r2value,
+                fitcoeff,
+                fitNorm,
                 thepass,
                 LGR,
                 TimingLGR,
-                optiondict["lagmin"],
-                optiondict["lagmax"],
-                genlagtc,
-                targetstep=optiondict["riptidestep"],
-                edgepad=3,
-                mklthreads=1,
+                mklthreads=optiondict["mklthreads"],
                 showprogressbar=optiondict["showprogressbar"],
                 chunksize=optiondict["mp_chunksize"],
                 nprocs=optiondict["nprocs"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
-                rt_floatset=np.float64,
-                rt_floattype="float64",
-                debug=True,
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+                debug=optiondict["debug"],
             )
             optiondict["despeckle_passes"] = 0
+            internaldespeckleincludemask = None
         else:
             print("unknown coarsedelay type")
             sys.exit(1)
+
+        if optiondict["saveintermediatemaps"]:
+            theheader = theinputdata.copyheader(numtimepoints=1)
+            bidspasssuffix = f"_intermediatedata-pass{thepass}"
+            maplist = [
+                (lagtimes, "maxtimecoarse", "map", "second", "Lag time in seconds"),
+                (lagstrengths, "maxcorrcoarse", "map", None, "Maximum correlation strength"),
+            ]
+            tide_io.savemaplist(
+                f"{outputname}{bidspasssuffix}",
+                maplist,
+                validvoxels,
+                nativespaceshape,
+                theheader,
+                bidsbasedict,
+                filetype=theinputdata.filetype,
+                rt_floattype=rt_floattype,
+                cifti_hdr=theinputdata.cifti_hdr,
+            )
 
         # refine delay
         if optiondict["refinedelayeachpass"]:
@@ -2032,6 +2083,25 @@ def rapidtide_main(argparsingfunc):
                 debug=optiondict["debug"],
             )
             lagtimes[:] = lagtimes + delayoffset
+
+            if optiondict["saveintermediatemaps"]:
+                theheader = theinputdata.copyheader(numtimepoints=1)
+                bidspasssuffix = f"_intermediatedata-pass{thepass}"
+                maplist = [
+                    (lagtimes, "maxtimerefined", "map", "second", "Lag time in seconds"),
+                    (lagstrengths, "maxcorrrefined", "map", None, "Maximum correlation strength"),
+                ]
+                tide_io.savemaplist(
+                    f"{outputname}{bidspasssuffix}",
+                    maplist,
+                    validvoxels,
+                    nativespaceshape,
+                    theheader,
+                    bidsbasedict,
+                    filetype=theinputdata.filetype,
+                    rt_floattype=rt_floattype,
+                    cifti_hdr=theinputdata.cifti_hdr,
+                )
 
         # Step 2d - make a rank order map
         timepercentile = (
@@ -2526,7 +2596,7 @@ def rapidtide_main(argparsingfunc):
                     nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
                     nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],
                     regressderivs=optiondict["regressderivs"],
-                    mp_chunksize=optiondict["mp_chunksize"],
+                    chunksize=optiondict["mp_chunksize"],
                     showprogressbar=optiondict["showprogressbar"],
                     alwaysmultiproc=optiondict["alwaysmultiproc"],
                     debug=optiondict["debug"],
@@ -3014,7 +3084,7 @@ def rapidtide_main(argparsingfunc):
                 nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
                 nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],
                 regressderivs=optiondict["regressderivs"],
-                mp_chunksize=optiondict["mp_chunksize"],
+                chunksize=optiondict["mp_chunksize"],
                 showprogressbar=optiondict["showprogressbar"],
                 alwaysmultiproc=optiondict["alwaysmultiproc"],
                 debug=optiondict["debug"],
@@ -3174,11 +3244,18 @@ def rapidtide_main(argparsingfunc):
     del fitmask
 
     # now do the 4D maps of the similarity function and friends
-    theheader = theinputdata.copyheader(
-        numtimepoints=np.shape(outcorrarray)[1],
-        tr=corrtr,
-        toffset=(corrscale[corrorigin - lagmininpts]),
-    )
+    if optiondict["coarsedelaytype"] == "simfunc":
+        theheader = theinputdata.copyheader(
+            numtimepoints=np.shape(outcorrarray)[1],
+            tr=corrtr,
+            toffset=(corrscale[corrorigin - lagmininpts]),
+        )
+    else:
+        theheader = theinputdata.copyheader(
+            numtimepoints=np.shape(outcorrarray)[1],
+            tr=riptidedelays[1] - riptidedelays[0],
+            toffset=(riptidedelays[0]),
+        )
     if (
         optiondict["savecorrout"]
         or (optiondict["outputlevel"] != "min")
