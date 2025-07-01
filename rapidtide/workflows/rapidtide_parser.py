@@ -97,7 +97,7 @@ DEFAULT_OUTPUTLEVEL = "normal"
 DEFAULT_SLFONOISEAMP_WINDOWSIZE = 40.0
 
 DEFAULT_COARSEDELAY_TYPE = "simfunc"
-DEFAULT_RIPTIDESTEP = 2.5
+DEFAULT_RIPTIDESTEP = 2.0
 
 DEFAULT_PATCHTHRESH = 3.0
 DEFAULT_REFINEDELAYMINDELAY = -5.0
@@ -1451,10 +1451,7 @@ def _get_parser():
         action="store",
         type=str,
         choices=["simfunc", "linfit"],
-        help=(
-            "Method to generate coarse delay map. "
-            f'Default is "{DEFAULT_COARSEDELAY_TYPE}".'
-        ),
+        help=("Method to generate coarse delay map. " f'Default is "{DEFAULT_COARSEDELAY_TYPE}".'),
         default=DEFAULT_COARSEDELAY_TYPE,
     )
     output.add_argument(
@@ -1463,7 +1460,9 @@ def _get_parser():
         action="store",
         type=lambda x: pf.is_float(parser, x, maxval=5.0),
         metavar="STEP",
-        help=(f"Timestep between RIPTiDe regressors, in seconds.  Default is {DEFAULT_RIPTIDESTEP}."),
+        help=(
+            f"Timestep between RIPTiDe regressors, in seconds.  Default is {DEFAULT_RIPTIDESTEP}."
+        ),
         default=DEFAULT_RIPTIDESTEP,
     )
     experimental.add_argument(
