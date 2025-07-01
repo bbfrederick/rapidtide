@@ -17,15 +17,76 @@
 #
 #
 import numpy as np
-from scipy import ndimage
 
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
+import rapidtide.linfitfiltpass as tide_linfitfiltpass
+import rapidtide.makelaggedtcs as tide_makelagged
+
+def makeRIPTiDeRegressors(
+    initial_fmri_x,
+    lagmin,
+    lagmax,
+    lagtcgenerator,
+    LGR,
+    nprocs=1,
+    alwaysmultiproc=False,
+    showprogressbar=True,
+    chunksize=1000,
+    targetstep=2.5,
+    edgepad=0,
+    rt_floatset=np.float64,
+    rt_floattype="float64",
+    debug=False,
+):
+    # make the RIPTiDe evs
+    numdelays = int(np.round((lagmax - lagmin) / targetstep, 0))
+    numregressors = numdelays + 2 * edgepad
+    delaystep = (lagmax - lagmin) / numdelays
+    delaystouse = np.linspace(
+        lagmin - edgepad * delaystep,
+        lagmax + edgepad * delaystep,
+        numdelays + 2 * edgepad,
+        endpoint=True,
+    )
+    if debug:
+        print(f"{lagmin=}")
+        print(f"{lagmax=}")
+        print(f"{numdelays=}")
+        print(f"{edgepad=}")
+        print(f"{numregressors=}")
+        print(f"{delaystep=}")
+        print(f"{delaystouse=}, {len(delaystouse)}")
+        print(f"{len(initial_fmri_x)}")
+
+    regressorset = np.zeros((len(delaystouse), len(initial_fmri_x)), dtype=rt_floatset)
+
+    dummy = tide_makelagged.makelaggedtcs(
+        lagtcgenerator,
+        initial_fmri_x,
+        np.ones_like(delaystouse, dtype=np.float64),
+        delaystouse,
+        regressorset,
+        LGR=LGR,
+        nprocs=nprocs,
+        alwaysmultiproc=alwaysmultiproc,
+        showprogressbar=showprogressbar,
+        chunksize=chunksize,
+        rt_floatset=rt_floatset,
+        rt_floattype=rt_floattype,
+        debug=debug,
+    )
+
+    if debug:
+        print(regressorset)
+
+    return regressorset, delaystouse
 
 
-def simfuncDelay(
+def calcSimFunc(
+    numvalidspatiallocs,
     fmri_data_valid,
     validsimcalcstart,
     validsimcalcend,
@@ -37,6 +98,12 @@ def simfuncDelay(
     theMutualInformationator,
     cleaned_referencetc,
     corrout,
+    regressorset,
+    delayvals,
+    sLFOfitmean,
+    r2value,
+    fitcoeff,
+    fitNorm,
     meanval,
     corrscale,
     outputname,
@@ -72,6 +139,8 @@ def simfuncDelay(
         similaritytype = "Mutual information"
     elif similaritymetric == "correlation":
         similaritytype = "Correlation"
+    elif similaritymetric == "riptide":
+        similaritytype = "RIPTiDe"
     else:
         similaritytype = "MI enhanced correlation"
     LGR.info(f"\n\n{similaritytype} calculation, pass {thepass}")
@@ -104,7 +173,7 @@ def simfuncDelay(
             rt_floattype=rt_floattype,
             debug=debug,
         )
-    else:
+    elif (similaritymetric == "correlation") or (similaritymetric == "hybrid"):
         (
             voxelsprocessed_cp,
             theglobalmaxlist,
@@ -129,23 +198,53 @@ def simfuncDelay(
             rt_floattype=rt_floattype,
             debug=debug,
         )
+    elif similaritymetric == "riptide":
+        # do the linear fit to the comb of delayed regressors
+        for thedelay in range(len(delayvals)):
+            voxelsprocessed_cp = tide_linfitfiltpass.linfitfiltpass(
+                numvalidspatiallocs,
+                fmri_data_valid,
+                0.0,
+                regressorset[thedelay, :],
+                sLFOfitmean,
+                corrout[:, thedelay],
+                r2value,
+                corrout[:, thedelay],
+                fitNorm,
+                None,
+                None,
+                coefficientsonly=True,
+                voxelspecific=False,
+                nprocs=nprocs,
+                alwaysmultiproc=alwaysmultiproc,
+                showprogressbar=showprogressbar,
+                verbose=(LGR is not None),
+                chunksize=chunksize,
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+                debug=debug,
+            )
+    else:
+        print("illegal similarity metric")
+
     tide_util.enablemkl(mklthreads, debug=threaddebug)
 
-    for i in range(len(theglobalmaxlist)):
-        theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]] - simcalcoffset
-    namesuffix = "_desc-globallag_hist"
-    tide_stats.makeandsavehistogram(
-        np.asarray(theglobalmaxlist),
-        len(corrscale),
-        0,
-        outputname + namesuffix,
-        displaytitle="Histogram of lag times from global lag calculation",
-        therange=(corrscale[0], corrscale[-1]),
-        refine=False,
-        dictvarname="globallaghist_pass" + str(thepass),
-        append=(echocancel or (thepass > 1)),
-        thedict=optiondict,
-    )
+    if similaritymetric != "riptide":
+        for i in range(len(theglobalmaxlist)):
+            theglobalmaxlist[i] = corrscale[theglobalmaxlist[i]] - simcalcoffset
+        namesuffix = "_desc-globallag_hist"
+        tide_stats.makeandsavehistogram(
+            np.asarray(theglobalmaxlist),
+            len(corrscale),
+            0,
+            outputname + namesuffix,
+            displaytitle="Histogram of lag times from global lag calculation",
+            therange=(corrscale[0], corrscale[-1]),
+            refine=False,
+            dictvarname="globallaghist_pass" + str(thepass),
+            append=(echocancel or (thepass > 1)),
+            thedict=optiondict,
+        )
 
     if checkpoint:
         outcorrarray[:, :] = 0.0
