@@ -49,11 +49,11 @@ def regressfrommaps(
     nprocs_makelaggedtcs=1,
     nprocs_regressionfilt=1,
     regressderivs=0,
-    mp_chunksize=50000,
+    chunksize=50000,
     showprogressbar=True,
     alwaysmultiproc=False,
     saveEVsandquit=False,
-    ratiosonly=False,
+    coefficientsonly=False,
     debug=False,
 ):
     if debug:
@@ -61,7 +61,7 @@ def regressfrommaps(
         print(f"\t{nprocs_makelaggedtcs=}")
         print(f"\t{nprocs_regressionfilt=}")
         print(f"\t{regressderivs=}")
-        print(f"\t{mp_chunksize=}")
+        print(f"\t{chunksize=}")
         print(f"\t{showprogressbar=}")
         print(f"\t{alwaysmultiproc=}")
         print(f"\t{mode=}")
@@ -88,7 +88,7 @@ def regressfrommaps(
         nprocs=nprocs_makelaggedtcs,
         alwaysmultiproc=alwaysmultiproc,
         showprogressbar=showprogressbar,
-        chunksize=mp_chunksize,
+        chunksize=chunksize,
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
         debug=debug,
@@ -146,12 +146,12 @@ def regressfrommaps(
         fitNorm,
         movingsignal,
         filtereddata,
-        ratiosonly=ratiosonly,
+        coefficientsonly=coefficientsonly,
         nprocs=nprocs_regressionfilt,
         alwaysmultiproc=alwaysmultiproc,
         showprogressbar=showprogressbar,
         verbose=(LGR is not None),
-        mp_chunksize=mp_chunksize,
+        chunksize=chunksize,
         rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
         debug=debug,
@@ -162,7 +162,7 @@ def regressfrommaps(
         fitcoeff *= 100.0
 
     # determine what was removed
-    if not ratiosonly:
+    if not coefficientsonly:
         removeddata = fmri_data_valid - filtereddata
         noiseremoved = np.var(removeddata, axis=0)
         if saveminimumsLFOfiltfiles:
