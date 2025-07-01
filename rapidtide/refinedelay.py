@@ -391,10 +391,10 @@ def getderivratios(
         nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
         nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],
         regressderivs=regressderivs,
-        mp_chunksize=optiondict["mp_chunksize"],
+        chunksize=optiondict["mp_chunksize"],
         showprogressbar=optiondict["showprogressbar"],
         alwaysmultiproc=optiondict["alwaysmultiproc"],
-        ratiosonly=True,
+        coefficientsonly=True,
         debug=debug,
     )
 

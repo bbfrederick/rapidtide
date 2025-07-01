@@ -1763,7 +1763,7 @@ def happy_main(argparsingfunc):
                 fitNorm,
                 datatoremove[validlocs, :],
                 filtereddata[validlocs, :],
-                mp_chunksize=10,
+                chunksize=10,
                 procbyvoxel=False,
                 nprocs=args.nprocs,
             )

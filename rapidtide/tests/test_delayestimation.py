@@ -350,7 +350,7 @@ def test_delayestimation(displayplots=False, debug=False):
             nprocs=nprocs,
             alwaysmultiproc=False,
             showprogressbar=False,
-            mp_chunksize=chunksize,
+            chunksize=chunksize,
         )
 
         if nprocs == 1:
