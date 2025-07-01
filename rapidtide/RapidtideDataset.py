@@ -408,7 +408,7 @@ class Overlay:
 
     def maskData(self):
         self.mask = self.geommask * self.funcmask
-        maskhash = hash(self.mask.tostring())
+        maskhash = hash(self.mask.tobytes())
         # these operations are expensive, so only do them if the mask is changed
         if (maskhash == self.maskhash) and (self.verbose > 1):
             print("mask has not changed")
