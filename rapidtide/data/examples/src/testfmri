@@ -32,7 +32,7 @@ rapidtide \
     --nofitfilt \
     --refinedelayeachpass \
     --coarsedelaytype linfit \
-    --riptidestep 2.0 \
+    --riptidestep 1.5 \
     --ampthresh 0.0 \
     --numnull 0 \
     sub-RAPIDTIDETEST.nii.gz \
