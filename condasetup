@@ -5,7 +5,7 @@ conda init
 conda activate micfix
 mamba install \
     numpy \
-    scipy \
+    "scipy<=1.15.3" \
     "matplotlib>=3.3.0" \
     pandas \
     pyarrow \
@@ -19,6 +19,11 @@ mamba install \
     pyqt6 \
     pyqt6-sip \
     "pyqtgraph>=0.13.4" \
-    tqdm
+    tqdm \
+    versioneer \
+    requests
 
-mamba install tensorflow keras
+mamba install \
+    tf-keras \
+    "tensorflow >= 2.10.0" \
+    keras
