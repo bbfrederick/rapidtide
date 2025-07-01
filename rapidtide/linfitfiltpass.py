@@ -91,11 +91,12 @@ def linfitfiltpass(
     filtereddata,
     nprocs=1,
     alwaysmultiproc=False,
+    voxelspecific=True,
     confoundregress=False,
-    ratiosonly=False,
+    coefficientsonly=False,
     procbyvoxel=True,
     showprogressbar=True,
-    mp_chunksize=1000,
+    chunksize=1000,
     rt_floatset=np.float64,
     rt_floattype="float64",
     verbose=True,
@@ -142,7 +143,7 @@ def linfitfiltpass(
 
                     # process and send the data
                     if procbyvoxel:
-                        if confoundregress:
+                        if confoundregress or (not voxelspecific):
                             outQ.put(
                                 _procOneRegressionFitItem(
                                     val,
@@ -163,7 +164,7 @@ def linfitfiltpass(
                                 )
                             )
                     else:
-                        if confoundregress:
+                        if confoundregress or (not voxelspecific):
                             outQ.put(
                                 _procOneRegressionFitItem(
                                     val,
@@ -197,7 +198,7 @@ def linfitfiltpass(
             indexaxis=indexaxis,
             procunit=procunit,
             showprogressbar=showprogressbar,
-            chunksize=mp_chunksize,
+            chunksize=chunksize,
         )
 
         # unpack the data
@@ -208,7 +209,7 @@ def linfitfiltpass(
                     r2value[voxel[0]] = voxel[3]
                     filtereddata[voxel[0], :] = voxel[7]
                     itemstotal += 1
-            elif ratiosonly:
+            elif coefficientsonly:
                 for voxel in data_out:
                     meanvalue[voxel[0]] = voxel[1]
                     rvalue[voxel[0]] = voxel[2]
@@ -240,7 +241,7 @@ def linfitfiltpass(
                     r2value[timepoint[0]] = timepoint[3]
                     filtereddata[:, timepoint[0]] = timepoint[7]
                     itemstotal += 1
-            elif ratiosonly:
+            elif coefficientsonly:
                 for timepoint in data_out:
                     meanvalue[timepoint[0]] = timepoint[1]
                     rvalue[timepoint[0]] = timepoint[2]
@@ -296,23 +297,41 @@ def linfitfiltpass(
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
-                    elif ratiosonly:
-                        (
-                            dummy,
-                            meanvalue[vox],
-                            rvalue[vox],
-                            r2value[vox],
-                            fitcoeff[vox],
-                            fitNorm[vox],
-                            dummy,
-                            dummy,
-                        ) = _procOneRegressionFitItem(
-                            vox,
-                            theevs[vox, :],
-                            thedata,
-                            rt_floatset=rt_floatset,
-                            rt_floattype=rt_floattype,
-                        )
+                    elif coefficientsonly:
+                        if voxelspecific:
+                            (
+                                dummy,
+                                meanvalue[vox],
+                                rvalue[vox],
+                                r2value[vox],
+                                fitcoeff[vox],
+                                fitNorm[vox],
+                                dummy,
+                                dummy,
+                            ) = _procOneRegressionFitItem(
+                                vox,
+                                theevs[vox, :],
+                                thedata,
+                                rt_floatset=rt_floatset,
+                                rt_floattype=rt_floattype,
+                            )
+                        else:
+                            (
+                                dummy,
+                                meanvalue[vox],
+                                rvalue[vox],
+                                r2value[vox],
+                                fitcoeff[vox],
+                                fitNorm[vox],
+                                dummy,
+                                dummy,
+                            ) = _procOneRegressionFitItem(
+                                vox,
+                                theevs,
+                                thedata,
+                                rt_floatset=rt_floatset,
+                                rt_floattype=rt_floattype,
+                            )
                     else:
                         (
                             dummy,
@@ -357,7 +376,7 @@ def linfitfiltpass(
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
-                    elif ratiosonly:
+                    elif coefficientsonly:
                         (
                             dummy,
                             meanvalue[timepoint],
