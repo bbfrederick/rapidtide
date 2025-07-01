@@ -1490,7 +1490,7 @@ def rapidtide_main(argparsingfunc):
     )
 
     # now do the arrays for delay refinement
-    if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
+    if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"] or (optiondict["similaritymetric"] == "riptide"):
         if optiondict["refinedelay"]:
             derivaxissize = np.max([2, optiondict["regressderivs"] + 1])
         else:
@@ -1551,6 +1551,13 @@ def rapidtide_main(argparsingfunc):
         thesize, theunit = tide_util.format_bytes(optiondict["totalRefineDelaybytes"])
         print(f"allocated {thesize:.3f} {theunit} {ramlocation} for delay refinement")
         tide_util.logmem("after derivative delay/sLFO filter array allocation")
+    else:
+        sLFOfitmean = None
+        rvalue = None
+        r2value = None
+        fitNorm = None
+        fitcoeff = None
+        lagtc = None
 
     # prepare for regressor refinement, if we're doing it
     if (
