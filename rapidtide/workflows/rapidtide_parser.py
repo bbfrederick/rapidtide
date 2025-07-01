@@ -782,10 +782,10 @@ def _get_parser():
         dest="similaritymetric",
         action="store",
         type=str,
-        choices=["correlation", "mutualinfo", "hybrid"],
+        choices=["correlation", "mutualinfo", "hybrid", "riptide"],
         help=(
             "Similarity metric for finding delay values.  "
-            'Choices are "correlation", "mutualinfo", and "hybrid". '
+            'Choices are "correlation", "mutualinfo", "hybrid", and "riptide". '
             f"Default is {DEFAULT_SIMILARITYMETRIC}."
         ),
         default=DEFAULT_SIMILARITYMETRIC,
@@ -1444,15 +1444,6 @@ def _get_parser():
     # Experimental options (not fully tested, may not work)
     experimental = parser.add_argument_group(
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
-    )
-    experimental.add_argument(
-        "--coarsedelaytype",
-        dest="coarsedelaytype",
-        action="store",
-        type=str,
-        choices=["simfunc", "linfit"],
-        help=("Method to generate coarse delay map. " f'Default is "{DEFAULT_COARSEDELAY_TYPE}".'),
-        default=DEFAULT_COARSEDELAY_TYPE,
     )
     output.add_argument(
         "--riptidestep",  # was -h
