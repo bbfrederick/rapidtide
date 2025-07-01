@@ -46,6 +46,7 @@ import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
+import rapidtide.workflows.fitDelayFuncMap as tide_fitDelayFuncMap
 import rapidtide.workflows.linfitDelayMap as tide_linfitDelayMap
 import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.refineRegressor as tide_refineRegressor
@@ -1928,9 +1929,9 @@ def rapidtide_main(argparsingfunc):
         optiondict["currentstage"] = f"precorrelation_pass{thepass}"
         tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
-        # step 1 - do the initial delay estimation
+        # Step 1a - do the initial delay estimation
         if optiondict["coarsedelaytype"] == "simfunc":
-            internaldespeckleincludemask = tide_simfuncDelayMap.simfuncDelay(
+            similaritytype = tide_simfuncDelayMap.simfuncDelay(
                 fmri_data_valid,
                 validsimcalcstart,
                 validsimcalcend,
@@ -1948,36 +1949,33 @@ def rapidtide_main(argparsingfunc):
                 outcorrarray,
                 validvoxels,
                 nativecorrshape,
-                nativespaceshape,
-                bidsbasedict,
-                numspatiallocs,
-                gaussout,
-                theinitialdelay,
-                windowout,
-                R2,
-                thesizes,
-                internalspaceshape,
-                numvalidspatiallocs,
                 theinputdata,
                 theheader,
-                theFitter,
-                fitmask,
-                lagtimes,
-                lagstrengths,
-                lagsigma,
-                failreason,
-                outmaparray,
                 lagmininpts,
                 lagmaxinpts,
                 thepass,
                 optiondict,
                 LGR,
                 TimingLGR,
-                rt_floatset=np.float64,
-                rt_floattype="float64",
+                similaritymetric=optiondict["similaritymetric"],
+                simcalcoffset=optiondict["simcalcoffset"],
+                echocancel=optiondict["echocancel"],
+                checkpoint=optiondict["checkpoint"],
+                mklthreads=optiondict["mklthreads"],
+                nprocs=optiondict["nprocs_calcsimilarity"],
+                alwaysmultiproc=optiondict["alwaysmultiproc"],
+                oversampfactor=optiondict["oversampfactor"],
+                interptype=optiondict["interptype"],
+                showprogressbar=optiondict["showprogressbar"],
+                chunksize=optiondict["mp_chunksize"],
+                rt_floatset=rt_floatset,
+                rt_floattype=rt_floattype,
+                threaddebug=optiondict["threaddebug"],
+                debug=optiondict["focaldebug"],
             )
+            fitcorrscale = trimmedcorrscale
         elif optiondict["coarsedelaytype"] == "linfit":
-            tide_linfitDelayMap.linfitDelay(
+            similaritytype = tide_linfitDelayMap.linfitDelay(
                 numvalidspatiallocs,
                 fmri_data_valid,
                 fitmask,
@@ -2006,7 +2004,7 @@ def rapidtide_main(argparsingfunc):
                 debug=optiondict["debug"],
             )
             optiondict["despeckle_passes"] = 0
-            internaldespeckleincludemask = None
+            fitcorrscale = riptidedelays
         else:
             print("unknown coarsedelay type")
             sys.exit(1)
@@ -2030,7 +2028,7 @@ def rapidtide_main(argparsingfunc):
                 cifti_hdr=theinputdata.cifti_hdr,
             )
 
-        # refine delay
+        # Step 1b - refine delay
         if optiondict["refinedelayeachpass"]:
             if optiondict["delayoffsetgausssigma"] < 0.0 and theinputdata.filetype != "text":
                 # set gausssigma automatically
@@ -2103,6 +2101,50 @@ def rapidtide_main(argparsingfunc):
                     rt_floattype=rt_floattype,
                     cifti_hdr=theinputdata.cifti_hdr,
                 )
+
+        # Step 2a - fit the delay function
+        internaldespeckleincludemask = tide_fitDelayFuncMap.fitDelayFunc(
+            fmri_data_valid,
+            validsimcalcstart,
+            validsimcalcend,
+            osvalidsimcalcstart,
+            osvalidsimcalcend,
+            initial_fmri_x,
+            os_fmri_x,
+            theMutualInformationator,
+            cleaned_referencetc,
+            corrout,
+            outputname,
+            validvoxels,
+            nativespaceshape,
+            bidsbasedict,
+            numspatiallocs,
+            gaussout,
+            theinitialdelay,
+            windowout,
+            R2,
+            thesizes,
+            internalspaceshape,
+            numvalidspatiallocs,
+            theinputdata,
+            theheader,
+            theFitter,
+            fitmask,
+            lagtimes,
+            lagstrengths,
+            lagsigma,
+            failreason,
+            outmaparray,
+            fitcorrscale,
+            similaritytype,
+            thepass,
+            optiondict,
+            LGR,
+            TimingLGR,
+            simplefit=(optiondict["coarsedelaytype"] == "linfit"),
+            rt_floatset=np.float64,
+            rt_floattype="float64",
+        )
 
         # Step 2d - make a rank order map
         timepercentile = (

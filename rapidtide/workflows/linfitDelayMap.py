@@ -16,8 +16,6 @@
 #   limitations under the License.
 #
 #
-import sys
-
 import numpy as np
 
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
@@ -113,8 +111,10 @@ def linfitDelay(
     rt_floatset=np.float64,
     rt_floattype="float64",
 ):
-    LGR.info(f"\n\nRIPTiDe calculation, pass {thepass}")
-    TimingLGR.info(f"RIPTiDe calculation start, pass {thepass}")
+    similaritytype = "RIPTiDe"
+
+    LGR.info(f"\n\n{similaritytype} calculation, pass {thepass}")
+    TimingLGR.info(f"{similaritytype} calculation start, pass {thepass}")
 
     if debug:
         print(f"{regressorset.shape=}")
@@ -150,7 +150,7 @@ def linfitDelay(
             debug=debug,
         )
 
-    # reenable mkl
+    # re-enable mkl
     tide_util.enablemkl(mklthreads)
 
     TimingLGR.info(
@@ -161,12 +161,5 @@ def linfitDelay(
         },
     )
 
-    for thevox in range(numvalidspatiallocs):
-        fitmask[thevox] = 1
-        if bipolar:
-            thismax = np.argmax(np.fabs(corrout[thevox, :]))
-        else:
-            thismax = np.argmax(corrout[thevox, :])
-        lagtimes[thevox] = delayvals[thismax]
-        lagstrengths[thevox] = corrout[thevox, thismax]
-        lagsigma[thevox] = 1.0
+
+    return similaritytype
