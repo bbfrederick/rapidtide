@@ -45,12 +45,12 @@ import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
+import rapidtide.workflows.calcSimFuncMap as tide_calcSimFuncMap
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
 import rapidtide.workflows.fitSimFuncMap as tide_fitSimFuncMap
 import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.refineRegressor as tide_refineRegressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
-import rapidtide.workflows.calcSimFuncMap as tide_calcSimFuncMap
 
 from .utils import setup_logger
 
