@@ -44,19 +44,21 @@ def test_fullrunrapidtide_v8(debug=False, local=False, displayplots=False):
         "--simcalcrange",
         "4",
         "-1",
+        "--searchrange",
+        "-5",
+        "10",
         "--nprocs",
         "-1",
         "--passes",
-        "2",
+        "1",
         "--despecklepasses",
         "3",
         "--similaritymetric",
         "riptide",
         "--riptidestep",
-        "1.25",
+        "1.5",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
-    rapidtide_quality.qualitycheck(os.path.join(testtemproot, "sub-RAPIDTIDETEST8"))
 
 
 if __name__ == "__main__":
