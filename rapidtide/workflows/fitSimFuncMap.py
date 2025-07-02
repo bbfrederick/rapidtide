@@ -22,9 +22,9 @@ from scipy import ndimage
 import rapidtide.io as tide_io
 import rapidtide.patchmatch as tide_patch
 import rapidtide.peakeval as tide_peakeval
+import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
-import rapidtide.resample as tide_resample
 
 
 def fitSimFunc(
