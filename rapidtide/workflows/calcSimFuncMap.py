@@ -202,16 +202,16 @@ def calcSimFunc(
     elif similaritymetric == "riptide":
         # do the linear fit to the comb of delayed regressors
         for thedelay in range(len(delayvals)):
-            print(f"Fitting delay {delayvals[thedelay]}")
+            print(f"Fitting delay {delayvals[thedelay]:.2f}")
             voxelsprocessed_cp = tide_linfitfiltpass.linfitfiltpass(
                 numvalidspatiallocs,
-                fmri_data_valid,
+                fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
                 0.0,
-                regressorset[thedelay, :],
+                regressorset[thedelay, validsimcalcstart : validsimcalcend + 1],
                 sLFOfitmean,
                 corrout[:, thedelay],
                 r2value,
-                corrout[:, thedelay],
+                fitcoeff,
                 fitNorm,
                 None,
                 None,

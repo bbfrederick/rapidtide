@@ -590,7 +590,7 @@ def dorefine(
                 sys.exit()
         LGR.info(
             f"Using {len(thefit.components_)} component(s), accounting for "
-            + f"{100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]}% of the variance"
+            + f"{100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]:.2f}% of the variance"
         )
         reduceddata = thefit.inverse_transform(thefit.transform(refinevoxels))
         if debug:

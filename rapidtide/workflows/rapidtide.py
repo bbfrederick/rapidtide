@@ -573,7 +573,7 @@ def rapidtide_main(argparsingfunc):
         savename = f"{outputname}_desc-processed_mask"
         tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, savename)
 
-    LGR.verbose(f"image threshval = {threshval}")
+    LGR.verbose(f"image threshval = {threshval:.2f}")
     validvoxels = np.where(corrmask > 0)[0]
     if optiondict["debug"]:
         print(f"{validvoxels.shape=}")
@@ -968,7 +968,7 @@ def rapidtide_main(argparsingfunc):
     )
     LGR.verbose("Input vector")
     LGR.verbose(f"length: {len(inputvec)}")
-    LGR.verbose(f"input freq: {inputfreq}")
+    LGR.verbose(f"input freq: {inputfreq:.2f}")
     LGR.verbose(f"input start time: {inputstarttime:.3f}")
 
     if not optiondict["useinitregressorref"]:
