@@ -2010,7 +2010,53 @@ def rapidtide_main(argparsingfunc):
                 cifti_hdr=theinputdata.cifti_hdr,
             )
 
-        # Step 1b - refine delay (optional)
+
+
+        # Step 2a - fit the delay function
+        internaldespeckleincludemask = tide_fitSimFuncMap.fitSimFunc(
+            fmri_data_valid,
+            validsimcalcstart,
+            validsimcalcend,
+            osvalidsimcalcstart,
+            osvalidsimcalcend,
+            initial_fmri_x,
+            os_fmri_x,
+            theMutualInformationator,
+            cleaned_referencetc,
+            corrout,
+            outputname,
+            validvoxels,
+            nativespaceshape,
+            bidsbasedict,
+            numspatiallocs,
+            gaussout,
+            theinitialdelay,
+            windowout,
+            R2,
+            thesizes,
+            internalspaceshape,
+            numvalidspatiallocs,
+            theinputdata,
+            theheader,
+            theFitter,
+            fitmask,
+            lagtimes,
+            lagstrengths,
+            lagsigma,
+            failreason,
+            outmaparray,
+            fitcorrscale,
+            similaritytype,
+            thepass,
+            optiondict,
+            LGR,
+            TimingLGR,
+            simplefit=(optiondict["similaritymetric"] == "riptide"),
+            rt_floatset=np.float64,
+            rt_floattype="float64",
+        )
+
+        # Step 2b - refine delay (optional)
         if optiondict["refinedelayeachpass"]:
             if optiondict["delayoffsetgausssigma"] < 0.0 and theinputdata.filetype != "text":
                 # set gausssigma automatically
@@ -2083,50 +2129,6 @@ def rapidtide_main(argparsingfunc):
                     rt_floattype=rt_floattype,
                     cifti_hdr=theinputdata.cifti_hdr,
                 )
-
-        # Step 2a - fit the delay function
-        internaldespeckleincludemask = tide_fitSimFuncMap.fitSimFunc(
-            fmri_data_valid,
-            validsimcalcstart,
-            validsimcalcend,
-            osvalidsimcalcstart,
-            osvalidsimcalcend,
-            initial_fmri_x,
-            os_fmri_x,
-            theMutualInformationator,
-            cleaned_referencetc,
-            corrout,
-            outputname,
-            validvoxels,
-            nativespaceshape,
-            bidsbasedict,
-            numspatiallocs,
-            gaussout,
-            theinitialdelay,
-            windowout,
-            R2,
-            thesizes,
-            internalspaceshape,
-            numvalidspatiallocs,
-            theinputdata,
-            theheader,
-            theFitter,
-            fitmask,
-            lagtimes,
-            lagstrengths,
-            lagsigma,
-            failreason,
-            outmaparray,
-            fitcorrscale,
-            similaritytype,
-            thepass,
-            optiondict,
-            LGR,
-            TimingLGR,
-            simplefit=(optiondict["similaritymetric"] == "riptide"),
-            rt_floatset=np.float64,
-            rt_floattype="float64",
-        )
 
         # Step 2b - make a rank order map
         timepercentile = (
