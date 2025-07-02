@@ -1,7 +1,10 @@
 # Release history
 
-## Version 3.0.9 (7/1/25)
-* (rapidtide) Added an alternative method for coarse delay estimation (set ``--coarsedelaytype linfit`` to select).  This uses a fit to a set of delayed regressors (actually, this is the original RIPTiDe method from ~2010).
+## Version 3.0.9 (7/2/25)
+* (rapidtide) Added an alternative method for coarse delay estimation (set ``--similaritymetric riptide`` to select).  This uses a fit to a set of delayed regressors (actually, this is the original RIPTiDe method from ~2010).
+* (rapidtide) Separated coarse delay estimation and similarity function fitting into two separate workflows (they were together in v3.0.8).
+* (rapidtide) Laid most of the groundwork for dynamically switching delay estimation methods and parameters between passes.
+* (package) Accepted several dependabot PRs.
 
 ## Version 3.0.8 (6/26/25)
 * (rapidtide) Fix https://github.com/bbfrederick/rapidtide/issues/213 (thanks to https://github.com/tomosumi for reporting the bug).
