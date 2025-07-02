@@ -20,10 +20,11 @@ import numpy as np
 
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
-import rapidtide.util as tide_util
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.makelaggedtcs as tide_makelagged
+import rapidtide.stats as tide_stats
+import rapidtide.util as tide_util
+
 
 def makeRIPTiDeRegressors(
     initial_fmri_x,
@@ -201,6 +202,7 @@ def calcSimFunc(
     elif similaritymetric == "riptide":
         # do the linear fit to the comb of delayed regressors
         for thedelay in range(len(delayvals)):
+            print(f"Fitting delay {delayvals[thedelay]}")
             voxelsprocessed_cp = tide_linfitfiltpass.linfitfiltpass(
                 numvalidspatiallocs,
                 fmri_data_valid,
