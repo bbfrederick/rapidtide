@@ -3,7 +3,7 @@
 rapidtide \
     --spatialfilt 2.5 \
     --nprocs -1 \
-    --searchrange -5 30 \
+    --searchrange -7.5 30 \
     --simcalcrange 50 -1 \
     --outputlevel more \
     --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
@@ -20,7 +20,7 @@ rapidtide \
 rapidtide \
     --spatialfilt 2.5 \
     --nprocs -1 \
-    --searchrange -5 30 \
+    --searchrange -7.5 30 \
     --simcalcrange 50 -1 \
     --outputlevel more \
     --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
@@ -37,4 +37,6 @@ rapidtide \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_riptide
 
-tidepool --uistyle big --dataset ../dst/sub-RAPIDTIDETEST_simfunc_ ../dst/sub-RAPIDTIDETEST_riptide_
+tidepool --uistyle big --dataset \
+    ../dst/sub-RAPIDTIDETEST_simfunc_ \
+    ../dst/sub-RAPIDTIDETEST_riptide_ &
