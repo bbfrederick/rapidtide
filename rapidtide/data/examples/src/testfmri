@@ -15,28 +15,28 @@ rapidtide \
     --refinedelayeachpass \
     --similaritymetric correlation \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_simfunc
+    ../dst/sub-RAPIDTIDETEST
 
-rapidtide \
-    --spatialfilt 2.5 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel more \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --nofitfilt \
-    --refinedelayeachpass \
-    --similaritymetric riptide \
-    --riptidestep 1.5 \
-    --ampthresh 0.0 \
-    --numnull 0 \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_riptide
-
-tidepool --uistyle big --dataset \
-    ../dst/sub-RAPIDTIDETEST_simfunc_ \
-    ../dst/sub-RAPIDTIDETEST_riptide_ &
+#rapidtide \
+    #--spatialfilt 2.5 \
+    #--nprocs -1 \
+    #--searchrange -7.5 30 \
+    #--simcalcrange 50 -1 \
+    #--outputlevel more \
+    #--graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
+    #--brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    #--whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
+    #--csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+    #--cleanrefined \
+    #--nofitfilt \
+    #--refinedelayeachpass \
+    #--similaritymetric riptide \
+    #--riptidestep 1.5 \
+    #--ampthresh 0.0 \
+    #--numnull 0 \
+    #sub-RAPIDTIDETEST.nii.gz \
+    #../dst/sub-RAPIDTIDETEST_riptide
+#
+#tidepool --uistyle big --dataset \
+    #../dst/sub-RAPIDTIDETEST_simfunc_ \
+    #../dst/sub-RAPIDTIDETEST_riptide_ &
