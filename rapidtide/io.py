@@ -1485,7 +1485,7 @@ def writebidstsv(
         reshapeddata = data
     if append:
         insamplerate, instarttime, incolumns, indata, incompressed, incolsource = readbidstsv(
-            outputfileroot + ".json", debug=debug
+            outputfileroot + ".json", neednotexist=True, debug=debug,
         )
         if debug:
             print("appending")
@@ -1732,7 +1732,7 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 
 
-def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
+def readbidstsv(inputfilename, colspec=None, warn=True, neednotexist=False, debug=False):
     r"""Read time series out of a BIDS tsv file
 
     Parameters
@@ -1899,11 +1899,13 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 columnsource,
             )
     else:
-        raise FileNotFoundError(f"file pair {inputfilename}(.json/.tsv[.gz]) does not exist")
-        return [None, None, None, None, None, None]
+        if neednotexist:
+            return [None, None, None, None, None, None]
+        else:
+            raise FileNotFoundError(f"file pair {thefileroot}(.json/.tsv[.gz]) does not exist")
 
 
-def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False):
+def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, neednotexist=False, debug=False):
     r"""
 
     Parameters
@@ -1917,7 +1919,7 @@ def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, debug=False)
 
     """
     samplerate, starttime, columns, data, compressed, colsource = readbidstsv(
-        inputfilename, debug=debug
+        inputfilename, neednotexist=neednotexist, debug=debug
     )
     if data is None:
         print("no valid datafile found")
