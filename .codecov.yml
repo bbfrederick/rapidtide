@@ -1,4 +1,5 @@
 codecov:
+  token: a7ddcddd-a83c-4bd0-8c91-b04765ece4d3
   notify:
     require_ci_to_pass: yes
 
