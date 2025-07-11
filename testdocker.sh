@@ -3,7 +3,7 @@
 DATADIR=/Users/frederic/code/rapidtide
 
 MYIPADDRESS=$(ifconfig en0 | grep 'inet ' | awk '{print $2}')
-VERSION=latest
+VERSION=latest-release
 
 # allow network connections in Xquartz Security settings
 xhost +
