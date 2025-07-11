@@ -16,6 +16,12 @@ omit =
     ../tidepoolTemplate_alt_qt6.py
     ../tidepoolTemplate_big.py
     ../tidepoolTemplate_big_qt6.py
+    ../workflows/tidepool.py
+    ../workflows/delayvar.py
+    ../workflows/variabilityizer.py
+    ../workflows/synthASL.py
+    ../workflows/proj2flow.py
+    ../workflows/adjustoffset.py
     ../notreadyforprimetime/*
 
 [report]
