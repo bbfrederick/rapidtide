@@ -1263,6 +1263,10 @@ def readlabelledtsv(inputfilename, compressed=False):
         theext = ".tsv.gz"
     else:
         theext = ".tsv"
+
+    if not os.path.isfile(inputfilename + theext):
+        raise FileNotFoundError(f"Labelled tsv file {inputfilename + theext} does not exist")
+
     df = pd.read_csv(inputfilename + theext, sep="\t", quotechar='"')
 
     # replace nans with 0
@@ -1290,6 +1294,9 @@ def readcsv(inputfilename, debug=False):
     NOTE:  If file does not exist or is not valid, return an empty dictionary
 
     """
+    if not os.path.isfile(inputfilename + ".csv"):
+        raise FileNotFoundError(f"csv file {inputfilename + ".csv"} does not exist")
+
     timeseriesdict = {}
 
     # Read the data in initially with no header
@@ -1341,6 +1348,9 @@ def readfslmat(inputfilename, debug=False):
     NOTE:  If file does not exist or is not valid, return an empty dictionary
 
     """
+    if not os.path.isfile(inputfilename + ".mat"):
+        raise FileNotFoundError(f"FSL mat file {inputfilename + ".mat"} does not exist")
+
     timeseriesdict = {}
 
     # Read the data in with no header
@@ -1364,8 +1374,7 @@ def readoptionsfile(inputfileroot):
         # options saved as text
         thedict = readdict(inputfileroot + ".txt")
     else:
-        print("no valid options file found")
-        return {}
+        raise FileNotFoundError(f"options file {inputfileroot}(.json/.txt) does not exist")
 
     # correct behavior for older options files
     try:
@@ -1890,7 +1899,7 @@ def readbidstsv(inputfilename, colspec=None, warn=True, debug=False):
                 columnsource,
             )
     else:
-        print("file pair does not exist")
+        raise FileNotFoundError(f"file pair {inputfilename}(.json/.tsv[.gz]) does not exist")
         return [None, None, None, None, None, None]
 
 

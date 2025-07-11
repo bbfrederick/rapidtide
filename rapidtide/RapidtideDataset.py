@@ -600,12 +600,15 @@ class RapidtideDataset:
                 if self.focusregressor is None:
                     self.focusregressor = thisregressor[0]
             else:
-                if self.verbose > 1:
-                    print(
-                        "file: ",
-                        self.fileroot + thisregressor[2],
-                        " does not exist - skipping...",
-                    )
+                if thisregressor[6]:
+                    raise FileNotFoundError(f"regressor file {self.fileroot + thisregressor[2]} does not exist")
+                else:
+                    if self.verbose > 1:
+                        print(
+                            "file: ",
+                            self.fileroot + thisregressor[2],
+                            " does not exist - skipping...",
+                        )
 
     def _loadfuncmaps(self):
         mapstoinvert = ["varChange"]
@@ -1047,6 +1050,7 @@ class RapidtideDataset:
                     self.inputfreq,
                     self.inputfreq,
                     self.inputstarttime,
+                    True,
                 ],
                 [
                     "postfilt",
@@ -1055,6 +1059,7 @@ class RapidtideDataset:
                     self.inputfreq,
                     self.inputfreq,
                     self.inputstarttime,
+                    True,
                 ],
                 [
                     "pass1",
@@ -1063,6 +1068,7 @@ class RapidtideDataset:
                     self.fmrifreq * self.oversampfactor,
                     self.fmrifreq,
                     0.0,
+                    True,
                 ],
                 [
                     "pass2",
@@ -1071,6 +1077,7 @@ class RapidtideDataset:
                     self.fmrifreq * self.oversampfactor,
                     self.fmrifreq,
                     0.0,
+                    False,
                 ],
                 [
                     "pass3",
@@ -1079,6 +1086,7 @@ class RapidtideDataset:
                     self.fmrifreq * self.oversampfactor,
                     self.fmrifreq,
                     0.0,
+                    False,
                 ],
                 [
                     "pass4",
@@ -1087,6 +1095,7 @@ class RapidtideDataset:
                     self.fmrifreq * self.oversampfactor,
                     self.fmrifreq,
                     0.0,
+                    False,
                 ],
             ]
         else:
@@ -1098,6 +1107,7 @@ class RapidtideDataset:
                     self.inputfreq,
                     self.inputfreq,
                     self.inputstarttime,
+                    True,
                 ],
                 [
                     "postfilt",
@@ -1106,6 +1116,7 @@ class RapidtideDataset:
                     self.inputfreq,
                     self.inputfreq,
                     self.inputstarttime,
+                    True,
                 ],
                 [
                     "pass1",
@@ -1114,6 +1125,7 @@ class RapidtideDataset:
                     self.fmrifreq * self.oversampfactor,
                     self.fmrifreq,
                     0.0,
+                    True,
                 ],
                 [
                     "pass2",
@@ -1122,6 +1134,7 @@ class RapidtideDataset:
                     self.fmrifreq * self.oversampfactor,
                     self.fmrifreq,
                     0.0,
+                    False,
                 ],
                 [
                     "pass3",
@@ -1130,6 +1143,7 @@ class RapidtideDataset:
                     self.fmrifreq * self.oversampfactor,
                     self.fmrifreq,
                     0.0,
+                    False,
                 ],
                 [
                     "pass4",
@@ -1138,6 +1152,7 @@ class RapidtideDataset:
                     self.fmrifreq * self.oversampfactor,
                     self.fmrifreq,
                     0.0,
+                    False,
                 ],
             ]
         self._loadregressors()
