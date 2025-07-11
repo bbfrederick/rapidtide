@@ -1295,7 +1295,7 @@ def readcsv(inputfilename, debug=False):
 
     """
     if not os.path.isfile(inputfilename + ".csv"):
-        raise FileNotFoundError(f"csv file {inputfilename + ".csv"} does not exist")
+        raise FileNotFoundError(f"csv file {inputfilename}.csv does not exist")
 
     timeseriesdict = {}
 
@@ -1349,7 +1349,7 @@ def readfslmat(inputfilename, debug=False):
 
     """
     if not os.path.isfile(inputfilename + ".mat"):
-        raise FileNotFoundError(f"FSL mat file {inputfilename + ".mat"} does not exist")
+        raise FileNotFoundError(f"FSL mat file {inputfilename}.mat does not exist")
 
     timeseriesdict = {}
 
