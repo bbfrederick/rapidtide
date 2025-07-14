@@ -6,23 +6,22 @@ sigterm = true
 source = .
 omit =
     __init__.py
-    ../__init__.py
-    ../scripts/__init__.py
-    ../OrthoImageItem.py
-    ../wiener2.py
-    ../tidepoolTemplate.py
-    ../tidepoolTemplate_qt6.py
-    ../tidepoolTemplate_alt.py
-    ../tidepoolTemplate_alt_qt6.py
-    ../tidepoolTemplate_big.py
-    ../tidepoolTemplate_big_qt6.py
-    ../workflows/tidepool.py
-    ../workflows/delayvar.py
-    ../workflows/variabilityizer.py
-    ../workflows/synthASL.py
-    ../workflows/proj2flow.py
-    ../workflows/adjustoffset.py
-    ../notreadyforprimetime/*
+    scripts/__init__.py
+    OrthoImageItem.py
+    wiener2.py
+    tidepoolTemplate.py
+    tidepoolTemplate_qt6.py
+    tidepoolTemplate_alt.py
+    tidepoolTemplate_alt_qt6.py
+    tidepoolTemplate_big.py
+    tidepoolTemplate_big_qt6.py
+    workflows/tidepool.py
+    workflows/delayvar.py
+    workflows/variabilityizer.py
+    workflows/synthASL.py
+    workflows/proj2flow.py
+    workflows/adjustoffset.py
+    notreadyforprimetime/*
 
 [report]
 exclude_lines = 
