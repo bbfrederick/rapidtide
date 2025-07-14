@@ -9,6 +9,7 @@ omit =
     scripts/__init__.py
     OrthoImageItem.py
     wiener2.py
+    fMRIData_class.py
     tidepoolTemplate.py
     tidepoolTemplate_qt6.py
     tidepoolTemplate_alt.py
