@@ -56,7 +56,7 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
         "--delaypatchthresh",
         "4.0",
     ]
-    #rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
     # now simulate data from maps
     print(testtemproot)
@@ -75,7 +75,7 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
         "5.0"
     ]
 
-    #pf.generic_init(rapidtide_simdata._get_parser, rapidtide_simdata.simdata, inputargs=inputargs)
+    pf.generic_init(rapidtide_simdata._get_parser, rapidtide_simdata.simdata, inputargs=inputargs)
 
     # run repeat rapidtide
     inputargs = [
