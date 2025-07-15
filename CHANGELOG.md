@@ -3,6 +3,7 @@
 ## Version 3.0.10 (7/11/25)
 * (tidepool) Do better checking on which required files exist so it's more clear why a dataset won't load.
 * (package) Adjusted coverage calculation.
+* (package) Added a test for data simulation.
 * (package) Accepted a dependabot PR.
 
 ## Version 3.0.9 (7/3/25)
