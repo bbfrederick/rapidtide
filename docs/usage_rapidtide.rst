@@ -323,6 +323,10 @@ process is linear, that's cool - the data you get out is the data you put in, ju
 some reason you *do* want to use the data that rapidtide has abused, simply use the ``--preservefiltering`` option,
 but I'd recommend you don't do that.
 
+TL;DR: ALL the filtering rapidtide does to the input data is discarded before the final filtering step.  The ONLY  filtering
+that is done to the lfoFilterCleaned dataset is removal of the moving sLFO regressor.  There is NO other temporal, spatial,
+or confound filtering done to the final output data.
+
 Working with standard fMRI packages
 """""""""""""""""""""""""""""""""""
 **FSL** - At the time I first developed rapidtide, I was using FSL almost exclusively, so some of the assumptions
