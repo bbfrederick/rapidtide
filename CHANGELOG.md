@@ -1,7 +1,8 @@
 # Release history
 
-## Version 3.0.10 (7/11/25)
+## Version 3.0.10 (7/28/25)
 * (tidepool) Do better checking on which required files exist so it's more clear why a dataset won't load.
+* (docs) Clarified that the sLFO filtered output of rapidtide has NO other filtering applied to is - the temporal, spatial, and confound filtering is all discarded prior to the final sLFO filtering step.
 * (package) Adjusted coverage calculation.
 * (package) Added a test for data simulation.
 * (package) Accepted a dependabot PR.
