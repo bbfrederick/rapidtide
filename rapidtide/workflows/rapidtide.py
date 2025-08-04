@@ -114,6 +114,10 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
     )
     return outputtimecourse, echofit, echoR2
 
+def setpassoptions(passdict, optiondict):
+    for key, value in passdict.items():
+        optiondict[key] = value
+
 
 def rapidtide_main(argparsingfunc):
     optiondict, theprefilter = argparsingfunc
@@ -1490,7 +1494,12 @@ def rapidtide_main(argparsingfunc):
     )
 
     # now do the arrays for delay refinement
-    if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"] or (optiondict["similaritymetric"] == "riptide"):
+    if (
+        optiondict["dolinfitfilt"]
+        or optiondict["docvrmap"]
+        or optiondict["refinedelay"]
+        or (optiondict["similaritymetric"] == "riptide")
+    ):
         if optiondict["refinedelay"]:
             derivaxissize = np.max([2, optiondict["regressderivs"] + 1])
         else:
@@ -1718,6 +1727,19 @@ def rapidtide_main(argparsingfunc):
     optiondict["currentstage"] = "preprocessingdone"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
 
+    # set up the pass options array
+    optiondict["passoptions"] = []
+    """optiondict["passoptions"].append(
+        {
+            "similaritymetric": "riptide"
+        }
+    )
+    optiondict["passoptions"].append(
+        {
+            "similaritymetric": optiondict["similaritymetric"]
+        }
+    )"""
+
     ####################################################
     #  Start the iterative fit and refinement
     ####################################################
@@ -1729,6 +1751,10 @@ def rapidtide_main(argparsingfunc):
         if optiondict["passes"] > 1:
             LGR.info("\n\n*********************")
             LGR.info(f"Pass number {thepass}")
+
+        # fetch the pass options
+        if len(optiondict["passoptions"]) >= thepass:
+            setpassoptions(optiondict["passoptions"][thepass - 1], optiondict)
 
         referencetc = tide_math.corrnormalize(
             resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1],
@@ -1788,13 +1814,6 @@ def rapidtide_main(argparsingfunc):
             LGR.info(f"\n\nSignificance estimation, pass {thepass}")
             if optiondict["checkpoint"]:
                 # bidsify
-                """tide_io.writebidstsv(
-                    f"{outputname}_desc-movingregressor_timeseries",
-                    tide_math.stdnormalize(resampnonosref_y),
-                    1.0 / fmritr,
-                    columns=["pass1"],
-                    append=False,
-                )"""
                 tide_io.writenpvecs(
                     cleaned_referencetc,
                     f"{outputname}_cleanedreference_pass" + str(thepass) + ".txt",
@@ -2009,8 +2028,6 @@ def rapidtide_main(argparsingfunc):
                 rt_floattype=rt_floattype,
                 cifti_hdr=theinputdata.cifti_hdr,
             )
-
-
 
         # Step 2a - fit the delay function
         internaldespeckleincludemask = tide_fitSimFuncMap.fitSimFunc(
