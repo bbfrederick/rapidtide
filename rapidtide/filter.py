@@ -73,10 +73,11 @@ def disablenumba():
 
 
 @conditionaljit()
-def padvec(inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debug=False):
+def padvec(inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
     r"""Returns a padded copy of the input data; padlen points of
     filled data are prepended and appended to the input data to reduce
-    end effects when the data is then filtered.  Filling can be "zero", "reflect", "cyclic", "constant", or "constant+".
+    end effects when the data is then filtered.  Filling can be "zero", "reflect", "cyclic", "constant",
+    or "constant+".
 
     Parameters
     ----------
@@ -91,12 +92,9 @@ def padvec(inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debu
     avlen : int, optional
         The number of points to average when doing "constant+" padding.  Default is 20.
 
-    cyclic : bool, optional
-        If True, pad by wrapping the data in a cyclic manner rather than reflecting at the ends
-        :param cyclic:
-
     padtype : str, optional
-        If True, pad by wrapping the data in a cyclic manner rather than reflecting at the ends
+        Method for padding data on the ends of the vector.  Options are "reflect", "zero", "cyclic",
+        "constant", or "constant+".  Default is "reflect".
         :param padtype:
 
     Returns
@@ -106,66 +104,48 @@ def padvec(inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debu
 
     """
     if debug:
-        print(
-            "padvec: padlen=",
-            padlen,
-            "avlen=",
-            avlen,
-            ", cyclic=",
-            cyclic,
-            ", padtype=",
-            padtype,
-            ", len(inputdata)=",
-            len(inputdata),
-        )
+        print("padvec: padlen=", padlen, ", avlen=", avlen, ", padtype=", padtype, "len(inputdata)=", len(inputdata))
     if padlen > len(inputdata):
-        raise RuntimeError(
-            "ERROR: padlen (",
-            padlen,
-            ") is greater than input data length (",
-            len(inputdata),
-            ")",
-        )
+        raise RuntimeError(f"ERROR: padlen ({padlen}) is greater than input data length ({len(inputdata)})")
     if avlen > padlen:
         avlen = padlen
 
     inputdtype = inputdata.dtype
     if padlen > 0:
-        if cyclic:
+        if padtype == "reflect":
+            return np.concatenate(
+                (inputdata[::-1][-padlen:], inputdata, inputdata[::-1][0:padlen])
+            )
+        elif padtype == "zero":
+            return np.concatenate(
+                (
+                    np.zeros((padlen), dtype=inputdtype),
+                    inputdata,
+                    np.zeros((padlen), dtype=inputdtype),
+                )
+            )
+        elif padtype == "cyclic":
             return np.concatenate((inputdata[-padlen:], inputdata, inputdata[0:padlen]))
+        elif padtype == "constant":
+            return np.concatenate(
+                (
+                    inputdata[0] * np.ones((padlen), dtype=inputdtype),
+                    inputdata,
+                    inputdata[-1] * np.ones((padlen), dtype=inputdtype),
+                )
+            )
+        elif padtype == "constant+":
+            startval = np.mean(inputdata[0:avlen])
+            endval = np.mean(inputdata[-avlen:])
+            return np.concatenate(
+                (
+                    (startval * np.ones((padlen), dtype=inputdtype)).astype(inputdtype),
+                    inputdata,
+                    (endval * np.ones((padlen), dtype=inputdtype)).astype(inputdtype),
+                )
+            )
         else:
-            if padtype == "reflect":
-                return np.concatenate(
-                    (inputdata[::-1][-padlen:], inputdata, inputdata[::-1][0:padlen])
-                )
-            elif padtype == "zero":
-                return np.concatenate(
-                    (
-                        np.zeros((padlen), dtype=inputdtype),
-                        inputdata,
-                        np.zeros((padlen), dtype=inputdtype),
-                    )
-                )
-            elif padtype == "constant":
-                return np.concatenate(
-                    (
-                        inputdata[0] * np.ones((padlen), dtype=inputdtype),
-                        inputdata,
-                        inputdata[-1] * np.ones((padlen), dtype=inputdtype),
-                    )
-                )
-            elif padtype == "constant+":
-                startval = np.mean(inputdata[0:avlen])
-                endval = np.mean(inputdata[-avlen:])
-                return np.concatenate(
-                    (
-                        (startval * np.ones((padlen), dtype=inputdtype)).astype(inputdtype),
-                        inputdata,
-                        (endval * np.ones((padlen), dtype=inputdtype)).astype(inputdtype),
-                    )
-                )
-            else:
-                raise ValueError("Padtype must be one of 'reflect', 'zero', or 'constant'")
+            raise ValueError("Padtype must be one of 'reflect', 'zero', 'cyclic', 'constant', or 'constant+'.")
     else:
         return inputdata
 
@@ -240,7 +220,6 @@ def dolpfiltfilt(
     order,
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -299,7 +278,7 @@ def dolpfiltfilt(
             b,
             a,
             padvec(
-                inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+                inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
             ),
         ).real,
         padlen=padlen,
@@ -314,7 +293,6 @@ def dohpfiltfilt(
     order,
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -372,7 +350,7 @@ def dohpfiltfilt(
             b,
             a,
             padvec(
-                inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+                inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
             ),
         ).real,
         padlen=padlen,
@@ -388,7 +366,6 @@ def dobpfiltfilt(
     order,
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -453,7 +430,7 @@ def dobpfiltfilt(
             b,
             a,
             padvec(
-                inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+                inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
             ),
         ).real,
         padlen=padlen,
@@ -525,7 +502,7 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
 
 # @conditionaljit()
 def dolpfftfilt(
-    Fs, upperpass, inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debug=False
+    Fs, upperpass, inputdata, padlen=20, avlen=20, padtype="reflect", debug=False
 ):
     r"""Performs an FFT brickwall lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -562,7 +539,7 @@ def dolpfftfilt(
         The filtered data
     """
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlpfftfunc(Fs, upperpass, padinputdata, debug=debug)
@@ -572,7 +549,7 @@ def dolpfftfilt(
 
 # @conditionaljit()
 def dohpfftfilt(
-    Fs, lowerpass, inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debug=False
+    Fs, lowerpass, inputdata, padlen=20, avlen=20, padtype="reflect", debug=False
 ):
     r"""Performs an FFT brickwall highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
@@ -609,7 +586,7 @@ def dohpfftfilt(
         The filtered data
     """
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = 1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)
@@ -625,7 +602,6 @@ def dobpfftfilt(
     inputdata,
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -668,7 +644,7 @@ def dobpfftfilt(
         The filtered data
     """
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlpfftfunc(Fs, upperpass, padinputdata, debug=debug) * (
@@ -826,7 +802,6 @@ def dolptransfuncfilt(
     type="brickwall",
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -865,7 +840,7 @@ def dolptransfuncfilt(
         The filtered data
     """
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptransfunc(
@@ -894,7 +869,6 @@ def dohptransfuncfilt(
     type="brickwall",
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -939,7 +913,7 @@ def dohptransfuncfilt(
     if lowerstop is None:
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptransfunc(
@@ -970,7 +944,6 @@ def dobptransfuncfilt(
     type="brickwall",
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -1015,7 +988,7 @@ def dobptransfuncfilt(
     if lowerstop is None:
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptransfunc(
@@ -1052,7 +1025,6 @@ def dolptrapfftfilt(
     inputdata,
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -1095,7 +1067,7 @@ def dolptrapfftfilt(
         The filtered data
     """
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug)
@@ -1111,7 +1083,6 @@ def dohptrapfftfilt(
     inputdata,
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -1154,7 +1125,7 @@ def dohptrapfftfilt(
         The filtered data
     """
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = 1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)
@@ -1172,7 +1143,6 @@ def dobptrapfftfilt(
     inputdata,
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -1223,7 +1193,7 @@ def dobptrapfftfilt(
         The filtered data
     """
     padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     inputdata_trans = fftpack.fft(padinputdata)
     if debug:
@@ -1428,7 +1398,7 @@ def savgolsmooth(data, smoothlen=101, polyorder=3):
 
 
 def csdfilter(
-    obsdata, commondata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debug=False
+    obsdata, commondata, padlen=20, avlen=20, padtype="reflect", debug=False
 ):
     r"""Cross spectral density filter - makes a filter transfer function that preserves common frequencies.
 
@@ -1456,10 +1426,10 @@ def csdfilter(
 
     """
     padobsdata = padvec(
-        obsdata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        obsdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     padcommondata = padvec(
-        commondata, padlen=padlen, avlen=avlen, cyclic=cyclic, padtype=padtype, debug=debug
+        commondata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
     )
     obsdata_trans = fftpack.fft(padobsdata)
     transferfunc = np.sqrt(np.abs(fftpack.fft(padobsdata) * np.conj(fftpack.fft(padcommondata))))
@@ -1479,7 +1449,6 @@ def arb_pass(
     butterorder=6,
     padlen=20,
     avlen=20,
-    cyclic=False,
     padtype="reflect",
     debug=False,
 ):
@@ -1545,7 +1514,6 @@ def arb_pass(
                 butterorder,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=False,
                 padtype=padtype,
                 debug=debug,
             )
@@ -1559,7 +1527,6 @@ def arb_pass(
                 type=transferfunc,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=cyclic,
                 padtype=padtype,
                 debug=debug,
             )
@@ -1573,7 +1540,6 @@ def arb_pass(
                 butterorder,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=False,
                 padtype=padtype,
                 debug=debug,
             )
@@ -1586,7 +1552,6 @@ def arb_pass(
                 type=transferfunc,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=cyclic,
                 padtype=padtype,
                 debug=debug,
             )
@@ -1603,14 +1568,12 @@ def arb_pass(
                     butterorder,
                     padlen=padlen,
                     avlen=avlen,
-                    cyclic=False,
                     padtype=padtype,
                     debug=debug,
                 ),
                 butterorder,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=False,
                 padtype=padtype,
                 debug=debug,
             )
@@ -1625,7 +1588,6 @@ def arb_pass(
                 type=transferfunc,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=cyclic,
                 padtype=padtype,
                 debug=debug,
             )
@@ -1735,7 +1697,6 @@ class NoncausalFilter:
         butterworthorder=6,
         correctfreq=True,
         padtime=30.0,
-        cyclic=False,
         padtype="reflect",
         debug=False,
     ):
@@ -1751,8 +1712,6 @@ class NoncausalFilter:
             Fix pass frequencies that are impossible.  Default is True.
         padtime: float, optional
             Amount of time to end pad to reduce edge effects.  Default is 30.0 seconds
-        cyclic : boolean, optional
-            If True, pad vectors cyclicly rather than reflecting data around the ends
         padtype : str, optional
             Choice of "reflect", "zero", or "constant".  Default is "reflect".
         debug: boolean, optional
@@ -1805,7 +1764,6 @@ class NoncausalFilter:
         self.butterworthorder = butterworthorder
         self.correctfreq = correctfreq
         self.padtime = padtime
-        self.cyclic = cyclic
         self.padtype = padtype
         self.debug = debug
 
@@ -1882,12 +1840,6 @@ class NoncausalFilter:
 
     def getpadtime(self):
         return self.padtime
-
-    def setcyclic(self, cyclic):
-        self.cyclic = cyclic
-
-    def getcyclic(self):
-        return self.cyclic
 
     def setpadtype(self, padtype):
         self.padtype = padtype
@@ -2059,7 +2011,6 @@ class NoncausalFilter:
             print("padtime=", self.padtime)
             print("padlen=", padlen)
             print("avlen=", avlen)
-            print("cyclic=", self.cyclic)
             print("padtype=", self.padtype)
 
         # now do the actual filtering
@@ -2076,7 +2027,6 @@ class NoncausalFilter:
                 transferfunc=self.transferfunc,
                 butterorder=self.butterworthorder,
                 padlen=padlen,
-                cyclic=self.cyclic,
                 padtype=self.padtype,
                 debug=self.debug,
             )
@@ -2104,7 +2054,6 @@ class NoncausalFilter:
                 butterorder=self.butterworthorder,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=self.cyclic,
                 padtype=self.padtype,
                 debug=self.debug,
             )
@@ -2132,7 +2081,6 @@ class NoncausalFilter:
                 butterorder=self.butterworthorder,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=self.cyclic,
                 padtype=self.padtype,
                 debug=self.debug,
             )
@@ -2148,7 +2096,6 @@ class NoncausalFilter:
                 butterorder=self.butterworthorder,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=self.cyclic,
                 padtype=self.padtype,
                 debug=self.debug,
             )
@@ -2164,7 +2111,6 @@ class NoncausalFilter:
                 butterorder=self.butterworthorder,
                 padlen=padlen,
                 avlen=avlen,
-                cyclic=self.cyclic,
                 padtype=self.padtype,
                 debug=self.debug,
             )

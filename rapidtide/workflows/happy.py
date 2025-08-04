@@ -1421,7 +1421,7 @@ def happy_main(argparsingfunc):
         # make a lowpass filter for the projected data. Limit frequency to 3 cycles per 2pi (1/6th Fs)
         phaseFs = 1.0 / phasestep
         phaseFc = phaseFs / 6.0
-        appsmoothingfilter = tide_filt.NoncausalFilter("arb", cyclic=True, padtime=0.0)
+        appsmoothingfilter = tide_filt.NoncausalFilter("arb", padtime=0.0)
         appsmoothingfilter.setfreqs(0.0, 0.0, phaseFc, phaseFc)
 
         # setup for aliased correlation if we're going to do it
