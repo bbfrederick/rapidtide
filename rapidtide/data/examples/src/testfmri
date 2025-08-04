@@ -15,7 +15,7 @@ rapidtide \
     --refinedelayeachpass \
     --similaritymetric correlation \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+    ../dst/sub-RAPIDTIDETEST_flexipass
 
 #rapidtide \
     #--spatialfilt 2.5 \
