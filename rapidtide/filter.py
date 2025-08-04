@@ -75,8 +75,8 @@ def disablenumba():
 @conditionaljit()
 def padvec(inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debug=False):
     r"""Returns a padded copy of the input data; padlen points of
-    reflected data are prepended and appended to the input data to reduce
-    end effects when the data is then filtered.
+    filled data are prepended and appended to the input data to reduce
+    end effects when the data is then filtered.  Filling can be "zero", "reflect", "cyclic", "constant", or "constant+".
 
     Parameters
     ----------
@@ -85,8 +85,11 @@ def padvec(inputdata, padlen=20, avlen=20, cyclic=False, padtype="reflect", debu
         :param inputdata:
 
     padlen : int, optional
-        The number of points to remove from each end.  Default is 20.
+        The number of points to add to each end.  Default is 20.
         :param padlen:
+        
+    avlen : int, optional
+        The number of points to average when doing "constant+" padding.  Default is 20.
 
     cyclic : bool, optional
         If True, pad by wrapping the data in a cyclic manner rather than reflecting at the ends
