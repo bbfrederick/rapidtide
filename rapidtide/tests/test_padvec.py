@@ -63,6 +63,23 @@ def maketestwaves(timeaxis):
             "waveform": 1.0 * scratch,
         }
     )
+
+    scratch = np.exp(-timeaxis / timeaxis[2])
+    testwaves.append(
+        {
+            "name": "damped exponential regressor",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 1.0 * scratch,
+        }
+    )
+
+    testwaves.append(
+        {
+            "name": "white noise plus exponential",
+            "timeaxis": 1.0 * timeaxis,
+            "waveform": 0.3 * np.random.normal(size=tclen) + scratch,
+        }
+    )
     return testwaves
 
 
@@ -89,7 +106,7 @@ def eval_padvecprops(
     nperseg = np.min([tclen, 2048])
     f, dummy = sp.signal.welch(overall, fs=1.0 / sampletime, nperseg=nperseg)
 
-    padtypelist = ["reflect", "zero", "constant", "constant+"]
+    padtypelist = ["reflect", "zero", "cyclic", "constant", "constant+"]
     transferfunclist = ["brickwall", "trapezoidal", "butterworth"]
 
     # construct some test waveforms for end effects
@@ -184,6 +201,7 @@ def eval_padvecprops(
                     legend.append(thewave["name"] + ": " + thefilter["name"])
                     offset += 1.25
                 plt.legend(legend)
+                plt.title(padtype)
                 plt.show()
 
 

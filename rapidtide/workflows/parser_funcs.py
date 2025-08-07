@@ -444,7 +444,7 @@ def addfilteropts(
             dest="ncfiltpadtype",
             action="store",
             type=str,
-            choices=["reflect", "zero", "constant", "constant+"],
+            choices=["reflect", "zero", "cyclic", "constant", "constant+"],
             help=(
                 f"The type of padding at each end of a "
                 "timecourse to be filtered "
