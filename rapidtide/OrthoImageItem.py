@@ -33,12 +33,17 @@ except ImportError:
     PILexists = False
 
 try:
-    from PyQt6.QtCore import QT_VERSION_STR
+    from PySide6.QtCore import QT_VERSION_STR
 except ImportError:
-    pyqtversion = 5
+    try:
+        from PyQt6.QtCore import QT_VERSION_STR
+    except ImportError:
+        pyqtbinding = "pyqt5"
+    else:
+        pyqtbinding = "pyqt6"
 else:
-    pyqtversion = 6
-print(f"using {pyqtversion=}")
+    pyqtbinding = "pyside6"
+print(f"using {pyqtbinding=}")
 
 
 def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
@@ -520,10 +525,14 @@ class OrthoImageItem(QtWidgets.QWidget):
         if self.verbose > 1:
             print("saving main window")
         mydialog = QtWidgets.QFileDialog()
-        if pyqtversion == 5:
+        if pyqtbinding == "pyqt5":
             options = mydialog.Options()
-        else:
+        elif pyqtbinding == "pyqt6":
             options = mydialog.options()
+        elif pyqtbinding == "pyside6":
+            options = mydialog.options()
+        else:
+            print("unsupported qt binding")
         thedir = str(
             mydialog.getExistingDirectory(options=options, caption="Image output directory")
         )
