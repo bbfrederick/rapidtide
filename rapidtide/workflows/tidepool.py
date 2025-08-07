@@ -41,9 +41,9 @@ from rapidtide.workflows.atlasaverage import summarizevoxels
 try:
     from PyQt6.QtCore import QT_VERSION_STR
 except ImportError:
-    pyqtversion = 5
+    pyqtversion = "pyqt5"
 else:
-    pyqtversion = 6
+    pyqtversion = "pyqt6"
 print(f"using {pyqtversion=}")
 
 os.environ["QT_MAC_WANTS_LAYER"] = "1"
@@ -184,10 +184,12 @@ def updateFileMenu():
     global fileMenu, sel_open
     global sel_files
 
-    if pyqtversion == 5:
+    if pyqtversion == "pyqt5":
         qactionfunc = QtWidgets.QAction
-    else:
+    elif pyqtversion == "pyqt6":
         qactionfunc = QtGui.QAction
+    else:
+        print("unsupported")
 
     # scrub file menu
     if sel_files is not None:
@@ -214,10 +216,12 @@ def datasetPicker():
     global verbosity
 
     mydialog = QtWidgets.QFileDialog()
-    if pyqtversion == 5:
+    if pyqtversion == "pyqt5":
         options = mydialog.Options()
-    else:
+    elif pyqtversion == "pyqt6":
         options = mydialog.options()
+    else:
+        print("unsupported")
     lagfilename = mydialog.getOpenFileName(
         options=options,
         filter="Lag time files (*_lagtimes.nii.gz *_desc-maxtime_map.nii.gz)",
@@ -591,8 +595,12 @@ class xyztlocation(QtWidgets.QWidget):
 
 
 def logStatus(thetextbox, thetext):
-    if pyqtversion == 5:
+    if pyqtversion == "pyqt5":
         thetextbox.moveCursor(QtGui.QTextCursor.End)
+    elif pyqtversion == "pyqt6":
+        pass
+    else:
+        print("unsupported")
     thetextbox.insertPlainText(thetext + "\n")
     sb = thetextbox.verticalScrollBar()
     sb.setValue(sb.maximum())
@@ -1773,20 +1781,22 @@ def tidepool(args):
     uiinitialized = False
     sel_files = None
 
-    if pyqtversion == 5:
+    if pyqtversion == "pyqt5":
         if args.uistyle == "normal":
             import rapidtide.tidepoolTemplate_alt as uiTemplate
         elif args.uistyle == "big":
             import rapidtide.tidepoolTemplate_big as uiTemplate
         else:
             import rapidtide.tidepoolTemplate as uiTemplate
-    else:
+    elif pyqtversion == "pyqt6":
         if args.uistyle == "normal":
             import rapidtide.tidepoolTemplate_alt_qt6 as uiTemplate
         elif args.uistyle == "big":
             import rapidtide.tidepoolTemplate_big_qt6 as uiTemplate
         else:
             import rapidtide.tidepoolTemplate_qt6 as uiTemplate
+    else:
+        print("unsupported")
 
     verbosity = args.verbose
     print(f"verbosity: {verbosity}")
@@ -1839,10 +1849,12 @@ def tidepool(args):
     print("creating menu bar")
     menuBar = win.menuBar()
     fileMenu = menuBar.addMenu("File")
-    if pyqtversion == 5:
+    if pyqtversion == "pyqt5":
         qactionfunc = QtWidgets.QAction
-    else:
+    elif pyqtversion == "pyqt6":
         qactionfunc = QtGui.QAction
+    else:
+        print("unsupported")
     sel_open = qactionfunc("Add dataset...", win)
     sel_open.triggered.connect(datasetPicker)
     fileMenu.addAction(sel_open)
@@ -2196,10 +2208,12 @@ def tidepool(args):
 
     # define things for the popup mask menu
     popMaskMenu = QtWidgets.QMenu(win)
-    if pyqtversion == 5:
+    if pyqtversion == "pyqt5":
         qactionfunc = QtWidgets.QAction
-    else:
+    elif pyqtversion == "pyqt6":
         qactionfunc = QtGui.QAction
+    else:
+        print("unsupported")
     sel_nomask = qactionfunc("No mask", win)
     sel_lagmask = qactionfunc("Valid fit", win)
     sel_brainmask = qactionfunc("Externally provided brain mask", win)
