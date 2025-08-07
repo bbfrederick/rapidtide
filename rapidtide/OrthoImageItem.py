@@ -33,7 +33,7 @@ except ImportError:
     PILexists = False
 
 try:
-    from PySide6.QtCore import QT_VERSION_STR
+    from PySide6.QtCore import __version__
 except ImportError:
     try:
         from PyQt6.QtCore import QT_VERSION_STR
