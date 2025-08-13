@@ -337,18 +337,34 @@ def trendgen(thexvals, thefitcoffs, demean):
 
 # @conditionaljit()
 def detrend(inputdata, order=1, demean=False):
-    """
+    """Estimates and removes a polynomial trend timecourse.
 
-    Parameters
-    ----------
-    inputdata
-    order
-    demean
+       This routine calculates a polynomial defined by a set of coefficients
+       at specified time points to create a trend timecourse, and subtracts it
+       from the input signal. Optionally, it can remove the mean of the input
+       data as well.
 
-    Returns
-    -------
+       Parameters
+       ----------
+       thetimepoints : numpy.ndarray
+           A 1D NumPy array of time points at which to evaluate the polynomial.
+       thecoffs : list or numpy.ndarray
+           A list or 1D NumPy array of polynomial coefficients, typically in
+           decreasing order of power (e.g., `[a, b, c]` for `ax^2 + bx + c`).
+       demean : bool
+           If True, the mean of the generated trend timecourse will be subtracted,
+           effectively centering the trend around zero.
 
-    """
+       Returns
+       -------
+       numpy.ndarray
+           A 1D NumPy array representing the generated polynomial trend timecourse.
+
+       Notes
+       -----
+       - This function utilizes `numpy.polyval` to evaluate the polynomial.
+       - Requires the `numpy` library.
+       """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
         thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]
@@ -1053,20 +1069,43 @@ def sincfit(height, loc, width, baseline, xvals, yvals):
 
 
 def gaussfit(height, loc, width, xvals, yvals):
-    """
+    """Performs a non-linear least squares fit of a Gaussian function to data.
 
-    Parameters
-    ----------
-    height
-    loc
-    width
-    xvals
-    yvals
+       This routine uses `scipy.optimize.leastsq` to find the optimal parameters
+       (height, location, and width) that best describe a Gaussian curve fitted
+       to the provided `yvals` data against `xvals`. It requires an external
+       `gaussresiduals` function to compute the residuals.
 
-    Returns
-    -------
+       Parameters
+       ----------
+       height : float
+           Initial guess for the amplitude or peak height of the Gaussian.
+       loc : float
+           Initial guess for the mean (center) of the Gaussian.
+       width : float
+           Initial guess for the standard deviation (width) of the Gaussian.
+       xvals : numpy.ndarray or list
+           The independent variable data points.
+       yvals : numpy.ndarray or list
+           The dependent variable data points to which the Gaussian will be fitted.
 
-    """
+       Returns
+       -------
+       tuple
+           A tuple containing the fitted parameters:
+           - float: The fitted height of the Gaussian.
+           - float: The fitted location (mean) of the Gaussian.
+           - float: The fitted width (standard deviation) of the Gaussian.
+
+       Notes
+       -----
+       - This function relies on an external function `gaussresiduals(params, y, x)`
+         which should calculate the difference between the observed `y` values and
+         the Gaussian function evaluated at `x` with the given `params` (height, loc, width).
+       - `scipy.optimize.leastsq` is used for the optimization, which requires
+         `scipy` and `numpy` to be imported (e.g., `import scipy.optimize as sp`
+         and `import numpy as np`).
+       """
     plsq, dummy = sp.optimize.leastsq(
         gaussresiduals, np.array([height, loc, width]), args=(yvals, xvals), maxfev=5000
     )
@@ -1074,6 +1113,32 @@ def gaussfit(height, loc, width, xvals, yvals):
 
 
 def gram_schmidt(theregressors, debug=False):
+    r"""Performs Gram-Schmidt orthogonalization on a set of vectors.
+
+    This routine takes a set of input vectors (rows of a 2D array) and
+    transforms them into an orthonormal basis using the Gram-Schmidt process.
+    It ensures that the resulting vectors are mutually orthogonal and
+    have a unit norm. Linearly dependent vectors are effectively skipped
+    if their orthogonal component is negligible.
+
+    Args:
+        theregressors (numpy.ndarray): A 2D NumPy array where each row
+            represents a vector to be orthogonalized.
+        debug (bool, optional): If True, prints debug information about
+            input and output dimensions. Defaults to False.
+
+    Returns:
+        numpy.ndarray: A 2D NumPy array representing the orthonormal basis.
+            Each row is an orthonormal vector. The number of rows may be
+            less than the input if some vectors were linearly dependent.
+
+    Notes:
+        - The function normalizes each orthogonalized vector to unit length.
+        - A small tolerance (1e-10) is used to check if a vector's orthogonal
+          component is effectively zero, indicating linear dependence.
+        - Requires the `numpy` library for array operations and linear algebra.
+    """
+
     if debug:
         print("gram_schmidt, input dimensions:", theregressors.shape)
     basis = []
@@ -1088,6 +1153,37 @@ def gram_schmidt(theregressors, debug=False):
 
 
 def mlproject(thefit, theevs, intercept):
+    r"""Calculates a linear combination (weighted sum) of explanatory variables.
+
+    This routine computes a predicted output by multiplying a set of
+    explanatory variables by corresponding coefficients and summing the results.
+    It can optionally include an intercept term. This is a common operation
+    in linear regression and other statistical models.
+
+    Args:
+        thefit (numpy.ndarray or list): A 1D array or list of coefficients
+            (weights) to be applied to the explanatory variables. If `intercept`
+            is True, the first element of `thefit` is treated as the intercept.
+        theevs (list of numpy.ndarray): A list where each element is a 1D NumPy
+            array representing an explanatory variable (feature time series).
+            The length of `theevs` should match the number of non-intercept
+            coefficients in `thefit`.
+        intercept (bool): If True, the first element of `thefit` is used as
+            an intercept term, and the remaining elements of `thefit` are
+            applied to `theevs`. If False, no intercept is added, and all
+            elements of `thefit` are applied to `theevs` starting from the
+            first element.
+
+    Returns:
+        numpy.ndarray: A 1D NumPy array representing the calculated linear
+        combination. Its length will be the same as the explanatory variables.
+
+    Notes:
+        The calculation performed is conceptually equivalent to:
+        `output = intercept_term + (coefficient_1 * ev_1) + (coefficient_2 * ev_2) + ...`
+        where `intercept_term` is `thefit[0]` if `intercept` is True, otherwise 0.
+    """
+
     thedest = theevs[0] * 0.0
     if intercept:
         thedest[:] = thefit[0]
@@ -1187,18 +1283,49 @@ def mlregress(X, y, intercept=True, debug=False):
 def calcexpandedregressors(
     confounddict, labels=None, start=0, end=-1, deriv=True, order=1, debug=False
 ):
-    r"""Calculates various motion related timecourses from motion data dict, and returns an array
+    r"""Calculates expanded regressors from a dictionary of confound vectors.
 
-    Parameters
-    ----------
-    confounddict: dict
-        A dictionary of the confound vectors
+    This routine generates a comprehensive set of motion-related regressors by
+    including higher-order polynomial terms and derivatives of the original
+    confound timecourses. It is commonly used in neuroimaging analysis to
+    account for subject movement.
 
-    Returns
-    -------
-    motionregressors: array
-        All the derivative timecourses to use in a numpy array
+    Args:
+        confounddict (dict): A dictionary where keys are labels (e.g., 'rot_x',
+            'trans_y') and values are the corresponding 1D time series (NumPy
+            arrays or lists).
+        labels (list, optional): A list of specific confound labels from
+            `confounddict` to process. If None, all labels in `confounddict`
+            will be used. Defaults to None.
+        start (int, optional): The starting index (inclusive) for slicing the
+            timecourses. Defaults to 0.
+        end (int, optional): The ending index (exclusive) for slicing the
+            timecourses. If None, slicing continues to the end of the timecourse.
+            Defaults to None.
+        deriv (bool, optional): If True, the first derivative of each selected
+            timecourse (and its polynomial expansions) is calculated and
+            included as a regressor. Defaults to False.
+        order (int, optional): The polynomial order for expansion. If `order > 1`,
+            terms like `label^2`, `label^3`, up to `label^order` will be
+            included. Defaults to 1 (no polynomial expansion).
+        debug (bool, optional): If True, prints debug information during
+            processing. Defaults to False.
 
+    Returns:
+        tuple: A tuple containing:
+            - outputregressors (numpy.ndarray): A 2D NumPy array where each row
+              represents a generated regressor (original, polynomial, or derivative)
+              and columns represent time points.
+            - outlabels (list): A list of strings, providing the labels for each
+              row in `outputregressors`, indicating what each regressor represents
+              (e.g., 'rot_x', 'rot_x^2', 'rot_x_deriv').
+
+    Notes:
+        - The derivatives are calculated using `numpy.gradient`.
+        - The function handles slicing of the timecourses based on `start` and `end`
+          parameters.
+        - The output regressors are concatenated horizontally to form the final
+          `outputregressors` array.
     """
     if labels is None:
         localconfounddict = confounddict.copy()
