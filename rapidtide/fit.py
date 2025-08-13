@@ -254,16 +254,38 @@ def risetime_eval_loop(x, p):
 @conditionaljit()
 def trapezoid_eval(x, toplength, p):
     """
+    Evaluates the trapezoidal function at a given point.
+
+    The trapezoidal function is defined as:
+
+    f(x) = A \* (1 - exp(-x / tau))
+
+    if 0 <= x < L
+
+    and
+
+    f(x) = A \* exp(-(x - L) / gamma)
+
+    if x >= L
+
+    where A, tau, and gamma are parameters.
 
     Parameters
     ----------
-    x
-    toplength
-    p
-
+    x: float or array-like
+        The point  or vector at which to evaluate the trapezoidal function.
+    toplength: float
+        The length of the top plateau of the trapezoid.
+    p: list or tuple of floats
+        A list of four values [A, tau, gamma, L].
     Returns
     -------
+    float or array-like
+        The value of the trapezoidal function at x.
 
+    Notes
+    -----
+    This function is vectorized and can handle arrays of input points.
     """
     corrx = x - p[0]
     if corrx < 0.0:
@@ -277,15 +299,28 @@ def trapezoid_eval(x, toplength, p):
 @conditionaljit()
 def risetime_eval(x, p):
     """
+    Evaluates the rise time function at a given point.
+
+    The rise time function is defined as:
+
+    f(x) = A \* (1 - exp(-x / tau))
+
+    where A and tau are parameters.
 
     Parameters
     ----------
-    x
-    p
-
+    x: float or array-like
+        The point at which to evaluate the rise time function.
+    p: list or tuple of floats
+        A list of two values [A, tau].
     Returns
     -------
+    float or array-like
+        The value of the rise time function at x.
 
+    Notes
+    -----
+    This function is vectorized and can handle arrays of input points.
     """
     corrx = x - p[0]
     if corrx < 0.0:
@@ -310,17 +345,39 @@ def gasboxcar(
 # generate the polynomial fit timecourse from the coefficients
 @conditionaljit()
 def trendgen(thexvals, thefitcoffs, demean):
-    """
+    """Generates a polynomial trend based on input x-values and coefficients.
+
+    This function constructs a polynomial trend using the provided x-values and
+    a set of polynomial coefficients. The order of the polynomial is determined
+    from the shape of the `thefitcoffs` array. Optionally, a constant term
+    (the highest order coefficient) can be included or excluded from the trend.
 
     Parameters
     ----------
-    thexvals
-    thefitcoffs
-    demean
+    thexvals : array_like
+        The x-values (independent variable) at which to evaluate the polynomial trend.
+        Expected to be a numpy array or similar.
+    thefitcoffs : array_like
+        A 1D array of polynomial coefficients. The length of this array minus one
+        determines the order of the polynomial. Coefficients are expected to be
+        ordered from the highest power of x down to the constant term (e.g.,
+        [a_n, a_n-1, ..., a_1, a_0] for a polynomial a_n*x^n + ... + a_0).
+    demean : bool
+        If True, the constant term (thefitcoffs[order]) is added to the generated
+        trend. If False, the constant term is excluded, effectively generating
+        a trend that is "demeaned" or centered around zero (assuming the constant
+        term represents the mean or offset).
 
     Returns
     -------
+    numpy.ndarray
+        A numpy array containing the calculated polynomial trend, with the same
+        shape as `thexvals`.
 
+    Notes
+    -----
+    This function implicitly assumes that `thexvals` is a numpy array or
+    behaves similarly for element-wise multiplication (`np.multiply`).
     """
     theshape = thefitcoffs.shape
     order = theshape[0] - 1
@@ -377,15 +434,30 @@ def detrend(inputdata, order=1, demean=False):
 @conditionaljit()
 def findfirstabove(theyvals, thevalue):
     """
+    Find the index of the first element in an array that is greater than or equal to a specified value.
+
+    This function iterates through the input array `theyvals` and returns the index of the
+    first element that is greater than or equal to `thevalue`. If no such element exists,
+    it returns the length of the array.
 
     Parameters
     ----------
-    theyvals
-    thevalue
-
+    theyvals : array_like
+        A 1D array of numeric values to be searched.
+    thevalue : float or int
+        The threshold value to compare against elements in `theyvals`.
     Returns
     -------
+    int
+        The index of the first element in `theyvals` that is greater than or equal to `thevalue`.
+        If no such element exists, returns the length of `theyvals`.
 
+    Examples
+    --------
+    >>> findfirstabove([1, 2, 3, 4], 3)
+    2
+    >>> findfirstabove([1, 2, 3, 4], 5)
+    4
     """
     for i in range(0, len(theyvals)):
         if theyvals[i] >= thevalue:
@@ -409,26 +481,47 @@ def findtrapezoidfunc(
     displayplots=False,
 ):
     """
+    Find the best-fitting trapezoidal function parameters to a data set.
+
+    This function uses least-squares optimization to fit a trapezoidal function
+    defined by `trapezoid_eval` to the input data (`theyvals`), using `thexvals`
+    as the independent variable. The shape of the trapezoid is fixed by `thetoplength`.
 
     Parameters
     ----------
-    thexvals
-    theyvals
-    thetoplength
-    initguess
-    debug
-    minrise
-    maxrise
-    minfall
-    maxfall
-    minstart
-    maxstart
-    refine
-    displayplots
-
+    thexvals : array_like
+        Independent variable values (time points) for the data.
+    theyvals : array_like
+        Dependent variable values (signal intensity) corresponding to `thexvals`.
+    thetoplength : float
+        The length of the top plateau of the trapezoid function.
+    initguess : array_like, optional
+        Initial guess for [start, amplitude, risetime, falltime].
+        If None, uses defaults based on data statistics.
+    debug : bool, optional
+        If True, print intermediate values during computation (default: False).
+    minrise : float, optional
+        Minimum allowed rise time parameter (default: 0.0).
+    maxrise : float, optional
+        Maximum allowed rise time parameter (default: 200.0).
+    minfall : float, optional
+        Minimum allowed fall time parameter (default: 0.0).
+    maxfall : float, optional
+        Maximum allowed fall time parameter (default: 200.0).
+    minstart : float, optional
+        Minimum allowed start time parameter (default: -100.0).
+    maxstart : float, optional
+        Maximum allowed start time parameter (default: 100.0).
+    refine : bool, optional
+        If True, perform additional refinement steps (not implemented in this version).
+    displayplots : bool, optional
+        If True, display plots during computation (not implemented in this version).
     Returns
     -------
-
+    tuple of floats
+        The fitted parameters [start, amplitude, risetime, falltime] if successful,
+        or [0.0, 0.0, 0.0, 0.0] if the solution is outside the valid parameter bounds.
+        A fifth value (integer) indicating success (1) or failure (0).
     """
     # guess at parameters: risestart, riseamplitude, risetime
     if initguess is None:
@@ -521,18 +614,50 @@ def territorydecomp(
     inputmap, template, atlas, inputmask=None, intercept=True, fitorder=1, debug=False
 ):
     """
+    Decompose an input map into territories defined by an atlas using polynomial regression.
+
+    This function performs a decomposition of an input map (e.g., a brain image) into
+    distinct regions (territories) as defined by an atlas. For each territory, it fits
+    a polynomial model to the template values and the corresponding data in that region.
+    The resulting coefficients are used to project the model back onto the original map.
 
     Parameters
     ----------
-    inputmap
-    atlas
-    inputmask
-    fitorder
-    debug
-
+    inputmap : numpy.ndarray
+        Input data to be decomposed. Can be 3D or 4D (e.g., time series).
+    template : numpy.ndarray
+        Template values corresponding to the spatial locations in `inputmap`.
+        Should have the same shape as `inputmap` (or be broadcastable).
+    atlas : numpy.ndarray
+        Atlas defining the territories. Each unique integer value represents a distinct region.
+        Must have the same shape as `inputmap`.
+    inputmask : numpy.ndarray, optional
+        Mask to define valid voxels in `inputmap`. If None, all voxels are considered valid.
+        Should have the same shape as `inputmap`.
+    intercept : bool, optional
+        If True, include an intercept term in the polynomial fit (default: True).
+    fitorder : int, optional
+        The order of the polynomial to fit for each territory (default: 1).
+    debug : bool, optional
+        If True, print debugging information during computation (default: False).
     Returns
     -------
+    tuple of numpy.ndarray
+        A tuple containing:
+        - fitmap : numpy.ndarray
+            The decomposed map with fitted values projected back onto the original spatial locations.
+        - thecoffs : numpy.ndarray
+            Array of polynomial coefficients for each territory and map. Shape is (nummaps, numterritories, fitorder+1)
+            if `intercept` is True, or (nummaps, numterritories, fitorder) otherwise.
+        - theR2s : numpy.ndarray
+            R-squared values for the fits for each territory and map. Shape is (nummaps, numterritories).
 
+    Notes
+    -----
+    - The function assumes that `inputmap` and `template` are aligned in space.
+    - If `inputmask` is not provided, all voxels are considered valid.
+    - The number of territories is determined by the maximum value in `atlas`.
+    - For each territory, a polynomial regression is performed using the template values as predictors.
     """
     datadims = len(inputmap.shape)
     if datadims > 3:
