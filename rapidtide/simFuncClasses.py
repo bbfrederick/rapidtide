@@ -694,9 +694,9 @@ class SimilarityFunctionFitter:
                 while peakpoints[peakstart - 1] == 1:
                     peakstart -= 1
             else:
-                while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1:
+                while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1 and peakend < len(self.corrtimeaxis) - 2:
                     peakend += 1
-                while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1:
+                while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1 and peakstart >= 1:
                     peakstart -= 1
             if self.debug:
                 print("final peakstart, peakend:", peakstart, peakend)
@@ -819,12 +819,18 @@ class SimilarityFunctionFitter:
                 if self.debug:
                     print("fit input array:", p0)
                 try:
-                    plsq, dummy = sp.optimize.leastsq(
+                    plsq, ier = sp.optimize.leastsq(
                         tide_fit.gaussresiduals, p0, args=(data, X), maxfev=5000
                     )
-                    maxval = plsq[0] + baseline
-                    maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
-                    maxsigma = plsq[2]
+                    if ier not in [1, 2, 3, 4]:  # Check for successful convergence
+                        failreason |= self.FML_FITALGOFAIL
+                        maxval = np.float64(0.0)
+                        maxlag = np.float64(0.0)
+                        maxsigma = np.float64(0.0)
+                    else:
+                        maxval = plsq[0] + baseline
+                        maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
+                        maxsigma = plsq[2]
                 except:
                     failreason |= self.FML_FITALGOFAIL
                     maxval = np.float64(0.0)
@@ -929,7 +935,7 @@ class SimilarityFunctionFitter:
                 # different rules for mutual information peaks
                 if ((maxval - baseline) < self.lthreshval * baselinedev) or (maxval < baseline):
                     failreason |= self.FML_FITAMPLOW
-                    maxval_init = 0.0
+                    maxval = 0.0
                     if self.debug:
                         if (maxval - baseline) < self.lthreshval * baselinedev:
                             print(

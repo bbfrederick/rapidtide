@@ -39,7 +39,12 @@ def dumplists(results, targets, failflags):
         print(results[i], targets[i], failflags[i])
 
 
-def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, tolerance=0.0001):
+def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, tolerance=0.0001, debug=False):
+    if debug:
+        print(f"{absmin=}, {absmax=}, {tolerance=}")
+        print(f"{testvalues=}")
+        print(f"{foundvalues=}")
+        print(f"{failflags=}")
     for i in range(len(testvalues)):
         if testvalues[i] < absmin:
             if foundvalues[i] != absmin:
@@ -61,12 +66,22 @@ def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, toleranc
     return True
 
 
-def test_findmaxlag(displayplots=False, debug=False):
+def test_findmaxlag(displayplots=False, local=False, debug=False):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
+    if debug:
+        print("debug flag is set")
     # for fittype in ["gauss", "quad", "fastquad", "COM", "None", "fastgauss", "gausscf"]:
     for fittype in ["gauss"]:
         print("*************************************")
         print(f"testing fittype: {fittype}")
-        textfilename = op.join(get_examples_path(), "lt_rt.txt")
+        textfilename = op.join(exampleroot, "lt_rt.txt")
 
         # set default variable values
         searchfrac = 0.75
@@ -172,16 +187,16 @@ def test_findmaxlag(displayplots=False, debug=False):
             for i in range(len(testlags)):
                 print(testlags[i], fml_maxlags[i], fml_lfailreasons[i])
 
-        assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_lfailreasons)
-        assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_lfailreasons)
+        assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_lfailreasons, debug=debug)
+        assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_lfailreasons, debug=debug)
         assert eval_fml_result(
-            absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_lfailreasons
+            absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_lfailreasons, debug=debug
         )
 
-        assert eval_fml_result(lagmin, lagmax, testlags, fmlc_maxlags, fmlc_lfailreasons)
-        assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_lfailreasons)
+        assert eval_fml_result(lagmin, lagmax, testlags, fmlc_maxlags, fmlc_lfailreasons, debug=debug)
+        assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_lfailreasons, debug=debug)
         assert eval_fml_result(
-            absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_lfailreasons
+            absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_lfailreasons, debug=debug
         )
 
         if displayplots:
@@ -315,19 +330,19 @@ def test_findmaxlag(displayplots=False, debug=False):
             ax.legend(["findmaxlag_gauss", "classes"])
             plt.show()
 
-        assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_wfailreasons)
+        assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_wfailreasons, debug=debug)
         # assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_wfailreasons)
         assert eval_fml_result(
-            absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_wfailreasons
+            absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_wfailreasons, debug=debug
         )
 
-        assert eval_fml_result(lagmin, lagmax, testlags, fmlc_maxlags, fmlc_wfailreasons)
-        assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_wfailreasons)
+        assert eval_fml_result(lagmin, lagmax, testlags, fmlc_maxlags, fmlc_wfailreasons, debug=debug)
+        assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_wfailreasons, debug=debug)
         assert eval_fml_result(
-            absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_wfailreasons
+            absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_wfailreasons, debug=debug
         )
 
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_findmaxlag(displayplots=True, debug=True)
+    test_findmaxlag(displayplots=True, local=True, debug=True)
