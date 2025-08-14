@@ -825,6 +825,48 @@ def territorystats(
 
 @conditionaljit()
 def refinepeak_quad(x, y, peakindex, stride=1):
+    """
+    Refine the location and properties of a peak using quadratic interpolation.
+
+    This function takes a peak index and a set of data points to perform
+    quadratic interpolation around the peak to estimate its precise location,
+    value, and width. It also determines whether the point is a local maximum or minimum.
+
+    Parameters
+    ----------
+    x : array-like
+        Independent variable values (e.g., time points).
+    y : array-like
+        Dependent variable values (e.g., signal intensity) corresponding to `x`.
+    peakindex : int
+        Index of the peak in the arrays `x` and `y`.
+    stride : int, optional
+        Number of data points to use on either side of the peak for interpolation.
+        Default is 1.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - peakloc : float
+            The refined location of the peak.
+        - peakval : float
+            The refined value at the peak.
+        - peakwidth : float
+            The estimated width of the peak.
+        - ismax : bool or None
+            True if the point is a local maximum, False if it's a local minimum,
+            and None if the point cannot be determined (e.g., at boundaries).
+        - badfit : bool
+            True if the fit could not be performed due to invalid conditions,
+            such as being at the boundary or having equal values on both sides.
+
+    Notes
+    -----
+    The function uses a quadratic fit to estimate peak properties. It checks for
+    valid conditions before performing the fit, including ensuring that the peak
+    is not at the edge of the data and that it's either a local maximum or minimum.
+    """
     # first make sure this actually is a peak
     ismax = None
     badfit = False
@@ -878,32 +920,114 @@ def findmaxlag_gauss(
     displayplots=False,
 ):
     """
+    Find the maximum lag in a cross-correlation function by fitting a Gaussian curve to the peak.
+
+    This function locates the peak in a cross-correlation function and optionally fits a Gaussian
+    curve to determine the precise lag time, amplitude, and width. It includes extensive error
+    checking and validation to ensure robust results.
 
     Parameters
     ----------
-    thexcorr_x
-    thexcorr_y
-    lagmin
-    lagmax
-    widthmax
-    edgebufferfrac
-    threshval
-    uthreshval
-    debug
-    tweaklims
-    zerooutbadfit
-    refine
-    maxguess
-    useguess
-    searchfrac
-    fastgauss
-    lagmod
-    enforcethresh
-    displayplots
+    thexcorr_x : array_like
+        X-axis values (lag times) of the cross-correlation function.
+    thexcorr_y : array_like
+        Y-axis values (correlation coefficients) of the cross-correlation function.
+    lagmin : float
+        Minimum allowable lag value in seconds.
+    lagmax : float
+        Maximum allowable lag value in seconds.
+    widthmax : float
+        Maximum allowable width of the Gaussian peak in seconds.
+    edgebufferfrac : float, optional
+        Fraction of array length to exclude from each edge during search. Default is 0.0.
+    threshval : float, optional
+        Minimum correlation threshold for a valid peak. Default is 0.0.
+    uthreshval : float, optional
+        Upper threshold value (currently unused). Default is 30.0.
+    debug : bool, optional
+        Enable debug output showing initial vs final parameter values. Default is False.
+    tweaklims : bool, optional
+        Automatically adjust search limits to avoid edge artifacts. Default is True.
+    zerooutbadfit : bool, optional
+        Set output to zero when fit fails rather than using initial guess. Default is True.
+    refine : bool, optional
+        Perform least-squares refinement of the Gaussian fit. Default is False.
+    maxguess : float, optional
+        Initial guess for maximum lag position. Used when useguess=True. Default is 0.0.
+    useguess : bool, optional
+        Use the provided maxguess instead of finding peak automatically. Default is False.
+    searchfrac : float, optional
+        Fraction of peak height used to determine initial width estimate. Default is 0.5.
+    fastgauss : bool, optional
+        Use fast non-iterative Gaussian fitting (less accurate). Default is False.
+    lagmod : float, optional
+        Modulus for lag values to handle wraparound. Default is 1000.0.
+    enforcethresh : bool, optional
+        Enforce minimum threshold requirements. Default is True.
+    absmaxsigma : float, optional
+        Absolute maximum allowed sigma (width) value. Default is 1000.0.
+    absminsigma : float, optional
+        Absolute minimum allowed sigma (width) value. Default is 0.1.
+    displayplots : bool, optional
+        Show matplotlib plots of data and fitted curve. Default is False.
 
     Returns
     -------
+    maxindex : int
+        Array index of the maximum correlation value.
+    maxlag : numpy.float64
+        Time lag at maximum correlation in seconds.
+    maxval : numpy.float64
+        Maximum correlation coefficient value.
+    maxsigma : numpy.float64
+        Width (sigma) of the fitted Gaussian peak.
+    maskval : numpy.uint16
+        Validity mask (1 = valid fit, 0 = invalid fit).
+    failreason : numpy.uint16
+        Bitwise failure reason code. Possible values:
+        - 0x01: Correlation amplitude below threshold
+        - 0x02: Correlation amplitude above maximum (>1.0)
+        - 0x04: Search window too narrow (<3 points)
+        - 0x08: Fitted width exceeds widthmax
+        - 0x10: Fitted lag outside [lagmin, lagmax] range
+        - 0x20: Peak found at edge of search range
+        - 0x40: Fitting procedure failed
+        - 0x80: Initial parameter estimation failed
+    fitstart : int
+        Starting index used for fitting.
+    fitend : int
+        Ending index used for fitting.
 
+    Notes
+    -----
+    - The function assumes cross-correlation data where Y-values represent correlation
+      coefficients (typically in range [-1, 1]).
+    - When refine=False, uses simple peak-finding based on maximum value.
+    - When refine=True, performs least-squares Gaussian fit for sub-bin precision.
+    - All time-related parameters (lagmin, lagmax, widthmax) should be in the same
+      units as thexcorr_x.
+    - The fastgauss option provides faster but less accurate non-iterative fitting.
+
+    Examples
+    --------
+    Basic usage without refinement:
+
+    >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+    ...     findmaxlag_gauss(lag_times, correlations, -10.0, 10.0, 5.0)
+    >>> if maskval == 1:
+    ...     print(f"Peak found at lag: {maxlag:.3f} s, correlation: {maxval:.3f}")
+
+    Advanced usage with refinement:
+
+    >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+    ...     findmaxlag_gauss(lag_times, correlations, -5.0, 5.0, 2.0,
+    ...                      refine=True, threshval=0.1, displayplots=True)
+
+    Using an initial guess:
+
+    >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+    ...     findmaxlag_gauss(lag_times, correlations, -10.0, 10.0, 3.0,
+    ...                      useguess=True, maxguess=2.5, refine=True)
     """
     # set initial parameters
     # widthmax is in seconds
@@ -923,7 +1047,7 @@ def findmaxlag_gauss(
     if tweaklims:
         lowerlim = 0
         upperlim = numlagbins - 1
-        while (thexcorr_y[lowerlim + 1] < thexcorr_y[lowerlim]) and (lowerlim + 1) < upperlim:
+        while (thexcorr_y[lowerlim + 1] < thexcorr_y[lowerlim]) and (lowerlim + 1) <= upperlim:
             lowerlim += 1
         while (thexcorr_y[upperlim - 1] < thexcorr_y[upperlim]) and (upperlim - 1) > lowerlim:
             upperlim -= 1
@@ -978,7 +1102,9 @@ def findmaxlag_gauss(
     if (maxindex - j < lowerlimit) or (j > searchbins):
         j -= 1
     # This is calculated from first principles, but it's always big by a factor or ~1.4.
-    #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division
+    #     Which makes me think I dropped a factor if sqrt(2).  So fix that with a final division.
+    if searchfrac <= 0 or searchfrac >= 1:
+        raise ValueError("searchfrac must be between 0 and 1 (exclusive)")
     maxsigma_init = np.float64(
         ((i + j + 1) * binwidth / (2.0 * np.sqrt(-np.log(searchfrac)))) / np.sqrt(2.0)
     )
@@ -1034,12 +1160,22 @@ def findmaxlag_gauss(
                 p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype="float64")
 
                 if fitend - fitstart >= 3:
-                    plsq, dummy = sp.optimize.leastsq(
-                        gaussresiduals, p0, args=(data, X), maxfev=5000
-                    )
-                    maxval = plsq[0]
-                    maxlag = np.fmod((1.0 * plsq[1]), lagmod)
-                    maxsigma = plsq[2]
+                    try:
+                        plsq, ier = sp.optimize.leastsq(
+                            gaussresiduals, p0, args=(data, X), maxfev=5000
+                        )
+                        if ier not in [1, 2, 3, 4]:  # Check for successful convergence
+                            maxval = np.float64(0.0)
+                            maxlag = np.float64(0.0)
+                            maxsigma = np.float64(0.0)
+                        else:
+                            maxval = plsq[0]
+                            maxlag = np.fmod((1.0 * plsq[1]), lagmod)
+                            maxsigma = plsq[2]
+                    except:
+                        maxval = np.float64(0.0)
+                        maxlag = np.float64(0.0)
+                        maxsigma = np.float64(0.0)
                 # if maxval > 1.0, fit failed catastrophically, zero out or reset to initial value
                 #     corrected logic for 1.1.6
                 if (np.fabs(maxval)) > 1.0 or (lagmin > maxlag) or (maxlag > lagmax):
@@ -1047,7 +1183,7 @@ def findmaxlag_gauss(
                         maxval = np.float64(0.0)
                         maxlag = np.float64(0.0)
                         maxsigma = np.float64(0.0)
-                        maskval = np.int16(0)
+                        maskval = np.uint16(0)
                     else:
                         maxval = np.float64(maxval_init)
                         maxlag = np.float64(maxlag_init)
@@ -1057,7 +1193,7 @@ def findmaxlag_gauss(
                         maxval = np.float64(0.0)
                         maxlag = np.float64(0.0)
                         maxsigma = np.float64(0.0)
-                        maskval = np.int16(0)
+                        maskval = np.uint16(0)
                     else:
                         if maxsigma > absmaxsigma:
                             maxsigma = absmaxsigma
@@ -2303,10 +2439,15 @@ def simfuncpeakfit(
             if debug:
                 print("fit input array:", p0)
             try:
-                plsq, dummy = sp.optimize.leastsq(gaussresiduals, p0, args=(data, X), maxfev=5000)
-                maxval = plsq[0] + baseline
-                maxlag = np.fmod((1.0 * plsq[1]), lagmod)
-                maxsigma = plsq[2]
+                plsq, ier = sp.optimize.leastsq(gaussresiduals, p0, args=(data, X), maxfev=5000)
+                if ier not in [1, 2, 3, 4]:  # Check for successful convergence
+                    maxval = np.float64(0.0)
+                    maxlag = np.float64(0.0)
+                    maxsigma = np.float64(0.0)
+                else:
+                    maxval = plsq[0] + baseline
+                    maxlag = np.fmod((1.0 * plsq[1]), lagmod)
+                    maxsigma = plsq[2]
             except:
                 maxval = np.float64(0.0)
                 maxlag = np.float64(0.0)
