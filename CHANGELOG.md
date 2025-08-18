@@ -1,11 +1,12 @@
 # Release history
 
-## Version 3.0.10 (7/28/25)
+## Version 3.0.10 (8/18/25)
 * (tidepool) Do better checking on which required files exist so it's more clear why a dataset won't load.
 * (docs) Clarified that the sLFO filtered output of rapidtide has NO other filtering applied to is - the temporal, spatial, and confound filtering is all discarded prior to the final sLFO filtering step.
+* (package) Played with some coding models (qwen3-coder, Claude) to write some docstrings and check a few routines for bugs.  It generally worked well, but you definitely have to check their work.
 * (package) Adjusted coverage calculation.
 * (package) Added a test for data simulation.
-* (package) Accepted a dependabot PR.
+* (package) Accepted several dependabot PRs.
 
 ## Version 3.0.9 (7/3/25)
 * (rapidtide) Added an alternative method for coarse delay estimation (set ``--similaritymetric riptide`` to select).  This uses a fit to a set of delayed regressors (actually, this is the original RIPTiDe method from ~2010).
