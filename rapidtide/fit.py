@@ -264,7 +264,7 @@ def trapezoid_eval(x, toplength, p):
 
     and
 
-    f(x) = A \* exp(-(x - L) / gamma)
+    f(x) = A * exp(-(x - L) / gamma)
 
     if x >= L
 
@@ -303,7 +303,7 @@ def risetime_eval(x, p):
 
     The rise time function is defined as:
 
-    f(x) = A \* (1 - exp(-x / tau))
+    f(x) = A * (1 - exp(-x / tau))
 
     where A and tau are parameters.
 
