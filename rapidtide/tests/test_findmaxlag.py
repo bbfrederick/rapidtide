@@ -26,7 +26,7 @@ import numpy as np
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.simFuncClasses as tide_simFuncClasses
-from rapidtide.tests.utils import get_examples_path
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
 def dumplists(results, targets, failflags):
