@@ -63,7 +63,7 @@ matplotlib==3.9.2
     # via rapidtide (pyproject.toml)
 mdurl==0.1.2
     # via markdown-it-py
-ml-dtypes==0.4.1
+ml-dtypes==0.5.3
     # via
     #   keras
     #   tensorflow
@@ -127,7 +127,7 @@ pillow==11.0.0
     #   imageio
     #   matplotlib
     #   scikit-image
-protobuf==4.25.8
+protobuf==5.29.5
     # via
     #   tensorboard
     #   tensorflow
@@ -185,17 +185,17 @@ six==1.16.0
     #   tensorflow
 statsmodels==0.14.4
     # via rapidtide (pyproject.toml)
-tensorboard==2.17.1
+tensorboard==2.19.0
     # via tensorflow
 tensorboard-data-server==0.7.2
     # via tensorboard
-tensorflow==2.17.0
+tensorflow==2.19.1
     # via
     #   rapidtide (pyproject.toml)
     #   tf-keras
 termcolor==2.5.0
     # via tensorflow
-tf-keras==2.17.0
+tf-keras==2.19.0
     # via rapidtide (pyproject.toml)
 threadpoolctl==3.5.0
     # via scikit-learn
