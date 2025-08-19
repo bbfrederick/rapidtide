@@ -2,6 +2,7 @@
 
 ## Version 3.0.10 (8/18/25)
 * (tidepool) Do better checking on which required files exist so it's more clear why a dataset won't load.
+* (tidepool) Add support for PySide6 (in addition to PyQt5 and PyQt6).
 * (docs) Clarified that the sLFO filtered output of rapidtide has NO other filtering applied to is - the temporal, spatial, and confound filtering is all discarded prior to the final sLFO filtering step.
 * (package) Played with some coding models (qwen3-coder, Claude) to write some docstrings and check a few routines for bugs.  It generally worked well, but you definitely have to check their work.
 * (package) Adjusted coverage calculation.
