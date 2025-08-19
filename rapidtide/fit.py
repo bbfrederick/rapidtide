@@ -258,7 +258,7 @@ def trapezoid_eval(x, toplength, p):
 
     The trapezoidal function is defined as:
 
-    f(x) = A \* (1 - exp(-x / tau))
+    f(x) = A * (1 - exp(-x / tau))
 
     if 0 <= x < L
 
