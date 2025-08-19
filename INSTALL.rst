@@ -65,7 +65,7 @@ source code, and type:
 
    git clone https://github.com/bbfrederick/rapidtide.git
    cd rapidtide
-   refresh
+   ./refresh
 
 
 to install all of the tools in the package. You should be able to run
@@ -74,11 +74,11 @@ subdirectories).
 
 If you’ve made edits to the code, or want to sync up with the current version on Github,
 cd into the
-package directory and type ``refresh``:
+package directory and type ``./refresh``:
 
 ::
 
-   refresh
+   ./refresh
 
 
 This will uninstall the current version, sync up to github, and reinstall
@@ -195,7 +195,7 @@ that runs entirely in user space, so the amount of mischief you can get up to is
 containers can be created from Docker containers as follows (stealing from the fMRIprep documentation):
 ::
 
-    singularity build /my_images/rapidtide.simg docker://fredericklab/rapidtide:latest-release
+    singularity build /my_images/rapidtide.sif docker://fredericklab/rapidtide:latest-release
 
 
 Running the container is similar to Docker.  The "-B" option is used to bind filesystems to mountpoints in the container.
@@ -205,7 +205,7 @@ For example, to run the simple rapidtide2x analysis above, type the following:
     singularity run \
         --cleanenv \
         -B INPUTDIRECTORY:/data_in,OUTPUTDIRECTORY:/data_out \
-        rapidtide.simg \
+        rapidtide.sif \
             rapidtide \
                 /data_in/YOURNIFTIFILE.nii.gz \
                 /data_out/outputname \
