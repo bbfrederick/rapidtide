@@ -59,7 +59,7 @@ authors = [
 'Changelog' = 'https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md'
 
 [project.optional-dependencies]
-tests = [
+test = [
   'codecov',
   'coverage',
   'coveralls',
@@ -161,7 +161,7 @@ rapidtide = ['.eggs', '.git', '.github', '.pytest_cache', 'rapidtide/candidatete
 # Aliases
 docs = ['rapidtide[doc]']
 tests = ['rapidtide[test]']
-all = ['rapidtide[docs,tests]']
+all = ['rapidtide[doc,test]']
 
 [tool.black]
 line-length = 99
