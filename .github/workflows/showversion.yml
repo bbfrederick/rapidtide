@@ -30,7 +30,7 @@ jobs:
 
       - name: Alternate Git Version
         id: alternategitversion
-        uses: codacy/git-version@2.8.4
+        uses: codacy/git-version@2.8.5
         with:
           release-branch: 'main'
           prefix: 'v'
