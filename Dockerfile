@@ -63,16 +63,14 @@ RUN chown -R $USER /src/$USER
 WORKDIR /home/$USER
 ENV HOME="/home/rapidtide"
 
-RUN /opt/miniforge3/bin/mamba init
+# set to non-root user and initialize mamba
+USER rapidtide
+RUN /opt/miniforge3/mamba shell
 RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
-RUN echo "/opt/miniforge3/bin/mamba activate science" >> /home/rapidtide/.bashrc
 
 # Precompile Python code
 #RUN cd /opt/miniforge3/envs/science/lib/python3.12/site-packages/rapidtide && \
 #    python -m compileall -b .
-
-# switch to the rapidtide user
-USER rapidtide
 
 # run things once
 RUN /opt/miniforge3/envs/science/bin/happy --help
