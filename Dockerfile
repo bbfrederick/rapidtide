@@ -70,20 +70,13 @@ RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
 # set to non-root user
 USER rapidtide
 
-# Precompile Python code
-#RUN cd /opt/miniforge3/envs/science/lib/python3.12/site-packages/rapidtide && \
-#    python -m compileall -b .
-
-# run things once
-RUN /opt/miniforge3/envs/science/bin/happy --help
-RUN /opt/miniforge3/envs/science/bin/rapidtide --help
-
 # set up variable for non-interactive shell
 ENV PATH=/opt/miniforge3/envs/science/bin:/opt/miniforge3/condabin:.:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 ENV RUNNING_IN_CONTAINER=1
 
 WORKDIR /tmp/
+
 ENTRYPOINT ["/cloud/mount-and-run"]
 
 LABEL org.label-schema.build-date=$BUILD_TIME \
