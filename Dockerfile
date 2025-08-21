@@ -64,7 +64,7 @@ WORKDIR /home/$USER
 ENV HOME="/home/rapidtide"
 
 # initialize user mamba
-RUN /opt/miniforge3/mamba shell
+RUN /opt/miniforge3/bin/mamba shell
 RUN echo "mamba activate science" >> /home/rapidtide/.bashrc
 
 # set to non-root user
