@@ -14,13 +14,16 @@ git pull
 # bump version
 version=`cat VERSION | sed 's/+/ /g' | sed 's/v//g' | awk '{print $1}'`
 echo "version: $version"
+version=localtest
 
 # run build
 docker buildx build . \
-    --platform linux/arm64,linux/amd64 \
+    --platform linux/arm64 \
     --tag $USERNAME/$IMAGE:latest --tag $USERNAME/$IMAGE:$version \
     --build-arg VERSION=$version \
     --build-arg BUILD_DATE=`date +"%Y%m%dT%H%M%S"` \
     --build-arg GITVERSION=$GITVERSION \
     --build-arg GITDIRECTVERSION=$GITVERSION \
-    --build-arg VCS_REF=`git rev-parse HEAD` --push
+    --build-arg VCS_REF=`git rev-parse HEAD`
+# --push
+#    --platform linux/arm64,linux/amd64 \
