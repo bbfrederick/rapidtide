@@ -190,20 +190,21 @@ Then the following command will work (you can replace 'tidepool' with any of the
 Singularity installation
 ------------------------
 
-Many times you can't use Docker, because of security concerns.  Singularity, from LBL, offers containerized computing
-that runs entirely in user space, so the amount of mischief you can get up to is significantly less.  Singularity
+Many times you can't use Docker, because of security concerns.  Apptainer (formerly singularity), from LBL, offers containerized computing
+that runs entirely in user space, so the amount of mischief you can get up to is significantly less.  Apptainer
 containers can be created from Docker containers as follows (stealing from the fMRIprep documentation):
 ::
 
-    singularity build /my_images/rapidtide.sif docker://fredericklab/rapidtide:latest-release
+    apptainer build \
+        /my_image_directory/rapidtide.sif \
+        docker://fredericklab/rapidtide:latest-release
 
 
 Running the container is similar to Docker.  The "-B" option is used to bind filesystems to mountpoints in the container.
-For example, to run the simple rapidtide2x analysis above, type the following:
+For example, to run the simple rapidtide analysis above, type the following:
 ::
 
-    singularity run \
-        --cleanenv \
+    apptainer run \
         -B INPUTDIRECTORY:/data_in,OUTPUTDIRECTORY:/data_out \
         rapidtide.sif \
             rapidtide \
