@@ -199,6 +199,7 @@ def happy_main(argparsingfunc):
             args.processmask,
             input_data.copyheader(numtimepoints=1),
             xsize,
+            thresh=0.001,
             maskname="process",
             debug=args.debug,
         )
