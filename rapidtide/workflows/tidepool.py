@@ -2052,19 +2052,19 @@ def tidepool(args):
         },
         "varBefore": {
             "colormap": gen_thermal_state(),
-            "label": "LFO variance before filtering",
+            "label": "LFO var. before filtering",
             "display": extramaps,
             "funcmask": "p_lt_0p050_mask",
         },
         "varAfter": {
             "colormap": gen_thermal_state(),
-            "label": "LFO variance after filtering",
+            "label": "LFO var. after filtering",
             "display": extramaps,
             "funcmask": "p_lt_0p050_mask",
         },
         "varChange": {
             "colormap": gen_thermal_state(),
-            "label": "LFO variance decrease %",
+            "label": "LFO var. decrease %",
             "display": True,
             "funcmask": "p_lt_0p050_mask",
         },
