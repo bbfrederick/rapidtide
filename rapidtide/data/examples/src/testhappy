@@ -72,5 +72,12 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_newdefaults \
+    ../dst/happy_mask \
+    --processmask sub-HAPPYTEST_mask.nii.gz \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy \
     --nprocs -1
