@@ -1,0 +1,40 @@
+#!/bin/bash
+
+python -c "from templateflow.api import get; print(str(get('MNI152NLin2009cAsym', resolution=1, suffix='T1w', desc=None, extension='nii.gz')))" 
+python -c "from templateflow.api import get; print(str(get('MNI152NLin2009cAsym', resolution=2, suffix='T1w', desc=None, extension='nii.gz')))" 
+
+# do the masks first
+for res in 1 2
+do
+    echo making resolution ${res} files
+    for atlas in JHU-ArterialTerritoriesNoVent-LVL1 JHU-ArterialTerritoriesNoVent-LVL2
+    do
+        SRC=JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_${res}mm_mask
+        DST=JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin2009cAsym_${res}mm_mask
+        antsApplyTransforms \
+            -d 3 \
+            -i ${SRC}.nii.gz \
+            -r /Users/frederic/.cache/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-0${res}_T1w.nii.gz \
+            -o ${DST}.nii.gz \
+            -n NearestNeighbor \
+            -t /Users/frederic/code/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5
+    done
+    
+    # then the maps
+    for atlas in JHU-ArterialTerritoriesNoVent-LVL1 JHU-ArterialTerritoriesNoVent-LVL2
+    do
+        SRC=JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_${res}mm
+        DST=JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin2009cAsym_${res}mm
+        antsApplyTransforms \
+            -d 3 \
+            -i ${SRC}.nii.gz \
+            -r /Users/frederic/.cache/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-0${res}_T1w.nii.gz \
+            -o ${DST}.nii.gz \
+            -n NearestNeighbor \
+            -t /Users/frederic/code/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5
+        fslmaths \
+	    ${DST}.nii.gz \
+            -mul JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin2009cAsym_${res}mm_mask.nii.gz \
+	    ${DST}.nii.gz
+    done
+done
