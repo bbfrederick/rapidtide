@@ -2,9 +2,9 @@
 
 DATADIR=/Users/frederic/code/rapidtide/rapidtide/data/examples
 
-VERSION=localtest
+VERSION=latest
 
-#docker pull fredericklab/rapidtide:${VERSION}
+docker pull fredericklab/rapidtide:${VERSION}
 docker run \
     -it fredericklab/rapidtide:${VERSION} \
     bash
