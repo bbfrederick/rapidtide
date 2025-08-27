@@ -1,5 +1,13 @@
 # Release history
 
+## Version 3.0.11 (8/27/25)
+* (Docker) Fixed a critical bug in building the container.
+* (happy) Added the ability to specify an overall processing mask.
+* (docs) Revised the singularity/apptainer installation section.
+* (reference) Added MNI152NLin2009cAsym versions of the JHU atlases.
+* (package) Miscellaneous code cleanups.
+* (package) More dependabot PRs.
+
 ## Version 3.0.10 (8/18/25)
 * (tidepool) Do better checking on which required files exist so it's more clear why a dataset won't load.
 * (tidepool) Add support for PySide6 (in addition to PyQt5 and PyQt6).
