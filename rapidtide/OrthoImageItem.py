@@ -137,6 +137,7 @@ class OrthoImageItem(QtWidgets.QWidget):
     ):
         QtWidgets.QWidget.__init__(self)
         self.map = map
+        self.mapname = self.map.label
         self.bgmap = bgmap
         self.axview = axview
         self.corview = corview
@@ -180,6 +181,7 @@ class OrthoImageItem(QtWidgets.QWidget):
 
         if self.verbose > 1:
             print("OrthoImageItem initialization:")
+            print("    Map name:", self.mapname)
             print("    Dimensions:", self.xdim, self.ydim, self.zdim)
             print("    Voxel sizes:", self.xsize, self.ysize, self.zsize)
             print("    FOVs:", self.xfov, self.yfov, self.zfov)
@@ -361,6 +363,7 @@ class OrthoImageItem(QtWidgets.QWidget):
     def setMap(self, themap):
         self.map = themap
         self.tdim = self.map.tdim
+        self.mapname = self.map.label
 
     def enableView(self):
         if self.button is not None:
