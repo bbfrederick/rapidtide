@@ -194,7 +194,18 @@ def happy_main(argparsingfunc):
 
     # make and save a mask of the voxels to process based on image intensity
     tide_util.logmem("before mask creation")
-    mask = np.uint16(tide_mask.makeepimask(input_data.nim).dataobj.reshape(numspatiallocs))
+    if args.processmask is not None:
+        mask = tide_mask.readamask(
+            args.processmask,
+            input_data.copyheader(numtimepoints=1),
+            xsize,
+            maskname="process",
+            debug=args.debug,
+        )
+        mask = np.uint16(np.where(mask > 0, 1, 0).reshape(numspatiallocs))
+    else:
+        mask = np.uint16(tide_mask.makeepimask(input_data.nim).dataobj.reshape(numspatiallocs))
+
     theheader = input_data.copyheader(numtimepoints=1)
     timings.append(["Mask created", time.time(), None, None])
     if args.outputlevel > 0:

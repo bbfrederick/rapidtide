@@ -557,6 +557,18 @@ def _get_parser():
     # Add miscellaneous options
     misc_opts = parser.add_argument_group("Miscellaneous options.")
     misc_opts.add_argument(
+        "--processmask",
+        dest="processmask",
+        action="store",
+        metavar="MASKNAME",
+        help=(
+            "Instead of dynamically generating a processing mask from the data, use "
+            "the mask specified in the file MASKNAME. "            
+            "The mask must be a NIFTI file with x, y, z dimensions matching the fMRI data."
+        ),
+        default=None,
+    )
+    misc_opts.add_argument(
         "--aliasedcorrelation",
         dest="doaliasedcorrelation",
         action="store_true",
