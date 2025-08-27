@@ -564,7 +564,7 @@ def _get_parser():
         help=(
             "Instead of dynamically generating a processing mask from the data, use "
             "the mask specified in the file MASKNAME. "            
-            "The mask must be a NIFTI file with x, y, z dimensions matching the fMRI data."
+            "The mask must be a 3D NIFTI file with x, y, z dimensions matching the fMRI data. "
         ),
         default=None,
     )
