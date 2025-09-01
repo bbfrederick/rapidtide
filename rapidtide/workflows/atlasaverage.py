@@ -380,7 +380,7 @@ def atlasaverage(args):
     else:
         print("processing 3D input file")
         outputvoxels = inputvoxels * 0.0
-        theregnums = []
+        thereglabels = []
         thevals = []
         thepercentiles = []
         thesizes = []
@@ -388,10 +388,10 @@ def atlasaverage(args):
         numsubregions = len(thefracs) - 1
         segmentedatlasvoxels = inputvoxels * 0.0
         if args.datalabel is not None:
-            theregnums.append("Region")
+            thereglabels.append("Region")
             thevals.append(args.datalabel)
         for theregion in regionlist:
-            theregnums.append(str(theregion))
+            thereglabels.append(regionlabels[theregion])
             theregionvoxels = inputvoxels[np.where(templatevoxels * themask == theregion)]
             initnum = theregionvoxels.shape[0]
             if args.ignorezeros:
@@ -462,7 +462,7 @@ def atlasaverage(args):
             )
         if args.headerline:
             tide_io.writevec(
-                [",".join(theregnums), ",".join(thevals)],
+                [",".join(thereglabels), ",".join(thevals)],
                 f"{args.outputroot}_regionsummaries.csv",
             )
         else:
@@ -474,7 +474,7 @@ def atlasaverage(args):
         outlines = []
         pctstrings = [f"{num:.0f}" for num in (np.array(thefracs) * 100.0).tolist()]
         outlines.append("Region\tVoxels\t" + "pct-" + "\tpct-".join(pctstrings))
-        for idx, region in enumerate(theregnums):
+        for idx, region in enumerate(thereglabels):
             outlines.append(region + "\t" + thesizes[idx] + "\t" + "\t".join(thepercentiles[idx]))
             tide_io.writevec(
                 outlines,
