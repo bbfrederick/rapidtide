@@ -636,6 +636,13 @@ def _get_parser():
         default=3,
     )
     debug_opts.add_argument(
+        "--normvesselmap",
+        dest="unnormvesselmap",
+        action="store_false",
+        help="Find vessels using normalized phase projection. ",
+        default=True,
+    )
+    debug_opts.add_argument(
         "--noorthog",
         dest="orthogonalize",
         action="store_false",
@@ -788,7 +795,6 @@ def process_args(inputargs=None):
     args.upsamplefac = 100
     args.centric = True
     args.pulsereconstepsize = 0.01
-    args.unnormvesselmap = True
     args.histlen = 100
     args.softvesselfrac = 0.4
     args.savecardiacnoise = True
