@@ -420,6 +420,7 @@ def normalizevoxels(
     starttime = time.time()
     # detrend if we are going to
     numspatiallocs = fmri_data.shape[0]
+    # NB: fmri_data is detrended in place
     if detrendorder > 0:
         print("Detrending to order", detrendorder, "...")
         if mpcode:
