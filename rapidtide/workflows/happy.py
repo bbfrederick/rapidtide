@@ -1694,9 +1694,11 @@ def happy_main(argparsingfunc):
         vesselmap = np.max(app, axis=3)
     else:
         vesselmap = np.max(normapp, axis=3)
+    pulsatilitymap = 100.0 * np.max(normapp, axis=3)
     vesselmapfilename = outputroot + "_desc-vessels_map"
     arterymapfilename = outputroot + "_desc-arteries_map"
     veinmapfilename = outputroot + "_desc-veins_map"
+    pulsatilitymapname = outputroot + "_desc-pulsatility_map"
     tide_io.savetonifti(vesselmap, theheader, vesselmapfilename)
     tide_io.savetonifti(
         np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0),
@@ -1707,6 +1709,11 @@ def happy_main(argparsingfunc):
         np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0),
         theheader,
         veinmapfilename,
+    )
+    tide_io.savetonifti(
+        pulsatilitymap,
+        theheader,
+        pulsatilitymapname,
     )
 
     # now generate aliased cardiac signals and regress them out of the data
