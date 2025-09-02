@@ -302,14 +302,19 @@ def atlasaverage(args):
             )
 
     # get the region names
+    numregions = np.max(templatevoxels)
     if args.regionlabelfile is None:
         regionlabels = []
-        numregions = np.max(templatevoxels)
         numdigits = int(np.log10(numregions)) + 1
         for regnum in range(1, numregions + 1):
             regionlabels.append(f"region_{str(regnum).zfill(numdigits)}")
     else:
         regionlabels = tide_io.readlabels(args.regionlabelfile)
+        if len(regionlabels) != numregions:
+            print("Error: number of labels in label file does not match the number of regions in the template.")
+            sys.exit()
+    if args.debug:
+        print(f"Region labels: {regionlabels}")
 
     # decide what regions we will summarize
     if args.regionlistfile is None:
@@ -322,6 +327,8 @@ def atlasaverage(args):
         for theregion in range(numregions):
             newlabels.append(regionlabels[theregion])
         regionlabels = newlabels
+    if args.debug:
+        print(f"Region labels to use: {regionlabels}")
 
     timecourses = np.zeros((numregions, numtimepoints), dtype="float")
     print(f"{numregions=}, {regionlist=}")
