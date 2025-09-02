@@ -401,7 +401,7 @@ def atlasaverage(args):
             thereglabels.append("Region")
             thevals.append(args.datalabel)
         for theregion in regionlist:
-            thereglabels.append(regionlabels[theregion])
+            thereglabels.append(regionlabels[theregion - 1])
             theregionvoxels = inputvoxels[np.where(templatevoxels * themask == theregion)]
             initnum = theregionvoxels.shape[0]
             if args.ignorezeros:
@@ -414,7 +414,8 @@ def atlasaverage(args):
                 if args.debug:
                     print(
                         f"extracting {theregionvoxels.shape[0]} "
-                        f"non-zero voxels from region {theregion} of {numregions}{extrabit}"
+                        f"non-zero voxels from region {theregion} of {numregions}{extrabit} "
+                        f"({thereglabels[-1]})"
                     )
             else:
                 if args.debug:
