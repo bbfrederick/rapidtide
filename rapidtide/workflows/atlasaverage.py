@@ -394,6 +394,9 @@ def atlasaverage(args):
         thefracs = np.linspace(0.0, 1.0, args.numpercentiles + 2, endpoint=True).tolist()
         numsubregions = len(thefracs) - 1
         segmentedatlasvoxels = inputvoxels * 0.0
+        if args.debug:
+            print(f"{len(regionlist)=}, {regionlist=}")
+            print(f"{len(regionlabels)=}, {regionlabels=}")
         if args.datalabel is not None:
             thereglabels.append("Region")
             thevals.append(args.datalabel)
