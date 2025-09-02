@@ -421,7 +421,8 @@ def atlasaverage(args):
                 if args.debug:
                     print(
                         f"extracting {theregionvoxels.shape[0]} "
-                        f"voxels from region {theregion} of {numregions}"
+                        f"voxels from region {theregion} of {numregions} "
+                        f"({thereglabels[-1]})"
                     )
             if theregionvoxels.shape[0] > 0:
                 regionval = summarizevoxels(theregionvoxels, method=args.summarymethod)
