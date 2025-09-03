@@ -1,5 +1,9 @@
 # Release history
 
+## Version 3.0.12 (8/27/25)
+* (happy) Added "pulsatility" map output - the percentage pulsatile variation around the mean in each voxel.
+* (atlasaverage) Fixed label output when extracting data from 3D files.
+
 ## Version 3.0.11 (8/27/25)
 * (Docker) Fixed a critical bug in building the container.
 * (happy) Added the ability to specify an overall processing mask.
