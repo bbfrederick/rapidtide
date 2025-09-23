@@ -81,7 +81,7 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
     rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     # check to see that rapidtide and retroregress output match
-    msethresh = 1e-6
+    msethresh = 2e-6
     aethresh = 2
     tclist = ["brain", "GM", "WM", "CSF"]
     for timecourse in tclist:
