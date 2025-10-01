@@ -1337,7 +1337,7 @@ def readfslmat(inputfilename, debug=False):
     Parameters
     ----------
     inputfilename : str
-        The root name of the csv (no extension)
+        The root name of the .mat file (no extension)
 
     Returns
     -------
