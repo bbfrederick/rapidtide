@@ -2669,6 +2669,12 @@ def rapidtide_main(argparsingfunc):
             varchange = initialvariance * 0.0
             varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
 
+            # calculate the voxelwise mean of the filtered data
+            lfofilteredmeanvalue = np.mean(
+                filtereddata,
+                axis=1,
+            )
+
             LGR.info("End filtering operation")
             TimingLGR.info(
                 "sLFO filtering end",
@@ -2978,6 +2984,13 @@ def rapidtide_main(argparsingfunc):
                     "percent",
                     "Change in inband variance after filtering, in percent",
                 ),
+                #(
+                #    lfofilteredmeanvalue,
+                #    "lfofilterMean",
+                #    "map",
+                #    None,
+                #    "Voxelwise mean of the sLFO filtered data",
+                #),
             ]
             if optiondict["saveminimumsLFOfiltfiles"]:
                 maplist += [
