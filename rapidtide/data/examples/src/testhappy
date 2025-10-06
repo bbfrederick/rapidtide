@@ -69,11 +69,18 @@
     #../dst/happy_mpdetrend_mpphaseproj_nocache \
     #--nprocs -1
 
+#happy \
+    #sub-HAPPYTEST.nii.gz \
+    #sub-HAPPYTEST.json \
+    #../dst/happy_mask \
+    #--processmask sub-HAPPYTEST_mask.nii.gz \
+    #--nprocs -1
+
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_mask \
-    --processmask sub-HAPPYTEST_mask.nii.gz \
+    ../dst/happy_pulsatility \
+    --normalizevesselmap \
     --nprocs -1
 
 happy \
