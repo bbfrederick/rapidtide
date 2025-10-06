@@ -25,6 +25,8 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
+DEFAULT_PULSATILITYSIGMA = 6.0
+DEFAULT_PULSATILITYTHRESHOLD = 0.5
 DEFAULT_DL_MODEL = "model_revised_tf2"
 
 
@@ -549,6 +551,29 @@ def _get_parser():
         action="store_true",
         help="Restrict cardiac waveform estimation to putative arteries only.",
         default=False,
+    )
+    phase_proj_tuning.add_argument(
+        "--pulsatilitysigma",
+        dest="pulsatilitysigma",
+        action="store",
+        metavar="SIGMAINMM",
+        type=lambda x: pf.is_float(parser, x),
+        help=(
+            "Split pulsatility map spatial frequencies with a gaussian filter with sigma=SIGMAINMM. "
+            f"Default is {DEFAULT_PULSATILITYSIGMA}mm. "),
+        default=DEFAULT_PULSATILITYSIGMA,
+    )
+    phase_proj_tuning.add_argument(
+        "--pulsatilitythreshold",
+        dest="pulsatilitythreshold",
+        action="store",
+        metavar="THRESHPCT",
+        type=lambda x: pf.is_float(parser, x),
+        help=(
+            "Consider voxels with a high spatial frequency pulsatility above THRESHPCT percent "
+            "to be vessels. "
+            f"Default is {DEFAULT_PULSATILITYTHRESHOLD}mm. "),
+        default=DEFAULT_PULSATILITYSIGMA,
     )
 
     # Add version options
