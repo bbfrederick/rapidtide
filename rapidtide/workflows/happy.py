@@ -1546,23 +1546,49 @@ def happy_main(argparsingfunc):
             numtimepoints=args.destpoints, tr=-np.pi, toffset=2.0 * np.pi / args.destpoints
         )
         if thispass == numpasses - 1:
-            appfilename = outputroot + "_desc-app_info"
-            normappfilename = outputroot + "_desc-normapp_info"
-            cinefilename = outputroot + "_desc-cine_info"
-            rawappfilename = outputroot + "_desc-rawapp_info"
-            bidsdict = bidsbasedict.copy()
-            bidsdict["Units"] = "second"
-            tide_io.writedicttojson(bidsdict, appfilename + ".json")
-            tide_io.writedicttojson(bidsdict, normappfilename + ".json")
-            tide_io.writedicttojson(bidsdict, cinefilename + ".json")
+            maplist = [
+                (
+                    app,
+                    "app",
+                    "info",
+                    None,
+                    "Cardiac pulsatility waveform with minimum over time removed",
+                ),
+                (
+                    normapp,
+                    "normapp",
+                    "info",
+                    "percent",
+                    "Cardiac pulsatility waveform in percentage change relative to mean",
+                ),
+                (
+                    cine,
+                    "cine",
+                    "info",
+                    None,
+                    "fMRI signal averaged over a single cardiac cycle",
+                ),
+            ]
             if args.outputlevel > 0:
-                tide_io.writedicttojson(bidsdict, rawappfilename + ".json")
-            tide_io.savetonifti(app, theheader, appfilename)
-            tide_io.savetonifti(normapp, theheader, normappfilename)
-            tide_io.savetonifti(cine, theheader, cinefilename)
-            if args.outputlevel > 0:
-                tide_io.savetonifti(rawapp, theheader, rawappfilename)
-
+                maplist += [
+                    (
+                        rawapp,
+                        "rawapp",
+                        "info",
+                        None,
+                        "Cardiac pulsatility waveform",
+                    ),
+                ]
+            # write the 4D phase projection maps
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices, args.destpoints),
+                theheader,
+                bidsdict,
+                debug=args.debug,
+            )
         timings.append(["Phase projected data saved" + passstring, time.time(), None, None])
 
         if args.doaliasedcorrelation and thispass == numpasses - 1:
@@ -1689,31 +1715,147 @@ def happy_main(argparsingfunc):
         else:
             estweights_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
 
-    # save a vessel image
+    # estimate pulsatility
+    pulsatilitymap = 100.0 * (np.max(normapp, axis=3) - np.min(normapp, axis=3))
+    rawrobustmax = tide_stats.getfracval(pulsatilitymap, 0.98, nozero=True)
+    pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
+    pulsatilitymask = np.where(pulsatilitymap > 0.0, 1.0, 0.0)
+    lfnormapp =  normapp * 0.0
+    hfnormapp = normapp * 0.0
+    for thephase in range(args.destpoints):
+        lfnormapp[:, :, :, thephase] = tide_filt.ssmooth(xdim, ydim, slicethickness, args.pulsatilitysigma, normapp[:, :, :, thephase]) * pulsatilitymask
+        hfnormapp[:, :, :, thephase] = normapp[:, :, :, thephase] - lfnormapp[:, :, :, thephase]
+    lfnormapp -= np.min(lfnormapp, axis=3)[:, :, :, None]
+    #hfnormapp *= -1.0
+    hfnormapp -= np.min(hfnormapp, axis=3)[:, :, :, None]
+    lfpulsatilitymap = (
+        tide_filt.ssmooth(xdim, ydim, slicethickness, args.pulsatilitysigma, pulsatilitymap)
+        * pulsatilitymask
+    )
+    hfpulsatilitymap = pulsatilitymap - lfpulsatilitymap
+    lfpulsatilitymap2 = 100.0 * np.max(lfnormapp, axis=3)
+    lfrobustmax = tide_stats.getfracval(lfpulsatilitymap2, 0.98, nozero=True)
+    lfpulsatilitymap2 = np.where(lfpulsatilitymap2 < lfrobustmax, lfpulsatilitymap2, lfrobustmax)
+    hfpulsatilitymap2 = 100.0 * np.max(hfnormapp, axis=3)
+    hfrobustmax = tide_stats.getfracval(hfpulsatilitymap2, 0.98, nozero=True)
+    hfpulsatilitymap2 = np.where(hfpulsatilitymap2 < hfrobustmax, hfpulsatilitymap2, hfrobustmax)
+
+    # make a vessel map
     if args.unnormvesselmap:
         vesselmap = np.max(app, axis=3)
     else:
-        vesselmap = np.max(normapp, axis=3)
-    pulsatilitymap = 100.0 * np.max(normapp, axis=3)
-    vesselmapfilename = outputroot + "_desc-vessels_map"
-    arterymapfilename = outputroot + "_desc-arteries_map"
-    veinmapfilename = outputroot + "_desc-veins_map"
-    pulsatilitymapname = outputroot + "_desc-pulsatility_map"
-    tide_io.savetonifti(vesselmap, theheader, vesselmapfilename)
-    tide_io.savetonifti(
-        np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0),
+        #vesselmap = np.max(normapp, axis=3)
+        vesselmap = np.where(hfpulsatilitymap > args.pulsatilitythreshold, 1.0, 0.0)
+    veinmap = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0)
+    arterymap = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0)
+
+    # specify the 3D maps
+    maplist = [
+        (
+            pulsatilitymap,
+            "pulsatility",
+            "map",
+            "percent",
+            "Cardiac pulsatility in percentage change relative to mean",
+        ),
+        (
+            pulsatilitymask,
+            "pulsatility",
+            "mask",
+            None,
+            "Valid cardiac pulsatility voxels",
+        ),
+        (
+            lfpulsatilitymap,
+            "lfpulsatility",
+            "map",
+            "percent",
+            "Low spatial frequency cardiac pulsatility in percentage change relative to mean",
+        ),
+        (
+            hfpulsatilitymap,
+            "hfpulsatility",
+            "map",
+            "percent",
+            "High spatial frequency cardiac pulsatility in percentage change relative to mean",
+        ),
+        (
+            lfpulsatilitymap2,
+            "lfpulsatility2",
+            "map",
+            "percent",
+            "Low spatial frequency cardiac pulsatility in percentage change relative to mean",
+        ),
+        (
+            hfpulsatilitymap2,
+            "hfpulsatility2",
+            "map",
+            "percent",
+            "High spatial frequency cardiac pulsatility in percentage change relative to mean",
+        ),
+        (
+            vesselmap,
+            "vessels",
+            "map",
+            None,
+            "Vessel voxels",
+        ),
+        (
+            arterymap,
+            "arteries",
+            "map",
+            None,
+            "Arterial voxels (maybe)",
+        ),
+        (
+            veinmap,
+            "veins",
+            "map",
+            None,
+            "Venous voxels (maybe)",
+        ),
+    ]
+    # write the 3D maps
+    tide_io.savemaplist(
+        outputroot,
+        maplist,
+        None,
+        (xsize, ysize, numslices),
         theheader,
-        arterymapfilename,
+        bidsdict,
+        debug=args.debug,
     )
-    tide_io.savetonifti(
-        np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0),
-        theheader,
-        veinmapfilename,
+    
+    # specify the 4D maps
+    theheader = input_data.copyheader(
+        numtimepoints=args.destpoints, tr=-np.pi, toffset=2.0 * np.pi / args.destpoints
     )
-    tide_io.savetonifti(
-        pulsatilitymap,
+    maplist = [
+        (
+            lfnormapp,
+            "lfnormapp",
+            "info",
+            "percent",
+            "Low spatial frequency cardiac pulsatility waveform in percentage change relative to mean",
+        ),
+        (
+            hfnormapp,
+            "hfnormapp",
+            "info",
+            "percent",
+            "High spatial frequency cardiac pulsatility waveform in percentage change relative to mean",
+        ),
+    ]
+
+    # write the 4D maps
+    tide_io.savemaplist(
+        outputroot,
+        maplist,
+        None,
+        (xsize, ysize, numslices, args.destpoints),
         theheader,
-        pulsatilitymapname,
+        bidsdict,
+        debug=args.debug,
     )
 
     # now generate aliased cardiac signals and regress them out of the data
