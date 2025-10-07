@@ -80,7 +80,7 @@ happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy_pulsatility \
-    --normalizevesselmap \
+    --normvesselmap \
     --nprocs -1
 
 happy \
