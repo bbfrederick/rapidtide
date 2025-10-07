@@ -351,6 +351,11 @@ def rapidtide_main(argparsingfunc):
     optiondict["simcalcoffset"] = -validsimcalcstart * fmritr
 
     ####################################################
+    # Calculate initial stats
+    ####################################################
+    init_mean, init_std, init_skew, init_kurtosis = tide_stats.fmristats(theinputdata.byvoxel())
+
+    ####################################################
     #  Prepare data
     ####################################################
     # read in the anatomic masks
@@ -3052,6 +3057,21 @@ def rapidtide_main(argparsingfunc):
                             "Normalized fit coefficient",
                         ),
                     ]
+                init_std_valid = init_std[validvoxels] + 0.0
+                init_skew_valid = init_skew[validvoxels] + 0.0
+                init_kurtosis_valid = init_kurtosis[validvoxels] + 0.0
+                maplist += [
+                    (init_std_valid, "initialStd", "map", None, "Std of the raw input data"),
+                    (init_skew_valid, "initialSkewness", "map", None, "Skewness of the raw input data"),
+                    (init_kurtosis_valid, "initialKurtosis", "map", None, "Kurtosis of the raw input data"),
+                ]
+                final_mean_valid, final_std_valid, final_skew_valid, final_kurtosis_valid = tide_stats.fmristats(
+                    filtereddata)
+                maplist += [
+                    (final_std_valid, "lfofilterCleanedStd", "map", None, "Std of the sLFO cleaned data"),
+                    (final_skew_valid, "lfofilterCleanedSkewness", "map", None, "Skewness of the sLFO cleaned data"),
+                    (final_kurtosis_valid, "lfofilterCleanedKurtosis", "map", None, "Kurtosis of the sLFO cleaned data"),
+                ]
         else:
             maplist = [
                 (

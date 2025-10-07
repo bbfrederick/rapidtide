@@ -1612,6 +1612,58 @@ def happy_main(argparsingfunc):
             tide_io.savetonifti(wavedelay, theheader, wavedelayfilename)
             tide_io.savetonifti(wavedelayCOM, theheader, wavedelayCOMfilename)
             tide_io.savetonifti(waveamp, theheader, waveampfilename)
+            bidsdict = bidsbasedict.copy()
+            """maplist = [
+                (
+                    thecorrfunc,
+                    "corrfunc",
+                    "info",
+                    None,
+                    "Aliased correlation function",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices, aliasedcorrelationpts),
+                theheader,
+                bidsdict,
+                debug=args.debug,
+            )
+            theheader["dim"][4] = 1
+            maplist = [
+                (
+                    wavedelay,
+                    "wavedelay",
+                    "map",
+                    "seconds",
+                    "Peak delay of aliased correlation function",
+                ),
+                (
+                    wavedelayCOM,
+                    "wavedelayCOM",
+                    "map",
+                    "seconds",
+                    "Center of mass of aliased correlation function",
+                ),
+                (
+                    waveamp,
+                    "waveamp",
+                    "map",
+                    None,
+                    "Peak amplitude of aliased correlation function",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices),
+                theheader,
+                bidsdict,
+                debug=args.debug,
+            )"""
 
         # make and save a voxel intensity histogram
         if args.unnormvesselmap:
@@ -1726,7 +1778,6 @@ def happy_main(argparsingfunc):
         lfnormapp[:, :, :, thephase] = tide_filt.ssmooth(xdim, ydim, slicethickness, args.pulsatilitysigma, normapp[:, :, :, thephase]) * pulsatilitymask
         hfnormapp[:, :, :, thephase] = normapp[:, :, :, thephase] - lfnormapp[:, :, :, thephase]
     lfnormapp -= np.min(lfnormapp, axis=3)[:, :, :, None]
-    #hfnormapp *= -1.0
     hfnormapp -= np.min(hfnormapp, axis=3)[:, :, :, None]
     lfpulsatilitymap = (
         tide_filt.ssmooth(xdim, ydim, slicethickness, args.pulsatilitysigma, pulsatilitymap)

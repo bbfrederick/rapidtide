@@ -489,6 +489,9 @@ def kurtosisstats(timecourse):
     testres = kurtosistest(timecourse)
     return kurtosis(timecourse), testres[0], testres[1]
 
+def fmristats(fmridata):
+    return np.mean(fmridata, axis=1), np.std(fmridata, axis=1), skew(fmridata, axis=1), kurtosis(fmridata, axis=1)
+
 
 def fast_ICC_rep_anova(Y, nocache=False, debug=False):
     """
