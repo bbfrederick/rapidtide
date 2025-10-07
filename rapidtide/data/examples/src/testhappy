@@ -79,12 +79,6 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_pulsatility \
-    --normvesselmap \
-    --nprocs -1
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
     ../dst/happy \
+    --aliasedcorrelation \
     --nprocs -1
