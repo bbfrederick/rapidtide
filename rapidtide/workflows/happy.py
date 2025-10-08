@@ -210,10 +210,25 @@ def happy_main(argparsingfunc):
     theheader = input_data.copyheader(numtimepoints=1)
     timings.append(["Mask created", time.time(), None, None])
     if args.outputlevel > 0:
-        maskfilename = outputroot + "_desc-processvoxels_mask"
         bidsdict = bidsbasedict.copy()
-        tide_io.writedicttojson(bidsdict, maskfilename + ".json")
-        tide_io.savetonifti(mask.reshape((xsize, ysize, numslices)), theheader, maskfilename)
+        maplist = [
+            (
+                mask.reshape((xsize, ysize, numslices)),
+                "processvoxels",
+                "mask",
+                None,
+                "fMRI voxels processed by happy",
+            ),
+        ]
+        tide_io.savemaplist(
+            outputroot,
+            maplist,
+            None,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
     timings.append(["Mask saved", time.time(), None, None])
     mask_byslice = mask.reshape((xsize * ysize, numslices))
 
@@ -278,25 +293,49 @@ def happy_main(argparsingfunc):
         )
         # save motionr2 map
         theheader = input_data.copyheader(numtimepoints=1)
-        motionr2filename = outputroot + "_desc-motionr2_map"
         bidsdict = bidsbasedict.copy()
-        tide_io.writedicttojson(bidsdict, motionr2filename + ".json")
         outarray = np.zeros((xsize, ysize, numslices), dtype=float)
         outarray.reshape(numspatiallocs)[validprojvoxels] = confoundr2
-        tide_io.savetonifti(
-            outarray.reshape((xsize, ysize, numslices)), theheader, motionr2filename
+        maplist = [
+            (
+                outarray.reshape((xsize, ysize, numslices)),
+                "motionr2",
+                "map",
+                None,
+                "R2 of motion regression",
+            ),
+        ]
+        tide_io.savemaplist(
+            outputroot,
+            maplist,
+            None,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
         )
         if args.savemotionglmfilt:
             print("prior to save - fmri_data has shape", fmri_data.shape)
-            motionfilteredfilename = outputroot + "_desc-motionfiltered_bold"
             bidsdict = bidsbasedict.copy()
-            bidsdict["Units"] = "second"
-            tide_io.writedicttojson(bidsdict, motionfilteredfilename + ".json")
-            tide_io.savetonifti(
-                fmri_data.reshape((xsize, ysize, numslices, timepoints)),
+            maplist = [
+                (
+                    fmri_data.reshape((xsize, ysize, numslices, timepoints)),
+                    "motionfiltered",
+                    "bold",
+                    None,
+                    "fMRI data after motion regression",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices, timepoints),
                 theheader,
-                motionfilteredfilename,
+                bidsdict,
+                debug=args.debug,
             )
+
             timings.append(["Motion filtered data saved", time.time(), numspatiallocs, "voxels"])
 
     # get slice times
@@ -335,16 +374,39 @@ def happy_main(argparsingfunc):
 
     # save means, medians, and mads
     theheader = input_data.copyheader(numtimepoints=1)
-    meansfilename = outputroot + "_desc-means_map"
-    mediansfilename = outputroot + "_desc-medians_map"
-    madsfilename = outputroot + "_desc-mads_map"
     bidsdict = bidsbasedict.copy()
-    tide_io.writedicttojson(bidsdict, meansfilename + ".json")
-    tide_io.writedicttojson(bidsdict, mediansfilename + ".json")
-    tide_io.writedicttojson(bidsdict, madsfilename + ".json")
-    tide_io.savetonifti(means.reshape((xsize, ysize, numslices)), theheader, meansfilename)
-    tide_io.savetonifti(medians.reshape((xsize, ysize, numslices)), theheader, mediansfilename)
-    tide_io.savetonifti(mads.reshape((xsize, ysize, numslices)), theheader, madsfilename)
+    maplist = [
+        (
+            means.reshape((xsize, ysize, numslices)),
+            "means",
+            "map",
+            None,
+            "fMRI timecourse mean over time",
+        ),
+        (
+            medians.reshape((xsize, ysize, numslices)),
+            "medians",
+            "map",
+            None,
+            "fMRI timecourse median over time",
+        ),
+        (
+            mads.reshape((xsize, ysize, numslices)),
+            "mads",
+            "map",
+            None,
+            "fMRI timecourse MAD over time",
+        ),
+    ]
+    tide_io.savemaplist(
+        outputroot,
+        maplist,
+        None,
+        (xsize, ysize, numslices),
+        theheader,
+        bidsdict,
+        debug=args.debug,
+    )
 
     # read in estimation mask if present. Otherwise, otherwise use intensity mask.
     infodict["estweightsname"] = args.estweightsname
@@ -382,10 +444,12 @@ def happy_main(argparsingfunc):
         if numpasses > 1:
             print()
             print()
-            print("starting pass", thispass + 1, "of", numpasses)
-            passstring = " - pass " + str(thispass + 1)
+            print(f"starting pass {thispass + 1} of {numpasses}")
+            passstring = f" - pass {thispass + 1}"
+            passnamefrag = f"pass{thispass + 1}"
         else:
             passstring = ""
+            passnamefrag = ""
         # now get an estimate of the cardiac signal
         print("estimating cardiac signal from fmri data")
         tide_util.logmem("before cardiacfromimage")
@@ -1416,9 +1480,24 @@ def happy_main(argparsingfunc):
             )
 
             theheader = input_data.copyheader(numtimepoints=1)
-            wrightfilename = f"{outputroot}_desc-wrightcorrspass{thispass + 1}_map"
-            tide_io.writedicttojson(bidsbasedict, wrightfilename + ".json")
-            tide_io.savetonifti(wrightcorrs, theheader, wrightfilename)
+            maplist = [
+                (
+                    wrightcorrs,
+                    f"wrightcorrspass{passnamefrag}",
+                    "map",
+                    None,
+                    "fMRI timecourse MAD over time",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices),
+                theheader,
+                bidsdict,
+                debug=args.debug,
+            )
             timings.append(
                 [
                     "Wright mask generation completed" + passstring,
@@ -1597,23 +1676,7 @@ def happy_main(argparsingfunc):
                 tr=(thealiasedcorrx[1] - thealiasedcorrx[0]),
                 toffset=0.0,
             )
-            corrfuncfilename = outputroot + "_desc-corrfunc_info"
-            wavedelayfilename = outputroot + "_desc-wavedelay_map"
-            wavedelayCOMfilename = outputroot + "_desc-wavedelayCOM_map"
-            waveampfilename = outputroot + "_desc-waveamp_map"
-            bidsdict = bidsbasedict.copy()
-            tide_io.writedicttojson(bidsdict, waveampfilename + ".json")
-            bidsdict["Units"] = "second"
-            tide_io.writedicttojson(bidsdict, corrfuncfilename + ".json")
-            tide_io.writedicttojson(bidsdict, wavedelayfilename + ".json")
-            tide_io.writedicttojson(bidsdict, wavedelayCOMfilename + ".json")
-            tide_io.savetonifti(thecorrfunc, theheader, corrfuncfilename)
-            theheader["dim"][4] = 1
-            tide_io.savetonifti(wavedelay, theheader, wavedelayfilename)
-            tide_io.savetonifti(wavedelayCOM, theheader, wavedelayCOMfilename)
-            tide_io.savetonifti(waveamp, theheader, waveampfilename)
-            bidsdict = bidsbasedict.copy()
-            """maplist = [
+            maplist = [
                 (
                     thecorrfunc,
                     "corrfunc",
@@ -1663,7 +1726,7 @@ def happy_main(argparsingfunc):
                 theheader,
                 bidsdict,
                 debug=args.debug,
-            )"""
+            )
 
         # make and save a voxel intensity histogram
         if args.unnormvesselmap:
@@ -1701,24 +1764,34 @@ def happy_main(argparsingfunc):
         maskedapp2d[np.where(vesselmask.reshape(numspatiallocs) == 0)[0], :] = 0.0
         if args.outputlevel > 1:
             if thispass == numpasses - 1:
-                maskedappfilename = outputroot + "_desc-maskedapp_info"
                 bidsdict = bidsbasedict.copy()
-                bidsdict["Units"] = "second"
-                tide_io.writedicttojson(bidsdict, maskedappfilename + ".json")
-                tide_io.savetonifti(
-                    maskedapp2d.reshape((xsize, ysize, numslices, args.destpoints)),
+                maplist = [
+                    (
+                        maskedapp2d.reshape((xsize, ysize, numslices, args.destpoints)),
+                        "maskedapp",
+                        "info",
+                        None,
+                        "Masked analytic phase projection",
+                    ),
+                ]
+                tide_io.savemaplist(
+                    outputroot,
+                    maplist,
+                    None,
+                    (xsize, ysize, numslices, args.destpoints),
                     theheader,
-                    maskedappfilename,
+                    bidsdict,
+                    debug=args.debug,
+                )
+                timings.append(
+                    [
+                        "Vessel masked phase projected data saved" + passstring,
+                        time.time(),
+                        None,
+                        None,
+                    ]
                 )
         del maskedapp2d
-        timings.append(
-            [
-                "Vessel masked phase projected data saved" + passstring,
-                time.time(),
-                None,
-                None,
-            ]
-        )
 
         # save multiple versions of the hard vessel mask
         if args.unnormvesselmap:
@@ -1734,31 +1807,74 @@ def happy_main(argparsingfunc):
         veins = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmask, 0)
         theheader = input_data.copyheader(numtimepoints=1)
         if thispass == numpasses - 1:
-            vesselmaskfilename = outputroot + "_desc-vessels_mask"
-            minphasefilename = outputroot + "_desc-minphase_map"
-            maxphasefilename = outputroot + "_desc-maxphase_map"
-            arterymapfilename = outputroot + "_desc-arteries_map"
-            veinmapfilename = outputroot + "_desc-veins_map"
-            bidsdict = bidsbasedict.copy()
-            tide_io.writedicttojson(bidsdict, vesselmaskfilename + ".json")
-            tide_io.savetonifti(vesselmask, theheader, vesselmaskfilename)
+            maplist = [
+                (
+                    vesselmask,
+                    "vessels",
+                    "mask",
+                    None,
+                    "Vessel mask",
+                ),
+            ]
             if args.outputlevel > 0:
-                tide_io.writedicttojson(bidsdict, arterymapfilename + ".json")
-                tide_io.writedicttojson(bidsdict, veinmapfilename + ".json")
-                bidsdict["Units"] = "radians"
-                tide_io.writedicttojson(bidsdict, minphasefilename + ".json")
-                tide_io.writedicttojson(bidsdict, maxphasefilename + ".json")
-                tide_io.savetonifti(minphase, theheader, minphasefilename)
-                tide_io.savetonifti(maxphase, theheader, maxphasefilename)
-                tide_io.savetonifti(arteries, theheader, arterymapfilename)
-                tide_io.savetonifti(veins, theheader, veinmapfilename)
+                maplist += [
+                    (
+                        minphase,
+                        "minphase",
+                        "map",
+                        "radians",
+                        "Cardiac phase where minimum pulsatility signal occurs",
+                    ),
+                    (
+                        maxphase,
+                        "maxphase",
+                        "map",
+                        "radians",
+                        "Cardiac phase where maximum pulsatility signal occurs",
+                    ),
+                    (
+                        arteries,
+                        "arteries",
+                        "map",
+                        None,
+                        "Arterial voxels (maybe)",
+                    ),
+                    (
+                        veins,
+                        "veins",
+                        "map",
+                        None,
+                        "Venous voxels (maybe)",
+                    ),
+                ]
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices),
+                theheader,
+                bidsdict,
+                debug=args.debug,
+            )
         timings.append(["Masks saved" + passstring, time.time(), None, None])
 
         # save the mask we used for this pass
-        tide_io.savetonifti(
-            estweights_byslice.reshape((xsize, ysize, numslices)),
+        tide_io.savemaplist(
+            outputroot,
+            [
+                (
+                    estweights_byslice.reshape((xsize, ysize, numslices)),
+                    f"estweights{passnamefrag}",
+                    "map",
+                    None,
+                    f"Estweights{passstring}",
+                ),
+            ],
+            None,
+            (xsize, ysize, numslices),
             theheader,
-            f"{outputroot}_desc-estweightspass{thispass}_map",
+            bidsdict,
+            debug=args.debug,
         )
 
         # now get ready to start again with a new mask
@@ -1772,10 +1888,15 @@ def happy_main(argparsingfunc):
     rawrobustmax = tide_stats.getfracval(pulsatilitymap, 0.98, nozero=True)
     pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
     pulsatilitymask = np.where(pulsatilitymap > 0.0, 1.0, 0.0)
-    lfnormapp =  normapp * 0.0
+    lfnormapp = normapp * 0.0
     hfnormapp = normapp * 0.0
     for thephase in range(args.destpoints):
-        lfnormapp[:, :, :, thephase] = tide_filt.ssmooth(xdim, ydim, slicethickness, args.pulsatilitysigma, normapp[:, :, :, thephase]) * pulsatilitymask
+        lfnormapp[:, :, :, thephase] = (
+            tide_filt.ssmooth(
+                xdim, ydim, slicethickness, args.pulsatilitysigma, normapp[:, :, :, thephase]
+            )
+            * pulsatilitymask
+        )
         hfnormapp[:, :, :, thephase] = normapp[:, :, :, thephase] - lfnormapp[:, :, :, thephase]
     lfnormapp -= np.min(lfnormapp, axis=3)[:, :, :, None]
     hfnormapp -= np.min(hfnormapp, axis=3)[:, :, :, None]
@@ -1795,7 +1916,7 @@ def happy_main(argparsingfunc):
     if args.unnormvesselmap:
         vesselmap = np.max(app, axis=3)
     else:
-        #vesselmap = np.max(normapp, axis=3)
+        # vesselmap = np.max(normapp, axis=3)
         vesselmap = np.where(hfpulsatilitymap > args.pulsatilitythreshold, 1.0, 0.0)
     veinmap = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0)
     arterymap = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0)
@@ -1876,7 +1997,7 @@ def happy_main(argparsingfunc):
         bidsdict,
         debug=args.debug,
     )
-    
+
     # specify the 4D maps
     theheader = input_data.copyheader(
         numtimepoints=args.destpoints, tr=-np.pi, toffset=2.0 * np.pi / args.destpoints
@@ -1932,17 +2053,30 @@ def happy_main(argparsingfunc):
         theheader = input_data.copyheader()
         timings.append(["Cardiac signal generated", time.time(), None, None])
         if args.savecardiacnoise:
-            cardiacnoisefilename = outputroot + "_desc-cardiacnoise_info"
-            phaseindexfilename = outputroot + "_desc-phaseindices_info"
-            tide_io.savetonifti(
-                cardiacnoise.reshape((xsize, ysize, numslices, timepoints)),
+            maplist = [
+                (
+                    cardiacnoise.reshape((xsize, ysize, numslices, timepoints)),
+                    "cardiacnoise",
+                    "info",
+                    None,
+                    "Calculated cardiac noise EVs",
+                ),
+                (
+                    phaseindices.reshape((xsize, ysize, numslices, timepoints)),
+                    "phaseindices",
+                    "info",
+                    None,
+                    "Phase indices",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices, timepoints),
                 theheader,
-                cardiacnoisefilename,
-            )
-            tide_io.savetonifti(
-                phaseindices.reshape((xsize, ysize, numslices, timepoints)),
-                theheader,
-                phaseindexfilename,
+                bidsdict,
+                debug=args.debug,
             )
             timings.append(["Cardiac signal saved", time.time(), None, None])
 
@@ -1954,6 +2088,7 @@ def happy_main(argparsingfunc):
         numvalidspatiallocs = len(validlocs)
         threshval = 0.0
         if args.dospatialregression:
+            regressiontype = "spatial"
             meanvals = np.zeros(timepoints, dtype=np.float64)
             rvals = np.zeros(timepoints, dtype=np.float64)
             r2vals = np.zeros(timepoints, dtype=np.float64)
@@ -1970,8 +2105,8 @@ def happy_main(argparsingfunc):
                 meanvals,
                 rvals,
                 r2vals,
-                fitcoffs,
-                fitNorm,
+                fitcoffs[None, :],
+                fitNorm[None, :],
                 datatoremove[validlocs, :],
                 filtereddata[validlocs, :],
                 chunksize=10,
@@ -1990,32 +2125,9 @@ def happy_main(argparsingfunc):
                     "timepoints",
                 ]
             )
-            tide_io.writevec(fitcoffs, outputroot + "_fitcoff.txt")
-            tide_io.writevec(meanvals, outputroot + "_fitmean.txt")
-            tide_io.writevec(rvals, outputroot + "_fitR.txt")
-            theheader = input_data.copyheader()
-            cardfiltresultfilename = outputroot + "_desc-cardfiltResult_bold"
-            cardfiltremovedfilename = outputroot + "_desc-cardfiltRemoved_bold"
-            tide_io.savetonifti(
-                filtereddata.reshape((xsize, ysize, numslices, timepoints)),
-                theheader,
-                cardfiltresultfilename,
-            )
-            tide_io.savetonifti(
-                datatoremove.reshape((xsize, ysize, numslices, timepoints)),
-                theheader,
-                cardfiltremovedfilename,
-            )
-            timings.append(
-                [
-                    "Cardiac signal spatial regression files written",
-                    time.time(),
-                    None,
-                    None,
-                ]
-            )
 
         if args.dotemporalregression:
+            regressiontype = "temporal"
             meanvals = np.zeros(numspatiallocs, dtype=np.float64)
             rvals = np.zeros(numspatiallocs, dtype=np.float64)
             r2vals = np.zeros(numspatiallocs, dtype=np.float64)
@@ -2032,8 +2144,8 @@ def happy_main(argparsingfunc):
                 meanvals[validlocs],
                 rvals[validlocs],
                 r2vals[validlocs],
-                fitcoffs[validlocs],
-                fitNorm[validlocs],
+                fitcoffs[validlocs, None],
+                fitNorm[validlocs, None],
                 datatoremove[validlocs, :],
                 filtereddata[validlocs, :],
                 procbyvoxel=True,
@@ -2053,44 +2165,74 @@ def happy_main(argparsingfunc):
                 ]
             )
             theheader = input_data.copyheader(numtimepoints=1)
-            cardfiltcoeffsfilename = outputroot + "_desc-cardfiltCoeffs_map"
-            cardfiltmeanfilename = outputroot + "_desc-cardfiltMean_map"
-            cardfiltRfilename = outputroot + "_desc-cardfiltR_map"
-            tide_io.savetonifti(
-                fitcoffs.reshape((xsize, ysize, numslices)),
+            maplist = [
+                (
+                    fitcoffs.reshape((xsize, ysize, numslices)),
+                    "cardfiltCoeffs",
+                    "map",
+                    None,
+                    "Coefficients for temporal cardiac noise regression",
+                ),
+                (
+                    meanvals.reshape((xsize, ysize, numslices)),
+                    "cardfiltMean",
+                    "map",
+                    None,
+                    "Mean values after temporal cardiac noise regression",
+                ),
+                (
+                    rvals.reshape((xsize, ysize, numslices)),
+                    "cardfiltR",
+                    "map",
+                    None,
+                    "R values for temporal cardiac noise regression",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices),
                 theheader,
-                cardfiltcoeffsfilename,
-            )
-            tide_io.savetonifti(
-                meanvals.reshape((xsize, ysize, numslices)),
-                theheader,
-                cardfiltmeanfilename,
-            )
-            tide_io.savetonifti(
-                rvals.reshape((xsize, ysize, numslices)), theheader, cardfiltRfilename
+                bidsdict,
+                debug=args.debug,
             )
 
-            theheader = input_data.copyheader()
-            cardfiltresultfilename = outputroot + "_desc-cardfiltResult_bold"
-            cardfiltremovedfilename = outputroot + "_desc-cardfiltRemoved_bold"
-            tide_io.savetonifti(
+        # now write out the filtered data
+        theheader = input_data.copyheader()
+        maplist = [
+            (
                 filtereddata.reshape((xsize, ysize, numslices, timepoints)),
-                theheader,
-                cardfiltresultfilename,
-            )
-            tide_io.savetonifti(
+                "cardfiltResult",
+                "bold",
+                None,
+                f"Cardiac filtered BOLD data after {regressiontype} regression",
+            ),
+            (
                 datatoremove.reshape((xsize, ysize, numslices, timepoints)),
-                theheader,
-                cardfiltremovedfilename,
-            )
-            timings.append(
-                [
-                    "Cardiac signal temporal regression files written",
-                    time.time(),
-                    None,
-                    None,
-                ]
-            )
+                "cardfiltRemoved",
+                "bold",
+                None,
+                f"Cardiac noise removed with {regressiontype} regression",
+            ),
+        ]
+        tide_io.savemaplist(
+            outputroot,
+            maplist,
+            None,
+            (xsize, ysize, numslices, timepoints),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
+        timings.append(
+            [
+                "Cardiac signal temporal regression files written",
+                time.time(),
+                None,
+                None,
+            ]
+        )
 
     timings.append(["Done", time.time(), None, None])
 
