@@ -76,18 +76,10 @@
     #--processmask sub-HAPPYTEST_mask.nii.gz \
     #--nprocs -1
 
+#    --motionfile sub-HAPPYTEST_mcf.par \
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happynewspatial \
-    --motionfile sub-HAPPYTEST_mcf.par \
-    --spatialregression \
-    --nprocs -1
-
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happynewtemporal \
-    --motionfile sub-HAPPYTEST_mcf.par \
-    --temporalregression \
+    ../dst/happy \
+    --increaseoutputlevel \
     --nprocs -1
