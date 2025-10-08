@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd ../dst
+for NEWFILE in happynewspatial_desc*.nii.gz
+do
+   OLDFILE=`echo ${NEWFILE} | sed 's/happynew/happyold/g'`
+   echo ${OLDFILE} ${NEWFILE}
+   diff ${OLDFILE} ${NEWFILE}
+done
+
+for NEWFILE in happynewtemporal_desc*.nii.gz
+do
+   OLDFILE=`echo ${NEWFILE} | sed 's/happynew/happyold/g'`
+   echo ${OLDFILE} ${NEWFILE}
+   diff ${OLDFILE} ${NEWFILE}
+done

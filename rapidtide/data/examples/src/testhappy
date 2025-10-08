@@ -79,6 +79,15 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy \
-    --aliasedcorrelation \
+    ../dst/happynewspatial \
+    --motionfile sub-HAPPYTEST_mcf.par \
+    --spatialregression \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happynewtemporal \
+    --motionfile sub-HAPPYTEST_mcf.par \
+    --temporalregression \
     --nprocs -1
