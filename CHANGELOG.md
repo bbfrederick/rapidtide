@@ -2,6 +2,7 @@
 
 ## Version 3.0.12 (10/8/25)
 * (happy) Added "pulsatility" map output - the percentage pulsatile variation around the mean in each voxel.
+* (happy) Made pass labelling consistent for output files.
 * (happy) Switched nifti file output to use maplist (jsons have description fields now).
 * (rapidtide) Output some timecourse statistics before and after sLFO regression.
 * (atlasaverage) Fixed label output when extracting data from 3D files.
