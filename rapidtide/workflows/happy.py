@@ -1884,7 +1884,9 @@ def happy_main(argparsingfunc):
             estweights_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
 
     # estimate pulsatility
-    card_min, card_max, card_mean, card_std, card_median, card_mad, card_skew, card_kurtosis = tide_stats.fmristats(normapp.reshape(numspatiallocs, -1))
+    card_min, card_max, card_mean, card_std, card_median, card_mad, card_skew, card_kurtosis = (
+        tide_stats.fmristats(normapp.reshape(numspatiallocs, -1))
+    )
     maplist = [
         (
             card_min,
@@ -2176,8 +2178,8 @@ def happy_main(argparsingfunc):
                 meanvals,
                 rvals,
                 r2vals,
-                fitcoffs[None, :],
-                fitNorm[None, :],
+                fitcoffs,
+                fitNorm,
                 datatoremove[validlocs, :],
                 filtereddata[validlocs, :],
                 chunksize=10,
@@ -2185,8 +2187,10 @@ def happy_main(argparsingfunc):
                 nprocs=args.nprocs,
             )
             tide_util.enablemkl(args.mklthreads)
-            print(datatoremove.shape, cardiacnoise.shape, fitcoffs.shape)
-            # datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[:, None])
+            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[None, :])
+            print(f"{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
+            print(f"{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
+            print(f"{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
             filtereddata = fmri_data - datatoremove
             timings.append(
                 [
@@ -2215,17 +2219,21 @@ def happy_main(argparsingfunc):
                 meanvals[validlocs],
                 rvals[validlocs],
                 r2vals[validlocs],
-                fitcoffs[validlocs, None],
-                fitNorm[validlocs, None],
+                fitcoffs[validlocs],
+                fitNorm[validlocs],
                 datatoremove[validlocs, :],
                 filtereddata[validlocs, :],
                 procbyvoxel=True,
                 nprocs=args.nprocs,
+                debug=args.focaldebug,
             )
             tide_util.enablemkl(args.mklthreads)
             datatoremove[validlocs, :] = np.multiply(
                 cardiacnoise[validlocs, :], fitcoffs[validlocs, None]
             )
+            print(f"{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
+            print(f"{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
+            print(f"{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
             filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
             timings.append(
                 [
@@ -2298,7 +2306,7 @@ def happy_main(argparsingfunc):
         )
         timings.append(
             [
-                "Cardiac signal temporal regression files written",
+                f"Cardiac signal {regressiontype} regression files written",
                 time.time(),
                 None,
                 None,
