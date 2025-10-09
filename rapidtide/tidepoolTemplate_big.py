@@ -15,7 +15,9 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1595, 810)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding
+        )
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
@@ -27,7 +29,9 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         self.imageData_groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.imageData_groupBox.setGeometry(QtCore.QRect(440, 7, 561, 591))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Maximum
+        )
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(self.imageData_groupBox.sizePolicy().hasHeightForWidth())
@@ -50,7 +54,11 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.setSpacing(0)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.dispmax_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.imageData_groupBox)
-        self.dispmax_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.dispmax_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.dispmax_doubleSpinBox.setDecimals(3)
         self.dispmax_doubleSpinBox.setObjectName("dispmax_doubleSpinBox")
         self.verticalLayout_3.addWidget(self.dispmax_doubleSpinBox)
@@ -67,7 +75,11 @@ class Ui_MainWindow(object):
         self.setMask_Button.setObjectName("setMask_Button")
         self.verticalLayout_3.addWidget(self.setMask_Button)
         self.dispmin_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.imageData_groupBox)
-        self.dispmin_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.dispmin_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.dispmin_doubleSpinBox.setDecimals(3)
         self.dispmin_doubleSpinBox.setObjectName("dispmin_doubleSpinBox")
         self.verticalLayout_3.addWidget(self.dispmin_doubleSpinBox)
@@ -77,7 +89,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addWidget(self.transparency_checkBox)
         self.gridLayout_2.addLayout(self.verticalLayout_3, 0, 1, 1, 1)
         self.graphicsView_colorbar = GraphicsView(self.imageData_groupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.graphicsView_colorbar.sizePolicy().hasHeightForWidth())
@@ -85,11 +99,15 @@ class Ui_MainWindow(object):
         self.graphicsView_colorbar.setMinimumSize(QtCore.QSize(25, 128))
         self.graphicsView_colorbar.setMaximumSize(QtCore.QSize(25, 256))
         self.graphicsView_colorbar.setSizeIncrement(QtCore.QSize(0, 1))
-        self.graphicsView_colorbar.setResizeAnchor(QtCore.Qt.QGraphicsView.ViewportAnchor.AnchorViewCenter)
+        self.graphicsView_colorbar.setResizeAnchor(
+            QtCore.Qt.QGraphicsView.ViewportAnchor.AnchorViewCenter
+        )
         self.graphicsView_colorbar.setObjectName("graphicsView_colorbar")
         self.gridLayout_2.addWidget(self.graphicsView_colorbar, 0, 0, 1, 1)
         self.aspects_verticalLayout = QtWidgets.QVBoxLayout()
-        self.aspects_verticalLayout.setSizeConstraint(QtCore.Qt.QLayout.SizeConstraint.SetMinimumSize)
+        self.aspects_verticalLayout.setSizeConstraint(
+            QtCore.Qt.QLayout.SizeConstraint.SetMinimumSize
+        )
         self.aspects_verticalLayout.setSpacing(0)
         self.aspects_verticalLayout.setObjectName("aspects_verticalLayout")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
@@ -214,7 +232,9 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addLayout(self.aspects_verticalLayout, 0, 2, 1, 1)
         self.gridLayout.addLayout(self.gridLayout_2, 2, 2, 1, 1)
         self.main_graphicsView_cor = GraphicsLayoutWidget(self.imageData_groupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.main_graphicsView_cor.sizePolicy().hasHeightForWidth())
@@ -227,7 +247,9 @@ class Ui_MainWindow(object):
         self.main_graphicsView_cor.setObjectName("main_graphicsView_cor")
         self.gridLayout.addWidget(self.main_graphicsView_cor, 1, 2, 1, 1)
         self.main_graphicsView_sag = GraphicsLayoutWidget(self.imageData_groupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.main_graphicsView_sag.sizePolicy().hasHeightForWidth())
@@ -240,7 +262,9 @@ class Ui_MainWindow(object):
         self.main_graphicsView_sag.setObjectName("main_graphicsView_sag")
         self.gridLayout.addWidget(self.main_graphicsView_sag, 2, 1, 1, 1)
         self.main_graphicsView_ax = GraphicsLayoutWidget(self.imageData_groupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.main_graphicsView_ax.sizePolicy().hasHeightForWidth())
@@ -250,12 +274,16 @@ class Ui_MainWindow(object):
         self.main_graphicsView_ax.setSizeIncrement(QtCore.QSize(1, 1))
         self.main_graphicsView_ax.setFrameShape(QtCore.Qt.QFrame.Shape.NoFrame)
         self.main_graphicsView_ax.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignCenter)
-        self.main_graphicsView_ax.setViewportUpdateMode(QtCore.Qt.QGraphicsView.ViewportUpdateMode.SmartViewportUpdate)
+        self.main_graphicsView_ax.setViewportUpdateMode(
+            QtCore.Qt.QGraphicsView.ViewportUpdateMode.SmartViewportUpdate
+        )
         self.main_graphicsView_ax.setObjectName("main_graphicsView_ax")
         self.gridLayout.addWidget(self.main_graphicsView_ax, 1, 1, 1, 1)
         self.overlays_groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.overlays_groupBox.setGeometry(QtCore.QRect(10, 7, 421, 591))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlays_groupBox.sizePolicy().hasHeightForWidth())
@@ -276,7 +304,9 @@ class Ui_MainWindow(object):
         self.overlay_radioButton_05.setObjectName("overlay_radioButton_05")
         self.overlay_graphicsView_01 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_01.setGeometry(QtCore.QRect(10, 25, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_01.sizePolicy().hasHeightForWidth())
@@ -353,7 +383,9 @@ class Ui_MainWindow(object):
         self.overlay_radioButton_08.setObjectName("overlay_radioButton_08")
         self.overlay_graphicsView_04 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_04.setGeometry(QtCore.QRect(10, 235, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_04.sizePolicy().hasHeightForWidth())
@@ -365,7 +397,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_04.setObjectName("overlay_graphicsView_04")
         self.overlay_graphicsView_06 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_06.setGeometry(QtCore.QRect(10, 375, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_06.sizePolicy().hasHeightForWidth())
@@ -377,7 +411,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_06.setObjectName("overlay_graphicsView_06")
         self.overlay_graphicsView_03 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_03.setGeometry(QtCore.QRect(10, 165, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_03.sizePolicy().hasHeightForWidth())
@@ -389,7 +425,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_03.setObjectName("overlay_graphicsView_03")
         self.overlay_graphicsView_08 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_08.setGeometry(QtCore.QRect(10, 515, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_08.sizePolicy().hasHeightForWidth())
@@ -401,7 +439,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_08.setObjectName("overlay_graphicsView_08")
         self.overlay_graphicsView_05 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_05.setGeometry(QtCore.QRect(10, 305, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_05.sizePolicy().hasHeightForWidth())
@@ -413,7 +453,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_05.setObjectName("overlay_graphicsView_05")
         self.overlay_graphicsView_02 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_02.setGeometry(QtCore.QRect(10, 95, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_02.sizePolicy().hasHeightForWidth())
@@ -425,7 +467,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_02.setObjectName("overlay_graphicsView_02")
         self.overlay_graphicsView_07 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_07.setGeometry(QtCore.QRect(10, 445, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_07.sizePolicy().hasHeightForWidth())
@@ -437,7 +481,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_07.setObjectName("overlay_graphicsView_07")
         self.overlay_graphicsView_09 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_09.setGeometry(QtCore.QRect(210, 25, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_09.sizePolicy().hasHeightForWidth())
@@ -449,7 +495,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_09.setObjectName("overlay_graphicsView_09")
         self.overlay_graphicsView_11 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_11.setGeometry(QtCore.QRect(210, 165, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_11.sizePolicy().hasHeightForWidth())
@@ -461,7 +509,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_11.setObjectName("overlay_graphicsView_11")
         self.overlay_graphicsView_10 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_10.setGeometry(QtCore.QRect(210, 95, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_10.sizePolicy().hasHeightForWidth())
@@ -473,7 +523,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_10.setObjectName("overlay_graphicsView_10")
         self.overlay_graphicsView_12 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_12.setGeometry(QtCore.QRect(210, 235, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_12.sizePolicy().hasHeightForWidth())
@@ -485,7 +537,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_12.setObjectName("overlay_graphicsView_12")
         self.overlay_graphicsView_13 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_13.setGeometry(QtCore.QRect(210, 305, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_13.sizePolicy().hasHeightForWidth())
@@ -497,7 +551,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_13.setObjectName("overlay_graphicsView_13")
         self.overlay_graphicsView_14 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_14.setGeometry(QtCore.QRect(210, 375, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_14.sizePolicy().hasHeightForWidth())
@@ -509,7 +565,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_14.setObjectName("overlay_graphicsView_14")
         self.overlay_graphicsView_15 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_15.setGeometry(QtCore.QRect(210, 445, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_15.sizePolicy().hasHeightForWidth())
@@ -521,7 +579,9 @@ class Ui_MainWindow(object):
         self.overlay_graphicsView_15.setObjectName("overlay_graphicsView_15")
         self.overlay_graphicsView_16 = GraphicsLayoutWidget(self.overlays_groupBox)
         self.overlay_graphicsView_16.setGeometry(QtCore.QRect(210, 515, 192, 64))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.overlay_graphicsView_16.sizePolicy().hasHeightForWidth())
@@ -638,7 +698,9 @@ class Ui_MainWindow(object):
         self.overlay_radioButton_16.raise_()
         self.histogram_groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.histogram_groupBox.setGeometry(QtCore.QRect(1010, 225, 571, 186))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.histogram_groupBox.sizePolicy().hasHeightForWidth())
@@ -651,7 +713,9 @@ class Ui_MainWindow(object):
         self.histogram_groupBox.setObjectName("histogram_groupBox")
         self.histogram_graphicsView = GraphicsLayoutWidget(self.histogram_groupBox)
         self.histogram_graphicsView.setGeometry(QtCore.QRect(10, 25, 551, 151))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.MinimumExpanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.histogram_graphicsView.sizePolicy().hasHeightForWidth())
@@ -670,7 +734,11 @@ class Ui_MainWindow(object):
         self.label_4.setObjectName("label_4")
         self.pixnumX_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
         self.pixnumX_doubleSpinBox.setGeometry(QtCore.QRect(30, 30, 67, 24))
-        self.pixnumX_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.pixnumX_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.pixnumX_doubleSpinBox.setDecimals(0)
         self.pixnumX_doubleSpinBox.setObjectName("pixnumX_doubleSpinBox")
         self.label_7 = QtWidgets.QLabel(self.mainimagedata_groupBox)
@@ -681,7 +749,11 @@ class Ui_MainWindow(object):
         self.label_7.setObjectName("label_7")
         self.coordX_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
         self.coordX_doubleSpinBox.setGeometry(QtCore.QRect(100, 30, 67, 24))
-        self.coordX_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.coordX_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.coordX_doubleSpinBox.setDecimals(3)
         self.coordX_doubleSpinBox.setObjectName("coordX_doubleSpinBox")
         self.label_9 = QtWidgets.QLabel(self.mainimagedata_groupBox)
@@ -692,22 +764,38 @@ class Ui_MainWindow(object):
         self.label_9.setObjectName("label_9")
         self.pixnumY_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
         self.pixnumY_doubleSpinBox.setGeometry(QtCore.QRect(30, 55, 67, 24))
-        self.pixnumY_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.pixnumY_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.pixnumY_doubleSpinBox.setDecimals(0)
         self.pixnumY_doubleSpinBox.setObjectName("pixnumY_doubleSpinBox")
         self.coordY_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
         self.coordY_doubleSpinBox.setGeometry(QtCore.QRect(100, 55, 67, 24))
-        self.coordY_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.coordY_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.coordY_doubleSpinBox.setDecimals(3)
         self.coordY_doubleSpinBox.setObjectName("coordY_doubleSpinBox")
         self.pixnumZ_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
         self.pixnumZ_doubleSpinBox.setGeometry(QtCore.QRect(30, 80, 67, 24))
-        self.pixnumZ_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.pixnumZ_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.pixnumZ_doubleSpinBox.setDecimals(0)
         self.pixnumZ_doubleSpinBox.setObjectName("pixnumZ_doubleSpinBox")
         self.coordZ_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
         self.coordZ_doubleSpinBox.setGeometry(QtCore.QRect(100, 80, 67, 24))
-        self.coordZ_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.coordZ_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.coordZ_doubleSpinBox.setDecimals(3)
         self.coordZ_doubleSpinBox.setObjectName("coordZ_doubleSpinBox")
         self.label_6 = QtWidgets.QLabel(self.mainimagedata_groupBox)
@@ -718,12 +806,20 @@ class Ui_MainWindow(object):
         self.label_8.setObjectName("label_8")
         self.coordT_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
         self.coordT_doubleSpinBox.setGeometry(QtCore.QRect(100, 130, 67, 24))
-        self.coordT_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.coordT_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.coordT_doubleSpinBox.setDecimals(3)
         self.coordT_doubleSpinBox.setObjectName("coordT_doubleSpinBox")
         self.pixnumT_doubleSpinBox = QtWidgets.QDoubleSpinBox(self.mainimagedata_groupBox)
         self.pixnumT_doubleSpinBox.setGeometry(QtCore.QRect(30, 130, 67, 24))
-        self.pixnumT_doubleSpinBox.setAlignment(QtCore.Qt.Qt.AlignmentFlag.AlignRight|QtCore.Qt.Qt.AlignmentFlag.AlignTrailing|QtCore.Qt.Qt.AlignmentFlag.AlignVCenter)
+        self.pixnumT_doubleSpinBox.setAlignment(
+            QtCore.Qt.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.Qt.AlignmentFlag.AlignVCenter
+        )
         self.pixnumT_doubleSpinBox.setDecimals(0)
         self.pixnumT_doubleSpinBox.setObjectName("pixnumT_doubleSpinBox")
         self.label_3 = QtWidgets.QLabel(self.mainimagedata_groupBox)
@@ -750,7 +846,9 @@ class Ui_MainWindow(object):
         self.runMovieButton.setObjectName("runMovieButton")
         self.regressor_groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.regressor_groupBox.setGeometry(QtCore.QRect(10, 595, 1571, 181))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.regressor_groupBox.sizePolicy().hasHeightForWidth())
@@ -763,10 +861,14 @@ class Ui_MainWindow(object):
         self.regressor_groupBox.setObjectName("regressor_groupBox")
         self.regressorspectrum_graphicsView = GraphicsLayoutWidget(self.regressor_groupBox)
         self.regressorspectrum_graphicsView.setGeometry(QtCore.QRect(730, 25, 710, 131))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.regressorspectrum_graphicsView.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.regressorspectrum_graphicsView.sizePolicy().hasHeightForWidth()
+        )
         self.regressorspectrum_graphicsView.setSizePolicy(sizePolicy)
         self.regressorspectrum_graphicsView.setMinimumSize(QtCore.QSize(710, 100))
         self.regressorspectrum_graphicsView.setMaximumSize(QtCore.QSize(710, 1000))
@@ -775,10 +877,14 @@ class Ui_MainWindow(object):
         self.regressortimecourse_graphicsView = GraphicsLayoutWidget(self.regressor_groupBox)
         self.regressortimecourse_graphicsView.setEnabled(True)
         self.regressortimecourse_graphicsView.setGeometry(QtCore.QRect(10, 23, 710, 131))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.regressortimecourse_graphicsView.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.regressortimecourse_graphicsView.sizePolicy().hasHeightForWidth()
+        )
         self.regressortimecourse_graphicsView.setSizePolicy(sizePolicy)
         self.regressortimecourse_graphicsView.setMinimumSize(QtCore.QSize(710, 100))
         self.regressortimecourse_graphicsView.setMaximumSize(QtCore.QSize(710, 1000))
@@ -834,7 +940,9 @@ class Ui_MainWindow(object):
         self.pass4_radioButton.setFont(font)
         self.pass4_radioButton.setObjectName("pass4_radioButton")
         self.verticalLayout.addWidget(self.pass4_radioButton)
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
         self.verticalLayout.addItem(spacerItem)
         self.label_5 = QtWidgets.QLabel(self.regressor_groupBox)
         self.label_5.setGeometry(QtCore.QRect(270, 155, 161, 16))
@@ -852,7 +960,9 @@ class Ui_MainWindow(object):
         self.label_12.setObjectName("label_12")
         self.logOutput_groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.logOutput_groupBox.setGeometry(QtCore.QRect(1200, 7, 381, 221))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.logOutput_groupBox.sizePolicy().hasHeightForWidth())
@@ -873,7 +983,9 @@ class Ui_MainWindow(object):
         self.logOutput.setObjectName("logOutput")
         self.simfunc_groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.simfunc_groupBox.setGeometry(QtCore.QRect(1010, 407, 571, 186))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.simfunc_groupBox.sizePolicy().hasHeightForWidth())
@@ -886,7 +998,9 @@ class Ui_MainWindow(object):
         self.simfunc_groupBox.setObjectName("simfunc_groupBox")
         self.simfunc_graphicsView = GraphicsLayoutWidget(self.simfunc_groupBox)
         self.simfunc_graphicsView.setGeometry(QtCore.QRect(10, 25, 551, 151))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.MinimumExpanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.simfunc_graphicsView.sizePolicy().hasHeightForWidth())
@@ -919,15 +1033,36 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.imageData_groupBox.setTitle(_translate("MainWindow", "Image Data"))
-        self.resetDispLimits_Button.setToolTip(_translate("MainWindow", "Set the display range of the current map to the absolute minimum and maximum"))
+        self.resetDispLimits_Button.setToolTip(
+            _translate(
+                "MainWindow",
+                "Set the display range of the current map to the absolute minimum and maximum",
+            )
+        )
         self.resetDispLimits_Button.setText(_translate("MainWindow", "Full Range"))
-        self.resetDispSmart_Button.setToolTip(_translate("MainWindow", "Set the display range of the current map to the robust minimum and maximum"))
+        self.resetDispSmart_Button.setToolTip(
+            _translate(
+                "MainWindow",
+                "Set the display range of the current map to the robust minimum and maximum",
+            )
+        )
         self.resetDispSmart_Button.setText(_translate("MainWindow", "Smart"))
-        self.saveDisp_Button.setToolTip(_translate("MainWindow", "Save jpegs of the currently displayed map"))
+        self.saveDisp_Button.setToolTip(
+            _translate("MainWindow", "Save jpegs of the currently displayed map")
+        )
         self.saveDisp_Button.setText(_translate("MainWindow", "Save"))
-        self.setMask_Button.setToolTip(_translate("MainWindow", "Right click to select the mask used to display the current map"))
+        self.setMask_Button.setToolTip(
+            _translate(
+                "MainWindow", "Right click to select the mask used to display the current map"
+            )
+        )
         self.setMask_Button.setText(_translate("MainWindow", "No mask"))
-        self.transparency_checkBox.setToolTip(_translate("MainWindow", "With transparency on, map values outside the range limits are not displayed."))
+        self.transparency_checkBox.setToolTip(
+            _translate(
+                "MainWindow",
+                "With transparency on, map values outside the range limits are not displayed.",
+            )
+        )
         self.transparency_checkBox.setText(_translate("MainWindow", "Transparency"))
         self.label_2.setText(_translate("MainWindow", "Colormap"))
         self.gray_radioButton.setText(_translate("MainWindow", "Gray"))
@@ -985,4 +1120,6 @@ class Ui_MainWindow(object):
         self.logOutput_groupBox.setTitle(_translate("MainWindow", "Information"))
         self.simfunc_groupBox.setTitle(_translate("MainWindow", "Correlation Function"))
         self.actionQuit.setText(_translate("MainWindow", "Quit"))
+
+
 from pyqtgraph import GraphicsLayoutWidget, GraphicsView

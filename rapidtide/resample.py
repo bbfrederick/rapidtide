@@ -597,7 +597,9 @@ def arbresample(
         return resampled
 
 
-def upsample(inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, dofilt=True, debug=False):
+def upsample(
+    inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, dofilt=True, debug=False
+):
     starttime = time.time()
     if Fs_higher <= Fs_init:
         print("upsample: target frequency must be higher than initial frequency")

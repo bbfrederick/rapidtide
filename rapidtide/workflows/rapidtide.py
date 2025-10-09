@@ -114,6 +114,7 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
     )
     return outputtimecourse, echofit, echoR2
 
+
 def setpassoptions(passdict, optiondict):
     for key, value in passdict.items():
         optiondict[key] = value
@@ -353,7 +354,9 @@ def rapidtide_main(argparsingfunc):
     ####################################################
     # Calculate initial stats
     ####################################################
-    init_mean, init_std, init_skew, init_kurtosis = tide_stats.fmristats(theinputdata.byvoxel())
+    init_min, init_max, init_mean, init_std, init_median, init_MAD, init_skew, init_kurtosis = (
+        tide_stats.fmristats(theinputdata.byvoxel())
+    )
 
     ####################################################
     #  Prepare data
@@ -2989,13 +2992,13 @@ def rapidtide_main(argparsingfunc):
                     "percent",
                     "Change in inband variance after filtering, in percent",
                 ),
-                #(
+                # (
                 #    lfofilteredmeanvalue,
                 #    "lfofilterMean",
                 #    "map",
                 #    None,
                 #    "Voxelwise mean of the sLFO filtered data",
-                #),
+                # ),
             ]
             if optiondict["saveminimumsLFOfiltfiles"]:
                 maplist += [
@@ -3062,15 +3065,53 @@ def rapidtide_main(argparsingfunc):
                 init_kurtosis_valid = init_kurtosis[validvoxels] + 0.0
                 maplist += [
                     (init_std_valid, "initialStd", "map", None, "Std of the raw input data"),
-                    (init_skew_valid, "initialSkewness", "map", None, "Skewness of the raw input data"),
-                    (init_kurtosis_valid, "initialKurtosis", "map", None, "Kurtosis of the raw input data"),
+                    (
+                        init_skew_valid,
+                        "initialSkewness",
+                        "map",
+                        None,
+                        "Skewness of the raw input data",
+                    ),
+                    (
+                        init_kurtosis_valid,
+                        "initialKurtosis",
+                        "map",
+                        None,
+                        "Kurtosis of the raw input data",
+                    ),
                 ]
-                final_mean_valid, final_std_valid, final_skew_valid, final_kurtosis_valid = tide_stats.fmristats(
-                    filtereddata)
+                (
+                    final_min_valid,
+                    final_max_valid,
+                    final_mean_valid,
+                    final_std_valid,
+                    final_median_valid,
+                    final_MAD_valid,
+                    final_skew_valid,
+                    final_kurtosis_valid,
+                ) = tide_stats.fmristats(filtereddata)
                 maplist += [
-                    (final_std_valid, "lfofilterCleanedStd", "map", None, "Std of the sLFO cleaned data"),
-                    (final_skew_valid, "lfofilterCleanedSkewness", "map", None, "Skewness of the sLFO cleaned data"),
-                    (final_kurtosis_valid, "lfofilterCleanedKurtosis", "map", None, "Kurtosis of the sLFO cleaned data"),
+                    (
+                        final_std_valid,
+                        "lfofilterCleanedStd",
+                        "map",
+                        None,
+                        "Std of the sLFO cleaned data",
+                    ),
+                    (
+                        final_skew_valid,
+                        "lfofilterCleanedSkewness",
+                        "map",
+                        None,
+                        "Skewness of the sLFO cleaned data",
+                    ),
+                    (
+                        final_kurtosis_valid,
+                        "lfofilterCleanedKurtosis",
+                        "map",
+                        None,
+                        "Kurtosis of the sLFO cleaned data",
+                    ),
                 ]
         else:
             maplist = [

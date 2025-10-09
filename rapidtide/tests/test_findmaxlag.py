@@ -39,7 +39,9 @@ def dumplists(results, targets, failflags):
         print(results[i], targets[i], failflags[i])
 
 
-def eval_fml_result(absmin, absmax, testvalues, foundvalues, failflags, tolerance=0.0001, debug=False):
+def eval_fml_result(
+    absmin, absmax, testvalues, foundvalues, failflags, tolerance=0.0001, debug=False
+):
     if debug:
         print(f"{absmin=}, {absmax=}, {tolerance=}")
         print(f"{testvalues=}")
@@ -187,14 +189,22 @@ def test_findmaxlag(displayplots=False, local=False, debug=False):
             for i in range(len(testlags)):
                 print(testlags[i], fml_maxlags[i], fml_lfailreasons[i])
 
-        assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_lfailreasons, debug=debug)
-        assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_lfailreasons, debug=debug)
+        assert eval_fml_result(
+            lagmin, lagmax, testlags, fml_maxlags, fml_lfailreasons, debug=debug
+        )
+        assert eval_fml_result(
+            absminval, absmaxval, testvals, fml_maxvals, fml_lfailreasons, debug=debug
+        )
         assert eval_fml_result(
             absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_lfailreasons, debug=debug
         )
 
-        assert eval_fml_result(lagmin, lagmax, testlags, fmlc_maxlags, fmlc_lfailreasons, debug=debug)
-        assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_lfailreasons, debug=debug)
+        assert eval_fml_result(
+            lagmin, lagmax, testlags, fmlc_maxlags, fmlc_lfailreasons, debug=debug
+        )
+        assert eval_fml_result(
+            absminval, absmaxval, testvals, fmlc_maxvals, fmlc_lfailreasons, debug=debug
+        )
         assert eval_fml_result(
             absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_lfailreasons, debug=debug
         )
@@ -330,14 +340,20 @@ def test_findmaxlag(displayplots=False, local=False, debug=False):
             ax.legend(["findmaxlag_gauss", "classes"])
             plt.show()
 
-        assert eval_fml_result(lagmin, lagmax, testlags, fml_maxlags, fml_wfailreasons, debug=debug)
+        assert eval_fml_result(
+            lagmin, lagmax, testlags, fml_maxlags, fml_wfailreasons, debug=debug
+        )
         # assert eval_fml_result(absminval, absmaxval, testvals, fml_maxvals, fml_wfailreasons)
         assert eval_fml_result(
             absminsigma, absmaxsigma, testsigmas, fml_maxsigmas, fml_wfailreasons, debug=debug
         )
 
-        assert eval_fml_result(lagmin, lagmax, testlags, fmlc_maxlags, fmlc_wfailreasons, debug=debug)
-        assert eval_fml_result(absminval, absmaxval, testvals, fmlc_maxvals, fmlc_wfailreasons, debug=debug)
+        assert eval_fml_result(
+            lagmin, lagmax, testlags, fmlc_maxlags, fmlc_wfailreasons, debug=debug
+        )
+        assert eval_fml_result(
+            absminval, absmaxval, testvals, fmlc_maxvals, fmlc_wfailreasons, debug=debug
+        )
         assert eval_fml_result(
             absminsigma, absmaxsigma, testsigmas, fmlc_maxsigmas, fmlc_wfailreasons, debug=debug
         )

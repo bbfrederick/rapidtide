@@ -2222,9 +2222,15 @@ def process_args(inputargs=None):
 
     # make the pass options dictionary
     args["passoptions"] = [
-        {"similaritymetric": "riptide",},
-        {"similaritymetric": "correlation", },
-        {"similaritymetric": "correlation", },
+        {
+            "similaritymetric": "riptide",
+        },
+        {
+            "similaritymetric": "correlation",
+        },
+        {
+            "similaritymetric": "correlation",
+        },
     ]
 
     # dispersion calculation

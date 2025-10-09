@@ -694,9 +694,17 @@ class SimilarityFunctionFitter:
                 while peakpoints[peakstart - 1] == 1:
                     peakstart -= 1
             else:
-                while thegrad[peakend + 1] <= 0.0 and peakpoints[peakend + 1] == 1 and peakend < len(self.corrtimeaxis) - 2:
+                while (
+                    thegrad[peakend + 1] <= 0.0
+                    and peakpoints[peakend + 1] == 1
+                    and peakend < len(self.corrtimeaxis) - 2
+                ):
                     peakend += 1
-                while thegrad[peakstart - 1] >= 0.0 and peakpoints[peakstart - 1] == 1 and peakstart >= 1:
+                while (
+                    thegrad[peakstart - 1] >= 0.0
+                    and peakpoints[peakstart - 1] == 1
+                    and peakstart >= 1
+                ):
                     peakstart -= 1
             if self.debug:
                 print("final peakstart, peakend:", peakstart, peakend)

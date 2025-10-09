@@ -115,7 +115,9 @@ def fitSimFunc(
         delaystep = (trimmedcorrscale[1] - trimmedcorrscale[0]) / upsampfac
         for thevox in range(numvalidspatiallocs):
             fitmask[thevox] = 1
-            upsampcorrout = tide_resample.upsample(corrout[thevox,:],1, upsampfac, intfac=True, dofilt=False)
+            upsampcorrout = tide_resample.upsample(
+                corrout[thevox, :], 1, upsampfac, intfac=True, dofilt=False
+            )
             if optiondict["bipolar"]:
                 thismax = np.argmax(np.fabs(upsampcorrout))
             else:
@@ -193,9 +195,9 @@ def fitSimFunc(
                 outmaparray[validvoxels] = eval("lagtimes")[:]
 
                 # find voxels to despeckle
-                medianlags = ndimage.median_filter(outmaparray.reshape(nativespaceshape), 3).reshape(
-                    numspatiallocs
-                )
+                medianlags = ndimage.median_filter(
+                    outmaparray.reshape(nativespaceshape), 3
+                ).reshape(numspatiallocs)
                 # voxels that we're happy with have initlags set to -1000000.0
                 initlags = np.where(
                     np.abs(outmaparray - medianlags) > optiondict["despeckle_thresh"],
@@ -235,7 +237,9 @@ def fitSimFunc(
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
-                        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
+                        tide_util.enablemkl(
+                            optiondict["mklthreads"], debug=optiondict["threaddebug"]
+                        )
 
                         voxelsprocessed_fc_ds += voxelsprocessed_thispass
                         optiondict[
@@ -258,7 +262,9 @@ def fitSimFunc(
                 0.0,
             )
             if optiondict["savedespecklemasks"] and (optiondict["despeckle_passes"] > 0):
-                despecklesavemask = np.where(internaldespeckleincludemask[validvoxels] == 0.0, 0, 1)
+                despecklesavemask = np.where(
+                    internaldespeckleincludemask[validvoxels] == 0.0, 0, 1
+                )
                 if thepass == optiondict["passes"]:
                     if theinputdata.filetype != "text":
                         if theinputdata.filetype == "cifti":

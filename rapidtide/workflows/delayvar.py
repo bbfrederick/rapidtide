@@ -618,8 +618,12 @@ def delayvar(args):
     winsLFOfitmean, winsLFOfitmean_shm = tide_util.allocarray(
         internalwinspaceshape, rt_outfloattype, shared=usesharedmem
     )
-    winrvalue, winrvalue_shm = tide_util.allocarray(internalwinspaceshape, rt_outfloattype, shared=usesharedmem)
-    winr2value, winr2value_shm = tide_util.allocarray(internalwinspaceshape, rt_outfloattype, shared=usesharedmem)
+    winrvalue, winrvalue_shm = tide_util.allocarray(
+        internalwinspaceshape, rt_outfloattype, shared=usesharedmem
+    )
+    winr2value, winr2value_shm = tide_util.allocarray(
+        internalwinspaceshape, rt_outfloattype, shared=usesharedmem
+    )
     winfitNorm, winfitNorm_shm = tide_util.allocarray(
         internalwinspaceshapederivs, rt_outfloattype, shared=usesharedmem
     )
@@ -629,7 +633,9 @@ def delayvar(args):
     winmovingsignal, winmovingsignal_shm = tide_util.allocarray(
         internalwinfmrishape, rt_outfloattype, shared=usesharedmem
     )
-    winlagtc, winlagtc_shm = tide_util.allocarray(internalwinfmrishape, rt_floattype, shared=usesharedmem)
+    winlagtc, winlagtc_shm = tide_util.allocarray(
+        internalwinfmrishape, rt_floattype, shared=usesharedmem
+    )
     winfiltereddata, winfiltereddata_shm = tide_util.allocarray(
         internalwinfmrishape, rt_outfloattype, shared=usesharedmem
     )

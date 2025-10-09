@@ -311,7 +311,9 @@ def atlasaverage(args):
     else:
         regionlabels = tide_io.readlabels(args.regionlabelfile)
         if len(regionlabels) != numregions:
-            print("Error: number of labels in label file does not match the number of regions in the template.")
+            print(
+                "Error: number of labels in label file does not match the number of regions in the template."
+            )
             sys.exit()
     if args.debug:
         print(f"Region labels: {regionlabels}")

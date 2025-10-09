@@ -88,7 +88,7 @@ def padvec(inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
     padlen : int, optional
         The number of points to add to each end.  Default is 20.
         :param padlen:
-        
+
     avlen : int, optional
         The number of points to average when doing "constant+" padding.  Default is 20.
 
@@ -104,9 +104,20 @@ def padvec(inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
 
     """
     if debug:
-        print("padvec: padlen=", padlen, ", avlen=", avlen, ", padtype=", padtype, "len(inputdata)=", len(inputdata))
+        print(
+            "padvec: padlen=",
+            padlen,
+            ", avlen=",
+            avlen,
+            ", padtype=",
+            padtype,
+            "len(inputdata)=",
+            len(inputdata),
+        )
     if padlen > len(inputdata):
-        raise RuntimeError(f"ERROR: padlen ({padlen}) is greater than input data length ({len(inputdata)})")
+        raise RuntimeError(
+            f"ERROR: padlen ({padlen}) is greater than input data length ({len(inputdata)})"
+        )
     if avlen > padlen:
         avlen = padlen
 
@@ -145,7 +156,9 @@ def padvec(inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
                 )
             )
         else:
-            raise ValueError("Padtype must be one of 'reflect', 'zero', 'cyclic', 'constant', or 'constant+'.")
+            raise ValueError(
+                "Padtype must be one of 'reflect', 'zero', 'cyclic', 'constant', or 'constant+'."
+            )
     else:
         return inputdata
 
@@ -277,9 +290,7 @@ def dolpfiltfilt(
         signal.filtfilt(
             b,
             a,
-            padvec(
-                inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-            ),
+            padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug),
         ).real,
         padlen=padlen,
     ).astype(np.float64)
@@ -349,9 +360,7 @@ def dohpfiltfilt(
         signal.filtfilt(
             b,
             a,
-            padvec(
-                inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-            ),
+            padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug),
         ).real,
         padlen=padlen,
     )
@@ -429,9 +438,7 @@ def dobpfiltfilt(
         signal.filtfilt(
             b,
             a,
-            padvec(
-                inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-            ),
+            padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug),
         ).real,
         padlen=padlen,
     )
@@ -501,9 +508,7 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
 
 
 # @conditionaljit()
-def dolpfftfilt(
-    Fs, upperpass, inputdata, padlen=20, avlen=20, padtype="reflect", debug=False
-):
+def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
     r"""Performs an FFT brickwall lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -538,9 +543,7 @@ def dolpfftfilt(
     filtereddata : 1D float array
         The filtered data
     """
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlpfftfunc(Fs, upperpass, padinputdata, debug=debug)
     inputdata_trans *= transferfunc
@@ -548,9 +551,7 @@ def dolpfftfilt(
 
 
 # @conditionaljit()
-def dohpfftfilt(
-    Fs, lowerpass, inputdata, padlen=20, avlen=20, padtype="reflect", debug=False
-):
+def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
     r"""Performs an FFT brickwall highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -585,9 +586,7 @@ def dohpfftfilt(
     filtereddata : 1D float array
         The filtered data
     """
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = 1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)
     inputdata_trans *= transferfunc
@@ -643,9 +642,7 @@ def dobpfftfilt(
     filtereddata : 1D float array
         The filtered data
     """
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlpfftfunc(Fs, upperpass, padinputdata, debug=debug) * (
         1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)
@@ -839,9 +836,7 @@ def dolptransfuncfilt(
     filtereddata : 1D float array
         The filtered data
     """
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type
@@ -912,9 +907,7 @@ def dohptransfuncfilt(
     """
     if lowerstop is None:
         lowerstop = lowerpass * (1.0 / 1.05)
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type
@@ -987,9 +980,7 @@ def dobptransfuncfilt(
     """
     if lowerstop is None:
         lowerstop = lowerpass * (1.0 / 1.05)
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs,
@@ -1066,9 +1057,7 @@ def dolptrapfftfilt(
     filtereddata : 1D float array
         The filtered data
     """
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug)
     inputdata_trans *= transferfunc
@@ -1124,9 +1113,7 @@ def dohptrapfftfilt(
     filtereddata : 1D float array
         The filtered data
     """
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     transferfunc = 1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)
     inputdata_trans *= transferfunc
@@ -1192,9 +1179,7 @@ def dobptrapfftfilt(
     filtereddata : 1D float array
         The filtered data
     """
-    padinputdata = padvec(
-        inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     inputdata_trans = fftpack.fft(padinputdata)
     if debug:
         print(
@@ -1397,9 +1382,7 @@ def savgolsmooth(data, smoothlen=101, polyorder=3):
     return savgol_filter(data, smoothlen, polyorder)
 
 
-def csdfilter(
-    obsdata, commondata, padlen=20, avlen=20, padtype="reflect", debug=False
-):
+def csdfilter(obsdata, commondata, padlen=20, avlen=20, padtype="reflect", debug=False):
     r"""Cross spectral density filter - makes a filter transfer function that preserves common frequencies.
 
     Parameters
@@ -1425,12 +1408,8 @@ def csdfilter(
         The filtered data
 
     """
-    padobsdata = padvec(
-        obsdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
-    padcommondata = padvec(
-        commondata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug
-    )
+    padobsdata = padvec(obsdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
+    padcommondata = padvec(commondata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     obsdata_trans = fftpack.fft(padobsdata)
     transferfunc = np.sqrt(np.abs(fftpack.fft(padobsdata) * np.conj(fftpack.fft(padcommondata))))
     obsdata_trans *= transferfunc

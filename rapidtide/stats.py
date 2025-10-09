@@ -32,6 +32,7 @@ with warnings.catch_warnings():
 
 import scipy as sp
 from scipy.stats import johnsonsb, kurtosis, kurtosistest, skew, skewtest
+from statsmodels.robust import mad
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
@@ -489,8 +490,18 @@ def kurtosisstats(timecourse):
     testres = kurtosistest(timecourse)
     return kurtosis(timecourse), testres[0], testres[1]
 
+
 def fmristats(fmridata):
-    return np.mean(fmridata, axis=1), np.std(fmridata, axis=1), skew(fmridata, axis=1), kurtosis(fmridata, axis=1)
+    return (
+        np.min(fmridata, axis=1),
+        np.max(fmridata, axis=1),
+        np.mean(fmridata, axis=1),
+        np.std(fmridata, axis=1),
+        np.median(fmridata, axis=1),
+        mad(fmridata, axis=1),
+        skew(fmridata, axis=1),
+        kurtosis(fmridata, axis=1),
+    )
 
 
 def fast_ICC_rep_anova(Y, nocache=False, debug=False):

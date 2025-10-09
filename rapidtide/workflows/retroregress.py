@@ -519,16 +519,24 @@ def retroregress(args):
     sLFOfitmean, sLFOfitmean_shm = tide_util.allocarray(
         internalvalidspaceshape, rt_outfloattype, shared=usesharedmem
     )
-    rvalue, rvalue_shm = tide_util.allocarray(internalvalidspaceshape, rt_outfloattype, shared=usesharedmem)
-    r2value, r2value_shm = tide_util.allocarray(internalvalidspaceshape, rt_outfloattype, shared=usesharedmem)
-    fitNorm, fitNorm_shm = tide_util.allocarray(internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem)
+    rvalue, rvalue_shm = tide_util.allocarray(
+        internalvalidspaceshape, rt_outfloattype, shared=usesharedmem
+    )
+    r2value, r2value_shm = tide_util.allocarray(
+        internalvalidspaceshape, rt_outfloattype, shared=usesharedmem
+    )
+    fitNorm, fitNorm_shm = tide_util.allocarray(
+        internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
+    )
     fitcoeff, fitcoeff_shm = tide_util.allocarray(
         internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
     )
     movingsignal, movingsignal_shm = tide_util.allocarray(
         internalvalidfmrishape, rt_outfloattype, shared=usesharedmem
     )
-    lagtc, lagtc_shm = tide_util.allocarray(internalvalidfmrishape, rt_floattype, shared=usesharedmem)
+    lagtc, lagtc_shm = tide_util.allocarray(
+        internalvalidfmrishape, rt_floattype, shared=usesharedmem
+    )
     filtereddata, filtereddata_shm = tide_util.allocarray(
         internalvalidfmrishape, rt_outfloattype, shared=usesharedmem
     )
@@ -894,13 +902,13 @@ def retroregress(args):
                     "percent",
                     "Change in inband variance after filtering, in percent",
                 ),
-                #(
+                # (
                 #    lfofilteredmeanvalue,
                 #    "lfofilterMean",
                 #    "map",
                 #    None,
                 #    "Voxelwise mean of the sLFO filtered data",
-                #)
+                # )
                 # (
                 #   initialrawvariance,
                 #    "lfofilterTotalVarianceBefore",

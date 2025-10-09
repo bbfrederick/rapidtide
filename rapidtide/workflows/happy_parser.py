@@ -560,7 +560,8 @@ def _get_parser():
         type=lambda x: pf.is_float(parser, x),
         help=(
             "Split pulsatility map spatial frequencies with a gaussian filter with sigma=SIGMAINMM. "
-            f"Default is {DEFAULT_PULSATILITYSIGMA}mm. "),
+            f"Default is {DEFAULT_PULSATILITYSIGMA}mm. "
+        ),
         default=DEFAULT_PULSATILITYSIGMA,
     )
     phase_proj_tuning.add_argument(
@@ -572,7 +573,8 @@ def _get_parser():
         help=(
             "Consider voxels with a high spatial frequency pulsatility above THRESHPCT percent "
             "to be vessels. "
-            f"Default is {DEFAULT_PULSATILITYTHRESHOLD}mm. "),
+            f"Default is {DEFAULT_PULSATILITYTHRESHOLD}mm. "
+        ),
         default=DEFAULT_PULSATILITYSIGMA,
     )
 
@@ -588,7 +590,7 @@ def _get_parser():
         metavar="MASKNAME",
         help=(
             "Instead of dynamically generating a processing mask from the data, use "
-            "the mask specified in the file MASKNAME. "            
+            "the mask specified in the file MASKNAME. "
             "The mask must be a 3D NIFTI file with x, y, z dimensions matching the fMRI data. "
         ),
         default=None,

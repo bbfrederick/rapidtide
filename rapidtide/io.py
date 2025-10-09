@@ -1485,7 +1485,9 @@ def writebidstsv(
         reshapeddata = data
     if append:
         insamplerate, instarttime, incolumns, indata, incompressed, incolsource = readbidstsv(
-            outputfileroot + ".json", neednotexist=True, debug=debug,
+            outputfileroot + ".json",
+            neednotexist=True,
+            debug=debug,
         )
         if debug:
             print("appending")
@@ -1905,7 +1907,9 @@ def readbidstsv(inputfilename, colspec=None, warn=True, neednotexist=False, debu
             raise FileNotFoundError(f"file pair {thefileroot}(.json/.tsv[.gz]) does not exist")
 
 
-def readcolfrombidstsv(inputfilename, columnnum=0, columnname=None, neednotexist=False, debug=False):
+def readcolfrombidstsv(
+    inputfilename, columnnum=0, columnname=None, neednotexist=False, debug=False
+):
     r"""
 
     Parameters

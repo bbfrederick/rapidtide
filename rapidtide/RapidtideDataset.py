@@ -601,7 +601,9 @@ class RapidtideDataset:
                     self.focusregressor = thisregressor[0]
             else:
                 if thisregressor[6]:
-                    raise FileNotFoundError(f"regressor file {self.fileroot + thisregressor[2]} does not exist")
+                    raise FileNotFoundError(
+                        f"regressor file {self.fileroot + thisregressor[2]} does not exist"
+                    )
                 else:
                     if self.verbose > 1:
                         print(

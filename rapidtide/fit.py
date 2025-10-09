@@ -396,32 +396,32 @@ def trendgen(thexvals, thefitcoffs, demean):
 def detrend(inputdata, order=1, demean=False):
     """Estimates and removes a polynomial trend timecourse.
 
-       This routine calculates a polynomial defined by a set of coefficients
-       at specified time points to create a trend timecourse, and subtracts it
-       from the input signal. Optionally, it can remove the mean of the input
-       data as well.
+    This routine calculates a polynomial defined by a set of coefficients
+    at specified time points to create a trend timecourse, and subtracts it
+    from the input signal. Optionally, it can remove the mean of the input
+    data as well.
 
-       Parameters
-       ----------
-       thetimepoints : numpy.ndarray
-           A 1D NumPy array of time points at which to evaluate the polynomial.
-       thecoffs : list or numpy.ndarray
-           A list or 1D NumPy array of polynomial coefficients, typically in
-           decreasing order of power (e.g., `[a, b, c]` for `ax^2 + bx + c`).
-       demean : bool
-           If True, the mean of the generated trend timecourse will be subtracted,
-           effectively centering the trend around zero.
+    Parameters
+    ----------
+    thetimepoints : numpy.ndarray
+        A 1D NumPy array of time points at which to evaluate the polynomial.
+    thecoffs : list or numpy.ndarray
+        A list or 1D NumPy array of polynomial coefficients, typically in
+        decreasing order of power (e.g., `[a, b, c]` for `ax^2 + bx + c`).
+    demean : bool
+        If True, the mean of the generated trend timecourse will be subtracted,
+        effectively centering the trend around zero.
 
-       Returns
-       -------
-       numpy.ndarray
-           A 1D NumPy array representing the generated polynomial trend timecourse.
+    Returns
+    -------
+    numpy.ndarray
+        A 1D NumPy array representing the generated polynomial trend timecourse.
 
-       Notes
-       -----
-       - This function utilizes `numpy.polyval` to evaluate the polynomial.
-       - Requires the `numpy` library.
-       """
+    Notes
+    -----
+    - This function utilizes `numpy.polyval` to evaluate the polynomial.
+    - Requires the `numpy` library.
+    """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
         thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]
@@ -1332,41 +1332,41 @@ def sincfit(height, loc, width, baseline, xvals, yvals):
 def gaussfit(height, loc, width, xvals, yvals):
     """Performs a non-linear least squares fit of a Gaussian function to data.
 
-       This routine uses `scipy.optimize.leastsq` to find the optimal parameters
-       (height, location, and width) that best describe a Gaussian curve fitted
-       to the provided `yvals` data against `xvals`. It requires an external
-       `gaussresiduals` function to compute the residuals.
+    This routine uses `scipy.optimize.leastsq` to find the optimal parameters
+    (height, location, and width) that best describe a Gaussian curve fitted
+    to the provided `yvals` data against `xvals`. It requires an external
+    `gaussresiduals` function to compute the residuals.
 
-       Parameters
-       ----------
-       height : float
-           Initial guess for the amplitude or peak height of the Gaussian.
-       loc : float
-           Initial guess for the mean (center) of the Gaussian.
-       width : float
-           Initial guess for the standard deviation (width) of the Gaussian.
-       xvals : numpy.ndarray or list
-           The independent variable data points.
-       yvals : numpy.ndarray or list
-           The dependent variable data points to which the Gaussian will be fitted.
+    Parameters
+    ----------
+    height : float
+        Initial guess for the amplitude or peak height of the Gaussian.
+    loc : float
+        Initial guess for the mean (center) of the Gaussian.
+    width : float
+        Initial guess for the standard deviation (width) of the Gaussian.
+    xvals : numpy.ndarray or list
+        The independent variable data points.
+    yvals : numpy.ndarray or list
+        The dependent variable data points to which the Gaussian will be fitted.
 
-       Returns
-       -------
-       tuple
-           A tuple containing the fitted parameters:
-           - float: The fitted height of the Gaussian.
-           - float: The fitted location (mean) of the Gaussian.
-           - float: The fitted width (standard deviation) of the Gaussian.
+    Returns
+    -------
+    tuple
+        A tuple containing the fitted parameters:
+        - float: The fitted height of the Gaussian.
+        - float: The fitted location (mean) of the Gaussian.
+        - float: The fitted width (standard deviation) of the Gaussian.
 
-       Notes
-       -----
-       - This function relies on an external function `gaussresiduals(params, y, x)`
-         which should calculate the difference between the observed `y` values and
-         the Gaussian function evaluated at `x` with the given `params` (height, loc, width).
-       - `scipy.optimize.leastsq` is used for the optimization, which requires
-         `scipy` and `numpy` to be imported (e.g., `import scipy.optimize as sp`
-         and `import numpy as np`).
-       """
+    Notes
+    -----
+    - This function relies on an external function `gaussresiduals(params, y, x)`
+      which should calculate the difference between the observed `y` values and
+      the Gaussian function evaluated at `x` with the given `params` (height, loc, width).
+    - `scipy.optimize.leastsq` is used for the optimization, which requires
+      `scipy` and `numpy` to be imported (e.g., `import scipy.optimize as sp`
+      and `import numpy as np`).
+    """
     plsq, dummy = sp.optimize.leastsq(
         gaussresiduals, np.array([height, loc, width]), args=(yvals, xvals), maxfev=5000
     )

@@ -37,7 +37,6 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
         exampleroot = get_examples_path()
         testtemproot = get_test_temp_path()
 
-
     # run initial rapidtide
     inputargs = [
         os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
@@ -63,16 +62,18 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
     inputargs = [
         "1.5",
         "260",
-        os.path.join( testtemproot, "sub-RAPIDTIDETESTSIM_desc-unfiltmean_map.nii.gz"),
-        os.path.join( testtemproot, "simulatedfmri_vn05"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETESTSIM_desc-unfiltmean_map.nii.gz"),
+        os.path.join(testtemproot, "simulatedfmri_vn05"),
         "--lfopctfile",
-        os.path.join( testtemproot, "sub-RAPIDTIDETESTSIM_desc-maxcorr_map.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETESTSIM_desc-maxcorr_map.nii.gz"),
         "--lfolagfile",
-        os.path.join( testtemproot, "sub-RAPIDTIDETESTSIM_desc-maxtimerefined_map.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETESTSIM_desc-maxtimerefined_map.nii.gz"),
         "--lforegressor",
-        os.path.join(testtemproot, "sub-RAPIDTIDETESTSIM_desc-movingregressor_timeseries.json:pass2"),
+        os.path.join(
+            testtemproot, "sub-RAPIDTIDETESTSIM_desc-movingregressor_timeseries.json:pass2"
+        ),
         "--voxelnoiselevel",
-        "5.0"
+        "5.0",
     ]
 
     pf.generic_init(rapidtide_simdata._get_parser, rapidtide_simdata.simdata, inputargs=inputargs)
@@ -116,7 +117,6 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
             spacetolerance=spacetolerance,
             debug=debug,
         )"""
-
 
 
 if __name__ == "__main__":
