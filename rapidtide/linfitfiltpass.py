@@ -404,11 +404,11 @@ def linfitfiltpass(
                                 r2value[timepoint],
                                 fitcoeff[timepoint],
                                 fitNorm[timepoint],
-                                datatoremove[:, timepoint],
-                                filtereddata[:, timepoint],
+                                dummy,
+                                dummy,
                             ) = _procOneRegressionFitItem(
                                 timepoint,
-                                theevs[:, timepoint],
+                                theevs,
                                 thedata,
                                 rt_floatset=rt_floatset,
                                 rt_floattype=rt_floattype,
@@ -424,7 +424,7 @@ def linfitfiltpass(
                             datatoremove[:, timepoint],
                             filtereddata[:, timepoint],
                         ) = _procOneRegressionFitItem(
-                            vox,
+                            timepoint,
                             theevs[:, timepoint],
                             thedata,
                             rt_floatset=rt_floatset,
