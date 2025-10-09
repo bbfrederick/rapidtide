@@ -1884,6 +1884,77 @@ def happy_main(argparsingfunc):
             estweights_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
 
     # estimate pulsatility
+    card_min, card_max, card_mean, card_std, card_median, card_mad, card_skew, card_kurtosis = tide_stats.fmristats(normapp.reshape(numspatiallocs, -1))
+    maplist = [
+        (
+            card_min,
+            "appmin",
+            "map",
+            None,
+            "Minimum value of analytic phase projection across all phases",
+        ),
+        (
+            card_max,
+            "appmax",
+            "map",
+            None,
+            "Maximum value of analytic phase projection across all phases",
+        ),
+        (
+            card_mean,
+            "appmean",
+            "map",
+            None,
+            "Mean value of analytic phase projection across all phases",
+        ),
+        (
+            card_std,
+            "appstd",
+            "map",
+            None,
+            "Standard deviation of analytic phase projection across all phases",
+        ),
+        (
+            card_median,
+            "appmedian",
+            "map",
+            None,
+            "Median of analytic phase projection across all phases",
+        ),
+        (
+            card_mad,
+            "appMAD",
+            "map",
+            None,
+            "Median average deviate of analytic phase projection across all phases",
+        ),
+        (
+            card_skew,
+            "appskew",
+            "map",
+            None,
+            "Skewness of analytic phase projection across all phases",
+        ),
+        (
+            card_kurtosis,
+            "appkurtosis",
+            "map",
+            None,
+            "Kurtosis of analytic phase projection across all phases",
+        ),
+    ]
+    # write the 3D maps
+    tide_io.savemaplist(
+        outputroot,
+        maplist,
+        None,
+        (xsize, ysize, numslices),
+        theheader,
+        bidsdict,
+        debug=args.debug,
+    )
+
+    pulsatilitymap2 = 100.0 * (card_max - card_min)
     pulsatilitymap = 100.0 * (np.max(normapp, axis=3) - np.min(normapp, axis=3))
     rawrobustmax = tide_stats.getfracval(pulsatilitymap, 0.98, nozero=True)
     pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
