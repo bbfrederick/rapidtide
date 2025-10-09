@@ -108,6 +108,7 @@ def linfitfiltpass(
         print(f"{fmri_data.shape=}")
         print(f"{threshval=}")
         print(f"{theevs.shape=}, {np.min(theevs)=}, {np.max(theevs)=}")
+        print(f"{theevs=}")
     if procbyvoxel:
         indexaxis = 0
         procunit = "voxels"
@@ -214,7 +215,7 @@ def linfitfiltpass(
                     meanvalue[voxel[0]] = voxel[1]
                     rvalue[voxel[0]] = voxel[2]
                     r2value[voxel[0]] = voxel[3]
-                    if theevs.ndim > 1:
+                    if fitcoeff.ndim > 1:
                         fitcoeff[voxel[0], :] = voxel[4]
                         fitNorm[voxel[0], :] = voxel[5]
                     else:
@@ -226,7 +227,7 @@ def linfitfiltpass(
                     meanvalue[voxel[0]] = voxel[1]
                     rvalue[voxel[0]] = voxel[2]
                     r2value[voxel[0]] = voxel[3]
-                    if theevs.ndim > 1:
+                    if fitcoeff.ndim > 1:
                         fitcoeff[voxel[0], :] = voxel[4]
                         fitNorm[voxel[0], :] = voxel[5]
                     else:
@@ -246,7 +247,7 @@ def linfitfiltpass(
                     meanvalue[timepoint[0]] = timepoint[1]
                     rvalue[timepoint[0]] = timepoint[2]
                     r2value[timepoint[0]] = timepoint[3]
-                    if theevs.ndim > 1:
+                    if fitcoeff.ndim > 1:
                         fitcoeff[:, timepoint[0]] = timepoint[4]
                         fitNorm[:, timepoint[0]] = timepoint[5]
                     else:
@@ -258,7 +259,7 @@ def linfitfiltpass(
                     meanvalue[timepoint[0]] = timepoint[1]
                     rvalue[timepoint[0]] = timepoint[2]
                     r2value[timepoint[0]] = timepoint[3]
-                    if theevs.ndim > 1:
+                    if fitcoeff.ndim > 1:
                         fitcoeff[:, timepoint[0]] = timepoint[4]
                         fitNorm[:, timepoint[0]] = timepoint[5]
                     else:
@@ -270,6 +271,7 @@ def linfitfiltpass(
 
         del data_out
     else:
+        # this is the single proc path
         itemstotal = 0
         if procbyvoxel:
             for vox in tqdm(
