@@ -91,7 +91,7 @@ def linfitfiltpass(
     filtereddata,
     nprocs=1,
     alwaysmultiproc=False,
-    voxelspecific=True,
+    constantevs=False,
     confoundregress=False,
     coefficientsonly=False,
     procbyvoxel=True,
@@ -144,7 +144,7 @@ def linfitfiltpass(
 
                     # process and send the data
                     if procbyvoxel:
-                        if confoundregress or (not voxelspecific):
+                        if confoundregress or constantevs:
                             outQ.put(
                                 _procOneRegressionFitItem(
                                     val,
@@ -165,7 +165,7 @@ def linfitfiltpass(
                                 )
                             )
                     else:
-                        if confoundregress or (not voxelspecific):
+                        if confoundregress or constantevs:
                             outQ.put(
                                 _procOneRegressionFitItem(
                                     val,
@@ -300,7 +300,7 @@ def linfitfiltpass(
                             rt_floattype=rt_floattype,
                         )
                     elif coefficientsonly:
-                        if voxelspecific:
+                        if not constantevs:
                             (
                                 dummy,
                                 meanvalue[vox],

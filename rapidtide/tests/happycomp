@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd tmp
+for NEWFILE in happyout1_desc*.nii.gz
+do
+   OLDFILE=`echo ${NEWFILE} | sed 's/happyout1_/happyout1s_/g'`
+   echo ${OLDFILE} ${NEWFILE}
+   diff ${OLDFILE} ${NEWFILE}
+done

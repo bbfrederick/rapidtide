@@ -216,7 +216,7 @@ def calcSimFunc(
                 None,
                 None,
                 coefficientsonly=True,
-                voxelspecific=False,
+                constantevs=True,
                 nprocs=nprocs,
                 alwaysmultiproc=alwaysmultiproc,
                 showprogressbar=showprogressbar,
