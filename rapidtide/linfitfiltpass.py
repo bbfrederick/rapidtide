@@ -107,7 +107,7 @@ def linfitfiltpass(
         print(f"{numprocitems=}")
         print(f"{fmri_data.shape=}")
         print(f"{threshval=}")
-        print(f"{theevs.shape=}")
+        print(f"{theevs.shape=}, {np.min(theevs)=}, {np.max(theevs)=}")
     if procbyvoxel:
         indexaxis = 0
         procunit = "voxels"
