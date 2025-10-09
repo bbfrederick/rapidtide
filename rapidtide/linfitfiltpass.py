@@ -379,22 +379,40 @@ def linfitfiltpass(
                             rt_floattype=rt_floattype,
                         )
                     elif coefficientsonly:
-                        (
-                            dummy,
-                            meanvalue[timepoint],
-                            rvalue[timepoint],
-                            r2value[timepoint],
-                            fitcoeff[timepoint],
-                            fitNorm[timepoint],
-                            dummy,
-                            dummy,
-                        ) = _procOneRegressionFitItem(
-                            timepoint,
-                            theevs[:, timepoint],
-                            thedata,
-                            rt_floatset=rt_floatset,
-                            rt_floattype=rt_floattype,
-                        )
+                        if not constantevs:
+                            (
+                                dummy,
+                                meanvalue[timepoint],
+                                rvalue[timepoint],
+                                r2value[timepoint],
+                                fitcoeff[timepoint],
+                                fitNorm[timepoint],
+                                dummy,
+                                dummy,
+                            ) = _procOneRegressionFitItem(
+                                timepoint,
+                                theevs[:, timepoint],
+                                thedata,
+                                rt_floatset=rt_floatset,
+                                rt_floattype=rt_floattype,
+                            )
+                        else:
+                            (
+                                dummy,
+                                meanvalue[timepoint],
+                                rvalue[timepoint],
+                                r2value[timepoint],
+                                fitcoeff[timepoint],
+                                fitNorm[timepoint],
+                                datatoremove[:, timepoint],
+                                filtereddata[:, timepoint],
+                            ) = _procOneRegressionFitItem(
+                                timepoint,
+                                theevs[:, timepoint],
+                                thedata,
+                                rt_floatset=rt_floatset,
+                                rt_floattype=rt_floattype,
+                            )
                     else:
                         (
                             dummy,
@@ -406,12 +424,13 @@ def linfitfiltpass(
                             datatoremove[:, timepoint],
                             filtereddata[:, timepoint],
                         ) = _procOneRegressionFitItem(
-                            timepoint,
+                            vox,
                             theevs[:, timepoint],
                             thedata,
                             rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
+
                     itemstotal += 1
         if showprogressbar:
             print()
