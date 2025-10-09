@@ -113,6 +113,8 @@ def happy_main(argparsingfunc):
         "***********************************************************************************************************************************")
     print("")"""
 
+    infodict["pid"] = os.getpid()
+
     infodict["fmrifilename"] = fmrifilename
     infodict["slicetimename"] = slicetimename
     infodict["outputroot"] = outputroot
@@ -138,6 +140,12 @@ def happy_main(argparsingfunc):
         "Units": "arbitrary",
         "CommandLineArgs": args.commandline,
     }
+
+    # decide if we need to use shared memory
+    if args.nprocs > 1:
+        infodict["sharedmem"] = True
+    else:
+        infodict["sharedmem"] = False
 
     # save the information file
     if args.saveinfoasjson:
@@ -2156,18 +2164,55 @@ def happy_main(argparsingfunc):
         # now remove them
         tide_util.logmem("before cardiac removal")
         print("Removing cardiac signal with GLM")
-        filtereddata = 0.0 * fmri_data
-        validlocs = np.where(mask > 0)[0]
+        validlocs  = np.where(mask > 0)[0]
         numvalidspatiallocs = len(validlocs)
+        if args.focaldebug:
+            print(f"{numvalidspatiallocs=}, {fmri_data.shape=}")
+        filtereddata, filtereddata_shm = tide_util.allocarray(
+            fmri_data.shape,
+            "float64",
+            shared=infodict["sharedmem"],
+            name=f"filtereddata_{infodict['pid']}",
+        )
+        datatoremove, datatoremove_shm = tide_util.allocarray(
+            fmri_data.shape,
+            "float64",
+            shared=infodict["sharedmem"],
+            name=f"datatoremove_{infodict['pid']}",
+        )
         threshval = 0.0
         if args.dospatialregression:
             regressiontype = "spatial"
-            meanvals = np.zeros(timepoints, dtype=np.float64)
-            rvals = np.zeros(timepoints, dtype=np.float64)
-            r2vals = np.zeros(timepoints, dtype=np.float64)
-            fitcoffs = np.zeros(timepoints, dtype=np.float64)
-            fitNorm = np.zeros(timepoints, dtype=np.float64)
-            datatoremove = 0.0 * fmri_data
+            meanvals, meanvals_shm = tide_util.allocarray(
+                (timepoints),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"meanvals_{infodict['pid']}",
+            )
+            rvals, rvals_shm = tide_util.allocarray(
+                (timepoints),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"rvals_{infodict['pid']}",
+            )
+            r2vals, r2vals_shm = tide_util.allocarray(
+                (timepoints),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"r2vals_{infodict['pid']}",
+            )
+            fitcoffs, fitcoffs_shm = tide_util.allocarray(
+                (timepoints),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"fitcoffs_{infodict['pid']}",
+            )
+            fitNorm, fitNorm_shm = tide_util.allocarray(
+                (timepoints),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"fitNorm_{infodict['pid']}",
+            )
             print("Running spatial regression on", timepoints, "timepoints")
             tide_util.disablemkl(args.nprocs)
             tide_linfitfiltpass.linfitfiltpass(
@@ -2203,12 +2248,36 @@ def happy_main(argparsingfunc):
 
         if args.dotemporalregression:
             regressiontype = "temporal"
-            meanvals = np.zeros(numspatiallocs, dtype=np.float64)
-            rvals = np.zeros(numspatiallocs, dtype=np.float64)
-            r2vals = np.zeros(numspatiallocs, dtype=np.float64)
-            fitcoffs = np.zeros(numspatiallocs, dtype=np.float64)
-            fitNorm = np.zeros(numspatiallocs, dtype=np.float64)
-            datatoremove = 0.0 * fmri_data
+            meanvals, meanvals_shm = tide_util.allocarray(
+                (numspatiallocs),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"meanvals_{infodict['pid']}",
+            )
+            rvals, rvals_shm = tide_util.allocarray(
+                (numspatiallocs),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"rvals_{infodict['pid']}",
+            )
+            r2vals, r2vals_shm = tide_util.allocarray(
+                (numspatiallocs),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"r2vals_{infodict['pid']}",
+            )
+            fitcoffs, fitcoffs_shm = tide_util.allocarray(
+                (numspatiallocs),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"fitcoffs_{infodict['pid']}",
+            )
+            fitNorm, fitNorm_shm = tide_util.allocarray(
+                (numspatiallocs),
+                "float64",
+                shared=infodict["sharedmem"],
+                name=f"fitNorm_{infodict['pid']}",
+            )
             print("Running temporal regression on", numvalidspatiallocs, "voxels")
             tide_util.disablemkl(args.nprocs)
             tide_linfitfiltpass.linfitfiltpass(
@@ -2312,6 +2381,17 @@ def happy_main(argparsingfunc):
                 None,
             ]
         )
+
+    # clean up shared memory, if using
+    if args.dotemporalregression or args.dospatialregression:
+        if infodict["sharedmem"]:
+            tide_util.cleanup_shm(filtereddata_shm)
+            tide_util.cleanup_shm(datatoremove_shm)
+            tide_util.cleanup_shm(meanvals_shm)
+            tide_util.cleanup_shm(rvals_shm)
+            tide_util.cleanup_shm(r2vals_shm)
+            tide_util.cleanup_shm(fitcoffs_shm)
+            tide_util.cleanup_shm(fitNorm_shm)
 
     timings.append(["Done", time.time(), None, None])
 

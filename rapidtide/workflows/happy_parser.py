@@ -124,7 +124,7 @@ def _get_parser():
         ),
         default=1,
     )
-    performance_opts.add_argument(
+    """performance_opts.add_argument(
         "--nprocs",
         dest="nprocs",
         action="store",
@@ -137,7 +137,7 @@ def _get_parser():
             "routine disables mklthreads (otherwise there's chaos)."
         ),
         default=1,
-    )
+    )"""
     # Preprocessing
     preprocessing_opts = parser.add_argument_group("Preprocessing")
     preprocessing_opts.add_argument(
@@ -847,6 +847,8 @@ def process_args(inputargs=None):
         args.motionfilename = None
 
     # set the number of worker processes if multiprocessing
+    # Multiprocessing is very broken atm.  Hard disable it.
+    args.nprocs = 1
     if args.nprocs < 1:
         args.nprocs = tide_multiproc.maxcpus()
 
