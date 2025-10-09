@@ -774,6 +774,13 @@ def _get_parser():
         help="Disable the congrid value cache completely.",
         default=True,
     )
+    debug_opts.add_argument(
+        "--focaldebug",
+        dest="focaldebug",
+        action="store_true",
+        help=("Enable targeted additional debugging output (used during development)."),
+        default=False,
+    )
 
     return parser
 
