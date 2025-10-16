@@ -77,9 +77,9 @@
     #--nprocs -1
 
 #    --motionfile sub-HAPPYTEST_mcf.par \
+
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy \
-    --increaseoutputlevel \
-    --nprocs -1
+    --increaseoutputlevel 
