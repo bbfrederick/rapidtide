@@ -50,7 +50,7 @@ except ImportError:
     mklexists = False
 
 try:
-    import rapidtide.dlfilter as tide_dlfilt
+    import rapidtide.dlfiltermin as tide_dlfilt
 
     dlfilterexists = True
     print("dlfilter exists")
