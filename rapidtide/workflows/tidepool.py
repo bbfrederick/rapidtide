@@ -138,6 +138,44 @@ def _get_parser():
     return parser
 
 
+def keyPressed(evt):
+    global currentdataset, thesubjects, whichsubject
+
+    numelements = len(thesubjects)
+
+    keymods = None
+    if evt.modifiers() & QtCore.Qt.KeyboardModifier.ShiftModifier:
+        keymods = "shift"
+
+    if (evt.key() == QtCore.Qt.Key.Key_Up) or (evt.key() == QtCore.Qt.Key.Key_Left):
+        if keymods == "shift":
+            whichsubject = numelements - 1
+        else:
+            whichsubject = (whichsubject - 1) % numelements
+        selectDataset(whichsubject)
+        print(f"Dataset set to {currentdataset.fileroot[:-1]} ({whichsubject})")
+    elif (evt.key() == QtCore.Qt.Key.Key_Down) or (evt.key() == QtCore.Qt.Key.Key_Right):
+        if keymods == "shift":
+            whichsubject = 0
+        else:
+            whichsubject = (whichsubject + 1) % numelements
+        selectDataset(whichsubject)
+        print(f"Dataset set to {currentdataset.fileroot[:-1]} ({whichsubject})")
+    else:
+        print(evt.key())
+
+
+
+class KeyPressWindow(QtWidgets.QMainWindow):
+    sigKeyPress = QtCore.pyqtSignal(object)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def keyPressEvent(self, ev):
+        self.sigKeyPress.emit(ev)
+
+
 def addDataset(
     thisdatafileroot,
     anatname=None,
@@ -1857,7 +1895,9 @@ def tidepool(args):
     # make the main window
     app = QtWidgets.QApplication([])
     print("setting up output window")
-    win = QtWidgets.QMainWindow()
+    win = KeyPressWindow()
+    win.sigKeyPress.connect(keyPressed)
+    #win = QtWidgets.QMainWindow()
     ui = uiTemplate.Ui_MainWindow()
     ui.setupUi(win)
     win.show()
