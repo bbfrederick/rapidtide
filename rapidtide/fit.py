@@ -26,12 +26,15 @@ import scipy.special as sps
 import statsmodels.api as sm
 import tqdm
 from numpy.polynomial import Polynomial
+from scipy import signal
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks, hilbert
 from scipy.stats import entropy, moment
 from sklearn.linear_model import LinearRegression
 from statsmodels.robust import mad
+from statsmodels.tsa.ar_model import AutoReg, ar_select_order
 
+import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 
 # ---------------------------------------- Global constants -------------------------------------------
@@ -429,6 +432,79 @@ def detrend(inputdata, order=1, demean=False):
         thecoffs = [0.0, 0.0]
     thefittc = trendgen(thetimepoints, thecoffs, demean)
     return inputdata - thefittc
+
+
+def prewhiten(series, nlags=None, debug=False):
+    """
+    Prewhiten a time series using an AR model estimated via statsmodels.
+    The resulting series has the same length as the input.
+
+    Parameters
+    ----------
+    series : array-like
+        Input 1D time series data.
+    nlags : int or None
+        Order of the autoregressive model. If None, automatically chosen via AIC.
+
+    Returns
+    -------
+    whitened : np.ndarray
+        Prewhitened series of same length as input.
+    model : statsmodels.tsa.arima.model.ARIMAResults
+        Fitted AR model for inspection.
+    """
+    series = np.asarray(series)
+
+    # Fit AR(p) model using ARIMA
+    if nlags is None:
+        best_aic, best_model, best_p = np.inf, None, None
+        for p in range(1, min(10, len(series)//5)):
+            try:
+                model = sm.tsa.ARIMA(series, order=(p, 0, 0)).fit()
+                if model.aic < best_aic:
+                    best_aic, best_model, best_p = model.aic, model, p
+            except Exception:
+                continue
+        model = best_model
+        if model is None:
+            raise RuntimeError("Failed to fit any AR model.")
+    else:
+        model = sm.tsa.ARIMA(series, order=(nlags, 0, 0)).fit()
+
+    # Extract AR coefficients and apply filter
+    ar_params = model.arparams
+    b = np.array([1.0])  # numerator (no MA component)
+    a = np.r_[1.0, -ar_params]  # denominator (AR polynomial)
+
+    # Apply the inverse AR filter (prewhitening)
+    whitened = signal.lfilter(b, a, series)
+
+    # return whitened, model
+    return whitened
+
+
+def prewhiten2(timecourse, nlags, debug=False, sel=False):
+    if not sel:
+        ar_model = AutoReg(timecourse, lags=nlags)
+        ar_fit = ar_model.fit()
+    else:
+        ar_model = ar_select_order(timecourse, nlags)
+        ar_model.ar_lags
+        ar_fit = ar_model.model.fit()
+    if debug:
+        print(ar_fit.summary())
+        fig = plt.figure(figsize=(16, 9))
+        fig = ar_fit.plot_diagnostics(fig=fig, lags=nlags)
+        plt.show()
+    ar_params = ar_fit.params
+
+    # The prewhitening filter coefficients are 1 for the numerator and
+    # (1, -ar_params[1]) for the denominator
+    b = [1]
+    a = np.insert(-ar_params[1:], 0, 1)
+
+    # Apply the filter to prewhiten the signal
+    return tide_math.stdnormalize(signal.lfilter(b, a, timecourse))
 
 
 @conditionaljit()

@@ -108,6 +108,8 @@ DEFAULT_DELAYOFFSETSPATIALFILT = -1
 DEFAULT_PATCHMINSIZE = 10
 DEFAULT_PATCHFWHM = 5
 
+DEFAULT_PREWHITEN_LAGS = -1
+
 
 def _get_parser():
     """
@@ -1445,7 +1447,7 @@ def _get_parser():
     experimental = parser.add_argument_group(
         "Experimental options (not fully tested, or not tested at all, may not work).  Beware!"
     )
-    output.add_argument(
+    experimental.add_argument(
         "--riptidestep",  # was -h
         dest="riptidestep",
         action="store",
@@ -1571,6 +1573,22 @@ def _get_parser():
         action="store_true",
         help=("Perform patch shift correction."),
         default=False,
+    )
+    experimental.add_argument(
+        "--prewhitenregressor",
+        dest="prewhitenregressor",
+        action="store_true",
+        help=("Prewhiten probe regressor prior to calculating correlations."),
+        default=False,
+    )
+    experimental.add_argument(
+        "--prewhitenlags",
+        dest="prewhitenlags",
+        action="store",
+        type=lambda x: pf.is_int(parser, x, minval=0),
+        metavar="LAGS",
+        help=(f"Set number of TRs to use in prewhitening.  Set to -1 to calculate automatically. Default is {DEFAULT_PREWHITEN_LAGS}."),
+        default=DEFAULT_PREWHITEN_LAGS,
     )
 
     # Deprecated options
@@ -1846,6 +1864,9 @@ def process_args(inputargs=None):
 
     args["lagmin"] = args["lag_extrema"][0]
     args["lagmax"] = args["lag_extrema"][1]
+
+    if args["prewhitenlags"] == -1:
+        args["prewhitenlags"] = int(np.max([np.fabs(args["lagmin"]), np.fabs(args["lagmax"])]))
 
     # set startpoint and endpoint
     args["startpoint"], args["endpoint"] = pf.parserange(args["timerange"], descriptor="timerange")

@@ -82,6 +82,8 @@ class RegressorRefiner:
         tmask_y=None,
         tmaskos_y=None,
         fastresamplerpadtime=45.0,
+        prewhitenregressor=False,
+        prewhitenlags=10,
         debug=False,
         rt_floattype="float64",
         rt_floatset=np.float64,
@@ -126,6 +128,8 @@ class RegressorRefiner:
         self.tmask_y = tmask_y
         self.tmaskos_y = tmaskos_y
         self.fastresamplerpadtime = fastresamplerpadtime
+        self.prewhitenregressor = prewhitenregressor
+        self.prewhitenlags = prewhitenlags
         self.debug = debug
         self.rt_floattype = rt_floattype
         self.rt_floatset = rt_floatset
@@ -247,7 +251,6 @@ class RegressorRefiner:
             showprogressbar=self.showprogressbar,
             chunksize=self.chunksize,
             padtrs=self.padtrs,
-            debug=self.debug,
             rt_floatset=self.rt_floatset,
             rt_floattype=self.rt_floattype,
         )
@@ -300,7 +303,6 @@ class RegressorRefiner:
             windowfunc=self.windowfunc,
             cleanrefined=self.cleanrefined,
             bipolar=self.bipolar,
-            debug=self.debug,
             rt_floatset=self.rt_floatset,
             rt_floattype=self.rt_floattype,
         )
@@ -311,6 +313,10 @@ class RegressorRefiner:
         outputdict["refineampfails_pass" + str(thepass)] = self.ampfails
         outputdict["refinelagfails_pass" + str(thepass)] = self.lagfails
         outputdict["refinesigmafails_pass" + str(thepass)] = self.sigmafails
+
+        if self.prewhitenregressor:
+            self.paddedoutputdata = tide_fit.prewhiten(self.paddedoutputdata, self.prewhitenlags, debug=self.debug)
+
 
         fmrifreq = 1.0 / fmritr
         if voxelsprocessed_rr > 0:
@@ -493,6 +499,7 @@ def refineRegressor(
     bidsbasedict,
     rt_floatset=np.float64,
     rt_floattype="float64",
+    debug=False,
 ):
     LGR.info(f"\n\nRegressor refinement, pass {thepass}")
     TimingLGR.info(f"Regressor refinement start, pass {thepass}")
@@ -630,7 +637,7 @@ def refineRegressor(
             filetype=theinputdata.filetype,
             rt_floattype=rt_floattype,
             cifti_hdr=theinputdata.cifti_hdr,
-            debug=True,
+            debug=debug,
         )
 
     return resampref_y, resampnonosref_y, stoprefining, refinestopreason, genlagtc

@@ -307,6 +307,7 @@ def rapidtide_main(argparsingfunc):
     if optiondict["oversampfactor"] < 0:
         optiondict["oversampfactor"] = int(np.max([np.ceil(fmritr / 0.5), 1]))
         LGR.debug(f"oversample factor set to {optiondict['oversampfactor']}")
+    # optiondict["prewhitenlags"] *= optiondict["oversampfactor"]
 
     oversamptr = fmritr / optiondict["oversampfactor"]
     LGR.verbose(f"fmri data: {timepoints} timepoints, tr = {fmritr}, oversamptr = {oversamptr}")
@@ -380,7 +381,7 @@ def rapidtide_main(argparsingfunc):
                     valslist=optiondict[thisanatomic[1]],
                     maskname=thisanatomic[2],
                     tolerance=optiondict["spatialtolerance"],
-                    debug=optiondict["focaldebug"],
+                    debug=optiondict["debug"],
                 )
             )
             anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
@@ -451,7 +452,7 @@ def rapidtide_main(argparsingfunc):
             numspatiallocs,
             istext=(theinputdata.filetype == "text"),
             tolerance=optiondict["spatialtolerance"],
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
     )
     if internalinvbrainmask is not None:
@@ -470,7 +471,7 @@ def rapidtide_main(argparsingfunc):
         numspatiallocs,
         istext=(theinputdata.filetype == "text"),
         tolerance=optiondict["spatialtolerance"],
-        debug=optiondict["focaldebug"],
+        debug=optiondict["debug"],
     )
     if internalinvbrainmask is not None:
         if internalrefineexcludemask is not None:
@@ -488,7 +489,7 @@ def rapidtide_main(argparsingfunc):
         numspatiallocs,
         istext=(theinputdata.filetype == "text"),
         tolerance=optiondict["spatialtolerance"],
-        debug=optiondict["focaldebug"],
+        debug=optiondict["debug"],
     )
     if internalinvbrainmask is not None:
         if internaloffsetexcludemask is not None:
@@ -510,7 +511,7 @@ def rapidtide_main(argparsingfunc):
             valslist=optiondict["corrmaskincludevals"],
             maskname="correlation",
             tolerance=optiondict["spatialtolerance"],
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
 
         corrmask = np.uint16(np.where(thecorrmask > 0, 1, 0).reshape(numspatiallocs))
@@ -1268,7 +1269,7 @@ def rapidtide_main(argparsingfunc):
         corrpadding=optiondict["corrpadding"],
         debug=optiondict["debug"],
     )
-    if optiondict["focaldebug"]:
+    if optiondict["debug"]:
         print(
             f"calling setreftc during initialization with length {optiondict['oversampfactor'] * validtimepoints}"
         )
@@ -1621,7 +1622,9 @@ def rapidtide_main(argparsingfunc):
             tmask_y=tmask_y,
             tmaskos_y=tmaskos_y,
             fastresamplerpadtime=optiondict["fastresamplerpadtime"],
-            debug=optiondict["debug"],
+            prewhitenregressor=False,
+            prewhitenlags=optiondict["prewhitenlags"],
+            debug=optiondict["focaldebug"],
         )
 
     # cycle over all voxels
@@ -1721,6 +1724,32 @@ def rapidtide_main(argparsingfunc):
                 "message3": "voxels",
             },
         )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-oversampledmovingregressor_timeseries",
+            tide_math.stdnormalize(resampref_y),
+            oversampfreq,
+            columns=["pass1_echocancel"],
+            extraheaderinfo={
+                "Description": "The probe regressor used in each pass, at the time resolution used for calculating the similarity function"
+            },
+            append=True,
+        )
+
+    # Preprocessing - prewhitening
+    if optiondict["prewhitenregressor"]:
+        resampref_y = tide_fit.prewhiten(
+            resampref_y, optiondict["prewhitenlags"], debug=optiondict["focaldebug"]
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-oversampledmovingregressor_timeseries",
+            tide_math.stdnormalize(resampref_y),
+            oversampfreq,
+            columns=["pass1_prewhiten"],
+            extraheaderinfo={
+                "Description": "The probe regressor used in each pass, at the time resolution used for calculating the similarity function"
+            },
+            append=True,
+        )
 
     # --------------------- Main pass loop ---------------------
     # loop over all passes
@@ -1811,7 +1840,7 @@ def rapidtide_main(argparsingfunc):
             rt_floattype=rt_floattype,
             rt_floatset=rt_floatset,
         )
-        if optiondict["focaldebug"]:
+        if optiondict["debug"]:
             print(
                 f"after cleanregressor: {len(referencetc)=}, {len(cleaned_referencetc)=}, {osvalidsimcalcstart=}, {osvalidsimcalcend=}, {lagmininpts=}, {lagmaxinpts=}"
             )
@@ -1835,7 +1864,7 @@ def rapidtide_main(argparsingfunc):
                     f"{outputname}_options_pregetnull_pass" + str(thepass) + ".json",
                 )
             theCorrelator.setlimits(lagmininpts, lagmaxinpts)
-            if optiondict["focaldebug"]:
+            if optiondict["debug"]:
                 print(
                     f"calling setreftc prior to significance estimation with length {len(cleaned_resampref_y)}"
                 )
@@ -2010,7 +2039,7 @@ def rapidtide_main(argparsingfunc):
             rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
             threaddebug=optiondict["threaddebug"],
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
         if optiondict["similaritymetric"] == "riptide":
             optiondict["despeckle_passes"] = 0
