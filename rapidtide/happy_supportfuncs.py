@@ -45,15 +45,6 @@ try:
 except ImportError:
     mklexists = False
 
-try:
-    import rapidtide.dlfilter as tide_dlfilt
-
-    dlfilterexists = True
-    print("dlfilter exists")
-except ImportError:
-    dlfilterexists = False
-    print("dlfilter does not exist")
-
 
 def rrifromphase(timeaxis, thephase):
     return None
