@@ -83,5 +83,6 @@ happy \
     sub-HAPPYTEST.json \
     ../dst/happy \
     --increaseoutputlevel \
-    --spatialregression \
+    --model model_cnn_pytorch \
+    --usepytorch \
     --nprocs -1
