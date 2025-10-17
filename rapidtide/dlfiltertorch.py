@@ -334,7 +334,6 @@ class DeepLearningFilter:
         self.usebadpts = self.infodict["usebadpts"]
 
         # Load the model as a dict
-        print(f"loading {os.path.join(self.modelpath, modelname, "model.pth")} to {self.device}")
         checkpoint = torch.load(
             os.path.join(self.modelpath, modelname, "model.pth"), map_location=self.device
         )
@@ -473,6 +472,7 @@ class DeepLearningFilter:
                         torch.load(os.path.join(self.modelname, "best_model.pth"))
                     )
                     break
+            self.evaluate()
 
         self.savemodel()
         self.trained = True
