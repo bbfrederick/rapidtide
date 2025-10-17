@@ -1,1 +1,1 @@
-model_cnn_w060_l19_fn50_fl05_e010_t4.0_ct0.72_s20_d1_relu_normaligned: Prediction Error: 0.5956581677909444 Raw Error: 0.3174055677061575
+model_cnn_w060_l19_fn50_fl05_e025_t4.0_ct0.72_s20_d1_relu_normaligned: Prediction Error: 0.6981142062735153 Raw Error: 0.3174055677061575
