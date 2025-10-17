@@ -20,7 +20,6 @@ import glob
 import logging
 import os
 import sys
-import time
 import warnings
 
 import matplotlib as mpl
@@ -46,7 +45,7 @@ if pyfftwpresent:
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 
 import rapidtide.io as tide_io
 
@@ -307,15 +306,20 @@ class DeepLearningFilter:
         else:
             modelsavename = altname
         LGR.info(f"saving {modelsavename}")
-        torch.save({
-            'model_state_dict': self.model.state_dict(),
-            'model_config': self.model.get_config() if hasattr(self.model, 'get_config') else None,
-        }, os.path.join(modelsavename, "model.pth"))
+        torch.save(
+            {
+                "model_state_dict": self.model.state_dict(),
+                "model_config": (
+                    self.model.get_config() if hasattr(self.model, "get_config") else None
+                ),
+            },
+            os.path.join(modelsavename, "model.pth"),
+        )
 
     def loadmodel(self, modelname, verbose=False):
         # read in the data
         LGR.info(f"loading {modelname}")
-        
+
         # load additional information first to reconstruct model
         self.infodict = tide_io.readdictfromjson(
             os.path.join(self.modelpath, modelname, "model_meta.json")
@@ -324,14 +328,13 @@ class DeepLearningFilter:
             print(self.infodict)
         self.window_size = self.infodict["window_size"]
         self.usebadpts = self.infodict["usebadpts"]
-        
+
         # Reconstruct the model architecture (must be done by subclass)
         # Then load the weights
         checkpoint = torch.load(
-            os.path.join(self.modelpath, modelname, "model.pth"),
-            map_location=self.device
+            os.path.join(self.modelpath, modelname, "model.pth"), map_location=self.device
         )
-        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.to(self.device)
 
         if verbose:
@@ -354,53 +357,59 @@ class DeepLearningFilter:
     def train(self):
         self.model.train()
         self.model.to(self.device)
-        
+
         # Convert numpy arrays to PyTorch tensors and transpose for Conv1d
+        print("converting tensors")
         train_x_tensor = torch.from_numpy(self.train_x).float().permute(0, 2, 1)
         train_y_tensor = torch.from_numpy(self.train_y).float().permute(0, 2, 1)
         val_x_tensor = torch.from_numpy(self.val_x).float().permute(0, 2, 1)
         val_y_tensor = torch.from_numpy(self.val_y).float().permute(0, 2, 1)
-        
+
+        print("setting data")
         train_dataset = TensorDataset(train_x_tensor, train_y_tensor)
         val_dataset = TensorDataset(val_x_tensor, val_y_tensor)
-        
+
         train_loader = DataLoader(train_dataset, batch_size=1024, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=1024, shuffle=False)
-        
+
+        print("setting criterion")
         criterion = nn.MSELoss()
+
+        print("setting optimizer")
         optimizer = optim.RMSprop(self.model.parameters())
-        
+
         self.loss = []
         self.val_loss = []
-        
-        best_val_loss = float('inf')
+
+        best_val_loss = float("inf")
         patience = 10
         patience_counter = 0
-        
+
         total_epochs = self.num_pretrain_epochs + self.num_epochs
-        
+
         for epoch in range(total_epochs):
+            print(f"Epoch {epoch+1}/{total_epochs}")
             # Training phase
             self.model.train()
             train_loss_epoch = 0.0
             for batch_x, batch_y in train_loader:
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
-                
+
                 optimizer.zero_grad()
                 outputs = self.model(batch_x)
                 loss = criterion(outputs, batch_y)
-                
+
                 if torch.isnan(loss):
                     LGR.error("NaN loss detected, terminating training")
                     break
-                
+
                 loss.backward()
                 optimizer.step()
                 train_loss_epoch += loss.item()
-            
+
             train_loss_epoch /= len(train_loader)
             self.loss.append(train_loss_epoch)
-            
+
             # Validation phase
             self.model.eval()
             val_loss_epoch = 0.0
@@ -410,31 +419,35 @@ class DeepLearningFilter:
                     outputs = self.model(batch_x)
                     loss = criterion(outputs, batch_y)
                     val_loss_epoch += loss.item()
-            
+
             val_loss_epoch /= len(val_loader)
             self.val_loss.append(val_loss_epoch)
-            
-            LGR.info(f"Epoch {epoch+1}/{total_epochs} - Loss: {train_loss_epoch:.4f} - Val Loss: {val_loss_epoch:.4f}")
-            
+
+            LGR.info(
+                f"Epoch {epoch+1}/{total_epochs} - Loss: {train_loss_epoch:.4f} - Val Loss: {val_loss_epoch:.4f}"
+            )
+
             # Save checkpoint
             self.intermediatemodelpath = os.path.join(
                 self.modelname, f"model_e{epoch+1:02d}_v{val_loss_epoch:.4f}.pth"
             )
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': self.model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'loss': train_loss_epoch,
-                'val_loss': val_loss_epoch,
-            }, self.intermediatemodelpath)
-            
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": self.model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "loss": train_loss_epoch,
+                    "val_loss": val_loss_epoch,
+                },
+                self.intermediatemodelpath,
+            )
+
             # Early stopping
             if val_loss_epoch < best_val_loss:
                 best_val_loss = val_loss_epoch
                 patience_counter = 0
                 # Save best model
-                torch.save(self.model.state_dict(), 
-                          os.path.join(self.modelname, "best_model.pth"))
+                torch.save(self.model.state_dict(), os.path.join(self.modelname, "best_model.pth"))
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
@@ -444,7 +457,7 @@ class DeepLearningFilter:
                         torch.load(os.path.join(self.modelname, "best_model.pth"))
                     )
                     break
-        
+
         self.savemodel()
         self.trained = True
 
@@ -522,55 +535,78 @@ class CNNDLFilter(DeepLearningFilter):
 
     def makenet(self):
         class CNNModel(nn.Module):
-            def __init__(self, num_filters, kernel_size, num_layers, dropout_rate, 
-                        dilation_rate, activation, inputsize):
+            def __init__(
+                self,
+                num_filters,
+                kernel_size,
+                num_layers,
+                dropout_rate,
+                dilation_rate,
+                activation,
+                inputsize,
+            ):
+                self.num_filters = num_filters
+                self.kernel_size = kernel_size
+                self.num_layers = num_layers
+                self.dropout_rate = dropout_rate
+                self.dilation_rate = dilation_rate
+                self.activation = activation
+                self.inputsize = inputsize
+
                 super(CNNModel, self).__init__()
-                
+
                 self.layers = nn.ModuleList()
-                
+
                 # Input layer
-                self.layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding='same'))
+                self.layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding="same"))
                 self.layers.append(nn.BatchNorm1d(num_filters))
                 self.layers.append(nn.Dropout(dropout_rate))
-                if activation == 'relu':
+                if activation == "relu":
                     self.layers.append(nn.ReLU())
-                elif activation == 'tanh':
+                elif activation == "tanh":
                     self.layers.append(nn.Tanh())
                 else:
                     self.layers.append(nn.ReLU())
-                
+
                 # Intermediate layers
                 for _ in range(num_layers - 2):
-                    self.layers.append(nn.Conv1d(num_filters, num_filters, kernel_size, 
-                                                 dilation=dilation_rate, padding='same'))
+                    self.layers.append(
+                        nn.Conv1d(
+                            num_filters,
+                            num_filters,
+                            kernel_size,
+                            dilation=dilation_rate,
+                            padding="same",
+                        )
+                    )
                     self.layers.append(nn.BatchNorm1d(num_filters))
                     self.layers.append(nn.Dropout(dropout_rate))
-                    if activation == 'relu':
+                    if activation == "relu":
                         self.layers.append(nn.ReLU())
-                    elif activation == 'tanh':
+                    elif activation == "tanh":
                         self.layers.append(nn.Tanh())
                     else:
                         self.layers.append(nn.ReLU())
-                
+
                 # Output layer
-                self.layers.append(nn.Conv1d(num_filters, inputsize, kernel_size, padding='same'))
-            
+                self.layers.append(nn.Conv1d(num_filters, inputsize, kernel_size, padding="same"))
+
             def forward(self, x):
                 for layer in self.layers:
                     x = layer(x)
                 return x
-            
+
             def get_config(self):
                 return {
-                    'num_filters': self.num_filters,
-                    'kernel_size': self.kernel_size,
-                    'num_layers': self.num_layers,
-                    'dropout_rate': self.dropout_rate,
-                    'dilation_rate': self.dilation_rate,
-                    'activation': self.activation,
-                    'inputsize': self.inputsize
+                    "num_filters": self.num_filters,
+                    "kernel_size": self.kernel_size,
+                    "num_layers": self.num_layers,
+                    "dropout_rate": self.dropout_rate,
+                    "dilation_rate": self.dilation_rate,
+                    "activation": self.activation,
+                    "inputsize": self.inputsize,
                 }
-        
+
         self.model = CNNModel(
             self.num_filters,
             self.kernel_size,
@@ -578,7 +614,7 @@ class CNNDLFilter(DeepLearningFilter):
             self.dropout_rate,
             self.dilation_rate,
             self.activation,
-            self.inputsize
+            self.inputsize,
         )
         self.model.to(self.device)
 
@@ -888,6 +924,7 @@ def prep(
     print("tclen", tclen)
 
     # read in the data from the matched files
+    print("about to read in data")
     if usebadpts:
         x, y, names, bad = readindata(
             matchedfilelist,
@@ -913,6 +950,7 @@ def prep(
             readlim=readlim,
             readskip=readskip,
         )
+    print("finished reading in data")
     LGR.info(f"xshape, yshape: {x.shape} {y.shape}")
 
     # normalize input and output data
