@@ -2,7 +2,7 @@
 
 import os
 
-import rapidtide.dlfilter as tide_dlfilter
+import rapidtide.dlfiltertorch as tide_dlfilter
 
 
 def dotraining(
@@ -17,11 +17,11 @@ def dotraining(
     kernel_size=5,
     dropout_rate=0.3,
     dofft=False,
-    nettype="crnn",
+    nettype="cnn",
     activation="relu",
     usebadpts=False,
     countlim=None,
-    readlim=None,
+    readlim=20,
     readskip=0,
     num_units=128,
     debug=False,
@@ -183,9 +183,16 @@ def dotraining(
     else:
         print(f"{nettype} is not a valid nettype!")
 
+    print("initializing")
     thefilter.initialize()
+
+    print("loading data")
     thefilter.loaddata()
+
+    print("training")
     thefilter.train()
+
+    print("evaluating")
     thefilter.evaluate()
 
 
@@ -261,6 +268,7 @@ def main():
         )
     """
 
+    """
     # train convolutional autoencoder
     nettype = "convautoencoder"
     num_epochs = 100
@@ -295,16 +303,16 @@ def main():
             encoding_dim=encoding_dim,
             excludebysubject=excludebysubject,
         )
-
     """
+
     # train CNN
     nettype = "cnn"
-    num_epochs = 100
+    num_epochs = 5
     kernel_size = 5
     num_layers = 13
     num_filters = 20
     window_size = 64
-    for kernel_size in [3, 4, 5, 6, 7, 8, 9]:
+    for kernel_size in [5]:
         dotraining(
             thedatadir,
             num_pretrain_epochs=num_pretrain_epochs,
@@ -332,7 +340,7 @@ def main():
             encoding_dim=encoding_dim,
             excludebysubject=excludebysubject,
         )
-    """
+
 
 
 if __name__ == "__main__":
