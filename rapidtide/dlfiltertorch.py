@@ -285,6 +285,7 @@ class DeepLearningFilter:
 
     def initmetadata(self):
         self.infodict = {}
+        self.infodict["nettype"] = self.nettype
         self.infodict["window_size"] = self.window_size
         self.infodict["usebadpts"] = self.usebadpts
         self.infodict["dofft"] = self.dofft
@@ -332,22 +333,34 @@ class DeepLearningFilter:
         self.window_size = self.infodict["window_size"]
         self.usebadpts = self.infodict["usebadpts"]
 
-        # Reconstruct the model architecture (must be done by subclass)
-        # Then load the weights
+        # Load the model as a dict
+        print(f"loading {os.path.join(self.modelpath, modelname, "model.pth")} to {self.device}")
         checkpoint = torch.load(
             os.path.join(self.modelpath, modelname, "model.pth"), map_location=self.device
         )
+
+        # Reconstruct the model architecture (must be done by subclass)
+        if self.infodict["nettype"] == "cnn":
+            self.num_filters = checkpoint['model_config']['num_filters']
+            self.kernel_size = checkpoint['model_config']['kernel_size']
+            self.num_layers = checkpoint['model_config']['num_layers']
+            self.dropout_rate = checkpoint['model_config']['dropout_rate']
+            self.dilation_rate = checkpoint['model_config']['dilation_rate']
+            self.activation = checkpoint['model_config']['activation']
+            self.inputsize = checkpoint['model_config']['inputsize']
+
+            self.model = CNNModel(
+                self.num_filters,
+                self.kernel_size,
+                self.num_layers,
+                self.dropout_rate,
+                self.dilation_rate,
+                self.activation,
+                self.inputsize,
+            )
+
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.to(self.device)
-
-        if verbose:
-            print(self.model)
-
-        # model is ready to use
-        self.initialized = True
-        self.trained = True
-        LGR.info(f"{modelname} loaded")
-
     def initialize(self):
         self.getname()
         self.makenet()
@@ -496,12 +509,86 @@ class DeepLearningFilter:
         return initscale * predicteddata / weightarray
 
 
+class CNNModel(nn.Module):
+    def __init__(
+        self,
+        num_filters,
+        kernel_size,
+        num_layers,
+        dropout_rate,
+        dilation_rate,
+        activation,
+        inputsize,
+    ):
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.num_layers = num_layers
+        self.dropout_rate = dropout_rate
+        self.dilation_rate = dilation_rate
+        self.activation = activation
+        self.inputsize = inputsize
+
+        super(CNNModel, self).__init__()
+
+        self.layers = nn.ModuleList()
+
+        # Input layer
+        self.layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding="same"))
+        self.layers.append(nn.BatchNorm1d(num_filters))
+        self.layers.append(nn.Dropout(dropout_rate))
+        if activation == "relu":
+            self.layers.append(nn.ReLU())
+        elif activation == "tanh":
+            self.layers.append(nn.Tanh())
+        else:
+            self.layers.append(nn.ReLU())
+
+        # Intermediate layers
+        for _ in range(num_layers - 2):
+            self.layers.append(
+                nn.Conv1d(
+                    num_filters,
+                    num_filters,
+                    kernel_size,
+                    dilation=dilation_rate,
+                    padding="same",
+                )
+            )
+            self.layers.append(nn.BatchNorm1d(num_filters))
+            self.layers.append(nn.Dropout(dropout_rate))
+            if activation == "relu":
+                self.layers.append(nn.ReLU())
+            elif activation == "tanh":
+                self.layers.append(nn.Tanh())
+            else:
+                self.layers.append(nn.ReLU())
+
+        # Output layer
+        self.layers.append(nn.Conv1d(num_filters, inputsize, kernel_size, padding="same"))
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
+    def get_config(self):
+        return {
+            "num_filters": self.num_filters,
+            "kernel_size": self.kernel_size,
+            "num_layers": self.num_layers,
+            "dropout_rate": self.dropout_rate,
+            "dilation_rate": self.dilation_rate,
+            "activation": self.activation,
+            "inputsize": self.inputsize,
+        }
+
 class CNNDLFilter(DeepLearningFilter):
     def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
         self.num_filters = num_filters
         self.kernel_size = kernel_size
         self.dilation_rate = dilation_rate
-        self.infodict["nettype"] = "cnn"
+        self.nettype = "cnn"
+        self.infodict["nettype"] = self.nettype
         self.infodict["num_filters"] = self.num_filters
         self.infodict["kernel_size"] = self.kernel_size
         super(CNNDLFilter, self).__init__(*args, **kwargs)
@@ -537,79 +624,6 @@ class CNNDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
-        class CNNModel(nn.Module):
-            def __init__(
-                self,
-                num_filters,
-                kernel_size,
-                num_layers,
-                dropout_rate,
-                dilation_rate,
-                activation,
-                inputsize,
-            ):
-                self.num_filters = num_filters
-                self.kernel_size = kernel_size
-                self.num_layers = num_layers
-                self.dropout_rate = dropout_rate
-                self.dilation_rate = dilation_rate
-                self.activation = activation
-                self.inputsize = inputsize
-
-                super(CNNModel, self).__init__()
-
-                self.layers = nn.ModuleList()
-
-                # Input layer
-                self.layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding="same"))
-                self.layers.append(nn.BatchNorm1d(num_filters))
-                self.layers.append(nn.Dropout(dropout_rate))
-                if activation == "relu":
-                    self.layers.append(nn.ReLU())
-                elif activation == "tanh":
-                    self.layers.append(nn.Tanh())
-                else:
-                    self.layers.append(nn.ReLU())
-
-                # Intermediate layers
-                for _ in range(num_layers - 2):
-                    self.layers.append(
-                        nn.Conv1d(
-                            num_filters,
-                            num_filters,
-                            kernel_size,
-                            dilation=dilation_rate,
-                            padding="same",
-                        )
-                    )
-                    self.layers.append(nn.BatchNorm1d(num_filters))
-                    self.layers.append(nn.Dropout(dropout_rate))
-                    if activation == "relu":
-                        self.layers.append(nn.ReLU())
-                    elif activation == "tanh":
-                        self.layers.append(nn.Tanh())
-                    else:
-                        self.layers.append(nn.ReLU())
-
-                # Output layer
-                self.layers.append(nn.Conv1d(num_filters, inputsize, kernel_size, padding="same"))
-
-            def forward(self, x):
-                for layer in self.layers:
-                    x = layer(x)
-                return x
-
-            def get_config(self):
-                return {
-                    "num_filters": self.num_filters,
-                    "kernel_size": self.kernel_size,
-                    "num_layers": self.num_layers,
-                    "dropout_rate": self.dropout_rate,
-                    "dilation_rate": self.dilation_rate,
-                    "activation": self.activation,
-                    "inputsize": self.inputsize,
-                }
-
         self.model = CNNModel(
             self.num_filters,
             self.kernel_size,
