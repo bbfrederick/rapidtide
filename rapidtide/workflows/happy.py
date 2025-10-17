@@ -49,15 +49,6 @@ try:
 except ImportError:
     mklexists = False
 
-try:
-    import rapidtide.dlfilter as tide_dlfilt
-
-    dlfilterexists = True
-    print("dlfilter exists")
-except ImportError:
-    dlfilterexists = False
-    print("dlfilter does not exist")
-
 
 def happy_main(argparsingfunc):
     timings = [["Start", time.time(), None, None]]
@@ -65,6 +56,25 @@ def happy_main(argparsingfunc):
     # get the command line parameters
     args = argparsingfunc
     infodict = vars(args)
+
+    if args.usepytorch:
+        try:
+            import rapidtide.dlfiltertorch as tide_dlfilt
+
+            dlfilterexists = True
+            print("pytorch dlfilter exists")
+        except ImportError:
+            dlfilterexists = False
+            print("pytorch dlfilter does not exist")
+    else:
+        try:
+            import rapidtide.dlfiltermin as tide_dlfilt
+
+            dlfilterexists = True
+            print("tensorflow dlfilter exists")
+        except ImportError:
+            dlfilterexists = False
+            print("tensorflow dlfilter does not exist")
 
     fmrifilename = args.fmrifilename
     slicetimename = args.slicetimename
