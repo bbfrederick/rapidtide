@@ -124,7 +124,7 @@ def _get_parser():
         ),
         default=1,
     )
-    """performance_opts.add_argument(
+    performance_opts.add_argument(
         "--nprocs",
         dest="nprocs",
         action="store",
@@ -137,7 +137,7 @@ def _get_parser():
             "routine disables mklthreads (otherwise there's chaos)."
         ),
         default=1,
-    )"""
+    )
     # Preprocessing
     preprocessing_opts = parser.add_argument_group("Preprocessing")
     preprocessing_opts.add_argument(
@@ -775,6 +775,13 @@ def _get_parser():
         default=True,
     )
     debug_opts.add_argument(
+        "--usepytorch",
+        dest="usepytorch",
+        action="store_true",
+        help=("Use experimental pytorch dlfilter implementation (do not use if you aren't me!)"),
+        default=False,
+    )
+    debug_opts.add_argument(
         "--focaldebug",
         dest="focaldebug",
         action="store_true",
@@ -848,7 +855,7 @@ def process_args(inputargs=None):
 
     # set the number of worker processes if multiprocessing
     # Multiprocessing is very broken atm.  Hard disable it.
-    args.nprocs = 1
+    #args.nprocs = 1
     if args.nprocs < 1:
         args.nprocs = tide_multiproc.maxcpus()
 
