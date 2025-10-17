@@ -82,4 +82,6 @@ happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy \
-    --increaseoutputlevel 
+    --increaseoutputlevel \
+    --spatialregression \
+    --nprocs -1
