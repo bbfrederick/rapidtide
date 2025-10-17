@@ -307,7 +307,7 @@ def main():
 
     # train CNN
     nettype = "cnn"
-    num_epochs = 10
+    num_epochs = 25
     kernel_size = 5
     num_layers = 19
     num_filters = 50
