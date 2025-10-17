@@ -21,7 +21,7 @@ def dotraining(
     activation="relu",
     usebadpts=False,
     countlim=None,
-    readlim=20,
+    readlim=None,
     readskip=0,
     num_units=128,
     debug=False,
@@ -199,7 +199,7 @@ def dotraining(
 def main():
     thiscomputer = os.uname().nodename
     print("thiscomputer:", thiscomputer)
-    if thiscomputer.startswith("bbf-"):
+    if thiscomputer.startswith("bbf-") or thiscomputer.startswith("DIMR22HDP90N5"):
         print("setting up to run on mac")
         thedatadir = "/Users/frederic/Dropbox_PHC/physioconn/output_2025"
     elif thiscomputer.startswith("DESKTOP"):
@@ -307,11 +307,11 @@ def main():
 
     # train CNN
     nettype = "cnn"
-    num_epochs = 5
+    num_epochs = 10
     kernel_size = 5
-    num_layers = 13
-    num_filters = 20
-    window_size = 64
+    num_layers = 19
+    num_filters = 50
+    window_size = 60
     for kernel_size in [5]:
         dotraining(
             thedatadir,
