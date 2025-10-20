@@ -25,6 +25,7 @@ import warnings
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import tqdm
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -340,13 +341,13 @@ class DeepLearningFilter:
 
         # Reconstruct the model architecture (must be done by subclass)
         if self.infodict["nettype"] == "cnn":
-            self.num_filters = checkpoint['model_config']['num_filters']
-            self.kernel_size = checkpoint['model_config']['kernel_size']
-            self.num_layers = checkpoint['model_config']['num_layers']
-            self.dropout_rate = checkpoint['model_config']['dropout_rate']
-            self.dilation_rate = checkpoint['model_config']['dilation_rate']
-            self.activation = checkpoint['model_config']['activation']
-            self.inputsize = checkpoint['model_config']['inputsize']
+            self.num_filters = checkpoint["model_config"]["num_filters"]
+            self.kernel_size = checkpoint["model_config"]["kernel_size"]
+            self.num_layers = checkpoint["model_config"]["num_layers"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.dilation_rate = checkpoint["model_config"]["dilation_rate"]
+            self.activation = checkpoint["model_config"]["activation"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
 
             self.model = CNNModel(
                 self.num_filters,
@@ -360,6 +361,7 @@ class DeepLearningFilter:
 
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.to(self.device)
+
     def initialize(self):
         self.getname()
         self.makenet()
@@ -407,7 +409,13 @@ class DeepLearningFilter:
             # Training phase
             self.model.train()
             train_loss_epoch = 0.0
-            for batch_x, batch_y in train_loader:
+            # for batch_x, batch_y in train_loader:
+            for batch_x, batch_y in tqdm.tqdm(
+                train_loader,
+                desc="Batch",
+                unit="batches",
+                disable=False,
+            ):
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
 
                 optimizer.zero_grad()
@@ -520,6 +528,8 @@ class CNNModel(nn.Module):
         activation,
         inputsize,
     ):
+        super(CNNModel, self).__init__()
+
         self.num_filters = num_filters
         self.kernel_size = kernel_size
         self.num_layers = num_layers
@@ -527,8 +537,6 @@ class CNNModel(nn.Module):
         self.dilation_rate = dilation_rate
         self.activation = activation
         self.inputsize = inputsize
-
-        super(CNNModel, self).__init__()
 
         self.layers = nn.ModuleList()
 
@@ -581,6 +589,7 @@ class CNNModel(nn.Module):
             "activation": self.activation,
             "inputsize": self.inputsize,
         }
+
 
 class CNNDLFilter(DeepLearningFilter):
     def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
@@ -1148,7 +1157,7 @@ def prep(
                     ]
             Xb = Xb_withbad
 
-        subjectstarts = range(N_subjs) * windowspersubject
+        subjectstarts = [i * windowspersubject for i in range(N_subjs)]
         for subj in range(N_subjs):
             LGR.info(f"{names[subj]} starts at {subjectstarts[subj]}")
 
