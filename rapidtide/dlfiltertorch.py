@@ -705,6 +705,7 @@ class CNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "pytorch",
                 "cnn",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
@@ -856,6 +857,7 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "pytorch",
                 "denseautoencoder",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
@@ -980,6 +982,7 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "pytorch",
                 "multiscalecnn",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
@@ -1158,6 +1161,7 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "pytorch",
                 "convautoencoder",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
@@ -1288,6 +1292,7 @@ class CRNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "pytorch",
                 "crnn",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
@@ -1388,6 +1393,7 @@ class LSTMDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "pytorch",
                 "lstm",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
@@ -1565,6 +1571,7 @@ class HybridDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "pytorch",
                 "hybrid",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),

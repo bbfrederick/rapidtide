@@ -484,6 +484,7 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "tf2",
                 "multiscalecnn",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
@@ -561,6 +562,7 @@ class CNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "tf2",
                 "cnn",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
@@ -635,6 +637,7 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "tf2",
                 "denseautoencoder",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
@@ -721,6 +724,7 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "tf2",
                 "convautoencoder",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
@@ -819,6 +823,7 @@ class CRNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "tf2",
                 "crnn",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
@@ -885,6 +890,7 @@ class LSTMDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "tf2",
                 "lstm",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
@@ -944,6 +950,7 @@ class HybridDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
+                "tf2",
                 "hybrid",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
