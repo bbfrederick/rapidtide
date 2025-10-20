@@ -705,8 +705,8 @@ class CNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "pytorch",
                 "cnn",
+                "pytorch",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
                 "fn" + str(self.num_filters).zfill(2),
@@ -857,8 +857,8 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "pytorch",
                 "denseautoencoder",
+                "pytorch",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
                 "e" + str(self.num_epochs).zfill(3),
@@ -982,8 +982,8 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "pytorch",
                 "multiscalecnn",
+                "pytorch",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
                 "fn" + str(self.num_filters).zfill(2),
@@ -1161,8 +1161,8 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "pytorch",
                 "convautoencoder",
+                "pytorch",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
                 "fn" + str(self.num_filters).zfill(2),
@@ -1292,8 +1292,8 @@ class CRNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "pytorch",
                 "crnn",
+                "pytorch",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
                 "fn" + str(self.num_filters).zfill(2),
@@ -1393,8 +1393,8 @@ class LSTMDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "pytorch",
                 "lstm",
+                "pytorch",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
                 "nu" + str(self.num_units),
@@ -1571,8 +1571,8 @@ class HybridDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "pytorch",
                 "hybrid",
+                "pytorch",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
                 "fn" + str(self.num_filters).zfill(2),

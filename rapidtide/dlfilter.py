@@ -484,8 +484,8 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "tf2",
                 "multiscalecnn",
+                "tf2",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
                 "fn" + str(self.num_filters).zfill(2),
@@ -562,8 +562,8 @@ class CNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "tf2",
                 "cnn",
+                "tf2",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
                 "fn" + str(self.num_filters).zfill(2),
@@ -637,8 +637,8 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "tf2",
                 "denseautoencoder",
+                "tf2",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
                 "e" + str(self.num_epochs).zfill(3),
@@ -724,8 +724,8 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "tf2",
                 "convautoencoder",
+                "tf2",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
                 "fn" + str(self.num_filters).zfill(2),
@@ -823,8 +823,8 @@ class CRNNDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "tf2",
                 "crnn",
+                "tf2",
                 "w" + str(self.window_size).zfill(3),
                 "en" + str(self.encoding_dim).zfill(3),
                 "fn" + str(self.num_filters).zfill(2),
@@ -890,8 +890,8 @@ class LSTMDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "tf2",
                 "lstm",
+                "tf2",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
                 "nu" + str(self.num_units),
@@ -950,8 +950,8 @@ class HybridDLFilter(DeepLearningFilter):
         self.modelname = "_".join(
             [
                 "model",
-                "tf2",
                 "hybrid",
+                "tf2",
                 "w" + str(self.window_size).zfill(3),
                 "l" + str(self.num_layers).zfill(2),
                 "fn" + str(self.num_filters).zfill(2),
