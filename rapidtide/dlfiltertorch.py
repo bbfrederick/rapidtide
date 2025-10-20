@@ -576,7 +576,7 @@ class DeepLearningFilter:
                     LGR.info(f"Early stopping triggered after {epoch+1} epochs")
                     # Restore best weights
                     self.model.load_state_dict(
-                        torch.load(os.path.join(self.modelname, "best_model.pth"))
+                        torch.load(os.path.join(self.modelname, "best_model.pth"), weights_only=True)
                     )
                     break
             self.evaluate()
