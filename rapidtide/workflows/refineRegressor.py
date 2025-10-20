@@ -315,8 +315,9 @@ class RegressorRefiner:
         outputdict["refinesigmafails_pass" + str(thepass)] = self.sigmafails
 
         if self.prewhitenregressor:
-            self.paddedoutputdata = tide_fit.prewhiten(self.paddedoutputdata, self.prewhitenlags, debug=self.debug)
-
+            self.paddedoutputdata = tide_fit.prewhiten(
+                self.paddedoutputdata, self.prewhitenlags, debug=self.debug
+            )
 
         fmrifreq = 1.0 / fmritr
         if voxelsprocessed_rr > 0:

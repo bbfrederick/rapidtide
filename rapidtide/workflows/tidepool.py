@@ -165,7 +165,6 @@ def keyPressed(evt):
         print(evt.key())
 
 
-
 class KeyPressWindow(QtWidgets.QMainWindow):
     sigKeyPress = QtCore.pyqtSignal(object)
 
@@ -1897,7 +1896,7 @@ def tidepool(args):
     print("setting up output window")
     win = KeyPressWindow()
     win.sigKeyPress.connect(keyPressed)
-    #win = QtWidgets.QMainWindow()
+    # win = QtWidgets.QMainWindow()
     ui = uiTemplate.Ui_MainWindow()
     ui.setupUi(win)
     win.show()

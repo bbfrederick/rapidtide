@@ -458,7 +458,7 @@ def prewhiten(series, nlags=None, debug=False):
     # Fit AR(p) model using ARIMA
     if nlags is None:
         best_aic, best_model, best_p = np.inf, None, None
-        for p in range(1, min(10, len(series)//5)):
+        for p in range(1, min(10, len(series) // 5)):
             try:
                 model = sm.tsa.ARIMA(series, order=(p, 0, 0)).fit()
                 if model.aic < best_aic:

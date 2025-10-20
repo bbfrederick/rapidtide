@@ -1587,7 +1587,9 @@ def _get_parser():
         action="store",
         type=lambda x: pf.is_int(parser, x, minval=0),
         metavar="LAGS",
-        help=(f"Set number of TRs to use in prewhitening.  Set to -1 to calculate automatically. Default is {DEFAULT_PREWHITEN_LAGS}."),
+        help=(
+            f"Set number of TRs to use in prewhitening.  Set to -1 to calculate automatically. Default is {DEFAULT_PREWHITEN_LAGS}."
+        ),
         default=DEFAULT_PREWHITEN_LAGS,
     )
 

@@ -80,17 +80,20 @@ def _unpackvoxeldata(retvals, voxelproducts):
 
 
 def findecho(
-        nlags,
-        shiftedtcs,
-        sigmav,
-        arcoefs,
-        pacf,
-        sigma,
-        phi,
-        ):
+    nlags,
+    shiftedtcs,
+    sigmav,
+    arcoefs,
+    pacf,
+    sigma,
+    phi,
+):
     inputshape = np.shape(shiftedtcs)
     for voxel in range(inputshape[0]):
-        sigmav[voxel], arcoefs[voxel, :], pacf[voxel, :], sigma[voxel, :], phi[voxel, :] = sm.tsa.stattools.levinson_durbin(shiftedtcs[voxel, :], nlags=nlags, isacov=False)
+        sigmav[voxel], arcoefs[voxel, :], pacf[voxel, :], sigma[voxel, :], phi[voxel, :] = (
+            sm.tsa.stattools.levinson_durbin(shiftedtcs[voxel, :], nlags=nlags, isacov=False)
+        )
+
 
 def alignvoxels(
     fmridata,

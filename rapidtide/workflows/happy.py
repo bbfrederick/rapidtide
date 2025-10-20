@@ -2174,7 +2174,7 @@ def happy_main(argparsingfunc):
         # now remove them
         tide_util.logmem("before cardiac removal")
         print("Removing cardiac signal with GLM")
-        validlocs  = np.where(mask > 0)[0]
+        validlocs = np.where(mask > 0)[0]
         numvalidspatiallocs = len(validlocs)
         if args.focaldebug:
             print(f"{numvalidspatiallocs=}, {fmri_data.shape=}")
