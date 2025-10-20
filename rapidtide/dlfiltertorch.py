@@ -358,6 +358,21 @@ class DeepLearningFilter:
                 self.activation,
                 self.inputsize,
             )
+        elif self.infodict["nettype"] == "autoencoder":
+            self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
+            self.num_layers = checkpoint["model_config"]["num_layers"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.activation = checkpoint["model_config"]["activation"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
+
+            self.model = DenseAutoencoderModel(
+                self.window_size,
+                self.encoding_dim,
+                self.num_layers,
+                self.dropout_rate,
+                self.activation,
+                self.inputsize,
+            )
 
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.to(self.device)
@@ -639,6 +654,153 @@ class CNNDLFilter(DeepLearningFilter):
             self.num_layers,
             self.dropout_rate,
             self.dilation_rate,
+            self.activation,
+            self.inputsize,
+        )
+        self.model.to(self.device)
+
+
+class DenseAutoencoderModel(nn.Module):
+    def __init__(self, window_size, encoding_dim, num_layers, dropout_rate, activation, inputsize):
+        super(DenseAutoencoderModel, self).__init__()
+
+        self.window_size = window_size
+        self.encoding_dim = encoding_dim
+        self.num_layers = num_layers
+        self.dropout_rate = dropout_rate
+        self.activation = activation
+        self.inputsize = inputsize
+
+        self.layers = nn.ModuleList()
+
+        # Calculate initial size factor
+        sizefac = 2
+        for i in range(1, num_layers - 1):
+            sizefac = int(sizefac * 2)
+        LGR.info(f"input layer - sizefac: {sizefac}")
+
+        # Input layer
+        self.layers.append(nn.Linear(window_size * inputsize, sizefac * encoding_dim))
+        self.layers.append(nn.BatchNorm1d(sizefac * encoding_dim))
+        self.layers.append(nn.Dropout(dropout_rate))
+        if activation == "relu":
+            self.layers.append(nn.ReLU())
+        elif activation == "tanh":
+            self.layers.append(nn.Tanh())
+        else:
+            self.layers.append(nn.ReLU())
+
+        # Encoding layers
+        for i in range(1, num_layers - 1):
+            sizefac = int(sizefac // 2)
+            LGR.info(f"encoder layer {i + 1}, sizefac: {sizefac}")
+            self.layers.append(nn.Linear(sizefac * 2 * encoding_dim, sizefac * encoding_dim))
+            self.layers.append(nn.BatchNorm1d(sizefac * encoding_dim))
+            self.layers.append(nn.Dropout(dropout_rate))
+            if activation == "relu":
+                self.layers.append(nn.ReLU())
+            elif activation == "tanh":
+                self.layers.append(nn.Tanh())
+            else:
+                self.layers.append(nn.ReLU())
+
+        # Encoding layer (bottleneck)
+        sizefac = int(sizefac // 2)
+        LGR.info(f"encoding layer - sizefac: {sizefac}")
+        self.layers.append(nn.Linear(sizefac * 2 * encoding_dim, encoding_dim))
+        self.layers.append(nn.BatchNorm1d(encoding_dim))
+        self.layers.append(nn.Dropout(dropout_rate))
+        if activation == "relu":
+            self.layers.append(nn.ReLU())
+        elif activation == "tanh":
+            self.layers.append(nn.Tanh())
+        else:
+            self.layers.append(nn.ReLU())
+
+        # Decoding layers
+        for i in range(1, num_layers):
+            sizefac = int(sizefac * 2)
+            LGR.info(f"decoding layer {i}, sizefac: {sizefac}")
+            if i == 1:
+                self.layers.append(nn.Linear(encoding_dim, sizefac * encoding_dim))
+            else:
+                self.layers.append(nn.Linear(sizefac // 2 * encoding_dim, sizefac * encoding_dim))
+            self.layers.append(nn.BatchNorm1d(sizefac * encoding_dim))
+            self.layers.append(nn.Dropout(dropout_rate))
+            if activation == "relu":
+                self.layers.append(nn.ReLU())
+            elif activation == "tanh":
+                self.layers.append(nn.Tanh())
+            else:
+                self.layers.append(nn.ReLU())
+
+        # Output layer
+        self.layers.append(nn.Linear(sizefac * encoding_dim, window_size * inputsize))
+
+    def forward(self, x):
+        # Flatten input from (batch, channels, length) to (batch, channels*length)
+        batch_size = x.shape[0]
+        x = x.reshape(batch_size, -1)
+
+        for layer in self.layers:
+            x = layer(x)
+
+        # Reshape back to (batch, channels, length)
+        x = x.reshape(batch_size, self.inputsize, self.window_size)
+        return x
+
+    def get_config(self):
+        return {
+            "window_size": self.window_size,
+            "encoding_dim": self.encoding_dim,
+            "num_layers": self.num_layers,
+            "dropout_rate": self.dropout_rate,
+            "activation": self.activation,
+            "inputsize": self.inputsize,
+        }
+
+
+class DenseAutoencoderDLFilter(DeepLearningFilter):
+    def __init__(self, encoding_dim=10, *args, **kwargs):
+        self.encoding_dim = encoding_dim
+        self.nettype = "autoencoder"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["encoding_dim"] = self.encoding_dim
+        super(DenseAutoencoderDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = "_".join(
+            [
+                "model",
+                "denseautoencoder",
+                "w" + str(self.window_size).zfill(3),
+                "en" + str(self.encoding_dim).zfill(3),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        self.model = DenseAutoencoderModel(
+            self.window_size,
+            self.encoding_dim,
+            self.num_layers,
+            self.dropout_rate,
             self.activation,
             self.inputsize,
         )
