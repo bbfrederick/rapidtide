@@ -199,7 +199,7 @@ def dotraining(
 def main():
     thiscomputer = os.uname().nodename
     print("thiscomputer:", thiscomputer)
-    if thiscomputer.startswith("bbf-") or thiscomputer.startswith("DIMR22HDP90N5"):
+    if thiscomputer.startswith("bbf-") or thiscomputer.startswith("Mac") or thiscomputer.startswith("DIMR22HDP90N5"):
         print("setting up to run on mac")
         thedatadir = "/Users/frederic/Dropbox_PHC/physioconn/output_2025"
     elif thiscomputer.startswith("DESKTOP"):
