@@ -373,6 +373,90 @@ class DeepLearningFilter:
                 self.activation,
                 self.inputsize,
             )
+        elif self.infodict["nettype"] == "multiscalecnn":
+            self.num_filters = checkpoint["model_config"]["num_filters"]
+            self.kernel_sizes = checkpoint["model_config"]["kernel_sizes"]
+            self.input_lens = checkpoint["model_config"]["input_lens"]
+            self.input_width = checkpoint["model_config"]["input_width"]
+            self.dilation_rate = checkpoint["model_config"]["dilation_rate"]
+
+            self.model = MultiscaleCNNModel(
+                self.num_filters,
+                self.kernel_sizes,
+                self.input_lens,
+                self.input_width,
+                self.dilation_rate,
+            )
+        elif self.infodict["nettype"] == "convautoencoder":
+            self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
+            self.num_filters = checkpoint["model_config"]["num_filters"]
+            self.kernel_size = checkpoint["model_config"]["kernel_size"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.activation = checkpoint["model_config"]["activation"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
+
+            self.model = ConvAutoencoderModel(
+                self.window_size,
+                self.encoding_dim,
+                self.num_filters,
+                self.kernel_size,
+                self.dropout_rate,
+                self.activation,
+                self.inputsize,
+            )
+        elif self.infodict["nettype"] == "crnn":
+            self.num_filters = checkpoint["model_config"]["num_filters"]
+            self.kernel_size = checkpoint["model_config"]["kernel_size"]
+            self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.activation = checkpoint["model_config"]["activation"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
+
+            self.model = CRNNModel(
+                self.num_filters,
+                self.kernel_size,
+                self.encoding_dim,
+                self.dropout_rate,
+                self.activation,
+                self.inputsize,
+            )
+        elif self.infodict["nettype"] == "lstm":
+            self.num_units = checkpoint["model_config"]["num_units"]
+            self.num_layers = checkpoint["model_config"]["num_layers"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
+
+            self.model = LSTMModel(
+                self.num_units,
+                self.num_layers,
+                self.dropout_rate,
+                self.window_size,
+                self.inputsize,
+            )
+        elif self.infodict["nettype"] == "hybrid":
+            self.num_filters = checkpoint["model_config"]["num_filters"]
+            self.kernel_size = checkpoint["model_config"]["kernel_size"]
+            self.num_units = checkpoint["model_config"]["num_units"]
+            self.num_layers = checkpoint["model_config"]["num_layers"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.activation = checkpoint["model_config"]["activation"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
+            self.invert = checkpoint["model_config"]["invert"]
+
+            self.model = HybridModel(
+                self.num_filters,
+                self.kernel_size,
+                self.num_units,
+                self.num_layers,
+                self.dropout_rate,
+                self.activation,
+                self.inputsize,
+                self.window_size,
+                self.invert,
+            )
+        else:
+            print(f"nettype {self.infodict['nettype']} is not supported!")
+            sys.exit()
 
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.to(self.device)
@@ -803,6 +887,721 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
             self.dropout_rate,
             self.activation,
             self.inputsize,
+        )
+        self.model.to(self.device)
+
+
+class MultiscaleCNNModel(nn.Module):
+    def __init__(
+        self,
+        num_filters,
+        kernel_sizes,
+        input_lens,
+        input_width,
+        dilation_rate,
+    ):
+        super(MultiscaleCNNModel, self).__init__()
+
+        self.num_filters = num_filters
+        self.kernel_sizes = kernel_sizes
+        self.input_lens = input_lens
+        self.input_width = input_width
+        self.dilation_rate = dilation_rate
+
+        # Create three separate branches for different scales
+        self.branch_small = self._make_branch(kernel_sizes[0])
+        self.branch_med = self._make_branch(kernel_sizes[1])
+        self.branch_large = self._make_branch(kernel_sizes[2])
+
+        # Final dense layer
+        self.fc = nn.Linear(150, 1)
+        self.sigmoid = nn.Sigmoid()
+
+    def _make_branch(self, kernel_size):
+        return nn.Sequential(
+            nn.Conv1d(self.input_width, self.num_filters, kernel_size, padding="same"),
+            nn.AdaptiveMaxPool1d(1),
+            nn.Flatten(),
+            nn.Linear(self.num_filters, 50),
+            nn.Tanh(),
+            nn.Dropout(0.3),
+        )
+
+    def forward(self, x_small, x_med, x_large):
+        # Process each branch
+        out_small = self.branch_small(x_small)
+        out_med = self.branch_med(x_med)
+        out_large = self.branch_large(x_large)
+
+        # Concatenate outputs
+        merged = torch.cat([out_small, out_med, out_large], dim=1)
+
+        # Final output
+        out = self.fc(merged)
+        out = self.sigmoid(out)
+
+        return out
+
+    def get_config(self):
+        return {
+            "num_filters": self.num_filters,
+            "kernel_sizes": self.kernel_sizes,
+            "input_lens": self.input_lens,
+            "input_width": self.input_width,
+            "dilation_rate": self.dilation_rate,
+        }
+
+
+class MultiscaleCNNDLFilter(DeepLearningFilter):
+    def __init__(
+        self,
+        num_filters=10,
+        kernel_sizes=[4, 8, 12],
+        input_lens=[64, 128, 192],
+        input_width=1,
+        dilation_rate=1,
+        *args,
+        **kwargs,
+    ):
+        self.num_filters = num_filters
+        self.kernel_sizes = kernel_sizes
+        self.input_lens = input_lens
+        self.input_width = input_width
+        self.dilation_rate = dilation_rate
+        self.nettype = "multiscalecnn"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_sizes"] = self.kernel_sizes
+        self.infodict["input_lens"] = self.input_lens
+        self.infodict["input_width"] = self.input_width
+        super(MultiscaleCNNDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = "_".join(
+            [
+                "model",
+                "multiscalecnn",
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_sizes[0]).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
+                "s" + str(self.step),
+                "d" + str(self.dilation_rate),
+                self.activation,
+            ]
+        )
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        self.model = MultiscaleCNNModel(
+            self.num_filters,
+            self.kernel_sizes,
+            self.input_lens,
+            self.input_width,
+            self.dilation_rate,
+        )
+        self.model.to(self.device)
+
+
+class ConvAutoencoderModel(nn.Module):
+    def __init__(
+        self,
+        window_size,
+        encoding_dim,
+        num_filters,
+        kernel_size,
+        dropout_rate,
+        activation,
+        inputsize,
+    ):
+        super(ConvAutoencoderModel, self).__init__()
+
+        self.window_size = window_size
+        self.encoding_dim = encoding_dim
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.dropout_rate = dropout_rate
+        self.activation = activation
+        self.inputsize = inputsize
+
+        # Get activation function
+        if activation == "relu":
+            act_fn = nn.ReLU
+        elif activation == "tanh":
+            act_fn = nn.Tanh
+        else:
+            act_fn = nn.ReLU
+
+        # Initial conv block
+        self.encoder_layers = nn.ModuleList()
+        self.encoder_layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding="same"))
+        self.encoder_layers.append(nn.BatchNorm1d(num_filters))
+        self.encoder_layers.append(nn.Dropout(dropout_rate))
+        self.encoder_layers.append(act_fn())
+        self.encoder_layers.append(nn.MaxPool1d(2, padding=1))
+
+        # Encoding path (3 layers)
+        nfilters = num_filters
+        self.filter_list = []
+        for _ in range(3):
+            nfilters *= 2
+            self.filter_list.append(nfilters)
+            self.encoder_layers.append(
+                nn.Conv1d(nfilters // 2, nfilters, kernel_size, padding="same")
+            )
+            self.encoder_layers.append(nn.BatchNorm1d(nfilters))
+            self.encoder_layers.append(nn.Dropout(dropout_rate))
+            self.encoder_layers.append(act_fn())
+            self.encoder_layers.append(nn.MaxPool1d(2, padding=1))
+
+        # Calculate size after pooling
+        self.encoded_size = window_size
+        for _ in range(4):  # 4 pooling layers
+            self.encoded_size = (self.encoded_size + 1) // 2
+
+        # Bottleneck
+        self.flatten = nn.Flatten()
+        self.encode_fc = nn.Linear(nfilters * self.encoded_size, encoding_dim)
+        self.encode_act = act_fn()
+        self.decode_fc = nn.Linear(encoding_dim, nfilters * self.encoded_size)
+        self.decode_act = act_fn()
+        self.unflatten_size = (nfilters, self.encoded_size)
+
+        # Decoding path (mirror)
+        self.decoder_layers = nn.ModuleList()
+        for i, filters in enumerate(reversed(self.filter_list)):
+            self.decoder_layers.append(nn.Upsample(scale_factor=2, mode="nearest"))
+            if i == 0:
+                self.decoder_layers.append(
+                    nn.Conv1d(nfilters, filters, kernel_size, padding="same")
+                )
+            else:
+                self.decoder_layers.append(
+                    nn.Conv1d(self.filter_list[-i], filters, kernel_size, padding="same")
+                )
+            self.decoder_layers.append(nn.BatchNorm1d(filters))
+            self.decoder_layers.append(nn.Dropout(dropout_rate))
+            self.decoder_layers.append(act_fn())
+
+        # Final upsampling
+        self.decoder_layers.append(nn.Upsample(scale_factor=2, mode="nearest"))
+        self.decoder_layers.append(nn.Conv1d(num_filters, inputsize, kernel_size, padding="same"))
+
+    def forward(self, x):
+        # Encoding
+        for layer in self.encoder_layers:
+            x = layer(x)
+
+        # Bottleneck
+        x = self.flatten(x)
+        x = self.encode_fc(x)
+        x = self.encode_act(x)
+        x = self.decode_fc(x)
+        x = self.decode_act(x)
+        x = x.view(x.size(0), *self.unflatten_size)
+
+        # Decoding
+        for layer in self.decoder_layers:
+            x = layer(x)
+
+        # Crop/pad to original window size
+        if x.size(2) > self.window_size:
+            x = x[:, :, : self.window_size]
+        elif x.size(2) < self.window_size:
+            pad_size = self.window_size - x.size(2)
+            x = nn.functional.pad(x, (0, pad_size))
+
+        return x
+
+    def get_config(self):
+        return {
+            "window_size": self.window_size,
+            "encoding_dim": self.encoding_dim,
+            "num_filters": self.num_filters,
+            "kernel_size": self.kernel_size,
+            "dropout_rate": self.dropout_rate,
+            "activation": self.activation,
+            "inputsize": self.inputsize,
+        }
+
+
+class ConvAutoencoderDLFilter(DeepLearningFilter):
+    def __init__(
+        self, encoding_dim=10, num_filters=5, kernel_size=5, dilation_rate=1, *args, **kwargs
+    ):
+        self.encoding_dim = encoding_dim
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.dilation_rate = dilation_rate
+        self.nettype = "convautoencoder"
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["nettype"] = self.nettype
+        self.infodict["encoding_dim"] = self.encoding_dim
+        super(ConvAutoencoderDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = "_".join(
+            [
+                "model",
+                "convautoencoder",
+                "w" + str(self.window_size).zfill(3),
+                "en" + str(self.encoding_dim).zfill(3),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        self.model = ConvAutoencoderModel(
+            self.window_size,
+            self.encoding_dim,
+            self.num_filters,
+            self.kernel_size,
+            self.dropout_rate,
+            self.activation,
+            self.inputsize,
+        )
+        self.model.to(self.device)
+
+
+class CRNNModel(nn.Module):
+    def __init__(
+        self, num_filters, kernel_size, encoding_dim, dropout_rate, activation, inputsize
+    ):
+        super(CRNNModel, self).__init__()
+
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.encoding_dim = encoding_dim
+        self.dropout_rate = dropout_rate
+        self.activation = activation
+        self.inputsize = inputsize
+
+        # Get activation function
+        if activation == "relu":
+            act_fn = nn.ReLU
+        elif activation == "tanh":
+            act_fn = nn.Tanh
+        else:
+            act_fn = nn.ReLU
+
+        # Convolutional front-end
+        self.conv1 = nn.Conv1d(inputsize, num_filters, kernel_size, padding="same")
+        self.bn1 = nn.BatchNorm1d(num_filters)
+        self.dropout1 = nn.Dropout(dropout_rate)
+        self.act1 = act_fn()
+
+        self.conv2 = nn.Conv1d(num_filters, num_filters * 2, kernel_size, padding="same")
+        self.bn2 = nn.BatchNorm1d(num_filters * 2)
+        self.dropout2 = nn.Dropout(dropout_rate)
+        self.act2 = act_fn()
+
+        # Bidirectional LSTM
+        self.lstm = nn.LSTM(num_filters * 2, encoding_dim, batch_first=True, bidirectional=True)
+
+        # Output mapping
+        self.fc_out = nn.Linear(encoding_dim * 2, inputsize)
+
+    def forward(self, x):
+        # Conv layers expect (batch, channels, length)
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.dropout1(x)
+        x = self.act1(x)
+
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.dropout2(x)
+        x = self.act2(x)
+
+        # LSTM expects (batch, seq_len, features)
+        x = x.permute(0, 2, 1)
+        x, _ = self.lstm(x)
+
+        # Output layer
+        x = self.fc_out(x)
+
+        # Convert back to (batch, channels, length)
+        x = x.permute(0, 2, 1)
+
+        return x
+
+    def get_config(self):
+        return {
+            "num_filters": self.num_filters,
+            "kernel_size": self.kernel_size,
+            "encoding_dim": self.encoding_dim,
+            "dropout_rate": self.dropout_rate,
+            "activation": self.activation,
+            "inputsize": self.inputsize,
+        }
+
+
+class CRNNDLFilter(DeepLearningFilter):
+    def __init__(
+        self, encoding_dim=10, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs
+    ):
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.dilation_rate = dilation_rate
+        self.encoding_dim = encoding_dim
+        self.nettype = "crnn"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["encoding_dim"] = self.encoding_dim
+        super(CRNNDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = "_".join(
+            [
+                "model",
+                "crnn",
+                "w" + str(self.window_size).zfill(3),
+                "en" + str(self.encoding_dim).zfill(3),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        self.model = CRNNModel(
+            self.num_filters,
+            self.kernel_size,
+            self.encoding_dim,
+            self.dropout_rate,
+            self.activation,
+            self.inputsize,
+        )
+        self.model.to(self.device)
+
+
+class LSTMModel(nn.Module):
+    def __init__(self, num_units, num_layers, dropout_rate, window_size, inputsize):
+        super(LSTMModel, self).__init__()
+
+        self.num_units = num_units
+        self.num_layers = num_layers
+        self.dropout_rate = dropout_rate
+        self.window_size = window_size
+        self.inputsize = inputsize
+
+        self.lstm_layers = nn.ModuleList()
+        self.dense_layers = nn.ModuleList()
+
+        for _ in range(num_layers):
+            # Bidirectional LSTM
+            self.lstm_layers.append(
+                nn.LSTM(
+                    inputsize if len(self.lstm_layers) == 0 else inputsize,
+                    num_units,
+                    batch_first=True,
+                    bidirectional=True,
+                    dropout=dropout_rate if num_layers > 1 else 0,
+                )
+            )
+            # Time-distributed dense layer
+            self.dense_layers.append(nn.Linear(num_units * 2, inputsize))
+
+    def forward(self, x):
+        # x is (batch, channels, length), convert to (batch, length, channels)
+        x = x.permute(0, 2, 1)
+
+        for lstm, dense in zip(self.lstm_layers, self.dense_layers):
+            x, _ = lstm(x)
+            # Apply dense layer across time steps
+            x = dense(x)
+
+        # Convert back to (batch, channels, length)
+        x = x.permute(0, 2, 1)
+
+        return x
+
+    def get_config(self):
+        return {
+            "num_units": self.num_units,
+            "num_layers": self.num_layers,
+            "dropout_rate": self.dropout_rate,
+            "window_size": self.window_size,
+            "inputsize": self.inputsize,
+        }
+
+
+class LSTMDLFilter(DeepLearningFilter):
+    def __init__(self, num_units=16, *args, **kwargs):
+        self.num_units = num_units
+        self.nettype = "lstm"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["num_units"] = self.num_units
+        super(LSTMDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = "_".join(
+            [
+                "model",
+                "lstm",
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "nu" + str(self.num_units),
+                "d" + str(self.dropout_rate),
+                "rd" + str(self.dropout_rate),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
+                "s" + str(self.step),
+            ]
+        )
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        self.model = LSTMModel(
+            self.num_units,
+            self.num_layers,
+            self.dropout_rate,
+            self.window_size,
+            self.inputsize,
+        )
+        self.model.to(self.device)
+
+
+class HybridModel(nn.Module):
+    def __init__(
+        self,
+        num_filters,
+        kernel_size,
+        num_units,
+        num_layers,
+        dropout_rate,
+        activation,
+        inputsize,
+        window_size,
+        invert,
+    ):
+        super(HybridModel, self).__init__()
+
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.num_units = num_units
+        self.num_layers = num_layers
+        self.dropout_rate = dropout_rate
+        self.activation = activation
+        self.inputsize = inputsize
+        self.window_size = window_size
+        self.invert = invert
+
+        # Get activation function
+        if activation == "relu":
+            act_fn = nn.ReLU
+        elif activation == "tanh":
+            act_fn = nn.Tanh
+        else:
+            act_fn = nn.ReLU
+
+        self.layers = nn.ModuleList()
+
+        if invert:
+            # CNN first, then LSTM
+            # Input layer
+            self.layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding="same"))
+            self.layers.append(nn.BatchNorm1d(num_filters))
+            self.layers.append(nn.Dropout(dropout_rate))
+            self.layers.append(act_fn())
+
+            # Intermediate CNN layers
+            for _ in range(num_layers - 2):
+                self.layers.append(
+                    nn.Conv1d(num_filters, num_filters, kernel_size, padding="same")
+                )
+                self.layers.append(nn.BatchNorm1d(num_filters))
+                self.layers.append(nn.Dropout(dropout_rate))
+                self.layers.append(act_fn())
+
+            # LSTM layer
+            self.lstm = nn.LSTM(
+                num_filters, num_units, batch_first=True, bidirectional=True, dropout=dropout_rate
+            )
+            self.lstm_dense = nn.Linear(num_units * 2, inputsize)
+
+        else:
+            # LSTM first, then CNN
+            self.lstm = nn.LSTM(
+                inputsize, num_units, batch_first=True, bidirectional=True, dropout=dropout_rate
+            )
+            self.lstm_dense = nn.Linear(num_units * 2, inputsize)
+            self.lstm_dropout = nn.Dropout(dropout_rate)
+
+            # Intermediate CNN layers
+            for _ in range(num_layers - 2):
+                self.layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding="same"))
+                self.layers.append(nn.BatchNorm1d(num_filters))
+                self.layers.append(nn.Dropout(dropout_rate))
+                self.layers.append(act_fn())
+
+            # Output layer
+            self.output_conv = nn.Conv1d(
+                num_filters if num_layers > 2 else inputsize,
+                inputsize,
+                kernel_size,
+                padding="same",
+            )
+
+    def forward(self, x):
+        if self.invert:
+            # Apply CNN layers
+            for layer in self.layers:
+                x = layer(x)
+
+            # LSTM expects (batch, seq_len, features)
+            x = x.permute(0, 2, 1)
+            x, _ = self.lstm(x)
+            x = self.lstm_dense(x)
+
+            # Convert back to (batch, channels, length)
+            x = x.permute(0, 2, 1)
+
+        else:
+            # LSTM first
+            x = x.permute(0, 2, 1)
+            x, _ = self.lstm(x)
+            x = self.lstm_dense(x)
+            x = self.lstm_dropout(x)
+            x = x.permute(0, 2, 1)
+
+            # CNN layers
+            for layer in self.layers:
+                x = layer(x)
+
+            # Output layer
+            if hasattr(self, "output_conv"):
+                x = self.output_conv(x)
+
+        return x
+
+    def get_config(self):
+        return {
+            "num_filters": self.num_filters,
+            "kernel_size": self.kernel_size,
+            "num_units": self.num_units,
+            "num_layers": self.num_layers,
+            "dropout_rate": self.dropout_rate,
+            "activation": self.activation,
+            "inputsize": self.inputsize,
+            "window_size": self.window_size,
+            "invert": self.invert,
+        }
+
+
+class HybridDLFilter(DeepLearningFilter):
+    def __init__(self, invert=False, num_filters=10, kernel_size=5, num_units=16, *args, **kwargs):
+        self.invert = invert
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.num_units = num_units
+        self.nettype = "hybrid"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["invert"] = self.invert
+        self.infodict["num_units"] = self.num_units
+        super(HybridDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        self.modelname = "_".join(
+            [
+                "model",
+                "hybrid",
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "nu" + str(self.num_units),
+                "d" + str(self.dropout_rate),
+                "rd" + str(self.dropout_rate),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.invert:
+            self.modelname += "_invert"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        self.model = HybridModel(
+            self.num_filters,
+            self.kernel_size,
+            self.num_units,
+            self.num_layers,
+            self.dropout_rate,
+            self.activation,
+            self.inputsize,
+            self.window_size,
+            self.invert,
         )
         self.model.to(self.device)
 
