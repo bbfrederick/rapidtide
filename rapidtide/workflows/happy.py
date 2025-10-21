@@ -495,6 +495,7 @@ def happy_main(argparsingfunc):
             madnorm=args.domadnorm,
             nprocs=args.nprocs,
             notchpct=args.notchpct,
+            notchrolloff=args.notchrolloff,
             fliparteries=args.fliparteries,
             arteriesonly=args.arteriesonly,
             usemask=args.usemaskcardfromfmri,

@@ -841,6 +841,7 @@ def process_args(inputargs=None):
     args.savecardiacnoise = True
     args.colnum = None
     args.colname = None
+    args.notchrolloff = 0.5
 
     # Additional argument parsing not handled by argparse
     # deal with notch filter logic
