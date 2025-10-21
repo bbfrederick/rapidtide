@@ -1896,90 +1896,96 @@ def happy_main(argparsingfunc):
             debug=args.debug,
         )
 
+        # estimate pulsatility
+        card_min, card_max, card_mean, card_std, card_median, card_mad, card_skew, card_kurtosis = (
+            tide_stats.fmristats(normapp.reshape(numspatiallocs, -1))
+        )
+        maplist = [
+            (
+                card_min,
+                "appmin",
+                "map",
+                None,
+                "Minimum value of analytic phase projection across all phases",
+            ),
+            (
+                card_max,
+                "appmax",
+                "map",
+                None,
+                "Maximum value of analytic phase projection across all phases",
+            ),
+            (
+                card_mean,
+                "appmean",
+                "map",
+                None,
+                "Mean value of analytic phase projection across all phases",
+            ),
+            (
+                card_std,
+                "appstd",
+                "map",
+                None,
+                "Standard deviation of analytic phase projection across all phases",
+            ),
+            (
+                card_median,
+                "appmedian",
+                "map",
+                None,
+                "Median of analytic phase projection across all phases",
+            ),
+            (
+                card_mad,
+                "appMAD",
+                "map",
+                None,
+                "Median average deviate of analytic phase projection across all phases",
+            ),
+            (
+                card_skew,
+                "appskew",
+                "map",
+                None,
+                "Skewness of analytic phase projection across all phases",
+            ),
+            (
+                card_kurtosis,
+                "appkurtosis",
+                "map",
+                None,
+                "Kurtosis of analytic phase projection across all phases",
+            ),
+        ]
+        # write the 3D maps
+        tide_io.savemaplist(
+            outputroot,
+            maplist,
+            None,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
+
+        pulsatilitymap = 100.0 * (np.max(normapp, axis=3) - np.min(normapp, axis=3))
+        rawrobustmax = tide_stats.getfracval(pulsatilitymap, 0.98, nozero=True)
+        rawmedian = tide_stats.getfracval(pulsatilitymap, 0.50, nozero=True)
+        infodict["pulsatilitythresh"] = rawmedian * 3.0
+        pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
+        pulsatilitymask = np.where(pulsatilitymap > infodict["pulsatilitythresh"], 1.0, 0.0)
+
         # now get ready to start again with a new mask
         if args.doaliasedcorrelation and thispass > 0:
             estweights_byslice = waveamp_byslice * vesselmask.reshape((xsize * ysize, numslices))
         else:
-            estweights_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
+            if args.useoriginalvesselmethod:
+                estweights_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
+            else:
+                estweights_byslice = pulsatilitymask.reshape((xsize * ysize, numslices)) + 0
 
-    # estimate pulsatility
-    card_min, card_max, card_mean, card_std, card_median, card_mad, card_skew, card_kurtosis = (
-        tide_stats.fmristats(normapp.reshape(numspatiallocs, -1))
-    )
-    maplist = [
-        (
-            card_min,
-            "appmin",
-            "map",
-            None,
-            "Minimum value of analytic phase projection across all phases",
-        ),
-        (
-            card_max,
-            "appmax",
-            "map",
-            None,
-            "Maximum value of analytic phase projection across all phases",
-        ),
-        (
-            card_mean,
-            "appmean",
-            "map",
-            None,
-            "Mean value of analytic phase projection across all phases",
-        ),
-        (
-            card_std,
-            "appstd",
-            "map",
-            None,
-            "Standard deviation of analytic phase projection across all phases",
-        ),
-        (
-            card_median,
-            "appmedian",
-            "map",
-            None,
-            "Median of analytic phase projection across all phases",
-        ),
-        (
-            card_mad,
-            "appMAD",
-            "map",
-            None,
-            "Median average deviate of analytic phase projection across all phases",
-        ),
-        (
-            card_skew,
-            "appskew",
-            "map",
-            None,
-            "Skewness of analytic phase projection across all phases",
-        ),
-        (
-            card_kurtosis,
-            "appkurtosis",
-            "map",
-            None,
-            "Kurtosis of analytic phase projection across all phases",
-        ),
-    ]
-    # write the 3D maps
-    tide_io.savemaplist(
-        outputroot,
-        maplist,
-        None,
-        (xsize, ysize, numslices),
-        theheader,
-        bidsdict,
-        debug=args.debug,
-    )
-
-    pulsatilitymap2 = 100.0 * (card_max - card_min)
-    pulsatilitymap = 100.0 * (np.max(normapp, axis=3) - np.min(normapp, axis=3))
-    rawrobustmax = tide_stats.getfracval(pulsatilitymap, 0.98, nozero=True)
-    pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
-    pulsatilitymask = np.where(pulsatilitymap > 0.0, 1.0, 0.0)
+    # calculate the lf and hf pulsatility maps
     lfnormapp = normapp * 0.0
     hfnormapp = normapp * 0.0
     for thephase in range(args.destpoints):
@@ -2005,13 +2011,17 @@ def happy_main(argparsingfunc):
     hfpulsatilitymap2 = np.where(hfpulsatilitymap2 < hfrobustmax, hfpulsatilitymap2, hfrobustmax)
 
     # make a vessel map
-    if args.unnormvesselmap:
-        vesselmap = np.max(app, axis=3)
+    if args.useoriginalvesselmethod:
+        if args.unnormvesselmap:
+            vesselmap = np.max(app, axis=3)
+        else:
+            # vesselmap = np.max(normapp, axis=3)
+            vesselmap = np.where(hfpulsatilitymap > args.pulsatilitythreshold, 1.0, 0.0)
     else:
-        # vesselmap = np.max(normapp, axis=3)
-        vesselmap = np.where(hfpulsatilitymap > args.pulsatilitythreshold, 1.0, 0.0)
+        vesselmap = pulsatilitymask
     veinmap = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0)
     arterymap = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0)
+
 
     # specify the 3D maps
     maplist = [

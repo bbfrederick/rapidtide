@@ -640,6 +640,13 @@ def _get_parser():
         help="Number of iterations for calculating Wright map. Set to 0 to disable.",
         default=0,
     )
+    misc_opts.add_argument(
+        "--usenewvesselmethod",
+        dest="useoriginalvesselmethod",
+        action="store_false",
+        help="Will use the new pulsatility method to find blood vessels. ",
+        default=True,
+    )
     pf.addtagopts(
         misc_opts,
         helptext="Additional key, value pairs to add to the info json file (useful for tracking analyses).",
