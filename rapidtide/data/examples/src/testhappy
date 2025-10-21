@@ -78,11 +78,21 @@
 
 #    --motionfile sub-HAPPYTEST_mcf.par \
 
+#happy \
+    #sub-HAPPYTEST.nii.gz \
+    #sub-HAPPYTEST.json \
+    #../dst/happy \
+    #--increaseoutputlevel \
+    #--model model_cnn_pytorch \
+    #--usepytorch \
+    #--nprocs -1
+
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy \
+    ../dst/happy_newvesselmethod \
     --increaseoutputlevel \
     --model model_cnn_pytorch \
+    --usenewvesselmethod \
     --usepytorch \
     --nprocs -1
