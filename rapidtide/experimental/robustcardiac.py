@@ -497,7 +497,7 @@ class RobustPPGProcessor:
     and heart rate extraction with intelligent segment handling.
     """
 
-    def __init__(self, fs=100.0, method="adaptive"):
+    def __init__(self, fs=100.0, method="adaptive", hr_estimate=75.0, process_noise=0.0001):
         """
         Parameters:
         -----------
@@ -509,17 +509,19 @@ class RobustPPGProcessor:
         self.fs = fs
         self.dt = 1.0 / fs
         self.method = method
+        self.process_noise = process_noise
+        self.hr_estimate = hr_estimate
 
         # Initialize components
         if method == "standard":
-            self.filter = PPGKalmanFilter(dt=self.dt, process_noise=0.001, measurement_noise=0.05)
+            self.filter = PPGKalmanFilter(dt=self.dt, process_noise=self.process_noise, measurement_noise=0.05)
         elif method == "adaptive":
             self.filter = AdaptivePPGKalmanFilter(
-                dt=self.dt, initial_process_noise=0.001, initial_measurement_noise=0.05
+                dt=self.dt, initial_process_noise=self.process_noise, initial_measurement_noise=0.05
             )
         else:  # ekf
             self.filter = ExtendedPPGKalmanFilter(
-                dt=self.dt, hr_estimate=75, process_noise=0.0001, measurement_noise=0.05
+                dt=self.dt, hr_estimate=self.hr_estimate, process_noise=self.process_noise, measurement_noise=0.05
             )
 
         self.quality_assessor = SignalQualityAssessor(fs=fs, window_size=5.0)
@@ -552,6 +554,8 @@ class RobustPPGProcessor:
         elif self.method == "ekf":
             filtered, hr_continuous = self.filter.filter_signal(signal_data, missing_indices)
             results["ekf_heart_rate"] = hr_continuous
+        elif self.method == "raw":
+            filtered = signal_data
         else:
             filtered = self.filter.filter_signal(signal_data, missing_indices)
 
@@ -864,7 +868,7 @@ def read_happy_ppg(filenameroot, debug=False):
     if debug:
         print(f"{indata.shape=}")
 
-    t = np.linspace(0, 1.0, num=indata.shape[1], endpoint=False) * (1.0 / Fs)
+    t = np.linspace(0, (indata.shape[1] / Fs), num=indata.shape[1], endpoint=False)
 
     # set raw file
     try:
@@ -967,6 +971,9 @@ def generate_synthetic_ppg(
 # Example usage
 if __name__ == "__main__":
     Fs = 25.0
+    process_noise = 0.25
+    hr_estimate = 65.0
+    qual_thresh = 0.3
 
     # Generate synthetic PPG signal
     """
@@ -975,10 +982,13 @@ if __name__ == "__main__":
     )"""
 
     # read in some real data
-    filenameroot = "data/examples/dst/happy_desc-stdrescardfromfmri_timeseries"
+    filenameroot = "../data/examples/dst/happy_desc-slicerescardfromfmri_timeseries"
     t, Fs, clean_ppg, corrupted_ppg, missing_indices = read_happy_ppg(filenameroot, debug=True)
     print(f"{t.shape=}")
+    print(f"{t=}")
     print(f"{Fs=}")
+    print(f"{process_noise=}")
+    print(f"{hr_estimate=}")
     print(f"{missing_indices=}")
     print(f"{clean_ppg.shape=}")
     print(f"{corrupted_ppg.shape=}")
@@ -987,40 +997,41 @@ if __name__ == "__main__":
     rollofffilter.setfreqs(0.0, 0.0, 1.0, 4.0)
     corrupted_ppg = rollofffilter.apply(Fs, corrupted_ppg)
     corrupted_ppg /= np.std(corrupted_ppg)
+    #corrupted_ppg = clean_ppg + 0.0
 
     # Apply standard PPG Kalman filter
-    kf = PPGKalmanFilter(dt=(1.0 / Fs), process_noise=0.01, measurement_noise=0.10)
+    kf = PPGKalmanFilter(dt=(1.0 / Fs), process_noise=process_noise, measurement_noise=0.10)
     filtered_standard = kf.filter_signal(corrupted_ppg, missing_indices)
 
     # Apply adaptive PPG Kalman filter
     akf = AdaptivePPGKalmanFilter(
-        dt=(1.0 / Fs), initial_process_noise=0.01, initial_measurement_noise=0.05
+        dt=(1.0 / Fs), initial_process_noise=process_noise, initial_measurement_noise=0.05
     )
     filtered_adaptive, motion_flags = akf.filter_signal(corrupted_ppg, missing_indices)
 
     # Apply Extended Kalman filter with sinusoidal model
     ekf = ExtendedPPGKalmanFilter(
-        dt=(1.0 / Fs), hr_estimate=75, process_noise=0.01, measurement_noise=0.05
+        dt=(1.0 / Fs), hr_estimate=hr_estimate, process_noise=process_noise, measurement_noise=0.05
     )
     filtered_ekf, ekf_heart_rates = ekf.filter_signal(corrupted_ppg, missing_indices)
 
     # Extract heart rate using frequency methods
     hr_extractor = HeartRateExtractor(fs=Fs)
     hr_times, hr_values = hr_extractor.extract_continuous(
-        filtered_adaptive, window_size=10.0, stride=2.0, method="fft"
+        filtered_ekf, window_size=10.0, stride=2.0, method="fft"
     )
 
     # Assess signal quality
     quality_assessor = SignalQualityAssessor(fs=Fs, window_size=5.0)
     qual_times, qual_scores = quality_assessor.assess_continuous(
-        corrupted_ppg, filtered_adaptive, stride=1.0
+        corrupted_ppg, filtered_ekf, stride=1.0
     )
 
     # Also get single HR estimate from peaks
-    hr_from_peaks, peak_indices = hr_extractor.extract_from_peaks(filtered_adaptive)
+    hr_from_peaks, peak_indices = hr_extractor.extract_from_peaks(filtered_ekf)
 
     # Plot results
-    fig = plt.figure(figsize=(15, 14))
+    fig = plt.figure(figsize=(15, 10))
     gs = fig.add_gridspec(6, 1, hspace=0.3)
 
     # Plot 1: Original and corrupted
@@ -1097,6 +1108,15 @@ if __name__ == "__main__":
         markersize=5,
         alpha=0.7,
     )
+    # Mark detected peaks
+    ax4.plot(
+        t[peak_indices],
+        filtered_ekf[peak_indices],
+        "kx",
+        label="Detected peaks",
+        markersize=8,
+        markeredgewidth=2,
+    )
     ax4.set_ylabel("Amplitude")
     ax4.set_title("Extended Kalman Filter (Sinusoidal Model)")
     ax4.legend(loc="upper right")
@@ -1118,7 +1138,7 @@ if __name__ == "__main__":
     ax5.set_title("Heart Rate Extraction")
     ax5.legend(loc="upper right")
     ax5.grid(True, alpha=0.3)
-    ax5.set_ylim([50, 100])
+    ax5.set_ylim([40, 110])
 
     # Plot 6: Signal quality assessment
     ax6 = fig.add_subplot(gs[5, 0])
@@ -1126,7 +1146,7 @@ if __name__ == "__main__":
     for i in range(len(qual_times) - 1):
         ax6.axvspan(qual_times[i], qual_times[i + 1], alpha=0.3, color=quality_colors[i])
     ax6.plot(qual_times, qual_scores, "k-", linewidth=2, label="Quality Score")
-    ax6.axhline(y=0.7, color="orange", linestyle="--", label="Good quality threshold")
+    ax6.axhline(y=qual_thresh, color="orange", linestyle="--", label="Good quality threshold")
     ax6.set_xlabel("Time (s)")
     ax6.set_ylabel("Quality Score")
     ax6.set_title("Signal Quality Assessment (0=Poor, 1=Excellent)")
@@ -1146,8 +1166,8 @@ if __name__ == "__main__":
     print(f"PERFORMANCE METRICS")
     print(f"{'='*60}")
     print(f"\nFiltering Performance:")
-    print(f"  Standard Kalman MSE: {mse_standard:.6f}")
-    print(f"  Adaptive Kalman MSE: {mse_adaptive:.6f}")
+    #print(f"  Standard Kalman MSE: {mse_standard:.6f}")
+    #print(f"  Adaptive Kalman MSE: {mse_adaptive:.6f}")
     print(f"  Extended Kalman MSE: {mse_ekf:.6f}")
     print(f"\nData Recovery:")
     print(
@@ -1182,8 +1202,11 @@ if __name__ == "__main__":
     print(f"COMPLETE PROCESSING PIPELINE DEMO")
     print(f"{'='*60}")
 
-    processor = RobustPPGProcessor(fs=Fs, method="adaptive")
-    pipeline_results = processor.process(corrupted_ppg, missing_indices, quality_threshold=0.5)
+    processor = RobustPPGProcessor(fs=Fs, method="ekf", hr_estimate=75.0, process_noise=0.1)
+    pipeline_results = processor.process(filtered_ekf, missing_indices, quality_threshold=qual_thresh)
+
+    #processor = RobustPPGProcessor(fs=Fs, method="raw", hr_estimate=75.0, process_noise=0.1)
+    #pipeline_results = processor.process(clean_ppg, missing_indices, quality_threshold=qual_thresh)
 
     print(f"\nPipeline Results:")
     print(f"  Mean quality score: {pipeline_results['mean_quality']:.3f}")
@@ -1218,8 +1241,8 @@ if __name__ == "__main__":
 
         # Extract segment around this peak
         segment_start = max(0, mid_peak - int(0.4 * 100))
-        segment_end = min(len(filtered_adaptive), mid_peak + int(0.6 * 100))
-        segment = filtered_adaptive[segment_start:segment_end]
+        segment_end = min(len(filtered_ekf), mid_peak + int(0.6 * 100))
+        segment = filtered_ekf[segment_start:segment_end]
         peak_in_segment = mid_peak - segment_start
 
         morph_features = feature_extractor.extract_morphology_features(segment, peak_in_segment)
@@ -1233,7 +1256,7 @@ if __name__ == "__main__":
             print(f"  Pulse width (FWHM): {morph_features['pulse_width']:.3f} s")
 
     # SpO2 proxy
-    spo2_proxy = feature_extractor.compute_spo2_proxy(filtered_adaptive)
+    spo2_proxy = feature_extractor.compute_spo2_proxy(filtered_ekf)
     print(f"\nSpO2 Proxy: {spo2_proxy:.1f}% (Note: This is not a real SpO2 measurement!)")
 
     print(f"\n{'='*60}")
