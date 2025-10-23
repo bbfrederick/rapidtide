@@ -82,6 +82,7 @@ doc = [
 adjustoffset = 'rapidtide.scripts.adjustoffset:entrypoint'
 aligntcs = 'rapidtide.scripts.aligntcs:entrypoint'
 applydlfilter = 'rapidtide.scripts.applydlfilter:entrypoint'
+applyppgproc = 'rapidtide.scripts.applyppgproc:entrypoint'
 atlasaverage = 'rapidtide.scripts.atlasaverage:entrypoint'
 atlastool = 'rapidtide.scripts.atlastool:entrypoint'
 calcicc = 'rapidtide.scripts.calcicc:entrypoint'
