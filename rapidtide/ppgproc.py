@@ -763,7 +763,7 @@ class HeartRateExtractor:
 
         return hr, peaks, rri, hr_waveform
 
-    def extract_from_fft(self, ppg_signal, hr_range=(40, 180)):
+    def extract_from_fft(self, ppg_signal, hr_range=(40.0, 180.0)):
         """
         Extract heart rate using FFT (frequency domain).
 
@@ -789,7 +789,7 @@ class HeartRateExtractor:
         freqs, psd = signal.welch(ppg_signal, fs=self.fs, nperseg=min(256, len(ppg_signal)))
 
         # Convert HR range to frequency range
-        freq_range = (hr_range[0] / 60, hr_range[1] / 60)
+        freq_range = (hr_range[0] / 60.0, hr_range[1] / 60.0)
 
         # Find peak in physiological range
         valid_indices = (freqs >= freq_range[0]) & (freqs <= freq_range[1])
