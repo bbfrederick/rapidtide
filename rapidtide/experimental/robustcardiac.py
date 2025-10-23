@@ -23,6 +23,7 @@ from scipy.interpolate import interp1d
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
+import rapidtide.ppgproc as tide_ppg
 
 
 class PPGKalmanFilter:
@@ -218,6 +219,327 @@ class AdaptivePPGKalmanFilter:
         return filtered, motion_flags
 
 
+class ExtendedPPGKalmanFilter:
+    """
+    Extended Kalman Filter for PPG with sinusoidal model.
+    Models the PPG waveform as a sinusoid with varying amplitude and baseline.
+    Better for capturing the periodic nature of PPG signals.
+    """
+
+    def __init__(self, dt=0.01, hr_estimate=75, process_noise=0.001, measurement_noise=0.05):
+        """
+        Parameters:
+        -----------
+        dt : float
+            Sampling interval (default 0.01 for 100Hz sampling, typical for PPG)
+        hr_estimate : float
+            Initial heart rate estimate in BPM
+        process_noise : float
+            Process noise covariance (Q). PPG is smoother, so use lower values (0.0001-0.01)
+        measurement_noise : float
+            Measurement noise covariance (R). Represents sensor/motion artifact noise
+        """
+        # State: [DC offset, amplitude, phase, frequency]
+        self.x = np.array([[0.0], [1.0], [0.0], [2 * np.pi * hr_estimate / 60]])
+        self.dt = dt
+
+        self.H = np.array([[1, 0, 0, 0]])  # We measure the overall signal
+
+        self.Q = np.eye(4) * process_noise
+        self.R = np.array([[measurement_noise]])
+        self.P = np.eye(4) * 0.1
+
+        # For heart rate extraction
+        self.hr_history = []
+
+    def get_heart_rate(self):
+        """Extract current heart rate estimate from state"""
+        frequency = self.x[3, 0]  # radians/second
+        hr = frequency * 60 / (2 * np.pi)  # Convert to BPM
+        return hr
+
+    def state_transition(self, x):
+        """Nonlinear state transition for sinusoidal model"""
+        dc, amp, phase, freq = x.flatten()
+
+        # Update phase based on frequency
+        new_phase = (phase + freq * self.dt) % (2 * np.pi)
+
+        return np.array([[dc], [amp], [new_phase], [freq]])
+
+    def measurement_function(self, x):
+        """Measurement model: DC + amplitude * sin(phase)"""
+        dc, amp, phase, freq = x.flatten()
+        return np.array([[dc + amp * np.sin(phase)]])
+
+    def predict(self):
+        """EKF prediction step"""
+        # Propagate state
+        self.x = self.state_transition(self.x)
+
+        # Jacobian of state transition
+        F = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, self.dt], [0, 0, 0, 1]])
+
+        self.P = F @ self.P @ F.T + self.Q
+
+    def update(self, measurement):
+        """EKF update step"""
+        # Predicted measurement
+        z_pred = self.measurement_function(self.x)
+
+        # Innovation
+        y = measurement - z_pred
+
+        # Jacobian of measurement function
+        dc, amp, phase, freq = self.x.flatten()
+        H = np.array([[1, np.sin(phase), amp * np.cos(phase), 0]])
+
+        # Innovation covariance
+        S = H @ self.P @ H.T + self.R
+
+        # Kalman gain
+        K = self.P @ H.T / S
+
+        # Update state
+        self.x = self.x + K * y
+
+        # Ensure phase stays in [0, 2π]
+        self.x[2, 0] = self.x[2, 0] % (2 * np.pi)
+
+        # Update covariance
+        I = np.eye(4)
+        self.P = (I - K @ H) @ self.P
+
+    def filter_signal(self, signal_data, missing_indices=None):
+        filtered = np.zeros(len(signal_data))
+        heart_rates = np.zeros(len(signal_data))
+
+        for i, measurement in enumerate(signal_data):
+            self.predict()
+
+            if missing_indices is not None and i in missing_indices:
+                filtered[i] = self.measurement_function(self.x)[0, 0]
+            elif np.isnan(measurement):
+                filtered[i] = self.measurement_function(self.x)[0, 0]
+            else:
+                self.update(np.array([[measurement]]))
+                filtered[i] = self.measurement_function(self.x)[0, 0]
+
+            # Track heart rate
+            hr = self.get_heart_rate()
+            heart_rates[i] = hr
+            self.hr_history.append(hr)
+
+        return filtered, heart_rates
+
+
+class HarmonicPPGKalmanFilter:
+    """
+    Extended Kalman Filter for PPG with harmonic sinusoidal model.
+    Models the PPG waveform as a fundamental sinusoid plus its first two harmonics.
+    This provides a more sophisticated representation of the PPG signal, capturing
+    the dicrotic notch and other morphological features.
+
+    State vector: [DC offset, A1, A2, A3, phase, frequency]
+    where:
+        DC offset: baseline
+        A1: amplitude of fundamental frequency
+        A2: amplitude of second harmonic (2f)
+        A3: amplitude of third harmonic (3f)
+        phase: phase of fundamental
+        frequency: angular frequency (rad/s)
+
+    Measurement model: y = DC + A1*sin(phase) + A2*sin(2*phase) + A3*sin(3*phase)
+    """
+
+    def __init__(self, dt=0.01, hr_estimate=75, process_noise=0.001, measurement_noise=0.05):
+        """
+        Parameters:
+        -----------
+        dt : float
+            Sampling interval (default 0.01 for 100Hz sampling)
+        hr_estimate : float
+            Initial heart rate estimate in BPM
+        process_noise : float
+            Process noise covariance (Q). Controls how much the state can change
+        measurement_noise : float
+            Measurement noise covariance (R). Represents sensor noise
+        """
+        # State: [DC offset, A1, A2, A3, phase, frequency]
+        # Initialize with reasonable defaults for PPG signals
+        self.x = np.array(
+            [
+                [0.0],  # DC offset (will be adjusted from data)
+                [1.0],  # A1 - fundamental amplitude
+                [0.2],  # A2 - second harmonic amplitude (typically ~20% of fundamental)
+                [0.1],  # A3 - third harmonic amplitude (typically ~10% of fundamental)
+                [0.0],  # phase
+                [2 * np.pi * hr_estimate / 60],  # frequency in rad/s
+            ]
+        )
+        self.dt = dt
+
+        # Measurement matrix - we measure the overall signal
+        self.H = np.array([[1, 0, 0, 0, 0, 0]])
+
+        # Process noise - allow more flexibility in amplitudes and phase
+        Q_diag = np.array(
+            [
+                process_noise * 0.1,  # DC changes slowly
+                process_noise,  # A1 fundamental amplitude
+                process_noise * 0.5,  # A2 second harmonic
+                process_noise * 0.5,  # A3 third harmonic
+                process_noise * 2.0,  # phase (changes fastest)
+                process_noise * 0.1,  # frequency (changes slowly)
+            ]
+        )
+        self.Q = np.diag(Q_diag)
+
+        self.R = np.array([[measurement_noise]])
+        self.P = np.eye(6) * 0.1
+
+        # For heart rate extraction
+        self.hr_history = []
+
+    def get_heart_rate(self):
+        """Extract current heart rate estimate from state"""
+        frequency = self.x[5, 0]  # radians/second
+        hr = frequency * 60 / (2 * np.pi)  # Convert to BPM
+        return hr
+
+    def state_transition(self, x):
+        """Nonlinear state transition for harmonic sinusoidal model"""
+        dc, a1, a2, a3, phase, freq = x.flatten()
+
+        # Update phase based on frequency
+        new_phase = (phase + freq * self.dt) % (2 * np.pi)
+
+        # Other states remain constant in the model
+        return np.array([[dc], [a1], [a2], [a3], [new_phase], [freq]])
+
+    def measurement_function(self, x):
+        """
+        Measurement model: DC + A1*sin(phase) + A2*sin(2*phase) + A3*sin(3*phase)
+        This models the fundamental frequency and first two harmonics.
+        """
+        dc, a1, a2, a3, phase, freq = x.flatten()
+        y = dc + a1 * np.sin(phase) + a2 * np.sin(2 * phase) + a3 * np.sin(3 * phase)
+        return np.array([[y]])
+
+    def predict(self):
+        """EKF prediction step"""
+        # Propagate state
+        self.x = self.state_transition(self.x)
+
+        # Jacobian of state transition
+        # dx_new/dx_old for each state variable
+        F = np.array(
+            [
+                [1, 0, 0, 0, 0, 0],  # dc
+                [0, 1, 0, 0, 0, 0],  # a1
+                [0, 0, 1, 0, 0, 0],  # a2
+                [0, 0, 0, 1, 0, 0],  # a3
+                [0, 0, 0, 0, 1, self.dt],  # phase depends on frequency
+                [0, 0, 0, 0, 0, 1],  # freq
+            ]
+        )
+
+        self.P = F @ self.P @ F.T + self.Q
+
+    def update(self, measurement):
+        """EKF update step"""
+        # Predicted measurement
+        z_pred = self.measurement_function(self.x)
+
+        # Innovation
+        y = measurement - z_pred
+
+        # Jacobian of measurement function h(x) = dc + a1*sin(φ) + a2*sin(2φ) + a3*sin(3φ)
+        dc, a1, a2, a3, phase, freq = self.x.flatten()
+
+        # ∂h/∂dc = 1
+        # ∂h/∂a1 = sin(φ)
+        # ∂h/∂a2 = sin(2φ)
+        # ∂h/∂a3 = sin(3φ)
+        # ∂h/∂φ = a1*cos(φ) + 2*a2*cos(2φ) + 3*a3*cos(3φ)
+        # ∂h/∂freq = 0
+        H = np.array(
+            [
+                [
+                    1,  # ∂h/∂dc
+                    np.sin(phase),  # ∂h/∂a1
+                    np.sin(2 * phase),  # ∂h/∂a2
+                    np.sin(3 * phase),  # ∂h/∂a3
+                    a1 * np.cos(phase)
+                    + 2 * a2 * np.cos(2 * phase)
+                    + 3 * a3 * np.cos(3 * phase),  # ∂h/∂φ
+                    0,  # ∂h/∂freq
+                ]
+            ]
+        )
+
+        # Innovation covariance
+        S = H @ self.P @ H.T + self.R
+
+        # Kalman gain
+        K = self.P @ H.T / S
+
+        # Update state
+        self.x = self.x + K * y
+
+        # Ensure phase stays in [0, 2π]
+        self.x[4, 0] = self.x[4, 0] % (2 * np.pi)
+
+        # Update covariance
+        I = np.eye(6)
+        self.P = (I - K @ H) @ self.P
+
+    def filter_signal(self, signal_data, missing_indices=None):
+        """
+        Filter entire signal and track heart rate.
+
+        Parameters:
+        -----------
+        signal_data : array-like
+            Input signal (use np.nan for missing values)
+        missing_indices : array-like, optional
+            Indices of missing data points
+
+        Returns:
+        --------
+        filtered : ndarray
+            Filtered and interpolated signal
+        heart_rates : ndarray
+            Heart rate estimate at each time point
+        harmonic_amplitudes : ndarray
+            Array of shape (n_samples, 3) containing [A1, A2, A3] at each time
+        """
+        filtered = np.zeros(len(signal_data))
+        heart_rates = np.zeros(len(signal_data))
+        harmonic_amplitudes = np.zeros((len(signal_data), 3))
+
+        for i, measurement in enumerate(signal_data):
+            self.predict()
+
+            if missing_indices is not None and i in missing_indices:
+                filtered[i] = self.measurement_function(self.x)[0, 0]
+            elif np.isnan(measurement):
+                filtered[i] = self.measurement_function(self.x)[0, 0]
+            else:
+                self.update(np.array([[measurement]]))
+                filtered[i] = self.measurement_function(self.x)[0, 0]
+
+            # Track heart rate
+            hr = self.get_heart_rate()
+            heart_rates[i] = hr
+            self.hr_history.append(hr)
+
+            # Track harmonic amplitudes
+            harmonic_amplitudes[i] = [self.x[1, 0], self.x[2, 0], self.x[3, 0]]
+
+        return filtered, heart_rates, harmonic_amplitudes
+
+
 class SignalQualityAssessor:
     """
     Assesses PPG signal quality based on multiple metrics.
@@ -394,10 +716,53 @@ class HeartRateExtractor:
         if len(valid_ibi) == 0:
             return None, peaks
 
-        # Convert to heart rate
-        hr = 60 / np.mean(valid_ibi)
+        # make an RRI waveform
+        rri = np.zeros(len(ppg_signal))
+        for peakidx in range(len(peaks)-1):
+            if (median_ibi * 0.7) <= ibi[peakidx] <= (median_ibi * 1.3):
+                rri[peaks[peakidx]:peaks[peakidx+1]] = ibi[peakidx]
+            else:
+                rri[peaks[peakidx] : peaks[peakidx + 1]] = 0.0
+        rri[0:peaks[0]] = rri[peaks[0]]
+        rri[peaks[-1]:] = rri[peaks[-1]]
 
-        return hr, peaks
+        # deal with the zeros
+        badranges = []
+        inarun = False
+        first = -1
+        for i in range(len(rri)):
+            if rri[i] == 0.0:
+                if not inarun:
+                    first = i
+                    inarun = True
+            else:
+                if inarun:
+                    badranges.append((first, i - 1))
+                    inarun = False
+        if inarun:
+            if first > 0:
+                badranges.append((first, len(rri) - 1))
+            else:
+                rri = None
+        print(f"badranges = {badranges}")
+
+        if badranges is not None:
+            for (first, last) in badranges:
+                if first == 0:
+                    rri[first : last + 1] = rri[last + 1]
+                elif last == (len(rri) - 1):
+                    rri[first : last+1] = rri[first - 1]
+                else:
+                    rri[first : last + 1] = (rri[first-1] + rri[last + 1]) / 2.0
+
+        # Convert to heart rate
+        hr = 60.0 / np.mean(valid_ibi)
+        if rri is not None:
+            hr_waveform = 60.0 / rri
+        else:
+            hr_waveform = None
+
+        return hr, peaks, rri, hr_waveform
 
     def extract_from_fft(self, ppg_signal, hr_range=(40, 180)):
         """
@@ -514,14 +879,21 @@ class RobustPPGProcessor:
 
         # Initialize components
         if method == "standard":
-            self.filter = PPGKalmanFilter(dt=self.dt, process_noise=self.process_noise, measurement_noise=0.05)
+            self.filter = PPGKalmanFilter(
+                dt=self.dt, process_noise=self.process_noise, measurement_noise=0.05
+            )
         elif method == "adaptive":
             self.filter = AdaptivePPGKalmanFilter(
-                dt=self.dt, initial_process_noise=self.process_noise, initial_measurement_noise=0.05
+                dt=self.dt,
+                initial_process_noise=self.process_noise,
+                initial_measurement_noise=0.05,
             )
         else:  # ekf
             self.filter = ExtendedPPGKalmanFilter(
-                dt=self.dt, hr_estimate=self.hr_estimate, process_noise=self.process_noise, measurement_noise=0.05
+                dt=self.dt,
+                hr_estimate=self.hr_estimate,
+                process_noise=self.process_noise,
+                measurement_noise=0.05,
             )
 
         self.quality_assessor = SignalQualityAssessor(fs=fs, window_size=5.0)
@@ -579,9 +951,11 @@ class RobustPPGProcessor:
             results["hr_values"] = hr_values
 
             # Overall heart rate from peaks
-            hr_from_peaks, peak_indices = self.hr_extractor.extract_from_peaks(filtered)
+            hr_from_peaks, peak_indices, rri, hr_waveform_from_peaks = self.hr_extractor.extract_from_peaks(filtered)
             results["hr_overall"] = hr_from_peaks
             results["peak_indices"] = peak_indices
+            results["rri"] = rri
+            results["hr_waveform"] = hr_waveform_from_peaks
         else:
             results["hr_times"] = np.array([])
             results["hr_values"] = np.array([])
@@ -752,113 +1126,6 @@ class PPGFeatureExtractor:
         return np.clip(spo2_proxy, 70, 100)
 
 
-class ExtendedPPGKalmanFilter:
-    """
-    Extended Kalman Filter for PPG with sinusoidal model.
-    Models the PPG waveform as a sinusoid with varying amplitude and baseline.
-    Better for capturing the periodic nature of PPG signals.
-    """
-
-    def __init__(self, dt=0.01, hr_estimate=75, process_noise=0.0001, measurement_noise=0.05):
-        """
-        Parameters:
-        -----------
-        hr_estimate : float
-            Initial heart rate estimate in BPM
-        """
-        # State: [DC offset, amplitude, phase, frequency]
-        self.x = np.array([[0.0], [1.0], [0.0], [2 * np.pi * hr_estimate / 60]])
-        self.dt = dt
-
-        self.H = np.array([[1, 0, 0, 0]])  # We measure the overall signal
-
-        self.Q = np.eye(4) * process_noise
-        self.R = np.array([[measurement_noise]])
-        self.P = np.eye(4) * 0.1
-
-        # For heart rate extraction
-        self.hr_history = []
-
-    def get_heart_rate(self):
-        """Extract current heart rate estimate from state"""
-        frequency = self.x[3, 0]  # radians/second
-        hr = frequency * 60 / (2 * np.pi)  # Convert to BPM
-        return hr
-
-    def state_transition(self, x):
-        """Nonlinear state transition for sinusoidal model"""
-        dc, amp, phase, freq = x.flatten()
-
-        # Update phase based on frequency
-        new_phase = (phase + freq * self.dt) % (2 * np.pi)
-
-        return np.array([[dc], [amp], [new_phase], [freq]])
-
-    def measurement_function(self, x):
-        """Measurement model: DC + amplitude * sin(phase)"""
-        dc, amp, phase, freq = x.flatten()
-        return np.array([[dc + amp * np.sin(phase)]])
-
-    def predict(self):
-        """EKF prediction step"""
-        # Propagate state
-        self.x = self.state_transition(self.x)
-
-        # Jacobian of state transition
-        F = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, self.dt], [0, 0, 0, 1]])
-
-        self.P = F @ self.P @ F.T + self.Q
-
-    def update(self, measurement):
-        """EKF update step"""
-        # Predicted measurement
-        z_pred = self.measurement_function(self.x)
-
-        # Innovation
-        y = measurement - z_pred
-
-        # Jacobian of measurement function
-        dc, amp, phase, freq = self.x.flatten()
-        H = np.array([[1, np.sin(phase), amp * np.cos(phase), 0]])
-
-        # Innovation covariance
-        S = H @ self.P @ H.T + self.R
-
-        # Kalman gain
-        K = self.P @ H.T / S
-
-        # Update state
-        self.x = self.x + K * y
-
-        # Ensure phase stays in [0, 2π]
-        self.x[2, 0] = self.x[2, 0] % (2 * np.pi)
-
-        # Update covariance
-        I = np.eye(4)
-        self.P = (I - K @ H) @ self.P
-
-    def filter_signal(self, signal_data, missing_indices=None):
-        filtered = np.zeros(len(signal_data))
-        heart_rates = np.zeros(len(signal_data))
-
-        for i, measurement in enumerate(signal_data):
-            self.predict()
-
-            if missing_indices is not None and i in missing_indices:
-                filtered[i] = self.measurement_function(self.x)[0, 0]
-            elif np.isnan(measurement):
-                filtered[i] = self.measurement_function(self.x)[0, 0]
-            else:
-                self.update(np.array([[measurement]]))
-                filtered[i] = self.measurement_function(self.x)[0, 0]
-
-            # Track heart rate
-            hr = self.get_heart_rate()
-            heart_rates[i] = hr
-            self.hr_history.append(hr)
-
-        return filtered, heart_rates
-
 def read_happy_ppg(filenameroot, debug=False):
     Fs, instarttime, incolumns, indata, incompressed, incolsource = tide_io.readbidstsv(
         f"{filenameroot}.json",
@@ -877,8 +1144,8 @@ def read_happy_ppg(filenameroot, debug=False):
         try:
             rawindex = incolumns.index("cardiacfromfmri_25.0Hz")
         except ValueError:
-            raise(ValueError("cardiacfromfmri column not found"))
-    raw_ppg = indata[rawindex,:]
+            raise (ValueError("cardiacfromfmri column not found"))
+    raw_ppg = indata[rawindex, :]
 
     # set badpts file
     try:
@@ -899,7 +1166,7 @@ def read_happy_ppg(filenameroot, debug=False):
             try:
                 cleanindex = incolumns.index("cardiacfromfmri_dlfiltered_25.0Hz")
             except ValueError:
-                raise(ValueError("no clean ppg column found"))
+                raise (ValueError("no clean ppg column found"))
     clean_ppg = indata[cleanindex, :]
 
     return t, Fs, clean_ppg, raw_ppg, missing_indices
@@ -971,7 +1238,7 @@ def generate_synthetic_ppg(
 # Example usage
 if __name__ == "__main__":
     Fs = 25.0
-    process_noise = 0.25
+    process_noise = 0.001
     hr_estimate = 65.0
     qual_thresh = 0.3
 
@@ -982,7 +1249,7 @@ if __name__ == "__main__":
     )"""
 
     # read in some real data
-    filenameroot = "../data/examples/dst/happy_desc-slicerescardfromfmri_timeseries"
+    filenameroot = "/Users/frederic/code/rapidtide/rapidtide/data/examples/dst/happy_desc-slicerescardfromfmri_timeseries"
     t, Fs, clean_ppg, corrupted_ppg, missing_indices = read_happy_ppg(filenameroot, debug=True)
     print(f"{t.shape=}")
     print(f"{t=}")
@@ -997,8 +1264,9 @@ if __name__ == "__main__":
     rollofffilter.setfreqs(0.0, 0.0, 1.0, 4.0)
     corrupted_ppg = rollofffilter.apply(Fs, corrupted_ppg)
     corrupted_ppg /= np.std(corrupted_ppg)
-    #corrupted_ppg = clean_ppg + 0.0
+    # corrupted_ppg = clean_ppg + 0.0
 
+    """
     # Apply standard PPG Kalman filter
     kf = PPGKalmanFilter(dt=(1.0 / Fs), process_noise=process_noise, measurement_noise=0.10)
     filtered_standard = kf.filter_signal(corrupted_ppg, missing_indices)
@@ -1008,12 +1276,21 @@ if __name__ == "__main__":
         dt=(1.0 / Fs), initial_process_noise=process_noise, initial_measurement_noise=0.05
     )
     filtered_adaptive, motion_flags = akf.filter_signal(corrupted_ppg, missing_indices)
+    """
 
     # Apply Extended Kalman filter with sinusoidal model
     ekf = ExtendedPPGKalmanFilter(
         dt=(1.0 / Fs), hr_estimate=hr_estimate, process_noise=process_noise, measurement_noise=0.05
     )
-    filtered_ekf, ekf_heart_rates = ekf.filter_signal(corrupted_ppg, missing_indices)
+    filtered_ekf, ekf_heart_rates = ekf.filter_signal(clean_ppg, missing_indices)
+
+    """
+    # Apply Harmonic Kalman filter with fundamental + 2 harmonics
+    hkf = HarmonicPPGKalmanFilter(
+        dt=(1.0 / Fs), hr_estimate=hr_estimate, process_noise=process_noise, measurement_noise=0.05
+    )
+    filtered_hkf, hkf_heart_rates, hkf_harmonic_amps = hkf.filter_signal(clean_ppg, missing_indices)
+    """
 
     # Extract heart rate using frequency methods
     hr_extractor = HeartRateExtractor(fs=Fs)
@@ -1023,19 +1300,28 @@ if __name__ == "__main__":
 
     # Assess signal quality
     quality_assessor = SignalQualityAssessor(fs=Fs, window_size=5.0)
+    #qual_times, qual_scores = quality_assessor.assess_continuous(
+    #    corrupted_ppg, filtered_ekf, stride=1.0
+    #)
     qual_times, qual_scores = quality_assessor.assess_continuous(
-        corrupted_ppg, filtered_ekf, stride=1.0
+        clean_ppg, filtered_ekf, stride=1.0
     )
 
-    # Also get single HR estimate from peaks
-    hr_from_peaks, peak_indices = hr_extractor.extract_from_peaks(filtered_ekf)
+    # Also get single HR estimate from peaks and beat to beat
+    hr_from_peaks, peak_indices, rri, hr_waveform_from_peaks = hr_extractor.extract_from_peaks(filtered_ekf)
+    print(f"HR from peaks: {hr_from_peaks}")
+    print(f"Peak indices: {peak_indices}")
+    print(f"RRIs: {rri}")
+    print(f"hr_waveform_from_peaks: {hr_waveform_from_peaks}")
 
     # Plot results
     fig = plt.figure(figsize=(15, 10))
-    gs = fig.add_gridspec(6, 1, hspace=0.3)
+    gs = fig.add_gridspec(4, 1, hspace=0.3)
 
+    thissubfig = 0
     # Plot 1: Original and corrupted
-    ax1 = fig.add_subplot(gs[0, 0])
+    ax1 = fig.add_subplot(gs[thissubfig, 0])
+    thissubfig += 1
     ax1.plot(t, clean_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1.5)
     ax1.plot(t, corrupted_ppg, "r.", label="Corrupted (noisy + missing)", markersize=3, alpha=0.5)
     ax1.set_ylabel("Amplitude")
@@ -1043,8 +1329,10 @@ if __name__ == "__main__":
     ax1.legend(loc="upper right")
     ax1.grid(True, alpha=0.3)
 
+    """
     # Plot 2: Standard Kalman filter
-    ax2 = fig.add_subplot(gs[1, 0])
+    ax2 = fig.add_subplot(gs[thissubfig, 0])
+    thissubfig += 1
     ax2.plot(t, clean_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1)
     ax2.plot(t, filtered_standard, "b-", label="Standard Kalman Filter", linewidth=1.5)
     ax2.plot(
@@ -1061,7 +1349,8 @@ if __name__ == "__main__":
     ax2.grid(True, alpha=0.3)
 
     # Plot 3: Adaptive Kalman filter with motion detection
-    ax3 = fig.add_subplot(gs[2, 0])
+    ax3 = fig.add_subplot(gs[thissubfig, 0])
+    thissubfig += 1
     ax3.plot(t, clean_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1)
     ax3.plot(t, filtered_adaptive, "c-", label="Adaptive Kalman Filter", linewidth=1.5)
     ax3.plot(
@@ -1094,9 +1383,11 @@ if __name__ == "__main__":
     ax3.set_title("Adaptive Kalman Filter (with Motion Detection)")
     ax3.legend(loc="upper right", fontsize=8)
     ax3.grid(True, alpha=0.3)
+    """
 
     # Plot 4: Extended Kalman filter (sinusoidal model)
-    ax4 = fig.add_subplot(gs[3, 0])
+    ax4 = fig.add_subplot(gs[thissubfig, 0])
+    thissubfig += 1
     ax4.plot(t, clean_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1)
     ax4.plot(t, corrupted_ppg, "r.", label="Corrupted (noisy + missing)", markersize=3, alpha=0.5)
     ax4.plot(t, filtered_ekf, "m-", label="Extended Kalman Filter", linewidth=1.5)
@@ -1122,60 +1413,110 @@ if __name__ == "__main__":
     ax4.legend(loc="upper right")
     ax4.grid(True, alpha=0.3)
 
-    # Plot 5: Heart rate extraction
-    ax5 = fig.add_subplot(gs[4, 0])
-    ax5.plot(hr_times, hr_values, "b-", label="FFT-based HR", linewidth=2, marker="o")
-    ax5.plot(t, ekf_heart_rates, "r-", label="EKF-based HR", linewidth=1.5, alpha=0.7)
+    """
+    # Plot 5: Harmonic Kalman filter (sinusoidal model)
+    ax5 = fig.add_subplot(gs[thissubfig, 0])
+    thissubfig += 1
+    ax5.plot(t, clean_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1)
+    ax5.plot(t, corrupted_ppg, "r.", label="Corrupted (noisy + missing)", markersize=3, alpha=0.5)
+    ax5.plot(t, filtered_hkf, "m-", label="Harmonic Kalman Filter", linewidth=1.5)
+    ax5.plot(
+        t[missing_indices],
+        filtered_hkf[missing_indices],
+        "ro",
+        label="Interpolated points",
+        markersize=5,
+        alpha=0.7,
+    )
+    # Mark detected peaks
+    ax5.plot(
+        t[peak_indices],
+        filtered_hkf[peak_indices],
+        "kx",
+        label="Detected peaks",
+        markersize=8,
+        markeredgewidth=2,
+    )
+    ax5.set_ylabel("Amplitude")
+    ax5.set_title("Extended Kalman Filter (Harmonic Model)")
+    ax5.legend(loc="upper right")
+    ax5.grid(True, alpha=0.3)
+    """
+
+    # Plot 6: Heart rate extraction
+    ax6 = fig.add_subplot(gs[thissubfig, 0])
+    thissubfig += 1
+    ax6.plot(hr_times, hr_values, "b-", label="FFT-based HR", linewidth=2, marker="o")
+    ax6.plot(t, ekf_heart_rates, "r-", label="EKF-based HR", linewidth=1.5, alpha=0.7)
+
+    if hr_waveform_from_peaks is not None:
+        ax6.plot(t, hr_waveform_from_peaks, "g-", label="Peak-based HR", linewidth=1.5, alpha=0.7)
+
     if hr_from_peaks is not None:
-        ax5.axhline(
+        ax6.axhline(
             y=hr_from_peaks,
             color="g",
             linestyle="--",
             label=f"Peak-based HR: {hr_from_peaks:.1f} BPM",
             linewidth=2,
         )
-    ax5.set_ylabel("Heart Rate (BPM)")
-    ax5.set_title("Heart Rate Extraction")
-    ax5.legend(loc="upper right")
-    ax5.grid(True, alpha=0.3)
-    ax5.set_ylim([40, 110])
-
-    # Plot 6: Signal quality assessment
-    ax6 = fig.add_subplot(gs[5, 0])
-    quality_colors = plt.cm.RdYlGn(qual_scores)  # Red=poor, Green=good
-    for i in range(len(qual_times) - 1):
-        ax6.axvspan(qual_times[i], qual_times[i + 1], alpha=0.3, color=quality_colors[i])
-    ax6.plot(qual_times, qual_scores, "k-", linewidth=2, label="Quality Score")
-    ax6.axhline(y=qual_thresh, color="orange", linestyle="--", label="Good quality threshold")
-    ax6.set_xlabel("Time (s)")
-    ax6.set_ylabel("Quality Score")
-    ax6.set_title("Signal Quality Assessment (0=Poor, 1=Excellent)")
+    ax6.set_ylabel("Heart Rate (BPM)")
+    ax6.set_title("Heart Rate Extraction")
     ax6.legend(loc="upper right")
     ax6.grid(True, alpha=0.3)
-    ax6.set_ylim([0, 1])
+    ax6.set_ylim([40, 110])
+
+    # Plot 7: Signal quality assessment
+    ax7 = fig.add_subplot(gs[thissubfig, 0])
+    thissubfig += 1
+    quality_colors = plt.cm.RdYlGn(qual_scores)  # Red=poor, Green=good
+    for i in range(len(qual_times) - 1):
+        ax7.axvspan(qual_times[i], qual_times[i + 1], alpha=0.3, color=quality_colors[i])
+    ax7.plot(qual_times, qual_scores, "k-", linewidth=2, label="Quality Score")
+    ax7.axhline(y=qual_thresh, color="orange", linestyle="--", label="Good quality threshold")
+    ax7.set_xlabel("Time (s)")
+    ax7.set_ylabel("Quality Score")
+    ax7.set_title("Signal Quality Assessment (0=Poor, 1=Excellent)")
+    ax7.legend(loc="upper right")
+    ax7.grid(True, alpha=0.3)
+    ax7.set_ylim([0, 1])
 
     plt.tight_layout()
     plt.show()
 
     # Print comprehensive performance metrics
+    """
     mse_standard = np.mean((clean_ppg - filtered_standard) ** 2)
     mse_adaptive = np.mean((clean_ppg - filtered_adaptive) ** 2)
+    """
     mse_ekf = np.mean((clean_ppg - filtered_ekf) ** 2)
+    """
+    mse_hkf = np.mean((clean_ppg - filtered_hkf) ** 2)
+    """
 
     print(f"\n{'='*60}")
     print(f"PERFORMANCE METRICS")
     print(f"{'='*60}")
     print(f"\nFiltering Performance:")
-    #print(f"  Standard Kalman MSE: {mse_standard:.6f}")
-    #print(f"  Adaptive Kalman MSE: {mse_adaptive:.6f}")
+    # print(f"  Standard Kalman MSE: {mse_standard:.6f}")
+    # print(f"  Adaptive Kalman MSE: {mse_adaptive:.6f}")
     print(f"  Extended Kalman MSE: {mse_ekf:.6f}")
+    """    
+    print(f"  Harmonic Kalman MSE: {mse_hkf:.6f}")
+    print(f"\nHarmonic Kalman Filter Details:")
+    print(f"  Mean A1 (fundamental): {np.mean(hkf_harmonic_amps[:, 0]):.3f}")
+    print(f"  Mean A2 (2nd harmonic): {np.mean(hkf_harmonic_amps[:, 1]):.3f}")
+    print(f"  Mean A3 (3rd harmonic): {np.mean(hkf_harmonic_amps[:, 2]):.3f}")
+    print(f"  A2/A1 ratio: {np.mean(hkf_harmonic_amps[:, 1])/np.mean(hkf_harmonic_amps[:, 0]):.3f}")
+    print(f"  A3/A1 ratio: {np.mean(hkf_harmonic_amps[:, 2])/np.mean(hkf_harmonic_amps[:, 0]):.3f}")
+    """
     print(f"\nData Recovery:")
     print(
         f"  Missing data points: {len(missing_indices)} ({len(missing_indices)/len(t)*100:.1f}%)"
     )
-    print(
-        f"  Motion artifacts detected: {np.sum(motion_flags)} points ({np.sum(motion_flags)/len(t)*100:.1f}%)"
-    )
+    # print(
+    #    f"  Motion artifacts detected: {np.sum(motion_flags)} points ({np.sum(motion_flags)/len(t)*100:.1f}%)"
+    # )
     print(f"\nHeart Rate Analysis:")
     print(
         f"  Peak-based HR: {hr_from_peaks:.1f} BPM"
@@ -1203,10 +1544,12 @@ if __name__ == "__main__":
     print(f"{'='*60}")
 
     processor = RobustPPGProcessor(fs=Fs, method="ekf", hr_estimate=75.0, process_noise=0.1)
-    pipeline_results = processor.process(filtered_ekf, missing_indices, quality_threshold=qual_thresh)
+    pipeline_results = processor.process(
+        filtered_ekf, missing_indices, quality_threshold=qual_thresh
+    )
 
-    #processor = RobustPPGProcessor(fs=Fs, method="raw", hr_estimate=75.0, process_noise=0.1)
-    #pipeline_results = processor.process(clean_ppg, missing_indices, quality_threshold=qual_thresh)
+    # processor = RobustPPGProcessor(fs=Fs, method="raw", hr_estimate=75.0, process_noise=0.1)
+    # pipeline_results = processor.process(clean_ppg, missing_indices, quality_threshold=qual_thresh)
 
     print(f"\nPipeline Results:")
     print(f"  Mean quality score: {pipeline_results['mean_quality']:.3f}")
