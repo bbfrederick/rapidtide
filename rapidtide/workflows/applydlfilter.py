@@ -20,16 +20,9 @@ import argparse
 import os
 import sys
 
-import numpy as np
-
-import rapidtide.correlate as tide_corr
 import rapidtide.dlfilter as tide_dlfilt
-import rapidtide.filter as tide_filt
-import rapidtide.fit as tide_fit
 import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
-import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
 
