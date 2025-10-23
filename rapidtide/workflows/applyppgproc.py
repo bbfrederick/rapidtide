@@ -17,14 +17,18 @@
 #
 #
 import argparse
-import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.filter as tide_filt
 import rapidtide.ppgproc as tide_ppg
+import rapidtide.workflows.parser_funcs as pf
+
+DEFAULT_PROCESSNOISE = 0.001
+DEFAULT_HRESTIMATE = 70.0
+DEFAULT_MEASUREMENTNOISE = 0.05
+DEFAULT_QUALTHRESH = 0.5
 
 
 def _get_parser():
@@ -40,7 +44,6 @@ def _get_parser():
     # Required arguments
     parser.add_argument(
         "infileroot",
-        type=lambda x: pf.is_valid_file(parser, x),
         help="The root name of the cardiacfromfmri file (without the json or tsv.gz extension).",
     )
     parser.add_argument(
@@ -48,22 +51,85 @@ def _get_parser():
         help="The root name of the output files.",
     )
 
+    # optional arguments
+    parser.add_argument(
+        "--process_noise",
+        dest="process_noise",
+        metavar="NOISE",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        help=f"Process noise for the PPG filter (default is {DEFAULT_PROCESSNOISE}). ",
+        default=DEFAULT_PROCESSNOISE,
+    )
+    parser.add_argument(
+        "--hr_estimate",
+        dest="hr_estimate",
+        metavar="BPM",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        help=f"Starting guess for heart rate in BPM (default is {DEFAULT_HRESTIMATE}). ",
+        default=DEFAULT_HRESTIMATE,
+    )
+    parser.add_argument(
+        "--qual_thresh",
+        dest="qual_thresh",
+        metavar="THRESH",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        help=f"Quality threshold for PPG, between 0 and 1 (default is {DEFAULT_QUALTHRESH}). ",
+        default=DEFAULT_QUALTHRESH,
+    )
+    parser.add_argument(
+        "--measurement_noise",
+        dest="measurement_noise",
+        metavar="NOISE",
+        action="store",
+        type=lambda x: pf.is_float(parser, x),
+        help=f"Assumed measurement noise (default is {DEFAULT_MEASUREMENTNOISE}). ",
+        default=DEFAULT_MEASUREMENTNOISE,
+    )
+    parser.add_argument(
+        "--display",
+        dest="display",
+        action="store_true",
+        help=("Graph the processed waveforms."),
+        default=False,
+    )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help=("Pring debugging information."),
+        default=False,
+    )
+    return parser
 
-def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3, measurement_noise=0.05, display=False, debug=False):
+
+def procppg(args):
+    if args.display:
+        import matplotlib as mpl
+
+        mpl.use("TkAgg")
+        import matplotlib.pyplot as plt
 
     ppginfo = {}
 
     # read in a happy data file
-    t, Fs, dlfiltered_ppg, cardiacfromfmri_ppg, pleth_ppg, missing_indices = tide_ppg.read_happy_ppg(filenameroot, debug=True)
+    t, Fs, dlfiltered_ppg, cardiacfromfmri_ppg, pleth_ppg, missing_indices = (
+        tide_ppg.read_happy_ppg(args.infileroot, debug=True)
+    )
     dlfiltered_ppg /= np.std(dlfiltered_ppg)
     rollofffilter = tide_filt.NoncausalFilter(filtertype="arb")
     rollofffilter.setfreqs(0.0, 0.0, 1.0, 4.0)
-    cardiacfromfmri_ppg = rollofffilter.apply(Fs, cardiacfromfmri_ppg)
+    # cardiacfromfmri_ppg = rollofffilter.apply(Fs, cardiacfromfmri_ppg)
     cardiacfromfmri_ppg /= np.std(cardiacfromfmri_ppg)
 
     # Apply Extended Kalman filter with sinusoidal model to the dlfiltered timecourse
     ekf = tide_ppg.ExtendedPPGKalmanFilter(
-        dt=(1.0 / Fs), hr_estimate=hr_estimate, process_noise=process_noise, measurement_noise=measurement_noise
+        dt=(1.0 / Fs),
+        hr_estimate=args.hr_estimate,
+        process_noise=args.process_noise,
+        measurement_noise=args.measurement_noise,
     )
     filtered_ekf, ekf_heart_rates = ekf.filter_signal(dlfiltered_ppg, missing_indices)
 
@@ -83,16 +149,18 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
     )
 
     # Also get single HR estimate from peaks and beat to beat
-    ppginfo["hr_from_peaks"], peak_indices, rri, hr_waveform_from_peaks = hr_extractor.extract_from_peaks(filtered_ekf)
+    ppginfo["hr_from_peaks"], peak_indices, rri, hr_waveform_from_peaks = (
+        hr_extractor.extract_from_peaks(filtered_ekf)
+    )
 
-    if debug:
+    if args.debug:
         print(f"HR from peaks: {ppginfo["hr_from_peaks"]}")
         print(f"Peak indices: {peak_indices}")
         print(f"RRIs: {rri}")
         print(f"hr_waveform_from_peaks: {hr_waveform_from_peaks}")
 
     # Plot results
-    if display:
+    if args.display:
         fig = plt.figure(figsize=(15, 10))
         gs = fig.add_gridspec(4, 1, hspace=0.3)
 
@@ -100,74 +168,32 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
         # Plot 1: Original and corrupted
         ax1 = fig.add_subplot(gs[thissubfig, 0])
         thissubfig += 1
-        ax1.plot(t, dlfiltered_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1.5)
-        ax1.plot(t, cardiacfromfmri_ppg, "r.", label="Corrupted (noisy + missing)", markersize=3, alpha=0.5)
+        ax1.plot(t, dlfiltered_ppg, "g-", label="DL filtered PPG", alpha=0.7, linewidth=1.5)
+        ax1.plot(
+            t,
+            cardiacfromfmri_ppg,
+            "r.",
+            label="Raw cardiac from fMRI with bad points",
+            markersize=3,
+            alpha=0.5,
+        )
         ax1.set_ylabel("Amplitude")
-        ax1.set_title("PPG Signal: Original vs Corrupted")
+        ax1.set_title("PPG Signal: Raw cardiac from fmri vs DL filtered")
         ax1.legend(loc="upper right")
         ax1.grid(True, alpha=0.3)
-
-        """
-        # Plot 2: Standard Kalman filter
-        ax2 = fig.add_subplot(gs[thissubfig, 0])
-        thissubfig += 1
-        ax2.plot(t, dlfiltered_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1)
-        ax2.plot(t, filtered_standard, "b-", label="Standard Kalman Filter", linewidth=1.5)
-        ax2.plot(
-            t[missing_indices],
-            filtered_standard[missing_indices],
-            "mo",
-            label="Interpolated points",
-            markersize=5,
-            alpha=0.7,
-        )
-        ax2.set_ylabel("Amplitude")
-        ax2.set_title("Standard Kalman Filter Recovery")
-        ax2.legend(loc="upper right")
-        ax2.grid(True, alpha=0.3)
-    
-        # Plot 3: Adaptive Kalman filter with motion detection
-        ax3 = fig.add_subplot(gs[thissubfig, 0])
-        thissubfig += 1
-        ax3.plot(t, dlfiltered_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1)
-        ax3.plot(t, filtered_adaptive, "c-", label="Adaptive Kalman Filter", linewidth=1.5)
-        ax3.plot(
-            t[missing_indices],
-            filtered_adaptive[missing_indices],
-            "mo",
-            label="Interpolated points",
-            markersize=5,
-            alpha=0.7,
-        )
-        if np.any(motion_flags):
-            ax3.plot(
-                t[motion_flags],
-                filtered_adaptive[motion_flags],
-                "r^",
-                label="Detected motion artifacts",
-                markersize=6,
-                alpha=0.5,
-            )
-        # Mark detected peaks
-        ax3.plot(
-            t[peak_indices],
-            filtered_adaptive[peak_indices],
-            "kx",
-            label="Detected peaks",
-            markersize=8,
-            markeredgewidth=2,
-        )
-        ax3.set_ylabel("Amplitude")
-        ax3.set_title("Adaptive Kalman Filter (with Motion Detection)")
-        ax3.legend(loc="upper right", fontsize=8)
-        ax3.grid(True, alpha=0.3)
-        """
 
         # Plot 4: Extended Kalman filter (sinusoidal model)
         ax4 = fig.add_subplot(gs[thissubfig, 0])
         thissubfig += 1
-        ax4.plot(t, dlfiltered_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1)
-        ax4.plot(t, cardiacfromfmri_ppg, "r.", label="Corrupted (noisy + missing)", markersize=3, alpha=0.5)
+        ax4.plot(t, dlfiltered_ppg, "g-", label="DL filtered PPG", alpha=0.7, linewidth=1)
+        ax4.plot(
+            t,
+            cardiacfromfmri_ppg,
+            "r.",
+            label="Raw cardiac from fMRI with bad points",
+            markersize=3,
+            alpha=0.5,
+        )
         ax4.plot(t, filtered_ekf, "m-", label="Extended Kalman Filter", linewidth=1.5)
         ax4.plot(
             t[missing_indices],
@@ -191,36 +217,6 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
         ax4.legend(loc="upper right")
         ax4.grid(True, alpha=0.3)
 
-        """
-        # Plot 5: Harmonic Kalman filter (sinusoidal model)
-        ax5 = fig.add_subplot(gs[thissubfig, 0])
-        thissubfig += 1
-        ax5.plot(t, dlfiltered_ppg, "g-", label="Clean PPG", alpha=0.7, linewidth=1)
-        ax5.plot(t, cardiacfromfmri_ppg, "r.", label="Corrupted (noisy + missing)", markersize=3, alpha=0.5)
-        ax5.plot(t, filtered_hkf, "m-", label="Harmonic Kalman Filter", linewidth=1.5)
-        ax5.plot(
-            t[missing_indices],
-            filtered_hkf[missing_indices],
-            "ro",
-            label="Interpolated points",
-            markersize=5,
-            alpha=0.7,
-        )
-        # Mark detected peaks
-        ax5.plot(
-            t[peak_indices],
-            filtered_hkf[peak_indices],
-            "kx",
-            label="Detected peaks",
-            markersize=8,
-            markeredgewidth=2,
-        )
-        ax5.set_ylabel("Amplitude")
-        ax5.set_title("Extended Kalman Filter (Harmonic Model)")
-        ax5.legend(loc="upper right")
-        ax5.grid(True, alpha=0.3)
-        """
-
         # Plot 6: Heart rate extraction
         ax6 = fig.add_subplot(gs[thissubfig, 0])
         thissubfig += 1
@@ -228,7 +224,9 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
         ax6.plot(t, ekf_heart_rates, "r-", label="EKF-based HR", linewidth=1.5, alpha=0.7)
 
         if hr_waveform_from_peaks is not None:
-            ax6.plot(t, hr_waveform_from_peaks, "g-", label="Peak-based HR", linewidth=1.5, alpha=0.7)
+            ax6.plot(
+                t, hr_waveform_from_peaks, "g-", label="Peak-based HR", linewidth=1.5, alpha=0.7
+            )
 
         if ppginfo["hr_from_peaks"] is not None:
             ax6.axhline(
@@ -249,9 +247,18 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
         thissubfig += 1
         quality_colors = plt.cm.RdYlGn(dlfiltered_qual_scores)  # Red=poor, Green=good
         for i in range(len(dlfiltered_qual_times) - 1):
-            ax7.axvspan(dlfiltered_qual_times[i], dlfiltered_qual_times[i + 1], alpha=0.3, color=quality_colors[i])
-        ax7.plot(dlfiltered_qual_times, dlfiltered_qual_scores, "k-", linewidth=2, label="Quality Score")
-        ax7.axhline(y=qual_thresh, color="orange", linestyle="--", label="Good quality threshold")
+            ax7.axvspan(
+                dlfiltered_qual_times[i],
+                dlfiltered_qual_times[i + 1],
+                alpha=0.3,
+                color=quality_colors[i],
+            )
+        ax7.plot(
+            dlfiltered_qual_times, dlfiltered_qual_scores, "k-", linewidth=2, label="Quality Score"
+        )
+        ax7.axhline(
+            y=args.qual_thresh, color="orange", linestyle="--", label="Good quality threshold"
+        )
         ax7.set_xlabel("Time (s)")
         ax7.set_ylabel("Quality Score")
         ax7.set_title("Signal Quality Assessment (0=Poor, 1=Excellent)")
@@ -263,13 +270,23 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
         plt.show()
 
     # Print comprehensive performance metrics
-    mse_ekf = np.mean((dlfiltered_ppg - filtered_ekf) ** 2)
+    ppginfo["mse_ekf"] = np.mean((dlfiltered_ppg - filtered_ekf) ** 2)
+    ppginfo["mean_fft_hr"] = np.mean(hr_values)
+    ppginfo["std_fft_hr"] = np.std(hr_values)
+    ppginfo["mean_ekf_hr"] = np.mean(ekf_heart_rates)
+    ppginfo["std_ekf_hr"] = np.std(ekf_heart_rates)
+    if hr_waveform_from_peaks is not None:
+        ppginfo["mean_peaks_hr"] = np.mean(hr_waveform_from_peaks)
+        ppginfo["std_peaks_hr"] = np.std(hr_waveform_from_peaks)
+    ppginfo["num_detected_peaks"] = len(peak_indices)
+    ppginfo["mean_dlfiltered_qual_scores"] = np.mean(dlfiltered_qual_scores)
+    ppginfo["mean_cardiacfromfmri_qual_scores"] = np.mean(cardiacfromfmri_qual_scores)
 
     print(f"\n{'='*60}")
     print(f"PERFORMANCE METRICS")
     print(f"{'='*60}")
     print(f"\nFiltering Performance:")
-    print(f"  Extended Kalman MSE: {mse_ekf:.6f}")
+    print(f"  Extended Kalman MSE: {ppginfo['mse_ekf']:.6f}")
     print(f"\nData Recovery:")
     print(
         f"  Missing data points: {len(missing_indices)} ({len(missing_indices)/len(t)*100:.1f}%)"
@@ -280,13 +297,16 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
         if ppginfo["hr_from_peaks"]
         else "  Peak-based HR: Unable to detect"
     )
-    print(f"  FFT-based HR (mean): {np.mean(hr_values):.1f} ± {np.std(hr_values):.1f} BPM")
-    print(
-        f"  EKF-based HR (mean): {np.mean(ekf_heart_rates):.1f} ± {np.std(ekf_heart_rates):.1f} BPM"
-    )
-    print(f"  Number of detected peaks: {len(peak_indices)}")
+    print(f"  FFT-based HR (mean): {ppginfo['mean_fft_hr']:.1f} ± {ppginfo['std_fft_hr']:.1f} BPM")
+    print(f"  EKF-based HR (mean): {ppginfo['mean_ekf_hr']:.1f} ± {ppginfo['std_ekf_hr']:.1f} BPM")
+
+    if hr_waveform_from_peaks is not None:
+        print(
+            f"  Peak-based HR (mean): {ppginfo['mean_peaks_hr']:.1f} ± {ppginfo['std_peaks_hr']:.1f} BPM"
+        )
+    print(f"  Number of detected peaks: {ppginfo['num_detected_peaks']}")
     print(f"\nSignal Quality:")
-    print(f"  Mean quality score: {np.mean(dlfiltered_qual_scores):.3f}")
+    print(f"  Mean quality score: {ppginfo['mean_dlfiltered_qual_scores']:.3f}")
     print(
         f"  Percentage of good quality signal (>0.7): {np.sum(dlfiltered_qual_scores > 0.7)/len(dlfiltered_qual_scores)*100:.1f}%"
     )
@@ -300,13 +320,14 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
     print(f"COMPLETE PROCESSING PIPELINE DEMO")
     print(f"{'='*60}")
 
-    processor = tide_ppg.RobustPPGProcessor(fs=Fs, method="ekf", hr_estimate=75.0, process_noise=0.1)
-    pipeline_results = processor.process(
-        filtered_ekf, missing_indices, quality_threshold=qual_thresh
+    processor = tide_ppg.RobustPPGProcessor(
+        fs=Fs, method="ekf", hr_estimate=args.hr_estimate, process_noise=args.process_noise
     )
-
-    # processor = RobustPPGProcessor(fs=Fs, method="raw", hr_estimate=75.0, process_noise=0.1)
-    # pipeline_results = processor.process(dlfiltered_ppg, missing_indices, quality_threshold=qual_thresh)
+    pipeline_results = processor.process(
+        filtered_ekf, missing_indices, quality_threshold=args.qual_thresh
+    )
+    if args.debug:
+        print(pipeline_results)
 
     print(f"\nPipeline Results:")
     print(f"  Mean quality score: {pipeline_results['mean_quality']:.3f}")
@@ -390,13 +411,18 @@ def procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3
            - Check quality scores after interpolation
             )"""
 
-# Example usage
-if __name__ == "__main__":
-    process_noise = 0.001
-    hr_estimate = 65.0
-    qual_thresh = 0.3
-
-    # read in some real data
-    filenameroot = "/Users/frederic/code/rapidtide/rapidtide/data/examples/dst/happy_desc-slicerescardfromfmri_timeseries"
-
-    procppg(filenameroot, process_noise=0.001, hr_estimate=65.0, qual_thresh=0.3, display=True, debug=True)
+    return (
+        ppginfo,
+        peak_indices,
+        rri,
+        hr_waveform_from_peaks,
+        peak_indices,
+        hr_times,
+        hr_values,
+        filtered_ekf,
+        ekf_heart_rates,
+        cardiacfromfmri_qual_times,
+        cardiacfromfmri_qual_scores,
+        dlfiltered_qual_times,
+        dlfiltered_qual_scores,
+    )

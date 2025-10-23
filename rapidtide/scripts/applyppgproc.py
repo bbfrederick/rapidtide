@@ -21,7 +21,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 
 def entrypoint():
-    pf.generic_init(theworkflow._get_parser, theworkflow.applyppgproc)
+    pf.generic_init(theworkflow._get_parser, theworkflow.procppg)
 
 
 if __name__ == "__main__":
