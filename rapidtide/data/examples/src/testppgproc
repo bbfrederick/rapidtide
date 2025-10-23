@@ -1,0 +1,17 @@
+#!/bin/bash
+
+applyppgproc \
+    ../dst/happy_desc-slicerescardfromfmri_timeseries \
+    ppgtest \
+    --process_noise 0.001 \
+    --hr_estimate 65.0 \
+    --qual_thresh 0.7 \
+    --display --debug
+
+applyppgproc \
+    ../dst/happy_desc-stdrescardfromfmri_timeseries \
+    ppgtest \
+    --process_noise 0.001 \
+    --hr_estimate 65.0 \
+    --qual_thresh 0.7 \
+    --display --debug
