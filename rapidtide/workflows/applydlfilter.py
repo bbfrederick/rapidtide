@@ -35,7 +35,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser():
     """
-    Argument parser for plethquality
+    Argument parser for applydlfilter
     """
     parser = argparse.ArgumentParser(
         prog="applydlfilter",
