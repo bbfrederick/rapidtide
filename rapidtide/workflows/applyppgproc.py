@@ -341,6 +341,7 @@ def procppg(args):
 
     if len(peak_indices) > 5:
         hrv_features = feature_extractor.extract_hrv_features(peak_indices)
+        ppginfo.update(hrv_features)
 
         if hrv_features is not None:
             print(f"\nHeart Rate Variability (HRV) Features:")
@@ -367,6 +368,7 @@ def procppg(args):
         peak_in_segment = mid_peak - segment_start
 
         morph_features = feature_extractor.extract_morphology_features(segment, peak_in_segment)
+        ppginfo.update(morph_features)
 
         print(f"\nPulse Morphology Features (single pulse):")
         print(f"  Pulse amplitude: {morph_features['pulse_amplitude']:.3f}")
@@ -378,38 +380,20 @@ def procppg(args):
 
     # SpO2 proxy
     spo2_proxy = feature_extractor.compute_spo2_proxy(filtered_ekf)
+    ppginfo["spo2_proxy"] = spo2_proxy
     print(f"\nSpO2 Proxy: {spo2_proxy:.1f}% (Note: This is not a real SpO2 measurement!)")
 
     print(f"\n{'='*60}")
     print(f"USAGE TIPS")
     print(f"{'='*60}")
-    """print(
-        ("For your own PPG data:"
-        
-        "1. Choose the appropriate filter:
-        "   - Standard: Clean signals, minimal motion
-           - Adaptive: Real-world signals with motion artifacts (RECOMMENDED)
-           - EKF: When you need continuous HR tracking
-        
-        2. Typical parameters for wearable PPG (wrist/finger):
-           processor = RobustPPGProcessor(fs=100, method='adaptive')
-           results = processor.process(your_signal, quality_threshold=0.5)
-        
-        3. Handle poor quality segments:
-           - Use quality_threshold to filter unreliable data
-           - Higher threshold (0.7+) for clinical applications
-           - Lower threshold (0.3+) for general monitoring
-        
-        4. Interpret HRV features:
-           - SDNN: Overall HRV (higher = better autonomic function)
-           - RMSSD: Short-term variability (parasympathetic activity)
-           - LF/HF ratio: Sympatho-vagal balance (2-3 is normal)
-        
-        5. For missing data:
-           - Mark missing samples as np.nan or provide missing_indices
-           - The Kalman filter will interpolate automatically
-           - Check quality scores after interpolation
-            )"""
+
+    if args.display:
+        plt.plot(cardiacfromfmri_qual_times, cardiacfromfmri_qual_scores, label="Cardiac from fMRI")
+        plt.plot(dlfiltered_qual_times, dlfiltered_qual_scores, label="DLfiltered")
+        plt.show()
+
+    if args.debug:
+        print(f"{ppginfo=}")
 
     return (
         ppginfo,
