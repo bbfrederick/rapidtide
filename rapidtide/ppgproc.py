@@ -1168,7 +1168,9 @@ def read_happy_ppg(filenameroot, debug=False):
                 raise (ValueError("no clean ppg column found"))
     clean_ppg = indata[cleanindex, :]
 
-    return t, Fs, clean_ppg, raw_ppg, missing_indices
+    pleth_ppg = None
+
+    return t, Fs, clean_ppg, raw_ppg, pleth_ppg, missing_indices
 
 
 def generate_synthetic_ppg(
