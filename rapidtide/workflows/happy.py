@@ -1897,9 +1897,16 @@ def happy_main(argparsingfunc):
         )
 
         # estimate pulsatility
-        card_min, card_max, card_mean, card_std, card_median, card_mad, card_skew, card_kurtosis = (
-            tide_stats.fmristats(normapp.reshape(numspatiallocs, -1))
-        )
+        (
+            card_min,
+            card_max,
+            card_mean,
+            card_std,
+            card_median,
+            card_mad,
+            card_skew,
+            card_kurtosis,
+        ) = tide_stats.fmristats(normapp.reshape(numspatiallocs, -1))
         maplist = [
             (
                 card_min,
@@ -2021,7 +2028,6 @@ def happy_main(argparsingfunc):
         vesselmap = pulsatilitymask
     veinmap = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) > 0, vesselmap, 0.0)
     arterymap = np.where(appflips_byslice.reshape((xsize, ysize, numslices)) < 0, vesselmap, 0.0)
-
 
     # specify the 3D maps
     maplist = [
