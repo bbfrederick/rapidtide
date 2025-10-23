@@ -717,13 +717,13 @@ class HeartRateExtractor:
 
         # make an RRI waveform
         rri = np.zeros(len(ppg_signal))
-        for peakidx in range(len(peaks)-1):
+        for peakidx in range(len(peaks) - 1):
             if (median_ibi * 0.7) <= ibi[peakidx] <= (median_ibi * 1.3):
-                rri[peaks[peakidx]:peaks[peakidx+1]] = ibi[peakidx]
+                rri[peaks[peakidx] : peaks[peakidx + 1]] = ibi[peakidx]
             else:
                 rri[peaks[peakidx] : peaks[peakidx + 1]] = 0.0
-        rri[0:peaks[0]] = rri[peaks[0]]
-        rri[peaks[-1]:] = rri[peaks[-1]]
+        rri[0 : peaks[0]] = rri[peaks[0]]
+        rri[peaks[-1] :] = rri[peaks[-1]]
 
         # deal with the zeros
         badranges = []
@@ -746,13 +746,13 @@ class HeartRateExtractor:
         print(f"badranges = {badranges}")
 
         if badranges is not None:
-            for (first, last) in badranges:
+            for first, last in badranges:
                 if first == 0:
                     rri[first : last + 1] = rri[last + 1]
                 elif last == (len(rri) - 1):
-                    rri[first : last+1] = rri[first - 1]
+                    rri[first : last + 1] = rri[first - 1]
                 else:
-                    rri[first : last + 1] = (rri[first-1] + rri[last + 1]) / 2.0
+                    rri[first : last + 1] = (rri[first - 1] + rri[last + 1]) / 2.0
 
         # Convert to heart rate
         hr = 60.0 / np.mean(valid_ibi)
@@ -950,7 +950,9 @@ class RobustPPGProcessor:
             results["hr_values"] = hr_values
 
             # Overall heart rate from peaks
-            hr_from_peaks, peak_indices, rri, hr_waveform_from_peaks = self.hr_extractor.extract_from_peaks(filtered)
+            hr_from_peaks, peak_indices, rri, hr_waveform_from_peaks = (
+                self.hr_extractor.extract_from_peaks(filtered)
+            )
             results["hr_overall"] = hr_from_peaks
             results["peak_indices"] = peak_indices
             results["rri"] = rri
