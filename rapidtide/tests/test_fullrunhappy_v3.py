@@ -45,6 +45,7 @@ def test_fullrunhappy_v3(debug=False, local=False, displayplots=False):
         os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
         "--mklthreads",
         "-1",
+        "--usetensorflow",
         "--model",
         "model_revised_tf2",
         "--cardcalconly",

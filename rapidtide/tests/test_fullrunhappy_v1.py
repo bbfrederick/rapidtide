@@ -42,8 +42,6 @@ def test_fullrunhappy_v1(debug=False, local=False, displayplots=False):
         "--mklthreads",
         "-1",
         "--spatialregression",
-        "--model",
-        "model_revised_tf2",
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 

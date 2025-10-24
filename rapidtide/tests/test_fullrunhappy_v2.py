@@ -45,8 +45,6 @@ def test_fullrunhappy_v2(debug=False, local=False, displayplots=False):
         os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
         "--mklthreads",
         "-1",
-        "--model",
-        "model_revised_tf2",
         "--fliparteries",
         "--temporalregression",
         "--cardiacfile",
