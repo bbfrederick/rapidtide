@@ -94,5 +94,4 @@ happy \
     --increaseoutputlevel \
     --model model_cnn_pytorch \
     --usenewvesselmethod \
-    --usepytorch \
     --nprocs -1
