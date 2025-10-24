@@ -27,8 +27,8 @@ import rapidtide.workflows.parser_funcs as pf
 DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
 DEFAULT_PULSATILITYSIGMA = 6.0
 DEFAULT_PULSATILITYTHRESHOLD = 0.5
-#DEFAULT_DL_MODEL = "model_revised_tf2"
-DEFAULT_DL_MODEL = "model_cnn_pytorch"
+DEFAULT_TF_DL_MODEL = "model_revised_tf2"
+DEFAULT_PT_DL_MODEL = "model_cnn_pytorch"
 
 
 def _get_parser():
@@ -104,10 +104,10 @@ def _get_parser():
         dest="modelname",
         metavar="MODELNAME",
         help=(
-            f"Use model MODELNAME for dl filter (default is {DEFAULT_DL_MODEL} - "
+            f"Use model MODELNAME for dl filter (default is {DEFAULT_PT_DL_MODEL} - "
             "from the revised NeuroImage paper.) "
         ),
-        default=DEFAULT_DL_MODEL,
+        default=None,
     )
 
     # Performance
@@ -828,6 +828,14 @@ def process_args(inputargs=None):
             suffix = ""
         formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
     tide_io.writevec(formattedcommandline, args.outputroot + "_formattedcommandline.txt")
+
+    # if user did not specify a model, set the default, depending on DL library
+    if args.modelname is None:
+        if args.usepytorch:
+            args.modelname = DEFAULT_PT_DL_MODEL
+        else:
+            args.modelname = DEFAULT_TF_DL_MODEL
+        print(f"No model specified.  {args.usepytorch=}, so using {args.modelname}")
 
     if args.debug:
         print()
