@@ -27,7 +27,8 @@ import rapidtide.workflows.parser_funcs as pf
 DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
 DEFAULT_PULSATILITYSIGMA = 6.0
 DEFAULT_PULSATILITYTHRESHOLD = 0.5
-DEFAULT_DL_MODEL = "model_revised_tf2"
+#DEFAULT_DL_MODEL = "model_revised_tf2"
+DEFAULT_DL_MODEL = "model_cnn_pytorch"
 
 
 def _get_parser():
@@ -782,11 +783,11 @@ def _get_parser():
         default=True,
     )
     debug_opts.add_argument(
-        "--usepytorch",
+        "--usetensorflow",
         dest="usepytorch",
-        action="store_true",
-        help=("Use experimental pytorch dlfilter implementation (do not use if you aren't me!)"),
-        default=False,
+        action="store_false",
+        help=("Switch to the old style tensorflow deep learning filter"),
+        default=True,
     )
     debug_opts.add_argument(
         "--focaldebug",
