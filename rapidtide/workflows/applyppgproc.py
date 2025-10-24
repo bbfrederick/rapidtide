@@ -99,7 +99,7 @@ def _get_parser():
         "--debug",
         dest="debug",
         action="store_true",
-        help=("Pring debugging information."),
+        help=("Print debugging information."),
         default=False,
     )
     return parser
@@ -388,7 +388,9 @@ def procppg(args):
     print(f"{'='*60}")
 
     if args.display:
-        plt.plot(cardiacfromfmri_qual_times, cardiacfromfmri_qual_scores, label="Cardiac from fMRI")
+        plt.plot(
+            cardiacfromfmri_qual_times, cardiacfromfmri_qual_scores, label="Cardiac from fMRI"
+        )
         plt.plot(dlfiltered_qual_times, dlfiltered_qual_scores, label="DLfiltered")
         plt.show()
 
