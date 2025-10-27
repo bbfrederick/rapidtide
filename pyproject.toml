@@ -40,7 +40,6 @@ dependencies = [
   'tensorflow >= 2.18.0',
   'tf-keras >= 2.18.0',
   'torch',
-  'torchvision',
   'tqdm',
   'versioneer',
 ]
