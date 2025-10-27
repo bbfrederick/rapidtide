@@ -68,7 +68,7 @@ def happy_main(argparsingfunc):
             print("pytorch dlfilter does not exist")
     else:
         try:
-            import rapidtide.dlfiltermin as tide_dlfilt
+            import rapidtide.dlfilter as tide_dlfilt
 
             dlfilterexists = True
             print("tensorflow dlfilter exists")
