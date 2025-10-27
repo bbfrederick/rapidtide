@@ -62,19 +62,19 @@ def happy_main(argparsingfunc):
             import rapidtide.dlfiltertorch as tide_dlfilt
 
             dlfilterexists = True
-            print("pytorch dlfilter exists")
+            print("pytorch dlfilter initialized")
         except ImportError:
             dlfilterexists = False
-            print("pytorch dlfilter does not exist")
+            print("pytorch dlfilter could not be initialized")
     else:
         try:
             import rapidtide.dlfilter as tide_dlfilt
 
             dlfilterexists = True
-            print("tensorflow dlfilter exists")
+            print("tensorflow dlfilter initialized")
         except ImportError:
             dlfilterexists = False
-            print("tensorflow dlfilter does not exist")
+            print("tensorflow dlfilter could not be initialized")
 
     fmrifilename = args.fmrifilename
     slicetimename = args.slicetimename
