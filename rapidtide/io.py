@@ -22,6 +22,7 @@ import operator as op
 import os
 import platform
 import sys
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import nibabel as nib
 import numpy as np
@@ -31,13 +32,17 @@ from rapidtide.tests.utils import mse
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
-def readfromnifti(inputfile, headeronly=False):
+def readfromnifti(
+    inputfile: str, headeronly: bool = False
+) -> Tuple[Any, Optional[np.ndarray], Any, np.ndarray, np.ndarray]:
     r"""Open a nifti file and read in the various important parts
 
     Parameters
     ----------
     inputfile : str
         The name of the nifti file.
+    headeronly : bool, optional
+        If True, only read the header without loading data. Default is False
 
     Returns
     -------
@@ -67,13 +72,17 @@ def readfromnifti(inputfile, headeronly=False):
     return nim, nim_data, nim_hdr, thedims, thesizes
 
 
-def readfromcifti(inputfile, debug=False):
+def readfromcifti(
+    inputfile: str, debug: bool = False
+) -> Tuple[Any, Any, np.ndarray, Any, np.ndarray, np.ndarray, Optional[float]]:
     r"""Open a cifti file and read in the various important parts
 
     Parameters
     ----------
     inputfile : str
         The name of the cifti file.
+    debug : bool, optional
+        Enable debug output. Default is False
 
     Returns
     -------
@@ -110,7 +119,21 @@ def readfromcifti(inputfile, debug=False):
     return cifti, cifti_hdr, nifti_data, nifti_hdr, thedims, thesizes, timestep
 
 
-def getciftitr(cifti_hdr):
+def getciftitr(cifti_hdr: Any) -> Tuple[float, float]:
+    r"""Extract the TR (repetition time) from a CIFTI header.
+
+    Parameters
+    ----------
+    cifti_hdr : CIFTI header object
+        The CIFTI header to extract timing information from
+
+    Returns
+    -------
+    timestep : float
+        The TR (time between timepoints) in seconds
+    starttime : float
+        The start time of the first timepoint in seconds
+    """
     seriesaxis = None
     for theaxis in cifti_hdr.matrix.mapped_indices:
         if isinstance(cifti_hdr.matrix.get_axis(theaxis), nib.cifti2.SeriesAxis):
@@ -126,7 +149,7 @@ def getciftitr(cifti_hdr):
 
 
 # dims are the array dimensions along each axis
-def parseniftidims(thedims):
+def parseniftidims(thedims: np.ndarray) -> Tuple[int, int, int, int]:
     r"""Split the dims array into individual elements
 
     Parameters
@@ -143,7 +166,7 @@ def parseniftidims(thedims):
 
 
 # sizes are the mapping between voxels and physical coordinates
-def parseniftisizes(thesizes):
+def parseniftisizes(thesizes: np.ndarray) -> Tuple[float, float, float, float]:
     r"""Split the size array into individual elements
 
     Parameters
@@ -159,7 +182,20 @@ def parseniftisizes(thesizes):
     return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
 
-def dumparraytonifti(thearray, filename):
+def dumparraytonifti(thearray: np.ndarray, filename: str) -> None:
+    r"""Save a numpy array to a NIFTI file with an identity affine transform.
+
+    Parameters
+    ----------
+    thearray : numpy array
+        The data array to save
+    filename : str
+        The output filename (without extension)
+
+    Returns
+    -------
+    None
+    """
     outputaffine = np.zeros((4, 4), dtype=float)
     for i in range(4):
         outputaffine[i, i] = 1.0
@@ -168,7 +204,7 @@ def dumparraytonifti(thearray, filename):
     savetonifti(thearray, outputheader, filename)
 
 
-def savetonifti(thearray, theheader, thename, debug=False):
+def savetonifti(thearray: np.ndarray, theheader: Any, thename: str, debug: bool = False) -> None:
     r"""Save a data array out to a nifti file
 
     Parameters
@@ -179,10 +215,12 @@ def savetonifti(thearray, theheader, thename, debug=False):
         A valid nifti header
     thename : str
         The name of the nifti file to save
+    debug : bool, optional
+        Enable debug output. Default is False
 
     Returns
     -------
-
+    None
     """
     outputaffine = theheader.get_best_affine()
     qaffine, qcode = theheader.get_qform(coded=True)
@@ -253,19 +291,61 @@ def savetonifti(thearray, theheader, thename, debug=False):
     output_nifti = None
 
 
-def niftifromarray(data):
+def niftifromarray(data: np.ndarray) -> Any:
+    r"""Create a NIFTI image object from a numpy array with identity affine.
+
+    Parameters
+    ----------
+    data : numpy array
+        The data array to convert to NIFTI format
+
+    Returns
+    -------
+    nifti_image : nibabel Nifti1Image
+        The NIFTI image object
+    """
     return nib.Nifti1Image(data, affine=np.eye(4))
 
 
-def niftihdrfromarray(data):
+def niftihdrfromarray(data: np.ndarray) -> Any:
+    r"""Create a NIFTI header from a numpy array with identity affine.
+
+    Parameters
+    ----------
+    data : numpy array
+        The data array to create a header for
+
+    Returns
+    -------
+    nifti_header : nibabel Nifti1Header
+        The NIFTI header object
+    """
     return nib.Nifti1Image(data, affine=np.eye(4)).header.copy()
 
 
 def makedestarray(
-    destshape,
-    filetype="nifti",
-    rt_floattype="float64",
-):
+    destshape: Union[Tuple, np.ndarray],
+    filetype: str = "nifti",
+    rt_floattype: str = "float64",
+) -> Tuple[np.ndarray, int]:
+    r"""Create a destination array for output data based on file type and shape.
+
+    Parameters
+    ----------
+    destshape : tuple or numpy array
+        Shape specification for the output array
+    filetype : str, optional
+        Type of output file ('nifti', 'cifti', or 'text'). Default is 'nifti'
+    rt_floattype : str, optional
+        Data type for the output array. Default is 'float64'
+
+    Returns
+    -------
+    outmaparray : numpy array
+        Pre-allocated output array with appropriate shape and dtype
+    internalspaceshape : int
+        The flattened spatial dimension size
+    """
     if filetype == "text":
         try:
             internalspaceshape = destshape[0]
@@ -295,12 +375,32 @@ def makedestarray(
 
 
 def populatemap(
-    themap,
-    internalspaceshape,
-    validvoxels,
-    outmaparray,
-    debug=False,
-):
+    themap: np.ndarray,
+    internalspaceshape: int,
+    validvoxels: Optional[np.ndarray],
+    outmaparray: np.ndarray,
+    debug: bool = False,
+) -> np.ndarray:
+    r"""Populate an output array with data from a map, handling valid voxel masking.
+
+    Parameters
+    ----------
+    themap : numpy array
+        The source data to populate into the output array
+    internalspaceshape : int
+        The total spatial dimension size
+    validvoxels : numpy array or None
+        Indices of valid voxels to populate, or None for all voxels
+    outmaparray : numpy array
+        The destination array to populate
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    outmaparray : numpy array
+        The populated output array
+    """
     if len(outmaparray.shape) == 1:
         outmaparray[:] = 0.0
         if validvoxels is not None:
@@ -321,18 +421,49 @@ def populatemap(
 
 
 def savemaplist(
-    outputname,
-    maplist,
-    validvoxels,
-    destshape,
-    theheader,
-    bidsbasedict,
-    filetype="nifti",
-    rt_floattype="float64",
-    cifti_hdr=None,
-    savejson=True,
-    debug=False,
-):
+    outputname: str,
+    maplist: List[Tuple],
+    validvoxels: Optional[np.ndarray],
+    destshape: Union[Tuple, np.ndarray],
+    theheader: Any,
+    bidsbasedict: Dict[str, Any],
+    filetype: str = "nifti",
+    rt_floattype: str = "float64",
+    cifti_hdr: Optional[Any] = None,
+    savejson: bool = True,
+    debug: bool = False,
+) -> None:
+    r"""Save a list of data maps to files with appropriate BIDS metadata.
+
+    Parameters
+    ----------
+    outputname : str
+        Base name for output files (without extension)
+    maplist : list of tuples
+        List of (data, suffix, maptype, unit, description) tuples to save
+    validvoxels : numpy array or None
+        Indices of valid voxels in the data
+    destshape : tuple or numpy array
+        Shape of the destination array
+    theheader : nifti/cifti header
+        Header object for the output files
+    bidsbasedict : dict
+        Base BIDS metadata to include in JSON sidecars
+    filetype : str, optional
+        Output file type ('nifti', 'cifti', or 'text'). Default is 'nifti'
+    rt_floattype : str, optional
+        Data type for output arrays. Default is 'float64'
+    cifti_hdr : cifti header or None, optional
+        CIFTI header if filetype is 'cifti'
+    savejson : bool, optional
+        Whether to save JSON sidecar files. Default is True
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    None
+    """
     outmaparray, internalspaceshape = makedestarray(
         destshape,
         filetype=filetype,
@@ -396,16 +527,16 @@ def savemaplist(
 
 
 def savetocifti(
-    thearray,
-    theciftiheader,
-    theniftiheader,
-    thename,
-    isseries=False,
-    names=["placeholder"],
-    start=0.0,
-    step=1.0,
-    debug=False,
-):
+    thearray: np.ndarray,
+    theciftiheader: Any,
+    theniftiheader: Any,
+    thename: str,
+    isseries: bool = False,
+    names: List[str] = ["placeholder"],
+    start: float = 0.0,
+    step: float = 1.0,
+    debug: bool = False,
+) -> None:
     r"""Save a data array out to a cifti
 
     Parameters
@@ -418,18 +549,20 @@ def savetocifti(
         A valid nifti header
     thename : str
         The name of the cifti file to save
-    isseries: bool
-        True if output is a dtseries, False if dtscalar
-    start: float
-        starttime in seconds
-    step: float
-        timestep in seconds
-    debug: bool
-        Print extended debugging information
+    isseries : bool, optional
+        True if output is a dtseries, False if dtscalar. Default is False
+    names : list of str, optional
+        Names for scalar maps. Default is ['placeholder']
+    start : float, optional
+        Start time in seconds. Default is 0.0
+    step : float, optional
+        Timestep in seconds. Default is 1.0
+    debug : bool, optional
+        Print extended debugging information. Default is False
 
     Returns
     -------
-
+    None
     """
     if debug:
         print("savetocifti:", thename)
@@ -525,7 +658,7 @@ def savetocifti(
     nib.cifti2.save(img, thename + suffix)
 
 
-def checkifnifti(filename):
+def checkifnifti(filename: str) -> bool:
     r"""Check to see if a file name is a valid nifti name.
 
     Parameters
@@ -545,7 +678,7 @@ def checkifnifti(filename):
         return False
 
 
-def niftisplitext(filename):
+def niftisplitext(filename: str) -> Tuple[str, str]:
     r"""Split nifti filename into name base and extensionn.
 
     Parameters
@@ -570,7 +703,22 @@ def niftisplitext(filename):
         return firstsplit[0], firstsplit[1]
 
 
-def niftisplit(inputfile, outputroot, axis=3):
+def niftisplit(inputfile: str, outputroot: str, axis: int = 3) -> None:
+    r"""Split a NIFTI file along a specified axis into separate files.
+
+    Parameters
+    ----------
+    inputfile : str
+        Path to the input NIFTI file
+    outputroot : str
+        Base name for output files (will be appended with slice numbers)
+    axis : int, optional
+        Axis along which to split (0-4). Default is 3 (time axis)
+
+    Returns
+    -------
+    None
+    """
     infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
     theheader = copy.deepcopy(infile_hdr)
     numpoints = infiledims[axis + 1]
@@ -604,7 +752,38 @@ def niftisplit(inputfile, outputroot, axis=3):
         savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
 
 
-def niftimerge(inputlist, outputname, writetodisk=True, axis=3, returndata=False, debug=False):
+def niftimerge(
+    inputlist: List[str],
+    outputname: str,
+    writetodisk: bool = True,
+    axis: int = 3,
+    returndata: bool = False,
+    debug: bool = False,
+) -> Optional[Tuple[np.ndarray, Any]]:
+    r"""Merge multiple NIFTI files along a specified axis.
+
+    Parameters
+    ----------
+    inputlist : list of str
+        List of input NIFTI file paths to merge
+    outputname : str
+        Path for the merged output file
+    writetodisk : bool, optional
+        Whether to write the output to disk. Default is True
+    axis : int, optional
+        Axis along which to concatenate (0-4). Default is 3 (time axis)
+    returndata : bool, optional
+        Whether to return the merged data and header. Default is False
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    output_data : numpy array or None
+        Merged data array (if returndata is True)
+    infile_hdr : nifti header or None
+        Header from the last input file (if returndata is True)
+    """
     inputdata = []
     for thefile in inputlist:
         if debug:
@@ -625,7 +804,24 @@ def niftimerge(inputlist, outputname, writetodisk=True, axis=3, returndata=False
         return output_data, infile_hdr
 
 
-def niftiroi(inputfile, outputfile, startpt, numpoints):
+def niftiroi(inputfile: str, outputfile: str, startpt: int, numpoints: int) -> None:
+    r"""Extract a region of interest (ROI) from a NIFTI file along the time axis.
+
+    Parameters
+    ----------
+    inputfile : str
+        Path to the input NIFTI file
+    outputfile : str
+        Path for the output ROI file
+    startpt : int
+        Starting timepoint index
+    numpoints : int
+        Number of timepoints to extract
+
+    Returns
+    -------
+    None
+    """
     print(inputfile, outputfile, startpt, numpoints)
     infile, infile_data, infile_hdr, infiledims, infilesizes = readfromnifti(inputfile)
     theheader = copy.deepcopy(infile_hdr)
@@ -637,13 +833,15 @@ def niftiroi(inputfile, outputfile, startpt, numpoints):
     savetonifti(output_data, theheader, outputfile)
 
 
-def checkifcifti(filename, debug=False):
+def checkifcifti(filename: str, debug: bool = False) -> bool:
     r"""Check to see if the specified file is CIFTI format
 
     Parameters
     ----------
     filename : str
         The file name
+    debug : bool, optional
+        Enable debug output. Default is False
 
     Returns
     -------
@@ -666,7 +864,7 @@ def checkifcifti(filename, debug=False):
         return False
 
 
-def checkiftext(filename):
+def checkiftext(filename: str) -> bool:
     r"""Check to see if the specified filename ends in '.txt'
 
     Parameters
@@ -686,7 +884,7 @@ def checkiftext(filename):
         return False
 
 
-def getniftiroot(filename):
+def getniftiroot(filename: str) -> str:
     r"""Strip a nifti filename down to the root with no extensions
 
     Parameters
@@ -708,7 +906,7 @@ def getniftiroot(filename):
         return filename
 
 
-def fmriheaderinfo(niftifilename):
+def fmriheaderinfo(niftifilename: str) -> Tuple[np.ndarray, np.ndarray]:
     r"""Retrieve the header information from a nifti file
 
     Parameters
@@ -733,7 +931,7 @@ def fmriheaderinfo(niftifilename):
     return thesizes, thedims
 
 
-def fmritimeinfo(niftifilename):
+def fmritimeinfo(niftifilename: str) -> Tuple[float, int]:
     r"""Retrieve the repetition time and number of timepoints from a nifti file
 
     Parameters
@@ -761,7 +959,7 @@ def fmritimeinfo(niftifilename):
     return tr, timepoints
 
 
-def checkspacematch(hdr1, hdr2, tolerance=1.0e-3):
+def checkspacematch(hdr1: Any, hdr2: Any, tolerance: float = 1.0e-3) -> bool:
     r"""Check the headers of two nifti files to determine if the cover the same volume at the same resolution (within tolerance)
 
     Parameters
@@ -770,6 +968,8 @@ def checkspacematch(hdr1, hdr2, tolerance=1.0e-3):
         The header of the first file
     hdr2 : nifti header structure
         The header of the second file
+    tolerance : float, optional
+        Tolerance for comparison. Default is 1.0e-3
 
     Returns
     -------
@@ -782,7 +982,7 @@ def checkspacematch(hdr1, hdr2, tolerance=1.0e-3):
     return dimmatch and resmatch
 
 
-def checkspaceresmatch(sizes1, sizes2, tolerance=1.0e-3):
+def checkspaceresmatch(sizes1: np.ndarray, sizes2: np.ndarray, tolerance: float = 1.0e-3) -> bool:
     r"""Check the spatial pixdims of two nifti files to determine if they have the same resolution (within tolerance)
 
     Parameters
@@ -810,8 +1010,8 @@ def checkspaceresmatch(sizes1, sizes2, tolerance=1.0e-3):
             return True
 
 
-def checkspacedimmatch(dims1, dims2, verbose=False):
-    r"""Check the dimension arrays of two nifti files to determine if the cover the same number of voxels in each dimension
+def checkspacedimmatch(dims1: np.ndarray, dims2: np.ndarray, verbose: bool = False) -> bool:
+    r"""Check the dimension arrays of two nifti files to determine if they cover the same number of voxels in each dimension.
 
     Parameters
     ----------
@@ -819,6 +1019,8 @@ def checkspacedimmatch(dims1, dims2, verbose=False):
         The dimension array from the first nifti file
     dims2 : int array
         The dimension array from the second nifti file
+    verbose : bool, optional
+        Enable verbose output. Default is False
 
     Returns
     -------
@@ -835,7 +1037,9 @@ def checkspacedimmatch(dims1, dims2, verbose=False):
             return True
 
 
-def checktimematch(dims1, dims2, numskip1=0, numskip2=0, verbose=False):
+def checktimematch(
+    dims1: np.ndarray, dims2: np.ndarray, numskip1: int = 0, numskip2: int = 0, verbose: bool = False
+) -> bool:
     r"""Check the dimensions of two nifti files to determine if the cover the same number of timepoints
 
     Parameters
@@ -848,6 +1052,8 @@ def checktimematch(dims1, dims2, numskip1=0, numskip2=0, verbose=False):
         Number of timepoints skipped at the beginning of file 1
     numskip2 : int, optional
         Number of timepoints skipped at the beginning of file 2
+    verbose : bool, optional
+        Enable verbose output. Default is False
 
     Returns
     -------
@@ -876,7 +1082,35 @@ def checktimematch(dims1, dims2, numskip1=0, numskip2=0, verbose=False):
         return True
 
 
-def checkdatamatch(data1, data2, absthresh=1e-12, msethresh=1e-12, debug=False):
+def checkdatamatch(
+    data1: np.ndarray,
+    data2: np.ndarray,
+    absthresh: float = 1e-12,
+    msethresh: float = 1e-12,
+    debug: bool = False,
+) -> Tuple[bool, bool]:
+    r"""Check if two data arrays match within specified tolerances.
+
+    Parameters
+    ----------
+    data1 : numpy array
+        First data array to compare
+    data2 : numpy array
+        Second data array to compare
+    absthresh : float, optional
+        Absolute difference threshold. Default is 1e-12
+    msethresh : float, optional
+        Mean squared error threshold. Default is 1e-12
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    msematch : bool
+        True if MSE is below threshold
+    absmatch : bool
+        True if maximum absolute difference is below threshold
+    """
     msediff = mse(data1, data2)
     absdiff = np.max(np.fabs(data1 - data2))
     if debug:
@@ -885,8 +1119,35 @@ def checkdatamatch(data1, data2, absthresh=1e-12, msethresh=1e-12, debug=False):
 
 
 def checkniftifilematch(
-    filename1, filename2, absthresh=1e-12, msethresh=1e-12, spacetolerance=1e-3, debug=False
-):
+    filename1: str,
+    filename2: str,
+    absthresh: float = 1e-12,
+    msethresh: float = 1e-12,
+    spacetolerance: float = 1e-3,
+    debug: bool = False,
+) -> bool:
+    r"""Check if two NIFTI files match in dimensions, resolution, and data values.
+
+    Parameters
+    ----------
+    filename1 : str
+        Path to first NIFTI file
+    filename2 : str
+        Path to second NIFTI file
+    absthresh : float, optional
+        Absolute difference threshold for data comparison. Default is 1e-12
+    msethresh : float, optional
+        Mean squared error threshold for data comparison. Default is 1e-12
+    spacetolerance : float, optional
+        Tolerance for spatial dimension/resolution matching. Default is 1e-3
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    ismatch : bool
+        True if files match within all specified tolerances
+    """
     im1, im1_data, im1_hdr, im1_dims, im1_sizes = readfromnifti(filename1)
     im2, im2_data, im2_hdr, im2_dims, im2_sizes = readfromnifti(filename2)
     spacematch = checkspacematch(im1_hdr, im2_hdr, tolerance=spacetolerance)
@@ -916,7 +1177,7 @@ def checkniftifilematch(
 
 
 # --------------------------- non-NIFTI file I/O functions ------------------------------------------
-def checkifparfile(filename):
+def checkifparfile(filename: str) -> bool:
     r"""Checks to see if a file is an FSL style motion parameter file
 
     Parameters
@@ -936,7 +1197,21 @@ def checkifparfile(filename):
         return False
 
 
-def readconfounds(filename, debug=False):
+def readconfounds(filename: str, debug: bool = False) -> Dict[str, np.ndarray]:
+    r"""Read confound regressors from a text file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the confounds file
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    confounddict : dict
+        Dictionary mapping confound names to timecourse arrays
+    """
     (
         thesamplerate,
         thestarttime,
@@ -955,8 +1230,8 @@ def readconfounds(filename, debug=False):
     return theconfounddict
 
 
-def readparfile(filename):
-    r"""Checks to see if a file is an FSL style motion parameter file
+def readparfile(filename: str) -> Dict[str, np.ndarray]:
+    r"""Read motion parameters from an FSL-style .par file.
 
     Parameters
     ----------
@@ -977,8 +1252,8 @@ def readparfile(filename):
     return motiondict
 
 
-def readmotion(filename, tr=1.0, colspec=None):
-    r"""Reads motion regressors from filename (from the columns specified in colspec, if given)
+def readmotion(filename: str, tr: float = 1.0, colspec: Optional[str] = None) -> Dict[str, Any]:
+    r"""Read motion regressors from a file (.par, .tsv, or other text format).
 
     Parameters
     ----------
@@ -1118,7 +1393,7 @@ def readmotion(filename, tr=1.0, colspec=None):
     return motiondict
 
 
-def sliceinfo(slicetimes, tr):
+def sliceinfo(slicetimes: np.ndarray, tr: float) -> Tuple[int, float, np.ndarray]:
     r"""Find out what slicetimes we have, their spacing, and which timepoint each slice occurs at.  This assumes
     uniform slice time spacing, but supports any slice acquisition order and multiband acquisitions.
 
@@ -1146,7 +1421,7 @@ def sliceinfo(slicetimes, tr):
     return numsteps, minstep, sliceoffsets
 
 
-def getslicetimesfromfile(slicetimename):
+def getslicetimesfromfile(slicetimename: str) -> Tuple[np.ndarray, bool, bool]:
     filebase, extension = os.path.splitext(slicetimename)
     if extension == ".json":
         jsoninfodict = readdictfromjson(slicetimename)
@@ -1167,7 +1442,7 @@ def getslicetimesfromfile(slicetimename):
     return slicetimes, normalizedtotr, fileisbidsjson
 
 
-def readbidssidecar(inputfilename):
+def readbidssidecar(inputfilename: str) -> Dict[str, Any]:
     r"""Read key value pairs out of a BIDS sidecar file
 
     Parameters
@@ -1191,7 +1466,7 @@ def readbidssidecar(inputfilename):
         return {}
 
 
-def writedicttojson(thedict, thefilename):
+def writedicttojson(thedict: Dict[str, Any], thefilename: str) -> None:
     r"""Write key value pairs to a json file
 
     Parameters
@@ -1218,7 +1493,7 @@ def writedicttojson(thedict, thefilename):
         )
 
 
-def readdictfromjson(inputfilename):
+def readdictfromjson(inputfilename: str) -> Dict[str, Any]:
     r"""Read key value pairs out of a json file
 
     Parameters
@@ -1242,7 +1517,7 @@ def readdictfromjson(inputfilename):
         return {}
 
 
-def readlabelledtsv(inputfilename, compressed=False):
+def readlabelledtsv(inputfilename: str, compressed: bool = False) -> Dict[str, np.ndarray]:
     r"""Read time series out of an fmriprep confounds tsv file
 
     Parameters
@@ -1277,7 +1552,7 @@ def readlabelledtsv(inputfilename, compressed=False):
     return confounddict
 
 
-def readcsv(inputfilename, debug=False):
+def readcsv(inputfilename: str, debug: bool = False) -> Dict[str, np.ndarray]:
     r"""Read time series out of an unlabelled csv file
 
     Parameters
@@ -1331,7 +1606,7 @@ def readcsv(inputfilename, debug=False):
     return timeseriesdict
 
 
-def readfslmat(inputfilename, debug=False):
+def readfslmat(inputfilename: str, debug: bool = False) -> Dict[str, np.ndarray]:
     r"""Read time series out of an FSL design.mat file
 
     Parameters
@@ -1366,7 +1641,7 @@ def readfslmat(inputfilename, debug=False):
     return timeseriesdict
 
 
-def readoptionsfile(inputfileroot):
+def readoptionsfile(inputfileroot: str) -> Dict[str, Any]:
     if os.path.isfile(inputfileroot + ".json"):
         # options saved as json
         thedict = readdictfromjson(inputfileroot + ".json")
@@ -1420,28 +1695,28 @@ def readoptionsfile(inputfileroot):
     return thedict
 
 
-def makecolname(colnum, startcol):
+def makecolname(colnum: int, startcol: int) -> str:
     return f"col_{str(colnum + startcol).zfill(2)}"
 
 
 def writebidstsv(
-    outputfileroot,
-    data,
-    samplerate,
-    extraheaderinfo=None,
-    compressed=True,
-    columns=None,
-    xaxislabel="time",
-    yaxislabel="arbitrary value",
-    starttime=0.0,
-    append=False,
-    samplerate_tolerance=1e-6,
-    starttime_tolerance=1e-6,
-    colsinjson=True,
-    colsintsv=False,
-    omitjson=False,
-    debug=False,
-):
+    outputfileroot: str,
+    data: np.ndarray,
+    samplerate: float,
+    extraheaderinfo: Optional[Dict[str, Any]] = None,
+    compressed: bool = True,
+    columns: Optional[List[str]] = None,
+    xaxislabel: str = "time",
+    yaxislabel: str = "arbitrary value",
+    starttime: float = 0.0,
+    append: bool = False,
+    samplerate_tolerance: float = 1e-6,
+    starttime_tolerance: float = 1e-6,
+    colsinjson: bool = True,
+    colsintsv: bool = False,
+    omitjson: bool = False,
+    debug: bool = False,
+) -> None:
     """
     NB: to be strictly valid, a continuous BIDS tsv file (i.e. a "_physio" or "_stim" file) requires:
     1) The .tsv is compressed (.tsv.gz)
@@ -1573,7 +1848,9 @@ def writebidstsv(
             )
 
 
-def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
+def readvectorsfromtextfile(
+    fullfilespec: str, onecol: bool = False, debug: bool = False
+) -> Tuple[Optional[float], Optional[float], Optional[List[str]], np.ndarray, Optional[bool], str]:
     r"""Read one or more time series from some sort of text file
 
     Parameters
@@ -1734,7 +2011,15 @@ def readvectorsfromtextfile(fullfilespec, onecol=False, debug=False):
     return thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype
 
 
-def readbidstsv(inputfilename, colspec=None, warn=True, neednotexist=False, debug=False):
+def readbidstsv(
+    inputfilename: str,
+    colspec: Optional[str] = None,
+    warn: bool = True,
+    neednotexist: bool = False,
+    debug: bool = False,
+) -> Tuple[
+    Optional[float], Optional[float], Optional[List[str]], Optional[np.ndarray], Optional[bool], Optional[str]
+]:
     r"""Read time series out of a BIDS tsv file
 
     Parameters
@@ -1908,8 +2193,12 @@ def readbidstsv(inputfilename, colspec=None, warn=True, neednotexist=False, debu
 
 
 def readcolfrombidstsv(
-    inputfilename, columnnum=0, columnname=None, neednotexist=False, debug=False
-):
+    inputfilename: str,
+    columnnum: int = 0,
+    columnname: Optional[str] = None,
+    neednotexist: bool = False,
+    debug: bool = False,
+) -> Tuple[Optional[float], Optional[float], Optional[np.ndarray]]:
     r"""
 
     Parameters
@@ -1950,7 +2239,23 @@ def readcolfrombidstsv(
             return samplerate, starttime, data[columnnum, :]
 
 
-def parsefilespec(filespec, debug=False):
+def parsefilespec(filespec: str, debug: bool = False) -> Tuple[str, Optional[str]]:
+    r"""Parse a file specification string into filename and column specification.
+
+    Parameters
+    ----------
+    filespec : str
+        File specification string (format: filename:colspec)
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    filename : str
+        The parsed filename
+    colspec : str or None
+        Column specification string, or None if not provided
+    """
     inputlist = filespec.split(":")
     if debug:
         print(f"PARSEFILESPEC: input string >>>{filespec}<<<")
@@ -1985,7 +2290,19 @@ def parsefilespec(filespec, debug=False):
     return thefilename, thecolspec
 
 
-def unique(list1):
+def unique(list1: List[Any]) -> List[Any]:
+    r"""Return unique elements from a list, preserving order.
+
+    Parameters
+    ----------
+    list1 : list
+        Input list
+
+    Returns
+    -------
+    unique_list : list
+        List containing only unique elements from input
+    """
     # initialize a null list
     unique_list = []
 
@@ -1997,7 +2314,21 @@ def unique(list1):
     return unique_list
 
 
-def colspectolist(colspec, debug=False):
+def colspectolist(colspec: Optional[str], debug: bool = False) -> Optional[List[int]]:
+    r"""Convert a column specification string to a list of column indices.
+
+    Parameters
+    ----------
+    colspec : str or None
+        Column specification (e.g., "0-5,7,10-12" or predefined macro)
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    collist : list of int or None
+        List of column indices, or None if specification is invalid
+    """
     if colspec is None:
         print("COLSPECTOLIST: no range specification - exiting")
         return None
@@ -2062,7 +2393,29 @@ def colspectolist(colspec, debug=False):
     return unique(sorted(collist))
 
 
-def processnamespec(maskspec, spectext1, spectext2, debug=False):
+def processnamespec(
+    maskspec: str, spectext1: str, spectext2: str, debug: bool = False
+) -> Tuple[str, Optional[List[int]]]:
+    r"""Process a name specification string into filename and column list.
+
+    Parameters
+    ----------
+    maskspec : str
+        Name specification string (format: filename:colspec)
+    spectext1 : str
+        Description text for debug output (prefix)
+    spectext2 : str
+        Description text for debug output (suffix)
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    filename : str
+        Parsed filename
+    collist : list of int or None
+        List of column indices, or None if no column spec provided
+    """
     thename, colspec = parsefilespec(maskspec)
     if colspec is not None:
         thevals = colspectolist(colspec)
@@ -2073,8 +2426,8 @@ def processnamespec(maskspec, spectext1, spectext2, debug=False):
     return thename, thevals
 
 
-def readcolfromtextfile(inputfilespec):
-    r"""
+def readcolfromtextfile(inputfilespec: str) -> np.ndarray:
+    r"""Read a single column from a text file.
 
     Parameters
     ----------
@@ -2097,7 +2450,13 @@ def readcolfromtextfile(inputfilespec):
         return inputdata[:, 0]
 
 
-def readvecs(inputfilename, colspec=None, numskip=0, debug=False, thedtype=float):
+def readvecs(
+    inputfilename: str,
+    colspec: Optional[str] = None,
+    numskip: int = 0,
+    debug: bool = False,
+    thedtype: type = float,
+) -> np.ndarray:
     r"""
 
     Parameters
@@ -2141,7 +2500,7 @@ def readvecs(inputfilename, colspec=None, numskip=0, debug=False, thedtype=float
     return theoutarray
 
 
-def readvec(inputfilename, numskip=0):
+def readvec(inputfilename: str, numskip: int = 0) -> np.ndarray:
     r"""Read an array of floats in from a text file.
 
     Parameters
@@ -2164,7 +2523,34 @@ def readvec(inputfilename, numskip=0):
     return np.asarray(inputvec, dtype=float)
 
 
-def readtc(inputfilename, colnum=None, colname=None, debug=False):
+def readtc(
+    inputfilename: str,
+    colnum: Optional[int] = None,
+    colname: Optional[str] = None,
+    debug: bool = False,
+) -> Tuple[np.ndarray, Optional[float], Optional[float]]:
+    r"""Read a timecourse from a text or BIDS TSV file.
+
+    Parameters
+    ----------
+    inputfilename : str
+        Path to the input file
+    colnum : int or None, optional
+        Column number to read (for multi-column files)
+    colname : str or None, optional
+        Column name to read (for BIDS TSV files)
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    timecourse : numpy array
+        The timecourse data
+    inputfreq : float or None
+        Sampling frequency (Hz) if available
+    inputstart : float or None
+        Start time (seconds) if available
+    """
     # check file type
     filebase, extension = os.path.splitext(inputfilename)
     inputfreq = None
@@ -2196,8 +2582,8 @@ def readtc(inputfilename, colnum=None, colname=None, debug=False):
     return timecourse, inputfreq, inputstart
 
 
-def readlabels(inputfilename):
-    r"""
+def readlabels(inputfilename: str) -> List[str]:
+    r"""Read text labels from a file, one per line.
 
     Parameters
     ----------
@@ -2215,9 +2601,8 @@ def readlabels(inputfilename):
     return inputvec
 
 
-def writedict(thedict, outputfile, lineend="", machinereadable=False):
-    r"""
-    Write all the key value pairs from a dictionary to a text file.
+def writedict(thedict: Dict[str, Any], outputfile: str, lineend: str = "", machinereadable: bool = False) -> None:
+    r"""Write all the key value pairs from a dictionary to a text file.
 
     Parameters
     ----------
@@ -2256,8 +2641,8 @@ def writedict(thedict, outputfile, lineend="", machinereadable=False):
             FILE.writelines("}" + thelineending)
 
 
-def readdict(inputfilename):
-    r"""Read key value pairs out of a text file
+def readdict(inputfilename: str) -> Dict[str, Any]:
+    r"""Read key value pairs from a text file.
 
     Parameters
     ----------
@@ -2286,8 +2671,9 @@ def readdict(inputfilename):
         return {}
 
 
-def writevec(thevec, outputfile, lineend=""):
-    r"""Write a vector out to a text file.
+def writevec(thevec: np.ndarray, outputfile: str, lineend: str = "") -> None:
+    r"""Write a vector to a text file, one value per line.
+
     Parameters
     ----------
     thevec : 1D numpy or python array
@@ -2319,16 +2705,43 @@ def writevec(thevec, outputfile, lineend=""):
 
 
 def writevectorstotextfile(
-    thevecs,
-    outputfile,
-    samplerate=1.0,
-    starttime=0.0,
-    columns=None,
-    compressed=True,
-    filetype="text",
-    lineend="",
-    debug=False,
-):
+    thevecs: np.ndarray,
+    outputfile: str,
+    samplerate: float = 1.0,
+    starttime: float = 0.0,
+    columns: Optional[List[str]] = None,
+    compressed: bool = True,
+    filetype: str = "text",
+    lineend: str = "",
+    debug: bool = False,
+) -> None:
+    r"""Write vectors to a text file in various formats.
+
+    Parameters
+    ----------
+    thevecs : numpy array
+        Data vectors to write
+    outputfile : str
+        Output file path
+    samplerate : float, optional
+        Sampling rate in Hz. Default is 1.0
+    starttime : float, optional
+        Start time in seconds. Default is 0.0
+    columns : list of str or None, optional
+        Column names
+    compressed : bool, optional
+        Whether to compress output (for BIDS formats). Default is True
+    filetype : str, optional
+        Output format ('text', 'csv', 'bidscontinuous', 'plaintsv'). Default is 'text'
+    lineend : str, optional
+        Line ending style ('mac', 'win', 'linux', or ''). Default is ''
+    debug : bool, optional
+        Enable debug output. Default is False
+
+    Returns
+    -------
+    None
+    """
     if filetype == "text":
         writenpvecs(thevecs, outputfile, headers=columns, lineend=lineend)
     elif filetype == "csv":
@@ -2366,7 +2779,14 @@ def writevectorstotextfile(
 
 
 # rewritten to guarantee file closure, combines writenpvec and writenpvecs
-def writenpvecs(thevecs, outputfile, ascsv=False, headers=None, altmethod=True, lineend=""):
+def writenpvecs(
+    thevecs: np.ndarray,
+    outputfile: str,
+    ascsv: bool = False,
+    headers: Optional[List[str]] = None,
+    altmethod: bool = True,
+    lineend: str = "",
+) -> None:
     r"""Write out a two dimensional numpy array to a text file
 
     Parameters
