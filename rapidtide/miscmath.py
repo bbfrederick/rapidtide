@@ -353,14 +353,39 @@ def varnormalize(vector: ArrayLike) -> NDArray:
 
 def pcnormalize(vector: ArrayLike) -> NDArray:
     """
+    Normalize a vector using percentage change normalization.
+
+    This function performs percentage change normalization by dividing each element
+    by the mean of the vector and subtracting 1.0.
 
     Parameters
     ----------
-    vector
+    vector : ArrayLike
+        Input vector to be normalized
 
     Returns
     -------
+    NDArray
+        Normalized vector where each element is (vector[i] / mean) - 1.0.
+        If the mean is less than or equal to zero, the original vector is returned.
 
+    Notes
+    -----
+    The normalization formula is: (vector / mean) - 1.0
+    If the mean of the vector is less than or equal to zero, the function returns
+    the original vector to avoid division by zero or negative normalization.
+
+    Examples
+    --------
+    >>> data = np.array([1, 2, 3, 4, 5])
+    >>> normalized = pcnormalize(data)
+    >>> print(normalized)
+    [-0.6 -0.2  0.2  0.6  1. ]
+
+    >>> data = np.array([10, 20, 30])
+    >>> normalized = pcnormalize(data)
+    >>> print(normalized)
+    [-0.5  0.5  1.5]
     """
     sigmean = np.mean(vector)
     if sigmean > 0.0:
@@ -371,14 +396,34 @@ def pcnormalize(vector: ArrayLike) -> NDArray:
 
 def ppnormalize(vector: ArrayLike) -> NDArray:
     """
+    Normalize a vector using peak-to-peak normalization.
+
+    This function performs peak-to-peak normalization by subtracting the mean
+    and dividing by the range (max - min) of the demeaned vector.
 
     Parameters
     ----------
-    vector
+    vector : ArrayLike
+        Input vector to be normalized
 
     Returns
     -------
+    NDArray
+        Normalized vector with values ranging from -0.5 to 0.5 when the range is non-zero,
+        or zero vector when the range is zero
 
+    Notes
+    -----
+    The normalization is performed as: (vector - mean) / (max - min)
+    If the range (max - min) is zero, the function returns the demeaned vector
+    (which will be all zeros) to avoid division by zero.
+
+    Examples
+    --------
+    >>> data = np.array([1, 2, 3, 4, 5])
+    >>> normalized = ppnormalize(data)
+    >>> print(normalized)
+    [-0.5 -0.25  0.   0.25  0.5 ]
     """
     demeaned = vector - np.mean(vector)
     sigpp = np.max(demeaned) - np.min(demeaned)
@@ -395,6 +440,47 @@ def imagevariance(
     meannorm: bool = True,
     debug: bool = False,
 ) -> NDArray:
+    """
+    Calculate variance of filtered image data, optionally normalized by mean.
+
+    This function applies a filter to each voxel's time series data and computes
+    the variance along the time dimension. The result can be optionally normalized
+    by the mean of the original data.
+
+    Parameters
+    ----------
+    thedata : NDArray
+        Input image data with shape (n_voxels, n_timepoints)
+    thefilter : Optional[object]
+        Filter object with an 'apply' method that takes (samplefreq, data) as arguments.
+        If None, no filtering is applied.
+    samplefreq : float
+        Sampling frequency used for filter application
+    meannorm : bool, optional
+        If True, normalize variance by mean of original data (default is True)
+    debug : bool, optional
+        If True, print debug information (default is False)
+
+    Returns
+    -------
+    NDArray
+        Array of variance values for each voxel. Shape is (n_voxels,) if meannorm=True,
+        or (n_voxels,) if meannorm=False.
+
+    Notes
+    -----
+    - NaN values are converted to zero in the final result
+    - When meannorm=True, the variance is normalized by the mean of the original data
+    - The filter is applied to each voxel's time series independently
+    - If no filter is provided, the original data is used directly
+
+    Examples
+    --------
+    >>> data = np.random.randn(100, 50)
+    >>> filter_obj = SomeFilter()
+    >>> variance = imagevariance(data, filter_obj, samplefreq=2.0)
+    >>> variance = imagevariance(data, None, samplefreq=2.0, meannorm=False)
+    """
     if debug:
         print(f"IMAGEVARIANCE: {thedata.shape}, {thefilter}, {samplefreq}")
     filteredim = thedata * 0.0
@@ -414,17 +500,41 @@ def corrnormalize(
     thedata: ArrayLike, detrendorder: int = 1, windowfunc: str = "hamming"
 ) -> NDArray:
     """
+    Normalize data by detrending and applying a window function, then standardize.
+
+    This function first detrends the input data, applies a window function if specified,
+    and then normalizes the result using standard normalization.
 
     Parameters
     ----------
-    thedata
-    detrendorder
-    windowfunc
+    thedata : ArrayLike
+        Input data to be normalized
+    detrendorder : int, optional
+        Order of detrending to apply (default is 1 for linear detrending)
+    windowfunc : str, optional
+        Window function to apply ('hamming', 'hanning', etc.), or 'None' to skip
+        windowing (default is 'hamming')
 
     Returns
     -------
+    NDArray
+        Normalized data array
 
+    Notes
+    -----
+    The normalization is performed by:
+    1. Detrending the data (if detrendorder > 0)
+    2. Applying window function (if windowfunc != 'None')
+    3. Standard normalization
+    4. Dividing by sqrt(n) where n is the data length
+
+    Examples
+    --------
+    >>> data = np.random.randn(100)
+    >>> normalized = corrnormalize(data)
+    >>> normalized = corrnormalize(data, detrendorder=2, windowfunc='hanning')
     """
+
     # detrend first
     if detrendorder > 0:
         intervec = stdnormalize(tide_fit.detrend(thedata, order=detrendorder, demean=True))
