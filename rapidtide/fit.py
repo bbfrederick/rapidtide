@@ -76,99 +76,123 @@ def disablenumba():
 
 # --------------------------- Fitting functions -------------------------------------------------
 def gaussresidualssk(p, y, x):
-    """
+    """Calculate residuals for skewed Gaussian fit.
 
     Parameters
     ----------
-    p
-    y
-    x
+    p : array-like
+        Skewed Gaussian parameters [amplitude, center, width, skewness]
+    y : array-like
+        Observed y values
+    x : array-like
+        x values
 
     Returns
     -------
-
+    err : array-like
+        Residuals (y - fitted values)
     """
     err = y - gausssk_eval(x, p)
     return err
 
 
 def gaussskresiduals(p, y, x):
-    """
+    """Calculate residuals for skewed Gaussian fit.
 
     Parameters
     ----------
-    p
-    y
-    x
+    p : array-like
+        Skewed Gaussian parameters [amplitude, center, width, skewness]
+    y : array-like
+        Observed y values
+    x : array-like
+        x values
 
     Returns
     -------
-
+    residuals : array-like
+        Residuals (y - fitted values)
     """
     return y - gausssk_eval(x, p)
 
 
 @conditionaljit()
 def gaussresiduals(p, y, x):
-    """
+    """Calculate residuals for Gaussian fit.
 
     Parameters
     ----------
-    p
-    y
-    x
+    p : array-like
+        Gaussian parameters [amplitude, center, width]
+    y : array-like
+        Observed y values
+    x : array-like
+        x values
 
     Returns
     -------
-
+    residuals : array-like
+        Residuals (y - fitted values)
     """
     return y - p[0] * np.exp(-((x - p[1]) ** 2) / (2.0 * p[2] * p[2]))
 
 
 def trapezoidresiduals(p, y, x, toplength):
-    """
+    """Calculate residuals for trapezoid fit.
 
     Parameters
     ----------
-    p
-    y
-    x
-    toplength
+    p : array-like
+        Trapezoid parameters [amplitude, center, width]
+    y : array-like
+        Observed y values
+    x : array-like
+        x values
+    toplength : float
+        Length of the flat top of the trapezoid
 
     Returns
     -------
-
+    residuals : array-like
+        Residuals (y - fitted values)
     """
     return y - trapezoid_eval_loop(x, toplength, p)
 
 
 def risetimeresiduals(p, y, x):
-    """
+    """Calculate residuals for rise time fit.
 
     Parameters
     ----------
-    p
-    y
-    x
+    p : array-like
+        Rise time parameters [amplitude, start, rise time]
+    y : array-like
+        Observed y values
+    x : array-like
+        x values
 
     Returns
     -------
-
+    residuals : array-like
+        Residuals (y - fitted values)
     """
     return y - risetime_eval_loop(x, p)
 
 
 def gausssk_eval(x, p):
-    """
+    """Evaluate a skewed Gaussian function.
 
     Parameters
     ----------
-    x
-    p
+    x : array-like
+        x values at which to evaluate the function
+    p : array-like
+        Skewed Gaussian parameters [amplitude, center, width, skewness]
 
     Returns
     -------
-
+    y : array-like
+        Evaluated skewed Gaussian values
     """
     t = (x - p[1]) / p[2]
     return p[0] * sp.stats.norm.pdf(t) * sp.stats.norm.cdf(p[3] * t)
@@ -203,32 +227,39 @@ def kaiserbessel_eval(x, p):
 
 @conditionaljit()
 def gauss_eval(x, p):
-    """
+    """Evaluate a Gaussian function.
 
     Parameters
     ----------
-    x
-    p
+    x : array-like
+        x values at which to evaluate the function
+    p : array-like
+        Gaussian parameters [amplitude, center, width]
 
     Returns
     -------
-
+    y : array-like
+        Evaluated Gaussian values
     """
     return p[0] * np.exp(-((x - p[1]) ** 2) / (2.0 * p[2] * p[2]))
 
 
 def trapezoid_eval_loop(x, toplength, p):
-    """
+    """Evaluate a trapezoid function.
 
     Parameters
     ----------
-    x
-    toplength
-    p
+    x : array-like
+        x values at which to evaluate the function
+    toplength : float
+        Length of the flat top of the trapezoid
+    p : array-like
+        Trapezoid parameters [amplitude, center, width]
 
     Returns
     -------
-
+    y : array-like
+        Evaluated trapezoid values
     """
     r = np.zeros(len(x), dtype="float64")
     for i in range(0, len(x)):
@@ -237,16 +268,19 @@ def trapezoid_eval_loop(x, toplength, p):
 
 
 def risetime_eval_loop(x, p):
-    """
+    """Evaluate a rise time function.
 
     Parameters
     ----------
-    x
-    p
+    x : array-like
+        x values at which to evaluate the function
+    p : array-like
+        Rise time parameters [amplitude, start, rise time]
 
     Returns
     -------
-
+    y : array-like
+        Evaluated rise time function values
     """
     r = np.zeros(len(x), dtype="float64")
     for i in range(0, len(x)):
