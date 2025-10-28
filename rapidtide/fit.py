@@ -18,6 +18,7 @@
 #
 import sys
 import warnings
+from typing import Any, Callable, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,6 +27,7 @@ import scipy.special as sps
 import statsmodels.api as sm
 import tqdm
 from numpy.polynomial import Polynomial
+from numpy.typing import ArrayLike, NDArray
 from scipy import signal
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks, hilbert
@@ -51,8 +53,8 @@ else:
     donotusenumba = False
 
 
-def conditionaljit():
-    def resdec(f):
+def conditionaljit() -> Callable:
+    def resdec(f: Callable) -> Callable:
         if donotusenumba:
             return f
         return jit(f, nopython=True)
@@ -60,8 +62,8 @@ def conditionaljit():
     return resdec
 
 
-def conditionaljit2():
-    def resdec(f):
+def conditionaljit2() -> Callable:
+    def resdec(f: Callable) -> Callable:
         if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=True)
@@ -69,13 +71,13 @@ def conditionaljit2():
     return resdec
 
 
-def disablenumba():
+def disablenumba() -> None:
     global donotusenumba
     donotusenumba = True
 
 
 # --------------------------- Fitting functions -------------------------------------------------
-def gaussresidualssk(p, y, x):
+def gaussresidualssk(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
     """Calculate residuals for skewed Gaussian fit.
 
     Parameters
@@ -96,7 +98,7 @@ def gaussresidualssk(p, y, x):
     return err
 
 
-def gaussskresiduals(p, y, x):
+def gaussskresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
     """Calculate residuals for skewed Gaussian fit.
 
     Parameters
@@ -117,7 +119,7 @@ def gaussskresiduals(p, y, x):
 
 
 @conditionaljit()
-def gaussresiduals(p, y, x):
+def gaussresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
     """Calculate residuals for Gaussian fit.
 
     Parameters
@@ -137,7 +139,7 @@ def gaussresiduals(p, y, x):
     return y - p[0] * np.exp(-((x - p[1]) ** 2) / (2.0 * p[2] * p[2]))
 
 
-def trapezoidresiduals(p, y, x, toplength):
+def trapezoidresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike, toplength: float) -> NDArray:
     """Calculate residuals for trapezoid fit.
 
     Parameters
@@ -159,7 +161,7 @@ def trapezoidresiduals(p, y, x, toplength):
     return y - trapezoid_eval_loop(x, toplength, p)
 
 
-def risetimeresiduals(p, y, x):
+def risetimeresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
     """Calculate residuals for rise time fit.
 
     Parameters
@@ -179,7 +181,7 @@ def risetimeresiduals(p, y, x):
     return y - risetime_eval_loop(x, p)
 
 
-def gausssk_eval(x, p):
+def gausssk_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
     """Evaluate a skewed Gaussian function.
 
     Parameters
@@ -199,7 +201,7 @@ def gausssk_eval(x, p):
 
 
 # @conditionaljit()
-def kaiserbessel_eval(x, p):
+def kaiserbessel_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
     """
 
     Parameters
@@ -226,7 +228,7 @@ def kaiserbessel_eval(x, p):
 
 
 @conditionaljit()
-def gauss_eval(x, p):
+def gauss_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
     """Evaluate a Gaussian function.
 
     Parameters
@@ -244,7 +246,7 @@ def gauss_eval(x, p):
     return p[0] * np.exp(-((x - p[1]) ** 2) / (2.0 * p[2] * p[2]))
 
 
-def trapezoid_eval_loop(x, toplength, p):
+def trapezoid_eval_loop(x: ArrayLike, toplength: float, p: ArrayLike) -> NDArray:
     """Evaluate a trapezoid function.
 
     Parameters
@@ -267,7 +269,7 @@ def trapezoid_eval_loop(x, toplength, p):
     return r
 
 
-def risetime_eval_loop(x, p):
+def risetime_eval_loop(x: ArrayLike, p: ArrayLike) -> NDArray:
     """Evaluate a rise time function.
 
     Parameters
@@ -289,7 +291,9 @@ def risetime_eval_loop(x, p):
 
 
 @conditionaljit()
-def trapezoid_eval(x, toplength, p):
+def trapezoid_eval(
+    x: Union[float, ArrayLike], toplength: float, p: ArrayLike
+) -> Union[float, NDArray]:
     """
     Evaluates the trapezoidal function at a given point.
 
@@ -334,7 +338,7 @@ def trapezoid_eval(x, toplength, p):
 
 
 @conditionaljit()
-def risetime_eval(x, p):
+def risetime_eval(x: Union[float, ArrayLike], p: ArrayLike) -> Union[float, NDArray]:
     """
     Evaluates the rise time function at a given point.
 
@@ -367,21 +371,21 @@ def risetime_eval(x, p):
 
 
 def gasboxcar(
-    data,
-    samplerate,
-    firstpeakstart,
-    firstpeakend,
-    secondpeakstart,
-    secondpeakend,
-    risetime=3.0,
-    falltime=3.0,
-):
+    data: ArrayLike,
+    samplerate: float,
+    firstpeakstart: float,
+    firstpeakend: float,
+    secondpeakstart: float,
+    secondpeakend: float,
+    risetime: float = 3.0,
+    falltime: float = 3.0,
+) -> None:
     return None
 
 
 # generate the polynomial fit timecourse from the coefficients
 @conditionaljit()
-def trendgen(thexvals, thefitcoffs, demean):
+def trendgen(thexvals: ArrayLike, thefitcoffs: ArrayLike, demean: bool) -> NDArray:
     """Generates a polynomial trend based on input x-values and coefficients.
 
     This function constructs a polynomial trend using the provided x-values and
@@ -430,7 +434,7 @@ def trendgen(thexvals, thefitcoffs, demean):
 
 
 # @conditionaljit()
-def detrend(inputdata, order=1, demean=False):
+def detrend(inputdata: ArrayLike, order: int = 1, demean: bool = False) -> NDArray:
     """Estimates and removes a polynomial trend timecourse.
 
     This routine calculates a polynomial defined by a set of coefficients
@@ -468,7 +472,7 @@ def detrend(inputdata, order=1, demean=False):
     return inputdata - thefittc
 
 
-def prewhiten(series, nlags=None, debug=False):
+def prewhiten(series: ArrayLike, nlags: Optional[int] = None, debug: bool = False) -> NDArray:
     """
     Prewhiten a time series using an AR model estimated via statsmodels.
     The resulting series has the same length as the input.
@@ -517,7 +521,9 @@ def prewhiten(series, nlags=None, debug=False):
     return whitened
 
 
-def prewhiten2(timecourse, nlags, debug=False, sel=False):
+def prewhiten2(
+    timecourse: ArrayLike, nlags: int, debug: bool = False, sel: bool = False
+) -> NDArray:
     if not sel:
         ar_model = AutoReg(timecourse, lags=nlags)
         ar_fit = ar_model.fit()
@@ -542,7 +548,7 @@ def prewhiten2(timecourse, nlags, debug=False, sel=False):
 
 
 @conditionaljit()
-def findfirstabove(theyvals, thevalue):
+def findfirstabove(theyvals: ArrayLike, thevalue: float) -> int:
     """
     Find the index of the first element in an array that is greater than or equal to a specified value.
 
@@ -576,20 +582,20 @@ def findfirstabove(theyvals, thevalue):
 
 
 def findtrapezoidfunc(
-    thexvals,
-    theyvals,
-    thetoplength,
-    initguess=None,
-    debug=False,
-    minrise=0.0,
-    maxrise=200.0,
-    minfall=0.0,
-    maxfall=200.0,
-    minstart=-100.0,
-    maxstart=100.0,
-    refine=False,
-    displayplots=False,
-):
+    thexvals: ArrayLike,
+    theyvals: ArrayLike,
+    thetoplength: float,
+    initguess: Optional[ArrayLike] = None,
+    debug: bool = False,
+    minrise: float = 0.0,
+    maxrise: float = 200.0,
+    minfall: float = 0.0,
+    maxfall: float = 200.0,
+    minstart: float = -100.0,
+    maxstart: float = 100.0,
+    refine: bool = False,
+    displayplots: bool = False,
+) -> Tuple[float, float, float, float, int]:
     """
     Find the best-fitting trapezoidal function parameters to a data set.
 
@@ -665,17 +671,17 @@ def findtrapezoidfunc(
 
 
 def findrisetimefunc(
-    thexvals,
-    theyvals,
-    initguess=None,
-    debug=False,
-    minrise=0.0,
-    maxrise=200.0,
-    minstart=-100.0,
-    maxstart=100.0,
-    refine=False,
-    displayplots=False,
-):
+    thexvals: ArrayLike,
+    theyvals: ArrayLike,
+    initguess: Optional[ArrayLike] = None,
+    debug: bool = False,
+    minrise: float = 0.0,
+    maxrise: float = 200.0,
+    minstart: float = -100.0,
+    maxstart: float = 100.0,
+    refine: bool = False,
+    displayplots: bool = False,
+) -> Tuple[float, float, float, int]:
     """
 
     Parameters
@@ -721,8 +727,14 @@ def findrisetimefunc(
 
 
 def territorydecomp(
-    inputmap, template, atlas, inputmask=None, intercept=True, fitorder=1, debug=False
-):
+    inputmap: NDArray,
+    template: NDArray,
+    atlas: NDArray,
+    inputmask: Optional[NDArray] = None,
+    intercept: bool = True,
+    fitorder: int = 1,
+    debug: bool = False,
+) -> Tuple[NDArray, NDArray, NDArray]:
     """
     Decompose an input map into territories defined by an atlas using polynomial regression.
 
@@ -834,8 +846,13 @@ def territorydecomp(
 
 
 def territorystats(
-    inputmap, atlas, inputmask=None, entropybins=101, entropyrange=None, debug=False
-):
+    inputmap: NDArray,
+    atlas: NDArray,
+    inputmask: Optional[NDArray] = None,
+    entropybins: int = 101,
+    entropyrange: Optional[Tuple[float, float]] = None,
+    debug: bool = False,
+) -> Tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
     """
 
     Parameters
@@ -934,7 +951,9 @@ def territorystats(
 
 
 @conditionaljit()
-def refinepeak_quad(x, y, peakindex, stride=1):
+def refinepeak_quad(
+    x: ArrayLike, y: ArrayLike, peakindex: int, stride: int = 1
+) -> Tuple[float, float, float, Optional[bool], bool]:
     """
     Refine the location and properties of a peak using quadratic interpolation.
 
@@ -1007,28 +1026,28 @@ def refinepeak_quad(x, y, peakindex, stride=1):
 
 @conditionaljit2()
 def findmaxlag_gauss(
-    thexcorr_x,
-    thexcorr_y,
-    lagmin,
-    lagmax,
-    widthmax,
-    edgebufferfrac=0.0,
-    threshval=0.0,
-    uthreshval=30.0,
-    debug=False,
-    tweaklims=True,
-    zerooutbadfit=True,
-    refine=False,
-    maxguess=0.0,
-    useguess=False,
-    searchfrac=0.5,
-    fastgauss=False,
-    lagmod=1000.0,
-    enforcethresh=True,
-    absmaxsigma=1000.0,
-    absminsigma=0.1,
-    displayplots=False,
-):
+    thexcorr_x: ArrayLike,
+    thexcorr_y: ArrayLike,
+    lagmin: float,
+    lagmax: float,
+    widthmax: float,
+    edgebufferfrac: float = 0.0,
+    threshval: float = 0.0,
+    uthreshval: float = 30.0,
+    debug: bool = False,
+    tweaklims: bool = True,
+    zerooutbadfit: bool = True,
+    refine: bool = False,
+    maxguess: float = 0.0,
+    useguess: bool = False,
+    searchfrac: float = 0.5,
+    fastgauss: bool = False,
+    lagmod: float = 1000.0,
+    enforcethresh: bool = True,
+    absmaxsigma: float = 1000.0,
+    absminsigma: float = 0.1,
+    displayplots: bool = False,
+) -> Tuple[int, float, float, float, int, int, int, int]:
     """
     Find the maximum lag in a cross-correlation function by fitting a Gaussian curve to the peak.
 
@@ -1354,7 +1373,9 @@ def findmaxlag_gauss(
 
 
 @conditionaljit2()
-def maxindex_noedge(thexcorr_x, thexcorr_y, bipolar=False):
+def maxindex_noedge(
+    thexcorr_x: ArrayLike, thexcorr_y: ArrayLike, bipolar: bool = False
+) -> Tuple[int, float]:
     """
 
     Parameters
@@ -1394,7 +1415,9 @@ def maxindex_noedge(thexcorr_x, thexcorr_y, bipolar=False):
     return maxindex, flipfac
 
 
-def gaussfitsk(height, loc, width, skewness, xvals, yvals):
+def gaussfitsk(
+    height: float, loc: float, width: float, skewness: float, xvals: ArrayLike, yvals: ArrayLike
+) -> NDArray:
     """
 
     Parameters
@@ -1419,27 +1442,33 @@ def gaussfitsk(height, loc, width, skewness, xvals, yvals):
     return plsq
 
 
-def gaussfunc(x, height, loc, FWHM):
+def gaussfunc(x: ArrayLike, height: float, loc: float, FWHM: float) -> NDArray:
     return height * np.exp(-((x - loc) ** 2) / (2 * (FWHM / 2.355) ** 2))
 
 
-def gaussfit2(height, loc, width, xvals, yvals):
+def gaussfit2(
+    height: float, loc: float, width: float, xvals: ArrayLike, yvals: ArrayLike
+) -> Tuple[float, float, float]:
     popt, pcov = curve_fit(gaussfunc, xvals, yvals, p0=[height, loc, width])
     return popt[0], popt[1], popt[2]
 
 
-def sincfunc(x, height, loc, FWHM, baseline):
+def sincfunc(x: ArrayLike, height: float, loc: float, FWHM: float, baseline: float) -> NDArray:
     return height * np.sinc((3.79098852 / (FWHM * np.pi)) * (x - loc)) + baseline
 
 
 # found this sinc fitting routine (and optimization) here:
 # https://stackoverflow.com/questions/49676116/why-cant-scipy-optimize-curve-fit-fit-my-data-using-a-numpy-sinc-function
-def sincfit(height, loc, width, baseline, xvals, yvals):
+def sincfit(
+    height: float, loc: float, width: float, baseline: float, xvals: ArrayLike, yvals: ArrayLike
+) -> Tuple[NDArray, NDArray]:
     popt, pcov = curve_fit(sincfunc, xvals, yvals, p0=[height, loc, width, baseline])
     return popt, pcov
 
 
-def gaussfit(height, loc, width, xvals, yvals):
+def gaussfit(
+    height: float, loc: float, width: float, xvals: ArrayLike, yvals: ArrayLike
+) -> Tuple[float, float, float]:
     """Performs a non-linear least squares fit of a Gaussian function to data.
 
     This routine uses `scipy.optimize.leastsq` to find the optimal parameters
@@ -1483,7 +1512,7 @@ def gaussfit(height, loc, width, xvals, yvals):
     return plsq[0], plsq[1], plsq[2]
 
 
-def gram_schmidt(theregressors, debug=False):
+def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
     r"""Performs Gram-Schmidt orthogonalization on a set of vectors.
 
     This routine takes a set of input vectors (rows of a 2D array) and
@@ -1523,7 +1552,7 @@ def gram_schmidt(theregressors, debug=False):
     return outputbasis
 
 
-def mlproject(thefit, theevs, intercept):
+def mlproject(thefit: ArrayLike, theevs: list, intercept: bool) -> NDArray:
     r"""Calculates a linear combination (weighted sum) of explanatory variables.
 
     This routine computes a predicted output by multiplying a set of
@@ -1566,7 +1595,9 @@ def mlproject(thefit, theevs, intercept):
     return thedest
 
 
-def olsregress(X, y, intercept=True, debug=False):
+def olsregress(
+    X: ArrayLike, y: ArrayLike, intercept: bool = True, debug: bool = False
+) -> Tuple[NDArray, float]:
     """
 
     Parameters
@@ -1597,7 +1628,9 @@ def olsregress(X, y, intercept=True, debug=False):
     return thefit.params, np.sqrt(thefit.rsquared)
 
 
-def mlregress(X, y, intercept=True, debug=False):
+def mlregress(
+    X: ArrayLike, y: ArrayLike, intercept: bool = True, debug: bool = False
+) -> Tuple[NDArray, float]:
     """
 
     Parameters
@@ -1652,8 +1685,14 @@ def mlregress(X, y, intercept=True, debug=False):
 
 
 def calcexpandedregressors(
-    confounddict, labels=None, start=0, end=-1, deriv=True, order=1, debug=False
-):
+    confounddict: dict,
+    labels: Optional[list] = None,
+    start: int = 0,
+    end: int = -1,
+    deriv: bool = True,
+    order: int = 1,
+    debug: bool = False,
+) -> Tuple[NDArray, list]:
     r"""Calculates expanded regressors from a dictionary of confound vectors.
 
     This routine generates a comprehensive set of motion-related regressors by
@@ -1746,7 +1785,9 @@ def calcexpandedregressors(
     return outputregressors, outlabels
 
 
-def derivativelinfitfilt(thedata, theevs, nderivs=1, debug=False):
+def derivativelinfitfilt(
+    thedata: ArrayLike, theevs: NDArray, nderivs: int = 1, debug: bool = False
+) -> Tuple[NDArray, NDArray, NDArray, float, NDArray]:
     r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
     its square, its cube, etc.).  Then perform a linear fit of thedata using the vectors
     in thenewevs and return the result.
@@ -1799,7 +1840,9 @@ def derivativelinfitfilt(thedata, theevs, nderivs=1, debug=False):
     return filtered, thenewevs, datatoremove, R, coffs
 
 
-def expandedlinfitfilt(thedata, theevs, ncomps=1, debug=False):
+def expandedlinfitfilt(
+    thedata: ArrayLike, theevs: NDArray, ncomps: int = 1, debug: bool = False
+) -> Tuple[NDArray, NDArray, NDArray, float, NDArray]:
     r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
     its square, its cube, etc.).  Then perform a multiple regression fit of thedata using the vectors
     in thenewevs and return the result.
@@ -1852,7 +1895,11 @@ def expandedlinfitfilt(thedata, theevs, ncomps=1, debug=False):
     return filtered, thenewevs, datatoremove, R, coffs
 
 
-def linfitfilt(thedata, theevs, returnintercept=False, debug=False):
+def linfitfilt(
+    thedata: ArrayLike, theevs: NDArray, returnintercept: bool = False, debug: bool = False
+) -> Union[
+    Tuple[NDArray, NDArray, float, NDArray], Tuple[NDArray, NDArray, float, NDArray, float]
+]:
     r"""Performs a multiple regression fit of thedata using the vectors in theevs
     and returns the result.
 
@@ -1907,13 +1954,13 @@ def linfitfilt(thedata, theevs, returnintercept=False, debug=False):
 
 
 def confoundregress(
-    data,
-    regressors,
-    debug=False,
-    showprogressbar=True,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-):
+    data: NDArray,
+    regressors: NDArray,
+    debug: bool = False,
+    showprogressbar: bool = True,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+) -> Tuple[NDArray, NDArray]:
     r"""Filters multiple regressors out of an array of data
 
     Parameters
@@ -1960,7 +2007,13 @@ def confoundregress(
 # You can redistribute it and/or modify it under the terms of the Do What The
 # Fuck You Want To Public License, Version 2, as published by Sam Hocevar. See
 # http://www.wtfpl.net/ for more details.
-def getpeaks(xvals, yvals, xrange=None, bipolar=False, displayplots=False):
+def getpeaks(
+    xvals: ArrayLike,
+    yvals: ArrayLike,
+    xrange: Optional[Tuple[float, float]] = None,
+    bipolar: bool = False,
+    displayplots: bool = False,
+) -> list:
     peaks, dummy = find_peaks(yvals, height=0)
     if bipolar:
         negpeaks, dummy = find_peaks(-yvals, height=0)
@@ -2008,7 +2061,9 @@ def getpeaks(xvals, yvals, xrange=None, bipolar=False, displayplots=False):
     return procpeaks
 
 
-def parabfit(x_axis, y_axis, peakloc, points):
+def parabfit(
+    x_axis: ArrayLike, y_axis: ArrayLike, peakloc: int, points: int
+) -> Tuple[float, float]:
     """
 
     Parameters
@@ -2045,7 +2100,9 @@ def parabfit(x_axis, y_axis, peakloc, points):
     return x, y
 
 
-def _datacheck_peakdetect(x_axis, y_axis):
+def _datacheck_peakdetect(
+    x_axis: Optional[ArrayLike], y_axis: ArrayLike
+) -> Tuple[NDArray, NDArray]:
     """
 
     Parameters
@@ -2069,7 +2126,9 @@ def _datacheck_peakdetect(x_axis, y_axis):
     return x_axis, y_axis
 
 
-def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
+def peakdetect(
+    y_axis: ArrayLike, x_axis: Optional[ArrayLike] = None, lookahead: int = 200, delta: float = 0.0
+) -> list:
     """
     Converted from/based on a MATLAB script at:
     http://billauer.co.il/peakdet.html
@@ -2184,7 +2243,7 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0.0):
     return [max_peaks, min_peaks]
 
 
-def ocscreetest(eigenvals, debug=False, displayplots=False):
+def ocscreetest(eigenvals: ArrayLike, debug: bool = False, displayplots: bool = False) -> int:
     num = len(eigenvals)
     a = eigenvals * 0.0
     b = eigenvals * 0.0
@@ -2221,7 +2280,7 @@ def ocscreetest(eigenvals, debug=False, displayplots=False):
     return i
 
 
-def afscreetest(eigenvals, displayplots=False):
+def afscreetest(eigenvals: ArrayLike, displayplots: bool = False) -> int:
     num = len(eigenvals)
     firstderiv = np.gradient(eigenvals, edge_order=2)
     secondderiv = np.gradient(firstderiv, edge_order=2)
@@ -2242,7 +2301,9 @@ def afscreetest(eigenvals, displayplots=False):
     return maxaccloc - 1
 
 
-def phaseanalysis(firstharmonic, displayplots=False):
+def phaseanalysis(
+    firstharmonic: ArrayLike, displayplots: bool = False
+) -> Tuple[NDArray, NDArray, NDArray]:
     print("entering phaseanalysis")
     analytic_signal = hilbert(firstharmonic)
     amplitude_envelope = np.abs(analytic_signal)
@@ -2300,28 +2361,28 @@ FML_FITFAIL = (
 
 
 def simfuncpeakfit(
-    incorrfunc,
-    corrtimeaxis,
-    useguess=False,
-    maxguess=0.0,
-    displayplots=False,
-    functype="correlation",
-    peakfittype="gauss",
-    searchfrac=0.5,
-    lagmod=1000.0,
-    enforcethresh=True,
-    allowhighfitamps=False,
-    lagmin=-30.0,
-    lagmax=30.0,
-    absmaxsigma=1000.0,
-    absminsigma=0.25,
-    hardlimit=True,
-    bipolar=False,
-    lthreshval=0.0,
-    uthreshval=1.0,
-    zerooutbadfit=True,
-    debug=False,
-):
+    incorrfunc: ArrayLike,
+    corrtimeaxis: ArrayLike,
+    useguess: bool = False,
+    maxguess: float = 0.0,
+    displayplots: bool = False,
+    functype: str = "correlation",
+    peakfittype: str = "gauss",
+    searchfrac: float = 0.5,
+    lagmod: float = 1000.0,
+    enforcethresh: bool = True,
+    allowhighfitamps: bool = False,
+    lagmin: float = -30.0,
+    lagmax: float = 30.0,
+    absmaxsigma: float = 1000.0,
+    absminsigma: float = 0.25,
+    hardlimit: bool = True,
+    bipolar: bool = False,
+    lthreshval: float = 0.0,
+    uthreshval: float = 1.0,
+    zerooutbadfit: bool = True,
+    debug: bool = False,
+) -> Tuple[int, float, float, float, int, int, int, int]:
     # check to make sure xcorr_x and xcorr_y match
     if corrtimeaxis is None:
         print("Correlation time axis is not defined - exiting")
@@ -2726,7 +2787,9 @@ def simfuncpeakfit(
     )
 
 
-def _maxindex_noedge(corrfunc, corrtimeaxis, bipolar=False):
+def _maxindex_noedge(
+    corrfunc: ArrayLike, corrtimeaxis: ArrayLike, bipolar: bool = False
+) -> Tuple[int, float]:
     """
 
     Parameters
