@@ -17,10 +17,12 @@
 #
 #
 import warnings
+from typing import Callable, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.polynomial import Polynomial
+from numpy.typing import ArrayLike, NDArray
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -56,8 +58,8 @@ else:
 
 
 # ----------------------------------------- Conditional jit handling ----------------------------------
-def conditionaljit():
-    def resdec(f):
+def conditionaljit() -> Callable:
+    def resdec(f: Callable) -> Callable:
         if donotusenumba:
             return f
         return jit(f, nopython=True)
@@ -65,8 +67,8 @@ def conditionaljit():
     return resdec
 
 
-def conditionaljit2():
-    def resdec(f):
+def conditionaljit2() -> Callable:
+    def resdec(f: Callable) -> Callable:
         if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=True)
@@ -74,13 +76,13 @@ def conditionaljit2():
     return resdec
 
 
-def disablenumba():
+def disablenumba() -> None:
     global donotusenumba
     donotusenumba = True
 
 
 # --------------------------- Spectral analysis functions ---------------------------------------
-def phase(mcv):
+def phase(mcv: ArrayLike) -> NDArray:
     r"""Return phase of complex numbers.
 
     Parameters
@@ -97,7 +99,7 @@ def phase(mcv):
     return np.arctan2(mcv.imag, mcv.real)
 
 
-def polarfft(invec, samplerate):
+def polarfft(invec: ArrayLike, samplerate: float) -> Tuple[NDArray, NDArray, NDArray]:
     """
 
     Parameters
@@ -123,7 +125,7 @@ def polarfft(invec, samplerate):
     return freqs, magspec, phspec
 
 
-def complex_cepstrum(x):
+def complex_cepstrum(x: ArrayLike) -> Tuple[NDArray, NDArray]:
     """
 
     Parameters
@@ -136,7 +138,7 @@ def complex_cepstrum(x):
     """
 
     # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
-    def _unwrap(phase):
+    def _unwrap(phase: NDArray) -> Tuple[NDArray, NDArray]:
         samples = phase.shape[-1]
         unwrapped = np.unwrap(phase)
         center = (samples + 1) // 2
@@ -154,7 +156,7 @@ def complex_cepstrum(x):
     return ceps, ndelay
 
 
-def real_cepstrum(x):
+def real_cepstrum(x: ArrayLike) -> NDArray:
     """
 
     Parameters
@@ -170,7 +172,7 @@ def real_cepstrum(x):
 
 
 # --------------------------- miscellaneous math functions -------------------------------------------------
-def thederiv(y):
+def thederiv(y: ArrayLike) -> list:
     """
 
     Parameters
@@ -189,7 +191,7 @@ def thederiv(y):
     return dyc
 
 
-def primes(n):
+def primes(n: int) -> list:
     """
 
     Parameters
@@ -213,7 +215,7 @@ def primes(n):
     return primfac
 
 
-def largestfac(n):
+def largestfac(n: int) -> int:
     """
 
     Parameters
@@ -228,7 +230,7 @@ def largestfac(n):
 
 
 # --------------------------- Normalization functions -------------------------------------------------
-def normalize(vector, method="stddev"):
+def normalize(vector: ArrayLike, method: str = "stddev") -> NDArray:
     """
 
     Parameters
@@ -255,7 +257,7 @@ def normalize(vector, method="stddev"):
         raise ValueError("Illegal normalization type")
 
 
-def znormalize(vector):
+def znormalize(vector: ArrayLike) -> NDArray:
     """
 
     Parameters
@@ -269,7 +271,9 @@ def znormalize(vector):
     return stdnormalize(vector)
 
 
-def removeoutliers(vector, zerobad=True, outlierfac=3.0):
+def removeoutliers(
+    vector: ArrayLike, zerobad: bool = True, outlierfac: float = 3.0
+) -> Tuple[NDArray, float, float]:
     themedian = np.median(vector)
     sigmad = mad(vector - themedian).astype(np.float64)
     if zerobad:
@@ -281,7 +285,9 @@ def removeoutliers(vector, zerobad=True, outlierfac=3.0):
     return cleaneddata, themedian, sigmad
 
 
-def madnormalize(vector, returnnormfac=False):
+def madnormalize(
+    vector: ArrayLike, returnnormfac: bool = False
+) -> Union[NDArray, Tuple[NDArray, float]]:
     """
 
     Parameters
@@ -307,7 +313,7 @@ def madnormalize(vector, returnnormfac=False):
 
 
 @conditionaljit()
-def stdnormalize(vector):
+def stdnormalize(vector: ArrayLike) -> NDArray:
     """
 
     Parameters
@@ -326,7 +332,7 @@ def stdnormalize(vector):
         return demeaned
 
 
-def varnormalize(vector):
+def varnormalize(vector: ArrayLike) -> NDArray:
     """
 
     Parameters
@@ -345,7 +351,7 @@ def varnormalize(vector):
         return demeaned
 
 
-def pcnormalize(vector):
+def pcnormalize(vector: ArrayLike) -> NDArray:
     """
 
     Parameters
@@ -363,7 +369,7 @@ def pcnormalize(vector):
         return vector
 
 
-def ppnormalize(vector):
+def ppnormalize(vector: ArrayLike) -> NDArray:
     """
 
     Parameters
@@ -382,7 +388,13 @@ def ppnormalize(vector):
         return demeaned
 
 
-def imagevariance(thedata, thefilter, samplefreq, meannorm=True, debug=False):
+def imagevariance(
+    thedata: NDArray,
+    thefilter: Optional[object],
+    samplefreq: float,
+    meannorm: bool = True,
+    debug: bool = False,
+) -> NDArray:
     if debug:
         print(f"IMAGEVARIANCE: {thedata.shape}, {thefilter}, {samplefreq}")
     filteredim = thedata * 0.0
@@ -398,7 +410,9 @@ def imagevariance(thedata, thefilter, samplefreq, meannorm=True, debug=False):
 
 
 # @conditionaljit()
-def corrnormalize(thedata, detrendorder=1, windowfunc="hamming"):
+def corrnormalize(
+    thedata: ArrayLike, detrendorder: int = 1, windowfunc: str = "hamming"
+) -> NDArray:
     """
 
     Parameters
@@ -426,7 +440,9 @@ def corrnormalize(thedata, detrendorder=1, windowfunc="hamming"):
         return stdnormalize(intervec) / np.sqrt(np.shape(thedata)[0])
 
 
-def noiseamp(vector, Fs, windowsize=40.0):
+def noiseamp(
+    vector: ArrayLike, Fs: float, windowsize: float = 40.0
+) -> Tuple[NDArray, NDArray, float, float, float, float]:
     """
 
     Parameters
@@ -465,7 +481,7 @@ def noiseamp(vector, Fs, windowsize=40.0):
     return filtrms, thefittc, startamp, endamp, changepct, changerate
 
 
-def rms(vector):
+def rms(vector: ArrayLike) -> float:
     """
 
     Parameters
@@ -479,7 +495,7 @@ def rms(vector):
     return np.sqrt(np.mean(np.square(vector)))
 
 
-def envdetect(Fs, inputdata, cutoff=0.25, padlen=10):
+def envdetect(Fs: float, inputdata: ArrayLike, cutoff: float = 0.25, padlen: int = 10) -> NDArray:
     """
 
     Parameters
@@ -504,7 +520,7 @@ def envdetect(Fs, inputdata, cutoff=0.25, padlen=10):
     return tide_filt.unpadvec(theenvbpf.apply(Fs, tide_filt.padvec(sigabs, padlen)), padlen)
 
 
-def phasemod(phase, centric=True):
+def phasemod(phase: ArrayLike, centric: bool = True) -> NDArray:
     """
 
     Parameters
@@ -525,7 +541,7 @@ def phasemod(phase, centric=True):
         return phase % (2.0 * np.pi)
 
 
-def trendfilt(inputdata, order=3, ndevs=3.0, debug=False):
+def trendfilt(inputdata: ArrayLike, order: int = 3, ndevs: float = 3.0, debug: bool = False) -> NDArray:
     """
 
     Parameters
