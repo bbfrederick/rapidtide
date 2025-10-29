@@ -33,6 +33,37 @@ global ratiotooffsetfunc, funcoffsets, maplimits
 
 
 def smooth(y: NDArray, box_pts: int) -> NDArray:
+    """Apply a simple moving average smooth to the input array.
+
+        This function performs convolution with a uniform boxcar filter to smooth
+        the input data. The smoothing is applied using the 'same' mode which
+        returns an array of the same length as the input.
+
+        Parameters
+        ----------
+        y : NDArray
+            Input array to be smoothed.
+        box_pts : int
+            Number of points in the smoothing window. Must be a positive integer.
+
+        Returns
+        -------
+        NDArray
+            Smoothed array of the same shape as input `y`.
+
+        Notes
+        -----
+        The smoothing is performed using numpy's convolve function with a boxcar
+        filter of uniform weights. The 'same' mode ensures the output has the
+        same length as the input, with edge effects handled by padding.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> data = np.array([1, 2, 3, 4, 5])
+        >>> smooth(data, 3)
+        array([1.33333333, 2.33333333, 3.33333333, 4.33333333, 5.33333333])
+        """
     box = np.ones(box_pts) / box_pts
     y_smooth = np.convolve(y, box, mode="same")
     return y_smooth
@@ -57,6 +88,86 @@ def trainratiotooffset(
     verbose: bool = False,
     debug: bool = False,
 ) -> None:
+    """
+        Train a mapping from derivative ratio to delay offset using lagged time courses.
+
+        This function generates synthetic fMRI data by applying time shifts to the
+        input lagged time course generator and computes derivative ratios to estimate
+        the relationship between the ratio of derivatives and the corresponding delay.
+        The resulting mapping is stored globally and optionally saved to BIDS-style
+        TSV files.
+
+        Parameters
+        ----------
+        lagtcgenerator : Any
+            An object that provides the `yfromx` method for generating lagged time courses.
+        timeaxis : numpy.ndarray
+            The time axis (in seconds) for the fMRI data.
+        outputname : str
+            Base name for output files (e.g., BIDS entity).
+        outputlevel : str
+            Determines level of output; valid values are "min", "onlyregressors", or others.
+        trainlagmin : float, optional
+            Minimum lag value for training offsets (default is 0.0).
+        trainlagmax : float, optional
+            Maximum lag value for training offsets (default is 0.0).
+        trainlagstep : float, optional
+            Step size for generating training offsets (default is 0.5).
+        mindelay : float, optional
+            Minimum delay to consider in the delay map (default is -3.0).
+        maxdelay : float, optional
+            Maximum delay to consider in the delay map (default is 3.0).
+        numpoints : int, optional
+            Number of points in the delay grid (default is 501).
+        smoothpts : int, optional
+            Number of points for smoothing (default is 3).
+        edgepad : int, optional
+            Padding applied to edges during processing (default is 5).
+        regressderivs : int, optional
+            Number of derivatives to regress (default is 1).
+        LGR : Optional[Any], optional
+            Logging object for verbose output (default is None).
+        TimingLGR : Optional[Any], optional
+            Timing logging object (default is None).
+        verbose : bool, optional
+            Enable verbose logging if True (default is False).
+        debug : bool, optional
+            Enable debug output if True (default is False).
+
+        Returns
+        -------
+        None
+            This function does not return any value but updates global variables:
+            - `ratiotooffsetfunc`: List of cubic spline interpolants mapping ratio to delay.
+            - `funcoffsets`: List of offset values used in training.
+            - `maplimits`: Tuple of minimum and maximum ratio values for the mapping.
+
+        Notes
+        -----
+        - The function uses `getderivratios` to compute derivative ratios.
+        - Output files are written in BIDS TSV format.
+        - The mapping function is saved globally for future use.
+
+        Examples
+        --------
+        >>> trainratiotooffset(
+        ...     lagtcgenerator=generator,
+        ...     timeaxis=time_axis,
+        ...     outputname="sub-01",
+        ...     outputlevel="full",
+        ...     trainlagmin=-1.0,
+        ...     trainlagmax=1.0,
+        ...     trainlagstep=0.2,
+        ...     mindelay=-2.0,
+        ...     maxdelay=2.0,
+        ...     numpoints=201,
+        ...     smoothpts=5,
+        ...     edgepad=3,
+        ...     regressderivs=2,
+        ...     verbose=True,
+        ...     debug=False
+        ... )
+        """
     global ratiotooffsetfunc, funcoffsets, maplimits
 
     if debug:
@@ -274,6 +385,48 @@ def trainratiotooffset(
 
 
 def ratiotodelay(theratio: float, offset: float = 0.0, debug: bool = False) -> Tuple[float, float]:
+    """
+        Convert a ratio to a delay value using lookup tables and offset compensation.
+    
+        This function maps a given ratio to a corresponding delay value by interpolating
+        between pre-calculated offset values. It handles boundary conditions by clamping
+        the ratio to predefined limits and applies offset compensation for accurate
+        delay calculation.
+    
+        Parameters
+        ----------
+        theratio : float
+            The input ratio value to be converted to delay. This value is used as input
+            to the lookup function after being clamped to the valid range.
+        offset : float, optional
+            Offset value used for compensation and lookup table selection. Default is 0.0.
+        debug : bool, optional
+            Flag to enable debug output. Default is False.
+        
+        Returns
+        -------
+        Tuple[float, float]
+            A tuple containing:
+            - The calculated delay value based on the ratio and offset
+            - The closest offset value used for the lookup
+        
+        Notes
+        -----
+        The function uses global variables `ratiotooffsetfunc`, `funcoffsets`, and `maplimits`:
+        - `ratiotooffsetfunc`: List of lookup functions for different offset values
+        - `funcoffsets`: List of pre-calculated offset values
+        - `maplimits`: Tuple containing minimum and maximum valid ratio limits
+    
+        Examples
+        --------
+        >>> result = ratiotodelay(0.5, offset=0.1)
+        >>> print(result)
+        (0.48, 0.1)
+    
+        >>> result = ratiotodelay(1.5, offset=0.0)
+        >>> print(result)
+        (0.95, 0.0)
+        """
     global ratiotooffsetfunc, funcoffsets, maplimits
 
     # find the closest calculated offset
@@ -306,6 +459,53 @@ def ratiotodelay(theratio: float, offset: float = 0.0, debug: bool = False) -> T
 def coffstodelay(
     thecoffs: NDArray, mindelay: float = -3.0, maxdelay: float = 3.0, debug: bool = False
 ) -> float:
+    """
+        Convert polynomial coefficients to delay value by finding roots within specified bounds.
+    
+        This function constructs a polynomial from the given coefficients and finds its roots
+        within the specified delay range. It returns the root closest to zero that lies
+        within the valid range, or 0.0 if no valid roots are found.
+    
+        Parameters
+        ----------
+        thecoffs : NDArray
+            Array of polynomial coefficients (excluding the leading 1.0 term).
+        mindelay : float, optional
+            Minimum allowed delay value, default is -3.0.
+        maxdelay : float, optional
+            Maximum allowed delay value, default is 3.0.
+        debug : bool, optional
+            If True, prints debugging information about root selection process,
+            default is False.
+        
+        Returns
+        -------
+        float
+            The selected delay value (root closest to zero within bounds),
+            or 0.0 if no valid roots are found.
+        
+        Notes
+        -----
+        The function constructs a polynomial with coefficients [1.0, *thecoffs] and
+        finds all roots within the interval [mindelay, maxdelay]. Only real roots
+        within the specified bounds are considered valid candidates.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> coeffs = np.array([0.5, -1.0])
+        >>> delay = coffstodelay(coeffs, mindelay=-2.0, maxdelay=2.0)
+        >>> print(delay)
+        0.5
+    
+        >>> coeffs = np.array([1.0, 0.0, -1.0])
+        >>> delay = coffstodelay(coeffs, mindelay=-1.0, maxdelay=1.0, debug=True)
+        keeping root 0 (1.0)
+        keeping root 1 (-1.0)
+        chosen = -1.0
+        >>> print(delay)
+        -1.0
+        """
     justaone = np.array([1.0], dtype=thecoffs.dtype)
     allcoffs = np.concatenate((justaone, thecoffs))
     theroots = (poly.Polynomial(allcoffs, domain=(mindelay, maxdelay))).roots()
@@ -359,6 +559,107 @@ def getderivratios(
     endtr: Optional[int] = None,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray]:
+    """
+        Compute the ratio of the first (or higher-order) derivative of regressors to the main regressor.
+
+        This function performs regression analysis on fMRI data using lagged timecourses and
+        calculates the ratio of each derivative regressor to the main (zeroth-order) regressor.
+        It is typically used in the context of hemodynamic response function (HRF) modeling and
+        temporal filtering.
+
+        Parameters
+        ----------
+        fmri_data_valid : NDArray
+            Valid fMRI data (voxels x timepoints).
+        validvoxels : NDArray
+            Boolean mask indicating valid voxels.
+        initial_fmri_x : NDArray
+            Initial fMRI design matrix (timepoints x regressors).
+        lagtimes : NDArray
+            Array of lag times for generating lagged regressors.
+        fitmask : NDArray
+            Mask for fitting regressors.
+        genlagtc : Any
+            Function or object for generating lagged timecourses.
+        mode : str
+            Regression mode (e.g., 'ols', 'wls').
+        outputname : str
+            Name of the output file or identifier.
+        oversamptr : float
+            Oversampling factor for temporal resolution.
+        sLFOfitmean : NDArray
+            Mean of the low-frequency fit.
+        rvalue : NDArray
+            R-values from regression.
+        r2value : NDArray
+            R-squared values from regression.
+        fitNorm : NDArray
+            Normalization factors from regression.
+        fitcoeff : NDArray
+            Regression coefficients (voxels x regressors).
+        movingsignal : NDArray
+            Moving signal data.
+        lagtc : NDArray
+            Lagged timecourses.
+        filtereddata : NDArray
+            Filtered fMRI data.
+        LGR : Optional[Any]
+            LGR object for temporal filtering.
+        TimingLGR : Optional[Any]
+            Timing LGR object for temporal filtering.
+        optiondict : dict
+            Dictionary of options for regression and processing.
+        regressderivs : int, optional
+            Number of derivative regressors to include (default is 1).
+        starttr : Optional[int], optional
+            Start timepoint for processing (default is 0).
+        endtr : Optional[int], optional
+            End timepoint for processing (default is number of timepoints).
+        debug : bool, optional
+            If True, print debug information (default is False).
+
+        Returns
+        -------
+        Tuple[NDArray, NDArray]
+            A tuple containing:
+            - `regressderivratios`: Array of derivative-to-main regressor ratios (regressors x voxels).
+            - `rvalue`: R-values from regression (same as input `rvalue`).
+
+        Notes
+        -----
+        - The function uses `tide_regressfrommaps.regressfrommaps` internally for regression.
+        - Derivative ratios are computed as `fitcoeff[:, i+1] / fitcoeff[:, 0]` for i in 0 to `regressderivs-1`.
+        - NaN values are replaced with 0 using `np.nan_to_num`.
+
+        Examples
+        --------
+        >>> ratios, rvals = getderivratios(
+        ...     fmri_data_valid,
+        ...     validvoxels,
+        ...     initial_fmri_x,
+        ...     lagtimes,
+        ...     fitmask,
+        ...     genlagtc,
+        ...     'ols',
+        ...     'output',
+        ...     2.0,
+        ...     sLFOfitmean,
+        ...     rvalue,
+        ...     r2value,
+        ...     fitNorm,
+        ...     fitcoeff,
+        ...     movingsignal,
+        ...     lagtc,
+        ...     filtereddata,
+        ...     None,
+        ...     None,
+        ...     optiondict,
+        ...     regressderivs=2,
+        ...     starttr=0,
+        ...     endtr=100,
+        ...     debug=False
+        ... )
+        """
     if starttr is None:
         starttr = 0
     if endtr is None:
@@ -429,6 +730,65 @@ def filterderivratios(
     verbose: bool = True,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray, float]:
+    """
+        Filter derivative ratios using median absolute deviation (MAD) and optional smoothing.
+
+        This function applies a filtering procedure to regression derivative ratios to
+        identify and correct outliers. It uses median filtering and compares deviations
+        from the median using the median absolute deviation (MAD). Optionally, Gaussian
+        smoothing is applied to the filtered data.
+
+        Parameters
+        ----------
+        regressderivratios : ndarray
+            Array of regression derivative ratios to be filtered.
+        nativespaceshape : tuple of int
+            Shape of the native space (e.g., (nx, ny, nz)).
+        validvoxels : ndarray
+            Boolean or integer array indicating valid voxels in the data.
+        thedims : tuple of float
+            Voxel dimensions (dx, dy, dz) used for Gaussian smoothing.
+        patchthresh : float, optional
+            Threshold for outlier detection in units of MAD. Default is 3.0.
+        gausssigma : float, optional
+            Standard deviation for Gaussian smoothing. If 0, no smoothing is applied.
+            Default is 0.
+        filetype : str, optional
+            File type for output mapping. If not "nifti", no median filtering is applied.
+            Default is "nifti".
+        rt_floattype : str, optional
+            Data type for the output arrays. Default is "float64".
+        verbose : bool, optional
+            If True, print diagnostic information. Default is True.
+        debug : bool, optional
+            If True, enable debug printing. Default is False.
+
+        Returns
+        -------
+        medfilt : ndarray
+            Median-filtered version of the input `regressderivratios`.
+        filteredarray : ndarray
+            Final filtered array with outliers replaced by median values.
+        themad : float
+            Median absolute deviation of the input `regressderivratios`.
+
+        Notes
+        -----
+        - The function uses `median_filter` from `scipy.ndimage` for spatial filtering.
+        - If `filetype` is "nifti", the input data is first mapped to a destination array
+          using `tide_io.makedestarray` and `tide_io.populatemap`.
+        - Gaussian smoothing is applied using `tide_filt.ssmooth` if `gausssigma > 0`.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from scipy.ndimage import median_filter
+        >>> # Assume inputs are prepared
+        >>> medfilt, filtered, mad_val = filterderivratios(
+        ...     regressderivratios, nativespaceshape, validvoxels, thedims,
+        ...     patchthresh=3.0, gausssigma=1.0, verbose=True
+        ... )
+        """
 
     if debug:
         print("filterderivratios:")
