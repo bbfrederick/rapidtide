@@ -32,31 +32,31 @@ import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 global ratiotooffsetfunc, funcoffsets, maplimits
 
 
-def smooth(y, box_pts):
+def smooth(y: NDArray, box_pts: int) -> NDArray:
     box = np.ones(box_pts) / box_pts
     y_smooth = np.convolve(y, box, mode="same")
     return y_smooth
 
 
 def trainratiotooffset(
-    lagtcgenerator,
-    timeaxis,
-    outputname,
-    outputlevel,
-    trainlagmin=0.0,
-    trainlagmax=0.0,
-    trainlagstep=0.5,
-    mindelay=-3.0,
-    maxdelay=3.0,
-    numpoints=501,
-    smoothpts=3,
-    edgepad=5,
-    regressderivs=1,
-    LGR=None,
-    TimingLGR=None,
-    verbose=False,
-    debug=False,
-):
+    lagtcgenerator: Any,
+    timeaxis: NDArray,
+    outputname: str,
+    outputlevel: str,
+    trainlagmin: float = 0.0,
+    trainlagmax: float = 0.0,
+    trainlagstep: float = 0.5,
+    mindelay: float = -3.0,
+    maxdelay: float = 3.0,
+    numpoints: int = 501,
+    smoothpts: int = 3,
+    edgepad: int = 5,
+    regressderivs: int = 1,
+    LGR: Optional[Any] = None,
+    TimingLGR: Optional[Any] = None,
+    verbose: bool = False,
+    debug: bool = False,
+) -> None:
     global ratiotooffsetfunc, funcoffsets, maplimits
 
     if debug:
@@ -273,7 +273,7 @@ def trainratiotooffset(
             )
 
 
-def ratiotodelay(theratio, offset=0.0, debug=False):
+def ratiotodelay(theratio: float, offset: float = 0.0, debug: bool = False) -> Tuple[float, float]:
     global ratiotooffsetfunc, funcoffsets, maplimits
 
     # find the closest calculated offset
@@ -303,7 +303,9 @@ def ratiotodelay(theratio, offset=0.0, debug=False):
         )
 
 
-def coffstodelay(thecoffs, mindelay=-3.0, maxdelay=3.0, debug=False):
+def coffstodelay(
+    thecoffs: NDArray, mindelay: float = -3.0, maxdelay: float = 3.0, debug: bool = False
+) -> float:
     justaone = np.array([1.0], dtype=thecoffs.dtype)
     allcoffs = np.concatenate((justaone, thecoffs))
     theroots = (poly.Polynomial(allcoffs, domain=(mindelay, maxdelay))).roots()
@@ -332,31 +334,31 @@ def coffstodelay(thecoffs, mindelay=-3.0, maxdelay=3.0, debug=False):
 
 
 def getderivratios(
-    fmri_data_valid,
-    validvoxels,
-    initial_fmri_x,
-    lagtimes,
-    fitmask,
-    genlagtc,
-    mode,
-    outputname,
-    oversamptr,
-    sLFOfitmean,
-    rvalue,
-    r2value,
-    fitNorm,
-    fitcoeff,
-    movingsignal,
-    lagtc,
-    filtereddata,
-    LGR,
-    TimingLGR,
-    optiondict,
-    regressderivs=1,
-    starttr=None,
-    endtr=None,
-    debug=False,
-):
+    fmri_data_valid: NDArray,
+    validvoxels: NDArray,
+    initial_fmri_x: NDArray,
+    lagtimes: NDArray,
+    fitmask: NDArray,
+    genlagtc: Any,
+    mode: str,
+    outputname: str,
+    oversamptr: float,
+    sLFOfitmean: NDArray,
+    rvalue: NDArray,
+    r2value: NDArray,
+    fitNorm: NDArray,
+    fitcoeff: NDArray,
+    movingsignal: NDArray,
+    lagtc: NDArray,
+    filtereddata: NDArray,
+    LGR: Optional[Any],
+    TimingLGR: Optional[Any],
+    optiondict: dict,
+    regressderivs: int = 1,
+    starttr: Optional[int] = None,
+    endtr: Optional[int] = None,
+    debug: bool = False,
+) -> Tuple[NDArray, NDArray]:
     if starttr is None:
         starttr = 0
     if endtr is None:
@@ -416,17 +418,17 @@ def getderivratios(
 
 
 def filterderivratios(
-    regressderivratios,
-    nativespaceshape,
-    validvoxels,
-    thedims,
-    patchthresh=3.0,
-    gausssigma=0,
-    filetype="nifti",
-    rt_floattype="float64",
-    verbose=True,
-    debug=False,
-):
+    regressderivratios: NDArray,
+    nativespaceshape: Tuple[int, ...],
+    validvoxels: NDArray,
+    thedims: Tuple[float, ...],
+    patchthresh: float = 3.0,
+    gausssigma: float = 0,
+    filetype: str = "nifti",
+    rt_floattype: str = "float64",
+    verbose: bool = True,
+    debug: bool = False,
+) -> Tuple[NDArray, NDArray, float]:
 
     if debug:
         print("filterderivratios:")

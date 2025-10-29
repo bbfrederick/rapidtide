@@ -22,6 +22,8 @@ import threading as thread
 from platform import python_version, system
 from typing import Any, Callable, List, Optional, Tuple
 
+import numpy as np
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 try:
@@ -30,14 +32,16 @@ except ImportError:
     import Queue as thrQueue
 
 
-def maxcpus(reservecpu=True):
+def maxcpus(reservecpu: bool = True) -> int:
     if reservecpu:
         return mp.cpu_count() - 1
     else:
         return mp.cpu_count()
 
 
-def _process_data(data_in, inQ, outQ, showprogressbar=True, chunksize=10000):
+def _process_data(
+    data_in: List[Any], inQ: Any, outQ: Any, showprogressbar: bool = True, chunksize: int = 10000
+) -> List[Any]:
     # send pos/data to workers
     data_out = []
     totalnum = len(data_in)
@@ -85,16 +89,16 @@ def _process_data(data_in, inQ, outQ, showprogressbar=True, chunksize=10000):
 
 
 def run_multiproc(
-    consumerfunc,
-    inputshape,
-    maskarray,
-    nprocs=1,
-    verbose=True,
-    indexaxis=0,
-    procunit="voxels",
-    showprogressbar=True,
-    chunksize=1000,
-):
+    consumerfunc: Callable[[Any, Any], None],
+    inputshape: Tuple[int, ...],
+    maskarray: Optional[NDArray] = None,
+    nprocs: int = 1,
+    verbose: bool = True,
+    indexaxis: int = 0,
+    procunit: str = "voxels",
+    showprogressbar: bool = True,
+    chunksize: int = 1000,
+) -> List[Any]:
     # initialize the workers and the queues
     __spec__ = None
     n_workers = nprocs
@@ -149,16 +153,16 @@ def run_multiproc(
 
 
 def run_multithread(
-    consumerfunc,
-    inputshape,
-    maskarray,
-    verbose=True,
-    nprocs=1,
-    indexaxis=0,
-    procunit="voxels",
-    showprogressbar=True,
-    chunksize=1000,
-):
+    consumerfunc: Callable[[Any, Any], None],
+    inputshape: Tuple[int, ...],
+    maskarray: Optional[NDArray] = None,
+    verbose: bool = True,
+    nprocs: int = 1,
+    indexaxis: int = 0,
+    procunit: str = "voxels",
+    showprogressbar: bool = True,
+    chunksize: int = 1000,
+) -> List[Any]:
     # initialize the workers and the queues
     n_workers = nprocs
     inQ = thrQueue.Queue()
