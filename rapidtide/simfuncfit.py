@@ -19,8 +19,10 @@
 import bisect
 import gc
 import logging
+from typing import Any, Callable, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
@@ -30,17 +32,17 @@ LGR = logging.getLogger("GENERAL")
 
 
 def onesimfuncfit(
-    correlationfunc,
-    thefitter,
-    disablethresholds=False,
-    initiallag=None,
-    despeckle_thresh=5.0,
-    lthreshval=0.0,
-    fixdelay=False,
-    initialdelayvalue=0.0,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-):
+    correlationfunc: ArrayLike,
+    thefitter: Any,
+    disablethresholds: bool = False,
+    initiallag: Optional[float] = None,
+    despeckle_thresh: float = 5.0,
+    lthreshval: float = 0.0,
+    fixdelay: bool = False,
+    initialdelayvalue: float = 0.0,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+) -> Tuple[int, float, float, float, int, int, int, int]:
     if initiallag is not None:
         thefitter.setguess(True, maxguess=initiallag)
         thefitter.setrange(-despeckle_thresh / 2.0, despeckle_thresh / 2.0)
@@ -78,17 +80,17 @@ def onesimfuncfit(
 
 
 def _procOneVoxelFitcorr(
-    vox,
-    corr_y,
-    thefitter,
-    disablethresholds=False,
-    despeckle_thresh=5.0,
-    initiallag=None,
-    fixdelay=False,
-    initialdelayvalue=0.0,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-):
+    vox: int,
+    corr_y: ArrayLike,
+    thefitter: Any,
+    disablethresholds: bool = False,
+    despeckle_thresh: float = 5.0,
+    initiallag: Optional[float] = None,
+    fixdelay: bool = False,
+    initialdelayvalue: float = 0.0,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+) -> Tuple[int, int, float, float, float, NDArray, NDArray, float, int, int]:
     (
         maxindex,
         maxlag,
@@ -154,30 +156,30 @@ def _procOneVoxelFitcorr(
 
 
 def fitcorr(
-    corrtimescale,
-    thefitter,
-    corrout,
-    lagmask,
-    failimage,
-    lagtimes,
-    lagstrengths,
-    lagsigma,
-    gaussout,
-    windowout,
-    R2,
-    despeckling=False,
-    peakdict=None,
-    nprocs=1,
-    alwaysmultiproc=False,
-    fixdelay=False,
-    initialdelayvalue=0.0,
-    showprogressbar=True,
-    chunksize=1000,
-    despeckle_thresh=5.0,
-    initiallags=None,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-):
+    corrtimescale: ArrayLike,
+    thefitter: Any,
+    corrout: NDArray,
+    lagmask: NDArray,
+    failimage: NDArray,
+    lagtimes: NDArray,
+    lagstrengths: NDArray,
+    lagsigma: NDArray,
+    gaussout: NDArray,
+    windowout: NDArray,
+    R2: NDArray,
+    despeckling: bool = False,
+    peakdict: Optional[dict] = None,
+    nprocs: int = 1,
+    alwaysmultiproc: bool = False,
+    fixdelay: bool = False,
+    initialdelayvalue: Union[float, NDArray] = 0.0,
+    showprogressbar: bool = True,
+    chunksize: int = 1000,
+    despeckle_thresh: float = 5.0,
+    initiallags: Optional[NDArray] = None,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+) -> int:
     thefitter.setcorrtimeaxis(corrtimescale)
     inputshape = np.shape(corrout)
     if initiallags is None:

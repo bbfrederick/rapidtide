@@ -18,9 +18,11 @@
 #
 import bisect
 import logging
+from typing import Any, Callable, Optional, Tuple, Union
 
 import numpy as np
 from nilearn import masking
+from numpy.typing import ArrayLike, NDArray
 from sklearn.decomposition import PCA
 
 import rapidtide.io as tide_io
@@ -30,16 +32,18 @@ import rapidtide.stats as tide_stats
 LGR = logging.getLogger("GENERAL")
 
 
-def resampmask(themask, thetargetres):
+def resampmask(themask: ArrayLike, thetargetres: float) -> NDArray:
     resampmask = themask
     return themask
 
 
-def makeepimask(nim):
+def makeepimask(nim: Any) -> Any:
     return masking.compute_epi_mask(nim)
 
 
-def maketmask(filename, timeaxis, maskvector, debug=False):
+def maketmask(
+    filename: str, timeaxis: ArrayLike, maskvector: NDArray, debug: bool = False
+) -> NDArray:
     inputdata = tide_io.readvecs(filename)
     theshape = np.shape(inputdata)
     if theshape[0] == 1:
@@ -61,16 +65,16 @@ def maketmask(filename, timeaxis, maskvector, debug=False):
 
 
 def readamask(
-    maskfilename,
-    nim_hdr,
-    xsize,
-    istext=False,
-    valslist=None,
-    thresh=None,
-    maskname="the",
-    tolerance=1.0e-3,
-    debug=False,
-):
+    maskfilename: str,
+    nim_hdr: Any,
+    xsize: int,
+    istext: bool = False,
+    valslist: Optional[list] = None,
+    thresh: Optional[float] = None,
+    maskname: str = "the",
+    tolerance: float = 1.0e-3,
+    debug: bool = False,
+) -> NDArray:
     LGR.debug(f"readamask called with filename: {maskfilename} vals: {valslist}")
     if debug:
         print("getmaskset:")
@@ -108,19 +112,19 @@ def readamask(
 
 
 def getmaskset(
-    maskname,
-    includename,
-    includevals,
-    excludename,
-    excludevals,
-    datahdr,
-    numspatiallocs,
-    extramask=None,
-    extramaskthresh=0.1,
-    istext=False,
-    tolerance=1.0e-3,
-    debug=False,
-):
+    maskname: str,
+    includename: Optional[str],
+    includevals: Optional[list],
+    excludename: Optional[str],
+    excludevals: Optional[list],
+    datahdr: Any,
+    numspatiallocs: int,
+    extramask: Optional[str] = None,
+    extramaskthresh: float = 0.1,
+    istext: bool = False,
+    tolerance: float = 1.0e-3,
+    debug: bool = False,
+) -> Tuple[Optional[NDArray], Optional[NDArray], Optional[NDArray]]:
     internalincludemask = None
     internalexcludemask = None
     internalextramask = None
@@ -204,17 +208,17 @@ def getmaskset(
 
 
 def getregionsignal(
-    indata,
-    filter=None,
-    Fs=1.0,
-    includemask=None,
-    excludemask=None,
-    signalgenmethod="sum",
-    pcacomponents=0.8,
-    signame="global mean",
-    rt_floatset=np.float64,
-    debug=False,
-):
+    indata: NDArray,
+    filter: Optional[Any] = None,
+    Fs: float = 1.0,
+    includemask: Optional[NDArray] = None,
+    excludemask: Optional[NDArray] = None,
+    signalgenmethod: str = "sum",
+    pcacomponents: Union[float, str] = 0.8,
+    signame: str = "global mean",
+    rt_floatset: type = np.float64,
+    debug: bool = False,
+) -> Tuple[NDArray, NDArray]:
     # Start with all voxels
     themask = indata[:, 0] * 0 + 1
 
@@ -283,22 +287,22 @@ def getregionsignal(
 
 
 def saveregionaltimeseries(
-    tcdesc,
-    tcname,
-    fmridata,
-    includemask,
-    fmrifreq,
-    outputname,
-    filter=None,
-    initfile=False,
-    excludemask=None,
-    filedesc="regional",
-    suffix="",
-    signalgenmethod="sum",
-    pcacomponents=0.8,
-    rt_floatset=np.float64,
-    debug=False,
-):
+    tcdesc: str,
+    tcname: str,
+    fmridata: NDArray,
+    includemask: NDArray,
+    fmrifreq: float,
+    outputname: str,
+    filter: Optional[Any] = None,
+    initfile: bool = False,
+    excludemask: Optional[NDArray] = None,
+    filedesc: str = "regional",
+    suffix: str = "",
+    signalgenmethod: str = "sum",
+    pcacomponents: Union[float, str] = 0.8,
+    rt_floatset: type = np.float64,
+    debug: bool = False,
+) -> Tuple[NDArray, NDArray]:
     thetimecourse, themask = getregionsignal(
         fmridata,
         filter=filter,
