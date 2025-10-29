@@ -13,7 +13,7 @@ jobs:
       - image: continuumio/miniconda3
     resource_class: medium
     steps:
-      - checkout
+      - checkout:
           method: blobless
       - persist_to_workspace:
           root: /tmp
