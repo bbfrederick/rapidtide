@@ -23,9 +23,11 @@ package.
 
 import sys
 import warnings
+from typing import Callable, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -53,8 +55,8 @@ else:
 
 
 # ----------------------------------------- Conditional jit handling ----------------------------------
-def conditionaljit():
-    def resdec(f):
+def conditionaljit() -> Callable:
+    def resdec(f: Callable) -> Callable:
         global donotusenumba
         if donotusenumba:
             return f
@@ -63,7 +65,7 @@ def conditionaljit():
     return resdec
 
 
-def disablenumba():
+def disablenumba() -> None:
     global donotusenumba
     donotusenumba = True
 
@@ -73,7 +75,13 @@ def disablenumba():
 
 
 @conditionaljit()
-def padvec(inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
+def padvec(
+    inputdata: ArrayLike,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Returns a padded copy of the input data; padlen points of
     filled data are prepended and appended to the input data to reduce
     end effects when the data is then filtered.  Filling can be "zero", "reflect", "cyclic", "constant",
@@ -164,7 +172,7 @@ def padvec(inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
 
 
 @conditionaljit()
-def unpadvec(inputdata, padlen=20):
+def unpadvec(inputdata: ArrayLike, padlen: int = 20) -> NDArray:
     r"""Returns a input data with the end pads removed (see padvec);
     padlen points of reflected data are removed from each end of the array.
 
@@ -190,7 +198,9 @@ def unpadvec(inputdata, padlen=20):
         return inputdata
 
 
-def ssmooth(xsize, ysize, zsize, sigma, inputdata):
+def ssmooth(
+    xsize: float, ysize: float, zsize: float, sigma: float, inputdata: ArrayLike
+) -> NDArray:
     r"""Applies an isotropic gaussian spatial filter to a 3D array
 
     Parameters
@@ -227,15 +237,15 @@ def ssmooth(xsize, ysize, zsize, sigma, inputdata):
 # - butterworth filters
 # @conditionaljit()
 def dolpfiltfilt(
-    Fs,
-    upperpass,
-    inputdata,
-    order,
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    upperpass: float,
+    inputdata: ArrayLike,
+    order: int,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs a bidirectional (zero phase) Butterworth lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -298,15 +308,15 @@ def dolpfiltfilt(
 
 # @conditionaljit()
 def dohpfiltfilt(
-    Fs,
-    lowerpass,
-    inputdata,
-    order,
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    lowerpass: float,
+    inputdata: ArrayLike,
+    order: int,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs a bidirectional (zero phase) Butterworth highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -368,16 +378,16 @@ def dohpfiltfilt(
 
 # @conditionaljit()
 def dobpfiltfilt(
-    Fs,
-    lowerpass,
-    upperpass,
-    inputdata,
-    order,
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    lowerpass: float,
+    upperpass: float,
+    inputdata: ArrayLike,
+    order: int,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -445,7 +455,7 @@ def dobpfiltfilt(
 
 
 # - direct filter with specified transfer function
-def transferfuncfilt(inputdata, transferfunc):
+def transferfuncfilt(inputdata: ArrayLike, transferfunc: ArrayLike) -> NDArray:
     r"""Filters input data using a previously calculated transfer function.
 
     Parameters
@@ -468,7 +478,9 @@ def transferfuncfilt(inputdata, transferfunc):
 
 
 # - fft brickwall filters
-def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
+def getlpfftfunc(
+    Fs: float, upperpass: float, inputdata: ArrayLike, debug: bool = False
+) -> NDArray:
     r"""Generates a brickwall lowpass transfer function.
 
     Parameters
@@ -508,7 +520,15 @@ def getlpfftfunc(Fs, upperpass, inputdata, debug=False):
 
 
 # @conditionaljit()
-def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
+def dolpfftfilt(
+    Fs: float,
+    upperpass: float,
+    inputdata: ArrayLike,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT brickwall lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -551,7 +571,15 @@ def dolpfftfilt(Fs, upperpass, inputdata, padlen=20, avlen=20, padtype="reflect"
 
 
 # @conditionaljit()
-def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, avlen=20, padtype="reflect", debug=False):
+def dohpfftfilt(
+    Fs: float,
+    lowerpass: float,
+    inputdata: ArrayLike,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT brickwall highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -595,15 +623,15 @@ def dohpfftfilt(Fs, lowerpass, inputdata, padlen=20, avlen=20, padtype="reflect"
 
 # @conditionaljit()
 def dobpfftfilt(
-    Fs,
-    lowerpass,
-    upperpass,
-    inputdata,
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    lowerpass: float,
+    upperpass: float,
+    inputdata: ArrayLike,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT brickwall bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
@@ -653,7 +681,9 @@ def dobpfftfilt(
 
 # - fft trapezoidal filters
 # @conditionaljit()
-def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
+def getlptrapfftfunc(
+    Fs: float, upperpass: float, upperstop: float, inputdata: ArrayLike, debug: bool = False
+) -> NDArray:
     r"""Generates a trapezoidal lowpass transfer function.
 
     Parameters
@@ -706,7 +736,14 @@ def getlptrapfftfunc(Fs, upperpass, upperstop, inputdata, debug=False):
 
 
 # @conditionaljit()
-def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type="brickwall", debug=False):
+def getlptransfunc(
+    Fs: float,
+    inputdata: ArrayLike,
+    upperpass: Optional[float] = None,
+    upperstop: Optional[float] = None,
+    type: str = "brickwall",
+    debug: bool = False,
+) -> NDArray:
     if upperpass is None:
         print("getlptransfunc: upperpass must be specified")
         sys.exit()
@@ -770,7 +807,14 @@ def getlptransfunc(Fs, inputdata, upperpass=None, upperstop=None, type="brickwal
     return transferfunc
 
 
-def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type="brickwall", debug=False):
+def gethptransfunc(
+    Fs: float,
+    inputdata: ArrayLike,
+    lowerstop: Optional[float] = None,
+    lowerpass: Optional[float] = None,
+    type: str = "brickwall",
+    debug: bool = False,
+) -> NDArray:
     if lowerpass is None:
         print("gethptransfunc: lowerpass must be specified")
         sys.exit()
@@ -792,16 +836,16 @@ def gethptransfunc(Fs, inputdata, lowerstop=None, lowerpass=None, type="brickwal
 
 # @conditionaljit()
 def dolptransfuncfilt(
-    Fs,
-    inputdata,
-    upperpass=None,
-    upperstop=None,
-    type="brickwall",
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    inputdata: ArrayLike,
+    upperpass: Optional[float] = None,
+    upperstop: Optional[float] = None,
+    type: str = "brickwall",
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT filter with a gaussian lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -857,16 +901,16 @@ def dolptransfuncfilt(
 
 # @conditionaljit()
 def dohptransfuncfilt(
-    Fs,
-    inputdata,
-    lowerstop=None,
-    lowerpass=None,
-    type="brickwall",
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    inputdata: ArrayLike,
+    lowerstop: Optional[float] = None,
+    lowerpass: Optional[float] = None,
+    type: str = "brickwall",
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -928,18 +972,18 @@ def dohptransfuncfilt(
 
 # @conditionaljit()
 def dobptransfuncfilt(
-    Fs,
-    inputdata,
-    lowerstop=None,
-    lowerpass=None,
-    upperpass=None,
-    upperstop=None,
-    type="brickwall",
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    inputdata: ArrayLike,
+    lowerstop: Optional[float] = None,
+    lowerpass: Optional[float] = None,
+    upperpass: Optional[float] = None,
+    upperstop: Optional[float] = None,
+    type: str = "brickwall",
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -1010,15 +1054,15 @@ def dobptransfuncfilt(
 
 # @conditionaljit()
 def dolptrapfftfilt(
-    Fs,
-    upperpass,
-    upperstop,
-    inputdata,
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    upperpass: float,
+    upperstop: float,
+    inputdata: ArrayLike,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT filter with a trapezoidal lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -1066,15 +1110,15 @@ def dolptrapfftfilt(
 
 # @conditionaljit()
 def dohptrapfftfilt(
-    Fs,
-    lowerstop,
-    lowerpass,
-    inputdata,
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    lowerstop: float,
+    lowerpass: float,
+    inputdata: ArrayLike,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -1122,17 +1166,17 @@ def dohptrapfftfilt(
 
 # @conditionaljit()
 def dobptrapfftfilt(
-    Fs,
-    lowerstop,
-    lowerpass,
-    upperpass,
-    upperstop,
-    inputdata,
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    lowerstop: float,
+    lowerpass: float,
+    upperpass: float,
+    upperstop: float,
+    inputdata: ArrayLike,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Performs an FFT filter with a trapezoidal bandpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
@@ -1205,7 +1249,7 @@ def dobptrapfftfilt(
 # We use a fixed SNR across all frequencies in this example.
 #
 # Written 2015 by Dan Stowell. Public domain.
-def wiener_deconvolution(signal, kernel, lambd):
+def wiener_deconvolution(signal: ArrayLike, kernel: ArrayLike, lambd: float) -> NDArray:
     "lambd is the SNR in the fourier domain"
     kernel = np.hstack(
         (kernel, np.zeros(len(signal) - len(kernel)))
@@ -1218,7 +1262,7 @@ def wiener_deconvolution(signal, kernel, lambd):
     return deconvolved
 
 
-def pspec(inputdata):
+def pspec(inputdata: ArrayLike) -> NDArray:
     r"""Calculate the power spectrum of an input signal
 
     Parameters
@@ -1236,11 +1280,13 @@ def pspec(inputdata):
     return np.sqrt(S * np.conj(S))
 
 
-def spectralflatness(spectrum):
+def spectralflatness(spectrum: ArrayLike) -> float:
     return np.exp(np.mean(np.log(spectrum))) / np.mean(spectrum)
 
 
-def spectrum(inputdata, Fs=1.0, mode="power", trim=True):
+def spectrum(
+    inputdata: ArrayLike, Fs: float = 1.0, mode: str = "power", trim: bool = True
+) -> Tuple[NDArray, Union[NDArray, None]]:
     r"""Performs an FFT of the input data, and returns the frequency axis and spectrum
     of the input signal.
 
@@ -1305,7 +1351,7 @@ def spectrum(inputdata, Fs=1.0, mode="power", trim=True):
     return specaxis, specvals
 
 
-def setnotchfilter(thefilter, thefreq, notchwidth=1.0):
+def setnotchfilter(thefilter: object, thefreq: float, notchwidth: float = 1.0) -> None:
     r"""Set notch filter - sets the filter parameters for the notch.
 
     Parameters
@@ -1326,7 +1372,13 @@ def setnotchfilter(thefilter, thefreq, notchwidth=1.0):
     )
 
 
-def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False):
+def harmonicnotchfilter(
+    timecourse: ArrayLike,
+    Fs: float,
+    Ffundamental: float,
+    notchpct: float = 1.0,
+    debug: bool = False,
+) -> NDArray:
     r"""Harmonic notch filter - removes a fundamental and its harmonics from a timecourse.
 
     Parameters
@@ -1378,11 +1430,18 @@ def harmonicnotchfilter(timecourse, Fs, Ffundamental, notchpct=1.0, debug=False)
     return filteredtc
 
 
-def savgolsmooth(data, smoothlen=101, polyorder=3):
+def savgolsmooth(data: ArrayLike, smoothlen: int = 101, polyorder: int = 3) -> NDArray:
     return savgol_filter(data, smoothlen, polyorder)
 
 
-def csdfilter(obsdata, commondata, padlen=20, avlen=20, padtype="reflect", debug=False):
+def csdfilter(
+    obsdata: ArrayLike,
+    commondata: ArrayLike,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Cross spectral density filter - makes a filter transfer function that preserves common frequencies.
 
     Parameters
@@ -1418,19 +1477,19 @@ def csdfilter(obsdata, commondata, padlen=20, avlen=20, padtype="reflect", debug
 
 # @conditionaljit()
 def arb_pass(
-    Fs,
-    inputdata,
-    lowerstop,
-    lowerpass,
-    upperpass,
-    upperstop,
-    transferfunc="trapezoidal",
-    butterorder=6,
-    padlen=20,
-    avlen=20,
-    padtype="reflect",
-    debug=False,
-):
+    Fs: float,
+    inputdata: ArrayLike,
+    lowerstop: float,
+    lowerpass: float,
+    upperpass: float,
+    upperstop: float,
+    transferfunc: str = "trapezoidal",
+    butterorder: int = 6,
+    padlen: int = 20,
+    avlen: int = 20,
+    padtype: str = "reflect",
+    debug: bool = False,
+) -> NDArray:
     r"""Filters an input waveform over a specified range.  By default it is a trapezoidal
     FFT filter, but brickwall and butterworth filters are also available.  Ends are padded to reduce
     transients.
@@ -1594,7 +1653,9 @@ class Plethfilter:
         return signal.filtfilt(self.b, self.a, data, axis=-1, padtype="odd", padlen=None)
 
 
-def getfilterbandfreqs(band, transitionfrac=0.05, species="human", asrange=False):
+def getfilterbandfreqs(
+    band: str, transitionfrac: float = 0.05, species: str = "human", asrange: bool = False
+) -> Union[str, Tuple[float, float, float, float]]:
     if species == "human":
         if band == "vlf":
             lowerpass = 0.0
@@ -2099,12 +2160,12 @@ class NoncausalFilter:
 
 
 # --------------------------- FFT helper functions ---------------------------------------------
-def polarfft(inputdata):
+def polarfft(inputdata: ArrayLike) -> Tuple[NDArray, NDArray]:
     complexxform = fftpack.fft(inputdata)
     return np.abs(complexxform), np.angle(complexxform)
 
 
-def ifftfrompolar(r, theta):
+def ifftfrompolar(r: ArrayLike, theta: ArrayLike) -> NDArray:
     complexxform = r * np.exp(1j * theta)
     return fftpack.ifft(complexxform).real
 
@@ -2113,7 +2174,7 @@ def ifftfrompolar(r, theta):
 BHwindows = {}
 
 
-def blackmanharris(length, debug=False):
+def blackmanharris(length: int, debug: bool = False) -> NDArray:
     r"""Returns a Blackman Harris window function of the specified length.
     Once calculated, windows are cached for speed.
 
@@ -2152,7 +2213,7 @@ def blackmanharris(length, debug=False):
 hannwindows = {}
 
 
-def hann(length, debug=False):
+def hann(length: int, debug: bool = False) -> NDArray:
     r"""Returns a Hann window function of the specified length.  Once calculated, windows
     are cached for speed.
 
@@ -2186,12 +2247,18 @@ def hann(length, debug=False):
 hammingwindows = {}
 
 
-def rect(length, L):
+def rect(length: int, L: float) -> NDArray:
     thearray = np.abs(np.linspace(0, length, length, endpoint=False) - length / 2.0)
     return np.where(thearray <= L / 2.0, 1.0, 0.0)
 
 
-def mRect(length, alpha=0.5, omegac=None, phi=0.0, debug=False):
+def mRect(
+    length: int,
+    alpha: float = 0.5,
+    omegac: Optional[float] = None,
+    phi: float = 0.0,
+    debug: bool = False,
+) -> NDArray:
     if omegac is None:
         omegac = 2.0 / length
     L = 1.0 / omegac
@@ -2207,7 +2274,7 @@ def mRect(length, alpha=0.5, omegac=None, phi=0.0, debug=False):
     return thewindow / np.max(thewindow)
 
 
-def hamming(length, debug=False):
+def hamming(length: int, debug: bool = False) -> NDArray:
     #   return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
     r"""Returns a Hamming window function of the specified length.  Once calculated, windows
     are cached for speed.
@@ -2238,7 +2305,7 @@ def hamming(length, debug=False):
         return hammingwindows[str(length)]
 
 
-def windowfunction(length, type="hamming", debug=False):
+def windowfunction(length: int, type: str = "hamming", debug: bool = False) -> NDArray:
     r"""Returns a window function of the specified length and type.  Once calculated, windows
     are cached for speed.
 

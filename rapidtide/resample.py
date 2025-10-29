@@ -31,8 +31,11 @@ with warnings.catch_warnings():
     else:
         pyfftwpresent = True
 
+from typing import Any, Callable, Optional, Tuple, Union
+
 import pylab as pl
 import scipy as sp
+from numpy.typing import ArrayLike, NDArray
 from scipy import fftpack, signal
 
 import rapidtide.filter as tide_filt
@@ -62,8 +65,8 @@ else:
     donotusenumba = False
 
 
-def conditionaljit():
-    def resdec(f):
+def conditionaljit() -> Callable:
+    def resdec(f: Callable) -> Callable:
         if donotusenumba:
             return f
         return jit(f, nopython=True)
@@ -71,8 +74,8 @@ def conditionaljit():
     return resdec
 
 
-def conditionaljit2():
-    def resdec(f):
+def conditionaljit2() -> Callable:
+    def resdec(f: Callable) -> Callable:
         if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=True)
@@ -80,7 +83,7 @@ def conditionaljit2():
     return resdec
 
 
-def disablenumba():
+def disablenumba() -> None:
     global donotusenumba
     donotusenumba = True
 
@@ -125,16 +128,16 @@ congridyvals["width"] = 3.0
 
 
 def congrid(
-    xaxis,
-    loc,
-    val,
-    width,
-    kernel="kaiser",
-    cache=True,
-    cyclic=True,
-    debug=False,
-    onlykeynotices=True,
-):
+    xaxis: ArrayLike,
+    loc: float,
+    val: float,
+    width: float,
+    kernel: str = "kaiser",
+    cache: bool = True,
+    cyclic: bool = True,
+    debug: bool = False,
+    onlykeynotices: bool = True,
+) -> Tuple[NDArray, NDArray, NDArray]:
     """
     Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel of width 'width'.  Grid
     parameters are cached for performance.
@@ -401,7 +404,9 @@ class FastResampler:
         return out_y
 
 
-def FastResamplerFromFile(inputname, colspec=None, debug=False, **kwargs):
+def FastResamplerFromFile(
+    inputname: str, colspec: Optional[str] = None, debug: bool = False, **kwargs
+) -> FastResampler:
     (
         insamplerate,
         instarttime,
@@ -425,15 +430,15 @@ def FastResamplerFromFile(inputname, colspec=None, debug=False, **kwargs):
 
 
 def doresample(
-    orig_x,
-    orig_y,
-    new_x,
-    method="cubic",
-    padlen=0,
-    padtype="reflect",
-    antialias=False,
-    debug=False,
-):
+    orig_x: ArrayLike,
+    orig_y: ArrayLike,
+    new_x: ArrayLike,
+    method: str = "cubic",
+    padlen: int = 0,
+    padtype: str = "reflect",
+    antialias: bool = False,
+    debug: bool = False,
+) -> NDArray:
     """
     Resample data from one spacing to another.  By default, does not apply any antialiasing filter.
 
@@ -501,15 +506,15 @@ def doresample(
 
 
 def arbresample(
-    inputdata,
-    init_freq,
-    final_freq,
-    intermed_freq=0.0,
-    method="univariate",
-    antialias=True,
-    decimate=False,
-    debug=False,
-):
+    inputdata: ArrayLike,
+    init_freq: float,
+    final_freq: float,
+    intermed_freq: float = 0.0,
+    method: str = "univariate",
+    antialias: bool = True,
+    decimate: bool = False,
+    debug: bool = False,
+) -> NDArray:
     """
 
     Parameters
@@ -598,8 +603,14 @@ def arbresample(
 
 
 def upsample(
-    inputdata, Fs_init, Fs_higher, method="univariate", intfac=False, dofilt=True, debug=False
-):
+    inputdata: ArrayLike,
+    Fs_init: float,
+    Fs_higher: float,
+    method: str = "univariate",
+    intfac: bool = False,
+    dofilt: bool = True,
+    debug: bool = False,
+) -> NDArray:
     starttime = time.time()
     if Fs_higher <= Fs_init:
         print("upsample: target frequency must be higher than initial frequency")
@@ -628,14 +639,14 @@ def upsample(
 
 
 def dotwostepresample(
-    orig_x,
-    orig_y,
-    intermed_freq,
-    final_freq,
-    method="univariate",
-    antialias=True,
-    debug=False,
-):
+    orig_x: ArrayLike,
+    orig_y: ArrayLike,
+    intermed_freq: float,
+    final_freq: float,
+    method: str = "univariate",
+    antialias: bool = True,
+    debug: bool = False,
+) -> NDArray:
     """
 
     Parameters
@@ -700,7 +711,9 @@ def dotwostepresample(
     return resampled_y
 
 
-def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
+def calcsliceoffset(
+    sotype: int, slicenum: int, numslices: int, tr: float, multiband: int = 1
+) -> float:
     """
 
     Parameters
@@ -804,7 +817,9 @@ def calcsliceoffset(sotype, slicenum, numslices, tr, multiband=1):
 
 # NB: a positive value of shifttrs delays the signal, a negative value advances it
 # timeshift using fourier phase multiplication
-def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
+def timeshift(
+    inputtc: ArrayLike, shifttrs: float, padtrs: int, doplot: bool = False, debug: bool = False
+) -> Tuple[NDArray, NDArray, NDArray, NDArray]:
     """
 
     Parameters
@@ -883,16 +898,23 @@ def timeshift(inputtc, shifttrs, padtrs, doplot=False, debug=False):
     ]
 
 
-def timewarp(orig_x, orig_y, timeoffset, demean=True, method="univariate", debug=False):
+def timewarp(
+    orig_x: ArrayLike,
+    orig_y: ArrayLike,
+    timeoffset: ArrayLike,
+    demean: bool = True,
+    method: str = "univariate",
+    debug: bool = False,
+) -> NDArray:
     if demean:
         demeanedoffset = timeoffset - np.mean(timeoffset)
         if debug:
             print("mean delay of ", np.mean(timeoffset), "seconds removed prior to resampling")
     else:
         demeanedoffset = timeoffset
-    sampletime = orig_x[1] - orig_x[0]
-    maxdevs = (np.min(demeanedoffset), np.max(demeanedoffset))
-    maxsamps = maxdevs / sampletime
+    sampletime = float(orig_x[1] - orig_x[0])
+    maxdevs = (float(np.min(demeanedoffset)), float(np.max(demeanedoffset)))
+    maxsamps = (maxdevs[0] / sampletime, maxdevs[1] / sampletime)
     padlen = np.min([int(len(orig_x) // 2), int(30.0 / sampletime)])
     if debug:
         print("maximum deviation in samples:", maxsamps)

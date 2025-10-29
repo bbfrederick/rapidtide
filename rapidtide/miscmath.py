@@ -651,7 +651,9 @@ def phasemod(phase: ArrayLike, centric: bool = True) -> NDArray:
         return phase % (2.0 * np.pi)
 
 
-def trendfilt(inputdata: ArrayLike, order: int = 3, ndevs: float = 3.0, debug: bool = False) -> NDArray:
+def trendfilt(
+    inputdata: ArrayLike, order: int = 3, ndevs: float = 3.0, debug: bool = False
+) -> NDArray:
     """
 
     Parameters

@@ -19,9 +19,11 @@
 """Functions for calculating correlations and similar metrics between arrays."""
 import logging
 import warnings
+from typing import Any, Callable, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -65,10 +67,10 @@ else:
     donotusenumba = False
 
 
-def conditionaljit():
+def conditionaljit() -> Callable:
     """Wrap functions in jit if numba is enabled."""
 
-    def resdec(f):
+    def resdec(f: Callable) -> Callable:
         if donotusenumba:
             return f
         return jit(f, nopython=True)
@@ -76,7 +78,7 @@ def conditionaljit():
     return resdec
 
 
-def disablenumba():
+def disablenumba() -> None:
     """Set a global variable to disable numba."""
     global donotusenumba
     donotusenumba = True
@@ -84,15 +86,15 @@ def disablenumba():
 
 # --------------------------- Correlation functions -------------------------------------------------
 def check_autocorrelation(
-    corrscale,
-    thexcorr,
-    delta=0.05,
-    acampthresh=0.1,
-    aclagthresh=10.0,
-    displayplots=False,
-    detrendorder=1,
-    debug=False,
-):
+    corrscale: ArrayLike,
+    thexcorr: ArrayLike,
+    delta: float = 0.05,
+    acampthresh: float = 0.1,
+    aclagthresh: float = 10.0,
+    displayplots: bool = False,
+    detrendorder: int = 1,
+    debug: bool = False,
+) -> Tuple[Optional[float], Optional[float]]:
     """Check for autocorrelation in an array.
 
     Parameters
@@ -176,14 +178,14 @@ def check_autocorrelation(
 
 
 def shorttermcorr_1D(
-    data1,
-    data2,
-    sampletime,
-    windowtime,
-    samplestep=1,
-    detrendorder=0,
-    windowfunc="hamming",
-):
+    data1: ArrayLike,
+    data2: ArrayLike,
+    sampletime: float,
+    windowtime: float,
+    samplestep: int = 1,
+    detrendorder: int = 0,
+    windowfunc: str = "hamming",
+) -> Tuple[NDArray, NDArray, NDArray]:
     """Calculate short-term sliding-window correlation between two 1D arrays.
 
     Parameters
@@ -230,19 +232,19 @@ def shorttermcorr_1D(
 
 
 def shorttermcorr_2D(
-    data1,
-    data2,
-    sampletime,
-    windowtime,
-    samplestep=1,
-    laglimits=None,
-    weighting="None",
-    zeropadding=0,
-    windowfunc="None",
-    detrendorder=0,
-    compress=False,
-    displayplots=False,
-):
+    data1: ArrayLike,
+    data2: ArrayLike,
+    sampletime: float,
+    windowtime: float,
+    samplestep: int = 1,
+    laglimits: Optional[Tuple[float, float]] = None,
+    weighting: str = "None",
+    zeropadding: int = 0,
+    windowfunc: str = "None",
+    detrendorder: int = 0,
+    compress: bool = False,
+    displayplots: bool = False,
+) -> Tuple[NDArray, NDArray, NDArray, NDArray, NDArray]:
     """Calculate short-term sliding-window correlation between two 2D arrays.
 
     Parameters
@@ -356,7 +358,7 @@ def shorttermcorr_2D(
     )
 
 
-def calc_MI(x, y, bins=50):
+def calc_MI(x: ArrayLike, y: ArrayLike, bins: int = 50) -> float:
     """Calculate mutual information between two arrays.
 
     Notes
@@ -372,8 +374,15 @@ def calc_MI(x, y, bins=50):
 
 # @conditionaljit()
 def mutual_info_2d(
-    x, y, sigma=1, bins=(256, 256), fast=False, normalized=True, EPS=1.0e-6, debug=False
-):
+    x: ArrayLike,
+    y: ArrayLike,
+    sigma: float = 1,
+    bins: Union[int, Tuple[int, int], Tuple[NDArray, NDArray]] = (256, 256),
+    fast: bool = False,
+    normalized: bool = True,
+    EPS: float = 1.0e-6,
+    debug: bool = False,
+) -> float:
     """Compute (normalized) mutual information between two 1D variate from a joint histogram.
 
     Parameters
@@ -458,21 +467,21 @@ def mutual_info_2d(
 
 # @conditionaljit
 def cross_mutual_info(
-    x,
-    y,
-    returnaxis=False,
-    negsteps=-1,
-    possteps=-1,
-    locs=None,
-    Fs=1.0,
-    norm=True,
-    madnorm=False,
-    windowfunc="None",
-    bins=-1,
-    prebin=True,
-    sigma=0.25,
-    fast=True,
-):
+    x: ArrayLike,
+    y: ArrayLike,
+    returnaxis: bool = False,
+    negsteps: int = -1,
+    possteps: int = -1,
+    locs: Optional[ArrayLike] = None,
+    Fs: float = 1.0,
+    norm: bool = True,
+    madnorm: bool = False,
+    windowfunc: str = "None",
+    bins: int = -1,
+    prebin: bool = True,
+    sigma: float = 0.25,
+    fast: bool = True,
+) -> Union[NDArray, Tuple[NDArray, NDArray, int]]:
     """Calculate cross-mutual information between two 1D arrays.
     Parameters
     ----------
@@ -599,12 +608,12 @@ def cross_mutual_info(
         return thexmi_y
 
 
-def mutual_info_to_r(themi, d=1):
+def mutual_info_to_r(themi: float, d: int = 1) -> float:
     """Convert mutual information to Pearson product-moment correlation."""
     return np.power(1.0 - np.exp(-2.0 * themi / d), -0.5)
 
 
-def dtw_distance(s1, s2):
+def dtw_distance(s1: ArrayLike, s2: ArrayLike) -> float:
     # Dynamic time warping function written by GPT-4
     # Get the lengths of the two input sequences
     n, m = len(s1), len(s2)
@@ -633,7 +642,9 @@ def dtw_distance(s1, s2):
     return DTW[n, m]
 
 
-def delayedcorr(data1, data2, delayval, timestep):
+def delayedcorr(
+    data1: ArrayLike, data2: ArrayLike, delayval: float, timestep: float
+) -> Tuple[float, float]:
     """Calculate correlation between two 1D arrays, at specific delay.
 
     Parameters
@@ -650,7 +661,9 @@ def delayedcorr(data1, data2, delayval, timestep):
     return sp.stats.pearsonr(data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0])
 
 
-def cepstraldelay(data1, data2, timestep, displayplots=True):
+def cepstraldelay(
+    data1: ArrayLike, data2: ArrayLike, timestep: float, displayplots: bool = True
+) -> float:
     """
     Estimate delay between two signals using Choudhary's cepstral analysis method.
 
@@ -762,13 +775,13 @@ class AliasedCorrelator:
 
 
 def matchsamplerates(
-    input1,
-    Fs1,
-    input2,
-    Fs2,
-    method="univariate",
-    debug=False,
-):
+    input1: ArrayLike,
+    Fs1: float,
+    input2: ArrayLike,
+    Fs2: float,
+    method: str = "univariate",
+    debug: bool = False,
+) -> Tuple[NDArray, NDArray, float]:
     if Fs1 > Fs2:
         corrFs = Fs1
         matchedinput1 = input1
@@ -785,16 +798,16 @@ def matchsamplerates(
 
 
 def arbcorr(
-    input1,
-    Fs1,
-    input2,
-    Fs2,
-    start1=0.0,
-    start2=0.0,
-    windowfunc="hamming",
-    method="univariate",
-    debug=False,
-):
+    input1: ArrayLike,
+    Fs1: float,
+    input2: ArrayLike,
+    Fs2: float,
+    start1: float = 0.0,
+    start2: float = 0.0,
+    windowfunc: str = "hamming",
+    method: str = "univariate",
+    debug: bool = False,
+) -> Tuple[NDArray, NDArray, float, int]:
     # upsample to the higher frequency of the two
     matchedinput1, matchedinput2, corrFs = matchsamplerates(
         input1,
@@ -822,8 +835,13 @@ def arbcorr(
 
 
 def faststcorrelate(
-    input1, input2, windowtype="hann", nperseg=32, weighting="None", displayplots=False
-):
+    input1: ArrayLike,
+    input2: ArrayLike,
+    windowtype: str = "hann",
+    nperseg: int = 32,
+    weighting: str = "None",
+    displayplots: bool = False,
+) -> Tuple[NDArray, NDArray, NDArray]:
     """Perform correlation between short-time Fourier transformed arrays."""
     nfft = nperseg
     noverlap = nperseg - 1
@@ -878,7 +896,7 @@ def faststcorrelate(
     return corrtimes, times, stcorr
 
 
-def primefacs(thelen):
+def primefacs(thelen: int) -> list:
     i = 2
     factors = []
     while i * i <= thelen:
@@ -891,20 +909,20 @@ def primefacs(thelen):
     return factors
 
 
-def optfftlen(thelen):
+def optfftlen(thelen: int) -> int:
     return thelen
 
 
 def fastcorrelate(
-    input1,
-    input2,
-    usefft=True,
-    zeropadding=0,
-    weighting="None",
-    compress=False,
-    displayplots=False,
-    debug=False,
-):
+    input1: ArrayLike,
+    input2: ArrayLike,
+    usefft: bool = True,
+    zeropadding: int = 0,
+    weighting: str = "None",
+    compress: bool = False,
+    displayplots: bool = False,
+    debug: bool = False,
+) -> NDArray:
     """Perform a fast correlation between two arrays.
 
     Parameters
@@ -995,7 +1013,7 @@ def fastcorrelate(
         return np.correlate(paddedinput1, paddedinput2, mode="full")
 
 
-def _centered(arr, newsize):
+def _centered(arr: NDArray, newsize: Union[int, ArrayLike]) -> NDArray:
     """Return the center newsize portion of the array.
 
     Parameters
@@ -1015,7 +1033,7 @@ def _centered(arr, newsize):
     return arr[tuple(myslice)]
 
 
-def _check_valid_mode_shapes(shape1, shape2):
+def _check_valid_mode_shapes(shape1: Tuple, shape2: Tuple) -> None:
     """Check that two shapes are 'valid' with respect to one another.
 
     Specifically, this checks that each item in one tuple is larger than or
@@ -1041,8 +1059,13 @@ def _check_valid_mode_shapes(shape1, shape2):
 
 
 def convolve_weighted_fft(
-    in1, in2, mode="full", weighting="None", compress=False, displayplots=False
-):
+    in1: ArrayLike,
+    in2: ArrayLike,
+    mode: str = "full",
+    weighting: str = "None",
+    compress: bool = False,
+    displayplots: bool = False,
+) -> NDArray:
     """Convolve two N-dimensional arrays using FFT.
 
     Convolve `in1` and `in2` using the fast Fourier transform method, with
@@ -1135,7 +1158,14 @@ def convolve_weighted_fft(
         return _centered(ret, s1 - s2 + 1)
 
 
-def gccproduct(fft1, fft2, weighting, threshfrac=0.1, compress=False, displayplots=False):
+def gccproduct(
+    fft1: NDArray,
+    fft2: NDArray,
+    weighting: str,
+    threshfrac: float = 0.1,
+    compress: bool = False,
+    displayplots: bool = False,
+) -> NDArray:
     """Calculate product for generalized crosscorrelation.
 
     Parameters
@@ -1197,17 +1227,17 @@ def gccproduct(fft1, fft2, weighting, threshfrac=0.1, compress=False, displayplo
 
 
 def aligntcwithref(
-    fixedtc,
-    movingtc,
-    Fs,
-    lagmin=-30,
-    lagmax=30,
-    refine=True,
-    zerooutbadfit=False,
-    widthmax=1000.0,
-    display=False,
-    verbose=False,
-):
+    fixedtc: ArrayLike,
+    movingtc: ArrayLike,
+    Fs: float,
+    lagmin: float = -30,
+    lagmax: float = 30,
+    refine: bool = True,
+    zerooutbadfit: bool = False,
+    widthmax: float = 1000.0,
+    display: bool = False,
+    verbose: bool = False,
+) -> Tuple[NDArray, float, float, int]:
     # now fixedtc and 2 are on the same timescales
     thexcorr = fastcorrelate(tide_math.corrnormalize(fixedtc), tide_math.corrnormalize(movingtc))
     xcorrlen = len(thexcorr)
