@@ -20,9 +20,11 @@
 A widget for orthographically displaying 3 and 4 dimensional data
 """
 import os
+from typing import Any
 
 import numpy as np
 import pyqtgraph as pg
+from numpy.typing import NDArray
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 try:
@@ -46,7 +48,9 @@ else:
 print(f"using {pyqtbinding=}")
 
 
-def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
+def newColorbar(
+    left: float, top: float, impixpervoxx: float, impixpervoxy: float, imgsize: int
+) -> tuple[Any, Any, Any, NDArray[np.float64]]:
     cb_xdim = imgsize // 10
     cb_ydim = imgsize
     theviewbox = pg.ViewBox(enableMouse=False)
@@ -80,14 +84,14 @@ def newColorbar(left, top, impixpervoxx, impixpervoxy, imgsize):
 
 
 def setupViewWindow(
-    view,
-    left,
-    top,
-    impixpervoxx,
-    impixpervoxy,
-    imgsize,
-    enableMouse=False,
-):
+    view: Any,
+    left: float,
+    top: float,
+    impixpervoxx: float,
+    impixpervoxy: float,
+    imgsize: int,
+    enableMouse: bool = False,
+) -> tuple[Any, Any, Any, Any, Any]:
 
     theviewbox = view.addViewBox(enableMouse=enableMouse, enableMenu=False, lockAspect=1.0)
     theviewbox.setAspectLocked()
@@ -268,16 +272,16 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.enableView()
         self.updateAllViews()
 
-    def xvox2pix(self, xpos):
+    def xvox2pix(self, xpos: int) -> int:
         return int(np.round(self.offsetx + self.impixpervoxx * xpos))
 
-    def yvox2pix(self, ypos):
+    def yvox2pix(self, ypos: int) -> int:
         return int(np.round(self.offsety + self.impixpervoxy * ypos))
 
-    def zvox2pix(self, zpos):
+    def zvox2pix(self, zpos: int) -> int:
         return int(np.round(self.offsetz + self.impixpervoxz * zpos))
 
-    def xpix2vox(self, xpix):
+    def xpix2vox(self, xpix: float) -> int:
         thepos = (xpix - self.offsetx) / self.impixpervoxx
         if thepos > self.xdim - 1:
             thepos = self.xdim - 1
@@ -285,7 +289,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             thepos = 0
         return int(np.round(thepos))
 
-    def ypix2vox(self, ypix):
+    def ypix2vox(self, ypix: float) -> int:
         thepos = (ypix - self.offsety) / self.impixpervoxy
         if thepos > self.ydim - 1:
             thepos = self.ydim - 1
@@ -293,7 +297,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             thepos = 0
         return int(np.round(thepos))
 
-    def zpix2vox(self, zpix):
+    def zpix2vox(self, zpix: float) -> int:
         thepos = (zpix - self.offsetz) / self.impixpervoxz
         if thepos > self.zdim - 1:
             thepos = self.zdim - 1
@@ -301,7 +305,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             thepos = 0
         return int(np.round(thepos))
 
-    def updateAllViews(self):
+    def updateAllViews(self) -> None:
         if self.tdim == 1:
             axdata = self.map.maskeddata[:, :, self.zpos]
         else:
@@ -354,18 +358,26 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.sagviewvLine.setValue(self.yvox2pix(self.ypos))
         self.sagviewhLine.setValue(self.zvox2pix(self.zpos))
 
-    def updateOneView(self, data, mask, background, theLUT, thefgwin, thebgwin):
+    def updateOneView(
+        self,
+        data: NDArray,
+        mask: NDArray,
+        background: NDArray | None,
+        theLUT: NDArray,
+        thefgwin: Any,
+        thebgwin: Any,
+    ) -> None:
         im = self.applyLUT(data, mask, theLUT, self.map.dispmin, self.map.dispmax)
         thefgwin.setImage(im.astype("float"))
         if background is not None:
             thebgwin.setImage(background.astype("float"), autoLevels=True)
 
-    def setMap(self, themap):
+    def setMap(self, themap: Any) -> None:
         self.map = themap
         self.tdim = self.map.tdim
         self.mapname = self.map.label
 
-    def enableView(self):
+    def enableView(self) -> None:
         if self.button is not None:
             self.button.setText(self.map.label)
             self.button.setDisabled(False)
@@ -374,7 +386,9 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.corview.show()
         self.sagview.show()
 
-    def applyLUT(self, theimage, mask, theLUT, dispmin, dispmax):
+    def applyLUT(
+        self, theimage: NDArray, mask: NDArray, theLUT: NDArray, dispmin: float, dispmax: float
+    ) -> NDArray:
         offset = dispmin
         if dispmax - dispmin > 0:
             scale = len(theLUT) / (dispmax - dispmin)
@@ -387,7 +401,7 @@ class OrthoImageItem(QtWidgets.QWidget):
         mappeddata[:, :, 3][np.where(mask < 1)] = 0
         return mappeddata
 
-    def updateCursors(self):
+    def updateCursors(self) -> None:
         xpix = self.xvox2pix(self.xpos)
         ypix = self.yvox2pix(self.ypos)
         zpix = self.zvox2pix(self.zpos)
@@ -398,60 +412,60 @@ class OrthoImageItem(QtWidgets.QWidget):
         self.sagviewvLine.setValue(ypix)
         self.sagviewhLine.setValue(zpix)
 
-    def handlemouseup(self, event):
+    def handlemouseup(self, event: Any) -> None:
         self.buttonisdown = False
         self.updateCursors()
         self.updateAllViews()
 
-    def handleaxmousemove(self, event):
+    def handleaxmousemove(self, event: Any) -> None:
         if self.buttonisdown:
             self.xpos = self.xpix2vox(event.pos().x() - 1)
             self.ypos = self.ypix2vox(self.imgsize - event.pos().y() + 1)
             self.updateAllViews()
             self.updated.emit()
 
-    def handlecormousemove(self, event):
+    def handlecormousemove(self, event: Any) -> None:
         if self.buttonisdown:
             self.xpos = self.xpix2vox(event.pos().x() - 1)
             self.zpos = self.zpix2vox(self.imgsize - event.pos().y() + 1)
             self.updateAllViews()
             self.updated.emit()
 
-    def handlesagmousemove(self, event):
+    def handlesagmousemove(self, event: Any) -> None:
         if self.buttonisdown:
             self.ypos = self.ypix2vox(event.pos().x() - 1)
             self.zpos = self.zpix2vox(self.imgsize - event.pos().y() + 1)
             self.updateAllViews()
             self.updated.emit()
 
-    def handleaxkey(self, event):
+    def handleaxkey(self, event: Any) -> None:
         if self.verbose > 1:
             print(event)
         self.updateAllViews()
         self.updated.emit()
 
-    def handleaxclick(self, event):
+    def handleaxclick(self, event: Any) -> None:
         self.xpos = self.xpix2vox(event.pos().x() - 1)
         self.ypos = self.ypix2vox(self.imgsize - event.pos().y() + 1)
         self.buttonisdown = True
         self.updateAllViews()
         self.updated.emit()
 
-    def handlecorclick(self, event):
+    def handlecorclick(self, event: Any) -> None:
         self.xpos = self.xpix2vox(event.pos().x() - 1)
         self.zpos = self.zpix2vox(self.imgsize - event.pos().y() + 1)
         self.buttonisdown = True
         self.updateAllViews()
         self.updated.emit()
 
-    def handlesagclick(self, event):
+    def handlesagclick(self, event: Any) -> None:
         self.ypos = self.ypix2vox(event.pos().x() - 1)
         self.zpos = self.zpix2vox(self.imgsize - event.pos().y() + 1)
         self.buttonisdown = True
         self.updateAllViews()
         self.updated.emit()
 
-    def setXYZpos(self, xpos, ypos, zpos, emitsignal=True):
+    def setXYZpos(self, xpos: int, ypos: int, zpos: int, emitsignal: bool = True) -> None:
         self.xpos = int(xpos)
         self.ypos = int(ypos)
         self.zpos = int(zpos)
@@ -459,7 +473,7 @@ class OrthoImageItem(QtWidgets.QWidget):
         if emitsignal:
             self.updated.emit()
 
-    def setTpos(self, tpos, emitsignal=True):
+    def setTpos(self, tpos: int, emitsignal: bool = True) -> None:
         if tpos > self.tdim - 1:
             self.tpos = int(self.tdim - 1)
         else:
@@ -469,13 +483,22 @@ class OrthoImageItem(QtWidgets.QWidget):
         if emitsignal:
             self.updated.emit()
 
-    def getFocusVal(self):
+    def getFocusVal(self) -> float:
         if self.tdim > 1:
             return self.map.maskeddata[self.xpos, self.ypos, self.zpos, self.tpos]
         else:
             return self.map.maskeddata[self.xpos, self.ypos, self.zpos]
 
-    def saveandcomposite(self, square_img, fg_img, bg_img, name, savedir, scalefach, scalefacv):
+    def saveandcomposite(
+        self,
+        square_img: Any,
+        fg_img: Any,
+        bg_img: Any,
+        name: str,
+        savedir: str,
+        scalefach: float,
+        scalefacv: float,
+    ) -> None:
         if PILexists:
             if self.verbose > 1:
                 print("using PIL to save ", name)
@@ -524,7 +547,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             fg_img.save(os.path.join(savedir, name + "_fg.png"))
             bg_img.save(os.path.join(savedir, name + "_bg.png"))
 
-    def saveDisp(self):
+    def saveDisp(self) -> None:
         if self.verbose > 1:
             print("saving main window")
         mydialog = QtWidgets.QFileDialog()
@@ -617,7 +640,7 @@ class OrthoImageItem(QtWidgets.QWidget):
             FILE.writelines(str(self.map.dispmin) + "\t" + str(self.map.dispmax))
             # img_colorbar.save(thedir + self.map.name + '_colorbar.png')
 
-    def summarize(self):
+    def summarize(self) -> None:
         if self.map is not None:
             # print('OrthoImageItem[', self.map.name, ']: map is set')
             pass

@@ -19,9 +19,11 @@
 import copy
 import os
 import sys
+from typing import Any, Callable
 
 import nibabel as nib
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -39,7 +41,7 @@ atlases = {
 }
 
 
-def check_rt_spatialmatch(dataset1, dataset2):
+def check_rt_spatialmatch(dataset1: Any, dataset2: Any) -> tuple[bool, bool, bool, bool]:
     if (
         (dataset1.xdim == dataset2.xdim)
         and (dataset1.ydim == dataset2.ydim)
@@ -103,7 +105,7 @@ class Timecourse:
             print("reading Timecourse ", self.name, " from ", self.filename, "...")
         self.readTimeData(self.label)
 
-    def readTimeData(self, thename):
+    def readTimeData(self, thename: str) -> None:
         if self.isbids:
             dummy, dummy, columns, indata, dummy, dummy = tide_io.readbidstsv(self.filename)
             try:
@@ -146,7 +148,7 @@ class Timecourse:
 
             print()
 
-    def summarize(self):
+    def summarize(self) -> None:
         print()
         print("Timecourse name:      ", self.name)
         print("    label:            ", self.label)
@@ -266,7 +268,7 @@ class Overlay:
         if self.verbose > 0:
             self.summarize()
 
-    def duplicate(self, newname, newlabel, init_LUT=True):
+    def duplicate(self, newname: str, newlabel: str, init_LUT: bool = True) -> Any:
         return Overlay(
             newname,
             self.filename,
@@ -279,7 +281,7 @@ class Overlay:
             verbose=self.verbose,
         )
 
-    def updateStats(self):
+    def updateStats(self) -> None:
         calcmaskeddata = self.data[np.where(self.mask != 0)]
 
         self.minval = calcmaskeddata.min()
@@ -307,14 +309,14 @@ class Overlay:
                 self.quartiles,
             )
 
-    def setData(self, data, isaMask=False):
+    def setData(self, data: NDArray, isaMask: bool = False) -> None:
         self.data = data.copy()
         if isaMask:
             self.data[np.where(self.data < 0.5)] = 0.0
             self.data[np.where(self.data > 0.5)] = 1.0
         self.updateStats()
 
-    def readImageData(self, isaMask=False):
+    def readImageData(self, isaMask: bool = False) -> None:
         self.nim, self.data, self.header, self.dims, self.sizes = tide_io.readfromnifti(
             self.filename
         )
@@ -340,13 +342,13 @@ class Overlay:
             print("Overlay sizes:", self.xsize, self.ysize, self.zsize, self.tr)
             print("Overlay toffset:", self.toffset)
 
-    def setLabel(self, label):
+    def setLabel(self, label: str) -> None:
         self.label = label
 
-    def real2tr(self, time):
+    def real2tr(self, time: float) -> float:
         return np.round((time - self.toffset) / self.tr, 0)
 
-    def tr2real(self, tpos):
+    def tr2real(self, tpos: int) -> float:
         return self.toffset + self.tr * tpos
 
     def real2vox(self, xcoord, ycoord, zcoord, time):
@@ -365,24 +367,24 @@ class Overlay:
             axis=0,
         )
 
-    def setXYZpos(self, xpos, ypos, zpos):
+    def setXYZpos(self, xpos: int, ypos: int, zpos: int) -> None:
         self.xpos = int(xpos)
         self.ypos = int(ypos)
         self.zpos = int(zpos)
 
-    def setTpos(self, tpos):
+    def setTpos(self, tpos: int) -> None:
         if tpos > self.tdim - 1:
             self.tpos = int(self.tdim - 1)
         else:
             self.tpos = int(tpos)
 
-    def getFocusVal(self):
+    def getFocusVal(self) -> float:
         if self.tdim > 1:
             return self.maskeddata[self.xpos, self.ypos, self.zpos, self.tpos]
         else:
             return self.maskeddata[self.xpos, self.ypos, self.zpos]
 
-    def setFuncMask(self, funcmask, maskdata=True):
+    def setFuncMask(self, funcmask: NDArray | None, maskdata: bool = True) -> None:
         self.funcmask = funcmask
         if self.funcmask is None:
             if self.tdim == 1:
@@ -394,7 +396,7 @@ class Overlay:
         if maskdata:
             self.maskData()
 
-    def setGeomMask(self, geommask, maskdata=True):
+    def setGeomMask(self, geommask: NDArray | None, maskdata: bool = True) -> None:
         self.geommask = geommask
         if self.geommask is None:
             if self.tdim == 1:
@@ -406,7 +408,7 @@ class Overlay:
         if maskdata:
             self.maskData()
 
-    def maskData(self):
+    def maskData(self) -> None:
         self.mask = self.geommask * self.funcmask
         maskhash = hash(self.mask.tobytes())
         # these operations are expensive, so only do them if the mask is changed
@@ -420,16 +422,16 @@ class Overlay:
             self.updateStats()
             self.maskhash = maskhash
 
-    def setReport(self, report):
+    def setReport(self, report: bool) -> None:
         self.report = report
 
-    def setTR(self, trval):
+    def setTR(self, trval: float) -> None:
         self.tr = trval
 
-    def settoffset(self, toffset):
+    def settoffset(self, toffset: float) -> None:
         self.toffset = toffset
 
-    def setLUT(self, lut_state, alpha=255, endalpha=128):
+    def setLUT(self, lut_state: dict, alpha: int = 255, endalpha: int = 128) -> None:
         if alpha is not None:
             theticks = [lut_state["ticks"][0]]
             for theelement in lut_state["ticks"][1:-1]:
@@ -449,10 +451,10 @@ class Overlay:
         self.theLUT = self.gradient.getLookupTable(512, alpha=True)
         self.LUTname = lut_state["name"]
 
-    def setisdisplayed(self, display_state):
+    def setisdisplayed(self, display_state: bool) -> None:
         self.display_state = display_state
 
-    def summarize(self):
+    def summarize(self) -> None:
         print()
         print("Overlay name:         ", self.name)
         print("    label:            ", self.label)
@@ -574,7 +576,7 @@ class RapidtideDataset:
         self.setupregressors()
         self.setupoverlays()
 
-    def _loadregressors(self):
+    def _loadregressors(self) -> None:
         self.focusregressor = None
         for thisregressor in self.regressorspecs:
             if os.path.isfile(self.fileroot + thisregressor[2]):
@@ -612,7 +614,7 @@ class RapidtideDataset:
                             " does not exist - skipping...",
                         )
 
-    def _loadfuncmaps(self):
+    def _loadfuncmaps(self) -> None:
         mapstoinvert = ["varChange"]
         self.loadedfuncmaps = []
         xdim = 0
@@ -673,7 +675,7 @@ class RapidtideDataset:
         if self.verbose > 1:
             print("functional maps loaded:", self.loadedfuncmaps)
 
-    def _loadfuncmasks(self):
+    def _loadfuncmasks(self) -> None:
         self.loadedfuncmasks = []
         for maskname, maskfilename in self.funcmasks:
             if self.verbose > 1:
@@ -699,7 +701,7 @@ class RapidtideDataset:
         if self.verbose > 1:
             print(self.loadedfuncmasks)
 
-    def _genpmasks(self, pvals=[0.05, 0.01, 0.005, 0.001]):
+    def _genpmasks(self, pvals: list[float] = [0.05, 0.01, 0.005, 0.001]) -> None:
         for thepval in pvals:
             maskname = f"p_lt_{thepval:.3f}_mask".replace("0.0", "0p0")
             nlpthresh = -np.log10(thepval)
@@ -715,7 +717,7 @@ class RapidtideDataset:
         if self.verbose > 1:
             print(self.loadedfuncmasks)
 
-    def _loadgeommask(self):
+    def _loadgeommask(self) -> bool:
         if self.geommaskname is not None:
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
@@ -770,7 +772,7 @@ class RapidtideDataset:
                 print("no geometric mask loaded")
             return False
 
-    def _loadanatomics(self):
+    def _loadanatomics(self) -> bool:
         try:
             fsldir = os.environ["FSLDIR"]
         except KeyError:
@@ -947,7 +949,7 @@ class RapidtideDataset:
                 print("no anatomic image loaded")
             return False
 
-    def _loadgraymask(self):
+    def _loadgraymask(self) -> bool:
         if self.graymaskspec is not None:
             filename, dummy = tide_io.parsefilespec(self.graymaskspec)
             if os.path.isfile(filename):
@@ -969,7 +971,7 @@ class RapidtideDataset:
                 print("no gray mask loaded")
             return False
 
-    def _loadwhitemask(self):
+    def _loadwhitemask(self) -> bool:
         if self.whitemaskspec is not None:
             filename, dummy = tide_io.parsefilespec(self.whitemaskspec)
             if os.path.isfile(filename):
@@ -991,7 +993,7 @@ class RapidtideDataset:
                 print("no white mask loaded")
             return False
 
-    def setupregressors(self):
+    def setupregressors(self) -> None:
         # load the regressors
         self.regressors = {}
         self.therunoptions = tide_io.readoptionsfile(self.fileroot + "desc-runoptions_info")
@@ -1159,17 +1161,17 @@ class RapidtideDataset:
             ]
         self._loadregressors()
 
-    def getregressors(self):
+    def getregressors(self) -> dict:
         return self.regressors
 
-    def setfocusregressor(self, whichregressor):
+    def setfocusregressor(self, whichregressor: str) -> None:
         try:
             testregressor = self.regressors[whichregressor]
             self.focusregressor = whichregressor
         except KeyError:
             self.focusregressor = "prefilt"
 
-    def setupoverlays(self):
+    def setupoverlays(self) -> None:
         # load the overlays
         self.overlays = {}
 
@@ -1399,15 +1401,15 @@ class RapidtideDataset:
         if self.verbose > 1:
             print("done")
 
-    def getoverlays(self):
+    def getoverlays(self) -> dict:
         return self.overlays
 
-    def setfocusmap(self, whichmap):
+    def setfocusmap(self, whichmap: str) -> None:
         try:
             testmap = self.overlays[whichmap]
             self.focusmap = whichmap
         except KeyError:
             self.focusmap = "lagtimes"
 
-    def setFuncMaskName(self, maskname):
+    def setFuncMaskName(self, maskname: str) -> None:
         self.funcmaskname = maskname

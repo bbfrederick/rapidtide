@@ -16,7 +16,10 @@
 #   limitations under the License.
 #
 #
+from typing import Any, Callable
+
 import numpy as np
+from numpy.typing import NDArray
 from scipy.special import factorial
 from tqdm import tqdm
 
@@ -27,8 +30,12 @@ import rapidtide.multiproc as tide_multiproc
 
 
 def _procOneRegressionFitItem(
-    vox, theevs, thedata, rt_floatset=np.float64, rt_floattype="float64"
-):
+    vox: int,
+    theevs: NDArray,
+    thedata: NDArray,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+) -> tuple[int, Any, Any, Any, Any, Any, NDArray, NDArray]:
     # NOTE: if theevs is 2D, dimension 0 is number of points, dimension 1 is number of evs
     thefit, R2 = tide_fit.mlregress(theevs, thedata)
     if theevs.ndim > 1:
@@ -437,7 +444,7 @@ def linfitfiltpass(
     return itemstotal
 
 
-def makevoxelspecificderivs(theevs, nderivs=1, debug=False):
+def makevoxelspecificderivs(theevs: NDArray, nderivs: int = 1, debug: bool = False) -> NDArray:
     r"""Perform multicomponent expansion on theevs (each ev replaced by itself,
     its square, its cube, etc.).
 
@@ -480,19 +487,19 @@ def makevoxelspecificderivs(theevs, nderivs=1, debug=False):
 
 
 def confoundregress(
-    theregressors,
-    theregressorlabels,
-    thedataarray,
-    tr,
-    nprocs=1,
-    orthogonalize=True,
-    tcstart=0,
-    tcend=-1,
-    tchp=None,
-    tclp=None,
-    showprogressbar=True,
-    debug=False,
-):
+    theregressors: NDArray,
+    theregressorlabels: list[str],
+    thedataarray: NDArray,
+    tr: float,
+    nprocs: int = 1,
+    orthogonalize: bool = True,
+    tcstart: int = 0,
+    tcend: int = -1,
+    tchp: float | None = None,
+    tclp: float | None = None,
+    showprogressbar: bool = True,
+    debug: bool = False,
+) -> tuple[NDArray, list[str], NDArray, NDArray]:
     if tcend == -1:
         theregressors = theregressors[:, tcstart:]
     else:

@@ -16,8 +16,11 @@
 #   limitations under the License.
 #
 #
+from typing import Any, Callable
+
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 from scipy import signal
 from scipy.interpolate import interp1d
 
@@ -32,7 +35,9 @@ class PPGKalmanFilter:
     noise characteristics compared to ECG.
     """
 
-    def __init__(self, dt=0.01, process_noise=0.001, measurement_noise=0.05):
+    def __init__(
+        self, dt: float = 0.01, process_noise: float = 0.001, measurement_noise: float = 0.05
+    ) -> None:
         """
         Initialize Kalman filter for PPG signals.
 
@@ -63,12 +68,12 @@ class PPGKalmanFilter:
         # Estimation error covariance
         self.P = np.eye(2)
 
-    def predict(self):
+    def predict(self) -> None:
         """Prediction step"""
         self.x = self.F @ self.x
         self.P = self.F @ self.P @ self.F.T + self.Q
 
-    def update(self, measurement):
+    def update(self, measurement: NDArray) -> None:
         """Update step with measurement"""
         # Innovation
         y = measurement - self.H @ self.x
@@ -86,7 +91,7 @@ class PPGKalmanFilter:
         I = np.eye(self.P.shape[0])
         self.P = (I - K @ self.H) @ self.P
 
-    def filter_signal(self, signal_data, missing_indices=None):
+    def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
         """
         Filter entire signal and interpolate missing data.
 
@@ -125,7 +130,12 @@ class AdaptivePPGKalmanFilter:
     Adjusts parameters based on signal characteristics and detects motion artifacts.
     """
 
-    def __init__(self, dt=0.01, initial_process_noise=0.001, initial_measurement_noise=0.05):
+    def __init__(
+        self,
+        dt: float = 0.01,
+        initial_process_noise: float = 0.001,
+        initial_measurement_noise: float = 0.05,
+    ) -> None:
         self.dt = dt
         self.x = np.array([[0.0], [0.0]])
         self.F = np.array([[1, dt], [0, 1]])
@@ -144,7 +154,7 @@ class AdaptivePPGKalmanFilter:
         # Motion artifact detection
         self.motion_threshold = 3.0  # Standard deviations
 
-    def detect_motion_artifact(self, innovation):
+    def detect_motion_artifact(self, innovation: NDArray) -> bool:
         """Detect potential motion artifacts based on innovation magnitude"""
         if len(self.innovation_history) < 10:
             return False
@@ -155,7 +165,7 @@ class AdaptivePPGKalmanFilter:
             return z_score > self.motion_threshold
         return False
 
-    def adapt_noise(self, innovation, is_motion_artifact):
+    def adapt_noise(self, innovation: NDArray, is_motion_artifact: bool) -> None:
         """Adapt noise parameters based on signal characteristics"""
         self.innovation_history.append(abs(innovation[0, 0]))
 
@@ -174,7 +184,7 @@ class AdaptivePPGKalmanFilter:
             # PPG needs lower process noise due to smoother signal
             self.Q_scale = max(0.0001, min(0.01, innovation_std * 0.05))
 
-    def predict(self):
+    def predict(self) -> None:
         Q = (
             np.array([[self.dt**4 / 4, self.dt**3 / 2], [self.dt**3 / 2, self.dt**2]])
             * self.Q_scale
@@ -182,7 +192,7 @@ class AdaptivePPGKalmanFilter:
         self.x = self.F @ self.x
         self.P = self.F @ self.P @ self.F.T + Q
 
-    def update(self, measurement):
+    def update(self, measurement: NDArray) -> None:
         y = measurement - self.H @ self.x
 
         # Detect motion artifact before updating
@@ -199,7 +209,7 @@ class AdaptivePPGKalmanFilter:
 
         return is_motion
 
-    def filter_signal(self, signal_data, missing_indices=None):
+    def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
         filtered = np.zeros(len(signal_data))
         motion_flags = np.zeros(len(signal_data), dtype=bool)
 
@@ -225,7 +235,13 @@ class ExtendedPPGKalmanFilter:
     Better for capturing the periodic nature of PPG signals.
     """
 
-    def __init__(self, dt=0.01, hr_estimate=75, process_noise=0.001, measurement_noise=0.05):
+    def __init__(
+        self,
+        dt: float = 0.01,
+        hr_estimate: float = 75,
+        process_noise: float = 0.001,
+        measurement_noise: float = 0.05,
+    ) -> None:
         """
         Parameters:
         -----------
@@ -251,13 +267,13 @@ class ExtendedPPGKalmanFilter:
         # For heart rate extraction
         self.hr_history = []
 
-    def get_heart_rate(self):
+    def get_heart_rate(self) -> float:
         """Extract current heart rate estimate from state"""
         frequency = self.x[3, 0]  # radians/second
         hr = frequency * 60 / (2 * np.pi)  # Convert to BPM
         return hr
 
-    def state_transition(self, x):
+    def state_transition(self, x: NDArray) -> NDArray:
         """Nonlinear state transition for sinusoidal model"""
         dc, amp, phase, freq = x.flatten()
 
@@ -266,12 +282,12 @@ class ExtendedPPGKalmanFilter:
 
         return np.array([[dc], [amp], [new_phase], [freq]])
 
-    def measurement_function(self, x):
+    def measurement_function(self, x: NDArray) -> NDArray:
         """Measurement model: DC + amplitude * sin(phase)"""
         dc, amp, phase, freq = x.flatten()
         return np.array([[dc + amp * np.sin(phase)]])
 
-    def predict(self):
+    def predict(self) -> None:
         """EKF prediction step"""
         # Propagate state
         self.x = self.state_transition(self.x)
@@ -281,7 +297,7 @@ class ExtendedPPGKalmanFilter:
 
         self.P = F @ self.P @ F.T + self.Q
 
-    def update(self, measurement):
+    def update(self, measurement: NDArray) -> None:
         """EKF update step"""
         # Predicted measurement
         z_pred = self.measurement_function(self.x)
@@ -309,7 +325,7 @@ class ExtendedPPGKalmanFilter:
         I = np.eye(4)
         self.P = (I - K @ H) @ self.P
 
-    def filter_signal(self, signal_data, missing_indices=None):
+    def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
         filtered = np.zeros(len(signal_data))
         heart_rates = np.zeros(len(signal_data))
 
@@ -351,7 +367,13 @@ class HarmonicPPGKalmanFilter:
     Measurement model: y = DC + A1*sin(phase) + A2*sin(2*phase) + A3*sin(3*phase)
     """
 
-    def __init__(self, dt=0.01, hr_estimate=75, process_noise=0.001, measurement_noise=0.05):
+    def __init__(
+        self,
+        dt: float = 0.01,
+        hr_estimate: float = 75,
+        process_noise: float = 0.001,
+        measurement_noise: float = 0.05,
+    ) -> None:
         """
         Parameters:
         -----------
@@ -400,13 +422,13 @@ class HarmonicPPGKalmanFilter:
         # For heart rate extraction
         self.hr_history = []
 
-    def get_heart_rate(self):
+    def get_heart_rate(self) -> float:
         """Extract current heart rate estimate from state"""
         frequency = self.x[5, 0]  # radians/second
         hr = frequency * 60 / (2 * np.pi)  # Convert to BPM
         return hr
 
-    def state_transition(self, x):
+    def state_transition(self, x: NDArray) -> NDArray:
         """Nonlinear state transition for harmonic sinusoidal model"""
         dc, a1, a2, a3, phase, freq = x.flatten()
 
@@ -416,7 +438,7 @@ class HarmonicPPGKalmanFilter:
         # Other states remain constant in the model
         return np.array([[dc], [a1], [a2], [a3], [new_phase], [freq]])
 
-    def measurement_function(self, x):
+    def measurement_function(self, x: NDArray) -> NDArray:
         """
         Measurement model: DC + A1*sin(phase) + A2*sin(2*phase) + A3*sin(3*phase)
         This models the fundamental frequency and first two harmonics.
@@ -425,7 +447,7 @@ class HarmonicPPGKalmanFilter:
         y = dc + a1 * np.sin(phase) + a2 * np.sin(2 * phase) + a3 * np.sin(3 * phase)
         return np.array([[y]])
 
-    def predict(self):
+    def predict(self) -> None:
         """EKF prediction step"""
         # Propagate state
         self.x = self.state_transition(self.x)
@@ -445,7 +467,7 @@ class HarmonicPPGKalmanFilter:
 
         self.P = F @ self.P @ F.T + self.Q
 
-    def update(self, measurement):
+    def update(self, measurement: NDArray) -> None:
         """EKF update step"""
         # Predicted measurement
         z_pred = self.measurement_function(self.x)
@@ -493,7 +515,7 @@ class HarmonicPPGKalmanFilter:
         I = np.eye(6)
         self.P = (I - K @ H) @ self.P
 
-    def filter_signal(self, signal_data, missing_indices=None):
+    def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
         """
         Filter entire signal and track heart rate.
 
@@ -545,7 +567,7 @@ class SignalQualityAssessor:
     Provides a quality score from 0 (poor) to 1 (excellent).
     """
 
-    def __init__(self, fs=100.0, window_size=5.0):
+    def __init__(self, fs: float = 100.0, window_size: float = 5.0) -> None:
         """
         Parameters:
         -----------
@@ -557,7 +579,9 @@ class SignalQualityAssessor:
         self.fs = fs
         self.window_samples = int(window_size * fs)
 
-    def assess_quality(self, signal_segment, filtered_segment=None):
+    def assess_quality(
+        self, signal_segment: NDArray, filtered_segment: NDArray | None = None
+    ) -> tuple[float, dict]:
         """
         Assess signal quality for a segment.
 
@@ -622,7 +646,9 @@ class SignalQualityAssessor:
 
         return quality_score, metrics
 
-    def assess_continuous(self, signal, filtered=None, stride=1.0):
+    def assess_continuous(
+        self, signal: NDArray, filtered: NDArray | None = None, stride: float = 1.0
+    ) -> tuple[NDArray, NDArray]:
         """
         Assess quality continuously along the signal.
 
@@ -671,7 +697,7 @@ class HeartRateExtractor:
     Extracts heart rate from PPG signals using multiple methods.
     """
 
-    def __init__(self, fs=100.0):
+    def __init__(self, fs: float = 100.0) -> None:
         """
         Parameters:
         -----------
@@ -680,7 +706,9 @@ class HeartRateExtractor:
         """
         self.fs = fs
 
-    def extract_from_peaks(self, ppg_signal, min_distance=0.4):
+    def extract_from_peaks(
+        self, ppg_signal: NDArray, min_distance: float = 0.4
+    ) -> tuple[float | None, NDArray, NDArray | None, NDArray | None]:
         """
         Extract heart rate from peak detection.
 
@@ -763,7 +791,9 @@ class HeartRateExtractor:
 
         return hr, peaks, rri, hr_waveform
 
-    def extract_from_fft(self, ppg_signal, hr_range=(40.0, 180.0)):
+    def extract_from_fft(
+        self, ppg_signal: NDArray, hr_range: tuple[float, float] = (40.0, 180.0)
+    ) -> tuple[float | None, float | None, NDArray, NDArray]:
         """
         Extract heart rate using FFT (frequency domain).
 
@@ -805,7 +835,13 @@ class HeartRateExtractor:
 
         return hr, dominant_freq, psd, freqs
 
-    def extract_continuous(self, ppg_signal, window_size=10.0, stride=2.0, method="fft"):
+    def extract_continuous(
+        self,
+        ppg_signal: NDArray,
+        window_size: float = 10.0,
+        stride: float = 2.0,
+        method: str = "fft",
+    ) -> tuple[NDArray, NDArray]:
         """
         Extract heart rate continuously along the PPG signal.
 
@@ -861,7 +897,13 @@ class RobustPPGProcessor:
     and heart rate extraction with intelligent segment handling.
     """
 
-    def __init__(self, fs=100.0, method="adaptive", hr_estimate=75.0, process_noise=0.0001):
+    def __init__(
+        self,
+        fs: float = 100.0,
+        method: str = "adaptive",
+        hr_estimate: float = 75.0,
+        process_noise: float = 0.0001,
+    ) -> None:
         """
         Parameters:
         -----------
@@ -898,7 +940,12 @@ class RobustPPGProcessor:
         self.quality_assessor = SignalQualityAssessor(fs=fs, window_size=5.0)
         self.hr_extractor = HeartRateExtractor(fs=fs)
 
-    def process(self, signal_data, missing_indices=None, quality_threshold=0.5):
+    def process(
+        self,
+        signal_data: NDArray,
+        missing_indices: list | None = None,
+        quality_threshold: float = 0.5,
+    ) -> dict:
         """
         Complete processing pipeline.
 
@@ -977,10 +1024,10 @@ class PPGFeatureExtractor:
     Extract additional features from PPG signals useful for health monitoring.
     """
 
-    def __init__(self, fs=100.0):
+    def __init__(self, fs: float = 100.0) -> None:
         self.fs = fs
 
-    def extract_hrv_features(self, peak_indices):
+    def extract_hrv_features(self, peak_indices: NDArray) -> dict | None:
         """
         Extract Heart Rate Variability (HRV) features.
 
@@ -1046,7 +1093,7 @@ class PPGFeatureExtractor:
 
         return features
 
-    def extract_morphology_features(self, signal_segment, peak_idx):
+    def extract_morphology_features(self, signal_segment: NDArray, peak_idx: int) -> dict:
         """
         Extract morphological features from a single PPG pulse.
 
@@ -1095,7 +1142,7 @@ class PPGFeatureExtractor:
 
         return features
 
-    def compute_spo2_proxy(self, filtered_signal):
+    def compute_spo2_proxy(self, filtered_signal: NDArray) -> float:
         """
         Compute a proxy for SpO2 (oxygen saturation) based on AC/DC ratio.
         Note: This is a simplified proxy and not a real SpO2 measurement.
@@ -1127,7 +1174,9 @@ class PPGFeatureExtractor:
         return np.clip(spo2_proxy, 70, 100)
 
 
-def read_happy_ppg(filenameroot, debug=False):
+def read_happy_ppg(
+    filenameroot: str, debug: bool = False
+) -> tuple[NDArray, float, NDArray, NDArray, NDArray | None, list]:
     Fs, instarttime, incolumns, indata, incompressed, incolsource = tide_io.readbidstsv(
         f"{filenameroot}.json",
         neednotexist=True,
@@ -1176,8 +1225,13 @@ def read_happy_ppg(filenameroot, debug=False):
 
 
 def generate_synthetic_ppg(
-    duration=10, fs=100.0, hr=75, noise_level=0.05, missing_percent=5, motion_artifacts=True
-):
+    duration: int = 10,
+    fs: float = 100.0,
+    hr: int = 75,
+    noise_level: float = 0.05,
+    missing_percent: int = 5,
+    motion_artifacts: bool = True,
+) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray]:
     """
     Generate synthetic PPG signal for testing.
 

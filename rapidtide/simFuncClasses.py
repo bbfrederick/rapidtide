@@ -18,11 +18,13 @@
 #
 import sys
 import warnings
+from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 from numpy.polynomial import Polynomial
+from numpy.typing import NDArray
 from scipy.optimize import curve_fit
 from statsmodels.robust import mad
 
@@ -72,10 +74,10 @@ class SimilarityFunctionator:
             self.setreftc(self.reftc)
             self.reftcstart = reftcstart + 0.0
 
-    def setFs(self, Fs):
+    def setFs(self, Fs: float) -> None:
         self.Fs = Fs
 
-    def preptc(self, thetc, isreftc=False):
+    def preptc(self, thetc: NDArray, isreftc: bool = False) -> NDArray:
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
         if isreftc:
             thenormtc = tide_math.corrnormalize(
@@ -106,14 +108,14 @@ class SimilarityFunctionator:
 
         return thenormtc
 
-    def trim(self, vector):
+    def trim(self, vector: NDArray) -> NDArray:
         return vector[
             self.similarityfuncorigin
             - self.lagmininpts : self.similarityfuncorigin
             + self.lagmaxinpts
         ]
 
-    def getfunction(self, trim=True):
+    def getfunction(self, trim: bool = True) -> tuple[NDArray | None, NDArray | None, int | None]:
         if self.datavalid:
             if trim:
                 return (
@@ -137,15 +139,15 @@ class SimilarityFunctionator:
 class MutualInformationator(SimilarityFunctionator):
     def __init__(
         self,
-        windowfunc="hamming",
-        norm=True,
-        madnorm=False,
-        smoothingtime=-1.0,
-        bins=20,
-        sigma=0.25,
-        *args,
-        **kwargs,
-    ):
+        windowfunc: str = "hamming",
+        norm: bool = True,
+        madnorm: bool = False,
+        smoothingtime: float = -1.0,
+        bins: int = 20,
+        sigma: float = 0.25,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         self.windowfunc = windowfunc
         self.norm = norm
         self.madnorm = madnorm
@@ -160,7 +162,7 @@ class MutualInformationator(SimilarityFunctionator):
             )
         super(MutualInformationator, self).__init__(*args, **kwargs)
 
-    def setlimits(self, lagmininpts, lagmaxinpts):
+    def setlimits(self, lagmininpts: int, lagmaxinpts: int) -> None:
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
         origpadtime = self.smoothingfilter.getpadtime()
@@ -170,10 +172,10 @@ class MutualInformationator(SimilarityFunctionator):
             print("lowering smoothing filter pad time to", newpadtime)
             self.smoothingfilter.setpadtime(newpadtime)
 
-    def setbins(self, bins):
+    def setbins(self, bins: int) -> None:
         self.bins = bins
 
-    def setreftc(self, reftc, offset=0.0):
+    def setreftc(self, reftc: NDArray, offset: float = 0.0) -> None:
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc, isreftc=True)
 
@@ -197,10 +199,16 @@ class MutualInformationator(SimilarityFunctionator):
             print(f"MutualInformationator setreftc: {self.timeaxis}")
             print(f"MutualInformationator setreftc: {self.mi_norm=}")
 
-    def getnormfac(self):
+    def getnormfac(self) -> float:
         return self.mi_norm
 
-    def run(self, thetc, locs=None, trim=True, gettimeaxis=True):
+    def run(
+        self,
+        thetc: NDArray,
+        locs: NDArray | None = None,
+        trim: bool = True,
+        gettimeaxis: bool = True,
+    ) -> tuple[NDArray, NDArray, int] | NDArray:
         if len(thetc) != len(self.reftc):
             print(
                 "MutualInformationator: timecourses are of different sizes:",
@@ -293,24 +301,24 @@ class MutualInformationator(SimilarityFunctionator):
 class Correlator(SimilarityFunctionator):
     def __init__(
         self,
-        windowfunc="hamming",
-        corrweighting="None",
-        corrpadding=0,
-        baselinefilter=None,
-        *args,
-        **kwargs,
-    ):
+        windowfunc: str = "hamming",
+        corrweighting: str = "None",
+        corrpadding: int = 0,
+        baselinefilter: Any | None = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         self.windowfunc = windowfunc
         self.corrweighting = corrweighting
         self.corrpadding = corrpadding
         self.baselinefilter = baselinefilter
         super(Correlator, self).__init__(*args, **kwargs)
 
-    def setlimits(self, lagmininpts, lagmaxinpts):
+    def setlimits(self, lagmininpts: int, lagmaxinpts: int) -> None:
         self.lagmininpts = lagmininpts
         self.lagmaxinpts = lagmaxinpts
 
-    def setreftc(self, reftc, offset=0.0):
+    def setreftc(self, reftc: NDArray, offset: float = 0.0) -> None:
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc, isreftc=True)
         self.similarityfunclen = len(self.reftc) * 2 - 1
@@ -324,7 +332,7 @@ class Correlator(SimilarityFunctionator):
         self.timeaxisvalid = True
         self.datavalid = False
 
-    def run(self, thetc, trim=True):
+    def run(self, thetc: NDArray, trim: bool = True) -> tuple[NDArray, NDArray, int]:
         if len(thetc) != len(self.reftc):
             print(
                 "Correlator: timecourses are of different sizes:",
@@ -524,33 +532,33 @@ class SimilarityFunctionFitter:
                 done = False
         return maxindex, flipfac
 
-    def setfunctype(self, functype):
+    def setfunctype(self, functype: str) -> None:
         self.functype = functype
 
-    def setpeakfittype(self, peakfittype):
+    def setpeakfittype(self, peakfittype: str) -> None:
         self.peakfittype = peakfittype
 
-    def setrange(self, lagmin, lagmax):
+    def setrange(self, lagmin: float, lagmax: float) -> None:
         self.lagmin = lagmin
         self.lagmax = lagmax
 
-    def setcorrtimeaxis(self, corrtimeaxis):
+    def setcorrtimeaxis(self, corrtimeaxis: NDArray | None) -> None:
         if corrtimeaxis is not None:
             self.corrtimeaxis = corrtimeaxis + 0.0
         else:
             self.corrtimeaxis = corrtimeaxis
 
-    def setguess(self, useguess, maxguess=0.0):
+    def setguess(self, useguess: bool, maxguess: float = 0.0) -> None:
         self.useguess = useguess
         self.maxguess = maxguess
 
-    def setlthresh(self, lthreshval):
+    def setlthresh(self, lthreshval: float) -> None:
         self.lthreshval = lthreshval
 
-    def setuthresh(self, uthreshval):
+    def setuthresh(self, uthreshval: float) -> None:
         self.uthreshval = uthreshval
 
-    def diagnosefail(self, failreason):
+    def diagnosefail(self, failreason: Any) -> str:
         # define error values
         reasons = []
         if failreason.astype(np.uint32) & self.FML_INITAMPLOW:
@@ -586,7 +594,7 @@ class SimilarityFunctionFitter:
         else:
             return "No error"
 
-    def fit(self, incorrfunc):
+    def fit(self, incorrfunc: NDArray) -> tuple[int, float, float, float, int, Any, int, int]:
         # check to make sure xcorr_x and xcorr_y match
         if self.corrtimeaxis is None:
             print("Correlation time axis is not defined - exiting")
@@ -1038,7 +1046,14 @@ class FrequencyTracker:
     freqs = None
     times = None
 
-    def __init__(self, lowerlim=0.1, upperlim=0.6, nperseg=32, Q=10.0, debug=False):
+    def __init__(
+        self,
+        lowerlim: float = 0.1,
+        upperlim: float = 0.6,
+        nperseg: int = 32,
+        Q: float = 10.0,
+        debug: bool = False,
+    ) -> None:
         self.lowerlim = lowerlim
         self.upperlim = upperlim
         self.nperseg = nperseg
@@ -1046,7 +1061,7 @@ class FrequencyTracker:
         self.debug = debug
         self.nfft = self.nperseg
 
-    def track(self, x, fs):
+    def track(self, x: NDArray, fs: float) -> tuple[NDArray, NDArray]:
         self.freqs, self.times, thespectrogram = sp.signal.spectrogram(
             np.concatenate(
                 [np.zeros(int(self.nperseg // 2)), x, np.zeros(int(self.nperseg // 2))],
@@ -1096,7 +1111,9 @@ class FrequencyTracker:
 
         return self.times[:-1], peakfreqs
 
-    def clean(self, x, fs, times, peakfreqs, numharmonics=2):
+    def clean(
+        self, x: NDArray, fs: float, times: NDArray, peakfreqs: NDArray, numharmonics: int = 2
+    ) -> NDArray:
         nyquistfreq = 0.5 * fs
         y = x * 0.0
         halfwidth = int(self.nperseg // 2)

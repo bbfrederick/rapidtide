@@ -19,9 +19,11 @@
 import gc
 import logging
 import sys
+from typing import Any, Callable
 
 import numpy as np
 import statsmodels as sm
+from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA, FastICA
 
@@ -36,10 +38,10 @@ LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelTimeShift(
-    vox,
-    voxelargs,
-    **kwargs,
-):
+    vox: int,
+    voxelargs: tuple,
+    **kwargs: Any,
+) -> tuple[int, NDArray, NDArray, NDArray, NDArray]:
     options = {
         "detrendorder": 1,
         "offsettime": 0.0,
@@ -68,11 +70,11 @@ def _procOneVoxelTimeShift(
     return vox, shiftedtc, weights, paddedshiftedtc, paddedweights
 
 
-def _packvoxeldata(voxnum, voxelargs):
+def _packvoxeldata(voxnum: int, voxelargs: tuple) -> list:
     return [(voxelargs[0])[voxnum, :], (voxelargs[1])[voxnum], voxelargs[2], voxelargs[3]]
 
 
-def _unpackvoxeldata(retvals, voxelproducts):
+def _unpackvoxeldata(retvals: tuple, voxelproducts: list) -> None:
     (voxelproducts[0])[retvals[0], :] = retvals[1]
     (voxelproducts[1])[retvals[0], :] = retvals[2]
     (voxelproducts[2])[retvals[0], :] = retvals[3]
@@ -80,14 +82,14 @@ def _unpackvoxeldata(retvals, voxelproducts):
 
 
 def findecho(
-    nlags,
-    shiftedtcs,
-    sigmav,
-    arcoefs,
-    pacf,
-    sigma,
-    phi,
-):
+    nlags: int,
+    shiftedtcs: NDArray,
+    sigmav: NDArray,
+    arcoefs: NDArray,
+    pacf: NDArray,
+    sigma: NDArray,
+    phi: NDArray,
+) -> None:
     inputshape = np.shape(shiftedtcs)
     for voxel in range(inputshape[0]):
         sigmav[voxel], arcoefs[voxel, :], pacf[voxel, :], sigma[voxel, :], phi[voxel, :] = (
@@ -418,16 +420,16 @@ def makerefinemask(
 
 
 def prenorm(
-    shiftedtcs,
-    refinemask,
-    lagtimes,
-    lagmaxthresh,
-    lagstrengths,
-    R2vals,
-    refineprenorm,
-    refineweighting,
-    debug=False,
-):
+    shiftedtcs: NDArray,
+    refinemask: NDArray,
+    lagtimes: NDArray,
+    lagmaxthresh: float,
+    lagstrengths: NDArray,
+    R2vals: NDArray,
+    refineprenorm: str,
+    refineweighting: str,
+    debug: bool = False,
+) -> None:
     if debug:
         print(f"{shiftedtcs.shape=}"),
         print(f"{refinemask.shape=}"),
