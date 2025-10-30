@@ -282,7 +282,7 @@ def dehaze(fdata: NDArray, level: int, debug: bool = False) -> NDArray:
 # https://github.com/nilearn/nilearn/blob/1607b52458c28953a87bbe6f42448b7b4e30a72f/nilearn/image/image.py#L164
 def _smooth_array(
     arr: NDArray,
-    affine: NDArray,
+    affine: NDArray | None,
     fwhm: float | NDArray | tuple | list | str | None = None,
     ensure_finite: bool = True,
     copy: bool = True,
