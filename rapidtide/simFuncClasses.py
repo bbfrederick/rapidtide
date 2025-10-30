@@ -499,7 +499,7 @@ class SimilarityFunctionFitter:
         self.allowhighfitamps = allowhighfitamps
         self.displayplots = displayplots
 
-    def _maxindex_noedge(self, corrfunc):
+    def _maxindex_noedge(self, corrfunc: NDArray) -> tuple[int, float]:
         """
 
         Parameters

@@ -46,11 +46,18 @@ except ImportError:
     mklexists = False
 
 
-def rrifromphase(timeaxis, thephase):
+def rrifromphase(timeaxis: np.ndarray, thephase: np.ndarray) -> None:
     return None
 
 
-def calc_3d_optical_flow(video, projmask, flowhdr, outputroot, window_size=3, debug=False):
+def calc_3d_optical_flow(
+    video: np.ndarray,
+    projmask: np.ndarray,
+    flowhdr: dict,
+    outputroot: str,
+    window_size: int = 3,
+    debug: bool = False,
+) -> tuple[np.ndarray, np.ndarray]:
     # window Define the window size for Lucas-Kanade method
     # Get the number of frames, height, and width of the video
     singlehdr = copy.deepcopy(flowhdr)
@@ -126,7 +133,7 @@ def calc_3d_optical_flow(video, projmask, flowhdr, outputroot, window_size=3, de
     return flow_vectors
 
 
-def phasejolt(phaseimage):
+def phasejolt(phaseimage: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
     # Compute the gradient of the window in x, y, and z directions
     grad_x, grad_y, grad_z = np.gradient(phaseimage)
@@ -147,7 +154,12 @@ def phasejolt(phaseimage):
     return (jump, jolt, laplacian)
 
 
-def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
+def cardiacsig(
+    thisphase: float | np.ndarray,
+    amps: tuple | np.ndarray = (1.0, 0.0, 0.0),
+    phases: np.ndarray | None = None,
+    overallphase: float = 0.0,
+) -> float | np.ndarray:
     total = 0.0
     if phases is None:
         phases = amps * 0.0
@@ -157,27 +169,27 @@ def cardiacsig(thisphase, amps=(1.0, 0.0, 0.0), phases=None, overallphase=0.0):
 
 
 def cardiacfromimage(
-    normdata_byslice,
-    estweights_byslice,
-    numslices,
-    timepoints,
-    tr,
-    slicetimes,
-    cardprefilter,
-    respprefilter,
-    notchpct=1.5,
-    notchrolloff=0.5,
-    invertphysiosign=False,
-    madnorm=True,
-    nprocs=1,
-    arteriesonly=False,
-    fliparteries=False,
-    debug=False,
-    appflips_byslice=None,
-    verbose=False,
-    usemask=True,
-    multiplicative=True,
-):
+    normdata_byslice: np.ndarray,
+    estweights_byslice: np.ndarray,
+    numslices: int,
+    timepoints: int,
+    tr: float,
+    slicetimes: np.ndarray,
+    cardprefilter: object,
+    respprefilter: object,
+    notchpct: float = 1.5,
+    notchrolloff: float = 0.5,
+    invertphysiosign: bool = False,
+    madnorm: bool = True,
+    nprocs: int = 1,
+    arteriesonly: bool = False,
+    fliparteries: bool = False,
+    debug: bool = False,
+    appflips_byslice: np.ndarray | None = None,
+    verbose: bool = False,
+    usemask: bool = True,
+    multiplicative: bool = True,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     # find out what timepoints we have, and their spacing
     numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
     print(
@@ -283,16 +295,23 @@ def cardiacfromimage(
     )
 
 
-def theCOM(X, data):
+def theCOM(X: np.ndarray, data: np.ndarray) -> float:
     # return the center of mass
     return np.sum(X * data) / np.sum(data)
 
 
-def savgolsmooth(data, smoothlen=101, polyorder=3):
+def savgolsmooth(data: np.ndarray, smoothlen: int = 101, polyorder: int = 3) -> np.ndarray:
     return savgol_filter(data, smoothlen, polyorder)
 
 
-def getperiodic(inputdata, Fs, fundfreq, ncomps=1, width=0.4, debug=False):
+def getperiodic(
+    inputdata: np.ndarray,
+    Fs: float,
+    fundfreq: float,
+    ncomps: int = 1,
+    width: float = 0.4,
+    debug: bool = False,
+) -> np.ndarray:
     outputdata = inputdata * 0.0
     lowerdist = fundfreq - fundfreq / (1.0 + width)
     upperdist = fundfreq * width
@@ -317,13 +336,13 @@ def getperiodic(inputdata, Fs, fundfreq, ncomps=1, width=0.4, debug=False):
 
 
 def getcardcoeffs(
-    cardiacwaveform,
-    slicesamplerate,
-    minhr=40.0,
-    maxhr=140.0,
-    smoothlen=101,
-    debug=False,
-):
+    cardiacwaveform: np.ndarray,
+    slicesamplerate: float,
+    minhr: float = 40.0,
+    maxhr: float = 140.0,
+    smoothlen: int = 101,
+    debug: bool = False,
+) -> float:
     if len(cardiacwaveform) > 1024:
         thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
     else:
@@ -393,19 +412,19 @@ def _unpackDetrendvoxeldata(retvals, voxelproducts):
 
 
 def normalizevoxels(
-    fmri_data,
-    detrendorder,
-    validvoxels,
-    time,
-    timings,
-    LGR=None,
-    mpcode=True,
-    nprocs=1,
-    alwaysmultiproc=False,
-    showprogressbar=True,
-    chunksize=1000,
-    debug=False,
-):
+    fmri_data: np.ndarray,
+    detrendorder: int,
+    validvoxels: np.ndarray,
+    time: object,
+    timings: list,
+    LGR: object | None = None,
+    mpcode: bool = True,
+    nprocs: int = 1,
+    alwaysmultiproc: bool = False,
+    showprogressbar: bool = True,
+    chunksize: int = 1000,
+    debug: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     print("Normalizing voxels...")
     normdata = fmri_data * 0.0
     demeandata = fmri_data * 0.0
@@ -477,8 +496,14 @@ def normalizevoxels(
 
 
 def cleanphysio(
-    Fs, physiowaveform, cutoff=0.4, thresh=0.2, nyquist=None, iscardiac=True, debug=False
-):
+    Fs: float,
+    physiowaveform: np.ndarray,
+    cutoff: float = 0.4,
+    thresh: float = 0.2,
+    nyquist: float | None = None,
+    iscardiac: bool = True,
+    debug: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     # first bandpass the cardiac signal to calculate the envelope
     if debug:
         print("Entering cleanphysio")
@@ -521,17 +546,17 @@ def cleanphysio(
 
 
 def findbadpts(
-    thewaveform,
-    nameroot,
-    outputroot,
-    samplerate,
-    infodict,
-    thetype="mad",
-    retainthresh=0.89,
-    mingap=2.0,
-    outputlevel=0,
-    debug=True,
-):
+    thewaveform: np.ndarray,
+    nameroot: str,
+    outputroot: str,
+    samplerate: float,
+    infodict: dict,
+    thetype: str = "mad",
+    retainthresh: float = 0.89,
+    mingap: float = 2.0,
+    outputlevel: int = 0,
+    debug: bool = True,
+) -> tuple[np.ndarray, float | tuple[float, float]]:
     # if thetype == 'triangle' or thetype == 'mad':
     if thetype == "mad":
         absdev = np.fabs(thewaveform - np.median(thewaveform))

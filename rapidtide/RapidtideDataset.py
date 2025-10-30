@@ -74,18 +74,18 @@ class Timecourse:
 
     def __init__(
         self,
-        name,
-        filename,
-        namebase,
-        samplerate,
-        displaysamplerate,
-        starttime=0.0,
-        label=None,
-        report=False,
-        isbids=False,
-        limits=None,
-        verbose=0,
-    ):
+        name: str,
+        filename: str,
+        namebase: str,
+        samplerate: float,
+        displaysamplerate: float,
+        starttime: float = 0.0,
+        label: str | None = None,
+        report: bool = False,
+        isbids: bool = False,
+        limits: tuple[float, float] | None = None,
+        verbose: int = 0,
+    ) -> None:
         self.verbose = verbose
         self.name = name
         self.filename = filename
@@ -168,22 +168,22 @@ class Overlay:
 
     def __init__(
         self,
-        name,
-        filespec,
-        namebase,
-        funcmask=None,
-        geommask=None,
-        label=None,
-        report=False,
-        lut_state=gen_gray_state(),
-        alpha=128,
-        endalpha=0,
-        display_state=True,
-        invertonload=False,
-        isaMask=False,
-        init_LUT=True,
-        verbose=1,
-    ):
+        name: str,
+        filespec: str,
+        namebase: str,
+        funcmask: NDArray | None = None,
+        geommask: NDArray | None = None,
+        label: str | None = None,
+        report: bool = False,
+        lut_state: dict = gen_gray_state(),
+        alpha: int = 128,
+        endalpha: int = 0,
+        display_state: bool = True,
+        invertonload: bool = False,
+        isaMask: bool = False,
+        init_LUT: bool = True,
+        verbose: int = 1,
+    ) -> None:
         self.verbose = verbose
         self.name = name
         if label is None:
@@ -351,7 +351,9 @@ class Overlay:
     def tr2real(self, tpos: int) -> float:
         return self.toffset + self.tr * tpos
 
-    def real2vox(self, xcoord, ycoord, zcoord, time):
+    def real2vox(
+        self, xcoord: float, ycoord: float, zcoord: float, time: float
+    ) -> tuple[int, int, int, int]:
         x, y, z = nib.apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         t = self.real2tr(time)
         return (
@@ -361,7 +363,7 @@ class Overlay:
             int(np.round(t, 0)),
         )
 
-    def vox2real(self, xpos, ypos, zpos, tpos):
+    def vox2real(self, xpos: int, ypos: int, zpos: int, tpos: int) -> NDArray:
         return np.concatenate(
             (nib.apply_affine(self.affine, [xpos, ypos, zpos]), [self.tr2real(tpos)]),
             axis=0,
@@ -519,24 +521,24 @@ class RapidtideDataset:
 
     def __init__(
         self,
-        name,
-        fileroot,
-        anatname=None,
-        geommaskname=None,
-        funcmaskname=None,
-        graymaskspec=None,
-        whitemaskspec=None,
-        userise=False,
-        usecorrout=False,
-        useatlas=False,
-        minimal=False,
-        forcetr=False,
-        forceoffset=False,
-        coordinatespace="unspecified",
-        offsettime=0.0,
-        init_LUT=True,
-        verbose=0,
-    ):
+        name: str,
+        fileroot: str,
+        anatname: str | None = None,
+        geommaskname: str | None = None,
+        funcmaskname: str | None = None,
+        graymaskspec: str | None = None,
+        whitemaskspec: str | None = None,
+        userise: bool = False,
+        usecorrout: bool = False,
+        useatlas: bool = False,
+        minimal: bool = False,
+        forcetr: bool = False,
+        forceoffset: bool = False,
+        coordinatespace: str = "unspecified",
+        offsettime: float = 0.0,
+        init_LUT: bool = True,
+        verbose: int = 0,
+    ) -> None:
         self.verbose = verbose
         self.name = name
         self.fileroot = fileroot

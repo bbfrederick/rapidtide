@@ -120,32 +120,32 @@ class DeepLearningFilter:
 
     def __init__(
         self,
-        window_size=128,
-        num_layers=5,
-        dropout_rate=0.3,
-        num_pretrain_epochs=0,
-        num_epochs=1,
-        activation="relu",
-        modelroot=".",
-        dofft=False,
-        excludethresh=4.0,
-        usebadpts=False,
-        thesuffix="25.0Hz",
-        modelpath=".",
-        thedatadir="/Users/frederic/Documents/MR_data/physioconn/timecourses",
-        inputfrag="abc",
-        targetfrag="xyz",
-        corrthresh=0.5,
-        excludebysubject=True,
-        startskip=200,
-        endskip=200,
-        step=1,
-        namesuffix=None,
-        readlim=None,
-        readskip=None,
-        countlim=None,
+        window_size: int = 128,
+        num_layers: int = 5,
+        dropout_rate: float = 0.3,
+        num_pretrain_epochs: int = 0,
+        num_epochs: int = 1,
+        activation: str = "relu",
+        modelroot: str = ".",
+        dofft: bool = False,
+        excludethresh: float = 4.0,
+        usebadpts: bool = False,
+        thesuffix: str = "25.0Hz",
+        modelpath: str = ".",
+        thedatadir: str = "/Users/frederic/Documents/MR_data/physioconn/timecourses",
+        inputfrag: str = "abc",
+        targetfrag: str = "xyz",
+        corrthresh: float = 0.5,
+        excludebysubject: bool = True,
+        startskip: int = 200,
+        endskip: int = 200,
+        step: int = 1,
+        namesuffix: str | None = None,
+        readlim: int | None = None,
+        readskip: int | None = None,
+        countlim: int | None = None,
         **kwargs,
-    ):
+    ) -> None:
         self.window_size = window_size
         self.dropout_rate = dropout_rate
         self.num_pretrain_epochs = num_pretrain_epochs
@@ -195,7 +195,7 @@ class DeepLearningFilter:
         self.infodict["step"] = self.step
         self.infodict["train_arch"] = sys.platform
 
-    def loaddata(self):
+    def loaddata(self) -> None:
         if not self.initialized:
             raise Exception("model must be initialized prior to loading data")
 
@@ -257,10 +257,10 @@ class DeepLearningFilter:
             )
 
     @tf.function
-    def predict_model(self, X):
+    def predict_model(self, X: np.ndarray) -> np.ndarray:
         return self.model(X, training=False)
 
-    def evaluate(self):
+    def evaluate(self) -> tuple[list, list, float, float]:
         self.lossfilename = os.path.join(self.modelname, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
@@ -301,7 +301,7 @@ class DeepLearningFilter:
 
         return self.loss, self.val_loss, self.pred_error, self.raw_error
 
-    def initmetadata(self):
+    def initmetadata(self) -> None:
         self.infodict = {}
         self.infodict["window_size"] = self.window_size
         self.infodict["usebadpts"] = self.usebadpts
@@ -314,14 +314,14 @@ class DeepLearningFilter:
         self.infodict["modelname"] = self.modelname
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
 
-    def updatemetadata(self):
+    def updatemetadata(self) -> None:
         self.infodict["loss"] = self.loss
         self.infodict["val_loss"] = self.val_loss
         self.infodict["raw_error"] = self.raw_error
         self.infodict["prediction_error"] = self.pred_error
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
 
-    def savemodel(self, altname=None):
+    def savemodel(self, altname: str | None = None) -> None:
         if altname is None:
             modelsavename = self.modelname
         else:
@@ -329,7 +329,7 @@ class DeepLearningFilter:
         LGR.info(f"saving {modelsavename}")
         self.model.save(os.path.join(modelsavename, "model.keras"))
 
-    def loadmodel(self, modelname, verbose=False):
+    def loadmodel(self, modelname: str, verbose: bool = False) -> None:
         # read in the data
         LGR.info(f"loading {modelname}")
         try:
@@ -361,7 +361,7 @@ class DeepLearningFilter:
         self.trained = True
         LGR.info(f"{modelname} loaded")
 
-    def initialize(self):
+    def initialize(self) -> None:
         self.getname()
         self.makenet()
         self.model.summary()
@@ -370,7 +370,7 @@ class DeepLearningFilter:
         self.initialized = True
         self.trained = False
 
-    def train(self):
+    def train(self) -> None:
         self.intermediatemodelpath = os.path.join(
             self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.keras"
         )
@@ -421,7 +421,7 @@ class DeepLearningFilter:
         self.savemodel()
         self.trained = True
 
-    def apply(self, inputdata, badpts=None):
+    def apply(self, inputdata: np.ndarray, badpts: np.ndarray | None = None) -> np.ndarray:
         initscale = mad(inputdata)
         scaleddata = inputdata / initscale
         predicteddata = scaleddata * 0.0
@@ -460,14 +460,14 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
     # it takes a time series as an input, performs 1-D convolution, and returns it as an output ready for concatenation
     def __init__(
         self,
-        num_filters=10,
-        kernel_sizes=[4, 8, 12],
-        input_lens=[64, 128, 192],
-        input_width=1,
-        dilation_rate=1,
+        num_filters: int = 10,
+        kernel_sizes: list[int] = [4, 8, 12],
+        input_lens: list[int] = [64, 128, 192],
+        input_width: int = 1,
+        dilation_rate: int = 1,
         *args,
         **kwargs,
-    ):
+    ) -> None:
         self.num_filters = num_filters
         self.kernel_sizes = kernel_sizes
         self.input_lens = input_lens
@@ -549,7 +549,14 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
 
 
 class CNNDLFilter(DeepLearningFilter):
-    def __init__(self, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs):
+    def __init__(
+        self,
+        num_filters: int = 10,
+        kernel_size: int = 5,
+        dilation_rate: int = 1,
+        *args,
+        **kwargs,
+    ) -> None:
         self.num_filters = num_filters
         self.kernel_size = kernel_size
         self.dilation_rate = dilation_rate
@@ -627,7 +634,7 @@ class CNNDLFilter(DeepLearningFilter):
 
 
 class DenseAutoencoderDLFilter(DeepLearningFilter):
-    def __init__(self, encoding_dim=10, *args, **kwargs):
+    def __init__(self, encoding_dim: int = 10, *args, **kwargs) -> None:
         self.encoding_dim = encoding_dim
         self.infodict["nettype"] = "autoencoder"
         self.infodict["encoding_dim"] = self.encoding_dim
@@ -708,8 +715,14 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
 
 class ConvAutoencoderDLFilter(DeepLearningFilter):
     def __init__(
-        self, encoding_dim=10, num_filters=5, kernel_size=5, dilation_rate=1, *args, **kwargs
-    ):
+        self,
+        encoding_dim: int = 10,
+        num_filters: int = 5,
+        kernel_size: int = 5,
+        dilation_rate: int = 1,
+        *args,
+        **kwargs,
+    ) -> None:
         self.encoding_dim = encoding_dim
         self.num_filters = num_filters
         self.kernel_size = kernel_size
@@ -807,8 +820,14 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
 
 class CRNNDLFilter(DeepLearningFilter):
     def __init__(
-        self, encoding_dim=10, num_filters=10, kernel_size=5, dilation_rate=1, *args, **kwargs
-    ):
+        self,
+        encoding_dim: int = 10,
+        num_filters: int = 10,
+        kernel_size: int = 5,
+        dilation_rate: int = 1,
+        *args,
+        **kwargs,
+    ) -> None:
         self.num_filters = num_filters
         self.kernel_size = kernel_size
         self.dilation_rate = dilation_rate
@@ -880,7 +899,7 @@ class CRNNDLFilter(DeepLearningFilter):
 
 
 class LSTMDLFilter(DeepLearningFilter):
-    def __init__(self, num_units=16, *args, **kwargs):
+    def __init__(self, num_units: int = 16, *args, **kwargs) -> None:
         self.num_units = num_units
         self.infodict["nettype"] = "lstm"
         self.infodict["num_units"] = self.num_units
@@ -934,7 +953,15 @@ class LSTMDLFilter(DeepLearningFilter):
 
 
 class HybridDLFilter(DeepLearningFilter):
-    def __init__(self, invert=False, num_filters=10, kernel_size=5, num_units=16, *args, **kwargs):
+    def __init__(
+        self,
+        invert: bool = False,
+        num_filters: int = 10,
+        kernel_size: int = 5,
+        num_units: int = 16,
+        *args,
+        **kwargs,
+    ) -> None:
         self.invert = invert
         self.num_filters = num_filters
         self.kernel_size = kernel_size

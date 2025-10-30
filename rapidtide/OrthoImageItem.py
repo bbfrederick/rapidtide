@@ -128,17 +128,17 @@ class OrthoImageItem(QtWidgets.QWidget):
 
     def __init__(
         self,
-        map,
-        axview,
-        corview,
-        sagview,
-        enableMouse=False,
-        button=None,
-        imgsize=64,
-        arrangement=0,
-        bgmap=None,
-        verbose=0,
-    ):
+        map: Any,
+        axview: Any,
+        corview: Any,
+        sagview: Any,
+        enableMouse: bool = False,
+        button: Any | None = None,
+        imgsize: int = 64,
+        arrangement: int = 0,
+        bgmap: Any | None = None,
+        verbose: int = 0,
+    ) -> None:
         QtWidgets.QWidget.__init__(self)
         self.map = map
         self.mapname = self.map.label
