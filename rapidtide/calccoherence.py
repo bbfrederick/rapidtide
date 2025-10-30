@@ -19,8 +19,10 @@
 import gc
 import logging
 import warnings
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.genericmultiproc as tide_genericmultiproc
 
@@ -29,10 +31,10 @@ LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelCoherence(
-    vox,
-    voxelargs,
-    **kwargs,
-):
+    vox: int,
+    voxelargs: list,
+    **kwargs: Any,
+) -> tuple[int, NDArray, NDArray, float, float]:
     options = {
         "alt": False,
         "debug": False,
@@ -64,32 +66,32 @@ def _procOneVoxelCoherence(
     )
 
 
-def _packvoxeldata(voxnum, voxelargs):
+def _packvoxeldata(voxnum: int, voxelargs: list) -> list:
     return [
         voxelargs[0],
         (voxelargs[1])[voxnum, :],
     ]
 
 
-def _unpackvoxeldata(retvals, voxelproducts):
+def _unpackvoxeldata(retvals: tuple, voxelproducts: list) -> None:
     (voxelproducts[0])[retvals[0]] = retvals[2]
     (voxelproducts[1])[retvals[0]] = retvals[3]
     (voxelproducts[2])[retvals[0]] = retvals[4]
 
 
 def coherencepass(
-    fmridata,
-    theCoherer,
-    coherencefunc,
-    coherencepeakval,
-    coherencepeakfreq,
-    alt=False,
-    chunksize=1000,
-    nprocs=1,
-    alwaysmultiproc=False,
-    showprogressbar=True,
-    debug=False,
-):
+    fmridata: NDArray,
+    theCoherer: Any,
+    coherencefunc: NDArray,
+    coherencepeakval: NDArray,
+    coherencepeakfreq: NDArray,
+    alt: bool = False,
+    chunksize: int = 1000,
+    nprocs: int = 1,
+    alwaysmultiproc: bool = False,
+    showprogressbar: bool = True,
+    debug: bool = False,
+) -> int:
     """
 
     Parameters

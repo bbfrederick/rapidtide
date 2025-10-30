@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.fft import fft, ifft, ifftshift
+from numpy.typing import NDArray
 
 plt.rcParams.update({"font.size": 6})
 
@@ -43,7 +44,7 @@ lambd_est = 1e-3  # estimated noise lev
 ##########################
 
 
-def gen_son(length):
+def gen_son(length: int) -> NDArray:
     "Generate a synthetic un-reverberated 'sound event' template"
     # (whitenoise -> integrate -> envelope -> normalise)
     son = np.cumsum(np.random.randn(length))
@@ -55,7 +56,7 @@ def gen_son(length):
     return son
 
 
-def gen_ir(length):
+def gen_ir(length: int) -> NDArray:
     "Generate a synthetic impulse response"
     # First we generate a quietish tail
     son = np.random.randn(length)
@@ -73,7 +74,7 @@ def gen_ir(length):
     return son
 
 
-def wiener_deconvolution(signal, kernel, lambd):
+def wiener_deconvolution(signal: NDArray, kernel: NDArray, lambd: float) -> NDArray:
     "lambd is the SNR"
     kernel = np.hstack(
         (kernel, np.zeros(len(signal) - len(kernel)))

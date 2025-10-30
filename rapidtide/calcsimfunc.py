@@ -19,8 +19,10 @@
 import gc
 import logging
 import warnings
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.resample as tide_resample
@@ -30,10 +32,10 @@ LGR = logging.getLogger("GENERAL")
 
 
 def _procOneVoxelCorrelation(
-    vox,
-    voxelargs,
-    **kwargs,
-):
+    vox: int,
+    voxelargs: list[Any],
+    **kwargs: Any,
+) -> tuple[int, float, NDArray, NDArray, float, list[float]]:
     options = {
         "oversampfactor": 1,
         "interptype": "univariate",
@@ -56,7 +58,7 @@ def _procOneVoxelCorrelation(
     return vox, np.mean(thetc), thexcorr_y, thexcorr_x, theglobalmax, theglobalmaxlist
 
 
-def _packvoxeldata(voxnum, voxelargs):
+def _packvoxeldata(voxnum: int, voxelargs: list[Any]) -> list[Any]:
     return [
         voxelargs[0],
         voxelargs[1],
@@ -68,7 +70,7 @@ def _packvoxeldata(voxnum, voxelargs):
     ]
 
 
-def _unpackvoxeldata(retvals, voxelproducts):
+def _unpackvoxeldata(retvals: tuple[Any, ...], voxelproducts: list[Any]) -> None:
     (voxelproducts[0])[retvals[0]] = retvals[1]
     (voxelproducts[1])[retvals[0], :] = retvals[2]
     voxelproducts[2] = retvals[3]
@@ -76,25 +78,25 @@ def _unpackvoxeldata(retvals, voxelproducts):
 
 
 def correlationpass(
-    fmridata,
-    referencetc,
-    theCorrelator,
-    fmri_x,
-    os_fmri_x,
-    lagmininpts,
-    lagmaxinpts,
-    corrout,
-    meanval,
-    nprocs=1,
-    alwaysmultiproc=False,
-    oversampfactor=1,
-    interptype="univariate",
-    showprogressbar=True,
-    chunksize=1000,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-    debug=False,
-):
+    fmridata: NDArray,
+    referencetc: NDArray,
+    theCorrelator: Any,
+    fmri_x: NDArray,
+    os_fmri_x: NDArray,
+    lagmininpts: int,
+    lagmaxinpts: int,
+    corrout: NDArray,
+    meanval: NDArray,
+    nprocs: int = 1,
+    alwaysmultiproc: bool = False,
+    oversampfactor: int = 1,
+    interptype: str = "univariate",
+    showprogressbar: bool = True,
+    chunksize: int = 1000,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+    debug: bool = False,
+) -> tuple[int, list[float], NDArray]:
     """
 
     Parameters

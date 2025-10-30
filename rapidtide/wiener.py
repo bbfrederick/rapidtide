@@ -17,13 +17,20 @@
 #
 #
 import numpy as np
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.multiproc as tide_multiproc
 
 
-def _procOneVoxelWiener(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype="float64"):
+def _procOneVoxelWiener(
+    vox: int,
+    lagtc: NDArray,
+    inittc: NDArray,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+) -> tuple[int, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
     thefit, R2 = tide_fit.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoff * lagtc)
@@ -40,17 +47,17 @@ def _procOneVoxelWiener(vox, lagtc, inittc, rt_floatset=np.float64, rt_floattype
 
 
 def wienerpass(
-    numspatiallocs,
-    fmri_data,
-    threshval,
-    lagtc,
-    optiondict,
-    wienerdeconv,
-    wpeak,
-    resampref_y,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-):
+    numspatiallocs: int,
+    fmri_data: NDArray,
+    threshval: float,
+    lagtc: NDArray,
+    optiondict: dict,
+    wienerdeconv: NDArray,
+    wpeak: NDArray,
+    resampref_y: NDArray,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+) -> int:
     rt_floatset = (rt_floatset,)
     rt_floattype = rt_floattype
     inputshape = np.shape(fmri_data)

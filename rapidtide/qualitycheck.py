@@ -16,8 +16,11 @@
 #   limitations under the License.
 #
 #
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 from scipy.ndimage import binary_erosion
 
 import rapidtide.filter as tide_filt
@@ -25,16 +28,18 @@ import rapidtide.stats as tide_stats
 from rapidtide.RapidtideDataset import RapidtideDataset
 
 
-def prepmask(inputmask):
+def prepmask(inputmask: NDArray) -> NDArray:
     erodedmask = binary_erosion(inputmask)
     return erodedmask
 
 
-def getmasksize(themask):
+def getmasksize(themask: NDArray) -> int:
     return len(np.ravel(themask[np.where(themask > 0)]))
 
 
-def checkregressors(theregressors, numpasses, filterlimits, debug=False):
+def checkregressors(
+    theregressors: dict[str, Any], numpasses: int, filterlimits: list[float], debug: bool = False
+) -> dict[str, float]:
     regressormetrics = {}
     firstregressor = theregressors["pass1"]
     lastregressor = theregressors[f"pass{numpasses}"]
@@ -59,18 +64,18 @@ def checkregressors(theregressors, numpasses, filterlimits, debug=False):
 
 
 def gethistmetrics(
-    themap,
-    themask,
-    thedict,
-    thehistlabel=None,
-    histlen=101,
-    rangemin=-1.0,
-    rangemax=1.0,
-    nozero=False,
-    savehist=False,
-    ignorefirstpoint=False,
-    debug=False,
-):
+    themap: NDArray,
+    themask: NDArray,
+    thedict: dict[str, Any],
+    thehistlabel: str | None = None,
+    histlen: int = 101,
+    rangemin: float = -1.0,
+    rangemax: float = 1.0,
+    nozero: bool = False,
+    savehist: bool = False,
+    ignorefirstpoint: bool = False,
+    debug: bool = False,
+) -> None:
     # mask and flatten the data
     maskisempty = False
     if len(np.where(themask > 0)) == 0:
@@ -155,16 +160,16 @@ def gethistmetrics(
 
 
 def checkmap(
-    themap,
-    themask,
-    histlen=101,
-    rangemin=0.0,
-    rangemax=1.0,
-    histlabel="similarity metric histogram",
-    ignorefirstpoint=False,
-    savehist=False,
-    debug=False,
-):
+    themap: NDArray,
+    themask: NDArray,
+    histlen: int = 101,
+    rangemin: float = 0.0,
+    rangemax: float = 1.0,
+    histlabel: str = "similarity metric histogram",
+    ignorefirstpoint: bool = False,
+    savehist: bool = False,
+    debug: bool = False,
+) -> dict[str, Any]:
     themetrics = {}
 
     gethistmetrics(
@@ -184,20 +189,20 @@ def checkmap(
 
 
 def qualitycheck(
-    datafileroot,
-    graymaskspec=None,
-    whitemaskspec=None,
-    anatname=None,
-    geommaskname=None,
-    userise=False,
-    usecorrout=False,
-    useatlas=False,
-    forcetr=False,
-    forceoffset=False,
-    offsettime=0.0,
-    verbose=False,
-    debug=False,
-):
+    datafileroot: str,
+    graymaskspec: str | None = None,
+    whitemaskspec: str | None = None,
+    anatname: str | None = None,
+    geommaskname: str | None = None,
+    userise: bool = False,
+    usecorrout: bool = False,
+    useatlas: bool = False,
+    forcetr: bool = False,
+    forceoffset: bool = False,
+    offsettime: float = 0.0,
+    verbose: bool = False,
+    debug: bool = False,
+) -> dict[str, Any]:
     # read in the dataset
     thedataset = RapidtideDataset(
         "main",

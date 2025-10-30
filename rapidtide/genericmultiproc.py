@@ -18,31 +18,33 @@
 #
 import gc
 import logging
+from typing import Any, Callable
 
 import numpy as np
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 import rapidtide.multiproc as tide_multiproc
 
 
 def run_multiproc(
-    voxelfunc,
-    packfunc,
-    unpackfunc,
-    voxelargs,
-    voxelproducts,
-    inputshape,
-    voxelmask,
-    LGR,
-    nprocs,
-    alwaysmultiproc,
-    showprogressbar,
-    chunksize,
-    indexaxis=0,
-    procunit="voxels",
-    debug=False,
-    **kwargs,
-):
+    voxelfunc: Callable,
+    packfunc: Callable,
+    unpackfunc: Callable,
+    voxelargs: list,
+    voxelproducts: list,
+    inputshape: tuple,
+    voxelmask: NDArray,
+    LGR: logging.Logger | None,
+    nprocs: int,
+    alwaysmultiproc: bool,
+    showprogressbar: bool,
+    chunksize: int,
+    indexaxis: int = 0,
+    procunit: str = "voxels",
+    debug: bool = False,
+    **kwargs: Any,
+) -> int:
     if debug:
         print(f"{len(voxelproducts)=}, {voxelproducts[0].shape}")
     if nprocs > 1 or alwaysmultiproc:

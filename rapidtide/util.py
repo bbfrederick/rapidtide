@@ -27,10 +27,12 @@ import sys
 import time
 from datetime import datetime
 from multiprocessing import shared_memory
+from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
@@ -68,7 +70,7 @@ else:
     pyfftwpresent = True
 
 
-def checkimports(optiondict):
+def checkimports(optiondict: dict[str, Any]) -> None:
     if pyfftwpresent:
         print("pfftw exists")
     else:
@@ -90,8 +92,8 @@ def checkimports(optiondict):
 
 
 # ----------------------------------------- Conditional jit handling ----------------------------------
-def conditionaljit():
-    def resdec(f):
+def conditionaljit() -> Callable:
+    def resdec(f: Callable) -> Callable:
         if donotusenumba:
             return f
         return jit(f, nopython=True)
@@ -99,8 +101,8 @@ def conditionaljit():
     return resdec
 
 
-def conditionaljit2():
-    def resdec(f):
+def conditionaljit2() -> Callable:
+    def resdec(f: Callable) -> Callable:
         if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=True)
@@ -108,12 +110,12 @@ def conditionaljit2():
     return resdec
 
 
-def disablenumba():
+def disablenumba() -> None:
     global donotusenumba
     donotusenumba = True
 
 
-def disablemkl(numprocs, debug=False):
+def disablemkl(numprocs: int, debug: bool = False) -> None:
     if mklexists:
         if numprocs > 1:
             if debug:
@@ -121,7 +123,7 @@ def disablemkl(numprocs, debug=False):
             mkl.set_num_threads(1)
 
 
-def enablemkl(numthreads, debug=False):
+def enablemkl(numthreads: int, debug: bool = False) -> None:
     if mklexists:
         if debug:
             print(f"enablemkl: setting threads to {numthreads}")
@@ -129,7 +131,7 @@ def enablemkl(numthreads, debug=False):
 
 
 # --------------------------- Utility functions -------------------------------------------------
-def findavailablemem():
+def findavailablemem() -> tuple[int, int]:
     if os.path.isfile("/sys/fs/cgroup/memory/memory.limit_in_bytes"):
         with open("/sys/fs/cgroup/memory/memory.limit_in_bytes") as limit:
             mem = int(limit.read())
@@ -141,7 +143,7 @@ def findavailablemem():
         return free, swap
 
 
-def checkifincontainer():
+def checkifincontainer() -> str | None:
     # Determine if the program is running in a container.  If so, we may need to adjust the python memory
     # limits because they are not set properly.  But check if we're running on CircleCI - it does not seem
     # to like you twiddling with the container parameters.
@@ -159,11 +161,11 @@ def checkifincontainer():
     return containertype
 
 
-def setmemlimit(memlimit):
+def setmemlimit(memlimit: int) -> None:
     resource.setrlimit(resource.RLIMIT_AS, (memlimit, memlimit))
 
 
-def formatmemamt(meminbytes):
+def formatmemamt(meminbytes: int) -> str:
     units = ["B", "kB", "MB", "GB", "TB"]
     index = 0
     unitnumber = np.uint64(1)
@@ -177,7 +179,7 @@ def formatmemamt(meminbytes):
     return f"{round(meminbytes/unitnumber, 3):.3f}{units[-1]}"
 
 
-def format_bytes(size):
+def format_bytes(size: float) -> tuple[float, str]:
     # 2**10 = 1024
     power = 2**10
     n = 0
@@ -188,7 +190,7 @@ def format_bytes(size):
     return size, power_labels[n] + "bytes"
 
 
-def logmem(msg=None):
+def logmem(msg: str | None = None) -> None:
     """Log memory usage with a logging object.
 
     Parameters
@@ -252,7 +254,7 @@ def logmem(msg=None):
     MemoryLGR.info("\t".join(outvals))
 
 
-def findexecutable(command):
+def findexecutable(command: str) -> str | None:
     """
 
     Parameters
@@ -275,7 +277,7 @@ def findexecutable(command):
         return None
 
 
-def isexecutable(command):
+def isexecutable(command: str) -> bool:
     """
 
     Parameters
@@ -301,7 +303,7 @@ def isexecutable(command):
         )
 
 
-def makeadir(pathname):
+def makeadir(pathname: str) -> bool:
     try:
         os.makedirs(pathname)
     except OSError:
@@ -315,7 +317,7 @@ def makeadir(pathname):
     return True
 
 
-def findreferencedir():
+def findreferencedir() -> str:
     # Get the list of directories
     site_packages_dirs = site.getsitepackages()
 
@@ -335,7 +337,7 @@ def findreferencedir():
     return referencedir
 
 
-def savecommandline(theargs, thename):
+def savecommandline(theargs: list[str], thename: str) -> None:
     """
 
     Parameters
@@ -350,7 +352,7 @@ def savecommandline(theargs, thename):
     tide_io.writevec([" ".join(theargs)], thename + "_commandline.txt")
 
 
-def startendcheck(timepoints, startpoint, endpoint):
+def startendcheck(timepoints: int, startpoint: int, endpoint: int) -> tuple[int, int]:
     """
 
     Parameters
@@ -387,13 +389,13 @@ def startendcheck(timepoints, startpoint, endpoint):
 
 
 def valtoindex(
-    thearray,
-    thevalue,
-    evenspacing=True,
-    discrete=True,
-    discretization="round",
-    debug=False,
-):
+    thearray: NDArray,
+    thevalue: float,
+    evenspacing: bool = True,
+    discrete: bool = True,
+    discretization: str = "round",
+    debug: bool = False,
+) -> int | float:
     """
 
     Parameters
@@ -444,7 +446,7 @@ def valtoindex(
         return int((np.abs(thearray - thevalue)).argmin())
 
 
-def progressbar(thisval, end_val, label="Percent", barsize=60):
+def progressbar(thisval: int, end_val: int, label: str = "Percent", barsize: int = 60) -> None:
     """
 
     Parameters
@@ -465,7 +467,7 @@ def progressbar(thisval, end_val, label="Percent", barsize=60):
     sys.stdout.flush()
 
 
-def makelaglist(lagstart, lagend, lagstep):
+def makelaglist(lagstart: float, lagend: float, lagstep: float) -> NDArray:
     """
 
     Parameters
@@ -497,7 +499,7 @@ def makelaglist(lagstart, lagend, lagstep):
 
 
 # ------------------------------------------ Version function ----------------------------------
-def version():
+def version() -> tuple[str, str, str, bool | str]:
     """
 
     Returns
@@ -579,7 +581,7 @@ def version():
 
 
 # --------------------------- timing functions -------------------------------------------------
-def timefmt(thenumber):
+def timefmt(thenumber: float) -> str:
     """
 
     Parameters
@@ -597,7 +599,7 @@ def timefmt(thenumber):
     return "{:10.2f}".format(thenumber)
 
 
-def proctiminglogfile(logfilename, timewidth=10):
+def proctiminglogfile(logfilename: str, timewidth: int = 10) -> tuple[list[str], float]:
     timingdata = pd.read_csv(
         logfilename,
         sep=None,
@@ -635,7 +637,11 @@ def proctiminglogfile(logfilename, timewidth=10):
     return outputlines, totaldiff
 
 
-def proctiminginfo(thetimings, outputfile="", extraheader=None):
+def proctiminginfo(
+    thetimings: list[tuple[str, float, float | None, str | None]],
+    outputfile: str = "",
+    extraheader: str | None = None,
+) -> None:
     """
 
     Parameters
@@ -680,7 +686,9 @@ def proctiminginfo(thetimings, outputfile="", extraheader=None):
 
 
 # timecourse functions
-def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
+def maketcfrom3col(
+    inputdata: NDArray, timeaxis: NDArray, outputvector: NDArray, debug: bool = False
+) -> NDArray:
     theshape = np.shape(inputdata)
     for idx in range(0, theshape[1]):
         starttime = inputdata[0, idx]
@@ -699,7 +707,9 @@ def maketcfrom3col(inputdata, timeaxis, outputvector, debug=False):
     return outputvector
 
 
-def maketcfrom2col(inputdata, timeaxis, outputvector, debug=False):
+def maketcfrom2col(
+    inputdata: NDArray, timeaxis: NDArray, outputvector: NDArray, debug: bool = False
+) -> NDArray:
     theshape = np.shape(inputdata)
     rangestart = int(inputdata[0, 0])
     for i in range(1, theshape[1]):
@@ -721,7 +731,13 @@ def maketcfrom2col(inputdata, timeaxis, outputvector, debug=False):
 
 
 # --------------------------- simulation functions ----------------------------------------------
-def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1, debug=False):
+def makeslicetimes(
+    numslices: int,
+    sliceordertype: str,
+    tr: float = 1.0,
+    multibandfac: int = 1,
+    debug: bool = False,
+) -> NDArray | None:
     outlist = np.zeros((numslices), dtype=np.float)
     if (numslices % multibandfac) != 0:
         print("ERROR: numslices is not evenly divisible by multband factor")
@@ -795,7 +811,9 @@ def makeslicetimes(numslices, sliceordertype, tr=1.0, multibandfac=1, debug=Fals
 
 
 # --------------------------- testing functions -------------------------------------------------
-def comparemap(map1, map2, mask=None, debug=False):
+def comparemap(
+    map1: NDArray, map2: NDArray, mask: NDArray | None = None, debug: bool = False
+) -> tuple[float, float, float, float, float, float, float, float]:
     ndims = len(map1.shape)
     if debug:
         print("map has", ndims, "axes")
@@ -861,7 +879,7 @@ def comparemap(map1, map2, mask=None, debug=False):
     return mindiff, maxdiff, meandiff, mse, minreldiff, maxreldiff, meanreldiff, relmse
 
 
-def comparerapidtideruns(root1, root2, debug=False):
+def comparerapidtideruns(root1: str, root2: str, debug: bool = False) -> dict[str, Any]:
     results = {}
     maskname1 = f"{root1}_desc-corrfit_mask.nii.gz"
     (
@@ -989,7 +1007,7 @@ def comparerapidtideruns(root1, root2, debug=False):
     return results
 
 
-def comparehappyruns(root1, root2, debug=False):
+def comparehappyruns(root1: str, root2: str, debug: bool = False) -> dict[str, Any]:
     results = {}
     if debug:
         print("comparehappyruns rootnames:", root1, root2)
@@ -1084,7 +1102,9 @@ def comparehappyruns(root1, root2, debug=False):
 
 
 # shared memory routines
-def numpy2shared(inarray, theouttype, name=None):
+def numpy2shared(
+    inarray: NDArray, theouttype: type, name: str | None = None
+) -> tuple[NDArray, shared_memory.SharedMemory]:
     # Create a shared memory block to store the array data
     outnbytes = np.dtype(theouttype).itemsize * inarray.size
     shm = shared_memory.SharedMemory(name=None, create=True, size=outnbytes)
@@ -1094,7 +1114,9 @@ def numpy2shared(inarray, theouttype, name=None):
     return inarray_shared, shm  # Return both the array and the shared memory object
 
 
-def allocshared(theshape, thetype, name=None):
+def allocshared(
+    theshape: tuple[int, ...], thetype: type, name: str | None = None
+) -> tuple[NDArray, shared_memory.SharedMemory]:
     # Calculate size based on shape
     thesize = np.prod(theshape)
     # Determine the data type size
@@ -1106,14 +1128,16 @@ def allocshared(theshape, thetype, name=None):
     return outarray, shm  # Return both the array and the shared memory object
 
 
-def allocarray(theshape, thetype, shared=False, name=None):
+def allocarray(
+    theshape: tuple[int, ...], thetype: type, shared: bool = False, name: str | None = None
+) -> tuple[NDArray, shared_memory.SharedMemory | None]:
     if shared:
         return allocshared(theshape, thetype, name)
     else:
         return np.zeros(theshape, dtype=thetype), None
 
 
-def cleanup_shm(shm):
+def cleanup_shm(shm: shared_memory.SharedMemory | None) -> None:
     # Cleanup
     pass
     # if shm is not None:
