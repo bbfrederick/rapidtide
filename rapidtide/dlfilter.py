@@ -146,6 +146,160 @@ class DeepLearningFilter:
         countlim: int | None = None,
         **kwargs,
     ) -> None:
+        """
+            Initialize the DeepLearningFilter with specified parameters.
+
+            This constructor sets up the configuration for a deep learning model used
+            for filtering physiological timecourses. It initializes various hyperparameters,
+            paths, and flags that control the behavior of the model and data processing.
+
+            Parameters
+            ----------
+            window_size : int, optional
+                Size of the sliding window used for processing time series data. Default is 128.
+            num_layers : int, optional
+                Number of layers in the neural network model. Default is 5.
+            dropout_rate : float, optional
+                Dropout rate for regularization during training. Default is 0.3.
+            num_pretrain_epochs : int, optional
+                Number of pre-training epochs. Default is 0.
+            num_epochs : int, optional
+                Number of training epochs. Default is 1.
+            activation : str, optional
+                Activation function to use in the model. Default is "relu".
+            modelroot : str, optional
+                Root directory for model storage. Default is ".".
+            dofft : bool, optional
+                Whether to apply FFT transformation to input data. Default is False.
+            excludethresh : float, optional
+                Threshold for excluding data points based on correlation. Default is 4.0.
+            usebadpts : bool, optional
+                Whether to include bad points in the input. Default is False.
+            thesuffix : str, optional
+                Suffix to append to filenames. Default is "25.0Hz".
+            modelpath : str, optional
+                Path to save or load the model. Default is ".".
+            thedatadir : str, optional
+                Directory containing the physiological data files. Default is
+                "/Users/frederic/Documents/MR_data/physioconn/timecourses".
+            inputfrag : str, optional
+                Fragment identifier for input data. Default is "abc".
+            targetfrag : str, optional
+                Fragment identifier for target data. Default is "xyz".
+            corrthresh : float, optional
+                Correlation threshold for filtering. Default is 0.5.
+            excludebysubject : bool, optional
+                Whether to exclude data by subject. Default is True.
+            startskip : int, optional
+                Number of samples to skip at the beginning of each timecourse. Default is 200.
+            endskip : int, optional
+                Number of samples to skip at the end of each timecourse. Default is 200.
+            step : int, optional
+                Step size for sliding window. Default is 1.
+            namesuffix : str, optional
+                Suffix to append to model name. Default is None.
+            readlim : int, optional
+                Limit on number of samples to read. Default is None.
+            readskip : int, optional
+                Number of samples to skip when reading data. Default is None.
+            countlim : int, optional
+                Limit on number of timecourses to process. Default is None.
+            **kwargs
+                Additional keyword arguments passed to the parent class.
+
+            Notes
+            -----
+            The `inputsize` is dynamically set based on the `usebadpts` flag:
+            - If `usebadpts` is True, input size is 2.
+            - Otherwise, input size is 1.
+
+            Examples
+            --------
+            >>> filter = DeepLearningFilter(
+            ...     window_size=256,
+            ...     num_layers=6,
+            ...     dropout_rate=0.2,
+            ...     modelroot="/models",
+            ...     dofft=True
+            ... )
+            """
+        """
+            Initialize the DeepLearningFilter with specified parameters.
+
+            This constructor sets up the configuration for a deep learning model used
+            for filtering physiological timecourses. It initializes various hyperparameters,
+            paths, and flags that control the behavior of the model and data processing.
+
+            Parameters
+            ----------
+            window_size : int, optional
+                Size of the sliding window used for processing time series data. Default is 128.
+            num_layers : int, optional
+                Number of layers in the neural network model. Default is 5.
+            dropout_rate : float, optional
+                Dropout rate for regularization during training. Default is 0.3.
+            num_pretrain_epochs : int, optional
+                Number of pre-training epochs. Default is 0.
+            num_epochs : int, optional
+                Number of training epochs. Default is 1.
+            activation : str, optional
+                Activation function to use in the model. Default is "relu".
+            modelroot : str, optional
+                Root directory for model storage. Default is ".".
+            dofft : bool, optional
+                Whether to apply FFT transformation to input data. Default is False.
+            excludethresh : float, optional
+                Threshold for excluding data points based on correlation. Default is 4.0.
+            usebadpts : bool, optional
+                Whether to include bad points in the input. Default is False.
+            thesuffix : str, optional
+                Suffix to append to filenames. Default is "25.0Hz".
+            modelpath : str, optional
+                Path to save or load the model. Default is ".".
+            thedatadir : str, optional
+                Directory containing the physiological data files. Default is
+                "/Users/frederic/Documents/MR_data/physioconn/timecourses".
+            inputfrag : str, optional
+                Fragment identifier for input data. Default is "abc".
+            targetfrag : str, optional
+                Fragment identifier for target data. Default is "xyz".
+            corrthresh : float, optional
+                Correlation threshold for filtering. Default is 0.5.
+            excludebysubject : bool, optional
+                Whether to exclude data by subject. Default is True.
+            startskip : int, optional
+                Number of samples to skip at the beginning of each timecourse. Default is 200.
+            endskip : int, optional
+                Number of samples to skip at the end of each timecourse. Default is 200.
+            step : int, optional
+                Step size for sliding window. Default is 1.
+            namesuffix : str, optional
+                Suffix to append to model name. Default is None.
+            readlim : int, optional
+                Limit on number of samples to read. Default is None.
+            readskip : int, optional
+                Number of samples to skip when reading data. Default is None.
+            countlim : int, optional
+                Limit on number of timecourses to process. Default is None.
+            **kwargs
+                Additional keyword arguments passed to the parent class.
+
+            Notes
+            -----
+            The `inputsize` is dynamically set based on the `usebadpts` flag:
+            - If `usebadpts` is True, input size is 2.
+            - Otherwise, input size is 1.
+
+            Examples
+            --------
+            >>> filter = DeepLearningFilter(
+            ...     window_size=256,
+            ...     num_layers=6,
+            ...     dropout_rate=0.2,
+            ...     modelroot="/models",
+            ...     dofft=True
+            ... )
+            """
         self.window_size = window_size
         self.dropout_rate = dropout_rate
         self.num_pretrain_epochs = num_pretrain_epochs
@@ -196,6 +350,90 @@ class DeepLearningFilter:
         self.infodict["train_arch"] = sys.platform
 
     def loaddata(self) -> None:
+        """
+            Load and preprocess data for training and validation.
+
+            This method initializes the data loading process by calling the `prep` function
+            with a set of parameters derived from the instance attributes. It handles both
+            FFT and non-FFT modes of data preprocessing. The loaded data is stored in
+            instance variables for use in subsequent training steps.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the following attributes:
+                - initialized : bool
+                    Indicates whether the model has been initialized.
+                - dofft : bool
+                    Whether to apply FFT transformation to the data.
+                - window_size : int
+                    Size of the sliding window used for data segmentation.
+                - thesuffix : str
+                    Suffix to append to filenames when reading data.
+                - thedatadir : str
+                    Directory path where the data files are located.
+                - inputfrag : str
+                    Fragment identifier for input data.
+                - targetfrag : str
+                    Fragment identifier for target data.
+                - startskip : int
+                    Number of samples to skip at the beginning of each file.
+                - endskip : int
+                    Number of samples to skip at the end of each file.
+                - corrthresh : float
+                    Correlation threshold for filtering data.
+                - step : int
+                    Step size for sliding window.
+                - usebadpts : bool
+                    Whether to include bad points in the data.
+                - excludethresh : float
+                    Threshold for excluding data points.
+                - excludebysubject : bool
+                    Whether to exclude data by subject.
+                - readlim : int
+                    Limit on the number of samples to read.
+                - readskip : int
+                    Number of samples to skip while reading.
+                - countlim : int
+                    Limit on the number of data points to process.
+
+            Returns
+            -------
+            None
+                This method does not return any value. It modifies the instance attributes
+                in place.
+
+            Raises
+            ------
+            Exception
+                If the model is not initialized prior to calling this method.
+
+            Notes
+            -----
+            The method assigns the following attributes to the instance after loading:
+            - train_x : array-like
+                Training input data.
+            - train_y : array-like
+                Training target data.
+            - val_x : array-like
+                Validation input data.
+            - val_y : array-like
+                Validation target data.
+            - Ns : int
+                Number of samples.
+            - tclen : int
+                Length of time series.
+            - thebatchsize : int
+                Batch size for training.
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.initialized = True
+            >>> model.loaddata()
+            >>> print(model.train_x.shape)
+            (1000, 10)
+            """
         if not self.initialized:
             raise Exception("model must be initialized prior to loading data")
 
@@ -258,9 +496,86 @@ class DeepLearningFilter:
 
     @tf.function
     def predict_model(self, X: np.ndarray) -> np.ndarray:
+        """
+            Make predictions using the trained model.
+
+            Parameters
+            ----------
+            X : np.ndarray
+                Input features for prediction. Shape should be (n_samples, n_features)
+                where n_samples is the number of samples and n_features is the number
+                of features expected by the model.
+
+            Returns
+            -------
+            np.ndarray
+                Model predictions. Shape will depend on the specific model type but
+                typically follows (n_samples,) for regression or (n_samples, n_classes)
+                for classification.
+
+            Notes
+            -----
+            This method sets the model to inference mode by calling with training=False.
+            The predictions are made without computing gradients, making it efficient
+            for inference tasks.
+
+            Examples
+            --------
+            >>> # Assuming model is already trained
+            >>> X_test = np.array([[1.0, 2.0], [3.0, 4.0]])
+            >>> predictions = model.predict_model(X_test)
+            >>> print(predictions)
+            """
         return self.model(X, training=False)
 
     def evaluate(self) -> tuple[list, list, float, float]:
+        """
+            Evaluate the model performance on validation data and compute loss metrics.
+
+            This method performs model evaluation by computing prediction errors and
+            saving training/validation loss curves. It calculates both prediction error
+            (difference between predicted and actual values) and raw error (difference
+            between input and actual values). The method also generates and saves a
+            plot of the training and validation loss over epochs.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the model and data attributes.
+
+            Returns
+            -------
+            tuple[list, list, float, float]
+                A tuple containing:
+                - training_loss : list
+                    List of training loss values per epoch
+                - validation_loss : list  
+                    List of validation loss values per epoch
+                - prediction_error : float
+                    Mean squared error between predicted and actual values
+                - raw_error : float
+                    Mean squared error between input features and actual values
+
+            Notes
+            -----
+            This method modifies the instance attributes:
+            - self.lossfilename: Path to the saved loss plot
+            - self.pred_error: Computed prediction error
+            - self.raw_error: Computed raw error
+            - self.loss: Training loss history
+            - self.val_loss: Validation loss history
+
+            The method saves:
+            - Loss plot as PNG file
+            - Loss metrics as text file
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> train_loss, val_loss, pred_error, raw_error = model.evaluate()
+            >>> print(f"Prediction Error: {pred_error}")
+            Prediction Error: 0.1234
+            """
         self.lossfilename = os.path.join(self.modelname, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
@@ -302,6 +617,43 @@ class DeepLearningFilter:
         return self.loss, self.val_loss, self.pred_error, self.raw_error
 
     def initmetadata(self) -> None:
+        """
+            Initialize and store metadata information for the model.
+
+            This function creates a dictionary containing various model configuration parameters
+            and writes them to a JSON file for future reference and reproducibility.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the metadata attributes.
+
+            Returns
+            -------
+            None
+                This function does not return any value but writes metadata to a JSON file.
+
+            Notes
+            -----
+            The metadata includes:
+            - Window size for processing
+            - Bad point handling flag
+            - FFT usage flag
+            - Exclusion threshold
+            - Number of epochs and layers
+            - Dropout rate
+            - Operating system platform
+            - Model name
+
+            The metadata is saved to ``{modelname}/model_meta.json`` where ``modelname`` 
+            is the model's name attribute.
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.initmetadata()
+            >>> # Metadata stored in modelname/model_meta.json
+            """
         self.infodict = {}
         self.infodict["window_size"] = self.window_size
         self.infodict["usebadpts"] = self.usebadpts
@@ -315,6 +667,48 @@ class DeepLearningFilter:
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
 
     def updatemetadata(self) -> None:
+        """
+            Update metadata dictionary with model metrics and save to JSON file.
+
+            This method updates the internal information dictionary with various model
+            performance metrics and writes the complete metadata to a JSON file for
+            model persistence and tracking.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the metadata and model information.
+                Expected to have the following attributes:
+                - infodict : dict
+                    Dictionary containing model metadata.
+                - loss : float
+                    Training loss value.
+                - val_loss : float
+                    Validation loss value.
+                - raw_error : float
+                    Raw error metric.
+                - pred_error : float
+                    Prediction error metric.
+                - modelname : str
+                    Name/path of the model for file output.
+
+            Returns
+            -------
+            None
+                This method does not return any value but modifies the `infodict` in-place
+                and writes to a JSON file.
+
+            Notes
+            -----
+            The method writes metadata to ``{modelname}/model_meta.json`` where
+            ``modelname`` is the model name attribute of the instance.
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.updatemetadata()
+            >>> # Creates model_meta.json with loss, val_loss, raw_error, and pred_error
+            """
         self.infodict["loss"] = self.loss
         self.infodict["val_loss"] = self.val_loss
         self.infodict["raw_error"] = self.raw_error
@@ -322,6 +716,37 @@ class DeepLearningFilter:
         tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
 
     def savemodel(self, altname: str | None = None) -> None:
+        """
+            Save the model to disk with the specified name.
+    
+            This method saves the current model to a Keras file format (.keras) in a 
+            directory named according to the model name or an alternative name provided.
+
+            Parameters
+            ----------
+            altname : str, optional
+                Alternative name to use for saving the model. If None, uses the 
+                model's default name stored in `self.modelname`. Default is None.
+
+            Returns
+            -------
+            None
+                This method does not return any value.
+
+            Notes
+            -----
+            The model is saved in the Keras format (.keras) and stored in a directory 
+            with the same name as the model. The method logs the saving operation 
+            using the logger instance `LGR`.
+
+            Examples
+            --------
+            >>> # Save model with default name
+            >>> savemodel()
+            >>> 
+            >>> # Save model with alternative name
+            >>> savemodel(altname="my_custom_model")
+            """
         if altname is None:
             modelsavename = self.modelname
         else:
@@ -330,6 +755,50 @@ class DeepLearningFilter:
         self.model.save(os.path.join(modelsavename, "model.keras"))
 
     def loadmodel(self, modelname: str, verbose: bool = False) -> None:
+        """
+            Load a trained model from disk and initialize model parameters.
+
+            Load a Keras model from the specified model directory, along with associated
+            metadata and configuration information. The function attempts to load the model
+            in Keras format first, falling back to HDF5 format if the Keras format is not found.
+
+            Parameters
+            ----------
+            modelname : str
+                Name of the model to load, corresponding to a subdirectory in ``self.modelpath``.
+            verbose : bool, optional
+                If True, print model summary and metadata information. Default is False.
+
+            Returns
+            -------
+            None
+                This method modifies the instance attributes in-place and does not return anything.
+
+            Notes
+            -----
+            The function attempts to load the model in the following order:
+            1. Keras format (``model.keras``)
+            2. HDF5 format (``model.h5``)
+
+            If neither format is found, the function exits with an error message.
+
+            The loaded model metadata is stored in ``self.infodict``, and model configuration
+            is stored in ``self.config``. Additional attributes like ``window_size`` and ``usebadpts``
+            are extracted from the metadata and stored as instance attributes.
+
+            Examples
+            --------
+            >>> loader = ModelLoader()
+            >>> loader.loadmodel("my_model", verbose=True)
+            loading my_model
+            Model: "sequential"
+            _________________________________________________________________
+            Layer (type)                Output Shape              Param #   
+            =================================================================
+            ...
+            >>> print(loader.window_size)
+            100
+            """
         # read in the data
         LGR.info(f"loading {modelname}")
         try:
@@ -362,6 +831,40 @@ class DeepLearningFilter:
         LGR.info(f"{modelname} loaded")
 
     def initialize(self) -> None:
+        """
+            Initialize the model by setting up network architecture and metadata.
+
+            This method performs a series of initialization steps including retrieving
+            the model name, creating the network architecture, displaying model summary,
+            saving the model configuration, initializing metadata, and setting appropriate
+            flags to indicate initialization status.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the model class being initialized.
+
+            Returns
+            -------
+            None
+                This method does not return any value.
+
+            Notes
+            -----
+            This method should be called before any training or prediction operations.
+            The initialization process sets `self.initialized` to True and `self.trained`
+            to False, indicating that the model is ready for training but has not been
+            trained yet.
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.initialize()
+            >>> print(model.initialized)
+            True
+            >>> print(model.trained)
+            False
+            """
         self.getname()
         self.makenet()
         self.model.summary()
@@ -371,6 +874,46 @@ class DeepLearningFilter:
         self.trained = False
 
     def train(self) -> None:
+        """
+            Train the model using the provided training and validation datasets.
+
+            This method performs model training with optional pretraining and logging. It supports
+            TensorBoard logging, model checkpointing, early stopping, and NaN termination. The trained
+            model is saved at the end of training.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the model and training configuration.
+                Expected attributes include:
+                - `model`: The Keras model to be trained.
+                - `train_x`, `train_y`: Training data inputs and labels.
+                - `val_x`, `val_y`: Validation data inputs and labels.
+                - `modelname`: Name of the model for saving purposes.
+                - `usetensorboard`: Boolean flag to enable TensorBoard logging.
+                - `num_pretrain_epochs`: Number of epochs for pretraining phase.
+                - `num_epochs`: Total number of training epochs.
+                - `savemodel()`: Method to save the trained model.
+
+            Returns
+            -------
+            None
+                This function does not return any value.
+
+            Notes
+            -----
+            - If `self.usetensorboard` is True, TensorBoard logging is enabled.
+            - If `self.num_pretrain_epochs` is greater than 0, a pretraining phase is performed
+              before the main training loop.
+            - The model is saved after training using the `savemodel()` method.
+            - Training uses `ModelCheckpoint`, `EarlyStopping`, and `TerminateOnNaN` callbacks
+              to manage training process and prevent overfitting or NaN issues.
+
+            Examples
+            --------
+            >>> trainer = ModelTrainer(model, train_x, train_y, val_x, val_y)
+            >>> trainer.train()
+            """
         self.intermediatemodelpath = os.path.join(
             self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.keras"
         )
@@ -422,6 +965,42 @@ class DeepLearningFilter:
         self.trained = True
 
     def apply(self, inputdata: np.ndarray, badpts: np.ndarray | None = None) -> np.ndarray:
+        """
+            Apply a sliding-window prediction model to the input data, optionally incorporating bad points.
+
+            This function performs a sliding-window prediction using a pre-trained model. It scales the input
+            data using the median absolute deviation (MAD), applies the model to overlapping windows of data,
+            and aggregates predictions with a weighted scheme. Optionally, bad points can be included in
+            the prediction process to influence the model's behavior.
+
+            Parameters
+            ----------
+            inputdata : np.ndarray
+                Input data array of shape (N,) to be processed.
+            badpts : np.ndarray | None, optional
+                Array of same shape as `inputdata` indicating bad or invalid points. If None, no bad points
+                are considered. Default is None.
+
+            Returns
+            -------
+            np.ndarray
+                Predicted data array of the same shape as `inputdata`, with predictions aggregated and
+                weighted across overlapping windows.
+
+            Notes
+            -----
+            - The function uses a sliding window of size `self.window_size` to process input data.
+            - Predictions are aggregated by summing over overlapping windows.
+            - A triangular weight scheme is applied to the aggregated predictions to reduce edge effects.
+            - If `self.usebadpts` is True, `badpts` are included as an additional feature in the model input.
+
+            Examples
+            --------
+            >>> model = MyModel(window_size=10, usebadpts=True)
+            >>> input_data = np.random.randn(100)
+            >>> bad_points = np.zeros_like(input_data)
+            >>> result = model.apply(input_data, bad_points)
+            """
         initscale = mad(inputdata)
         scaleddata = inputdata / initscale
         predicteddata = scaleddata * 0.0
@@ -468,6 +1047,96 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         *args,
         **kwargs,
     ) -> None:
+        """
+            Initialize the MultiscaleCNNDLFilter.
+
+            This constructor initializes a multiscale CNN filter with specified parameters
+            for processing sequential data with multiple kernel sizes and dilation rates.
+
+            Parameters
+            ----------
+            num_filters : int, optional
+                Number of filters to use in the convolutional layers. Default is 10.
+            kernel_sizes : list of int, optional
+                List of kernel sizes to use for different convolutional layers.
+                Default is [4, 8, 12].
+            input_lens : list of int, optional
+                List of input sequence lengths to process. Default is [64, 128, 192].
+            input_width : int, optional
+                Width of the input data (number of input channels). Default is 1.
+            dilation_rate : int, optional
+                Dilation rate for the convolutional layers. Default is 1.
+            *args
+                Variable length argument list passed to parent class.
+            **kwargs
+                Arbitrary keyword arguments passed to parent class.
+
+            Returns
+            -------
+            None
+                This method initializes the object and does not return any value.
+
+            Notes
+            -----
+            The initialized object will store network configuration information in
+            `infodict` including network type, number of filters, kernel sizes, input lengths,
+            and input width. The parent class initialization is called using `super()`.
+
+            Examples
+            --------
+            >>> filter = MultiscaleCNNDLFilter(
+            ...     num_filters=20,
+            ...     kernel_sizes=[3, 6, 9],
+            ...     input_lens=[32, 64, 128],
+            ...     input_width=2,
+            ...     dilation_rate=2
+            ... )
+            """
+        """
+            Initialize the MultiscaleCNNDLFilter.
+    
+            This constructor initializes a multiscale CNN filter with specified parameters
+            for processing sequential data with multiple kernel sizes and dilation rates.
+    
+            Parameters
+            ----------
+            num_filters : int, optional
+                Number of filters to use in the convolutional layers, default is 10
+            kernel_sizes : list of int, optional
+                List of kernel sizes to use for different convolutional layers, 
+                default is [4, 8, 12]
+            input_lens : list of int, optional
+                List of input sequence lengths to process, default is [64, 128, 192]
+            input_width : int, optional
+                Width of the input data (number of input channels), default is 1
+            dilation_rate : int, optional
+                Dilation rate for the convolutional layers, default is 1
+            *args
+                Variable length argument list passed to parent class
+            **kwargs
+                Arbitrary keyword arguments passed to parent class
+    
+            Returns
+            -------
+            None
+                This method initializes the object and does not return any value
+    
+            Notes
+            -----
+            The initialized object will store network configuration information in
+            `infodict` including network type, number of filters, kernel sizes, input lengths,
+            and input width. The parent class initialization is called using super().
+    
+            Examples
+            --------
+            >>> filter = MultiscaleCNNDLFilter(
+            ...     num_filters=20,
+            ...     kernel_sizes=[3, 6, 9],
+            ...     input_lens=[32, 64, 128],
+            ...     input_width=2,
+            ...     dilation_rate=2
+            ... )
+            """
         self.num_filters = num_filters
         self.kernel_sizes = kernel_sizes
         self.input_lens = input_lens
@@ -481,6 +1150,69 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         super(MultiscaleCNNDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
+        """
+            Generate and return model name based on configuration parameters.
+
+            This method constructs a descriptive model name by joining various configuration
+            parameters with specific prefixes and zero-padded numbers. The generated name
+            is used to create a unique model identifier and corresponding directory path.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the following attributes:
+
+                - window_size : int
+                    Size of the input window
+                - num_layers : int
+                    Number of layers in the model
+                - num_filters : int
+                    Number of filters in the model
+                - kernel_size : int
+                    Size of the convolutional kernel
+                - num_epochs : int
+                    Number of training epochs
+                - excludethresh : float
+                    Threshold for excluding data points
+                - corrthresh : float
+                    Correlation threshold for filtering
+                - step : int
+                    Step size for processing
+                - dilation_rate : int
+                    Dilation rate for convolutional layers
+                - activation : str
+                    Activation function name
+                - usebadpts : bool
+                    Whether to use bad points in training
+                - excludebysubject : bool
+                    Whether to exclude data by subject
+                - namesuffix : str, optional
+                    Additional suffix to append to the model name
+                - modelroot : str
+                    Root directory for model storage
+
+            Returns
+            -------
+            None
+                This method modifies the instance attributes `modelname` and `modelpath`
+                but does not return any value.
+
+            Notes
+            -----
+            The generated model name follows this format:
+            "model_multiscalecnn_tf2_wXxx_lYy_fnZz_flZz_eXxx_tY_ctZ_sZ_dZ_activation[_usebadpts][_excludebysubject][_suffix]"
+
+            Where Xxx, Yy, Zz, etc. represent zero-padded numbers based on the parameter values.
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.window_size = 100
+            >>> model.num_layers = 5
+            >>> model.getname()
+            >>> print(model.modelname)
+            'model_multiscalecnn_tf2_w100_l05_fn05_fl05_e001_t0.5_ct0.8_s1_d1_relu'
+            """
         self.modelname = "_".join(
             [
                 "model",
@@ -512,6 +1244,41 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
             pass
 
     def makesubnet(self, inputlen, kernelsize):
+        """
+            Create a 1D convolutional neural network submodel for time series processing.
+
+            This function constructs a neural network submodel that processes time series data
+            through 1D convolutional layers followed by global max pooling and dense layers
+            with dropout regularization. The model is designed for feature extraction from
+            sequential data.
+
+            Parameters
+            ----------
+            inputlen : int
+                Length of the input time series sequence.
+            kernelsize : int
+                Size of the convolutional kernel for 1D convolution operation.
+
+            Returns
+            -------
+            Model
+                Keras Model object representing the constructed submodel with the following structure:
+                Input -> Conv1D -> GlobalMaxPool1D -> Dense -> Dropout -> Dense -> Output
+
+            Notes
+            -----
+            The model architecture includes:
+            - 1D convolution with tanh activation
+            - Global max pooling for sequence reduction
+            - Two dense layers with tanh activation
+            - Dropout regularization (0.3) after first dense layer
+            - Uses 'same' padding for convolutional layer
+
+            Examples
+            --------
+            >>> model = makesubnet(inputlen=100, kernelsize=3)
+            >>> model.summary()
+            """
         # the input is a time series of length input_len and width input_width
         input_seq = Input(shape=(inputlen, self.input_width))
 
@@ -528,6 +1295,48 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         return basemodel
 
     def makenet(self):
+        """
+            Create a multi-scale neural network for time series analysis.
+
+            This function constructs a neural network model that processes time series data at
+            multiple resolutions (original, medium, and small scale). The model uses separate
+            sub-networks for each resolution level and concatenates their outputs to make
+            predictions. The architecture leverages different kernel sizes for different
+            down-sampled versions to capture features at multiple temporal scales.
+
+            Parameters
+            ----------
+            self : object
+                The instance containing the following attributes:
+                - inputs_lens : list of int
+                    Lengths of input sequences for small, medium, and original scales.
+                - input_width : int
+                    Width of input features.
+                - kernel_sizes : list of int
+                    Kernel sizes for convolutional layers corresponding to each scale.
+                - makesubnet : callable
+                    Function to create sub-network for a given sequence length and kernel size.
+
+            Returns
+            -------
+            None
+                This method modifies the instance in-place by setting the `model` attribute
+                to the constructed Keras model.
+
+            Notes
+            -----
+            The model architecture:
+            1. Takes three inputs at different resolutions.
+            2. Processes each input through separate sub-networks with scale-specific kernels.
+            3. Concatenates the embeddings from all branches.
+            4. Applies a final dense layer with sigmoid activation for binary classification.
+
+            Examples
+            --------
+            >>> # Assuming self is an instance with proper attributes set
+            >>> self.makenet()
+            >>> print(self.model.summary())
+            """
         # the inputs to the branches are the original time series, and its down-sampled versions
         input_smallseq = Input(shape=(self.inputs_lens[0], self.input_width))
         input_medseq = Input(shape=(self.inputs_lens[1], self.input_width))
@@ -557,6 +1366,40 @@ class CNNDLFilter(DeepLearningFilter):
         *args,
         **kwargs,
     ) -> None:
+        """
+            Initialize the CNNDLFilter layer.
+
+            Parameters
+            ----------
+            num_filters : int, optional
+                Number of convolutional filters to use, by default 10.
+            kernel_size : int, optional
+                Size of the convolutional kernel, by default 5.
+            dilation_rate : int, optional
+                Dilation rate for the convolutional layer, by default 1.
+            *args
+                Variable length argument list passed to parent class.
+            **kwargs
+                Arbitrary keyword arguments passed to parent class.
+
+            Returns
+            -------
+            None
+                This method initializes the layer and does not return any value.
+
+            Notes
+            -----
+            This constructor sets up a convolutional layer with specified parameters
+            and registers the network type as "cnn" in the infodict. The dilation rate
+            controls the spacing between kernel points, allowing for wider receptive
+            fields without increasing the number of parameters.
+
+            Examples
+            --------
+            >>> layer = CNNDLFilter(num_filters=32, kernel_size=3, dilation_rate=2)
+            >>> print(layer.num_filters)
+            32
+            """
         self.num_filters = num_filters
         self.kernel_size = kernel_size
         self.dilation_rate = dilation_rate
@@ -566,6 +1409,74 @@ class CNNDLFilter(DeepLearningFilter):
         super(CNNDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
+        """
+            Generate and return the model name based on configuration parameters.
+
+            This method constructs a descriptive model name by joining various configuration
+            parameters with specific prefixes and zero-padded numbers. The resulting name
+            is used to create a unique directory path for model storage.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing model configuration parameters.
+                Expected attributes include:
+                - window_size : int
+                - num_layers : int
+                - num_filters : int
+                - kernel_size : int
+                - num_epochs : int
+                - excludethresh : float
+                - corrthresh : float
+                - step : int
+                - dilation_rate : int
+                - activation : str
+                - modelroot : str
+                - usebadpts : bool
+                - excludebysubject : bool
+                - namesuffix : str, optional
+
+            Returns
+            -------
+            None
+                This method does not return a value but sets the following attributes:
+                - `self.modelname`: str, the constructed model name
+                - `self.modelpath`: str, the full path to the model directory
+
+            Notes
+            -----
+            The generated model name follows this format:
+            "model_cnn_tf2_wXXX_lYY_fnZZ_flZZ_eXXX_tY_ctZ_sZ_dZ_activation[_usebadpts][_excludebysubject][_suffix]"
+
+            Where:
+            - XXX: window_size (3-digit zero-padded)
+            - YY: num_layers (2-digit zero-padded)
+            - ZZ: num_filters (2-digit zero-padded)
+            - ZZ: kernel_size (2-digit zero-padded)
+            - XXX: num_epochs (3-digit zero-padded)
+            - Y: excludethresh (single digit)
+            - Z: corrthresh (single digit)
+            - Z: step (single digit)
+            - Z: dilation_rate (single digit)
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.window_size = 100
+            >>> model.num_layers = 5
+            >>> model.num_filters = 32
+            >>> model.kernel_size = 3
+            >>> model.num_epochs = 1000
+            >>> model.excludethresh = 0.5
+            >>> model.corrthresh = 0.8
+            >>> model.step = 1
+            >>> model.dilation_rate = 2
+            >>> model.activation = "relu"
+            >>> model.modelroot = "./models"
+            >>> model.getname()
+            >>> print(model.modelname)
+            'model_cnn_tf2_w100_l05_fn32_fl03_e1000_t05_ct08_s1_d2_relu'
+            """
         self.modelname = "_".join(
             [
                 "model",
@@ -597,6 +1508,63 @@ class CNNDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
+        """
+            Create and configure a 1D convolutional neural network model.
+
+            This method builds a sequential CNN architecture with multiple convolutional layers,
+            batch normalization, dropout regularization, and ReLU activation functions. The network
+            is designed for sequence-to-sequence mapping with skip connections.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the model configuration parameters.
+                Expected attributes include:
+                - num_filters : int
+                    Number of convolutional filters in each layer.
+                - kernel_size : int
+                    Size of the convolutional kernel.
+                - inputsize : int
+                    Size of the input sequence.
+                - num_layers : int
+                    Total number of layers in the network.
+                - dilation_rate : int
+                    Dilation rate for dilated convolutions.
+                - dropout_rate : float
+                    Dropout rate for regularization.
+                - activation : str or callable
+                    Activation function to use.
+
+            Returns
+            -------
+            None
+                This method modifies the instance's model attribute in-place and does not return anything.
+
+            Notes
+            -----
+            The network architecture follows this pattern:
+            - Input layer with Conv1D, BatchNormalization, Dropout, and Activation
+            - Intermediate layers with Conv1D, BatchNormalization, Dropout, and Activation
+            - Output layer with Conv1D matching the input size
+            - Model compiled with RMSprop optimizer and MSE loss
+
+            Examples
+            --------
+            >>> class MyModel:
+            ...     def __init__(self):
+            ...         self.num_filters = 64
+            ...         self.kernel_size = 3
+            ...         self.inputsize = 100
+            ...         self.num_layers = 5
+            ...         self.dilation_rate = 2
+            ...         self.dropout_rate = 0.2
+            ...         self.activation = 'relu'
+            ...         self.model = None
+            ...
+            >>> model = MyModel()
+            >>> model.makenet()
+            >>> print(model.model.summary())
+            """
         self.model = Sequential()
 
         # make the input layer
@@ -635,12 +1603,102 @@ class CNNDLFilter(DeepLearningFilter):
 
 class DenseAutoencoderDLFilter(DeepLearningFilter):
     def __init__(self, encoding_dim: int = 10, *args, **kwargs) -> None:
+        """
+            Initialize the DenseAutoencoderDLFilter.
+
+            Parameters
+            ----------
+            encoding_dim : int, default=10
+                The dimensionality of the encoding layer in the autoencoder.
+            *args
+                Variable length argument list passed to the parent class constructor.
+            **kwargs
+                Arbitrary keyword arguments passed to the parent class constructor.
+
+            Returns
+            -------
+            None
+                This method initializes the instance and does not return any value.
+
+            Notes
+            -----
+            This constructor sets up the autoencoder architecture by:
+            1. Storing the encoding dimension as an instance attribute
+            2. Updating the infodict with network type and encoding dimension information
+            3. Calling the parent class constructor with passed arguments
+
+            Examples
+            --------
+            >>> filter = DenseAutoencoderDLFilter(encoding_dim=20)
+            >>> print(filter.encoding_dim)
+            20
+            """
         self.encoding_dim = encoding_dim
         self.infodict["nettype"] = "autoencoder"
         self.infodict["encoding_dim"] = self.encoding_dim
         super(DenseAutoencoderDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
+        """
+            Generate and return model name based on configuration parameters.
+
+            This method constructs a descriptive model name by joining various configuration
+            parameters with specific prefixes and formatting conventions. The generated name
+            is used to create a unique identifier for the model and its corresponding directory
+            path.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the model configuration attributes.
+                Expected attributes include:
+                - `window_size`: int, size of the window
+                - `encoding_dim`: int, dimension of the encoding layer
+                - `num_epochs`: int, number of training epochs
+                - `excludethresh`: float, threshold for exclusion
+                - `corrthresh`: float, correlation threshold
+                - `step`: int, step size
+                - `activation`: str, activation function name
+                - `modelroot`: str, root directory for models
+                - `usebadpts`: bool, flag to include bad points
+                - `excludebysubject`: bool, flag to exclude by subject
+                - `namesuffix`: str, optional suffix to append to the model name
+
+            Returns
+            -------
+            None
+                This method does not return a value but sets the following attributes:
+                - `self.modelname`: str, the generated model name
+                - `self.modelpath`: str, the full path to the model directory
+
+            Notes
+            -----
+            The model name is constructed using the following components:
+            - "model_denseautoencoder_tf2" as base identifier
+            - Window size with 3-digit zero-padded formatting (wXXX)
+            - Encoding dimension with 3-digit zero-padded formatting (enXXX)
+            - Number of epochs with 3-digit zero-padded formatting (eXXX)
+            - Exclusion threshold (tX.XX)
+            - Correlation threshold (ctX.XX)
+            - Step size (sX)
+            - Activation function name
+            - Optional suffixes based on configuration flags
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.window_size = 100
+            >>> model.encoding_dim = 50
+            >>> model.num_epochs = 1000
+            >>> model.excludethresh = 0.5
+            >>> model.corrthresh = 0.8
+            >>> model.step = 10
+            >>> model.activation = 'relu'
+            >>> model.modelroot = '/models'
+            >>> model.getname()
+            >>> print(model.modelname)
+            'model_denseautoencoder_tf2_w100_en050_e1000_t0.5_ct00.8_s10_relu'
+            """
         self.modelname = "_".join(
             [
                 "model",
@@ -669,6 +1727,56 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
+        """
+            Create and compile a neural network model for autoencoding.
+
+            This function constructs a symmetric autoencoder architecture with configurable
+            number of layers, encoding dimension, and activation function. The network
+            consists of an input layer, multiple encoding layers, an encoding layer,
+            decoding layers, and an output layer. Batch normalization, dropout, and
+            activation functions are applied at each layer as specified by the instance
+            attributes.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the following attributes:
+                - num_layers : int
+                    Number of layers in the network.
+                - encoding_dim : int
+                    Dimension of the encoding layer.
+                - inputsize : int
+                    Size of the input data.
+                - dropout_rate : float
+                    Dropout rate applied to all layers.
+                - activation : str or callable
+                    Activation function used in all layers.
+                - model : keras.Sequential
+                    The constructed Keras model (assigned within the function).
+
+            Returns
+            -------
+            None
+                This function does not return a value but assigns the constructed model
+                to the instance attribute `self.model`.
+
+            Notes
+            -----
+            - The network architecture is symmetric, with the number of units in each
+              layer following a pattern that doubles or halves based on the layer index.
+            - The model is compiled with the RMSprop optimizer and mean squared error loss.
+
+            Examples
+            --------
+            >>> autoencoder = AutoEncoder()
+            >>> autoencoder.num_layers = 4
+            >>> autoencoder.encoding_dim = 32
+            >>> autoencoder.inputsize = 784
+            >>> autoencoder.dropout_rate = 0.2
+            >>> autoencoder.activation = 'relu'
+            >>> autoencoder.makenet()
+            >>> autoencoder.model.summary()
+            """
         self.model = Sequential()
 
         # make the input layer
@@ -723,6 +1831,43 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         *args,
         **kwargs,
     ) -> None:
+        """
+            Initialize ConvAutoencoderDLFilter.
+
+            Parameters
+            ----------
+            encoding_dim : int, optional
+                Dimension of the encoding layer, by default 10.
+            num_filters : int, optional
+                Number of filters in the convolutional layers, by default 5.
+            kernel_size : int, optional
+                Size of the convolutional kernel, by default 5.
+            dilation_rate : int, optional
+                Dilation rate for the convolutional layers, by default 1.
+            *args
+                Variable length argument list.
+            **kwargs
+                Arbitrary keyword arguments.
+
+            Returns
+            -------
+            None
+                This method does not return any value.
+
+            Notes
+            -----
+            This constructor initializes the ConvAutoencoderDLFilter with specified
+            convolutional parameters and sets up the infodict with network metadata.
+
+            Examples
+            --------
+            >>> model = ConvAutoencoderDLFilter(
+            ...     encoding_dim=15,
+            ...     num_filters=8,
+            ...     kernel_size=3,
+            ...     dilation_rate=2
+            ... )
+            """
         self.encoding_dim = encoding_dim
         self.num_filters = num_filters
         self.kernel_size = kernel_size
@@ -734,6 +1879,67 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         super(ConvAutoencoderDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
+        """
+            Generate and configure the model name and path based on current configuration parameters.
+
+            This method constructs a descriptive model name string using various configuration 
+            parameters and creates the corresponding directory path for model storage. The generated 
+            name includes information about window size, encoding dimensions, filter settings, 
+            training parameters, and optional flags.
+
+            Parameters
+            ----------
+            self : object
+                The instance containing configuration parameters for model naming.
+                Expected attributes include:
+                - window_size : int
+                - encoding_dim : int
+                - num_filters : int
+                - kernel_size : int
+                - num_epochs : int
+                - excludethresh : float
+                - corrthresh : float
+                - step : int
+                - activation : str
+                - usebadpts : bool
+                - excludebysubject : bool
+                - namesuffix : str or None
+                - modelroot : str
+
+            Returns
+            -------
+            None
+                This method modifies the instance attributes in-place and does not return a value.
+                Modifies the following instance attributes:
+                - modelname : str
+                - modelpath : str
+
+            Notes
+            -----
+            The generated model name follows a specific naming convention:
+            "model_convautoencoder_tf2_wXXX_enYYY_fnZZ_flZZ_eXXX_tY_ctZ_sZ_activation"
+            where XXX, YYY, ZZ, and Z represent zero-padded numerical values.
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.window_size = 100
+            >>> model.encoding_dim = 50
+            >>> model.num_filters = 32
+            >>> model.kernel_size = 5
+            >>> model.num_epochs = 1000
+            >>> model.excludethresh = 0.5
+            >>> model.corrthresh = 0.8
+            >>> model.step = 10
+            >>> model.activation = 'relu'
+            >>> model.usebadpts = True
+            >>> model.excludebysubject = False
+            >>> model.namesuffix = 'test'
+            >>> model.modelroot = '/path/to/models'
+            >>> model.getname()
+            >>> print(model.modelname)
+            'model_convautoencoder_tf2_w100_en050_fn32_fl05_e1000_t0.5_ct0.8_s10_relu_usebadpts_test'
+            """
         self.modelname = "_".join(
             [
                 "model",
@@ -764,6 +1970,60 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
+        """
+            Build and compile a 1D convolutional autoencoder model.
+
+            This function constructs a symmetric encoder-decoder architecture using 1D convolutions,
+            batch normalization, dropout, and pooling layers. The model is designed for sequence
+            processing tasks such as time-series or signal denoising.
+
+            Parameters
+            ----------
+            self : object
+                Instance of the class containing the following attributes:
+                - window_size : int
+                    The length of the input sequence.
+                - inputsize : int
+                    The number of input features at each time step.
+                - num_filters : int
+                    Initial number of filters in the first convolutional layer.
+                - kernel_size : int
+                    Size of the convolutional kernel.
+                - dropout_rate : float
+                    Dropout rate applied after batch normalization.
+                - activation : str or callable
+                    Activation function used in layers.
+                - encoding_dim : int
+                    Dimensionality of the encoded representation.
+
+            Returns
+            -------
+            None
+                This method does not return a value but sets the `self.model` attribute to the
+                compiled Keras model.
+
+            Notes
+            -----
+            The model architecture includes:
+            - An initial convolutional block followed by max pooling.
+            - Three encoding layers with increasing filter sizes and halving the sequence length.
+            - A bottleneck layer that compresses the representation.
+            - A symmetric decoding path that mirrors the encoding path.
+            - Final upsampling to reconstruct the original sequence dimensions.
+
+            Examples
+            --------
+            >>> model = MyClass()
+            >>> model.window_size = 100
+            >>> model.inputsize = 10
+            >>> model.num_filters = 32
+            >>> model.kernel_size = 3
+            >>> model.dropout_rate = 0.2
+            >>> model.activation = 'relu'
+            >>> model.encoding_dim = 16
+            >>> model.makenet()
+            >>> model.model.summary()
+            """
         input_layer = Input(shape=(self.window_size, self.inputsize))
         x = input_layer
 
@@ -828,6 +2088,43 @@ class CRNNDLFilter(DeepLearningFilter):
         *args,
         **kwargs,
     ) -> None:
+        """
+            Initialize CRNNDLFilter layer.
+
+            Parameters
+            ----------
+            encoding_dim : int, default=10
+                Dimension of the encoding layer.
+            num_filters : int, default=10
+                Number of filters in the convolutional layer.
+            kernel_size : int, default=5
+                Size of the convolutional kernel.
+            dilation_rate : int, default=1
+                Dilation rate for the convolutional layer.
+            *args
+                Variable length argument list.
+            **kwargs
+                Arbitrary keyword arguments.
+
+            Returns
+            -------
+            None
+                This method does not return any value.
+
+            Notes
+            -----
+            This constructor initializes the CRNNDLFilter layer with specified parameters
+            and sets up the network type information in the infodict.
+
+            Examples
+            --------
+            >>> filter_layer = CRNNDLFilter(
+            ...     encoding_dim=15,
+            ...     num_filters=20,
+            ...     kernel_size=3,
+            ...     dilation_rate=2
+            ... )
+            """
         self.num_filters = num_filters
         self.kernel_size = kernel_size
         self.dilation_rate = dilation_rate
@@ -839,6 +2136,68 @@ class CRNNDLFilter(DeepLearningFilter):
         super(CRNNDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
+        """
+            Generate and configure the model name and path based on current parameters.
+
+            This method constructs a descriptive model name string using various instance 
+            attributes and creates the corresponding directory path for model storage.
+
+            Parameters
+            ----------
+            self : object
+                The instance containing model configuration parameters
+
+            Attributes Used
+            ---------------
+            window_size : int
+                Size of the sliding window
+            encoding_dim : int
+                Dimension of the encoding layer
+            num_filters : int
+                Number of filters in the convolutional layers
+            kernel_size : int
+                Size of the convolutional kernel
+            num_epochs : int
+                Number of training epochs
+            excludethresh : float
+                Threshold for excluding data points
+            corrthresh : float
+                Correlation threshold for filtering
+            step : int
+                Step size for sliding window
+            activation : str
+                Activation function used
+            usebadpts : bool
+                Whether to use bad points in training
+            excludebysubject : bool
+                Whether to exclude data by subject
+            namesuffix : str, optional
+                Additional suffix to append to model name
+            modelroot : str
+                Root directory for model storage
+
+            Returns
+            -------
+            None
+                This method modifies instance attributes in-place:
+                - self.modelname: constructed model name string
+                - self.modelpath: full path to model directory
+
+            Notes
+            -----
+            The generated model name follows a consistent format:
+            "model_crnn_tf2_wXxx_enXxx_fnXX_flXX_eXXX_tX_ctX_sX_activation"
+            where Xxx represents zero-padded numbers and XX represents zero-padded two-digit numbers.
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.window_size = 100
+            >>> model.encoding_dim = 50
+            >>> model.getname()
+            >>> print(model.modelname)
+            'model_crnn_tf2_w100_en050_fn10_fl10_e001_t0.5_ct0.8_s1_relu'
+            """
         self.modelname = "_".join(
             [
                 "model",
@@ -869,6 +2228,65 @@ class CRNNDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
+        """
+            Create and compile a 1D convolutional neural network for temporal feature extraction and reconstruction.
+
+            This function builds a neural network architecture consisting of:
+            - A convolutional front-end for feature extraction
+            - A bidirectional LSTM layer for temporal modeling
+            - A dense output layer mapping to the input size
+
+            The model is compiled with Adam optimizer and mean squared error loss.
+
+            Parameters
+            ----------
+            self : object
+                The class instance containing the following attributes:
+                - window_size : int
+                    The size of the input time window.
+                - inputsize : int
+                    The number of input channels/features.
+                - num_filters : int
+                    Number of filters in the convolutional layers.
+                - kernel_size : int
+                    Size of the convolutional kernel.
+                - dropout_rate : float
+                    Dropout rate for regularization.
+                - activation : str or callable
+                    Activation function for convolutional layers.
+                - encoding_dim : int
+                    Number of units in the LSTM layer.
+
+            Returns
+            -------
+            None
+                This method modifies the instance's `model` attribute in-place.
+
+            Notes
+            -----
+            The network architecture follows this pipeline:
+            Input -> Conv1D -> BatchNorm -> Dropout -> Activation -> 
+            Conv1D -> BatchNorm -> Dropout -> Activation -> 
+            Bidirectional LSTM -> Dense -> Output
+
+            The model is compiled with:
+            - Optimizer: Adam
+            - Loss: Mean Squared Error (MSE)
+
+            Examples
+            --------
+            >>> # Assuming a class with the required attributes
+            >>> model = MyModel()
+            >>> model.window_size = 100
+            >>> model.inputsize = 10
+            >>> model.num_filters = 32
+            >>> model.kernel_size = 3
+            >>> model.dropout_rate = 0.2
+            >>> model.activation = 'relu'
+            >>> model.encoding_dim = 64
+            >>> model.makenet()
+            >>> model.model.summary()
+            """
         input_layer = Input(shape=(self.window_size, self.inputsize))
         x = input_layer
 
@@ -900,12 +2318,104 @@ class CRNNDLFilter(DeepLearningFilter):
 
 class LSTMDLFilter(DeepLearningFilter):
     def __init__(self, num_units: int = 16, *args, **kwargs) -> None:
+        """
+            Initialize the LSTMDLFilter layer.
+
+            Parameters
+            ----------
+            num_units : int, optional
+                Number of units in the LSTM layer, by default 16
+            *args : tuple
+                Additional positional arguments passed to the parent class
+            **kwargs : dict
+                Additional keyword arguments passed to the parent class
+
+            Returns
+            -------
+            None
+                This method initializes the layer in-place and does not return any value
+
+            Notes
+            -----
+            This method sets up the LSTM layer with the specified number of units and
+            configures the infodict with the network type and unit count. The parent
+            class initialization is called with any additional arguments provided.
+
+            Examples
+            --------
+            >>> layer = LSTMDLFilter(num_units=32)
+            >>> print(layer.num_units)
+            32
+            """
         self.num_units = num_units
         self.infodict["nettype"] = "lstm"
         self.infodict["num_units"] = self.num_units
         super(LSTMDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
+        """
+            Generate and return the model name and path based on current configuration parameters.
+
+            This method constructs a standardized model name string using various configuration 
+            parameters and creates the corresponding directory path. The generated name includes 
+            information about the model architecture, training parameters, and preprocessing settings.
+
+            Parameters
+            ----------
+            self : object
+                The instance containing the following attributes:
+                - window_size : int
+                    Size of the sliding window for time series data
+                - num_layers : int
+                    Number of LSTM layers in the model
+                - num_units : int
+                    Number of units in each LSTM layer
+                - dropout_rate : float
+                    Dropout rate for regularization
+                - num_epochs : int
+                    Number of training epochs
+                - excludethresh : float
+                    Threshold for exclusion criteria
+                - corrthresh : float
+                    Correlation threshold for filtering
+                - step : int
+                    Step size for data processing
+                - excludebysubject : bool
+                    Whether to exclude data by subject
+                - modelroot : str
+                    Root directory for model storage
+
+            Returns
+            -------
+            None
+                This method modifies the instance attributes `modelname` and `modelpath` in place.
+                It does not return any value.
+
+            Notes
+            -----
+            The generated model name follows a specific naming convention:
+            "model_lstm_tf2_wXxx_lYY_nuZZZ_dDD_rdDD_eEEE_tT_ctTT_sS"
+            where Xxx, YY, ZZZ, DD, EEEE, T, TT, S represent zero-padded numerical values.
+
+            If `excludebysubject` is True, "_excludebysubject" is appended to the model name.
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.window_size = 100
+            >>> model.num_layers = 2
+            >>> model.num_units = 128
+            >>> model.dropout_rate = 0.2
+            >>> model.num_epochs = 100
+            >>> model.excludethresh = 0.5
+            >>> model.corrthresh = 0.8
+            >>> model.step = 1
+            >>> model.excludebysubject = True
+            >>> model.modelroot = "/path/to/models"
+            >>> model.getname()
+            >>> print(model.modelname)
+            'model_lstm_tf2_w100_l02_nu128_d02_rd02_e100_t05_ct08_s1_excludebysubject'
+            """
         self.modelname = "_".join(
             [
                 "model",
@@ -932,6 +2442,47 @@ class LSTMDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
+        """
+            Create and configure a bidirectional LSTM neural network model.
+
+            This function builds a sequential neural network architecture using bidirectional LSTM layers
+            followed by time-distributed dense layers. The model is compiled with Adam optimizer and MSE loss.
+
+            Parameters
+            ----------
+            self : object
+                The instance containing the following attributes:
+                - num_layers : int
+                    Number of LSTM layers in the model
+                - num_units : int
+                    Number of units in each LSTM layer
+                - dropout_rate : float
+                    Dropout rate for both dropout and recurrent dropout
+                - window_size : int
+                    Size of the input window for time series data
+
+            Returns
+            -------
+            None
+                This method modifies the instance in-place by setting the `model` attribute.
+
+            Notes
+            -----
+            The model architecture consists of:
+            1. Bidirectional LSTM layers with specified number of units and dropout rates
+            2. TimeDistributed Dense layers to map outputs back to window size
+            3. Compilation with Adam optimizer and MSE loss function
+
+            Examples
+            --------
+            >>> model_instance = MyModel()
+            >>> model_instance.num_layers = 2
+            >>> model_instance.num_units = 50
+            >>> model_instance.dropout_rate = 0.2
+            >>> model_instance.window_size = 10
+            >>> model_instance.makenet()
+            >>> print(model_instance.model.summary())
+            """
         self.model = Sequential()
 
         # each layer consists of an LSTM followed by a dense time distributed layer to get it back to the window size
@@ -962,6 +2513,44 @@ class HybridDLFilter(DeepLearningFilter):
         *args,
         **kwargs,
     ) -> None:
+        """
+            Initialize the HybridDLFilter layer.
+
+            Parameters
+            ----------
+            invert : bool, optional
+                If True, inverts the filter operation, by default False
+            num_filters : int, optional
+                Number of filters to use in the convolutional layer, by default 10
+            kernel_size : int, optional
+                Size of the convolutional kernel, by default 5
+            num_units : int, optional
+                Number of units in the dense layer, by default 16
+            *args
+                Variable length argument list
+            **kwargs
+                Arbitrary keyword arguments
+
+            Returns
+            -------
+            None
+                This method does not return a value
+
+            Notes
+            -----
+            This method initializes the hybrid deep learning filter by setting up
+            the convolutional and dense layer parameters. The infodict is populated
+            with configuration information for tracking and debugging purposes.
+
+            Examples
+            --------
+            >>> layer = HybridDLFilter(
+            ...     invert=True,
+            ...     num_filters=20,
+            ...     kernel_size=3,
+            ...     num_units=32
+            ... )
+            """
         self.invert = invert
         self.num_filters = num_filters
         self.kernel_size = kernel_size
@@ -974,6 +2563,79 @@ class HybridDLFilter(DeepLearningFilter):
         super(HybridDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
+        """
+            Generate and return the model name and path based on current configuration parameters.
+
+            This method constructs a descriptive model name string by joining various configuration
+            parameters with specific prefixes and formatting conventions. The resulting model name
+            is used to create a unique directory path for model storage.
+
+            Parameters
+            ----------
+            self : object
+                The instance containing model configuration parameters. Expected attributes include:
+                - `window_size` : int
+                - `num_layers` : int
+                - `num_filters` : int
+                - `kernel_size` : int
+                - `num_units` : int
+                - `dropout_rate` : float
+                - `num_epochs` : int
+                - `excludethresh` : float
+                - `corrthresh` : float
+                - `step` : int
+                - `activation` : str
+                - `invert` : bool
+                - `excludebysubject` : bool
+                - `modelroot` : str
+
+            Returns
+            -------
+            None
+                This method does not return a value but modifies instance attributes:
+                - `self.modelname`: The constructed model name string
+                - `self.modelpath`: The full path to the model directory
+
+            Notes
+            -----
+            The model name is constructed using the following components:
+            - "model_hybrid_tf2_" prefix
+            - Window size with 3-digit zero-padded formatting
+            - Number of layers with 2-digit zero-padded formatting
+            - Number of filters with 2-digit zero-padded formatting
+            - Kernel size with 2-digit zero-padded formatting
+            - Number of units
+            - Dropout rate (appears twice with different prefixes)
+            - Number of epochs with 3-digit zero-padded formatting
+            - Exclusion threshold
+            - Correlation threshold
+            - Step size
+            - Activation function name
+
+            Additional suffixes are appended based on boolean flags:
+            - "_invert" if `self.invert` is True
+            - "_excludebysubject" if `self.excludebysubject` is True
+
+            Examples
+            --------
+            >>> model = MyModel()
+            >>> model.window_size = 100
+            >>> model.num_layers = 3
+            >>> model.num_filters = 16
+            >>> model.kernel_size = 5
+            >>> model.num_units = 64
+            >>> model.dropout_rate = 0.2
+            >>> model.num_epochs = 100
+            >>> model.excludethresh = 0.5
+            >>> model.corrthresh = 0.8
+            >>> model.step = 1
+            >>> model.activation = "relu"
+            >>> model.invert = True
+            >>> model.excludebysubject = False
+            >>> model.getname()
+            >>> print(model.modelname)
+            'model_hybrid_tf2_w100_l03_fn16_fl05_nu64_d0.2_rd0.2_e100_t0.5_ct0.8_s01_relu_invert'
+            """
         self.modelname = "_".join(
             [
                 "model",
@@ -1005,6 +2667,71 @@ class HybridDLFilter(DeepLearningFilter):
             pass
 
     def makenet(self):
+        """
+            Build and compile a neural network model with configurable CNN and LSTM layers.
+
+            This function constructs a neural network model using Keras, with the architecture
+            determined by the `invert` flag. If `invert` is True, the model starts with a
+            Conv1D layer followed by LSTM layers; otherwise, it starts with LSTM layers
+            followed by Conv1D layers. The model is compiled with the RMSprop optimizer
+            and mean squared error loss.
+
+            Parameters
+            ----------
+            self : object
+                The instance of the class containing the model configuration attributes.
+
+            Attributes Used
+            ---------------
+            self.invert : bool
+                If True, the model begins with a Conv1D layer and ends with an LSTM layer.
+                If False, the model begins with an LSTM layer and ends with a Conv1D layer.
+            self.num_filters : int
+                Number of filters in each Conv1D layer.
+            self.kernel_size : int
+                Size of the kernel in Conv1D layers.
+            self.padding : str, default='same'
+                Padding mode for Conv1D layers.
+            self.window_size : int
+                Length of the input sequence.
+            self.inputsize : int
+                Number of features in the input data.
+            self.num_layers : int
+                Total number of layers in the model.
+            self.num_units : int
+                Number of units in the LSTM layers.
+            self.dropout_rate : float
+                Dropout rate for regularization.
+            self.activation : str or callable
+                Activation function for Conv1D layers.
+
+            Returns
+            -------
+            None
+                This method modifies the instance's `self.model` attribute in place.
+
+            Notes
+            -----
+            - The model uses `Sequential` from Keras.
+            - Batch normalization and dropout are applied after each Conv1D layer (except the last).
+            - The final layer is a Dense layer wrapped in `TimeDistributed` for sequence-to-sequence output.
+            - The model is compiled using `RMSprop` optimizer and `mse` loss.
+
+            Examples
+            --------
+            >>> model_builder = MyModelClass()
+            >>> model_builder.invert = True
+            >>> model_builder.num_filters = 32
+            >>> model_builder.kernel_size = 3
+            >>> model_builder.window_size = 100
+            >>> model_builder.inputsize = 1
+            >>> model_builder.num_layers = 5
+            >>> model_builder.num_units = 64
+            >>> model_builder.dropout_rate = 0.2
+            >>> model_builder.activation = 'relu'
+            >>> model_builder.makenet()
+            >>> model_builder.model.summary()
+            """
         self.model = Sequential()
 
         if self.invert:
@@ -1094,6 +2821,59 @@ def filtscale(
     epsilon: float = 1e-10,
     numorders: int = 6,
 ) -> tuple[np.ndarray, float] | np.ndarray:
+    """
+        Apply or reverse a frequency-domain scaling and normalization to input data.
+
+        This function performs either forward or inverse transformation of the input
+        data in the frequency domain, applying scaling, normalization, and optionally
+        hybrid encoding. It supports both logarithmic and standard normalization
+        modes.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Input signal or transformed data (depending on `reverse` flag).
+        scalefac : float, optional
+            Scaling factor used for normalization. Default is 1.0.
+        reverse : bool, optional
+            If True, performs inverse transformation from frequency domain back
+            to time domain. Default is False.
+        hybrid : bool, optional
+            If True, returns a hybrid representation combining original data
+            and magnitude spectrum. Default is False.
+        lognormalize : bool, optional
+            If True, applies logarithmic normalization to the magnitude spectrum.
+            Default is True.
+        epsilon : float, optional
+            Small constant added to avoid log(0). Default is 1e-10.
+        numorders : int, optional
+            Number of orders used for scaling in log normalization. Default is 6.
+
+        Returns
+        -------
+        tuple[np.ndarray, float] or np.ndarray
+            - If `reverse=False`: A tuple of (transformed data, scale factor).
+              The transformed data is a stacked array of magnitude and phase components
+              (or original data in hybrid mode).
+            - If `reverse=True`: Reconstructed time-domain signal.
+
+        Notes
+        -----
+        - Forward mode applies FFT, normalizes the magnitude, and stacks magnitude
+          and phase.
+        - In hybrid mode, the output includes the original time-domain signal
+          instead of the phase component.
+        - In reverse mode, the phase and magnitude components are used to reconstruct
+          the original signal using inverse FFT.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from scipy import fftpack
+        >>> x = np.random.randn(1024)
+        >>> scaled_data, scale = filtscale(x)
+        >>> reconstructed = filtscale(scaled_data, scale, reverse=True)
+        """
     if not reverse:
         specvals = fftpack.fft(data)
         if lognormalize:
@@ -1124,10 +2904,76 @@ def filtscale(
 
 
 def tobadpts(name: str) -> str:
+    """
+        Convert a filename to its corresponding bad points filename.
+    
+        Replaces the '.txt' extension with '_badpts.txt' to create a standardized
+        bad points filename pattern.
+    
+        Parameters
+        ----------
+        name : str
+            Input filename, typically ending with '.txt' extension.
+        
+        Returns
+        -------
+        str
+            Filename with '.txt' replaced by '_badpts.txt' extension.
+        
+        Notes
+        -----
+        This function assumes the input filename ends with '.txt' extension.
+        If the input does not contain '.txt', the function will append '_badpts.txt'
+        to the end of the string.
+    
+        Examples
+        --------
+        >>> tobadpts("data.txt")
+        'data_badpts.txt'
+    
+        >>> tobadpts("results.txt")
+        'results_badpts.txt'
+    
+        >>> tobadpts("config")
+        'config_badpts.txt'
+        """
     return name.replace(".txt", "_badpts.txt")
 
 
 def targettoinput(name: str, targetfrag: str = "xyz", inputfrag: str = "abc") -> str:
+    """
+        Replace occurrences of a target fragment with an input fragment in a string.
+
+        Parameters
+        ----------
+        name : str
+            The input string to process.
+        targetfrag : str, default='xyz'
+            The fragment to search for and replace. Defaults to 'xyz'.
+        inputfrag : str, default='abc'
+            The fragment to replace targetfrag with. Defaults to 'abc'.
+
+        Returns
+        -------
+        str
+            The modified string with targetfrag replaced by inputfrag.
+
+        Notes
+        -----
+        This function uses Python's built-in string replace method, which replaces
+        all occurrences of targetfrag with inputfrag in the input string.
+
+        Examples
+        --------
+        >>> targettoinput("hello xyz world")
+        'hello abc world'
+    
+        >>> targettoinput("xyzxyzxyz", "xyz", "123")
+        '123123123'
+    
+        >>> targettoinput("abcdef", "xyz", "123")
+        'abcdef'
+        """
     LGR.debug(f"replacing {targetfrag} with {inputfrag}")
     return name.replace(targetfrag, inputfrag)
 
@@ -1139,6 +2985,46 @@ def getmatchedtcs(
     inputfrag: str = "abc",
     debug: bool = False,
 ) -> tuple[list[str], int]:
+    """
+        Find and validate timecourse files matching a search pattern, and determine the length of the timecourses.
+
+        This function searches for files matching the given `searchstring`, checks for the existence of
+        corresponding info files to ensure completeness, and reads the first matched file to determine
+        the length of the timecourses. It is intended for use with BIDS-compatible timecourse files.
+
+        Parameters
+        ----------
+        searchstring : str
+            A glob pattern to match target files. Typically includes a path and file name pattern.
+        usebadpts : bool, optional
+            Flag indicating whether to use bad points in processing. Default is False.
+        targetfrag : str, optional
+            Fragment identifier for target files. Default is "xyz".
+        inputfrag : str, optional
+            Fragment identifier for input files. Default is "abc".
+        debug : bool, optional
+            If True, print debug information including matched files and processing steps.
+            Default is False.
+
+        Returns
+        -------
+        tuple[list[str], int]
+            A tuple containing:
+            - List of matched and validated file paths.
+            - Length of the timecourses (number of timepoints) in the first matched file.
+
+        Notes
+        -----
+        - The function expects files to have a corresponding `_info` file for validation.
+        - Timecourse data is read from the first matched file using `tide_io.readbidstsv`.
+        - The function currently only reads the first matched file to determine `tclen`, assuming all
+          matched files have the same timecourse length.
+
+        Examples
+        --------
+        >>> matched_files, length = getmatchedtcs("sub-*/func/*cardiacfromfmri_25.0Hz*")
+        >>> print(f"Found {len(matched_files)} files with {length} timepoints each.")
+        """
     # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
     if debug:
@@ -1190,6 +3076,130 @@ def readindata(
 ) -> (
     tuple[np.ndarray, np.ndarray, list[str]] | tuple[np.ndarray, np.ndarray, list[str], np.ndarray]
 ):
+    """
+        Read and process time-series data from a list of matched files.
+
+        This function reads cardiac and plethysmographic data from a set of files, applies
+        filtering based on data quality metrics (e.g., correlation thresholds, NaN values,
+        data length, and standard deviation), and returns processed arrays for training.
+
+        Parameters
+        ----------
+        matchedfilelist : list of str
+            List of file paths to be processed. Each file should contain time-series data
+            in a format compatible with `tide_io.readbidstsv`.
+        tclen : int
+            The length of the time series to be read from each file.
+        targetfrag : str, optional
+            Fragment identifier used for mapping filenames (default is "xyz").
+        inputfrag : str, optional
+            Fragment identifier used for mapping filenames (default is "abc").
+        usebadpts : bool, optional
+            If True, include bad point data in the output (default is False).
+        startskip : int, optional
+            Number of samples to skip at the beginning of each time series (default is 0).
+        endskip : int, optional
+            Number of samples to skip at the end of each time series (default is 0).
+        corrthresh : float, optional
+            Threshold for correlation between raw and plethysmographic signals.
+            Files with correlations below this value are excluded (default is 0.5).
+        readlim : int, optional
+            Maximum number of files to read. If None, all files are read (default is None).
+        readskip : int, optional
+            Number of files to skip at the beginning of the list. If None, no files are skipped (default is None).
+        debug : bool, optional
+            If True, print debug information during processing (default is False).
+
+        Returns
+        -------
+        tuple of (np.ndarray, np.ndarray, list[str]) or (np.ndarray, np.ndarray, list[str], np.ndarray)
+            - `x1[startskip:-endskip, :count]`: Array of x-axis time series data.
+            - `y1[startskip:-endskip, :count]`: Array of y-axis time series data.
+            - `names[:count]`: List of file names that passed quality checks.
+            - `bad1[startskip:-endskip, :count]`: Optional array of bad point data if `usebadpts` is True.
+
+        Notes
+        -----
+        - Files are filtered based on:
+            - Correlation threshold (`corrthresh`)
+            - Presence of NaN values
+            - Data length (must be at least `tclen`)
+            - Standard deviation of data (must be between 0.5 and 20.0)
+        - Excluded files are logged with reasons.
+        - If `usebadpts` is True, bad point data is included in the returned tuple.
+
+        Examples
+        --------
+        >>> x, y, names = readindata(
+        ...     matchedfilelist=["file1.tsv", "file2.tsv"],
+        ...     tclen=1000,
+        ...     corrthresh=0.6,
+        ...     readlim=10
+        ... )
+        >>> print(f"Loaded {len(names)} files")
+        """
+    """
+        Read and process time-series data from a list of matched files.
+
+        This function reads cardiac and plethysmographic data from a set of files, applies
+        filtering based on data quality metrics (e.g., correlation thresholds, NaN values,
+        data length, and standard deviation), and returns processed arrays for training.
+
+        Parameters
+        ----------
+        matchedfilelist : list of str
+            List of file paths to be processed. Each file should contain time-series data
+            in a format compatible with `tide_io.readbidstsv`.
+        tclen : int
+            The length of the time series to be read from each file.
+        targetfrag : str, optional
+            Fragment identifier used for mapping filenames (default is "xyz").
+        inputfrag : str, optional
+            Fragment identifier used for mapping filenames (default is "abc").
+        usebadpts : bool, optional
+            If True, include bad point data in the output (default is False).
+        startskip : int, optional
+            Number of samples to skip at the beginning of each time series (default is 0).
+        endskip : int, optional
+            Number of samples to skip at the end of each time series (default is 0).
+        corrthresh : float, optional
+            Threshold for correlation between raw and plethysmographic signals.
+            Files with correlations below this value are excluded (default is 0.5).
+        readlim : int, optional
+            Maximum number of files to read. If None, all files are read (default is None).
+        readskip : int, optional
+            Number of files to skip at the beginning of the list. If None, no files are skipped (default is None).
+        debug : bool, optional
+            If True, print debug information during processing (default is False).
+
+        Returns
+        -------
+        tuple of (np.ndarray, np.ndarray, list[str]) or (np.ndarray, np.ndarray, list[str], np.ndarray)
+            - `x1[startskip:-endskip, :count]`: Array of x-axis time series data.
+            - `y1[startskip:-endskip, :count]`: Array of y-axis time series data.
+            - `names[:count]`: List of file names that passed quality checks.
+            - `bad1[startskip:-endskip, :count]`: Optional array of bad point data if `usebadpts` is True.
+
+        Notes
+        -----
+        - Files are filtered based on:
+            - Correlation threshold (`corrthresh`)
+            - Presence of NaN values
+            - Data length (must be at least `tclen`)
+            - Standard deviation of data (must be between 0.5 and 20.0)
+        - Excluded files are logged with reasons.
+        - If `usebadpts` is True, bad point data is included in the returned tuple.
+
+        Examples
+        --------
+        >>> x, y, names = readindata(
+        ...     matchedfilelist=["file1.tsv", "file2.tsv"],
+        ...     tclen=1000,
+        ...     corrthresh=0.6,
+        ...     readlim=10
+        ... )
+        >>> print(f"Loaded {len(names)} files")
+        """
     LGR.info(
         "readindata called with usebadpts, startskip, endskip, readlim, readskip, targetfrag, inputfrag = "
         f"{usebadpts} {startskip} {endskip} {readlim} {readskip} {targetfrag} {inputfrag}"
@@ -1360,33 +3370,95 @@ def prep(
     | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int, np.ndarray, np.ndarray]
 ):
     """
-    prep - reads in training and validation data for 1D filter
+        Prepare time-series data for training and validation by reading, normalizing,
+        windowing, and splitting into batches.
 
-    Parameters
-    ----------
-    window_size
-    step
-    excludethresh
-    excludebysubject
-    usebadpts
-    startskip
-    endskip
-    thesuffix
-    thedatadir
-    inputfrag
-    targetfrag
-    corrthresh
-    dofft
-    readlim
-    readskip
-    countlim
+        This function reads time-series data from JSON files, normalizes the data,
+        applies windowing to create input-output pairs, and splits the data into
+        training and validation sets based on subject-wise or window-wise exclusion
+        criteria.
 
-    Returns
-    -------
-    train_x, train_y, val_x, val_y, N_subjs, tclen - startskip, batchsize
+        Parameters
+        ----------
+        window_size : int
+            Size of the sliding window used to create input-output pairs.
+        step : int, optional
+            Step size for sliding window (default is 1).
+        excludethresh : float, optional
+            Threshold for excluding windows or subjects based on maximum absolute
+            value of input data (default is 4.0).
+        usebadpts : bool, optional
+            Whether to include bad points in the data (default is False).
+        startskip : int, optional
+            Number of time points to skip at the beginning of each time series
+            (default is 200).
+        endskip : int, optional
+            Number of time points to skip at the end of each time series
+            (default is 200).
+        excludebysubject : bool, optional
+            If True, exclude entire subjects based on maximum absolute value;
+            otherwise, exclude individual windows (default is True).
+        thesuffix : str, optional
+            Suffix used to identify files (default is "sliceres").
+        thedatadir : str, optional
+            Directory where the data files are located (default is
+            "/data/frederic/physioconn/output_2025").
+        inputfrag : str, optional
+            Fragment identifier for input data (default is "abc").
+        targetfrag : str, optional
+            Fragment identifier for target data (default is "xyz").
+        corrthresh : float, optional
+            Correlation threshold for matching time series (default is 0.5).
+        dofft : bool, optional
+            Whether to perform FFT on the data (default is False).
+        readlim : int or None, optional
+            Limit on number of time points to read (default is None).
+        readskip : int or None, optional
+            Number of time points to skip when reading data (default is None).
+        countlim : int or None, optional
+            Limit on number of subjects to process (default is None).
+        debug : bool, optional
+            Whether to enable debug logging (default is False).
 
-    """
+        Returns
+        -------
+        tuple of (np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int)
+            If `dofft` is False:
+                - train_x : ndarray of shape (n_train, window_size, 1)
+                - train_y : ndarray of shape (n_train, window_size, 1)
+                - val_x : ndarray of shape (n_val, window_size, 1)
+                - val_y : ndarray of shape (n_val, window_size, 1)
+                - N_subjs : int
+                - tclen : int
+                - batchsize : int
 
+            tuple of (np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int,
+                      np.ndarray, np.ndarray)
+            If `dofft` is True:
+                - train_x : ndarray of shape (n_train, window_size, 2)
+                - train_y : ndarray of shape (n_train, window_size, 2)
+                - val_x : ndarray of shape (n_val, window_size, 2)
+                - val_y : ndarray of shape (n_val, window_size, 2)
+                - N_subjs : int
+                - tclen : int
+                - batchsize : int
+                - Xscale_fourier : ndarray of shape (N_subjs, windowspersubject)
+                - Yscale_fourier : ndarray of shape (N_subjs, windowspersubject)
+
+        Notes
+        -----
+        - Data normalization is performed using median absolute deviation (MAD).
+        - Windows are created based on sliding window approach.
+        - Training and validation sets are split based on subject-wise partitioning.
+        - If `usebadpts` is True, bad points are included in the returned data.
+        - If `dofft` is True, data is transformed using a filtering scale function.
+
+        Examples
+        --------
+        >>> train_x, train_y, val_x, val_y, N_subjs, tclen, batchsize = prep(
+        ...     window_size=100, step=10, excludethresh=3.0, dofft=False
+        ... )
+        """
     searchstring = os.path.join(thedatadir, "*", "*_desc-stdrescardfromfmri_timeseries.json")
 
     # find matched files
