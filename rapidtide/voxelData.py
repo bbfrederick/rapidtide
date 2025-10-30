@@ -17,8 +17,10 @@
 #
 #
 import copy
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
@@ -40,11 +42,11 @@ class dataVolume:
 
     def __init__(
         self,
-        shape,
-        shared=False,
-        dtype=np.float64,
-        thepid=0,
-    ):
+        shape: tuple,
+        shared: bool = False,
+        dtype: type = np.float64,
+        thepid: int = 0,
+    ) -> None:
         if len(shape) == 3:
             self.xsize = int(shape[0])
             self.ysize = int(shape[1])
@@ -64,24 +66,23 @@ class dataVolume:
         self.data, self.data_shm = tide_util.allocarray(
             shape, self.dtype, shared=shared, name=f"filtereddata_{thepid}"
         )
+
+    def byvol(self) -> NDArray:
         return self.data
 
-    def byvol(self):
-        return self.data
-
-    def byslice(self):
+    def byslice(self) -> NDArray:
         if self.dimensions == 3:
             return self.data.reshape(self.xsize * self.ysize, -1)
         else:
             return self.data.reshape(self.xsize * self.ysize, self.numslices, -1)
 
-    def byvoxel(self):
+    def byvoxel(self) -> NDArray:
         if self.dimensions == 3:
             return self.data.reshape(self.numspatiallocs)
         else:
             return self.data.reshape(self.numspatiallocs, -1)
 
-    def destroy(self):
+    def destroy(self) -> None:
         del self.data
         if self.data_shm is not None:
             tide_util.cleanup_shm(self.data_shm)
@@ -116,16 +117,16 @@ class VoxelData:
 
     def __init__(
         self,
-        filename,
-        timestep=0.0,
-        validstart=None,
-        validend=None,
-    ):
+        filename: str,
+        timestep: float = 0.0,
+        validstart: int | None = None,
+        validend: int | None = None,
+    ) -> None:
 
         self.filename = filename
         self.readdata(timestep, validstart, validend)
 
-    def readdata(self, timestep, validstart, validend):
+    def readdata(self, timestep: float, validstart: int | None, validend: int | None) -> None:
         # load the data
         self.load()
 
@@ -193,7 +194,12 @@ class VoxelData:
         self.setvalidtimes(validstart, validend)
         self.resident = True
 
-    def copyheader(self, numtimepoints=None, tr=None, toffset=None):
+    def copyheader(
+        self,
+        numtimepoints: int | None = None,
+        tr: float | None = None,
+        toffset: float | None = None,
+    ) -> Any | None:
         if self.filetype == "text":
             return None
         else:
@@ -217,18 +223,18 @@ class VoxelData:
                     thisheader["pixdim"][4] = tr
             return thisheader
 
-    def getsizes(self):
+    def getsizes(self) -> tuple[float, float, float, float]:
         return self.xdim, self.ydim, self.slicethickness, self.timestep
 
-    def getdims(self):
+    def getdims(self) -> tuple[int, int, int, int]:
         return self.xsize, self.ysize, self.numslices, self.timepoints
 
-    def unload(self):
+    def unload(self) -> None:
         del self.nim_data
         del self.nim
         self.resident = False
 
-    def load(self):
+    def load(self) -> None:
         if self.filetype is not None:
             print("reloading non-resident data")
         else:
@@ -255,7 +261,7 @@ class VoxelData:
                 )
         self.resident = True
 
-    def setvalidtimes(self, validstart, validend):
+    def setvalidtimes(self, validstart: int | None, validend: int | None) -> None:
         if validstart is None:
             self.validstart = 0
         else:
@@ -272,16 +278,16 @@ class VoxelData:
         else:
             self.nativefmrishape = (self.xsize, self.realtimepoints)
 
-    def setvalidvoxels(self, validvoxels):
+    def setvalidvoxels(self, validvoxels: NDArray) -> None:
         self.validvoxels = validvoxels
         self.numvalidspatiallocs = np.shape(self.validvoxels)[0]
 
-    def byvol(self):
+    def byvol(self) -> NDArray:
         if not self.resident:
             self.load()
         return self.nim_data
 
-    def byvoltrimmed(self):
+    def byvoltrimmed(self) -> NDArray:
         if not self.resident:
             self.load()
         if self.filetype == "nifti":
@@ -292,19 +298,19 @@ class VoxelData:
         else:
             return self.nim_data[:, self.validstart : self.validend + 1]
 
-    def byvoxel(self):
+    def byvoxel(self) -> NDArray:
         if self.dimensions == 4 or self.filetype == "cifti" or self.filetype == "text":
             return self.byvoltrimmed().reshape(self.numspatiallocs, -1)
         else:
             return self.byvoltrimmed().reshape(self.numspatiallocs)
 
-    def byslice(self):
+    def byslice(self) -> NDArray:
         if self.dimensions == 4 or self.filetype == "cifti" or self.filetype == "text":
             return self.byvoltrimmed().reshape(self.numslicelocs, self.numslices, -1)
         else:
             return self.byvoltrimmed().reshape(self.numslicelocs, self.numslices)
 
-    def validdata(self):
+    def validdata(self) -> NDArray:
         if self.validvoxels is None:
             return self.byvoxel()
         else:
@@ -318,14 +324,14 @@ class VoxelData:
 
     def smooth(
         self,
-        gausssigma,
-        brainmask=None,
-        graymask=None,
-        whitemask=None,
-        premask=False,
-        premasktissueonly=False,
-        showprogressbar=False,
-    ):
+        gausssigma: float,
+        brainmask: NDArray | None = None,
+        graymask: NDArray | None = None,
+        whitemask: NDArray | None = None,
+        premask: bool = False,
+        premasktissueonly: bool = False,
+        showprogressbar: bool = False,
+    ) -> float:
         # do spatial filtering if requested
         if self.filetype == "cifti" or self.filetype == "text":
             gausssigma = 0.0
@@ -379,7 +385,7 @@ class VoxelData:
                 )
         return gausssigma
 
-    def summarize(self):
+    def summarize(self) -> None:
         print("Voxel data summary:")
         print(f"\t{self.nim=}")
         print(f"\t{self.nim_data.shape=}")

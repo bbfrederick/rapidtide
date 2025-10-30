@@ -16,9 +16,12 @@
 #   limitations under the License.
 #
 #
+import logging
 import sys
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.genericmultiproc as tide_genericmultiproc
@@ -27,10 +30,10 @@ import rapidtide.miscmath as tide_math
 
 # note: rawtimecourse has been filtered, but NOT windowed
 def _procOneNullCorrelationx(
-    vox,
-    voxelargs,
-    **kwargs,
-):
+    vox: int,
+    voxelargs: list,
+    **kwargs: Any,
+) -> tuple[int, float]:
 
     options = {
         "permutationmethod": "shuffle",
@@ -79,29 +82,29 @@ def _procOneNullCorrelationx(
     return vox, maxval
 
 
-def _packvoxeldata(voxnum, voxelargs):
+def _packvoxeldata(voxnum: int, voxelargs: list) -> list:
     return [voxelargs[0], voxelargs[1], voxelargs[2], voxelargs[3], voxelargs[4]]
 
 
-def _unpackvoxeldata(retvals, voxelproducts):
+def _unpackvoxeldata(retvals: tuple, voxelproducts: list) -> None:
     (voxelproducts[0])[retvals[0]] = retvals[1]
 
 
 def getNullDistributionData(
-    Fs,
-    theCorrelator,
-    thefitter,
-    LGR,
-    numestreps=0,
-    nprocs=1,
-    alwaysmultiproc=False,
-    showprogressbar=True,
-    chunksize=1000,
-    permutationmethod="shuffle",
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-    debug=False,
-):
+    Fs: float,
+    theCorrelator: Any,
+    thefitter: Any,
+    LGR: logging.Logger,
+    numestreps: int = 0,
+    nprocs: int = 1,
+    alwaysmultiproc: bool = False,
+    showprogressbar: bool = True,
+    chunksize: int = 1000,
+    permutationmethod: str = "shuffle",
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+    debug: bool = False,
+) -> NDArray:
     r"""Calculate a set of null correlations to determine the distribution of correlation values.  This can
     be used to find the spurious correlation threshold
 

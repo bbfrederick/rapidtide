@@ -17,17 +17,20 @@
 #
 #
 import gc
+import logging
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.genericmultiproc as tide_genericmultiproc
 
 
 def _procOneVoxelMakelagtc(
-    vox,
-    voxelargs,
-    **kwargs,
-):
+    vox: int,
+    voxelargs: list,
+    **kwargs: Any,
+) -> tuple[int, NDArray]:
     # unpack arguments
     options = {
         "rt_floatset": np.float64,
@@ -50,29 +53,29 @@ def _procOneVoxelMakelagtc(
     )
 
 
-def _packvoxeldata(voxnum, voxelargs):
+def _packvoxeldata(voxnum: int, voxelargs: list) -> list:
     return [voxelargs[0], (voxelargs[1])[voxnum], voxelargs[2]]
 
 
-def _unpackvoxeldata(retvals, voxelproducts):
+def _unpackvoxeldata(retvals: tuple, voxelproducts: list) -> None:
     (voxelproducts[0])[retvals[0], :] = retvals[1]
 
 
 def makelaggedtcs(
-    lagtcgenerator,
-    timeaxis,
-    lagmask,
-    lagtimes,
-    lagtc,
-    LGR=None,
-    nprocs=1,
-    alwaysmultiproc=False,
-    showprogressbar=True,
-    chunksize=1000,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-    debug=False,
-):
+    lagtcgenerator: Any,
+    timeaxis: NDArray,
+    lagmask: NDArray,
+    lagtimes: NDArray,
+    lagtc: NDArray,
+    LGR: logging.Logger | None = None,
+    nprocs: int = 1,
+    alwaysmultiproc: bool = False,
+    showprogressbar: bool = True,
+    chunksize: int = 1000,
+    rt_floatset: type = np.float64,
+    rt_floattype: str = "float64",
+    debug: bool = False,
+) -> int:
     if debug:
         print("makelaggedtcs: Starting")
         print(f"\t{lagtc.shape=}")

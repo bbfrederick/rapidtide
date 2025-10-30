@@ -18,11 +18,13 @@
 #
 import sys
 import warnings
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 from numpy.polynomial import Polynomial
+from numpy.typing import NDArray
 from scipy.optimize import curve_fit
 from statsmodels.robust import mad
 
@@ -46,7 +48,9 @@ class fMRIDataset:
     numskip = 0
     validvoxels = None
 
-    def __init__(self, thedata, zerodata=False, copydata=False, numskip=0):
+    def __init__(
+        self, thedata: NDArray, zerodata: bool = False, copydata: bool = False, numskip: int = 0
+    ) -> None:
         if zerodata:
             self.thedata = thedata * 0.0
         else:
@@ -57,7 +61,7 @@ class fMRIDataset:
         self.getsizes()
         self.setnumskip(numskip)
 
-    def getsizes(self):
+    def getsizes(self) -> None:
         self.theshape = self.thedata.shape
         self.xsize = self.theshape[0]
         self.ysize = self.theshape[1]
@@ -69,22 +73,22 @@ class fMRIDataset:
         self.slicesize = self.xsize * self.ysize
         self.numvox = self.slicesize * self.numslices
 
-    def setnumskip(self, numskip):
+    def setnumskip(self, numskip: int) -> None:
         self.numskip = numskip
         self.timepoints = self.realtimepoints - self.numskip
 
-    def setvalid(self, validvoxels):
+    def setvalid(self, validvoxels: NDArray) -> None:
         self.validvoxels = validvoxels
 
-    def byslice(self):
+    def byslice(self) -> NDArray:
         return self.thedata[:, :, :, self.numskip :].reshape(
             (self.slicesize, self.numslices, self.timepoints)
         )
 
-    def byvol(self):
+    def byvol(self) -> NDArray:
         return self.thedata[:, :, :, self.numskip :].reshape((self.numvox, self.timepoints))
 
-    def byvox(self):
+    def byvox(self) -> NDArray:
         return self.thedata[:, :, :, self.numskip :]
 
 
@@ -102,17 +106,17 @@ class ProbeRegressor:
 
     def __init__(
         self,
-        inputvec,
-        inputfreq,
-        targetperiod,
-        targetpoints,
-        targetstartpoint,
-        targetoversample=1,
-        inputstart=0.0,
-        inputoffset=0.0,
-        targetstart=0.0,
-        targetoffset=0.0,
-    ):
+        inputvec: NDArray,
+        inputfreq: float,
+        targetperiod: float,
+        targetpoints: int,
+        targetstartpoint: int,
+        targetoversample: int = 1,
+        inputstart: float = 0.0,
+        inputoffset: float = 0.0,
+        targetstart: float = 0.0,
+        targetoffset: float = 0.0,
+    ) -> None:
         self.inputoffset = inputoffset
         self.setinputvec(inputvec, inputfreq, inputstart=inputstart)
         self.targetperiod = targetperiod
@@ -121,17 +125,17 @@ class ProbeRegressor:
         self.targetpoints = targetpoints
         self.targetstartpoint = targetstartpoint
 
-    def setinputvec(self, inputvec, inputfreq, inputstart=0.0):
+    def setinputvec(self, inputvec: NDArray, inputfreq: float, inputstart: float = 0.0) -> None:
         self.inputvec = inputvec
         self.inputfreq = inputfreq
         self.inputstart = inputstart
 
-    def makeinputtimeaxis(self):
+    def makeinputtimeaxis(self) -> None:
         self.inputtimeaxis = np.linspace(0.0, len(self.inputvec)) / self.inputfreq - (
             self.inputstarttime + self.inputoffset
         )
 
-    def maketargettimeaxis(self):
+    def maketargettimeaxis(self) -> None:
         self.targettimeaxis = np.linspace(
             self.targetperiod * self.targetstartpoint,
             self.targetperiod * self.targetstartpoint + self.targetperiod * self.targetpoints,
@@ -155,15 +159,15 @@ class Coherer:
 
     def __init__(
         self,
-        Fs=0.0,
-        freqmin=None,
-        freqmax=None,
-        ncprefilter=None,
-        reftc=None,
-        detrendorder=1,
-        windowfunc="hamming",
-        debug=False,
-    ):
+        Fs: float = 0.0,
+        freqmin: float | None = None,
+        freqmax: float | None = None,
+        ncprefilter: Any | None = None,
+        reftc: NDArray | None = None,
+        detrendorder: int = 1,
+        windowfunc: str = "hamming",
+        debug: bool = False,
+    ) -> None:
         self.Fs = Fs
         self.ncprefilter = ncprefilter
         self.reftc = reftc
@@ -184,7 +188,7 @@ class Coherer:
             print("\tfreqmin:", self.freqmin)
             print("\tfreqmax:", self.freqmax)
 
-    def preptc(self, thetc):
+    def preptc(self, thetc: NDArray) -> NDArray:
         # prepare timecourse by filtering, normalizing, detrending, and applying a window function
         return tide_math.corrnormalize(
             self.ncprefilter.apply(self.Fs, thetc),
@@ -192,7 +196,7 @@ class Coherer:
             windowfunc="None",
         )
 
-    def setlimits(self, freqmin, freqmax):
+    def setlimits(self, freqmin: float, freqmax: float) -> None:
         self.freqmin = freqmin
         self.freqmax = freqmax
         if self.freqaxisvalid:
@@ -208,7 +212,7 @@ class Coherer:
             print("\tfreqmin,freqmax:", self.freqmin, self.freqmax)
             print("\tfreqmininpts,freqmaxinpts:", self.freqmininpts, self.freqmaxinpts)
 
-    def getaxisinfo(self):
+    def getaxisinfo(self) -> tuple[float, float, float, int]:
         return (
             self.freqaxis[self.freqmininpts],
             self.freqaxis[self.freqmaxinpts],
@@ -216,7 +220,7 @@ class Coherer:
             self.freqmaxinpts - self.freqmininpts,
         )
 
-    def setreftc(self, reftc):
+    def setreftc(self, reftc: NDArray) -> None:
         self.reftc = reftc + 0.0
         self.prepreftc = self.preptc(self.reftc)
 
@@ -238,10 +242,12 @@ class Coherer:
             self.freqaxis, self.freqmax, discretization="ceiling", debug=self.debug
         )
 
-    def trim(self, vector):
+    def trim(self, vector: NDArray) -> NDArray:
         return vector[self.freqmininpts : self.freqmaxinpts]
 
-    def run(self, thetc, trim=True, alt=False):
+    def run(
+        self, thetc: NDArray, trim: bool = True, alt: bool = False
+    ) -> tuple[NDArray, NDArray, int] | tuple[NDArray, NDArray, int, NDArray, NDArray, NDArray]:
         if len(thetc) != len(self.reftc):
             print(
                 "Coherer: timecourses are of different sizes:",

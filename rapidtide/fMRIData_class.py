@@ -16,7 +16,10 @@
 #   limitations under the License.
 #
 #
+from typing import Any
+
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 
@@ -34,15 +37,15 @@ class fMRIData:
 
     def __init__(
         self,
-        filename=None,
-        header=None,
-        data=None,
-        mask=None,
-        validvoxels=None,
-        dims=None,
-        sizes=None,
-        description=None,
-    ):
+        filename: str | None = None,
+        header: Any | None = None,
+        data: NDArray | None = None,
+        mask: NDArray | None = None,
+        validvoxels: NDArray | None = None,
+        dims: tuple | None = None,
+        sizes: tuple | None = None,
+        description: str | None = None,
+    ) -> None:
         r"""
 
         Parameters
@@ -91,7 +94,7 @@ class fMRIData:
         self.sizes = sizes
         self.description = description
 
-    def load(self, filename):
+    def load(self, filename: str) -> None:
         self.filename = filename
         ####################################################
         #  Read data
