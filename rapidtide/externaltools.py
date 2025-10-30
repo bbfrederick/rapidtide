@@ -20,6 +20,8 @@ import os
 import subprocess
 from os.path import join as pjoin
 
+import typing_extensions
+
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 

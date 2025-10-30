@@ -19,6 +19,7 @@
 from typing import Any, Callable
 
 import numpy as np
+import typing_extensions
 from numpy.typing import NDArray
 from scipy.special import factorial
 from tqdm import tqdm

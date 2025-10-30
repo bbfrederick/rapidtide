@@ -23,6 +23,7 @@ from typing import Any, Callable
 
 import nibabel as nib
 import numpy as np
+import typing_extensions
 from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt

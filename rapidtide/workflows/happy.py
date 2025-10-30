@@ -24,6 +24,7 @@ import warnings
 from pathlib import Path
 
 import numpy as np
+import typing_extensions
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt

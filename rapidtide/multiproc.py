@@ -23,6 +23,7 @@ from platform import python_version, system
 from typing import Any, Callable, List, Optional, Tuple
 
 import numpy as np
+import typing_extensions
 from numpy.typing import NDArray
 from tqdm import tqdm
 

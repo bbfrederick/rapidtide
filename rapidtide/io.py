@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import nibabel as nib
 import numpy as np
 import pandas as pd
+import typing_extensions
 
 from rapidtide.tests.utils import mse
 

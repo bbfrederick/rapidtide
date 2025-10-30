@@ -21,6 +21,7 @@ import sys
 from typing import Any
 
 import numpy as np
+import typing_extensions
 from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt

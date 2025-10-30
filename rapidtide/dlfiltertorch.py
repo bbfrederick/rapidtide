@@ -26,6 +26,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
+import typing_extensions
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")

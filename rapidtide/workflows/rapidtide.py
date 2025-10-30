@@ -25,6 +25,7 @@ import warnings
 from pathlib import Path
 
 import numpy as np
+import typing_extensions
 from scipy.stats import rankdata
 
 import rapidtide.calccoherence as tide_calccoherence
