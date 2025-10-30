@@ -46,45 +46,43 @@ class fMRIData:
         sizes: tuple | None = None,
         description: str | None = None,
     ) -> None:
-        r"""
-
-        Parameters
-        ----------
-        corrtimeaxis:  1D float array
-            The time axis of the correlation function
-        lagmin: float
-            The minimum allowed lag time in seconds
-        lagmax: float
-            The maximum allowed lag time in seconds
-        absmaxsigma: float
-            The maximum allowed peak halfwidth in seconds
-        hardlimit
-        bipolar: boolean
-            If true find the correlation peak with the maximum absolute value, regardless of sign
-        threshval
-        uthreshval
-        debug
-        zerooutbadfit
-        maxguess
-        useguess
-        searchfrac
-        lagmod
-        enforcethresh
-        displayplots
-
-        Returns
-        -------
-
-
-        Methods
-        -------
-        fit(corrfunc):
-            Fit the correlation function given in corrfunc and return the location of the peak in seconds, the maximum
-            correlation value, the peak width
-        setrange(lagmin, lagmax):
-            Specify the search range for lag peaks, in seconds
         """
+            Initialize a new instance.
 
+            Parameters
+            ----------
+            filename : str, optional
+                Path to the data file. Default is None.
+            header : Any, optional
+                Header information associated with the data. Default is None.
+            data : NDArray, optional
+                Main data array. Default is None.
+            mask : NDArray, optional
+                Mask array for data filtering. Default is None.
+            validvoxels : NDArray, optional
+                Array indicating valid voxels. Default is None.
+            dims : tuple, optional
+                Dimensions of the data. Default is None.
+            sizes : tuple, optional
+                Size information for the data. Default is None.
+            description : str, optional
+                Description of the data. Default is None.
+
+            Returns
+            -------
+            None
+                This method initializes the instance attributes but does not return anything.
+
+            Notes
+            -----
+            This constructor sets up the basic attributes for data handling. All parameters
+            are optional and can be None, allowing for flexible initialization of instances.
+
+            Examples
+            --------
+            >>> instance = MyClass()
+            >>> instance = MyClass(filename="data.nii", data=np.array([1, 2, 3]))
+            """
         self.filename = filename
         self.header = header
         self.data = data
@@ -95,6 +93,44 @@ class fMRIData:
         self.description = description
 
     def load(self, filename: str) -> None:
+        """
+            Load fMRI data from a file.
+
+            Load fMRI data from a file, supporting text, CIFTI, and NIFTI formats.
+            The function determines the file type and reads the data accordingly,
+            setting appropriate attributes such as data shape, timepoints, and spatial dimensions.
+
+            Parameters
+            ----------
+            filename : str
+                Path to the input file. Supported formats are text, CIFTI, and NIFTI.
+
+            Returns
+            -------
+            None
+                This function does not return a value but updates the instance attributes
+                with loaded data and metadata.
+
+            Notes
+            -----
+            This function modifies the instance state by setting the following attributes:
+            - `filename`: The path to the input file.
+            - `filetype`: The type of the file ('text', 'cifti', or 'nifti').
+            - `data`: The loaded data array.
+            - `header`: The header information (if available).
+            - `xsize`, `ysize`, `numslices`, `timepoints`: Spatial and temporal dimensions.
+            - `thesizes`: A list containing the dimensions of the data.
+            - `numspatiallocs`: Total number of spatial locations.
+            - `nativespaceshape`: Shape of the native space.
+            - `cifti_hdr`: CIFTI header (if applicable).
+
+            Examples
+            --------
+            >>> loader = DataReader()
+            >>> loader.load('fmri_data.nii.gz')
+            >>> print(loader.timepoints)
+            100
+            """
         self.filename = filename
         ####################################################
         #  Read data
