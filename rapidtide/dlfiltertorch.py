@@ -1616,14 +1616,14 @@ class HybridDLFilter(DeepLearningFilter):
 
 
 def filtscale(
-    data,
-    scalefac=1.0,
-    reverse=False,
-    hybrid=False,
-    lognormalize=True,
-    epsilon=1e-10,
-    numorders=6,
-):
+    data: np.ndarray,
+    scalefac: float = 1.0,
+    reverse: bool = False,
+    hybrid: bool = False,
+    lognormalize: bool = True,
+    epsilon: float = 1e-10,
+    numorders: int = 6,
+) -> tuple[np.ndarray, float] | np.ndarray:
     if not reverse:
         specvals = fftpack.fft(data)
         if lognormalize:
@@ -1653,16 +1653,22 @@ def filtscale(
             return fftpack.ifft(specvals).real
 
 
-def tobadpts(name):
+def tobadpts(name: str) -> str:
     return name.replace(".txt", "_badpts.txt")
 
 
-def targettoinput(name, targetfrag="xyz", inputfrag="abc"):
+def targettoinput(name: str, targetfrag: str = "xyz", inputfrag: str = "abc") -> str:
     LGR.debug(f"replacing {targetfrag} with {inputfrag}")
     return name.replace(targetfrag, inputfrag)
 
 
-def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="abc", debug=False):
+def getmatchedtcs(
+    searchstring: str,
+    usebadpts: bool = False,
+    targetfrag: str = "xyz",
+    inputfrag: str = "abc",
+    debug: bool = False,
+) -> tuple[list[str], int]:
     # list all of the target files
     fromfile = sorted(glob.glob(searchstring))
     if debug:
@@ -1700,17 +1706,19 @@ def getmatchedtcs(searchstring, usebadpts=False, targetfrag="xyz", inputfrag="ab
 
 
 def readindata(
-    matchedfilelist,
-    tclen,
-    targetfrag="xyz",
-    inputfrag="abc",
-    usebadpts=False,
-    startskip=0,
-    endskip=0,
-    corrthresh=0.5,
-    readlim=None,
-    readskip=None,
-    debug=False,
+    matchedfilelist: list[str],
+    tclen: int,
+    targetfrag: str = "xyz",
+    inputfrag: str = "abc",
+    usebadpts: bool = False,
+    startskip: int = 0,
+    endskip: int = 0,
+    corrthresh: float = 0.5,
+    readlim: int | None = None,
+    readskip: int | None = None,
+    debug: bool = False,
+) -> (
+    tuple[np.ndarray, np.ndarray, list[str]] | tuple[np.ndarray, np.ndarray, list[str], np.ndarray]
 ):
     LGR.info(
         "readindata called with usebadpts, startskip, endskip, readlim, readskip, targetfrag, inputfrag = "
@@ -1860,23 +1868,26 @@ def readindata(
 
 
 def prep(
-    window_size,
-    step=1,
-    excludethresh=4.0,
-    usebadpts=False,
-    startskip=200,
-    endskip=200,
-    excludebysubject=True,
-    thesuffix="sliceres",
-    thedatadir="/data/frederic/physioconn/output_2025",
-    inputfrag="abc",
-    targetfrag="xyz",
-    corrthresh=0.5,
-    dofft=False,
-    readlim=None,
-    readskip=None,
-    countlim=None,
-    debug=False,
+    window_size: int,
+    step: int = 1,
+    excludethresh: float = 4.0,
+    usebadpts: bool = False,
+    startskip: int = 200,
+    endskip: int = 200,
+    excludebysubject: bool = True,
+    thesuffix: str = "sliceres",
+    thedatadir: str = "/data/frederic/physioconn/output_2025",
+    inputfrag: str = "abc",
+    targetfrag: str = "xyz",
+    corrthresh: float = 0.5,
+    dofft: bool = False,
+    readlim: int | None = None,
+    readskip: int | None = None,
+    countlim: int | None = None,
+    debug: bool = False,
+) -> (
+    tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int]
+    | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int, np.ndarray, np.ndarray]
 ):
     """
     prep - reads in training and validation data for 1D filter
