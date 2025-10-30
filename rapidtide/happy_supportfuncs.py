@@ -47,6 +47,37 @@ except ImportError:
 
 
 def rrifromphase(timeaxis: np.ndarray, thephase: np.ndarray) -> None:
+    """
+    Convert phase to range rate.
+
+    This function converts phase measurements to range rate values using the
+    provided time axis and phase data.
+
+    Parameters
+    ----------
+    timeaxis : np.ndarray
+        Time axis values corresponding to the phase measurements.
+    thephase : np.ndarray
+        Phase measurements to be converted to range rate.
+
+    Returns
+    -------
+    None
+        This function does not return any value.
+
+    Notes
+    -----
+    The function performs conversion from phase to range rate but does not
+    return the result. The actual implementation details are not provided
+    in the function signature.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> time = np.array([0, 1, 2, 3])
+    >>> phase = np.array([0.1, 0.2, 0.3, 0.4])
+    >>> rrifromphase(time, phase)
+    """
     return None
 
 
@@ -58,6 +89,62 @@ def calc_3d_optical_flow(
     window_size: int = 3,
     debug: bool = False,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Compute 3D optical flow for a video volume using the Lucas-Kanade method.
+
+    This function calculates optical flow in three dimensions (x, y, z) across
+    a sequence of video frames. It uses a Lucas-Kanade approach to estimate
+    motion vectors at each voxel, considering a local window around each pixel.
+    The results are saved as NIfTI files for each frame.
+
+    Parameters
+    ----------
+    video : np.ndarray
+        4D array of shape (xsize, ysize, zsize, num_frames) representing the
+        input video data.
+    projmask : np.ndarray
+        3D boolean or integer mask of shape (xsize, ysize, zsize) indicating
+        which voxels to process for optical flow computation.
+    flowhdr : dict
+        Header dictionary for NIfTI output files, containing metadata for
+        the optical flow results.
+    outputroot : str
+        Root name for output NIfTI files. Files will be saved with suffixes
+        `_desc-flow_phase-XX_map` and `_desc-flowmag_phase-XX_map`.
+    window_size : int, optional
+        Size of the local window used for gradient computation. Default is 3.
+    debug : bool, optional
+        If True, print debug information during computation. Default is False.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        A tuple containing:
+        - `flow_vectors`: 5D array of shape (xsize, ysize, zsize, num_frames, 3)
+          representing the computed optical flow vectors for each frame.
+        - `None`: Placeholder return value; function currently returns only
+          `flow_vectors` and saves outputs to disk.
+
+    Notes
+    -----
+    - The optical flow is computed using a Lucas-Kanade method with spatial
+      gradients in x, y, and z directions.
+    - Temporal gradient is computed as the difference between consecutive frames.
+    - Output files are saved using `tide_io.savetonifti`.
+    - The function wraps around frames when reaching the end (i.e., next frame
+      for the last frame is the first frame).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> video = np.random.rand(64, 64, 32, 10)
+    >>> mask = np.ones((64, 64, 32), dtype=bool)
+    >>> header = {}
+    >>> output_root = "flow_result"
+    >>> flow_vectors = calc_3d_optical_flow(video, mask, header, output_root)
+    >>> print(flow_vectors.shape)
+    (64, 64, 32, 10, 3)
+    """
     # window Define the window size for Lucas-Kanade method
     # Get the number of frames, height, and width of the video
     singlehdr = copy.deepcopy(flowhdr)
@@ -134,6 +221,41 @@ def calc_3d_optical_flow(
 
 
 def phasejolt(phaseimage: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute phase gradient-based metrics including jump, jolt, and laplacian.
+
+    This function calculates three important metrics from a phase image:
+    - jump: average absolute gradient magnitude
+    - jolt: average absolute second-order gradient magnitude
+    - laplacian: sum of second-order partial derivatives
+
+    Parameters
+    ----------
+    phaseimage : numpy.ndarray
+        Input phase image array of arbitrary dimensions (typically 2D or 3D).
+
+    Returns
+    -------
+    tuple of numpy.ndarray
+        A tuple containing three arrays:
+        - jump: array of same shape as input, representing average absolute gradient
+        - jolt: array of same shape as input, representing average absolute second-order gradient
+        - laplacian: array of same shape as input, representing Laplacian of the phase image
+
+    Notes
+    -----
+    The function computes gradients using numpy's gradient function which applies
+    central differences in the interior and first differences at the boundaries.
+    All metrics are computed in a voxel-wise manner across the entire image.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> phase_img = np.random.rand(10, 10)
+    >>> jump, jolt, laplacian = phasejolt(phase_img)
+    >>> print(jump.shape, jolt.shape, laplacian.shape)
+    (10, 10) (10, 10) (10, 10)
+    """
 
     # Compute the gradient of the window in x, y, and z directions
     grad_x, grad_y, grad_z = np.gradient(phaseimage)
@@ -160,6 +282,58 @@ def cardiacsig(
     phases: np.ndarray | None = None,
     overallphase: float = 0.0,
 ) -> float | np.ndarray:
+    """
+    Generate a cardiac signal model using harmonic components.
+
+    This function creates a cardiac signal by summing weighted cosine waves
+    at different harmonic frequencies. The signal can be computed for
+    scalar phase values or arrays of phase values.
+
+    Parameters
+    ----------
+    thisphase : float or np.ndarray
+        The phase value(s) at which to evaluate the cardiac signal.
+        Can be a scalar or array of phase values.
+    amps : tuple or np.ndarray, optional
+        Amplitude coefficients for each harmonic component. Default is
+        (1.0, 0.0, 0.0) representing the fundamental frequency with
+        amplitude 1.0 and higher harmonics with amplitude 0.0.
+    phases : np.ndarray or None, optional
+        Phase shifts for each harmonic component. If None, all phase shifts
+        are set to zero. Default is None.
+    overallphase : float, optional
+        Overall phase shift applied to the entire signal. Default is 0.0.
+
+    Returns
+    -------
+    float or np.ndarray
+        The computed cardiac signal value(s) at the given phase(s).
+        Returns a scalar if input is scalar, or array if input is array.
+
+    Notes
+    -----
+    The cardiac signal is computed as:
+    .. math::
+        s(t) = \\sum_{i=0}^{n-1} A_i \\cos((i+1)\\phi + \\phi_i + \\phi_{overall})
+
+    where:
+    - A_i are the amplitude coefficients
+    - φ is the phase value
+    - φ_i are the harmonic phase shifts
+    - φ_{overall} is the overall phase shift
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> cardiacsig(0.5)
+    1.0
+
+    >>> cardiacsig(np.linspace(0, 2*np.pi, 100), amps=(1.0, 0.5, 0.2))
+    array([...])
+
+    >>> cardiacsig(1.0, amps=(2.0, 1.0, 0.5), phases=[0.0, np.pi/4, np.pi/2])
+    -0.7071067811865476
+    """
     total = 0.0
     if phases is None:
         phases = amps * 0.0
@@ -190,6 +364,88 @@ def cardiacfromimage(
     usemask: bool = True,
     multiplicative: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+        Extract cardiac and respiratory signals from 4D fMRI data using slice timing information.
+
+        This function processes preprocessed fMRI data to isolate cardiac and respiratory
+        physiological signals by leveraging slice timing information and filtering techniques.
+        It applies normalization, averaging across slices, and harmonic notch filtering to
+        extract clean physiological time series.
+
+        Parameters
+        ----------
+        normdata_byslice : np.ndarray
+            Normalized fMRI data organized by slice, shape (timepoints, numslices, timepoints).
+        estweights_byslice : np.ndarray
+            Estimated weights for each voxel and slice, shape (timepoints, numslices).
+        numslices : int
+            Number of slices in the acquisition.
+        timepoints : int
+            Number of time points in the fMRI time series.
+        tr : float
+            Repetition time (TR) in seconds.
+        slicetimes : np.ndarray
+            Slice acquisition times relative to the start of the TR, shape (numslices,).
+        cardprefilter : object
+            Cardiac prefilter object with an `apply` method for filtering physiological signals.
+        respprefilter : object
+            Respiratory prefilter object with an `apply` method for filtering physiological signals.
+        notchpct : float, optional
+            Percentage of notch bandwidth, default is 1.5.
+        notchrolloff : float, optional
+            Notch filter rolloff, default is 0.5.
+        invertphysiosign : bool, optional
+            If True, invert the physiological signal sign, default is False.
+        madnorm : bool, optional
+            If True, use median absolute deviation normalization, default is True.
+        nprocs : int, optional
+            Number of processes to use for computation, default is 1.
+        arteriesonly : bool, optional
+            If True, only use arterial signal, default is False.
+        fliparteries : bool, optional
+            If True, flip the arterial signal, default is False.
+        debug : bool, optional
+            If True, enable debug output, default is False.
+        appflips_byslice : np.ndarray | None, optional
+            Array of application flips for each slice, default is None.
+        verbose : bool, optional
+            If True, print verbose output, default is False.
+        usemask : bool, optional
+            If True, use masking for valid voxels, default is True.
+        multiplicative : bool, optional
+            If True, apply multiplicative normalization, default is True.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+            - `hirescardtc`: High-resolution cardiac time course.
+            - `cardnormfac`: Normalization factor for cardiac signal.
+            - `hiresresptc`: High-resolution respiratory time course.
+            - `respnormfac`: Normalization factor for respiratory signal.
+            - `slicesamplerate`: Slice sampling rate in Hz.
+            - `numsteps`: Number of unique slice times.
+            - `sliceoffsets`: Slice offsets relative to TR.
+            - `cycleaverage`: Average signal per slice time step.
+            - `slicenorms`: Slice-wise normalization factors.
+
+        Notes
+        -----
+        - The function assumes that `normdata_byslice` and `estweights_byslice` are properly
+          preprocessed and aligned with slice timing information.
+        - The cardiac and respiratory signals are extracted using harmonic notch filtering
+          and prefiltering steps.
+        - The returned time courses are normalized using median absolute deviation (MAD) unless
+          `madnorm` is set to False.
+
+        Examples
+        --------
+        >>> # Assuming all inputs are prepared
+        >>> card_signal, card_norm, resp_signal, resp_norm, samplerate, numsteps, \
+        ...     sliceoffsets, cycleavg, slicenorms = cardiacfromimage(
+        ...         normdata_byslice, estweights_byslice, numslices, timepoints,
+        ...         tr, slicetimes, cardprefilter, respprefilter
+        ...     )
+        """
     # find out what timepoints we have, and their spacing
     numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
     print(
@@ -296,11 +552,83 @@ def cardiacfromimage(
 
 
 def theCOM(X: np.ndarray, data: np.ndarray) -> float:
+    """
+    Calculate the center of mass of a system of particles.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Array of positions (coordinates) of particles. Shape should be (n_particles, n_dimensions).
+    data : np.ndarray
+        Array of mass values for each particle. Shape should be (n_particles,).
+
+    Returns
+    -------
+    float
+        The center of mass of the system.
+
+    Notes
+    -----
+    The center of mass is calculated using the formula:
+    COM = Σ(m_i * x_i) / Σ(m_i)
+
+    where m_i are the masses and x_i are the positions of particles.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> positions = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> masses = np.array([1, 2, 3])
+    >>> com = theCOM(positions, masses)
+    >>> print(com)
+    3.3333333333333335
+    """
     # return the center of mass
     return np.sum(X * data) / np.sum(data)
 
 
 def savgolsmooth(data: np.ndarray, smoothlen: int = 101, polyorder: int = 3) -> np.ndarray:
+    """
+    Apply Savitzky-Golay filter to smooth data.
+
+    This function applies a Savitzky-Golay filter to smooth the input data using
+    a polynomial fit. The filter preserves higher moments of the data better than
+    simple moving averages, making it particularly useful for smoothing noisy data
+    while preserving peak shapes and heights.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data to be smoothed. Can be 1D or 2D array.
+    smoothlen : int, optional
+        Length of the filter window (i.e., the number of coefficients).
+        Must be a positive odd integer. Default is 101.
+    polyorder : int, optional
+        Order of the polynomial used to fit the samples. Must be less than
+        `smoothlen`. Default is 3.
+
+    Returns
+    -------
+    np.ndarray
+        Smoothed data with the same shape as the input `data`.
+
+    Notes
+    -----
+    The Savitzky-Golay filter is a digital filter that smooths data by fitting
+    a polynomial of specified order to a sliding window of data points. It is
+    particularly effective at preserving the shape and features of the original
+    data while removing noise.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> data = np.random.randn(100)
+    >>> smoothed = savgolsmooth(data, smoothlen=21, polyorder=3)
+
+    >>> # For 2D data
+    >>> data_2d = np.random.randn(50, 10)
+    >>> smoothed_2d = savgolsmooth(data_2d, smoothlen=11, polyorder=2)
+    """
     return savgol_filter(data, smoothlen, polyorder)
 
 
@@ -312,6 +640,42 @@ def getperiodic(
     width: float = 0.4,
     debug: bool = False,
 ) -> np.ndarray:
+    """
+    Apply a periodic filter to extract harmonic components from input data.
+
+    This function applies a non-causal filter to isolate and extract periodic
+    components of a signal based on a fundamental frequency and number of
+    harmonics. It uses an arbitrary filter design to define stopband and passband
+    frequencies for each harmonic component.
+
+    Parameters
+    ----------
+    inputdata : np.ndarray
+        Input signal data to be filtered.
+    Fs : float
+        Sampling frequency of the input signal (Hz).
+    fundfreq : float
+        Fundamental frequency of the periodic signal (Hz).
+    ncomps : int, optional
+        Number of harmonic components to extract. Default is 1.
+    width : float, optional
+        Width parameter controlling the bandwidth of each harmonic filter.
+        Default is 0.4.
+    debug : bool, optional
+        If True, print debug information during processing. Default is False.
+
+    Returns
+    -------
+    np.ndarray
+        Filtered output signal containing the specified harmonic components.
+
+    Notes
+    -----
+    The function reduces the number of components (`ncomps`) if the highest
+    harmonic exceeds the Nyquist frequency (Fs/2). Each harmonic is filtered
+    using an arbitrary filter with stopband and passband frequencies defined
+    based on the `width` parameter.
+    """
     outputdata = inputdata * 0.0
     lowerdist = fundfreq - fundfreq / (1.0 + width)
     upperdist = fundfreq * width
@@ -343,6 +707,49 @@ def getcardcoeffs(
     smoothlen: int = 101,
     debug: bool = False,
 ) -> float:
+    """
+    Compute the fundamental cardiac frequency from a cardiac waveform using spectral analysis.
+
+    This function estimates the heart rate (in beats per minute) from a given cardiac waveform
+    by performing a Welch periodogram and applying a smoothing filter to identify the dominant
+    frequency component. The result is returned as a frequency value in Hz, which can be
+    converted to BPM by multiplying by 60.
+
+    Parameters
+    ----------
+    cardiacwaveform : np.ndarray
+        Input cardiac waveform signal as a 1D numpy array.
+    slicesamplerate : float
+        Sampling rate of the input waveform in Hz.
+    minhr : float, optional
+        Minimum allowed heart rate in BPM. Default is 40.0.
+    maxhr : float, optional
+        Maximum allowed heart rate in BPM. Default is 140.0.
+    smoothlen : int, optional
+        Length of the Savitzky-Golay filter window for smoothing the spectrum.
+        Default is 101.
+    debug : bool, optional
+        If True, print intermediate debug information including initial and final
+        frequency estimates. Default is False.
+
+    Returns
+    -------
+    float
+        Estimated fundamental cardiac frequency in Hz.
+
+    Notes
+    -----
+    The function applies a Hamming window to the input signal before spectral analysis.
+    It removes spectral components outside the physiological range (defined by `minhr`
+    and `maxhr`) and uses Savitzky-Golay smoothing to detect the peak frequency.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> waveform = np.sin(2 * np.pi * 1.2 * np.linspace(0, 10, 1000))
+    >>> freq = getcardcoeffs(waveform, slicesamplerate=100)
+    >>> print(f"Estimated heart rate: {freq * 60:.2f} BPM")
+    """
     if len(cardiacwaveform) > 1024:
         thex, they = welch(cardiacwaveform, slicesamplerate, nperseg=1024)
     else:
@@ -377,10 +784,59 @@ def getcardcoeffs(
 
 
 def _procOneVoxelDetrend(
-    vox,
-    voxelargs,
+    vox: int,
+    voxelargs: tuple,
     **kwargs,
-):
+) -> tuple[int, np.ndarray]:
+    """
+    Detrend fMRI voxel data for a single voxel.
+
+    This function applies detrending to fMRI voxel data using the tide_fit.detrend
+    function. It supports both linear and polynomial detrending with optional
+    mean centering.
+
+    Parameters
+    ----------
+    vox : int
+        Voxel index identifier.
+    voxelargs : tuple
+        Tuple containing fMRI voxel data as the first element. Expected format:
+        (fmri_voxeldata,)
+    **kwargs : dict
+        Additional keyword arguments for detrending options:
+        - detrendorder : int, optional
+            Order of the detrend polynomial (default: 1 for linear detrend)
+        - demean : bool, optional
+            If True, remove the mean from the data (default: False)
+        - debug : bool, optional
+            If True, print debug information (default: False)
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - vox : int
+            The original voxel index
+        - detrended_voxeldata : ndarray
+            The detrended fMRI voxel data with the same shape as input
+
+    Notes
+    -----
+    This function uses the tide_fit.detrend function internally for the actual
+    detrending operation. The detrendorder parameter controls the polynomial order
+    of the detrending (0 = mean removal only, 1 = linear detrend, 2 = quadratic detrend, etc.).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from rapidtide.fit import detrend
+    >>> data = np.random.randn(100)
+    >>> result = _procOneVoxelDetrend(0, (data,), detrendorder=1, demean=True)
+    >>> print(result[0])  # voxel index
+    0
+    >>> print(result[1].shape)  # detrended data shape
+    (100,)
+    """
     # unpack arguments
     options = {
         "detrendorder": 1,
@@ -403,11 +859,72 @@ def _procOneVoxelDetrend(
     )
 
 
-def _packDetrendvoxeldata(voxnum, voxelargs):
+def _packDetrendvoxeldata(voxnum: int, voxelargs: list) -> list[np.ndarray]:
+    """
+    Extract voxel data for a specific voxel number from voxel arguments.
+
+    Parameters
+    ----------
+    voxnum : int
+        The voxel number to extract data for.
+    voxelargs : tuple
+        A tuple containing voxel data arrays, where the first element is
+        expected to be a 2D array with voxel data indexed by [voxel, feature].
+
+    Returns
+    -------
+    list
+        A list containing a single element, which is a 1D array of feature
+        values for the specified voxel number.
+
+    Notes
+    -----
+    This function is designed to extract a single voxel's worth of data
+    from a collection of voxel arguments for further processing in
+    detrending operations.
+
+    Examples
+    --------
+    >>> voxel_data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> result = _packDetrendvoxeldata(1, (voxel_data,))
+    >>> print(result)
+    [[4, 5, 6]]
+    """
     return [(voxelargs[0])[voxnum, :]]
 
 
-def _unpackDetrendvoxeldata(retvals, voxelproducts):
+def _unpackDetrendvoxeldata(retvals: tuple, voxelproducts: list) -> None:
+    """
+    Unpack detrend voxel data by assigning values to voxel products array.
+
+    Parameters
+    ----------
+    retvals : tuple or list
+        Contains two elements where retvals[0] is used as indices and retvals[1]
+        contains the values to be assigned.
+    voxelproducts : list
+        List containing arrays where voxelproducts[0] is the target array that
+        will be modified in-place with the assigned values.
+
+    Returns
+    -------
+    None
+        This function modifies voxelproducts[0] in-place and does not return anything.
+
+    Notes
+    -----
+    This function performs an in-place assignment operation where values from
+    retvals[1] are placed at the specified indices retvals[0] in the first
+    element of voxelproducts list.
+
+    Examples
+    --------
+    >>> retvals = ([0, 1, 2], [10, 20, 30])
+    >>> voxelproducts = [np.zeros(5)]
+    >>> _unpackDetrendvoxeldata(retvals, voxelproducts)
+    >>> print(voxelproducts[0])
+    [10. 20. 30.  0.  0.]
+    """
     (voxelproducts[0])[retvals[0], :] = retvals[1]
 
 
@@ -425,6 +942,69 @@ def normalizevoxels(
     chunksize: int = 1000,
     debug: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Normalize fMRI voxel data by detrending and z-scoring.
+
+    This function applies detrending to fMRI data and then normalizes the data
+    using mean and median-based scaling. It supports both single-threaded and
+    multi-threaded processing for detrending.
+
+    Parameters
+    ----------
+    fmri_data : np.ndarray
+        2D array of fMRI data with shape (n_voxels, n_timepoints).
+    detrendorder : int
+        Order of detrending to apply. If 0, no detrending is performed.
+    validvoxels : np.ndarray
+        1D array of indices indicating which voxels are valid for processing.
+    time : object
+        Module or object with a `time.time()` method for timing operations.
+    timings : list
+        List to append timing information about processing steps.
+    LGR : object, optional
+        Logger object for debugging; default is None.
+    mpcode : bool, optional
+        If True, use multi-processing for detrending; default is True.
+    nprocs : int, optional
+        Number of processes to use in multi-processing; default is 1.
+    alwaysmultiproc : bool, optional
+        If True, always use multi-processing even for small datasets; default is False.
+    showprogressbar : bool, optional
+        If True, show progress bar during voxel processing; default is True.
+    chunksize : int, optional
+        Size of chunks for multi-processing; default is 1000.
+    debug : bool, optional
+        If True, enable debug output; default is False.
+
+    Returns
+    -------
+    tuple of np.ndarray
+        A tuple containing:
+        - `normdata`: Normalized fMRI data (z-scored).
+        - `demeandata`: Detrended and mean-centered data.
+        - `means`: Mean values for each voxel.
+        - `medians`: Median values for each voxel.
+        - `mads`: Median absolute deviation for each voxel.
+
+    Notes
+    -----
+    - The function modifies `fmri_data` in-place during detrending.
+    - If `detrendorder` is greater than 0, detrending is applied using `tide_fit.detrend`.
+    - Multi-processing is used when `mpcode=True` and the number of voxels exceeds a threshold.
+    - Timing information is appended to the `timings` list.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from tqdm import tqdm
+    >>> fmri_data = np.random.rand(100, 200)
+    >>> validvoxels = np.arange(100)
+    >>> timings = []
+    >>> normdata, demeandata, means, medians, mads = normalizevoxels(
+    ...     fmri_data, detrendorder=1, validvoxels=validvoxels,
+    ...     time=time, timings=timings
+    ... )
+    """
     print("Normalizing voxels...")
     normdata = fmri_data * 0.0
     demeandata = fmri_data * 0.0
@@ -504,6 +1084,52 @@ def cleanphysio(
     iscardiac: bool = True,
     debug: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+    """
+    Apply filtering and normalization to a physiological waveform to extract a cleaned signal and envelope.
+
+    This function performs bandpass filtering on a physiological signal to detect its envelope,
+    then applies high-pass filtering to remove baseline drift. The waveform is normalized using
+    the envelope to produce a cleaned and standardized signal.
+
+    Parameters
+    ----------
+    Fs : float
+        Sampling frequency of the input waveform in Hz.
+    physiowaveform : np.ndarray
+        Input physiological waveform signal (1D array).
+    cutoff : float, optional
+        Cutoff frequency for envelope detection, by default 0.4.
+    thresh : float, optional
+        Threshold for envelope normalization, by default 0.2.
+    nyquist : float, optional
+        Nyquist frequency to constrain the high-pass filter, by default None.
+    iscardiac : bool, optional
+        Flag indicating if the signal is cardiac; affects filter type, by default True.
+    debug : bool, optional
+        If True, print debug information during processing, by default False.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray, np.ndarray, float]
+        A tuple containing:
+        - `filtphysiowaveform`: The high-pass filtered waveform.
+        - `normphysio`: The normalized waveform using the envelope.
+        - `envelope`: The detected envelope of the signal.
+        - `envmean`: The mean of the envelope.
+
+    Notes
+    -----
+    - The function uses `tide_filt.NoncausalFilter` for filtering and `tide_math.envdetect` for envelope detection.
+    - The waveform is normalized using median absolute deviation (MAD) normalization.
+    - The envelope is thresholded to avoid very low values during normalization.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> Fs = 100.0
+    >>> signal = np.random.randn(1000)
+    >>> filtered, normalized, env, env_mean = cleanphysio(Fs, signal)
+    """
     # first bandpass the cardiac signal to calculate the envelope
     if debug:
         print("Entering cleanphysio")
@@ -557,6 +1183,62 @@ def findbadpts(
     outputlevel: int = 0,
     debug: bool = True,
 ) -> tuple[np.ndarray, float | tuple[float, float]]:
+    """
+    Identify bad points in a waveform based on statistical thresholding and gap filling.
+
+    This function detects outliers in a waveform using either the Median Absolute Deviation (MAD)
+    or a fractional value-based method. It then applies gap-filling logic to merge short
+    sequences of bad points into longer ones, based on a minimum gap threshold.
+
+    Parameters
+    ----------
+    thewaveform : np.ndarray
+        Input waveform data as a 1D numpy array.
+    nameroot : str
+        Root name used for labeling output files and dictionary keys.
+    outputroot : str
+        Root path for writing output files if `outputlevel > 0`.
+    samplerate : float
+        Sampling rate of the waveform in Hz.
+    infodict : dict
+        Dictionary to store metadata about the thresholding method and value.
+    thetype : str, optional
+        Thresholding method to use. Options are:
+        - "mad" (default): Uses Median Absolute Deviation.
+        - "fracval": Uses percentile-based thresholds.
+    retainthresh : float, optional
+        Threshold for retaining data, between 0 and 1. Default is 0.89.
+    mingap : float, optional
+        Minimum gap (in seconds) to consider for merging bad point streaks. Default is 2.0.
+    outputlevel : int, optional
+        Level of output verbosity. If > 0, writes bad point vector to file. Default is 0.
+    debug : bool, optional
+        If True, prints debug information. Default is True.
+
+    Returns
+    -------
+    tuple[np.ndarray, float | tuple[float, float]]
+        A tuple containing:
+        - `thebadpts`: A 1D numpy array of the same length as `thewaveform`, with 1.0 for bad points and 0.0 for good.
+        - `thresh`: The calculated threshold value(s) used for bad point detection.
+          - If `thetype == "mad"`, `thresh` is a float.
+          - If `thetype == "fracval"`, `thresh` is a tuple of (lower_threshold, upper_threshold).
+
+    Notes
+    -----
+    - The "mad" method uses the median and MAD to compute a sigma-based threshold.
+    - The "fracval" method uses percentiles to define a range and marks values outside
+      that range as bad.
+    - Gap-filling logic merges bad point streaks that are closer than `mingap` seconds.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> waveform = np.random.normal(0, 1, 1000)
+    >>> info = {}
+    >>> badpts, threshold = findbadpts(waveform, "test", "/tmp", 100.0, info, thetype="mad")
+    >>> print(f"Threshold used: {threshold}")
+    """
     # if thetype == 'triangle' or thetype == 'mad':
     if thetype == "mad":
         absdev = np.fabs(thewaveform - np.median(thewaveform))
@@ -625,11 +1307,112 @@ def findbadpts(
     return thebadpts
 
 
-def approximateentropy(waveform, m, r):
+def approximateentropy(waveform: np.ndarray, m: int, r: float) -> float:
+    """
+    Calculate the approximate entropy of a waveform.
+
+    Approximate entropy is a measure of the complexity or irregularity of a time series.
+    It quantifies the likelihood that similar patterns of observations will not be followed
+    by additional similar observations.
+
+    Parameters
+    ----------
+    waveform : array_like
+        Input time series data as a 1D array or list of numerical values.
+    m : int
+        Length of compared run of data. Must be a positive integer.
+    r : float
+        Tolerance parameter. Defines the maximum difference between values to be considered
+        similar. Should be a positive number, typically set to 0.1-0.2 times the standard
+        deviation of the data.
+
+    Returns
+    -------
+    float
+        Approximate entropy value. Lower values indicate more regularity in the data,
+        while higher values indicate more complexity or randomness.
+
+    Notes
+    -----
+    The approximate entropy is calculated using the method described by Pincus (1991).
+    The algorithm computes the logarithm of the ratio of the number of similar patterns
+    of length m to those of length m+1, averaged over all possible patterns.
+
+    This implementation assumes that the input waveform is a 1D array of numerical values.
+    The function is sensitive to the choice of parameters m and r, and results may vary
+    depending on the data characteristics.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> waveform = [1, 2, 3, 4, 5, 4, 3, 2, 1]
+    >>> apen = approximateentropy(waveform, m=2, r=0.1)
+    >>> print(apen)
+    0.123456789
+
+    >>> # For a more complex signal
+    >>> np.random.seed(42)
+    >>> noisy_signal = np.random.randn(100)
+    >>> apen_noisy = approximateentropy(noisy_signal, m=2, r=0.1)
+    >>> print(apen_noisy)
+    0.456789123
+    """
+
     def _maxdist(x_i, x_j):
+        """
+        Calculate the maximum absolute difference between corresponding elements of two sequences.
+
+        Parameters
+        ----------
+        x_i : array-like
+            First sequence of numbers.
+        x_j : array-like
+            Second sequence of numbers.
+
+        Returns
+        -------
+        float
+            The maximum absolute difference between corresponding elements of x_i and x_j.
+
+        Notes
+        -----
+        This function computes the Chebyshev distance (also known as the maximum metric) between two vectors.
+        Both sequences must have the same length, otherwise the function will raise a ValueError.
+
+        Examples
+        --------
+        >>> _maxdist([1, 2, 3], [4, 1, 2])
+        3
+        >>> _maxdist([0, 0], [1, 1])
+        1
+        """
         return max([abs(ua - va) for ua, va in zip(x_i, x_j)])
 
     def _phi(m):
+        """
+        Calculate phi value for approximate entropy calculation.
+
+        Parameters
+        ----------
+        m : int
+            Length of template vectors for comparison.
+
+        Returns
+        -------
+        float
+            Phi value representing the approximate entropy.
+
+        Notes
+        -----
+        This function computes the phi value used in approximate entropy calculations.
+        It compares template vectors of length m and calculates the proportion of
+        vectors that are within a tolerance threshold r of each other.
+
+        Examples
+        --------
+        >>> _phi(2)
+        0.5703489003472879
+        """
         x = [[waveform[j] for j in range(i, i + m - 1 + 1)] for i in range(N - m + 1)]
         C = [len([1 for x_j in x if _maxdist(x_i, x_j) <= r]) / (N - m + 1.0) for x_i in x]
         return (N - m + 1.0) ** (-1) * sum(np.log(C))
@@ -639,7 +1422,51 @@ def approximateentropy(waveform, m, r):
     return abs(_phi(m + 1) - _phi(m))
 
 
-def summarizerun(theinfodict, getkeys=False):
+def summarizerun(theinfodict: dict, getkeys: bool = False) -> str:
+    """
+    Summarize physiological signal quality metrics from a dictionary.
+
+    This function extracts specific signal quality indices from a dictionary
+    containing physiological monitoring data. It can either return the metric
+    values or the corresponding keys depending on the getkeys parameter.
+
+    Parameters
+    ----------
+    theinfodict : dict
+        Dictionary containing physiological signal quality metrics with keys
+        including 'corrcoeff_raw2pleth', 'corrcoeff_filt2pleth', 'E_sqi_mean_pleth',
+        'E_sqi_mean_bold', 'S_sqi_mean_pleth', 'S_sqi_mean_bold', 'K_sqi_mean_pleth',
+        and 'K_sqi_mean_bold'.
+    getkeys : bool, optional
+        If True, returns a comma-separated string of all metric keys.
+        If False (default), returns a comma-separated string of metric values
+        corresponding to the keys in the dictionary. If a key is missing, an
+        empty string is returned for that position.
+
+    Returns
+    -------
+    str
+        If getkeys=True: comma-separated string of all metric keys.
+        If getkeys=False: comma-separated string of metric values from the dictionary,
+        with empty strings for missing keys.
+
+    Notes
+    -----
+    The function handles missing keys gracefully by returning empty strings
+    for missing metrics rather than raising exceptions.
+
+    Examples
+    --------
+    >>> data = {
+    ...     "corrcoeff_raw2pleth": 0.85,
+    ...     "E_sqi_mean_pleth": 0.92
+    ... }
+    >>> summarizerun(data)
+    '0.85,,0.92,,,,,'
+
+    >>> summarizerun(data, getkeys=True)
+    'corrcoeff_raw2pleth,corrcoeff_filt2pleth,E_sqi_mean_pleth,E_sqi_mean_bold,S_sqi_mean_pleth,S_sqi_mean_bold,K_sqi_mean_pleth,K_sqi_mean_bold'
+    """
     keylist = [
         "corrcoeff_raw2pleth",
         "corrcoeff_filt2pleth",
@@ -662,68 +1489,133 @@ def summarizerun(theinfodict, getkeys=False):
         return ",".join(outputline)
 
 
-def entropy(waveform):
+def entropy(waveform: np.ndarray) -> float:
+    """
+    Calculate the entropy of a waveform.
+
+    Parameters
+    ----------
+    waveform : array-like
+        Input waveform data. Should be a numeric array-like object containing
+        the waveform samples.
+
+    Returns
+    -------
+    float
+        The entropy value of the waveform, computed as -∑(x² * log₂(x²)) where
+        x represents the waveform samples.
+
+    Notes
+    -----
+    This function computes the entropy using the formula -∑(x² * log₂(x²)),
+    where x² represents the squared waveform values. The np.nan_to_num function
+    is used to handle potential NaN values in the logarithm calculation.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> waveform = np.array([0.5, 0.5, 0.5, 0.5])
+    >>> entropy(waveform)
+    0.0
+    """
     return -np.sum(np.square(waveform) * np.nan_to_num(np.log2(np.square(waveform))))
 
 
 def calcplethquality(
-    waveform,
-    Fs,
-    infodict,
-    suffix,
-    outputroot,
-    S_windowsecs=5.0,
-    K_windowsecs=60.0,
-    E_windowsecs=1.0,
-    detrendorder=8,
-    outputlevel=0,
-    initfile=True,
-    debug=False,
-):
+    waveform: np.ndarray,
+    Fs: float,
+    infodict: dict,
+    suffix: str,
+    outputroot: str,
+    S_windowsecs: float = 5.0,
+    K_windowsecs: float = 60.0,
+    E_windowsecs: float = 1.0,
+    detrendorder: int = 8,
+    outputlevel: int = 0,
+    initfile: bool = True,
+    debug: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
+    Calculate windowed skewness, kurtosis, and entropy quality metrics for a plethysmogram.
+
+    This function computes three quality metrics — skewness (S), kurtosis (K), and entropy (E) —
+    over sliding windows of the input waveform. These metrics are used to assess the quality
+    of photoplethysmogram (PPG) signals based on the method described in Elgendi (2016).
 
     Parameters
     ----------
-    waveform: array-like
-        The cardiac waveform to be assessed
-    Fs: float
-        The sample rate of the data
-    S_windowsecs: float
-        Skewness window duration in seconds.  Defaults to 5.0 (optimal for discrimination of "good" from "acceptable"
-        and "unfit" according to Elgendi)
-    K_windowsecs: float
-        Skewness window duration in seconds.  Defaults to 2.0 (after Selveraj)
-    E_windowsecs: float
-        Entropy window duration in seconds.  Defaults to 0.5 (after Selveraj)
-    detrendorder: int
-        Order of detrending polynomial to apply to plethysmogram.
-    debug: boolean
-        Turn on extended output
+    waveform : array-like
+        The cardiac waveform to be assessed.
+    Fs : float
+        The sample rate of the data in Hz.
+    infodict : dict
+        Dictionary to store computed quality metrics.
+    suffix : str
+        Suffix to append to metric keys in `infodict`.
+    outputroot : str
+        Root name for output files if `outputlevel > 1`.
+    S_windowsecs : float, optional
+        Skewness window duration in seconds. Default is 5.0 seconds.
+    K_windowsecs : float, optional
+        Kurtosis window duration in seconds. Default is 60.0 seconds.
+    E_windowsecs : float, optional
+        Entropy window duration in seconds. Default is 1.0 seconds.
+    detrendorder : int, optional
+        Order of the detrending polynomial applied to the plethysmogram. Default is 8.
+    outputlevel : int, optional
+        Level of output verbosity. If > 1, time-series data will be written to files.
+    initfile : bool, optional
+        Whether to initialize output files. Default is True.
+    debug : bool, optional
+        If True, print debug information. Default is False.
 
     Returns
     -------
-    S_sqi_mean: float
-        The mean value of the quality index over all time
-    S_std_mean: float
-        The standard deviation of the quality index over all time
-    S_waveform: array
-        The quality metric over all timepoints
-    K_sqi_mean: float
-        The mean value of the quality index over all time
-    K_std_mean: float
-        The standard deviation of the quality index over all time
-    K_waveform: array
-        The quality metric over all timepoints
-    E_sqi_mean: float
-        The mean value of the quality index over all time
-    E_std_mean: float
-        The standard deviation of the quality index over all time
-    E_waveform: array
-        The quality metric over all timepoints
+    tuple
+        A tuple containing the following elements in order:
 
+        - S_sqi_mean : float
+            Mean value of the skewness quality index over all time.
+        - S_sqi_std : float
+            Standard deviation of the skewness quality index over all time.
+        - S_waveform : array
+            The skewness quality metric over all timepoints.
+        - K_sqi_mean : float
+            Mean value of the kurtosis quality index over all time.
+        - K_sqi_std : float
+            Standard deviation of the kurtosis quality index over all time.
+        - K_waveform : array
+            The kurtosis quality metric over all timepoints.
+        - E_sqi_mean : float
+            Mean value of the entropy quality index over all time.
+        - E_sqi_std : float
+            Standard deviation of the entropy quality index over all time.
+        - E_waveform : array
+            The entropy quality metric over all timepoints.
 
-    Calculates the windowed skewness, kurtosis, and entropy quality metrics described in Elgendi, M.
-    "Optimal Signal Quality Index for Photoplethysmogram Signals". Bioengineering 2016, Vol. 3, Page 21 3, 21 (2016).
+    Notes
+    -----
+    The function applies a detrending polynomial to the input waveform before computing
+    the quality metrics. Window sizes are rounded to the nearest odd number of samples
+    to ensure symmetric windows.
+
+    References
+    ----------
+    Elgendi, M. "Optimal Signal Quality Index for Photoplethysmogram Signals".
+    Bioengineering 2016, Vol. 3, Page 21 (2016).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from scipy.stats import skew, kurtosis
+    >>> waveform = np.random.randn(1000)
+    >>> Fs = 100.0
+    >>> infodict = {}
+    >>> suffix = "_test"
+    >>> outputroot = "test_output"
+    >>> S_mean, S_std, S_wave, K_mean, K_std, K_wave, E_mean, E_std, E_wave = calcplethquality(
+    ...     waveform, Fs, infodict, suffix, outputroot
+    ... )
     """
     # detrend the waveform
     dt_waveform = tide_fit.detrend(waveform, order=detrendorder, demean=True)
@@ -806,21 +1698,95 @@ def calcplethquality(
 
 
 def getphysiofile(
-    waveformfile,
-    inputfreq,
-    inputstart,
-    slicetimeaxis,
-    stdfreq,
-    stdpoints,
-    envcutoff,
-    envthresh,
-    timings,
-    outputroot,
-    slop=0.25,
-    outputlevel=0,
-    iscardiac=True,
-    debug=False,
-):
+    waveformfile: str,
+    inputfreq: float,
+    inputstart: float | None,
+    slicetimeaxis: np.ndarray,
+    stdfreq: float,
+    stdpoints: int,
+    envcutoff: float,
+    envthresh: float,
+    timings: list,
+    outputroot: str,
+    slop: float = 0.25,
+    outputlevel: int = 0,
+    iscardiac: bool = True,
+    debug: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Read, process, and resample physiological waveform data.
+
+    This function reads a physiological signal from a text file, filters and normalizes
+    the signal, and resamples it to both slice-specific and standard time resolutions.
+    It supports cardiac and non-cardiac signal processing, with optional debugging and
+    output writing.
+
+    Parameters
+    ----------
+    waveformfile : str
+        Path to the input physiological waveform file.
+    inputfreq : float
+        Sampling frequency of the input waveform. If negative, the frequency is
+        inferred from the file.
+    inputstart : float or None
+        Start time of the input waveform. If None, defaults to 0.0.
+    slicetimeaxis : array_like
+        Time axis corresponding to slice acquisition times.
+    stdfreq : float
+        Standard sampling frequency for resampling.
+    stdpoints : int
+        Number of points for the standard time axis.
+    envcutoff : float
+        Cutoff frequency for envelope filtering.
+    envthresh : float
+        Threshold for envelope normalization.
+    timings : list
+        List to append timing information for logging.
+    outputroot : str
+        Root name for output files.
+    slop : float, optional
+        Tolerance for time alignment check (default is 0.25).
+    outputlevel : int, optional
+        Level of output writing (default is 0).
+    iscardiac : bool, optional
+        Flag indicating if the signal is cardiac (default is True).
+    debug : bool, optional
+        Enable debug printing (default is False).
+
+    Returns
+    -------
+    waveform_sliceres : ndarray
+        Physiological signal resampled to slice time resolution.
+    waveform_stdres : ndarray
+        Physiological signal resampled to standard time resolution.
+    inputfreq : float
+        The actual input sampling frequency used.
+    len(waveform_fullres) : int
+        Length of the original waveform data.
+
+    Notes
+    -----
+    - The function reads the waveform file using `tide_io.readvectorsfromtextfile`.
+    - Signal filtering and normalization are performed using `cleanphysio`.
+    - Resampling is done using `tide_resample.doresample`.
+    - If `iscardiac` is True, raw and cleaned signals are saved to files when `outputlevel > 1`.
+
+    Examples
+    --------
+    >>> waveform_sliceres, waveform_stdres, freq, length = getphysiofile(
+    ...     waveformfile="physio.txt",
+    ...     inputfreq=100.0,
+    ...     inputstart=0.0,
+    ...     slicetimeaxis=np.linspace(0, 10, 50),
+    ...     stdfreq=25.0,
+    ...     stdpoints=100,
+    ...     envcutoff=0.5,
+    ...     envthresh=0.1,
+    ...     timings=[],
+    ...     outputroot="output",
+    ...     debug=False
+    ... )
+    """
     if debug:
         print("Entering getphysiofile")
     print("Reading physiological signal from file")
@@ -946,7 +1912,62 @@ def getphysiofile(
     return waveform_sliceres, waveform_stdres, inputfreq, len(waveform_fullres)
 
 
-def readextmask(thefilename, nim_hdr, xsize, ysize, numslices, debug=False):
+def readextmask(
+    thefilename: str,
+    nim_hdr: dict,
+    xsize: int,
+    ysize: int,
+    numslices: int,
+    debug: bool = False,
+) -> np.ndarray:
+    """
+    Read and validate external mask from NIfTI file.
+
+    This function reads a mask from a NIfTI file and performs validation checks
+    to ensure compatibility with the input fMRI data dimensions. The mask must
+    have exactly 3 dimensions and match the spatial dimensions of the fMRI data.
+
+    Parameters
+    ----------
+    thefilename : str
+        Path to the NIfTI file containing the mask
+    nim_hdr : dict
+        Header information from the fMRI data
+    xsize : int
+        X dimension size of the fMRI data
+    ysize : int
+        Y dimension size of the fMRI data
+    numslices : int
+        Number of slices in the fMRI data
+    debug : bool, optional
+        If True, print debug information about mask dimensions (default is False)
+
+    Returns
+    -------
+    numpy.ndarray
+        The mask data array with shape (xsize, ysize, numslices)
+
+    Raises
+    ------
+    ValueError
+        If mask dimensions do not match fMRI data dimensions or if mask has
+        more than 3 dimensions
+
+    Notes
+    -----
+    The function performs the following validation checks:
+    1. Reads mask from NIfTI file using tide_io.readfromnifti
+    2. Parses NIfTI dimensions using tide_io.parseniftidims
+    3. Validates that mask spatial dimensions match fMRI data dimensions
+    4. Ensures mask has exactly 3 dimensions (no time dimension allowed)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> mask_data = readextmask('mask.nii', fmri_header, 64, 64, 30)
+    >>> print(mask_data.shape)
+    (64, 64, 30)
+    """
     (
         extmask,
         extmask_data,
@@ -971,32 +1992,60 @@ def readextmask(thefilename, nim_hdr, xsize, ysize, numslices, debug=False):
     return extmask_data
 
 
-def checkcardmatch(reference, candidate, samplerate, refine=True, zeropadding=0, debug=False):
+def checkcardmatch(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    samplerate: float,
+    refine: bool = True,
+    zeropadding: int = 0,
+    debug: bool = False,
+) -> tuple[float, float, str]:
     """
+    Compare two cardiac waveforms using cross-correlation and peak fitting.
+
+    This function performs a cross-correlation between a reference and a candidate
+    cardiac waveform after applying a non-causal cardiac filter. It then fits a
+    Gaussian to the cross-correlation peak to estimate the time delay and
+    correlation strength.
 
     Parameters
     ----------
-    reference: 1D numpy array
-        The cardiac waveform to compare to
-    candidate: 1D numpy array
-        The cardiac waveform to be assessed
-    samplerate: float
-        The sample rate of the data in Hz
-    refine: bool, optional
-        Whether to refine the peak fit.  Default is True.
-    zeropadding: int, optional
-        Specify the length of correlation padding to use.
-    debug: bool, optional
-        Output additional information for debugging
+    reference : 1D numpy array
+        The cardiac waveform to compare to.
+    candidate : 1D numpy array
+        The cardiac waveform to be assessed.
+    samplerate : float
+        The sample rate of the data in Hz.
+    refine : bool, optional
+        Whether to refine the peak fit. Default is True.
+    zeropadding : int, optional
+        Specify the length of correlation padding to use. Default is 0.
+    debug : bool, optional
+        Output additional information for debugging. Default is False.
 
     Returns
     -------
-    maxval: float
-        The maximum value of the crosscorrelation function
-    maxdelay: float
+    maxval : float
+        The maximum value of the crosscorrelation function.
+    maxdelay : float
         The time, in seconds, where the maximum crosscorrelation occurs.
-    failreason: flag
-        Reason why the fit failed (0 if no failure)
+    failreason : int
+        Reason why the fit failed (0 if no failure).
+
+    Notes
+    -----
+    The function applies a cardiac filter to both waveforms before computing
+    the cross-correlation. A Gaussian fit is used to estimate the peak location
+    and strength within a predefined search range of ±2 seconds around the
+    initial peak.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> reference = np.sin(2 * np.pi * 1.2 * np.linspace(0, 10, 1000))
+    >>> candidate = np.sin(2 * np.pi * 1.2 * np.linspace(0, 10, 1000) + 0.1)
+    >>> maxval, maxdelay, failreason = checkcardmatch(reference, candidate, 100)
+    >>> print(f"Max correlation: {maxval}, Delay: {maxdelay}s")
     """
     thecardfilt = tide_filt.NoncausalFilter(filtertype="cardiac")
     trimlength = np.min([len(reference), len(candidate)])
@@ -1057,16 +2106,78 @@ def checkcardmatch(reference, candidate, samplerate, refine=True, zeropadding=0,
 
 
 def cardiaccycleaverage(
-    sourcephases,
-    destinationphases,
-    waveform,
-    procpoints,
-    congridbins,
-    gridkernel,
-    centric,
-    cache=True,
-    cyclic=True,
-):
+    sourcephases: np.ndarray,
+    destinationphases: np.ndarray,
+    waveform: np.ndarray,
+    procpoints: int,
+    congridbins: int,
+    gridkernel: str,
+    centric: bool,
+    cache: bool = True,
+    cyclic: bool = True,
+) -> np.ndarray:
+    """
+    Compute the average waveform over a cardiac cycle using phase-based resampling.
+
+    This function performs phase-resolved averaging of a waveform signal over a
+    cardiac cycle. It uses a resampling technique to map source phase values to
+    destination phases, accumulating weighted contributions to produce an averaged
+    waveform. The result is normalized and adjusted to remove artifacts from low
+    weight regions.
+
+    Parameters
+    ----------
+    sourcephases : array-like
+        Array of source phase values (in radians) corresponding to the waveform data.
+    destinationphases : array-like
+        Array of destination phase values (in radians) where the averaged waveform
+        will be computed.
+    waveform : array-like
+        Array of waveform values to be averaged.
+    procpoints : array-like
+        Array of indices indicating which points in `waveform` and `sourcephases`
+        should be processed.
+    congridbins : int
+        Number of bins used in the resampling process.
+    gridkernel : callable
+        Kernel function used for interpolation during resampling.
+    centric : bool
+        If True, phase values are treated as centric (e.g., centered around 0).
+        If False, phase values are treated as cyclic (e.g., 0 to 2π).
+    cache : bool, optional
+        If True, use cached results for repeated computations (default is True).
+    cyclic : bool, optional
+        If True, treat phase values as cyclic (default is True).
+
+    Returns
+    -------
+    tuple of ndarray
+        A tuple containing:
+        - `rawapp_bypoint`: The normalized averaged waveform values for each
+          destination phase.
+        - `weight_bypoint`: The total weight for each destination phase.
+
+    Notes
+    -----
+    The function applies a threshold to weights: only points with weights greater
+    than 1/50th of the maximum weight are considered valid. These points are then
+    normalized and shifted to start from zero.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> sourcephases = np.linspace(0, 2*np.pi, 100)
+    >>> destinationphases = np.linspace(0, 2*np.pi, 50)
+    >>> waveform = np.sin(sourcephases)
+    >>> procpoints = np.arange(100)
+    >>> congridbins = 10
+    >>> gridkernel = lambda x: np.exp(-x**2 / 2)
+    >>> centric = False
+    >>> avg_waveform, weights = cardiaccycleaverage(
+    ...     sourcephases, destinationphases, waveform, procpoints,
+    ...     congridbins, gridkernel, centric
+    ... )
+    """
     rawapp_bypoint = np.zeros(len(destinationphases), dtype=np.float64)
     weight_bypoint = np.zeros(len(destinationphases), dtype=np.float64)
     for t in procpoints:
@@ -1094,7 +2205,47 @@ def cardiaccycleaverage(
     return rawapp_bypoint, weight_bypoint
 
 
-def circularderivs(timecourse):
+def circularderivs(timecourse: np.ndarray) -> tuple[np.ndarray, float, float]:
+    """
+    Compute circular first derivatives and their extremal values.
+
+    This function calculates the circular first derivative of a time course,
+    which is the difference between consecutive elements with the last element
+    wrapped around to the first. It then returns the maximum and minimum values
+    of these derivatives along with their indices.
+
+    Parameters
+    ----------
+    timecourse : array-like
+        Input time course data as a 1D array or sequence of numerical values.
+
+    Returns
+    -------
+    tuple
+        A tuple containing four elements:
+        - max_derivative : float
+            The maximum value of the circular first derivative
+        - argmax_index : int
+            The index of the maximum derivative value
+        - min_derivative : float
+            The minimum value of the circular first derivative
+        - argmin_index : int
+            The index of the minimum derivative value
+
+    Notes
+    -----
+    The circular first derivative is computed as:
+    ``first_deriv[i] = timecourse[i+1] - timecourse[i]`` for i < n-1,
+    and ``first_deriv[n-1] = timecourse[0] - timecourse[n-1]``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> timecourse = [1, 2, 3, 2, 1]
+    >>> max_val, max_idx, min_val, min_idx = circularderivs(timecourse)
+    >>> print(f"Max derivative: {max_val} at index {max_idx}")
+    >>> print(f"Min derivative: {min_val} at index {min_idx}")
+    """
     firstderiv = np.diff(timecourse, append=[timecourse[0]])
     return (
         np.max(firstderiv),
@@ -1105,6 +2256,79 @@ def circularderivs(timecourse):
 
 
 def _procOnePhaseProject(slice, sliceargs, **kwargs):
+    """
+    Process a single phase project for fMRI data resampling and averaging.
+
+    This function performs temporal resampling of fMRI data along the phase dimension
+    using a congrid-based interpolation scheme. It updates weight, raw application,
+    and cine data arrays based on the resampled values.
+
+    Parameters
+    ----------
+    slice : int
+        The slice index to process.
+    sliceargs : tuple
+        A tuple containing the following elements:
+        - validlocslist : list of arrays
+          List of valid location indices for each slice.
+        - proctrs : array-like
+          Time indices to process.
+        - demeandata_byslice : ndarray
+          Demeaned fMRI data organized by slice and time.
+        - fmri_data_byslice : ndarray
+          Raw fMRI data organized by slice and time.
+        - outphases : array-like
+          Output phase values for resampling.
+        - cardphasevals : ndarray
+          Cardinality of phase values for each slice and time.
+        - congridbins : int
+          Number of bins for congrid interpolation.
+        - gridkernel : str
+          Interpolation kernel to use.
+        - weights_byslice : ndarray
+          Weight array to be updated.
+        - cine_byslice : ndarray
+          Cine data array to be updated.
+        - destpoints : int
+          Number of destination points.
+        - rawapp_byslice : ndarray
+          Raw application data array to be updated.
+    **kwargs : dict
+        Additional options to override default settings:
+        - cache : bool, optional
+          Whether to use caching in congrid (default: True).
+        - debug : bool, optional
+          Whether to enable debug mode (default: False).
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - slice : int
+          The input slice index.
+        - rawapp_byslice : ndarray
+          Updated raw application data for the slice.
+        - cine_byslice : ndarray
+          Updated cine data for the slice.
+        - weights_byslice : ndarray
+          Updated weights for the slice.
+        - validlocs : array-like
+          Valid location indices for the slice.
+
+    Notes
+    -----
+    This function modifies the input arrays `weights_byslice`, `rawapp_byslice`,
+    and `cine_byslice` in-place. The function assumes that the data has already
+    been preprocessed and organized into slices and time points.
+
+    Examples
+    --------
+    >>> slice_idx = 0
+    >>> args = (validlocslist, proctrs, demeandata_byslice, fmri_data_byslice,
+    ...         outphases, cardphasevals, congridbins, gridkernel,
+    ...         weights_byslice, cine_byslice, destpoints, rawapp_byslice)
+    >>> result = _procOnePhaseProject(slice_idx, args, cache=False)
+    """
     options = {
         "cache": True,
         "debug": False,
@@ -1168,6 +2392,34 @@ def _procOnePhaseProject(slice, sliceargs, **kwargs):
 
 
 def _packslicedataPhaseProject(slicenum, sliceargs):
+    """
+    Pack slice data for phase projection.
+
+    This function takes a slice number and slice arguments, then returns a
+    flattened list containing all the slice arguments in order.
+
+    Parameters
+    ----------
+    slicenum : int
+        The slice number identifier.
+    sliceargs : list or tuple
+        Collection of slice arguments to be packed into a flat list.
+
+    Returns
+    -------
+    list
+        A list containing all elements from sliceargs in the same order.
+
+    Notes
+    -----
+    This function essentially performs a flattening operation on the slice
+    arguments, converting them into a fixed-length list format.
+
+    Examples
+    --------
+    >>> _packslicedataPhaseProject(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    """
     return [
         sliceargs[0],
         sliceargs[1],
@@ -1185,12 +2437,97 @@ def _packslicedataPhaseProject(slicenum, sliceargs):
 
 
 def _unpackslicedataPhaseProject(retvals, voxelproducts):
+    """
+    Unpack slice data for phase project operation.
+
+    This function assigns sliced data from retvals to corresponding voxelproducts
+    based on index mappings. It performs three simultaneous assignments using
+    slicing operations on 3D arrays.
+
+    Parameters
+    ----------
+    retvals : tuple of array-like
+        A tuple containing 5 elements where:
+        - retvals[0], retvals[1], retvals[2], retvals[3], retvals[4]
+        - retvals[4] is used as row index for slicing
+        - retvals[0] is used as column index for slicing
+    voxelproducts : list of array-like
+        A list of 3 arrays that will be modified in-place with the sliced data.
+        Each array is expected to be 3D and will be indexed using retvals[4] and retvals[0].
+
+    Returns
+    -------
+    None
+        This function modifies voxelproducts in-place and does not return any value.
+
+    Notes
+    -----
+    The function performs three assignments:
+    1. voxelproducts[0][retvals[4], retvals[0], :] = retvals[1][retvals[4], :]
+    2. voxelproducts[1][retvals[4], retvals[0], :] = retvals[2][retvals[4], :]
+    3. voxelproducts[2][retvals[4], retvals[0], :] = retvals[3][retvals[4], :]
+
+    All arrays must be compatible for the specified slicing operations.
+
+    Examples
+    --------
+    >>> retvals = (np.array([0, 1]), np.array([[1, 2], [3, 4]]),
+    ...            np.array([[5, 6], [7, 8]]), np.array([[9, 10], [11, 12]]),
+    ...            np.array([0, 1]))
+    >>> voxelproducts = [np.zeros((2, 2, 2)), np.zeros((2, 2, 2)), np.zeros((2, 2, 2))]
+    >>> _unpackslicedataPhaseProject(retvals, voxelproducts)
+    """
     (voxelproducts[0])[retvals[4], retvals[0], :] = (retvals[1])[retvals[4], :]
     (voxelproducts[1])[retvals[4], retvals[0], :] = (retvals[2])[retvals[4], :]
     (voxelproducts[2])[retvals[4], retvals[0], :] = (retvals[3])[retvals[4], :]
 
 
-def preloadcongrid(outphases, congridbins, gridkernel="kaiser", cyclic=True, debug=False):
+def preloadcongrid(
+    outphases: np.ndarray,
+    congridbins: int,
+    gridkernel: str = "kaiser",
+    cyclic: bool = True,
+    debug: bool = False,
+) -> None:
+    """
+    Preload congrid interpolation cache for efficient subsequent calls.
+
+    This function preloads the congrid interpolation cache by performing a series
+    of interpolation operations with different phase values. This avoids the
+    computational overhead of cache initialization during subsequent calls to
+    tide_resample.congrid with the same parameters.
+
+    Parameters
+    ----------
+    outphases : array-like
+        Output phase values for the interpolation grid.
+    congridbins : array-like
+        Binning parameters for the congrid interpolation.
+    gridkernel : str, optional
+        Interpolation kernel to use. Default is "kaiser".
+    cyclic : bool, optional
+        Whether to treat the data as cyclic. Default is True.
+    debug : bool, optional
+        Enable debug output. Default is False.
+
+    Returns
+    -------
+    None
+        This function does not return any value.
+
+    Notes
+    -----
+    This function is designed to improve performance when calling tide_resample.congrid
+    multiple times with the same parameters. By preloading the cache with various
+    phase values, subsequent calls will be faster as the cache is already populated.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> outphases = np.linspace(0, 2*np.pi, 100)
+    >>> congridbins = [10, 20]
+    >>> preloadcongrid(outphases, congridbins, gridkernel="kaiser", cyclic=True)
+    """
     outphasestep = outphases[1] - outphases[0]
     outphasecenter = outphases[int(len(outphases) / 2)]
     fillargs = outphasestep * (
@@ -1230,6 +2567,88 @@ def phaseprojectpass(
     cache=True,
     debug=False,
 ):
+    """
+    Perform phase-encoding projection for fMRI data across slices.
+
+    This function projects fMRI data onto a set of phase values using congrid
+    resampling, accumulating results in `rawapp_byslice` and `cine_byslice` arrays.
+    It supports both single-threaded and multi-processed execution.
+
+    Parameters
+    ----------
+    numslices : int
+        Number of slices to process.
+    demeandata_byslice : ndarray
+        Demeaned fMRI data, shape (nvoxels, nslices, ntr).
+    fmri_data_byslice : ndarray
+        Raw fMRI data, shape (nvoxels, nslices, ntr).
+    validlocslist : list of ndarray
+        List of valid voxel indices for each slice.
+    proctrs : ndarray
+        Timepoints to process.
+    weights_byslice : ndarray
+        Weight array, shape (nvoxels, nslices, ndestpoints).
+    cine_byslice : ndarray
+        Cine data array, shape (nvoxels, nslices, ndestpoints).
+    rawapp_byslice : ndarray
+        Raw application data array, shape (nvoxels, nslices, ndestpoints).
+    outphases : ndarray
+        Output phase values.
+    cardphasevals : ndarray
+        Cardinal phase values for each slice and timepoint, shape (nslices, ntr).
+    congridbins : int
+        Number of bins for congrid resampling.
+    gridkernel : str
+        Kernel to use for congrid resampling.
+    destpoints : int
+        Number of destination points.
+    mpcode : bool, optional
+        If True, use multiprocessing. Default is False.
+    nprocs : int, optional
+        Number of processes to use if `mpcode` is True. Default is 1.
+    alwaysmultiproc : bool, optional
+        If True, always use multiprocessing even for small datasets. Default is False.
+    showprogressbar : bool, optional
+        If True, show progress bar. Default is True.
+    cache : bool, optional
+        If True, enable caching for congrid. Default is True.
+    debug : bool, optional
+        If True, enable debug output. Default is False.
+
+    Returns
+    -------
+    None
+        The function modifies `weights_byslice`, `cine_byslice`, and `rawapp_byslice` in-place.
+
+    Notes
+    -----
+    This function is typically used in the context of phase-encoded fMRI analysis.
+    It applies a congrid-based resampling technique to project data onto a specified
+    phase grid, accumulating weighted contributions in the output arrays.
+
+    Examples
+    --------
+    >>> phaseprojectpass(
+    ...     numslices=10,
+    ...     demeandata_byslice=demean_data,
+    ...     fmri_data_byslice=fmri_data,
+    ...     validlocslist=valid_locs_list,
+    ...     proctrs=tr_list,
+    ...     weights_byslice=weights,
+    ...     cine_byslice=cine_data,
+    ...     rawapp_byslice=rawapp_data,
+    ...     outphases=phase_vals,
+    ...     cardphasevals=card_phase_vals,
+    ...     congridbins=100,
+    ...     gridkernel='gaussian',
+    ...     destpoints=50,
+    ...     mpcode=False,
+    ...     nprocs=4,
+    ...     showprogressbar=True,
+    ...     cache=True,
+    ...     debug=False,
+    ... )
+    """
     if mpcode:
         inputshape = rawapp_byslice.shape
         sliceargs = [
@@ -1312,6 +2731,60 @@ def phaseprojectpass(
 
 
 def _procOneSliceSmoothing(slice, sliceargs, **kwargs):
+    """
+    Apply smoothing filter to a single slice of projected data along time dimension.
+
+    This function processes a single slice of data by applying a smoothing filter
+    to the raw application data and computing circular derivatives for the
+    specified slice. The smoothing is applied only to valid locations within the slice.
+
+    Parameters
+    ----------
+    slice : int
+        The slice index to process.
+    sliceargs : tuple
+        A tuple containing the following elements:
+
+        - validlocslist : list of arrays
+          List of arrays containing valid location indices for each slice
+        - rawapp_byslice : ndarray
+          Array containing raw application data by slice [locations, slices, time_points]
+        - appsmoothingfilter : object
+          Smoothing filter object with an apply method
+        - phaseFs : array-like
+          Frequency values for smoothing filter application
+        - derivatives_byslice : ndarray
+          Array to store computed derivatives [locations, slices, time_points]
+    **kwargs : dict
+        Additional keyword arguments:
+        - debug : bool, optional
+          Enable debug mode (default: False)
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+
+        - slice : int
+          The input slice index
+        - rawapp_byslice : ndarray
+          Smoothed raw application data for the specified slice [locations, time_points]
+        - derivatives_byslice : ndarray
+          Computed circular derivatives for the specified slice [locations, time_points]
+
+    Notes
+    -----
+    - The function only processes slices with valid locations (len(validlocs) > 0)
+    - Smoothing is applied using the provided smoothing filter's apply method
+    - Circular derivatives are computed using the `circularderivs` function
+    - The function modifies the input arrays in-place
+
+    Examples
+    --------
+    >>> slice_idx = 5
+    >>> sliceargs = (validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice)
+    >>> result = _procOneSliceSmoothing(slice_idx, sliceargs, debug=True)
+    """
     options = {
         "debug": False,
     }
@@ -1330,6 +2803,31 @@ def _procOneSliceSmoothing(slice, sliceargs, **kwargs):
 
 
 def _packslicedataSliceSmoothing(slicenum, sliceargs):
+    """Pack slice data for slice smoothing operation.
+
+    Parameters
+    ----------
+    slicenum : int
+        The slice number identifier.
+    sliceargs : list
+        List containing slice arguments with at least 5 elements.
+
+    Returns
+    -------
+    list
+        A list containing the first 5 elements from sliceargs in the same order.
+
+    Notes
+    -----
+    This function extracts the first five elements from the sliceargs parameter
+    and returns them as a new list. It's typically used as part of a slice
+    smoothing pipeline where slice arguments need to be packed for further processing.
+
+    Examples
+    --------
+    >>> _packslicedataSliceSmoothing(1, [10, 20, 30, 40, 50, 60])
+    [10, 20, 30, 40, 50]
+    """
     return [
         sliceargs[0],
         sliceargs[1],
@@ -1340,6 +2838,49 @@ def _packslicedataSliceSmoothing(slicenum, sliceargs):
 
 
 def _unpackslicedataSliceSmoothing(retvals, voxelproducts):
+    """
+    Unpack slice data for smoothing operation.
+
+    This function assigns smoothed slice data back to the voxel products array
+    based on the provided retvals structure.
+
+    Parameters
+    ----------
+    retvals : tuple of array-like
+        A tuple containing:
+        - retvals[0] : array-like
+            Index array for slice selection
+        - retvals[1] : array-like
+            First set of smoothed data to assign
+        - retvals[2] : array-like
+            Second set of smoothed data to assign
+    voxelproducts : list of array-like
+        A list containing two array-like objects where:
+        - voxelproducts[0] : array-like
+            First voxel product array to be modified
+        - voxelproducts[1] : array-like
+            Second voxel product array to be modified
+
+    Returns
+    -------
+    None
+        This function modifies the voxelproducts arrays in-place and does not return anything.
+
+    Notes
+    -----
+    The function performs in-place assignment operations on the voxelproducts arrays.
+    The first dimension of voxelproducts arrays is modified using retvals[0] as indices,
+    while the second and third dimensions are directly assigned from retvals[1] and retvals[2].
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> retvals = (np.array([0, 1, 2]), np.array([[1, 2], [3, 4], [5, 6]]), np.array([[7, 8], [9, 10], [11, 12]]))
+    >>> voxelproducts = [np.zeros((3, 3, 2)), np.zeros((3, 3, 2))]
+    >>> _unpackslicedataSliceSmoothing(retvals, voxelproducts)
+    >>> print(voxelproducts[0])
+    >>> print(voxelproducts[1])
+    """
     (voxelproducts[0])[:, retvals[0], :] = retvals[1]
     (voxelproducts[1])[:, retvals[0], :] = retvals[2]
 
@@ -1356,6 +2897,58 @@ def tcsmoothingpass(
     showprogressbar=True,
     debug=False,
 ):
+    """
+    Apply smoothing to time course data across slices using multiprocessing.
+
+    This function performs smoothing operations on time course data organized by slices,
+    utilizing multiprocessing for improved performance when processing large datasets.
+
+    Parameters
+    ----------
+    numslices : int
+        Number of slices in the dataset
+    validlocslist : list
+        List of valid locations for processing
+    rawapp_byslice : numpy.ndarray
+        Raw application data organized by slice
+    appsmoothingfilter : numpy.ndarray
+        Smoothing filter to be applied
+    phaseFs : float
+        Phase frequency parameter for smoothing operations
+    derivatives_byslice : numpy.ndarray
+        Derivative data organized by slice
+    nprocs : int, optional
+        Number of processors to use for multiprocessing (default is 1)
+    alwaysmultiproc : bool, optional
+        Whether to always use multiprocessing regardless of data size (default is False)
+    showprogressbar : bool, optional
+        Whether to display progress bar during processing (default is True)
+    debug : bool, optional
+        Enable debug mode for additional logging (default is False)
+
+    Returns
+    -------
+    numpy.ndarray
+        Processed data after smoothing operations have been applied
+
+    Notes
+    -----
+    This function uses the `tide_genericmultiproc.run_multiproc` utility to distribute
+    the smoothing workload across multiple processors. The function handles data organization
+    and processing for each slice individually, then combines results.
+
+    Examples
+    --------
+    >>> result = tcsmoothingpass(
+    ...     numslices=10,
+    ...     validlocslist=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    ...     rawapp_byslice=raw_data,
+    ...     appsmoothingfilter=smoothing_filter,
+    ...     phaseFs=100.0,
+    ...     derivatives_byslice=derivatives,
+    ...     nprocs=4
+    ... )
+    """
     inputshape = rawapp_byslice.shape
     sliceargs = [validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice]
     slicefunc = _procOneSliceSmoothing
@@ -1412,6 +3005,97 @@ def phaseproject(
     thealiasedcorrx,
     theAliasedCorrelator,
 ):
+    """
+    Perform phase projection and related processing on fMRI data across slices.
+
+    This function performs phase projection on fMRI data, optionally smoothing
+    timecourses, and applying flips based on derivative information. It also
+    computes wavelet-based correlation measures and updates relevant arrays
+    in-place for further processing.
+
+    Parameters
+    ----------
+    input_data : object
+        Input fMRI data container with `getdims()` and `byslice()` methods.
+    demeandata_byslice : array_like
+        Demeaned fMRI data by slice.
+    means_byslice : array_like
+        Mean values by slice for normalization.
+    rawapp_byslice : array_like
+        Raw APP (Arterial Spin Labeling) data by slice.
+    app_byslice : array_like
+        APP data after initial processing.
+    normapp_byslice : array_like
+        Normalized APP data.
+    weights_byslice : array_like
+        Weights by slice for processing.
+    cine_byslice : array_like
+        Cine data by slice.
+    projmask_byslice : array_like
+        Projection mask by slice.
+    derivatives_byslice : array_like
+        Derivative data by slice, used for determining flips.
+    proctrs : array_like
+        Processing timepoints or transformation parameters.
+    thispass : int
+        Current processing pass number.
+    args : argparse.Namespace
+        Command-line arguments controlling processing behavior.
+    sliceoffsets : array_like
+        Slice offset values.
+    cardphasevals : array_like
+        Cardiac phase values.
+    outphases : array_like
+        Output phases.
+    appsmoothingfilter : array_like
+        Smoothing filter for timecourses.
+    phaseFs : float
+        Sampling frequency for phase processing.
+    thecorrfunc_byslice : array_like
+        Correlation function by slice.
+    waveamp_byslice : array_like
+        Wave amplitude by slice.
+    wavedelay_byslice : array_like
+        Wave delay by slice.
+    wavedelayCOM_byslice : array_like
+        Center of mass of wave delay by slice.
+    corrected_rawapp_byslice : array_like
+        Corrected raw APP data by slice.
+    corrstartloc : int
+        Start location for correlation computation.
+    correndloc : int
+        End location for correlation computation.
+    thealiasedcorrx : array_like
+        Aliased correlation x-axis values.
+    theAliasedCorrelator : object
+        Correlator object for aliased correlation computation.
+
+    Returns
+    -------
+    appflips_byslice : array_like
+        Flip values applied to the APP data by slice.
+
+    Notes
+    -----
+    - The function modifies several input arrays in-place.
+    - If `args.smoothapp` is True, smoothing is applied to the raw APP data.
+    - If `args.fliparteries` is True, flips are applied to correct arterial
+      orientation.
+    - If `args.doaliasedcorrelation` is True, aliased correlation is computed
+      and stored in `thecorrfunc_byslice`.
+
+    Examples
+    --------
+    >>> phaseproject(
+    ...     input_data, demeandata_byslice, means_byslice, rawapp_byslice,
+    ...     app_byslice, normapp_byslice, weights_byslice, cine_byslice,
+    ...     projmask_byslice, derivatives_byslice, proctrs, thispass, args,
+    ...     sliceoffsets, cardphasevals, outphases, appsmoothingfilter,
+    ...     phaseFs, thecorrfunc_byslice, waveamp_byslice, wavedelay_byslice,
+    ...     wavedelayCOM_byslice, corrected_rawapp_byslice, corrstartloc,
+    ...     correndloc, thealiasedcorrx, theAliasedCorrelator
+    ... )
+    """
     xsize, ysize, numslices, timepoints = input_data.getdims()
     fmri_data_byslice = input_data.byslice()
 
@@ -1539,6 +3223,67 @@ def findvessels(
     outputlevel,
     debug=False,
 ):
+    """
+    Find vessel thresholds and generate vessel masks from app data.
+
+    This function processes app data to identify vessel thresholds and optionally
+    generates histograms for visualization. It handles both normalized and
+    unnormalized vessel maps based on the input parameters.
+
+    Parameters
+    ----------
+    app : numpy.ndarray
+        Raw app data array
+    normapp : numpy.ndarray
+        Normalized app data array
+    validlocs : numpy.ndarray
+        Array of valid locations for processing
+    numspatiallocs : int
+        Number of spatial locations
+    outputroot : str
+        Root directory path for output files
+    unnormvesselmap : bool
+        Flag indicating whether to use unnormalized vessel map
+    destpoints : int
+        Number of destination points
+    softvesselfrac : float
+        Fractional multiplier for soft vessel threshold
+    histlen : int
+        Length of histogram bins
+    outputlevel : int
+        Level of output generation (0 = no histogram, 1 = histogram only)
+    debug : bool, optional
+        Debug flag for additional logging (default is False)
+
+    Returns
+    -------
+    tuple
+        Tuple containing (hardvesselthresh, softvesselthresh) threshold values
+
+    Notes
+    -----
+    The function performs the following steps:
+    1. Reshapes app data based on unnormvesselmap flag
+    2. Extracts valid locations from the reshaped data
+    3. Generates histogram if outputlevel > 0
+    4. Calculates hard and soft vessel thresholds based on 98th percentile
+    5. Prints threshold values to console
+
+    Examples
+    --------
+    >>> hard_thresh, soft_thresh = findvessels(
+    ...     app=app_data,
+    ...     normapp=norm_app_data,
+    ...     validlocs=valid_indices,
+    ...     numspatiallocs=100,
+    ...     outputroot='/path/to/output',
+    ...     unnormvesselmap=True,
+    ...     destpoints=50,
+    ...     softvesselfrac=0.5,
+    ...     histlen=100,
+    ...     outputlevel=1
+    ... )
+    """
     if unnormvesselmap:
         app2d = app.reshape((numspatiallocs, destpoints))
     else:
@@ -1566,6 +3311,44 @@ def findvessels(
 
 
 def upsampleimage(input_data, numsteps, sliceoffsets, slicesamplerate, outputroot):
+    """
+    Upsample fMRI data along the temporal and slice dimensions.
+
+    This function takes fMRI data and upsamples it by a factor of `numsteps` along
+    the temporal dimension, and interpolates across slices to align with specified
+    slice offsets. The resulting upsampled data is saved as a NIfTI file.
+
+    Parameters
+    ----------
+    input_data : object
+        Input fMRI data object with attributes: `byvol()`, `timepoints`, `xsize`,
+        `ysize`, `numslices`, and `copyheader()`.
+    numsteps : int
+        Upsampling factor along the temporal dimension.
+    sliceoffsets : array-like of int
+        Slice offset indices indicating where each slice's data should be placed
+        in the upsampled volume.
+    slicesamplerate : float
+        Sampling rate of the slice acquisition (used to set the TR in the output header).
+    outputroot : str
+        Root name for the output NIfTI file (will be suffixed with "_upsampled").
+
+    Returns
+    -------
+    None
+        The function saves the upsampled data to a NIfTI file and does not return any value.
+
+    Notes
+    -----
+    - The function demeanes the input data before upsampling.
+    - Interpolation is performed along the slice direction using linear interpolation.
+    - The output file is saved using `tide_io.savetonifti`.
+
+    Examples
+    --------
+    >>> upsampleimage(fmri_data, numsteps=2, sliceoffsets=[0, 1], slicesamplerate=2.0, outputroot='output')
+    Upsamples the fMRI data by a factor of 2 and saves to 'output_upsampled.nii'.
+    """
     fmri_data = input_data.byvol()
     timepoints = input_data.timepoints
     xsize = input_data.xsize
@@ -1627,6 +3410,78 @@ def wrightmap(
     verbose=False,
     debug=False,
 ):
+    """
+    Compute a vessel map using Wright's method by performing phase correlation
+    analysis across randomized subsets of timecourses.
+
+    This function implements Wright's method for estimating vessel maps by
+    splitting the timecourse data into two random halves, projecting each half
+    separately, and computing the Pearson correlation between the resulting
+    projections for each voxel and slice. The final map is derived as the mean
+    of these correlations across iterations.
+
+    Parameters
+    ----------
+    input_data : object
+        Input data container with attributes `xsize`, `ysize`, and `numslices`.
+    demeandata_byslice : array_like
+        Demeaned data organized by slice, shape ``(nvoxels, numslices)``.
+    rawapp_byslice : array_like
+        Raw application data by slice, shape ``(nvoxels, numslices)``.
+    projmask_byslice : array_like
+        Projection mask by slice, shape ``(nvoxels, numslices)``.
+    outphases : array_like
+        Output phases, shape ``(nphases,)``.
+    cardphasevals : array_like
+        Cardinal phase values, shape ``(nphases,)``.
+    proctrs : array_like
+        Timecourse indices to be processed, shape ``(ntimepoints,)``.
+    congridbins : array_like
+        Binning information for congrid interpolation.
+    gridkernel : array_like
+        Kernel for grid interpolation.
+    destpoints : array_like
+        Destination points for projection.
+    iterations : int, optional
+        Number of iterations for random splitting (default is 100).
+    nprocs : int, optional
+        Number of processes to use for parallel computation; -1 uses all
+        available cores (default is -1).
+    verbose : bool, optional
+        If True, print progress messages (default is False).
+    debug : bool, optional
+        If True, print additional debug information (default is False).
+
+    Returns
+    -------
+    wrightcorrs : ndarray
+        Computed vessel map with shape ``(xsize, ysize, numslices)``.
+
+    Notes
+    -----
+    This function performs a bootstrap-like procedure where the input timecourse
+    is randomly split into two halves, and phase projections are computed for
+    each half. Pearson correlation is computed between the two projections for
+    each voxel and slice. The result is averaged over all iterations to produce
+    the final vessel map.
+
+    Examples
+    --------
+    >>> wrightcorrs = wrightmap(
+    ...     input_data,
+    ...     demeandata_byslice,
+    ...     rawapp_byslice,
+    ...     projmask_byslice,
+    ...     outphases,
+    ...     cardphasevals,
+    ...     proctrs,
+    ...     congridbins,
+    ...     gridkernel,
+    ...     destpoints,
+    ...     iterations=50,
+    ...     verbose=True
+    ... )
+    """
     xsize = input_data.xsize
     ysize = input_data.ysize
     numslices = input_data.numslices
