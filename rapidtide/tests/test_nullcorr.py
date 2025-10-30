@@ -21,6 +21,7 @@ import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import typing_extensions
 
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.correlate as tide_corr

@@ -20,6 +20,7 @@ import os
 
 import matplotlib as mpl
 import numpy as np
+import typing_extensions
 
 import rapidtide.io as tide_io
 import rapidtide.workflows.rapidtide as rapidtide_workflow

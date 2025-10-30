@@ -19,6 +19,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import typing_extensions
 
 import rapidtide.miscmath as tide_math
 from rapidtide.tests.utils import mse

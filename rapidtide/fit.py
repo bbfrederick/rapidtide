@@ -26,6 +26,7 @@ import scipy as sp
 import scipy.special as sps
 import statsmodels.api as sm
 import tqdm
+import typing_extensions
 from numpy.polynomial import Polynomial
 from numpy.typing import ArrayLike, NDArray
 from scipy import signal

@@ -19,6 +19,7 @@ import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import typing_extensions
 
 import rapidtide.io as tide_io
 from rapidtide.correlate import calc_MI

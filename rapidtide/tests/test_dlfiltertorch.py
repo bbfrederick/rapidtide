@@ -23,6 +23,7 @@ import tempfile
 import numpy as np
 import pytest
 import torch
+import typing_extensions
 
 import rapidtide.dlfiltertorch as dlfiltertorch
 from rapidtide.tests.utils import get_test_temp_path, mse

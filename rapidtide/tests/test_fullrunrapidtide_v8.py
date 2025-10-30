@@ -19,6 +19,7 @@
 import os
 
 import matplotlib as mpl
+import typing_extensions
 
 import rapidtide.qualitycheck as rapidtide_quality
 import rapidtide.workflows.rapidtide as rapidtide_workflow

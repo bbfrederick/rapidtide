@@ -21,6 +21,7 @@ import os.path as op
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import typing_extensions
 
 from rapidtide.correlate import shorttermcorr_1D, shorttermcorr_2D
 from rapidtide.filter import NoncausalFilter

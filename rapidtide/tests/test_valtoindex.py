@@ -17,6 +17,7 @@
 #
 #
 import numpy as np
+import typing_extensions
 
 from rapidtide.util import valtoindex
 

@@ -19,6 +19,7 @@
 import os
 
 import matplotlib as mpl
+import typing_extensions
 
 import rapidtide.externaltools as tide_exttools
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path, mse

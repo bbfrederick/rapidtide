@@ -22,6 +22,7 @@ import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import typing_extensions
 
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math

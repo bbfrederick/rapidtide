@@ -19,6 +19,7 @@
 import os
 
 import matplotlib as mpl
+import typing_extensions
 
 import rapidtide.workflows.happy as happy_workflow
 import rapidtide.workflows.happy_parser as happy_parser

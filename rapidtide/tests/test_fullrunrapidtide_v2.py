@@ -19,6 +19,7 @@
 import os
 
 import matplotlib as mpl
+import typing_extensions
 
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
