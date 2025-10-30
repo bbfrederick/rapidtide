@@ -24,6 +24,7 @@ import warnings
 from typing import Any
 
 import numpy as np
+import typing_extensions
 from numpy.typing import NDArray
 from scipy.interpolate import griddata
 from scipy.ndimage import distance_transform_edt, gaussian_filter1d
