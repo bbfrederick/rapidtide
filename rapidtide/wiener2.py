@@ -45,7 +45,7 @@ lambd_est = 1e-3  # estimated noise lev
 
 
 def gen_son(length: int) -> NDArray:
-    "Generate a synthetic un-reverberated 'sound event' template"
+    #"Generate a synthetic un-reverberated 'sound event' template"
     # (whitenoise -> integrate -> envelope -> normalise)
     son = np.cumsum(np.random.randn(length))
     # apply envelope
@@ -57,7 +57,7 @@ def gen_son(length: int) -> NDArray:
 
 
 def gen_ir(length: int) -> NDArray:
-    "Generate a synthetic impulse response"
+    #"Generate a synthetic impulse response"
     # First we generate a quietish tail
     son = np.random.randn(length)
     attacklen = int(length // 2)
@@ -75,7 +75,7 @@ def gen_ir(length: int) -> NDArray:
 
 
 def wiener_deconvolution(signal: NDArray, kernel: NDArray, lambd: float) -> NDArray:
-    "lambd is the SNR"
+    #"lambd is the SNR"
     kernel = np.hstack(
         (kernel, np.zeros(len(signal) - len(kernel)))
     )  # zero pad the kernel to same length
@@ -85,7 +85,7 @@ def wiener_deconvolution(signal: NDArray, kernel: NDArray, lambd: float) -> NDAr
 
 
 if __name__ == "__main__":
-    "simple test: get one soundtype and one impulse response, convolve them, deconvolve them, and check the result (plot it!)"
+    #"simple test: get one soundtype and one impulse response, convolve them, deconvolve them, and check the result (plot it!)"
     son = gen_son(sonlen)
     ir = gen_ir(irlen)
     obs = np.convolve(son, ir, mode="full")
