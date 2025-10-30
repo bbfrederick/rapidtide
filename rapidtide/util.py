@@ -32,7 +32,6 @@ from typing import Any, Callable
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import typing_extensions
 from numpy.typing import NDArray
 
 import rapidtide._version as tide_versioneer

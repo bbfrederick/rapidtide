@@ -16,9 +16,6 @@
 #   limitations under the License.
 #
 #
-import typing_extensions
-
-
 def setendalpha(thestate: dict, alpha: int, debug: bool = False) -> dict:
     if debug:
         print("color mode:", thestate["mode"])

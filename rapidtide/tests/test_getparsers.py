@@ -17,7 +17,6 @@
 #
 #
 import numpy as np
-import typing_extensions
 
 from rapidtide.workflows.adjustoffset import _get_parser as adjustoffset_getparser
 from rapidtide.workflows.aligntcs import _get_parser as aligntcs_getparser

@@ -23,7 +23,6 @@ from typing import Any, Callable, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-import typing_extensions
 from numpy.typing import ArrayLike, NDArray
 
 with warnings.catch_warnings():

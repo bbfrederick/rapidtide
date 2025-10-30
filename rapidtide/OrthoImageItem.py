@@ -24,7 +24,6 @@ from typing import Any
 
 import numpy as np
 import pyqtgraph as pg
-import typing_extensions
 from numpy.typing import NDArray
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 

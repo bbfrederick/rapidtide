@@ -17,7 +17,6 @@
 #
 #
 import numpy as np
-import typing_extensions
 from numpy.typing import NDArray
 from tqdm import tqdm
 

@@ -21,7 +21,6 @@ import logging
 from typing import Any
 
 import numpy as np
-import typing_extensions
 from numpy.typing import NDArray
 
 import rapidtide.genericmultiproc as tide_genericmultiproc

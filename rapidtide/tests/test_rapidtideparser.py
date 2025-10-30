@@ -17,7 +17,6 @@
 #
 #
 import numpy as np
-import typing_extensions
 
 from rapidtide.workflows.rapidtide_parser import process_args
 

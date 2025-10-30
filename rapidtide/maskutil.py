@@ -21,7 +21,6 @@ import logging
 from typing import Any, Callable, Optional, Tuple, Union
 
 import numpy as np
-import typing_extensions
 from nilearn import masking
 from numpy.typing import ArrayLike, NDArray
 from sklearn.decomposition import PCA

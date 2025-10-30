@@ -493,10 +493,10 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-      - build_py39
-      - test_py39:
-          requires:
-            - build_py39
+      #- build_py39
+      #- test_py39:
+      #    requires:
+      #      - build_py39
       - build_py310
       - test_py310:
           requires:

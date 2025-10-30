@@ -20,7 +20,6 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-import typing_extensions
 from numpy.typing import NDArray
 from scipy.ndimage import binary_erosion
 

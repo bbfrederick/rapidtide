@@ -23,7 +23,6 @@ from typing import Any, Callable
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-import typing_extensions
 from numpy.polynomial import Polynomial
 from numpy.typing import NDArray
 from scipy.optimize import curve_fit

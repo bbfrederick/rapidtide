@@ -20,7 +20,6 @@ import os
 
 import matplotlib as mpl
 import numpy as np
-import typing_extensions
 
 import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math

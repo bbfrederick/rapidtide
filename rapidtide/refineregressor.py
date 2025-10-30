@@ -23,7 +23,6 @@ from typing import Any, Callable
 
 import numpy as np
 import statsmodels as sm
-import typing_extensions
 from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA, FastICA

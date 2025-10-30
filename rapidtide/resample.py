@@ -21,7 +21,6 @@ import time
 import warnings
 
 import numpy as np
-import typing_extensions
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")

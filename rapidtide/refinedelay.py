@@ -20,7 +20,6 @@ from typing import Any, Callable, Optional, Tuple, Union
 
 import numpy as np
 import numpy.polynomial.polynomial as poly
-import typing_extensions
 from numpy.typing import ArrayLike, NDArray
 from scipy.interpolate import CubicSpline, UnivariateSpline
 from scipy.ndimage import median_filter

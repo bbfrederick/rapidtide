@@ -19,7 +19,6 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import typing_extensions
 
 import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math

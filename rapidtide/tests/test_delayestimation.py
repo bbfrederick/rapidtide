@@ -21,7 +21,6 @@ import multiprocessing as mp
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import typing_extensions
 
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.filter as tide_filt

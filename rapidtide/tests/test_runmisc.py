@@ -19,7 +19,6 @@
 import os
 
 import matplotlib as mpl
-import typing_extensions
 
 import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.showtc as showtc

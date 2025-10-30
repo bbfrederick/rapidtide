@@ -19,7 +19,6 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import typing_extensions
 
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
 from rapidtide.tests.utils import mse

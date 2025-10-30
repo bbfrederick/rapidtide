@@ -19,8 +19,6 @@
 import argparse
 import os
 
-import typing_extensions
-
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path

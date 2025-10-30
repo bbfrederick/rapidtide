@@ -28,7 +28,6 @@ import matplotlib.cm as cm
 # matplotlib.use('PDF') # http://www.astrobetter.com/plotting-to-a-file-in-python/
 import matplotlib.pyplot as plt
 import numpy as np
-import typing_extensions
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.fft import fft, ifft, ifftshift
 from numpy.typing import NDArray

@@ -17,7 +17,6 @@
 #
 #
 import numpy as np
-import typing_extensions
 
 from rapidtide.stats import fast_ICC_rep_anova
 

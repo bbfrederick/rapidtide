@@ -19,7 +19,6 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import typing_extensions
 
 from rapidtide.filter import dolpfiltfilt
 from rapidtide.resample import timeshift

@@ -22,8 +22,6 @@ A simple GUI for looking at the results of a rapidtide analysis
 
 import os
 
-import typing_extensions
-
 from rapidtide.RapidtideDataset import RapidtideDataset
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 

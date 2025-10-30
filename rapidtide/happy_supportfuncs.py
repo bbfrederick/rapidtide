@@ -21,7 +21,6 @@ import time
 import warnings
 
 import numpy as np
-import typing_extensions
 from scipy.signal import savgol_filter, welch
 from scipy.stats import kurtosis, pearsonr, skew
 from statsmodels.robust import mad

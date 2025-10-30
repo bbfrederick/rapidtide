@@ -20,7 +20,6 @@ import os
 from types import SimpleNamespace
 
 import matplotlib as mpl
-import typing_extensions
 
 import rapidtide.workflows.aligntcs as aligntcs_workflow
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
