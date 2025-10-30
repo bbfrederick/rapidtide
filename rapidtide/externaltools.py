@@ -24,7 +24,7 @@ import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 
 
-def fslinfo():
+def fslinfo() -> str | None:
     global fslexists
     fsldir = os.environ.get("FSLDIR")
     if fsldir is not None:
@@ -34,7 +34,7 @@ def fslinfo():
     return fsldir
 
 
-def whatexists():
+def whatexists() -> tuple[bool, bool, bool]:
     fsldir = os.environ.get("FSLDIR")
     if fsldir is not None:
         fslexists = True
@@ -48,7 +48,7 @@ def whatexists():
     return fslexists, c3dexists, antsexists
 
 
-def getfslcmds():
+def getfslcmds() -> tuple[str, str, str]:
     fsldir = os.environ.get("FSLDIR")
     fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
     flirtcmd = os.path.join(fsldir, "bin", "flirt")
@@ -56,7 +56,7 @@ def getfslcmds():
     return fslsubcmd, flirtcmd, applywarpcmd
 
 
-def runcmd(thecmd, fake=False, debug=False):
+def runcmd(thecmd: list[str], fake: bool = False, debug: bool = False) -> None:
     if debug:
         print(thecmd)
     if fake:
@@ -67,8 +67,14 @@ def runcmd(thecmd, fake=False, debug=False):
 
 
 def makeflirtcmd(
-    inputfile, targetname, xform, outputname, warpfile=None, cluster=False, debug=False
-):
+    inputfile: str,
+    targetname: str,
+    xform: str,
+    outputname: str,
+    warpfile: str | None = None,
+    cluster: bool = False,
+    debug: bool = False,
+) -> list[str]:
     fslsubcmd, flirtcmd, applywarpcmd = getfslcmds()
     thecommand = []
     if warpfile is None:
@@ -99,12 +105,20 @@ def makeflirtcmd(
     return thecommand
 
 
-def runflirt(inputfile, targetname, xform, outputname, warpfile=None, fake=False, debug=False):
+def runflirt(
+    inputfile: str,
+    targetname: str,
+    xform: str,
+    outputname: str,
+    warpfile: str | None = None,
+    fake: bool = False,
+    debug: bool = False,
+) -> None:
     thecommand = makeflirtcmd(inputfile, targetname, xform, outputname, warpfile=warpfile)
     runcmd(thecommand, fake=fake, debug=debug)
 
 
-def n4correct(inputfile, outputdir, fake=False, debug=False):
+def n4correct(inputfile: str, outputdir: str, fake: bool = False, debug: bool = False) -> None:
     thename, theext = tide_io.niftisplitext(inputfile)
     n4cmd = []
     n4cmd += ["N4BiasFieldCorrection"]
@@ -114,7 +128,14 @@ def n4correct(inputfile, outputdir, fake=False, debug=False):
     runcmd(n4cmd, fake=fake, debug=debug)
 
 
-def antsapply(inputname, targetname, outputroot, transforms, fake=False, debug=False):
+def antsapply(
+    inputname: str,
+    targetname: str,
+    outputroot: str,
+    transforms: list[str],
+    fake: bool = False,
+    debug: bool = False,
+) -> None:
     applyxfmcmd = []
     applyxfmcmd += ["antsApplyTransforms"]
     applyxfmcmd += ["--default-value", "0"]

@@ -16,7 +16,7 @@
 #   limitations under the License.
 #
 #
-def setendalpha(thestate, alpha, debug=False):
+def setendalpha(thestate: dict, alpha: int, debug: bool = False) -> dict:
     if debug:
         print("color mode:", thestate["mode"])
     sortedticks = sorted(thestate["ticks"], key=lambda x: x[0])
@@ -60,7 +60,7 @@ def setendalpha(thestate, alpha, debug=False):
     return adjustedgradient
 
 
-def gen_thermal_state():
+def gen_thermal_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["thermal"]
@@ -69,7 +69,7 @@ def gen_thermal_state():
     # return Gradients["thermal"]
 
 
-def gen_flame_state():
+def gen_flame_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["flame"]
@@ -78,7 +78,7 @@ def gen_flame_state():
     # return Gradients["flame"]
 
 
-def gen_yellowy_state():
+def gen_yellowy_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["yellowy"]
@@ -87,7 +87,7 @@ def gen_yellowy_state():
     # return Gradients["yellowy"]
 
 
-def gen_bipolar_state():
+def gen_bipolar_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["bipolar"]
@@ -96,7 +96,7 @@ def gen_bipolar_state():
     # return Gradients["bipolar"]
 
 
-def gen_spectrum_state():
+def gen_spectrum_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["spectrum"]
@@ -105,7 +105,7 @@ def gen_spectrum_state():
     # return Gradients["spectrum"]
 
 
-def gen_turbo_state():
+def gen_turbo_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["turbo"]
@@ -114,7 +114,7 @@ def gen_turbo_state():
     # return Gradients["turbo"]
 
 
-def gen_gray_state():
+def gen_gray_state() -> dict:
     return {
         "ticks": [
             (0.0000, (0, 0, 0, 255)),
@@ -125,7 +125,7 @@ def gen_gray_state():
     }
 
 
-def gen_grey_state():
+def gen_grey_state() -> dict:
     return {
         "ticks": [
             (0.0000, (0, 0, 0, 255)),
@@ -136,7 +136,7 @@ def gen_grey_state():
     }
 
 
-def gen_viridis_state():
+def gen_viridis_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["viridis"]
@@ -145,7 +145,7 @@ def gen_viridis_state():
     # return Gradients["viridis"]
 
 
-def gen_inferno_state():
+def gen_inferno_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["inferno"]
@@ -154,7 +154,7 @@ def gen_inferno_state():
     # return Gradients["inferno"]
 
 
-def gen_plasma_state():
+def gen_plasma_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["plasma"]
@@ -163,7 +163,7 @@ def gen_plasma_state():
     # return Gradients["plasma"]
 
 
-def gen_magma_state():
+def gen_magma_state() -> dict:
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
     thegradient = Gradients["magma"]
@@ -172,7 +172,7 @@ def gen_magma_state():
     # return Gradients["magma"]
 
 
-def gen_g2y2r_state():
+def gen_g2y2r_state() -> dict:
     return {
         "ticks": [
             (0.0000, (0, 0, 0, 0)),
@@ -186,7 +186,7 @@ def gen_g2y2r_state():
     }
 
 
-def gen_mask_state():
+def gen_mask_state() -> dict:
     return {
         "ticks": [(0.0000, (0, 0, 0, 255)), (1.0000, (255, 255, 255, 0))],
         "mode": "rgb",
@@ -194,7 +194,7 @@ def gen_mask_state():
     }
 
 
-def gen_greyclip_state():
+def gen_greyclip_state() -> dict:
     return {
         "ticks": [
             (0.0, (0, 0, 0, 255)),
@@ -206,7 +206,7 @@ def gen_greyclip_state():
     }
 
 
-def getagradient():
+def getagradient():  # type: ignore
     from pyqtgraph import GradientWidget
 
     return GradientWidget(orientation="right", allowAdd=True)

@@ -21,8 +21,10 @@ import math
 import os
 import sys
 import warnings
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.interpolate import griddata
 from scipy.ndimage import distance_transform_edt, gaussian_filter1d
 from skimage.filters import threshold_multiotsu
@@ -31,7 +33,9 @@ from skimage.segmentation import flood_fill
 import rapidtide.io as tide_io
 
 
-def interpolate_masked_voxels(data, mask, method="linear", extrapolate=True):
+def interpolate_masked_voxels(
+    data: NDArray, mask: NDArray, method: str = "linear", extrapolate: bool = True
+) -> NDArray:
     """
     Replaces masked voxels in a 3D numpy array with interpolated values
     from the unmasked region. Supports boundary extrapolation and multiple interpolation methods.
@@ -87,7 +91,7 @@ def interpolate_masked_voxels(data, mask, method="linear", extrapolate=True):
     return interpolated_data
 
 
-def get_bounding_box(mask, value, buffer=0):
+def get_bounding_box(mask: NDArray, value: int, buffer: int = 0) -> tuple[tuple, tuple]:
     """
     Computes the 3D bounding box that contains all the voxels in the mask with value value.
 
@@ -119,21 +123,25 @@ def get_bounding_box(mask, value, buffer=0):
     return tuple(min_coords), tuple(max_coords)
 
 
-def flood3d(
-    image,
-    newvalue,
-):
+def flood3d(image: NDArray, newvalue: int) -> NDArray:
     filledim = image * 0
     for slice in range(image.shape[2]):
         filledim[:, :, slice] = flood_fill(image[:, :, slice], (0, 0), newvalue, connectivity=1)
     return filledim
 
 
-def invertedflood3D(image, newvalue):
+def invertedflood3D(image: NDArray, newvalue: int) -> NDArray:
     return image + newvalue - flood3d(image, newvalue)
 
 
-def growregion(image, location, value, separatedimage, regionsize, debug=False):
+def growregion(
+    image: NDArray,
+    location: tuple[int, int, int],
+    value: int,
+    separatedimage: NDArray,
+    regionsize: int,
+    debug: bool = False,
+) -> int:
     separatedimage[location[0], location[1], location[2]] = value
     regionsize += 1
     if debug:
@@ -157,7 +165,7 @@ def growregion(image, location, value, separatedimage, regionsize, debug=False):
     return regionsize
 
 
-def separateclusters(image, sizethresh=0, debug=False):
+def separateclusters(image: NDArray, sizethresh: int = 0, debug: bool = False) -> NDArray:
     separatedclusters = image * 0
     stop = False
     value = 1
@@ -219,7 +227,7 @@ def separateclusters(image, sizethresh=0, debug=False):
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-def clamp(low, high, value):
+def clamp(low: int, high: int, value: int) -> int:
     """bound an integer to a range
 
     Parameters
@@ -235,7 +243,7 @@ def clamp(low, high, value):
     return max(low, min(high, value))
 
 
-def dehaze(fdata, level, debug=False):
+def dehaze(fdata: NDArray, level: int, debug: bool = False) -> NDArray:
     """use Otsu to threshold https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_multiotsu.html
         n.b. threshold used to mask image: dark values are zeroed, but result is NOT binary
     Parameters
@@ -272,7 +280,13 @@ def dehaze(fdata, level, debug=False):
 
 
 # https://github.com/nilearn/nilearn/blob/1607b52458c28953a87bbe6f42448b7b4e30a72f/nilearn/image/image.py#L164
-def _smooth_array(arr, affine, fwhm=None, ensure_finite=True, copy=True):
+def _smooth_array(
+    arr: NDArray,
+    affine: NDArray | None,
+    fwhm: float | NDArray | tuple | list | str | None = None,
+    ensure_finite: bool = True,
+    copy: bool = True,
+) -> NDArray:
     """Smooth images by applying a Gaussian filter.
 
     Apply a Gaussian filter along the three first dimensions of `arr`.
@@ -355,7 +369,7 @@ def _smooth_array(arr, affine, fwhm=None, ensure_finite=True, copy=True):
     return arr
 
 
-def binary_zero_crossing(fdata):
+def binary_zero_crossing(fdata: NDArray) -> NDArray:
     """binarize (negative voxels are zero)
     Parameters
     ----------
@@ -372,7 +386,9 @@ def binary_zero_crossing(fdata):
     return edge
 
 
-def difference_of_gaussian(fdata, affine, fwhmNarrow, ratioopt=True, debug=False):
+def difference_of_gaussian(
+    fdata: NDArray, affine: NDArray, fwhmNarrow: float, ratioopt: bool = True, debug: bool = False
+) -> NDArray:
     """Apply Difference of Gaussian (DoG) filter.
     https://en.wikipedia.org/wiki/Difference_of_Gaussians
     https://en.wikipedia.org/wiki/Marr–Hildreth_algorithm
@@ -415,7 +431,14 @@ def difference_of_gaussian(fdata, affine, fwhmNarrow, ratioopt=True, debug=False
 # We are operating on data in memory that are closely associated with the source
 # NIFTI files, so the affine and sizes fields are easy to come by, but unlike the
 # original library, we are not working directly with NIFTI images.
-def calc_DoG(thedata, theaffine, thesizes, fwhm=3, ratioopt=True, debug=False):
+def calc_DoG(
+    thedata: NDArray,
+    theaffine: NDArray,
+    thesizes: tuple,
+    fwhm: float = 3,
+    ratioopt: bool = True,
+    debug: bool = False,
+) -> NDArray:
     """Find edges of a NIfTI image using the Difference of Gaussian (DoG).
     Parameters
     ----------
@@ -440,7 +463,15 @@ def calc_DoG(thedata, theaffine, thesizes, fwhm=3, ratioopt=True, debug=False):
     return difference_of_gaussian(dehazed_data, theaffine, fwhm, ratioopt=ratioopt, debug=debug)
 
 
-def getclusters(theimage, theaffine, thesizes, fwhm=5, ratioopt=True, sizethresh=10, debug=False):
+def getclusters(
+    theimage: NDArray,
+    theaffine: NDArray,
+    thesizes: tuple,
+    fwhm: float = 5,
+    ratioopt: bool = True,
+    sizethresh: int = 10,
+    debug: bool = False,
+) -> NDArray:
     if debug:
         print("Detecting clusters..")
         print(f"\t{theimage.shape=}")
@@ -455,7 +486,9 @@ def getclusters(theimage, theaffine, thesizes, fwhm=5, ratioopt=True, sizethresh
     )
 
 
-def interppatch(img_data, separatedimage, method="linear", debug=False):
+def interppatch(
+    img_data: NDArray, separatedimage: NDArray, method: str = "linear", debug: bool = False
+) -> tuple[NDArray, NDArray]:
     interpolated = img_data + 0.0
     justboxes = img_data * 0.0
     numregions = np.max(separatedimage)
