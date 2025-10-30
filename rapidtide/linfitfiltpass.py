@@ -445,7 +445,8 @@ def linfitfiltpass(
 
 
 def makevoxelspecificderivs(theevs: NDArray, nderivs: int = 1, debug: bool = False) -> NDArray:
-    r"""Perform multicomponent expansion on theevs (each ev replaced by itself,
+    """
+    Perform multicomponent expansion on theevs (each ev replaced by itself,
     its square, its cube, etc.).
 
     Parameters

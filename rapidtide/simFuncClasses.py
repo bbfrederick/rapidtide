@@ -436,7 +436,7 @@ class SimilarityFunctionFitter:
         functype="correlation",
         peakfittype="gauss",
     ):
-        r"""
+        """
 
         Parameters
         ----------

@@ -82,7 +82,8 @@ def padvec(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Returns a padded copy of the input data; padlen points of
+    """
+    Returns a padded copy of the input data; padlen points of
     filled data are prepended and appended to the input data to reduce
     end effects when the data is then filtered.  Filling can be "zero", "reflect", "cyclic", "constant",
     or "constant+".
@@ -173,7 +174,8 @@ def padvec(
 
 @conditionaljit()
 def unpadvec(inputdata: ArrayLike, padlen: int = 20) -> NDArray:
-    r"""Returns a input data with the end pads removed (see padvec);
+    """
+    Returns a input data with the end pads removed (see padvec);
     padlen points of reflected data are removed from each end of the array.
 
     Parameters
@@ -201,7 +203,8 @@ def unpadvec(inputdata: ArrayLike, padlen: int = 20) -> NDArray:
 def ssmooth(
     xsize: float, ysize: float, zsize: float, sigma: float, inputdata: ArrayLike
 ) -> NDArray:
-    r"""Applies an isotropic gaussian spatial filter to a 3D array
+    """
+    Applies an isotropic gaussian spatial filter to a 3D array
 
     Parameters
     ----------
@@ -246,7 +249,8 @@ def dolpfiltfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs a bidirectional (zero phase) Butterworth lowpass filter on an input vector
+    """
+    Performs a bidirectional (zero phase) Butterworth lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -317,7 +321,8 @@ def dohpfiltfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs a bidirectional (zero phase) Butterworth highpass filter on an input vector
+    """
+    Performs a bidirectional (zero phase) Butterworth highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -388,7 +393,8 @@ def dobpfiltfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
+    """
+    Performs a bidirectional (zero phase) Butterworth bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -456,7 +462,8 @@ def dobpfiltfilt(
 
 # - direct filter with specified transfer function
 def transferfuncfilt(inputdata: ArrayLike, transferfunc: ArrayLike) -> NDArray:
-    r"""Filters input data using a previously calculated transfer function.
+    """
+    Filters input data using a previously calculated transfer function.
 
     Parameters
     ----------
@@ -481,7 +488,8 @@ def transferfuncfilt(inputdata: ArrayLike, transferfunc: ArrayLike) -> NDArray:
 def getlpfftfunc(
     Fs: float, upperpass: float, inputdata: ArrayLike, debug: bool = False
 ) -> NDArray:
-    r"""Generates a brickwall lowpass transfer function.
+    """
+    Generates a brickwall lowpass transfer function.
 
     Parameters
     ----------
@@ -529,7 +537,8 @@ def dolpfftfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT brickwall lowpass filter on an input vector
+    """
+    Performs an FFT brickwall lowpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -580,7 +589,8 @@ def dohpfftfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT brickwall highpass filter on an input vector
+    """
+    Performs an FFT brickwall highpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -632,7 +642,8 @@ def dobpfftfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT brickwall bandpass filter on an input vector
+    """
+    Performs an FFT brickwall bandpass filter on an input vector
     and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -684,7 +695,8 @@ def dobpfftfilt(
 def getlptrapfftfunc(
     Fs: float, upperpass: float, upperstop: float, inputdata: ArrayLike, debug: bool = False
 ) -> NDArray:
-    r"""Generates a trapezoidal lowpass transfer function.
+    """
+    Generates a trapezoidal lowpass transfer function.
 
     Parameters
     ----------
@@ -846,7 +858,8 @@ def dolptransfuncfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT filter with a gaussian lowpass transfer
+    """
+    Performs an FFT filter with a gaussian lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -911,7 +924,8 @@ def dohptransfuncfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT filter with a trapezoidal highpass transfer
+    """
+    Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -984,7 +998,8 @@ def dobptransfuncfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT filter with a trapezoidal highpass transfer
+    """
+    Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -1063,7 +1078,8 @@ def dolptrapfftfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT filter with a trapezoidal lowpass transfer
+    """
+    Performs an FFT filter with a trapezoidal lowpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -1119,7 +1135,8 @@ def dohptrapfftfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT filter with a trapezoidal highpass transfer
+    """
+    Performs an FFT filter with a trapezoidal highpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -1177,7 +1194,8 @@ def dobptrapfftfilt(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Performs an FFT filter with a trapezoidal bandpass transfer
+    """
+    Performs an FFT filter with a trapezoidal bandpass transfer
     function on an input vector and returns the result.  Ends are padded to reduce transients.
 
     Parameters
@@ -1263,7 +1281,8 @@ def wiener_deconvolution(signal: ArrayLike, kernel: ArrayLike, lambd: float) -> 
 
 
 def pspec(inputdata: ArrayLike) -> NDArray:
-    r"""Calculate the power spectrum of an input signal
+    """
+    Calculate the power spectrum of an input signal
 
     Parameters
     ----------
@@ -1287,7 +1306,8 @@ def spectralflatness(spectrum: ArrayLike) -> float:
 def spectrum(
     inputdata: ArrayLike, Fs: float = 1.0, mode: str = "power", trim: bool = True
 ) -> Tuple[NDArray, Union[NDArray, None]]:
-    r"""Performs an FFT of the input data, and returns the frequency axis and spectrum
+    """
+    Performs an FFT of the input data, and returns the frequency axis and spectrum
     of the input signal.
 
     Parameters
@@ -1352,7 +1372,8 @@ def spectrum(
 
 
 def setnotchfilter(thefilter: object, thefreq: float, notchwidth: float = 1.0) -> None:
-    r"""Set notch filter - sets the filter parameters for the notch.
+    """
+    Set notch filter - sets the filter parameters for the notch.
 
     Parameters
     ----------
@@ -1379,7 +1400,8 @@ def harmonicnotchfilter(
     notchpct: float = 1.0,
     debug: bool = False,
 ) -> NDArray:
-    r"""Harmonic notch filter - removes a fundamental and its harmonics from a timecourse.
+    """
+    Harmonic notch filter - removes a fundamental and its harmonics from a timecourse.
 
     Parameters
     ----------
@@ -1442,7 +1464,8 @@ def csdfilter(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Cross spectral density filter - makes a filter transfer function that preserves common frequencies.
+    """
+    Cross spectral density filter - makes a filter transfer function that preserves common frequencies.
 
     Parameters
     ----------
@@ -1490,7 +1513,8 @@ def arb_pass(
     padtype: str = "reflect",
     debug: bool = False,
 ) -> NDArray:
-    r"""Filters an input waveform over a specified range.  By default it is a trapezoidal
+    """
+    Filters an input waveform over a specified range.  By default it is a trapezoidal
     FFT filter, but brickwall and butterworth filters are also available.  Ends are padded to reduce
     transients.
 
@@ -1740,7 +1764,8 @@ class NoncausalFilter:
         padtype="reflect",
         debug=False,
     ):
-        r"""A zero time delay filter for one dimensional signals, especially physiological ones.
+        """
+        A zero time delay filter for one dimensional signals, especially physiological ones.
 
         Parameters
         ----------
@@ -1931,7 +1956,8 @@ class NoncausalFilter:
         return self.lowerstop, self.lowerpass, self.upperpass, self.upperstop
 
     def apply(self, Fs, data):
-        r"""Apply the filter to a dataset.
+        """
+        Apply the filter to a dataset.
 
         Parameters
         ----------
@@ -2175,7 +2201,8 @@ BHwindows = {}
 
 
 def blackmanharris(length: int, debug: bool = False) -> NDArray:
-    r"""Returns a Blackman Harris window function of the specified length.
+    """
+    Returns a Blackman Harris window function of the specified length.
     Once calculated, windows are cached for speed.
 
     Parameters
@@ -2214,7 +2241,8 @@ hannwindows = {}
 
 
 def hann(length: int, debug: bool = False) -> NDArray:
-    r"""Returns a Hann window function of the specified length.  Once calculated, windows
+    """
+    Returns a Hann window function of the specified length.  Once calculated, windows
     are cached for speed.
 
     Parameters
@@ -2276,7 +2304,8 @@ def mRect(
 
 def hamming(length: int, debug: bool = False) -> NDArray:
     #   return 0.54 - 0.46 * np.cos((np.arange(0.0, float(length), 1.0) / float(length)) * 2.0 * np.pi)
-    r"""Returns a Hamming window function of the specified length.  Once calculated, windows
+    """
+    Returns a Hamming window function of the specified length.  Once calculated, windows
     are cached for speed.
 
     Parameters
@@ -2306,7 +2335,8 @@ def hamming(length: int, debug: bool = False) -> NDArray:
 
 
 def windowfunction(length: int, type: str = "hamming", debug: bool = False) -> NDArray:
-    r"""Returns a window function of the specified length and type.  Once calculated, windows
+    """
+    Returns a window function of the specified length and type.  Once calculated, windows
     are cached for speed.
 
     Parameters

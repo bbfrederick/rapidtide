@@ -83,7 +83,8 @@ def disablenumba() -> None:
 
 # --------------------------- Spectral analysis functions ---------------------------------------
 def phase(mcv: ArrayLike) -> NDArray:
-    r"""Return phase of complex numbers.
+    """
+    Return phase of complex numbers.
 
     Parameters
     ----------
@@ -100,17 +101,6 @@ def phase(mcv: ArrayLike) -> NDArray:
 
 
 def polarfft(invec: ArrayLike, samplerate: float) -> Tuple[NDArray, NDArray, NDArray]:
-    """
-
-    Parameters
-    ----------
-    invec
-    samplerate
-
-    Returns
-    -------
-
-    """
     if np.shape(invec)[0] % 2 == 1:
         thevec = invec[:-1]
     else:
@@ -126,17 +116,6 @@ def polarfft(invec: ArrayLike, samplerate: float) -> Tuple[NDArray, NDArray, NDA
 
 
 def complex_cepstrum(x: ArrayLike) -> Tuple[NDArray, NDArray]:
-    """
-
-    Parameters
-    ----------
-    x
-
-    Returns
-    -------
-
-    """
-
     # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
     def _unwrap(phase: NDArray) -> Tuple[NDArray, NDArray]:
         samples = phase.shape[-1]
@@ -157,32 +136,12 @@ def complex_cepstrum(x: ArrayLike) -> Tuple[NDArray, NDArray]:
 
 
 def real_cepstrum(x: ArrayLike) -> NDArray:
-    """
-
-    Parameters
-    ----------
-    x
-
-    Returns
-    -------
-
-    """
     # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
     return fftpack.ifft(np.log(np.abs(fftpack.fft(x)))).real
 
 
 # --------------------------- miscellaneous math functions -------------------------------------------------
 def thederiv(y: ArrayLike) -> list:
-    """
-
-    Parameters
-    ----------
-    y
-
-    Returns
-    -------
-
-    """
     dyc = [0.0] * len(y)
     dyc[0] = (y[0] - y[1]) / 2.0
     for i in range(1, len(y) - 1):
@@ -192,16 +151,6 @@ def thederiv(y: ArrayLike) -> list:
 
 
 def primes(n: int) -> list:
-    """
-
-    Parameters
-    ----------
-    n
-
-    Returns
-    -------
-
-    """
     # found on stackoverflow: https://stackoverflow.com/questions/16996217/prime-factorization-list
     primfac = []
     d = 2
@@ -216,31 +165,11 @@ def primes(n: int) -> list:
 
 
 def largestfac(n: int) -> int:
-    """
-
-    Parameters
-    ----------
-    n
-
-    Returns
-    -------
-
-    """
     return primes(n)[-1]
 
 
 # --------------------------- Normalization functions -------------------------------------------------
 def normalize(vector: ArrayLike, method: str = "stddev") -> NDArray:
-    """
-
-    Parameters
-    ----------
-    vector
-
-    Returns
-    -------
-
-    """
     if method == "None":
         return vector - np.mean(vector)
     elif method == "percent":
@@ -258,16 +187,6 @@ def normalize(vector: ArrayLike, method: str = "stddev") -> NDArray:
 
 
 def znormalize(vector: ArrayLike) -> NDArray:
-    """
-
-    Parameters
-    ----------
-    vector
-
-    Returns
-    -------
-
-    """
     return stdnormalize(vector)
 
 
@@ -288,16 +207,6 @@ def removeoutliers(
 def madnormalize(
     vector: ArrayLike, returnnormfac: bool = False
 ) -> Union[NDArray, Tuple[NDArray, float]]:
-    """
-
-    Parameters
-    ----------
-    vector
-
-    Returns
-    -------
-
-    """
     demedianed = vector - np.median(vector)
     sigmad = mad(demedianed).astype(np.float64)
     if sigmad > 0.0:
@@ -314,16 +223,6 @@ def madnormalize(
 
 @conditionaljit()
 def stdnormalize(vector: ArrayLike) -> NDArray:
-    """
-
-    Parameters
-    ----------
-    vector
-
-    Returns
-    -------
-
-    """
     demeaned = vector - np.mean(vector)
     sigstd = np.std(demeaned)
     if sigstd > 0.0:
@@ -333,16 +232,6 @@ def stdnormalize(vector: ArrayLike) -> NDArray:
 
 
 def varnormalize(vector: ArrayLike) -> NDArray:
-    """
-
-    Parameters
-    ----------
-    vector
-
-    Returns
-    -------
-
-    """
     demeaned = vector - np.mean(vector)
     sigvar = np.var(demeaned)
     if sigvar > 0.0:
@@ -553,17 +442,6 @@ def corrnormalize(
 def noiseamp(
     vector: ArrayLike, Fs: float, windowsize: float = 40.0
 ) -> Tuple[NDArray, NDArray, float, float, float, float]:
-    """
-
-    Parameters
-    ----------
-    vector
-    Fs
-
-    Returns
-    -------
-
-    """
     cutoff = 1.0 / windowsize
     padlen = int(len(vector) // 2)
     theenvbpf = tide_filt.NoncausalFilter(filtertype="arb")
@@ -592,37 +470,10 @@ def noiseamp(
 
 
 def rms(vector: ArrayLike) -> float:
-    """
-
-    Parameters
-    ----------
-    vector
-
-    Returns
-    -------
-
-    """
     return np.sqrt(np.mean(np.square(vector)))
 
 
 def envdetect(Fs: float, inputdata: ArrayLike, cutoff: float = 0.25, padlen: int = 10) -> NDArray:
-    """
-
-    Parameters
-    ----------
-    Fs : float
-        Sample frequency in Hz.
-    inputdata : float array
-        Data to be envelope detected
-    cutoff : float
-        Highest possible modulation frequency
-
-    Returns
-    -------
-    envelope : float array
-        The envelope function
-
-    """
     demeaned = inputdata - np.mean(inputdata)
     sigabs = abs(demeaned)
     theenvbpf = tide_filt.NoncausalFilter(filtertype="arb")
@@ -631,20 +482,6 @@ def envdetect(Fs: float, inputdata: ArrayLike, cutoff: float = 0.25, padlen: int
 
 
 def phasemod(phase: ArrayLike, centric: bool = True) -> NDArray:
-    """
-
-    Parameters
-    ----------
-    phase : array-like
-        An unwrapped phase vector
-    centric: boolean, optional
-        Determines whether to do modulo to centric (-np.pi to np.pi) or non-centric (0 to 2 * np.pi) range
-
-    Returns
-    -------
-    wrapped : array-like
-        The phase vector, remapped to the range of +/-np.pi
-    """
     if centric:
         return ((-phase + np.pi) % (2.0 * np.pi) - np.pi) * -1.0
     else:
@@ -654,18 +491,6 @@ def phasemod(phase: ArrayLike, centric: bool = True) -> NDArray:
 def trendfilt(
     inputdata: ArrayLike, order: int = 3, ndevs: float = 3.0, debug: bool = False
 ) -> NDArray:
-    """
-
-    Parameters
-    ----------
-    inputdata : array-like
-        A data vector with a polynomial trend and impulsive noise
-
-    Returns
-    -------
-    patched : array-like
-        The input data with the impulsive noise removed
-    """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
         thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]

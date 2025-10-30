@@ -78,7 +78,8 @@ def disablenumba() -> None:
 
 # --------------------------- Fitting functions -------------------------------------------------
 def gaussresidualssk(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
-    """Calculate residuals for skewed Gaussian fit.
+    """
+    Calculate residuals for skewed Gaussian fit.
 
     Parameters
     ----------
@@ -99,7 +100,8 @@ def gaussresidualssk(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
 
 
 def gaussskresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
-    """Calculate residuals for skewed Gaussian fit.
+    """
+    Calculate residuals for skewed Gaussian fit.
 
     Parameters
     ----------
@@ -120,7 +122,8 @@ def gaussskresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
 
 @conditionaljit()
 def gaussresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
-    """Calculate residuals for Gaussian fit.
+    """
+    Calculate residuals for Gaussian fit.
 
     Parameters
     ----------
@@ -140,7 +143,8 @@ def gaussresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
 
 
 def trapezoidresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike, toplength: float) -> NDArray:
-    """Calculate residuals for trapezoid fit.
+    """
+    Calculate residuals for trapezoid fit.
 
     Parameters
     ----------
@@ -162,7 +166,8 @@ def trapezoidresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike, toplength: floa
 
 
 def risetimeresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
-    """Calculate residuals for rise time fit.
+    """
+    Calculate residuals for rise time fit.
 
     Parameters
     ----------
@@ -182,7 +187,8 @@ def risetimeresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
 
 
 def gausssk_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
-    """Evaluate a skewed Gaussian function.
+    """
+    Evaluate a skewed Gaussian function.
 
     Parameters
     ----------
@@ -229,7 +235,8 @@ def kaiserbessel_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
 
 @conditionaljit()
 def gauss_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
-    """Evaluate a Gaussian function.
+    """
+    Evaluate a Gaussian function.
 
     Parameters
     ----------
@@ -247,7 +254,8 @@ def gauss_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
 
 
 def trapezoid_eval_loop(x: ArrayLike, toplength: float, p: ArrayLike) -> NDArray:
-    """Evaluate a trapezoid function.
+    """
+    Evaluate a trapezoid function.
 
     Parameters
     ----------
@@ -270,7 +278,8 @@ def trapezoid_eval_loop(x: ArrayLike, toplength: float, p: ArrayLike) -> NDArray
 
 
 def risetime_eval_loop(x: ArrayLike, p: ArrayLike) -> NDArray:
-    """Evaluate a rise time function.
+    """
+    Evaluate a rise time function.
 
     Parameters
     ----------
@@ -386,7 +395,8 @@ def gasboxcar(
 # generate the polynomial fit timecourse from the coefficients
 @conditionaljit()
 def trendgen(thexvals: ArrayLike, thefitcoffs: ArrayLike, demean: bool) -> NDArray:
-    """Generates a polynomial trend based on input x-values and coefficients.
+    """
+    Generates a polynomial trend based on input x-values and coefficients.
 
     This function constructs a polynomial trend using the provided x-values and
     a set of polynomial coefficients. The order of the polynomial is determined
@@ -435,7 +445,8 @@ def trendgen(thexvals: ArrayLike, thefitcoffs: ArrayLike, demean: bool) -> NDArr
 
 # @conditionaljit()
 def detrend(inputdata: ArrayLike, order: int = 1, demean: bool = False) -> NDArray:
-    """Estimates and removes a polynomial trend timecourse.
+    """
+    Estimates and removes a polynomial trend timecourse.
 
     This routine calculates a polynomial defined by a set of coefficients
     at specified time points to create a trend timecourse, and subtracts it
@@ -682,25 +693,6 @@ def findrisetimefunc(
     refine: bool = False,
     displayplots: bool = False,
 ) -> Tuple[float, float, float, int]:
-    """
-
-    Parameters
-    ----------
-    thexvals
-    theyvals
-    initguess
-    debug
-    minrise
-    maxrise
-    minstart
-    maxstart
-    refine
-    displayplots
-
-    Returns
-    -------
-
-    """
     # guess at parameters: risestart, riseamplitude, risetime
     if initguess is None:
         initstart = 0.0
@@ -853,19 +845,6 @@ def territorystats(
     entropyrange: Optional[Tuple[float, float]] = None,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
-    """
-
-    Parameters
-    ----------
-    inputmap
-    atlas
-    inputmask
-    debug
-
-    Returns
-    -------
-
-    """
     datadims = len(inputmap.shape)
     if datadims > 3:
         nummaps = inputmap.shape[3]
@@ -1376,18 +1355,6 @@ def findmaxlag_gauss(
 def maxindex_noedge(
     thexcorr_x: ArrayLike, thexcorr_y: ArrayLike, bipolar: bool = False
 ) -> Tuple[int, float]:
-    """
-
-    Parameters
-    ----------
-    thexcorr_x
-    thexcorr_y
-    bipolar
-
-    Returns
-    -------
-
-    """
     lowerlim = 0
     upperlim = len(thexcorr_x) - 1
     done = False
@@ -1418,21 +1385,6 @@ def maxindex_noedge(
 def gaussfitsk(
     height: float, loc: float, width: float, skewness: float, xvals: ArrayLike, yvals: ArrayLike
 ) -> NDArray:
-    """
-
-    Parameters
-    ----------
-    height
-    loc
-    width
-    skewness
-    xvals
-    yvals
-
-    Returns
-    -------
-
-    """
     plsq, dummy = sp.optimize.leastsq(
         gaussresidualssk,
         np.array([height, loc, width, skewness]),
@@ -1469,7 +1421,8 @@ def sincfit(
 def gaussfit(
     height: float, loc: float, width: float, xvals: ArrayLike, yvals: ArrayLike
 ) -> Tuple[float, float, float]:
-    """Performs a non-linear least squares fit of a Gaussian function to data.
+    """
+    Performs a non-linear least squares fit of a Gaussian function to data.
 
     This routine uses `scipy.optimize.leastsq` to find the optimal parameters
     (height, location, and width) that best describe a Gaussian curve fitted
@@ -1513,7 +1466,8 @@ def gaussfit(
 
 
 def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
-    r"""Performs Gram-Schmidt orthogonalization on a set of vectors.
+    """
+    Performs Gram-Schmidt orthogonalization on a set of vectors.
 
     This routine takes a set of input vectors (rows of a 2D array) and
     transforms them into an orthonormal basis using the Gram-Schmidt process.
@@ -1553,7 +1507,8 @@ def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
 
 
 def mlproject(thefit: ArrayLike, theevs: list, intercept: bool) -> NDArray:
-    r"""Calculates a linear combination (weighted sum) of explanatory variables.
+    """
+    Calculates a linear combination (weighted sum) of explanatory variables.
 
     This routine computes a predicted output by multiplying a set of
     explanatory variables by corresponding coefficients and summing the results.
@@ -1598,29 +1553,6 @@ def mlproject(thefit: ArrayLike, theevs: list, intercept: bool) -> NDArray:
 def olsregress(
     X: ArrayLike, y: ArrayLike, intercept: bool = True, debug: bool = False
 ) -> Tuple[NDArray, float]:
-    """
-
-    Parameters
-    ----------
-    X
-    y
-    intercept
-
-    Returns
-    -------
-
-    """
-    """Return the coefficients from a multiple linear regression, along with R, the coefficient of determination.
-
-    X: The independent variables (nxp).
-    y: The dependent variable (1xn or nx1).
-    intercept: Specifies whether or not the slope intercept should be considered.
-
-    The routine computes the coefficients (b_0, b_1, ..., b_p) from the data (x,y) under
-    the assumption that y = b0 + b_1 * x_1 + b_2 * x_2 + ... + b_p * x_p.
-
-    If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
-    """
     if intercept:
         X = sm.add_constant(X, prepend=True)
     model = sm.OLS(y, exog=X)
@@ -1631,29 +1563,6 @@ def olsregress(
 def mlregress(
     X: ArrayLike, y: ArrayLike, intercept: bool = True, debug: bool = False
 ) -> Tuple[NDArray, float]:
-    """
-
-    Parameters
-    ----------
-    x
-    y
-    intercept
-
-    Returns
-    -------
-
-    """
-    """Return the coefficients from a multiple linear regression, along with R, the coefficient of determination.
-
-    x: The independent variables (pxn or nxp).
-    y: The dependent variable (1xn or nx1).
-    intercept: Specifies whether or not the slope intercept should be considered.
-
-    The routine computes the coefficients (b_0, b_1, ..., b_p) from the data (x,y) under
-    the assumption that y = b0 + b_1 * x_1 + b_2 * x_2 + ... + b_p * x_p.
-
-    If intercept is False, the routine assumes that b0 = 0 and returns (b_1, b_2, ..., b_p).
-    """
     if debug:
         print(f"mlregress initial: {X.shape=}, {y.shape=}")
     y = np.atleast_1d(y)
@@ -1693,7 +1602,8 @@ def calcexpandedregressors(
     order: int = 1,
     debug: bool = False,
 ) -> Tuple[NDArray, list]:
-    r"""Calculates expanded regressors from a dictionary of confound vectors.
+    """
+    Calculates expanded regressors from a dictionary of confound vectors.
 
     This routine generates a comprehensive set of motion-related regressors by
     including higher-order polynomial terms and derivatives of the original
@@ -1788,7 +1698,8 @@ def calcexpandedregressors(
 def derivativelinfitfilt(
     thedata: ArrayLike, theevs: NDArray, nderivs: int = 1, debug: bool = False
 ) -> Tuple[NDArray, NDArray, NDArray, float, NDArray]:
-    r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
+    """
+    First perform multicomponent expansion on theevs (each ev replaced by itself,
     its square, its cube, etc.).  Then perform a linear fit of thedata using the vectors
     in thenewevs and return the result.
 
@@ -1843,7 +1754,8 @@ def derivativelinfitfilt(
 def expandedlinfitfilt(
     thedata: ArrayLike, theevs: NDArray, ncomps: int = 1, debug: bool = False
 ) -> Tuple[NDArray, NDArray, NDArray, float, NDArray]:
-    r"""First perform multicomponent expansion on theevs (each ev replaced by itself,
+    """
+    First perform multicomponent expansion on theevs (each ev replaced by itself,
     its square, its cube, etc.).  Then perform a multiple regression fit of thedata using the vectors
     in thenewevs and return the result.
 
@@ -1900,7 +1812,8 @@ def linfitfilt(
 ) -> Union[
     Tuple[NDArray, NDArray, float, NDArray], Tuple[NDArray, NDArray, float, NDArray, float]
 ]:
-    r"""Performs a multiple regression fit of thedata using the vectors in theevs
+    """
+    Performs a multiple regression fit of thedata using the vectors in theevs
     and returns the result.
 
     Parameters
@@ -1961,7 +1874,8 @@ def confoundregress(
     rt_floatset: type = np.float64,
     rt_floattype: str = "float64",
 ) -> Tuple[NDArray, NDArray]:
-    r"""Filters multiple regressors out of an array of data
+    """
+    Filters multiple regressors out of an array of data
 
     Parameters
     ----------
@@ -2064,19 +1978,6 @@ def getpeaks(
 def parabfit(
     x_axis: ArrayLike, y_axis: ArrayLike, peakloc: int, points: int
 ) -> Tuple[float, float]:
-    """
-
-    Parameters
-    ----------
-    x_axis
-    y_axis
-    peakloc
-    peaksize
-
-    Returns
-    -------
-
-    """
     func = lambda x, a, tau, c: a * ((x - tau) ** 2) + c
     distance = abs(x_axis[peakloc[1][0]] - x_axis[peakloc[0][0]]) / 4
     index = peakloc
@@ -2103,17 +2004,6 @@ def parabfit(
 def _datacheck_peakdetect(
     x_axis: Optional[ArrayLike], y_axis: ArrayLike
 ) -> Tuple[NDArray, NDArray]:
-    """
-
-    Parameters
-    ----------
-    x_axis
-    y_axis
-
-    Returns
-    -------
-
-    """
     if x_axis is None:
         x_axis = range(len(y_axis))
 
@@ -2790,16 +2680,6 @@ def simfuncpeakfit(
 def _maxindex_noedge(
     corrfunc: ArrayLike, corrtimeaxis: ArrayLike, bipolar: bool = False
 ) -> Tuple[int, float]:
-    """
-
-    Parameters
-    ----------
-    corrfunc
-
-    Returns
-    -------
-
-    """
     lowerlim = 0
     upperlim = len(corrtimeaxis) - 1
     done = False
