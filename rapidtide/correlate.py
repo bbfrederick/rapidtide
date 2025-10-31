@@ -95,24 +95,6 @@ def check_autocorrelation(
     detrendorder: int = 1,
     debug: bool = False,
 ) -> Tuple[Optional[float], Optional[float]]:
-    """Check for autocorrelation in an array.
-
-    Parameters
-    ----------
-    corrscale
-    thexcorr
-    delta
-    acampthresh
-    aclagthresh
-    displayplots
-    windowfunc
-    detrendorder
-
-    Returns
-    -------
-    sidelobetime
-    sidelobeamp
-    """
     if debug:
         print("check_autocorrelation:")
         print(f"delta: {delta}")
@@ -186,24 +168,6 @@ def shorttermcorr_1D(
     detrendorder: int = 0,
     windowfunc: str = "hamming",
 ) -> Tuple[NDArray, NDArray, NDArray]:
-    """Calculate short-term sliding-window correlation between two 1D arrays.
-
-    Parameters
-    ----------
-    data1
-    data2
-    sampletime
-    windowtime
-    samplestep
-    detrendorder
-    windowfunc
-
-    Returns
-    -------
-    times
-    corrpertime
-    ppertime
-    """
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
     times = []
@@ -245,30 +209,6 @@ def shorttermcorr_2D(
     compress: bool = False,
     displayplots: bool = False,
 ) -> Tuple[NDArray, NDArray, NDArray, NDArray, NDArray]:
-    """Calculate short-term sliding-window correlation between two 2D arrays.
-
-    Parameters
-    ----------
-    data1
-    data2
-    sampletime
-    windowtime
-    samplestep
-    laglimits
-    weighting
-    zeropadding
-    windowfunc
-    detrendorder
-    displayplots
-
-    Returns
-    -------
-    times
-    xcorrpertime
-    Rvals
-    delayvals
-    valid
-    """
     windowsize = int(windowtime // sampletime)
     halfwindow = int((windowsize + 1) // 2)
 
@@ -383,7 +323,7 @@ def mutual_info_2d(
     EPS: float = 1.0e-6,
     debug: bool = False,
 ) -> float:
-    """Compute (normalized) mutual information between two 1D variate from a joint histogram.
+    """Compute (normalized) mutual information between two 1D variates from a joint histogram.
 
     Parameters
     ----------
@@ -613,51 +553,9 @@ def mutual_info_to_r(themi: float, d: int = 1) -> float:
     return np.power(1.0 - np.exp(-2.0 * themi / d), -0.5)
 
 
-def dtw_distance(s1: ArrayLike, s2: ArrayLike) -> float:
-    # Dynamic time warping function written by GPT-4
-    # Get the lengths of the two input sequences
-    n, m = len(s1), len(s2)
-
-    # Initialize a (n+1) x (m+1) matrix with zeros
-    DTW = np.zeros((n + 1, m + 1))
-
-    # Set the first row and first column of the matrix to infinity, since
-    # the first element of each sequence cannot be aligned with an empty sequence
-    DTW[1:, 0] = np.inf
-    DTW[0, 1:] = np.inf
-
-    # Compute the DTW distance by iteratively filling in the matrix
-    for i in range(1, n + 1):
-        for j in range(1, m + 1):
-            # Compute the cost of aligning the i-th element of s1 with the j-th element of s2
-            cost = abs(s1[i - 1] - s2[j - 1])
-
-            # Compute the minimum cost of aligning the first i-1 elements of s1 with the first j elements of s2,
-            # the first i elements of s1 with the first j-1 elements of s2, and the first i-1 elements of s1
-            # with the first j-1 elements of s2, and add this to the cost of aligning the i-th element of s1
-            # with the j-th element of s2
-            DTW[i, j] = cost + np.min([DTW[i - 1, j], DTW[i, j - 1], DTW[i - 1, j - 1]])
-
-    # Return the DTW distance between the two sequences, which is the value in the last cell of the matrix
-    return DTW[n, m]
-
-
 def delayedcorr(
     data1: ArrayLike, data2: ArrayLike, delayval: float, timestep: float
 ) -> Tuple[float, float]:
-    """Calculate correlation between two 1D arrays, at specific delay.
-
-    Parameters
-    ----------
-    data1
-    data2
-    delayval
-    timestep
-
-    Returns
-    -------
-    corr
-    """
     return sp.stats.pearsonr(data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0])
 
 
@@ -720,18 +618,6 @@ def cepstraldelay(
 
 
 class AliasedCorrelator:
-    """An aliased correlator.
-
-    Parameters
-    ----------
-    hiressignal : 1D array
-        The unaliased waveform to match
-    hires_Fs : float
-        The sample rate of the unaliased waveform
-    numsteps : int
-        Number of distinct slice acquisition times within the TR.
-    """
-
     def __init__(self, hiressignal, hires_Fs, numsteps):
         self.hires_Fs = hires_Fs
         self.numsteps = numsteps
@@ -1014,17 +900,6 @@ def fastcorrelate(
 
 
 def _centered(arr: NDArray, newsize: Union[int, ArrayLike]) -> NDArray:
-    """Return the center newsize portion of the array.
-
-    Parameters
-    ----------
-    arr
-    newsize
-
-    Returns
-    -------
-    arr
-    """
     newsize = np.asarray(newsize)
     currsize = np.array(arr.shape)
     startind = (currsize - newsize) // 2
@@ -1034,22 +909,6 @@ def _centered(arr: NDArray, newsize: Union[int, ArrayLike]) -> NDArray:
 
 
 def _check_valid_mode_shapes(shape1: Tuple, shape2: Tuple) -> None:
-    """Check that two shapes are 'valid' with respect to one another.
-
-    Specifically, this checks that each item in one tuple is larger than or
-    equal to corresponding item in another tuple.
-
-    Parameters
-    ----------
-    shape1
-    shape2
-
-    Raises
-    ------
-    ValueError
-        If at least one item in the first shape is not larger than or equal to
-        the corresponding item in the second one.
-    """
     for d1, d2 in zip(shape1, shape2):
         if not d1 >= d2:
             raise ValueError(
@@ -1059,14 +918,15 @@ def _check_valid_mode_shapes(shape1: Tuple, shape2: Tuple) -> None:
 
 
 def convolve_weighted_fft(
-    in1: ArrayLike,
-    in2: ArrayLike,
+    in1: NDArray,
+    in2: NDArray,
     mode: str = "full",
     weighting: str = "None",
     compress: bool = False,
     displayplots: bool = False,
 ) -> NDArray:
-    """Convolve two N-dimensional arrays using FFT.
+    """
+    Convolve two N-dimensional arrays using FFT.
 
     Convolve `in1` and `in2` using the fast Fourier transform method, with
     the output size determined by the `mode` argument.
@@ -1102,9 +962,6 @@ def convolve_weighted_fft(
         An N-dimensional array containing a subset of the discrete linear
         convolution of `in1` with `in2`.
     """
-    in1 = np.asarray(in1)
-    in2 = np.asarray(in2)
-
     if np.isscalar(in1) and np.isscalar(in2):  # scalar inputs
         return in1 * in2
     elif not in1.ndim == in2.ndim:
@@ -1151,11 +1008,13 @@ def convolve_weighted_fft(
     # scale to preserve the maximum
 
     if mode == "full":
-        return ret
+        retval = ret
     elif mode == "same":
-        return _centered(ret, s1)
+        retval = _centered(ret, s1)
     elif mode == "valid":
-        return _centered(ret, s1 - s2 + 1)
+        retval = _centered(ret, s1 - s2 + 1)
+
+    return retval
 
 
 def gccproduct(
@@ -1166,20 +1025,6 @@ def gccproduct(
     compress: bool = False,
     displayplots: bool = False,
 ) -> NDArray:
-    """Calculate product for generalized crosscorrelation.
-
-    Parameters
-    ----------
-    fft1
-    fft2
-    weighting
-    threshfrac
-    displayplots
-
-    Returns
-    -------
-    product
-    """
     product = fft1 * fft2
     if weighting == "None":
         return product
@@ -1227,8 +1072,8 @@ def gccproduct(
 
 
 def aligntcwithref(
-    fixedtc: ArrayLike,
-    movingtc: ArrayLike,
+    fixedtc: NDArray,
+    movingtc: NDArray,
     Fs: float,
     lagmin: float = -30,
     lagmax: float = 30,

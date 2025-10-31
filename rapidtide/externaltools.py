@@ -48,11 +48,16 @@ def whatexists() -> tuple[bool, bool, bool]:
     return fslexists, c3dexists, antsexists
 
 
-def getfslcmds() -> tuple[str, str, str]:
+def getfslcmds() -> tuple[str | None, str | None, str | None]:
     fsldir = os.environ.get("FSLDIR")
-    fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
-    flirtcmd = os.path.join(fsldir, "bin", "flirt")
-    applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
+    if fsldir is not None:
+        fslsubcmd = os.path.join(fsldir, "bin", "fsl_sub")
+        flirtcmd = os.path.join(fsldir, "bin", "flirt")
+        applywarpcmd = os.path.join(fsldir, "bin", "applywarp")
+    else:
+        fslsubcmd = None
+        flirtcmd = None
+        applywarpcmd = None
     return fslsubcmd, flirtcmd, applywarpcmd
 
 

@@ -77,39 +77,39 @@ def disablenumba() -> None:
 
 
 # --------------------------- Fitting functions -------------------------------------------------
-def gaussresidualssk(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
+def gaussresidualssk(p: NDArray, y: NDArray, x: NDArray) -> NDArray:
     """
     Calculate residuals for skewed Gaussian fit.
 
     Parameters
     ----------
-    p : array-like
+    p : NDArray
         Skewed Gaussian parameters [amplitude, center, width, skewness]
-    y : array-like
+    y : NDArray
         Observed y values
-    x : array-like
+    x : NDArray
         x values
 
     Returns
     -------
-    err : array-like
+    err : NDArray
         Residuals (y - fitted values)
     """
     err = y - gausssk_eval(x, p)
     return err
 
 
-def gaussskresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
+def gaussskresiduals(p: NDArray, y: NDArray, x: NDArray) -> NDArray:
     """
     Calculate residuals for skewed Gaussian fit.
 
     Parameters
     ----------
-    p : array-like
+    p : NDArray
         Skewed Gaussian parameters [amplitude, center, width, skewness]
-    y : array-like
+    y : NDArray
         Observed y values
-    x : array-like
+    x : NDArray
         x values
 
     Returns
@@ -121,85 +121,85 @@ def gaussskresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
 
 
 @conditionaljit()
-def gaussresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
+def gaussresiduals(p: NDArray, y: NDArray, x: NDArray) -> NDArray:
     """
     Calculate residuals for Gaussian fit.
 
     Parameters
     ----------
-    p : array-like
+    p : NDArray
         Gaussian parameters [amplitude, center, width]
-    y : array-like
+    y : NDArray
         Observed y values
-    x : array-like
+    x : NDArray
         x values
 
     Returns
     -------
-    residuals : array-like
+    residuals : NDArray
         Residuals (y - fitted values)
     """
     return y - p[0] * np.exp(-((x - p[1]) ** 2) / (2.0 * p[2] * p[2]))
 
 
-def trapezoidresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike, toplength: float) -> NDArray:
+def trapezoidresiduals(p: NDArray, y: NDArray, x: NDArray, toplength: float) -> NDArray:
     """
     Calculate residuals for trapezoid fit.
 
     Parameters
     ----------
-    p : array-like
+    p : NDArray
         Trapezoid parameters [amplitude, center, width]
-    y : array-like
+    y : NDArray
         Observed y values
-    x : array-like
+    x : NDArray
         x values
     toplength : float
         Length of the flat top of the trapezoid
 
     Returns
     -------
-    residuals : array-like
+    residuals : NDArray
         Residuals (y - fitted values)
     """
     return y - trapezoid_eval_loop(x, toplength, p)
 
 
-def risetimeresiduals(p: ArrayLike, y: ArrayLike, x: ArrayLike) -> NDArray:
+def risetimeresiduals(p: NDArray, y: NDArray, x: NDArray) -> NDArray:
     """
     Calculate residuals for rise time fit.
 
     Parameters
     ----------
-    p : array-like
+    p : NDArray
         Rise time parameters [amplitude, start, rise time]
-    y : array-like
+    y : NDArray
         Observed y values
-    x : array-like
+    x : NDArray
         x values
 
     Returns
     -------
-    residuals : array-like
+    residuals : NDArray
         Residuals (y - fitted values)
     """
     return y - risetime_eval_loop(x, p)
 
 
-def gausssk_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
+def gausssk_eval(x: NDArray, p: NDArray) -> NDArray:
     """
     Evaluate a skewed Gaussian function.
 
     Parameters
     ----------
-    x : array-like
+    x : NDArray
         x values at which to evaluate the function
-    p : array-like
+    p : NDArray
         Skewed Gaussian parameters [amplitude, center, width, skewness]
 
     Returns
     -------
-    y : array-like
+    y : NDArray
         Evaluated skewed Gaussian values
     """
     t = (x - p[1]) / p[2]
@@ -207,14 +207,14 @@ def gausssk_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
 
 
 # @conditionaljit()
-def kaiserbessel_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
+def kaiserbessel_eval(x: NDArray, p: NDArray) -> NDArray:
     """
 
     Parameters
     ----------
-    x: array-like
+    x: NDArray
         arguments to the KB function
-    p: array-like
+    p: NDArray
         The Kaiser-Bessel window parameters [alpha, tau] (wikipedia) or [beta, W/2] (Jackson, J. I., Meyer, C. H.,
         Nishimura, D. G. & Macovski, A. Selection of a convolution function for Fourier inversion using gridding
         [computerised tomography application]. IEEE Trans. Med. Imaging 10, 473–478 (1991))
@@ -234,41 +234,41 @@ def kaiserbessel_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
 
 
 @conditionaljit()
-def gauss_eval(x: ArrayLike, p: ArrayLike) -> NDArray:
+def gauss_eval(x: NDArray, p: NDArray) -> NDArray:
     """
     Evaluate a Gaussian function.
 
     Parameters
     ----------
-    x : array-like
+    x : NDArray
         x values at which to evaluate the function
-    p : array-like
+    p : NDArray
         Gaussian parameters [amplitude, center, width]
 
     Returns
     -------
-    y : array-like
+    y : NDArray
         Evaluated Gaussian values
     """
     return p[0] * np.exp(-((x - p[1]) ** 2) / (2.0 * p[2] * p[2]))
 
 
-def trapezoid_eval_loop(x: ArrayLike, toplength: float, p: ArrayLike) -> NDArray:
+def trapezoid_eval_loop(x: NDArray, toplength: float, p: NDArray) -> NDArray:
     """
     Evaluate a trapezoid function.
 
     Parameters
     ----------
-    x : array-like
+    x : NDArray
         x values at which to evaluate the function
     toplength : float
         Length of the flat top of the trapezoid
-    p : array-like
+    p : NDArray
         Trapezoid parameters [amplitude, center, width]
 
     Returns
     -------
-    y : array-like
+    y : NDArray
         Evaluated trapezoid values
     """
     r = np.zeros(len(x), dtype="float64")
@@ -277,20 +277,20 @@ def trapezoid_eval_loop(x: ArrayLike, toplength: float, p: ArrayLike) -> NDArray
     return r
 
 
-def risetime_eval_loop(x: ArrayLike, p: ArrayLike) -> NDArray:
+def risetime_eval_loop(x: NDArray, p: NDArray) -> NDArray:
     """
     Evaluate a rise time function.
 
     Parameters
     ----------
-    x : array-like
+    x : NDArray
         x values at which to evaluate the function
-    p : array-like
+    p : NDArray
         Rise time parameters [amplitude, start, rise time]
 
     Returns
     -------
-    y : array-like
+    y : NDArray
         Evaluated rise time function values
     """
     r = np.zeros(len(x), dtype="float64")
@@ -301,7 +301,7 @@ def risetime_eval_loop(x: ArrayLike, p: ArrayLike) -> NDArray:
 
 @conditionaljit()
 def trapezoid_eval(
-    x: Union[float, ArrayLike], toplength: float, p: ArrayLike
+    x: Union[float, NDArray], toplength: float, p: NDArray
 ) -> Union[float, NDArray]:
     """
     Evaluates the trapezoidal function at a given point.
@@ -322,7 +322,7 @@ def trapezoid_eval(
 
     Parameters
     ----------
-    x: float or array-like
+    x: float or NDArray
         The point  or vector at which to evaluate the trapezoidal function.
     toplength: float
         The length of the top plateau of the trapezoid.
@@ -347,7 +347,7 @@ def trapezoid_eval(
 
 
 @conditionaljit()
-def risetime_eval(x: Union[float, ArrayLike], p: ArrayLike) -> Union[float, NDArray]:
+def risetime_eval(x: Union[float, NDArray], p: NDArray) -> Union[float, NDArray]:
     """
     Evaluates the rise time function at a given point.
 
@@ -359,13 +359,13 @@ def risetime_eval(x: Union[float, ArrayLike], p: ArrayLike) -> Union[float, NDAr
 
     Parameters
     ----------
-    x: float or array-like
+    x: float or NDArray
         The point at which to evaluate the rise time function.
     p: list or tuple of floats
         A list of two values [A, tau].
     Returns
     -------
-    float or array-like
+    float or NDArray
         The value of the rise time function at x.
 
     Notes
@@ -380,7 +380,7 @@ def risetime_eval(x: Union[float, ArrayLike], p: ArrayLike) -> Union[float, NDAr
 
 
 def gasboxcar(
-    data: ArrayLike,
+    data: NDArray,
     samplerate: float,
     firstpeakstart: float,
     firstpeakend: float,
@@ -394,7 +394,7 @@ def gasboxcar(
 
 # generate the polynomial fit timecourse from the coefficients
 @conditionaljit()
-def trendgen(thexvals: ArrayLike, thefitcoffs: ArrayLike, demean: bool) -> NDArray:
+def trendgen(thexvals: NDArray, thefitcoffs: NDArray, demean: bool) -> NDArray:
     """
     Generates a polynomial trend based on input x-values and coefficients.
 
@@ -405,10 +405,10 @@ def trendgen(thexvals: ArrayLike, thefitcoffs: ArrayLike, demean: bool) -> NDArr
 
     Parameters
     ----------
-    thexvals : array_like
+    thexvals : NDArray
         The x-values (independent variable) at which to evaluate the polynomial trend.
         Expected to be a numpy array or similar.
-    thefitcoffs : array_like
+    thefitcoffs : NDArray
         A 1D array of polynomial coefficients. The length of this array minus one
         determines the order of the polynomial. Coefficients are expected to be
         ordered from the highest power of x down to the constant term (e.g.,
@@ -421,7 +421,7 @@ def trendgen(thexvals: ArrayLike, thefitcoffs: ArrayLike, demean: bool) -> NDArr
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         A numpy array containing the calculated polynomial trend, with the same
         shape as `thexvals`.
 
@@ -444,7 +444,7 @@ def trendgen(thexvals: ArrayLike, thefitcoffs: ArrayLike, demean: bool) -> NDArr
 
 
 # @conditionaljit()
-def detrend(inputdata: ArrayLike, order: int = 1, demean: bool = False) -> NDArray:
+def detrend(inputdata: NDArray, order: int = 1, demean: bool = False) -> NDArray:
     """
     Estimates and removes a polynomial trend timecourse.
 
@@ -455,9 +455,9 @@ def detrend(inputdata: ArrayLike, order: int = 1, demean: bool = False) -> NDArr
 
     Parameters
     ----------
-    thetimepoints : numpy.ndarray
+    thetimepoints : NDArray
         A 1D NumPy array of time points at which to evaluate the polynomial.
-    thecoffs : list or numpy.ndarray
+    thecoffs : list or NDArray
         A list or 1D NumPy array of polynomial coefficients, typically in
         decreasing order of power (e.g., `[a, b, c]` for `ax^2 + bx + c`).
     demean : bool
@@ -466,7 +466,7 @@ def detrend(inputdata: ArrayLike, order: int = 1, demean: bool = False) -> NDArr
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         A 1D NumPy array representing the generated polynomial trend timecourse.
 
     Notes
@@ -478,7 +478,7 @@ def detrend(inputdata: ArrayLike, order: int = 1, demean: bool = False) -> NDArr
     try:
         thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]
     except np.lib.polynomial.RankWarning:
-        thecoffs = [0.0, 0.0]
+        thecoffs = np.array([0.0, 0.0])
     thefittc = trendgen(thetimepoints, thecoffs, demean)
     return inputdata - thefittc
 
@@ -533,7 +533,7 @@ def prewhiten(series: ArrayLike, nlags: Optional[int] = None, debug: bool = Fals
 
 
 def prewhiten2(
-    timecourse: ArrayLike, nlags: int, debug: bool = False, sel: bool = False
+    timecourse: NDArray, nlags: int, debug: bool = False, sel: bool = False
 ) -> NDArray:
     if not sel:
         ar_model = AutoReg(timecourse, lags=nlags)
@@ -558,45 +558,11 @@ def prewhiten2(
     return tide_math.stdnormalize(signal.lfilter(b, a, timecourse))
 
 
-@conditionaljit()
-def findfirstabove(theyvals: ArrayLike, thevalue: float) -> int:
-    """
-    Find the index of the first element in an array that is greater than or equal to a specified value.
-
-    This function iterates through the input array `theyvals` and returns the index of the
-    first element that is greater than or equal to `thevalue`. If no such element exists,
-    it returns the length of the array.
-
-    Parameters
-    ----------
-    theyvals : array_like
-        A 1D array of numeric values to be searched.
-    thevalue : float or int
-        The threshold value to compare against elements in `theyvals`.
-    Returns
-    -------
-    int
-        The index of the first element in `theyvals` that is greater than or equal to `thevalue`.
-        If no such element exists, returns the length of `theyvals`.
-
-    Examples
-    --------
-    >>> findfirstabove([1, 2, 3, 4], 3)
-    2
-    >>> findfirstabove([1, 2, 3, 4], 5)
-    4
-    """
-    for i in range(0, len(theyvals)):
-        if theyvals[i] >= thevalue:
-            return i
-    return len(theyvals)
-
-
 def findtrapezoidfunc(
-    thexvals: ArrayLike,
-    theyvals: ArrayLike,
+    thexvals: NDArray,
+    theyvals: NDArray,
     thetoplength: float,
-    initguess: Optional[ArrayLike] = None,
+    initguess: NDArray | None = None,
     debug: bool = False,
     minrise: float = 0.0,
     maxrise: float = 200.0,
@@ -682,9 +648,9 @@ def findtrapezoidfunc(
 
 
 def findrisetimefunc(
-    thexvals: ArrayLike,
-    theyvals: ArrayLike,
-    initguess: Optional[ArrayLike] = None,
+    thexvals: NDArray,
+    theyvals: NDArray,
+    initguess: NDArray | None = None,
     debug: bool = False,
     minrise: float = 0.0,
     maxrise: float = 200.0,
@@ -825,7 +791,7 @@ def territorydecomp(
                     evs = []
                     for order in range(1, fitorder + 1):
                         evs.append(np.power(template[maskedvoxels], order))
-                    thefit, R2 = mlregress(evs, thismap[maskedvoxels], intercept=intercept)
+                    thefit, R2 = mlregress(np.asarray(evs), thismap[maskedvoxels], intercept=intercept)
                     thecoffs[whichmap, i - 1, :] = np.asarray(thefit[0]).reshape((-1))
                     theR2s[whichmap, i - 1] = 1.0 * R2
                     thisfit[maskedvoxels] = mlproject(thecoffs[whichmap, i - 1, :], evs, intercept)
@@ -840,11 +806,11 @@ def territorydecomp(
 def territorystats(
     inputmap: NDArray,
     atlas: NDArray,
-    inputmask: Optional[NDArray] = None,
+    inputmask: NDArray | None = None,
     entropybins: int = 101,
-    entropyrange: Optional[Tuple[float, float]] = None,
+    entropyrange: Tuple[float, float] | None = None,
     debug: bool = False,
-) -> Tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
+) -> Tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
     datadims = len(inputmap.shape)
     if datadims > 3:
         nummaps = inputmap.shape[3]
@@ -880,7 +846,7 @@ def territorystats(
             thevoxels = inputmap[np.where(inputmask > 0.0)]
         else:
             thevoxels = inputmap
-        entropyrange = [np.min(thevoxels), np.max(thevoxels)]
+        entropyrange = (np.min(thevoxels), np.max(thevoxels))
     if debug:
         print(f"entropy bins: {entropybins}")
         print(f"entropy range: {entropyrange}")
@@ -907,9 +873,9 @@ def territorystats(
                 thestds[whichmap, i - 1] = np.std(thismap[maskedvoxels])
                 themedians[whichmap, i - 1] = np.median(thismap[maskedvoxels])
                 themads[whichmap, i - 1] = mad(thismap[maskedvoxels])
-                thevariances[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=2)
-                theskewnesses[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=3)
-                thekurtoses[whichmap, i - 1] = moment(thismap[maskedvoxels], moment=4)
+                thevariances[whichmap, i - 1] = moment(thismap[maskedvoxels], order=2)
+                theskewnesses[whichmap, i - 1] = moment(thismap[maskedvoxels], order=3)
+                thekurtoses[whichmap, i - 1] = moment(thismap[maskedvoxels], order=4)
                 theentropies[whichmap, i - 1] = entropy(
                     np.histogram(
                         thismap[maskedvoxels], bins=entropybins, range=entropyrange, density=True
@@ -931,7 +897,7 @@ def territorystats(
 
 @conditionaljit()
 def refinepeak_quad(
-    x: ArrayLike, y: ArrayLike, peakindex: int, stride: int = 1
+    x: NDArray, y: NDArray, peakindex: int, stride: int = 1
 ) -> Tuple[float, float, float, Optional[bool], bool]:
     """
     Refine the location and properties of a peak using quadratic interpolation.
@@ -942,9 +908,9 @@ def refinepeak_quad(
 
     Parameters
     ----------
-    x : array-like
+    x : NDArray
         Independent variable values (e.g., time points).
-    y : array-like
+    y : NDArray
         Dependent variable values (e.g., signal intensity) corresponding to `x`.
     peakindex : int
         Index of the peak in the arrays `x` and `y`.
@@ -1005,8 +971,8 @@ def refinepeak_quad(
 
 @conditionaljit2()
 def findmaxlag_gauss(
-    thexcorr_x: ArrayLike,
-    thexcorr_y: ArrayLike,
+    thexcorr_x: NDArray,
+    thexcorr_y: NDArray,
     lagmin: float,
     lagmax: float,
     widthmax: float,
@@ -1026,7 +992,7 @@ def findmaxlag_gauss(
     absmaxsigma: float = 1000.0,
     absminsigma: float = 0.1,
     displayplots: bool = False,
-) -> Tuple[int, float, float, float, int, int, int, int]:
+) -> Tuple[int, np.float64, np.float64, np.float64, np.uint16, np.uint16, int, int]:
     """
     Find the maximum lag in a cross-correlation function by fitting a Gaussian curve to the peak.
 
@@ -1036,9 +1002,9 @@ def findmaxlag_gauss(
 
     Parameters
     ----------
-    thexcorr_x : array_like
+    thexcorr_x : NDArray
         X-axis values (lag times) of the cross-correlation function.
-    thexcorr_y : array_like
+    thexcorr_y : NDArray
         Y-axis values (correlation coefficients) of the cross-correlation function.
     lagmin : float
         Minimum allowable lag value in seconds.
@@ -1235,15 +1201,15 @@ def findmaxlag_gauss(
         )
     if maxsigma_init > widthmax:
         failreason += FML_BADWIDTH
-        maxsigma_init = widthmax
+        maxsigma_init = np.float64(widthmax)
     if (maxval_init < threshval) and enforcethresh:
         failreason += FML_BADAMPLOW
     if maxval_init < 0.0:
         failreason += FML_BADAMPLOW
-        maxval_init = 0.0
+        maxval_init = np.float64(0.0)
     if maxval_init > 1.0:
         failreason |= FML_BADAMPHIGH
-        maxval_init = 1.0
+        maxval_init = np.float64(1.0)
     if failreason > 0:
         maskval = np.uint16(0)
     if failreason > 0 and zerooutbadfit:
@@ -1304,9 +1270,9 @@ def findmaxlag_gauss(
                         maskval = np.uint16(0)
                     else:
                         if maxsigma > absmaxsigma:
-                            maxsigma = absmaxsigma
+                            maxsigma = np.float64(absmaxsigma)
                         else:
-                            maxsigma = absminsigma
+                            maxsigma = np.float64(absminsigma)
 
         else:
             maxval = np.float64(maxval_init)
@@ -1353,7 +1319,7 @@ def findmaxlag_gauss(
 
 @conditionaljit2()
 def maxindex_noedge(
-    thexcorr_x: ArrayLike, thexcorr_y: ArrayLike, bipolar: bool = False
+    thexcorr_x: NDArray, thexcorr_y: NDArray, bipolar: bool = False
 ) -> Tuple[int, float]:
     lowerlim = 0
     upperlim = len(thexcorr_x) - 1
@@ -1394,32 +1360,32 @@ def gaussfitsk(
     return plsq
 
 
-def gaussfunc(x: ArrayLike, height: float, loc: float, FWHM: float) -> NDArray:
+def gaussfunc(x: NDArray, height: float, loc: float, FWHM: float) -> NDArray:
     return height * np.exp(-((x - loc) ** 2) / (2 * (FWHM / 2.355) ** 2))
 
 
 def gaussfit2(
-    height: float, loc: float, width: float, xvals: ArrayLike, yvals: ArrayLike
+    height: float, loc: float, width: float, xvals: NDArray, yvals: NDArray
 ) -> Tuple[float, float, float]:
     popt, pcov = curve_fit(gaussfunc, xvals, yvals, p0=[height, loc, width])
     return popt[0], popt[1], popt[2]
 
 
-def sincfunc(x: ArrayLike, height: float, loc: float, FWHM: float, baseline: float) -> NDArray:
+def sincfunc(x: NDArray, height: float, loc: float, FWHM: float, baseline: float) -> NDArray:
     return height * np.sinc((3.79098852 / (FWHM * np.pi)) * (x - loc)) + baseline
 
 
 # found this sinc fitting routine (and optimization) here:
 # https://stackoverflow.com/questions/49676116/why-cant-scipy-optimize-curve-fit-fit-my-data-using-a-numpy-sinc-function
 def sincfit(
-    height: float, loc: float, width: float, baseline: float, xvals: ArrayLike, yvals: ArrayLike
+    height: float, loc: float, width: float, baseline: float, xvals: NDArray, yvals: NDArray
 ) -> Tuple[NDArray, NDArray]:
     popt, pcov = curve_fit(sincfunc, xvals, yvals, p0=[height, loc, width, baseline])
     return popt, pcov
 
 
 def gaussfit(
-    height: float, loc: float, width: float, xvals: ArrayLike, yvals: ArrayLike
+    height: float, loc: float, width: float, xvals: NDArray, yvals: NDArray
 ) -> Tuple[float, float, float]:
     """
     Performs a non-linear least squares fit of a Gaussian function to data.
@@ -1437,9 +1403,9 @@ def gaussfit(
         Initial guess for the mean (center) of the Gaussian.
     width : float
         Initial guess for the standard deviation (width) of the Gaussian.
-    xvals : numpy.ndarray or list
+    xvals : NDArray
         The independent variable data points.
-    yvals : numpy.ndarray or list
+    yvals : NDArray
         The dependent variable data points to which the Gaussian will be fitted.
 
     Returns
@@ -1495,9 +1461,9 @@ def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
 
     if debug:
         print("gram_schmidt, input dimensions:", theregressors.shape)
-    basis = []
+    basis: list[float] = []
     for i in range(theregressors.shape[0]):
-        w = theregressors[i, :] - np.sum(np.dot(theregressors[i, :], b) * b for b in basis)
+        w = theregressors[i, :] - np.sum(np.array(np.dot(theregressors[i, :], b) * b) for b in basis)
         if (np.fabs(w) > 1e-10).any():
             basis.append(w / np.linalg.norm(w))
     outputbasis = np.array(basis)
@@ -1506,7 +1472,7 @@ def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
     return outputbasis
 
 
-def mlproject(thefit: ArrayLike, theevs: list, intercept: bool) -> NDArray:
+def mlproject(thefit: NDArray, theevs: list, intercept: bool) -> NDArray:
     """
     Calculates a linear combination (weighted sum) of explanatory variables.
 
@@ -1516,7 +1482,7 @@ def mlproject(thefit: ArrayLike, theevs: list, intercept: bool) -> NDArray:
     in linear regression and other statistical models.
 
     Args:
-        thefit (numpy.ndarray or list): A 1D array or list of coefficients
+        thefit (NDArray): A 1D array or list of coefficients
             (weights) to be applied to the explanatory variables. If `intercept`
             is True, the first element of `thefit` is treated as the intercept.
         theevs (list of numpy.ndarray): A list where each element is a 1D NumPy
@@ -1561,7 +1527,7 @@ def olsregress(
 
 
 def mlregress(
-    X: ArrayLike, y: ArrayLike, intercept: bool = True, debug: bool = False
+    X: NDArray, y: NDArray, intercept: bool = True, debug: bool = False
 ) -> Tuple[NDArray, float]:
     if debug:
         print(f"mlregress initial: {X.shape=}, {y.shape=}")

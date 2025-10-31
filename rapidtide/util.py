@@ -1015,7 +1015,7 @@ def valtoindex(
     discrete: bool = True,
     discretization: str = "round",
     debug: bool = False,
-) -> int | float:
+) -> int:
     """
         Find the index of the closest value in an ordered array to a given value.
 

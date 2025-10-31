@@ -76,7 +76,7 @@ def disablenumba() -> None:
 
 @conditionaljit()
 def padvec(
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     padlen: int = 20,
     avlen: int = 20,
     padtype: str = "reflect",
@@ -90,7 +90,7 @@ def padvec(
 
     Parameters
     ----------
-    inputdata : 1D array
+    inputdata : NDArray
         An array of any numerical type.
         :param inputdata:
 
@@ -173,14 +173,14 @@ def padvec(
 
 
 @conditionaljit()
-def unpadvec(inputdata: ArrayLike, padlen: int = 20) -> NDArray:
+def unpadvec(inputdata: NDArray, padlen: int = 20) -> NDArray:
     """
     Returns a input data with the end pads removed (see padvec);
     padlen points of reflected data are removed from each end of the array.
 
     Parameters
     ----------
-    inputdata : 1D array
+    inputdata : NDArray
         An array of any numerical type.
         :param inputdata:
     padlen : int, optional
@@ -201,7 +201,7 @@ def unpadvec(inputdata: ArrayLike, padlen: int = 20) -> NDArray:
 
 
 def ssmooth(
-    xsize: float, ysize: float, zsize: float, sigma: float, inputdata: ArrayLike
+    xsize: float, ysize: float, zsize: float, sigma: float, inputdata: NDArray
 ) -> NDArray:
     """
     Applies an isotropic gaussian spatial filter to a 3D array
@@ -224,7 +224,7 @@ def ssmooth(
         The width of the gaussian filter kernel in spatial units
         :param sigma:
 
-    inputdata : 3D numeric array
+    inputdata : NDArray
         The spatial data to filter
         :param inputdata:
 
@@ -242,7 +242,7 @@ def ssmooth(
 def dolpfiltfilt(
     Fs: float,
     upperpass: float,
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     order: int,
     padlen: int = 20,
     avlen: int = 20,
@@ -263,7 +263,7 @@ def dolpfiltfilt(
         Upper end of passband in Hz
         :param upperpass:
 
-    inputdata : 1D numpy array
+    inputdata : NDArray
         Input data to be filtered
         :param inputdata:
 
@@ -314,7 +314,7 @@ def dolpfiltfilt(
 def dohpfiltfilt(
     Fs: float,
     lowerpass: float,
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     order: int,
     padlen: int = 20,
     avlen: int = 20,
@@ -335,8 +335,7 @@ def dohpfiltfilt(
         Lower end of passband in Hz
         :param lowerpass:
 
-    inputdata : 1D numpy array
-        Input data to be filtered
+    inputdata : NDArray
         :param inputdata:
 
     order : int
@@ -386,7 +385,7 @@ def dobpfiltfilt(
     Fs: float,
     lowerpass: float,
     upperpass: float,
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     order: int,
     padlen: int = 20,
     avlen: int = 20,
@@ -411,7 +410,7 @@ def dobpfiltfilt(
         Upper end of passband in Hz
         :param upperpass:
 
-    inputdata : 1D numpy array
+    inputdata : NDArray
         Input data to be filtered
         :param inputdata:
 
@@ -461,17 +460,17 @@ def dobpfiltfilt(
 
 
 # - direct filter with specified transfer function
-def transferfuncfilt(inputdata: ArrayLike, transferfunc: ArrayLike) -> NDArray:
+def transferfuncfilt(inputdata: NDArray, transferfunc: NDArray) -> NDArray:
     """
     Filters input data using a previously calculated transfer function.
 
     Parameters
     ----------
-    inputdata : 1D float array
+    inputdata : NDArray
         Input data to be filtered
         :param inputdata:
 
-    transferfunc : 1D float array
+    transferfunc : NDArray
         The transfer function
         :param transferfunc:
 
@@ -515,7 +514,7 @@ def getlpfftfunc(
         The transfer function
     """
     transferfunc = np.ones(np.shape(inputdata), dtype=np.float64)
-    cutoffbin = int((upperpass / Fs) * np.shape(transferfunc)[0])
+    cutoffbin = int((upperpass / Fs) * len(transferfunc))
     if debug:
         print(
             "getlpfftfunc - Fs, upperpass, len(inputdata):",
@@ -693,7 +692,7 @@ def dobpfftfilt(
 # - fft trapezoidal filters
 # @conditionaljit()
 def getlptrapfftfunc(
-    Fs: float, upperpass: float, upperstop: float, inputdata: ArrayLike, debug: bool = False
+    Fs: float, upperpass: float, upperstop: float, inputdata: NDArray, debug: bool = False
 ) -> NDArray:
     """
     Generates a trapezoidal lowpass transfer function.
@@ -712,7 +711,7 @@ def getlptrapfftfunc(
         Lower end of stopband in Hz
         :param upperstop:
 
-    inputdata : 1D numpy array
+    inputdata : NDArray
         Input data to be filtered
         :param inputdata:
 
@@ -750,7 +749,7 @@ def getlptrapfftfunc(
 # @conditionaljit()
 def getlptransfunc(
     Fs: float,
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     upperpass: Optional[float] = None,
     upperstop: Optional[float] = None,
     type: str = "brickwall",
@@ -821,7 +820,7 @@ def getlptransfunc(
 
 def gethptransfunc(
     Fs: float,
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     lowerstop: Optional[float] = None,
     lowerpass: Optional[float] = None,
     type: str = "brickwall",
@@ -905,7 +904,7 @@ def dolptransfuncfilt(
         )
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_title("LP Transfer function - " + type + ", upperpass={:.2f}".format(upperpass))
+        ax.set_title(f"LP Transfer function - {type}, upperpass={upperpass:.2f}")
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= transferfunc
@@ -915,9 +914,9 @@ def dolptransfuncfilt(
 # @conditionaljit()
 def dohptransfuncfilt(
     Fs: float,
-    inputdata: ArrayLike,
-    lowerstop: Optional[float] = None,
-    lowerpass: Optional[float] = None,
+    inputdata: NDArray,
+    lowerpass: float,
+    lowerstop: Optional[float | None] = None,
     type: str = "brickwall",
     padlen: int = 20,
     avlen: int = 20,
@@ -932,19 +931,15 @@ def dohptransfuncfilt(
     ----------
     Fs : float
         Sample rate in Hz
-        :param Fs:
 
-    lowerstop : float
-        Upper end of stopband in Hz
-        :param lowerstop:
+    inputdata : NDArray
+        Input data to be filtered
 
     lowerpass : float
         Lower end of passband in Hz
-        :param lowerpass:
 
-    inputdata : 1D numpy array
-        Input data to be filtered
-        :param inputdata:
+    lowerstop : float
+        Upper end of stopband in Hz
 
     padlen : int, optional
         Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
@@ -977,7 +972,7 @@ def dohptransfuncfilt(
         )
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_title("HP Transfer function - " + type + ", lowerpass={:.2f}".format(lowerpass))
+        ax.set_title(f"HP Transfer function - {type}, lowerpass={lowerpass:.2f}")
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= 1.0 - transferfunc
@@ -987,10 +982,10 @@ def dohptransfuncfilt(
 # @conditionaljit()
 def dobptransfuncfilt(
     Fs: float,
-    inputdata: ArrayLike,
+    inputdata: NDArray,
+    lowerpass: float,
+    upperpass: float,
     lowerstop: Optional[float] = None,
-    lowerpass: Optional[float] = None,
-    upperpass: Optional[float] = None,
     upperstop: Optional[float] = None,
     type: str = "brickwall",
     padlen: int = 20,
@@ -1008,6 +1003,10 @@ def dobptransfuncfilt(
         Sample rate in Hz
         :param Fs:
 
+    inputdata : NDArray
+        Input data to be filtered
+        :param inputdata:
+
     lowerstop : float
         Upper end of stopband in Hz
         :param lowerstop:
@@ -1015,10 +1014,6 @@ def dobptransfuncfilt(
     lowerpass : float
         Lower end of passband in Hz
         :param lowerpass:
-
-    inputdata : 1D numpy array
-        Input data to be filtered
-        :param inputdata:
 
     padlen : int, optional
         Amount of points to reflect around each end of the input vector prior to filtering.  Default is 20.
@@ -1057,9 +1052,7 @@ def dobptransfuncfilt(
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title(
-            "BP Transfer function - "
-            + type
-            + ", lowerpass={:.2f}, upperpass={:.2f}".format(lowerpass, upperpass)
+            f"BP Transfer function - {type}, lowerpass={lowerpass:.2f}, upperpass={upperpass:.2f}"
         )
         plt.plot(freqaxis, transferfunc)
         plt.show()
@@ -1267,7 +1260,7 @@ def dobptrapfftfilt(
 # We use a fixed SNR across all frequencies in this example.
 #
 # Written 2015 by Dan Stowell. Public domain.
-def wiener_deconvolution(signal: ArrayLike, kernel: ArrayLike, lambd: float) -> NDArray:
+def wiener_deconvolution(signal: NDArray, kernel: NDArray, lambd: float) -> NDArray:
     "lambd is the SNR in the fourier domain"
     kernel = np.hstack(
         (kernel, np.zeros(len(signal) - len(kernel)))
@@ -1280,13 +1273,13 @@ def wiener_deconvolution(signal: ArrayLike, kernel: ArrayLike, lambd: float) -> 
     return deconvolved
 
 
-def pspec(inputdata: ArrayLike) -> NDArray:
+def pspec(inputdata: NDArray) -> NDArray:
     """
     Calculate the power spectrum of an input signal
 
     Parameters
     ----------
-    inputdata: 1D numpy array
+    inputdata: NDArray
         Input data
 
     Returns
@@ -1299,12 +1292,12 @@ def pspec(inputdata: ArrayLike) -> NDArray:
     return np.sqrt(S * np.conj(S))
 
 
-def spectralflatness(spectrum: ArrayLike) -> float:
+def spectralflatness(spectrum: NDArray) -> float:
     return np.exp(np.mean(np.log(spectrum))) / np.mean(spectrum)
 
 
 def spectrum(
-    inputdata: ArrayLike, Fs: float = 1.0, mode: str = "power", trim: bool = True
+    inputdata: NDArray, Fs: float = 1.0, mode: str = "power", trim: bool = True
 ) -> Tuple[NDArray, Union[NDArray, None]]:
     """
     Performs an FFT of the input data, and returns the frequency axis and spectrum
@@ -1312,7 +1305,7 @@ def spectrum(
 
     Parameters
     ----------
-    inputdata : 1D numpy array
+    inputdata : NDArray
         Input data
         :param inputdata:
 
@@ -1329,10 +1322,10 @@ def spectrum(
 
     Returns
     -------
-    specaxis : 1D float array
+    specaxis : NDArray
         The frequency axis.
 
-    specvals : 1D float array
+    specvals : NDArray
         The spectral data.
 
     Other Parameters
@@ -1366,8 +1359,7 @@ def spectrum(
     elif mode == "power":
         specvals = np.sqrt(np.absolute(specvals))
     else:
-        print("illegal spectrum mode")
-        specvals = None
+        raise RuntimeError("illegal spectrum mode")
     return specaxis, specvals
 
 
@@ -1394,7 +1386,7 @@ def setnotchfilter(thefilter: object, thefreq: float, notchwidth: float = 1.0) -
 
 
 def harmonicnotchfilter(
-    timecourse: ArrayLike,
+    timecourse: NDArray,
     Fs: float,
     Ffundamental: float,
     notchpct: float = 1.0,
@@ -1405,7 +1397,7 @@ def harmonicnotchfilter(
 
     Parameters
     ----------
-    timecourse: 1D numpy array
+    timecourse: NDArray
         Input data
     Fs: float
         Sample rate
@@ -1452,7 +1444,7 @@ def harmonicnotchfilter(
     return filteredtc
 
 
-def savgolsmooth(data: ArrayLike, smoothlen: int = 101, polyorder: int = 3) -> NDArray:
+def savgolsmooth(data: NDArray, smoothlen: int = 101, polyorder: int = 3) -> NDArray:
     return savgol_filter(data, smoothlen, polyorder)
 
 
@@ -1501,7 +1493,7 @@ def csdfilter(
 # @conditionaljit()
 def arb_pass(
     Fs: float,
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     lowerstop: float,
     lowerpass: float,
     upperpass: float,
@@ -1524,7 +1516,7 @@ def arb_pass(
         Sample rate in Hz
         :param Fs:
 
-    inputdata : 1D numpy array
+    inputdata : NDArray
         Input data to be filtered
         :param inputdata:
 
@@ -1609,8 +1601,8 @@ def arb_pass(
             return dohptransfuncfilt(
                 Fs,
                 inputdata,
+                lowerpass,
                 lowerstop=lowerstop,
-                lowerpass=lowerpass,
                 type=transferfunc,
                 padlen=padlen,
                 avlen=avlen,
@@ -1643,9 +1635,9 @@ def arb_pass(
             return dobptransfuncfilt(
                 Fs,
                 inputdata,
+                lowerpass,
+                upperpass,
                 lowerstop=lowerstop,
-                lowerpass=lowerpass,
-                upperpass=upperpass,
                 upperstop=upperstop,
                 type=transferfunc,
                 padlen=padlen,
@@ -2186,12 +2178,12 @@ class NoncausalFilter:
 
 
 # --------------------------- FFT helper functions ---------------------------------------------
-def polarfft(inputdata: ArrayLike) -> Tuple[NDArray, NDArray]:
+def polarfft(inputdata: NDArray) -> Tuple[NDArray, NDArray]:
     complexxform = fftpack.fft(inputdata)
     return np.abs(complexxform), np.angle(complexxform)
 
 
-def ifftfrompolar(r: ArrayLike, theta: ArrayLike) -> NDArray:
+def ifftfrompolar(r: NDArray, theta: NDArray) -> NDArray:
     complexxform = r * np.exp(1j * theta)
     return fftpack.ifft(complexxform).real
 
