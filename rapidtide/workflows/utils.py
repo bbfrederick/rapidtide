@@ -19,6 +19,7 @@
 """Utility functions for rapidtide workflows."""
 import logging
 import os
+from typing import Any, Optional
 
 LGR = logging.getLogger("GENERAL")
 TimingLGR = logging.getLogger("TIMING")
@@ -37,9 +38,10 @@ class ContextFilter(logging.Filter):
 
     NAMES = {"TIMING", "MEMORY"}
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         if not any([n in record.name for n in self.NAMES]):
             return True
+        return False
 
 
 class TimingFormatter(logging.Formatter):
@@ -48,7 +50,7 @@ class TimingFormatter(logging.Formatter):
     The fields must be passed as a dictionary, without a keyword.
     """
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         if isinstance(record.args, dict):
             record.message2 = record.args.get("message2", None)
             record.message3 = record.args.get("message3", None)
@@ -59,13 +61,13 @@ class TimingFormatter(logging.Formatter):
 
 
 def setup_logger(
-    logger_filename,
-    timing_filename,
-    memory_filename=None,
-    error_filename=None,
-    verbose=False,
-    debug=False,
-):
+    logger_filename: str,
+    timing_filename: str,
+    memory_filename: Optional[str] = None,
+    error_filename: Optional[str] = None,
+    verbose: bool = False,
+    debug: bool = False,
+) -> None:
     """Set up a set of loggers.
 
     Parameters
@@ -96,7 +98,7 @@ def setup_logger(
     VERBOSE_LEVEL = 15  # between info and debug
     logging.addLevelName(VERBOSE_LEVEL, "VERBOSE")
 
-    def verbose(self, message, *args, **kwargs):
+    def verbose(self: logging.Logger, message: str, *args: Any, **kwargs: Any) -> None:
         if self.isEnabledFor(VERBOSE_LEVEL):
             self._log(VERBOSE_LEVEL, message, args, **kwargs)
 

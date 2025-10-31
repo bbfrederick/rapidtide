@@ -23,9 +23,10 @@ Utility functions for testing rapidtide.
 import os
 
 import numpy as np
+import numpy.typing as npt
 
 
-def get_rapidtide_root():
+def get_rapidtide_root() -> str:
     """
     Returns the path to the base rapidtide directory, terminated with separator.
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
@@ -34,7 +35,7 @@ def get_rapidtide_root():
     return os.path.join(thisdir, "..") + os.path.sep
 
 
-def get_scripts_path():
+def get_scripts_path() -> str:
     """
     Returns the path to test datasets, terminated with separator. Test-related
     data are kept in tests folder in "testdata".
@@ -43,7 +44,7 @@ def get_scripts_path():
     return os.path.realpath(os.path.join(get_rapidtide_root(), "scripts")) + os.path.sep
 
 
-def get_test_data_path():
+def get_test_data_path() -> str:
     """
     Returns the path to test datasets, terminated with separator. Test-related
     data are kept in tests folder in "testdata".
@@ -52,7 +53,7 @@ def get_test_data_path():
     return os.path.realpath(os.path.join(get_rapidtide_root(), "tests", "testdata")) + os.path.sep
 
 
-def get_test_target_path():
+def get_test_target_path() -> str:
     """
     Returns the path to test comparison data, terminated with separator. Test-related
     data are kept in tests folder in "testtargets".
@@ -63,7 +64,7 @@ def get_test_target_path():
     )
 
 
-def get_test_temp_path():
+def get_test_temp_path() -> str:
     """
     Returns the path to test temporary directory, terminated with separator.
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
@@ -71,7 +72,7 @@ def get_test_temp_path():
     return os.path.realpath(os.path.join(get_rapidtide_root(), "tests", "tmp")) + os.path.sep
 
 
-def get_examples_path():
+def get_examples_path() -> str:
     """
     Returns the path to examples src directory, where larger test files live, terminated with separator. Test-related
     data are kept in tests folder in "data".
@@ -83,7 +84,7 @@ def get_examples_path():
     )
 
 
-def create_dir(thedir, debug=False):
+def create_dir(thedir: str, debug: bool = False) -> None:
     # create a directory if it doesn't exist
     try:
         os.makedirs(thedir)
@@ -96,7 +97,7 @@ def create_dir(thedir, debug=False):
             pass
 
 
-def mse(ndarr1, ndarr2):
+def mse(ndarr1: npt.NDArray, ndarr2: npt.NDArray) -> np.floating:
     """
     Compute mean-squared error.
     """
