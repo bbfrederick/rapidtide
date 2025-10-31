@@ -30,7 +30,8 @@ starttime = None
 
 
 class ContextFilter(logging.Filter):
-    """A filter to allow specific logging handlers to ignore specific loggers.
+    """
+    A filter to allow specific logging handlers to ignore specific loggers.
 
     We use this to prevent our secondary loggers from printing to the general log file or to
     stdout.
@@ -45,7 +46,8 @@ class ContextFilter(logging.Filter):
 
 
 class TimingFormatter(logging.Formatter):
-    """A formatter to allow optional extra fields (message2 and message3) in a logger.
+    """
+    A formatter to allow optional extra fields (message2 and message3) in a logger.
 
     The fields must be passed as a dictionary, without a keyword.
     """
@@ -68,7 +70,8 @@ def setup_logger(
     verbose: bool = False,
     debug: bool = False,
 ) -> None:
-    """Set up a set of loggers.
+    """
+    Set up a set of loggers.
 
     Parameters
     ----------
