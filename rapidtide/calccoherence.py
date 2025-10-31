@@ -35,6 +35,53 @@ def _procOneVoxelCoherence(
     voxelargs: list,
     **kwargs: Any,
 ) -> tuple[int, NDArray, NDArray, float, float]:
+    """
+        Process coherence for a single voxel.
+    
+        This function computes coherence values for a given voxel using the provided
+        coherence calculator and fMRI time course data. It returns the voxel index
+        along with coherence values and the location of the maximum coherence.
+    
+        Parameters
+        ----------
+        vox : int
+            The voxel index being processed.
+        voxelargs : list
+            A list containing two elements: the coherence calculator object and
+            the fMRI time course data (fmritc).
+        **kwargs : Any
+            Additional keyword arguments that can override default options:
+            - alt : bool, optional (default: False)
+                Flag to indicate alternative computation mode.
+            - debug : bool, optional (default: False)
+                Flag to enable debug printing.
+            
+        Returns
+        -------
+        tuple[int, NDArray, NDArray, float, float]
+            A tuple containing:
+            - vox : int
+                The input voxel index
+            - thecoherence_x : NDArray
+                X-axis coherence values
+            - thecoherence_y : NDArray
+                Y-axis coherence values
+            - thecoherence_y[maxindex] : float
+                Maximum coherence value
+            - thecoherence_x[maxindex] : float
+                X-coordinate corresponding to maximum coherence
+            
+        Notes
+        -----
+        The function uses the `theCoherer.run()` method to compute coherence values.
+        When `alt=True`, the function returns additional dummy values from the
+        coherence calculation. The maximum coherence is determined using `np.argmax()`.
+    
+        Examples
+        --------
+        >>> result = _procOneVoxelCoherence(10, [coherer_obj, fmri_data], alt=True)
+        >>> voxel_idx, x_vals, y_vals, max_coherence, max_x = result
+        """
     options = {
         "alt": False,
         "debug": False,
