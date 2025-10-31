@@ -16,8 +16,6 @@
 #   limitations under the License.
 #
 #
-from pyqtgraph import GradientWidget
-from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 
 
 def setendalpha(thestate: dict, alpha: int, debug: bool = False) -> dict:
@@ -137,6 +135,8 @@ def gen_thermal_state() -> dict:
         >>> print(thermal_gradient['name'])
         'thermal'
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["thermal"]
     thegradient["name"] = "thermal"
     return thegradient
@@ -175,6 +175,8 @@ def gen_flame_state() -> dict:
         pyqtgraph.graphicsItems.GradientEditorItem.Gradients : 
             The source of built-in gradients in pyqtgraph
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["flame"]
     thegradient["name"] = "flame"
     return thegradient
@@ -207,6 +209,8 @@ def gen_yellowy_state() -> dict:
         >>> print(gradient['name'])
         'yellowy'
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["yellowy"]
     thegradient["name"] = "yellowy"
     return thegradient
@@ -238,6 +242,7 @@ def gen_bipolar_state() -> dict:
         >>> print(gradient['name'])
         'bipolar'
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
     thegradient = Gradients["bipolar"]
     thegradient["name"] = "bipolar"
     return thegradient
@@ -267,6 +272,8 @@ def gen_spectrum_state() -> dict:
         >>> print(spectrum_grad['name'])
         'spectrum'
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["spectrum"]
     thegradient["name"] = "spectrum"
     return thegradient
@@ -301,6 +308,8 @@ def gen_turbo_state() -> dict:
         >>> print(len(gradient['colorMap']))
         256
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["turbo"]
     thegradient["name"] = "turbo"
     return thegradient
@@ -406,6 +415,8 @@ def gen_viridis_state() -> dict:
         >>> print(len(gradient_dict['colorMap']))
         256
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["viridis"]
     thegradient["name"] = "viridis"
     return thegradient
@@ -435,6 +446,8 @@ def gen_inferno_state() -> dict:
         >>> print(gradient['name'])
         'inferno'
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["inferno"]
     thegradient["name"] = "inferno"
     return thegradient
@@ -466,6 +479,8 @@ def gen_plasma_state() -> dict:
         >>> print(gradient['name'])
         'plasma'
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["plasma"]
     thegradient["name"] = "plasma"
     return thegradient
@@ -500,6 +515,8 @@ def gen_magma_state() -> dict:
         >>> print(len(magma_gradient) > 1)
         True
         """
+    from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+
     thegradient = Gradients["magma"]
     thegradient["name"] = "magma"
     return thegradient
@@ -654,5 +671,6 @@ def getagradient():  # type: ignore
         >>> # Use the gradient widget in a PyQt application
         >>> layout.addWidget(gradient_widget)
         """
-    return GradientWidget(orientation="right", allowAdd=True)
+    from pyqtgraph import GradientWidget
 
+    return GradientWidget(orientation="right", allowAdd=True)
