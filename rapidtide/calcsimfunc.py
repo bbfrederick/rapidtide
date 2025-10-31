@@ -36,6 +36,68 @@ def _procOneVoxelCorrelation(
     voxelargs: list[Any],
     **kwargs: Any,
 ) -> tuple[int, float, NDArray, NDArray, float, list[float]]:
+    """
+        Process correlation for a single voxel.
+    
+        This function performs correlation analysis on a single voxel using the provided
+        fMRI data and correlation parameters. It handles resampling of fMRI data based
+        on the oversampling factor and computes the correlation between the resampled
+        data and the target time course.
+    
+        Parameters
+        ----------
+        vox : int
+            The voxel index being processed.
+        voxelargs : list[Any]
+            List containing the following elements in order:
+            - thetc : array-like
+            - theCorrelator : object
+            - fmri_x : array-like
+            - fmritc : array-like
+            - os_fmri_x : array-like
+            - theglobalmaxlist : list
+            - thexcorr_y : array-like
+        **kwargs : Any
+            Additional keyword arguments that override default options:
+            - oversampfactor : int, optional
+                Oversampling factor for resampling (default: 1)
+            - interptype : str, optional
+                Interpolation type for resampling (default: "univariate")
+            - debug : bool, optional
+                Enable debug printing (default: False)
+    
+        Returns
+        -------
+        tuple[int, float, NDArray, NDArray, float, list[float]]
+            A tuple containing:
+            - vox : int
+                The input voxel index
+            - np.mean(thetc) : float
+                Mean of the processed time course
+            - thexcorr_y : NDArray
+                Correlation values
+            - thexcorr_x : NDArray
+                Correlation lags
+            - theglobalmax : float
+                Global maximum correlation value
+            - theglobalmaxlist : list[float]
+                List of global maximum correlation values
+    
+        Notes
+        -----
+        The function modifies the input `thetc` array in-place with the resampled data.
+        If oversampfactor is less than 1, no resampling is performed and the original
+        time course is used.
+    
+        Examples
+        --------
+        >>> result = _procOneVoxelCorrelation(
+        ...     vox=100,
+        ...     voxelargs=[thetc, correlator, fmri_x, fmritc, os_fmri_x, globalmaxlist, xcorr_y],
+        ...     oversampfactor=2,
+        ...     debug=True
+        ... )
+        """
     options = {
         "oversampfactor": 1,
         "interptype": "univariate",
@@ -59,6 +121,42 @@ def _procOneVoxelCorrelation(
 
 
 def _packvoxeldata(voxnum: int, voxelargs: list[Any]) -> list[Any]:
+    """
+        Pack voxel data into a structured list format.
+    
+        This function extracts and organizes voxel data from a list of arguments,
+        specifically selecting a slice from the fourth element based on the voxel number.
+    
+        Parameters
+        ----------
+        voxnum : int
+            The voxel index used to select a specific row from the fourth element
+            of voxelargs, which is expected to be a 2D array-like structure.
+        voxelargs : list[Any]
+            A list containing voxel-related arguments. The expected structure is:
+            [arg0, arg1, arg2, array_2d, arg4, arg5, arg6]
+            where the fourth element (index 3) should be a 2D array-like object
+            from which a row will be selected using voxnum.
+    
+        Returns
+        -------
+        list[Any]
+            A list containing the packed voxel data with the following structure:
+            [voxelargs[0], voxelargs[1], voxelargs[2], 
+             voxelargs[3][voxnum, :], voxelargs[4], voxelargs[5], voxelargs[6]]
+            where the fourth element is the selected row from the 2D array.
+    
+        Notes
+        -----
+        The function assumes that voxelargs[3] is a 2D array-like structure and
+        that voxnum is a valid index for selecting a row from this array.
+    
+        Examples
+        --------
+        >>> voxelargs = [1, 2, 3, [[10, 20], [30, 40]], 5, 6, 7]
+        >>> _packvoxeldata(1, voxelargs)
+        [1, 2, 3, [30, 40], 5, 6, 7]
+        """
     return [
         voxelargs[0],
         voxelargs[1],
@@ -71,6 +169,51 @@ def _packvoxeldata(voxnum: int, voxelargs: list[Any]) -> list[Any]:
 
 
 def _unpackvoxeldata(retvals: tuple[Any, ...], voxelproducts: list[Any]) -> None:
+    """
+        Unpack voxel data from retvals into voxelproducts structure.
+    
+        Parameters
+        ----------
+        retvals : tuple[Any, ...]
+            Tuple containing voxel data to be unpacked. Expected to contain at least 5 elements
+            where:
+            - retvals[0]: index/key for first assignment
+            - retvals[1]: value for first assignment
+            - retvals[2]: array-like data for second assignment
+            - retvals[3]: value for third assignment
+            - retvals[4]: value for fourth assignment (will be incremented by 0)
+        voxelproducts : list[Any]
+            List containing voxel data structures where unpacked data will be stored:
+            - voxelproducts[0]: dict or array-like structure for first assignment
+            - voxelproducts[1]: 2D array-like structure for second assignment
+            - voxelproducts[2]: scalar or single value storage
+            - voxelproducts[3]: list-like structure for appending fourth assignment
+        
+        Returns
+        -------
+        None
+            This function modifies voxelproducts in-place and does not return any value.
+        
+        Notes
+        -----
+        This function performs in-place modifications of the voxelproducts list elements.
+        The fourth assignment uses `retvals[4] + 0` which effectively creates a copy of
+        the value to ensure no reference issues.
+    
+        Examples
+        --------
+        >>> retvals = (0, 'value1', [1, 2, 3], 42, 10)
+        >>> voxelproducts = [{}, [[0]*3], 0, []]
+        >>> _unpackvoxeldata(retvals, voxelproducts)
+        >>> voxelproducts[0]
+        {0: 'value1'}
+        >>> voxelproducts[1]
+        [[1, 2, 3]]
+        >>> voxelproducts[2]
+        42
+        >>> voxelproducts[3]
+        [10]
+        """
     (voxelproducts[0])[retvals[0]] = retvals[1]
     (voxelproducts[1])[retvals[0], :] = retvals[2]
     voxelproducts[2] = retvals[3]
@@ -98,31 +241,89 @@ def correlationpass(
     debug: bool = False,
 ) -> tuple[int, list[float], NDArray]:
     """
+        Compute correlation-based similarity function across MRI voxels using multi-processing.
 
-    Parameters
-    ----------
-    fmridata
-    referencetc - the reference regressor, already oversampled
-    theCorrelator
-    fmri_x
-    os_fmri_x
-    tr
-    lagmininpts
-    lagmaxinpts
-    corrout
-    meanval
-    nprocs
-    oversampfactor
-    interptype
-    showprogressbar
-    chunksize
-    rt_floatset
-    rt_floattype
+        This function computes a correlation-based similarity measure between a reference time course
+        and fMRI data across voxels, using a specified correlator object. It supports both single and
+        multi-processing modes and allows for various interpolation and oversampling options.
 
-    Returns
-    -------
+        Parameters
+        ----------
+        fmridata : ndarray
+            4D fMRI data array of shape (time, x, y, z).
+        referencetc : ndarray
+            Reference time course of shape (time,).
+        theCorrelator : object
+            An object implementing the `setreftc` and `setlimits` methods for correlation computation.
+        fmri_x : ndarray
+            Time points corresponding to fMRI data, shape (time,).
+        os_fmri_x : ndarray
+            Oversampled time points, shape (oversampled_time,).
+        lagmininpts : int
+            Minimum lag in samples to consider for correlation.
+        lagmaxinpts : int
+            Maximum lag in samples to consider for correlation.
+        corrout : ndarray
+            Output array to store correlation values, shape (time, x, y, z).
+        meanval : ndarray
+            Array to store mean values, shape (x, y, z).
+        nprocs : int, optional
+            Number of processes to use for parallel computation. Default is 1.
+        alwaysmultiproc : bool, optional
+            If True, always use multiprocessing even for single voxel processing. Default is False.
+        oversampfactor : int, optional
+            Oversampling factor for interpolation. Default is 1.
+        interptype : str, optional
+            Interpolation type, e.g., 'univariate'. Default is 'univariate'.
+        showprogressbar : bool, optional
+            Whether to display a progress bar. Default is True.
+        chunksize : int, optional
+            Size of chunks for multiprocessing. Default is 1000.
+        rt_floatset : type, optional
+            Floating-point type for internal computations. Default is np.float64.
+        rt_floattype : str, optional
+            String representation of floating-point type. Default is 'float64'.
+        debug : bool, optional
+            If True, enable debug logging. Default is False.
 
-    """
+        Returns
+        -------
+        tuple of (int, list of float, ndarray)
+            - Total number of voxels processed.
+            - List of global maximum correlation values.
+            - Correlation scale array.
+
+        Notes
+        -----
+        The function uses `tide_genericmultiproc.run_multiproc` to perform multi-voxel correlation
+        computations in parallel. It initializes a correlator object and sets the reference time course
+        and lag limits before starting the computation.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from some_module import correlationpass, SomeCorrelator
+        >>> fmri_data = np.random.rand(100, 64, 64, 32)
+        >>> ref_tc = np.random.rand(100)
+        >>> correlator = SomeCorrelator()
+        >>> fmri_x = np.linspace(0, 100, 100)
+        >>> os_fmri_x = np.linspace(0, 100, 200)
+        >>> corr_out = np.zeros_like(fmri_data)
+        >>> mean_val = np.zeros((64, 64, 32))
+        >>> total_voxels, max_vals, corr_scale = correlationpass(
+        ...     fmridata=fmri_data,
+        ...     referencetc=ref_tc,
+        ...     theCorrelator=correlator,
+        ...     fmri_x=fmri_x,
+        ...     os_fmri_x=os_fmri_x,
+        ...     lagmininpts=-10,
+        ...     lagmaxinpts=10,
+        ...     corrout=corr_out,
+        ...     meanval=mean_val,
+        ...     nprocs=4,
+        ...     debug=False
+        ... )
+        """
     if debug:
         print(f"calling setreftc in calcsimfunc with length {len(referencetc)}")
     theCorrelator.setreftc(referencetc)

@@ -67,6 +67,36 @@ def _procOneVoxelCoherence(
 
 
 def _packvoxeldata(voxnum: int, voxelargs: list) -> list:
+    """
+        Pack voxel data for processing.
+    
+        Parameters
+        ----------
+        voxnum : int
+            The voxel number to extract from the second element of voxelargs.
+        voxelargs : list
+            A list containing voxel arguments where:
+            - voxelargs[0] is the first voxel argument (returned as-is)
+            - voxelargs[1] is a 2D array from which row voxnum is extracted
+        
+        Returns
+        -------
+        list
+            A list containing:
+            - voxelargs[0] (unchanged)
+            - The voxnum-th row of voxelargs[1] as a 1D array
+        
+        Notes
+        -----
+        This function is typically used in voxel-based data processing workflows
+        where data needs to be extracted and reorganized for further analysis.
+    
+        Examples
+        --------
+        >>> voxelargs = [10, [[1, 2, 3], [4, 5, 6], [7, 8, 9]]]
+        >>> _packvoxeldata(1, voxelargs)
+        [10, [4, 5, 6]]
+        """
     return [
         voxelargs[0],
         (voxelargs[1])[voxnum, :],
@@ -74,6 +104,55 @@ def _packvoxeldata(voxnum: int, voxelargs: list) -> list:
 
 
 def _unpackvoxeldata(retvals: tuple, voxelproducts: list) -> None:
+    """
+        Unpack voxel data from retvals tuple into corresponding voxel product lists.
+    
+        This function takes a tuple of voxel data and distributes the values into
+        three separate voxel product lists based on the index specified in the first
+        element of the retvals tuple.
+    
+        Parameters
+        ----------
+        retvals : tuple
+            A tuple containing voxel data where:
+            - retvals[0] : int, index for insertion
+            - retvals[1] : unused
+            - retvals[2] : value to insert into voxelproducts[0]
+            - retvals[3] : value to insert into voxelproducts[1]
+            - retvals[4] : value to insert into voxelproducts[2]
+        voxelproducts : list
+            A list of three voxel product arrays/lists where:
+            - voxelproducts[0] : first voxel product array
+            - voxelproducts[1] : second voxel product array  
+            - voxelproducts[2] : third voxel product array
+    
+        Returns
+        -------
+        None
+            This function modifies the voxelproducts lists in-place and does not return anything.
+    
+        Notes
+        -----
+        The function assumes that retvals contains exactly 5 elements and that
+        voxelproducts contains exactly 3 elements. The first element of retvals
+        is used as an index to determine the position where values should be inserted
+        into each of the three voxel product arrays.
+    
+        Examples
+        --------
+        >>> voxel1 = [0, 0, 0]
+        >>> voxel2 = [0, 0, 0]
+        >>> voxel3 = [0, 0, 0]
+        >>> retvals = (1, None, 10, 20, 30)
+        >>> voxelproducts = [voxel1, voxel2, voxel3]
+        >>> _unpackvoxeldata(retvals, voxelproducts)
+        >>> print(voxel1[1])
+        10
+        >>> print(voxel2[1])
+        20
+        >>> print(voxel3[1])
+        30
+        """
     (voxelproducts[0])[retvals[0]] = retvals[2]
     (voxelproducts[1])[retvals[0]] = retvals[3]
     (voxelproducts[2])[retvals[0]] = retvals[4]
@@ -93,25 +172,64 @@ def coherencepass(
     debug: bool = False,
 ) -> int:
     """
+        Perform coherence analysis on fMRI data across voxels using multiprocessing.
 
-    Parameters
-    ----------
-    fmridata
-    theCoherer
-    coherencefunc
-    coherencepeakval
-    coherencepeakfreq
-    chunksize
-    nprocs
-    alwaysmultiproc
-    showprogressbar
-    rt_floatset
-    rt_floattype
+        This function applies coherence analysis to each voxel in the input fMRI data,
+        storing results in the provided output arrays. It supports parallel processing
+        for improved performance and includes optional debugging and progress tracking.
 
-    Returns
-    -------
+        Parameters
+        ----------
+        fmridata : numpy.ndarray
+            Input fMRI data array with shape (time, voxels).
+        theCoherer : Any
+            Object or function used to perform coherence calculations.
+        coherencefunc : numpy.ndarray
+            Array to store coherence function results for each voxel.
+        coherencepeakval : numpy.ndarray
+            Array to store peak coherence values for each voxel.
+        coherencepeakfreq : numpy.ndarray
+            Array to store peak coherence frequencies for each voxel.
+        alt : bool, optional
+            If True, use alternative coherence calculation method. Default is False.
+        chunksize : int, optional
+            Number of voxels to process in each chunk during multiprocessing.
+            Default is 1000.
+        nprocs : int, optional
+            Number of processes to use for multiprocessing. Default is 1.
+        alwaysmultiproc : bool, optional
+            If True, always use multiprocessing even for small datasets.
+            Default is False.
+        showprogressbar : bool, optional
+            If True, display a progress bar during processing. Default is True.
+        debug : bool, optional
+            If True, enable debug logging. Default is False.
 
-    """
+        Returns
+        -------
+        int
+            Total number of voxels processed.
+
+        Notes
+        -----
+        This function uses `tide_genericmultiproc.run_multiproc` to distribute
+        voxel-wise coherence computations across multiple processes. The results
+        are stored directly into the provided output arrays (`coherencefunc`,
+        `coherencepeakval`, `coherencepeakfreq`).
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> fmri_data = np.random.rand(100, 50)
+        >>> coherer = SomeCohererClass()
+        >>> coherence_func = np.zeros((100, 50))
+        >>> peak_val = np.zeros((1, 50))
+        >>> peak_freq = np.zeros((1, 50))
+        >>> n_voxels = coherencepass(
+        ...     fmri_data, coherer, coherence_func, peak_val, peak_freq
+        ... )
+        >>> print(f"Processed {n_voxels} voxels")
+        """
     inputshape = np.shape(fmridata)
     voxelargs = [theCoherer, fmridata]
     voxelfunc = _procOneVoxelCoherence
