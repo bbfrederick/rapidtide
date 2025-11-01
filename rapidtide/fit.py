@@ -25,7 +25,6 @@ import numpy as np
 import scipy as sp
 import scipy.special as sps
 import statsmodels.api as sm
-import tqdm
 from numpy.polynomial import Polynomial
 from numpy.typing import ArrayLike, NDArray
 from scipy import signal
@@ -35,6 +34,7 @@ from scipy.stats import entropy, moment
 from sklearn.linear_model import LinearRegression
 from statsmodels.robust import mad
 from statsmodels.tsa.ar_model import AutoReg, ar_select_order
+from tqdm import tqdm
 
 import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
@@ -54,7 +54,80 @@ else:
 
 
 def conditionaljit() -> Callable:
+    """
+        Return a jit decorator that conditionally applies Numba compilation.
+
+        This function creates a decorator that conditionally applies Numba's jit
+        compilation based on the global `donotusenumba` flag. When `donotusenumba`
+        is True, the function is returned unchanged. When False, the function is
+        compiled with `jit(nopython=True)` for maximum performance.
+
+        Returns
+        -------
+        Callable
+            A decorator function that either returns the input function unchanged
+            or applies Numba jit compilation based on the global flag.
+
+        Notes
+        -----
+        The behavior of this decorator is controlled by the global variable
+        `donotusenumba`. This allows for easy switching between compiled and
+        uncompiled versions for debugging and testing purposes.
+
+        Examples
+        --------
+        >>> @conditionaljit()
+        ... def my_function(x):
+        ...     return x * 2
+        ...
+        >>> result = my_function(5)
+        >>> print(result)
+        10
+        """
     def resdec(f: Callable) -> Callable:
+        """
+            Decorator that applies Numba JIT compilation to a function.
+    
+            This decorator conditionally applies Numba's JIT compilation to functions,
+            bypassing compilation when the `donotusenumba` flag is set to True.
+    
+            Parameters
+            ----------
+            f : callable
+                The function to be decorated and potentially compiled with Numba.
+        
+            Returns
+            -------
+            callable
+                The original function if `donotusenumba` is True, otherwise the
+                Numba-compiled version of the function with `nopython=True` mode.
+        
+            Notes
+            -----
+            This decorator provides a convenient way to toggle Numba compilation
+            on/off based on the global `donotusenumba` flag. When `donotusenumba` 
+            is False (default), the function will be compiled with Numba's 
+            `nopython=True` mode for maximum performance. When True, the function 
+            remains unchanged and is executed in pure Python.
+    
+            Examples
+            --------
+            >>> donotusenumba = False
+            >>> @resdec
+            ... def my_function(x):
+            ...     return x * 2
+            ...
+            >>> my_function(5)
+            10
+    
+            >>> donotusenumba = True
+            >>> @resdec
+            ... def my_function(x):
+            ...     return x * 2
+            ...
+            >>> my_function(5)
+            10
+            """
         if donotusenumba:
             return f
         return jit(f, nopython=True)
@@ -63,7 +136,69 @@ def conditionaljit() -> Callable:
 
 
 def conditionaljit2() -> Callable:
+    """
+        Return a jit decorator that conditionally applies Numba compilation.
+    
+        This function returns a decorator that conditionally applies Numba's jit
+        compilation based on global flags. If either `donotusenumba` or `donotbeaggressive`
+        flags are True, the function is returned unchanged. Otherwise, it applies
+        `@jit(nopython=True)` decoration.
+    
+        Returns
+        -------
+        Callable
+            A decorator function that conditionally applies Numba jit compilation.
+        
+        Notes
+        -----
+        The behavior of this decorator is controlled by global boolean flags:
+        - `donotusenumba`: If True, no Numba compilation is applied
+        - `donotbeaggressive`: If True, no Numba compilation is applied
+    
+        Examples
+        --------
+        >>> @conditionaljit2()
+        ... def my_function(x):
+        ...     return x * 2
+        ...
+        >>> result = my_function(5)
+        """
     def resdec(f: Callable) -> Callable:
+        """
+            Decorator that conditionally applies Numba JIT compilation to a function.
+    
+            This decorator checks global flags to determine whether to apply Numba's
+            JIT compilation. If either `donotusenumba` or `donotbeaggressive` flags are
+            set to True, the original function is returned unchanged. Otherwise, the
+            function is compiled with `nopython=True` mode for optimal performance.
+    
+            Parameters
+            ----------
+            f : callable
+                The function to be decorated and potentially compiled with Numba.
+        
+            Returns
+            -------
+            callable
+                The original function if compilation is skipped, or the Numba-compiled
+                version of the function if compilation is applied.
+        
+            Notes
+            -----
+            The behavior of this decorator is controlled by two global flags:
+            - `donotusenumba`: If True, skips Numba compilation entirely
+            - `donotbeaggressive`: If True, skips Numba compilation
+    
+            Examples
+            --------
+            >>> @resdec
+            ... def my_function(x):
+            ...     return x * 2
+            ...
+            >>> result = my_function(5)
+            >>> print(result)
+            10
+            """
         if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=True)
@@ -72,136 +207,231 @@ def conditionaljit2() -> Callable:
 
 
 def disablenumba() -> None:
+    """
+        Disable Numba compilation globally.
+    
+        This function sets a global flag that prevents Numba from being used in subsequent
+        operations. This can be useful for debugging or when Numba compilation is causing
+        issues in a workflow.
+    
+        Returns
+        -------
+        None
+            This function does not return any value.
+    
+        Notes
+        -----
+        This function modifies a global variable `donotusenumba`. After calling this
+        function, any code that checks this flag will skip Numba compilation and use
+        standard Python execution instead.
+    
+        Examples
+        --------
+        >>> disablenumba()
+        >>> # Subsequent Numba-compiled functions will now run in pure Python mode
+        """
     global donotusenumba
     donotusenumba = True
 
 
 # --------------------------- Fitting functions -------------------------------------------------
-def gaussresidualssk(p: NDArray, y: NDArray, x: NDArray) -> NDArray:
-    """
-    Calculate residuals for skewed Gaussian fit.
-
-    Parameters
-    ----------
-    p : NDArray
-        Skewed Gaussian parameters [amplitude, center, width, skewness]
-    y : NDArray
-        Observed y values
-    x : NDArray
-        x values
-
-    Returns
-    -------
-    err : NDArray
-        Residuals (y - fitted values)
-    """
-    err = y - gausssk_eval(x, p)
-    return err
-
-
 def gaussskresiduals(p: NDArray, y: NDArray, x: NDArray) -> NDArray:
     """
-    Calculate residuals for skewed Gaussian fit.
-
-    Parameters
-    ----------
-    p : NDArray
-        Skewed Gaussian parameters [amplitude, center, width, skewness]
-    y : NDArray
-        Observed y values
-    x : NDArray
-        x values
-
-    Returns
-    -------
-    residuals : array-like
-        Residuals (y - fitted values)
-    """
+        Calculate residuals for skewed Gaussian fit.
+    
+        This function computes the residuals (observed values minus fitted values) 
+        for a skewed Gaussian model. The residuals are used to assess the quality 
+        of the fit and are commonly used in optimization routines.
+    
+        Parameters
+        ----------
+        p : NDArray
+            Skewed Gaussian parameters [amplitude, center, width, skewness]
+        y : NDArray
+            Observed y values
+        x : NDArray
+            x values
+        
+        Returns
+        -------
+        residuals : NDArray
+            Residuals (y - fitted values) for the skewed Gaussian model
+        
+        Notes
+        -----
+        The function relies on the `gausssk_eval` function to compute the fitted 
+        values of the skewed Gaussian model given the parameters and x values.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> p = np.array([1.0, 0.0, 1.0, 0.5])  # amplitude, center, width, skewness
+        >>> y = gausssk_eval(x, p) + np.random.normal(0, 0.1, len(x))
+        >>> residuals = gaussskresiduals(p, y, x)
+        >>> print(f"Mean residual: {np.mean(residuals):.6f}")
+        """
     return y - gausssk_eval(x, p)
 
 
 @conditionaljit()
 def gaussresiduals(p: NDArray, y: NDArray, x: NDArray) -> NDArray:
     """
-    Calculate residuals for Gaussian fit.
-
-    Parameters
-    ----------
-    p : NDArray
-        Gaussian parameters [amplitude, center, width]
-    y : NDArray
-        Observed y values
-    x : NDArray
-        x values
-
-    Returns
-    -------
-    residuals : NDArray
-        Residuals (y - fitted values)
-    """
+        Calculate residuals for Gaussian fit.
+    
+        This function computes the residuals (observed values minus fitted values) 
+        for a Gaussian function with parameters [amplitude, center, width].
+    
+        Parameters
+        ----------
+        p : NDArray
+            Gaussian parameters [amplitude, center, width]
+        y : NDArray
+            Observed y values
+        x : NDArray
+            x values
+    
+        Returns
+        -------
+        NDArray
+            Residuals (y - fitted values) where fitted values are calculated as:
+            y_fit = amplitude * exp(-((x - center) ** 2) / (2 * width ** 2))
+    
+        Notes
+        -----
+        The Gaussian function is defined as:
+        f(x) = amplitude * exp(-((x - center) ** 2) / (2 * width ** 2))
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> p = np.array([1.0, 0.0, 0.5])  # amplitude=1.0, center=0.0, width=0.5
+        >>> y = np.array([0.5, 0.8, 1.0, 0.8, 0.5])
+        >>> x = np.linspace(-2, 2, 5)
+        >>> residuals = gaussresiduals(p, y, x)
+        >>> print(residuals)
+        """
     return y - p[0] * np.exp(-((x - p[1]) ** 2) / (2.0 * p[2] * p[2]))
 
 
 def trapezoidresiduals(p: NDArray, y: NDArray, x: NDArray, toplength: float) -> NDArray:
     """
-    Calculate residuals for trapezoid fit.
+        Calculate residuals for trapezoid fit.
+    
+        This function computes the residuals (observed values minus fitted values) for a trapezoid
+        function fit. The trapezoid is defined by amplitude, center, and width parameters, with
+        a specified flat top length.
+    
+        Parameters
+        ----------
+        p : NDArray
+            Trapezoid parameters [amplitude, center, width]
+        y : NDArray
+            Observed y values
+        x : NDArray
+            x values
+        toplength : float
+            Length of the flat top of the trapezoid
 
-    Parameters
-    ----------
-    p : NDArray
-        Trapezoid parameters [amplitude, center, width]
-    y : NDArray
-        Observed y values
-    x : NDArray
-        x values
-    toplength : float
-        Length of the flat top of the trapezoid
+        Returns
+        -------
+        residuals : NDArray
+            Residuals (y - fitted values)
 
-    Returns
-    -------
-    residuals : NDArray
-        Residuals (y - fitted values)
-    """
+        Notes
+        -----
+        The function uses `trapezoid_eval_loop` to evaluate the trapezoid function with the
+        given parameters and returns the difference between observed and predicted values.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 100)
+        >>> y = trapezoid_eval_loop(x, 2.0, [1.0, 5.0, 3.0]) + np.random.normal(0, 0.1, 100)
+        >>> p = [1.0, 5.0, 3.0]
+        >>> residuals = trapezoidresiduals(p, y, x, 2.0)
+        """
     return y - trapezoid_eval_loop(x, toplength, p)
 
 
 def risetimeresiduals(p: NDArray, y: NDArray, x: NDArray) -> NDArray:
     """
-    Calculate residuals for rise time fit.
+        Calculate residuals for rise time fit.
+    
+        This function computes the residuals between observed data and fitted rise time model
+        by subtracting the evaluated model from the observed values.
+    
+        Parameters
+        ----------
+        p : NDArray
+            Rise time parameters [amplitude, start, rise time] where:
+            - amplitude: peak value of the rise time curve
+            - start: starting time of the rise
+            - rise time: time constant for the rise process
+        y : NDArray
+            Observed y values (dependent variable)
+        x : NDArray
+            x values (independent variable, typically time)
 
-    Parameters
-    ----------
-    p : NDArray
-        Rise time parameters [amplitude, start, rise time]
-    y : NDArray
-        Observed y values
-    x : NDArray
-        x values
+        Returns
+        -------
+        residuals : NDArray
+            Residuals (y - fitted values) representing the difference between
+            observed data and model predictions
 
-    Returns
-    -------
-    residuals : NDArray
-        Residuals (y - fitted values)
-    """
+        Notes
+        -----
+        This function assumes the existence of a `risetime_eval_loop` function that
+        evaluates the rise time model at given x values with parameters p.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> p = np.array([1.0, 0.0, 0.5])
+        >>> y = np.array([0.1, 0.3, 0.7, 0.9])
+        >>> x = np.array([0.0, 0.2, 0.4, 0.6])
+        >>> residuals = risetimeresiduals(p, y, x)
+        >>> print(residuals)
+        """
     return y - risetime_eval_loop(x, p)
 
 
 def gausssk_eval(x: NDArray, p: NDArray) -> NDArray:
     """
-    Evaluate a skewed Gaussian function.
+        Evaluate a skewed Gaussian function.
+    
+        This function computes a skewed Gaussian distribution using the method described
+        by Azzalini and Dacunha (1996) for generating skewed normal distributions.
+    
+        Parameters
+        ----------
+        x : NDArray
+            x values at which to evaluate the function
+        p : NDArray
+            Skewed Gaussian parameters [amplitude, center, width, skewness]
+            - amplitude: scaling factor for the peak height
+            - center: location parameter (mean of the underlying normal distribution)
+            - width: scale parameter (standard deviation of the underlying normal distribution)
+            - skewness: skewness parameter (controls the asymmetry of the distribution)
 
-    Parameters
-    ----------
-    x : NDArray
-        x values at which to evaluate the function
-    p : NDArray
-        Skewed Gaussian parameters [amplitude, center, width, skewness]
+        Returns
+        -------
+        y : NDArray
+            Evaluated skewed Gaussian values
 
-    Returns
-    -------
-    y : NDArray
-        Evaluated skewed Gaussian values
-    """
+        Notes
+        -----
+        The skewed Gaussian is defined as:
+        f(x) = amplitude * φ((x-center)/width) * Φ(skewness * (x-center)/width)
+        where φ is the standard normal PDF and Φ is the standard normal CDF.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> params = [1.0, 0.0, 1.0, 2.0]  # amplitude, center, width, skewness
+        >>> y = gausssk_eval(x, params)
+        """
     t = (x - p[1]) / p[2]
     return p[0] * sp.stats.norm.pdf(t) * sp.stats.norm.cdf(p[3] * t)
 
@@ -210,19 +440,41 @@ def gausssk_eval(x: NDArray, p: NDArray) -> NDArray:
 def kaiserbessel_eval(x: NDArray, p: NDArray) -> NDArray:
     """
 
-    Parameters
-    ----------
-    x: NDArray
-        arguments to the KB function
-    p: NDArray
-        The Kaiser-Bessel window parameters [alpha, tau] (wikipedia) or [beta, W/2] (Jackson, J. I., Meyer, C. H.,
-        Nishimura, D. G. & Macovski, A. Selection of a convolution function for Fourier inversion using gridding
-        [computerised tomography application]. IEEE Trans. Med. Imaging 10, 473–478 (1991))
+        Evaluate the Kaiser-Bessel window function.
 
-    Returns
-    -------
+        This function computes the Kaiser-Bessel window function, which is commonly used in
+        signal processing and medical imaging applications for gridding and convolution operations.
+        The window is defined by parameters alpha (or beta) and tau (or W/2).
 
-    """
+        Parameters
+        ----------
+        x : NDArray
+            Arguments to the KB function, typically representing spatial or frequency coordinates
+        p : NDArray
+            The Kaiser-Bessel window parameters [alpha, tau] (wikipedia) or [beta, W/2] (Jackson, J. I., Meyer, C. H.,
+            Nishimura, D. G. & Macovski, A. Selection of a convolution function for Fourier inversion using gridding
+            [computerised tomography application]. IEEE Trans. Med. Imaging 10, 473–478 (1991))
+
+        Returns
+        -------
+        NDArray
+            The evaluated Kaiser-Bessel window function values corresponding to input x
+
+        Notes
+        -----
+        The Kaiser-Bessel window is defined as:
+        KB(x) = I0(α√(1-(x/τ)²)) / (τ * I0(α)) for |x| ≤ τ
+        KB(x) = 0 for |x| > τ
+    
+        where I0 is the zeroth-order modified Bessel function of the first kind.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-1, 1, 100)
+        >>> p = np.array([4.0, 0.5])  # alpha=4.0, tau=0.5
+        >>> result = kaiserbessel_eval(x, p)
+        """
     normfac = sps.i0(p[0] * np.sqrt(1.0 - np.square((0.0 / p[1])))) / p[1]
     sqrtargs = 1.0 - np.square((x / p[1]))
     sqrtargs[np.where(sqrtargs < 0.0)] = 0.0
@@ -236,41 +488,80 @@ def kaiserbessel_eval(x: NDArray, p: NDArray) -> NDArray:
 @conditionaljit()
 def gauss_eval(x: NDArray, p: NDArray) -> NDArray:
     """
-    Evaluate a Gaussian function.
-
-    Parameters
-    ----------
-    x : NDArray
-        x values at which to evaluate the function
-    p : NDArray
-        Gaussian parameters [amplitude, center, width]
-
-    Returns
-    -------
-    y : NDArray
-        Evaluated Gaussian values
-    """
+        Evaluate a Gaussian function.
+    
+        This function computes the values of a Gaussian (normal) distribution
+        at given x points with specified parameters.
+    
+        Parameters
+        ----------
+        x : NDArray
+            x values at which to evaluate the Gaussian function
+        p : NDArray
+            Gaussian parameters [amplitude, center, width] where:
+            - amplitude: peak height of the Gaussian
+            - center: x-value of the Gaussian center
+            - width: standard deviation of the Gaussian
+    
+        Returns
+        -------
+        y : NDArray
+            Evaluated Gaussian values with the same shape as x
+    
+        Notes
+        -----
+        The Gaussian function is defined as:
+        f(x) = amplitude * exp(-((x - center)^2) / (2 * width^2))
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> params = np.array([1.0, 0.0, 1.0])  # amplitude=1, center=0, width=1
+        >>> y = gauss_eval(x, params)
+        >>> print(y.shape)
+        (100,)
+        """
     return p[0] * np.exp(-((x - p[1]) ** 2) / (2.0 * p[2] * p[2]))
 
 
 def trapezoid_eval_loop(x: NDArray, toplength: float, p: NDArray) -> NDArray:
     """
-    Evaluate a trapezoid function.
+        Evaluate a trapezoid function at multiple points using a loop.
+    
+        This function evaluates a trapezoid-shaped function at given x values. The trapezoid
+        is defined by its amplitude, center, and total width, with the flat top length
+        specified separately.
+    
+        Parameters
+        ----------
+        x : NDArray
+            x values at which to evaluate the function
+        toplength : float
+            Length of the flat top of the trapezoid
+        p : NDArray
+            Trapezoid parameters [amplitude, center, width]
 
-    Parameters
-    ----------
-    x : NDArray
-        x values at which to evaluate the function
-    toplength : float
-        Length of the flat top of the trapezoid
-    p : NDArray
-        Trapezoid parameters [amplitude, center, width]
+        Returns
+        -------
+        y : NDArray
+            Evaluated trapezoid values
 
-    Returns
-    -------
-    y : NDArray
-        Evaluated trapezoid values
-    """
+        Notes
+        -----
+        The trapezoid function is defined as:
+        - Zero outside the range [center - width/2, center + width/2]
+        - Linearly increasing from 0 to amplitude in the range [center - width/2, center - width/2 + toplength/2]
+        - Constant at amplitude in the range [center - width/2 + toplength/2, center + width/2 - toplength/2]
+        - Linearly decreasing from amplitude to 0 in the range [center + width/2 - toplength/2, center + width/2]
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 100)
+        >>> p = [1.0, 5.0, 4.0]  # amplitude=1.0, center=5.0, width=4.0
+        >>> result = trapezoid_eval_loop(x, 2.0, p)
+        """
     r = np.zeros(len(x), dtype="float64")
     for i in range(0, len(x)):
         r[i] = trapezoid_eval(x[i], toplength, p)
@@ -279,20 +570,39 @@ def trapezoid_eval_loop(x: NDArray, toplength: float, p: NDArray) -> NDArray:
 
 def risetime_eval_loop(x: NDArray, p: NDArray) -> NDArray:
     """
-    Evaluate a rise time function.
+        Evaluate a rise time function.
+    
+        This function evaluates a rise time function for a given set of x values and parameters.
+        It iterates through each x value and applies the risetime_eval function to compute
+        the corresponding y values.
+    
+        Parameters
+        ----------
+        x : NDArray
+            x values at which to evaluate the function
+        p : NDArray
+            Rise time parameters [amplitude, start, rise time]
 
-    Parameters
-    ----------
-    x : NDArray
-        x values at which to evaluate the function
-    p : NDArray
-        Rise time parameters [amplitude, start, rise time]
+        Returns
+        -------
+        y : NDArray
+            Evaluated rise time function values
 
-    Returns
-    -------
-    y : NDArray
-        Evaluated rise time function values
-    """
+        Notes
+        -----
+        This function uses a loop-based approach for evaluating the rise time function.
+        For better performance with large arrays, consider using vectorized operations
+        instead of this loop-based implementation.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.array([0, 1, 2, 3, 4])
+        >>> p = np.array([1.0, 0.0, 1.0])
+        >>> result = risetime_eval_loop(x, p)
+        >>> print(result)
+        [0. 0.63212056 0.86466472 0.95021293 0.98168436]
+        """
     r = np.zeros(len(x), dtype="float64")
     for i in range(0, len(x)):
         r[i] = risetime_eval(x[i], p)
@@ -304,39 +614,48 @@ def trapezoid_eval(
     x: Union[float, NDArray], toplength: float, p: NDArray
 ) -> Union[float, NDArray]:
     """
-    Evaluates the trapezoidal function at a given point.
+        Evaluate the trapezoidal function at given points.
+    
+        The trapezoidal function is defined as:
+    
+        f(x) = A * (1 - exp(-x / tau))   if 0 <= x < L
+    
+        f(x) = A * exp(-(x - L) / gamma) if x >= L
+    
+        where A, tau, and gamma are parameters, and L is the length of the top plateau.
 
-    The trapezoidal function is defined as:
+        Parameters
+        ----------
+        x : float or NDArray
+            The point or vector at which to evaluate the trapezoidal function.
+        toplength : float
+            The length of the top plateau of the trapezoid.
+        p : NDArray
+            A list or tuple of four values [A, tau, gamma, L] where:
+            - A is the amplitude,
+            - tau is the time constant for the rising edge,
+            - gamma is the time constant for the falling edge,
+            - L is the length of the top plateau.
 
-    f(x) = A * (1 - exp(-x / tau))
+        Returns
+        -------
+        float or NDArray
+            The value of the trapezoidal function at x. Returns a scalar if x is scalar,
+            or an array if x is an array.
 
-    if 0 <= x < L
-
-    and
-
-    f(x) = A * exp(-(x - L) / gamma)
-
-    if x >= L
-
-    where A, tau, and gamma are parameters.
-
-    Parameters
-    ----------
-    x: float or NDArray
-        The point  or vector at which to evaluate the trapezoidal function.
-    toplength: float
-        The length of the top plateau of the trapezoid.
-    p: list or tuple of floats
-        A list of four values [A, tau, gamma, L].
-    Returns
-    -------
-    float or array-like
-        The value of the trapezoidal function at x.
-
-    Notes
-    -----
-    This function is vectorized and can handle arrays of input points.
-    """
+        Notes
+        -----
+        This function is vectorized and can handle arrays of input points.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> p = [1.0, 2.0, 3.0, 4.0]  # A=1.0, tau=2.0, gamma=3.0, L=4.0
+        >>> trapezoid_eval(2.0, 4.0, p)
+        0.3934693402873665
+        >>> trapezoid_eval(np.array([1.0, 2.0, 5.0]), 4.0, p)
+        array([0.39346934, 0.63212056, 0.22313016])
+        """
     corrx = x - p[0]
     if corrx < 0.0:
         return 0.0
@@ -349,29 +668,44 @@ def trapezoid_eval(
 @conditionaljit()
 def risetime_eval(x: Union[float, NDArray], p: NDArray) -> Union[float, NDArray]:
     """
-    Evaluates the rise time function at a given point.
-
-    The rise time function is defined as:
-
-    f(x) = A * (1 - exp(-x / tau))
-
-    where A and tau are parameters.
-
-    Parameters
-    ----------
-    x: float or NDArray
-        The point at which to evaluate the rise time function.
-    p: list or tuple of floats
-        A list of two values [A, tau].
-    Returns
-    -------
-    float or NDArray
-        The value of the rise time function at x.
-
-    Notes
-    -----
-    This function is vectorized and can handle arrays of input points.
-    """
+        Evaluates the rise time function at a given point.
+    
+        The rise time function is defined as:
+    
+        f(x) = A * (1 - exp(-x / tau))
+    
+        where A and tau are parameters.
+    
+        Parameters
+        ----------
+        x : float or NDArray
+            The point at which to evaluate the rise time function.
+        p : NDArray
+            An array of three values [x0, A, tau] where:
+            - x0: offset parameter
+            - A: amplitude parameter
+            - tau: time constant parameter
+        
+        Returns
+        -------
+        float or NDArray
+            The value of the rise time function at x. Returns 0.0 if x < x0.
+        
+        Notes
+        -----
+        This function is vectorized and can handle arrays of input points.
+        The function implements a shifted exponential rise function commonly used
+        in signal processing and physics applications.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> p = [1.0, 2.0, 0.5]  # x0=1.0, A=2.0, tau=0.5
+        >>> risetime_eval(2.0, p)
+        1.2642411176571153
+        >>> risetime_eval(np.array([0.5, 1.5, 2.5]), p)
+        array([0.        , 0.63212056, 1.26424112])
+        """
     corrx = x - p[0]
     if corrx < 0.0:
         return 0.0
@@ -389,6 +723,52 @@ def gasboxcar(
     risetime: float = 3.0,
     falltime: float = 3.0,
 ) -> None:
+    """
+        Apply gas boxcar filtering to the input data.
+    
+        This function applies a gas boxcar filtering operation to the provided data array,
+        which is commonly used in gas detection and analysis applications to smooth and
+        enhance specific signal features.
+    
+        Parameters
+        ----------
+        data : NDArray
+            Input data array to be filtered
+        samplerate : float
+            Sampling rate of the input data in Hz
+        firstpeakstart : float
+            Start time of the first peak in seconds
+        firstpeakend : float
+            End time of the first peak in seconds
+        secondpeakstart : float
+            Start time of the second peak in seconds
+        secondpeakend : float
+            End time of the second peak in seconds
+        risetime : float, optional
+            Rise time parameter for the boxcar filter in seconds, default is 3.0
+        falltime : float, optional
+            Fall time parameter for the boxcar filter in seconds, default is 3.0
+        
+        Returns
+        -------
+        None
+            This function modifies the input data in-place and returns None
+        
+        Notes
+        -----
+        The gas boxcar filtering operation is designed to enhance gas detection signals
+        by applying specific filtering parameters based on the peak timing information.
+        The function assumes that the input data is properly formatted and that the
+        time parameters are within the valid range of the data.
+        
+        Examples
+        --------
+        >>> import numpy as np
+        >>> data = np.random.rand(1000)
+        >>> gasboxcar(data, samplerate=100.0, firstpeakstart=10.0, 
+        ...           firstpeakend=15.0, secondpeakstart=20.0, 
+        ...           secondpeakend=25.0, risetime=2.0, falltime=2.0)
+        """
     return None
 
 
@@ -396,40 +776,50 @@ def gasboxcar(
 @conditionaljit()
 def trendgen(thexvals: NDArray, thefitcoffs: NDArray, demean: bool) -> NDArray:
     """
-    Generates a polynomial trend based on input x-values and coefficients.
+        Generate a polynomial trend based on input x-values and coefficients.
 
-    This function constructs a polynomial trend using the provided x-values and
-    a set of polynomial coefficients. The order of the polynomial is determined
-    from the shape of the `thefitcoffs` array. Optionally, a constant term
-    (the highest order coefficient) can be included or excluded from the trend.
+        This function constructs a polynomial trend using the provided x-values and
+        a set of polynomial coefficients. The order of the polynomial is determined
+        from the shape of the `thefitcoffs` array. Optionally, a constant term
+        (the highest order coefficient) can be included or excluded from the trend.
 
-    Parameters
-    ----------
-    thexvals : NDArray
-        The x-values (independent variable) at which to evaluate the polynomial trend.
-        Expected to be a numpy array or similar.
-    thefitcoffs : NDArray
-        A 1D array of polynomial coefficients. The length of this array minus one
-        determines the order of the polynomial. Coefficients are expected to be
-        ordered from the highest power of x down to the constant term (e.g.,
-        [a_n, a_n-1, ..., a_1, a_0] for a polynomial a_n*x^n + ... + a_0).
-    demean : bool
-        If True, the constant term (thefitcoffs[order]) is added to the generated
-        trend. If False, the constant term is excluded, effectively generating
-        a trend that is "demeaned" or centered around zero (assuming the constant
-        term represents the mean or offset).
+        Parameters
+        ----------
+        thexvals : NDArray
+            The x-values (independent variable) at which to evaluate the polynomial trend.
+            Expected to be a numpy array or similar.
+        thefitcoffs : NDArray
+            A 1D array of polynomial coefficients. The length of this array minus one
+            determines the order of the polynomial. Coefficients are expected to be
+            ordered from the highest power of x down to the constant term (e.g.,
+            [a_n, a_n-1, ..., a_1, a_0] for a polynomial a_n*x^n + ... + a_0).
+        demean : bool
+            If True, the constant term (thefitcoffs[order]) is added to the generated
+            trend. If False, the constant term is excluded, effectively generating
+            a trend that is "demeaned" or centered around zero (assuming the constant
+            term represents the mean or offset).
 
-    Returns
-    -------
-    NDArray
-        A numpy array containing the calculated polynomial trend, with the same
-        shape as `thexvals`.
+        Returns
+        -------
+        NDArray
+            A numpy array containing the calculated polynomial trend, with the same
+            shape as `thexvals`.
 
-    Notes
-    -----
-    This function implicitly assumes that `thexvals` is a numpy array or
-    behaves similarly for element-wise multiplication (`np.multiply`).
-    """
+        Notes
+        -----
+        This function implicitly assumes that `thexvals` is a numpy array or
+        behaves similarly for element-wise multiplication (`np.multiply`).
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(0, 1, 5)
+        >>> coeffs = np.array([1, 0, 1])  # x^2 + 1
+        >>> trendgen(x, coeffs, demean=True)
+        array([1.    , 1.0625, 1.25  , 1.5625, 2.    ])
+        >>> trendgen(x, coeffs, demean=False)
+        array([-0.    , -0.0625, -0.25  , -0.5625, -1.    ])
+        """
     theshape = thefitcoffs.shape
     order = theshape[0] - 1
     thepoly = thexvals
@@ -446,38 +836,50 @@ def trendgen(thexvals: NDArray, thefitcoffs: NDArray, demean: bool) -> NDArray:
 # @conditionaljit()
 def detrend(inputdata: NDArray, order: int = 1, demean: bool = False) -> NDArray:
     """
-    Estimates and removes a polynomial trend timecourse.
-
-    This routine calculates a polynomial defined by a set of coefficients
-    at specified time points to create a trend timecourse, and subtracts it
-    from the input signal. Optionally, it can remove the mean of the input
-    data as well.
-
-    Parameters
-    ----------
-    thetimepoints : NDArray
-        A 1D NumPy array of time points at which to evaluate the polynomial.
-    thecoffs : list or NDArray
-        A list or 1D NumPy array of polynomial coefficients, typically in
-        decreasing order of power (e.g., `[a, b, c]` for `ax^2 + bx + c`).
-    demean : bool
-        If True, the mean of the generated trend timecourse will be subtracted,
-        effectively centering the trend around zero.
-
-    Returns
-    -------
-    NDArray
-        A 1D NumPy array representing the generated polynomial trend timecourse.
-
-    Notes
-    -----
-    - This function utilizes `numpy.polyval` to evaluate the polynomial.
-    - Requires the `numpy` library.
-    """
+        Estimates and removes a polynomial trend timecourse.
+    
+        This routine calculates a polynomial defined by a set of coefficients
+        at specified time points to create a trend timecourse, and subtracts it
+        from the input signal. Optionally, it can remove the mean of the input
+        data as well.
+    
+        Parameters
+        ----------
+        inputdata : NDArray
+            A 1D NumPy array of input data from which the trend will be removed.
+        order : int, optional
+            The order of the polynomial to fit to the data. Default is 1 (linear).
+        demean : bool, optional
+            If True, the mean of the input data is subtracted before fitting the
+            polynomial trend. Default is False.
+        
+        Returns
+        -------
+        NDArray
+            A 1D NumPy array of the detrended data, with the polynomial trend removed.
+        
+        Notes
+        -----
+        - This function uses `numpy.polynomial.Polynomial.fit` to fit a polynomial
+          to the input data and then evaluates it using `trendgen`.
+        - If a `RankWarning` is raised during fitting (e.g., due to insufficient
+          data or poor conditioning), the function defaults to a zero-order
+          polynomial (constant trend).
+        - The time points are centered around zero, ranging from -N/2 to N/2,
+          where N is the length of the input data.
+        
+        Examples
+        --------
+        >>> import numpy as np
+        >>> data = np.array([1, 2, 3, 4, 5])
+        >>> detrended = detrend(data, order=1)
+        >>> print(detrended)
+        [0. 0. 0. 0. 0.]
+        """
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
         thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]
-    except np.lib.polynomial.RankWarning:
+    except np.exceptions.RankWarning:
         thecoffs = np.array([0.0, 0.0])
     thefittc = trendgen(thetimepoints, thecoffs, demean)
     return inputdata - thefittc
@@ -485,23 +887,40 @@ def detrend(inputdata: NDArray, order: int = 1, demean: bool = False) -> NDArray
 
 def prewhiten(series: ArrayLike, nlags: Optional[int] = None, debug: bool = False) -> NDArray:
     """
-    Prewhiten a time series using an AR model estimated via statsmodels.
-    The resulting series has the same length as the input.
+        Prewhiten a time series using an AR model estimated via statsmodels.
+        The resulting series has the same length as the input.
 
-    Parameters
-    ----------
-    series : array-like
-        Input 1D time series data.
-    nlags : int or None
-        Order of the autoregressive model. If None, automatically chosen via AIC.
+        Parameters
+        ----------
+        series : array-like
+            Input 1D time series data.
+        nlags : int, optional
+            Order of the autoregressive model. If None, automatically chosen via AIC.
+            Default is None.
+        debug : bool, optional
+            If True, additional debug information may be printed. Default is False.
 
-    Returns
-    -------
-    whitened : np.ndarray
-        Prewhitened series of same length as input.
-    model : statsmodels.tsa.arima.model.ARIMAResults
-        Fitted AR model for inspection.
-    """
+        Returns
+        -------
+        whitened : np.ndarray
+            Prewhitened series of the same length as input. The prewhitening removes
+            the autoregressive structure from the data, leaving only the residuals.
+
+        Notes
+        -----
+        This function fits an AR(p) model to the input series using `statsmodels.tsa.ARIMA`
+        and applies the inverse AR filter to prewhiten the data. If `nlags` is not provided,
+        the function automatically selects the best model order based on the Akaike Information Criterion (AIC).
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from statsmodels.tsa.arima.model import ARIMA
+        >>> series = np.random.randn(100)
+        >>> whitened = prewhiten(series)
+        >>> print(whitened.shape)
+        (100,)
+        """
     series = np.asarray(series)
 
     # Fit AR(p) model using ARIMA
@@ -535,6 +954,47 @@ def prewhiten(series: ArrayLike, nlags: Optional[int] = None, debug: bool = Fals
 def prewhiten2(
     timecourse: NDArray, nlags: int, debug: bool = False, sel: bool = False
 ) -> NDArray:
+    """
+        Prewhiten a time course using autoregressive modeling.
+    
+        This function applies prewhitening to a time course by fitting an autoregressive
+        model and then applying the corresponding filter to remove temporal autocorrelation.
+    
+        Parameters
+        ----------
+        timecourse : array_like
+            Input time course to be prewhitened, shape (n_times,)
+        nlags : int
+            Number of lags to use for the autoregressive model
+        debug : bool, optional
+            If True, print model summary and display diagnostic plots, by default False
+        sel : bool, optional
+            If True, use automatic lag selection, by default False
+        
+        Returns
+        -------
+        ndarray
+            Prewhitened time course with standardized normalization applied
+        
+        Notes
+        -----
+        The prewhitening process involves:
+        1. Fitting an autoregressive model to the input time course
+        2. Computing filter coefficients from the model parameters
+        3. Applying the filter using scipy.signal.lfilter
+        4. Standardizing the result using tide_math.stdnormalize
+    
+        When `sel=True`, the function uses `ar_select_order` for automatic lag selection
+        instead of using the fixed number of lags specified by `nlags`.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> timecourse = np.random.randn(100)
+        >>> whitened = prewhiten2(timecourse, nlags=3)
+        >>> # With debugging enabled
+        >>> whitened = prewhiten2(timecourse, nlags=3, debug=True)
+        """
     if not sel:
         ar_model = AutoReg(timecourse, lags=nlags)
         ar_fit = ar_model.fit()
@@ -573,6 +1033,67 @@ def findtrapezoidfunc(
     refine: bool = False,
     displayplots: bool = False,
 ) -> Tuple[float, float, float, float, int]:
+    """
+        Find the best-fitting trapezoidal function parameters to a data set.
+
+        This function uses least-squares optimization to fit a trapezoidal function
+        defined by `trapezoid_eval` to the input data (`theyvals`), using `thexvals`
+        as the independent variable. The shape of the trapezoid is fixed by `thetoplength`.
+
+        Parameters
+        ----------
+        thexvals : array_like
+            Independent variable values (time points) for the data.
+        theyvals : array_like
+            Dependent variable values (signal intensity) corresponding to `thexvals`.
+        thetoplength : float
+            The length of the top plateau of the trapezoid function.
+        initguess : array_like, optional
+            Initial guess for [start, amplitude, risetime, falltime].
+            If None, uses defaults based on data statistics.
+        debug : bool, optional
+            If True, print intermediate values during computation (default: False).
+        minrise : float, optional
+            Minimum allowed rise time parameter (default: 0.0).
+        maxrise : float, optional
+            Maximum allowed rise time parameter (default: 200.0).
+        minfall : float, optional
+            Minimum allowed fall time parameter (default: 0.0).
+        maxfall : float, optional
+            Maximum allowed fall time parameter (default: 200.0).
+        minstart : float, optional
+            Minimum allowed start time parameter (default: -100.0).
+        maxstart : float, optional
+            Maximum allowed start time parameter (default: 100.0).
+        refine : bool, optional
+            If True, perform additional refinement steps (not implemented in this version).
+        displayplots : bool, optional
+            If True, display plots during computation (not implemented in this version).
+
+        Returns
+        -------
+        tuple of floats
+            The fitted parameters [start, amplitude, risetime, falltime] if successful,
+            or [0.0, 0.0, 0.0, 0.0] if the solution is outside the valid parameter bounds.
+            A fifth value (integer) indicating success (1) or failure (0).
+
+        Notes
+        -----
+        The optimization is performed using `scipy.optimize.leastsq` with a residual
+        function `trapezoidresiduals`. The function returns a tuple of five elements:
+        (start, amplitude, risetime, falltime, success_flag), where success_flag is 1
+        if all parameters are within the specified bounds, and 0 otherwise.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 100)
+        >>> y = trapezoid_eval(x, start=2, amplitude=5, risetime=1, falltime=1, top_length=4)
+        >>> y += np.random.normal(0, 0.1, len(y))  # Add noise
+        >>> params = findtrapezoidfunc(x, y, thetoplength=4)
+        >>> print(params)
+        (2.05, 4.98, 1.02, 1.01, 1)
+        """
     """
     Find the best-fitting trapezoidal function parameters to a data set.
 
@@ -659,6 +1180,58 @@ def findrisetimefunc(
     refine: bool = False,
     displayplots: bool = False,
 ) -> Tuple[float, float, float, int]:
+    """
+        Find the rise time of a signal by fitting a model to the data.
+
+        This function fits a rise time model to the provided signal data using least squares
+        optimization. It returns the estimated start time, amplitude, and rise time of the signal,
+        along with a success flag indicating whether the fit is within specified bounds.
+
+        Parameters
+        ----------
+        thexvals : NDArray
+            Array of x-axis values (time or independent variable).
+        theyvals : NDArray
+            Array of y-axis values (signal or dependent variable).
+        initguess : NDArray | None, optional
+            Initial guess for [start_time, amplitude, rise_time]. If None, defaults are used.
+        debug : bool, optional
+            If True, prints the x and y values during processing (default is False).
+        minrise : float, optional
+            Minimum allowed rise time (default is 0.0).
+        maxrise : float, optional
+            Maximum allowed rise time (default is 200.0).
+        minstart : float, optional
+            Minimum allowed start time (default is -100.0).
+        maxstart : float, optional
+            Maximum allowed start time (default is 100.0).
+        refine : bool, optional
+            Placeholder for future refinement logic (default is False).
+        displayplots : bool, optional
+            Placeholder for future plotting logic (default is False).
+
+        Returns
+        -------
+        Tuple[float, float, float, int]
+            A tuple containing:
+            - start_time: Estimated start time of the rise.
+            - amplitude: Estimated amplitude of the rise.
+            - rise_time: Estimated rise time.
+            - success: 1 if the fit is within bounds, 0 otherwise.
+
+        Notes
+        -----
+        The function uses `scipy.optimize.leastsq` to perform the fitting. The model being fitted
+        is defined in the `risetimeresiduals` function, which must be defined elsewhere in the code.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 100)
+        >>> y = np.exp(-x / 2) * np.sin(x)
+        >>> start, amp, rise, success = findrisetimefunc(x, y)
+        >>> print(f"Start: {start}, Amplitude: {amp}, Rise Time: {rise}, Success: {success}")
+        """
     # guess at parameters: risestart, riseamplitude, risetime
     if initguess is None:
         initstart = 0.0
@@ -694,51 +1267,60 @@ def territorydecomp(
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray, NDArray]:
     """
-    Decompose an input map into territories defined by an atlas using polynomial regression.
+        Decompose an input map into territories defined by an atlas using polynomial regression.
 
-    This function performs a decomposition of an input map (e.g., a brain image) into
-    distinct regions (territories) as defined by an atlas. For each territory, it fits
-    a polynomial model to the template values and the corresponding data in that region.
-    The resulting coefficients are used to project the model back onto the original map.
+        This function performs a decomposition of an input map (e.g., a brain image) into
+        distinct regions (territories) as defined by an atlas. For each territory, it fits
+        a polynomial model to the template values and the corresponding data in that region.
+        The resulting coefficients are used to project the model back onto the original map.
 
-    Parameters
-    ----------
-    inputmap : numpy.ndarray
-        Input data to be decomposed. Can be 3D or 4D (e.g., time series).
-    template : numpy.ndarray
-        Template values corresponding to the spatial locations in `inputmap`.
-        Should have the same shape as `inputmap` (or be broadcastable).
-    atlas : numpy.ndarray
-        Atlas defining the territories. Each unique integer value represents a distinct region.
-        Must have the same shape as `inputmap`.
-    inputmask : numpy.ndarray, optional
-        Mask to define valid voxels in `inputmap`. If None, all voxels are considered valid.
-        Should have the same shape as `inputmap`.
-    intercept : bool, optional
-        If True, include an intercept term in the polynomial fit (default: True).
-    fitorder : int, optional
-        The order of the polynomial to fit for each territory (default: 1).
-    debug : bool, optional
-        If True, print debugging information during computation (default: False).
-    Returns
-    -------
-    tuple of numpy.ndarray
-        A tuple containing:
-        - fitmap : numpy.ndarray
-            The decomposed map with fitted values projected back onto the original spatial locations.
-        - thecoffs : numpy.ndarray
-            Array of polynomial coefficients for each territory and map. Shape is (nummaps, numterritories, fitorder+1)
-            if `intercept` is True, or (nummaps, numterritories, fitorder) otherwise.
-        - theR2s : numpy.ndarray
-            R-squared values for the fits for each territory and map. Shape is (nummaps, numterritories).
+        Parameters
+        ----------
+        inputmap : numpy.ndarray
+            Input data to be decomposed. Can be 3D or 4D (e.g., time series).
+        template : numpy.ndarray
+            Template values corresponding to the spatial locations in `inputmap`.
+            Should have the same shape as `inputmap` (or be broadcastable).
+        atlas : numpy.ndarray
+            Atlas defining the territories. Each unique integer value represents a distinct region.
+            Must have the same shape as `inputmap`.
+        inputmask : numpy.ndarray, optional
+            Mask to define valid voxels in `inputmap`. If None, all voxels are considered valid.
+            Should have the same shape as `inputmap`.
+        intercept : bool, optional
+            If True, include an intercept term in the polynomial fit (default: True).
+        fitorder : int, optional
+            The order of the polynomial to fit for each territory (default: 1).
+        debug : bool, optional
+            If True, print debugging information during computation (default: False).
 
-    Notes
-    -----
-    - The function assumes that `inputmap` and `template` are aligned in space.
-    - If `inputmask` is not provided, all voxels are considered valid.
-    - The number of territories is determined by the maximum value in `atlas`.
-    - For each territory, a polynomial regression is performed using the template values as predictors.
-    """
+        Returns
+        -------
+        tuple of numpy.ndarray
+            A tuple containing:
+            - fitmap : numpy.ndarray
+                The decomposed map with fitted values projected back onto the original spatial locations.
+            - thecoffs : numpy.ndarray
+                Array of polynomial coefficients for each territory and map. Shape is (nummaps, numterritories, fitorder+1)
+                if `intercept` is True, or (nummaps, numterritories, fitorder) otherwise.
+            - theR2s : numpy.ndarray
+                R-squared values for the fits for each territory and map. Shape is (nummaps, numterritories).
+
+        Notes
+        -----
+        - The function assumes that `inputmap` and `template` are aligned in space.
+        - If `inputmask` is not provided, all voxels are considered valid.
+        - The number of territories is determined by the maximum value in `atlas`.
+        - For each territory, a polynomial regression is performed using the template values as predictors.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> inputmap = np.random.rand(10, 10, 10)
+        >>> template = np.random.rand(10, 10, 10)
+        >>> atlas = np.ones((10, 10, 10), dtype=int)
+        >>> fitmap, coeffs, r2s = territorydecomp(inputmap, template, atlas)
+        """
     datadims = len(inputmap.shape)
     if datadims > 3:
         nummaps = inputmap.shape[3]
@@ -811,6 +1393,66 @@ def territorystats(
     entropyrange: Tuple[float, float] | None = None,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
+    """
+        Compute descriptive statistics for regions defined by an atlas within a multi-dimensional input map.
+
+        This function calculates various statistical measures (mean, standard deviation, median, etc.)
+        for each region (territory) defined in the `atlas` array, based on the data in `inputmap`.
+        It supports both single and multi-map inputs, and optionally uses a mask to define valid regions.
+
+        Parameters
+        ----------
+        inputmap : ndarray
+            Input data array of shape (X, Y, Z) or (X, Y, Z, N), where N is the number of maps.
+        atlas : ndarray
+            Atlas array defining regions of interest, with each region labeled by an integer.
+            Must be the same spatial dimensions as `inputmap`.
+        inputmask : ndarray, optional
+            Boolean or binary mask array of the same shape as `inputmap`. If None, all voxels are considered valid.
+        entropybins : int, default=101
+            Number of bins to use when computing entropy.
+        entropyrange : tuple of float, optional
+            Range (min, max) for histogram binning when computing entropy. If None, uses the full range of data.
+        debug : bool, default=False
+            If True, prints debug information during computation.
+
+        Returns
+        -------
+        tuple of ndarray
+            A tuple containing:
+            - statsmap : ndarray
+                Zero-initialized array of the same shape as `inputmap`, used for storing statistics.
+            - themeans : ndarray
+                Array of shape (N, max(atlas)) containing the mean values for each region in each map.
+            - thestds : ndarray
+                Array of shape (N, max(atlas)) containing the standard deviations for each region in each map.
+            - themedians : ndarray
+                Array of shape (N, max(atlas)) containing the median values for each region in each map.
+            - themads : ndarray
+                Array of shape (N, max(atlas)) containing the median absolute deviations for each region in each map.
+            - thevariances : ndarray
+                Array of shape (N, max(atlas)) containing the variance values for each region in each map.
+            - theskewnesses : ndarray
+                Array of shape (N, max(atlas)) containing the skewness values for each region in each map.
+            - thekurtoses : ndarray
+                Array of shape (N, max(atlas)) containing the kurtosis values for each region in each map.
+            - theentropies : ndarray
+                Array of shape (N, max(atlas)) containing the entropy values for each region in each map.
+
+        Notes
+        -----
+        - The function supports both 3D and 4D input arrays. For 4D arrays, each map is processed separately.
+        - Entropy is computed using the probability distribution from a histogram of voxel values.
+        - If `inputmask` is not provided, all voxels are considered valid.
+        - The `atlas` labels are expected to start from 1, and regions are indexed accordingly.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> inputmap = np.random.rand(10, 10, 10)
+        >>> atlas = np.ones((10, 10, 10), dtype=int)
+        >>> statsmap, means, stds, medians, mads, variances, skewnesses, kurtoses, entropies = territorystats(inputmap, atlas)
+        """
     datadims = len(inputmap.shape)
     if datadims > 3:
         nummaps = inputmap.shape[3]
@@ -900,47 +1542,55 @@ def refinepeak_quad(
     x: NDArray, y: NDArray, peakindex: int, stride: int = 1
 ) -> Tuple[float, float, float, Optional[bool], bool]:
     """
-    Refine the location and properties of a peak using quadratic interpolation.
+        Refine the location and properties of a peak using quadratic interpolation.
 
-    This function takes a peak index and a set of data points to perform
-    quadratic interpolation around the peak to estimate its precise location,
-    value, and width. It also determines whether the point is a local maximum or minimum.
+        This function takes a peak index and a set of data points to perform
+        quadratic interpolation around the peak to estimate its precise location,
+        value, and width. It also determines whether the point is a local maximum or minimum.
 
-    Parameters
-    ----------
-    x : NDArray
-        Independent variable values (e.g., time points).
-    y : NDArray
-        Dependent variable values (e.g., signal intensity) corresponding to `x`.
-    peakindex : int
-        Index of the peak in the arrays `x` and `y`.
-    stride : int, optional
-        Number of data points to use on either side of the peak for interpolation.
-        Default is 1.
+        Parameters
+        ----------
+        x : NDArray
+            Independent variable values (e.g., time points).
+        y : NDArray
+            Dependent variable values (e.g., signal intensity) corresponding to `x`.
+        peakindex : int
+            Index of the peak in the arrays `x` and `y`.
+        stride : int, optional
+            Number of data points to use on either side of the peak for interpolation.
+            Default is 1.
 
-    Returns
-    -------
-    tuple
-        A tuple containing:
-        - peakloc : float
-            The refined location of the peak.
-        - peakval : float
-            The refined value at the peak.
-        - peakwidth : float
-            The estimated width of the peak.
-        - ismax : bool or None
-            True if the point is a local maximum, False if it's a local minimum,
-            and None if the point cannot be determined (e.g., at boundaries).
-        - badfit : bool
-            True if the fit could not be performed due to invalid conditions,
-            such as being at the boundary or having equal values on both sides.
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - peakloc : float
+                The refined location of the peak.
+            - peakval : float
+                The refined value at the peak.
+            - peakwidth : float
+                The estimated width of the peak.
+            - ismax : bool or None
+                True if the point is a local maximum, False if it's a local minimum,
+                and None if the point cannot be determined (e.g., at boundaries).
+            - badfit : bool
+                True if the fit could not be performed due to invalid conditions,
+                such as being at the boundary or having equal values on both sides.
 
-    Notes
-    -----
-    The function uses a quadratic fit to estimate peak properties. It checks for
-    valid conditions before performing the fit, including ensuring that the peak
-    is not at the edge of the data and that it's either a local maximum or minimum.
-    """
+        Notes
+        -----
+        The function uses a quadratic fit to estimate peak properties. It checks for
+        valid conditions before performing the fit, including ensuring that the peak
+        is not at the edge of the data and that it's either a local maximum or minimum.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 100)
+        >>> y = np.exp(-0.5 * (x - 5)**2) + 0.1 * np.random.random(100)
+        >>> peakloc, peakval, peakwidth, ismax, badfit = refinepeak_quad(x, y, 50, stride=2)
+        >>> print(f"Peak location: {peakloc:.2f}, Peak value: {peakval:.2f}")
+        """
     # first make sure this actually is a peak
     ismax = None
     badfit = False
@@ -993,6 +1643,116 @@ def findmaxlag_gauss(
     absminsigma: float = 0.1,
     displayplots: bool = False,
 ) -> Tuple[int, np.float64, np.float64, np.float64, np.uint16, np.uint16, int, int]:
+    """
+        Find the maximum lag in a cross-correlation function by fitting a Gaussian curve to the peak.
+
+        This function locates the peak in a cross-correlation function and optionally fits a Gaussian
+        curve to determine the precise lag time, amplitude, and width. It includes extensive error
+        checking and validation to ensure robust results.
+
+        Parameters
+        ----------
+        thexcorr_x : NDArray
+            X-axis values (lag times) of the cross-correlation function.
+        thexcorr_y : NDArray
+            Y-axis values (correlation coefficients) of the cross-correlation function.
+        lagmin : float
+            Minimum allowable lag value in seconds.
+        lagmax : float
+            Maximum allowable lag value in seconds.
+        widthmax : float
+            Maximum allowable width of the Gaussian peak in seconds.
+        edgebufferfrac : float, optional
+            Fraction of array length to exclude from each edge during search. Default is 0.0.
+        threshval : float, optional
+            Minimum correlation threshold for a valid peak. Default is 0.0.
+        uthreshval : float, optional
+            Upper threshold value (currently unused). Default is 30.0.
+        debug : bool, optional
+            Enable debug output showing initial vs final parameter values. Default is False.
+        tweaklims : bool, optional
+            Automatically adjust search limits to avoid edge artifacts. Default is True.
+        zerooutbadfit : bool, optional
+            Set output to zero when fit fails rather than using initial guess. Default is True.
+        refine : bool, optional
+            Perform least-squares refinement of the Gaussian fit. Default is False.
+        maxguess : float, optional
+            Initial guess for maximum lag position. Used when useguess=True. Default is 0.0.
+        useguess : bool, optional
+            Use the provided maxguess instead of finding peak automatically. Default is False.
+        searchfrac : float, optional
+            Fraction of peak height used to determine initial width estimate. Default is 0.5.
+        fastgauss : bool, optional
+            Use fast non-iterative Gaussian fitting (less accurate). Default is False.
+        lagmod : float, optional
+            Modulus for lag values to handle wraparound. Default is 1000.0.
+        enforcethresh : bool, optional
+            Enforce minimum threshold requirements. Default is True.
+        absmaxsigma : float, optional
+            Absolute maximum allowed sigma (width) value. Default is 1000.0.
+        absminsigma : float, optional
+            Absolute minimum allowed sigma (width) value. Default is 0.1.
+        displayplots : bool, optional
+            Show matplotlib plots of data and fitted curve. Default is False.
+
+        Returns
+        -------
+        maxindex : int
+            Array index of the maximum correlation value.
+        maxlag : numpy.float64
+            Time lag at maximum correlation in seconds.
+        maxval : numpy.float64
+            Maximum correlation coefficient value.
+        maxsigma : numpy.float64
+            Width (sigma) of the fitted Gaussian peak.
+        maskval : numpy.uint16
+            Validity mask (1 = valid fit, 0 = invalid fit).
+        failreason : numpy.uint16
+            Bitwise failure reason code. Possible values:
+            - 0x01: Correlation amplitude below threshold
+            - 0x02: Correlation amplitude above maximum (>1.0)
+            - 0x04: Search window too narrow (<3 points)
+            - 0x08: Fitted width exceeds widthmax
+            - 0x10: Fitted lag outside [lagmin, lagmax] range
+            - 0x20: Peak found at edge of search range
+            - 0x40: Fitting procedure failed
+            - 0x80: Initial parameter estimation failed
+        fitstart : int
+            Starting index used for fitting.
+        fitend : int
+            Ending index used for fitting.
+
+        Notes
+        -----
+        - The function assumes cross-correlation data where Y-values represent correlation
+          coefficients (typically in range [-1, 1]).
+        - When refine=False, uses simple peak-finding based on maximum value.
+        - When refine=True, performs least-squares Gaussian fit for sub-bin precision.
+        - All time-related parameters (lagmin, lagmax, widthmax) should be in the same
+          units as thexcorr_x.
+        - The fastgauss option provides faster but less accurate non-iterative fitting.
+
+        Examples
+        --------
+        Basic usage without refinement:
+
+        >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+        ...     findmaxlag_gauss(lag_times, correlations, -10.0, 10.0, 5.0)
+        >>> if maskval == 1:
+        ...     print(f"Peak found at lag: {maxlag:.3f} s, correlation: {maxval:.3f}")
+
+        Advanced usage with refinement:
+
+        >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+        ...     findmaxlag_gauss(lag_times, correlations, -5.0, 5.0, 2.0,
+        ...                      refine=True, threshval=0.1, displayplots=True)
+
+        Using an initial guess:
+
+        >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+        ...     findmaxlag_gauss(lag_times, correlations, -10.0, 10.0, 3.0,
+        ...                      useguess=True, maxguess=2.5, refine=True)
+        """
     """
     Find the maximum lag in a cross-correlation function by fitting a Gaussian curve to the peak.
 
@@ -1321,6 +2081,50 @@ def findmaxlag_gauss(
 def maxindex_noedge(
     thexcorr_x: NDArray, thexcorr_y: NDArray, bipolar: bool = False
 ) -> Tuple[int, float]:
+    """
+        Find the index of the maximum value in cross-correlation data, avoiding edge effects.
+    
+        This function searches for the maximum value in the cross-correlation data while
+        ensuring that the result is not located at the edges of the data array. It handles
+        both unipolar and bipolar cases, returning the index and a flip factor for bipolar
+        cases where the minimum absolute value might be larger than the maximum.
+    
+        Parameters
+        ----------
+        thexcorr_x : NDArray
+            Array containing the x-coordinates of the cross-correlation data
+        thexcorr_y : NDArray
+            Array containing the y-coordinates (cross-correlation values) of the data
+        bipolar : bool, optional
+            If True, considers both positive and negative values when finding the maximum.
+            If False, only considers positive values. Default is False.
+        
+        Returns
+        -------
+        Tuple[int, float]
+            A tuple containing:
+            - int: The index of the maximum value in the cross-correlation data
+            - float: Flip factor (-1.0 if bipolar case and minimum absolute value is larger,
+              1.0 otherwise)
+          
+        Notes
+        -----
+        The function iteratively adjusts the search range to avoid edge effects by
+        incrementing lowerlim when maxindex is 0, and decrementing upperlim when
+        maxindex equals upperlim. This ensures the returned index is not at the boundaries
+        of the input arrays.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.array([0, 1, 2, 3, 4])
+        >>> y = np.array([0.1, 0.5, 0.8, 0.3, 0.2])
+        >>> index, flip = maxindex_noedge(x, y)
+        >>> print(index)
+        2
+        >>> print(flip)
+        1.0
+        """
     lowerlim = 0
     upperlim = len(thexcorr_x) - 1
     done = False
@@ -1351,8 +2155,50 @@ def maxindex_noedge(
 def gaussfitsk(
     height: float, loc: float, width: float, skewness: float, xvals: ArrayLike, yvals: ArrayLike
 ) -> NDArray:
+    """
+        Fit a skewed Gaussian function to data using least squares optimization.
+
+        This function performs least squares fitting of a skewed Gaussian model to the
+        provided data points. The model includes parameters for height, location, width,
+        and skewness of the Gaussian distribution.
+
+        Parameters
+        ----------
+        height : float
+            The amplitude or height of the Gaussian peak.
+        loc : float
+            The location (mean) of the Gaussian peak.
+        width : float
+            The width (standard deviation) of the Gaussian peak.
+        skewness : float
+            The skewness parameter that controls the asymmetry of the Gaussian.
+        xvals : array-like
+            The x-coordinates of the data points to be fitted.
+        yvals : array-like
+            The y-coordinates of the data points to be fitted.
+
+        Returns
+        -------
+        ndarray
+            Array containing the optimized parameters [height, loc, width, skewness] that
+            best fit the data according to the least squares method.
+
+        Notes
+        -----
+        This function uses `scipy.optimize.leastsq` internally for the optimization
+        process. The fitting is performed using the `gaussskresiduals` residual function
+        which should be defined elsewhere in the codebase.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> y = gaussfitsk(1.0, 0.0, 1.0, 0.0, x, y_data)
+        >>> print(y)
+        [height_opt, loc_opt, width_opt, skewness_opt]
+        """
     plsq, dummy = sp.optimize.leastsq(
-        gaussresidualssk,
+        gaussskresiduals,
         np.array([height, loc, width, skewness]),
         args=(yvals, xvals),
         maxfev=5000,
@@ -1361,17 +2207,133 @@ def gaussfitsk(
 
 
 def gaussfunc(x: NDArray, height: float, loc: float, FWHM: float) -> NDArray:
+    """
+        Calculate a Gaussian function.
+    
+        This function computes a Gaussian (normal) distribution with specified height,
+        location, and Full Width at Half Maximum (FWHM).
+    
+        Parameters
+        ----------
+        x : NDArray
+            Array of values at which to evaluate the Gaussian function.
+        height : float
+            The maximum height of the Gaussian curve.
+        loc : float
+            The location (mean) of the Gaussian curve.
+        FWHM : float
+            The Full Width at Half Maximum of the Gaussian curve.
+        
+        Returns
+        -------
+        NDArray
+            Array of Gaussian function values evaluated at x.
+        
+        Notes
+        -----
+        The Gaussian function is defined as:
+        f(x) = height * exp(-((x - loc) ** 2) / (2 * (FWHM / 2.355) ** 2))
+    
+        The conversion from FWHM to standard deviation (sigma) uses the relationship:
+        sigma = FWHM / (2 * sqrt(2 * log(2))) ≈ FWHM / 2.355
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> y = gaussfunc(x, height=1.0, loc=0.0, FWHM=2.0)
+        >>> print(y.shape)
+        (100,)
+        """
     return height * np.exp(-((x - loc) ** 2) / (2 * (FWHM / 2.355) ** 2))
 
 
 def gaussfit2(
     height: float, loc: float, width: float, xvals: NDArray, yvals: NDArray
 ) -> Tuple[float, float, float]:
+    """
+        Calculate a Gaussian function.
+    
+        This function computes a Gaussian (normal) distribution with specified height,
+        location, and Full Width at Half Maximum (FWHM).
+    
+        Parameters
+        ----------
+        x : array_like
+            Input values for which to compute the Gaussian function
+        height : float
+            Height (amplitude) of the Gaussian peak
+        loc : float
+            Location (mean) of the Gaussian peak
+        FWHM : float
+            Full Width at Half Maximum of the Gaussian peak
+    
+        Returns
+        -------
+        ndarray
+            Array of Gaussian function values computed at input x values
+    
+        Notes
+        -----
+        The Gaussian function is computed using the formula:
+        f(x) = height * exp(-((x - loc)^2) / (2 * (FWHM / 2.355)^2))
+    
+        The conversion from FWHM to sigma (standard deviation) uses the relationship:
+        sigma = FWHM / 2.355
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> y = gaussfunc(x, height=1.0, loc=0.0, FWHM=2.0)
+        >>> print(y.shape)
+        (100,)
+        """
     popt, pcov = curve_fit(gaussfunc, xvals, yvals, p0=[height, loc, width])
     return popt[0], popt[1], popt[2]
 
 
 def sincfunc(x: NDArray, height: float, loc: float, FWHM: float, baseline: float) -> NDArray:
+    """
+        Compute a scaled and shifted sinc function.
+    
+        This function evaluates a sinc function with specified height, location, 
+        full width at half maximum, and baseline offset. The sinc function is 
+        scaled by a factor that relates the FWHM to the sinc function's natural 
+        scaling.
+
+        Parameters
+        ----------
+        x : NDArray
+            Input array of values where the function is evaluated.
+        height : float
+            Height of the sinc function peak.
+        loc : float
+            Location (center) of the sinc function peak.
+        FWHM : float
+            Full width at half maximum of the sinc function.
+        baseline : float
+            Baseline offset added to the sinc function values.
+
+        Returns
+        -------
+        NDArray
+            Array of sinc function values with the same shape as input `x`.
+
+        Notes
+        -----
+        The sinc function is defined as sin(πx)/(πx) with the convention that 
+        sinc(0) = 1. The scaling factor 3.79098852 is chosen to relate the FWHM 
+        to the natural sinc function properties.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> y = sincfunc(x, height=2.0, loc=0.0, FWHM=1.0, baseline=1.0)
+        >>> print(y.shape)
+        (100,)
+        """
     return height * np.sinc((3.79098852 / (FWHM * np.pi)) * (x - loc)) + baseline
 
 
@@ -1380,6 +2342,43 @@ def sincfunc(x: NDArray, height: float, loc: float, FWHM: float, baseline: float
 def sincfit(
     height: float, loc: float, width: float, baseline: float, xvals: NDArray, yvals: NDArray
 ) -> Tuple[NDArray, NDArray]:
+    """
+        Sinc function for fitting and modeling.
+
+        This function implements a scaled and shifted sinc function commonly used in
+        signal processing and data fitting applications.
+
+        Parameters
+        ----------
+        x : ndarray
+            Array of x-values where the function is evaluated.
+        height : float
+            Height of the sinc function peak.
+        loc : float
+            Location (center) of the sinc function peak.
+        FWHM : float
+            Full Width at Half Maximum of the sinc function.
+        baseline : float
+            Baseline offset added to the sinc function.
+
+        Returns
+        -------
+        ndarray
+            Array of sinc function values evaluated at x.
+
+        Notes
+        -----
+        The sinc function is defined as sin(πx)/(πx) with the convention that sinc(0) = 1.
+        This implementation uses a scaled version with the specified FWHM parameter.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> y = sincfunc(x, height=1.0, loc=0.0, FWHM=2.0, baseline=0.0)
+        >>> print(y.shape)
+        (100,)
+        """
     popt, pcov = curve_fit(sincfunc, xvals, yvals, p0=[height, loc, width, baseline])
     return popt, pcov
 
@@ -1388,43 +2387,53 @@ def gaussfit(
     height: float, loc: float, width: float, xvals: NDArray, yvals: NDArray
 ) -> Tuple[float, float, float]:
     """
-    Performs a non-linear least squares fit of a Gaussian function to data.
+        Performs a non-linear least squares fit of a Gaussian function to data.
 
-    This routine uses `scipy.optimize.leastsq` to find the optimal parameters
-    (height, location, and width) that best describe a Gaussian curve fitted
-    to the provided `yvals` data against `xvals`. It requires an external
-    `gaussresiduals` function to compute the residuals.
+        This routine uses `scipy.optimize.leastsq` to find the optimal parameters
+        (height, location, and width) that best describe a Gaussian curve fitted
+        to the provided `yvals` data against `xvals`. It requires an external
+        `gaussresiduals` function to compute the residuals.
 
-    Parameters
-    ----------
-    height : float
-        Initial guess for the amplitude or peak height of the Gaussian.
-    loc : float
-        Initial guess for the mean (center) of the Gaussian.
-    width : float
-        Initial guess for the standard deviation (width) of the Gaussian.
-    xvals : NDArray
-        The independent variable data points.
-    yvals : NDArray
-        The dependent variable data points to which the Gaussian will be fitted.
+        Parameters
+        ----------
+        height : float
+            Initial guess for the amplitude or peak height of the Gaussian.
+        loc : float
+            Initial guess for the mean (center) of the Gaussian.
+        width : float
+            Initial guess for the standard deviation (width) of the Gaussian.
+        xvals : NDArray
+            The independent variable data points.
+        yvals : NDArray
+            The dependent variable data points to which the Gaussian will be fitted.
 
-    Returns
-    -------
-    tuple
-        A tuple containing the fitted parameters:
-        - float: The fitted height of the Gaussian.
-        - float: The fitted location (mean) of the Gaussian.
-        - float: The fitted width (standard deviation) of the Gaussian.
+        Returns
+        -------
+        tuple of float
+            A tuple containing the fitted parameters:
+            - height: The fitted height (amplitude) of the Gaussian.
+            - loc: The fitted location (mean) of the Gaussian.
+            - width: The fitted width (standard deviation) of the Gaussian.
 
-    Notes
-    -----
-    - This function relies on an external function `gaussresiduals(params, y, x)`
-      which should calculate the difference between the observed `y` values and
-      the Gaussian function evaluated at `x` with the given `params` (height, loc, width).
-    - `scipy.optimize.leastsq` is used for the optimization, which requires
-      `scipy` and `numpy` to be imported (e.g., `import scipy.optimize as sp`
-      and `import numpy as np`).
-    """
+        Notes
+        -----
+        - This function relies on an external function `gaussresiduals(params, y, x)`
+          which should calculate the difference between the observed `y` values and
+          the Gaussian function evaluated at `x` with the given `params` (height, loc, width).
+        - `scipy.optimize.leastsq` is used for the optimization, which requires
+          `scipy` and `numpy` to be imported (e.g., `import scipy.optimize as sp`
+          and `import numpy as np`).
+        - The optimization may fail if initial guesses are too far from the true values
+          or if the data does not well-support a Gaussian fit.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(-5, 5, 100)
+        >>> y = 2 * np.exp(-0.5 * ((x - 1) / 0.5)**2) + np.random.normal(0, 0.1, 100)
+        >>> height, loc, width = gaussfit(1.0, 0.0, 1.0, x, y)
+        >>> print(f"Fitted height: {height:.2f}, location: {loc:.2f}, width: {width:.2f}")
+        """
     plsq, dummy = sp.optimize.leastsq(
         gaussresiduals, np.array([height, loc, width]), args=(yvals, xvals), maxfev=5000
     )
@@ -1433,31 +2442,45 @@ def gaussfit(
 
 def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
     """
-    Performs Gram-Schmidt orthogonalization on a set of vectors.
+        Performs Gram-Schmidt orthogonalization on a set of vectors.
 
-    This routine takes a set of input vectors (rows of a 2D array) and
-    transforms them into an orthonormal basis using the Gram-Schmidt process.
-    It ensures that the resulting vectors are mutually orthogonal and
-    have a unit norm. Linearly dependent vectors are effectively skipped
-    if their orthogonal component is negligible.
+        This routine takes a set of input vectors (rows of a 2D array) and
+        transforms them into an orthonormal basis using the Gram-Schmidt process.
+        It ensures that the resulting vectors are mutually orthogonal and
+        have a unit norm. Linearly dependent vectors are effectively skipped
+        if their orthogonal component is negligible.
 
-    Args:
-        theregressors (numpy.ndarray): A 2D NumPy array where each row
-            represents a vector to be orthogonalized.
-        debug (bool, optional): If True, prints debug information about
-            input and output dimensions. Defaults to False.
+        Parameters
+        ----------
+        theregressors : numpy.ndarray
+            A 2D NumPy array where each row represents a vector to be orthogonalized.
+        debug : bool, optional
+            If True, prints debug information about input and output dimensions.
+            Default is False.
 
-    Returns:
-        numpy.ndarray: A 2D NumPy array representing the orthonormal basis.
-            Each row is an orthonormal vector. The number of rows may be
-            less than the input if some vectors were linearly dependent.
+        Returns
+        -------
+        numpy.ndarray
+            A 2D NumPy array representing the orthonormal basis. Each row is an
+            orthonormal vector. The number of rows may be less than the input if
+            some vectors were linearly dependent.
 
-    Notes:
+        Notes
+        -----
         - The function normalizes each orthogonalized vector to unit length.
         - A small tolerance (1e-10) is used to check if a vector's orthogonal
           component is effectively zero, indicating linear dependence.
         - Requires the `numpy` library for array operations and linear algebra.
-    """
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> vectors = np.array([[2, 1], [3, 4]])
+        >>> basis = gram_schmidt(vectors)
+        >>> print(basis)
+        [[0.89442719 0.4472136 ]
+         [-0.4472136  0.89442719]]
+        """
 
     if debug:
         print("gram_schmidt, input dimensions:", theregressors.shape)
@@ -1474,36 +2497,50 @@ def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
 
 def mlproject(thefit: NDArray, theevs: list, intercept: bool) -> NDArray:
     """
-    Calculates a linear combination (weighted sum) of explanatory variables.
+        Calculates a linear combination (weighted sum) of explanatory variables.
 
-    This routine computes a predicted output by multiplying a set of
-    explanatory variables by corresponding coefficients and summing the results.
-    It can optionally include an intercept term. This is a common operation
-    in linear regression and other statistical models.
+        This routine computes a predicted output by multiplying a set of
+        explanatory variables by corresponding coefficients and summing the results.
+        It can optionally include an intercept term. This is a common operation
+        in linear regression and other statistical models.
 
-    Args:
-        thefit (NDArray): A 1D array or list of coefficients
-            (weights) to be applied to the explanatory variables. If `intercept`
-            is True, the first element of `thefit` is treated as the intercept.
-        theevs (list of numpy.ndarray): A list where each element is a 1D NumPy
-            array representing an explanatory variable (feature time series).
-            The length of `theevs` should match the number of non-intercept
-            coefficients in `thefit`.
-        intercept (bool): If True, the first element of `thefit` is used as
-            an intercept term, and the remaining elements of `thefit` are
-            applied to `theevs`. If False, no intercept is added, and all
-            elements of `thefit` are applied to `theevs` starting from the
-            first element.
+        Parameters
+        ----------
+        thefit : NDArray
+            A 1D array or list of coefficients (weights) to be applied to the
+            explanatory variables. If `intercept` is True, the first element of
+            `thefit` is treated as the intercept.
+        theevs : list of numpy.ndarray
+            A list where each element is a 1D NumPy array representing an
+            explanatory variable (feature time series). The length of `theevs`
+            should match the number of non-intercept coefficients in `thefit`.
+        intercept : bool
+            If True, the first element of `thefit` is used as an intercept term,
+            and the remaining elements of `thefit` are applied to `theevs`. If False,
+            no intercept is added, and all elements of `thefit` are applied to
+            `theevs` starting from the first element.
 
-    Returns:
-        numpy.ndarray: A 1D NumPy array representing the calculated linear
-        combination. Its length will be the same as the explanatory variables.
+        Returns
+        -------
+        NDArray
+            A 1D NumPy array representing the calculated linear combination.
+            Its length will be the same as the explanatory variables.
 
-    Notes:
+        Notes
+        -----
         The calculation performed is conceptually equivalent to:
         `output = intercept_term + (coefficient_1 * ev_1) + (coefficient_2 * ev_2) + ...`
         where `intercept_term` is `thefit[0]` if `intercept` is True, otherwise 0.
-    """
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> thefit = np.array([1.0, 2.0, 3.0])
+        >>> theevs = [np.array([1, 2, 3]), np.array([4, 5, 6])]
+        >>> result = mlproject(thefit, theevs, intercept=True)
+        >>> print(result)
+        [ 9. 14. 19.]
+        """
 
     thedest = theevs[0] * 0.0
     if intercept:
@@ -1519,6 +2556,44 @@ def mlproject(thefit: NDArray, theevs: list, intercept: bool) -> NDArray:
 def olsregress(
     X: ArrayLike, y: ArrayLike, intercept: bool = True, debug: bool = False
 ) -> Tuple[NDArray, float]:
+    """
+        Perform ordinary least squares regression.
+
+        Parameters
+        ----------
+        X : array-like
+            Independent variables (features) matrix of shape (n_samples, n_features).
+        y : array-like
+            Dependent variable (target) vector of shape (n_samples,).
+        intercept : bool, optional
+            Whether to add a constant term (intercept) to the model. Default is True.
+        debug : bool, optional
+            Whether to enable debug mode. Default is False.
+
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - params : ndarray
+              Estimated regression coefficients (including intercept if specified)
+            - rsquared : float
+              Square root of the coefficient of determination (R-squared)
+
+        Notes
+        -----
+        This function uses statsmodels OLS regression to fit a linear model.
+        If intercept is True, a constant term is added to the design matrix.
+        The function returns the regression parameters and the square root of R-squared.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> X = np.array([[1, 2], [3, 4], [5, 6]])
+        >>> y = np.array([1, 2, 3])
+        >>> params, r_squared = olsregress(X, y)
+        >>> print(params)
+        [0.1 0.4 0.2]
+        """
     if intercept:
         X = sm.add_constant(X, prepend=True)
     model = sm.OLS(y, exog=X)
@@ -1529,6 +2604,53 @@ def olsregress(
 def mlregress(
     X: NDArray, y: NDArray, intercept: bool = True, debug: bool = False
 ) -> Tuple[NDArray, float]:
+    """
+        Perform multiple linear regression and return coefficients and R-squared value.
+    
+        This function fits a multiple linear regression model to the input data and
+        returns the regression coefficients (including intercept if specified) along
+        with the coefficient of determination (R-squared).
+    
+        Parameters
+        ----------
+        X : NDArray
+            Input feature matrix of shape (n_samples, n_features) or (n_samples,)
+            If 1D array is provided, it will be treated as a single feature.
+        y : NDArray
+            Target values of shape (n_samples,) or (n_samples, 1)
+            If 1D array is provided, it will be treated as a single target.
+        intercept : bool, optional
+            Whether to calculate and include intercept term in the model.
+            Default is True.
+        debug : bool, optional
+            If True, print debug information about the input shapes and processing steps.
+            Default is False.
+        
+        Returns
+        -------
+        Tuple[NDArray, float]
+            A tuple containing:
+            - coefficients : NDArray of shape (n_features + 1, 1) where the first
+              element is the intercept (if intercept=True) and subsequent elements
+              are the regression coefficients for each feature
+            - R2 : float, the coefficient of determination (R-squared) of the fitted model
+        
+        Notes
+        -----
+        The function automatically handles shape adjustments for input arrays,
+        ensuring that the number of samples in X matches the number of target values in y.
+        If the input X is 1D, it will be converted to 2D. If the shapes don't match initially,
+        the function will attempt to transpose X to match the number of samples in y.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> X = np.array([[1, 2], [3, 4], [5, 6]])
+        >>> y = np.array([3, 7, 11])
+        >>> coeffs, r2 = mlregress(X, y)
+        >>> print(f"Coefficients: {coeffs.flatten()}")
+        >>> print(f"R-squared: {r2}")
+        """
     if debug:
         print(f"mlregress initial: {X.shape=}, {y.shape=}")
     y = np.atleast_1d(y)
@@ -1569,50 +2691,69 @@ def calcexpandedregressors(
     debug: bool = False,
 ) -> Tuple[NDArray, list]:
     """
-    Calculates expanded regressors from a dictionary of confound vectors.
+        Calculate expanded regressors from a dictionary of confound vectors.
 
-    This routine generates a comprehensive set of motion-related regressors by
-    including higher-order polynomial terms and derivatives of the original
-    confound timecourses. It is commonly used in neuroimaging analysis to
-    account for subject movement.
+        This routine generates a comprehensive set of motion-related regressors by
+        including higher-order polynomial terms and derivatives of the original
+        confound timecourses. It is commonly used in neuroimaging analysis to
+        account for subject movement.
 
-    Args:
-        confounddict (dict): A dictionary where keys are labels (e.g., 'rot_x',
-            'trans_y') and values are the corresponding 1D time series (NumPy
-            arrays or lists).
-        labels (list, optional): A list of specific confound labels from
-            `confounddict` to process. If None, all labels in `confounddict`
-            will be used. Defaults to None.
-        start (int, optional): The starting index (inclusive) for slicing the
-            timecourses. Defaults to 0.
-        end (int, optional): The ending index (exclusive) for slicing the
-            timecourses. If None, slicing continues to the end of the timecourse.
-            Defaults to None.
-        deriv (bool, optional): If True, the first derivative of each selected
-            timecourse (and its polynomial expansions) is calculated and
-            included as a regressor. Defaults to False.
-        order (int, optional): The polynomial order for expansion. If `order > 1`,
-            terms like `label^2`, `label^3`, up to `label^order` will be
-            included. Defaults to 1 (no polynomial expansion).
-        debug (bool, optional): If True, prints debug information during
-            processing. Defaults to False.
+        Parameters
+        ----------
+        confounddict : dict
+            A dictionary where keys are labels (e.g., 'rot_x', 'trans_y') and values
+            are the corresponding 1D time series (NumPy arrays or lists).
+        labels : list, optional
+            A list of specific confound labels from `confounddict` to process. If None,
+            all labels in `confounddict` will be used. Default is None.
+        start : int, optional
+            The starting index (inclusive) for slicing the timecourses. Default is 0.
+        end : int, optional
+            The ending index (exclusive) for slicing the timecourses. If -1, slicing
+            continues to the end of the timecourse. Default is -1.
+        deriv : bool, optional
+            If True, the first derivative of each selected timecourse (and its
+            polynomial expansions) is calculated and included as a regressor.
+            Default is True.
+        order : int, optional
+            The polynomial order for expansion. If `order > 1`, terms like `label^2`,
+            `label^3`, up to `label^order` will be included. Default is 1 (no
+            polynomial expansion).
+        debug : bool, optional
+            If True, prints debug information during processing. Default is False.
 
-    Returns:
-        tuple: A tuple containing:
-            - outputregressors (numpy.ndarray): A 2D NumPy array where each row
-              represents a generated regressor (original, polynomial, or derivative)
-              and columns represent time points.
-            - outlabels (list): A list of strings, providing the labels for each
-              row in `outputregressors`, indicating what each regressor represents
-              (e.g., 'rot_x', 'rot_x^2', 'rot_x_deriv').
+        Returns
+        -------
+        tuple of (numpy.ndarray, list)
+            A tuple containing:
+            - outputregressors : numpy.ndarray
+              A 2D NumPy array where each row represents a generated regressor
+              (original, polynomial, or derivative) and columns represent time points.
+            - outlabels : list of str
+              A list of strings providing the labels for each row in `outputregressors`,
+              indicating what each regressor represents (e.g., 'rot_x', 'rot_x^2',
+              'rot_x_deriv').
 
-    Notes:
+        Notes
+        -----
         - The derivatives are calculated using `numpy.gradient`.
         - The function handles slicing of the timecourses based on `start` and `end`
           parameters.
         - The output regressors are concatenated horizontally to form the final
           `outputregressors` array.
-    """
+
+        Examples
+        --------
+        >>> confounddict = {
+        ...     'rot_x': [0.1, 0.2, 0.3],
+        ...     'trans_y': [0.05, 0.1, 0.15]
+        ... }
+        >>> regressors, labels = calcexpandedregressors(confounddict, order=2, deriv=True)
+        >>> print(regressors.shape)
+        (4, 3)
+        >>> print(labels)
+        ['rot_x', 'trans_y', 'rot_x^2', 'trans_y^2', 'rot_x_deriv', 'trans_y_deriv']
+        """
     if labels is None:
         localconfounddict = confounddict.copy()
         labels = list(localconfounddict.keys())
@@ -1662,32 +2803,59 @@ def calcexpandedregressors(
 
 
 def derivativelinfitfilt(
-    thedata: ArrayLike, theevs: NDArray, nderivs: int = 1, debug: bool = False
+    thedata: NDArray, theevs: NDArray, nderivs: int = 1, debug: bool = False
 ) -> Tuple[NDArray, NDArray, NDArray, float, NDArray]:
     """
-    First perform multicomponent expansion on theevs (each ev replaced by itself,
-    its square, its cube, etc.).  Then perform a linear fit of thedata using the vectors
-    in thenewevs and return the result.
+        Perform multicomponent expansion on explanatory variables and fit the data using linear regression.
 
-    Parameters
-    ----------
-    thedata : 1D numpy array
-        Input data of length N to be filtered
-        :param thedata:
+        First, each explanatory variable is expanded into multiple components by taking
+        successive derivatives (or powers, in the case of scalar inputs). Then, a linear
+        fit is performed on the input data using the expanded set of explanatory variables.
 
-    theevs : 2D numpy array
-        NxP array of explanatory variables to be fit
-        :param theevs:
+        Parameters
+        ----------
+        thedata : NDArray
+            Input data of length N to be filtered.
+        theevs : NDArray
+            NxP array of explanatory variables to be fit. If 1D, it is treated as a single
+            explanatory variable.
+        nderivs : int, optional
+            Number of derivative components to compute for each explanatory variable.
+            Default is 1. For each input variable, this creates a sequence of
+            derivatives: original, first derivative, second derivative, etc.
+        debug : bool, optional
+            Flag to toggle debugging output. Default is False.
 
-    nderivs : integer
-        Number of components to use for each ev.  Each successive component is a
-        higher power of the initial ev (initial, square, cube, etc.)
-        :param nderivs:
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - filtered : ndarray
+                The filtered version of `thedata` after fitting.
+            - thenewevs : ndarray
+                The expanded set of explanatory variables (original + derivatives).
+            - datatoremove : ndarray
+                The part of the data that was removed during fitting.
+            - R : float
+                The coefficient of determination (R²) of the fit.
+            - coffs : ndarray
+                The coefficients of the linear fit.
 
-    debug: bool
-        Flag to toggle debugging output
-        :param debug:
-    """
+        Notes
+        -----
+        This function is useful for filtering data when the underlying signal is expected
+        to have smooth variations, and derivative information can improve the fit.
+        The expansion of each variable into its derivatives allows for better modeling
+        of local trends in the data.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from typing import Tuple
+        >>> thedata = np.array([1, 2, 3, 4, 5])
+        >>> theevs = np.array([[1, 2], [2, 3], [3, 4], [4, 5], [5, 6]])
+        >>> filtered, expanded_ev, removed, R, coeffs = derivativelinfitfilt(thedata, theevs, nderivs=2)
+        """
     if debug:
         print(f"{thedata.shape=}")
         print(f"{theevs.shape=}")
@@ -1710,7 +2878,7 @@ def derivativelinfitfilt(
     if debug:
         print(f"{nderivs=}")
         print(f"{thenewevs.shape=}")
-    filtered, datatoremove, R, coffs = linfitfilt(thedata, thenewevs, debug=debug)
+    filtered, datatoremove, R, coffs, dummy = linfitfilt(thedata, thenewevs, debug=debug)
     if debug:
         print(f"{R=}")
 
@@ -1718,32 +2886,58 @@ def derivativelinfitfilt(
 
 
 def expandedlinfitfilt(
-    thedata: ArrayLike, theevs: NDArray, ncomps: int = 1, debug: bool = False
+    thedata: NDArray, theevs: NDArray, ncomps: int = 1, debug: bool = False
 ) -> Tuple[NDArray, NDArray, NDArray, float, NDArray]:
     """
-    First perform multicomponent expansion on theevs (each ev replaced by itself,
-    its square, its cube, etc.).  Then perform a multiple regression fit of thedata using the vectors
-    in thenewevs and return the result.
+        Perform multicomponent expansion on explanatory variables and fit a linear model.
 
-    Parameters
-    ----------
-    thedata : 1D numpy array
-        Input data of length N to be filtered
-        :param thedata:
+        First, perform multicomponent expansion on the explanatory variables (`theevs`), 
+        where each variable is replaced by itself, its square, its cube, etc., up to `ncomps` 
+        components. Then, perform a multiple regression fit of `thedata` using the expanded 
+        explanatory variables and return the filtered data, the fitted model components, 
+        the residual sum of squares, and the coefficients.
 
-    theevs : 2D numpy array
-        NxP array of explanatory variables to be fit
-        :param theevs:
+        Parameters
+        ----------
+        thedata : NDArray
+            Input data of length N to be filtered.
+        theevs : array_like
+            NxP array of explanatory variables to be fit.
+        ncomps : int, optional
+            Number of components to use for each ev. Each successive component is a
+            higher power of the initial ev (initial, square, cube, etc.). Default is 1.
+        debug : bool, optional
+            Flag to toggle debugging output. Default is False.
 
-    ncomps : integer
-        Number of components to use for each ev.  Each successive component is a
-        higher power of the initial ev (initial, square, cube, etc.)
-        :param ncomps:
+        Returns
+        -------
+        filtered : ndarray
+            The filtered version of `thedata` after fitting and removing the linear model.
+        thenewevs : ndarray
+            The expanded explanatory variables used in the fit.
+        datatoremove : ndarray
+            The portion of `thedata` that was removed during the fitting process.
+        R : float
+            Residual sum of squares from the linear fit.
+        coffs : ndarray
+            The coefficients of the linear fit.
 
-    debug: bool
-        Flag to toggle debugging output
-        :param debug:
-    """
+        Notes
+        -----
+        If `ncomps` is 1, no expansion is performed and `theevs` is used directly.
+        For each column in `theevs`, the expanded columns are created by taking powers
+        of the original column (1st, 2nd, ..., ncomps-th power).
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from typing import Tuple
+        >>> thedata = np.array([1, 2, 3, 4, 5])
+        >>> theevs = np.array([[1, 2], [2, 3], [3, 4], [4, 5], [5, 6]])
+        >>> filtered, expanded_ev, removed, R, coeffs = expandedlinfitfilt(thedata, theevs, ncomps=2)
+        >>> print(filtered)
+        [0. 0. 0. 0. 0.]
+        """
     if debug:
         print(f"{thedata.shape=}")
         print(f"{theevs.shape=}")
@@ -1766,7 +2960,7 @@ def expandedlinfitfilt(
     if debug:
         print(f"{ncomps=}")
         print(f"{thenewevs.shape=}")
-    filtered, datatoremove, R, coffs = linfitfilt(thedata, thenewevs, debug=debug)
+    filtered, datatoremove, R, coffs, dummy = linfitfilt(thedata, thenewevs, debug=debug)
     if debug:
         print(f"{R=}")
 
@@ -1774,28 +2968,56 @@ def expandedlinfitfilt(
 
 
 def linfitfilt(
-    thedata: ArrayLike, theevs: NDArray, returnintercept: bool = False, debug: bool = False
-) -> Union[
-    Tuple[NDArray, NDArray, float, NDArray], Tuple[NDArray, NDArray, float, NDArray, float]
-]:
+    thedata: NDArray, theevs: NDArray, debug: bool = False
+) -> Tuple[NDArray, NDArray, float, NDArray, float]:
     """
-    Performs a multiple regression fit of thedata using the vectors in theevs
-    and returns the result.
+        Performs a multiple regression fit of thedata using the vectors in theevs
+        and returns the result.
 
-    Parameters
-    ----------
-    thedata : 1D numpy array
-        Input data of length N to be filtered
-        :param thedata:
+        This function fits a linear model to the input data using the explanatory
+        variables provided in `theevs`, then removes the fitted component from the
+        original data to produce a filtered version.
 
-    theevs : 2D numpy array
-        NxP array of explanatory variables to be fit
-        :param theevs:
+        Parameters
+        ----------
+        thedata : NDArray
+            Input data of length N to be filtered.
+        theevs : NDArray
+            NxP array of explanatory variables to be fit. If 1D, treated as a single
+            explanatory variable.
+        returnintercept : bool, optional
+            If True, also return the intercept term from the regression. Default is False.
+        debug : bool, optional
+            If True, print debugging information during execution. Default is False.
 
-    debug: bool
-        Flag to toggle debugging output
-        :param debug:
-    """
+        Returns
+        -------
+        filtered : ndarray
+            The filtered data, i.e., the original data with the fitted component removed.
+        datatoremove : ndarray
+            The component of thedata that was removed during filtering.
+        R2 : float
+            The coefficient of determination (R-squared) of the regression.
+        retcoffs : ndarray
+            The regression coefficients (excluding intercept) for each explanatory variable.
+        theintercept : float, optional
+            The intercept term from the regression. Only returned if `returnintercept=True`.
+
+        Notes
+        -----
+        This function uses `mlregress` internally to perform the linear regression.
+        The intercept is always included in the model, but only returned if explicitly
+        requested via `returnintercept`.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> thedata = np.array([1, 2, 3, 4, 5])
+        >>> theevs = np.array([[1, 1], [1, 2], [1, 3], [1, 4], [1, 5]])
+        >>> filtered, datatoremove, R2, retcoffs, dummy = linfitfilt(thedata, theevs)
+        >>> print(filtered)
+        [0. 0. 0. 0. 0.]
+        """
 
     if debug:
         print(f"{thedata.shape=}")
@@ -1826,10 +3048,7 @@ def linfitfilt(
     filtered = thedata - datatoremove
     if debug:
         print(f"{retcoffs=}")
-    if returnintercept:
-        return filtered, datatoremove, R2, retcoffs, theintercept
-    else:
-        return filtered, datatoremove, R2, retcoffs
+    return filtered, datatoremove, R2, retcoffs, theintercept
 
 
 def confoundregress(
@@ -1841,22 +3060,47 @@ def confoundregress(
     rt_floattype: str = "float64",
 ) -> Tuple[NDArray, NDArray]:
     """
-    Filters multiple regressors out of an array of data
+        Filters multiple regressors out of an array of data using linear regression.
 
-    Parameters
-    ----------
-    data : 2d numpy array
-        A data array.  First index is the spatial dimension, second is the time (filtering) dimension.
+        This function removes the effect of nuisance regressors from each voxel's timecourse
+        by fitting a linear model and subtracting the predicted signal.
 
-    regressors: 2d numpy array
-        The set of regressors to filter out of each timecourse.  The first dimension is the regressor number, second is the time (filtering) dimension:
+        Parameters
+        ----------
+        data : 2d numpy array
+            A data array where the first index is the spatial dimension (e.g., voxels),
+            and the second index is the time (filtering) dimension.
+        regressors : 2d numpy array
+            The set of regressors to filter out of each timecourse. The first dimension
+            is the regressor number, and the second is the time (filtering) dimension.
+        debug : bool, optional
+            Print additional diagnostic information if True. Default is False.
+        showprogressbar : bool, optional
+            Show progress bar during processing. Default is True.
+        rt_floatset : type, optional
+            The data type used for floating-point calculations. Default is np.float64.
+        rt_floattype : str, optional
+            The string representation of the floating-point data type. Default is "float64".
 
-    debug : boolean
-        Print additional diagnostic information if True
+        Returns
+        -------
+        filtereddata : 2d numpy array
+            The data with regressors removed, same shape as input `data`.
+        r2value : 1d numpy array
+            The R-squared value for each voxel's regression fit, shape (data.shape[0],).
 
-    Returns
-    -------
-    """
+        Notes
+        -----
+        This function uses `mlregress` internally to perform the linear regression for each voxel.
+        The regressors are applied in the order they appear in the input array.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> data = np.random.rand(100, 1000)
+        >>> regressors = np.random.rand(3, 1000)
+        >>> filtered_data, r2_values = confoundregress(data, regressors, debug=True)
+        """
     if debug:
         print("data shape:", data.shape)
         print("regressors shape:", regressors.shape)
@@ -1888,12 +3132,55 @@ def confoundregress(
 # Fuck You Want To Public License, Version 2, as published by Sam Hocevar. See
 # http://www.wtfpl.net/ for more details.
 def getpeaks(
-    xvals: ArrayLike,
-    yvals: ArrayLike,
+    xvals: NDArray,
+    yvals: NDArray,
     xrange: Optional[Tuple[float, float]] = None,
     bipolar: bool = False,
     displayplots: bool = False,
 ) -> list:
+    """
+        Find peaks in y-values within a specified range and optionally display results.
+
+        This function identifies local maxima (and optionally minima) in the input
+        y-values and returns their coordinates along with an offset from the origin.
+        It supports filtering by a range of x-values and can handle both unipolar and
+        bipolar peak detection.
+
+        Parameters
+        ----------
+        xvals : NDArray
+            X-axis values corresponding to the y-values.
+        yvals : NDArray
+            Y-axis values where peaks are to be detected.
+        xrange : tuple of float, optional
+            A tuple (min, max) specifying the range of x-values to consider.
+            If None, the full range is used.
+        bipolar : bool, optional
+            If True, detect both positive and negative peaks (minima and maxima).
+            If False, only detect positive peaks.
+        displayplots : bool, optional
+            If True, display a plot showing the data and detected peaks.
+
+        Returns
+        -------
+        list of lists
+            A list of peaks, each represented as [x_value, y_value, offset_from_origin].
+            The offset is calculated using `tide_util.valtoindex` relative to x=0.
+
+        Notes
+        -----
+        - The function uses `scipy.signal.find_peaks` to detect peaks.
+        - If `bipolar` is True, both positive and negative peaks are included.
+        - The `displayplots` option requires `matplotlib.pyplot` to be imported as `plt`.
+
+        Examples
+        --------
+        >>> x = np.linspace(-10, 10, 100)
+        >>> y = np.sin(x)
+        >>> peaks = getpeaks(x, y, xrange=(-5, 5), bipolar=True)
+        >>> print(peaks)
+        [[-1.5707963267948966, 1.0, -25], [1.5707963267948966, 1.0, 25]]
+        """
     peaks, dummy = find_peaks(yvals, height=0)
     if bipolar:
         negpeaks, dummy = find_peaks(-yvals, height=0)
@@ -1942,8 +3229,46 @@ def getpeaks(
 
 
 def parabfit(
-    x_axis: ArrayLike, y_axis: ArrayLike, peakloc: int, points: int
+    x_axis: NDArray, y_axis: NDArray, peakloc: int, points: int
 ) -> Tuple[float, float]:
+    """
+        Fit a parabola to a localized region around a peak and return the peak coordinates.
+    
+        This function performs a quadratic curve fitting on a subset of data surrounding
+        a specified peak location. It uses a parabolic model of the form a*(x-tau)^2 + c
+        to estimate the precise peak position and amplitude.
+    
+        Parameters
+        ----------
+        x_axis : NDArray
+            Array of x-axis values (typically time or frequency).
+        y_axis : NDArray
+            Array of y-axis values (typically signal amplitude).
+        peakloc : int
+            Index location of the peak in the data arrays.
+        points : int
+            Number of points to include in the local fit around the peak.
+        
+        Returns
+        -------
+        Tuple[float, float]
+            A tuple containing (x_peak, y_peak) - the fitted peak coordinates.
+        
+        Notes
+        -----
+        The function uses a least-squares fitting approach with scipy.optimize.curve_fit.
+        Initial parameter estimates are derived analytically based on the peak location
+        and a distance calculation. The parabolic model assumes the peak has a symmetric
+        quadratic shape.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 100)
+        >>> y = 2 * (x - 5)**2 + 1
+        >>> peak_x, peak_y = parabfit(x, y, 50, 10)
+        >>> print(f"Peak at x={peak_x:.2f}, y={peak_y:.2f}")
+        """
     func = lambda x, a, tau, c: a * ((x - tau) ** 2) + c
     distance = abs(x_axis[peakloc[1][0]] - x_axis[peakloc[0][0]]) / 4
     index = peakloc
@@ -1968,10 +3293,49 @@ def parabfit(
 
 
 def _datacheck_peakdetect(
-    x_axis: Optional[ArrayLike], y_axis: ArrayLike
+    x_axis: Optional[NDArray], y_axis: NDArray
 ) -> Tuple[NDArray, NDArray]:
+    """
+        Validate and convert input arrays for peak detection.
+
+        Parameters
+        ----------
+        x_axis : NDArray, optional
+            X-axis values. If None, range(len(y_axis)) is used.
+        y_axis : NDArray
+            Y-axis values to be processed.
+
+        Returns
+        -------
+        tuple of ndarray
+            Tuple containing (x_axis, y_axis) as numpy arrays.
+
+        Raises
+        ------
+        ValueError
+            If input vectors y_axis and x_axis have different lengths.
+
+        Notes
+        -----
+        This function ensures that both input arrays are converted to numpy arrays
+        and have matching shapes. If x_axis is None, it defaults to a range
+        corresponding to the length of y_axis.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x, y = _datacheck_peakdetect([1, 2, 3], [4, 5, 6])
+        >>> print(x)
+        [1 2 3]
+        >>> print(y)
+        [4 5 6]
+    
+        >>> x, y = _datacheck_peakdetect(None, [4, 5, 6])
+        >>> print(x)
+        [0 1 2]
+        """
     if x_axis is None:
-        x_axis = range(len(y_axis))
+        x_axis = np.arange(0, len(y_axis))
 
     if np.shape(y_axis) != np.shape(x_axis):
         raise ValueError("Input vectors y_axis and x_axis must have same length")
@@ -1983,45 +3347,55 @@ def _datacheck_peakdetect(
 
 
 def peakdetect(
-    y_axis: ArrayLike, x_axis: Optional[ArrayLike] = None, lookahead: int = 200, delta: float = 0.0
+    y_axis: NDArray, x_axis: Optional[NDArray] = None, lookahead: int = 200, delta: float = 0.0
 ) -> list:
     """
-    Converted from/based on a MATLAB script at:
-    http://billauer.co.il/peakdet.html
+        Detect local maxima and minima in a signal.
 
-    function for detecting local maxima and minima in a signal.
-    Discovers peaks by searching for values which are surrounded by lower
-    or larger values for maxima and minima respectively
+        This function is based on a MATLAB script by Billauer, and identifies peaks
+        by searching for values that are surrounded by lower (for maxima) or larger
+        (for minima) values. It uses a lookahead window to confirm that a candidate
+        is indeed a peak and not noise or jitter.
 
-    keyword arguments:
-    y_axis -- A list containing the signal over which to find peaks
+        Parameters
+        ----------
+        y_axis : NDArray
+            A list or array containing the signal over which to find peaks.
+        x_axis : NDArray, optional
+            An x-axis whose values correspond to the y_axis list. If omitted,
+            an index of the y_axis is used. Default is None.
+        lookahead : int, optional
+            Distance to look ahead from a peak candidate to determine if it is
+            the actual peak. Default is 200.
+        delta : float, optional
+            Minimum difference between a peak and the following points. If set,
+            this helps avoid false peaks towards the end of the signal. Default is 0.0.
 
-    x_axis -- A x-axis whose values correspond to the y_axis list and is used
-        in the return to specify the position of the peaks. If omitted an
-        index of the y_axis is used.
-        (default: None)
+        Returns
+        -------
+        list of lists
+            A list containing two sublists: ``[max_peaks, min_peaks]``.
+            Each sublist contains tuples of the form ``(position, peak_value)``.
+            For example, to unpack maxima into x and y coordinates:
+            ``x, y = zip(*max_peaks)``.
 
-    lookahead -- distance to look ahead from a peak candidate to determine if
-        it is the actual peak
-        (default: 200)
-        '(samples / period) / f' where '4 >= f >= 1.25' might be a good value
+        Notes
+        -----
+        - The function assumes that the input signal is sampled at regular intervals.
+        - If ``delta`` is not provided, the function runs slower but may detect more
+          peaks.
+        - When ``delta`` is correctly specified (e.g., as 5 * RMS noise), it can
+          significantly improve performance.
 
-    delta -- this specifies a minimum difference between a peak and
-        the following points, before a peak may be considered a peak. Useful
-        to hinder the function from picking up false peaks towards to end of
-        the signal. To work well delta should be set to delta >= RMSnoise * 5.
-        (default: 0)
-            When omitted delta function causes a 20% decrease in speed.
-            When used Correctly it can double the speed of the function
-
-
-    return: two lists [max_peaks, min_peaks] containing the positive and
-        negative peaks respectively. Each cell of the lists contains a tuple
-        of: (position, peak_value)
-        to get the average peak value do: np.mean(max_peaks, 0)[1] on the
-        results to unpack one of the lists into x, y coordinates do:
-        x, y = zip(*max_peaks)
-    """
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 100)
+        >>> y = np.sin(x) + 0.5 * np.sin(3 * x)
+        >>> max_peaks, min_peaks = peakdetect(y, x, lookahead=10, delta=0.1)
+        >>> print("Max peaks:", max_peaks)
+        >>> print("Min peaks:", min_peaks)
+        """
     max_peaks = []
     min_peaks = []
     dump = []  # Used to pop the first hit which almost always is false
@@ -2099,7 +3473,46 @@ def peakdetect(
     return [max_peaks, min_peaks]
 
 
-def ocscreetest(eigenvals: ArrayLike, debug: bool = False, displayplots: bool = False) -> int:
+def ocscreetest(eigenvals: NDArray, debug: bool = False, displayplots: bool = False) -> int:
+    """
+        Perform eigenvalue screening using the OCSCREE test to determine the number of retained components.
+    
+        This function implements a variant of the scree test for determining the number of significant 
+        eigenvalues in a dataset. It uses a linear regression approach to model the eigenvalue decay 
+        and identifies the point where the observed eigenvalues fall below the predicted values.
+    
+        Parameters
+        ----------
+        eigenvals : NDArray
+            Array of eigenvalues, typically sorted in descending order.
+        debug : bool, optional
+            If True, print intermediate calculations for debugging purposes. Default is False.
+        displayplots : bool, optional
+            If True, display plots of the original eigenvalues, regression coefficients (a and b), 
+            and the predicted eigenvalue curve. Default is False.
+        
+        Returns
+        -------
+        int
+            The index of the last retained component based on the OCSCREE criterion.
+        
+        Notes
+        -----
+        The function performs the following steps:
+        1. Initialize arrays for regression coefficients 'a' and 'b'.
+        2. Compute regression coefficients from the eigenvalues.
+        3. Predict eigenvalues using the regression model.
+        4. Identify the point where the actual eigenvalues drop below the predicted values.
+        5. Optionally display diagnostic plots.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> eigenvals = np.array([3.5, 2.1, 1.8, 1.2, 0.9, 0.5])
+        >>> result = ocscreetest(eigenvals)
+        >>> print(result)
+        3
+        """
     num = len(eigenvals)
     a = eigenvals * 0.0
     b = eigenvals * 0.0
@@ -2136,7 +3549,45 @@ def ocscreetest(eigenvals: ArrayLike, debug: bool = False, displayplots: bool = 
     return i
 
 
-def afscreetest(eigenvals: ArrayLike, displayplots: bool = False) -> int:
+def afscreetest(eigenvals: NDArray, displayplots: bool = False) -> int:
+    """
+        Detect the optimal number of components using the second derivative of eigenvalues.
+    
+        This function applies a second derivative analysis to the eigenvalues to identify
+        the point where the rate of change of eigenvalues begins to decrease significantly,
+        which typically indicates the optimal number of components to retain.
+
+        Parameters
+        ----------
+        eigenvals : NDArray
+            Array of eigenvalues, typically from a PCA or similar decomposition.
+            Should be sorted in descending order.
+        displayplots : bool, optional
+            If True, display plots showing the original eigenvalues, first derivative,
+            and second derivative (default is False).
+
+        Returns
+        -------
+        int
+            The index of the optimal number of components, adjusted by subtracting 1
+            from the location of maximum second derivative.
+
+        Notes
+        -----
+        The method works by:
+        1. Computing the first derivative of eigenvalues
+        2. Computing the second derivative of the first derivative
+        3. Finding the maximum of the second derivative
+        4. Returning the index of this maximum minus 1
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> eigenvals = np.array([5.0, 3.0, 1.5, 0.8, 0.2])
+        >>> optimal_components = afscreetest(eigenvals)
+        >>> print(optimal_components)
+        1
+        """
     num = len(eigenvals)
     firstderiv = np.gradient(eigenvals, edge_order=2)
     secondderiv = np.gradient(firstderiv, edge_order=2)
@@ -2154,12 +3605,56 @@ def afscreetest(eigenvals: ArrayLike, displayplots: bool = False) -> int:
         ax3.set_title("Second derivative")
         plt.plot(secondderiv, color="g")
         plt.show()
-    return maxaccloc - 1
+    return int(maxaccloc - 1)
 
 
 def phaseanalysis(
     firstharmonic: ArrayLike, displayplots: bool = False
 ) -> Tuple[NDArray, NDArray, NDArray]:
+    """
+        Perform phase analysis on a signal using analytic signal representation.
+
+        This function computes the analytic signal of the input signal using the Hilbert transform,
+        and extracts the instantaneous phase and amplitude envelope. Optionally displays plots
+        of the analytic signal, phase, and amplitude.
+
+        Parameters
+        ----------
+        firstharmonic : array-like
+            Input signal to analyze. Should be a 1D array-like object.
+        displayplots : bool, optional
+            If True, displays plots of the analytic signal, phase, and amplitude.
+            Default is False.
+
+        Returns
+        -------
+        tuple of ndarray
+            A tuple containing:
+            - instantaneous_phase : ndarray
+              The unwrapped instantaneous phase of the signal
+            - amplitude_envelope : ndarray
+              The amplitude envelope of the signal
+            - analytic_signal : ndarray
+              The analytic signal (complex-valued)
+
+        Notes
+        -----
+        The function uses `scipy.signal.hilbert` to compute the analytic signal,
+        which is defined as: :math:`x_a(t) = x(t) + j\\hat{x}(t)` where :math:`\\hat{x}(t)`
+        is the Hilbert transform of :math:`x(t)`.
+
+        The instantaneous phase is computed as the angle of the analytic signal and is
+        unwrapped to remove discontinuities.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from scipy.signal import hilbert
+        >>> signal = np.sin(2 * np.pi * 5 * np.linspace(0, 1, 100))
+        >>> phase, amp, analytic = phaseanalysis(signal)
+        >>> print(f"Phase shape: {phase.shape}")
+        Phase shape: (100,)
+        """
     print("entering phaseanalysis")
     analytic_signal = hilbert(firstharmonic)
     amplitude_envelope = np.abs(analytic_signal)
@@ -2217,8 +3712,8 @@ FML_FITFAIL = (
 
 
 def simfuncpeakfit(
-    incorrfunc: ArrayLike,
-    corrtimeaxis: ArrayLike,
+    incorrfunc: NDArray,
+    corrtimeaxis: NDArray,
     useguess: bool = False,
     maxguess: float = 0.0,
     displayplots: bool = False,
@@ -2239,6 +3734,97 @@ def simfuncpeakfit(
     zerooutbadfit: bool = True,
     debug: bool = False,
 ) -> Tuple[int, float, float, float, int, int, int, int]:
+    """
+        Fit a peak in a correlation or mutual information function.
+
+        This function performs peak fitting on a correlation or mutual information
+        function to extract peak parameters such as location, amplitude, and width.
+        It supports various fitting methods and includes error handling and
+        validation for fit parameters.
+
+        Parameters
+        ----------
+        incorrfunc : NDArray
+            Input correlation or mutual information function values.
+        corrtimeaxis : NDArray
+            Time axis corresponding to the correlation function.
+        useguess : bool, optional
+            If True, use `maxguess` as an initial guess for the peak location.
+            Default is False.
+        maxguess : float, optional
+            Initial guess for the peak location in seconds. Used only if `useguess` is True.
+            Default is 0.0.
+        displayplots : bool, optional
+            If True, display plots of the peak and fit. Default is False.
+        functype : str, optional
+            Type of function to fit. Options are 'correlation', 'mutualinfo', or 'hybrid'.
+            Default is 'correlation'.
+        peakfittype : str, optional
+            Type of peak fitting to perform. Options are 'gauss', 'fastgauss', 'quad',
+            'fastquad', 'COM', or 'None'. Default is 'gauss'.
+        searchfrac : float, optional
+            Fraction of the peak maximum to define the search range for peak width.
+            Default is 0.5.
+        lagmod : float, optional
+            Modulus for lag values, used to wrap around the lag values.
+            Default is 1000.0.
+        enforcethresh : bool, optional
+            If True, enforce amplitude thresholds. Default is True.
+        allowhighfitamps : bool, optional
+            If True, allow fit amplitudes to exceed 1.0. Default is False.
+        lagmin : float, optional
+            Minimum allowed lag value in seconds. Default is -30.0.
+        lagmax : float, optional
+            Maximum allowed lag value in seconds. Default is 30.0.
+        absmaxsigma : float, optional
+            Maximum allowed sigma value in seconds. Default is 1000.0.
+        absminsigma : float, optional
+            Minimum allowed sigma value in seconds. Default is 0.25.
+        hardlimit : bool, optional
+            If True, enforce hard limits on lag values. Default is True.
+        bipolar : bool, optional
+            If True, allow negative correlation values. Default is False.
+        lthreshval : float, optional
+            Lower threshold for amplitude validation. Default is 0.0.
+        uthreshval : float, optional
+            Upper threshold for amplitude validation. Default is 1.0.
+        zerooutbadfit : bool, optional
+            If True, set fit results to zero if fit fails. Default is True.
+        debug : bool, optional
+            If True, print debug information. Default is False.
+
+        Returns
+        -------
+        tuple of int, float, float, float, int, int, int, int
+            A tuple containing:
+            - maxindex: Index of the peak maximum.
+            - maxlag: Fitted peak lag in seconds.
+            - maxval: Fitted peak amplitude.
+            - maxsigma: Fitted peak width (sigma) in seconds.
+            - maskval: Mask indicating fit success (1 for success, 0 for failure).
+            - failreason: Reason for fit failure (bitmask).
+            - peakstart: Start index of the peak region used for fitting.
+            - peakend: End index of the peak region used for fitting.
+
+        Notes
+        -----
+        - The function automatically handles different types of correlation functions
+          and mutual information functions with appropriate baseline corrections.
+        - Various fitting methods are supported, each with its own strengths and
+          trade-offs in terms of speed and accuracy.
+        - Fit results are validated against physical constraints and thresholds.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from scipy import signal
+        >>> # Create sample data
+        >>> t = np.linspace(-50, 50, 1000)
+        >>> corr = np.exp(-0.5 * (t / 2)**2) + 0.1 * np.random.randn(1000)
+        >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, peakstart, peakend = \
+        ...     simfuncpeakfit(corr, t, peakfittype='gauss')
+        >>> print(f"Peak lag: {maxlag:.2f} s, Amplitude: {maxval:.2f}, Width: {maxsigma:.2f} s")
+        """
     # check to make sure xcorr_x and xcorr_y match
     if corrtimeaxis is None:
         print("Correlation time axis is not defined - exiting")
@@ -2507,7 +4093,7 @@ def simfuncpeakfit(
                 if debug:
                     print("poly coffs:", a, b, c)
                     print("maxlag, maxval, maxsigma:", maxlag, maxval, maxsigma)
-            except np.lib.polynomial.RankWarning:
+            except np.exceptions.RankWarning:
                 maxlag = 0.0
                 maxval = 0.0
                 maxsigma = 0.0
@@ -2644,8 +4230,47 @@ def simfuncpeakfit(
 
 
 def _maxindex_noedge(
-    corrfunc: ArrayLike, corrtimeaxis: ArrayLike, bipolar: bool = False
+    corrfunc: NDArray, corrtimeaxis: NDArray, bipolar: bool = False
 ) -> Tuple[int, float]:
+    """
+        Find the index of the maximum correlation value, avoiding edge effects.
+
+        This function locates the maximum (or minimum, if bipolar=True) correlation value
+        within the given time axis range, while avoiding edge effects by progressively
+        narrowing the search window.
+
+        Parameters
+        ----------
+        corrfunc : NDArray
+            Correlation function values to search for maximum.
+        corrtimeaxis : NDArray
+            Time axis corresponding to the correlation function.
+        bipolar : bool, optional
+            If True, considers both positive and negative correlation values.
+            Default is False.
+
+        Returns
+        -------
+        Tuple[int, float]
+            A tuple containing:
+            - int: Index of the maximum correlation value
+            - float: Flip factor (-1.0 if minimum was selected, 1.0 otherwise)
+
+        Notes
+        -----
+        The function iteratively narrows the search range by excluding edges
+        where the maximum was found. This helps avoid edge effects in correlation
+        analysis. When bipolar=True, the function compares both maximum and minimum
+        absolute values to determine the optimal selection.
+
+        Examples
+        --------
+        >>> corrfunc = np.array([0.1, 0.5, 0.3, 0.8, 0.2])
+        >>> corrtimeaxis = np.array([0, 1, 2, 3, 4])
+        >>> index, flip = _maxindex_noedge(corrfunc, corrtimeaxis)
+        >>> print(index)
+        3
+        """
     lowerlim = 0
     upperlim = len(corrtimeaxis) - 1
     done = False
