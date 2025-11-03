@@ -126,7 +126,7 @@ def printthresholds(pcts: ArrayLike, thepercentiles: ArrayLike, labeltext: str) 
 def fitgausspdf(
     thehist: Tuple,
     histlen: int,
-    thedata: ArrayLike,
+    thedata: NDArray,
     displayplots: bool = False,
     nozero: bool = False,
     debug: bool = False,
@@ -214,7 +214,7 @@ def fitgausspdf(
 def fitjsbpdf(
     thehist: Tuple,
     histlen: int,
-    thedata: ArrayLike,
+    thedata: NDArray,
     displayplots: bool = False,
     nozero: bool = False,
     debug: bool = False,
@@ -297,7 +297,7 @@ def getjohnsonppf(percentile: float, params: ArrayLike, zeroterm: float) -> None
 
 
 def sigFromDistributionData(
-    vallist: ArrayLike,
+    vallist: NDArray,
     histlen: int,
     thepercentiles: ArrayLike,
     similaritymetric: str = "correlation",
@@ -623,7 +623,7 @@ def fisher(r: float) -> float:
     return 0.5 * np.log((1 + r) / (1 - r))
 
 
-def permute_phase(time_series: ArrayLike) -> NDArray:
+def permute_phase(time_series: NDArray) -> NDArray:
     """Generate phase-randomized surrogate time series.
 
     Creates a surrogate time series with the same power spectrum as the input
@@ -653,7 +653,7 @@ def permute_phase(time_series: ArrayLike) -> NDArray:
     return permuted_time_series
 
 
-def skewnessstats(timecourse: ArrayLike) -> Tuple[float, float, float]:
+def skewnessstats(timecourse: NDArray) -> Tuple[float, float, float]:
     """Calculate skewness and statistical test for timecourse.
 
     Parameters
@@ -670,7 +670,7 @@ def skewnessstats(timecourse: ArrayLike) -> Tuple[float, float, float]:
     return skew(timecourse), testres[0], testres[1]
 
 
-def kurtosisstats(timecourse: ArrayLike) -> Tuple[float, float, float]:
+def kurtosisstats(timecourse: NDArray) -> Tuple[float, float, float]:
     """Calculate kurtosis and statistical test for timecourse.
 
     Parameters
@@ -804,7 +804,7 @@ def fast_ICC_rep_anova(
 
 # --------------------------- histogram functions -------------------------------------------------
 def gethistprops(
-    indata: ArrayLike,
+    indata: NDArray,
     histlen: int,
     refine: bool = False,
     therange: Optional[Tuple[float, float]] = None,
@@ -953,7 +953,7 @@ def prochistogram(
     return peakheight, peakloc, peakwidth, centerofmass
 
 
-def percentilefromloc(indata: ArrayLike, peakloc: float, nozero: bool = False) -> float:
+def percentilefromloc(indata: NDArray, peakloc: float, nozero: bool = False) -> float:
     """Calculate the percentile corresponding to a given value location.
 
     Parameters
@@ -980,7 +980,7 @@ def percentilefromloc(indata: ArrayLike, peakloc: float, nozero: bool = False) -
 
 
 def makehistogram(
-    indata: ArrayLike,
+    indata: NDArray,
     histlen: Optional[int],
     binsize: Optional[float] = None,
     therange: Optional[Tuple[float, float]] = None,
@@ -1049,7 +1049,7 @@ def makehistogram(
     return thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile
 
 
-def echoloc(indata: ArrayLike, histlen: int, startoffset: float = 5.0) -> Tuple[float, float]:
+def echoloc(indata: NDArray, histlen: int, startoffset: float = 5.0) -> Tuple[float, float]:
     """Detect and analyze echo peak in histogram data.
 
     Identifies a secondary (echo) peak in histogram data that occurs after
@@ -1098,7 +1098,7 @@ def echoloc(indata: ArrayLike, histlen: int, startoffset: float = 5.0) -> Tuple[
 
 
 def makeandsavehistogram(
-    indata: ArrayLike,
+    indata: NDArray,
     histlen: int,
     endtrim: int,
     outname: str,
@@ -1257,7 +1257,7 @@ def symmetrize(a: NDArray, antisymmetric: bool = False, zerodiagonal: bool = Fal
 
 
 def makepmask(
-    rvals: ArrayLike, pval: float, sighistfit: ArrayLike, onesided: bool = True
+    rvals: NDArray, pval: float, sighistfit: NDArray, onesided: bool = True
 ) -> NDArray:
     """Create significance mask from p-value threshold and distribution fit.
 
@@ -1290,7 +1290,7 @@ def makepmask(
 
 
 # Find the image intensity value which thefrac of the non-zero voxels in the image exceed
-def getfracval(datamat: ArrayLike, thefrac: float, nozero: bool = False) -> float:
+def getfracval(datamat: NDArray, thefrac: float, nozero: bool = False) -> float:
     """Get data value at a specific fractional position in sorted data.
 
     Parameters
@@ -1311,7 +1311,7 @@ def getfracval(datamat: ArrayLike, thefrac: float, nozero: bool = False) -> floa
 
 
 def getfracvals(
-    datamat: ArrayLike, thefracs: ArrayLike, nozero: bool = False, debug: bool = False
+    datamat: NDArray, thefracs: ArrayLike, nozero: bool = False, debug: bool = False
 ) -> list:
     """Get data values at multiple fractional positions in sorted data.
 
@@ -1385,7 +1385,7 @@ def getfracvalsfromfit(histfit: ArrayLike, thefracs: ArrayLike) -> NDArray:
 
 
 def makemask(
-    image: ArrayLike,
+    image: NDArray,
     threshpct: float = 25.0,
     verbose: bool = False,
     nozero: bool = False,
@@ -1430,7 +1430,7 @@ def makemask(
     return themask
 
 
-def getmasksize(themask: ArrayLike) -> int:
+def getmasksize(themask: NDArray) -> int:
     """
 
     Parameters
