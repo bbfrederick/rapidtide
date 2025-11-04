@@ -18,8 +18,10 @@
 #
 import argparse
 import sys
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 from statsmodels.robust import mad
 
 import rapidtide.io as tide_io
@@ -28,43 +30,7 @@ import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
 
-def summarizevoxels(thevoxels, method="mean"):
-    theshape = thevoxels.shape
-    if len(theshape) > 1:
-        numtimepoints = theshape[1]
-    else:
-        numtimepoints = 1
-
-    if method == "CoV":
-        if numtimepoints > 1:
-            regionsummary = 100.0 * np.nan_to_num(
-                np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
-            )
-        else:
-            regionsummary = 100.0 * np.nan_to_num(np.std(thevoxels) / np.mean(thevoxels))
-    else:
-        if method == "mean":
-            themethod = np.mean
-        elif method == "sum":
-            themethod = np.sum
-        elif method == "median":
-            themethod = np.median
-        elif method == "std":
-            themethod = np.std
-        elif method == "MAD":
-            themethod = mad
-        else:
-            print(f"illegal summary method {method} in summarizevoxels")
-            sys.exit()
-
-        if numtimepoints > 1:
-            regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
-        else:
-            regionsummary = np.nan_to_num(themethod(thevoxels))
-    return regionsummary
-
-
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="atlasaverage",
@@ -202,8 +168,44 @@ def _get_parser():
 
     return parser
 
+def summarizevoxels(thevoxels: NDArray, method: str = "mean") -> float:
+    theshape = thevoxels.shape
+    if len(theshape) > 1:
+        numtimepoints = theshape[1]
+    else:
+        numtimepoints = 1
 
-def atlasaverage(args):
+    if method == "CoV":
+        if numtimepoints > 1:
+            regionsummary = 100.0 * np.nan_to_num(
+                np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
+            )
+        else:
+            regionsummary = 100.0 * np.nan_to_num(np.std(thevoxels) / np.mean(thevoxels))
+    else:
+        if method == "mean":
+            themethod = np.mean
+        elif method == "sum":
+            themethod = np.sum
+        elif method == "median":
+            themethod = np.median
+        elif method == "std":
+            themethod = np.std
+        elif method == "MAD":
+            themethod = mad
+        else:
+            print(f"illegal summary method {method} in summarizevoxels")
+            sys.exit()
+
+        if numtimepoints > 1:
+            regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
+        else:
+            regionsummary = np.nan_to_num(themethod(thevoxels))
+    return regionsummary
+
+
+
+def atlasaverage(args: Any) -> None:
     if args.normmethod == "none":
         print("will not normalize timecourses")
     elif args.normmethod == "pct":
@@ -392,7 +394,7 @@ def atlasaverage(args):
         thereglabels = []
         thevals = []
         thepercentiles = []
-        thesizes = []
+        theregsizes = []
         thefracs = np.linspace(0.0, 1.0, args.numpercentiles + 2, endpoint=True).tolist()
         numsubregions = len(thefracs) - 1
         segmentedatlasvoxels = inputvoxels * 0.0
@@ -440,7 +442,7 @@ def atlasaverage(args):
                 ]
                 outputvoxels[np.where(templatevoxels == theregion)] = regionval
                 thevals.append(str(regionval))
-                thesizes.append(str(regionsizes))
+                theregsizes.append(str(regionsizes))
                 thepercentiles.append(regionpercentiles)
             else:
                 if args.debug:
@@ -476,12 +478,12 @@ def atlasaverage(args):
             )
         if args.headerline:
             tide_io.writevec(
-                [",".join(thereglabels), ",".join(thevals)],
+                np.array([",".join(thereglabels), ",".join(thevals)]),
                 f"{args.outputroot}_regionsummaries.csv",
             )
         else:
             tide_io.writevec(
-                [",".join(thevals)],
+                np.array([",".join(thevals)]),
                 f"{args.outputroot}_regionsummaries.csv",
             )
 
@@ -489,8 +491,8 @@ def atlasaverage(args):
         pctstrings = [f"{num:.0f}" for num in (np.array(thefracs) * 100.0).tolist()]
         outlines.append("Region\tVoxels\t" + "pct-" + "\tpct-".join(pctstrings))
         for idx, region in enumerate(thereglabels):
-            outlines.append(region + "\t" + thesizes[idx] + "\t" + "\t".join(thepercentiles[idx]))
+            outlines.append(region + "\t" + theregsizes[idx] + "\t" + "\t".join(thepercentiles[idx]))
             tide_io.writevec(
-                outlines,
+                np.array(outlines),
                 f"{args.outputroot}_regionpercentiles.tsv",
             )

@@ -18,8 +18,11 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr
@@ -29,7 +32,7 @@ import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for showarbcorr
     """
@@ -240,13 +243,13 @@ def _get_parser():
     return parser
 
 
-def printthresholds(pcts, thepercentiles, labeltext):
+def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
     print(labeltext)
     for i in range(0, len(pcts)):
         print("\tp <", "{:.3f}".format(1.0 - thepercentiles[i]), ": ", pcts[i])
 
 
-def showarbcorr(args):
+def showarbcorr(args: Any) -> None:
     # set some default values
     absmaxsigma = 1000.0
     absminsigma = 0.25

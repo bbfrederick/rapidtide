@@ -18,16 +18,19 @@
 #
 import argparse
 import copy
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import nibabel as nib
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for diffrois
     """
@@ -77,7 +80,7 @@ def _get_parser():
     return parser
 
 
-def diffrois(args):
+def diffrois(args: Any) -> None:
     df = pd.read_csv(args.datafile)
 
     theregions = np.array(df.columns[1:].values)

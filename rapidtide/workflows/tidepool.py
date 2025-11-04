@@ -23,12 +23,15 @@ A simple GUI for looking at the results of a rapidtide analysis
 import argparse
 import os
 import sys
+from argparse import Namespace
 from functools import partial
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from nibabel.affines import apply_affine
+from numpy.typing import NDArray
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 import rapidtide.util as tide_util
@@ -54,7 +57,7 @@ print(f"using {pyqtbinding=}")
 os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
 
-def _get_parser():
+def _get_parser() -> Any:
     parser = argparse.ArgumentParser(
         prog="tidepool",
         description="A program to display the results of a time delay analysis",
@@ -138,7 +141,7 @@ def _get_parser():
     return parser
 
 
-def keyPressed(evt):
+def keyPressed(evt: Any) -> None:
     global currentdataset, thesubjects, whichsubject
 
     numelements = len(thesubjects)
@@ -168,25 +171,25 @@ def keyPressed(evt):
 class KeyPressWindow(QtWidgets.QMainWindow):
     sigKeyPress = QtCore.pyqtSignal(object)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-    def keyPressEvent(self, ev):
+    def keyPressEvent(self, ev: Any) -> None:
         self.sigKeyPress.emit(ev)
 
 
 def addDataset(
-    thisdatafileroot,
-    anatname=None,
-    geommaskname=None,
-    userise=False,
-    usecorrout=True,
-    useatlas=False,
-    forcetr=False,
-    forceoffset=False,
-    offsettime=0.0,
-    ignoredimmatch=False,
-):
+    thisdatafileroot: Any,
+    anatname: Optional[Any] = None,
+    geommaskname: Optional[Any] = None,
+    userise: bool = False,
+    usecorrout: bool = True,
+    useatlas: bool = False,
+    forcetr: bool = False,
+    forceoffset: bool = False,
+    offsettime: float = 0.0,
+    ignoredimmatch: bool = False,
+) -> None:
     global currentdataset, thesubjects, whichsubject, datafileroots
     global verbosity
 
@@ -221,7 +224,7 @@ def addDataset(
         print(f"subject {idx}: {subject.fileroot}")
 
 
-def updateFileMenu():
+def updateFileMenu() -> None:
     global thesubjects, whichsubject
     global fileMenu, sel_open
     global sel_files
@@ -254,7 +257,7 @@ def updateFileMenu():
             fileMenu.addAction(sel_files[-1])
 
 
-def datasetPicker():
+def datasetPicker() -> None:
     global currentdataset, thesubjects, whichsubject, datafileroots
     global ui, win, defaultdict, overlagGraphicsViews
     global verbosity
@@ -287,7 +290,7 @@ def datasetPicker():
     updateFileMenu()
 
 
-def selectDataset(thesubject):
+def selectDataset(thesubject: Any) -> None:
     global currentdataset, thesubjects, whichsubject, datafileroots
     global ui, win, defaultdict, overlagGraphicsViews
     global verbosity, uiinitialized
@@ -319,28 +322,28 @@ class xyztlocation(QtWidgets.QWidget):
 
     def __init__(
         self,
-        xpos,
-        ypos,
-        zpos,
-        tpos,
-        xdim,
-        ydim,
-        zdim,
-        tdim,
-        toffset,
-        tr,
-        affine,
-        XPosSpinBox=None,
-        YPosSpinBox=None,
-        ZPosSpinBox=None,
-        TPosSpinBox=None,
-        XCoordSpinBox=None,
-        YCoordSpinBox=None,
-        ZCoordSpinBox=None,
-        TCoordSpinBox=None,
-        TimeSlider=None,
-        runMovieButton=None,
-    ):
+        xpos: Any,
+        ypos: Any,
+        zpos: Any,
+        tpos: Any,
+        xdim: Any,
+        ydim: Any,
+        zdim: Any,
+        tdim: Any,
+        toffset: Any,
+        tr: Any,
+        affine: Any,
+        XPosSpinBox: Optional[Any] = None,
+        YPosSpinBox: Optional[Any] = None,
+        ZPosSpinBox: Optional[Any] = None,
+        TPosSpinBox: Optional[Any] = None,
+        XCoordSpinBox: Optional[Any] = None,
+        YCoordSpinBox: Optional[Any] = None,
+        ZCoordSpinBox: Optional[Any] = None,
+        TCoordSpinBox: Optional[Any] = None,
+        TimeSlider: Optional[Any] = None,
+        runMovieButton: Optional[Any] = None,
+    ) -> None:
         QtWidgets.QWidget.__init__(self)
 
         self.XPosSpinBox = XPosSpinBox
@@ -366,7 +369,7 @@ class xyztlocation(QtWidgets.QWidget):
         self.movierunning = False
         self.movieTimer.timeout.connect(self.updateMovie)
 
-    def setXYZInfo(self, xdim, ydim, zdim, affine):
+    def setXYZInfo(self, xdim: Any, ydim: Any, zdim: Any, affine: Any) -> None:
         self.xdim = xdim
         self.ydim = ydim
         self.zdim = zdim
@@ -409,7 +412,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.zcoord,
         )
 
-    def setTInfo(self, tdim, tr, toffset):
+    def setTInfo(self, tdim: Any, tr: Any, toffset: Any) -> None:
         self.tdim = tdim
         self.toffset = toffset
         self.tr = tr
@@ -430,7 +433,7 @@ class xyztlocation(QtWidgets.QWidget):
         self.setupTimeSlider(self.TimeSlider, self.getTimeSlider, 0, self.tdim - 1, self.tpos)
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
 
-    def setupRunMovieButton(self, thebutton, thehandler):
+    def setupRunMovieButton(self, thebutton: Any, thehandler: Any) -> None:
         global verbosity
 
         if thebutton is not None:
@@ -439,13 +442,23 @@ class xyztlocation(QtWidgets.QWidget):
             thebutton.setText("Start Movie")
             thebutton.clicked.connect(thehandler)
 
-    def setupTimeSlider(self, theslider, thehandler, minval, maxval, currentval):
+    def setupTimeSlider(
+        self, theslider: Any, thehandler: Any, minval: Any, maxval: Any, currentval: Any
+    ) -> None:
         if theslider is not None:
             theslider.setRange(minval, maxval)
             theslider.setSingleStep(1)
             theslider.valueChanged.connect(thehandler)
 
-    def setupSpinBox(self, thespinbox, thehandler, minval, maxval, stepsize, currentval):
+    def setupSpinBox(
+        self,
+        thespinbox: Any,
+        thehandler: Any,
+        minval: Any,
+        maxval: Any,
+        stepsize: Any,
+        currentval: Any,
+    ) -> None:
         if thespinbox is not None:
             thespinbox.setRange(minval, maxval)
             thespinbox.setSingleStep(stepsize)
@@ -454,7 +467,7 @@ class xyztlocation(QtWidgets.QWidget):
             thespinbox.setKeyboardTracking(False)
             thespinbox.valueChanged.connect(thehandler)
 
-    def updateXYZValues(self, emitsignal=True):
+    def updateXYZValues(self, emitsignal: bool = True) -> None:
         # print('resetting XYZ spinbox values')
         if self.XPosSpinBox is not None:
             self.XPosSpinBox.setValue(self.xpos)
@@ -472,7 +485,7 @@ class xyztlocation(QtWidgets.QWidget):
         if emitsignal:
             self.updatedXYZ.emit()
 
-    def updateTValues(self):
+    def updateTValues(self) -> None:
         # print('resetting T spinbox values')
         if self.TPosSpinBox is not None:
             self.TPosSpinBox.setValue(self.tpos)
@@ -490,34 +503,34 @@ class xyztlocation(QtWidgets.QWidget):
         # print('done resetting T spinbox values')
         self.updatedT.emit()
 
-    def real2tr(self, time):
+    def real2tr(self, time: Any) -> None:
         return int(np.round((time - self.toffset) / self.tr, 0))
 
-    def tr2real(self, tpos):
+    def tr2real(self, tpos: Any) -> None:
         return self.toffset + self.tr * tpos
 
-    def real2vox(self, xcoord, ycoord, zcoord):
+    def real2vox(self, xcoord: Any, ycoord: Any, zcoord: Any) -> None:
         x, y, z = apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         return int(np.round(x, 0)), int(np.round(y, 0)), int(np.round(z, 0))
 
-    def vox2real(self, xpos, ypos, zpos):
+    def vox2real(self, xpos: Any, ypos: Any, zpos: Any) -> None:
         return apply_affine(self.affine, [xpos, ypos, zpos])
 
-    def setXYZpos(self, xpos, ypos, zpos, emitsignal=True):
+    def setXYZpos(self, xpos: Any, ypos: Any, zpos: Any, emitsignal: bool = True) -> None:
         self.xpos = xpos
         self.ypos = ypos
         self.zpos = zpos
         self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
         self.updateXYZValues(emitsignal=emitsignal)
 
-    def setXYZcoord(self, xcoord, ycoord, zcoord, emitsignal=True):
+    def setXYZcoord(self, xcoord: Any, ycoord: Any, zcoord: Any, emitsignal: bool = True) -> None:
         self.xcoord = xcoord
         self.ycoord = ycoord
         self.zcoord = zcoord
         self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
         self.updateXYZValues(emitsignal=emitsignal)
 
-    def setTpos(self, tpos):
+    def setTpos(self, tpos: Any) -> None:
         if tpos > self.tdim:
             tpos = self.tdim
         if self.tpos != tpos:
@@ -525,13 +538,13 @@ class xyztlocation(QtWidgets.QWidget):
             self.tcoord = self.tr2real(self.tpos)
             self.updateTValues()
 
-    def setTcoord(self, tcoord):
+    def setTcoord(self, tcoord: Any) -> None:
         if self.tcoord != tcoord:
             self.tcoord = tcoord
             self.tpos = self.real2tr(self.tcoord)
             self.updateTValues()
 
-    def getXpos(self, event):
+    def getXpos(self, event: Any) -> None:
         # print('entering getXpos')
         newx = int(self.XPosSpinBox.value())
         if self.xpos != newx:
@@ -539,7 +552,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues(emitsignal=True)
 
-    def getYpos(self, event):
+    def getYpos(self, event: Any) -> None:
         # print('entering getYpos')
         newy = int(self.YPosSpinBox.value())
         if self.ypos != newy:
@@ -547,7 +560,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues(emitsignal=True)
 
-    def getZpos(self, event):
+    def getZpos(self, event: Any) -> None:
         # print('entering getZpos')
         newz = int(self.ZPosSpinBox.value())
         if self.zpos != newz:
@@ -555,7 +568,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.xcoord, self.ycoord, self.zcoord = self.vox2real(self.xpos, self.ypos, self.zpos)
             self.updateXYZValues(emitsignal=True)
 
-    def getTpos(self, event):
+    def getTpos(self, event: Any) -> None:
         # print('entering getTpos')
         newt = int(self.TPosSpinBox.value())
         if self.tpos != newt:
@@ -566,59 +579,59 @@ class xyztlocation(QtWidgets.QWidget):
                 self.movieTimer.start(int(self.tpos))
             self.updateTValues()
 
-    def getXcoord(self, event):
+    def getXcoord(self, event: Any) -> None:
         newxcoord = self.XCoordSpinBox.value()
         if self.xcoord != newxcoord:
             self.xcoord = newxcoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues(emitsignal=True)
 
-    def getYcoord(self, event):
+    def getYcoord(self, event: Any) -> None:
         newycoord = self.YCoordSpinBox.value()
         if self.ycoord != newycoord:
             self.ycoord = newycoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues(emitsignal=True)
 
-    def getZcoord(self, event):
+    def getZcoord(self, event: Any) -> None:
         newzcoord = self.ZCoordSpinBox.value()
         if self.zcoord != newzcoord:
             self.zcoord = newzcoord
             self.xpos, self.ypos, self.zpos = self.real2vox(self.xcoord, self.ycoord, self.zcoord)
             self.updateXYZValues(emitsignal=True)
 
-    def getTcoord(self, event):
+    def getTcoord(self, event: Any) -> None:
         newtcoord = self.TCoordSpinBox.value()
         if self.tcoord != newtcoord:
             self.tcoord = newtcoord
             self.tpos = self.real2tr(self.tcoord)
             self.updateTValues()
 
-    def getTimeSlider(self):
+    def getTimeSlider(self) -> None:
         self.tpos = self.TimeSlider.value()
         self.tcoord = self.tr2real(self.tpos)
         self.updateTValues()
 
-    def updateMovie(self):
+    def updateMovie(self) -> None:
         # self.tpos = (self.tpos + 1) % self.tdim
         self.setTpos((self.tpos + 1) % self.tdim)
         self.updateTValues()
         if verbosity > 1:
             print(f"Tpos, t: {self.tpos}, {self.TCoordSpinBox.value()}")
 
-    def stopMovie(self):
+    def stopMovie(self) -> None:
         self.movierunning = False
         self.movieTimer.stop()
         if self.runMovieButton is not None:
             self.runMovieButton.setText("Start Movie")
 
-    def startMovie(self):
+    def startMovie(self) -> None:
         self.movierunning = True
         if self.runMovieButton is not None:
             self.runMovieButton.setText("Stop Movie")
         self.movieTimer.start(int(self.frametime))
 
-    def runMovieToggle(self, event):
+    def runMovieToggle(self, event: Any) -> None:
         if verbosity > 1:
             print("entering runMovieToggle")
         if self.movierunning:
@@ -632,7 +645,7 @@ class xyztlocation(QtWidgets.QWidget):
         if verbosity > 1:
             print("leaving runMovieToggle")
 
-    def setFrametime(self, frametime):
+    def setFrametime(self, frametime: Any) -> None:
         if self.movierunning:
             self.movieTimer.stop()
         self.frametime = frametime
@@ -640,7 +653,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.movieTimer.start(int(self.frametime))
 
 
-def logStatus(thetextbox, thetext):
+def logStatus(thetextbox: Any, thetext: Any) -> None:
     if pyqtbinding == "pyqt5":
         thetextbox.moveCursor(QtGui.QTextCursor.End)
     elif pyqtbinding == "pyqt6":
@@ -654,19 +667,19 @@ def logStatus(thetextbox, thetext):
     sb.setValue(sb.maximum())
 
 
-def getMinDispLimit():
+def getMinDispLimit() -> None:
     global ui, overlays, currentdataset
     overlays[currentdataset.focusmap].dispmin = ui.dispmin_doubleSpinBox.value()
     updateDispLimits()
 
 
-def getMaxDispLimit():
+def getMaxDispLimit() -> None:
     global ui, overlays, currentdataset
     overlays[currentdataset.focusmap].dispmax = ui.dispmax_doubleSpinBox.value()
     updateDispLimits()
 
 
-def updateDispLimits():
+def updateDispLimits() -> None:
     global ui, overlays, currentdataset
     ui.dispmin_doubleSpinBox.setRange(
         overlays[currentdataset.focusmap].minval,
@@ -689,21 +702,21 @@ def updateDispLimits():
     updateUI(callingfunc="updateDispLimits", orthoimages=True)
 
 
-def resetDispLimits():
+def resetDispLimits() -> None:
     global overlays, currentdataset
     overlays[currentdataset.focusmap].dispmin = overlays[currentdataset.focusmap].minval
     overlays[currentdataset.focusmap].dispmax = overlays[currentdataset.focusmap].maxval
     updateDispLimits()
 
 
-def resetDispSmart():
+def resetDispSmart() -> None:
     global overlays, currentdataset
     overlays[currentdataset.focusmap].dispmin = overlays[currentdataset.focusmap].robustmin
     overlays[currentdataset.focusmap].dispmax = overlays[currentdataset.focusmap].robustmax
     updateDispLimits()
 
 
-def updateSimilarityFunc():
+def updateSimilarityFunc() -> None:
     global overlays, timeaxis, currentloc
     global currentdataset
     global simfunc_ax, simfuncCurve, simfuncfitCurve, simfuncTLine, simfuncPeakMarker, simfuncCurvePoint, simfuncCaption, simfuncFitter
@@ -764,7 +777,7 @@ def updateSimilarityFunc():
             simfuncPeakMarker.setData(x=[], y=[], symbol="d")
 
 
-def updateHistogram():
+def updateHistogram() -> None:
     global hist_ax, overlays, currentdataset
     hist_ax.plot(
         overlays[currentdataset.focusmap].histx,
@@ -800,7 +813,7 @@ class RectangleItem(pg.GraphicsObject):
         self.color = color
         self.generatePicture()
 
-    def generatePicture(self):
+    def generatePicture(self) -> None:
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
         p.setPen(pg.mkPen(self.color))
@@ -810,14 +823,14 @@ class RectangleItem(pg.GraphicsObject):
         p.drawRect(QtCore.QRectF(tl, size))
         p.end()
 
-    def paint(self, p, *args):
+    def paint(self, p: Any, *args: Any) -> None:
         p.drawPicture(0, 0, self.picture)
 
-    def boundingRect(self):
+    def boundingRect(self) -> None:
         return QtCore.QRectF(self.picture.boundingRect())
 
 
-def updateRegressor():
+def updateRegressor() -> None:
     global regressor_ax, liveplots, currentdataset
     focusregressor = currentdataset.focusregressor
     regressors = currentdataset.getregressors()
@@ -856,7 +869,7 @@ def updateRegressor():
         print("currentdataset.focusregressor is None!")
 
 
-def updateRegressorSpectrum():
+def updateRegressorSpectrum() -> None:
     global regressorspectrum_ax, liveplots, currentdataset
     focusregressor = currentdataset.focusregressor
     regressorfilterlimits = currentdataset.regressorfilterlimits
@@ -886,7 +899,7 @@ def updateRegressorSpectrum():
         regressorspectrum_ax.addItem(therectangle)
 
 
-def calcAtlasStats():
+def calcAtlasStats() -> None:
     global overlays, atlasstats, averagingmode, currentdataset
     global atlasaveragingdone
     print("in calcAtlasStats")
@@ -943,7 +956,7 @@ def calcAtlasStats():
         print("cannot perform average - no atlas map found")
 
 
-def updateAtlasStats():
+def updateAtlasStats() -> None:
     global overlays, atlasstats, averagingmode, currentdataset
     print("in updateAtlasStats")
     if "atlas" in overlays and (averagingmode is not None):
@@ -958,7 +971,7 @@ def updateAtlasStats():
                 overlays[themap + "_atlasstat"].updateStats()
 
 
-def doAtlasAveraging(state):
+def doAtlasAveraging(state: Any) -> None:
     global atlasaveragingdone
     print("in doAtlasAveraging")
     if state == QtCore.Qt.CheckState.Checked:
@@ -970,7 +983,7 @@ def doAtlasAveraging(state):
     updateOrthoImages()
 
 
-def updateAveragingMode():
+def updateAveragingMode() -> None:
     global averagingmode, focusmap
     global atlasaveragingdone
     global overlays
@@ -997,7 +1010,7 @@ def updateAveragingMode():
     )
 
 
-def raw_radioButton_clicked(enabled):
+def raw_radioButton_clicked(enabled: Any) -> None:
     global averagingmode
     if enabled:
         print("in raw_radioButton_clicked")
@@ -1005,7 +1018,7 @@ def raw_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def mean_radioButton_clicked(enabled):
+def mean_radioButton_clicked(enabled: Any) -> None:
     global averagingmode
     if enabled:
         print("in mean_radioButton_clicked")
@@ -1013,7 +1026,7 @@ def mean_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def median_radioButton_clicked(enabled):
+def median_radioButton_clicked(enabled: Any) -> None:
     global averagingmode
     if enabled:
         print("in median_radioButton_clicked")
@@ -1021,7 +1034,7 @@ def median_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def CoV_radioButton_clicked(enabled):
+def CoV_radioButton_clicked(enabled: Any) -> None:
     global averagingmode
     if enabled:
         print("in CoV_radioButton_clicked")
@@ -1029,7 +1042,7 @@ def CoV_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def std_radioButton_clicked(enabled):
+def std_radioButton_clicked(enabled: Any) -> None:
     global averagingmode
     if enabled:
         print("in std_radioButton_clicked")
@@ -1037,7 +1050,7 @@ def std_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def MAD_radioButton_clicked(enabled):
+def MAD_radioButton_clicked(enabled: Any) -> None:
     global averagingmode
     if enabled:
         print("in MAD_radioButton_clicked")
@@ -1045,7 +1058,7 @@ def MAD_radioButton_clicked(enabled):
         updateAveragingMode()
 
 
-def transparencyCheckboxClicked():
+def transparencyCheckboxClicked() -> None:
     global LUT_alpha, LUT_endalpha, ui, overlays, currentdataset
     global verbosity
 
@@ -1062,7 +1075,7 @@ def transparencyCheckboxClicked():
     updateLUT()
 
 
-def gray_radioButton_clicked(enabled):
+def gray_radioButton_clicked(enabled: Any) -> None:
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
 
     if enabled:
@@ -1076,7 +1089,7 @@ def gray_radioButton_clicked(enabled):
         updateLUT()
 
 
-def thermal_radioButton_clicked(enabled):
+def thermal_radioButton_clicked(enabled: Any) -> None:
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
@@ -1089,7 +1102,7 @@ def thermal_radioButton_clicked(enabled):
         updateLUT()
 
 
-def plasma_radioButton_clicked(enabled):
+def plasma_radioButton_clicked(enabled: Any) -> None:
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
@@ -1102,7 +1115,7 @@ def plasma_radioButton_clicked(enabled):
         updateLUT()
 
 
-def viridis_radioButton_clicked(enabled):
+def viridis_radioButton_clicked(enabled: Any) -> None:
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
@@ -1115,7 +1128,7 @@ def viridis_radioButton_clicked(enabled):
         updateLUT()
 
 
-def turbo_radioButton_clicked(enabled):
+def turbo_radioButton_clicked(enabled: Any) -> None:
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
@@ -1128,7 +1141,7 @@ def turbo_radioButton_clicked(enabled):
         updateLUT()
 
 
-def rainbow_radioButton_clicked(enabled):
+def rainbow_radioButton_clicked(enabled: Any) -> None:
     global imageadj, overlays, currentdataset, LUT_alpha, LUT_endalpha
     if enabled:
         overlays[currentdataset.focusmap].setLUT(
@@ -1141,7 +1154,7 @@ def rainbow_radioButton_clicked(enabled):
         updateLUT()
 
 
-def setMask(maskname):
+def setMask(maskname: Any) -> None:
     global overlays, loadedfuncmaps, ui, atlasaveragingdone, currentdataset
     maskinfodicts = {}
     maskinfodicts["nomask"] = {
@@ -1186,7 +1199,7 @@ def setMask(maskname):
     updateUI(callingfunc=f"setMask({maskname})", orthoimages=True, histogram=True)
 
 
-def setAtlasMask():
+def setAtlasMask() -> None:
     global overlays, loadedfuncmaps, ui, currentdataset
     print("Using all defined atlas regions as functional mask")
     ui.setMask_Button.setText("Valid mask")
@@ -1195,7 +1208,7 @@ def setAtlasMask():
     updateUI(callingfunc="setAtlasMask", orthoimages=True, histogram=True)
 
 
-def overlay_radioButton_clicked(which, enabled):
+def overlay_radioButton_clicked(which: Any, enabled: Any) -> None:
     global imageadj, overlays, currentdataset, panetomap, ui, overlaybuttons
     global currentloc, atlasaveragingdone
     global verbosity
@@ -1250,7 +1263,7 @@ def overlay_radioButton_clicked(which, enabled):
             )
 
 
-def updateTimepoint(event):
+def updateTimepoint(event: Any) -> None:
     global data, overlays, simfunc_ax, tr, tpos, timeaxis, currentloc, ui
     global currentdataset
     global vLine
@@ -1272,7 +1285,7 @@ def updateTimepoint(event):
         )
 
 
-def updateLUT():
+def updateLUT() -> None:
     global img_colorbar
     global overlays, currentdataset
     global harvestcolormaps
@@ -1294,7 +1307,7 @@ def updateLUT():
         timecourse_ax.plot(timeaxis, selected, clear=True)"""
 
 
-def mapwithLUT(theimage, themask, theLUT, dispmin, dispmax):
+def mapwithLUT(theimage: Any, themask: Any, theLUT: Any, dispmin: Any, dispmax: Any) -> None:
     offset = dispmin
     scale = len(theLUT) / (dispmax - dispmin)
     scaleddata = np.rint((theimage - offset) * scale).astype("int32")
@@ -1305,7 +1318,7 @@ def mapwithLUT(theimage, themask, theLUT, dispmin, dispmax):
     return mappeddata
 
 
-def updateTFromControls():
+def updateTFromControls() -> None:
     global mainwin, currentloc
     mainwin.setTpos(currentloc.tpos, emitsignal=False)
     updateUI(
@@ -1316,7 +1329,7 @@ def updateTFromControls():
     )
 
 
-def updateXYZFromControls():
+def updateXYZFromControls() -> None:
     global mainwin, currentloc
     mainwin.setXYZpos(currentloc.xpos, currentloc.ypos, currentloc.zpos, emitsignal=False)
     updateUI(
@@ -1327,21 +1340,21 @@ def updateXYZFromControls():
     )
 
 
-def updateXYZFromMainWin():
+def updateXYZFromMainWin() -> None:
     global mainwin, currentloc
     currentloc.setXYZpos(mainwin.xpos, mainwin.ypos, mainwin.zpos, emitsignal=False)
     updateUI(callingfunc="updateXYZFromMainWin", similarityfunc=True, focusvals=True)
 
 
 def updateUI(
-    orthoimages=False,
-    histogram=False,
-    LUT=False,
-    similarityfunc=False,
-    focusvals=False,
-    callingfunc=None,
-    verbose=0,
-):
+    orthoimages: bool = False,
+    histogram: bool = False,
+    LUT: bool = False,
+    similarityfunc: bool = False,
+    focusvals: bool = False,
+    callingfunc: Optional[Any] = None,
+    verbose: int = 0,
+) -> None:
     if verbose > 1:
         if callingfunc is None:
             print("updateUI called with:")
@@ -1366,7 +1379,7 @@ def updateUI(
         printfocusvals()
 
 
-def updateOrthoImages():
+def updateOrthoImages() -> None:
     global hist
     global currentdataset
     global maps
@@ -1390,7 +1403,7 @@ def updateOrthoImages():
     ui.TimeSlider.setValue(currentloc.tpos)
 
 
-def printfocusvals():
+def printfocusvals() -> None:
     global ui, overlays, currentdataset
     global currentloc
     global simfuncFitter
@@ -1438,14 +1451,21 @@ def printfocusvals():
                     logStatus(ui.logOutput, outstring)
 
 
-def regressor_radioButton_clicked(theregressor, enabled):
+def regressor_radioButton_clicked(theregressor: Any, enabled: Any) -> None:
     global currentdataset
     currentdataset.setfocusregressor(theregressor)
     updateRegressor()
     updateRegressorSpectrum()
 
 
-def activateDataset(currentdataset, ui, win, defaultdict, overlayGraphicsViews, verbosity=0):
+def activateDataset(
+    currentdataset: Any,
+    ui: Any,
+    win: Any,
+    defaultdict: Any,
+    overlayGraphicsViews: Any,
+    verbosity: int = 0,
+) -> None:
     global regressors, overlays
     global mainwin
     global xdim, ydim, zdim, tdim, xpos, ypos, zpos, tpos
@@ -1741,15 +1761,15 @@ def activateDataset(currentdataset, ui, win, defaultdict, overlayGraphicsViews, 
 
 
 def loadpane(
-    themap,
-    thepane,
-    view,
-    button,
-    panemap,
-    orthoimagedict,
-    bgmap=None,
-    sm_imgsize=32.0,
-):
+    themap: Any,
+    thepane: Any,
+    view: Any,
+    button: Any,
+    panemap: Any,
+    orthoimagedict: Any,
+    bgmap: Optional[Any] = None,
+    sm_imgsize: float = 32.0,
+) -> None:
     if themap.display_state:
         if bgmap is None:
             orthoimagedict[themap.name] = OrthoImageItem(
@@ -1775,7 +1795,7 @@ def loadpane(
         panemap[thepane] = themap.name
 
 
-def tidepool(args):
+def tidepool(args: Any) -> None:
     global vLine
     global ui, win
     global fileMenu, sel_open, sel_files
@@ -2302,7 +2322,7 @@ def tidepool(args):
     numspecial = 0
 
     # configure the mask selection popup menu
-    def on_mask_context_menu(point):
+    def on_mask_context_menu(point: Any) -> None:
         # show context menu
         popMaskMenu.exec(ui.setMask_Button.mapToGlobal(point))
 
@@ -2310,7 +2330,7 @@ def tidepool(args):
     ui.setMask_Button.customContextMenuRequested.connect(on_mask_context_menu)
 
     # configure the file selection popup menu
-    def on_file_context_menu(point):
+    def on_file_context_menu(point: Any) -> None:
         # show context menu
         popMaskMenu.exec(ui.setFile_Button.mapToGlobal(point))
 

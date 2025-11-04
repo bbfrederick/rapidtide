@@ -20,8 +20,11 @@ import argparse
 import platform
 import sys
 import time
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -30,7 +33,7 @@ import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     parser = argparse.ArgumentParser(
         prog="gmscalc",
         description="Calculate the global mean signal, and filtered versions",
@@ -86,7 +89,9 @@ def _get_parser():
     return parser
 
 
-def makecommandlinelist(arglist, starttime, endtime, extra=None):
+def makecommandlinelist(
+    arglist: Any, starttime: Any, endtime: Any, extra: Optional[Any] = None
+) -> None:
     # get the processing date
     dateline = (
         "# Processed on "
@@ -123,7 +128,7 @@ def makecommandlinelist(arglist, starttime, endtime, extra=None):
         return [dateline, timeline, nodeline, commandline]
 
 
-def gmscalc_main():
+def gmscalc_main() -> None:
     try:
         args = _get_parser().parse_args()
     except SystemExit:

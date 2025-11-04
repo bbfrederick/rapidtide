@@ -18,15 +18,18 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for filttc
     """
@@ -104,7 +107,7 @@ def _get_parser():
     return parser
 
 
-def filttc(args):
+def filttc(args: Any) -> None:
     args, thefilter = pf.postprocessfilteropts(args)
 
     # read in data

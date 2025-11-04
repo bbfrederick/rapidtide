@@ -17,6 +17,8 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from matplotlib.pyplot import *
 
@@ -28,7 +30,7 @@ import rapidtide.voxelData as tide_voxelData
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for simdata
     """
@@ -177,17 +179,17 @@ def _get_parser():
 
 
 def prepareband(
-    simdatadims,
-    pctfile,
-    sigfracfile,
-    lagfile,
-    regressorfile,
-    samprate,
-    starttime,
-    regressorname,
-    padtime=30.0,
-    debug=False,
-):
+    simdatadims: Any,
+    pctfile: Any,
+    sigfracfile: Any,
+    lagfile: Any,
+    regressorfile: Any,
+    samprate: Any,
+    starttime: Any,
+    regressorname: Any,
+    padtime: float = 30.0,
+    debug: bool = False,
+) -> None:
     if debug:
         print("simdatadims:", simdatadims)
         print("pctfile:", pctfile)
@@ -261,28 +263,28 @@ def prepareband(
 
 
 def fmrisignal(
-    Fs,
-    times,
-    meanvalue,
-    dolfo=False,
-    lfowave=None,
-    lfomag=None,
-    lfodelay=None,
-    lfonoise=0.0,
-    lfofilter=None,
-    doresp=False,
-    respwave=None,
-    respmag=None,
-    respdelay=None,
-    respnoise=0.0,
-    respfilter=None,
-    docardiac=False,
-    cardiacwave=None,
-    cardiacmag=None,
-    cardiacdelay=None,
-    cardiacnoise=0.0,
-    cardiacfilter=None,
-):
+    Fs: Any,
+    times: Any,
+    meanvalue: Any,
+    dolfo: bool = False,
+    lfowave: Optional[Any] = None,
+    lfomag: Optional[Any] = None,
+    lfodelay: Optional[Any] = None,
+    lfonoise: float = 0.0,
+    lfofilter: Optional[Any] = None,
+    doresp: bool = False,
+    respwave: Optional[Any] = None,
+    respmag: Optional[Any] = None,
+    respdelay: Optional[Any] = None,
+    respnoise: float = 0.0,
+    respfilter: Optional[Any] = None,
+    docardiac: bool = False,
+    cardiacwave: Optional[Any] = None,
+    cardiacmag: Optional[Any] = None,
+    cardiacdelay: Optional[Any] = None,
+    cardiacnoise: float = 0.0,
+    cardiacfilter: Optional[Any] = None,
+) -> None:
     thesignal = np.zeros((len(times)), dtype=float)
     if dolfo:
         thesignal += meanvalue * (
@@ -302,7 +304,7 @@ def fmrisignal(
     return thesignal + meanvalue
 
 
-def simdata(args):
+def simdata(args: Any) -> None:
     # set default variable values
     lfopctdata = None
     lfolagdata = None

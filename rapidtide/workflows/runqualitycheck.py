@@ -17,12 +17,14 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import rapidtide.io as tide_io
 import rapidtide.qualitycheck as tide_quality
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for runqualitycheck
     """
@@ -66,7 +68,7 @@ def _get_parser():
     return parser
 
 
-def runqualitycheck(args):
+def runqualitycheck(args: Any) -> None:
     resultsdict = tide_quality.qualitycheck(
         args.inputfileroot,
         graymaskspec=args.graymaskspec,

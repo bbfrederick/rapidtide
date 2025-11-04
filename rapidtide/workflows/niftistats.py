@@ -21,8 +21,11 @@ import copy
 import platform
 import sys
 import time
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import ttest_ind, ttest_rel
 from tqdm import tqdm
 
@@ -33,7 +36,7 @@ import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 
-def _get_parser(calctype="icc"):
+def _get_parser(calctype: str = "icc") -> Any:
     if calctype == "icc":
         parser = argparse.ArgumentParser(
             prog="calcicc",
@@ -161,7 +164,7 @@ def _get_parser(calctype="icc"):
     return parser
 
 
-def parsemeasurementlist(measlist, numfiles, debug=False):
+def parsemeasurementlist(measlist: Any, numfiles: Any, debug: bool = False) -> None:
     nummeas, numsubjs = measlist.shape[0], measlist.shape[1]
     filesel = np.zeros((nummeas, numsubjs), dtype=int)
     volumesel = np.zeros((nummeas, numsubjs), dtype=int)
@@ -189,7 +192,9 @@ def parsemeasurementlist(measlist, numfiles, debug=False):
     return filesel, volumesel
 
 
-def makdcommandlinelist(arglist, starttime, endtime, extra=None):
+def makdcommandlinelist(
+    arglist: Any, starttime: Any, endtime: Any, extra: Optional[Any] = None
+) -> None:
     # get the processing date
     dateline = (
         "# Processed on "
@@ -226,7 +231,7 @@ def makdcommandlinelist(arglist, starttime, endtime, extra=None):
         return [dateline, timeline, nodeline, commandline]
 
 
-def niftistats_main(calctype="icc"):
+def niftistats_main(calctype: str = "icc") -> None:
     try:
         args = _get_parser(calctype=calctype).parse_args()
     except SystemExit:

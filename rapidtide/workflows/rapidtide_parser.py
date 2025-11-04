@@ -21,9 +21,11 @@ import logging
 import os
 import sys
 from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import nibabel as nib
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
@@ -111,7 +113,7 @@ DEFAULT_PATCHFWHM = 5
 DEFAULT_PREWHITEN_LAGS = -1
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for rapidtide
     """
@@ -1751,7 +1753,7 @@ def _get_parser():
     return parser
 
 
-def process_args(inputargs=None):
+def process_args(inputargs: Optional[Any] = None) -> None:
     """
     Compile arguments for rapidtide workflow.
     """

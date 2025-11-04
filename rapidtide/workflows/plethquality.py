@@ -18,15 +18,18 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import skew
 
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for plethquality
     """
@@ -57,7 +60,7 @@ def _get_parser():
     return parser
 
 
-def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
+def plethquality(waveform: Any, Fs: Any, S_windowsecs: float = 5.0, debug: bool = False) -> None:
     """
 
     Parameters
@@ -103,7 +106,7 @@ def plethquality(waveform, Fs, S_windowsecs=5.0, debug=False):
     return S_sqi_mean, S_sqi_std, S_waveform
 
 
-def plethquality(args):
+def plethquality(args: Any) -> None:
     if args.display:
         import matplotlib as mpl
 

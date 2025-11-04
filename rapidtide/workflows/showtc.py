@@ -21,10 +21,12 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 import argparse
 import sys
+from argparse import Namespace
 
 import matplotlib.cm as cm
 import numpy as np
 from matplotlib.pyplot import figure, savefig, setp, show
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
@@ -41,11 +43,11 @@ except ImportError:
     haveseaborn = False
 
 
-def phase(mcv):
+def phase(mcv: NDArray[np.complex128]) -> NDArray[np.float64]:
     return np.arctan2(mcv.imag, mcv.real)
 
 
-def _get_parser():
+def _get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="showtc",
         description="Plots the data in text files.",
@@ -186,7 +188,7 @@ def _get_parser():
     return parser
 
 
-def showtc(args):
+def showtc(args: Namespace) -> None:
     # set the sample rate
     if args.samplerate == "auto":
         samplerate = 1.0

@@ -17,16 +17,19 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for resamp1tc
     """
@@ -91,7 +94,7 @@ def _get_parser():
     return parser
 
 
-def resampletc(args):
+def resampletc(args: Any) -> None:
     intimestep = 1.0 / args.insamplerate
     outtimestep = 1.0 / args.outsamplerate
     (

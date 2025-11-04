@@ -17,13 +17,16 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 
 
-def _get_parser():
+def _get_parser() -> Any:
     parser = argparse.ArgumentParser(
         prog="pairwisemergenifti",
         description="Merges adjacent timepoints in a nifti file.",
@@ -50,7 +53,7 @@ def _get_parser():
     return parser
 
 
-def pairwisemergenifti(args):
+def pairwisemergenifti(args: Any) -> None:
     print("reading input data")
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
     print("reading input mask")

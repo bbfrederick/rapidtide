@@ -16,7 +16,10 @@
 #   limitations under the License.
 #
 #
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
@@ -27,35 +30,35 @@ import rapidtide.simfuncfit as tide_simfuncfit
 
 
 def cleanregressor(
-    outputname,
-    thepass,
-    referencetc,
-    resampref_y,
-    resampnonosref_y,
-    fmrifreq,
-    oversampfreq,
-    osvalidsimcalcstart,
-    osvalidsimcalcend,
-    lagmininpts,
-    lagmaxinpts,
-    theFitter,
-    theCorrelator,
-    lagmin,
-    lagmax,
-    LGR=None,
-    check_autocorrelation=True,
-    fix_autocorrelation=True,
-    despeckle_thresh=5.0,
-    lthreshval=0.0,
-    fixdelay=False,
-    detrendorder=3,
-    windowfunc="hamming",
-    respdelete=False,
-    displayplots=False,
-    debug=False,
-    rt_floattype="float64",
-    rt_floatset=np.float64,
-):
+    outputname: Any,
+    thepass: Any,
+    referencetc: Any,
+    resampref_y: Any,
+    resampnonosref_y: Any,
+    fmrifreq: Any,
+    oversampfreq: Any,
+    osvalidsimcalcstart: Any,
+    osvalidsimcalcend: Any,
+    lagmininpts: Any,
+    lagmaxinpts: Any,
+    theFitter: Any,
+    theCorrelator: Any,
+    lagmin: Any,
+    lagmax: Any,
+    LGR: Optional[Any] = None,
+    check_autocorrelation: bool = True,
+    fix_autocorrelation: bool = True,
+    despeckle_thresh: float = 5.0,
+    lthreshval: float = 0.0,
+    fixdelay: bool = False,
+    detrendorder: int = 3,
+    windowfunc: str = "hamming",
+    respdelete: bool = False,
+    displayplots: bool = False,
+    debug: bool = False,
+    rt_floattype: str = "float64",
+    rt_floatset: Any = np.float64,
+) -> None:
     # print debugging info
     if debug:
         print("cleanregressor:")

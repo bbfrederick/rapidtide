@@ -17,8 +17,8 @@
 #
 #
 import argparse
+from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.filter as tide_filt
@@ -31,7 +31,7 @@ DEFAULT_MEASUREMENTNOISE = 0.05
 DEFAULT_QUALTHRESH = 0.5
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for applyppgproc
     """
@@ -105,7 +105,7 @@ def _get_parser():
     return parser
 
 
-def procppg(args):
+def procppg(args: Any) -> None:
     if args.display:
         import matplotlib as mpl
 

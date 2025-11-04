@@ -17,14 +17,17 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import rankdata
 
 import rapidtide.io as tide_io
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for pixelcomp
     """
@@ -50,7 +53,7 @@ def _get_parser():
     return parser
 
 
-def imtopercentile(image, mask, debug=False):
+def imtopercentile(image: Any, mask: Any, debug: bool = False) -> None:
     outmaparray = image * 0.0
     nativespaceshape = image.shape
     validvoxels = np.where(mask > 0)
@@ -69,7 +72,7 @@ def imtopercentile(image, mask, debug=False):
     return outmaparray.reshape(nativespaceshape)
 
 
-def rankimage(args):
+def rankimage(args: Any) -> None:
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfilename)
     (
         mask_img,

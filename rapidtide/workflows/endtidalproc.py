@@ -19,19 +19,22 @@
 import argparse
 import bisect
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import invert_float, is_float
 
 
-def phase(mcv):
+def phase(mcv: Any) -> None:
     return np.arctan2(mcv.imag, mcv.real)
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="endtidalproc",
@@ -104,7 +107,7 @@ def _get_parser():
     return parser
 
 
-def process_args(args):
+def process_args(args: Any) -> None:
     if args.samplerate is None:
         args.samplerate = 1.0
 
@@ -116,7 +119,7 @@ def process_args(args):
     return args
 
 
-def endtidalproc():
+def endtidalproc() -> None:
     args = process_args(_get_parser().parse_args(sys.argv[1:]))
 
     if args.isoxygen:

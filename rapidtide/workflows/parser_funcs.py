@@ -23,6 +23,7 @@ import argparse
 import os.path as op
 import sys
 from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -30,12 +31,18 @@ import rapidtide.util as tide_util
 
 
 class IndicateSpecifiedAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: Optional[str] = None,
+    ) -> None:
         setattr(namespace, self.dest, values)
         setattr(namespace, self.dest + "_nondefault", True)
 
 
-def detailedversion():
+def detailedversion() -> None:
     (
         release_version,
         git_sha,
@@ -51,13 +58,13 @@ def detailedversion():
     sys.exit()
 
 
-def setifnotset(thedict, thekey, theval):
+def setifnotset(thedict: Dict[str, Any], thekey: str, theval: Any) -> None:
     if (thekey + "_nondefault") not in thedict.keys():
         print("overriding " + thekey)
         thedict[thekey] = theval
 
 
-def is_valid_file(parser, arg):
+def is_valid_file(parser: argparse.ArgumentParser, arg: Optional[str]) -> Optional[str]:
     """
     Check if argument is existing file.
     """
@@ -66,13 +73,13 @@ def is_valid_file(parser, arg):
     else:
         thefilename = None
 
-    if not op.isfile(thefilename) and thefilename is not None:
+    if not op.isfile(thefilename) and (thefilename is not None):
         parser.error("The file {0} does not exist!".format(thefilename))
 
     return arg
 
 
-def invert_float(parser, arg):
+def invert_float(parser: argparse.ArgumentParser, arg: Union[str, float]) -> Union[str, float]:
     """
     Check if argument is float or auto.
     """
@@ -83,7 +90,12 @@ def invert_float(parser, arg):
     return arg
 
 
-def is_float(parser, arg, minval=None, maxval=None):
+def is_float(
+    parser: argparse.ArgumentParser,
+    arg: Union[str, float],
+    minval: Optional[float] = None,
+    maxval: Optional[float] = None,
+) -> Union[str, float]:
     """
     Check if argument is float or auto.
     """
@@ -100,7 +112,9 @@ def is_float(parser, arg, minval=None, maxval=None):
     return arg
 
 
-def is_valid_file_or_float(parser, arg):
+def is_valid_file_or_float(
+    parser: argparse.ArgumentParser, arg: Optional[str]
+) -> Union[str, float]:
     """
     Check if argument is existing file.
     """
@@ -119,7 +133,12 @@ def is_valid_file_or_float(parser, arg):
     return arg
 
 
-def is_int(parser, arg, minval=None, maxval=None):
+def is_int(
+    parser: argparse.ArgumentParser,
+    arg: Union[str, int],
+    minval: Optional[int] = None,
+    maxval: Optional[int] = None,
+) -> Union[str, int]:
     """
     Check if argument is int or auto.
     """
@@ -136,7 +155,7 @@ def is_int(parser, arg, minval=None, maxval=None):
     return arg
 
 
-def is_range(parser, arg):
+def is_range(parser: argparse.ArgumentParser, arg: Optional[List[Any]]) -> Optional[List[Any]]:
     """
     Check if argument is min/max pair.
     """
@@ -148,7 +167,7 @@ def is_range(parser, arg):
     return arg
 
 
-def is_valid_tag(parser, arg):
+def is_valid_tag(parser: argparse.ArgumentParser, arg: Optional[str]) -> Tuple[str, str]:
     """
     Check if argument is existing file.
     """
@@ -173,7 +192,9 @@ DEFAULT_PADVAL = 0
 DEFAULT_WINDOWFUNC = "hamming"
 
 
-def addreqinputniftifile(parser, varname, addedtext=""):
+def addreqinputniftifile(
+    parser: argparse.ArgumentParser, varname: str, addedtext: str = ""
+) -> None:
     parser.add_argument(
         varname,
         type=lambda x: is_valid_file(parser, x),
@@ -181,7 +202,9 @@ def addreqinputniftifile(parser, varname, addedtext=""):
     )
 
 
-def addreqoutputniftifile(parser, varname, addedtext=""):
+def addreqoutputniftifile(
+    parser: argparse.ArgumentParser, varname: str, addedtext: str = ""
+) -> None:
     parser.add_argument(
         varname,
         type=str,
@@ -189,7 +212,9 @@ def addreqoutputniftifile(parser, varname, addedtext=""):
     )
 
 
-def addreqinputtextfile(parser, varname, onecol=False):
+def addreqinputtextfile(
+    parser: argparse.ArgumentParser, varname: str, onecol: bool = False
+) -> None:
     if onecol:
         colspecline = (
             "Use [:COLUMN] to select which column to use, where COLUMN is an "
@@ -208,7 +233,13 @@ def addreqinputtextfile(parser, varname, onecol=False):
     )
 
 
-def addreqinputtextfiles(parser, varname, numreq="Two", nargs="*", onecol=False):
+def addreqinputtextfiles(
+    parser: argparse.ArgumentParser,
+    varname: str,
+    numreq: str = "Two",
+    nargs: str = "*",
+    onecol: bool = False,
+) -> None:
     if onecol:
         colspecline = (
             "Use [:COLUMN] to select which column to use, where COLUMN is an "
@@ -228,7 +259,9 @@ def addreqinputtextfiles(parser, varname, numreq="Two", nargs="*", onecol=False)
     )
 
 
-def addreqoutputtextfile(parser, varname, rootname=False):
+def addreqoutputtextfile(
+    parser: argparse.ArgumentParser, varname: str, rootname: bool = False
+) -> None:
     if rootname:
         helpline = "Root name for the output files"
     else:
@@ -241,9 +274,9 @@ def addreqoutputtextfile(parser, varname, rootname=False):
 
 
 def addtagopts(
-    opt_group,
-    helptext="Additional key, value pairs to add to the options json file (useful for tracking analyses).",
-):
+    opt_group: argparse._ArgumentGroup,
+    helptext: str = "Additional key, value pairs to add to the options json file (useful for tracking analyses).",
+) -> None:
     opt_group.add_argument(
         "--infotag",
         action="append",
@@ -254,7 +287,7 @@ def addtagopts(
     )
 
 
-def postprocesstagopts(args):
+def postprocesstagopts(args: Namespace) -> Namespace:
     if args.infotag is not None:
         argvars = vars(args)
         for thetag in argvars["infotag"]:
@@ -265,7 +298,11 @@ def postprocesstagopts(args):
         return args
 
 
-def addnormalizationopts(parser, normtarget="timecourse", defaultmethod=DEFAULT_NORMTYPE):
+def addnormalizationopts(
+    parser: argparse.ArgumentParser,
+    normtarget: str = "timecourse",
+    defaultmethod: str = DEFAULT_NORMTYPE,
+) -> None:
     norm_opts = parser.add_argument_group("Normalization options")
     norm_opts.add_argument(
         "--normmethod",
@@ -288,7 +325,7 @@ def addnormalizationopts(parser, normtarget="timecourse", defaultmethod=DEFAULT_
     )
 
 
-def addversionopts(parser):
+def addversionopts(parser: argparse.ArgumentParser) -> None:
     version_opts = parser.add_argument_group("Version options")
     version_opts.add_argument(
         "--version",
@@ -304,7 +341,7 @@ def addversionopts(parser):
     )
 
 
-def addsamplerateopts(parser, details=False):
+def addsamplerateopts(parser: argparse.ArgumentParser, details: bool = False) -> None:
     sampling = parser.add_mutually_exclusive_group()
     sampling.add_argument(
         "--samplerate",
@@ -333,8 +370,11 @@ def addsamplerateopts(parser, details=False):
 
 
 def addfilteropts(
-    parser, filtertarget="timecourses", defaultmethod=DEFAULT_FILTERBAND, details=False
-):
+    parser: argparse.ArgumentParser,
+    filtertarget: str = "timecourses",
+    defaultmethod: str = DEFAULT_FILTERBAND,
+    details: bool = False,
+) -> None:
     filt_opts = parser.add_argument_group("Filtering options")
     filt_opts.add_argument(
         "--filterband",
@@ -454,7 +494,7 @@ def addfilteropts(
         )
 
 
-def postprocesssamplerateopts(args, debug=False):
+def postprocesssamplerateopts(args: Namespace, debug: bool = False) -> Namespace:
     # set the sample rate
     if args.samplerate == "auto":
         samplerate = 1.0
@@ -465,7 +505,7 @@ def postprocesssamplerateopts(args, debug=False):
     return args
 
 
-def postprocessfilteropts(args, debug=False):
+def postprocessfilteropts(args: Namespace, debug: bool = False) -> Tuple[Namespace, Any]:
     # configure the filter
     # set the trapezoidal flag, if using
     try:
@@ -548,7 +588,7 @@ def postprocessfilteropts(args, debug=False):
     return args, theprefilter
 
 
-def addwindowopts(parser, windowtype=DEFAULT_WINDOWFUNC):
+def addwindowopts(parser: argparse.ArgumentParser, windowtype: str = DEFAULT_WINDOWFUNC) -> None:
     wfunc = parser.add_argument_group("Windowing options")
     wfunc.add_argument(
         "--windowfunc",
@@ -578,7 +618,7 @@ def addwindowopts(parser, windowtype=DEFAULT_WINDOWFUNC):
     )
 
 
-def addplotopts(parser, multiline=True):
+def addplotopts(parser: argparse.ArgumentParser, multiline: bool = True) -> None:
     plotopts = parser.add_argument_group("General plot appearance options")
     plotopts.add_argument(
         "--title",
@@ -729,7 +769,7 @@ def addplotopts(parser, multiline=True):
     )
 
 
-def addpermutationopts(parser, numreps=10000):
+def addpermutationopts(parser: argparse.ArgumentParser, numreps: int = 10000) -> None:
     sigcalc_opts = parser.add_argument_group("Significance calculation options")
     permutationmethod = sigcalc_opts.add_mutually_exclusive_group()
     permutationmethod.add_argument(
@@ -759,7 +799,12 @@ def addpermutationopts(parser, numreps=10000):
     )
 
 
-def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0):
+def addsearchrangeopts(
+    parser: argparse.ArgumentParser,
+    details: bool = False,
+    defaultmin: float = -30.0,
+    defaultmax: float = 30.0,
+) -> None:
     parser.add_argument(
         "--searchrange",
         dest="lag_extrema",
@@ -785,7 +830,7 @@ def addsearchrangeopts(parser, details=False, defaultmin=-30.0, defaultmax=30.0)
         )
 
 
-def postprocesssearchrangeopts(args):
+def postprocesssearchrangeopts(args: Namespace) -> Namespace:
     # Additional argument parsing not handled by argparse
     # first handle fixed delay
     try:
@@ -810,7 +855,7 @@ def postprocesssearchrangeopts(args):
     return args
 
 
-def addtimerangeopts(parser):
+def addtimerangeopts(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--timerange",
         dest="timerange",
@@ -828,7 +873,7 @@ def addtimerangeopts(parser):
     )
 
 
-def postprocesstimerangeopts(args):
+def postprocesstimerangeopts(args: Namespace) -> Namespace:
     args.startpoint = int(args.timerange[0])
     if args.timerange[1] == -1:
         args.endpoint = 10000000000
@@ -837,7 +882,9 @@ def postprocesstimerangeopts(args):
     return args
 
 
-def parserange(timerange, descriptor="timerange", debug=False):
+def parserange(
+    timerange: Tuple[int, int], descriptor: str = "timerange", debug: bool = False
+) -> Tuple[int, int]:
     if timerange[0] < 0:
         startpoint = 0
     else:
@@ -855,7 +902,7 @@ def parserange(timerange, descriptor="timerange", debug=False):
     return startpoint, endpoint
 
 
-def addsimilarityopts(parser):
+def addsimilarityopts(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--mutualinfosmoothingtime",
         dest="smoothingtime",
@@ -871,7 +918,10 @@ def addsimilarityopts(parser):
     )
 
 
-def setargs(thegetparserfunc, inputargs=None):
+def setargs(
+    thegetparserfunc: Callable[[], argparse.ArgumentParser],
+    inputargs: Optional[List[str]] = None,
+) -> Tuple[Namespace, List[str]]:
     """
     Compile arguments for rapidtide workflow.
     """
@@ -898,7 +948,11 @@ def setargs(thegetparserfunc, inputargs=None):
     return args, argstowrite
 
 
-def generic_init(theparser, themain, inputargs=None):
+def generic_init(
+    theparser: Callable[[], argparse.ArgumentParser],
+    themain: Callable[[Namespace], None],
+    inputargs: Optional[List[str]] = None,
+) -> None:
     """
     Compile arguments either from the command line, or from an argument list.
     """

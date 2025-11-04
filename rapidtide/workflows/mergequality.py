@@ -17,6 +17,8 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -24,7 +26,7 @@ import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for mergequality
     """
@@ -68,7 +70,7 @@ def _get_parser():
     return parser
 
 
-def mergequality(args):
+def mergequality(args: Any) -> None:
     if args.debug:
         print(f"{args.input=}")
         print(f"{args.outputroot=}")

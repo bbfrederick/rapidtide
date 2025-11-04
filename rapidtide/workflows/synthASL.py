@@ -17,14 +17,17 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 from rapidtide.RapidtideDataset import RapidtideDataset
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="synthASL",
@@ -70,7 +73,16 @@ def _get_parser():
     return parser
 
 
-def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, bloodT1=1.841):
+def calcASL(
+    lags: Any,
+    strengths: Any,
+    widths: Any,
+    mask: Any,
+    tagoffset: float = 2.945,
+    pld: float = 1.8,
+    TI: float = 1.8,
+    bloodT1: float = 1.841,
+) -> None:
     theaslimage = lags * 0.0
 
     # convert rapidtide delays to time from tagging, and only keep positive delays after pld
@@ -85,7 +97,7 @@ def calcASL(lags, strengths, widths, mask, tagoffset=2.945, pld=1.8, TI=1.8, blo
     return theaslimage, tagdecayfac, oxyfac, cbvfac, calcmask, offsets
 
 
-def synthASL(args):
+def synthASL(args: Any) -> None:
     # get the command line parameters
     try:
         args = _get_parser().parse_args()

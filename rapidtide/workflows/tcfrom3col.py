@@ -17,14 +17,17 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="tcfrom3col",
@@ -48,7 +51,7 @@ def _get_parser():
     return parser
 
 
-def tcfrom3col(args):
+def tcfrom3col(args: Any) -> None:
     if args.debug:
         print(args)
 

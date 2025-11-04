@@ -21,11 +21,13 @@ import glob
 import os
 import subprocess
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import rapidtide.externaltools as tide_extern
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="rapidtide2std",
@@ -84,16 +86,16 @@ def _get_parser():
 
 
 def transformmaps(
-    thepath,
-    theoutputdir,
-    subjroot,
-    reftarget,
-    xformfuncmat,
-    warpfuncfile,
-    thefmrimaps=None,
-    theanatmaps=None,
-    preponly=False,
-):
+    thepath: Any,
+    theoutputdir: Any,
+    subjroot: Any,
+    reftarget: Any,
+    xformfuncmat: Any,
+    warpfuncfile: Any,
+    thefmrimaps: Optional[Any] = None,
+    theanatmaps: Optional[Any] = None,
+    preponly: bool = False,
+) -> None:
     print("entering transformmaps with:")
     print(thepath)
     print(subjroot)
@@ -151,7 +153,7 @@ def transformmaps(
                 print("no hires anatomic found - skipping")
 
 
-def happy2std(args):
+def happy2std(args: Any) -> None:
     # make sure the appropriate transformation matrix and targets exist
     fsldir = os.environ.get("FSLDIR")
     if fsldir is None:

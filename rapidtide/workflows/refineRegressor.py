@@ -17,8 +17,10 @@
 #
 #
 import sys
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
@@ -40,54 +42,54 @@ class RegressorRefiner:
 
     def __init__(
         self,
-        internalvalidfmrishape,
-        internalvalidpaddedfmrishape,
-        pid,
-        outputname,
-        initial_fmri_x,
-        paddedinitial_fmri_x,
-        os_fmri_x,
-        sharedmem=False,
-        offsettime=0.0,
-        ampthresh=0.3,
-        lagminthresh=0.25,
-        lagmaxthresh=3.0,
-        sigmathresh=1000.0,
-        cleanrefined=False,
-        bipolar=False,
-        fixdelay=False,
-        includemask=None,
-        excludemask=None,
-        LGR=None,
-        nprocs=1,
-        detrendorder=1,
-        alwaysmultiproc=False,
-        showprogressbar=True,
-        chunksize=50000,
-        padtrs=10,
-        refineprenorm="var",
-        refineweighting=None,
-        refinetype="pca",
-        pcacomponents=0.8,
-        dodispersioncalc=False,
-        dispersioncalc_lower=-5.0,
-        dispersioncalc_upper=5.0,
-        dispersioncalc_step=0.5,
-        windowfunc="hamming",
-        passes=3,
-        maxpasses=15,
-        convergencethresh=None,
-        interptype="univariate",
-        usetmask=False,
-        tmask_y=None,
-        tmaskos_y=None,
-        fastresamplerpadtime=45.0,
-        prewhitenregressor=False,
-        prewhitenlags=10,
-        debug=False,
-        rt_floattype="float64",
-        rt_floatset=np.float64,
-    ):
+        internalvalidfmrishape: Any,
+        internalvalidpaddedfmrishape: Any,
+        pid: Any,
+        outputname: Any,
+        initial_fmri_x: Any,
+        paddedinitial_fmri_x: Any,
+        os_fmri_x: Any,
+        sharedmem: bool = False,
+        offsettime: float = 0.0,
+        ampthresh: float = 0.3,
+        lagminthresh: float = 0.25,
+        lagmaxthresh: float = 3.0,
+        sigmathresh: float = 1000.0,
+        cleanrefined: bool = False,
+        bipolar: bool = False,
+        fixdelay: bool = False,
+        includemask: Optional[Any] = None,
+        excludemask: Optional[Any] = None,
+        LGR: Optional[Any] = None,
+        nprocs: int = 1,
+        detrendorder: int = 1,
+        alwaysmultiproc: bool = False,
+        showprogressbar: bool = True,
+        chunksize: int = 50000,
+        padtrs: int = 10,
+        refineprenorm: str = "var",
+        refineweighting: Optional[Any] = None,
+        refinetype: str = "pca",
+        pcacomponents: float = 0.8,
+        dodispersioncalc: bool = False,
+        dispersioncalc_lower: float = -5.0,
+        dispersioncalc_upper: float = 5.0,
+        dispersioncalc_step: float = 0.5,
+        windowfunc: str = "hamming",
+        passes: int = 3,
+        maxpasses: int = 15,
+        convergencethresh: Optional[Any] = None,
+        interptype: str = "univariate",
+        usetmask: bool = False,
+        tmask_y: Optional[Any] = None,
+        tmaskos_y: Optional[Any] = None,
+        fastresamplerpadtime: float = 45.0,
+        prewhitenregressor: bool = False,
+        prewhitenlags: int = 10,
+        debug: bool = False,
+        rt_floattype: str = "float64",
+        rt_floatset: Any = np.float64,
+    ) -> None:
         self.internalvalidfmrishape = internalvalidfmrishape
         self.internalvalidpaddedfmrishape = internalvalidpaddedfmrishape
         self.sharedmem = sharedmem
@@ -137,11 +139,11 @@ class RegressorRefiner:
         self.setmasks(includemask, excludemask)
         self.totalrefinementbytes = self._allocatemem(pid)
 
-    def setmasks(self, includemask, excludemask):
+    def setmasks(self, includemask: Any, excludemask: Any) -> None:
         self.includemask = includemask
         self.excludemask = excludemask
 
-    def _allocatemem(self, pid):
+    def _allocatemem(self, pid: Any) -> None:
         self.shiftedtcs, self.shiftedtcs_shm = tide_util.allocarray(
             self.internalvalidfmrishape,
             self.rt_floattype,
@@ -181,7 +183,7 @@ class RegressorRefiner:
         tide_util.logmem("after refinement array allocation")
         return totalrefinementbytes
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         del self.paddedshiftedtcs
         del self.paddedweights
         del self.shiftedtcs
@@ -192,7 +194,7 @@ class RegressorRefiner:
             tide_util.cleanup_shm(self.shiftedtcs_shm)
             tide_util.cleanup_shm(self.weights_shm)
 
-    def makemask(self, lagstrengths, lagtimes, lagsigma, fitmask):
+    def makemask(self, lagstrengths: Any, lagtimes: Any, lagsigma: Any, fitmask: Any) -> None:
         # create the refinement mask
         (
             self.refinemaskvoxels,
@@ -226,13 +228,13 @@ class RegressorRefiner:
         else:
             return True
 
-    def getrefinemask(self):
+    def getrefinemask(self) -> None:
         return self.refinemask
 
-    def getpaddedshiftedtcs(self):
+    def getpaddedshiftedtcs(self) -> None:
         return self.paddedshiftedtcs
 
-    def alignvoxels(self, fmri_data_valid, fmritr, lagtimes):
+    def alignvoxels(self, fmri_data_valid: Any, fmritr: Any, lagtimes: Any) -> None:
         # align timecourses to prepare for refinement
         self.LGR.info("aligning timecourses")
         voxelsprocessed_rra = tide_refineregressor.alignvoxels(
@@ -257,7 +259,7 @@ class RegressorRefiner:
         return voxelsprocessed_rra
         # self.LGR.info(f"align complete: {voxelsprocessed_rra=}")
 
-    def prenormalize(self, lagtimes, lagstrengths, R2):
+    def prenormalize(self, lagtimes: Any, lagstrengths: Any, R2: Any) -> None:
         tide_refineregressor.prenorm(
             self.paddedshiftedtcs,
             self.refinemask,
@@ -271,14 +273,14 @@ class RegressorRefiner:
 
     def refine(
         self,
-        theprefilter,
-        fmritr,
-        thepass,
-        lagstrengths,
-        lagtimes,
-        previousnormoutputdata,
-        corrmasksize,
-    ):
+        theprefilter: Any,
+        fmritr: Any,
+        thepass: Any,
+        lagstrengths: Any,
+        lagtimes: Any,
+        previousnormoutputdata: Any,
+        corrmasksize: Any,
+    ) -> None:
         (
             voxelsprocessed_rr,
             self.paddedoutputdata,
@@ -473,35 +475,35 @@ class RegressorRefiner:
 
 
 def refineRegressor(
-    LGR,
-    TimingLGR,
-    thepass,
-    optiondict,
-    fitmask,
-    internaloffsetincludemask_valid,
-    internaloffsetexcludemask_valid,
-    internalrefineincludemask_valid,
-    internalrefineexcludemask_valid,
-    internaldespeckleincludemask,
-    validvoxels,
-    theRegressorRefiner,
-    lagtimes,
-    lagstrengths,
-    lagsigma,
-    fmri_data_valid,
-    fmritr,
-    R2,
-    theprefilter,
-    previousnormoutputdata,
-    theinputdata,
-    numpadtrs,
-    outputname,
-    nativefmrishape,
-    bidsbasedict,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-    debug=False,
-):
+    LGR: Any,
+    TimingLGR: Any,
+    thepass: Any,
+    optiondict: Any,
+    fitmask: Any,
+    internaloffsetincludemask_valid: Any,
+    internaloffsetexcludemask_valid: Any,
+    internalrefineincludemask_valid: Any,
+    internalrefineexcludemask_valid: Any,
+    internaldespeckleincludemask: Any,
+    validvoxels: Any,
+    theRegressorRefiner: Any,
+    lagtimes: Any,
+    lagstrengths: Any,
+    lagsigma: Any,
+    fmri_data_valid: Any,
+    fmritr: Any,
+    R2: Any,
+    theprefilter: Any,
+    previousnormoutputdata: Any,
+    theinputdata: Any,
+    numpadtrs: Any,
+    outputname: Any,
+    nativefmrishape: Any,
+    bidsbasedict: Any,
+    rt_floatset: Any = np.float64,
+    rt_floattype: str = "float64",
+    debug: bool = False,
+) -> None:
     LGR.info(f"\n\nRegressor refinement, pass {thepass}")
     TimingLGR.info(f"Regressor refinement start, pass {thepass}")
     if optiondict["refineoffset"]:

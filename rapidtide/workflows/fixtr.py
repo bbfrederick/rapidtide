@@ -17,11 +17,13 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import rapidtide.io as tide_io
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for resamplenifti
     """
@@ -45,7 +47,7 @@ def _get_parser():
     return parser
 
 
-def fixtr(args):
+def fixtr(args: Any) -> None:
     # get the input TR
     inputtr, numinputtrs = tide_io.fmritimeinfo(args.inputfile)
     if args.debug:

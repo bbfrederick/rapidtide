@@ -18,10 +18,13 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.cm as cm
 import numpy as np
 import scipy as sp
+from numpy.typing import NDArray
 from scipy.signal import correlate
 from scipy.stats import pearsonr
 
@@ -40,7 +43,7 @@ DEFAULT_SIGMAMAX = 1000.0
 DEFAULT_SIGMAMIN = 0.25
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for showxcorrx
     """
@@ -317,13 +320,13 @@ def _get_parser():
     return parser
 
 
-def printthresholds(pcts, thepercentiles, labeltext):
+def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
     print(labeltext)
     for i in range(0, len(pcts)):
         print("\tp <", "{:.3f}".format(1.0 - thepercentiles[i]), ": ", pcts[i])
 
 
-def showxcorrx(args):
+def showxcorrx(args: Any) -> None:
     # set some default values
     zerooutbadfit = False
     peakfittype = "gauss"

@@ -16,46 +16,49 @@
 #   limitations under the License.
 #
 #
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.stats as tide_stats
 
 
 def refineDelay(
-    fmri_data_valid,
-    initial_fmri_x,
-    xdim,
-    ydim,
-    slicethickness,
-    sLFOfiltmask,
-    genlagtc,
-    oversamptr,
-    sLFOfitmean,
-    rvalue,
-    r2value,
-    fitNorm,
-    fitcoeff,
-    lagtc,
-    outputname,
-    validvoxels,
-    nativespaceshape,
-    theinputdata,
-    lagtimes,
-    optiondict,
-    LGR,
-    TimingLGR,
-    outputlevel="normal",
-    gausssigma=-1,
-    patchthresh=3.0,
-    mindelay=-5.0,
-    maxdelay=5.0,
-    numpoints=501,
-    histlen=101,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-    debug=False,
-):
+    fmri_data_valid: Any,
+    initial_fmri_x: Any,
+    xdim: Any,
+    ydim: Any,
+    slicethickness: Any,
+    sLFOfiltmask: Any,
+    genlagtc: Any,
+    oversamptr: Any,
+    sLFOfitmean: Any,
+    rvalue: Any,
+    r2value: Any,
+    fitNorm: Any,
+    fitcoeff: Any,
+    lagtc: Any,
+    outputname: Any,
+    validvoxels: Any,
+    nativespaceshape: Any,
+    theinputdata: Any,
+    lagtimes: Any,
+    optiondict: Any,
+    LGR: Any,
+    TimingLGR: Any,
+    outputlevel: str = "normal",
+    gausssigma: int = -1,
+    patchthresh: float = 3.0,
+    mindelay: float = -5.0,
+    maxdelay: float = 5.0,
+    numpoints: int = 501,
+    histlen: int = 101,
+    rt_floatset: Any = np.float64,
+    rt_floattype: str = "float64",
+    debug: bool = False,
+) -> None:
     # do the calibration
     TimingLGR.info("Refinement calibration start")
     regressderivratios, regressrvalues = tide_refinedelay.getderivratios(

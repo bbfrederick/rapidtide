@@ -18,6 +18,8 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.cm as cm
 import numpy as np
@@ -36,12 +38,13 @@ from matplotlib.pyplot import (
     ylabel,
     ylim,
 )
+from numpy.typing import NDArray
 from scipy.stats import linregress
 
 import rapidtide.io as tide_io
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="showxy",
@@ -202,18 +205,18 @@ def _get_parser():
 
 
 def bland_altman_plot(
-    data1,
-    data2,
-    usex=False,
-    identifier=None,
-    fontscalefac=1.0,
-    xrange=None,
-    yrange=None,
-    doannotate=True,
-    debug=False,
-    *args,
-    **kwargs,
-):
+    data1: Any,
+    data2: Any,
+    usex: bool = False,
+    identifier: Optional[Any] = None,
+    fontscalefac: float = 1.0,
+    xrange: Optional[Any] = None,
+    yrange: Optional[Any] = None,
+    doannotate: bool = True,
+    debug: bool = False,
+    *args: Any,
+    **kwargs: Any,
+) -> None:
     # data1 is X, data2 is Y
     data1 = np.asarray(data1)
     data2 = np.asarray(data2)
@@ -268,7 +271,7 @@ def bland_altman_plot(
         ylim(yrange)
 
 
-def stringtorange(thestring):
+def stringtorange(thestring: Any) -> None:
     thelist = thestring.split(",")
     if len(thelist) != 2:
         print("range setting requires two comma separated floats - exiting")
@@ -286,7 +289,7 @@ def stringtorange(thestring):
     return (themin, themax)
 
 
-def showxy(args):
+def showxy(args: Any) -> None:
     # process the file list
     textfilename = []
     for thefile in args.textfilenames:

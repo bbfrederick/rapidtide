@@ -18,14 +18,17 @@
 #
 import argparse
 import copy
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="proj2flow",
@@ -57,7 +60,7 @@ def _get_parser():
     return parser
 
 
-def proj2flow(args):
+def proj2flow(args: Any) -> None:
     # set default variable values
     displayplots = False
 

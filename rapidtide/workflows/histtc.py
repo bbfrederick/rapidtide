@@ -17,15 +17,18 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for histtc
     """
@@ -108,7 +111,7 @@ def _get_parser():
     return parser
 
 
-def histtc(args):
+def histtc(args: Any) -> None:
     # set default variable values
     thepercentiles = [0.2, 0.25, 0.5, 0.75, 0.98]
     thepvalnames = []

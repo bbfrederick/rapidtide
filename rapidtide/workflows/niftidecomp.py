@@ -18,8 +18,11 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from sklearn.decomposition import PCA, FastICA, SparsePCA
 
 import rapidtide.filter as tide_filt
@@ -27,7 +30,7 @@ import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 
-def _get_parser(decompaxis):
+def _get_parser(decompaxis: Any) -> Any:
     """
     Argument parser for spatialdecomp and temporaldecomp
     """
@@ -109,15 +112,15 @@ def _get_parser(decompaxis):
     return parser
 
 
-def _get_parser_temporal():
+def _get_parser_temporal() -> Any:
     return _get_parser("temporal")
 
 
-def _get_parser_spatial():
+def _get_parser_spatial() -> Any:
     return _get_parser("spatial")
 
 
-def transposeifspatial(data, decompaxis="temporal"):
+def transposeifspatial(data: Any, decompaxis: str = "temporal") -> None:
     if decompaxis == "spatial":
         return np.transpose(data)
     else:
@@ -125,16 +128,16 @@ def transposeifspatial(data, decompaxis="temporal"):
 
 
 def niftidecomp_workflow(
-    decompaxis,
-    datafilelist,
-    datamaskname=None,
-    decomptype="pca",
-    pcacomponents=0.5,
-    icacomponents=None,
-    varnorm=True,
-    demean=True,
-    sigma=0.0,
-):
+    decompaxis: Any,
+    datafilelist: Any,
+    datamaskname: Optional[Any] = None,
+    decomptype: str = "pca",
+    pcacomponents: float = 0.5,
+    icacomponents: Optional[Any] = None,
+    varnorm: bool = True,
+    demean: bool = True,
+    sigma: float = 0.0,
+) -> None:
     print(f"Will perform {decomptype} analysis along the {decompaxis} axis")
 
     if decompaxis == "temporal":
@@ -360,7 +363,7 @@ def niftidecomp_workflow(
     )
 
 
-def main(decompaxis, args):
+def main(decompaxis: Any, args: Any) -> None:
     if args["ncomp"] < 0.0:
         args["pcacomponents"] = 0.5
         args["icacomponents"] = None
@@ -448,9 +451,9 @@ def main(decompaxis, args):
     )
 
 
-def main_temporal(args):
+def main_temporal(args: Any) -> None:
     main("temporal", vars(args))
 
 
-def main_spatial(args):
+def main_spatial(args: Any) -> None:
     main("spatial", vars(args))

@@ -17,14 +17,17 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="variabilityizer",
@@ -41,7 +44,7 @@ def _get_parser():
     return parser
 
 
-def cvttovariability(windowhalfwidth, data):
+def cvttovariability(windowhalfwidth: Any, data: Any) -> None:
     themean = np.mean(data)
     if themean > 0.0:
         thestd = data * 0.0
@@ -55,7 +58,7 @@ def cvttovariability(windowhalfwidth, data):
         return data
 
 
-def variabilityizer(args):
+def variabilityizer(args: Any) -> None:
     # get the input TR
     inputtr_fromfile, numinputtrs = tide_io.fmritimeinfo(args.inputfilename)
     print("input data: ", numinputtrs, " timepoints, tr = ", inputtr_fromfile)

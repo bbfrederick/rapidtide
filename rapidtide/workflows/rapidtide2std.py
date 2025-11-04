@@ -20,12 +20,14 @@ import argparse
 import glob
 import os
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import rapidtide.externaltools as tide_exttools
 import rapidtide.io as tide_io
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="rapidtide2std",
@@ -111,7 +113,7 @@ def _get_parser():
     return parser
 
 
-def rapidtide2std(args):
+def rapidtide2std(args: Any) -> None:
     if args.debug:
         print(args)
 

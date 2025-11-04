@@ -17,6 +17,7 @@
 #
 #
 import argparse
+from typing import Any
 
 import numpy as np
 
@@ -28,7 +29,7 @@ import rapidtide.resample as tide_resample
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="aligntcs",
@@ -83,7 +84,7 @@ def _get_parser():
     return parser
 
 
-def aligntcs(args):
+def aligntcs(args: Any) -> None:
     if args.displayplots:
         import matplotlib as mpl
 

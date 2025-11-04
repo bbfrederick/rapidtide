@@ -17,7 +17,10 @@
 #
 #
 
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
@@ -25,37 +28,37 @@ import rapidtide.makelaggedtcs as tide_makelagged
 
 
 def regressfrommaps(
-    fmri_data_valid,
-    validvoxels,
-    initial_fmri_x,
-    lagtimes,
-    fitmask,
-    genlagtc,
-    mode,
-    outputname,
-    oversamptr,
-    sLFOfitmean,
-    rvalue,
-    r2value,
-    fitNorm,
-    fitcoeff,
-    movingsignal,
-    lagtc,
-    filtereddata,
-    LGR,
-    TimingLGR,
-    regressfiltthreshval,
-    saveminimumsLFOfiltfiles,
-    nprocs_makelaggedtcs=1,
-    nprocs_regressionfilt=1,
-    regressderivs=0,
-    chunksize=50000,
-    showprogressbar=True,
-    alwaysmultiproc=False,
-    saveEVsandquit=False,
-    coefficientsonly=False,
-    debug=False,
-):
+    fmri_data_valid: Any,
+    validvoxels: Any,
+    initial_fmri_x: Any,
+    lagtimes: Any,
+    fitmask: Any,
+    genlagtc: Any,
+    mode: Any,
+    outputname: Any,
+    oversamptr: Any,
+    sLFOfitmean: Any,
+    rvalue: Any,
+    r2value: Any,
+    fitNorm: Any,
+    fitcoeff: Any,
+    movingsignal: Any,
+    lagtc: Any,
+    filtereddata: Any,
+    LGR: Any,
+    TimingLGR: Any,
+    regressfiltthreshval: Any,
+    saveminimumsLFOfiltfiles: Any,
+    nprocs_makelaggedtcs: int = 1,
+    nprocs_regressionfilt: int = 1,
+    regressderivs: int = 0,
+    chunksize: int = 50000,
+    showprogressbar: bool = True,
+    alwaysmultiproc: bool = False,
+    saveEVsandquit: bool = False,
+    coefficientsonly: bool = False,
+    debug: bool = False,
+) -> None:
     if debug:
         print("regressfrommaps: Starting")
         print(f"\t{nprocs_makelaggedtcs=}")

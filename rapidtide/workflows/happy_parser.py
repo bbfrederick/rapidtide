@@ -17,8 +17,11 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
@@ -31,7 +34,7 @@ DEFAULT_TF_DL_MODEL = "model_revised_tf2"
 DEFAULT_PT_DL_MODEL = "model_cnn_pytorch"
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for happy
     """
@@ -800,7 +803,7 @@ def _get_parser():
     return parser
 
 
-def process_args(inputargs=None):
+def process_args(inputargs: Optional[Any] = None) -> None:
     """
     Compile arguments for rapidtide workflow.
     """

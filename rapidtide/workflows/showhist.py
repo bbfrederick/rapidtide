@@ -17,15 +17,18 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from matplotlib.pyplot import bar, legend, plot, savefig, show, title, xlabel, ylabel
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="showhist",
@@ -90,7 +93,7 @@ def _get_parser():
     return parser
 
 
-def showhist(args):
+def showhist(args: Any) -> None:
     if args.debug:
         print(args)
     if args.calcdist:

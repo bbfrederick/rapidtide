@@ -20,16 +20,19 @@ import argparse
 import os
 import subprocess
 import sys
+from argparse import Namespace
 from glob import glob
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.externaltools as tide_exttools
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for atlastool
     """
@@ -156,7 +159,7 @@ def _get_parser():
     return parser
 
 
-def atlastool(args):
+def atlastool(args: Any) -> None:
     if args.debug:
         print(args)
 

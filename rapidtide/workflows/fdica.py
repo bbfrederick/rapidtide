@@ -40,20 +40,25 @@ if pyfftwpresent:
     pyfftw.interfaces.cache.enable()
 
 
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+from numpy.typing import NDArray
+
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 
-def P2R(radii, angles):
+def P2R(radii: Any, angles: Any) -> None:
     return radii * np.exp(1j * angles)
 
 
-def R2P(x):
+def R2P(x: Any) -> None:
     return np.absolute(x), np.angle(x)
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for fdica
     """
@@ -117,16 +122,16 @@ def _get_parser():
 
 
 def fdica(
-    datafile,
-    datamask,
-    outputroot,
-    gausssigma=0.0,
-    pcacomponents="mle",
-    icacomponents=None,
-    lowerfreq=0.009,
-    upperfreq=0.15,
-    debug=False,
-):
+    datafile: Any,
+    datamask: Any,
+    outputroot: Any,
+    gausssigma: float = 0.0,
+    pcacomponents: str = "mle",
+    icacomponents: Optional[Any] = None,
+    lowerfreq: float = 0.009,
+    upperfreq: float = 0.15,
+    debug: bool = False,
+) -> None:
     # read in data
     print("reading in data arrays")
     (
@@ -422,7 +427,7 @@ def fdica(
     )
 
 
-def main():
+def main() -> None:
     try:
         args = _get_parser().parse_args()
     except SystemExit:

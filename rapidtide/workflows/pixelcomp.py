@@ -25,10 +25,14 @@ from numpy.polynomial import Polynomial
 import rapidtide.io as tide_io
 
 mpl.use("Agg")
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import matplotlib.pyplot as plt
+from numpy.typing import NDArray
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for pixelcomp
     """
@@ -99,7 +103,9 @@ def _get_parser():
     return parser
 
 
-def bland_altman_plot(data1, data2, usex=False, *args, **kwargs):
+def bland_altman_plot(
+    data1: Any, data2: Any, usex: bool = False, *args: Any, **kwargs: Any
+) -> None:
     # data1 is X, data2 is Y
     data1 = np.asarray(data1)
     data2 = np.asarray(data2)
@@ -117,7 +123,7 @@ def bland_altman_plot(data1, data2, usex=False, *args, **kwargs):
     plt.axhline(md - 2 * sd, color="gray", linestyle="--")
 
 
-def pairdata(input1_data, input2_data, totalmask):
+def pairdata(input1_data: Any, input2_data: Any, totalmask: Any) -> None:
     nonzeropoints = np.where(totalmask > 0)
     pairlist = []
     for i in range(0, len(nonzeropoints[0])):
@@ -131,7 +137,7 @@ def pairdata(input1_data, input2_data, totalmask):
     return np.asarray(pairlist)
 
 
-def pixelcomp(args):
+def pixelcomp(args: Any) -> None:
     if args.display:
         mpl.use("TkAgg")
 

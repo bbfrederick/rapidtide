@@ -18,15 +18,18 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for polyfitim
     """
@@ -78,14 +81,14 @@ def _get_parser():
 
 
 def polyfitim(
-    datafile,
-    datamask,
-    templatefile,
-    templatemask,
-    outputroot,
-    regionatlas=None,
-    order=1,
-):
+    datafile: Any,
+    datamask: Any,
+    templatefile: Any,
+    templatemask: Any,
+    outputroot: Any,
+    regionatlas: Optional[Any] = None,
+    order: int = 1,
+) -> None:
     # check the order
     if order < 1:
         print("order must be >= 1")
@@ -279,7 +282,7 @@ def polyfitim(
     )
 
 
-def main(args):
+def main(args: Any) -> None:
     polyfitim(
         args.datafile,
         args.datamask,

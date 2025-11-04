@@ -23,8 +23,10 @@ import platform
 import sys
 import warnings
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import rankdata
 
 import rapidtide.calccoherence as tide_calccoherence
@@ -66,7 +68,7 @@ ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
 
-def checkforzeromean(thedataset):
+def checkforzeromean(thedataset: Any) -> None:
     themean = np.mean(thedataset, axis=1)
     thestd = np.std(thedataset, axis=1)
     if np.mean(thestd) > np.mean(themean):
@@ -75,7 +77,9 @@ def checkforzeromean(thedataset):
         return False
 
 
-def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints):
+def echocancel(
+    thetimecourse: Any, echooffset: Any, thetimestep: Any, outputname: Any, padtimepoints: Any
+) -> None:
     tide_io.writebidstsv(
         f"{outputname}_desc-echocancellation_timeseries",
         thetimecourse,
@@ -115,12 +119,12 @@ def echocancel(thetimecourse, echooffset, thetimestep, outputname, padtimepoints
     return outputtimecourse, echofit, echoR2
 
 
-def setpassoptions(passdict, optiondict):
+def setpassoptions(passdict: Any, optiondict: Any) -> None:
     for key, value in passdict.items():
         optiondict[key] = value
 
 
-def rapidtide_main(argparsingfunc):
+def rapidtide_main(argparsingfunc: Any) -> None:
     optiondict, theprefilter = argparsingfunc
     optiondict["threaddebug"] = False
 

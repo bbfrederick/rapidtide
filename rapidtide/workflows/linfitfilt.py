@@ -18,15 +18,18 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for linfitfilt
     """
@@ -76,7 +79,14 @@ def _get_parser():
     return parser
 
 
-def linfitfilt(inputfile, numskip, outputroot, evfilename, datamaskname, saveall=True):
+def linfitfilt(
+    inputfile: Any,
+    numskip: Any,
+    outputroot: Any,
+    evfilename: Any,
+    datamaskname: Any,
+    saveall: bool = True,
+) -> None:
     # initialize some variables
     evdata = []
     evisnifti = []
@@ -238,7 +248,7 @@ def linfitfilt(inputfile, numskip, outputroot, evfilename, datamaskname, saveall
     tide_io.savetonifti(filtereddata, theheader, outputroot + "_filtered")
 
 
-def main():
+def main() -> None:
     try:
         args = vars(_get_parser().parse_args())
     except SystemExit:

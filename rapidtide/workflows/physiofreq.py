@@ -18,9 +18,12 @@
 #
 import argparse
 import os
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 from scipy.signal import savgol_filter, welch
 
 import rapidtide.filter as tide_filt
@@ -29,7 +32,7 @@ import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 
 
-def _get_parser():
+def _get_parser() -> Any:
     parser = argparse.ArgumentParser(
         prog="physiofreq",
         description="Finds the dominant frequency in a cardiac or respiratory waveform.",
@@ -75,15 +78,15 @@ def _get_parser():
 
 
 def getwavefreq(
-    thewaveform,
-    thesamplerate,
-    minpermin=40.0,
-    maxpermin=140.0,
-    smooth=True,
-    smoothlen=101,
-    debug=False,
-    displayplots=False,
-):
+    thewaveform: Any,
+    thesamplerate: Any,
+    minpermin: float = 40.0,
+    maxpermin: float = 140.0,
+    smooth: bool = True,
+    smoothlen: int = 101,
+    debug: bool = False,
+    displayplots: bool = False,
+) -> None:
     if len(thewaveform) % 2 == 1:
         thewaveform = thewaveform[:-1]
     if len(thewaveform) > 1024:
@@ -141,7 +144,7 @@ def getwavefreq(
     return peakfreq
 
 
-def physiofreq(args):
+def physiofreq(args: Any) -> None:
     textfileinfo, textfilecolspec = tide_io.parsefilespec(args.textfilename)
     filebase, extension = os.path.splitext(textfileinfo[0])
     if extension == ".json":

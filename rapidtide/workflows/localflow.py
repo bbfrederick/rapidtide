@@ -19,8 +19,11 @@
 import argparse
 import copy
 import time
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 import rapidtide.correlate as tide_corr
@@ -41,7 +44,7 @@ DEFAULT_AMPTHRESH = 0.3
 DEFAULT_MINLAGDIFF = 0.0
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="localflow",
@@ -149,17 +152,17 @@ def _get_parser():
 
 
 def preprocdata(
-    fmridata,
-    themask,
-    theprefilter,
-    oversamplefactor,
-    Fs,
-    tr,
-    detrendorder=3,
-    windowfunc="hamming",
-    padseconds=0,
-    showprogressbar=True,
-):
+    fmridata: Any,
+    themask: Any,
+    theprefilter: Any,
+    oversamplefactor: Any,
+    Fs: Any,
+    tr: Any,
+    detrendorder: int = 3,
+    windowfunc: str = "hamming",
+    padseconds: int = 0,
+    showprogressbar: bool = True,
+) -> None:
     numspatiallocs = fmridata.shape[0] * fmridata.shape[1] * fmridata.shape[2]
     timepoints = fmridata.shape[3]
 
@@ -203,19 +206,19 @@ def preprocdata(
 
 
 def getcorrloc(
-    thedata,
-    idx1,
-    idx2,
-    Fs,
-    dofit=False,
-    lagmin=-12.5,
-    lagmax=12.5,
-    widthmax=100.0,
-    negsearch=15.0,
-    possearch=15.0,
-    padding=0,
-    debug=False,
-):
+    thedata: Any,
+    idx1: Any,
+    idx2: Any,
+    Fs: Any,
+    dofit: bool = False,
+    lagmin: float = -12.5,
+    lagmax: float = 12.5,
+    widthmax: float = 100.0,
+    negsearch: float = 15.0,
+    possearch: float = 15.0,
+    padding: int = 0,
+    debug: bool = False,
+) -> None:
     tc1 = thedata[idx1, :]
     tc2 = thedata[idx2, :]
     if np.any(tc1) != 0.0 and np.any(tc2) != 0.0:
@@ -299,14 +302,14 @@ def getcorrloc(
         return 0.0, 0.0, 0, 0
 
 
-def xyz2index(x, y, z, xsize, ysize, zsize):
+def xyz2index(x: Any, y: Any, z: Any, xsize: Any, ysize: Any, zsize: Any) -> None:
     if (0 <= x < xsize) and (0 <= y < ysize) and (0 <= z < zsize):
         return int(z) + int(y) * int(zsize) + int(x) * int(zsize * ysize)
     else:
         return -1
 
 
-def index2xyz(theindex, ysize, zsize):
+def index2xyz(theindex: Any, ysize: Any, zsize: Any) -> None:
     x = theindex // int(zsize * ysize)
     theindex -= int(x) * int(zsize * ysize)
     y = theindex // int(zsize)
@@ -315,7 +318,7 @@ def index2xyz(theindex, ysize, zsize):
     return x, y, z
 
 
-def localflow(args):
+def localflow(args: Any) -> None:
     # set default variable values
     displayplots = False
 

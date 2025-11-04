@@ -19,8 +19,11 @@
 import argparse
 import copy
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 import rapidtide.io as tide_io
@@ -29,7 +32,7 @@ import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="histnifti",
@@ -119,7 +122,7 @@ def _get_parser():
     return parser
 
 
-def histnifti(args):
+def histnifti(args: Any) -> None:
     # set default variable values
     thepercentiles = [0.2, 0.25, 0.5, 0.75, 0.98]
     thepvalnames = []

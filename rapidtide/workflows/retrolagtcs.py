@@ -21,8 +21,11 @@ import copy
 import logging
 import os
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
@@ -39,7 +42,7 @@ TimingLGR = logging.getLogger("TIMING")
 DEFAULT_REGRESSIONFILTDERIVS = 0
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for retrolagtcs
     """
@@ -126,7 +129,7 @@ def _get_parser():
     return parser
 
 
-def retrolagtcs(args):
+def retrolagtcs(args: Any) -> None:
     rt_floatset = np.float64
     rt_floattype = "float64"
     rt_outfloatset = np.float64

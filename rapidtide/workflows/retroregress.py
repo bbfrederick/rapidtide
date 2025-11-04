@@ -23,9 +23,12 @@ import os
 import platform
 import sys
 import time
+from argparse import Namespace
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -63,7 +66,7 @@ DEFAULT_REFINEDELAYNUMPOINTS = 501
 DEFAULT_DELAYOFFSETSPATIALFILT = -1
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for glmfilt
     """
@@ -232,7 +235,7 @@ def _get_parser():
     return parser
 
 
-def retroregress(args):
+def retroregress(args: Any) -> None:
     # get the pid of the parent process
     args.pid = os.getpid()
 
@@ -1364,7 +1367,7 @@ def retroregress(args):
     Path(f"{outputname}_RETRODONE.txt").touch()
 
 
-def process_args(inputargs=None):
+def process_args(inputargs: Optional[Any] = None) -> None:
     """
     Compile arguments for retroregress workflow.
     """

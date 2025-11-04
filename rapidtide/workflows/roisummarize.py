@@ -18,15 +18,18 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for roisummarize
     """
@@ -101,7 +104,9 @@ def _get_parser():
     return parser
 
 
-def summarize4Dbylabel(inputvoxels, templatevoxels, normmethod="z", debug=False):
+def summarize4Dbylabel(
+    inputvoxels: Any, templatevoxels: Any, normmethod: str = "z", debug: bool = False
+) -> None:
     numregions = np.max(templatevoxels)
     numtimepoints = inputvoxels.shape[1]
     timecourses = np.zeros((numregions, numtimepoints), dtype="float")
@@ -118,7 +123,7 @@ def summarize4Dbylabel(inputvoxels, templatevoxels, normmethod="z", debug=False)
     return timecourses
 
 
-def summarize3Dbylabel(inputvoxels, templatevoxels, debug=False):
+def summarize3Dbylabel(inputvoxels: Any, templatevoxels: Any, debug: bool = False) -> None:
     numregions = np.max(templatevoxels)
     outputvoxels = 0.0 * inputvoxels
     regionstats = []
@@ -132,7 +137,7 @@ def summarize3Dbylabel(inputvoxels, templatevoxels, debug=False):
     return outputvoxels, regionstats
 
 
-def roisummarize(args):
+def roisummarize(args: Any) -> None:
     # grab the command line arguments then pass them off.
     try:
         args = _get_parser().parse_args()

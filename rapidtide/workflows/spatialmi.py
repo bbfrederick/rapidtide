@@ -18,8 +18,11 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
@@ -28,7 +31,7 @@ import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for pixelcomp
     """
@@ -138,19 +141,19 @@ def _get_parser():
 
 
 def getneighborhood(
-    indata,
-    xloc,
-    yloc,
-    zloc,
-    xsize,
-    ysize,
-    zsize,
-    radius,
-    spherical=False,
-    kernelwidth=1.5,
-    slop=0.01,
-    debug=False,
-):
+    indata: Any,
+    xloc: Any,
+    yloc: Any,
+    zloc: Any,
+    xsize: Any,
+    ysize: Any,
+    zsize: Any,
+    radius: Any,
+    spherical: bool = False,
+    kernelwidth: float = 1.5,
+    slop: float = 0.01,
+    debug: bool = False,
+) -> None:
     if not spherical:
         global usedwidth, kernel
         try:
@@ -230,7 +233,16 @@ def getneighborhood(
         return np.array(outdata)
 
 
-def getMI(x, y, norm=True, bins=-1, init=False, prebin=True, sigma=0.25, debug=False):
+def getMI(
+    x: Any,
+    y: Any,
+    norm: bool = True,
+    bins: int = -1,
+    init: bool = False,
+    prebin: bool = True,
+    sigma: float = 0.25,
+    debug: bool = False,
+) -> None:
     global thebins
 
     if norm:
@@ -285,7 +297,7 @@ def getMI(x, y, norm=True, bins=-1, init=False, prebin=True, sigma=0.25, debug=F
     )
 
 
-def spatialmi(args):
+def spatialmi(args: Any) -> None:
     global thebins
     thebins = None
 

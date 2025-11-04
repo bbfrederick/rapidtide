@@ -19,6 +19,7 @@
 import argparse
 import os
 import sys
+from typing import Any
 
 import rapidtide.dlfilter as tide_dlfilt
 import rapidtide.happy_supportfuncs as happy_support
@@ -26,7 +27,7 @@ import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for applydlfilter
     """
@@ -81,7 +82,7 @@ def _get_parser():
     return parser
 
 
-def applydlfilter(args):
+def applydlfilter(args: Any) -> None:
     if args.display:
         import matplotlib as mpl
 

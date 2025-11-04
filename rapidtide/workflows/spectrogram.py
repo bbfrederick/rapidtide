@@ -18,17 +18,20 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from numpy.typing import NDArray
 from scipy.signal import ShortTimeFFT, check_NOLA, stft
 
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_float, is_int, is_valid_file
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for spectrogram
     """
@@ -73,7 +76,9 @@ def _get_parser():
     return parser
 
 
-def calcspecgram(x, time, nperseg=32, windowtype="hann", legacy=True):
+def calcspecgram(
+    x: Any, time: Any, nperseg: int = 32, windowtype: str = "hann", legacy: bool = True
+) -> None:
     """Make and plot a log-scaled spectrogram"""
     dt = np.diff(time)[0]  # In days...
     fs = 1.0 / dt
@@ -113,7 +118,7 @@ def calcspecgram(x, time, nperseg=32, windowtype="hann", legacy=True):
     return freq, segtimes, thestft, isinvertable
 
 
-def showspecgram(thestft, time, freq, ax, fig, mode="mag"):
+def showspecgram(thestft: Any, time: Any, freq: Any, ax: Any, fig: Any, mode: str = "mag") -> None:
     # Log scaling for amplitude values
     if mode == "mag":
         spec_img = np.log10(np.abs(thestft))
@@ -167,13 +172,13 @@ def showspecgram(thestft, time, freq, ax, fig, mode="mag"):
     return im, cbar
 
 
-def make_legend_axes(ax):
+def make_legend_axes(ax: Any) -> None:
     divider = make_axes_locatable(ax)
     legend_ax = divider.append_axes("right", 0.4, pad=0.2)
     return legend_ax
 
 
-def ndplot(x, time, thelabel, nperseg=32, legacy=True):
+def ndplot(x: Any, time: Any, thelabel: Any, nperseg: int = 32, legacy: bool = True) -> None:
     print("arrived in ndplot")
     fig = plt.figure()
 
@@ -218,7 +223,7 @@ def ndplot(x, time, thelabel, nperseg=32, legacy=True):
     # plt.subplots_adjust(hspace=0.0)
 
 
-def spectrogram(args):
+def spectrogram(args: Any) -> None:
     # get the command line parameters
     try:
         args = _get_parser().parse_args()

@@ -22,8 +22,10 @@ import sys
 import time
 import warnings
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
@@ -50,7 +52,7 @@ except ImportError:
     mklexists = False
 
 
-def happy_main(argparsingfunc):
+def happy_main(argparsingfunc: Any) -> None:
     timings = [["Start", time.time(), None, None]]
 
     # get the command line parameters

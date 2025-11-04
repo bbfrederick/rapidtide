@@ -17,8 +17,11 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from tqdm import tqdm
 
@@ -27,7 +30,7 @@ import rapidtide.miscmath as tide_math
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 
-def _get_parser():
+def _get_parser() -> Any:
     parser = argparse.ArgumentParser(
         prog="pairproc",
         description="Compare the even and odd volumes of a 4D nifti file.",
@@ -68,7 +71,7 @@ def _get_parser():
     return parser
 
 
-def pairproc(args):
+def pairproc(args: Any) -> None:
     # read in the data files
     print("reading input file")
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)

@@ -16,7 +16,10 @@
 #   limitations under the License.
 #
 #
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
+from numpy.typing import NDArray
 from scipy import ndimage
 
 import rapidtide.io as tide_io
@@ -28,48 +31,48 @@ import rapidtide.util as tide_util
 
 
 def fitSimFunc(
-    fmri_data_valid,
-    validsimcalcstart,
-    validsimcalcend,
-    osvalidsimcalcstart,
-    osvalidsimcalcend,
-    initial_fmri_x,
-    os_fmri_x,
-    theMutualInformationator,
-    cleaned_referencetc,
-    corrout,
-    outputname,
-    validvoxels,
-    nativespaceshape,
-    bidsbasedict,
-    numspatiallocs,
-    gaussout,
-    theinitialdelay,
-    windowout,
-    R2,
-    thesizes,
-    internalspaceshape,
-    numvalidspatiallocs,
-    theinputdata,
-    theheader,
-    theFitter,
-    fitmask,
-    lagtimes,
-    lagstrengths,
-    lagsigma,
-    failreason,
-    outmaparray,
-    trimmedcorrscale,
-    similaritytype,
-    thepass,
-    optiondict,
-    LGR,
-    TimingLGR,
-    simplefit=False,
-    upsampfac=8,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
-):
+    fmri_data_valid: Any,
+    validsimcalcstart: Any,
+    validsimcalcend: Any,
+    osvalidsimcalcstart: Any,
+    osvalidsimcalcend: Any,
+    initial_fmri_x: Any,
+    os_fmri_x: Any,
+    theMutualInformationator: Any,
+    cleaned_referencetc: Any,
+    corrout: Any,
+    outputname: Any,
+    validvoxels: Any,
+    nativespaceshape: Any,
+    bidsbasedict: Any,
+    numspatiallocs: Any,
+    gaussout: Any,
+    theinitialdelay: Any,
+    windowout: Any,
+    R2: Any,
+    thesizes: Any,
+    internalspaceshape: Any,
+    numvalidspatiallocs: Any,
+    theinputdata: Any,
+    theheader: Any,
+    theFitter: Any,
+    fitmask: Any,
+    lagtimes: Any,
+    lagstrengths: Any,
+    lagsigma: Any,
+    failreason: Any,
+    outmaparray: Any,
+    trimmedcorrscale: Any,
+    similaritytype: Any,
+    thepass: Any,
+    optiondict: Any,
+    LGR: Any,
+    TimingLGR: Any,
+    simplefit: bool = False,
+    upsampfac: int = 8,
+    rt_floatset: Any = np.float64,
+    rt_floattype: str = "float64",
+) -> None:
     # Do a peak prefit if doing hybrid
     if optiondict["similaritymetric"] == "hybrid":
         LGR.info(f"\n\nPeak prefit calculation, pass {thepass}")

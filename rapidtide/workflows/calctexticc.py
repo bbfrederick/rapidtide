@@ -20,8 +20,11 @@ import argparse
 import platform
 import sys
 import time
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.linalg import pinv
 
 import rapidtide.io as tide_io
@@ -30,7 +33,7 @@ import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 
-def _get_parser():
+def _get_parser() -> Any:
     parser = argparse.ArgumentParser(
         prog="calcicc",
         description="Calculate per-column ICC(3,1) on a set of text files.",
@@ -105,7 +108,7 @@ def _get_parser():
     return parser
 
 
-def parsetextmeasurementlist(measlist, numfiles, debug=False):
+def parsetextmeasurementlist(measlist: Any, numfiles: Any, debug: bool = False) -> None:
     # how do we get the number of subjects?
     nummeas, numsubjs = measlist.shape[0], measlist.shape[1]
     filesel = np.zeros((nummeas, numsubjs), dtype=int)
@@ -134,7 +137,9 @@ def parsetextmeasurementlist(measlist, numfiles, debug=False):
     return filesel, volumesel
 
 
-def makdcommandlinelist(arglist, starttime, endtime, extra=None):
+def makdcommandlinelist(
+    arglist: Any, starttime: Any, endtime: Any, extra: Optional[Any] = None
+) -> None:
     # get the processing date
     dateline = (
         "# Processed on "
@@ -171,7 +176,7 @@ def makdcommandlinelist(arglist, starttime, endtime, extra=None):
         return [dateline, timeline, nodeline, commandline]
 
 
-def calctexticc(args):
+def calctexticc(args: Any) -> None:
     runstarttime = time.time()
 
     datafiles = (args.datafile).split(",")

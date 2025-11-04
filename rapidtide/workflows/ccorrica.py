@@ -21,9 +21,12 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import nibabel as nib
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr
@@ -38,7 +41,7 @@ DEFAULT_DETREND_ORDER = 3
 DEFAULT_CORRWEIGHTING = "phat"
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for ccorrica
     """
@@ -134,7 +137,7 @@ def _get_parser():
     return parser
 
 
-def ccorrica(args):
+def ccorrica(args: Any) -> None:
     args, theprefilter = pf.postprocessfilteropts(args)
 
     # read in data

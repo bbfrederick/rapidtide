@@ -18,6 +18,7 @@
 #
 import argparse
 import copy
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -33,7 +34,7 @@ DEFAULT_PEAKTHRESH = 0.33
 DEFAULT_HISTBINS = 151
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for adjust offset
     """
@@ -159,7 +160,7 @@ def _get_parser():
     return parser
 
 
-def adjustoffset(args):
+def adjustoffset(args: Any) -> None:
     if args.debug:
         print(f"reading map file {args.inputmap}")
     (

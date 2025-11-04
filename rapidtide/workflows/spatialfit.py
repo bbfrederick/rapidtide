@@ -17,6 +17,8 @@
 #
 #
 import argparse
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from matplotlib.pyplot import *
 from tqdm import tqdm
@@ -26,7 +28,7 @@ import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="spatialfit",
@@ -80,7 +82,7 @@ def _get_parser():
     return parser
 
 
-def spatialfit(args):
+def spatialfit(args: Any) -> None:
     # get the command line parameters
     try:
         args = _get_parser().parse_args()

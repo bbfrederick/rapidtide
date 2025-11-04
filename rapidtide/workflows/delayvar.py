@@ -22,9 +22,12 @@ import logging
 import os
 import sys
 import time
+from argparse import Namespace
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA
 from tf_keras.src.dtensor.integration_test_utils import train_step
@@ -68,7 +71,7 @@ DEFAULT_LAGMAX = -999
 DEFAULT_TRAINSTEP = 0.5
 
 
-def _get_parser():
+def _get_parser() -> Any:
     """
     Argument parser for glmfilt
     """
@@ -265,7 +268,7 @@ def _get_parser():
     return parser
 
 
-def delayvar(args):
+def delayvar(args: Any) -> None:
     # get the pid of the parent process
     args.pid = os.getpid()
 
@@ -1118,7 +1121,7 @@ def delayvar(args):
     Path(f"{outputname}_DELAYVARDONE.txt").touch()
 
 
-def process_args(inputargs=None):
+def process_args(inputargs: Optional[Any] = None) -> None:
     """
     Compile arguments for delayvar workflow.
     """

@@ -18,11 +18,14 @@
 #
 import argparse
 import sys
+from argparse import Namespace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from numpy.polynomial import Polynomial
+from numpy.typing import NDArray
 
 import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
@@ -32,7 +35,7 @@ import rapidtide.resample as tide_resamp
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> Any:
     parser = argparse.ArgumentParser(
         prog="showstxcorr",
         description="Plots the data in text files.",
@@ -187,13 +190,13 @@ def _get_parser():
     return parser
 
 
-def printthresholds(pcts, thepercentiles, labeltext):
+def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
     print(labeltext)
     for i in range(0, len(pcts)):
         print("\tp <", 1.0 - thepercentiles[i], ": ", pcts[i])
 
 
-def showstxcorr(args):
+def showstxcorr(args: Any) -> None:
     # get the command line parameters
     verbose = True
     matrixoutput = False
