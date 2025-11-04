@@ -67,7 +67,7 @@ def setup_logger(
     timing_filename: str,
     memory_filename: Optional[str] = None,
     error_filename: Optional[str] = None,
-    verbose: bool = False,
+    isverbose: bool = False,
     debug: bool = False,
 ) -> None:
     """
@@ -110,7 +110,7 @@ def setup_logger(
     # Set logging level for main logger
     if debug:
         logging.root.setLevel(logging.DEBUG)
-    elif verbose:
+    elif isverbose:
         logging.root.setLevel(VERBOSE_LEVEL)
     else:
         logging.root.setLevel(logging.INFO)

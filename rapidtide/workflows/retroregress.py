@@ -253,7 +253,7 @@ def retroregress(args):
         logger_filename=f"{outputname}_retrolog.txt",
         timing_filename=f"{outputname}_retroruntimings.tsv",
         error_filename=f"{outputname}_retroerrorlog.txt",
-        verbose=False,
+        isverbose=False,
         debug=args.debug,
     )
     TimingLGR.info("Start")

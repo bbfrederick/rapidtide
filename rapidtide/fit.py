@@ -3408,7 +3408,7 @@ def peakdetect(
     # perform some checks
     if lookahead < 1:
         raise ValueError("Lookahead must be '1' or above in value")
-    if not (np.isscalar(delta) and delta >= 0):
+    if not (np.isscalar(delta) and (delta >= 0.0)):
         raise ValueError("delta must be a positive number")
 
     # maxima and minima candidates are temporarily stored in
@@ -3443,7 +3443,7 @@ def peakdetect(
                 #    mxpos = x_axis[np.where(y_axis[index:index+lookahead]==mx)]
 
         ####look for min####
-        if y > mn + delta and mn != -np.inf:
+        if (y > mn + delta) and (mn != -np.inf):
             # Minima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
             if y_axis[index : index + lookahead].min() > mn:
@@ -3609,7 +3609,7 @@ def afscreetest(eigenvals: NDArray, displayplots: bool = False) -> int:
 
 
 def phaseanalysis(
-    firstharmonic: ArrayLike, displayplots: bool = False
+    firstharmonic: NDArray, displayplots: bool = False
 ) -> Tuple[NDArray, NDArray, NDArray]:
     """
         Perform phase analysis on a signal using analytic signal representation.
@@ -3620,8 +3620,8 @@ def phaseanalysis(
 
         Parameters
         ----------
-        firstharmonic : array-like
-            Input signal to analyze. Should be a 1D array-like object.
+        firstharmonic : NDArray
+            Input signal to analyze. Should be a 1D NDArray object.
         displayplots : bool, optional
             If True, displays plots of the analytic signal, phase, and amplitude.
             Default is False.
@@ -3733,7 +3733,7 @@ def simfuncpeakfit(
     uthreshval: float = 1.0,
     zerooutbadfit: bool = True,
     debug: bool = False,
-) -> Tuple[int, float, float, float, int, int, int, int]:
+) -> Tuple[int, np.float64, np.float64, np.float64, np.uint16, np.uint32, int, int]:
     """
         Fit a peak in a correlation or mutual information function.
 
@@ -3889,7 +3889,7 @@ def simfuncpeakfit(
         baselinedev = 0.0
     else:
         # for mutual information, there is a nonzero baseline, so we want the difference from that.
-        baseline = np.median(corrfunc)
+        baseline = float(np.median(corrfunc))
         baselinedev = mad(corrfunc)
     if debug:
         print("baseline, baselinedev:", baseline, baselinedev)
@@ -3922,8 +3922,8 @@ def simfuncpeakfit(
 
         peakpoints[0] = 0
         peakpoints[-1] = 0
-        peakstart = np.max([1, maxindex - 1])
-        peakend = np.min([len(corrtimeaxis) - 2, maxindex + 1])
+        peakstart = int(np.max([1, maxindex - 1]))
+        peakend = int(np.min([len(corrtimeaxis) - 2, maxindex + 1]))
         if debug:
             print("initial peakstart, peakend:", peakstart, peakend)
         if functype == "mutualinfo":
@@ -3989,7 +3989,7 @@ def simfuncpeakfit(
                 print("bad initial")
         if maxsigma_init > absmaxsigma:
             failreason |= FML_INITWIDTHHIGH
-            maxsigma_init = absmaxsigma
+            maxsigma_init = np.float64(absmaxsigma)
             if debug:
                 print("bad initial width - too high")
         if peakend - peakstart < 2:
@@ -4042,7 +4042,7 @@ def simfuncpeakfit(
             data = corrfunc[peakstart : peakend + 1]
             maxval = maxval_init
             maxlag = np.sum(X * data) / np.sum(data)
-            maxsigma = 10.0
+            maxsigma = np.float64(10.0)
         elif peakfittype == "gauss":
             X = corrtimeaxis[peakstart : peakend + 1] - baseline
             data = corrfunc[peakstart : peakend + 1]
@@ -4094,9 +4094,9 @@ def simfuncpeakfit(
                     print("poly coffs:", a, b, c)
                     print("maxlag, maxval, maxsigma:", maxlag, maxval, maxsigma)
             except np.exceptions.RankWarning:
-                maxlag = 0.0
-                maxval = 0.0
-                maxsigma = 0.0
+                maxlag = np.float64(0.0)
+                maxval = np.float64(0.0)
+                maxsigma = np.float64(0.0)
             if debug:
                 print("\n")
                 for i in range(len(X)):
@@ -4121,7 +4121,7 @@ def simfuncpeakfit(
         if (functype == "correlation") or (functype == "hybrid"):
             if maxval < lowestcorrcoeff:
                 failreason |= FML_FITAMPLOW
-                maxval = lowestcorrcoeff
+                maxval = np.float64(lowestcorrcoeff)
                 if debug:
                     print("bad fit amp: maxval is lower than lower limit")
                 fitfail = True
@@ -4158,22 +4158,22 @@ def simfuncpeakfit(
                 print("bad lag after refinement")
             if lagmin > maxlag:
                 failreason |= FML_FITLAGLOW
-                maxlag = lagmin
+                maxlag = np.float64(lagmin)
             else:
                 failreason |= FML_FITLAGHIGH
-                maxlag = lagmax
+                maxlag = np.float64(lagmax)
             fitfail = True
         if maxsigma > absmaxsigma:
             failreason |= FML_FITWIDTHHIGH
             if debug:
                 print("bad width after refinement:", maxsigma, ">", absmaxsigma)
-            maxsigma = absmaxsigma
+            maxsigma = np.float64(absmaxsigma)
             fitfail = True
         if maxsigma < absminsigma:
             failreason |= FML_FITWIDTHLOW
             if debug:
                 print("bad width after refinement:", maxsigma, "<", absminsigma)
-            maxsigma = absminsigma
+            maxsigma = np.float64(absminsigma)
             fitfail = True
         if fitfail:
             if debug:

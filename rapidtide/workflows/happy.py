@@ -102,7 +102,7 @@ def happy_main(argparsingfunc):
         logger_filename=f"{outputroot}_log.txt",
         timing_filename=f"{outputroot}_runtimings.tsv",
         memory_filename=f"{outputroot}_memusage.tsv",
-        verbose=args.verbose,
+        isverbose=args.verbose,
         debug=args.debug,
     )
 

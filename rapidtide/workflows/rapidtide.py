@@ -180,7 +180,7 @@ def rapidtide_main(argparsingfunc):
         logger_filename=f"{outputname}_log.txt",
         timing_filename=f"{outputname}_runtimings.tsv",
         memory_filename=f"{outputname}_memusage.tsv",
-        verbose=optiondict["verbose"],
+        isverbose=optiondict["verbose"],
         debug=optiondict["debug"],
     )
     TimingLGR.info("Start")
