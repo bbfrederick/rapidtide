@@ -23,7 +23,7 @@ from typing import Any, Callable, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -86,8 +86,8 @@ def disablenumba() -> None:
 
 # --------------------------- Correlation functions -------------------------------------------------
 def check_autocorrelation(
-    corrscale: ArrayLike,
-    thexcorr: ArrayLike,
+    corrscale: NDArray,
+    thexcorr: NDArray,
     delta: float = 0.05,
     acampthresh: float = 0.1,
     aclagthresh: float = 10.0,
@@ -160,8 +160,8 @@ def check_autocorrelation(
 
 
 def shorttermcorr_1D(
-    data1: ArrayLike,
-    data2: ArrayLike,
+    data1: NDArray,
+    data2: NDArray,
     sampletime: float,
     windowtime: float,
     samplestep: int = 1,
@@ -196,8 +196,8 @@ def shorttermcorr_1D(
 
 
 def shorttermcorr_2D(
-    data1: ArrayLike,
-    data2: ArrayLike,
+    data1: NDArray,
+    data2: NDArray,
     sampletime: float,
     windowtime: float,
     samplestep: int = 1,
@@ -298,7 +298,7 @@ def shorttermcorr_2D(
     )
 
 
-def calc_MI(x: ArrayLike, y: ArrayLike, bins: int = 50) -> float:
+def calc_MI(x: NDArray, y: NDArray, bins: int = 50) -> float:
     """Calculate mutual information between two arrays.
 
     Notes
@@ -314,10 +314,10 @@ def calc_MI(x: ArrayLike, y: ArrayLike, bins: int = 50) -> float:
 
 # @conditionaljit()
 def mutual_info_2d(
-    x: ArrayLike,
-    y: ArrayLike,
+    x: NDArray,
+    y: NDArray,
     sigma: float = 1,
-    bins: Union[int, Tuple[int, int], Tuple[NDArray, NDArray]] = (256, 256),
+    bins: Union[Tuple[int, int], Tuple[NDArray, NDArray]] = (256, 256),
     fast: bool = False,
     normalized: bool = True,
     EPS: float = 1.0e-6,
@@ -327,9 +327,9 @@ def mutual_info_2d(
 
     Parameters
     ----------
-    x : 1D array
+    x : 1D NDArray
         first variable
-    y : 1D array
+    y : 1D NDArray
         second variable
     sigma : float, optional
         Sigma for Gaussian smoothing of the joint histogram.
@@ -407,12 +407,12 @@ def mutual_info_2d(
 
 # @conditionaljit
 def cross_mutual_info(
-    x: ArrayLike,
-    y: ArrayLike,
+    x: NDArray,
+    y: NDArray,
     returnaxis: bool = False,
     negsteps: int = -1,
     possteps: int = -1,
-    locs: Optional[ArrayLike] = None,
+    locs: Optional[NDArray] = None,
     Fs: float = 1.0,
     norm: bool = True,
     madnorm: bool = False,
@@ -554,13 +554,13 @@ def mutual_info_to_r(themi: float, d: int = 1) -> float:
 
 
 def delayedcorr(
-    data1: ArrayLike, data2: ArrayLike, delayval: float, timestep: float
+    data1: NDArray, data2: NDArray, delayval: float, timestep: float
 ) -> Tuple[float, float]:
     return sp.stats.pearsonr(data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0])
 
 
 def cepstraldelay(
-    data1: ArrayLike, data2: ArrayLike, timestep: float, displayplots: bool = True
+    data1: NDArray, data2: NDArray, timestep: float, displayplots: bool = True
 ) -> float:
     """
     Estimate delay between two signals using Choudhary's cepstral analysis method.
@@ -661,9 +661,9 @@ class AliasedCorrelator:
 
 
 def matchsamplerates(
-    input1: ArrayLike,
+    input1: NDArray,
     Fs1: float,
-    input2: ArrayLike,
+    input2: NDArray,
     Fs2: float,
     method: str = "univariate",
     debug: bool = False,
@@ -684,9 +684,9 @@ def matchsamplerates(
 
 
 def arbcorr(
-    input1: ArrayLike,
+    input1: NDArray,
     Fs1: float,
-    input2: ArrayLike,
+    input2: NDArray,
     Fs2: float,
     start1: float = 0.0,
     start2: float = 0.0,
@@ -721,8 +721,8 @@ def arbcorr(
 
 
 def faststcorrelate(
-    input1: ArrayLike,
-    input2: ArrayLike,
+    input1: NDArray,
+    input2: NDArray,
     windowtype: str = "hann",
     nperseg: int = 32,
     weighting: str = "None",
@@ -732,7 +732,6 @@ def faststcorrelate(
     nfft = nperseg
     noverlap = nperseg - 1
     onesided = False
-    boundary = "even"
     freqs, times, thestft1 = signal.stft(
         input1,
         fs=1.0,
@@ -742,7 +741,7 @@ def faststcorrelate(
         nfft=nfft,
         detrend="linear",
         return_onesided=onesided,
-        boundary=boundary,
+        boundary="even",
         padded=True,
         axis=-1,
     )
@@ -756,7 +755,7 @@ def faststcorrelate(
         nfft=nfft,
         detrend="linear",
         return_onesided=onesided,
-        boundary=boundary,
+        boundary="even",
         padded=True,
         axis=-1,
     )
@@ -800,8 +799,8 @@ def optfftlen(thelen: int) -> int:
 
 
 def fastcorrelate(
-    input1: ArrayLike,
-    input2: ArrayLike,
+    input1: NDArray,
+    input2: NDArray,
     usefft: bool = True,
     zeropadding: int = 0,
     weighting: str = "None",
@@ -899,7 +898,7 @@ def fastcorrelate(
         return np.correlate(paddedinput1, paddedinput2, mode="full")
 
 
-def _centered(arr: NDArray, newsize: Union[int, ArrayLike]) -> NDArray:
+def _centered(arr: NDArray, newsize: Union[int, NDArray]) -> NDArray:
     newsize = np.asarray(newsize)
     currsize = np.array(arr.shape)
     startind = (currsize - newsize) // 2
@@ -1018,8 +1017,8 @@ def convolve_weighted_fft(
 
 
 def gccproduct(
-    fft1: NDArray,
-    fft2: NDArray,
+    fft1: NDArray[tuple[int], np.complex_],
+    fft2: NDArray[tuple[int], np.complex_],
     weighting: str,
     threshfrac: float = 0.1,
     compress: bool = False,
