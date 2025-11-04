@@ -363,8 +363,14 @@ def mutual_info_2d(
         xend = bins[0][-1]
         ystart = bins[1][0]
         yend = bins[1][-1]
-        numxbins = len(bins[0]) - 1
-        numybins = len(bins[1]) - 1
+        if np.isscalar(bins[0]):
+            numxbins = bins[0]
+        else:
+            numxbins = len(bins[0]) - 1
+        if np.isscalar(bins[1]):
+            numybins = bins[1]
+        else:
+            numybins = len(bins[1]) - 1
         cuts = (x >= xstart) & (x < xend) & (y >= ystart) & (y < yend)
         c = ((x[cuts] - xstart) / (xend - xstart) * numxbins).astype(np.int_)
         c += ((y[cuts] - ystart) / (yend - ystart) * numybins).astype(np.int_) * numxbins
@@ -1017,8 +1023,8 @@ def convolve_weighted_fft(
 
 
 def gccproduct(
-    fft1: NDArray[tuple[int], np.complex_],
-    fft2: NDArray[tuple[int], np.complex_],
+    fft1: NDArray,
+    fft2: NDArray,
     weighting: str,
     threshfrac: float = 0.1,
     compress: bool = False,
