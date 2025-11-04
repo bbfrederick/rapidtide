@@ -22,7 +22,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from scipy.signal import check_NOLA, stft
+from scipy.signal import ShortTimeFFT, check_NOLA, stft
 
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_float, is_int, is_valid_file
@@ -56,6 +56,13 @@ def _get_parser():
         default=128,
     )
     parser.add_argument(
+        "--newstyle",
+        dest="legacy",
+        action="store_false",
+        help=("Use new method of calculating spectrogram."),
+        default=True,
+    )
+    parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -66,26 +73,41 @@ def _get_parser():
     return parser
 
 
-def calcspecgram(x, time, nperseg=32, windowtype="hann"):
+def calcspecgram(x, time, nperseg=32, windowtype="hann", legacy=True):
     """Make and plot a log-scaled spectrogram"""
     dt = np.diff(time)[0]  # In days...
     fs = 1.0 / dt
     nfft = nperseg
     noverlap = nperseg - 1
 
-    freq, segtimes, thestft = stft(
-        x,
-        fs=fs,
-        window=windowtype,
-        nperseg=nperseg,
-        noverlap=noverlap,
-        nfft=nfft,
-        detrend="linear",
-        return_onesided=True,
-        boundary="zeros",
-        padded=True,
-        axis=-1,
-    )
+    if legacy:
+        freq, segtimes, thestft = stft(
+            x,
+            fs=fs,
+            window=windowtype,
+            nperseg=nperseg,
+            noverlap=noverlap,
+            nfft=nfft,
+            detrend="linear",
+            return_onesided=True,
+            boundary="zeros",
+            padded=True,
+            axis=-1,
+        )
+    else:
+        SFT = ShortTimeFFT.from_window(
+            windowtype,
+            fs,
+            nperseg,
+            noverlap,
+            mfft=nperseg,
+            fft_mode="onesided",
+            scale_to="psd",
+            phase_shift=None,
+        )
+        freq = SFT.f
+        thestft = SFT.stft(x, p0=0, p1=(len(x) - noverlap) // SFT.hop, k_offset=nperseg // 2)
+        segtimes = SFT.t(len(x), p0=0, p1=(len(x) - noverlap) // SFT.hop, k_offset=nperseg // 2)
 
     isinvertable = check_NOLA(windowtype, nperseg, noverlap, tol=1e-10)
     return freq, segtimes, thestft, isinvertable
@@ -151,11 +173,11 @@ def make_legend_axes(ax):
     return legend_ax
 
 
-def ndplot(x, time, thelabel, nperseg=32):
+def ndplot(x, time, thelabel, nperseg=32, legacy=True):
     print("arrived in ndplot")
     fig = plt.figure()
 
-    freq, segtimes, thestft, isinvertable = calcspecgram(x, time, nperseg=nperseg)
+    freq, segtimes, thestft, isinvertable = calcspecgram(x, time, nperseg=nperseg, legacy=legacy)
     print("Is the spectrgram invertable?", isinvertable)
 
     # -- Panel 1 Magnitude
@@ -213,5 +235,5 @@ def spectrogram(args):
     xvec = np.arange(0.0, len(yvec), 1.0) * timestep
 
     thelabel = args.textfilename
-    ndplot(yvec, xvec, thelabel, nperseg=args.nperseg)
+    ndplot(yvec, xvec, thelabel, nperseg=args.nperseg, legacy=args.legacy)
     plt.show()
