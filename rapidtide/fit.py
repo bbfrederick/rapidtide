@@ -666,7 +666,7 @@ def trapezoid_eval(
 
 
 @conditionaljit()
-def risetime_eval(x: Union[float, NDArray], p: NDArray) -> Union[float, NDArray]:
+def risetime_eval(x: Union[float, NDArray[np.floating[Any]]], p: NDArray[np.floating[Any]]) -> Union[float, NDArray[np.floating[Any]]]:
     """
         Evaluates the rise time function at a given point.
     
@@ -714,7 +714,7 @@ def risetime_eval(x: Union[float, NDArray], p: NDArray) -> Union[float, NDArray]
 
 
 def gasboxcar(
-    data: NDArray,
+    data: NDArray[np.floating[Any]],
     samplerate: float,
     firstpeakstart: float,
     firstpeakend: float,
@@ -774,7 +774,7 @@ def gasboxcar(
 
 # generate the polynomial fit timecourse from the coefficients
 @conditionaljit()
-def trendgen(thexvals: NDArray, thefitcoffs: NDArray, demean: bool) -> NDArray:
+def trendgen(thexvals: NDArray[np.floating[Any]], thefitcoffs: NDArray[np.floating[Any]], demean: bool) -> NDArray[np.floating[Any]]:
     """
         Generate a polynomial trend based on input x-values and coefficients.
 
@@ -785,10 +785,10 @@ def trendgen(thexvals: NDArray, thefitcoffs: NDArray, demean: bool) -> NDArray:
 
         Parameters
         ----------
-        thexvals : NDArray
+        thexvals : NDArray[np.floating[Any]]
             The x-values (independent variable) at which to evaluate the polynomial trend.
             Expected to be a numpy array or similar.
-        thefitcoffs : NDArray
+        thefitcoffs : NDArray[np.floating[Any]]
             A 1D array of polynomial coefficients. The length of this array minus one
             determines the order of the polynomial. Coefficients are expected to be
             ordered from the highest power of x down to the constant term (e.g.,
@@ -801,7 +801,7 @@ def trendgen(thexvals: NDArray, thefitcoffs: NDArray, demean: bool) -> NDArray:
 
         Returns
         -------
-        NDArray
+        NDArray[np.floating[Any]]
             A numpy array containing the calculated polynomial trend, with the same
             shape as `thexvals`.
 
@@ -834,7 +834,7 @@ def trendgen(thexvals: NDArray, thefitcoffs: NDArray, demean: bool) -> NDArray:
 
 
 # @conditionaljit()
-def detrend(inputdata: NDArray, order: int = 1, demean: bool = False) -> NDArray:
+def detrend(inputdata: NDArray[np.floating[Any]], order: int = 1, demean: bool = False) -> NDArray[np.floating[Any]]:
     """
         Estimates and removes a polynomial trend timecourse.
     
@@ -845,7 +845,7 @@ def detrend(inputdata: NDArray, order: int = 1, demean: bool = False) -> NDArray
     
         Parameters
         ----------
-        inputdata : NDArray
+        inputdata : NDArray[np.floating[Any]]
             A 1D NumPy array of input data from which the trend will be removed.
         order : int, optional
             The order of the polynomial to fit to the data. Default is 1 (linear).
@@ -855,7 +855,7 @@ def detrend(inputdata: NDArray, order: int = 1, demean: bool = False) -> NDArray
         
         Returns
         -------
-        NDArray
+        NDArray[np.floating[Any]]
             A 1D NumPy array of the detrended data, with the polynomial trend removed.
         
         Notes
@@ -885,14 +885,14 @@ def detrend(inputdata: NDArray, order: int = 1, demean: bool = False) -> NDArray
     return inputdata - thefittc
 
 
-def prewhiten(series: ArrayLike, nlags: Optional[int] = None, debug: bool = False) -> NDArray:
+def prewhiten(series: NDArray[np.floating[Any]], nlags: Optional[int] = None, debug: bool = False) -> NDArray[np.floating[Any]]:
     """
         Prewhiten a time series using an AR model estimated via statsmodels.
         The resulting series has the same length as the input.
 
         Parameters
         ----------
-        series : array-like
+        series : NDArray[np.floating[Any]]
             Input 1D time series data.
         nlags : int, optional
             Order of the autoregressive model. If None, automatically chosen via AIC.
@@ -902,7 +902,7 @@ def prewhiten(series: ArrayLike, nlags: Optional[int] = None, debug: bool = Fals
 
         Returns
         -------
-        whitened : np.ndarray
+        whitened : NDArray[np.floating[Any]]
             Prewhitened series of the same length as input. The prewhitening removes
             the autoregressive structure from the data, leaving only the residuals.
 
@@ -952,8 +952,8 @@ def prewhiten(series: ArrayLike, nlags: Optional[int] = None, debug: bool = Fals
 
 
 def prewhiten2(
-    timecourse: NDArray, nlags: int, debug: bool = False, sel: bool = False
-) -> NDArray:
+    timecourse: NDArray[np.floating[Any]], nlags: int, debug: bool = False, sel: bool = False
+) -> NDArray[np.floating[Any]]:
     """
         Prewhiten a time course using autoregressive modeling.
     
@@ -962,7 +962,7 @@ def prewhiten2(
     
         Parameters
         ----------
-        timecourse : array_like
+        timecourse : NDArray[np.floating[Any]]
             Input time course to be prewhitened, shape (n_times,)
         nlags : int
             Number of lags to use for the autoregressive model
@@ -973,7 +973,7 @@ def prewhiten2(
         
         Returns
         -------
-        ndarray
+        NDArray[np.floating[Any]]
             Prewhitened time course with standardized normalization applied
         
         Notes
@@ -1019,10 +1019,10 @@ def prewhiten2(
 
 
 def findtrapezoidfunc(
-    thexvals: NDArray,
-    theyvals: NDArray,
+    thexvals: NDArray[np.floating[Any]],
+    theyvals: NDArray[np.floating[Any]],
     thetoplength: float,
-    initguess: NDArray | None = None,
+    initguess: NDArray[np.floating[Any]] | None = None,
     debug: bool = False,
     minrise: float = 0.0,
     maxrise: float = 200.0,
@@ -1042,13 +1042,13 @@ def findtrapezoidfunc(
 
         Parameters
         ----------
-        thexvals : array_like
+        thexvals : NDArray[np.floating[Any]]
             Independent variable values (time points) for the data.
-        theyvals : array_like
+        theyvals : NDArray[np.floating[Any]]
             Dependent variable values (signal intensity) corresponding to `thexvals`.
         thetoplength : float
             The length of the top plateau of the trapezoid function.
-        initguess : array_like, optional
+        initguess : NDArray[np.floating[Any]], optional
             Initial guess for [start, amplitude, risetime, falltime].
             If None, uses defaults based on data statistics.
         debug : bool, optional
@@ -1094,49 +1094,6 @@ def findtrapezoidfunc(
         >>> print(params)
         (2.05, 4.98, 1.02, 1.01, 1)
         """
-    """
-    Find the best-fitting trapezoidal function parameters to a data set.
-
-    This function uses least-squares optimization to fit a trapezoidal function
-    defined by `trapezoid_eval` to the input data (`theyvals`), using `thexvals`
-    as the independent variable. The shape of the trapezoid is fixed by `thetoplength`.
-
-    Parameters
-    ----------
-    thexvals : array_like
-        Independent variable values (time points) for the data.
-    theyvals : array_like
-        Dependent variable values (signal intensity) corresponding to `thexvals`.
-    thetoplength : float
-        The length of the top plateau of the trapezoid function.
-    initguess : array_like, optional
-        Initial guess for [start, amplitude, risetime, falltime].
-        If None, uses defaults based on data statistics.
-    debug : bool, optional
-        If True, print intermediate values during computation (default: False).
-    minrise : float, optional
-        Minimum allowed rise time parameter (default: 0.0).
-    maxrise : float, optional
-        Maximum allowed rise time parameter (default: 200.0).
-    minfall : float, optional
-        Minimum allowed fall time parameter (default: 0.0).
-    maxfall : float, optional
-        Maximum allowed fall time parameter (default: 200.0).
-    minstart : float, optional
-        Minimum allowed start time parameter (default: -100.0).
-    maxstart : float, optional
-        Maximum allowed start time parameter (default: 100.0).
-    refine : bool, optional
-        If True, perform additional refinement steps (not implemented in this version).
-    displayplots : bool, optional
-        If True, display plots during computation (not implemented in this version).
-    Returns
-    -------
-    tuple of floats
-        The fitted parameters [start, amplitude, risetime, falltime] if successful,
-        or [0.0, 0.0, 0.0, 0.0] if the solution is outside the valid parameter bounds.
-        A fifth value (integer) indicating success (1) or failure (0).
-    """
     # guess at parameters: risestart, riseamplitude, risetime
     if initguess is None:
         initstart = 0.0
@@ -1169,9 +1126,9 @@ def findtrapezoidfunc(
 
 
 def findrisetimefunc(
-    thexvals: NDArray,
-    theyvals: NDArray,
-    initguess: NDArray | None = None,
+    thexvals: NDArray[np.floating[Any]],
+    theyvals: NDArray[np.floating[Any]],
+    initguess: NDArray[np.floating[Any]] | None = None,
     debug: bool = False,
     minrise: float = 0.0,
     maxrise: float = 200.0,
@@ -1189,11 +1146,11 @@ def findrisetimefunc(
 
         Parameters
         ----------
-        thexvals : NDArray
+        thexvals : NDArray[np.floating[Any]]
             Array of x-axis values (time or independent variable).
-        theyvals : NDArray
+        theyvals : NDArray[np.floating[Any]]
             Array of y-axis values (signal or dependent variable).
-        initguess : NDArray | None, optional
+        initguess : NDArray[np.floating[Any]] | None, optional
             Initial guess for [start_time, amplitude, rise_time]. If None, defaults are used.
         debug : bool, optional
             If True, prints the x and y values during processing (default is False).
@@ -1258,7 +1215,7 @@ def findrisetimefunc(
 
 
 def territorydecomp(
-    inputmap: NDArray,
+    inputmap: NDArray[np.floating[Any]],
     template: NDArray,
     atlas: NDArray,
     inputmask: Optional[NDArray] = None,
@@ -1276,7 +1233,7 @@ def territorydecomp(
 
         Parameters
         ----------
-        inputmap : numpy.ndarray
+        inputmap : NDArray[np.floating[Any]]
             Input data to be decomposed. Can be 3D or 4D (e.g., time series).
         template : numpy.ndarray
             Template values corresponding to the spatial locations in `inputmap`.
@@ -1386,7 +1343,7 @@ def territorydecomp(
 
 
 def territorystats(
-    inputmap: NDArray,
+    inputmap: NDArray[np.floating[Any]],
     atlas: NDArray,
     inputmask: NDArray | None = None,
     entropybins: int = 101,
@@ -1402,7 +1359,7 @@ def territorystats(
 
         Parameters
         ----------
-        inputmap : ndarray
+        inputmap : NDArray[np.floating[Any]]
             Input data array of shape (X, Y, Z) or (X, Y, Z, N), where N is the number of maps.
         atlas : ndarray
             Atlas array defining regions of interest, with each region labeled by an integer.
@@ -1539,7 +1496,7 @@ def territorystats(
 
 @conditionaljit()
 def refinepeak_quad(
-    x: NDArray, y: NDArray, peakindex: int, stride: int = 1
+    x: NDArray[np.floating[Any]], y: NDArray[np.floating[Any]], peakindex: int, stride: int = 1
 ) -> Tuple[float, float, float, Optional[bool], bool]:
     """
         Refine the location and properties of a peak using quadratic interpolation.
@@ -1550,9 +1507,9 @@ def refinepeak_quad(
 
         Parameters
         ----------
-        x : NDArray
+        x : NDArray[np.floating[Any]]
             Independent variable values (e.g., time points).
-        y : NDArray
+        y : NDArray[np.floating[Any]]
             Dependent variable values (e.g., signal intensity) corresponding to `x`.
         peakindex : int
             Index of the peak in the arrays `x` and `y`.
@@ -1621,8 +1578,8 @@ def refinepeak_quad(
 
 @conditionaljit2()
 def findmaxlag_gauss(
-    thexcorr_x: NDArray,
-    thexcorr_y: NDArray,
+    thexcorr_x: NDArray[np.floating[Any]],
+    thexcorr_y: NDArray[np.floating[Any]],
     lagmin: float,
     lagmax: float,
     widthmax: float,
@@ -1652,9 +1609,9 @@ def findmaxlag_gauss(
 
         Parameters
         ----------
-        thexcorr_x : NDArray
+        thexcorr_x : NDArray[np.floating[Any]]
             X-axis values (lag times) of the cross-correlation function.
-        thexcorr_y : NDArray
+        thexcorr_y : NDArray[np.floating[Any]]
             Y-axis values (correlation coefficients) of the cross-correlation function.
         lagmin : float
             Minimum allowable lag value in seconds.
@@ -3347,7 +3304,7 @@ def _datacheck_peakdetect(
 
 
 def peakdetect(
-    y_axis: NDArray, x_axis: Optional[NDArray] = None, lookahead: int = 200, delta: float = 0.0
+    y_axis: NDArray[np.floating[Any]], x_axis: Optional[NDArray[np.floating[Any]]] = None, lookahead: int = 200, delta: float = 0.0
 ) -> list:
     """
         Detect local maxima and minima in a signal.
@@ -3359,9 +3316,9 @@ def peakdetect(
 
         Parameters
         ----------
-        y_axis : NDArray
+        y_axis : NDArray[np.floating[Any]]
             A list or array containing the signal over which to find peaks.
-        x_axis : NDArray, optional
+        x_axis : NDArray[np.floating[Any]], optional
             An x-axis whose values correspond to the y_axis list. If omitted,
             an index of the y_axis is used. Default is None.
         lookahead : int, optional

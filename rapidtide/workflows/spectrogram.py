@@ -108,7 +108,7 @@ def _get_parser() -> Any:
 
 
 def calcspecgram(
-    x: Any, time: Any, nperseg: int = 32, windowtype: str = "hann"
+    x: NDArray[np.floating[Any]], time: NDArray[np.floating[Any]], nperseg: int = 32, windowtype: str = "hann"
 ) -> Tuple[NDArray, NDArray, NDArray, bool]:
     """
         Make and plot a log-scaled spectrogram.
@@ -119,9 +119,9 @@ def calcspecgram(
 
         Parameters
         ----------
-        x : array_like
+        x : NDArray[np.floating[Any]]
             Input signal data to compute the spectrogram for.
-        time : array_like
+        time : NDArray[np.floating[Any]]
             Time vector corresponding to the input signal. Used to calculate sampling
             frequency from the time differences.
         nperseg : int, optional
