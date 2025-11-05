@@ -6,6 +6,8 @@
 * (happy) Switched nifti file output to use maplist (jsons have description fields now).
 * (rapidtide) Output some timecourse statistics before and after sLFO regression.
 * (atlasaverage) Fixed label output when extracting data from 3D files.
+* (package) Added type hints to all core routines (thanks Claude!).
+* (package) Added docstrings to all core routines (thanks script I wrote that calls qwen3-coder locally so I don't run out of Claude tokens!).
 * (package) More dependabot PRs.
 
 ## Version 3.0.11 (8/27/25)
