@@ -2443,7 +2443,7 @@ def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
         print("gram_schmidt, input dimensions:", theregressors.shape)
     basis: list[float] = []
     for i in range(theregressors.shape[0]):
-        w = theregressors[i, :] - np.sum(np.array(list(np.dot(theregressors[i, :], b) * b) for b in basis))
+        w = theregressors[i, :] - np.sum(np.array(np.dot(theregressors[i, :], b) * b) for b in basis)
         if (np.fabs(w) > 1e-10).any():
             basis.append(w / np.linalg.norm(w))
     outputbasis = np.array(basis)
