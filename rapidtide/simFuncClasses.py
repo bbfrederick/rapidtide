@@ -1748,7 +1748,7 @@ class SimilarityFunctionFitter:
                     if self.debug:
                         print("poly coffs:", a, b, c)
                         print("maxlag, maxval, maxsigma:", maxlag, maxval, maxsigma)
-                except np.lib.polynomial.RankWarning:
+                except np.exceptions.RankWarning:
                     failreason |= self.FML_FITALGOFAIL
                     maxlag = 0.0
                     maxval = 0.0
