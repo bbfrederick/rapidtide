@@ -44,65 +44,65 @@ def onesimfuncfit(
     rt_floattype: str = "float64",
 ) -> Tuple[int, float, float, float, int, int, int, int]:
     """
-        Perform a single fit on a correlation function using the provided fitter.
+    Perform a single fit on a correlation function using the provided fitter.
 
-        This function sets up the fitter with initial parameters and thresholds,
-        then performs a fit on the provided correlation function. If `fixdelay` is
-        True, the fit is skipped and a fixed delay value is used instead.
+    This function sets up the fitter with initial parameters and thresholds,
+    then performs a fit on the provided correlation function. If `fixdelay` is
+    True, the fit is skipped and a fixed delay value is used instead.
 
-        Parameters
-        ----------
-        correlationfunc : ArrayLike
-            The correlation function data to be fitted.
-        thefitter : Any
-            An object with methods `setguess`, `setrange`, `setlthresh`, and `fit`.
-        disablethresholds : bool, optional
-            If True, disables the threshold setting in the fitter. Default is False.
-        initiallag : float, optional
-            Initial guess for the lag value. If None, no initial guess is set.
-            Default is None.
-        despeckle_thresh : float, optional
-            Threshold for despeckling. Default is 5.0.
-        lthreshval : float, optional
-            Low threshold value for the fitter. Default is 0.0.
-        fixdelay : bool, optional
-            If True, uses a fixed delay value instead of performing a fit.
-            Default is False.
-        initialdelayvalue : float, optional
-            The fixed delay value to use when `fixdelay=True`. Default is 0.0.
-        rt_floatset : type, optional
-            The data type to use for floating-point values. Default is `np.float64`.
-        rt_floattype : str, optional
-            String representation of the floating-point type. Default is "float64".
+    Parameters
+    ----------
+    correlationfunc : ArrayLike
+        The correlation function data to be fitted.
+    thefitter : Any
+        An object with methods `setguess`, `setrange`, `setlthresh`, and `fit`.
+    disablethresholds : bool, optional
+        If True, disables the threshold setting in the fitter. Default is False.
+    initiallag : float, optional
+        Initial guess for the lag value. If None, no initial guess is set.
+        Default is None.
+    despeckle_thresh : float, optional
+        Threshold for despeckling. Default is 5.0.
+    lthreshval : float, optional
+        Low threshold value for the fitter. Default is 0.0.
+    fixdelay : bool, optional
+        If True, uses a fixed delay value instead of performing a fit.
+        Default is False.
+    initialdelayvalue : float, optional
+        The fixed delay value to use when `fixdelay=True`. Default is 0.0.
+    rt_floatset : type, optional
+        The data type to use for floating-point values. Default is `np.float64`.
+    rt_floattype : str, optional
+        String representation of the floating-point type. Default is "float64".
 
-        Returns
-        -------
-        tuple of (int, float, float, float, int, int, int, int)
-            A tuple containing:
-            - maxindex (int): Index of the maximum value in the correlation function.
-            - maxlag (float): The lag value at the maximum.
-            - maxval (float): The maximum value in the correlation function.
-            - maxsigma (float): The sigma (standard deviation) of the fit.
-            - maskval (int): A mask value indicating fit quality.
-            - peakstart (int): Start index of the fitted peak.
-            - peakend (int): End index of the fitted peak.
-            - failreason (int): Reason for fit failure (0 if successful).
+    Returns
+    -------
+    tuple of (int, float, float, float, int, int, int, int)
+        A tuple containing:
+        - maxindex (int): Index of the maximum value in the correlation function.
+        - maxlag (float): The lag value at the maximum.
+        - maxval (float): The maximum value in the correlation function.
+        - maxsigma (float): The sigma (standard deviation) of the fit.
+        - maskval (int): A mask value indicating fit quality.
+        - peakstart (int): Start index of the fitted peak.
+        - peakend (int): End index of the fitted peak.
+        - failreason (int): Reason for fit failure (0 if successful).
 
-        Notes
-        -----
-        When `fixdelay=True`, the function bypasses the fitting process and returns
-        precomputed values based on `initialdelayvalue`.
+    Notes
+    -----
+    When `fixdelay=True`, the function bypasses the fitting process and returns
+    precomputed values based on `initialdelayvalue`.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> from some_module import some_fitter_class
-        >>> corr_func = np.random.rand(100)
-        >>> fitter = some_fitter_class()
-        >>> result = onesimfuncfit(corr_func, fitter)
-        >>> print(result)
-        (50, 0.5, 0.95, 0.02, 1, 45, 55, 0)
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from some_module import some_fitter_class
+    >>> corr_func = np.random.rand(100)
+    >>> fitter = some_fitter_class()
+    >>> result = onesimfuncfit(corr_func, fitter)
+    >>> print(result)
+    (50, 0.5, 0.95, 0.02, 1, 45, 55, 0)
+    """
     if initiallag is not None:
         thefitter.setguess(True, maxguess=initiallag)
         thefitter.setrange(-despeckle_thresh / 2.0, despeckle_thresh / 2.0)
@@ -152,72 +152,72 @@ def _procOneVoxelFitcorr(
     rt_floattype: str = "float64",
 ) -> Tuple[int, int, float, float, float, NDArray, NDArray, float, int, int]:
     """
-        Process a single voxel for correlation fitting.
+    Process a single voxel for correlation fitting.
 
-        This function performs correlation fitting on a single voxel's data using the provided fitter.
-        It returns fitting results including time, strength, sigma, Gaussian fit, window mask, R² value,
-        and metadata such as mask value and failure reason.
+    This function performs correlation fitting on a single voxel's data using the provided fitter.
+    It returns fitting results including time, strength, sigma, Gaussian fit, window mask, R² value,
+    and metadata such as mask value and failure reason.
 
-        Parameters
-        ----------
-        vox : int
-            Voxel index.
-        corr_y : ArrayLike
-            Correlation data for the voxel.
-        thefitter : Any
-            Fitter object containing fitting parameters and methods.
-        disablethresholds : bool, optional
-            If True, disables thresholding during fitting. Default is False.
-        despeckle_thresh : float, optional
-            Threshold for despeckling. Default is 5.0.
-        initiallag : float, optional
-            Initial lag value for fitting. Default is None.
-        fixdelay : bool, optional
-            If True, fixes the delay during fitting. Default is False.
-        initialdelayvalue : float, optional
-            Initial delay value if `fixdelay` is True. Default is 0.0.
-        rt_floatset : type, optional
-            Type to use for real-valued floating-point arrays. Default is `np.float64`.
-        rt_floattype : str, optional
-            String representation of the floating-point type. Default is "float64".
+    Parameters
+    ----------
+    vox : int
+        Voxel index.
+    corr_y : ArrayLike
+        Correlation data for the voxel.
+    thefitter : Any
+        Fitter object containing fitting parameters and methods.
+    disablethresholds : bool, optional
+        If True, disables thresholding during fitting. Default is False.
+    despeckle_thresh : float, optional
+        Threshold for despeckling. Default is 5.0.
+    initiallag : float, optional
+        Initial lag value for fitting. Default is None.
+    fixdelay : bool, optional
+        If True, fixes the delay during fitting. Default is False.
+    initialdelayvalue : float, optional
+        Initial delay value if `fixdelay` is True. Default is 0.0.
+    rt_floatset : type, optional
+        Type to use for real-valued floating-point arrays. Default is `np.float64`.
+    rt_floattype : str, optional
+        String representation of the floating-point type. Default is "float64".
 
-        Returns
-        -------
-        tuple of (int, int, float, float, float, ndarray, ndarray, float, int, int)
-            A tuple containing:
-            - `vox`: Voxel index.
-            - `volumetotalinc`: 1 if fit was successful, 0 otherwise.
-            - `thetime`: Fitted time value.
-            - `thestrength`: Fitted strength value.
-            - `thesigma`: Fitted sigma value.
-            - `thegaussout`: Gaussian fit evaluated over the time axis.
-            - `thewindowout`: Binary window mask indicating the peak region.
-            - `theR2`: R-squared value of the fit.
-            - `maskval`: Mask value from the fitting process.
-            - `failreason`: Reason for failure, if any.
+    Returns
+    -------
+    tuple of (int, int, float, float, float, ndarray, ndarray, float, int, int)
+        A tuple containing:
+        - `vox`: Voxel index.
+        - `volumetotalinc`: 1 if fit was successful, 0 otherwise.
+        - `thetime`: Fitted time value.
+        - `thestrength`: Fitted strength value.
+        - `thesigma`: Fitted sigma value.
+        - `thegaussout`: Gaussian fit evaluated over the time axis.
+        - `thewindowout`: Binary window mask indicating the peak region.
+        - `theR2`: R-squared value of the fit.
+        - `maskval`: Mask value from the fitting process.
+        - `failreason`: Reason for failure, if any.
 
-        Notes
-        -----
-        - If `maxval > 0.3`, plotting is disabled.
-        - The function uses `onesimfuncfit` to perform the actual fitting.
-        - The `thefitter` object must have attributes like `zerooutbadfit`, `lagmod`, and `corrtimeaxis`.
+    Notes
+    -----
+    - If `maxval > 0.3`, plotting is disabled.
+    - The function uses `onesimfuncfit` to perform the actual fitting.
+    - The `thefitter` object must have attributes like `zerooutbadfit`, `lagmod`, and `corrtimeaxis`.
 
-        Examples
-        --------
-        >>> result = _procOneVoxelFitcorr(
-        ...     vox=10,
-        ...     corr_y=corr_data,
-        ...     thefitter=fitter_obj,
-        ...     disablethresholds=False,
-        ...     despeckle_thresh=5.0,
-        ...     fixdelay=False,
-        ...     initialdelayvalue=0.0,
-        ...     rt_floatset=np.float64,
-        ...     rt_floattype="float64"
-        ... )
-        >>> print(result)
-        (10, 1, 1.23, 0.95, 0.12, array([...]), array([...]), 0.90, 1, 0)
-        """
+    Examples
+    --------
+    >>> result = _procOneVoxelFitcorr(
+    ...     vox=10,
+    ...     corr_y=corr_data,
+    ...     thefitter=fitter_obj,
+    ...     disablethresholds=False,
+    ...     despeckle_thresh=5.0,
+    ...     fixdelay=False,
+    ...     initialdelayvalue=0.0,
+    ...     rt_floatset=np.float64,
+    ...     rt_floattype="float64"
+    ... )
+    >>> print(result)
+    (10, 1, 1.23, 0.95, 0.12, array([...]), array([...]), 0.90, 1, 0)
+    """
     (
         maxindex,
         maxlag,
@@ -308,90 +308,90 @@ def fitcorr(
     rt_floattype: str = "float64",
 ) -> int:
     """
-        Fit correlation data to extract lag parameters and related statistics for each voxel.
+    Fit correlation data to extract lag parameters and related statistics for each voxel.
 
-        This function performs a fitting procedure on correlation data for each voxel, 
-        extracting lag times, strengths, sigma values, Gaussian fits, window functions, 
-        and R² values. It supports both single-threaded and multi-threaded processing.
+    This function performs a fitting procedure on correlation data for each voxel,
+    extracting lag times, strengths, sigma values, Gaussian fits, window functions,
+    and R² values. It supports both single-threaded and multi-threaded processing.
 
-        Parameters
-        ----------
-        corrtimescale : ArrayLike
-            Time scale of the correlation data.
-        thefitter : Any
-            Fitter object used to perform the fitting. Must have methods like `setcorrtimeaxis`.
-        corrout : NDArray
-            Correlation data for all voxels, shape (n_voxels, n_timepoints).
-        lagmask : NDArray
-            Mask indicating valid lags for each voxel, shape (n_voxels,).
-        failimage : NDArray
-            Image to store failure flags for each voxel, shape (n_voxels,).
-        lagtimes : NDArray
-            Output array for lag times, shape (n_voxels,).
-        lagstrengths : NDArray
-            Output array for lag strengths, shape (n_voxels,).
-        lagsigma : NDArray
-            Output array for lag sigma values, shape (n_voxels,).
-        gaussout : NDArray
-            Output array for Gaussian fit parameters, shape (n_voxels, n_timepoints).
-        windowout : NDArray
-            Output array for window function values, shape (n_voxels, n_timepoints).
-        R2 : NDArray
-            Output array for R² values, shape (n_voxels,).
-        despeckling : bool, optional
-            If True, performs despeckling pass, only accepting successful fits, by default False.
-        peakdict : dict, optional
-            Dictionary of peak information, by default None.
-        nprocs : int, optional
-            Number of processes to use for multiprocessing, by default 1.
-        alwaysmultiproc : bool, optional
-            If True, always use multiprocessing even for single process, by default False.
-        fixdelay : bool, optional
-            If True, fix the delay value, by default False.
-        initialdelayvalue : Union[float, NDArray], optional
-            Initial delay value(s), by default 0.0.
-        showprogressbar : bool, optional
-            If True, show progress bar, by default True.
-        chunksize : int, optional
-            Size of chunks for multiprocessing, by default 1000.
-        despeckle_thresh : float, optional
-            Threshold for despeckling, by default 5.0.
-        initiallags : NDArray, optional
-            Initial lag values for each voxel, by default None.
-        rt_floatset : type, optional
-            Floating-point type for runtime, by default np.float64.
-        rt_floattype : str, optional
-            String representation of floating-point type, by default "float64".
+    Parameters
+    ----------
+    corrtimescale : ArrayLike
+        Time scale of the correlation data.
+    thefitter : Any
+        Fitter object used to perform the fitting. Must have methods like `setcorrtimeaxis`.
+    corrout : NDArray
+        Correlation data for all voxels, shape (n_voxels, n_timepoints).
+    lagmask : NDArray
+        Mask indicating valid lags for each voxel, shape (n_voxels,).
+    failimage : NDArray
+        Image to store failure flags for each voxel, shape (n_voxels,).
+    lagtimes : NDArray
+        Output array for lag times, shape (n_voxels,).
+    lagstrengths : NDArray
+        Output array for lag strengths, shape (n_voxels,).
+    lagsigma : NDArray
+        Output array for lag sigma values, shape (n_voxels,).
+    gaussout : NDArray
+        Output array for Gaussian fit parameters, shape (n_voxels, n_timepoints).
+    windowout : NDArray
+        Output array for window function values, shape (n_voxels, n_timepoints).
+    R2 : NDArray
+        Output array for R² values, shape (n_voxels,).
+    despeckling : bool, optional
+        If True, performs despeckling pass, only accepting successful fits, by default False.
+    peakdict : dict, optional
+        Dictionary of peak information, by default None.
+    nprocs : int, optional
+        Number of processes to use for multiprocessing, by default 1.
+    alwaysmultiproc : bool, optional
+        If True, always use multiprocessing even for single process, by default False.
+    fixdelay : bool, optional
+        If True, fix the delay value, by default False.
+    initialdelayvalue : Union[float, NDArray], optional
+        Initial delay value(s), by default 0.0.
+    showprogressbar : bool, optional
+        If True, show progress bar, by default True.
+    chunksize : int, optional
+        Size of chunks for multiprocessing, by default 1000.
+    despeckle_thresh : float, optional
+        Threshold for despeckling, by default 5.0.
+    initiallags : NDArray, optional
+        Initial lag values for each voxel, by default None.
+    rt_floatset : type, optional
+        Floating-point type for runtime, by default np.float64.
+    rt_floattype : str, optional
+        String representation of floating-point type, by default "float64".
 
-        Returns
-        -------
-        int
-            Total number of voxels successfully processed.
+    Returns
+    -------
+    int
+        Total number of voxels successfully processed.
 
-        Notes
-        -----
-        The function modifies the input arrays (`lagtimes`, `lagstrengths`, `lagsigma`, 
-        `gaussout`, `windowout`, `R2`, `lagmask`, `failimage`) in-place.
+    Notes
+    -----
+    The function modifies the input arrays (`lagtimes`, `lagstrengths`, `lagsigma`,
+    `gaussout`, `windowout`, `R2`, `lagmask`, `failimage`) in-place.
 
-        Examples
-        --------
-        >>> fitcorr(
-        ...     corrtimescale=timescale,
-        ...     thefitter=fitter,
-        ...     corrout=correlation_data,
-        ...     lagmask=lag_mask,
-        ...     failimage=fail_image,
-        ...     lagtimes=lag_times,
-        ...     lagstrengths=lag_strengths,
-        ...     lagsigma=lag_sigma,
-        ...     gaussout=gaussian_out,
-        ...     windowout=window_out,
-        ...     R2=r2_values,
-        ...     nprocs=4,
-        ...     despeckling=True,
-        ... )
-        12345
-        """
+    Examples
+    --------
+    >>> fitcorr(
+    ...     corrtimescale=timescale,
+    ...     thefitter=fitter,
+    ...     corrout=correlation_data,
+    ...     lagmask=lag_mask,
+    ...     failimage=fail_image,
+    ...     lagtimes=lag_times,
+    ...     lagstrengths=lag_strengths,
+    ...     lagsigma=lag_sigma,
+    ...     gaussout=gaussian_out,
+    ...     windowout=window_out,
+    ...     R2=r2_values,
+    ...     nprocs=4,
+    ...     despeckling=True,
+    ... )
+    12345
+    """
     thefitter.setcorrtimeaxis(corrtimescale)
     inputshape = np.shape(corrout)
     if initiallags is None:

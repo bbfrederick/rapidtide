@@ -31,31 +31,31 @@ from rapidtide.workflows.parser_funcs import is_valid_file
 
 def _get_parser() -> Any:
     """
-        Argument parser for linfitfilt.
-    
-        This function constructs and returns an `argparse.ArgumentParser` object configured
-        for the `linfitfilt` command-line tool. It defines all required and optional arguments
-        needed to specify input files, regression parameters, and output options.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser for the linfitfilt tool.
-        
-        Notes
-        -----
-        The parser is designed to handle:
-        - Input NIfTI files (3D or 4D)
-        - EV (event-related) files for regression
-        - Data masking options
-        - Timecourse skipping for fitting
-        - Output filtering and saving options
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        """
+    Argument parser for linfitfilt.
+
+    This function constructs and returns an `argparse.ArgumentParser` object configured
+    for the `linfitfilt` command-line tool. It defines all required and optional arguments
+    needed to specify input files, regression parameters, and output options.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for the linfitfilt tool.
+
+    Notes
+    -----
+    The parser is designed to handle:
+    - Input NIfTI files (3D or 4D)
+    - EV (event-related) files for regression
+    - Data masking options
+    - Timecourse skipping for fitting
+    - Output filtering and saving options
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    """
     parser = argparse.ArgumentParser(
         prog="linfitfilt",
         description="Fits and removes the effect of voxel specific and/or global regressors.",
@@ -111,58 +111,58 @@ def linfitfilt(
     saveall: bool = True,
 ) -> None:
     """
-        Perform linear regression fitting on 4D NIfTI data using specified regressors.
+    Perform linear regression fitting on 4D NIfTI data using specified regressors.
 
-        This function fits a linear model to each voxel's time series using the provided
-        regressors and saves the resulting fit coefficients, R-squared values, and filtered
-        data. It supports both NIfTI and text-based regressor files, as well as FSL par files
-        for global regressors.
+    This function fits a linear model to each voxel's time series using the provided
+    regressors and saves the resulting fit coefficients, R-squared values, and filtered
+    data. It supports both NIfTI and text-based regressor files, as well as FSL par files
+    for global regressors.
 
-        Parameters
-        ----------
-        inputfile : str or pathlib.Path
-            Path to the input 4D NIfTI file containing the time series data.
-        numskip : int
-            Number of initial time points to skip when fitting the model.
-        outputroot : str
-            Root name for output NIfTI files (e.g., '_mean', '_fit0', '_R2', etc.).
-        evfilename : list of str or pathlib.Path
-            List of paths to files containing regressor time series. Can be NIfTI files,
-            text files, or FSL par files.
-        datamaskname : str or pathlib.Path, optional
-            Path to a NIfTI file defining the mask for data analysis. If None, a full mask
-            is assumed.
-        saveall : bool, optional
-            If True, save all intermediate and final output files. Default is True.
+    Parameters
+    ----------
+    inputfile : str or pathlib.Path
+        Path to the input 4D NIfTI file containing the time series data.
+    numskip : int
+        Number of initial time points to skip when fitting the model.
+    outputroot : str
+        Root name for output NIfTI files (e.g., '_mean', '_fit0', '_R2', etc.).
+    evfilename : list of str or pathlib.Path
+        List of paths to files containing regressor time series. Can be NIfTI files,
+        text files, or FSL par files.
+    datamaskname : str or pathlib.Path, optional
+        Path to a NIfTI file defining the mask for data analysis. If None, a full mask
+        is assumed.
+    saveall : bool, optional
+        If True, save all intermediate and final output files. Default is True.
 
-        Returns
-        -------
-        None
-            This function does not return a value but saves multiple NIfTI files to disk.
+    Returns
+    -------
+    None
+        This function does not return a value but saves multiple NIfTI files to disk.
 
-        Notes
-        -----
-        - The function performs ordinary least squares (OLS) regression for each voxel.
-        - The regressors are applied to the data after skipping the first `numskip` time points.
-        - Output files include:
-            - `<outputroot>_mean.nii.gz`: Mean of the data.
-            - `<outputroot>_fit{j}.nii.gz`: Fitted coefficients for regressor j.
-            - `<outputroot>_R2.nii.gz`: R-squared values for the model.
-            - `<outputroot>_totaltoremove.nii.gz`: Regressor contributions to be removed.
-            - `<outputroot>_trimmed.nii.gz`: Trimmed input data.
-            - `<outputroot>_filtered.nii.gz`: Final filtered data.
+    Notes
+    -----
+    - The function performs ordinary least squares (OLS) regression for each voxel.
+    - The regressors are applied to the data after skipping the first `numskip` time points.
+    - Output files include:
+        - `<outputroot>_mean.nii.gz`: Mean of the data.
+        - `<outputroot>_fit{j}.nii.gz`: Fitted coefficients for regressor j.
+        - `<outputroot>_R2.nii.gz`: R-squared values for the model.
+        - `<outputroot>_totaltoremove.nii.gz`: Regressor contributions to be removed.
+        - `<outputroot>_trimmed.nii.gz`: Trimmed input data.
+        - `<outputroot>_filtered.nii.gz`: Final filtered data.
 
-        Examples
-        --------
-        >>> linfitfilt(
-        ...     inputfile='data.nii.gz',
-        ...     numskip=5,
-        ...     outputroot='output',
-        ...     evfilename=['regressor1.txt', 'regressor2.nii.gz'],
-        ...     datamaskname='mask.nii.gz',
-        ...     saveall=True
-        ... )
-        """
+    Examples
+    --------
+    >>> linfitfilt(
+    ...     inputfile='data.nii.gz',
+    ...     numskip=5,
+    ...     outputroot='output',
+    ...     evfilename=['regressor1.txt', 'regressor2.nii.gz'],
+    ...     datamaskname='mask.nii.gz',
+    ...     saveall=True
+    ... )
+    """
     # initialize some variables
     evdata = []
     evisnifti = []
@@ -326,32 +326,32 @@ def linfitfilt(
 
 def main() -> None:
     """
-        Main function to execute the linear fit and filter pipeline.
-    
-        This function parses command line arguments and executes the linear fit and 
-        filter process on the input data file. It handles argument parsing exceptions 
-        and provides help output when needed.
-    
-        Parameters
-        ----------
-        None
-    
-        Returns
-        -------
-        None
-            This function does not return any value.
-    
-        Notes
-        -----
-        The function relies on `_get_parser()` to create and return an argument parser
-        with the necessary command line options. The parsed arguments are then passed
-        to the `linfitfilt` function for processing.
-    
-        Examples
-        --------
-        >>> main()
-        # Executes the linear fit and filter pipeline with arguments from command line
-        """
+    Main function to execute the linear fit and filter pipeline.
+
+    This function parses command line arguments and executes the linear fit and
+    filter process on the input data file. It handles argument parsing exceptions
+    and provides help output when needed.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+        This function does not return any value.
+
+    Notes
+    -----
+    The function relies on `_get_parser()` to create and return an argument parser
+    with the necessary command line options. The parsed arguments are then passed
+    to the `linfitfilt` function for processing.
+
+    Examples
+    --------
+    >>> main()
+    # Executes the linear fit and filter pipeline with arguments from command line
+    """
     try:
         args = vars(_get_parser().parse_args())
     except SystemExit:

@@ -37,21 +37,21 @@ def interpolate_masked_voxels(
     data: NDArray, mask: NDArray, method: str = "linear", extrapolate: bool = True
 ) -> NDArray:
     """
-        Replaces masked voxels in a 3D numpy array with interpolated values
-        from the unmasked region. Supports boundary extrapolation and multiple interpolation methods.
+    Replaces masked voxels in a 3D numpy array with interpolated values
+    from the unmasked region. Supports boundary extrapolation and multiple interpolation methods.
 
-        Parameters:
-            data (np.ndarray): A 3D numpy array containing the data.
-            mask (np.ndarray): A 3D binary numpy array of the same shape as `data`,
-                               where 1 indicates masked voxels and 0 indicates unmasked voxels.
-            method (str): Interpolation method ('linear', 'nearest', or 'cubic').
-            extrapolate (bool): Whether to extrapolate values for masked voxels outside the convex hull
-                                of the unmasked points.
+    Parameters:
+        data (np.ndarray): A 3D numpy array containing the data.
+        mask (np.ndarray): A 3D binary numpy array of the same shape as `data`,
+                           where 1 indicates masked voxels and 0 indicates unmasked voxels.
+        method (str): Interpolation method ('linear', 'nearest', or 'cubic').
+        extrapolate (bool): Whether to extrapolate values for masked voxels outside the convex hull
+                            of the unmasked points.
 
-        Returns:
-            np.ndarray: A new 3D array with interpolated (and optionally extrapolated)
-                        values replacing masked regions.
-        """
+    Returns:
+        np.ndarray: A new 3D array with interpolated (and optionally extrapolated)
+                    values replacing masked regions.
+    """
     if data.shape != mask.shape:
         raise ValueError("Data and mask must have the same shape.")
 
@@ -93,40 +93,40 @@ def interpolate_masked_voxels(
 
 def get_bounding_box(mask: NDArray, value: int, buffer: int = 0) -> tuple[tuple, tuple]:
     """
-        Computes the 3D bounding box that contains all the voxels in the mask with value value.
+    Computes the 3D bounding box that contains all the voxels in the mask with value value.
 
-        Parameters
-        ----------
-        mask : np.ndarray
-            A 3D binary mask where non-zero values indicate the masked region.
-        value : int
-            The masked region value to compute the bounding box for.
-        buffer : int, optional
-            Buffer to add around the bounding box in all directions. Default is 0.
+    Parameters
+    ----------
+    mask : np.ndarray
+        A 3D binary mask where non-zero values indicate the masked region.
+    value : int
+        The masked region value to compute the bounding box for.
+    buffer : int, optional
+        Buffer to add around the bounding box in all directions. Default is 0.
 
-        Returns
-        -------
-        tuple of tuple of int
-            Two tuples defining the bounding box:
-            ((min_x, min_y, min_z), (max_x, max_y, max_z)),
-            where min and max are inclusive coordinates of the bounding box.
+    Returns
+    -------
+    tuple of tuple of int
+        Two tuples defining the bounding box:
+        ((min_x, min_y, min_z), (max_x, max_y, max_z)),
+        where min and max are inclusive coordinates of the bounding box.
 
-        Notes
-        -----
-        The function handles edge cases where the buffer extends beyond the mask boundaries
-        by clamping the coordinates to the valid range [0, shape[axis]-1].
+    Notes
+    -----
+    The function handles edge cases where the buffer extends beyond the mask boundaries
+    by clamping the coordinates to the valid range [0, shape[axis]-1].
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> mask = np.zeros((10, 10, 10), dtype=int)
-        >>> mask[3:7, 3:7, 3:7] = 1
-        >>> get_bounding_box(mask, 1)
-        ((3, 3, 3), (6, 6, 6))
+    Examples
+    --------
+    >>> import numpy as np
+    >>> mask = np.zeros((10, 10, 10), dtype=int)
+    >>> mask[3:7, 3:7, 3:7] = 1
+    >>> get_bounding_box(mask, 1)
+    ((3, 3, 3), (6, 6, 6))
 
-        >>> get_bounding_box(mask, 1, buffer=1)
-        ((2, 2, 2), (7, 7, 7))
-        """
+    >>> get_bounding_box(mask, 1, buffer=1)
+    ((2, 2, 2), (7, 7, 7))
+    """
     if mask.ndim != 3:
         raise ValueError("Input mask must be a 3D array.")
 
@@ -148,43 +148,43 @@ def get_bounding_box(mask: NDArray, value: int, buffer: int = 0) -> tuple[tuple,
 
 def flood3d(image: NDArray, newvalue: int) -> NDArray:
     """
-        Apply flood fill to each slice of a 3D image.
-    
-        This function performs a connected-component flood fill operation on each 
-        2D slice of a 3D image, starting from the top-left corner (0, 0).
-    
-        Parameters
-        ----------
-        image : NDArray
-            Input 3D image array of shape (height, width, depth)
-        newvalue : int
-            The value to fill the connected component with
-        
-        Returns
-        -------
-        NDArray
-            3D image array of the same shape as input, with flood fill applied 
-            to each slice
-        
-        Notes
-        -----
-        - Uses 4-connectivity (rook-style connectivity) for flood fill
-        - Each slice is processed independently
-        - The fill operation starts from position (0, 0) in each slice
-        - Original image values are preserved in the output where fill did not occur
-    
-        Examples
-        --------
-        >>> import numpy as np
-        >>> image = np.array([[[1, 1, 0],
-        ...                    [1, 0, 0],
-        ...                    [0, 0, 0]],
-        ...                   [[1, 1, 0],
-        ...                    [1, 0, 0],
-        ...                    [0, 0, 0]]])
-        >>> result = flood3d(image, 5)
-        >>> print(result)
-        """
+    Apply flood fill to each slice of a 3D image.
+
+    This function performs a connected-component flood fill operation on each
+    2D slice of a 3D image, starting from the top-left corner (0, 0).
+
+    Parameters
+    ----------
+    image : NDArray
+        Input 3D image array of shape (height, width, depth)
+    newvalue : int
+        The value to fill the connected component with
+
+    Returns
+    -------
+    NDArray
+        3D image array of the same shape as input, with flood fill applied
+        to each slice
+
+    Notes
+    -----
+    - Uses 4-connectivity (rook-style connectivity) for flood fill
+    - Each slice is processed independently
+    - The fill operation starts from position (0, 0) in each slice
+    - Original image values are preserved in the output where fill did not occur
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> image = np.array([[[1, 1, 0],
+    ...                    [1, 0, 0],
+    ...                    [0, 0, 0]],
+    ...                   [[1, 1, 0],
+    ...                    [1, 0, 0],
+    ...                    [0, 0, 0]]])
+    >>> result = flood3d(image, 5)
+    >>> print(result)
+    """
     filledim = image * 0
     for slice in range(image.shape[2]):
         filledim[:, :, slice] = flood_fill(image[:, :, slice], (0, 0), newvalue, connectivity=1)
@@ -193,36 +193,36 @@ def flood3d(image: NDArray, newvalue: int) -> NDArray:
 
 def invertedflood3D(image: NDArray, newvalue: int) -> NDArray:
     """
-        Apply inverted flood fill operation to a 3D image.
-    
-        This function performs an inverted flood fill by adding the new value to the
-        original image and subtracting the result of a standard flood3d operation.
-    
-        Parameters
-        ----------
-        image : NDArray
-            Input 3D image array to process
-        newvalue : int
-            Value to be added during the inverted flood fill operation
-        
-        Returns
-        -------
-        NDArray
-            Resulting image after inverted flood fill operation
-        
-        Notes
-        -----
-        The function relies on a `flood3d` function which is assumed to be defined
-        elsewhere in the codebase. The inverted flood fill is computed as:
-        result = image + newvalue - flood3d(image, newvalue)
-    
-        Examples
-        --------
-        >>> import numpy as np
-        >>> image = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
-        >>> result = invertedflood3D(image, 10)
-        >>> print(result)
-        """
+    Apply inverted flood fill operation to a 3D image.
+
+    This function performs an inverted flood fill by adding the new value to the
+    original image and subtracting the result of a standard flood3d operation.
+
+    Parameters
+    ----------
+    image : NDArray
+        Input 3D image array to process
+    newvalue : int
+        Value to be added during the inverted flood fill operation
+
+    Returns
+    -------
+    NDArray
+        Resulting image after inverted flood fill operation
+
+    Notes
+    -----
+    The function relies on a `flood3d` function which is assumed to be defined
+    elsewhere in the codebase. The inverted flood fill is computed as:
+    result = image + newvalue - flood3d(image, newvalue)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> image = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+    >>> result = invertedflood3D(image, 10)
+    >>> print(result)
+    """
     return image + newvalue - flood3d(image, newvalue)
 
 
@@ -321,69 +321,69 @@ def separateclusters(image: NDArray, sizethresh: int = 0, debug: bool = False) -
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 def clamp(low: int, high: int, value: int) -> int:
     """
-        Bound an integer to a range.
+    Bound an integer to a range.
 
-        This function clamps a value to ensure it falls within the inclusive range [low, high].
-        If the value is less than low, it returns low. If the value is greater than high,
-        it returns high. Otherwise, it returns the value unchanged.
+    This function clamps a value to ensure it falls within the inclusive range [low, high].
+    If the value is less than low, it returns low. If the value is greater than high,
+    it returns high. Otherwise, it returns the value unchanged.
 
-        Parameters
-        ----------
-        low : int
-            The lower bound of the range (inclusive).
-        high : int
-            The upper bound of the range (inclusive).
-        value : int
-            The value to be clamped.
+    Parameters
+    ----------
+    low : int
+        The lower bound of the range (inclusive).
+    high : int
+        The upper bound of the range (inclusive).
+    value : int
+        The value to be clamped.
 
-        Returns
-        -------
-        int
-            The clamped value within the range [low, high].
+    Returns
+    -------
+    int
+        The clamped value within the range [low, high].
 
-        Notes
-        -----
-        The function assumes that `low <= high`. If this condition is not met,
-        the behavior is undefined and may return unexpected results.
+    Notes
+    -----
+    The function assumes that `low <= high`. If this condition is not met,
+    the behavior is undefined and may return unexpected results.
 
-        Examples
-        --------
-        >>> clamp(0, 10, 5)
-        5
-        >>> clamp(0, 10, -1)
-        0
-        >>> clamp(0, 10, 15)
-        10
-        """
+    Examples
+    --------
+    >>> clamp(0, 10, 5)
+    5
+    >>> clamp(0, 10, -1)
+    0
+    >>> clamp(0, 10, 15)
+    10
+    """
     return max(low, min(high, value))
 
 
 def dehaze(fdata: NDArray, level: int, debug: bool = False) -> NDArray:
     """
-        use Otsu to threshold https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_multiotsu.html
-        n.b. threshold used to mask image: dark values are zeroed, but result is NOT binary
+    use Otsu to threshold https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_multiotsu.html
+    n.b. threshold used to mask image: dark values are zeroed, but result is NOT binary
 
-        Parameters
-        ----------
-        fdata : numpy.memmap from Niimg-like object
-            Image(s) to run DoG on (see :ref:`extracting_data`
-            for a detailed description of the valid input types).
-        level : int
-            value 1..5 with larger values preserving more bright voxels
-            dark_classes/total_classes
-                1: 3/4
-                2: 2/3
-                3: 1/2
-                4: 1/3
-                5: 1/4
-        debug : :obj:`bool`, optional
-            Controls the amount of verbosity: True give more messages
-            (False means no messages). Default=False.
+    Parameters
+    ----------
+    fdata : numpy.memmap from Niimg-like object
+        Image(s) to run DoG on (see :ref:`extracting_data`
+        for a detailed description of the valid input types).
+    level : int
+        value 1..5 with larger values preserving more bright voxels
+        dark_classes/total_classes
+            1: 3/4
+            2: 2/3
+            3: 1/2
+            4: 1/3
+            5: 1/4
+    debug : :obj:`bool`, optional
+        Controls the amount of verbosity: True give more messages
+        (False means no messages). Default=False.
 
-        Returns
-        -------
-        :class:`nibabel.nifti1.Nifti1Image`
-        """
+    Returns
+    -------
+    :class:`nibabel.nifti1.Nifti1Image`
+    """
     level = clamp(1, 5, level)
     n_classes = abs(3 - level) + 2
     dark_classes = 4 - level
@@ -405,53 +405,53 @@ def _smooth_array(
     copy: bool = True,
 ) -> NDArray:
     """
-        Smooth images by applying a Gaussian filter.
+    Smooth images by applying a Gaussian filter.
 
-        Apply a Gaussian filter along the three first dimensions of `arr`.
+    Apply a Gaussian filter along the three first dimensions of `arr`.
 
-        Parameters
-        ----------
-        arr : :class:`numpy.ndarray`
-            4D array, with image number as last dimension. 3D arrays are also
-            accepted.
+    Parameters
+    ----------
+    arr : :class:`numpy.ndarray`
+        4D array, with image number as last dimension. 3D arrays are also
+        accepted.
 
-        affine : :class:`numpy.ndarray`
-            (4, 4) matrix, giving affine transformation for image. (3, 3) matrices
-            are also accepted (only these coefficients are used).
-            If `fwhm='fast'`, the affine is not used and can be None.
+    affine : :class:`numpy.ndarray`
+        (4, 4) matrix, giving affine transformation for image. (3, 3) matrices
+        are also accepted (only these coefficients are used).
+        If `fwhm='fast'`, the affine is not used and can be None.
 
-        fwhm : scalar, :class:`numpy.ndarray`/:obj:`tuple`/:obj:`list`, 'fast' or None, optional
-            Smoothing strength, as a full-width at half maximum, in millimeters.
-            If a nonzero scalar is given, width is identical in all 3 directions.
-            A :class:`numpy.ndarray`, :obj:`tuple`, or :obj:`list` must have 3 elements,
-            giving the FWHM along each axis.
-            If any of the elements is zero or None, smoothing is not performed
-            along that axis.
-            If  `fwhm='fast'`, a fast smoothing will be performed with a filter
-            [0.2, 1, 0.2] in each direction and a normalisation
-            to preserve the local average value.
-            If fwhm is None, no filtering is performed (useful when just removal
-            of non-finite values is needed).
+    fwhm : scalar, :class:`numpy.ndarray`/:obj:`tuple`/:obj:`list`, 'fast' or None, optional
+        Smoothing strength, as a full-width at half maximum, in millimeters.
+        If a nonzero scalar is given, width is identical in all 3 directions.
+        A :class:`numpy.ndarray`, :obj:`tuple`, or :obj:`list` must have 3 elements,
+        giving the FWHM along each axis.
+        If any of the elements is zero or None, smoothing is not performed
+        along that axis.
+        If  `fwhm='fast'`, a fast smoothing will be performed with a filter
+        [0.2, 1, 0.2] in each direction and a normalisation
+        to preserve the local average value.
+        If fwhm is None, no filtering is performed (useful when just removal
+        of non-finite values is needed).
 
-        ensure_finite : :obj:`bool`, optional
-            If True, replace every non-finite values (like NaNs) by zero before
-            filtering. Default=True.
+    ensure_finite : :obj:`bool`, optional
+        If True, replace every non-finite values (like NaNs) by zero before
+        filtering. Default=True.
 
-        copy : :obj:`bool`, optional
-            If True, input array is not modified. True by default: the filtering
-            is not performed in-place. Default=True.
+    copy : :obj:`bool`, optional
+        If True, input array is not modified. True by default: the filtering
+        is not performed in-place. Default=True.
 
-        Returns
-        -------
-        :class:`numpy.ndarray`
-            Filtered `arr`.
+    Returns
+    -------
+    :class:`numpy.ndarray`
+        Filtered `arr`.
 
-        Notes
-        -----
-        This function is most efficient with arr in C order.
+    Notes
+    -----
+    This function is most efficient with arr in C order.
 
-        """
-        # Here, we have to investigate use cases of fwhm. Particularly, if fwhm=0.
+    """
+    # Here, we have to investigate use cases of fwhm. Particularly, if fwhm=0.
     # See issue #1537
     if isinstance(fwhm, (int, float)) and (fwhm == 0.0):
         warnings.warn(
@@ -489,15 +489,15 @@ def _smooth_array(
 
 def binary_zero_crossing(fdata: NDArray) -> NDArray:
     """
-        binarize (negative voxels are zero)
+    binarize (negative voxels are zero)
 
-        Parameters
-        ----------
-        fdata : numpy.memmap from Niimg-like object
-        Returns
-        -------
-        :class:`nibabel.nifti1.Nifti1Image`
-        """
+    Parameters
+    ----------
+    fdata : numpy.memmap from Niimg-like object
+    Returns
+    -------
+    :class:`nibabel.nifti1.Nifti1Image`
+    """
     edge = np.where(fdata > 0.0, 1, 0)
     edge = distance_transform_edt(edge)
     edge[edge > 1] = 0
@@ -510,27 +510,27 @@ def difference_of_gaussian(
     fdata: NDArray, affine: NDArray, fwhmNarrow: float, ratioopt: bool = True, debug: bool = False
 ) -> NDArray:
     """
-        Apply Difference of Gaussian (DoG) filter.
-        https://en.wikipedia.org/wiki/Difference_of_Gaussians
-        https://en.wikipedia.org/wiki/Marr–Hildreth_algorithm
-        D. Marr and E. C. Hildreth. Theory of edge detection. Proceedings of the Royal Society, London B, 207:187-217, 1980
-        Parameters
-        ----------
-        fdata : numpy.memmap from Niimg-like object
-        affine : :class:`numpy.ndarray`
-            (4, 4) matrix, giving affine transformation for image. (3, 3) matrices
-            are also accepted (only these coefficients are used).
-        fwhmNarrow : int
-            Narrow kernel width, in millimeters. Is an arbitrary ratio of wide to narrow kernel.
-                human cortex about 2.5mm thick
-                Large values yield smoother results
-        debug : :obj:`bool`, optional
-            Controls the amount of verbosity: True give more messages
-            (False means no messages). Default=False.
-        Returns
-        -------
-        :class:`nibabel.nifti1.Nifti1Image`
-        """
+    Apply Difference of Gaussian (DoG) filter.
+    https://en.wikipedia.org/wiki/Difference_of_Gaussians
+    https://en.wikipedia.org/wiki/Marr–Hildreth_algorithm
+    D. Marr and E. C. Hildreth. Theory of edge detection. Proceedings of the Royal Society, London B, 207:187-217, 1980
+    Parameters
+    ----------
+    fdata : numpy.memmap from Niimg-like object
+    affine : :class:`numpy.ndarray`
+        (4, 4) matrix, giving affine transformation for image. (3, 3) matrices
+        are also accepted (only these coefficients are used).
+    fwhmNarrow : int
+        Narrow kernel width, in millimeters. Is an arbitrary ratio of wide to narrow kernel.
+            human cortex about 2.5mm thick
+            Large values yield smoother results
+    debug : :obj:`bool`, optional
+        Controls the amount of verbosity: True give more messages
+        (False means no messages). Default=False.
+    Returns
+    -------
+    :class:`nibabel.nifti1.Nifti1Image`
+    """
 
     # Hardcode 1.6 as ratio of wide versus narrow FWHM
     # Marr and Hildreth (1980) suggest narrow to wide ratio of 1.6
@@ -561,21 +561,21 @@ def calc_DoG(
     debug: bool = False,
 ) -> NDArray:
     """
-        Find edges of a NIfTI image using the Difference of Gaussian (DoG).
-        Parameters
-        ----------
-        thedata : 3D data array
-            Image(s) to run DoG on (see :ref:`extracting_data`
-            for a detailed description of the valid input types).
-        fwhm : int
-            Edge detection strength, as a full-width at half maximum, in millimeters.
-        debug : :obj:`bool`, optional
-            Controls the amount of verbosity: True give more messages
-            (False means no messages). Default=False.
-        Returns
-        -------
-        :class:`nibabel.nifti1.Nifti1Image`
-        """
+    Find edges of a NIfTI image using the Difference of Gaussian (DoG).
+    Parameters
+    ----------
+    thedata : 3D data array
+        Image(s) to run DoG on (see :ref:`extracting_data`
+        for a detailed description of the valid input types).
+    fwhm : int
+        Edge detection strength, as a full-width at half maximum, in millimeters.
+    debug : :obj:`bool`, optional
+        Controls the amount of verbosity: True give more messages
+        (False means no messages). Default=False.
+    Returns
+    -------
+    :class:`nibabel.nifti1.Nifti1Image`
+    """
 
     if debug:
         print("Input intensity range {}..{}".format(np.nanmin(thedata), np.nanmax(thedata)))
@@ -612,50 +612,50 @@ def interppatch(
     img_data: NDArray, separatedimage: NDArray, method: str = "linear", debug: bool = False
 ) -> tuple[NDArray, NDArray]:
     """
-        Interpolate voxel values within labeled regions of a 3D image.
+    Interpolate voxel values within labeled regions of a 3D image.
 
-        This function applies interpolation to each labeled region in a separated image,
-        using the specified interpolation method. It returns both the interpolated image
-        and a copy of the original image with the same spatial extent.
+    This function applies interpolation to each labeled region in a separated image,
+    using the specified interpolation method. It returns both the interpolated image
+    and a copy of the original image with the same spatial extent.
 
-        Parameters
-        ----------
-        img_data : NDArray
-            A 3D array representing the input image data to be interpolated.
-        separatedimage : NDArray
-            A 3D array of integers where each unique positive integer represents a
-            distinct region. Zero values are treated as background.
-        method : str, optional
-            The interpolation method to use. Default is "linear". Other options may
-            include "nearest", "cubic", etc., depending on the implementation of
-            `interpolate_masked_voxels`.
-        debug : bool, optional
-            If True, print debug information for each region being processed.
-            Default is False.
+    Parameters
+    ----------
+    img_data : NDArray
+        A 3D array representing the input image data to be interpolated.
+    separatedimage : NDArray
+        A 3D array of integers where each unique positive integer represents a
+        distinct region. Zero values are treated as background.
+    method : str, optional
+        The interpolation method to use. Default is "linear". Other options may
+        include "nearest", "cubic", etc., depending on the implementation of
+        `interpolate_masked_voxels`.
+    debug : bool, optional
+        If True, print debug information for each region being processed.
+        Default is False.
 
-        Returns
-        -------
-        tuple[NDArray, NDArray]
-            A tuple containing:
-            - `interpolated`: The image with interpolated values in each region.
-            - `justboxes`: A copy of the original image data, with the same shape
-              as `img_data`, used for reference or visualization purposes.
+    Returns
+    -------
+    tuple[NDArray, NDArray]
+        A tuple containing:
+        - `interpolated`: The image with interpolated values in each region.
+        - `justboxes`: A copy of the original image data, with the same shape
+          as `img_data`, used for reference or visualization purposes.
 
-        Notes
-        -----
-        - Each region is processed independently using its bounding box.
-        - The function modifies `img_data` only within the bounds of each region.
-        - The `interpolate_masked_voxels` function is assumed to handle the actual
-          interpolation logic for masked voxels.
+    Notes
+    -----
+    - Each region is processed independently using its bounding box.
+    - The function modifies `img_data` only within the bounds of each region.
+    - The `interpolate_masked_voxels` function is assumed to handle the actual
+      interpolation logic for masked voxels.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> img = np.random.rand(10, 10, 10)
-        >>> labels = np.zeros((10, 10, 10))
-        >>> labels[3:7, 3:7, 3:7] = 1
-        >>> interpolated, boxes = interppatch(img, labels, method="linear")
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> img = np.random.rand(10, 10, 10)
+    >>> labels = np.zeros((10, 10, 10))
+    >>> labels[3:7, 3:7, 3:7] = 1
+    >>> interpolated, boxes = interppatch(img, labels, method="linear")
+    """
     interpolated = img_data + 0.0
     justboxes = img_data * 0.0
     numregions = np.max(separatedimage)
@@ -694,12 +694,12 @@ def interppatch(
 
 if __name__ == "__main__":
     """
-        Apply Gaussian smooth to image
-        Parameters
-        ----------
-        fnm : str
-            NIfTI image to convert
-        """
+    Apply Gaussian smooth to image
+    Parameters
+    ----------
+    fnm : str
+        NIfTI image to convert
+    """
     if len(sys.argv) < 2:
         print("No filename provided: I do not know which image to convert!")
         sys.exit()

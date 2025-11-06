@@ -36,38 +36,38 @@ DEFAULT_PT_DL_MODEL = "model_cnn_pytorch"
 
 def _get_parser() -> Any:
     """
-        Create and configure an argument parser for the happy command-line tool.
-    
-        This function sets up an `argparse.ArgumentParser` with numerous options for
-        configuring the hypersampling by analytic phase projection (HAPPY) pipeline.
-        It includes arguments for input files, processing steps, performance tuning,
-        preprocessing, cardiac and respiration estimation, output handling, and debugging.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser with all supported command-line options.
-        
-        Notes
-        -----
-        The parser includes multiple argument groups for different functional areas:
-        - Processing steps
-        - Performance
-        - Preprocessing
-        - Cardiac estimation tuning
-        - External cardiac waveform options
-        - External respiration waveform options
-        - Output processing
-        - Output options
-        - Phase projection tuning
-        - Miscellaneous options
-        - Debugging options
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        """
+    Create and configure an argument parser for the happy command-line tool.
+
+    This function sets up an `argparse.ArgumentParser` with numerous options for
+    configuring the hypersampling by analytic phase projection (HAPPY) pipeline.
+    It includes arguments for input files, processing steps, performance tuning,
+    preprocessing, cardiac and respiration estimation, output handling, and debugging.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser with all supported command-line options.
+
+    Notes
+    -----
+    The parser includes multiple argument groups for different functional areas:
+    - Processing steps
+    - Performance
+    - Preprocessing
+    - Cardiac estimation tuning
+    - External cardiac waveform options
+    - External respiration waveform options
+    - Output processing
+    - Output options
+    - Phase projection tuning
+    - Miscellaneous options
+    - Debugging options
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    """
     parser = argparse.ArgumentParser(
         prog="happy",
         description="Hypersampling by Analytic Phase Projection - Yay!.",
@@ -835,38 +835,38 @@ def _get_parser() -> Any:
 
 def process_args(inputargs: Optional[Any] = None) -> None:
     """
-        Compile arguments for happy workflow.
+    Compile arguments for happy workflow.
 
-        This function processes input arguments for the happy workflow, handling
-        argument parsing, command line formatting, default model selection, and post-processing
-        of various parameters. It also manages motion file specifications, multiprocessing
-        settings, and output level calculations.
+    This function processes input arguments for the happy workflow, handling
+    argument parsing, command line formatting, default model selection, and post-processing
+    of various parameters. It also manages motion file specifications, multiprocessing
+    settings, and output level calculations.
 
-        Parameters
-        ----------
-        inputargs : optional
-            Input arguments to be processed. If None, arguments are parsed from the command line.
-            Default is None.
+    Parameters
+    ----------
+    inputargs : optional
+        Input arguments to be processed. If None, arguments are parsed from the command line.
+        Default is None.
 
-        Returns
-        -------
-        args : argparse.Namespace
-            Processed arguments namespace containing all parsed and defaulted values.
+    Returns
+    -------
+    args : argparse.Namespace
+        Processed arguments namespace containing all parsed and defaulted values.
 
-        Notes
-        -----
-        - If no model is specified, the function sets a default based on whether PyTorch or TensorFlow
-          is being used.
-        - The function writes formatted command line arguments to files for logging purposes.
-        - Multiprocessing is currently disabled due to instability.
-        - The output level is adjusted based on user-provided increments and decrements.
+    Notes
+    -----
+    - If no model is specified, the function sets a default based on whether PyTorch or TensorFlow
+      is being used.
+    - The function writes formatted command line arguments to files for logging purposes.
+    - Multiprocessing is currently disabled due to instability.
+    - The output level is adjusted based on user-provided increments and decrements.
 
-        Examples
-        --------
-        >>> args = process_args()
-        >>> print(args.outputroot)
-        >>> print(args.modelname)
-        """
+    Examples
+    --------
+    >>> args = process_args()
+    >>> print(args.outputroot)
+    >>> print(args.modelname)
+    """
     args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
 
     # save the raw and formatted command lines

@@ -32,33 +32,33 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Construct and return an argument parser for the atlasaverage command-line tool.
-    
-        This function builds an `argparse.ArgumentParser` object configured with all
-        required and optional arguments needed to run the `atlasaverage` utility. It
-        handles input validation for file paths and defines various options for
-        normalizing, summarizing, and filtering data within atlas regions.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object for the atlasaverage tool.
-        
-        Notes
-        -----
-        The parser is set up with:
-        - Two required positional arguments: `datafile` and `templatefile`.
-        - One required positional argument: `outputroot`.
-        - Several optional arguments controlling normalization, summarization,
-          masking, and output formatting.
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['data.nii', 'atlas.nii', 'output'])
-        >>> print(args.datafile)
-        'data.nii'
-        """
+    Construct and return an argument parser for the atlasaverage command-line tool.
+
+    This function builds an `argparse.ArgumentParser` object configured with all
+    required and optional arguments needed to run the `atlasaverage` utility. It
+    handles input validation for file paths and defines various options for
+    normalizing, summarizing, and filtering data within atlas regions.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object for the atlasaverage tool.
+
+    Notes
+    -----
+    The parser is set up with:
+    - Two required positional arguments: `datafile` and `templatefile`.
+    - One required positional argument: `outputroot`.
+    - Several optional arguments controlling normalization, summarization,
+      masking, and output formatting.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['data.nii', 'atlas.nii', 'output'])
+    >>> print(args.datafile)
+    'data.nii'
+    """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="atlasaverage",
@@ -196,48 +196,49 @@ def _get_parser() -> Any:
 
     return parser
 
+
 def summarizevoxels(thevoxels: NDArray, method: str = "mean") -> float:
     """
-        Summarize voxel data using specified statistical method.
-    
-        Parameters
-        ----------
-        thevoxels : ndarray
-            Input voxel data array. Can be 1D or 2D, where 2D arrays are interpreted
-            as time series with shape (voxels, timepoints).
-        method : str, default="mean"
-            Summary method to apply. Options are:
-            - "mean": Compute mean along axis 0
-            - "sum": Compute sum along axis 0  
-            - "median": Compute median along axis 0
-            - "std": Compute standard deviation along axis 0
-            - "MAD": Compute median absolute deviation along axis 0
-            - "CoV": Compute coefficient of variation (std/mean) along axis 0
-        
-        Returns
-        -------
-        float or ndarray
-            Summary statistic(s) of the voxel data. Returns a scalar for 1D input
-            or array of statistics for 2D input along axis 0.
-        
-        Notes
-        -----
-        - NaN values are converted to zero using `np.nan_to_num` before computation
-        - For coefficient of variation ("CoV"), the result is multiplied by 100 to
-          express as percentage
-        - When input is 1D, time dimension is treated as single timepoint
-        - The function handles both 1D and 2D input arrays appropriately
-    
-        Examples
-        --------
-        >>> import numpy as np
-        >>> voxels = np.array([[1, 2, 3], [4, 5, 6]])
-        >>> summarizevoxels(voxels, method="mean")
-        array([2.5, 3.5, 4.5])
-    
-        >>> summarizevoxels(voxels, method="CoV")
-        array([40.82482905, 33.33333333, 25.        ])
-        """
+    Summarize voxel data using specified statistical method.
+
+    Parameters
+    ----------
+    thevoxels : ndarray
+        Input voxel data array. Can be 1D or 2D, where 2D arrays are interpreted
+        as time series with shape (voxels, timepoints).
+    method : str, default="mean"
+        Summary method to apply. Options are:
+        - "mean": Compute mean along axis 0
+        - "sum": Compute sum along axis 0
+        - "median": Compute median along axis 0
+        - "std": Compute standard deviation along axis 0
+        - "MAD": Compute median absolute deviation along axis 0
+        - "CoV": Compute coefficient of variation (std/mean) along axis 0
+
+    Returns
+    -------
+    float or ndarray
+        Summary statistic(s) of the voxel data. Returns a scalar for 1D input
+        or array of statistics for 2D input along axis 0.
+
+    Notes
+    -----
+    - NaN values are converted to zero using `np.nan_to_num` before computation
+    - For coefficient of variation ("CoV"), the result is multiplied by 100 to
+      express as percentage
+    - When input is 1D, time dimension is treated as single timepoint
+    - The function handles both 1D and 2D input arrays appropriately
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> voxels = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> summarizevoxels(voxels, method="mean")
+    array([2.5, 3.5, 4.5])
+
+    >>> summarizevoxels(voxels, method="CoV")
+    array([40.82482905, 33.33333333, 25.        ])
+    """
     theshape = thevoxels.shape
     if len(theshape) > 1:
         numtimepoints = theshape[1]
@@ -273,84 +274,83 @@ def summarizevoxels(thevoxels: NDArray, method: str = "mean") -> float:
     return regionsummary
 
 
-
 def atlasaverage(args: Any) -> None:
     """
-        Compute average timecourses or summary statistics for regions defined by an atlas.
+    Compute average timecourses or summary statistics for regions defined by an atlas.
 
-        This function reads fMRI data and a template (atlas) file, extracts timecourses
-        or summary statistics for each region in the atlas, and saves the results to
-        output files. It supports multiple normalization methods and can process both
-        3D and 4D input data.
+    This function reads fMRI data and a template (atlas) file, extracts timecourses
+    or summary statistics for each region in the atlas, and saves the results to
+    output files. It supports multiple normalization methods and can process both
+    3D and 4D input data.
 
-        Parameters
-        ----------
-        args : argparse.Namespace
-            Arguments parsed from command line. Expected attributes include:
-            - datafile : str
-                Path to the input fMRI NIfTI file.
-            - templatefile : str
-                Path to the template NIfTI file defining regions.
-            - normmethod : str
-                Normalization method for timecourses: 'none', 'pct', 'std', 'var', 'p2p'.
-            - outputroot : str
-                Root name for output files.
-            - debug : bool
-                If True, enable debug printing and save intermediate masks.
-            - includespec : str or None
-                Specification for including voxels in analysis.
-            - excludespec : str or None
-                Specification for excluding voxels from analysis.
-            - extramaskname : str or None
-                Path to an additional mask file.
-            - regionlabelfile : str or None
-                Path to a file containing region labels.
-            - regionlistfile : str or None
-                Path to a file listing regions to include.
-            - summarymethod : str
-                Method for summarizing voxel values (e.g., 'mean', 'median').
-            - datalabel : str or None
-                Label to prepend to output summary.
-            - ignorezeros : bool
-                If True, exclude zero voxels when computing summaries.
-            - numpercentiles : int
-                Number of percentiles to compute for each region.
-            - headerline : bool
-                If True, include a header line in the summary CSV.
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Arguments parsed from command line. Expected attributes include:
+        - datafile : str
+            Path to the input fMRI NIfTI file.
+        - templatefile : str
+            Path to the template NIfTI file defining regions.
+        - normmethod : str
+            Normalization method for timecourses: 'none', 'pct', 'std', 'var', 'p2p'.
+        - outputroot : str
+            Root name for output files.
+        - debug : bool
+            If True, enable debug printing and save intermediate masks.
+        - includespec : str or None
+            Specification for including voxels in analysis.
+        - excludespec : str or None
+            Specification for excluding voxels from analysis.
+        - extramaskname : str or None
+            Path to an additional mask file.
+        - regionlabelfile : str or None
+            Path to a file containing region labels.
+        - regionlistfile : str or None
+            Path to a file listing regions to include.
+        - summarymethod : str
+            Method for summarizing voxel values (e.g., 'mean', 'median').
+        - datalabel : str or None
+            Label to prepend to output summary.
+        - ignorezeros : bool
+            If True, exclude zero voxels when computing summaries.
+        - numpercentiles : int
+            Number of percentiles to compute for each region.
+        - headerline : bool
+            If True, include a header line in the summary CSV.
 
-        Returns
-        -------
-        None
-            This function does not return a value but writes output files to disk.
+    Returns
+    -------
+    None
+        This function does not return a value but writes output files to disk.
 
-        Notes
-        -----
-        For 4D data, the function computes timecourses for each region and saves them
-        as a TSV file. For 3D data, it computes summary statistics and saves both
-        a labeled NIfTI file and a CSV/TSV summary.
+    Notes
+    -----
+    For 4D data, the function computes timecourses for each region and saves them
+    as a TSV file. For 3D data, it computes summary statistics and saves both
+    a labeled NIfTI file and a CSV/TSV summary.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     datafile='fmri.nii.gz',
-        ...     templatefile='atlas.nii.gz',
-        ...     normmethod='std',
-        ...     outputroot='output',
-        ...     debug=False,
-        ...     includespec=None,
-        ...     excludespec=None,
-        ...     extramaskname=None,
-        ...     regionlabelfile=None,
-        ...     regionlistfile=None,
-        ...     summarymethod='mean',
-        ...     datalabel=None,
-        ...     ignorezeros=False,
-        ...     numpercentiles=5,
-        ...     headerline=True
-        ... )
-        >>> atlasaverage(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     datafile='fmri.nii.gz',
+    ...     templatefile='atlas.nii.gz',
+    ...     normmethod='std',
+    ...     outputroot='output',
+    ...     debug=False,
+    ...     includespec=None,
+    ...     excludespec=None,
+    ...     extramaskname=None,
+    ...     regionlabelfile=None,
+    ...     regionlistfile=None,
+    ...     summarymethod='mean',
+    ...     datalabel=None,
+    ...     ignorezeros=False,
+    ...     numpercentiles=5,
+    ...     headerline=True
+    ... )
+    >>> atlasaverage(args)
+    """
     if args.normmethod == "none":
         print("will not normalize timecourses")
     elif args.normmethod == "pct":
@@ -636,7 +636,9 @@ def atlasaverage(args: Any) -> None:
         pctstrings = [f"{num:.0f}" for num in (np.array(thefracs) * 100.0).tolist()]
         outlines.append("Region\tVoxels\t" + "pct-" + "\tpct-".join(pctstrings))
         for idx, region in enumerate(thereglabels):
-            outlines.append(region + "\t" + theregsizes[idx] + "\t" + "\t".join(thepercentiles[idx]))
+            outlines.append(
+                region + "\t" + theregsizes[idx] + "\t" + "\t".join(thepercentiles[idx])
+            )
             tide_io.writevec(
                 np.array(outlines),
                 f"{args.outputroot}_regionpercentiles.tsv",

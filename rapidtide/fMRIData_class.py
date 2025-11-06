@@ -47,42 +47,42 @@ class fMRIData:
         description: str | None = None,
     ) -> None:
         """
-            Initialize a new instance.
+        Initialize a new instance.
 
-            Parameters
-            ----------
-            filename : str, optional
-                Path to the data file. Default is None.
-            header : Any, optional
-                Header information associated with the data. Default is None.
-            data : NDArray, optional
-                Main data array. Default is None.
-            mask : NDArray, optional
-                Mask array for data filtering. Default is None.
-            validvoxels : NDArray, optional
-                Array indicating valid voxels. Default is None.
-            dims : tuple, optional
-                Dimensions of the data. Default is None.
-            sizes : tuple, optional
-                Size information for the data. Default is None.
-            description : str, optional
-                Description of the data. Default is None.
+        Parameters
+        ----------
+        filename : str, optional
+            Path to the data file. Default is None.
+        header : Any, optional
+            Header information associated with the data. Default is None.
+        data : NDArray, optional
+            Main data array. Default is None.
+        mask : NDArray, optional
+            Mask array for data filtering. Default is None.
+        validvoxels : NDArray, optional
+            Array indicating valid voxels. Default is None.
+        dims : tuple, optional
+            Dimensions of the data. Default is None.
+        sizes : tuple, optional
+            Size information for the data. Default is None.
+        description : str, optional
+            Description of the data. Default is None.
 
-            Returns
-            -------
-            None
-                This method initializes the instance attributes but does not return anything.
+        Returns
+        -------
+        None
+            This method initializes the instance attributes but does not return anything.
 
-            Notes
-            -----
-            This constructor sets up the basic attributes for data handling. All parameters
-            are optional and can be None, allowing for flexible initialization of instances.
+        Notes
+        -----
+        This constructor sets up the basic attributes for data handling. All parameters
+        are optional and can be None, allowing for flexible initialization of instances.
 
-            Examples
-            --------
-            >>> instance = MyClass()
-            >>> instance = MyClass(filename="data.nii", data=np.array([1, 2, 3]))
-            """
+        Examples
+        --------
+        >>> instance = MyClass()
+        >>> instance = MyClass(filename="data.nii", data=np.array([1, 2, 3]))
+        """
         self.filename = filename
         self.header = header
         self.data = data
@@ -94,43 +94,43 @@ class fMRIData:
 
     def load(self, filename: str) -> None:
         """
-            Load fMRI data from a file.
+        Load fMRI data from a file.
 
-            Load fMRI data from a file, supporting text, CIFTI, and NIFTI formats.
-            The function determines the file type and reads the data accordingly,
-            setting appropriate attributes such as data shape, timepoints, and spatial dimensions.
+        Load fMRI data from a file, supporting text, CIFTI, and NIFTI formats.
+        The function determines the file type and reads the data accordingly,
+        setting appropriate attributes such as data shape, timepoints, and spatial dimensions.
 
-            Parameters
-            ----------
-            filename : str
-                Path to the input file. Supported formats are text, CIFTI, and NIFTI.
+        Parameters
+        ----------
+        filename : str
+            Path to the input file. Supported formats are text, CIFTI, and NIFTI.
 
-            Returns
-            -------
-            None
-                This function does not return a value but updates the instance attributes
-                with loaded data and metadata.
+        Returns
+        -------
+        None
+            This function does not return a value but updates the instance attributes
+            with loaded data and metadata.
 
-            Notes
-            -----
-            This function modifies the instance state by setting the following attributes:
-            - `filename`: The path to the input file.
-            - `filetype`: The type of the file ('text', 'cifti', or 'nifti').
-            - `data`: The loaded data array.
-            - `header`: The header information (if available).
-            - `xsize`, `ysize`, `numslices`, `timepoints`: Spatial and temporal dimensions.
-            - `thesizes`: A list containing the dimensions of the data.
-            - `numspatiallocs`: Total number of spatial locations.
-            - `nativespaceshape`: Shape of the native space.
-            - `cifti_hdr`: CIFTI header (if applicable).
+        Notes
+        -----
+        This function modifies the instance state by setting the following attributes:
+        - `filename`: The path to the input file.
+        - `filetype`: The type of the file ('text', 'cifti', or 'nifti').
+        - `data`: The loaded data array.
+        - `header`: The header information (if available).
+        - `xsize`, `ysize`, `numslices`, `timepoints`: Spatial and temporal dimensions.
+        - `thesizes`: A list containing the dimensions of the data.
+        - `numspatiallocs`: Total number of spatial locations.
+        - `nativespaceshape`: Shape of the native space.
+        - `cifti_hdr`: CIFTI header (if applicable).
 
-            Examples
-            --------
-            >>> loader = DataReader()
-            >>> loader.load('fmri_data.nii.gz')
-            >>> print(loader.timepoints)
-            100
-            """
+        Examples
+        --------
+        >>> loader = DataReader()
+        >>> loader.load('fmri_data.nii.gz')
+        >>> print(loader.timepoints)
+        100
+        """
         self.filename = filename
         ####################################################
         #  Read data

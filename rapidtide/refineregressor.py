@@ -72,79 +72,79 @@ def _procOneVoxelTimeShift(
 
 def _packvoxeldata(voxnum: int, voxelargs: tuple) -> list:
     """
-        Pack voxel data into a list structure.
-    
-        Parameters
-        ----------
-        voxnum : int
-            The voxel index to extract data from.
-        voxelargs : tuple
-            A tuple containing voxel data with the following structure:
-            - voxelargs[0]: 2D array of shape (n_voxels, n_features) containing voxel features
-            - voxelargs[1]: 1D array of shape (n_voxels,) containing voxel labels or values
-            - voxelargs[2]: Additional voxel parameter (type depends on context)
-            - voxelargs[3]: Additional voxel parameter (type depends on context)
-    
-        Returns
-        -------
-        list
-            A list containing:
-            - [0]: 1D array of shape (n_features,) representing voxel features at voxnum
-            - [1]: scalar value representing voxel label or value at voxnum
-            - [2]: third element from voxelargs tuple
-            - [3]: fourth element from voxelargs tuple
-    
-        Notes
-        -----
-        This function is typically used for extracting and packaging voxel data for further processing
-        in neuroimaging or 3D data analysis workflows.
-    
-        Examples
-        --------
-        >>> voxel_features = np.array([[1, 2, 3], [4, 5, 6]])
-        >>> voxel_labels = np.array([10, 20])
-        >>> extra_param1 = "param1"
-        >>> extra_param2 = "param2"
-        >>> result = _packvoxeldata(0, (voxel_features, voxel_labels, extra_param1, extra_param2))
-        >>> print(result)
-        [[1, 2, 3], 10, 'param1', 'param2']
-        """
+    Pack voxel data into a list structure.
+
+    Parameters
+    ----------
+    voxnum : int
+        The voxel index to extract data from.
+    voxelargs : tuple
+        A tuple containing voxel data with the following structure:
+        - voxelargs[0]: 2D array of shape (n_voxels, n_features) containing voxel features
+        - voxelargs[1]: 1D array of shape (n_voxels,) containing voxel labels or values
+        - voxelargs[2]: Additional voxel parameter (type depends on context)
+        - voxelargs[3]: Additional voxel parameter (type depends on context)
+
+    Returns
+    -------
+    list
+        A list containing:
+        - [0]: 1D array of shape (n_features,) representing voxel features at voxnum
+        - [1]: scalar value representing voxel label or value at voxnum
+        - [2]: third element from voxelargs tuple
+        - [3]: fourth element from voxelargs tuple
+
+    Notes
+    -----
+    This function is typically used for extracting and packaging voxel data for further processing
+    in neuroimaging or 3D data analysis workflows.
+
+    Examples
+    --------
+    >>> voxel_features = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> voxel_labels = np.array([10, 20])
+    >>> extra_param1 = "param1"
+    >>> extra_param2 = "param2"
+    >>> result = _packvoxeldata(0, (voxel_features, voxel_labels, extra_param1, extra_param2))
+    >>> print(result)
+    [[1, 2, 3], 10, 'param1', 'param2']
+    """
     return [(voxelargs[0])[voxnum, :], (voxelargs[1])[voxnum], voxelargs[2], voxelargs[3]]
 
 
 def _unpackvoxeldata(retvals: tuple, voxelproducts: list) -> None:
     """
-        Unpack voxel data from retvals into voxelproducts arrays.
+    Unpack voxel data from retvals into voxelproducts arrays.
 
-        Parameters
-        ----------
-        retvals : tuple
-            Tuple containing voxel data to be unpacked. Expected to contain at least 5 elements
-            where retvals[0] is the index for assignment and retvals[1:5] are the data arrays.
-        voxelproducts : list
-            List of arrays where voxel data will be unpacked. Expected to contain exactly 4 arrays
-            that will be modified in-place.
+    Parameters
+    ----------
+    retvals : tuple
+        Tuple containing voxel data to be unpacked. Expected to contain at least 5 elements
+        where retvals[0] is the index for assignment and retvals[1:5] are the data arrays.
+    voxelproducts : list
+        List of arrays where voxel data will be unpacked. Expected to contain exactly 4 arrays
+        that will be modified in-place.
 
-        Returns
-        -------
-        None
-            This function modifies the voxelproducts arrays in-place and does not return anything.
+    Returns
+    -------
+    None
+        This function modifies the voxelproducts arrays in-place and does not return anything.
 
-        Notes
-        -----
-        This function performs in-place assignment of voxel data. The first element of retvals
-        is used as an index for row-wise assignment into each of the four arrays in voxelproducts.
-        All arrays in voxelproducts must have sufficient dimensions to accommodate the assignment.
+    Notes
+    -----
+    This function performs in-place assignment of voxel data. The first element of retvals
+    is used as an index for row-wise assignment into each of the four arrays in voxelproducts.
+    All arrays in voxelproducts must have sufficient dimensions to accommodate the assignment.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> voxel_data = [np.zeros((10, 5)), np.zeros((10, 5)), np.zeros((10, 5)), np.zeros((10, 5))]
-        >>> retvals = (2, np.array([1, 2, 3, 4, 5]), np.array([6, 7, 8, 9, 10]), 
-        ...            np.array([11, 12, 13, 14, 15]), np.array([16, 17, 18, 19, 20]))
-        >>> _unpackvoxeldata(retvals, voxel_data)
-        >>> print(voxel_data[0][2, :])  # Should print [1 2 3 4 5]
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> voxel_data = [np.zeros((10, 5)), np.zeros((10, 5)), np.zeros((10, 5)), np.zeros((10, 5))]
+    >>> retvals = (2, np.array([1, 2, 3, 4, 5]), np.array([6, 7, 8, 9, 10]),
+    ...            np.array([11, 12, 13, 14, 15]), np.array([16, 17, 18, 19, 20]))
+    >>> _unpackvoxeldata(retvals, voxel_data)
+    >>> print(voxel_data[0][2, :])  # Should print [1 2 3 4 5]
+    """
     (voxelproducts[0])[retvals[0], :] = retvals[1]
     (voxelproducts[1])[retvals[0], :] = retvals[2]
     (voxelproducts[2])[retvals[0], :] = retvals[3]
@@ -161,55 +161,55 @@ def findecho(
     phi: NDArray,
 ) -> None:
     """
-        Compute autoregressive parameters and related statistics for each voxel using Levinson-Durbin recursion.
-    
-        This function applies the Levinson-Durbin algorithm to estimate autoregressive coefficients
-        and associated statistics for time series data from multiple voxels. The algorithm computes
-        the variance, autoregressive coefficients, partial autocorrelations, and other related
-        parameters for each voxel's time series.
-    
-        Parameters
-        ----------
-        nlags : int
-            Number of lags to compute for the autoregressive model.
-        shiftedtcs : NDArray
-            Input time series data with shape (n_voxels, n_timepoints), where each row represents
-            a voxel's time series.
-        sigmav : NDArray
-            Output array for variance estimates, shape (n_voxels,).
-        arcoefs : NDArray
-            Output array for autoregressive coefficients, shape (n_voxels, nlags).
-        pacf : NDArray
-            Output array for partial autocorrelations, shape (n_voxels, nlags).
-        sigma : NDArray
-            Output array for sigma values, shape (n_voxels, nlags).
-        phi : NDArray
-            Output array for phi values, shape (n_voxels, nlags).
-        
-        Returns
-        -------
-        None
-            This function modifies the input arrays in-place and does not return any value.
-        
-        Notes
-        -----
-        The function uses `statsmodels.tsa.stattools.levinson_durbin` to compute the autoregressive
-        parameters. This algorithm is efficient for computing autoregressive parameters and is
-        commonly used in time series analysis for estimating model parameters.
-    
-        Examples
-        --------
-        >>> import numpy as np
-        >>> from statsmodels.tsa import stattools
-        >>> nlags = 5
-        >>> shiftedtcs = np.random.randn(100, 1000)
-        >>> sigmav = np.zeros(100)
-        >>> arcoefs = np.zeros((100, 5))
-        >>> pacf = np.zeros((100, 5))
-        >>> sigma = np.zeros((100, 5))
-        >>> phi = np.zeros((100, 5))
-        >>> findecho(nlags, shiftedtcs, sigmav, arcoefs, pacf, sigma, phi)
-        """
+    Compute autoregressive parameters and related statistics for each voxel using Levinson-Durbin recursion.
+
+    This function applies the Levinson-Durbin algorithm to estimate autoregressive coefficients
+    and associated statistics for time series data from multiple voxels. The algorithm computes
+    the variance, autoregressive coefficients, partial autocorrelations, and other related
+    parameters for each voxel's time series.
+
+    Parameters
+    ----------
+    nlags : int
+        Number of lags to compute for the autoregressive model.
+    shiftedtcs : NDArray
+        Input time series data with shape (n_voxels, n_timepoints), where each row represents
+        a voxel's time series.
+    sigmav : NDArray
+        Output array for variance estimates, shape (n_voxels,).
+    arcoefs : NDArray
+        Output array for autoregressive coefficients, shape (n_voxels, nlags).
+    pacf : NDArray
+        Output array for partial autocorrelations, shape (n_voxels, nlags).
+    sigma : NDArray
+        Output array for sigma values, shape (n_voxels, nlags).
+    phi : NDArray
+        Output array for phi values, shape (n_voxels, nlags).
+
+    Returns
+    -------
+    None
+        This function modifies the input arrays in-place and does not return any value.
+
+    Notes
+    -----
+    The function uses `statsmodels.tsa.stattools.levinson_durbin` to compute the autoregressive
+    parameters. This algorithm is efficient for computing autoregressive parameters and is
+    commonly used in time series analysis for estimating model parameters.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from statsmodels.tsa import stattools
+    >>> nlags = 5
+    >>> shiftedtcs = np.random.randn(100, 1000)
+    >>> sigmav = np.zeros(100)
+    >>> arcoefs = np.zeros((100, 5))
+    >>> pacf = np.zeros((100, 5))
+    >>> sigma = np.zeros((100, 5))
+    >>> phi = np.zeros((100, 5))
+    >>> findecho(nlags, shiftedtcs, sigmav, arcoefs, pacf, sigma, phi)
+    """
     inputshape = np.shape(shiftedtcs)
     for voxel in range(inputshape[0]):
         sigmav[voxel], arcoefs[voxel, :], pacf[voxel, :], sigma[voxel, :], phi[voxel, :] = (
@@ -238,80 +238,80 @@ def alignvoxels(
     rt_floattype: str = "float64",
 ) -> int:
     """
-        Apply temporal alignment (timeshift) to all voxels in fMRI data based on correlation peaks.
+    Apply temporal alignment (timeshift) to all voxels in fMRI data based on correlation peaks.
 
-        This routine applies a time shift to every voxel in the fMRI data based on the lag times
-        determined from cross-correlation with a reference signal. The function modifies the input
-        arrays in-place to store the aligned timecourses and associated weights.
+    This routine applies a time shift to every voxel in the fMRI data based on the lag times
+    determined from cross-correlation with a reference signal. The function modifies the input
+    arrays in-place to store the aligned timecourses and associated weights.
 
-        Parameters
-        ----------
-        fmridata : 4D numpy.ndarray
-            fMRI data, filtered to the passband, with shape (nx, ny, nz, nt)
-        fmritr : float
-            Data repetition time (TR), in seconds
-        shiftedtcs : 4D numpy.ndarray
-            Destination array for time-aligned voxel timecourses, shape (nx, ny, nz, nt)
-        weights : 4D numpy.ndarray
-            Weights for each timepoint in the final regressor, shape (nx, ny, nz, nt)
-        paddedshiftedtcs : 4D numpy.ndarray
-            Time-aligned voxel timecourses with padding, shape (nx, ny, nz, nt + 2*padtrs)
-        paddedweights : 4D numpy.ndarray
-            Weights for each timepoint in the padded regressor, shape (nx, ny, nz, nt + 2*padtrs)
-        lagtimes : 3D numpy.ndarray
-            Time delay of maximum crosscorrelation in seconds, shape (nx, ny, nz)
-        lagmask : 3D numpy.ndarray
-            Mask of voxels with successful correlation fits, shape (nx, ny, nz)
-        detrendorder : int, optional
-            Order of polynomial used to detrend the data (default is 1)
-        offsettime : float, optional
-            Global time shift to apply to all timecourses in seconds (default is 0.0)
-        nprocs : int, optional
-            Number of processes to use for multiprocessing (default is 1)
-        alwaysmultiproc : bool, optional
-            If True, always use multiprocessing even for small datasets (default is False)
-        showprogressbar : bool, optional
-            If True, show a progress bar during processing (default is True)
-        chunksize : int, optional
-            Number of voxels to process per chunk in multiprocessing (default is 1000)
-        padtrs : int, optional
-            Number of timepoints to pad on each end of the timecourses (default is 60)
-        debug : bool, optional
-            If True, enable additional debugging output (default is False)
-        rt_floatset : type, optional
-            Function to coerce variable types (default is np.float64)
-        rt_floattype : str, optional
-            Data type for internal variables ('float32' or 'float64') (default is 'float64')
+    Parameters
+    ----------
+    fmridata : 4D numpy.ndarray
+        fMRI data, filtered to the passband, with shape (nx, ny, nz, nt)
+    fmritr : float
+        Data repetition time (TR), in seconds
+    shiftedtcs : 4D numpy.ndarray
+        Destination array for time-aligned voxel timecourses, shape (nx, ny, nz, nt)
+    weights : 4D numpy.ndarray
+        Weights for each timepoint in the final regressor, shape (nx, ny, nz, nt)
+    paddedshiftedtcs : 4D numpy.ndarray
+        Time-aligned voxel timecourses with padding, shape (nx, ny, nz, nt + 2*padtrs)
+    paddedweights : 4D numpy.ndarray
+        Weights for each timepoint in the padded regressor, shape (nx, ny, nz, nt + 2*padtrs)
+    lagtimes : 3D numpy.ndarray
+        Time delay of maximum crosscorrelation in seconds, shape (nx, ny, nz)
+    lagmask : 3D numpy.ndarray
+        Mask of voxels with successful correlation fits, shape (nx, ny, nz)
+    detrendorder : int, optional
+        Order of polynomial used to detrend the data (default is 1)
+    offsettime : float, optional
+        Global time shift to apply to all timecourses in seconds (default is 0.0)
+    nprocs : int, optional
+        Number of processes to use for multiprocessing (default is 1)
+    alwaysmultiproc : bool, optional
+        If True, always use multiprocessing even for small datasets (default is False)
+    showprogressbar : bool, optional
+        If True, show a progress bar during processing (default is True)
+    chunksize : int, optional
+        Number of voxels to process per chunk in multiprocessing (default is 1000)
+    padtrs : int, optional
+        Number of timepoints to pad on each end of the timecourses (default is 60)
+    debug : bool, optional
+        If True, enable additional debugging output (default is False)
+    rt_floatset : type, optional
+        Function to coerce variable types (default is np.float64)
+    rt_floattype : str, optional
+        Data type for internal variables ('float32' or 'float64') (default is 'float64')
 
-        Returns
-        -------
-        volumetotal : int
-            Total number of voxels processed
+    Returns
+    -------
+    volumetotal : int
+        Total number of voxels processed
 
-        Notes
-        -----
-        This function modifies the input arrays `shiftedtcs`, `weights`, `paddedshiftedtcs`, and
-        `paddedweights` in-place. The `lagtimes` and `lagmask` arrays are used to determine the
-        appropriate time shifts for each voxel.
+    Notes
+    -----
+    This function modifies the input arrays `shiftedtcs`, `weights`, `paddedshiftedtcs`, and
+    `paddedweights` in-place. The `lagtimes` and `lagmask` arrays are used to determine the
+    appropriate time shifts for each voxel.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> from rapidtide import alignvoxels
-        >>> fmridata = np.random.rand(64, 64, 32, 100)
-        >>> fmritr = 2.0
-        >>> shiftedtcs = np.zeros_like(fmridata)
-        >>> weights = np.ones_like(fmridata)
-        >>> paddedshiftedtcs = np.zeros((64, 64, 32, 100 + 2*60))
-        >>> paddedweights = np.ones((64, 64, 32, 100 + 2*60))
-        >>> lagtimes = np.random.rand(64, 64, 32)
-        >>> lagmask = np.ones((64, 64, 32))
-        >>> volumetotal = alignvoxels(
-        ...     fmridata, fmritr, shiftedtcs, weights, paddedshiftedtcs, paddedweights,
-        ...     lagtimes, lagmask, nprocs=4
-        ... )
-        >>> print(f"Processed {volumetotal} voxels")
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from rapidtide import alignvoxels
+    >>> fmridata = np.random.rand(64, 64, 32, 100)
+    >>> fmritr = 2.0
+    >>> shiftedtcs = np.zeros_like(fmridata)
+    >>> weights = np.ones_like(fmridata)
+    >>> paddedshiftedtcs = np.zeros((64, 64, 32, 100 + 2*60))
+    >>> paddedweights = np.ones((64, 64, 32, 100 + 2*60))
+    >>> lagtimes = np.random.rand(64, 64, 32)
+    >>> lagmask = np.ones((64, 64, 32))
+    >>> volumetotal = alignvoxels(
+    ...     fmridata, fmritr, shiftedtcs, weights, paddedshiftedtcs, paddedweights,
+    ...     lagtimes, lagmask, nprocs=4
+    ... )
+    >>> print(f"Processed {volumetotal} voxels")
+    """
     inputshape = np.shape(fmridata)
     voxelargs = [fmridata, lagtimes, padtrs, fmritr]
     voxelfunc = _procOneVoxelTimeShift
@@ -382,91 +382,91 @@ def makerefinemask(
     rt_floattype: str = "float64",
 ) -> tuple[int, NDArray | None, int, int, int, int, int]:
     """
-        Determine which voxels should be used for regressor refinement based on correlation strength,
-        time delay, and peak width criteria.
+    Determine which voxels should be used for regressor refinement based on correlation strength,
+    time delay, and peak width criteria.
 
-        This routine evaluates a set of voxels defined by their correlation properties and applies
-        various thresholds to determine which ones are suitable for refinement. It supports optional
-        masking, bipolar correlation handling, and debugging output.
+    This routine evaluates a set of voxels defined by their correlation properties and applies
+    various thresholds to determine which ones are suitable for refinement. It supports optional
+    masking, bipolar correlation handling, and debugging output.
 
-        Parameters
-        ----------
-        lagstrengths : ndarray
-            3D numpy float array of maximum correlation coefficients in every voxel.
-        lagtimes : ndarray
-            3D numpy float array of time delays (in seconds) of maximum crosscorrelation.
-        lagsigma : ndarray
-            3D numpy float array of Gaussian widths (in seconds) of the crosscorrelation peaks.
-        lagmask : ndarray
-            3D numpy float array masking voxels with successful correlation fits.
-        offsettime : float, optional
-            Offset time in seconds to apply to all regressors. Default is 0.0.
-        ampthresh : float, optional
-            Lower limit of correlation values to consider for refine mask inclusion.
-            If negative, treated as percentile. Default is 0.3.
-        lagmaskside : str, optional
-            Which side of the lag values to consider: 'upper', 'lower', or 'both'.
-            Default is 'both'.
-        lagminthresh : float, optional
-            Lower limit of absolute lag values to consider for inclusion. Default is 0.5.
-        lagmaxthresh : float, optional
-            Upper limit of absolute lag values to consider for inclusion. Default is 5.0.
-        sigmathresh : float, optional
-            Upper limit of lag peak width (in seconds) for inclusion. Default is 100.
-        cleanrefined : bool, optional
-            If True, uses the full location mask for refinement; otherwise, uses the refined mask.
-            Default is False.
-        bipolar : bool, optional
-            If True, considers both positive and negative correlation peaks. Default is False.
-        includemask : ndarray, optional
-            3D array masking voxels to include in refinement. Default is None (all voxels).
-        excludemask : ndarray, optional
-            3D array masking voxels to exclude from refinement. Default is None (no voxels).
-        fixdelay : bool, optional
-            If True, uses the raw `lagmask` without applying delay thresholds. Default is False.
-        debug : bool, optional
-            Enable additional debugging output. Default is False.
-        rt_floatset : callable, optional
-            Function to coerce variable types. Default is `np.float64`.
-        rt_floattype : str, optional
-            Data type for internal variables. Must be 'float32' or 'float64'. Default is 'float64'.
+    Parameters
+    ----------
+    lagstrengths : ndarray
+        3D numpy float array of maximum correlation coefficients in every voxel.
+    lagtimes : ndarray
+        3D numpy float array of time delays (in seconds) of maximum crosscorrelation.
+    lagsigma : ndarray
+        3D numpy float array of Gaussian widths (in seconds) of the crosscorrelation peaks.
+    lagmask : ndarray
+        3D numpy float array masking voxels with successful correlation fits.
+    offsettime : float, optional
+        Offset time in seconds to apply to all regressors. Default is 0.0.
+    ampthresh : float, optional
+        Lower limit of correlation values to consider for refine mask inclusion.
+        If negative, treated as percentile. Default is 0.3.
+    lagmaskside : str, optional
+        Which side of the lag values to consider: 'upper', 'lower', or 'both'.
+        Default is 'both'.
+    lagminthresh : float, optional
+        Lower limit of absolute lag values to consider for inclusion. Default is 0.5.
+    lagmaxthresh : float, optional
+        Upper limit of absolute lag values to consider for inclusion. Default is 5.0.
+    sigmathresh : float, optional
+        Upper limit of lag peak width (in seconds) for inclusion. Default is 100.
+    cleanrefined : bool, optional
+        If True, uses the full location mask for refinement; otherwise, uses the refined mask.
+        Default is False.
+    bipolar : bool, optional
+        If True, considers both positive and negative correlation peaks. Default is False.
+    includemask : ndarray, optional
+        3D array masking voxels to include in refinement. Default is None (all voxels).
+    excludemask : ndarray, optional
+        3D array masking voxels to exclude from refinement. Default is None (no voxels).
+    fixdelay : bool, optional
+        If True, uses the raw `lagmask` without applying delay thresholds. Default is False.
+    debug : bool, optional
+        Enable additional debugging output. Default is False.
+    rt_floatset : callable, optional
+        Function to coerce variable types. Default is `np.float64`.
+    rt_floattype : str, optional
+        Data type for internal variables. Must be 'float32' or 'float64'. Default is 'float64'.
 
-        Returns
-        -------
-        volumetotal : int
-            Number of voxels processed for refinement.
-        maskarray : ndarray or None
-            3D mask of voxels used for refinement. Returns None if no voxels remain after filtering.
-        locationfails : int
-            Number of voxels eliminated due to include/exclude mask constraints.
-        ampfails : int
-            Number of voxels eliminated due to low correlation amplitude.
-        lagfails : int
-            Number of voxels eliminated due to lag value out of range.
-        sigmafails : int
-            Number of voxels eliminated due to wide correlation peak.
-        numinmask : int
-            Total number of voxels in the original `lagmask`.
+    Returns
+    -------
+    volumetotal : int
+        Number of voxels processed for refinement.
+    maskarray : ndarray or None
+        3D mask of voxels used for refinement. Returns None if no voxels remain after filtering.
+    locationfails : int
+        Number of voxels eliminated due to include/exclude mask constraints.
+    ampfails : int
+        Number of voxels eliminated due to low correlation amplitude.
+    lagfails : int
+        Number of voxels eliminated due to lag value out of range.
+    sigmafails : int
+        Number of voxels eliminated due to wide correlation peak.
+    numinmask : int
+        Total number of voxels in the original `lagmask`.
 
-        Notes
-        -----
-        - The function applies multiple filtering steps: amplitude, lag time, and sigma (peak width).
-        - If `ampthresh` is negative, it is interpreted as a percentile threshold.
-        - The `lagmaskside` parameter controls which direction of the lag values to consider:
-          'upper' for positive lags, 'lower' for negative lags, 'both' for both.
-        - If no voxels remain after filtering, an error is printed and the function returns early.
+    Notes
+    -----
+    - The function applies multiple filtering steps: amplitude, lag time, and sigma (peak width).
+    - If `ampthresh` is negative, it is interpreted as a percentile threshold.
+    - The `lagmaskside` parameter controls which direction of the lag values to consider:
+      'upper' for positive lags, 'lower' for negative lags, 'both' for both.
+    - If no voxels remain after filtering, an error is printed and the function returns early.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> lagstrengths = np.random.rand(10, 10, 10)
-        >>> lagtimes = np.random.rand(10, 10, 10) * 10
-        >>> lagsigma = np.random.rand(10, 10, 10) * 50
-        >>> lagmask = np.ones((10, 10, 10))
-        >>> volumetotal, maskarray, locfails, ampfails, lagfails, sigfails, numinmask = makerefinemask(
-        ...     lagstrengths, lagtimes, lagsigma, lagmask, ampthresh=0.4, lagminthresh=1.0
-        ... )
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> lagstrengths = np.random.rand(10, 10, 10)
+    >>> lagtimes = np.random.rand(10, 10, 10) * 10
+    >>> lagsigma = np.random.rand(10, 10, 10) * 50
+    >>> lagmask = np.ones((10, 10, 10))
+    >>> volumetotal, maskarray, locfails, ampfails, lagfails, sigfails, numinmask = makerefinemask(
+    ...     lagstrengths, lagtimes, lagsigma, lagmask, ampthresh=0.4, lagminthresh=1.0
+    ... )
+    """
     if ampthresh < 0.0:
         if bipolar:
             theampthresh = tide_stats.getfracval(np.fabs(lagstrengths), -ampthresh, nozero=True)
@@ -584,55 +584,55 @@ def prenorm(
     debug: bool = False,
 ) -> None:
     """
-        Apply pre-normalization and weighting to shifted time correlation data.
+    Apply pre-normalization and weighting to shifted time correlation data.
 
-        This function performs normalization and weighting of time correlation data
-        based on specified criteria. It modifies the input `shiftedtcs` array in-place.
+    This function performs normalization and weighting of time correlation data
+    based on specified criteria. It modifies the input `shiftedtcs` array in-place.
 
-        Parameters
-        ----------
-        shiftedtcs : NDArray
-            Array of shifted time correlation data, shape (n_samples, n_timepoints).
-        refinemask : NDArray
-            Boolean mask for refining data, shape (n_samples,).
-        lagtimes : NDArray
-            Array of lag times, shape (n_samples,).
-        lagmaxthresh : float
-            Threshold for lag time normalization.
-        lagstrengths : NDArray
-            Array of lag strengths, shape (n_samples,).
-        R2vals : NDArray
-            Array of R-squared values, shape (n_samples,).
-        refineprenorm : str
-            Normalization method to use: 'mean', 'var', 'std', or 'invlag'.
-            If any other value is provided, unit normalization is applied.
-        refineweighting : str
-            Weighting method to use: 'R', 'R2', or other (default weighting based on lagstrengths).
-        debug : bool, optional
-            If True, print debug information about input shapes and intermediate values.
+    Parameters
+    ----------
+    shiftedtcs : NDArray
+        Array of shifted time correlation data, shape (n_samples, n_timepoints).
+    refinemask : NDArray
+        Boolean mask for refining data, shape (n_samples,).
+    lagtimes : NDArray
+        Array of lag times, shape (n_samples,).
+    lagmaxthresh : float
+        Threshold for lag time normalization.
+    lagstrengths : NDArray
+        Array of lag strengths, shape (n_samples,).
+    R2vals : NDArray
+        Array of R-squared values, shape (n_samples,).
+    refineprenorm : str
+        Normalization method to use: 'mean', 'var', 'std', or 'invlag'.
+        If any other value is provided, unit normalization is applied.
+    refineweighting : str
+        Weighting method to use: 'R', 'R2', or other (default weighting based on lagstrengths).
+    debug : bool, optional
+        If True, print debug information about input shapes and intermediate values.
 
-        Returns
-        -------
-        None
-            The function modifies `shiftedtcs` in-place.
+    Returns
+    -------
+    None
+        The function modifies `shiftedtcs` in-place.
 
-        Notes
-        -----
-        The function applies normalization using a divisor computed according to the
-        `refineprenorm` parameter and then applies weights based on `refineweighting`.
-        The `shiftedtcs` array is updated in-place.
+    Notes
+    -----
+    The function applies normalization using a divisor computed according to the
+    `refineprenorm` parameter and then applies weights based on `refineweighting`.
+    The `shiftedtcs` array is updated in-place.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> shiftedtcs = np.random.rand(10, 5)
-        >>> refinemask = np.ones(10, dtype=bool)
-        >>> lagtimes = np.arange(10)
-        >>> lagmaxthresh = 2.0
-        >>> lagstrengths = np.random.rand(10)
-        >>> R2vals = np.random.rand(10)
-        >>> prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals, "mean", "R", debug=True)
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> shiftedtcs = np.random.rand(10, 5)
+    >>> refinemask = np.ones(10, dtype=bool)
+    >>> lagtimes = np.arange(10)
+    >>> lagmaxthresh = 2.0
+    >>> lagstrengths = np.random.rand(10)
+    >>> R2vals = np.random.rand(10)
+    >>> prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals, "mean", "R", debug=True)
+    """
     if debug:
         print(f"{shiftedtcs.shape=}"),
         print(f"{refinemask.shape=}"),
@@ -697,97 +697,97 @@ def dorefine(
     rt_floattype: str = "float64",
 ) -> tuple[int, NDArray]:
     """
-        Refine timecourses using specified method (ICA, PCA, weighted average, or unweighted average).
+    Refine timecourses using specified method (ICA, PCA, weighted average, or unweighted average).
 
-        This function applies a refinement process to a set of timecourses based on a mask and
-        weights. It supports multiple refinement techniques including ICA, PCA, and averaging,
-        and can optionally perform dispersion calculation and cleaning of refined data.
+    This function applies a refinement process to a set of timecourses based on a mask and
+    weights. It supports multiple refinement techniques including ICA, PCA, and averaging,
+    and can optionally perform dispersion calculation and cleaning of refined data.
 
-        Parameters
-        ----------
-        shiftedtcs : ndarray
-            Array of shape (n_voxels, n_timepoints) containing the shifted timecourses.
-        refinemask : ndarray
-            Boolean mask indicating which voxels to include in refinement.
-        weights : ndarray
-            Array of shape (n_voxels, n_timepoints) containing weights for each voxel.
-        theprefilter : Any
-            Pre-filter object with an `apply` method to filter the data.
-        fmritr : float
-            fMRI repetition time in seconds.
-        passnum : int
-            Pass number for output file naming.
-        lagstrengths : ndarray
-            Array of lag strengths for each voxel.
-        lagtimes : ndarray
-            Array of lag times for each voxel.
-        refinetype : str
-            Type of refinement to perform: 'ica', 'pca', 'weighted_average', or 'unweighted_average'.
-        fmrifreq : float
-            fMRI frequency in Hz.
-        outputname : str
-            Base name for output files.
-        detrendorder : int, optional
-            Order of detrending for correlation normalization (default is 1).
-        pcacomponents : float or str, optional
-            Number of PCA components to use. If < 1, treated as fraction of variance; if 'mle', uses MLE.
-            Default is 0.8.
-        dodispersioncalc : bool, optional
-            If True, compute dispersion calculation across lag ranges (default is False).
-        dispersioncalc_lower : float, optional
-            Lower bound for dispersion calculation lag range (default is 0.0).
-        dispersioncalc_upper : float, optional
-            Upper bound for dispersion calculation lag range (default is 0.0).
-        dispersioncalc_step : float, optional
-            Step size for dispersion calculation lag range (default is 0.0).
-        windowfunc : str, optional
-            Window function for correlation normalization (default is "hamming").
-        cleanrefined : bool, optional
-            If True, remove linearly fitted discard data from refined output (default is False).
-        bipolar : bool, optional
-            If True, flip sign of negative lag strengths (default is False).
-        debug : bool, optional
-            If True, print debug information (default is False).
-        rt_floatset : type, optional
-            Data type for floating-point numbers (default is np.float64).
-        rt_floattype : str, optional
-            String representation of floating-point data type (default is "float64").
+    Parameters
+    ----------
+    shiftedtcs : ndarray
+        Array of shape (n_voxels, n_timepoints) containing the shifted timecourses.
+    refinemask : ndarray
+        Boolean mask indicating which voxels to include in refinement.
+    weights : ndarray
+        Array of shape (n_voxels, n_timepoints) containing weights for each voxel.
+    theprefilter : Any
+        Pre-filter object with an `apply` method to filter the data.
+    fmritr : float
+        fMRI repetition time in seconds.
+    passnum : int
+        Pass number for output file naming.
+    lagstrengths : ndarray
+        Array of lag strengths for each voxel.
+    lagtimes : ndarray
+        Array of lag times for each voxel.
+    refinetype : str
+        Type of refinement to perform: 'ica', 'pca', 'weighted_average', or 'unweighted_average'.
+    fmrifreq : float
+        fMRI frequency in Hz.
+    outputname : str
+        Base name for output files.
+    detrendorder : int, optional
+        Order of detrending for correlation normalization (default is 1).
+    pcacomponents : float or str, optional
+        Number of PCA components to use. If < 1, treated as fraction of variance; if 'mle', uses MLE.
+        Default is 0.8.
+    dodispersioncalc : bool, optional
+        If True, compute dispersion calculation across lag ranges (default is False).
+    dispersioncalc_lower : float, optional
+        Lower bound for dispersion calculation lag range (default is 0.0).
+    dispersioncalc_upper : float, optional
+        Upper bound for dispersion calculation lag range (default is 0.0).
+    dispersioncalc_step : float, optional
+        Step size for dispersion calculation lag range (default is 0.0).
+    windowfunc : str, optional
+        Window function for correlation normalization (default is "hamming").
+    cleanrefined : bool, optional
+        If True, remove linearly fitted discard data from refined output (default is False).
+    bipolar : bool, optional
+        If True, flip sign of negative lag strengths (default is False).
+    debug : bool, optional
+        If True, print debug information (default is False).
+    rt_floatset : type, optional
+        Data type for floating-point numbers (default is np.float64).
+    rt_floattype : str, optional
+        String representation of floating-point data type (default is "float64").
 
-        Returns
-        -------
-        tuple[int, ndarray]
-            A tuple containing:
-            - `volumetotal`: int, total number of voxels included in refinement.
-            - `outputdata`: ndarray, refined timecourse of shape (n_timepoints,).
+    Returns
+    -------
+    tuple[int, ndarray]
+        A tuple containing:
+        - `volumetotal`: int, total number of voxels included in refinement.
+        - `outputdata`: ndarray, refined timecourse of shape (n_timepoints,).
 
-        Notes
-        -----
-        - The function supports multiple refinement methods: ICA, PCA, weighted average, and
-          unweighted average.
-        - If `cleanrefined` is True, a linear regression is performed to remove discard data
-          from the refined output.
-        - If `dodispersioncalc` is True, dispersion calculation is performed across lag ranges
-          and outputs are saved to files with the prefix `outputname`.
+    Notes
+    -----
+    - The function supports multiple refinement methods: ICA, PCA, weighted average, and
+      unweighted average.
+    - If `cleanrefined` is True, a linear regression is performed to remove discard data
+      from the refined output.
+    - If `dodispersioncalc` is True, dispersion calculation is performed across lag ranges
+      and outputs are saved to files with the prefix `outputname`.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> shiftedtcs = np.random.rand(100, 200)
-        >>> refinemask = np.ones(100)
-        >>> weights = np.ones((100, 200))
-        >>> theprefilter = SomeFilter()
-        >>> fmritr = 2.0
-        >>> passnum = 1
-        >>> lagstrengths = np.random.rand(100)
-        >>> lagtimes = np.random.rand(100)
-        >>> refinetype = "pca"
-        >>> fmrifreq = 0.1
-        >>> outputname = "test_output"
-        >>> volumetotal, outputdata = dorefine(
-        ...     shiftedtcs, refinemask, weights, theprefilter, fmritr, passnum,
-        ...     lagstrengths, lagtimes, refinetype, fmrifreq, outputname
-        ... )
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> shiftedtcs = np.random.rand(100, 200)
+    >>> refinemask = np.ones(100)
+    >>> weights = np.ones((100, 200))
+    >>> theprefilter = SomeFilter()
+    >>> fmritr = 2.0
+    >>> passnum = 1
+    >>> lagstrengths = np.random.rand(100)
+    >>> lagtimes = np.random.rand(100)
+    >>> refinetype = "pca"
+    >>> fmrifreq = 0.1
+    >>> outputname = "test_output"
+    >>> volumetotal, outputdata = dorefine(
+    ...     shiftedtcs, refinemask, weights, theprefilter, fmritr, passnum,
+    ...     lagstrengths, lagtimes, refinetype, fmrifreq, outputname
+    ... )
+    """
     # now generate the refined timecourse(s)
     inputshape = np.shape(shiftedtcs)
     validlist = np.where(refinemask > 0)[0]

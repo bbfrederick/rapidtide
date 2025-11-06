@@ -68,29 +68,29 @@ DEFAULT_DELAYOFFSETSPATIALFILT = -1
 
 def _get_parser() -> Any:
     """
-        Argument parser for glmfilt.
-    
-        This function constructs and returns an `argparse.ArgumentParser` object configured
-        for the `glmfilt` command-line tool, which performs sLFO (spatially localized
-        filter) filtering using maps generated from a previous rapidtide analysis.
+    Argument parser for glmfilt.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser for the glmfilt command-line interface.
+    This function constructs and returns an `argparse.ArgumentParser` object configured
+    for the `glmfilt` command-line tool, which performs sLFO (spatially localized
+    filter) filtering using maps generated from a previous rapidtide analysis.
 
-        Notes
-        -----
-        The parser includes both standard and experimental options. Experimental options
-        are not fully tested and may not work as expected.
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for the glmfilt command-line interface.
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['fmri.nii', 'dataset_root'])
-        >>> print(args.fmrifile)
-        'fmri.nii'
-        """
+    Notes
+    -----
+    The parser includes both standard and experimental options. Experimental options
+    are not fully tested and may not work as expected.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['fmri.nii', 'dataset_root'])
+    >>> print(args.fmrifile)
+    'fmri.nii'
+    """
     parser = argparse.ArgumentParser(
         prog="retroregress",
         description="Do the rapidtide sLFO filtering using the maps generated from a previous analysis.",
@@ -258,88 +258,88 @@ def _get_parser() -> Any:
 
 def retroregress(args: Any) -> None:
     """
-        Perform retrospective regression analysis on fMRI data to filter out slow
-        physiological noise (sLFO).
+    Perform retrospective regression analysis on fMRI data to filter out slow
+    physiological noise (sLFO).
 
-        This function applies a retrospective regression approach to remove slow
-        physiological noise from fMRI data. It uses a delayed sLFO regressor to
-        model and remove the noise, optionally refining the delay using temporal
-        derivatives of the regressor.
+    This function applies a retrospective regression approach to remove slow
+    physiological noise from fMRI data. It uses a delayed sLFO regressor to
+    model and remove the noise, optionally refining the delay using temporal
+    derivatives of the regressor.
 
-        Parameters
-        ----------
-        args : argparse.Namespace
-            Command-line arguments parsed by argparse. Expected attributes include:
-            - data_root : str
-                Root path for input data files
-            - output_prefix : str
-                Prefix for output files
-            - filter_type : str
-                Type of filtering to apply (e.g., 'bandpass')
-            - filter_low : float
-                Low cutoff frequency for filtering
-            - filter_high : float
-                High cutoff frequency for filtering
-            - regress_derivs : int
-                Number of temporal derivatives to include in the regressor
-            - refinedelay : bool
-                Whether to refine the delay using temporal derivatives
-            - refinecorr : bool
-                Whether to compute correlation refinement
-            - savemovingsignal : bool
-                Whether to save the filtered signal
-            - savenormalsLFOfiltfiles : bool
-                Whether to save standard output files
-            - saveminimumsLFOfiltfiles : bool
-                Whether to save minimum output files
-            - saveallsLFOfiltfiles : bool
-                Whether to save all output files
-            - makepseudofile : bool
-                Whether to create a pseudo-file
-            - nprocs : int
-                Number of processes to use
-            - debug : bool
-                Enable debug mode
-            - focaldebug : bool
-                Enable focal debug mode
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command-line arguments parsed by argparse. Expected attributes include:
+        - data_root : str
+            Root path for input data files
+        - output_prefix : str
+            Prefix for output files
+        - filter_type : str
+            Type of filtering to apply (e.g., 'bandpass')
+        - filter_low : float
+            Low cutoff frequency for filtering
+        - filter_high : float
+            High cutoff frequency for filtering
+        - regress_derivs : int
+            Number of temporal derivatives to include in the regressor
+        - refinedelay : bool
+            Whether to refine the delay using temporal derivatives
+        - refinecorr : bool
+            Whether to compute correlation refinement
+        - savemovingsignal : bool
+            Whether to save the filtered signal
+        - savenormalsLFOfiltfiles : bool
+            Whether to save standard output files
+        - saveminimumsLFOfiltfiles : bool
+            Whether to save minimum output files
+        - saveallsLFOfiltfiles : bool
+            Whether to save all output files
+        - makepseudofile : bool
+            Whether to create a pseudo-file
+        - nprocs : int
+            Number of processes to use
+        - debug : bool
+            Enable debug mode
+        - focaldebug : bool
+            Enable focal debug mode
 
-        Returns
-        -------
-        None
-            This function does not return a value but writes output files to disk.
+    Returns
+    -------
+    None
+        This function does not return a value but writes output files to disk.
 
-        Notes
-        -----
-        The function performs the following steps:
-        1. Reads input data files including mean image, correlation mask, and processed mask
-        2. Applies temporal filtering to the input data
-        3. Performs GLM regression using delayed sLFO regressors
-        4. Refines delay if requested using temporal derivatives
-        5. Saves output files including filtered data, regressors, and timing information
+    Notes
+    -----
+    The function performs the following steps:
+    1. Reads input data files including mean image, correlation mask, and processed mask
+    2. Applies temporal filtering to the input data
+    3. Performs GLM regression using delayed sLFO regressors
+    4. Refines delay if requested using temporal derivatives
+    5. Saves output files including filtered data, regressors, and timing information
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     data_root='path/to/data',
-        ...     output_prefix='output',
-        ...     filter_type='bandpass',
-        ...     filter_low=0.01,
-        ...     filter_high=0.1,
-        ...     regress_derivs=2,
-        ...     refinedelay=True,
-        ...     refinecorr=False,
-        ...     savemovingsignal=True,
-        ...     savenormalsLFOfiltfiles=True,
-        ...     saveminimumsLFOfiltfiles=True,
-        ...     saveallsLFOfiltfiles=False,
-        ...     makepseudofile=False,
-        ...     nprocs=4,
-        ...     debug=False,
-        ...     focaldebug=False
-        ... )
-        >>> retroregress(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     data_root='path/to/data',
+    ...     output_prefix='output',
+    ...     filter_type='bandpass',
+    ...     filter_low=0.01,
+    ...     filter_high=0.1,
+    ...     regress_derivs=2,
+    ...     refinedelay=True,
+    ...     refinecorr=False,
+    ...     savemovingsignal=True,
+    ...     savenormalsLFOfiltfiles=True,
+    ...     saveminimumsLFOfiltfiles=True,
+    ...     saveallsLFOfiltfiles=False,
+    ...     makepseudofile=False,
+    ...     nprocs=4,
+    ...     debug=False,
+    ...     focaldebug=False
+    ... )
+    >>> retroregress(args)
+    """
     # get the pid of the parent process
     args.pid = os.getpid()
 
@@ -1473,35 +1473,35 @@ def retroregress(args: Any) -> None:
 
 def process_args(inputargs: Optional[Any] = None) -> None:
     """
-        Compile arguments for retroregress workflow.
-    
-        This function processes input arguments for the retroregress workflow by parsing
-        command line arguments or provided input arguments using a predefined parser.
-    
-        Parameters
-        ----------
-        inputargs : Any, optional
-            Input arguments to be processed. Can be None (default), a list of strings,
-            or other argument formats supported by the underlying parser. Default is None.
-        
-        Returns
-        -------
-        argparse.Namespace
-            Parsed arguments namespace containing all processed arguments for the workflow.
-        
-        Notes
-        -----
-        The function relies on `pf.setargs` and `_get_parser` which should be defined
-        in the module's scope. The returned arguments can be used directly in the
-        retroregress workflow pipeline.
-        
-        Examples
-        --------
-        >>> # Using default arguments
-        >>> args = process_args()
-    
-        >>> # Using custom input arguments
-        >>> args = process_args(['--input', 'data.csv', '--output', 'results.txt'])
-        """
+    Compile arguments for retroregress workflow.
+
+    This function processes input arguments for the retroregress workflow by parsing
+    command line arguments or provided input arguments using a predefined parser.
+
+    Parameters
+    ----------
+    inputargs : Any, optional
+        Input arguments to be processed. Can be None (default), a list of strings,
+        or other argument formats supported by the underlying parser. Default is None.
+
+    Returns
+    -------
+    argparse.Namespace
+        Parsed arguments namespace containing all processed arguments for the workflow.
+
+    Notes
+    -----
+    The function relies on `pf.setargs` and `_get_parser` which should be defined
+    in the module's scope. The returned arguments can be used directly in the
+    retroregress workflow pipeline.
+
+    Examples
+    --------
+    >>> # Using default arguments
+    >>> args = process_args()
+
+    >>> # Using custom input arguments
+    >>> args = process_args(['--input', 'data.csv', '--output', 'results.txt'])
+    """
     args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
     return args

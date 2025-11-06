@@ -18,7 +18,7 @@
 #
 import argparse
 import sys
-from typing import Any, Tuple
+from typing import Any, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,42 +29,44 @@ from scipy.signal import ShortTimeFFT, check_NOLA, stft
 import rapidtide.io as tide_io
 from rapidtide.workflows.parser_funcs import is_float, is_int, is_valid_file
 
+NPFloat2DArray = NDArray[Union[np.float32, np.float64]]
+
 
 def _get_parser() -> Any:
     """
-        Argument parser for spectrogram.
-    
-        This function creates and configures an argument parser for the spectrogram 
-        command-line tool that computes and displays spectrograms from text files 
-        containing timecourse data.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object with all required and optional 
-            arguments for spectrogram computation.
-    
-        Notes
-        -----
-        The parser expects a text file containing one data point per line and a 
-        specified sample rate. The spectrogram is computed using the Short-Time 
-        Fourier Transform (STFT) with configurable segment length.
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['input.txt', '44100'])
-        >>> print(args.textfilename)
-        'input.txt'
-        >>> print(args.samplerate)
-        44100
-    
-        See Also
-        --------
-        is_valid_file : Validates input file existence and readability
-        is_float : Validates float conversion
-        is_int : Validates integer conversion
-        """
+    Argument parser for spectrogram.
+
+    This function creates and configures an argument parser for the spectrogram
+    command-line tool that computes and displays spectrograms from text files
+    containing timecourse data.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object with all required and optional
+        arguments for spectrogram computation.
+
+    Notes
+    -----
+    The parser expects a text file containing one data point per line and a
+    specified sample rate. The spectrogram is computed using the Short-Time
+    Fourier Transform (STFT) with configurable segment length.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['input.txt', '44100'])
+    >>> print(args.textfilename)
+    'input.txt'
+    >>> print(args.samplerate)
+    44100
+
+    See Also
+    --------
+    is_valid_file : Validates input file existence and readability
+    is_float : Validates float conversion
+    is_int : Validates integer conversion
+    """
     parser = argparse.ArgumentParser(
         prog="spectrogram",
         description="Computes and shows the spectrogram of a text file.",
@@ -108,55 +110,58 @@ def _get_parser() -> Any:
 
 
 def calcspecgram(
-    x: NDArray[np.floating[Any]], time: NDArray[np.floating[Any]], nperseg: int = 32, windowtype: str = "hann"
+    x: NDArray[np.floating[Any]],
+    time: NDArray[np.floating[Any]],
+    nperseg: int = 32,
+    windowtype: str = "hann",
 ) -> Tuple[NDArray, NDArray, NDArray, bool]:
     """
-        Make and plot a log-scaled spectrogram.
+    Make and plot a log-scaled spectrogram.
 
-        This function computes a spectrogram using the Short-Time Fourier Transform (STFT)
-        with configurable window parameters and returns frequency, time, and STFT data
-        along with a check for invertibility.
+    This function computes a spectrogram using the Short-Time Fourier Transform (STFT)
+    with configurable window parameters and returns frequency, time, and STFT data
+    along with a check for invertibility.
 
-        Parameters
-        ----------
-        x : NDArray[np.floating[Any]]
-            Input signal data to compute the spectrogram for.
-        time : NDArray[np.floating[Any]]
-            Time vector corresponding to the input signal. Used to calculate sampling
-            frequency from the time differences.
-        nperseg : int, optional
-            Length of each segment for the STFT, by default 32.
-        windowtype : str, optional
-            Type of window to use for the STFT, by default "hann".
+    Parameters
+    ----------
+    x : NDArray[np.floating[Any]]
+        Input signal data to compute the spectrogram for.
+    time : NDArray[np.floating[Any]]
+        Time vector corresponding to the input signal. Used to calculate sampling
+        frequency from the time differences.
+    nperseg : int, optional
+        Length of each segment for the STFT, by default 32.
+    windowtype : str, optional
+        Type of window to use for the STFT, by default "hann".
 
-        Returns
-        -------
-        freq : ndarray
-            Array of frequencies corresponding to the spectrogram rows.
-        segtimes : ndarray
-            Array of time points corresponding to the spectrogram columns.
-        thestft : ndarray
-            Short-Time Fourier Transform of the input signal.
-        isinvertable : bool
-            Boolean flag indicating whether the window satisfies the Non-Overlap
-            Additivity of Overlapped Windows (NOLA) constraint for invertibility.
+    Returns
+    -------
+    freq : ndarray
+        Array of frequencies corresponding to the spectrogram rows.
+    segtimes : ndarray
+        Array of time points corresponding to the spectrogram columns.
+    thestft : ndarray
+        Short-Time Fourier Transform of the input signal.
+    isinvertable : bool
+        Boolean flag indicating whether the window satisfies the Non-Overlap
+        Additivity of Overlapped Windows (NOLA) constraint for invertibility.
 
-        Notes
-        -----
-        The function calculates the sampling frequency from the time vector and uses
-        the ShortTimeFFT library to compute the STFT. The window overlap is set to
-        ensure maximum overlap (nperseg - 1) for optimal spectrogram resolution.
+    Notes
+    -----
+    The function calculates the sampling frequency from the time vector and uses
+    the ShortTimeFFT library to compute the STFT. The window overlap is set to
+    ensure maximum overlap (nperseg - 1) for optimal spectrogram resolution.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> from scipy.signal import chirp
-        >>> t = np.linspace(0, 1, 1000)
-        >>> x = chirp(t, f0=1, f1=10, t1=1, method='linear')
-        >>> freq, times, stft, invertible = calcspecgram(x, t)
-        >>> print(f"Frequency range: {freq[0]:.2f} to {freq[-1]:.2f} Hz")
-        >>> print(f"Time range: {times[0]:.2f} to {times[-1]:.2f} seconds")
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from scipy.signal import chirp
+    >>> t = np.linspace(0, 1, 1000)
+    >>> x = chirp(t, f0=1, f1=10, t1=1, method='linear')
+    >>> freq, times, stft, invertible = calcspecgram(x, t)
+    >>> print(f"Frequency range: {freq[0]:.2f} to {freq[-1]:.2f} Hz")
+    >>> print(f"Time range: {times[0]:.2f} to {times[-1]:.2f} seconds")
+    """
     dt = np.diff(time)[0]  # In days...
     fs = 1.0 / dt
     noverlap = nperseg - 1
@@ -179,61 +184,63 @@ def calcspecgram(
     return freq, segtimes, thestft, isinvertable
 
 
-def showspecgram(thestft: Any, time: Any, freq: Any, ax: Any, fig: Any, mode: str = "mag") -> Tuple[Any, Any]:
+def showspecgram(
+    thestft: Any, time: Any, freq: Any, ax: Any, fig: Any, mode: str = "mag"
+) -> Tuple[Any, Any]:
     """
-        Display a spectrogram plot based on the provided STFT data.
+    Display a spectrogram plot based on the provided STFT data.
 
-        This function visualizes the Short-Time Fourier Transform (STFT) of a signal
-        in the form of a spectrogram. It supports multiple display modes including
-        magnitude, phase, real, and imaginary components. The function also handles
-        logarithmic scaling for amplitude values and includes a colorbar with appropriate
-        labeling.
+    This function visualizes the Short-Time Fourier Transform (STFT) of a signal
+    in the form of a spectrogram. It supports multiple display modes including
+    magnitude, phase, real, and imaginary components. The function also handles
+    logarithmic scaling for amplitude values and includes a colorbar with appropriate
+    labeling.
 
-        Parameters
-        ----------
-        thestft : Any
-            The Short-Time Fourier Transform (STFT) of the signal. Typically a 2D array
-            where rows correspond to frequency bins and columns to time frames.
-        time : Any
-            Time vector corresponding to the STFT columns. Used for x-axis labeling.
-        freq : Any
-            Frequency vector corresponding to the STFT rows. Used for y-axis labeling.
-        ax : Any
-            Matplotlib axis object on which the spectrogram will be plotted.
-        fig : Any
-            Matplotlib figure object used to create the colorbar.
-        mode : str, optional
-            The mode of visualization. Options are:
-            - "mag": Magnitude of the STFT (default)
-            - "phase": Phase of the STFT
-            - "real": Real part of the STFT
-            - "imag": Imaginary part of the STFT
+    Parameters
+    ----------
+    thestft : Any
+        The Short-Time Fourier Transform (STFT) of the signal. Typically a 2D array
+        where rows correspond to frequency bins and columns to time frames.
+    time : Any
+        Time vector corresponding to the STFT columns. Used for x-axis labeling.
+    freq : Any
+        Frequency vector corresponding to the STFT rows. Used for y-axis labeling.
+    ax : Any
+        Matplotlib axis object on which the spectrogram will be plotted.
+    fig : Any
+        Matplotlib figure object used to create the colorbar.
+    mode : str, optional
+        The mode of visualization. Options are:
+        - "mag": Magnitude of the STFT (default)
+        - "phase": Phase of the STFT
+        - "real": Real part of the STFT
+        - "imag": Imaginary part of the STFT
 
-        Returns
-        -------
-        Tuple[Any, Any]
-            A tuple containing:
-            - im: The image object returned by `pcolormesh`
-            - cbar: The colorbar object added to the plot
+    Returns
+    -------
+    Tuple[Any, Any]
+        A tuple containing:
+        - im: The image object returned by `pcolormesh`
+        - cbar: The colorbar object added to the plot
 
-        Notes
-        -----
-        - For magnitude mode, the data is log-scaled using `log10`.
-        - For phase mode, the data is scaled between -π and π.
-        - The y-axis is set to range from `freq[1]` to `freq.max()` to avoid potential
-          issues with zero frequency bins.
-        - X-axis tick labels are hidden for cleaner visualization.
-        - If an invalid `mode` is provided, the function will print an error and exit.
+    Notes
+    -----
+    - For magnitude mode, the data is log-scaled using `log10`.
+    - For phase mode, the data is scaled between -π and π.
+    - The y-axis is set to range from `freq[1]` to `freq.max()` to avoid potential
+      issues with zero frequency bins.
+    - X-axis tick labels are hidden for cleaner visualization.
+    - If an invalid `mode` is provided, the function will print an error and exit.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import matplotlib.pyplot as plt
-        >>> # Assuming `sft` is your STFT data, `t` is time, `f` is frequency
-        >>> fig, ax = plt.subplots()
-        >>> im, cbar = showspecgram(sft, t, f, ax, fig, mode="mag")
-        >>> plt.show()
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> # Assuming `sft` is your STFT data, `t` is time, `f` is frequency
+    >>> fig, ax = plt.subplots()
+    >>> im, cbar = showspecgram(sft, t, f, ax, fig, mode="mag")
+    >>> plt.show()
+    """
     # Log scaling for amplitude values
     if mode == "mag":
         spec_img = np.log10(np.abs(thestft))
@@ -287,39 +294,39 @@ def showspecgram(thestft: Any, time: Any, freq: Any, ax: Any, fig: Any, mode: st
     return im, cbar
 
 
-def make_legend_axes(ax: Any) -> None:
+def make_legend_axes(ax: Any) -> object:
     """
-        Create a new axes for legend placement next to the given axes.
-    
-        This function creates a new axes object positioned to the right of the
-        provided axes, which can be used for placing legends. The new axes is
-        created using matplotlib's make_axes_locatable utility.
-    
-        Parameters
-        ----------
-        ax : matplotlib.axes.Axes
-            The original axes object to which the legend axes will be appended.
-        
-        Returns
-        -------
-        matplotlib.axes.Axes
-            The newly created axes object that can be used for legend placement.
-        
-        Notes
-        -----
-        The legend axes is positioned to the right of the original axes with:
-        - Size: 0.4 inches width
-        - Padding: 0.2 inches from the original axes
-    
-        Examples
-        --------
-        >>> import matplotlib.pyplot as plt
-        >>> fig, ax = plt.subplots()
-        >>> ax.plot([1, 2, 3], [1, 4, 9])
-        >>> legend_ax = make_legend_axes(ax)
-        >>> ax.legend(['data'], bbox_to_anchor=(1.05, 1), loc='upper left')
-        >>> plt.show()
-        """
+    Create a new axes for legend placement next to the given axes.
+
+    This function creates a new axes object positioned to the right of the
+    provided axes, which can be used for placing legends. The new axes is
+    created using matplotlib's make_axes_locatable utility.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The original axes object to which the legend axes will be appended.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The newly created axes object that can be used for legend placement.
+
+    Notes
+    -----
+    The legend axes is positioned to the right of the original axes with:
+    - Size: 0.4 inches width
+    - Padding: 0.2 inches from the original axes
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot([1, 2, 3], [1, 4, 9])
+    >>> legend_ax = make_legend_axes(ax)
+    >>> ax.legend(['data'], bbox_to_anchor=(1.05, 1), loc='upper left')
+    >>> plt.show()
+    """
     divider = make_axes_locatable(ax)
     legend_ax = divider.append_axes("right", 0.4, pad=0.2)
     return legend_ax
@@ -327,44 +334,44 @@ def make_legend_axes(ax: Any) -> None:
 
 def ndplot(x: Any, time: Any, thelabel: Any, nperseg: int = 32) -> None:
     """
-        Plot spectrogram magnitude, phase, and time-domain signal.
+    Plot spectrogram magnitude, phase, and time-domain signal.
 
-        This function computes and displays a spectrogram of the input signal `x` using
-        the Short-Time Fourier Transform (STFT). It shows the magnitude and phase of
-        the spectrogram in separate subplots, and overlays the original time-domain
-        signal on a third subplot.
+    This function computes and displays a spectrogram of the input signal `x` using
+    the Short-Time Fourier Transform (STFT). It shows the magnitude and phase of
+    the spectrogram in separate subplots, and overlays the original time-domain
+    signal on a third subplot.
 
-        Parameters
-        ----------
-        x : array-like
-            Input signal to be analyzed.
-        time : array-like
-            Time vector corresponding to the signal `x`.
-        thelabel : str
-            Label used for plotting titles.
-        nperseg : int, optional
-            Length of each segment for the STFT. Default is 32.
+    Parameters
+    ----------
+    x : array-like
+        Input signal to be analyzed.
+    time : array-like
+        Time vector corresponding to the signal `x`.
+    thelabel : str
+        Label used for plotting titles.
+    nperseg : int, optional
+        Length of each segment for the STFT. Default is 32.
 
-        Returns
-        -------
-        None
-            This function does not return any value. It displays the plot directly.
+    Returns
+    -------
+    None
+        This function does not return any value. It displays the plot directly.
 
-        Notes
-        -----
-        - The function uses `calcspecgram` to compute the STFT and checks if the
-          spectrogram is invertible.
-        - The magnitude and phase are plotted in the first two subplots.
-        - The time-domain signal is overlaid in the third subplot.
-        - The function relies on `showspecgram` for plotting the spectrograms.
+    Notes
+    -----
+    - The function uses `calcspecgram` to compute the STFT and checks if the
+      spectrogram is invertible.
+    - The magnitude and phase are plotted in the first two subplots.
+    - The time-domain signal is overlaid in the third subplot.
+    - The function relies on `showspecgram` for plotting the spectrograms.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> t = np.linspace(0, 1, 1000)
-        >>> x = np.sin(2 * np.pi * 50 * t)
-        >>> ndplot(x, t, "Example Signal")
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> t = np.linspace(0, 1, 1000)
+    >>> x = np.sin(2 * np.pi * 50 * t)
+    >>> ndplot(x, t, "Example Signal")
+    """
     print("arrived in ndplot")
     fig = plt.figure()
 
@@ -411,43 +418,43 @@ def ndplot(x: Any, time: Any, thelabel: Any, nperseg: int = 32) -> None:
 
 def spectrogram(args: Any) -> None:
     """
-        Compute and display spectrogram of time series data from text file.
-    
-        This function reads time series data from a text file, computes its spectrogram
-        using Welch's method, and displays the result. The spectrogram shows how
-        the frequency content of the signal changes over time.
-    
-        Parameters
-        ----------
-        args : Any
-            Command line arguments containing:
-            - textfilename : str
-                Path to the text file containing time series data
-            - samplerate : float
-                Sampling rate of the tidal data in Hz
-            - nperseg : int, optional
-                Length of each segment for FFT (default: 256)
-            - debug : bool, optional
-                Enable debug output (default: False)
-    
-        Returns
-        -------
-        None
-            This function displays the spectrogram plot and does not return any value.
-    
-        Notes
-        -----
-        The function uses Welch's method for spectral estimation, which divides the
-        signal into overlapping segments and averages their periodograms. The time
-        axis is automatically calculated based on the sampling rate and data length.
-    
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(textfilename='tidal_data.txt', 
-        ...                          samplerate=10.0, nperseg=512, debug=False)
-        >>> spectrogram(args)
-        """
+    Compute and display spectrogram of time series data from text file.
+
+    This function reads time series data from a text file, computes its spectrogram
+    using Welch's method, and displays the result. The spectrogram shows how
+    the frequency content of the signal changes over time.
+
+    Parameters
+    ----------
+    args : Any
+        Command line arguments containing:
+        - textfilename : str
+            Path to the text file containing time series data
+        - samplerate : float
+            Sampling rate of the tidal data in Hz
+        - nperseg : int, optional
+            Length of each segment for FFT (default: 256)
+        - debug : bool, optional
+            Enable debug output (default: False)
+
+    Returns
+    -------
+    None
+        This function displays the spectrogram plot and does not return any value.
+
+    Notes
+    -----
+    The function uses Welch's method for spectral estimation, which divides the
+    signal into overlapping segments and averages their periodograms. The time
+    axis is automatically calculated based on the sampling rate and data length.
+
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(textfilename='tidal_data.txt',
+    ...                          samplerate=10.0, nperseg=512, debug=False)
+    >>> spectrogram(args)
+    """
     # get the command line parameters
     try:
         args = _get_parser().parse_args()
@@ -475,7 +482,6 @@ def spectrogram(args: Any) -> None:
             print("Sample rate must be specified in input file or with --samplerate")
             sys.exit()
     timestep = 1.0 / samplerate
-
 
     xvec = np.arange(0.0, len(yvec), 1.0) * timestep + starttime
 

@@ -34,33 +34,33 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Argument parser for showarbcorr.
-    
-        This function constructs and returns an `argparse.ArgumentParser` object configured
-        for the `showarbcorr` command-line tool. It defines required and optional arguments
-        for calculating and displaying crosscorrelation between two time series, supporting
-        variable lengths and sampling frequencies.
+    Argument parser for showarbcorr.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser for `showarbcorr`.
+    This function constructs and returns an `argparse.ArgumentParser` object configured
+    for the `showarbcorr` command-line tool. It defines required and optional arguments
+    for calculating and displaying crosscorrelation between two time series, supporting
+    variable lengths and sampling frequencies.
 
-        Notes
-        -----
-        The parser includes groups for:
-        - Required input files
-        - Optional arguments (e.g., sample rates, display control)
-        - Preprocessing options (e.g., detrending, correlation weighting)
-        - Filtering and windowing options
-        - Output configuration (e.g., files for results, plots)
-        - Miscellaneous settings (e.g., multiprocessing, progress bar)
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for `showarbcorr`.
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        """
+    Notes
+    -----
+    The parser includes groups for:
+    - Required input files
+    - Optional arguments (e.g., sample rates, display control)
+    - Preprocessing options (e.g., detrending, correlation weighting)
+    - Filtering and windowing options
+    - Output configuration (e.g., files for results, plots)
+    - Miscellaneous settings (e.g., multiprocessing, progress bar)
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    """
     parser = argparse.ArgumentParser(
         prog="showarbcorr",
         description=(
@@ -270,41 +270,41 @@ def _get_parser() -> Any:
 
 def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
     """
-        Print thresholds with corresponding percentile labels.
-    
-        This function prints a formatted list of thresholds along with their 
-        corresponding percentile labels for statistical analysis output.
-    
-        Parameters
-        ----------
-        pcts : Any
-            Array or list of threshold values to be printed.
-        thepercentiles : Any
-            Array or list of percentile values corresponding to the thresholds.
-        labeltext : Any
-            Text label to be printed before the threshold list.
-        
-        Returns
-        -------
-        None
-            This function prints to standard output and does not return any value.
-        
-        Notes
-        -----
-        The function formats the percentile values as "1.0 - thepercentiles[i]" 
-        to show the alpha level (significance threshold) for each percentile.
-    
-        Examples
-        --------
-        >>> pcts = [0.05, 0.01, 0.001]
-        >>> thepercentiles = [0.95, 0.99, 0.999]
-        >>> labeltext = "Critical Values:"
-        >>> printthresholds(pcts, thepercentiles, labeltext)
-        Critical Values:
-            p < 0.050 : 0.05
-            p < 0.010 : 0.01
-            p < 0.001 : 0.001
-        """
+    Print thresholds with corresponding percentile labels.
+
+    This function prints a formatted list of thresholds along with their
+    corresponding percentile labels for statistical analysis output.
+
+    Parameters
+    ----------
+    pcts : Any
+        Array or list of threshold values to be printed.
+    thepercentiles : Any
+        Array or list of percentile values corresponding to the thresholds.
+    labeltext : Any
+        Text label to be printed before the threshold list.
+
+    Returns
+    -------
+    None
+        This function prints to standard output and does not return any value.
+
+    Notes
+    -----
+    The function formats the percentile values as "1.0 - thepercentiles[i]"
+    to show the alpha level (significance threshold) for each percentile.
+
+    Examples
+    --------
+    >>> pcts = [0.05, 0.01, 0.001]
+    >>> thepercentiles = [0.95, 0.99, 0.999]
+    >>> labeltext = "Critical Values:"
+    >>> printthresholds(pcts, thepercentiles, labeltext)
+    Critical Values:
+        p < 0.050 : 0.05
+        p < 0.010 : 0.01
+        p < 0.001 : 0.001
+    """
     print(labeltext)
     for i in range(0, len(pcts)):
         print("\tp <", "{:.3f}".format(1.0 - thepercentiles[i]), ": ", pcts[i])
@@ -312,84 +312,84 @@ def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
 
 def showarbcorr(args: Any) -> None:
     """
-        Compute and display cross-correlation between two time series with optional filtering and plotting.
+    Compute and display cross-correlation between two time series with optional filtering and plotting.
 
-        This function reads two time series from text files, matches their sampling rates, applies
-        optional filtering, and computes the cross-correlation. It supports various options for
-        data trimming, inversion, and output formatting, including optional visualization and
-        correlation fitting.
+    This function reads two time series from text files, matches their sampling rates, applies
+    optional filtering, and computes the cross-correlation. It supports various options for
+    data trimming, inversion, and output formatting, including optional visualization and
+    correlation fitting.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing command-line arguments and configuration options. Expected
-            attributes include:
-            - infilename1, infilename2 : str
-                Paths to input text files containing the two time series.
-            - samplerate1, samplerate2 : float, optional
-                Sampling rates for the two time series. If not provided, they are inferred
-                from the input files.
-            - start1, start2 : float, optional
-                Start times for the two time series.
-            - trimdata : bool
-                If True, trim the data to the shorter of the two time series.
-            - invert : bool
-                If True, invert the second time series before correlation.
-            - windowfunc : str, optional
-                Window function to apply during correlation normalization.
-            - detrendorder : int, optional
-                Order of detrending to apply before correlation.
-            - display : bool
-                If True, display the cross-correlation plot.
-            - graphfile : str, optional
-                Output filename for saving the plot.
-            - label : str, optional
-                Label to use in output.
-            - lagmin, lagmax : float
-                Minimum and maximum lags (in seconds) to consider in the correlation.
-            - debug : bool
-                If True, enable debug output.
-            - bipolar : bool
-                If True, fit the peak using bipolar symmetry.
-            - summarymode : bool
-                If True, output results in a tab-separated summary format.
-            - outputfile : str, optional
-                File to write summary output.
-            - corroutputfile : str, optional
-                File to write full cross-correlation data.
-            - verbose : bool
-                If True, print verbose messages.
+    Parameters
+    ----------
+    args : Any
+        An object containing command-line arguments and configuration options. Expected
+        attributes include:
+        - infilename1, infilename2 : str
+            Paths to input text files containing the two time series.
+        - samplerate1, samplerate2 : float, optional
+            Sampling rates for the two time series. If not provided, they are inferred
+            from the input files.
+        - start1, start2 : float, optional
+            Start times for the two time series.
+        - trimdata : bool
+            If True, trim the data to the shorter of the two time series.
+        - invert : bool
+            If True, invert the second time series before correlation.
+        - windowfunc : str, optional
+            Window function to apply during correlation normalization.
+        - detrendorder : int, optional
+            Order of detrending to apply before correlation.
+        - display : bool
+            If True, display the cross-correlation plot.
+        - graphfile : str, optional
+            Output filename for saving the plot.
+        - label : str, optional
+            Label to use in output.
+        - lagmin, lagmax : float
+            Minimum and maximum lags (in seconds) to consider in the correlation.
+        - debug : bool
+            If True, enable debug output.
+        - bipolar : bool
+            If True, fit the peak using bipolar symmetry.
+        - summarymode : bool
+            If True, output results in a tab-separated summary format.
+        - outputfile : str, optional
+            File to write summary output.
+        - corroutputfile : str, optional
+            File to write full cross-correlation data.
+        - verbose : bool
+            If True, print verbose messages.
 
-        Returns
-        -------
-        None
-            This function does not return a value but may produce plots, print outputs,
-            and write files depending on the provided arguments.
+    Returns
+    -------
+    None
+        This function does not return a value but may produce plots, print outputs,
+        and write files depending on the provided arguments.
 
-        Notes
-        -----
-        - The function uses `tide_io.readvectorsfromtextfile` to read input data.
-        - Filtering is applied via `tide_math.corrnormalize` and `theprefilter.apply`.
-        - Cross-correlation is computed using `tide_corr.arbcorr`.
-        - A peak-fitting procedure is used to refine the maximum correlation lag.
-        - If `summarymode` is True, output is written in tab-separated format to stdout or a file.
+    Notes
+    -----
+    - The function uses `tide_io.readvectorsfromtextfile` to read input data.
+    - Filtering is applied via `tide_math.corrnormalize` and `theprefilter.apply`.
+    - Cross-correlation is computed using `tide_corr.arbcorr`.
+    - A peak-fitting procedure is used to refine the maximum correlation lag.
+    - If `summarymode` is True, output is written in tab-separated format to stdout or a file.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     infilename1="data1.txt",
-        ...     infilename2="data2.txt",
-        ...     samplerate1=10.0,
-        ...     samplerate2=10.0,
-        ...     display=True,
-        ...     lagmin=-5.0,
-        ...     lagmax=5.0,
-        ...     windowfunc="hanning",
-        ...     debug=False
-        ... )
-        >>> showarbcorr(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     infilename1="data1.txt",
+    ...     infilename2="data2.txt",
+    ...     samplerate1=10.0,
+    ...     samplerate2=10.0,
+    ...     display=True,
+    ...     lagmin=-5.0,
+    ...     lagmax=5.0,
+    ...     windowfunc="hanning",
+    ...     debug=False
+    ... )
+    >>> showarbcorr(args)
+    """
     # set some default values
     absmaxsigma = 1000.0
     absminsigma = 0.25

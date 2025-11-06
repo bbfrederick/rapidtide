@@ -31,11 +31,11 @@ starttime = None
 
 class ContextFilter(logging.Filter):
     """
-        A filter to allow specific logging handlers to ignore specific loggers.
+    A filter to allow specific logging handlers to ignore specific loggers.
 
-        We use this to prevent our secondary loggers from printing to the general log file or to
-        stdout.
-        """
+    We use this to prevent our secondary loggers from printing to the general log file or to
+    stdout.
+    """
 
     NAMES = {"TIMING", "MEMORY"}
 
@@ -47,79 +47,79 @@ class ContextFilter(logging.Filter):
 
 class TimingFormatter(logging.Formatter):
     """
-        Determine whether to filter a log record based on its name.
-    
-        This filter checks if any of the names in `self.NAMES` are contained
-        within the log record's name. If none of the names are found, the record
-        is allowed through (returns True). If any name is found, the record is
-        filtered out (returns False).
-    
-        Parameters
-        ----------
-        record : logging.LogRecord
-            The log record to be filtered.
-        
-        Returns
-        -------
-        bool
-            True if the record should be allowed through (not filtered),
-            False if the record should be filtered out.
-        
-        Notes
-        -----
-        The filtering is performed using substring matching. If `self.NAMES` is
-        empty, all records will be allowed through.
-    
-        Examples
-        --------
-        >>> class MyFilter:
-        ...     NAMES = ['DEBUG', 'INFO']
-        ...     def filter(self, record):
-        ...         if not any([n in record.name for n in self.NAMES]):
-        ...             return True
-        ...         return False
-        ...
-        >>> filter_instance = MyFilter()
-        >>> record = logging.LogRecord('DEBUG', 10, 'file.py', 1, 'message', None, None)
-        >>> filter_instance.filter(record)
-        False
-        """
+    Determine whether to filter a log record based on its name.
+
+    This filter checks if any of the names in `self.NAMES` are contained
+    within the log record's name. If none of the names are found, the record
+    is allowed through (returns True). If any name is found, the record is
+    filtered out (returns False).
+
+    Parameters
+    ----------
+    record : logging.LogRecord
+        The log record to be filtered.
+
+    Returns
+    -------
+    bool
+        True if the record should be allowed through (not filtered),
+        False if the record should be filtered out.
+
+    Notes
+    -----
+    The filtering is performed using substring matching. If `self.NAMES` is
+    empty, all records will be allowed through.
+
+    Examples
+    --------
+    >>> class MyFilter:
+    ...     NAMES = ['DEBUG', 'INFO']
+    ...     def filter(self, record):
+    ...         if not any([n in record.name for n in self.NAMES]):
+    ...             return True
+    ...         return False
+    ...
+    >>> filter_instance = MyFilter()
+    >>> record = logging.LogRecord('DEBUG', 10, 'file.py', 1, 'message', None, None)
+    >>> filter_instance.filter(record)
+    False
+    """
 
     def format(self, record: logging.LogRecord) -> str:
         """
-            Format a log record, extracting message2 and message3 from record.args.
-    
-            This method extends the standard logging formatter by checking if the log record's
-            args attribute is a dictionary. If so, it extracts "message2" and "message3" 
-            values from the dictionary and assigns them as attributes to the record for 
-            use in log formatting.
-    
-            Parameters
-            ----------
-            record : logging.LogRecord
-                The log record to be formatted. The record's args attribute is checked
-                to determine if message2 and message3 should be extracted.
-    
-            Returns
-            -------
-            str
-                The formatted log message string.
-    
-            Notes
-            -----
-            This method modifies the record in-place by adding message2 and message3
-            attributes when record.args is a dictionary. If record.args is not a 
-            dictionary, these attributes are set to None.
-    
-            Examples
-            --------
-            >>> import logging
-            >>> formatter = MyFormatter()
-            >>> record = logging.LogRecord('name', 1, 'file', 1, 'message', {'message2': 'extra', 'message3': 'info'}, None)
-            >>> formatted = formatter.format(record)
-            >>> print(formatted)
-            'message'
-            """
+        Format a log record, extracting message2 and message3 from record.args.
+
+        This method extends the standard logging formatter by checking if the log record's
+        args attribute is a dictionary. If so, it extracts "message2" and "message3"
+        values from the dictionary and assigns them as attributes to the record for
+        use in log formatting.
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            The log record to be formatted. The record's args attribute is checked
+            to determine if message2 and message3 should be extracted.
+
+        Returns
+        -------
+        str
+            The formatted log message string.
+
+        Notes
+        -----
+        This method modifies the record in-place by adding message2 and message3
+        attributes when record.args is a dictionary. If record.args is not a
+        dictionary, these attributes are set to None.
+
+        Examples
+        --------
+        >>> import logging
+        >>> formatter = MyFormatter()
+        >>> record = logging.LogRecord('name', 1, 'file', 1, 'message', {'message2': 'extra', 'message3': 'info'}, None)
+        >>> formatted = formatter.format(record)
+        >>> print(formatted)
+        'message'
+        """
         if isinstance(record.args, dict):
             record.message2 = record.args.get("message2", None)
             record.message3 = record.args.get("message3", None)
@@ -138,51 +138,51 @@ def setup_logger(
     debug: bool = False,
 ) -> None:
     """
-        Set up a set of loggers for handling generic, timing, memory, and error logging.
+    Set up a set of loggers for handling generic, timing, memory, and error logging.
 
-        This function configures multiple loggers with custom handlers and formatters,
-        writing output to specified files. It also sets up a custom "VERBOSE" logging level
-        and supports optional console output filtering.
+    This function configures multiple loggers with custom handlers and formatters,
+    writing output to specified files. It also sets up a custom "VERBOSE" logging level
+    and supports optional console output filtering.
 
-        Parameters
-        ----------
-        logger_filename : str
-            Output file for generic logging information.
-        timing_filename : str
-            Output file for timing-related information.
-        memory_filename : str, optional
-            Output file for memory usage-related information. If not provided, memory logging is disabled.
-        error_filename : str, optional
-            Output file for error-related information. If not provided, error logging is disabled.
-        isverbose : bool, optional
-            Sets the target logging level to VERBOSE (a custom level between INFO and DEBUG).
-            Is overridden by ``debug``, if ``debug = True``. Default is False.
-        debug : bool, optional
-            Sets the target logging level to DEBUG. Default is False.
+    Parameters
+    ----------
+    logger_filename : str
+        Output file for generic logging information.
+    timing_filename : str
+        Output file for timing-related information.
+    memory_filename : str, optional
+        Output file for memory usage-related information. If not provided, memory logging is disabled.
+    error_filename : str, optional
+        Output file for error-related information. If not provided, error logging is disabled.
+    isverbose : bool, optional
+        Sets the target logging level to VERBOSE (a custom level between INFO and DEBUG).
+        Is overridden by ``debug``, if ``debug = True``. Default is False.
+    debug : bool, optional
+        Sets the target logging level to DEBUG. Default is False.
 
-        Returns
-        -------
-        None
-            This function does not return any value.
+    Returns
+    -------
+    None
+        This function does not return any value.
 
-        Notes
-        -----
-        - Existing log files from previous runs are automatically removed.
-        - A custom logging level "VERBOSE" (level 15) is added, placed between INFO and DEBUG.
-        - Console output is filtered using a `ContextFilter` to avoid duplicate messages.
-        - Loggers for timing, memory, and error are configured only if their respective filenames are provided.
+    Notes
+    -----
+    - Existing log files from previous runs are automatically removed.
+    - A custom logging level "VERBOSE" (level 15) is added, placed between INFO and DEBUG.
+    - Console output is filtered using a `ContextFilter` to avoid duplicate messages.
+    - Loggers for timing, memory, and error are configured only if their respective filenames are provided.
 
-        Examples
-        --------
-        >>> setup_logger(
-        ...     logger_filename="app.log",
-        ...     timing_filename="timing.log",
-        ...     memory_filename="memory.log",
-        ...     error_filename="error.log",
-        ...     isverbose=True,
-        ...     debug=False
-        ... )
-        """
+    Examples
+    --------
+    >>> setup_logger(
+    ...     logger_filename="app.log",
+    ...     timing_filename="timing.log",
+    ...     memory_filename="memory.log",
+    ...     error_filename="error.log",
+    ...     isverbose=True,
+    ...     debug=False
+    ... )
+    """
     # Clean up existing files from previous runs
     for fname in [logger_filename, timing_filename, memory_filename, error_filename]:
         if fname is not None:
@@ -196,42 +196,42 @@ def setup_logger(
 
     def verbose(self: logging.Logger, message: str, *args: Any, **kwargs: Any) -> None:
         """
-            Log a message with VERBOSE_LEVEL if it is enabled.
-    
-            This method provides a verbose logging capability that only executes
-            when the logger's verbosity level is set to include VERBOSE_LEVEL.
-    
-            Parameters
-            ----------
-            self : logging.Logger
-                The logger instance calling this method.
-            message : str
-                The message to be logged. This message may contain placeholders
-                for additional arguments.
-            *args : Any
-                Additional arguments to be formatted into the message.
-            **kwargs : Any
-                Additional keyword arguments to be passed to the logging system.
-        
-            Returns
-            -------
-            None
-                This method does not return any value.
-        
-            Notes
-            -----
-            This method is a convenience wrapper around the standard logging system
-            that only executes when VERBOSE_LEVEL is enabled. It allows for
-            conditional verbose logging without requiring explicit checks in the
-            calling code.
-    
-            Examples
-            --------
-            >>> import logging
-            >>> logger = logging.getLogger(__name__)
-            >>> logger.setLevel(logging.DEBUG)
-            >>> logger.verbose("Processing item %s", item_name)
-            """
+        Log a message with VERBOSE_LEVEL if it is enabled.
+
+        This method provides a verbose logging capability that only executes
+        when the logger's verbosity level is set to include VERBOSE_LEVEL.
+
+        Parameters
+        ----------
+        self : logging.Logger
+            The logger instance calling this method.
+        message : str
+            The message to be logged. This message may contain placeholders
+            for additional arguments.
+        *args : Any
+            Additional arguments to be formatted into the message.
+        **kwargs : Any
+            Additional keyword arguments to be passed to the logging system.
+
+        Returns
+        -------
+        None
+            This method does not return any value.
+
+        Notes
+        -----
+        This method is a convenience wrapper around the standard logging system
+        that only executes when VERBOSE_LEVEL is enabled. It allows for
+        conditional verbose logging without requiring explicit checks in the
+        calling code.
+
+        Examples
+        --------
+        >>> import logging
+        >>> logger = logging.getLogger(__name__)
+        >>> logger.setLevel(logging.DEBUG)
+        >>> logger.verbose("Processing item %s", item_name)
+        """
         if self.isEnabledFor(VERBOSE_LEVEL):
             self._log(VERBOSE_LEVEL, message, args, **kwargs)
 

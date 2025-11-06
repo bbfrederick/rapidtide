@@ -35,36 +35,36 @@ except ImportError:
 def maxcpus(reservecpu: bool = True) -> int:
     """Return the maximum number of CPUs that can be used for parallel processing.
 
-        This function returns the total number of CPU cores available on the system,
-        with an option to reserve one CPU core for system operations.
+    This function returns the total number of CPU cores available on the system,
+    with an option to reserve one CPU core for system operations.
 
-        Parameters
-        ----------
-        reservecpu : bool, default=True
-            If True, reserves one CPU core for system operations by returning
-            `cpu_count() - 1`. If False, returns the total number of CPU cores
-            available without reservation.
+    Parameters
+    ----------
+    reservecpu : bool, default=True
+        If True, reserves one CPU core for system operations by returning
+        `cpu_count() - 1`. If False, returns the total number of CPU cores
+        available without reservation.
 
-        Returns
-        -------
-        int
-            The maximum number of CPUs available for parallel processing.
-            If `reservecpu=True`, returns `cpu_count() - 1`.
-            If `reservecpu=False`, returns `cpu_count()`.
+    Returns
+    -------
+    int
+        The maximum number of CPUs available for parallel processing.
+        If `reservecpu=True`, returns `cpu_count() - 1`.
+        If `reservecpu=False`, returns `cpu_count()`.
 
-        Notes
-        -----
-        This function uses `multiprocessing.cpu_count()` to determine the number
-        of available CPU cores. The reserved CPU core helps maintain system
-        responsiveness during parallel processing tasks.
+    Notes
+    -----
+    This function uses `multiprocessing.cpu_count()` to determine the number
+    of available CPU cores. The reserved CPU core helps maintain system
+    responsiveness during parallel processing tasks.
 
-        Examples
-        --------
-        >>> maxcpus()
-        7
-        >>> maxcpus(reservecpu=False)
-        8
-        """
+    Examples
+    --------
+    >>> maxcpus()
+    7
+    >>> maxcpus(reservecpu=False)
+    8
+    """
     if reservecpu:
         return mp.cpu_count() - 1
     else:
@@ -76,42 +76,42 @@ def _process_data(
 ) -> List[Any]:
     """Process input data in chunks using multiprocessing queues.
 
-        This function distributes data into chunks and processes them using
-        provided input and output queues. It supports progress tracking and
-        handles both complete chunks and a final remainder chunk.
+    This function distributes data into chunks and processes them using
+    provided input and output queues. It supports progress tracking and
+    handles both complete chunks and a final remainder chunk.
 
-        Parameters
-        ----------
-        data_in : List[Any]
-            Input data to be processed.
-        inQ : Any
-            Input queue for sending data to worker processes.
-        outQ : Any
-            Output queue for receiving processed data from worker processes.
-        showprogressbar : bool, optional
-            If True, display a progress bar during processing. Default is True.
-        chunksize : int, optional
-            Size of data chunks to process at a time. Default is 10000.
+    Parameters
+    ----------
+    data_in : List[Any]
+        Input data to be processed.
+    inQ : Any
+        Input queue for sending data to worker processes.
+    outQ : Any
+        Output queue for receiving processed data from worker processes.
+    showprogressbar : bool, optional
+        If True, display a progress bar during processing. Default is True.
+    chunksize : int, optional
+        Size of data chunks to process at a time. Default is 10000.
 
-        Returns
-        -------
-        List[Any]
-            List of processed data items retrieved from the output queue.
+    Returns
+    -------
+    List[Any]
+        List of processed data items retrieved from the output queue.
 
-        Notes
-        -----
-        This function assumes that `inQ` and `outQ` are properly configured
-        multiprocessing queues and that worker processes are running and
-        consuming from `inQ` and producing to `outQ`.
+    Notes
+    -----
+    This function assumes that `inQ` and `outQ` are properly configured
+    multiprocessing queues and that worker processes are running and
+    consuming from `inQ` and producing to `outQ`.
 
-        Examples
-        --------
-        >>> from multiprocessing import Queue
-        >>> data = list(range(1000))
-        >>> in_q = Queue()
-        >>> out_q = Queue()
-        >>> result = _process_data(data, in_q, out_q)
-        """
+    Examples
+    --------
+    >>> from multiprocessing import Queue
+    >>> data = list(range(1000))
+    >>> in_q = Queue()
+    >>> out_q = Queue()
+    >>> result = _process_data(data, in_q, out_q)
+    """
     # send pos/data to workers
     data_out = []
     totalnum = len(data_in)
@@ -170,61 +170,61 @@ def run_multiproc(
     chunksize: int = 1000,
 ) -> List[Any]:
     """
-        Execute a function in parallel across multiple processes using multiprocessing.
+    Execute a function in parallel across multiple processes using multiprocessing.
 
-        This function initializes a set of worker processes and distributes input data
-        across them for parallel processing. It supports optional masking of data
-        along a specified axis and provides progress reporting.
+    This function initializes a set of worker processes and distributes input data
+    across them for parallel processing. It supports optional masking of data
+    along a specified axis and provides progress reporting.
 
-        Parameters
-        ----------
-        consumerfunc : callable
-            Function to be executed in parallel. Must accept two arguments: an input queue
-            and an output queue for inter-process communication.
-        inputshape : tuple of int
-            Shape of the input data along all axes. The dimension along `indexaxis` is
-            used to determine the number of items to process.
-        maskarray : ndarray, optional
-            Boolean or binary mask array used to filter indices. Only indices where
-            `maskarray[d] > 0.5` are processed. If None, all indices are processed.
-        nprocs : int, optional
-            Number of worker processes to use. Default is 1 (single-threaded).
-        verbose : bool, optional
-            If True, print information about the number of units being processed.
-            Default is True.
-        indexaxis : int, optional
-            Axis along which to iterate for processing. Default is 0.
-        procunit : str, optional
-            Unit of processing, used for logging messages. Default is "voxels".
-        showprogressbar : bool, optional
-            If True, display a progress bar during processing. Default is True.
-        chunksize : int, optional
-            Number of items to process in each chunk. Default is 1000.
+    Parameters
+    ----------
+    consumerfunc : callable
+        Function to be executed in parallel. Must accept two arguments: an input queue
+        and an output queue for inter-process communication.
+    inputshape : tuple of int
+        Shape of the input data along all axes. The dimension along `indexaxis` is
+        used to determine the number of items to process.
+    maskarray : ndarray, optional
+        Boolean or binary mask array used to filter indices. Only indices where
+        `maskarray[d] > 0.5` are processed. If None, all indices are processed.
+    nprocs : int, optional
+        Number of worker processes to use. Default is 1 (single-threaded).
+    verbose : bool, optional
+        If True, print information about the number of units being processed.
+        Default is True.
+    indexaxis : int, optional
+        Axis along which to iterate for processing. Default is 0.
+    procunit : str, optional
+        Unit of processing, used for logging messages. Default is "voxels".
+    showprogressbar : bool, optional
+        If True, display a progress bar during processing. Default is True.
+    chunksize : int, optional
+        Number of items to process in each chunk. Default is 1000.
 
-        Returns
-        -------
-        list
-            List of results returned by the worker processes.
+    Returns
+    -------
+    list
+        List of results returned by the worker processes.
 
-        Notes
-        -----
-        - On Python 3.8+ and non-Windows systems, the function uses the 'fork' context
-          for better performance.
-        - The function will exit with an error if `maskarray` is provided but its
-          length does not match the size of the `indexaxis` dimension of `inputshape`.
+    Notes
+    -----
+    - On Python 3.8+ and non-Windows systems, the function uses the 'fork' context
+      for better performance.
+    - The function will exit with an error if `maskarray` is provided but its
+      length does not match the size of the `indexaxis` dimension of `inputshape`.
 
-        Examples
-        --------
-        >>> def worker_func(inQ, outQ):
-        ...     while True:
-        ...         item = inQ.get()
-        ...         if item is None:
-        ...             break
-        ...         outQ.put(item * 2)
-        ...
-        >>> shape = (100, 100)
-        >>> result = run_multiproc(worker_func, shape, nprocs=4)
-        """
+    Examples
+    --------
+    >>> def worker_func(inQ, outQ):
+    ...     while True:
+    ...         item = inQ.get()
+    ...         if item is None:
+    ...             break
+    ...         outQ.put(item * 2)
+    ...
+    >>> shape = (100, 100)
+    >>> result = run_multiproc(worker_func, shape, nprocs=4)
+    """
     # initialize the workers and the queues
     __spec__ = None
     n_workers = nprocs
@@ -290,62 +290,62 @@ def run_multithread(
     chunksize: int = 1000,
 ) -> List[Any]:
     """
-        Execute a multithreaded processing task using a specified consumer function.
+    Execute a multithreaded processing task using a specified consumer function.
 
-        This function initializes a set of worker threads that process data in parallel
-        according to the provided consumer function. It supports optional masking,
-        progress tracking, and configurable chunking for efficient processing.
+    This function initializes a set of worker threads that process data in parallel
+    according to the provided consumer function. It supports optional masking,
+    progress tracking, and configurable chunking for efficient processing.
 
-        Parameters
-        ----------
-        consumerfunc : callable
-            A function that takes two arguments (input queue, output queue) and
-            processes data in a loop until signaled to stop.
-        inputshape : tuple of int
-            Shape of the input data along all axes. The dimension along `indexaxis`
-            determines how many items will be processed.
-        maskarray : ndarray, optional
-            Boolean or integer array used to filter which indices are processed.
-            Must match the size of the axis specified by `indexaxis`.
-        verbose : bool, optional
-            If True, print information about the number of items being processed
-            and the number of threads used. Default is True.
-        nprocs : int, optional
-            Number of worker threads to spawn. Default is 1.
-        indexaxis : int, optional
-            Axis along which the indexing is performed. Default is 0.
-        procunit : str, optional
-            Unit of processing, used in verbose output. Default is "voxels".
-        showprogressbar : bool, optional
-            If True, display a progress bar during processing. Default is True.
-        chunksize : int, optional
-            Number of items to process in each chunk. Default is 1000.
+    Parameters
+    ----------
+    consumerfunc : callable
+        A function that takes two arguments (input queue, output queue) and
+        processes data in a loop until signaled to stop.
+    inputshape : tuple of int
+        Shape of the input data along all axes. The dimension along `indexaxis`
+        determines how many items will be processed.
+    maskarray : ndarray, optional
+        Boolean or integer array used to filter which indices are processed.
+        Must match the size of the axis specified by `indexaxis`.
+    verbose : bool, optional
+        If True, print information about the number of items being processed
+        and the number of threads used. Default is True.
+    nprocs : int, optional
+        Number of worker threads to spawn. Default is 1.
+    indexaxis : int, optional
+        Axis along which the indexing is performed. Default is 0.
+    procunit : str, optional
+        Unit of processing, used in verbose output. Default is "voxels".
+    showprogressbar : bool, optional
+        If True, display a progress bar during processing. Default is True.
+    chunksize : int, optional
+        Number of items to process in each chunk. Default is 1000.
 
-        Returns
-        -------
-        list
-            A list of results returned by the consumer function for each processed item.
+    Returns
+    -------
+    list
+        A list of results returned by the consumer function for each processed item.
 
-        Notes
-        -----
-        - The function uses `threading.Queue` for inter-thread communication.
-        - If `maskarray` is provided, only indices where `maskarray[d] > 0` are processed.
-        - The `consumerfunc` is expected to read from `inQ` and write to `outQ` until
-          a `None` is received on `inQ`, signaling the end of processing.
+    Notes
+    -----
+    - The function uses `threading.Queue` for inter-thread communication.
+    - If `maskarray` is provided, only indices where `maskarray[d] > 0` are processed.
+    - The `consumerfunc` is expected to read from `inQ` and write to `outQ` until
+      a `None` is received on `inQ`, signaling the end of processing.
 
-        Examples
-        --------
-        >>> def my_consumer(inQ, outQ):
-        ...     while True:
-        ...         item = inQ.get()
-        ...         if item is None:
-        ...             break
-        ...         result = item * 2
-        ...         outQ.put(result)
-        ...
-        >>> shape = (100, 50)
-        >>> result = run_multithread(my_consumer, shape, nprocs=4)
-        """
+    Examples
+    --------
+    >>> def my_consumer(inQ, outQ):
+    ...     while True:
+    ...         item = inQ.get()
+    ...         if item is None:
+    ...             break
+    ...         result = item * 2
+    ...         outQ.put(result)
+    ...
+    >>> shape = (100, 50)
+    >>> result = run_multithread(my_consumer, shape, nprocs=4)
+    """
     # initialize the workers and the queues
     n_workers = nprocs
     inQ = thrQueue.Queue()

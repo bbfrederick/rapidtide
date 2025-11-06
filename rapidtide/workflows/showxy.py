@@ -46,30 +46,30 @@ import rapidtide.io as tide_io
 
 def _get_parser() -> Any:
     """
-        Create and configure an argument parser for plotting xy data from text files.
+    Create and configure an argument parser for plotting xy data from text files.
 
-        This function sets up an `argparse.ArgumentParser` with a variety of options to
-        control how xy data is read from text files and plotted. It supports features such as
-        axis labels, range limits, title, output file saving, font scaling, legend handling,
-        color specification, and special plot types like Bland-Altman.
+    This function sets up an `argparse.ArgumentParser` with a variety of options to
+    control how xy data is read from text files and plotted. It supports features such as
+    axis labels, range limits, title, output file saving, font scaling, legend handling,
+    color specification, and special plot types like Bland-Altman.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object ready to parse command-line arguments.
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object ready to parse command-line arguments.
 
-        Notes
-        -----
-        The parser expects one or more text file names as positional arguments. Each file
-        should contain whitespace-separated x and y data, one point per line.
+    Notes
+    -----
+    The parser expects one or more text file names as positional arguments. Each file
+    should contain whitespace-separated x and y data, one point per line.
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['data.txt'])
-        >>> print(args.textfilenames)
-        ['data.txt']
-        """
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['data.txt'])
+    >>> print(args.textfilenames)
+    ['data.txt']
+    """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="showxy",
@@ -243,58 +243,58 @@ def bland_altman_plot(
     **kwargs: Any,
 ) -> None:
     """
-        Create a Bland-Altman plot to compare two measurement methods.
+    Create a Bland-Altman plot to compare two measurement methods.
 
-        This function generates a Bland-Altman plot, which is used to compare two
-        measurement methods by plotting the difference between the measurements
-        against their mean. It also computes and displays key statistics such as
-        mean difference, standard deviation of differences, and regression slopes.
+    This function generates a Bland-Altman plot, which is used to compare two
+    measurement methods by plotting the difference between the measurements
+    against their mean. It also computes and displays key statistics such as
+    mean difference, standard deviation of differences, and regression slopes.
 
-        Parameters
-        ----------
-        data1 : array-like
-            First set of measurements (X-axis data if `usex=True`).
-        data2 : array-like
-            Second set of measurements (Y-axis data).
-        usex : bool, optional
-            If True, use `data1` as the X-axis values; otherwise, use the mean of
-            `data1` and `data2` as the X-axis values. Default is False.
-        identifier : optional
-            Identifier for the dataset, printed for reference. Default is None.
-        fontscalefac : float, optional
-            Scaling factor for font size in annotations. Default is 1.0.
-        xrange : array-like, optional
-            X-axis limits for the plot. Default is None.
-        yrange : array-like, optional
-            Y-axis limits for the plot. Default is None.
-        doannotate : bool, optional
-            If True, annotate the plot with mean difference and standard deviation.
-            Default is True.
-        debug : bool, optional
-            If True, print debug information. Default is False.
-        *args : tuple
-            Additional arguments passed to the scatter plot.
-        **kwargs : dict
-            Additional keyword arguments passed to the scatter plot.
+    Parameters
+    ----------
+    data1 : array-like
+        First set of measurements (X-axis data if `usex=True`).
+    data2 : array-like
+        Second set of measurements (Y-axis data).
+    usex : bool, optional
+        If True, use `data1` as the X-axis values; otherwise, use the mean of
+        `data1` and `data2` as the X-axis values. Default is False.
+    identifier : optional
+        Identifier for the dataset, printed for reference. Default is None.
+    fontscalefac : float, optional
+        Scaling factor for font size in annotations. Default is 1.0.
+    xrange : array-like, optional
+        X-axis limits for the plot. Default is None.
+    yrange : array-like, optional
+        Y-axis limits for the plot. Default is None.
+    doannotate : bool, optional
+        If True, annotate the plot with mean difference and standard deviation.
+        Default is True.
+    debug : bool, optional
+        If True, print debug information. Default is False.
+    *args : tuple
+        Additional arguments passed to the scatter plot.
+    **kwargs : dict
+        Additional keyword arguments passed to the scatter plot.
 
-        Returns
-        -------
-        None
-            This function does not return a value but displays a plot.
+    Returns
+    -------
+    None
+        This function does not return a value but displays a plot.
 
-        Notes
-        -----
-        The Bland-Altman plot is useful for assessing the agreement between two
-        measurement methods. The plot includes horizontal lines indicating the mean
-        difference and ±2 standard deviations from the mean.
+    Notes
+    -----
+    The Bland-Altman plot is useful for assessing the agreement between two
+    measurement methods. The plot includes horizontal lines indicating the mean
+    difference and ±2 standard deviations from the mean.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> data1 = np.array([1, 2, 3, 4, 5])
-        >>> data2 = np.array([1.1, 2.2, 2.8, 4.1, 4.9])
-        >>> bland_altman_plot(data1, data2)
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> data1 = np.array([1, 2, 3, 4, 5])
+    >>> data2 = np.array([1.1, 2.2, 2.8, 4.1, 4.9])
+    >>> bland_altman_plot(data1, data2)
+    """
     # data1 is X, data2 is Y
     data1 = np.asarray(data1)
     data2 = np.asarray(data2)
@@ -351,33 +351,33 @@ def bland_altman_plot(
 
 def stringtorange(thestring: Any) -> None:
     """
-        Convert a comma-separated string to a tuple of floats representing a range.
-    
-        Parameters
-        ----------
-        thestring : Any
-            A string containing two comma-separated float values representing
-            the minimum and maximum values of a range.
-    
-        Returns
-        -------
-        tuple of float
-            A tuple containing (min_value, max_value) as floats.
-    
-        Notes
-        -----
-        This function expects exactly two comma-separated float values. If the
-        input string does not contain exactly two values or if the values cannot
-        be converted to floats, the program will exit with an error message.
-    
-        Examples
-        --------
-        >>> stringtorange("1.5,10.0")
-        (1.5, 10.0)
-    
-        >>> stringtorange("0,-5.5")
-        (0.0, -5.5)
-        """
+    Convert a comma-separated string to a tuple of floats representing a range.
+
+    Parameters
+    ----------
+    thestring : Any
+        A string containing two comma-separated float values representing
+        the minimum and maximum values of a range.
+
+    Returns
+    -------
+    tuple of float
+        A tuple containing (min_value, max_value) as floats.
+
+    Notes
+    -----
+    This function expects exactly two comma-separated float values. If the
+    input string does not contain exactly two values or if the values cannot
+    be converted to floats, the program will exit with an error message.
+
+    Examples
+    --------
+    >>> stringtorange("1.5,10.0")
+    (1.5, 10.0)
+
+    >>> stringtorange("0,-5.5")
+    (0.0, -5.5)
+    """
     thelist = thestring.split(",")
     if len(thelist) != 2:
         print("range setting requires two comma separated floats - exiting")
@@ -397,66 +397,66 @@ def stringtorange(thestring: Any) -> None:
 
 def showxy(args: Any) -> None:
     """
-        Display or save xy data plots based on command-line arguments.
+    Display or save xy data plots based on command-line arguments.
 
-        This function reads data from text files and plots the corresponding x and y vectors.
-        It supports multiple plot types including line plots, bar plots, and Bland-Altman plots.
-        The function also handles legend, title, axis labels, and output file saving.
+    This function reads data from text files and plots the corresponding x and y vectors.
+    It supports multiple plot types including line plots, bar plots, and Bland-Altman plots.
+    The function also handles legend, title, axis labels, and output file saving.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing various arguments for plotting, including:
-            - `textfilenames`: List of text files containing data vectors.
-            - `colors`: Comma-separated string of color names for plotting.
-            - `legends`: Comma-separated string of legend labels.
-            - `legendloc`: Location of the legend.
-            - `dobars`: Boolean indicating whether to plot bar charts.
-            - `blandaltman`: Boolean indicating whether to use Bland-Altman plot.
-            - `usex`: Used in Bland-Altman plot.
-            - `fontscalefac`: Scaling factor for font sizes.
-            - `xrange`: X-axis range.
-            - `yrange`: Y-axis range.
-            - `doannotate`: Boolean indicating whether to annotate points.
-            - `debug`: Boolean for debugging output.
-            - `usepoints`: Boolean for plotting points instead of lines.
-            - `thetitle`: Title of the plot.
-            - `thexlabel`: X-axis label.
-            - `theylabel`: Y-axis label.
-            - `outputfile`: Output file name for saving the plot.
-            - `saveres`: Resolution for saved figure.
+    Parameters
+    ----------
+    args : Any
+        An object containing various arguments for plotting, including:
+        - `textfilenames`: List of text files containing data vectors.
+        - `colors`: Comma-separated string of color names for plotting.
+        - `legends`: Comma-separated string of legend labels.
+        - `legendloc`: Location of the legend.
+        - `dobars`: Boolean indicating whether to plot bar charts.
+        - `blandaltman`: Boolean indicating whether to use Bland-Altman plot.
+        - `usex`: Used in Bland-Altman plot.
+        - `fontscalefac`: Scaling factor for font sizes.
+        - `xrange`: X-axis range.
+        - `yrange`: Y-axis range.
+        - `doannotate`: Boolean indicating whether to annotate points.
+        - `debug`: Boolean for debugging output.
+        - `usepoints`: Boolean for plotting points instead of lines.
+        - `thetitle`: Title of the plot.
+        - `thexlabel`: X-axis label.
+        - `theylabel`: Y-axis label.
+        - `outputfile`: Output file name for saving the plot.
+        - `saveres`: Resolution for saved figure.
 
-        Returns
-        -------
-        None
-            This function does not return any value. It either displays the plot or saves it to a file.
+    Returns
+    -------
+    None
+        This function does not return any value. It either displays the plot or saves it to a file.
 
-        Notes
-        -----
-        - If `dobars` is True, bar plots are displayed using light gray bars.
-        - If `blandaltman` is True, a Bland-Altman plot is generated.
-        - If neither `dobars` nor `blandaltman` is True, line plots are displayed.
-        - If `colors` is not provided, colors are selected from the `nipy_spectral` colormap.
-        - If `outputfile` is None, the plot is displayed using `matplotlib.pyplot.show()`.
+    Notes
+    -----
+    - If `dobars` is True, bar plots are displayed using light gray bars.
+    - If `blandaltman` is True, a Bland-Altman plot is generated.
+    - If neither `dobars` nor `blandaltman` is True, line plots are displayed.
+    - If `colors` is not provided, colors are selected from the `nipy_spectral` colormap.
+    - If `outputfile` is None, the plot is displayed using `matplotlib.pyplot.show()`.
 
-        Examples
-        --------
-        >>> args = argparse.Namespace(
-        ...     textfilenames=['data1.txt', 'data2.txt'],
-        ...     colors='red,blue',
-        ...     legends='Dataset1, Dataset2',
-        ...     legendloc='upper right',
-        ...     dobars=False,
-        ...     blandaltman=False,
-        ...     usepoints=False,
-        ...     thetitle='My Plot',
-        ...     thexlabel='X-axis',
-        ...     theylabel='Y-axis',
-        ...     outputfile='output.png',
-        ...     saveres=300
-        ... )
-        >>> showxy(args)
-        """
+    Examples
+    --------
+    >>> args = argparse.Namespace(
+    ...     textfilenames=['data1.txt', 'data2.txt'],
+    ...     colors='red,blue',
+    ...     legends='Dataset1, Dataset2',
+    ...     legendloc='upper right',
+    ...     dobars=False,
+    ...     blandaltman=False,
+    ...     usepoints=False,
+    ...     thetitle='My Plot',
+    ...     thexlabel='X-axis',
+    ...     theylabel='Y-axis',
+    ...     outputfile='output.png',
+    ...     saveres=300
+    ... )
+    >>> showxy(args)
+    """
     # process the file list
     textfilename = []
     for thefile in args.textfilenames:

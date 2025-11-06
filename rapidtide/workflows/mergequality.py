@@ -28,28 +28,28 @@ import rapidtide.stats as tide_stats
 
 def _get_parser() -> Any:
     """
-        Argument parser for mergequality.
-    
-        Creates and configures an argument parser for the mergequality tool that merges
-        rapidtide quality check data from multiple runs.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object with all required and optional arguments
-            for the mergequality tool.
-        
-        Notes
-        -----
-        The returned parser is configured with:
-        - Required arguments: --input and --outputroot
-        - Optional arguments: --keyfile, --showhists, --addgraymetrics, --addwhitemetrics, --debug
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['--input', 'run1.csv', 'run2.csv', '--outputroot', 'merged'])
-        """
+    Argument parser for mergequality.
+
+    Creates and configures an argument parser for the mergequality tool that merges
+    rapidtide quality check data from multiple runs.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object with all required and optional arguments
+        for the mergequality tool.
+
+    Notes
+    -----
+    The returned parser is configured with:
+    - Required arguments: --input and --outputroot
+    - Optional arguments: --keyfile, --showhists, --addgraymetrics, --addwhitemetrics, --debug
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['--input', 'run1.csv', 'run2.csv', '--outputroot', 'merged'])
+    """
     parser = argparse.ArgumentParser(
         prog="mergequality",
         description=("Merge rapidtide quality check data from several runs."),
@@ -92,59 +92,59 @@ def _get_parser() -> Any:
 
 def mergequality(args: Any) -> None:
     """
-        Merge quality metrics from multiple input JSON files into a single CSV file.
+    Merge quality metrics from multiple input JSON files into a single CSV file.
 
-        This function reads quality metrics from input JSON files and combines them
-        into a structured DataFrame. It supports optional inclusion of gray and white
-        matter specific metrics based on command-line arguments. Histograms for each
-        metric are also generated and saved.
+    This function reads quality metrics from input JSON files and combines them
+    into a structured DataFrame. It supports optional inclusion of gray and white
+    matter specific metrics based on command-line arguments. Histograms for each
+    metric are also generated and saved.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing the following attributes:
-            - input : list of str
-                List of input JSON file paths to process.
-            - outputroot : str
-                Base name for output CSV and histogram files.
-            - keyfile : str, optional
-                Path to a JSON file containing key metrics definitions. If None,
-                default metrics are used.
-            - addgraymetrics : bool
-                Whether to include gray matter specific metrics.
-            - addwhitemetrics : bool
-                Whether to include white matter specific metrics.
-            - showhists : bool
-                Whether to display histograms.
-            - debug : bool
-                Whether to print debug information.
+    Parameters
+    ----------
+    args : Any
+        An object containing the following attributes:
+        - input : list of str
+            List of input JSON file paths to process.
+        - outputroot : str
+            Base name for output CSV and histogram files.
+        - keyfile : str, optional
+            Path to a JSON file containing key metrics definitions. If None,
+            default metrics are used.
+        - addgraymetrics : bool
+            Whether to include gray matter specific metrics.
+        - addwhitemetrics : bool
+            Whether to include white matter specific metrics.
+        - showhists : bool
+            Whether to display histograms.
+        - debug : bool
+            Whether to print debug information.
 
-        Returns
-        -------
-        None
-            This function does not return a value but saves a CSV file and histogram
-            plots to disk.
+    Returns
+    -------
+    None
+        This function does not return a value but saves a CSV file and histogram
+        plots to disk.
 
-        Notes
-        -----
-        The function uses `tide_io.readdictfromjson` to read input JSON files and
-        `tide_stats.makeandsavehistogram` to generate histograms. Default metrics
-        are included for mask, regressor, lag, laggrad, strength, and MTT.
-        Gray and white matter metrics are conditionally added based on `args`.
+    Notes
+    -----
+    The function uses `tide_io.readdictfromjson` to read input JSON files and
+    `tide_stats.makeandsavehistogram` to generate histograms. Default metrics
+    are included for mask, regressor, lag, laggrad, strength, and MTT.
+    Gray and white matter metrics are conditionally added based on `args`.
 
-        Examples
-        --------
-        >>> args = type('Args', (), {
-        ...     'input': ['file1.json', 'file2.json'],
-        ...     'outputroot': 'output',
-        ...     'keyfile': None,
-        ...     'addgraymetrics': True,
-        ...     'addwhitemetrics': False,
-        ...     'showhists': True,
-        ...     'debug': False
-        ... })()
-        >>> mergequality(args)
-        """
+    Examples
+    --------
+    >>> args = type('Args', (), {
+    ...     'input': ['file1.json', 'file2.json'],
+    ...     'outputroot': 'output',
+    ...     'keyfile': None,
+    ...     'addgraymetrics': True,
+    ...     'addwhitemetrics': False,
+    ...     'showhists': True,
+    ...     'debug': False
+    ... })()
+    >>> mergequality(args)
+    """
     if args.debug:
         print(f"{args.input=}")
         print(f"{args.outputroot=}")

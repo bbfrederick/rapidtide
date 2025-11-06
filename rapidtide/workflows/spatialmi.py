@@ -33,31 +33,31 @@ import rapidtide.miscmath as tide_math
 
 def _get_parser() -> Any:
     """
-        Argument parser for spatialmi.
-    
-        This function constructs and returns an `argparse.ArgumentParser` object configured
-        to parse command-line arguments for the `spatialmi` tool, which calculates localized
-        spatial mutual information between two NIfTI images.
+    Argument parser for spatialmi.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser for the spatial mutual information calculation tool.
+    This function constructs and returns an `argparse.ArgumentParser` object configured
+    to parse command-line arguments for the `spatialmi` tool, which calculates localized
+    spatial mutual information between two NIfTI images.
 
-        Notes
-        -----
-        The parser requires four mandatory positional arguments: two input NIfTI image filenames,
-        two corresponding mask filenames, and an output root name. Optional arguments allow
-        customization of the calculation, including neighborhood shape, filtering, normalization,
-        and debugging output.
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for the spatial mutual information calculation tool.
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        >>> print(args.inputfilename1)
-        'input1.nii.gz'
-        """
+    Notes
+    -----
+    The parser requires four mandatory positional arguments: two input NIfTI image filenames,
+    two corresponding mask filenames, and an output root name. Optional arguments allow
+    customization of the calculation, including neighborhood shape, filtering, normalization,
+    and debugging output.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    >>> print(args.inputfilename1)
+    'input1.nii.gz'
+    """
     parser = argparse.ArgumentParser(
         prog="spatialmi",
         description=("Calculate the localized spatial mutual information between two images"),
@@ -178,59 +178,59 @@ def getneighborhood(
     debug: bool = False,
 ) -> None:
     """
-        Extract a neighborhood from a 3D dataset, either as a weighted kernel or a spherical region.
+    Extract a neighborhood from a 3D dataset, either as a weighted kernel or a spherical region.
 
-        This function retrieves a local neighborhood around a specified 3D location in a dataset.
-        The neighborhood can be extracted either as a cubic region with a Gaussian-weighted kernel
-        (when `spherical=False`) or as a spherical region (when `spherical=True`).
+    This function retrieves a local neighborhood around a specified 3D location in a dataset.
+    The neighborhood can be extracted either as a cubic region with a Gaussian-weighted kernel
+    (when `spherical=False`) or as a spherical region (when `spherical=True`).
 
-        Parameters
-        ----------
-        indata : array_like
-            Input 3D dataset from which the neighborhood is extracted.
-        xloc, yloc, zloc : float or int
-            The center coordinates of the neighborhood in the dataset.
-        xsize, ysize, zsize : int
-            Dimensions of the input dataset along each axis.
-        radius : float or int
-            The radius of the neighborhood. For `spherical=False`, this defines the cubic
-            kernel size. For `spherical=True`, it defines the spherical radius.
-        spherical : bool, optional
-            If True, extracts a spherical neighborhood. If False, extracts a cubic neighborhood
-            with a Gaussian kernel. Default is False.
-        kernelwidth : float, optional
-            Width parameter for the Gaussian kernel used when `spherical=False`. Default is 1.5.
-        slop : float, optional
-            Tolerance for spherical radius checking. Default is 0.01.
-        debug : bool, optional
-            If True, prints debug information about the index list initialization. Default is False.
+    Parameters
+    ----------
+    indata : array_like
+        Input 3D dataset from which the neighborhood is extracted.
+    xloc, yloc, zloc : float or int
+        The center coordinates of the neighborhood in the dataset.
+    xsize, ysize, zsize : int
+        Dimensions of the input dataset along each axis.
+    radius : float or int
+        The radius of the neighborhood. For `spherical=False`, this defines the cubic
+        kernel size. For `spherical=True`, it defines the spherical radius.
+    spherical : bool, optional
+        If True, extracts a spherical neighborhood. If False, extracts a cubic neighborhood
+        with a Gaussian kernel. Default is False.
+    kernelwidth : float, optional
+        Width parameter for the Gaussian kernel used when `spherical=False`. Default is 1.5.
+    slop : float, optional
+        Tolerance for spherical radius checking. Default is 0.01.
+    debug : bool, optional
+        If True, prints debug information about the index list initialization. Default is False.
 
-        Returns
-        -------
-        ndarray
-            A flattened array of the neighborhood values. When `spherical=False`, the values
-            are weighted by a Gaussian kernel. When `spherical=True`, the values are unweighted.
+    Returns
+    -------
+    ndarray
+        A flattened array of the neighborhood values. When `spherical=False`, the values
+        are weighted by a Gaussian kernel. When `spherical=True`, the values are unweighted.
 
-        Notes
-        -----
-        - The function uses global variables `kernel`, `usedwidth`, `indexlist`, and `usedradius`
-          to cache computations for performance. These are initialized on first call.
-        - For `spherical=False`, the function returns a flattened array of the kernel-weighted
-          neighborhood.
-        - For `spherical=True`, the function returns a flattened array of values within the
-          spherical neighborhood.
+    Notes
+    -----
+    - The function uses global variables `kernel`, `usedwidth`, `indexlist`, and `usedradius`
+      to cache computations for performance. These are initialized on first call.
+    - For `spherical=False`, the function returns a flattened array of the kernel-weighted
+      neighborhood.
+    - For `spherical=True`, the function returns a flattened array of values within the
+      spherical neighborhood.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> data = np.random.rand(10, 10, 10)
-        >>> neighborhood = getneighborhood(data, 5, 5, 5, 10, 10, 10, 2, spherical=False)
-        >>> print(neighborhood.shape)
-        (125,)
-        >>> neighborhood = getneighborhood(data, 5, 5, 5, 10, 10, 10, 2, spherical=True)
-        >>> print(neighborhood.shape)
-        (33,)
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> data = np.random.rand(10, 10, 10)
+    >>> neighborhood = getneighborhood(data, 5, 5, 5, 10, 10, 10, 2, spherical=False)
+    >>> print(neighborhood.shape)
+    (125,)
+    >>> neighborhood = getneighborhood(data, 5, 5, 5, 10, 10, 10, 2, spherical=True)
+    >>> print(neighborhood.shape)
+    (33,)
+    """
     if not spherical:
         global usedwidth, kernel
         try:
@@ -321,55 +321,55 @@ def getMI(
     debug: bool = False,
 ) -> None:
     """
-        Compute the mutual information between two variables using binned estimation.
+    Compute the mutual information between two variables using binned estimation.
 
-        This function calculates the mutual information between two input arrays `x` and `y`,
-        using a binned approach. It supports normalization, automatic bin selection, and
-        optional pre-binning for performance optimization.
+    This function calculates the mutual information between two input arrays `x` and `y`,
+    using a binned approach. It supports normalization, automatic bin selection, and
+    optional pre-binning for performance optimization.
 
-        Parameters
-        ----------
-        x : array-like
-            First input variable.
-        y : array-like
-            Second input variable.
-        norm : bool, optional
-            If True, normalize the input variables using standard normalization
-            (zero mean, unit variance). Default is True.
-        bins : int, optional
-            Number of bins to use for the 2D histogram. If less than 1, the number
-            of bins is automatically determined as `max(int(sqrt(len(x) / 5)), 3)`.
-            Default is -1.
-        init : bool, optional
-            If True, reinitialize the global binning structure. Default is False.
-        prebin : bool, optional
-            If True, use precomputed bin edges. If False, use the number of bins
-            directly. Default is True.
-        sigma : float, optional
-            Standard deviation for Gaussian smoothing in the mutual information
-            calculation. Default is 0.25.
-        debug : bool, optional
-            If True, print debugging information during execution. Default is False.
+    Parameters
+    ----------
+    x : array-like
+        First input variable.
+    y : array-like
+        Second input variable.
+    norm : bool, optional
+        If True, normalize the input variables using standard normalization
+        (zero mean, unit variance). Default is True.
+    bins : int, optional
+        Number of bins to use for the 2D histogram. If less than 1, the number
+        of bins is automatically determined as `max(int(sqrt(len(x) / 5)), 3)`.
+        Default is -1.
+    init : bool, optional
+        If True, reinitialize the global binning structure. Default is False.
+    prebin : bool, optional
+        If True, use precomputed bin edges. If False, use the number of bins
+        directly. Default is True.
+    sigma : float, optional
+        Standard deviation for Gaussian smoothing in the mutual information
+        calculation. Default is 0.25.
+    debug : bool, optional
+        If True, print debugging information during execution. Default is False.
 
-        Returns
-        -------
-        None
-            The function returns the result of `tide_corr.mutual_info_2d`, which is
-            not explicitly returned here but is the core output of the function.
+    Returns
+    -------
+    None
+        The function returns the result of `tide_corr.mutual_info_2d`, which is
+        not explicitly returned here but is the core output of the function.
 
-        Notes
-        -----
-        The function uses a global variable `thebins` to store binning information.
-        If `init` is True or `thebins` is None, bin edges are computed and stored
-        in `thebins`. The function relies on `tide_math.stdnormalize` for normalization
-        and `tide_corr.mutual_info_2d` for the actual mutual information computation.
+    Notes
+    -----
+    The function uses a global variable `thebins` to store binning information.
+    If `init` is True or `thebins` is None, bin edges are computed and stored
+    in `thebins`. The function relies on `tide_math.stdnormalize` for normalization
+    and `tide_corr.mutual_info_2d` for the actual mutual information computation.
 
-        Examples
-        --------
-        >>> x = [1, 2, 3, 4, 5]
-        >>> y = [2, 4, 6, 8, 10]
-        >>> getMI(x, y, norm=True, bins=10, debug=False)
-        """
+    Examples
+    --------
+    >>> x = [1, 2, 3, 4, 5]
+    >>> y = [2, 4, 6, 8, 10]
+    >>> getMI(x, y, norm=True, bins=10, debug=False)
+    """
     global thebins
 
     if norm:
@@ -426,80 +426,80 @@ def getMI(
 
 def spatialmi(args: Any) -> None:
     """
-        Compute spatial mutual information (MI) between two 3D images over a specified neighborhood.
+    Compute spatial mutual information (MI) between two 3D images over a specified neighborhood.
 
-        This function reads two input NIfTI images and their corresponding masks, computes the
-        mutual information between the images within a local neighborhood for each voxel,
-        and saves the result as a NIfTI file. Optional spatial filtering can be applied
-        before computing the MI.
+    This function reads two input NIfTI images and their corresponding masks, computes the
+    mutual information between the images within a local neighborhood for each voxel,
+    and saves the result as a NIfTI file. Optional spatial filtering can be applied
+    before computing the MI.
 
-        Parameters
-        ----------
-        args : Any
-            Parsed command-line arguments containing:
-            - inputfilename1 : str
-                Path to the first input NIfTI image.
-            - inputfilename2 : str
-                Path to the second input NIfTI image.
-            - maskfilename1 : str
-                Path to the mask for the first image.
-            - maskfilename2 : str
-                Path to the mask for the second image.
-            - index1 : int, optional
-                Index of the time point to use from the first image (default is 0).
-            - index2 : int, optional
-                Index of the time point to use from the second image (default is 0).
-            - radius : float
-                Neighborhood radius for computing mutual information.
-            - sigma : float, optional
-                Standard deviation for spatial smoothing (default is None).
-            - spherical : bool
-                Whether to use a spherical neighborhood (default is False).
-            - kernelwidth : float
-                Width of the kernel for neighborhood computation (default is None).
-            - norm : bool
-                Whether to normalize the data before computing MI (default is False).
-            - prebin : bool
-                Whether to pre-bin the data (default is False).
-            - debug : bool
-                Enable debug output (default is False).
-            - outputroot : str
-                Root name for the output NIfTI file.
+    Parameters
+    ----------
+    args : Any
+        Parsed command-line arguments containing:
+        - inputfilename1 : str
+            Path to the first input NIfTI image.
+        - inputfilename2 : str
+            Path to the second input NIfTI image.
+        - maskfilename1 : str
+            Path to the mask for the first image.
+        - maskfilename2 : str
+            Path to the mask for the second image.
+        - index1 : int, optional
+            Index of the time point to use from the first image (default is 0).
+        - index2 : int, optional
+            Index of the time point to use from the second image (default is 0).
+        - radius : float
+            Neighborhood radius for computing mutual information.
+        - sigma : float, optional
+            Standard deviation for spatial smoothing (default is None).
+        - spherical : bool
+            Whether to use a spherical neighborhood (default is False).
+        - kernelwidth : float
+            Width of the kernel for neighborhood computation (default is None).
+        - norm : bool
+            Whether to normalize the data before computing MI (default is False).
+        - prebin : bool
+            Whether to pre-bin the data (default is False).
+        - debug : bool
+            Enable debug output (default is False).
+        - outputroot : str
+            Root name for the output NIfTI file.
 
-        Returns
-        -------
-        None
-            The function writes the computed spatial mutual information to a NIfTI file
-            named `<outputroot>_result.nii.gz`.
+    Returns
+    -------
+    None
+        The function writes the computed spatial mutual information to a NIfTI file
+        named `<outputroot>_result.nii.gz`.
 
-        Notes
-        -----
-        - The function requires that both input images and their masks have matching spatial dimensions.
-        - If `sigma` is specified, spatial filtering is applied using a Gaussian kernel.
-        - The neighborhood is defined by the `radius` and `spherical` parameters.
-        - The output file contains mutual information values for each voxel in the masked region.
+    Notes
+    -----
+    - The function requires that both input images and their masks have matching spatial dimensions.
+    - If `sigma` is specified, spatial filtering is applied using a Gaussian kernel.
+    - The neighborhood is defined by the `radius` and `spherical` parameters.
+    - The output file contains mutual information values for each voxel in the masked region.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     inputfilename1='image1.nii.gz',
-        ...     inputfilename2='image2.nii.gz',
-        ...     maskfilename1='mask1.nii.gz',
-        ...     maskfilename2='mask2.nii.gz',
-        ...     index1=0,
-        ...     index2=0,
-        ...     radius=5.0,
-        ...     sigma=None,
-        ...     spherical=True,
-        ...     kernelwidth=None,
-        ...     norm=False,
-        ...     prebin=False,
-        ...     debug=False,
-        ...     outputroot='output'
-        ... )
-        >>> spatialmi(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     inputfilename1='image1.nii.gz',
+    ...     inputfilename2='image2.nii.gz',
+    ...     maskfilename1='mask1.nii.gz',
+    ...     maskfilename2='mask2.nii.gz',
+    ...     index1=0,
+    ...     index2=0,
+    ...     radius=5.0,
+    ...     sigma=None,
+    ...     spherical=True,
+    ...     kernelwidth=None,
+    ...     norm=False,
+    ...     prebin=False,
+    ...     debug=False,
+    ...     outputroot='output'
+    ... )
+    >>> spatialmi(args)
+    """
     global thebins
     thebins = None
 

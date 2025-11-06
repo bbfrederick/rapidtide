@@ -46,34 +46,34 @@ DEFAULT_MINLAGDIFF = 0.0
 
 def _get_parser() -> Any:
     """
-        Create and configure an argument parser for the localflow command-line tool.
+    Create and configure an argument parser for the localflow command-line tool.
 
-        This function sets up an `argparse.ArgumentParser` with a set of predefined
-        command-line arguments used to control the behavior of the local flow analysis
-        pipeline. It includes options for input/output file handling, reconstruction
-        parameters, filtering, windowing, and debugging.
+    This function sets up an `argparse.ArgumentParser` with a set of predefined
+    command-line arguments used to control the behavior of the local flow analysis
+    pipeline. It includes options for input/output file handling, reconstruction
+    parameters, filtering, windowing, and debugging.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser with all required and optional arguments.
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser with all required and optional arguments.
 
-        Notes
-        -----
-        The parser includes the following argument groups:
-        - Required positional arguments: `inputfilename` and `outputroot`
-        - Optional arguments for reconstruction parameters such as `npasses`, `radius`,
-          `minlagdiff`, `ampthresh`, `gausssigma`, `oversampfac`, `dofit`, `detrendorder`,
-          and `nosphere`
-        - Miscellaneous options including `noprogressbar` and `debug`
+    Notes
+    -----
+    The parser includes the following argument groups:
+    - Required positional arguments: `inputfilename` and `outputroot`
+    - Optional arguments for reconstruction parameters such as `npasses`, `radius`,
+      `minlagdiff`, `ampthresh`, `gausssigma`, `oversampfac`, `dofit`, `detrendorder`,
+      and `nosphere`
+    - Miscellaneous options including `noprogressbar` and `debug`
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        >>> print(args.inputfilename)
-        'input.nii.gz'
-        """
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    >>> print(args.inputfilename)
+    'input.nii.gz'
+    """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="localflow",
@@ -193,67 +193,67 @@ def preprocdata(
     showprogressbar: bool = True,
 ) -> None:
     """
-        Preprocess fMRI data by resampling, filtering, and normalizing voxel time series.
+    Preprocess fMRI data by resampling, filtering, and normalizing voxel time series.
 
-        This function applies a series of preprocessing steps to fMRI data including:
-        resampling to a higher temporal resolution, applying a filter, and detrending
-        with correlation normalization. It processes each voxel individually based on
-        a provided mask.
+    This function applies a series of preprocessing steps to fMRI data including:
+    resampling to a higher temporal resolution, applying a filter, and detrending
+    with correlation normalization. It processes each voxel individually based on
+    a provided mask.
 
-        Parameters
-        ----------
-        fmridata : array-like
-            4D fMRI data array with shape (nx, ny, nz, nt), where nx, ny, nz are spatial
-            dimensions and nt is the number of time points.
-        themask : array-like
-            3D binary mask array with the same spatial dimensions as `fmridata`. Voxels
-            with values > 0 are processed.
-        theprefilter : object
-            A filter object with an `apply` method that applies a temporal filter to the data.
-        oversamplefactor : float
-            Factor by which to oversample the data. Must be a positive number.
-        Fs : float
-            Sampling frequency of the original fMRI data in Hz.
-        tr : float
-            Repetition time (TR) of the fMRI acquisition in seconds.
-        detrendorder : int, optional
-            Order of the polynomial used for detrending. Default is 3.
-        windowfunc : str, optional
-            Window function used for correlation normalization. Default is "hamming".
-        padseconds : int, optional
-            Number of seconds to pad the resampled signal. Default is 0.
-        showprogressbar : bool, optional
-            Whether to display a progress bar during voxel processing. Default is True.
+    Parameters
+    ----------
+    fmridata : array-like
+        4D fMRI data array with shape (nx, ny, nz, nt), where nx, ny, nz are spatial
+        dimensions and nt is the number of time points.
+    themask : array-like
+        3D binary mask array with the same spatial dimensions as `fmridata`. Voxels
+        with values > 0 are processed.
+    theprefilter : object
+        A filter object with an `apply` method that applies a temporal filter to the data.
+    oversamplefactor : float
+        Factor by which to oversample the data. Must be a positive number.
+    Fs : float
+        Sampling frequency of the original fMRI data in Hz.
+    tr : float
+        Repetition time (TR) of the fMRI acquisition in seconds.
+    detrendorder : int, optional
+        Order of the polynomial used for detrending. Default is 3.
+    windowfunc : str, optional
+        Window function used for correlation normalization. Default is "hamming".
+    padseconds : int, optional
+        Number of seconds to pad the resampled signal. Default is 0.
+    showprogressbar : bool, optional
+        Whether to display a progress bar during voxel processing. Default is True.
 
-        Returns
-        -------
-        tuple
-            A tuple containing:
-            - osfmridata_byvox : ndarray
-                Resampled and filtered fMRI data for processed voxels, shape (numvoxels, ostimepoints).
-            - ostimepoints : int
-                Number of time points in the oversampled data.
-            - oversamptr : float
-                Oversampled repetition time.
-            - numvoxelsprocessed : int
-                Total number of voxels processed.
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - osfmridata_byvox : ndarray
+            Resampled and filtered fMRI data for processed voxels, shape (numvoxels, ostimepoints).
+        - ostimepoints : int
+            Number of time points in the oversampled data.
+        - oversamptr : float
+            Oversampled repetition time.
+        - numvoxelsprocessed : int
+            Total number of voxels processed.
 
-        Notes
-        -----
-        This function modifies the input data in-place during processing. The output includes
-        only the voxels that are marked as active in `themask`.
+    Notes
+    -----
+    This function modifies the input data in-place during processing. The output includes
+    only the voxels that are marked as active in `themask`.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> from some_module import preprocdata
-        >>> fmri_data = np.random.rand(64, 64, 32, 100)
-        >>> mask = np.ones((64, 64, 32))
-        >>> filter_obj = SomeFilter()
-        >>> result = preprocdata(
-        ...     fmri_data, mask, filter_obj, oversamplefactor=2.0, Fs=2.0, tr=2.0
-        ... )
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from some_module import preprocdata
+    >>> fmri_data = np.random.rand(64, 64, 32, 100)
+    >>> mask = np.ones((64, 64, 32))
+    >>> filter_obj = SomeFilter()
+    >>> result = preprocdata(
+    ...     fmri_data, mask, filter_obj, oversamplefactor=2.0, Fs=2.0, tr=2.0
+    ... )
+    """
     numspatiallocs = fmridata.shape[0] * fmridata.shape[1] * fmridata.shape[2]
     timepoints = fmridata.shape[3]
 
@@ -311,61 +311,61 @@ def getcorrloc(
     debug: bool = False,
 ) -> None:
     """
-        Compute the cross-correlation peak between two time series and optionally fit it.
+    Compute the cross-correlation peak between two time series and optionally fit it.
 
-        This function computes the cross-correlation between two time series selected
-        from `thedata` using indices `idx1` and `idx2`. It returns the maximum correlation
-        value, the corresponding time lag, a mask indicating success, and a failure reason.
+    This function computes the cross-correlation between two time series selected
+    from `thedata` using indices `idx1` and `idx2`. It returns the maximum correlation
+    value, the corresponding time lag, a mask indicating success, and a failure reason.
 
-        Parameters
-        ----------
-        thedata : array_like
-            Input data array of shape (n_channels, n_samples).
-        idx1 : int or array_like
-            Index or indices of the first time series in `thedata`.
-        idx2 : int or array_like
-            Index or indices of the second time series in `thedata`.
-        Fs : float
-            Sampling frequency of the data.
-        dofit : bool, optional
-            If True, perform a peak fit on the cross-correlation function. Default is False.
-        lagmin : float, optional
-            Minimum lag to consider in seconds. Default is -12.5.
-        lagmax : float, optional
-            Maximum lag to consider in seconds. Default is 12.5.
-        widthmax : float, optional
-            Maximum width for fitting. Default is 100.0.
-        negsearch : float, optional
-            Search range for negative lags in seconds. Default is 15.0.
-        possearch : float, optional
-            Search range for positive lags in seconds. Default is 15.0.
-        padding : int, optional
-            Zero-padding for FFT-based correlation. Default is 0.
-        debug : bool, optional
-            If True, print debug information. Default is False.
+    Parameters
+    ----------
+    thedata : array_like
+        Input data array of shape (n_channels, n_samples).
+    idx1 : int or array_like
+        Index or indices of the first time series in `thedata`.
+    idx2 : int or array_like
+        Index or indices of the second time series in `thedata`.
+    Fs : float
+        Sampling frequency of the data.
+    dofit : bool, optional
+        If True, perform a peak fit on the cross-correlation function. Default is False.
+    lagmin : float, optional
+        Minimum lag to consider in seconds. Default is -12.5.
+    lagmax : float, optional
+        Maximum lag to consider in seconds. Default is 12.5.
+    widthmax : float, optional
+        Maximum width for fitting. Default is 100.0.
+    negsearch : float, optional
+        Search range for negative lags in seconds. Default is 15.0.
+    possearch : float, optional
+        Search range for positive lags in seconds. Default is 15.0.
+    padding : int, optional
+        Zero-padding for FFT-based correlation. Default is 0.
+    debug : bool, optional
+        If True, print debug information. Default is False.
 
-        Returns
-        -------
-        tuple
-            A tuple of (maxcorr, maxtime, maskval, failreason) where:
-            - maxcorr: Maximum correlation value.
-            - maxtime: Time lag corresponding to maxcorr in seconds.
-            - maskval: Mask indicating fit success (1 = success, 0 = failure).
-            - failreason: Numeric code indicating reason for fit failure (0 = no failure).
+    Returns
+    -------
+    tuple
+        A tuple of (maxcorr, maxtime, maskval, failreason) where:
+        - maxcorr: Maximum correlation value.
+        - maxtime: Time lag corresponding to maxcorr in seconds.
+        - maskval: Mask indicating fit success (1 = success, 0 = failure).
+        - failreason: Numeric code indicating reason for fit failure (0 = no failure).
 
-        Notes
-        -----
-        - If either time series contains all zeros, the function returns (0.0, 0.0, 0, 0).
-        - The function uses `tide_corr.fastcorrelate` for correlation and `tide_fit.simfuncpeakfit`
-          for fitting when `dofit=True`.
+    Notes
+    -----
+    - If either time series contains all zeros, the function returns (0.0, 0.0, 0, 0).
+    - The function uses `tide_corr.fastcorrelate` for correlation and `tide_fit.simfuncpeakfit`
+      for fitting when `dofit=True`.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> data = np.random.rand(10, 1000)
-        >>> corr, time, mask, reason = getcorrloc(data, 0, 1, Fs=100, dofit=True)
-        >>> print(f"Correlation: {corr}, Lag: {time}s")
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> data = np.random.rand(10, 1000)
+    >>> corr, time, mask, reason = getcorrloc(data, 0, 1, Fs=100, dofit=True)
+    >>> print(f"Correlation: {corr}, Lag: {time}s")
+    """
     tc1 = thedata[idx1, :]
     tc2 = thedata[idx2, :]
     if np.any(tc1) != 0.0 and np.any(tc2) != 0.0:
@@ -451,42 +451,42 @@ def getcorrloc(
 
 def xyz2index(x: Any, y: Any, z: Any, xsize: Any, ysize: Any, zsize: Any) -> None:
     """
-        Convert 3D coordinates to a linear index for a 3D array.
-    
-        This function maps 3D coordinates (x, y, z) to a linear index assuming
-        row-major order storage of a 3D array with dimensions (xsize, ysize, zsize).
-    
-        Parameters
-        ----------
-        x : Any
-            X-coordinate, should be between 0 and xsize-1 inclusive
-        y : Any
-            Y-coordinate, should be between 0 and ysize-1 inclusive
-        z : Any
-            Z-coordinate, should be between 0 and zsize-1 inclusive
-        xsize : Any
-            Size of the array along the x-axis
-        ysize : Any
-            Size of the array along the y-axis
-        zsize : Any
-            Size of the array along the z-axis
-    
-        Returns
-        -------
-        int
-            Linear index if coordinates are valid (within bounds), -1 otherwise
-        
-        Notes
-        -----
-        The function uses row-major order indexing: index = z + y * zsize + x * zsize * ysize
-    
-        Examples
-        --------
-        >>> xyz2index(1, 2, 3, 10, 10, 10)
-        321
-        >>> xyz2index(15, 2, 3, 10, 10, 10)
-        -1
-        """
+    Convert 3D coordinates to a linear index for a 3D array.
+
+    This function maps 3D coordinates (x, y, z) to a linear index assuming
+    row-major order storage of a 3D array with dimensions (xsize, ysize, zsize).
+
+    Parameters
+    ----------
+    x : Any
+        X-coordinate, should be between 0 and xsize-1 inclusive
+    y : Any
+        Y-coordinate, should be between 0 and ysize-1 inclusive
+    z : Any
+        Z-coordinate, should be between 0 and zsize-1 inclusive
+    xsize : Any
+        Size of the array along the x-axis
+    ysize : Any
+        Size of the array along the y-axis
+    zsize : Any
+        Size of the array along the z-axis
+
+    Returns
+    -------
+    int
+        Linear index if coordinates are valid (within bounds), -1 otherwise
+
+    Notes
+    -----
+    The function uses row-major order indexing: index = z + y * zsize + x * zsize * ysize
+
+    Examples
+    --------
+    >>> xyz2index(1, 2, 3, 10, 10, 10)
+    321
+    >>> xyz2index(15, 2, 3, 10, 10, 10)
+    -1
+    """
     if (0 <= x < xsize) and (0 <= y < ysize) and (0 <= z < zsize):
         return int(z) + int(y) * int(zsize) + int(x) * int(zsize * ysize)
     else:
@@ -495,44 +495,44 @@ def xyz2index(x: Any, y: Any, z: Any, xsize: Any, ysize: Any, zsize: Any) -> Non
 
 def index2xyz(theindex: Any, ysize: Any, zsize: Any) -> None:
     """
-        Convert a linear index to 3D coordinates (x, y, z).
-    
-        This function maps a 1D index to 3D coordinates within a 3D grid
-        with dimensions determined by ysize and zsize. The conversion assumes
-        row-major ordering where the index is distributed across the three
-        dimensions based on the product of the grid dimensions.
-    
-        Parameters
-        ----------
-        theindex : Any
-            The linear index to be converted to 3D coordinates
-        ysize : Any
-            The size of the grid in the y dimension
-        zsize : Any
-            The size of the grid in the z dimension
-        
-        Returns
-        -------
-        tuple
-            A tuple containing (x, y, z) coordinates corresponding to the input index
-        
-        Notes
-        -----
-        The function assumes that the grid dimensions are such that the total
-        number of elements is sufficient to accommodate the given index.
-        The conversion follows the formula:
-        - x = index // (ysize * zsize)
-        - y = (index - x * ysize * zsize) // zsize
-        - z = index - x * ysize * zsize - y * zsize
-    
-        Examples
-        --------
-        >>> index2xyz(10, 3, 4)
-        (0, 0, 10)
-    
-        >>> index2xyz(25, 3, 4)
-        (2, 0, 1)
-        """
+    Convert a linear index to 3D coordinates (x, y, z).
+
+    This function maps a 1D index to 3D coordinates within a 3D grid
+    with dimensions determined by ysize and zsize. The conversion assumes
+    row-major ordering where the index is distributed across the three
+    dimensions based on the product of the grid dimensions.
+
+    Parameters
+    ----------
+    theindex : Any
+        The linear index to be converted to 3D coordinates
+    ysize : Any
+        The size of the grid in the y dimension
+    zsize : Any
+        The size of the grid in the z dimension
+
+    Returns
+    -------
+    tuple
+        A tuple containing (x, y, z) coordinates corresponding to the input index
+
+    Notes
+    -----
+    The function assumes that the grid dimensions are such that the total
+    number of elements is sufficient to accommodate the given index.
+    The conversion follows the formula:
+    - x = index // (ysize * zsize)
+    - y = (index - x * ysize * zsize) // zsize
+    - z = index - x * ysize * zsize - y * zsize
+
+    Examples
+    --------
+    >>> index2xyz(10, 3, 4)
+    (0, 0, 10)
+
+    >>> index2xyz(25, 3, 4)
+    (2, 0, 1)
+    """
     x = theindex // int(zsize * ysize)
     theindex -= int(x) * int(zsize * ysize)
     y = theindex // int(zsize)
@@ -543,79 +543,79 @@ def index2xyz(theindex: Any, ysize: Any, zsize: Any) -> None:
 
 def localflow(args: Any) -> None:
     """
-        Perform local flow analysis on fMRI data.
+    Perform local flow analysis on fMRI data.
 
-        This function processes fMRI data to compute local correlation and delay information
-        across spatial neighbors, followed by a reconstruction step to estimate time delays
-        in the signal propagation.
+    This function processes fMRI data to compute local correlation and delay information
+    across spatial neighbors, followed by a reconstruction step to estimate time delays
+    in the signal propagation.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing various arguments for processing, including:
-            - inputfilename : str
-                Path to the input NIfTI file.
-            - outputroot : str
-                Root name for output files.
-            - gausssigma : float
-                Sigma for Gaussian spatial smoothing. If less than 0, automatically computed.
-            - oversampfactor : int
-                Oversampling factor for preprocessing. If -1, computed automatically.
-            - detrendorder : int
-                Order of detrending to apply.
-            - windowfunc : str
-                Window function to use for preprocessing.
-            - padseconds : float
-                Padding in seconds for preprocessing.
-            - showprogressbar : bool
-                Whether to show progress bars.
-            - dofit : bool
-                Whether to fit the correlation.
-            - debug : bool
-                Whether to enable debug mode.
-            - radius : float
-                Neighborhood radius in mm.
-            - npasses : int
-                Number of reconstruction passes.
-            - ampthresh : float
-                Amplitude threshold for valid correlations.
+    Parameters
+    ----------
+    args : Any
+        An object containing various arguments for processing, including:
+        - inputfilename : str
+            Path to the input NIfTI file.
+        - outputroot : str
+            Root name for output files.
+        - gausssigma : float
+            Sigma for Gaussian spatial smoothing. If less than 0, automatically computed.
+        - oversampfactor : int
+            Oversampling factor for preprocessing. If -1, computed automatically.
+        - detrendorder : int
+            Order of detrending to apply.
+        - windowfunc : str
+            Window function to use for preprocessing.
+        - padseconds : float
+            Padding in seconds for preprocessing.
+        - showprogressbar : bool
+            Whether to show progress bars.
+        - dofit : bool
+            Whether to fit the correlation.
+        - debug : bool
+            Whether to enable debug mode.
+        - radius : float
+            Neighborhood radius in mm.
+        - npasses : int
+            Number of reconstruction passes.
+        - ampthresh : float
+            Amplitude threshold for valid correlations.
 
-        Returns
-        -------
-        None
-            This function does not return a value but saves multiple NIfTI files and timing logs.
+    Returns
+    -------
+    None
+        This function does not return a value but saves multiple NIfTI files and timing logs.
 
-        Notes
-        -----
-        The function performs the following steps:
-        1. Reads and preprocesses input fMRI data.
-        2. Applies spatial filtering if specified.
-        3. Prepares data for correlation analysis.
-        4. Identifies spatial neighbors within a specified radius.
-        5. Computes local correlations and delays.
-        6. Reconstructs time delays using iterative averaging.
-        7. Saves results as NIfTI files.
+    Notes
+    -----
+    The function performs the following steps:
+    1. Reads and preprocesses input fMRI data.
+    2. Applies spatial filtering if specified.
+    3. Prepares data for correlation analysis.
+    4. Identifies spatial neighbors within a specified radius.
+    5. Computes local correlations and delays.
+    6. Reconstructs time delays using iterative averaging.
+    7. Saves results as NIfTI files.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     inputfilename="fmri.nii.gz",
-        ...     outputroot="output",
-        ...     gausssigma=-1.0,
-        ...     oversampfactor=-1,
-        ...     detrendorder=1,
-        ...     windowfunc="hann",
-        ...     padseconds=10.0,
-        ...     showprogressbar=True,
-        ...     dofit=True,
-        ...     debug=False,
-        ...     radius=5.0,
-        ...     npasses=5,
-        ...     ampthresh=0.1
-        ... )
-        >>> localflow(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     inputfilename="fmri.nii.gz",
+    ...     outputroot="output",
+    ...     gausssigma=-1.0,
+    ...     oversampfactor=-1,
+    ...     detrendorder=1,
+    ...     windowfunc="hann",
+    ...     padseconds=10.0,
+    ...     showprogressbar=True,
+    ...     dofit=True,
+    ...     debug=False,
+    ...     radius=5.0,
+    ...     npasses=5,
+    ...     ampthresh=0.1
+    ... )
+    >>> localflow(args)
+    """
     # set default variable values
     displayplots = False
 

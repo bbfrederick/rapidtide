@@ -31,30 +31,30 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Argument parser for filttc.
-    
-        This function constructs and returns an `argparse.ArgumentParser` object configured
-        for parsing command-line arguments for the `filttc` tool, which filters timecourse
-        data in text files. It includes support for specifying sampling rate or timestep,
-        filter options, normalization methods, and miscellaneous flags.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser for the filttc tool.
-        
-        Notes
-        -----
-        The `--samplerate` and `--sampletstep` arguments are mutually exclusive and define
-        the sampling frequency of the input timecourses. The sampling frequency can be
-        specified either as a frequency (Hz) or as a timestep (seconds), with the latter
-        being the inverse of the former.
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['--inputfile', 'input.txt', '--outputfile', 'output.txt'])
-        """
+    Argument parser for filttc.
+
+    This function constructs and returns an `argparse.ArgumentParser` object configured
+    for parsing command-line arguments for the `filttc` tool, which filters timecourse
+    data in text files. It includes support for specifying sampling rate or timestep,
+    filter options, normalization methods, and miscellaneous flags.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for the filttc tool.
+
+    Notes
+    -----
+    The `--samplerate` and `--sampletstep` arguments are mutually exclusive and define
+    the sampling frequency of the input timecourses. The sampling frequency can be
+    specified either as a frequency (Hz) or as a timestep (seconds), with the latter
+    being the inverse of the former.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['--inputfile', 'input.txt', '--outputfile', 'output.txt'])
+    """
     parser = argparse.ArgumentParser(
         prog="filttc",
         description=("Filter timecourse data in text files"),
@@ -131,51 +131,51 @@ def _get_parser() -> Any:
 
 def filttc(args: Any) -> None:
     """
-        Apply a filter to timecourse data read from a text file and write the filtered output.
+    Apply a filter to timecourse data read from a text file and write the filtered output.
 
-        This function reads timecourse data from a specified input file, applies a filter
-        to each timecourse, and writes the filtered data to an output file. It supports
-        normalization, demeaning, and automatic sampling rate detection from the input file
-        or command-line arguments.
+    This function reads timecourse data from a specified input file, applies a filter
+    to each timecourse, and writes the filtered data to an output file. It supports
+    normalization, demeaning, and automatic sampling rate detection from the input file
+    or command-line arguments.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing command-line arguments. Expected attributes include:
-            - `inputfile`: Path to the input text file containing timecourse data.
-            - `outputfile`: Path to the output text file where filtered data will be written.
-            - `samplerate`: Sampling rate of the data, or 'auto' to detect from file.
-            - `normfirst`: Boolean indicating whether to normalize before filtering.
-            - `normmethod`: Normalization method to use (e.g., 'zscore', 'minmax').
-            - `demean`: Boolean indicating whether to remove the mean from the filtered data.
+    Parameters
+    ----------
+    args : Any
+        An object containing command-line arguments. Expected attributes include:
+        - `inputfile`: Path to the input text file containing timecourse data.
+        - `outputfile`: Path to the output text file where filtered data will be written.
+        - `samplerate`: Sampling rate of the data, or 'auto' to detect from file.
+        - `normfirst`: Boolean indicating whether to normalize before filtering.
+        - `normmethod`: Normalization method to use (e.g., 'zscore', 'minmax').
+        - `demean`: Boolean indicating whether to remove the mean from the filtered data.
 
-        Returns
-        -------
-        None
-            This function does not return a value. It writes the filtered timecourse data
-            to the specified output file.
+    Returns
+    -------
+    None
+        This function does not return a value. It writes the filtered timecourse data
+        to the specified output file.
 
-        Notes
-        -----
-        - The input file must contain a header specifying the sampling rate, or the
-          sampling rate must be provided via command-line arguments.
-        - The filtering and normalization are applied independently to each timecourse.
-        - If `normfirst` is True, normalization is applied before filtering; otherwise,
-          filtering is applied before normalization.
+    Notes
+    -----
+    - The input file must contain a header specifying the sampling rate, or the
+      sampling rate must be provided via command-line arguments.
+    - The filtering and normalization are applied independently to each timecourse.
+    - If `normfirst` is True, normalization is applied before filtering; otherwise,
+      filtering is applied before normalization.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     inputfile='input.txt',
-        ...     outputfile='output.txt',
-        ...     samplerate='auto',
-        ...     normfirst=False,
-        ...     normmethod='zscore',
-        ...     demean=True
-        ... )
-        >>> filttc(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     inputfile='input.txt',
+    ...     outputfile='output.txt',
+    ...     samplerate='auto',
+    ...     normfirst=False,
+    ...     normmethod='zscore',
+    ...     demean=True
+    ... )
+    >>> filttc(args)
+    """
     args, thefilter = pf.postprocessfilteropts(args)
 
     # read in data

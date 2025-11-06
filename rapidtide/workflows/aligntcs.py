@@ -31,30 +31,30 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Construct and return an argument parser for aligning two time series.
+    Construct and return an argument parser for aligning two time series.
 
-        This function sets up an `argparse.ArgumentParser` with required and optional
-        arguments for resampling and aligning two time series datasets. It supports
-        specifying input files, sample rates, output file, and various processing options
-        such as plotting and verbosity.
+    This function sets up an `argparse.ArgumentParser` with required and optional
+    arguments for resampling and aligning two time series datasets. It supports
+    specifying input files, sample rates, output file, and various processing options
+    such as plotting and verbosity.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object with all necessary arguments for
-            time series alignment.
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object with all necessary arguments for
+        time series alignment.
 
-        Notes
-        -----
-        The function uses a custom helper `pf.is_float` to validate sample rate inputs.
-        It also adds search range and filter options via `pf.addsearchrangeopts` and
-        `pf.addfilteropts`.
+    Notes
+    -----
+    The function uses a custom helper `pf.is_float` to validate sample rate inputs.
+    It also adds search range and filter options via `pf.addsearchrangeopts` and
+    `pf.addfilteropts`.
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        """
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="aligntcs",
@@ -111,62 +111,62 @@ def _get_parser() -> Any:
 
 def aligntcs(args: Any) -> None:
     """
-        Align two time series using cross-correlation and resampling.
+    Align two time series using cross-correlation and resampling.
 
-        This function reads two input time series from text files, aligns them based on
-        cross-correlation, and writes the aligned second time series to an output file.
-        Optional plotting of cross-correlation and aligned signals can be enabled via
-        the `displayplots` argument in `args`.
+    This function reads two input time series from text files, aligns them based on
+    cross-correlation, and writes the aligned second time series to an output file.
+    Optional plotting of cross-correlation and aligned signals can be enabled via
+    the `displayplots` argument in `args`.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing the following attributes:
-            - infile1 : str
-                Path to the first input text file.
-            - infile2 : str
-                Path to the second input text file.
-            - insamplerate1 : float
-                Sampling rate of the first input signal.
-            - insamplerate2 : float
-                Sampling rate of the second input signal.
-            - outputfile : str
-                Path to the output file where the aligned second signal will be written.
-            - lagmin : float
-                Minimum lag for cross-correlation search.
-            - lagmax : float
-                Maximum lag for cross-correlation search.
-            - displayplots : bool
-                If True, displays cross-correlation and aligned signals using matplotlib.
+    Parameters
+    ----------
+    args : Any
+        An object containing the following attributes:
+        - infile1 : str
+            Path to the first input text file.
+        - infile2 : str
+            Path to the second input text file.
+        - insamplerate1 : float
+            Sampling rate of the first input signal.
+        - insamplerate2 : float
+            Sampling rate of the second input signal.
+        - outputfile : str
+            Path to the output file where the aligned second signal will be written.
+        - lagmin : float
+            Minimum lag for cross-correlation search.
+        - lagmax : float
+            Maximum lag for cross-correlation search.
+        - displayplots : bool
+            If True, displays cross-correlation and aligned signals using matplotlib.
 
-        Returns
-        -------
-        None
-            This function does not return a value but writes the aligned data to a file
-            and optionally displays plots.
+    Returns
+    -------
+    None
+        This function does not return a value but writes the aligned data to a file
+        and optionally displays plots.
 
-        Notes
-        -----
-        - The function applies a prefilter to the input data before alignment.
-        - The second time series is resampled to match the timing of the first.
-        - Cross-correlation is performed using a fast correlation method.
-        - If `displayplots` is True, the function will use the 'TkAgg' backend for matplotlib.
+    Notes
+    -----
+    - The function applies a prefilter to the input data before alignment.
+    - The second time series is resampled to match the timing of the first.
+    - Cross-correlation is performed using a fast correlation method.
+    - If `displayplots` is True, the function will use the 'TkAgg' backend for matplotlib.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     infile1='signal1.txt',
-        ...     infile2='signal2.txt',
-        ...     insamplerate1=100.0,
-        ...     insamplerate2=100.0,
-        ...     outputfile='aligned_signal2.txt',
-        ...     lagmin=-0.1,
-        ...     lagmax=0.1,
-        ...     displayplots=False
-        ... )
-        >>> aligntcs(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     infile1='signal1.txt',
+    ...     infile2='signal2.txt',
+    ...     insamplerate1=100.0,
+    ...     insamplerate2=100.0,
+    ...     outputfile='aligned_signal2.txt',
+    ...     lagmin=-0.1,
+    ...     lagmax=0.1,
+    ...     displayplots=False
+    ... )
+    >>> aligntcs(args)
+    """
     if args.displayplots:
         import matplotlib as mpl
 

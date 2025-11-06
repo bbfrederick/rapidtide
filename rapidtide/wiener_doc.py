@@ -32,55 +32,55 @@ def _procOneVoxelWiener(
     rt_floattype: str = "float64",
 ) -> tuple[int, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
     """
-        Perform Wiener filter processing on a single voxel time series.
-    
-        This function applies a Wiener filter to remove the lagged component from
-        the initial time course, returning both the filtered and unfiltered results
-        along with fitting statistics.
-    
-        Parameters
-        ----------
-        vox : int
-            Voxel index identifier
-        lagtc : NDArray
-            Lagged time course data (input signal)
-        inittc : NDArray
-            Initial time course data (target signal)
-        rt_floatset : type, optional
-            Real-time float type for output arrays, default is np.float64
-        rt_floattype : str, optional
-            String representation of the real-time float type, default is "float64"
-        
-        Returns
-        -------
-        tuple[int, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]
-            A tuple containing:
-            - vox (int): Input voxel index
-            - intercept (NDArray): Regression intercept term
-            - sqrt_R2 (NDArray): Square root of coefficient of determination
-            - R2 (NDArray): Coefficient of determination
-            - fitcoff (NDArray): Fitting coefficient
-            - ratio (NDArray): Ratio of slope to intercept
-            - datatoremove (NDArray): Data to be removed (filtered signal)
-            - residual (NDArray): Residual signal (unfiltered data)
-        
-        Notes
-        -----
-        This function uses maximum likelihood regression to estimate the relationship
-        between lagged and initial time courses, then applies the Wiener filter
-        to remove the lagged component from the initial signal.
-    
-        Examples
-        --------
-        >>> import numpy as np
-        >>> lagtc = np.array([1.0, 2.0, 3.0, 4.0])
-        >>> inittc = np.array([2.0, 4.0, 6.0, 8.0])
-        >>> result = _procOneVoxelWiener(0, lagtc, inittc)
-        >>> print(result[0])  # voxel index
-        0
-        >>> print(result[4])  # fitting coefficient
-        2.0
-        """
+    Perform Wiener filter processing on a single voxel time series.
+
+    This function applies a Wiener filter to remove the lagged component from
+    the initial time course, returning both the filtered and unfiltered results
+    along with fitting statistics.
+
+    Parameters
+    ----------
+    vox : int
+        Voxel index identifier
+    lagtc : NDArray
+        Lagged time course data (input signal)
+    inittc : NDArray
+        Initial time course data (target signal)
+    rt_floatset : type, optional
+        Real-time float type for output arrays, default is np.float64
+    rt_floattype : str, optional
+        String representation of the real-time float type, default is "float64"
+
+    Returns
+    -------
+    tuple[int, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]
+        A tuple containing:
+        - vox (int): Input voxel index
+        - intercept (NDArray): Regression intercept term
+        - sqrt_R2 (NDArray): Square root of coefficient of determination
+        - R2 (NDArray): Coefficient of determination
+        - fitcoff (NDArray): Fitting coefficient
+        - ratio (NDArray): Ratio of slope to intercept
+        - datatoremove (NDArray): Data to be removed (filtered signal)
+        - residual (NDArray): Residual signal (unfiltered data)
+
+    Notes
+    -----
+    This function uses maximum likelihood regression to estimate the relationship
+    between lagged and initial time courses, then applies the Wiener filter
+    to remove the lagged component from the initial signal.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> lagtc = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> inittc = np.array([2.0, 4.0, 6.0, 8.0])
+    >>> result = _procOneVoxelWiener(0, lagtc, inittc)
+    >>> print(result[0])  # voxel index
+    0
+    >>> print(result[4])  # fitting coefficient
+    2.0
+    """
     thefit, R2 = tide_fit.mlregress(lagtc, inittc)
     fitcoff = rt_floatset(thefit[0, 1])
     datatoremove = rt_floatset(fitcoff * lagtc)
@@ -109,70 +109,70 @@ def wienerpass(
     rt_floattype: str = "float64",
 ) -> int:
     """
-        Perform Wiener deconvolution on fMRI data voxels.
+    Perform Wiener deconvolution on fMRI data voxels.
 
-        This function applies Wiener deconvolution to each voxel in the fMRI data
-        based on the provided lagged time course and threshold. It supports both
-        single-threaded and multi-threaded processing depending on the configuration
-        in `optiondict`.
+    This function applies Wiener deconvolution to each voxel in the fMRI data
+    based on the provided lagged time course and threshold. It supports both
+    single-threaded and multi-threaded processing depending on the configuration
+    in `optiondict`.
 
-        Parameters
-        ----------
-        numspatiallocs : int
-            Number of spatial locations (voxels) in the fMRI data.
-        fmri_data : numpy.ndarray
-            2D array of fMRI data with shape (numspatiallocs, timepoints).
-        threshval : float
-            Threshold value for masking voxels based on mean signal intensity.
-        lagtc : numpy.ndarray
-            2D array of lagged time courses with shape (numspatiallocs, timepoints).
-        optiondict : dict
-            Dictionary containing processing options including:
-            - 'nprocs': number of processors to use (default: 1)
-            - 'showprogressbar': whether to show progress bar (default: True)
-            - 'mp_chunksize': chunk size for multiprocessing (default: 10)
-        wienerdeconv : numpy.ndarray
-            Wiener deconvolution kernel or filter.
-        wpeak : numpy.ndarray
-            Peak values associated with the Wiener deconvolution.
-        resampref_y : numpy.ndarray
-            Resampled reference signal for filtering.
-        rt_floatset : type, optional
-            Data type for floating-point numbers, default is `np.float64`.
-        rt_floattype : str, optional
-            String representation of the floating-point data type, default is "float64".
+    Parameters
+    ----------
+    numspatiallocs : int
+        Number of spatial locations (voxels) in the fMRI data.
+    fmri_data : numpy.ndarray
+        2D array of fMRI data with shape (numspatiallocs, timepoints).
+    threshval : float
+        Threshold value for masking voxels based on mean signal intensity.
+    lagtc : numpy.ndarray
+        2D array of lagged time courses with shape (numspatiallocs, timepoints).
+    optiondict : dict
+        Dictionary containing processing options including:
+        - 'nprocs': number of processors to use (default: 1)
+        - 'showprogressbar': whether to show progress bar (default: True)
+        - 'mp_chunksize': chunk size for multiprocessing (default: 10)
+    wienerdeconv : numpy.ndarray
+        Wiener deconvolution kernel or filter.
+    wpeak : numpy.ndarray
+        Peak values associated with the Wiener deconvolution.
+    resampref_y : numpy.ndarray
+        Resampled reference signal for filtering.
+    rt_floatset : type, optional
+        Data type for floating-point numbers, default is `np.float64`.
+    rt_floattype : str, optional
+        String representation of the floating-point data type, default is "float64".
 
-        Returns
-        -------
-        int
-            Total number of voxels processed.
+    Returns
+    -------
+    int
+        Total number of voxels processed.
 
-        Notes
-        -----
-        - Voxels are masked based on their mean signal intensity exceeding `threshval`.
-        - If `nprocs` > 1, multiprocessing is used to process voxels in parallel.
-        - The function modifies global variables such as `meanvalue`, `rvalue`, etc.,
-          which are assumed to be defined in the outer scope.
+    Notes
+    -----
+    - Voxels are masked based on their mean signal intensity exceeding `threshval`.
+    - If `nprocs` > 1, multiprocessing is used to process voxels in parallel.
+    - The function modifies global variables such as `meanvalue`, `rvalue`, etc.,
+      which are assumed to be defined in the outer scope.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> fmri_data = np.random.rand(100, 50)
-        >>> lagtc = np.random.rand(100, 50)
-        >>> optiondict = {'nprocs': 4, 'showprogressbar': True, 'mp_chunksize': 5}
-        >>> result = wienerpass(
-        ...     numspatiallocs=100,
-        ...     fmri_data=fmri_data,
-        ...     threshval=0.1,
-        ...     lagtc=lagtc,
-        ...     optiondict=optiondict,
-        ...     wienerdeconv=np.array([1, 2, 1]),
-        ...     wpeak=np.array([0.5]),
-        ...     resampref_y=np.array([1, 1, 1])
-        ... )
-        >>> print(result)
-        100
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> fmri_data = np.random.rand(100, 50)
+    >>> lagtc = np.random.rand(100, 50)
+    >>> optiondict = {'nprocs': 4, 'showprogressbar': True, 'mp_chunksize': 5}
+    >>> result = wienerpass(
+    ...     numspatiallocs=100,
+    ...     fmri_data=fmri_data,
+    ...     threshval=0.1,
+    ...     lagtc=lagtc,
+    ...     optiondict=optiondict,
+    ...     wienerdeconv=np.array([1, 2, 1]),
+    ...     wpeak=np.array([0.5]),
+    ...     resampref_y=np.array([1, 1, 1])
+    ... )
+    >>> print(result)
+    100
+    """
     rt_floatset = (rt_floatset,)
     rt_floattype = rt_floattype
     inputshape = np.shape(fmri_data)

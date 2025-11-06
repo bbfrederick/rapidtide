@@ -36,34 +36,34 @@ DEFAULT_HISTBINS = 151
 
 def _get_parser() -> Any:
     """
-        Argument parser for adjust offset.
-    
-        This function constructs and returns an `argparse.ArgumentParser` object configured
-        for parsing command-line arguments used by the `adjustoffset` tool. It defines
-        various options for adjusting the offset of a rapidtide delay map, including
-        masking, histogram-based peak detection, and output control.
+    Argument parser for adjust offset.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser for the adjustoffset tool.
+    This function constructs and returns an `argparse.ArgumentParser` object configured
+    for parsing command-line arguments used by the `adjustoffset` tool. It defines
+    various options for adjusting the offset of a rapidtide delay map, including
+    masking, histogram-based peak detection, and output control.
 
-        Notes
-        -----
-        The parser includes support for:
-        - Input and output file specifications
-        - Masking options (include, exclude, extra)
-        - Histogram-based offset estimation
-        - Search range limiting
-        - Debugging and display options
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for the adjustoffset tool.
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['input.nii', 'output_root'])
-        >>> print(args.inputmap)
-        'input.nii'
-        """
+    Notes
+    -----
+    The parser includes support for:
+    - Input and output file specifications
+    - Masking options (include, exclude, extra)
+    - Histogram-based offset estimation
+    - Search range limiting
+    - Debugging and display options
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['input.nii', 'output_root'])
+    >>> print(args.inputmap)
+    'input.nii'
+    """
     parser = argparse.ArgumentParser(
         prog="adjustoffset",
         description="Adjust the offset of a rapidtide delay map.",
@@ -188,80 +188,80 @@ def _get_parser() -> Any:
 
 def adjustoffset(args: Any) -> None:
     """
-        Adjust the offset of a NIfTI map based on histogram analysis and optional masking.
+    Adjust the offset of a NIfTI map based on histogram analysis and optional masking.
 
-        This function reads a NIfTI map file, applies optional inclusion and exclusion masks,
-        and computes a peak location from the histogram of valid voxels. The computed offset
-        is then added to the map values, unless a fixed offset is specified via `args.setoffset`.
+    This function reads a NIfTI map file, applies optional inclusion and exclusion masks,
+    and computes a peak location from the histogram of valid voxels. The computed offset
+    is then added to the map values, unless a fixed offset is specified via `args.setoffset`.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing the following attributes:
-            - `inputmap` : str
-                Path to the input NIfTI map file.
-            - `debug` : bool
-                If True, prints debug information.
-            - `includespec` : str, optional
-                Specification for including voxels in the analysis.
-            - `excludespec` : str, optional
-                Specification for excluding voxels from the analysis.
-            - `extramaskname` : str, optional
-                Path to an additional mask file.
-            - `histbins` : int
-                Number of histogram bins to use.
-            - `searchrange` : tuple of float, optional
-                Range of values to consider for histogram analysis.
-            - `refine` : bool
-                Whether to refine the peak detection.
-            - `pickleft` : bool
-                Whether to pick the leftmost peak.
-            - `pickleftthresh` : float, optional
-                Threshold for leftmost peak picking.
-            - `display` : bool
-                Whether to display the histogram.
-            - `histonly` : bool
-                If True, only compute and display the histogram, do not adjust the map.
-            - `setoffset` : float, optional
-                Fixed offset value to apply to the map.
-            - `outputroot` : str
-                Root name for output files.
+    Parameters
+    ----------
+    args : Any
+        An object containing the following attributes:
+        - `inputmap` : str
+            Path to the input NIfTI map file.
+        - `debug` : bool
+            If True, prints debug information.
+        - `includespec` : str, optional
+            Specification for including voxels in the analysis.
+        - `excludespec` : str, optional
+            Specification for excluding voxels from the analysis.
+        - `extramaskname` : str, optional
+            Path to an additional mask file.
+        - `histbins` : int
+            Number of histogram bins to use.
+        - `searchrange` : tuple of float, optional
+            Range of values to consider for histogram analysis.
+        - `refine` : bool
+            Whether to refine the peak detection.
+        - `pickleft` : bool
+            Whether to pick the leftmost peak.
+        - `pickleftthresh` : float, optional
+            Threshold for leftmost peak picking.
+        - `display` : bool
+            Whether to display the histogram.
+        - `histonly` : bool
+            If True, only compute and display the histogram, do not adjust the map.
+        - `setoffset` : float, optional
+            Fixed offset value to apply to the map.
+        - `outputroot` : str
+            Root name for output files.
 
-        Returns
-        -------
-        None
-            This function does not return a value but saves two NIfTI files:
-            - `<outputroot>_maskmap.nii.gz`: The generated mask map.
-            - `<outputroot>_adjustedmaxtime.nii.gz`: The adjusted map with offset applied.
+    Returns
+    -------
+    None
+        This function does not return a value but saves two NIfTI files:
+        - `<outputroot>_maskmap.nii.gz`: The generated mask map.
+        - `<outputroot>_adjustedmaxtime.nii.gz`: The adjusted map with offset applied.
 
-        Notes
-        -----
-        - The function uses `tide_io.readfromnifti` to read the input map and `tide_io.savetonifti` to save outputs.
-        - Masks are generated using `tide_mask.getmaskset` based on inclusion/exclusion specifications.
-        - Histogram analysis is performed using `tide_stats.gethistprops` and `tide_stats.makehistogram`.
-        - If `args.setoffset` is provided, it overrides the computed peak location as the offset.
+    Notes
+    -----
+    - The function uses `tide_io.readfromnifti` to read the input map and `tide_io.savetonifti` to save outputs.
+    - Masks are generated using `tide_mask.getmaskset` based on inclusion/exclusion specifications.
+    - Histogram analysis is performed using `tide_stats.gethistprops` and `tide_stats.makehistogram`.
+    - If `args.setoffset` is provided, it overrides the computed peak location as the offset.
 
-        Examples
-        --------
-        >>> class Args:
-        ...     inputmap = "input_map.nii.gz"
-        ...     debug = True
-        ...     includespec = "brain"
-        ...     excludespec = None
-        ...     extramaskname = None
-        ...     histbins = 100
-        ...     searchrange = (0.0, 10.0)
-        ...     refine = True
-        ...     pickleft = False
-        ...     pickleftthresh = 0.5
-        ...     display = False
-        ...     histonly = False
-        ...     setoffset = None
-        ...     outputroot = "output"
-        ...
-        >>> args = Args()
-        >>> adjustoffset(args)
-        """
+    Examples
+    --------
+    >>> class Args:
+    ...     inputmap = "input_map.nii.gz"
+    ...     debug = True
+    ...     includespec = "brain"
+    ...     excludespec = None
+    ...     extramaskname = None
+    ...     histbins = 100
+    ...     searchrange = (0.0, 10.0)
+    ...     refine = True
+    ...     pickleft = False
+    ...     pickleftthresh = 0.5
+    ...     display = False
+    ...     histonly = False
+    ...     setoffset = None
+    ...     outputroot = "output"
+    ...
+    >>> args = Args()
+    >>> adjustoffset(args)
+    """
     if args.debug:
         print(f"reading map file {args.inputmap}")
     (

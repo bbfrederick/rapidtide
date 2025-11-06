@@ -34,45 +34,45 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Generate and return an argument parser for the histnifti command-line tool.
-    
-        This function constructs an `argparse.ArgumentParser` object configured with
-        all necessary arguments for processing NIFTI files and generating histograms
-        of their voxel values. It supports various options for controlling binning,
-        masking, normalization, and display behavior.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object ready to parse command-line arguments.
-        
-        Notes
-        -----
-        The parser includes the following positional and optional arguments:
-    
-        - Positional arguments:
-            - inputfile: Path to the input NIFTI file.
-            - outputroot: Root name for output files.
-    
-        - Optional arguments:
-            - --histlen: Set histogram length to LEN (default: auto).
-            - --minval: Minimum bin value in histogram.
-            - --maxval: Maximum bin value in histogram.
-            - --robustrange: Use robust range (2nd to 98th percentile) for histogram limits.
-            - --transform: Replace data values with their percentile scores.
-            - --nozero: Exclude zero values from histogram.
-            - --nozerothresh: Threshold for considering values as zero (default: 0.01).
-            - --normhist: Return probability density instead of raw counts.
-            - --maskfile: Only process voxels within a 3D mask.
-            - --nodisplay: Do not display histogram.
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['input.nii', 'output_root'])
-        >>> print(args.inputfile)
-        'input.nii'
-        """
+    Generate and return an argument parser for the histnifti command-line tool.
+
+    This function constructs an `argparse.ArgumentParser` object configured with
+    all necessary arguments for processing NIFTI files and generating histograms
+    of their voxel values. It supports various options for controlling binning,
+    masking, normalization, and display behavior.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object ready to parse command-line arguments.
+
+    Notes
+    -----
+    The parser includes the following positional and optional arguments:
+
+    - Positional arguments:
+        - inputfile: Path to the input NIFTI file.
+        - outputroot: Root name for output files.
+
+    - Optional arguments:
+        - --histlen: Set histogram length to LEN (default: auto).
+        - --minval: Minimum bin value in histogram.
+        - --maxval: Maximum bin value in histogram.
+        - --robustrange: Use robust range (2nd to 98th percentile) for histogram limits.
+        - --transform: Replace data values with their percentile scores.
+        - --nozero: Exclude zero values from histogram.
+        - --nozerothresh: Threshold for considering values as zero (default: 0.01).
+        - --normhist: Return probability density instead of raw counts.
+        - --maskfile: Only process voxels within a 3D mask.
+        - --nodisplay: Do not display histogram.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['input.nii', 'output_root'])
+    >>> print(args.inputfile)
+    'input.nii'
+    """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="histnifti",
@@ -164,78 +164,78 @@ def _get_parser() -> Any:
 
 def histnifti(args: Any) -> None:
     """
-        Compute and save histograms, sorted data, and percentiles from NIfTI image data.
+    Compute and save histograms, sorted data, and percentiles from NIfTI image data.
 
-        This function reads input NIfTI data and optionally a mask, computes histograms
-        for each voxel (or across all voxels if 3D), and saves sorted data, percentiles,
-        and histogram results as NIfTI files. It supports both 3D and 4D data processing.
+    This function reads input NIfTI data and optionally a mask, computes histograms
+    for each voxel (or across all voxels if 3D), and saves sorted data, percentiles,
+    and histogram results as NIfTI files. It supports both 3D and 4D data processing.
 
-        Parameters
-        ----------
-        args : argparse.Namespace
-            Command-line arguments containing:
-            - inputfile : str
-                Path to the input NIfTI file.
-            - maskfile : str, optional
-                Path to the mask NIfTI file. If None, a full mask is generated.
-            - outputroot : str
-                Root name for output files.
-            - robustrange : bool
-                If True, use 2nd and 98th percentiles for histogram range.
-            - minval : float, optional
-                Minimum value for histogram range.
-            - maxval : float, optional
-                Maximum value for histogram range.
-            - histlen : int, optional
-                Number of histogram bins. If None, computed based on data size.
-            - nozero : bool
-                If True, exclude zero values from histogram calculation.
-            - nozerothresh : float
-                Threshold for excluding zero-like values when `nozero` is True.
-            - transform : bool
-                If True, apply a transformation to the data.
-            - display : bool
-                If True, display histogram plots.
-            - normhist : bool
-                If True, normalize histogram values.
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command-line arguments containing:
+        - inputfile : str
+            Path to the input NIfTI file.
+        - maskfile : str, optional
+            Path to the mask NIfTI file. If None, a full mask is generated.
+        - outputroot : str
+            Root name for output files.
+        - robustrange : bool
+            If True, use 2nd and 98th percentiles for histogram range.
+        - minval : float, optional
+            Minimum value for histogram range.
+        - maxval : float, optional
+            Maximum value for histogram range.
+        - histlen : int, optional
+            Number of histogram bins. If None, computed based on data size.
+        - nozero : bool
+            If True, exclude zero values from histogram calculation.
+        - nozerothresh : float
+            Threshold for excluding zero-like values when `nozero` is True.
+        - transform : bool
+            If True, apply a transformation to the data.
+        - display : bool
+            If True, display histogram plots.
+        - normhist : bool
+            If True, normalize histogram values.
 
-        Returns
-        -------
-        None
-            This function does not return a value but saves multiple NIfTI files:
-            - `<outputroot>_sorted.nii.gz`: Sorted time series data.
-            - `<outputroot>_pcts.nii.gz`: Percentile values.
-            - `<outputroot>_hists.nii.gz`: Histogram data per voxel.
-            - `<outputroot>_transformed.nii.gz`: Transformed data (if `transform` is True).
-            - `<outputroot>_hist.txt`: Histogram plot (if `display` is True).
+    Returns
+    -------
+    None
+        This function does not return a value but saves multiple NIfTI files:
+        - `<outputroot>_sorted.nii.gz`: Sorted time series data.
+        - `<outputroot>_pcts.nii.gz`: Percentile values.
+        - `<outputroot>_hists.nii.gz`: Histogram data per voxel.
+        - `<outputroot>_transformed.nii.gz`: Transformed data (if `transform` is True).
+        - `<outputroot>_hist.txt`: Histogram plot (if `display` is True).
 
-        Notes
-        -----
-        - For 4D data, the function computes histograms, sorted arrays, and percentiles
-          for each voxel.
-        - For 3D data, the function can compute a global histogram or apply a transformation.
-        - The function uses `tide_io` for reading/writing NIfTI files and `tide_stats` for
-          statistical operations.
+    Notes
+    -----
+    - For 4D data, the function computes histograms, sorted arrays, and percentiles
+      for each voxel.
+    - For 3D data, the function can compute a global histogram or apply a transformation.
+    - The function uses `tide_io` for reading/writing NIfTI files and `tide_stats` for
+      statistical operations.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     inputfile='data.nii.gz',
-        ...     maskfile=None,
-        ...     outputroot='output',
-        ...     robustrange=False,
-        ...     minval=None,
-        ...     maxval=None,
-        ...     histlen=None,
-        ...     nozero=False,
-        ...     nozerothresh=0.0,
-        ...     transform=False,
-        ...     display=False,
-        ...     normhist=False
-        ... )
-        >>> histnifti(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     inputfile='data.nii.gz',
+    ...     maskfile=None,
+    ...     outputroot='output',
+    ...     robustrange=False,
+    ...     minval=None,
+    ...     maxval=None,
+    ...     histlen=None,
+    ...     nozero=False,
+    ...     nozerothresh=0.0,
+    ...     transform=False,
+    ...     display=False,
+    ...     normhist=False
+    ... )
+    >>> histnifti(args)
+    """
     # set default variable values
     thepercentiles = [0.2, 0.25, 0.5, 0.75, 0.98]
     thepvalnames = []

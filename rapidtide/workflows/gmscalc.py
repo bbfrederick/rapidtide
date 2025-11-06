@@ -35,31 +35,31 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Construct and return an argument parser for the gmscalc tool.
+    Construct and return an argument parser for the gmscalc tool.
 
-        This function sets up an `argparse.ArgumentParser` with required and optional
-        arguments needed to run the global mean signal calculation and filtering
-        pipeline. It includes support for specifying input data, output root, data mask,
-        normalization options, smoothing, and debugging.
+    This function sets up an `argparse.ArgumentParser` with required and optional
+    arguments needed to run the global mean signal calculation and filtering
+    pipeline. It includes support for specifying input data, output root, data mask,
+    normalization options, smoothing, and debugging.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser with all required and optional arguments
-            for the gmscalc tool.
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser with all required and optional arguments
+        for the gmscalc tool.
 
-        Notes
-        -----
-        The parser is configured with `allow_abbrev=False` to enforce full argument
-        names and avoid ambiguity.
+    Notes
+    -----
+    The parser is configured with `allow_abbrev=False` to enforce full argument
+    names and avoid ambiguity.
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['data.nii', 'output_root'])
-        >>> print(args.datafile)
-        'data.nii'
-        """
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['data.nii', 'output_root'])
+    >>> print(args.datafile)
+    'data.nii'
+    """
     parser = argparse.ArgumentParser(
         prog="gmscalc",
         description="Calculate the global mean signal, and filtered versions",
@@ -119,50 +119,50 @@ def makecommandlinelist(
     arglist: Any, starttime: Any, endtime: Any, extra: Optional[Any] = None
 ) -> None:
     """
-        Create a list of command line information for logging purposes.
-    
-        This function generates a list of descriptive strings containing processing
-        information including date, duration, version details, and the actual command
-        that was executed.
-    
-        Parameters
-        ----------
-        arglist : Any
-            List of command line arguments to be joined into a command string.
-        starttime : Any
-            Start time of the process, typically a timestamp.
-        endtime : Any
-            End time of the process, typically a timestamp.
-        extra : Any, optional
-            Additional descriptive text to include in the output list. Default is None.
-        
-        Returns
-        -------
-        list of str
-            List containing the following elements in order:
-            - Processing date and time
-            - Processing duration
-            - Node and version information
-            - Extra information (if provided)
-            - The actual command line string
-        
-        Notes
-        -----
-        The function uses `time.strftime` to format the start time and `tide_util.version()`
-        to retrieve version information. The command line is constructed by joining
-        the `arglist` elements with spaces.
-        
-        Examples
-        --------
-        >>> import time
-        >>> args = ['python', 'script.py', '--input', 'data.txt']
-        >>> start = time.time()
-        >>> # ... some processing ...
-        >>> end = time.time()
-        >>> info = makecommandlinelist(args, start, end)
-        >>> print(info[0])
-        '# Processed on Mon, 01 Jan 2024 12:00:00 UTC.'
-        """
+    Create a list of command line information for logging purposes.
+
+    This function generates a list of descriptive strings containing processing
+    information including date, duration, version details, and the actual command
+    that was executed.
+
+    Parameters
+    ----------
+    arglist : Any
+        List of command line arguments to be joined into a command string.
+    starttime : Any
+        Start time of the process, typically a timestamp.
+    endtime : Any
+        End time of the process, typically a timestamp.
+    extra : Any, optional
+        Additional descriptive text to include in the output list. Default is None.
+
+    Returns
+    -------
+    list of str
+        List containing the following elements in order:
+        - Processing date and time
+        - Processing duration
+        - Node and version information
+        - Extra information (if provided)
+        - The actual command line string
+
+    Notes
+    -----
+    The function uses `time.strftime` to format the start time and `tide_util.version()`
+    to retrieve version information. The command line is constructed by joining
+    the `arglist` elements with spaces.
+
+    Examples
+    --------
+    >>> import time
+    >>> args = ['python', 'script.py', '--input', 'data.txt']
+    >>> start = time.time()
+    >>> # ... some processing ...
+    >>> end = time.time()
+    >>> info = makecommandlinelist(args, start, end)
+    >>> print(info[0])
+    '# Processed on Mon, 01 Jan 2024 12:00:00 UTC.'
+    """
     # get the processing date
     dateline = (
         "# Processed on "
@@ -201,39 +201,39 @@ def makecommandlinelist(
 
 def gmscalc_main() -> None:
     """
-        Main function to calculate global mean signal (GMS) from fMRI data.
+    Main function to calculate global mean signal (GMS) from fMRI data.
 
-        This function reads NIfTI-formatted fMRI data, applies optional smoothing,
-        masks the data if a mask is provided, and computes the global mean signal
-        across valid voxels. It then applies low-frequency (LFO) and high-frequency
-        (HF) filtering to the global signal and writes the results to text files.
+    This function reads NIfTI-formatted fMRI data, applies optional smoothing,
+    masks the data if a mask is provided, and computes the global mean signal
+    across valid voxels. It then applies low-frequency (LFO) and high-frequency
+    (HF) filtering to the global signal and writes the results to text files.
 
-        The function uses the `tide_io` module for reading and writing data, and
-        `tide_filt` and `tide_math` for filtering and normalization.
+    The function uses the `tide_io` module for reading and writing data, and
+    `tide_filt` and `tide_math` for filtering and normalization.
 
-        Notes
-        -----
-        The function expects a command-line interface to be set up with `_get_parser()`
-        and uses `sys.argv` to parse arguments. It prints diagnostic information
-        during execution.
+    Notes
+    -----
+    The function expects a command-line interface to be set up with `_get_parser()`
+    and uses `sys.argv` to parse arguments. It prints diagnostic information
+    during execution.
 
-        Examples
-        --------
-        Assuming the script is called as `gmscalc_main.py` and properly configured:
+    Examples
+    --------
+    Assuming the script is called as `gmscalc_main.py` and properly configured:
 
-        >>> gmscalc_main()
+    >>> gmscalc_main()
 
-        This will read the input data, perform processing, and write output files
-        with names based on the `outputroot` argument.
+    This will read the input data, perform processing, and write output files
+    with names based on the `outputroot` argument.
 
-        See Also
-        --------
-        tide_io.readfromnifti : Reads NIfTI files.
-        tide_io.writevec : Writes vectors to text files.
-        tide_filt.ssmooth : Applies spatial smoothing.
-        tide_filt.NoncausalFilter : Applies non-causal filtering.
-        tide_math.normalize : Normalizes a signal.
-        """
+    See Also
+    --------
+    tide_io.readfromnifti : Reads NIfTI files.
+    tide_io.writevec : Writes vectors to text files.
+    tide_filt.ssmooth : Applies spatial smoothing.
+    tide_filt.NoncausalFilter : Applies non-causal filtering.
+    tide_math.normalize : Normalizes a signal.
+    """
     try:
         args = _get_parser().parse_args()
     except SystemExit:

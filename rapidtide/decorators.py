@@ -33,37 +33,36 @@ def getdecoratorvars():
     return donotusenumba, donotbeaggressive
 
 
-
 def conditionaljit() -> Callable:
     """
-        Wrap functions in jit if numba is enabled.
+    Wrap functions in jit if numba is enabled.
 
-        This function creates a decorator that conditionally applies Numba's jit
-        decorator to functions. If the `donotusenumba` flag is True, the original
-        function is returned unchanged. Otherwise, the function is compiled with
-        `jit(nopython=True)` for optimal performance.
+    This function creates a decorator that conditionally applies Numba's jit
+    decorator to functions. If the `donotusenumba` flag is True, the original
+    function is returned unchanged. Otherwise, the function is compiled with
+    `jit(nopython=True)` for optimal performance.
 
-        Returns
-        -------
-        Callable
-            A decorator function that can be applied to other functions.
+    Returns
+    -------
+    Callable
+        A decorator function that can be applied to other functions.
 
-        Notes
-        -----
-        This decorator provides a convenient way to conditionally enable Numba
-        compilation based on a global flag. It's useful for debugging and
-        development where you want to disable JIT compilation temporarily.
+    Notes
+    -----
+    This decorator provides a convenient way to conditionally enable Numba
+    compilation based on a global flag. It's useful for debugging and
+    development where you want to disable JIT compilation temporarily.
 
-        Examples
-        --------
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)
-        >>> print(result)
-        10
-        """
+    Examples
+    --------
+    >>> @conditionaljit()
+    ... def my_function(x):
+    ...     return x * 2
+    ...
+    >>> result = my_function(5)
+    >>> print(result)
+    10
+    """
 
     def resdec(f):
         if donotusenumba:

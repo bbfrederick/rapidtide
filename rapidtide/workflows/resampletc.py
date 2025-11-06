@@ -31,36 +31,36 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Argument parser for resamp1tc.
-    
-        This function constructs and returns an `argparse.ArgumentParser` object configured
-        for parsing command-line arguments for the `resamp1tc` utility. It defines required
-        and optional arguments needed to resample a timeseries file.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser for the resamp1tc utility.
-        
-        Notes
-        -----
-        The parser includes the following required arguments:
-    
-        - ``inputfile``: Path to the input timeseries file.
-        - ``insamplerate``: Input sample rate in Hz.
-        - ``outputfile``: Path to the output resampled file.
-        - ``outsamplerate``: Output sample rate in Hz.
-    
-        Optional arguments include:
-    
-        - ``--nodisplay``: Do not display data.
-        - ``--noantialias``: Disable antialiasing.
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        """
+    Argument parser for resamp1tc.
+
+    This function constructs and returns an `argparse.ArgumentParser` object configured
+    for parsing command-line arguments for the `resamp1tc` utility. It defines required
+    and optional arguments needed to resample a timeseries file.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for the resamp1tc utility.
+
+    Notes
+    -----
+    The parser includes the following required arguments:
+
+    - ``inputfile``: Path to the input timeseries file.
+    - ``insamplerate``: Input sample rate in Hz.
+    - ``outputfile``: Path to the output resampled file.
+    - ``outsamplerate``: Output sample rate in Hz.
+
+    Optional arguments include:
+
+    - ``--nodisplay``: Do not display data.
+    - ``--noantialias``: Disable antialiasing.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    """
     parser = argparse.ArgumentParser(
         prog="resampletc",
         description=("Resample a timeseries file"),
@@ -124,62 +124,62 @@ def _get_parser() -> Any:
 
 def resampletc(args: Any) -> None:
     """
-        Resample a time series signal from an input file to a specified output sampling rate.
+    Resample a time series signal from an input file to a specified output sampling rate.
 
-        This function reads a time series from a text file, resamples it to a new sampling rate,
-        and writes the resampled data to an output file. Optionally, it displays the original
-        and resampled signals for visual comparison.
+    This function reads a time series from a text file, resamples it to a new sampling rate,
+    and writes the resampled data to an output file. Optionally, it displays the original
+    and resampled signals for visual comparison.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing the following attributes:
-            - `inputfile` : str
-                Path to the input text file containing the time series data.
-            - `outputfile` : str
-                Path to the output text file where resampled data will be written.
-            - `insamplerate` : float
-                Input sampling rate (Hz) of the data in the input file.
-            - `outsamplerate` : float
-                Desired output sampling rate (Hz) for the resampled data.
-            - `antialias` : bool
-                Whether to apply anti-aliasing during resampling.
-            - `display` : bool
-                If True, plots the original and resampled signals.
-            - `starttime` : float, optional
-                Start time for the output signal. If None, uses the start time from input.
-            - `endtime` : float, optional
-                End time for the output signal. If None, uses the end time from input.
+    Parameters
+    ----------
+    args : Any
+        An object containing the following attributes:
+        - `inputfile` : str
+            Path to the input text file containing the time series data.
+        - `outputfile` : str
+            Path to the output text file where resampled data will be written.
+        - `insamplerate` : float
+            Input sampling rate (Hz) of the data in the input file.
+        - `outsamplerate` : float
+            Desired output sampling rate (Hz) for the resampled data.
+        - `antialias` : bool
+            Whether to apply anti-aliasing during resampling.
+        - `display` : bool
+            If True, plots the original and resampled signals.
+        - `starttime` : float, optional
+            Start time for the output signal. If None, uses the start time from input.
+        - `endtime` : float, optional
+            End time for the output signal. If None, uses the end time from input.
 
-        Returns
-        -------
-        None
-            This function does not return a value. It writes the resampled data to a file
-            and optionally displays a plot.
+    Returns
+    -------
+    None
+        This function does not return a value. It writes the resampled data to a file
+        and optionally displays a plot.
 
-        Notes
-        -----
-        - The input file is expected to contain a single column of time series data.
-        - If the sampling rate specified in the input file does not match `args.insamplerate`,
-          a warning is printed.
-        - The function uses `tide_resample.arbresample` for resampling with configurable
-          anti-aliasing.
-        - If `args.display` is True, the original and resampled signals are plotted
-          with the original in black and the resampled in red.
+    Notes
+    -----
+    - The input file is expected to contain a single column of time series data.
+    - If the sampling rate specified in the input file does not match `args.insamplerate`,
+      a warning is printed.
+    - The function uses `tide_resample.arbresample` for resampling with configurable
+      anti-aliasing.
+    - If `args.display` is True, the original and resampled signals are plotted
+      with the original in black and the resampled in red.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     inputfile='input.txt',
-        ...     outputfile='output.txt',
-        ...     insamplerate=10.0,
-        ...     outsamplerate=5.0,
-        ...     antialias=True,
-        ...     display=False
-        ... )
-        >>> resampletc(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     inputfile='input.txt',
+    ...     outputfile='output.txt',
+    ...     insamplerate=10.0,
+    ...     outsamplerate=5.0,
+    ...     antialias=True,
+    ...     display=False
+    ... )
+    >>> resampletc(args)
+    """
     intimestep = 1.0 / args.insamplerate
     outtimestep = 1.0 / args.outsamplerate
     (

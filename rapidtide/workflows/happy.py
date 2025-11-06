@@ -54,76 +54,76 @@ except ImportError:
 
 def happy_main(argparsingfunc: Any) -> None:
     """
-        Process fMRI data to remove cardiac noise using temporal and/or spatial regression.
-    
-        This function performs cardiac noise regression on fMRI data using either
-        temporal or spatial regression methods. It calculates cardiac noise signals
-        from the cardiac phase information and removes them from the fMRI data.
-    
-        Parameters
-        ----------
-        args : argparse.Namespace
-            Command line arguments containing processing options
-        infodict : dict
-            Dictionary containing processing information including shared memory settings
-        fmri_data : numpy.ndarray
-            4D fMRI data array (x, y, z, time)
-        mask : numpy.ndarray
-            3D mask array indicating valid voxels
-        projmask_byslice : numpy.ndarray
-            2D mask array for each slice indicating valid projection locations
-        cardphasevals : numpy.ndarray
-            2D array of cardiac phase values for each slice and timepoint
-        rawapp_byslice : numpy.ndarray
-            3D array of raw cardiac signals for each slice and timepoint
-        outphases : numpy.ndarray
-            Array of cardiac phases
-        timepoints : int
-            Number of timepoints in the fMRI data
-        xsize : int
-            X dimension of the fMRI data
-        ysize : int
-            Y dimension of the fMRI data
-        numslices : int
-            Number of slices in the fMRI data
-        outputroot : str
-            Root name for output files
-        tide_util : module
-            Utility module for memory management and other operations
-        tide_io : module
-            I/O module for reading/writing data
-        tide_linfitfiltpass : module
-            Linear fitting and filtering module
-        tide_filt : module
-            Filtering module
-        platform : module
-            Platform information module
-        Path : class
-            Path class from pathlib module
-        
-        Returns
-        -------
-        None
-            Function performs in-place processing and saves results to files
-        
-        Notes
-        -----
-        This function performs multiple steps:
-        1. Calculates cardiac noise signals from cardiac phase information
-        2. Applies temporal or spatial regression to remove cardiac noise
-        3. Saves filtered data and regression coefficients
-        4. Handles shared memory cleanup when needed
-    
-        Examples
-        --------
-        >>> process_fmri_with_cardiac_regression(
-        ...     args, infodict, fmri_data, mask, projmask_byslice,
-        ...     cardphasevals, rawapp_byslice, outphases, 
-        ...     timepoints, xsize, ysize, numslices, 
-        ...     outputroot, tide_util, tide_io, tide_linfitfiltpass, 
-        ...     tide_filt, platform, Path
-        ... )
-        """
+    Process fMRI data to remove cardiac noise using temporal and/or spatial regression.
+
+    This function performs cardiac noise regression on fMRI data using either
+    temporal or spatial regression methods. It calculates cardiac noise signals
+    from the cardiac phase information and removes them from the fMRI data.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command line arguments containing processing options
+    infodict : dict
+        Dictionary containing processing information including shared memory settings
+    fmri_data : numpy.ndarray
+        4D fMRI data array (x, y, z, time)
+    mask : numpy.ndarray
+        3D mask array indicating valid voxels
+    projmask_byslice : numpy.ndarray
+        2D mask array for each slice indicating valid projection locations
+    cardphasevals : numpy.ndarray
+        2D array of cardiac phase values for each slice and timepoint
+    rawapp_byslice : numpy.ndarray
+        3D array of raw cardiac signals for each slice and timepoint
+    outphases : numpy.ndarray
+        Array of cardiac phases
+    timepoints : int
+        Number of timepoints in the fMRI data
+    xsize : int
+        X dimension of the fMRI data
+    ysize : int
+        Y dimension of the fMRI data
+    numslices : int
+        Number of slices in the fMRI data
+    outputroot : str
+        Root name for output files
+    tide_util : module
+        Utility module for memory management and other operations
+    tide_io : module
+        I/O module for reading/writing data
+    tide_linfitfiltpass : module
+        Linear fitting and filtering module
+    tide_filt : module
+        Filtering module
+    platform : module
+        Platform information module
+    Path : class
+        Path class from pathlib module
+
+    Returns
+    -------
+    None
+        Function performs in-place processing and saves results to files
+
+    Notes
+    -----
+    This function performs multiple steps:
+    1. Calculates cardiac noise signals from cardiac phase information
+    2. Applies temporal or spatial regression to remove cardiac noise
+    3. Saves filtered data and regression coefficients
+    4. Handles shared memory cleanup when needed
+
+    Examples
+    --------
+    >>> process_fmri_with_cardiac_regression(
+    ...     args, infodict, fmri_data, mask, projmask_byslice,
+    ...     cardphasevals, rawapp_byslice, outphases,
+    ...     timepoints, xsize, ysize, numslices,
+    ...     outputroot, tide_util, tide_io, tide_linfitfiltpass,
+    ...     tide_filt, platform, Path
+    ... )
+    """
     timings = [["Start", time.time(), None, None]]
 
     # get the command line parameters

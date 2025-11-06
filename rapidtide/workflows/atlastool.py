@@ -34,29 +34,29 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Argument parser for atlastool.
-    
-        This function constructs and returns an `argparse.ArgumentParser` object configured
-        with all the necessary arguments for the `atlastool` utility. It supports parsing
-        of NIfTI atlas files, with options for transforming, splitting, masking, and
-        reformatting atlas data.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser for atlastool.
-        
-        Notes
-        -----
-        The parser includes both required and optional arguments for handling NIfTI files,
-        including support for 3D and 4D output formats, splitting regions along the midline,
-        applying masks, and debugging options.
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        """
+    Argument parser for atlastool.
+
+    This function constructs and returns an `argparse.ArgumentParser` object configured
+    with all the necessary arguments for the `atlastool` utility. It supports parsing
+    of NIfTI atlas files, with options for transforming, splitting, masking, and
+    reformatting atlas data.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for atlastool.
+
+    Notes
+    -----
+    The parser includes both required and optional arguments for handling NIfTI files,
+    including support for 3D and 4D output formats, splitting regions along the midline,
+    applying masks, and debugging options.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    """
     parser = argparse.ArgumentParser(
         prog="atlastool",
         description=("A utility to manipulate nifti atlas files"),
@@ -182,78 +182,78 @@ def _get_parser() -> Any:
 
 def atlastool(args: Any) -> None:
     """
-        Process and convert atlas templates for neuroimaging analysis.
+    Process and convert atlas templates for neuroimaging analysis.
 
-        This function reads a template NIfTI file, reshapes it into a 4D array, and optionally
-        splits left-right regions, resamples to a target resolution, applies a mask, and saves
-        the processed data as a new NIfTI file. It supports both 3D and 4D input templates,
-        and can handle label files for region mapping.
+    This function reads a template NIfTI file, reshapes it into a 4D array, and optionally
+    splits left-right regions, resamples to a target resolution, applies a mask, and saves
+    the processed data as a new NIfTI file. It supports both 3D and 4D input templates,
+    and can handle label files for region mapping.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing command-line arguments. Expected attributes include:
-            - inputtemplatename : str
-                Path to the input NIfTI template file.
-            - debug : bool
-                If True, print debug information.
-            - maxval : float, optional
-                Maximum value to truncate template data.
-            - labelfile : str, optional
-                Path to a text file containing region labels.
-            - dosplit : bool
-                If True, split regions into left and right hemispheres.
-            - LtoR : bool
-                If True, assign left hemisphere labels first.
-            - targetfile : str, optional
-                Path to a target NIfTI file for resampling.
-            - xfm : str, optional
-                Path to transformation file for resampling.
-            - maskfile : str, optional
-                Path to a mask NIfTI file.
-            - maskthresh : float
-                Threshold for generating mask from template if no maskfile is provided.
-            - removeemptyregions : bool
-                If True, remove regions with no voxels.
-            - volumeperregion : bool
-                If True, save each region as a separate volume; otherwise, save as a
-                single label map.
-            - outputtemplatename : str
-                Path for the output NIfTI file.
+    Parameters
+    ----------
+    args : Any
+        An object containing command-line arguments. Expected attributes include:
+        - inputtemplatename : str
+            Path to the input NIfTI template file.
+        - debug : bool
+            If True, print debug information.
+        - maxval : float, optional
+            Maximum value to truncate template data.
+        - labelfile : str, optional
+            Path to a text file containing region labels.
+        - dosplit : bool
+            If True, split regions into left and right hemispheres.
+        - LtoR : bool
+            If True, assign left hemisphere labels first.
+        - targetfile : str, optional
+            Path to a target NIfTI file for resampling.
+        - xfm : str, optional
+            Path to transformation file for resampling.
+        - maskfile : str, optional
+            Path to a mask NIfTI file.
+        - maskthresh : float
+            Threshold for generating mask from template if no maskfile is provided.
+        - removeemptyregions : bool
+            If True, remove regions with no voxels.
+        - volumeperregion : bool
+            If True, save each region as a separate volume; otherwise, save as a
+            single label map.
+        - outputtemplatename : str
+            Path for the output NIfTI file.
 
-        Returns
-        -------
-        None
-            This function does not return a value but saves processed data to disk.
+    Returns
+    -------
+    None
+        This function does not return a value but saves processed data to disk.
 
-        Notes
-        -----
-        - The function supports both 3D and 4D input templates.
-        - If `targetfile` is provided, the template is resampled using FSL or ANTs.
-        - If `maskfile` is not provided, a mask is generated from the template using
-          `maskthresh`.
-        - Labels from `labelfile` are used in the output if provided.
+    Notes
+    -----
+    - The function supports both 3D and 4D input templates.
+    - If `targetfile` is provided, the template is resampled using FSL or ANTs.
+    - If `maskfile` is not provided, a mask is generated from the template using
+      `maskthresh`.
+    - Labels from `labelfile` are used in the output if provided.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     inputtemplatename='template.nii.gz',
-        ...     debug=False,
-        ...     maxval=None,
-        ...     labelfile='labels.txt',
-        ...     dosplit=True,
-        ...     LtoR=True,
-        ...     targetfile='target.nii.gz',
-        ...     xfm='transform.mat',
-        ...     maskfile=None,
-        ...     maskthresh=0.5,
-        ...     removeemptyregions=True,
-        ...     volumeperregion=False,
-        ...     outputtemplatename='output.nii.gz'
-        ... )
-        >>> atlastool(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     inputtemplatename='template.nii.gz',
+    ...     debug=False,
+    ...     maxval=None,
+    ...     labelfile='labels.txt',
+    ...     dosplit=True,
+    ...     LtoR=True,
+    ...     targetfile='target.nii.gz',
+    ...     xfm='transform.mat',
+    ...     maskfile=None,
+    ...     maskthresh=0.5,
+    ...     removeemptyregions=True,
+    ...     volumeperregion=False,
+    ...     outputtemplatename='output.nii.gz'
+    ... )
+    >>> atlastool(args)
+    """
     if args.debug:
         print(args)
 

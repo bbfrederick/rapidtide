@@ -29,36 +29,36 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Argument parser for applydlfilter.
-    
-        This function creates and configures an argument parser for the `applydlfilter` 
-        command-line tool, which applies a deep learning filter to a timecourse.
+    Argument parser for applydlfilter.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object with defined arguments for `applydlfilter`.
+    This function creates and configures an argument parser for the `applydlfilter`
+    command-line tool, which applies a deep learning filter to a timecourse.
 
-        Notes
-        -----
-        The parser includes the following required and optional arguments:
-    
-        - ``infilename``: Input text file (or list of files) containing timecourse data.
-        - ``outfilename``: Output text file (or list of files) to save filtered data.
-        - ``--model``: Model root name to use for filtering (default: ``model_revised``).
-        - ``--filesarelists``: Flag indicating input file contains lists of filenames.
-        - ``--nodisplay``: Flag to disable plotting (for non-interactive use).
-        - ``--verbose``: Flag to enable verbose output.
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object with defined arguments for `applydlfilter`.
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['input.txt', 'output.txt', '--model', 'custom_model'])
-        >>> print(args.infilename)
-        'input.txt'
-        >>> print(args.model)
-        'custom_model'
-        """
+    Notes
+    -----
+    The parser includes the following required and optional arguments:
+
+    - ``infilename``: Input text file (or list of files) containing timecourse data.
+    - ``outfilename``: Output text file (or list of files) to save filtered data.
+    - ``--model``: Model root name to use for filtering (default: ``model_revised``).
+    - ``--filesarelists``: Flag indicating input file contains lists of filenames.
+    - ``--nodisplay``: Flag to disable plotting (for non-interactive use).
+    - ``--verbose``: Flag to enable verbose output.
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['input.txt', 'output.txt', '--model', 'custom_model'])
+    >>> print(args.infilename)
+    'input.txt'
+    >>> print(args.model)
+    'custom_model'
+    """
     parser = argparse.ArgumentParser(
         prog="applydlfilter",
         description=("Apply a deep learning filter to a timecourse."),
@@ -112,60 +112,60 @@ def _get_parser() -> Any:
 
 def applydlfilter(args: Any) -> None:
     """
-        Apply a deep learning filter to fMRI data files.
+    Apply a deep learning filter to fMRI data files.
 
-        This function reads fMRI data from input files, applies a deep learning filter
-        to denoise the data, and writes the filtered output to specified files. It supports
-        processing multiple files either from lists or a single file, and optionally displays
-        the filtering results using matplotlib.
+    This function reads fMRI data from input files, applies a deep learning filter
+    to denoise the data, and writes the filtered output to specified files. It supports
+    processing multiple files either from lists or a single file, and optionally displays
+    the filtering results using matplotlib.
 
-        Parameters
-        ----------
-        args : Any
-            An object containing the following attributes:
-            - `infilename` : str
-                Path to the input file or list of input files.
-            - `outfilename` : str
-                Path to the output file or list of output files.
-            - `filesarelists` : bool
-                If True, `infilename` and `outfilename` are treated as paths to text files
-                containing lists of input and output filenames, respectively.
-            - `model` : str
-                Path to the deep learning model to be used for filtering.
-            - `display` : bool
-                If True, displays the original and filtered data using matplotlib.
-            - `verbose` : bool
-                If True, prints verbose output during processing.
+    Parameters
+    ----------
+    args : Any
+        An object containing the following attributes:
+        - `infilename` : str
+            Path to the input file or list of input files.
+        - `outfilename` : str
+            Path to the output file or list of output files.
+        - `filesarelists` : bool
+            If True, `infilename` and `outfilename` are treated as paths to text files
+            containing lists of input and output filenames, respectively.
+        - `model` : str
+            Path to the deep learning model to be used for filtering.
+        - `display` : bool
+            If True, displays the original and filtered data using matplotlib.
+        - `verbose` : bool
+            If True, prints verbose output during processing.
 
-        Returns
-        -------
-        None
-            This function does not return any value. It writes filtered data to files
-            and optionally displays plots.
+    Returns
+    -------
+    None
+        This function does not return any value. It writes filtered data to files
+        and optionally displays plots.
 
-        Notes
-        -----
-        - The function assumes that the input data has a sampling rate of 25.0 Hz.
-        - If `filesarelists` is True, the input and output filenames are read from
-          text files, where each line contains a single filename.
-        - The function checks for matching list lengths when processing multiple files.
-        - If a bad points file is specified, it is read and used during filtering.
-        - The deep learning model is loaded from a predefined model path within the
-          `rapidtide` package.
+    Notes
+    -----
+    - The function assumes that the input data has a sampling rate of 25.0 Hz.
+    - If `filesarelists` is True, the input and output filenames are read from
+      text files, where each line contains a single filename.
+    - The function checks for matching list lengths when processing multiple files.
+    - If a bad points file is specified, it is read and used during filtering.
+    - The deep learning model is loaded from a predefined model path within the
+      `rapidtide` package.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     infilename="input.txt",
-        ...     outfilename="output.txt",
-        ...     filesarelists=False,
-        ...     model="model.h5",
-        ...     display=False,
-        ...     verbose=True
-        ... )
-        >>> applydlfilter(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     infilename="input.txt",
+    ...     outfilename="output.txt",
+    ...     filesarelists=False,
+    ...     model="model.h5",
+    ...     display=False,
+    ...     verbose=True
+    ... )
+    >>> applydlfilter(args)
+    """
     if args.display:
         import matplotlib as mpl
 

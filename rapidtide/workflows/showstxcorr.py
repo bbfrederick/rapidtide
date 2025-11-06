@@ -37,34 +37,34 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-        Create and configure an argument parser for the showstxcorr tool.
+    Create and configure an argument parser for the showstxcorr tool.
 
-        This function sets up an `argparse.ArgumentParser` with various required and
-        optional arguments to control the behavior of the cross-correlation plotting
-        tool. It includes options for input files, sampling parameters, correlation
-        settings, display control, and preprocessing steps.
+    This function sets up an `argparse.ArgumentParser` with various required and
+    optional arguments to control the behavior of the cross-correlation plotting
+    tool. It includes options for input files, sampling parameters, correlation
+    settings, display control, and preprocessing steps.
 
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object with all necessary arguments added.
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object with all necessary arguments added.
 
-        Notes
-        -----
-        The parser is configured with:
-        - Two required input text files (`infilename1`, `infilename2`)
-        - Output filename root
-        - Sampling rate or time step options (mutually exclusive)
-        - Correlation threshold and window parameters
-        - Time range and display options
-        - Preprocessing options like detrending and correlation weighting
-        - Filtering and windowing options
+    Notes
+    -----
+    The parser is configured with:
+    - Two required input text files (`infilename1`, `infilename2`)
+    - Output filename root
+    - Sampling rate or time step options (mutually exclusive)
+    - Correlation threshold and window parameters
+    - Time range and display options
+    - Preprocessing options like detrending and correlation weighting
+    - Filtering and windowing options
 
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args()
-        """
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args()
+    """
     parser = argparse.ArgumentParser(
         prog="showstxcorr",
         description="Plots the data in text files.",
@@ -221,42 +221,42 @@ def _get_parser() -> Any:
 
 def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
     """
-        Print thresholds with corresponding percentile values.
-    
-        This function prints a formatted list of thresholds where each threshold
-        corresponds to a specific percentile. The output shows the probability
-        threshold for which the percentile is less than the given value.
-    
-        Parameters
-        ----------
-        pcts : Any
-            Array-like object containing the percentile values to be printed.
-        thepercentiles : Any
-            Array-like object containing the corresponding percentile thresholds.
-        labeltext : Any
-            Text label to be printed before the threshold values.
-        
-        Returns
-        -------
-        None
-            This function prints to stdout and does not return any value.
-        
-        Notes
-        -----
-        The function assumes that both `pcts` and `thepercentiles` have the same length
-        and that the percentiles are ordered in ascending order.
-    
-        Examples
-        --------
-        >>> pcts = [0.05, 0.01, 0.001]
-        >>> thepercentiles = [0.95, 0.99, 0.999]
-        >>> labeltext = "Significance thresholds:"
-        >>> printthresholds(pcts, thepercentiles, labeltext)
-        Significance thresholds:
-        	p < 0.05 :  0.05
-        	p < 0.01 :  0.01
-        	p < 0.001 :  0.001
-        """
+    Print thresholds with corresponding percentile values.
+
+    This function prints a formatted list of thresholds where each threshold
+    corresponds to a specific percentile. The output shows the probability
+    threshold for which the percentile is less than the given value.
+
+    Parameters
+    ----------
+    pcts : Any
+        Array-like object containing the percentile values to be printed.
+    thepercentiles : Any
+        Array-like object containing the corresponding percentile thresholds.
+    labeltext : Any
+        Text label to be printed before the threshold values.
+
+    Returns
+    -------
+    None
+        This function prints to stdout and does not return any value.
+
+    Notes
+    -----
+    The function assumes that both `pcts` and `thepercentiles` have the same length
+    and that the percentiles are ordered in ascending order.
+
+    Examples
+    --------
+    >>> pcts = [0.05, 0.01, 0.001]
+    >>> thepercentiles = [0.95, 0.99, 0.999]
+    >>> labeltext = "Significance thresholds:"
+    >>> printthresholds(pcts, thepercentiles, labeltext)
+    Significance thresholds:
+            p < 0.05 :  0.05
+            p < 0.01 :  0.01
+            p < 0.001 :  0.001
+    """
     print(labeltext)
     for i in range(0, len(pcts)):
         print("\tp <", 1.0 - thepercentiles[i], ": ", pcts[i])
@@ -264,93 +264,93 @@ def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
 
 def showstxcorr(args: Any) -> None:
     """
-        Compute and display short-term cross-correlations between two time series.
+    Compute and display short-term cross-correlations between two time series.
 
-        This function performs short-term cross-correlation analysis on two input time series,
-        applying optional filtering, detrending, and time-warping. It supports both single
-        correlation output and matrix output modes, and can generate plots and save results
-        to files.
+    This function performs short-term cross-correlation analysis on two input time series,
+    applying optional filtering, detrending, and time-warping. It supports both single
+    correlation output and matrix output modes, and can generate plots and save results
+    to files.
 
-        Parameters
-        ----------
-        args : argparse.Namespace
-            Command-line arguments containing the following attributes:
-            - infilename1 : str
-                Path to the first input file.
-            - infilename2 : str
-                Path to the second input file.
-            - samplerate : float or str
-                Sampling rate of the data. Must be set if 'auto'.
-            - starttime : float
-                Start time for data trimming.
-            - duration : float
-                Duration of the data to process.
-            - stepsize : float
-                Step size for correlation computation.
-            - windowwidth : float
-                Width of the analysis window in seconds.
-            - lagmin : float
-                Minimum lag for correlation search.
-            - lagmax : float
-                Maximum lag for correlation search.
-            - corrweighting : str
-                Type of weighting for correlation.
-            - windowfunc : str
-                Window function to apply.
-            - detrendorder : int
-                Order of detrending to apply.
-            - invert : bool
-                Whether to invert the second signal.
-            - display : bool
-                Whether to display plots.
-            - debug : bool
-                Whether to enable debug output.
-            - outfilename : str
-                Base name for output files.
-            - corrthresh : float
-                Threshold for correlation significance.
-            - filter : dict
-                Filter parameters.
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command-line arguments containing the following attributes:
+        - infilename1 : str
+            Path to the first input file.
+        - infilename2 : str
+            Path to the second input file.
+        - samplerate : float or str
+            Sampling rate of the data. Must be set if 'auto'.
+        - starttime : float
+            Start time for data trimming.
+        - duration : float
+            Duration of the data to process.
+        - stepsize : float
+            Step size for correlation computation.
+        - windowwidth : float
+            Width of the analysis window in seconds.
+        - lagmin : float
+            Minimum lag for correlation search.
+        - lagmax : float
+            Maximum lag for correlation search.
+        - corrweighting : str
+            Type of weighting for correlation.
+        - windowfunc : str
+            Window function to apply.
+        - detrendorder : int
+            Order of detrending to apply.
+        - invert : bool
+            Whether to invert the second signal.
+        - display : bool
+            Whether to display plots.
+        - debug : bool
+            Whether to enable debug output.
+        - outfilename : str
+            Base name for output files.
+        - corrthresh : float
+            Threshold for correlation significance.
+        - filter : dict
+            Filter parameters.
 
-        Returns
-        -------
-        None
-            This function does not return a value but saves output files and displays plots
-            if requested.
+    Returns
+    -------
+    None
+        This function does not return a value but saves output files and displays plots
+        if requested.
 
-        Notes
-        -----
-        The function applies a prefilter to the data and trims the input time series to
-        the specified duration. It supports both single correlation and matrix correlation
-        modes. In matrix mode, all components are correlated against each other and
-        results are saved to NIfTI files and CSV tables. In single mode, correlations are
-        computed between two time series and results are saved to text files.
+    Notes
+    -----
+    The function applies a prefilter to the data and trims the input time series to
+    the specified duration. It supports both single correlation and matrix correlation
+    modes. In matrix mode, all components are correlated against each other and
+    results are saved to NIfTI files and CSV tables. In single mode, correlations are
+    computed between two time series and results are saved to text files.
 
-        Examples
-        --------
-        >>> import argparse
-        >>> args = argparse.Namespace(
-        ...     infilename1='data1.txt',
-        ...     infilename2='data2.txt',
-        ...     samplerate=100,
-        ...     starttime=0,
-        ...     duration=1000,
-        ...     stepsize=10,
-        ...     windowwidth=20,
-        ...     lagmin=-5,
-        ...     lagmax=5,
-        ...     corrweighting='uniform',
-        ...     windowfunc='hanning',
-        ...     detrendorder=1,
-        ...     invert=False,
-        ...     display=False,
-        ...     debug=False,
-        ...     outfilename='output',
-        ...     corrthresh=0.3,
-        ...     filter={}
-        ... )
-        >>> showstxcorr(args)
-        """
+    Examples
+    --------
+    >>> import argparse
+    >>> args = argparse.Namespace(
+    ...     infilename1='data1.txt',
+    ...     infilename2='data2.txt',
+    ...     samplerate=100,
+    ...     starttime=0,
+    ...     duration=1000,
+    ...     stepsize=10,
+    ...     windowwidth=20,
+    ...     lagmin=-5,
+    ...     lagmax=5,
+    ...     corrweighting='uniform',
+    ...     windowfunc='hanning',
+    ...     detrendorder=1,
+    ...     invert=False,
+    ...     display=False,
+    ...     debug=False,
+    ...     outfilename='output',
+    ...     corrthresh=0.3,
+    ...     filter={}
+    ... )
+    >>> showstxcorr(args)
+    """
     # get the command line parameters
     verbose = True
     matrixoutput = False

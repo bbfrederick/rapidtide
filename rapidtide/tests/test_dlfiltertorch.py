@@ -51,11 +51,11 @@ def dummy_data():
     val_y = np.random.randn(20, window_size, 1).astype(np.float32)
 
     return {
-        'train_x': train_x,
-        'train_y': train_y,
-        'val_x': val_x,
-        'val_y': val_y,
-        'window_size': window_size
+        "train_x": train_x,
+        "train_y": train_y,
+        "val_x": val_x,
+        "val_y": val_y,
+        "window_size": window_size,
     }
 
 
@@ -66,7 +66,7 @@ def test_cnn_model_creation():
     num_layers = 3
     dropout_rate = 0.3
     dilation_rate = 1
-    activation = 'relu'
+    activation = "relu"
     inputsize = 1
 
     model = dlfiltertorch.CNNModel(
@@ -76,7 +76,7 @@ def test_cnn_model_creation():
         dropout_rate=dropout_rate,
         dilation_rate=dilation_rate,
         activation=activation,
-        inputsize=inputsize
+        inputsize=inputsize,
     )
 
     # Test forward pass
@@ -89,8 +89,8 @@ def test_cnn_model_creation():
 
     # Test get_config
     config = model.get_config()
-    assert config['num_filters'] == num_filters
-    assert config['kernel_size'] == kernel_size
+    assert config["num_filters"] == num_filters
+    assert config["kernel_size"] == kernel_size
 
 
 def test_lstm_model_creation():
@@ -106,7 +106,7 @@ def test_lstm_model_creation():
         num_layers=num_layers,
         dropout_rate=dropout_rate,
         window_size=window_size,
-        inputsize=inputsize
+        inputsize=inputsize,
     )
 
     # Test forward pass
@@ -118,8 +118,8 @@ def test_lstm_model_creation():
 
     # Test get_config
     config = model.get_config()
-    assert config['num_units'] == num_units
-    assert config['num_layers'] == num_layers
+    assert config["num_units"] == num_units
+    assert config["num_layers"] == num_layers
 
 
 def test_dense_autoencoder_model_creation():
@@ -128,7 +128,7 @@ def test_dense_autoencoder_model_creation():
     encoding_dim = 10
     num_layers = 3
     dropout_rate = 0.3
-    activation = 'relu'
+    activation = "relu"
     inputsize = 1
 
     model = dlfiltertorch.DenseAutoencoderModel(
@@ -137,7 +137,7 @@ def test_dense_autoencoder_model_creation():
         num_layers=num_layers,
         dropout_rate=dropout_rate,
         activation=activation,
-        inputsize=inputsize
+        inputsize=inputsize,
     )
 
     # Test forward pass
@@ -149,8 +149,8 @@ def test_dense_autoencoder_model_creation():
 
     # Test get_config
     config = model.get_config()
-    assert config['encoding_dim'] == encoding_dim
-    assert config['window_size'] == window_size
+    assert config["encoding_dim"] == encoding_dim
+    assert config["window_size"] == window_size
 
 
 @pytest.mark.skip(reason="ConvAutoencoderModel has dimension calculation issues")
@@ -163,7 +163,7 @@ def test_conv_autoencoder_model_creation():
     num_filters = 5
     kernel_size = 5
     dropout_rate = 0.3
-    activation = 'relu'
+    activation = "relu"
     inputsize = 1
 
     model = dlfiltertorch.ConvAutoencoderModel(
@@ -173,7 +173,7 @@ def test_conv_autoencoder_model_creation():
         kernel_size=kernel_size,
         dropout_rate=dropout_rate,
         activation=activation,
-        inputsize=inputsize
+        inputsize=inputsize,
     )
 
     # Test forward pass
@@ -190,7 +190,7 @@ def test_crnn_model_creation():
     kernel_size = 5
     encoding_dim = 10
     dropout_rate = 0.3
-    activation = 'relu'
+    activation = "relu"
     inputsize = 1
 
     model = dlfiltertorch.CRNNModel(
@@ -199,7 +199,7 @@ def test_crnn_model_creation():
         encoding_dim=encoding_dim,
         dropout_rate=dropout_rate,
         activation=activation,
-        inputsize=inputsize
+        inputsize=inputsize,
     )
 
     # Test forward pass
@@ -218,7 +218,7 @@ def test_hybrid_model_creation():
     num_units = 16
     num_layers = 3
     dropout_rate = 0.3
-    activation = 'relu'
+    activation = "relu"
     inputsize = 1
     window_size = 64
 
@@ -232,7 +232,7 @@ def test_hybrid_model_creation():
         activation=activation,
         inputsize=inputsize,
         window_size=window_size,
-        invert=False
+        invert=False,
     )
 
     batch_size = 4
@@ -251,7 +251,7 @@ def test_hybrid_model_creation():
         activation=activation,
         inputsize=inputsize,
         window_size=window_size,
-        invert=True
+        invert=True,
     )
 
     output_inverted = model_inverted(x)
@@ -266,7 +266,7 @@ def test_cnn_dlfilter_initialization(temp_model_dir):
         window_size=64,
         num_layers=3,
         num_epochs=1,
-        modelroot=temp_model_dir
+        modelroot=temp_model_dir,
     )
 
     assert filter_obj.window_size == 64
@@ -285,7 +285,7 @@ def test_cnn_dlfilter_initialize(temp_model_dir):
         num_layers=3,
         num_epochs=1,
         modelroot=temp_model_dir,
-        namesuffix="test"
+        namesuffix="test",
     )
 
     # Just call getname and makenet, don't call full initialize
@@ -306,11 +306,7 @@ def test_cnn_dlfilter_initialize(temp_model_dir):
 def test_lstm_dlfilter_initialization(temp_model_dir):
     """Test LSTMDLFilter initialization."""
     filter_obj = dlfiltertorch.LSTMDLFilter(
-        num_units=16,
-        window_size=64,
-        num_layers=2,
-        num_epochs=1,
-        modelroot=temp_model_dir
+        num_units=16, window_size=64, num_layers=2, num_epochs=1, modelroot=temp_model_dir
     )
 
     assert filter_obj.window_size == 64
@@ -321,11 +317,7 @@ def test_lstm_dlfilter_initialization(temp_model_dir):
 def test_dense_autoencoder_dlfilter_initialization(temp_model_dir):
     """Test DenseAutoencoderDLFilter initialization."""
     filter_obj = dlfiltertorch.DenseAutoencoderDLFilter(
-        encoding_dim=10,
-        window_size=64,
-        num_layers=3,
-        num_epochs=1,
-        modelroot=temp_model_dir
+        encoding_dim=10, window_size=64, num_layers=3, num_epochs=1, modelroot=temp_model_dir
     )
 
     assert filter_obj.window_size == 64
@@ -341,7 +333,7 @@ def test_conv_autoencoder_dlfilter_initialization(temp_model_dir):
         kernel_size=5,
         window_size=64,
         num_epochs=1,
-        modelroot=temp_model_dir
+        modelroot=temp_model_dir,
     )
 
     assert filter_obj.window_size == 64
@@ -358,7 +350,7 @@ def test_crnn_dlfilter_initialization(temp_model_dir):
         kernel_size=5,
         window_size=64,
         num_epochs=1,
-        modelroot=temp_model_dir
+        modelroot=temp_model_dir,
     )
 
     assert filter_obj.window_size == 64
@@ -377,7 +369,7 @@ def test_hybrid_dlfilter_initialization(temp_model_dir):
         window_size=64,
         num_layers=3,
         num_epochs=1,
-        modelroot=temp_model_dir
+        modelroot=temp_model_dir,
     )
 
     assert filter_obj.window_size == 64
@@ -392,10 +384,10 @@ def test_predict_model(temp_model_dir, dummy_data):
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
         kernel_size=5,
-        window_size=dummy_data['window_size'],
+        window_size=dummy_data["window_size"],
         num_layers=3,
         num_epochs=1,
-        modelroot=temp_model_dir
+        modelroot=temp_model_dir,
     )
 
     # Just create the model without full initialize
@@ -404,9 +396,9 @@ def test_predict_model(temp_model_dir, dummy_data):
     filter_obj.model.to(filter_obj.device)
 
     # Test prediction with numpy array
-    predictions = filter_obj.predict_model(dummy_data['val_x'])
+    predictions = filter_obj.predict_model(dummy_data["val_x"])
 
-    assert predictions.shape == dummy_data['val_y'].shape
+    assert predictions.shape == dummy_data["val_y"].shape
     assert isinstance(predictions, np.ndarray)
 
 
@@ -421,7 +413,7 @@ def test_apply_method(temp_model_dir):
         window_size=window_size,
         num_layers=3,
         num_epochs=1,
-        modelroot=temp_model_dir
+        modelroot=temp_model_dir,
     )
 
     # Just create the model without full initialize
@@ -451,7 +443,7 @@ def test_apply_method_with_badpts(temp_model_dir):
         num_layers=3,
         num_epochs=1,
         modelroot=temp_model_dir,
-        usebadpts=True
+        usebadpts=True,
     )
 
     # Just create the model without full initialize
@@ -483,7 +475,7 @@ def test_save_and_load_model(temp_model_dir):
         num_layers=3,
         num_epochs=1,
         modelroot=temp_model_dir,
-        namesuffix="saveloadtest"
+        namesuffix="saveloadtest",
     )
 
     # Create and save the model using modelpath
@@ -508,14 +500,14 @@ def test_save_and_load_model(temp_model_dir):
         num_layers=3,
         num_epochs=1,
         modelroot=temp_model_dir,
-        modelpath=temp_model_dir
+        modelpath=temp_model_dir,
     )
 
     filter_obj2.loadmodel(original_modelname)
 
     # Check that metadata was loaded correctly
     assert filter_obj2.window_size == 64
-    assert filter_obj2.infodict['nettype'] == 'cnn'
+    assert filter_obj2.infodict["nettype"] == "cnn"
 
     # Verify weights match
     for name, param in filter_obj2.model.named_parameters():
@@ -528,21 +520,13 @@ def test_filtscale_forward():
     data = np.random.randn(64)
 
     # Test without log normalization
-    scaled_data, scalefac = dlfiltertorch.filtscale(
-        data,
-        reverse=False,
-        lognormalize=False
-    )
+    scaled_data, scalefac = dlfiltertorch.filtscale(data, reverse=False, lognormalize=False)
 
     assert scaled_data.shape == (64, 2)
     assert isinstance(scalefac, (float, np.floating))
 
     # Test with log normalization
-    scaled_data_log, scalefac_log = dlfiltertorch.filtscale(
-        data,
-        reverse=False,
-        lognormalize=True
-    )
+    scaled_data_log, scalefac_log = dlfiltertorch.filtscale(data, reverse=False, lognormalize=True)
 
     assert scaled_data_log.shape == (64, 2)
 
@@ -553,17 +537,10 @@ def test_filtscale_reverse():
     data = np.random.randn(64)
 
     # Forward then reverse
-    scaled_data, scalefac = dlfiltertorch.filtscale(
-        data,
-        reverse=False,
-        lognormalize=False
-    )
+    scaled_data, scalefac = dlfiltertorch.filtscale(data, reverse=False, lognormalize=False)
 
     reconstructed = dlfiltertorch.filtscale(
-        scaled_data,
-        scalefac=scalefac,
-        reverse=True,
-        lognormalize=False
+        scaled_data, scalefac=scalefac, reverse=True, lognormalize=False
     )
 
     # Should reconstruct approximately to original
@@ -581,17 +558,13 @@ def test_tobadpts():
 def test_targettoinput():
     """Test targettoinput helper function."""
     filename = "test_xyz_file.txt"
-    result = dlfiltertorch.targettoinput(
-        filename,
-        targetfrag="xyz",
-        inputfrag="abc"
-    )
+    result = dlfiltertorch.targettoinput(filename, targetfrag="xyz", inputfrag="abc")
     assert result == "test_abc_file.txt"
 
 
 def test_model_with_different_activations(temp_model_dir):
     """Test models with different activation functions."""
-    activations = ['relu', 'tanh']
+    activations = ["relu", "tanh"]
 
     for activation in activations:
         model = dlfiltertorch.CNNModel(
@@ -601,7 +574,7 @@ def test_model_with_different_activations(temp_model_dir):
             dropout_rate=0.3,
             dilation_rate=1,
             activation=activation,
-            inputsize=1
+            inputsize=1,
         )
 
         # Test forward pass
@@ -610,18 +583,14 @@ def test_model_with_different_activations(temp_model_dir):
         assert output.shape == x.shape
 
         config = model.get_config()
-        assert config['activation'] == activation
+        assert config["activation"] == activation
 
 
 def test_device_selection():
     """Test that device is properly set based on availability."""
     # This test just checks that the device variable is set
     # We can't guarantee CUDA/MPS availability in test environment
-    assert dlfiltertorch.device in [
-        torch.device('cuda'),
-        torch.device('mps'),
-        torch.device('cpu')
-    ]
+    assert dlfiltertorch.device in [torch.device("cuda"), torch.device("mps"), torch.device("cpu")]
 
 
 def test_infodict_population(temp_model_dir):
@@ -635,22 +604,22 @@ def test_infodict_population(temp_model_dir):
         num_epochs=5,
         excludethresh=4.0,
         corrthresh=0.5,
-        modelroot=temp_model_dir
+        modelroot=temp_model_dir,
     )
 
     # Check that infodict has expected keys
-    assert 'nettype' in filter_obj.infodict
-    assert 'num_filters' in filter_obj.infodict
-    assert 'kernel_size' in filter_obj.infodict
-    assert filter_obj.infodict['nettype'] == 'cnn'
+    assert "nettype" in filter_obj.infodict
+    assert "num_filters" in filter_obj.infodict
+    assert "kernel_size" in filter_obj.infodict
+    assert filter_obj.infodict["nettype"] == "cnn"
 
     # Create the model (don't call initmetadata due to path bug)
     filter_obj.getname()
     filter_obj.makenet()
 
     # The model should populate infodict with window_size during getname
-    assert 'window_size' in filter_obj.infodict
-    assert filter_obj.infodict['window_size'] == 64
+    assert "window_size" in filter_obj.infodict
+    assert filter_obj.infodict["window_size"] == 64
 
 
 if __name__ == "__main__":

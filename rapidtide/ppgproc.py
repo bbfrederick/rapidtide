@@ -30,47 +30,47 @@ import rapidtide.io as tide_io
 
 class PPGKalmanFilter:
     """
-        Kalman filter optimized for PPG (photoplethysmogram) signals.
-        PPG signals are lower frequency, more sinusoidal, and have different
-        noise characteristics compared to ECG.
-        """
+    Kalman filter optimized for PPG (photoplethysmogram) signals.
+    PPG signals are lower frequency, more sinusoidal, and have different
+    noise characteristics compared to ECG.
+    """
 
     def __init__(
         self, dt: float = 0.01, process_noise: float = 0.001, measurement_noise: float = 0.05
     ) -> None:
         """
-            Initialize Kalman filter for PPG signals.
-    
-            Initialize Kalman filter with default parameters suitable for photoplethysmography (PPG) 
-            signal processing. Uses a constant velocity model with position and velocity states.
-    
-            Parameters
-            ----------
-            dt : float, optional
-                Sampling interval in seconds, default is 0.01 (100Hz sampling rate typical for PPG)
-            process_noise : float, optional
-                Process noise covariance (Q) controlling state uncertainty, default is 0.001.
-                Lower values (0.0001-0.01) appropriate for smoother PPG signals
-            measurement_noise : float, optional
-                Measurement noise covariance (R) representing sensor/motion artifact noise, 
-                default is 0.05
-        
-            Returns
-            -------
-            None
-                Initializes internal filter parameters and state variables
-        
-            Notes
-            -----
-            The filter uses a constant velocity model with state vector [position, velocity].
-            PPG signals are inherently smoother than other physiological signals, so lower 
-            process noise values are typically appropriate.
-    
-            Examples
-            --------
-            >>> filter = KalmanFilter(dt=0.02, process_noise=0.005, measurement_noise=0.1)
-            >>> filter = KalmanFilter()  # Uses default parameters
-            """
+        Initialize Kalman filter for PPG signals.
+
+        Initialize Kalman filter with default parameters suitable for photoplethysmography (PPG)
+        signal processing. Uses a constant velocity model with position and velocity states.
+
+        Parameters
+        ----------
+        dt : float, optional
+            Sampling interval in seconds, default is 0.01 (100Hz sampling rate typical for PPG)
+        process_noise : float, optional
+            Process noise covariance (Q) controlling state uncertainty, default is 0.001.
+            Lower values (0.0001-0.01) appropriate for smoother PPG signals
+        measurement_noise : float, optional
+            Measurement noise covariance (R) representing sensor/motion artifact noise,
+            default is 0.05
+
+        Returns
+        -------
+        None
+            Initializes internal filter parameters and state variables
+
+        Notes
+        -----
+        The filter uses a constant velocity model with state vector [position, velocity].
+        PPG signals are inherently smoother than other physiological signals, so lower
+        process noise values are typically appropriate.
+
+        Examples
+        --------
+        >>> filter = KalmanFilter(dt=0.02, process_noise=0.005, measurement_noise=0.1)
+        >>> filter = KalmanFilter()  # Uses default parameters
+        """
         # State vector: [position, velocity]
         self.x = np.array([[0.0], [0.0]])
 
@@ -96,32 +96,32 @@ class PPGKalmanFilter:
 
     def update(self, measurement: NDArray) -> None:
         """
-            Update step with measurement.
+        Update step with measurement.
 
-            Parameters
-            ----------
-            measurement : NDArray
-                The measurement vector used to update the state estimate.
+        Parameters
+        ----------
+        measurement : NDArray
+            The measurement vector used to update the state estimate.
 
-            Returns
-            -------
-            None
-                This method modifies the instance attributes in-place and does not return anything.
+        Returns
+        -------
+        None
+            This method modifies the instance attributes in-place and does not return anything.
 
-            Notes
-            -----
-            This function performs the update step of a Kalman filter. It computes the innovation,
-            innovation covariance, Kalman gain, and then updates the state estimate and covariance
-            matrix based on the measurement.
+        Notes
+        -----
+        This function performs the update step of a Kalman filter. It computes the innovation,
+        innovation covariance, Kalman gain, and then updates the state estimate and covariance
+        matrix based on the measurement.
 
-            Examples
-            --------
-            >>> kf = KalmanFilter()
-            >>> measurement = np.array([1.0, 2.0])
-            >>> kf.update(measurement)
-            >>> print(kf.x)
-            [0.95 1.98]
-            """
+        Examples
+        --------
+        >>> kf = KalmanFilter()
+        >>> measurement = np.array([1.0, 2.0])
+        >>> kf.update(measurement)
+        >>> print(kf.x)
+        [0.95 1.98]
+        """
         # Innovation
         y = measurement - self.H @ self.x
 
@@ -140,44 +140,44 @@ class PPGKalmanFilter:
 
     def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
         """
-            Filter entire signal and interpolate missing data using a Kalman filter approach.
-    
-            This function applies a filtering process to signal data, handling missing values
-            by either prediction-only steps or full update steps depending on the presence
-            of missing data points. Missing values are represented as np.nan in the input
-            signal_data.
-    
-            Parameters
-            ----------
-            signal_data : array-like
-                Input signal data where missing values are represented as np.nan
-            missing_indices : array-like, optional
-                Indices of missing data points in the signal. If None, no indices are
-                considered missing. Default is None.
-        
-            Returns
-            -------
-            filtered_signal : ndarray
-                Filtered and interpolated signal with the same shape as input signal_data
-        
-            Notes
-            -----
-            The function uses a Kalman filter framework where:
-            - For missing data points or NaN values, only prediction steps are performed
-            - For valid measurements, both prediction and update steps are performed
-            - The filtered result is stored in the state vector x[0, 0] after each step
-    
-            Examples
-            --------
-            >>> # Basic usage with missing data
-            >>> signal = np.array([1.0, np.nan, 3.0, 4.0, np.nan, 6.0])
-            >>> missing_indices = [1, 4]
-            >>> filtered = filter_signal(signal, missing_indices)
-    
-            >>> # Usage without missing data
-            >>> signal = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
-            >>> filtered = filter_signal(signal)
-            """
+        Filter entire signal and interpolate missing data using a Kalman filter approach.
+
+        This function applies a filtering process to signal data, handling missing values
+        by either prediction-only steps or full update steps depending on the presence
+        of missing data points. Missing values are represented as np.nan in the input
+        signal_data.
+
+        Parameters
+        ----------
+        signal_data : array-like
+            Input signal data where missing values are represented as np.nan
+        missing_indices : array-like, optional
+            Indices of missing data points in the signal. If None, no indices are
+            considered missing. Default is None.
+
+        Returns
+        -------
+        filtered_signal : ndarray
+            Filtered and interpolated signal with the same shape as input signal_data
+
+        Notes
+        -----
+        The function uses a Kalman filter framework where:
+        - For missing data points or NaN values, only prediction steps are performed
+        - For valid measurements, both prediction and update steps are performed
+        - The filtered result is stored in the state vector x[0, 0] after each step
+
+        Examples
+        --------
+        >>> # Basic usage with missing data
+        >>> signal = np.array([1.0, np.nan, 3.0, 4.0, np.nan, 6.0])
+        >>> missing_indices = [1, 4]
+        >>> filtered = filter_signal(signal, missing_indices)
+
+        >>> # Usage without missing data
+        >>> signal = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        >>> filtered = filter_signal(signal)
+        """
         filtered = np.zeros(len(signal_data))
 
         for i, measurement in enumerate(signal_data):
@@ -197,9 +197,9 @@ class PPGKalmanFilter:
 
 class AdaptivePPGKalmanFilter:
     """
-        Adaptive Kalman filter for PPG signals with motion artifact detection.
-        Adjusts parameters based on signal characteristics and detects motion artifacts.
-        """
+    Adaptive Kalman filter for PPG signals with motion artifact detection.
+    Adjusts parameters based on signal characteristics and detects motion artifacts.
+    """
 
     def __init__(
         self,
@@ -208,32 +208,32 @@ class AdaptivePPGKalmanFilter:
         initial_measurement_noise: float = 0.05,
     ) -> None:
         """
-            Initialize the Kalman filter with default parameters.
-    
-            Parameters
-            ----------
-            dt : float, optional
-                Time step for the Kalman filter, by default 0.01
-            initial_process_noise : float, optional
-                Initial process noise covariance, by default 0.001
-            initial_measurement_noise : float, optional
-                Initial measurement noise covariance, by default 0.05
-        
-            Returns
-            -------
-            None
-                This method initializes the instance variables and does not return anything.
-        
-            Notes
-            -----
-            This constructor sets up a 2D Kalman filter for position and velocity estimation.
-            The filter uses a constant velocity model with adaptive noise scaling.
-    
-            Examples
-            --------
-            >>> filter = KalmanFilter()
-            >>> filter = KalmanFilter(dt=0.02, initial_process_noise=0.005)
-            """
+        Initialize the Kalman filter with default parameters.
+
+        Parameters
+        ----------
+        dt : float, optional
+            Time step for the Kalman filter, by default 0.01
+        initial_process_noise : float, optional
+            Initial process noise covariance, by default 0.001
+        initial_measurement_noise : float, optional
+            Initial measurement noise covariance, by default 0.05
+
+        Returns
+        -------
+        None
+            This method initializes the instance variables and does not return anything.
+
+        Notes
+        -----
+        This constructor sets up a 2D Kalman filter for position and velocity estimation.
+        The filter uses a constant velocity model with adaptive noise scaling.
+
+        Examples
+        --------
+        >>> filter = KalmanFilter()
+        >>> filter = KalmanFilter(dt=0.02, initial_process_noise=0.005)
+        """
         self.dt = dt
         self.x = np.array([[0.0], [0.0]])
         self.F = np.array([[1, dt], [0, 1]])
@@ -254,39 +254,39 @@ class AdaptivePPGKalmanFilter:
 
     def detect_motion_artifact(self, innovation: NDArray) -> bool:
         """
-            Detect potential motion artifacts based on innovation magnitude.
+        Detect potential motion artifacts based on innovation magnitude.
 
-            This function analyzes the innovation signal to identify potential motion artifacts
-            by computing a z-score against the recent history of innovation values.
+        This function analyzes the innovation signal to identify potential motion artifacts
+        by computing a z-score against the recent history of innovation values.
 
-            Parameters
-            ----------
-            innovation : NDArray
-                The innovation signal to be analyzed, typically representing the difference
-                between predicted and actual measurements. Expected to be a 2D array with
-                shape (1, 1) for single sample analysis.
+        Parameters
+        ----------
+        innovation : NDArray
+            The innovation signal to be analyzed, typically representing the difference
+            between predicted and actual measurements. Expected to be a 2D array with
+            shape (1, 1) for single sample analysis.
 
-            Returns
-            -------
-            bool
-                True if a motion artifact is detected (z-score exceeds threshold),
-                False otherwise.
+        Returns
+        -------
+        bool
+            True if a motion artifact is detected (z-score exceeds threshold),
+            False otherwise.
 
-            Notes
-            -----
-            The function requires at least 10 samples in the innovation history to make
-            a detection decision. If the recent standard deviation is zero, the function
-            returns False to avoid division by zero errors.
+        Notes
+        -----
+        The function requires at least 10 samples in the innovation history to make
+        a detection decision. If the recent standard deviation is zero, the function
+        returns False to avoid division by zero errors.
 
-            Examples
-            --------
-            >>> detector = MotionDetector()
-            >>> detector.innovation_history = [0.1, 0.2, 0.15, 0.18, 0.22, 0.19, 0.21, 0.17, 0.23, 0.20]
-            >>> detector.motion_threshold = 3.0
-            >>> result = detector.detect_motion_artifact(np.array([[5.0]]))
-            >>> print(result)
-            True
-            """
+        Examples
+        --------
+        >>> detector = MotionDetector()
+        >>> detector.innovation_history = [0.1, 0.2, 0.15, 0.18, 0.22, 0.19, 0.21, 0.17, 0.23, 0.20]
+        >>> detector.motion_threshold = 3.0
+        >>> result = detector.detect_motion_artifact(np.array([[5.0]]))
+        >>> print(result)
+        True
+        """
         if len(self.innovation_history) < 10:
             return False
 
@@ -298,41 +298,41 @@ class AdaptivePPGKalmanFilter:
 
     def adapt_noise(self, innovation: NDArray, is_motion_artifact: bool) -> None:
         """
-            Adapt noise parameters based on signal characteristics.
-    
-            This method adjusts the measurement and process noise covariance matrices
-            based on the current innovation signal and motion artifact detection.
-    
-            Parameters
-            ----------
-            innovation : NDArray
-                The innovation signal, typically the difference between predicted and
-                actual measurements. Expected to be a 2D array with shape (1, 1) for
-                single-dimensional measurements.
-            is_motion_artifact : bool
-                Flag indicating whether a motion artifact has been detected in the signal.
-                When True, measurement noise is increased to handle the artifact.
-        
-            Returns
-            -------
-            None
-                This method modifies the instance attributes in-place and does not return
-                any value.
-        
-            Notes
-            -----
-            The method maintains a sliding window history of innovation values to compute
-            statistical measures for process noise adaptation. When motion artifacts are
-            detected, the measurement noise covariance matrix R is increased by a factor
-            of 10 to reduce the filter's trust in current measurements.
-    
-            Examples
-            --------
-            >>> # Assuming self is a Kalman filter instance
-            >>> innovation = np.array([[0.5]])
-            >>> adapt_noise(innovation, is_motion_artifact=True)
-            >>> # Measurement noise R is increased, process noise Q_scale is adjusted
-            """
+        Adapt noise parameters based on signal characteristics.
+
+        This method adjusts the measurement and process noise covariance matrices
+        based on the current innovation signal and motion artifact detection.
+
+        Parameters
+        ----------
+        innovation : NDArray
+            The innovation signal, typically the difference between predicted and
+            actual measurements. Expected to be a 2D array with shape (1, 1) for
+            single-dimensional measurements.
+        is_motion_artifact : bool
+            Flag indicating whether a motion artifact has been detected in the signal.
+            When True, measurement noise is increased to handle the artifact.
+
+        Returns
+        -------
+        None
+            This method modifies the instance attributes in-place and does not return
+            any value.
+
+        Notes
+        -----
+        The method maintains a sliding window history of innovation values to compute
+        statistical measures for process noise adaptation. When motion artifacts are
+        detected, the measurement noise covariance matrix R is increased by a factor
+        of 10 to reduce the filter's trust in current measurements.
+
+        Examples
+        --------
+        >>> # Assuming self is a Kalman filter instance
+        >>> innovation = np.array([[0.5]])
+        >>> adapt_noise(innovation, is_motion_artifact=True)
+        >>> # Measurement noise R is increased, process noise Q_scale is adjusted
+        """
         self.innovation_history.append(abs(innovation[0, 0]))
 
         if len(self.innovation_history) > self.window_size:
@@ -360,38 +360,38 @@ class AdaptivePPGKalmanFilter:
 
     def update(self, measurement: NDArray) -> None:
         """
-            Update the state estimate using the Kalman filter update step.
-    
-            This method performs the measurement update step of the Kalman filter, incorporating
-            new measurements into the state estimate while accounting for measurement noise
-            and potential motion artifacts.
-    
-            Parameters
-            ----------
-            measurement : NDArray
-                The new measurement vector used to update the state estimate.
-        
-            Returns
-            -------
-            bool
-                True if motion artifact was detected, False otherwise.
-        
-            Notes
-            -----
-            The update process includes:
-            1. Computing the innovation (measurement residual)
-            2. Detecting motion artifacts using the detect_motion_artifact method
-            3. Computing the Kalman gain
-            4. Updating the state estimate and covariance matrix
-            5. Adapting noise parameters based on the measurement residual and motion detection
-    
-            Examples
-            --------
-            >>> kf = KalmanFilter()
-            >>> measurement = np.array([1.0, 2.0])
-            >>> motion_detected = kf.update(measurement)
-            >>> print(f"Motion artifact detected: {motion_detected}")
-            """
+        Update the state estimate using the Kalman filter update step.
+
+        This method performs the measurement update step of the Kalman filter, incorporating
+        new measurements into the state estimate while accounting for measurement noise
+        and potential motion artifacts.
+
+        Parameters
+        ----------
+        measurement : NDArray
+            The new measurement vector used to update the state estimate.
+
+        Returns
+        -------
+        bool
+            True if motion artifact was detected, False otherwise.
+
+        Notes
+        -----
+        The update process includes:
+        1. Computing the innovation (measurement residual)
+        2. Detecting motion artifacts using the detect_motion_artifact method
+        3. Computing the Kalman gain
+        4. Updating the state estimate and covariance matrix
+        5. Adapting noise parameters based on the measurement residual and motion detection
+
+        Examples
+        --------
+        >>> kf = KalmanFilter()
+        >>> measurement = np.array([1.0, 2.0])
+        >>> motion_detected = kf.update(measurement)
+        >>> print(f"Motion artifact detected: {motion_detected}")
+        """
         y = measurement - self.H @ self.x
 
         # Detect motion artifact before updating
@@ -410,44 +410,44 @@ class AdaptivePPGKalmanFilter:
 
     def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
         """
-            Apply filtering to signal data using a Kalman filter approach.
-    
-            This function processes signal measurements using a Kalman filter framework,
-            handling missing data and NaN values appropriately while tracking motion detection
-            flags for each measurement.
-    
-            Parameters
-            ----------
-            signal_data : NDArray
-                Array containing the signal measurements to be filtered.
-            missing_indices : list of int, optional
-                List of indices where measurements are missing. If None, no special
-                handling is performed for missing data. Default is None.
-        
-            Returns
-            -------
-            tuple of (NDArray, NDArray)
-                A tuple containing:
-                - filtered : NDArray
-                  Array of filtered signal values
-                - motion_flags : NDArray of bool
-                  Boolean array indicating motion detection for each measurement
-        
-            Notes
-            -----
-            The function uses a prediction-update cycle for each measurement:
-            1. Prediction step is always performed
-            2. For missing measurements or NaN values, the current state estimate is returned
-            3. For valid measurements, the update step is performed and motion is detected
-    
-            Examples
-            --------
-            >>> # Basic usage
-            >>> filtered_data, motion_flags = filter_signal(signal, missing_indices=[2, 5])
-            >>> 
-            >>> # With no missing indices
-            >>> filtered_data, motion_flags = filter_signal(signal)
-            """
+        Apply filtering to signal data using a Kalman filter approach.
+
+        This function processes signal measurements using a Kalman filter framework,
+        handling missing data and NaN values appropriately while tracking motion detection
+        flags for each measurement.
+
+        Parameters
+        ----------
+        signal_data : NDArray
+            Array containing the signal measurements to be filtered.
+        missing_indices : list of int, optional
+            List of indices where measurements are missing. If None, no special
+            handling is performed for missing data. Default is None.
+
+        Returns
+        -------
+        tuple of (NDArray, NDArray)
+            A tuple containing:
+            - filtered : NDArray
+              Array of filtered signal values
+            - motion_flags : NDArray of bool
+              Boolean array indicating motion detection for each measurement
+
+        Notes
+        -----
+        The function uses a prediction-update cycle for each measurement:
+        1. Prediction step is always performed
+        2. For missing measurements or NaN values, the current state estimate is returned
+        3. For valid measurements, the update step is performed and motion is detected
+
+        Examples
+        --------
+        >>> # Basic usage
+        >>> filtered_data, motion_flags = filter_signal(signal, missing_indices=[2, 5])
+        >>>
+        >>> # With no missing indices
+        >>> filtered_data, motion_flags = filter_signal(signal)
+        """
         filtered = np.zeros(len(signal_data))
         motion_flags = np.zeros(len(signal_data), dtype=bool)
 
@@ -468,10 +468,10 @@ class AdaptivePPGKalmanFilter:
 
 class ExtendedPPGKalmanFilter:
     """
-        Extended Kalman Filter for PPG with sinusoidal model.
-        Models the PPG waveform as a sinusoid with varying amplitude and baseline.
-        Better for capturing the periodic nature of PPG signals.
-        """
+    Extended Kalman Filter for PPG with sinusoidal model.
+    Models the PPG waveform as a sinusoid with varying amplitude and baseline.
+    Better for capturing the periodic nature of PPG signals.
+    """
 
     def __init__(
         self,
@@ -481,46 +481,46 @@ class ExtendedPPGKalmanFilter:
         measurement_noise: float = 0.05,
     ) -> None:
         """
-            Initialize the Kalman filter for heart rate estimation from PPG signals.
-    
-            This constructor initializes the state vector and covariance matrices for a 
-            Kalman filter designed to estimate heart rate from photoplethysmography (PPG) 
-            signals. The filter models the PPG signal as a sinusoidal waveform with 
-            time-varying parameters.
-    
-            Parameters
-            ----------
-            dt : float, optional
-                Sampling interval in seconds (default 0.01 for 100Hz sampling, typical for PPG)
-            hr_estimate : float, optional
-                Initial heart rate estimate in beats per minute (BPM) (default 75)
-            process_noise : float, optional
-                Process noise covariance (Q). PPG is smoother, so use lower values (0.0001-0.01) 
-                (default 0.001)
-            measurement_noise : float, optional
-                Measurement noise covariance (R). Represents sensor/motion artifact noise 
-                (default 0.05)
-    
-            Returns
-            -------
-            None
-                This method initializes the object's attributes in-place and does not return a value.
-    
-            Notes
-            -----
-            The state vector x contains [DC offset, amplitude, phase, frequency] representing 
-            the sinusoidal model of the PPG signal. The filter uses a constant velocity model 
-            for the frequency component to track heart rate variations.
-    
-            Examples
-            --------
-            >>> filter = KalmanFilter(dt=0.02, hr_estimate=80, process_noise=0.005)
-            >>> print(filter.x)
-            [[0.]
-             [1.]
-             [0.]
-             [2.0943951023931953]]
-            """
+        Initialize the Kalman filter for heart rate estimation from PPG signals.
+
+        This constructor initializes the state vector and covariance matrices for a
+        Kalman filter designed to estimate heart rate from photoplethysmography (PPG)
+        signals. The filter models the PPG signal as a sinusoidal waveform with
+        time-varying parameters.
+
+        Parameters
+        ----------
+        dt : float, optional
+            Sampling interval in seconds (default 0.01 for 100Hz sampling, typical for PPG)
+        hr_estimate : float, optional
+            Initial heart rate estimate in beats per minute (BPM) (default 75)
+        process_noise : float, optional
+            Process noise covariance (Q). PPG is smoother, so use lower values (0.0001-0.01)
+            (default 0.001)
+        measurement_noise : float, optional
+            Measurement noise covariance (R). Represents sensor/motion artifact noise
+            (default 0.05)
+
+        Returns
+        -------
+        None
+            This method initializes the object's attributes in-place and does not return a value.
+
+        Notes
+        -----
+        The state vector x contains [DC offset, amplitude, phase, frequency] representing
+        the sinusoidal model of the PPG signal. The filter uses a constant velocity model
+        for the frequency component to track heart rate variations.
+
+        Examples
+        --------
+        >>> filter = KalmanFilter(dt=0.02, hr_estimate=80, process_noise=0.005)
+        >>> print(filter.x)
+        [[0.]
+         [1.]
+         [0.]
+         [2.0943951023931953]]
+        """
         # State: [DC offset, amplitude, phase, frequency]
         self.x = np.array([[0.0], [1.0], [0.0], [2 * np.pi * hr_estimate / 60]])
         self.dt = dt
@@ -536,75 +536,75 @@ class ExtendedPPGKalmanFilter:
 
     def get_heart_rate(self) -> float:
         """
-            Extract current heart rate estimate from state.
+        Extract current heart rate estimate from state.
 
-            This function converts the angular frequency stored in the state vector
-            to beats per minute (BPM), which represents the heart rate.
+        This function converts the angular frequency stored in the state vector
+        to beats per minute (BPM), which represents the heart rate.
 
-            Parameters
-            ----------
-            self : object
-                The object instance containing the state vector. The state vector
-                is expected to have at least 4 elements, with the third element
-                (index 3) containing the angular frequency in radians/second.
+        Parameters
+        ----------
+        self : object
+            The object instance containing the state vector. The state vector
+            is expected to have at least 4 elements, with the third element
+            (index 3) containing the angular frequency in radians/second.
 
-            Returns
-            -------
-            float
-                The estimated heart rate in beats per minute (BPM).
+        Returns
+        -------
+        float
+            The estimated heart rate in beats per minute (BPM).
 
-            Notes
-            -----
-            The conversion from angular frequency (radians/second) to heart rate (BPM)
-            is calculated as: HR = ω × 60 / (2π), where ω is the angular frequency.
+        Notes
+        -----
+        The conversion from angular frequency (radians/second) to heart rate (BPM)
+        is calculated as: HR = ω × 60 / (2π), where ω is the angular frequency.
 
-            Examples
-            --------
-            >>> heart_rate = obj.get_heart_rate()
-            >>> print(f"Heart rate: {heart_rate:.1f} BPM")
-            Heart rate: 72.0 BPM
-            """
+        Examples
+        --------
+        >>> heart_rate = obj.get_heart_rate()
+        >>> print(f"Heart rate: {heart_rate:.1f} BPM")
+        Heart rate: 72.0 BPM
+        """
         frequency = self.x[3, 0]  # radians/second
         hr = frequency * 60 / (2 * np.pi)  # Convert to BPM
         return hr
 
     def state_transition(self, x: NDArray) -> NDArray:
         """
-            Nonlinear state transition for sinusoidal model.
+        Nonlinear state transition for sinusoidal model.
 
-            This function performs the state transition for a sinusoidal model, updating
-            the phase based on the frequency and time step, while keeping other state
-            variables unchanged.
+        This function performs the state transition for a sinusoidal model, updating
+        the phase based on the frequency and time step, while keeping other state
+        variables unchanged.
 
-            Parameters
-            ----------
-            x : ndarray
-                Input state vector of shape (4,) containing [dc_offset, amplitude, phase, frequency]
+        Parameters
+        ----------
+        x : ndarray
+            Input state vector of shape (4,) containing [dc_offset, amplitude, phase, frequency]
 
-            Returns
-            -------
-            ndarray
-                Transited state vector of shape (4, 1) containing [dc_offset, amplitude, new_phase, frequency]
-                where new_phase = (phase + frequency * dt) % (2 * pi)
+        Returns
+        -------
+        ndarray
+            Transited state vector of shape (4, 1) containing [dc_offset, amplitude, new_phase, frequency]
+            where new_phase = (phase + frequency * dt) % (2 * pi)
 
-            Notes
-            -----
-            The phase is updated using the formula: new_phase = (phase + freq * dt) % (2 * pi)
-            This ensures the phase remains within the range [0, 2π).
+        Notes
+        -----
+        The phase is updated using the formula: new_phase = (phase + freq * dt) % (2 * pi)
+        This ensures the phase remains within the range [0, 2π).
 
-            Examples
-            --------
-            >>> import numpy as np
-            >>> # Example usage
-            >>> x = np.array([[1.0], [2.0], [0.5], [0.1]])
-            >>> # Assuming self.dt = 0.01
-            >>> result = state_transition(x)
-            >>> print(result)
-            [[1.0]
-             [2.0]
-             [0.501]
-             [0.1]]
-            """
+        Examples
+        --------
+        >>> import numpy as np
+        >>> # Example usage
+        >>> x = np.array([[1.0], [2.0], [0.5], [0.1]])
+        >>> # Assuming self.dt = 0.01
+        >>> result = state_transition(x)
+        >>> print(result)
+        [[1.0]
+         [2.0]
+         [0.501]
+         [0.1]]
+        """
         dc, amp, phase, freq = x.flatten()
 
         # Update phase based on frequency
@@ -614,92 +614,92 @@ class ExtendedPPGKalmanFilter:
 
     def measurement_function(self, x: NDArray) -> NDArray:
         """
-            Measurement model: DC + amplitude * sin(phase)
+        Measurement model: DC + amplitude * sin(phase)
 
-            This function implements a measurement model that combines a DC component with a sinusoidal
-            signal. The model is defined as: y = dc + amp * sin(phase), where dc is the DC offset,
-            amp is the amplitude, and phase is the phase angle.
+        This function implements a measurement model that combines a DC component with a sinusoidal
+        signal. The model is defined as: y = dc + amp * sin(phase), where dc is the DC offset,
+        amp is the amplitude, and phase is the phase angle.
 
-            Parameters
-            ----------
-            x : ndarray
-                Input array of shape (4,) containing the model parameters in order:
-                [dc, amp, phase, freq]
-                - dc : float
-                    DC offset component
-                - amp : float
-                    Amplitude of the sinusoidal signal
-                - phase : float
-                    Phase angle of the sinusoidal signal (in radians)
-                - freq : float
-                    Frequency of the sinusoidal signal (not used in current implementation)
+        Parameters
+        ----------
+        x : ndarray
+            Input array of shape (4,) containing the model parameters in order:
+            [dc, amp, phase, freq]
+            - dc : float
+                DC offset component
+            - amp : float
+                Amplitude of the sinusoidal signal
+            - phase : float
+                Phase angle of the sinusoidal signal (in radians)
+            - freq : float
+                Frequency of the sinusoidal signal (not used in current implementation)
 
-            Returns
-            -------
-            ndarray
-                Measurement output array of shape (1, 1) containing the computed measurement:
-                [[dc + amp * sin(phase)]]
+        Returns
+        -------
+        ndarray
+            Measurement output array of shape (1, 1) containing the computed measurement:
+            [[dc + amp * sin(phase)]]
 
-            Notes
-            -----
-            The frequency parameter is included in the input array but not used in the current
-            implementation of the measurement model.
+        Notes
+        -----
+        The frequency parameter is included in the input array but not used in the current
+        implementation of the measurement model.
 
-            Examples
-            --------
-            >>> import numpy as np
-            >>> x = np.array([1.0, 2.0, np.pi/4, 1.0])
-            >>> result = measurement_function(None, x)
-            >>> print(result)
-            [[2.41421356]]
-            """
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.array([1.0, 2.0, np.pi/4, 1.0])
+        >>> result = measurement_function(None, x)
+        >>> print(result)
+        [[2.41421356]]
+        """
         dc, amp, phase, freq = x.flatten()
         return np.array([[dc + amp * np.sin(phase)]])
 
     def predict(self) -> None:
         """
-            EKF prediction step
-    
-            Performs the prediction step of the Extended Kalman Filter (EKF) algorithm.
-            This step propagates the state estimate and covariance matrix forward in time
-            using the state transition model and process noise.
-    
-            Parameters
-            ----------
-            self : object
-                The EKF instance containing the following attributes:
-                - x : array-like
-                    Current state vector
-                - P : array-like
-                    Current covariance matrix
-                - dt : float
-                    Time step
-                - Q : array-like
-                    Process noise covariance matrix
-                - state_transition : callable
-                    Function that computes the state transition
-    
-            Returns
-            -------
-            None
-                This method modifies the instance attributes in-place and does not return anything.
-    
-            Notes
-            -----
-            The prediction step follows the standard EKF equations:
-            - State prediction: x = f(x)
-            - Covariance prediction: P = F * P * F^T + Q
-    
-            The state transition matrix F is hardcoded for a 4-dimensional state vector
-            with position and velocity components, where the third component (typically
-            acceleration) is integrated over time.
-    
-            Examples
-            --------
-            >>> ekf = EKF()
-            >>> ekf.predict()
-            >>> # State and covariance matrices are updated in-place
-            """
+        EKF prediction step
+
+        Performs the prediction step of the Extended Kalman Filter (EKF) algorithm.
+        This step propagates the state estimate and covariance matrix forward in time
+        using the state transition model and process noise.
+
+        Parameters
+        ----------
+        self : object
+            The EKF instance containing the following attributes:
+            - x : array-like
+                Current state vector
+            - P : array-like
+                Current covariance matrix
+            - dt : float
+                Time step
+            - Q : array-like
+                Process noise covariance matrix
+            - state_transition : callable
+                Function that computes the state transition
+
+        Returns
+        -------
+        None
+            This method modifies the instance attributes in-place and does not return anything.
+
+        Notes
+        -----
+        The prediction step follows the standard EKF equations:
+        - State prediction: x = f(x)
+        - Covariance prediction: P = F * P * F^T + Q
+
+        The state transition matrix F is hardcoded for a 4-dimensional state vector
+        with position and velocity components, where the third component (typically
+        acceleration) is integrated over time.
+
+        Examples
+        --------
+        >>> ekf = EKF()
+        >>> ekf.predict()
+        >>> # State and covariance matrices are updated in-place
+        """
         # Propagate state
         self.x = self.state_transition(self.x)
 
@@ -710,37 +710,37 @@ class ExtendedPPGKalmanFilter:
 
     def update(self, measurement: NDArray) -> None:
         """
-            EKF update step.
+        EKF update step.
 
-            Perform the measurement update step of the Extended Kalman Filter (EKF).
+        Perform the measurement update step of the Extended Kalman Filter (EKF).
 
-            Parameters
-            ----------
-            measurement : NDArray
-                The actual measurement vector used to update the state estimate.
+        Parameters
+        ----------
+        measurement : NDArray
+            The actual measurement vector used to update the state estimate.
 
-            Returns
-            -------
-            None
-                This method modifies the state and covariance matrices in-place.
+        Returns
+        -------
+        None
+            This method modifies the state and covariance matrices in-place.
 
-            Notes
-            -----
-            This implementation assumes a specific measurement function structure where the state vector
-            contains [dc, amp, phase, freq] components. The phase is constrained to remain within [0, 2π]
-            after each update.
+        Notes
+        -----
+        This implementation assumes a specific measurement function structure where the state vector
+        contains [dc, amp, phase, freq] components. The phase is constrained to remain within [0, 2π]
+        after each update.
 
-            Examples
-            --------
-            >>> ekf = ExtendedKalmanFilter()
-            >>> measurement = np.array([[1.0], [0.5], [0.2]])
-            >>> ekf.update(measurement)
-            >>> print(ekf.x)
-            [[1.0]
-             [0.5]
-             [0.2]
-             [0.0]]
-            """
+        Examples
+        --------
+        >>> ekf = ExtendedKalmanFilter()
+        >>> measurement = np.array([[1.0], [0.5], [0.2]])
+        >>> ekf.update(measurement)
+        >>> print(ekf.x)
+        [[1.0]
+         [0.5]
+         [0.2]
+         [0.0]]
+        """
         # Predicted measurement
         z_pred = self.measurement_function(self.x)
 
@@ -769,41 +769,41 @@ class ExtendedPPGKalmanFilter:
 
     def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
         """
-            Apply filtering to signal data using a Kalman filter approach.
+        Apply filtering to signal data using a Kalman filter approach.
 
-            This function processes signal data through a Kalman filter, handling missing measurements
-            and NaN values appropriately. It returns both the filtered signal and corresponding heart rates.
+        This function processes signal data through a Kalman filter, handling missing measurements
+        and NaN values appropriately. It returns both the filtered signal and corresponding heart rates.
 
-            Parameters
-            ----------
-            signal_data : NDArray
-                Array containing the raw signal measurements to be filtered.
-            missing_indices : list of int, optional
-                List of indices where measurements are missing. If None, no special handling
-                is applied for missing data. Default is None.
+        Parameters
+        ----------
+        signal_data : NDArray
+            Array containing the raw signal measurements to be filtered.
+        missing_indices : list of int, optional
+            List of indices where measurements are missing. If None, no special handling
+            is applied for missing data. Default is None.
 
-            Returns
-            -------
-            tuple of (NDArray, NDArray)
-                A tuple containing:
-                - filtered : NDArray
-                    Array of filtered signal values corresponding to the input measurements
-                - heart_rates : NDArray
-                    Array of heart rate values computed at each time step
+        Returns
+        -------
+        tuple of (NDArray, NDArray)
+            A tuple containing:
+            - filtered : NDArray
+                Array of filtered signal values corresponding to the input measurements
+            - heart_rates : NDArray
+                Array of heart rate values computed at each time step
 
-            Notes
-            -----
-            The function uses the following logic for each measurement:
-            - For missing indices: Uses current state prediction
-            - For NaN values: Uses current state prediction
-            - For valid measurements: Updates the filter with the measurement and returns the prediction
-    
-            Examples
-            --------
-            >>> filtered_signal, hr_values = filter_signal(signal_data, missing_indices=[2, 5])
-            >>> print(f"Filtered signal shape: {filtered_signal.shape}")
-            >>> print(f"Heart rates shape: {hr_values.shape}")
-            """
+        Notes
+        -----
+        The function uses the following logic for each measurement:
+        - For missing indices: Uses current state prediction
+        - For NaN values: Uses current state prediction
+        - For valid measurements: Updates the filter with the measurement and returns the prediction
+
+        Examples
+        --------
+        >>> filtered_signal, hr_values = filter_signal(signal_data, missing_indices=[2, 5])
+        >>> print(f"Filtered signal shape: {filtered_signal.shape}")
+        >>> print(f"Heart rates shape: {hr_values.shape}")
+        """
         filtered = np.zeros(len(signal_data))
         heart_rates = np.zeros(len(signal_data))
 
@@ -828,22 +828,22 @@ class ExtendedPPGKalmanFilter:
 
 class HarmonicPPGKalmanFilter:
     """
-        Extended Kalman Filter for PPG with harmonic sinusoidal model.
-        Models the PPG waveform as a fundamental sinusoid plus its first two harmonics.
-        This provides a more sophisticated representation of the PPG signal, capturing
-        the dicrotic notch and other morphological features.
+    Extended Kalman Filter for PPG with harmonic sinusoidal model.
+    Models the PPG waveform as a fundamental sinusoid plus its first two harmonics.
+    This provides a more sophisticated representation of the PPG signal, capturing
+    the dicrotic notch and other morphological features.
 
-        State vector: [DC offset, A1, A2, A3, phase, frequency]
-        where:
-            DC offset: baseline
-            A1: amplitude of fundamental frequency
-            A2: amplitude of second harmonic (2f)
-            A3: amplitude of third harmonic (3f)
-            phase: phase of fundamental
-            frequency: angular frequency (rad/s)
+    State vector: [DC offset, A1, A2, A3, phase, frequency]
+    where:
+        DC offset: baseline
+        A1: amplitude of fundamental frequency
+        A2: amplitude of second harmonic (2f)
+        A3: amplitude of third harmonic (3f)
+        phase: phase of fundamental
+        frequency: angular frequency (rad/s)
 
-        Measurement model: y = DC + A1*sin(phase) + A2*sin(2*phase) + A3*sin(3*phase)
-        """
+    Measurement model: y = DC + A1*sin(phase) + A2*sin(2*phase) + A3*sin(3*phase)
+    """
 
     def __init__(
         self,
@@ -853,48 +853,48 @@ class HarmonicPPGKalmanFilter:
         measurement_noise: float = 0.05,
     ) -> None:
         """
-            Initialize the Kalman filter for heart rate estimation from PPG signals.
-    
-            This constructor sets up the state vector, covariance matrices, and noise parameters
-            for a Kalman filter designed to track the fundamental frequency and harmonics of
-            a photoplethysmography (PPG) signal to extract heart rate information.
+        Initialize the Kalman filter for heart rate estimation from PPG signals.
 
-            Parameters
-            ----------
-            dt : float, optional
-                Sampling interval in seconds (default is 0.01, corresponding to 100 Hz).
-            hr_estimate : float, optional
-                Initial heart rate estimate in beats per minute (BPM) (default is 75).
-            process_noise : float, optional
-                Process noise covariance (Q). Controls how much the state can change over time
-                (default is 0.001).
-            measurement_noise : float, optional
-                Measurement noise covariance (R). Represents sensor noise level (default is 0.05).
+        This constructor sets up the state vector, covariance matrices, and noise parameters
+        for a Kalman filter designed to track the fundamental frequency and harmonics of
+        a photoplethysmography (PPG) signal to extract heart rate information.
 
-            Returns
-            -------
-            None
-                This method initializes instance attributes and does not return any value.
+        Parameters
+        ----------
+        dt : float, optional
+            Sampling interval in seconds (default is 0.01, corresponding to 100 Hz).
+        hr_estimate : float, optional
+            Initial heart rate estimate in beats per minute (BPM) (default is 75).
+        process_noise : float, optional
+            Process noise covariance (Q). Controls how much the state can change over time
+            (default is 0.001).
+        measurement_noise : float, optional
+            Measurement noise covariance (R). Represents sensor noise level (default is 0.05).
 
-            Notes
-            -----
-            The state vector contains six elements:
-            [DC offset, A1, A2, A3, phase, frequency]
-    
-            The Kalman filter uses a linear model to track the time-varying components of the
-            PPG signal, with the frequency component directly related to heart rate.
-    
-            Examples
-            --------
-            >>> kf = KalmanFilter(dt=0.02, hr_estimate=80, process_noise=0.005)
-            >>> print(kf.x)
-            [[0. ]
-             [1. ]
-             [0.2]
-             [0.1]
-             [0. ]
-             [2.0943951023931953]]
-            """
+        Returns
+        -------
+        None
+            This method initializes instance attributes and does not return any value.
+
+        Notes
+        -----
+        The state vector contains six elements:
+        [DC offset, A1, A2, A3, phase, frequency]
+
+        The Kalman filter uses a linear model to track the time-varying components of the
+        PPG signal, with the frequency component directly related to heart rate.
+
+        Examples
+        --------
+        >>> kf = KalmanFilter(dt=0.02, hr_estimate=80, process_noise=0.005)
+        >>> print(kf.x)
+        [[0. ]
+         [1. ]
+         [0.2]
+         [0.1]
+         [0. ]
+         [2.0943951023931953]]
+        """
         # State: [DC offset, A1, A2, A3, phase, frequency]
         # Initialize with reasonable defaults for PPG signals
         self.x = np.array(
@@ -933,83 +933,83 @@ class HarmonicPPGKalmanFilter:
 
     def get_heart_rate(self) -> float:
         """
-            Extract current heart rate estimate from state.
+        Extract current heart rate estimate from state.
 
-            This function converts the angular frequency stored in the state vector
-            to beats per minute (BPM), which represents the current heart rate estimate.
+        This function converts the angular frequency stored in the state vector
+        to beats per minute (BPM), which represents the current heart rate estimate.
 
-            Parameters
-            ----------
-            self : object
-                The instance containing the state vector with heart rate information.
-                The state vector is expected to have at least 6 elements, with the 6th
-                element (index 5) containing the angular frequency in radians/second.
+        Parameters
+        ----------
+        self : object
+            The instance containing the state vector with heart rate information.
+            The state vector is expected to have at least 6 elements, with the 6th
+            element (index 5) containing the angular frequency in radians/second.
 
-            Returns
-            -------
-            float
-                Current heart rate estimate in beats per minute (BPM).
+        Returns
+        -------
+        float
+            Current heart rate estimate in beats per minute (BPM).
 
-            Notes
-            -----
-            The conversion from angular frequency (radians/second) to BPM is calculated as:
-            BPM = frequency × 60 / (2 × π)
+        Notes
+        -----
+        The conversion from angular frequency (radians/second) to BPM is calculated as:
+        BPM = frequency × 60 / (2 × π)
 
-            Examples
-            --------
-            >>> hr = obj.get_heart_rate()
-            >>> print(f"Current heart rate: {hr:.1f} BPM")
-            Current heart rate: 72.0 BPM
-            """
+        Examples
+        --------
+        >>> hr = obj.get_heart_rate()
+        >>> print(f"Current heart rate: {hr:.1f} BPM")
+        Current heart rate: 72.0 BPM
+        """
         frequency = self.x[5, 0]  # radians/second
         hr = frequency * 60 / (2 * np.pi)  # Convert to BPM
         return hr
 
     def state_transition(self, x: NDArray) -> NDArray:
         """
-            Nonlinear state transition for harmonic sinusoidal model.
+        Nonlinear state transition for harmonic sinusoidal model.
 
-            This function performs the state transition for a harmonic sinusoidal model
-            where the phase evolves according to the frequency and time step, while other
-            state variables remain constant.
+        This function performs the state transition for a harmonic sinusoidal model
+        where the phase evolves according to the frequency and time step, while other
+        state variables remain constant.
 
-            Parameters
-            ----------
-            x : ndarray
-                State vector of shape (6,) containing:
-                - dc: DC offset component
-                - a1: First harmonic amplitude
-                - a2: Second harmonic amplitude  
-                - a3: Third harmonic amplitude
-                - phase: Current phase value
-                - freq: Frequency value
+        Parameters
+        ----------
+        x : ndarray
+            State vector of shape (6,) containing:
+            - dc: DC offset component
+            - a1: First harmonic amplitude
+            - a2: Second harmonic amplitude
+            - a3: Third harmonic amplitude
+            - phase: Current phase value
+            - freq: Frequency value
 
-            Returns
-            -------
-            ndarray
-                Transited state vector of shape (6, 1) with updated phase and unchanged
-                other state components.
+        Returns
+        -------
+        ndarray
+            Transited state vector of shape (6, 1) with updated phase and unchanged
+            other state components.
 
-            Notes
-            -----
-            The phase is updated using the formula: new_phase = (phase + freq * dt) % (2 * π)
-            where dt is the time step stored in self.dt. This ensures the phase remains
-            within the [0, 2π) range.
+        Notes
+        -----
+        The phase is updated using the formula: new_phase = (phase + freq * dt) % (2 * π)
+        where dt is the time step stored in self.dt. This ensures the phase remains
+        within the [0, 2π) range.
 
-            Examples
-            --------
-            >>> import numpy as np
-            >>> model = HarmonicModel(dt=0.1)
-            >>> x = np.array([[1.0], [0.5], [0.3], [0.2], [0.1], [0.05]])
-            >>> x_new = model.state_transition(x)
-            >>> print(x_new)
-            [[1.0]
-             [0.5]
-             [0.3]
-             [0.2]
-             [0.105]
-             [0.05]]
-            """
+        Examples
+        --------
+        >>> import numpy as np
+        >>> model = HarmonicModel(dt=0.1)
+        >>> x = np.array([[1.0], [0.5], [0.3], [0.2], [0.1], [0.05]])
+        >>> x_new = model.state_transition(x)
+        >>> print(x_new)
+        [[1.0]
+         [0.5]
+         [0.3]
+         [0.2]
+         [0.105]
+         [0.05]]
+        """
         dc, a1, a2, a3, phase, freq = x.flatten()
 
         # Update phase based on frequency
@@ -1020,95 +1020,95 @@ class HarmonicPPGKalmanFilter:
 
     def measurement_function(self, x: NDArray) -> NDArray:
         """
-            Measurement model: DC + A1*sin(phase) + A2*sin(2*phase) + A3*sin(3*phase)
-            This models the fundamental frequency and first two harmonics.
-    
-            Parameters
-            ----------
-            x : ndarray
-                Input array of shape (6,) containing parameters in order:
-                [dc, a1, a2, a3, phase, freq]
-                - dc: DC offset component
-                - a1: Amplitude of fundamental frequency
-                - a2: Amplitude of second harmonic
-                - a3: Amplitude of third harmonic
-                - phase: Phase angle in radians
-                - freq: Frequency component (not directly used in calculation)
-    
-            Returns
-            -------
-            ndarray
-                Measurement output array of shape (1, 1) containing the computed signal value.
-                The output represents a sum of sinusoidal components with different frequencies
-                and amplitudes, modeling a signal with fundamental and harmonic components.
-    
-            Notes
-            -----
-            This function implements a harmonic model that combines:
-            - A DC component (dc)
-            - Fundamental frequency component (a1 * sin(phase))
-            - Second harmonic component (a2 * sin(2 * phase))
-            - Third harmonic component (a3 * sin(3 * phase))
-    
-            The frequency parameter is included in the input array but not used in the computation,
-            suggesting this might be part of a larger system where frequency is handled elsewhere.
-    
-            Examples
-            --------
-            >>> import numpy as np
-            >>> x = np.array([1.0, 0.5, 0.3, 0.2, np.pi/4, 1.0])
-            >>> result = measurement_function(x)
-            >>> print(result)
-            [[1.82940168]]
-            """
+        Measurement model: DC + A1*sin(phase) + A2*sin(2*phase) + A3*sin(3*phase)
+        This models the fundamental frequency and first two harmonics.
+
+        Parameters
+        ----------
+        x : ndarray
+            Input array of shape (6,) containing parameters in order:
+            [dc, a1, a2, a3, phase, freq]
+            - dc: DC offset component
+            - a1: Amplitude of fundamental frequency
+            - a2: Amplitude of second harmonic
+            - a3: Amplitude of third harmonic
+            - phase: Phase angle in radians
+            - freq: Frequency component (not directly used in calculation)
+
+        Returns
+        -------
+        ndarray
+            Measurement output array of shape (1, 1) containing the computed signal value.
+            The output represents a sum of sinusoidal components with different frequencies
+            and amplitudes, modeling a signal with fundamental and harmonic components.
+
+        Notes
+        -----
+        This function implements a harmonic model that combines:
+        - A DC component (dc)
+        - Fundamental frequency component (a1 * sin(phase))
+        - Second harmonic component (a2 * sin(2 * phase))
+        - Third harmonic component (a3 * sin(3 * phase))
+
+        The frequency parameter is included in the input array but not used in the computation,
+        suggesting this might be part of a larger system where frequency is handled elsewhere.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.array([1.0, 0.5, 0.3, 0.2, np.pi/4, 1.0])
+        >>> result = measurement_function(x)
+        >>> print(result)
+        [[1.82940168]]
+        """
         dc, a1, a2, a3, phase, freq = x.flatten()
         y = dc + a1 * np.sin(phase) + a2 * np.sin(2 * phase) + a3 * np.sin(3 * phase)
         return np.array([[y]])
 
     def predict(self) -> None:
         """
-            EKF prediction step.
+        EKF prediction step.
 
-            Performs the prediction step of the Extended Kalman Filter (EKF) algorithm,
-            propagating the state estimate and error covariance forward in time.
+        Performs the prediction step of the Extended Kalman Filter (EKF) algorithm,
+        propagating the state estimate and error covariance forward in time.
 
-            Parameters
-            ----------
-            self : object
-                The EKF instance containing the following attributes:
-                - x : array-like
-                    Current state vector
-                - P : array-like
-                    Current error covariance matrix
-                - Q : array-like
-                    Process noise covariance matrix
-                - dt : float
-                    Time step
+        Parameters
+        ----------
+        self : object
+            The EKF instance containing the following attributes:
+            - x : array-like
+                Current state vector
+            - P : array-like
+                Current error covariance matrix
+            - Q : array-like
+                Process noise covariance matrix
+            - dt : float
+                Time step
 
-            Returns
-            -------
-            None
-                This method modifies the instance attributes in-place and does not return anything.
+        Returns
+        -------
+        None
+            This method modifies the instance attributes in-place and does not return anything.
 
-            Notes
-            -----
-            The prediction step involves:
-            1. State propagation using the state transition function
-            2. Jacobian matrix computation for the state transition
-            3. Error covariance prediction using the matrix equation: P = F*P*F^T + Q
+        Notes
+        -----
+        The prediction step involves:
+        1. State propagation using the state transition function
+        2. Jacobian matrix computation for the state transition
+        3. Error covariance prediction using the matrix equation: P = F*P*F^T + Q
 
-            The state transition matrix F is structured as:
-            - First three rows represent constant state variables (dc, a1, a2)
-            - Fourth row represents constant state variable (a3)
-            - Fifth row represents phase that depends on frequency
-            - Sixth row represents frequency with constant rate of change
+        The state transition matrix F is structured as:
+        - First three rows represent constant state variables (dc, a1, a2)
+        - Fourth row represents constant state variable (a3)
+        - Fifth row represents phase that depends on frequency
+        - Sixth row represents frequency with constant rate of change
 
-            Examples
-            --------
-            >>> ekf = EKF()
-            >>> ekf.predict()
-            >>> # State and covariance matrices are updated in-place
-            """
+        Examples
+        --------
+        >>> ekf = EKF()
+        >>> ekf.predict()
+        >>> # State and covariance matrices are updated in-place
+        """
         # Propagate state
         self.x = self.state_transition(self.x)
 
@@ -1129,37 +1129,37 @@ class HarmonicPPGKalmanFilter:
 
     def update(self, measurement: NDArray) -> None:
         """
-            EKF update step.
+        EKF update step.
 
-            Perform the Kalman filter update step using the provided measurement.
+        Perform the Kalman filter update step using the provided measurement.
 
-            Parameters
-            ----------
-            measurement : NDArray
-                The measured values used to update the state estimate. Shape should be
-                compatible with the measurement function output.
+        Parameters
+        ----------
+        measurement : NDArray
+            The measured values used to update the state estimate. Shape should be
+            compatible with the measurement function output.
 
-            Returns
-            -------
-            None
-                This method modifies the instance's state variables `self.x` and `self.P`
-                in place.
+        Returns
+        -------
+        None
+            This method modifies the instance's state variables `self.x` and `self.P`
+            in place.
 
-            Notes
-            -----
-            The update step uses the measurement function to predict the measurement
-            based on the current state, computes the innovation, and updates the state
-            and covariance using the Kalman gain.
+        Notes
+        -----
+        The update step uses the measurement function to predict the measurement
+        based on the current state, computes the innovation, and updates the state
+        and covariance using the Kalman gain.
 
-            The phase component of the state vector is constrained to the range [0, 2π]
-            after the update.
+        The phase component of the state vector is constrained to the range [0, 2π]
+        after the update.
 
-            Examples
-            --------
-            >>> ekf = ExtendedKalmanFilter()
-            >>> z = np.array([[1.0]])
-            >>> ekf.update(z)
-            """
+        Examples
+        --------
+        >>> ekf = ExtendedKalmanFilter()
+        >>> z = np.array([[1.0]])
+        >>> ekf.update(z)
+        """
         # Predicted measurement
         z_pred = self.measurement_function(self.x)
 
@@ -1208,45 +1208,45 @@ class HarmonicPPGKalmanFilter:
 
     def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
         """
-            Filter entire signal and track heart rate.
+        Filter entire signal and track heart rate.
 
-            This function applies a filtering process to the input signal data, handling missing values
-            and tracking heart rate and harmonic amplitudes at each time point. It uses a Kalman filter
-            framework for prediction and update steps, with special handling for missing data points.
+        This function applies a filtering process to the input signal data, handling missing values
+        and tracking heart rate and harmonic amplitudes at each time point. It uses a Kalman filter
+        framework for prediction and update steps, with special handling for missing data points.
 
-            Parameters
-            ----------
-            signal_data : array-like
-                Input signal data. Use `np.nan` to indicate missing values.
-            missing_indices : array-like, optional
-                Indices of missing data points in `signal_data`. If not provided, all data points
-                are assumed to be valid.
+        Parameters
+        ----------
+        signal_data : array-like
+            Input signal data. Use `np.nan` to indicate missing values.
+        missing_indices : array-like, optional
+            Indices of missing data points in `signal_data`. If not provided, all data points
+            are assumed to be valid.
 
-            Returns
-            -------
-            filtered : ndarray
-                Filtered and interpolated signal values.
-            heart_rates : ndarray
-                Estimated heart rate at each time point.
-            harmonic_amplitudes : ndarray
-                Array of shape (n_samples, 3) containing the amplitudes [A1, A2, A3] of the first
-                three harmonics at each time point.
+        Returns
+        -------
+        filtered : ndarray
+            Filtered and interpolated signal values.
+        heart_rates : ndarray
+            Estimated heart rate at each time point.
+        harmonic_amplitudes : ndarray
+            Array of shape (n_samples, 3) containing the amplitudes [A1, A2, A3] of the first
+            three harmonics at each time point.
 
-            Notes
-            -----
-            - The function assumes the existence of a Kalman filter class with methods:
-              `predict()`, `update()`, `measurement_function()`, and `get_heart_rate()`.
-            - Heart rate is tracked and stored in `self.hr_history` during processing.
-            - Missing data points are handled by using the current state estimate from the filter
-              without updating the filter with new measurements.
+        Notes
+        -----
+        - The function assumes the existence of a Kalman filter class with methods:
+          `predict()`, `update()`, `measurement_function()`, and `get_heart_rate()`.
+        - Heart rate is tracked and stored in `self.hr_history` during processing.
+        - Missing data points are handled by using the current state estimate from the filter
+          without updating the filter with new measurements.
 
-            Examples
-            --------
-            >>> filtered_signal, hr_estimates, harmonics = filter_signal(signal_data, missing_indices)
-            >>> print(f"Filtered signal shape: {filtered_signal.shape}")
-            >>> print(f"Heart rate estimates: {hr_estimates}")
-            >>> print(f"Harmonic amplitudes: {harmonics}")
-            """
+        Examples
+        --------
+        >>> filtered_signal, hr_estimates, harmonics = filter_signal(signal_data, missing_indices)
+        >>> print(f"Filtered signal shape: {filtered_signal.shape}")
+        >>> print(f"Heart rate estimates: {hr_estimates}")
+        >>> print(f"Harmonic amplitudes: {harmonics}")
+        """
         filtered = np.zeros(len(signal_data))
         heart_rates = np.zeros(len(signal_data))
         harmonic_amplitudes = np.zeros((len(signal_data), 3))
@@ -1275,37 +1275,37 @@ class HarmonicPPGKalmanFilter:
 
 class SignalQualityAssessor:
     """
-        Assesses PPG signal quality based on multiple metrics.
-        Provides a quality score from 0 (poor) to 1 (excellent).
-        """
+    Assesses PPG signal quality based on multiple metrics.
+    Provides a quality score from 0 (poor) to 1 (excellent).
+    """
 
     def __init__(self, fs: float = 100.0, window_size: float = 5.0) -> None:
         """
-            Initialize the quality assessment parameters.
-    
-            Parameters
-            ----------
-            fs : float, default=100.0
-                Sampling frequency in Hz
-            window_size : float, default=5.0
-                Window size in seconds for quality assessment
-    
-            Returns
-            -------
-            None
-                This method initializes instance attributes but does not return any value
-    
-            Notes
-            -----
-            The window size is converted to the number of samples based on the sampling frequency.
-            The resulting number of samples is stored in ``self.window_samples``.
-    
-            Examples
-            --------
-            >>> qa = QualityAssessor(fs=200.0, window_size=2.5)
-            >>> qa.window_samples
-            500
-            """
+        Initialize the quality assessment parameters.
+
+        Parameters
+        ----------
+        fs : float, default=100.0
+            Sampling frequency in Hz
+        window_size : float, default=5.0
+            Window size in seconds for quality assessment
+
+        Returns
+        -------
+        None
+            This method initializes instance attributes but does not return any value
+
+        Notes
+        -----
+        The window size is converted to the number of samples based on the sampling frequency.
+        The resulting number of samples is stored in ``self.window_samples``.
+
+        Examples
+        --------
+        >>> qa = QualityAssessor(fs=200.0, window_size=2.5)
+        >>> qa.window_samples
+        500
+        """
         self.fs = fs
         self.window_samples = int(window_size * fs)
 
@@ -1313,39 +1313,39 @@ class SignalQualityAssessor:
         self, signal_segment: NDArray, filtered_segment: NDArray | None = None
     ) -> tuple[float, dict]:
         """
-            Assess the quality of a signal segment based on multiple physiological and signal-processing metrics.
+        Assess the quality of a signal segment based on multiple physiological and signal-processing metrics.
 
-            Parameters
-            ----------
-            signal_segment : ndarray
-                The raw signal segment to be assessed.
-            filtered_segment : ndarray, optional
-                The filtered version of the signal segment. If provided, used to compute SNR.
-                If not provided, SNR is set to a default value of 0.5.
+        Parameters
+        ----------
+        signal_segment : ndarray
+            The raw signal segment to be assessed.
+        filtered_segment : ndarray, optional
+            The filtered version of the signal segment. If provided, used to compute SNR.
+            If not provided, SNR is set to a default value of 0.5.
 
-            Returns
-            -------
-            quality_score : float
-                Overall quality score normalized between 0 and 1, where 1 indicates the best quality.
-            metrics : dict
-                Dictionary containing individual quality metrics:
-                - 'snr': Signal-to-noise ratio normalized to 0-1.
-                - 'perfusion': Relative pulse amplitude normalized to 0-1.
-                - 'spectral_purity': Proportion of power in the physiological heart rate band (0.5-3.0 Hz).
-                - 'kurtosis': Measure of outliers/artifacts, normalized to 0-1 (lower is better).
-                - 'zero_crossing': Regularity of zero crossings, normalized to 0-1.
+        Returns
+        -------
+        quality_score : float
+            Overall quality score normalized between 0 and 1, where 1 indicates the best quality.
+        metrics : dict
+            Dictionary containing individual quality metrics:
+            - 'snr': Signal-to-noise ratio normalized to 0-1.
+            - 'perfusion': Relative pulse amplitude normalized to 0-1.
+            - 'spectral_purity': Proportion of power in the physiological heart rate band (0.5-3.0 Hz).
+            - 'kurtosis': Measure of outliers/artifacts, normalized to 0-1 (lower is better).
+            - 'zero_crossing': Regularity of zero crossings, normalized to 0-1.
 
-            Notes
-            -----
-            This function computes a weighted average of several quality metrics to produce an overall score.
-            The weights are chosen to reflect the relative importance of each metric in assessing PPG signal quality.
+        Notes
+        -----
+        This function computes a weighted average of several quality metrics to produce an overall score.
+        The weights are chosen to reflect the relative importance of each metric in assessing PPG signal quality.
 
-            Examples
-            --------
-            >>> quality_score, metrics = assess_quality(signal_segment, filtered_segment)
-            >>> print(f"Quality Score: {quality_score:.2f}")
-            >>> print(f"SNR: {metrics['snr']:.2f}")
-            """
+        Examples
+        --------
+        >>> quality_score, metrics = assess_quality(signal_segment, filtered_segment)
+        >>> print(f"Quality Score: {quality_score:.2f}")
+        >>> print(f"SNR: {metrics['snr']:.2f}")
+        """
         metrics = {}
 
         # 1. SNR estimate (signal-to-noise ratio)
@@ -1404,45 +1404,45 @@ class SignalQualityAssessor:
         self, signal: NDArray, filtered: NDArray | None = None, stride: float = 1.0
     ) -> tuple[NDArray, NDArray]:
         """
-            Assess quality continuously along the signal.
-    
-            This function evaluates signal quality at multiple time points by sliding a window
-            across the input signal. For each window, a quality score is computed using the
-            internal `assess_quality` method. The stride parameter controls the overlap between
-            consecutive windows.
-    
-            Parameters
-            ----------
-            signal : array-like
-                Input signal to be assessed for quality.
-            filtered : array-like, optional
-                Filtered version of the signal used for SNR calculation. If None, no filtering
-                is applied in the quality assessment.
-            stride : float, default=1.0
-                Stride between windows in seconds. Controls the overlap between consecutive
-                windows. A stride of 1.0 means no overlap, while smaller values create overlap.
+        Assess quality continuously along the signal.
 
-            Returns
-            -------
-            times : ndarray
-                Time points corresponding to quality scores, in seconds.
-            quality_scores : ndarray
-                Quality scores at each time point. The scores are computed using the internal
-                `assess_quality` method for each signal segment.
+        This function evaluates signal quality at multiple time points by sliding a window
+        across the input signal. For each window, a quality score is computed using the
+        internal `assess_quality` method. The stride parameter controls the overlap between
+        consecutive windows.
 
-            Notes
-            -----
-            The function uses a sliding window approach where the window size is defined by
-            `self.window_samples` and the sampling frequency by `self.fs`. The quality assessment
-            is performed on non-overlapping segments of the signal, with the stride determining
-            the step size between consecutive segments.
+        Parameters
+        ----------
+        signal : array-like
+            Input signal to be assessed for quality.
+        filtered : array-like, optional
+            Filtered version of the signal used for SNR calculation. If None, no filtering
+            is applied in the quality assessment.
+        stride : float, default=1.0
+            Stride between windows in seconds. Controls the overlap between consecutive
+            windows. A stride of 1.0 means no overlap, while smaller values create overlap.
 
-            Examples
-            --------
-            >>> times, scores = obj.assess_continuous(signal, filtered, stride=0.5)
-            >>> print(f"Quality scores: {scores}")
-            >>> print(f"Time points: {times}")
-            """
+        Returns
+        -------
+        times : ndarray
+            Time points corresponding to quality scores, in seconds.
+        quality_scores : ndarray
+            Quality scores at each time point. The scores are computed using the internal
+            `assess_quality` method for each signal segment.
+
+        Notes
+        -----
+        The function uses a sliding window approach where the window size is defined by
+        `self.window_samples` and the sampling frequency by `self.fs`. The quality assessment
+        is performed on non-overlapping segments of the signal, with the stride determining
+        the step size between consecutive segments.
+
+        Examples
+        --------
+        >>> times, scores = obj.assess_continuous(signal, filtered, stride=0.5)
+        >>> print(f"Quality scores: {scores}")
+        >>> print(f"Time points: {times}")
+        """
         stride_samples = int(stride * self.fs)
         n_windows = (len(signal) - self.window_samples) // stride_samples + 1
 
@@ -1469,83 +1469,83 @@ class SignalQualityAssessor:
 
 class HeartRateExtractor:
     """
-        Extracts heart rate from PPG signals using multiple methods.
-        """
+    Extracts heart rate from PPG signals using multiple methods.
+    """
 
     def __init__(self, fs: float = 100.0) -> None:
         """
-            Initialize the object with a sampling frequency.
-    
-            Parameters
-            ----------
-            fs : float
-                Sampling frequency in Hz. Default is 100.0 Hz.
-    
-            Returns
-            -------
-            None
-    
-            Notes
-            -----
-            This constructor sets the sampling frequency attribute for the object.
-            The sampling frequency determines the rate at which signals are sampled
-            and is crucial for digital signal processing applications.
-    
-            Examples
-            --------
-            >>> obj = MyClass()
-            >>> obj.fs
-            100.0
-    
-            >>> obj = MyClass(fs=200.0)
-            >>> obj.fs
-            200.0
-            """
+        Initialize the object with a sampling frequency.
+
+        Parameters
+        ----------
+        fs : float
+            Sampling frequency in Hz. Default is 100.0 Hz.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This constructor sets the sampling frequency attribute for the object.
+        The sampling frequency determines the rate at which signals are sampled
+        and is crucial for digital signal processing applications.
+
+        Examples
+        --------
+        >>> obj = MyClass()
+        >>> obj.fs
+        100.0
+
+        >>> obj = MyClass(fs=200.0)
+        >>> obj.fs
+        200.0
+        """
         self.fs = fs
 
     def extract_from_peaks(
         self, ppg_signal: NDArray, min_distance: float = 0.4
     ) -> tuple[float | None, NDArray, NDArray | None, NDArray | None]:
         """
-            Extract heart rate from a PPG signal using peak detection.
+        Extract heart rate from a PPG signal using peak detection.
 
-            This function detects peaks in the PPG signal, computes inter-beat intervals (IBIs),
-            removes outliers, and calculates the corresponding heart rate in beats per minute (BPM).
-            It also generates a heart rate waveform (RRI) based on the detected peaks.
+        This function detects peaks in the PPG signal, computes inter-beat intervals (IBIs),
+        removes outliers, and calculates the corresponding heart rate in beats per minute (BPM).
+        It also generates a heart rate waveform (RRI) based on the detected peaks.
 
-            Parameters
-            ----------
-            ppg_signal : array_like
-                Input photoplethysmography (PPG) signal.
-            min_distance : float, optional
-                Minimum time between peaks in seconds. Default is 0.4 seconds.
+        Parameters
+        ----------
+        ppg_signal : array_like
+            Input photoplethysmography (PPG) signal.
+        min_distance : float, optional
+            Minimum time between peaks in seconds. Default is 0.4 seconds.
 
-            Returns
-            -------
-            tuple
-                A tuple containing:
-                - hr : float or None
-                    Heart rate in beats per minute (BPM). Returns None if not enough peaks are found.
-                - peak_indices : ndarray
-                    Indices of detected peaks in the PPG signal.
-                - rri : ndarray or None
-                    Inter-beat interval waveform (RRI) in seconds. Returns None if processing fails.
-                - hr_waveform : ndarray or None
-                    Heart rate waveform derived from RRI. Returns None if processing fails.
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - hr : float or None
+                Heart rate in beats per minute (BPM). Returns None if not enough peaks are found.
+            - peak_indices : ndarray
+                Indices of detected peaks in the PPG signal.
+            - rri : ndarray or None
+                Inter-beat interval waveform (RRI) in seconds. Returns None if processing fails.
+            - hr_waveform : ndarray or None
+                Heart rate waveform derived from RRI. Returns None if processing fails.
 
-            Notes
-            -----
-            - The function uses `scipy.signal.find_peaks` for peak detection.
-            - Outliers in inter-beat intervals are filtered using a median-based approach.
-            - The RRI waveform is constructed by interpolating valid IBIs between peaks.
-            - If the signal has insufficient peaks or all IBIs are outliers, the function returns None for heart rate.
+        Notes
+        -----
+        - The function uses `scipy.signal.find_peaks` for peak detection.
+        - Outliers in inter-beat intervals are filtered using a median-based approach.
+        - The RRI waveform is constructed by interpolating valid IBIs between peaks.
+        - If the signal has insufficient peaks or all IBIs are outliers, the function returns None for heart rate.
 
-            Examples
-            --------
-            >>> hr, peaks, rri, hr_waveform = extractor.extract_from_peaks(ppg_signal, min_distance=0.4)
-            >>> print(f"Heart Rate: {hr} BPM")
-            Heart Rate: 72.5 BPM
-            """
+        Examples
+        --------
+        >>> hr, peaks, rri, hr_waveform = extractor.extract_from_peaks(ppg_signal, min_distance=0.4)
+        >>> print(f"Heart Rate: {hr} BPM")
+        Heart Rate: 72.5 BPM
+        """
         # Find peaks
         min_samples = int(min_distance * self.fs)
         peaks, properties = signal.find_peaks(ppg_signal, distance=min_samples, prominence=0.1)
@@ -1615,44 +1615,44 @@ class HeartRateExtractor:
         self, ppg_signal: NDArray, hr_range: tuple[float, float] = (40.0, 180.0)
     ) -> tuple[float | None, float | None, NDArray, NDArray]:
         """
-            Extract heart rate using FFT (frequency domain).
+        Extract heart rate using FFT (frequency domain).
 
-            This function computes the power spectral density (PSD) of the input PPG signal
-            using Welch's method and identifies the dominant frequency within a specified
-            heart rate range. The dominant frequency is then converted to heart rate in BPM.
+        This function computes the power spectral density (PSD) of the input PPG signal
+        using Welch's method and identifies the dominant frequency within a specified
+        heart rate range. The dominant frequency is then converted to heart rate in BPM.
 
-            Parameters
-            ----------
-            ppg_signal : numpy.ndarray
-                Input photoplethysmography (PPG) signal.
-            hr_range : tuple of float, optional
-                Expected heart rate range in beats per minute (BPM). Default is (40.0, 180.0).
+        Parameters
+        ----------
+        ppg_signal : numpy.ndarray
+            Input photoplethysmography (PPG) signal.
+        hr_range : tuple of float, optional
+            Expected heart rate range in beats per minute (BPM). Default is (40.0, 180.0).
 
-            Returns
-            -------
-            hr : float or None
-                Dominant heart rate in BPM. Returns None if no valid peak is found in the
-                specified range.
-            frequency : float or None
-                Dominant frequency in Hz. Returns None if no valid peak is found in the
-                specified range.
-            psd : numpy.ndarray
-                Power spectral density values corresponding to the frequency array.
-            freqs : numpy.ndarray
-                Frequency values corresponding to the power spectral density.
+        Returns
+        -------
+        hr : float or None
+            Dominant heart rate in BPM. Returns None if no valid peak is found in the
+            specified range.
+        frequency : float or None
+            Dominant frequency in Hz. Returns None if no valid peak is found in the
+            specified range.
+        psd : numpy.ndarray
+            Power spectral density values corresponding to the frequency array.
+        freqs : numpy.ndarray
+            Frequency values corresponding to the power spectral density.
 
-            Notes
-            -----
-            The function uses Welch's method for PSD estimation, which is robust for
-            noisy signals. The heart rate is derived from the peak frequency in the
-            physiological range (default: 40-180 BPM).
+        Notes
+        -----
+        The function uses Welch's method for PSD estimation, which is robust for
+        noisy signals. The heart rate is derived from the peak frequency in the
+        physiological range (default: 40-180 BPM).
 
-            Examples
-            --------
-            >>> hr, freq, psd, freqs = extract_from_fft(ppg_signal, hr_range=(50.0, 120.0))
-            >>> print(f"Heart rate: {hr} BPM")
-            Heart rate: 72.5 BPM
-            """
+        Examples
+        --------
+        >>> hr, freq, psd, freqs = extract_from_fft(ppg_signal, hr_range=(50.0, 120.0))
+        >>> print(f"Heart rate: {hr} BPM")
+        Heart rate: 72.5 BPM
+        """
         # Compute power spectral density
         freqs, psd = signal.welch(ppg_signal, fs=self.fs, nperseg=min(256, len(ppg_signal)))
 
@@ -1681,45 +1681,45 @@ class HeartRateExtractor:
         method: str = "fft",
     ) -> tuple[NDArray, NDArray]:
         """
-            Extract heart rate continuously along the PPG signal.
+        Extract heart rate continuously along the PPG signal.
 
-            This function computes heart rate estimates over time by sliding a window
-            across the PPG signal and applying either FFT-based or peak-based methods
-            to each segment. The heart rate is estimated at the center of each window.
+        This function computes heart rate estimates over time by sliding a window
+        across the PPG signal and applying either FFT-based or peak-based methods
+        to each segment. The heart rate is estimated at the center of each window.
 
-            Parameters
-            ----------
-            ppg_signal : array_like
-                Input PPG signal as a 1D array of samples.
-            window_size : float, optional
-                Size of the sliding window in seconds. Default is 10.0 seconds.
-            stride : float, optional
-                Stride between consecutive windows in seconds. Default is 2.0 seconds.
-            method : str, optional
-                Estimation method to use. Either 'fft' for FFT-based heart rate estimation
-                or 'peaks' for peak-based estimation. Default is 'fft'.
+        Parameters
+        ----------
+        ppg_signal : array_like
+            Input PPG signal as a 1D array of samples.
+        window_size : float, optional
+            Size of the sliding window in seconds. Default is 10.0 seconds.
+        stride : float, optional
+            Stride between consecutive windows in seconds. Default is 2.0 seconds.
+        method : str, optional
+            Estimation method to use. Either 'fft' for FFT-based heart rate estimation
+            or 'peaks' for peak-based estimation. Default is 'fft'.
 
-            Returns
-            -------
-            times : ndarray
-                Time points (in seconds) corresponding to the heart rate estimates.
-            heart_rates : ndarray
-                Heart rate estimates in beats per minute (BPM) at each time point.
+        Returns
+        -------
+        times : ndarray
+            Time points (in seconds) corresponding to the heart rate estimates.
+        heart_rates : ndarray
+            Heart rate estimates in beats per minute (BPM) at each time point.
 
-            Notes
-            -----
-            - The function uses the sampling frequency (`self.fs`) to convert time values
-              into sample indices.
-            - If the `method` is 'fft', the function calls `self.extract_from_fft()`.
-            - If the `method` is 'peaks', the function calls `self.extract_from_peaks()`.
-            - Heart rate estimates are only included if they are not `None`.
+        Notes
+        -----
+        - The function uses the sampling frequency (`self.fs`) to convert time values
+          into sample indices.
+        - If the `method` is 'fft', the function calls `self.extract_from_fft()`.
+        - If the `method` is 'peaks', the function calls `self.extract_from_peaks()`.
+        - Heart rate estimates are only included if they are not `None`.
 
-            Examples
-            --------
-            >>> times, hrs = extract_continuous(ppg_signal, window_size=5.0, stride=1.0)
-            >>> print(times[:3])  # First three time points
-            >>> print(hrs[:3])    # First three heart rate estimates
-            """
+        Examples
+        --------
+        >>> times, hrs = extract_continuous(ppg_signal, window_size=5.0, stride=1.0)
+        >>> print(times[:3])  # First three time points
+        >>> print(hrs[:3])    # First three heart rate estimates
+        """
         window_samples = int(window_size * self.fs)
         stride_samples = int(stride * self.fs)
         n_windows = (len(ppg_signal) - window_samples) // stride_samples + 1
@@ -1762,38 +1762,38 @@ class RobustPPGProcessor:
         process_noise: float = 0.0001,
     ) -> None:
         """
-            Initialize the PPG signal processing pipeline with specified parameters.
-    
-            Parameters
-            ----------
-            fs : float, optional
-                Sampling frequency in Hz, default is 100.0
-            method : str, optional
-                Filter method to use, must be one of 'standard', 'adaptive', or 'ekf', 
-                default is 'adaptive'
-            hr_estimate : float, optional
-                Initial heart rate estimate in BPM, default is 75.0
-            process_noise : float, optional
-                Process noise covariance value, default is 0.0001
-    
-            Returns
-            -------
-            None
-                This method initializes the instance attributes and sets up the 
-                appropriate filter and processing components based on the specified method.
-    
-            Notes
-            -----
-            The initialization creates different filter types based on the method parameter:
-            - 'standard': Uses PPGKalmanFilter with fixed measurement noise
-            - 'adaptive': Uses AdaptivePPGKalmanFilter with adaptive noise estimation
-            - 'ekf': Uses ExtendedPPGKalmanFilter with extended Kalman filter approach
-    
-            Examples
-            --------
-            >>> processor = PPGProcessor(fs=125.0, method='ekf', hr_estimate=80.0)
-            >>> processor = PPGProcessor()  # Uses default parameters
-            """
+        Initialize the PPG signal processing pipeline with specified parameters.
+
+        Parameters
+        ----------
+        fs : float, optional
+            Sampling frequency in Hz, default is 100.0
+        method : str, optional
+            Filter method to use, must be one of 'standard', 'adaptive', or 'ekf',
+            default is 'adaptive'
+        hr_estimate : float, optional
+            Initial heart rate estimate in BPM, default is 75.0
+        process_noise : float, optional
+            Process noise covariance value, default is 0.0001
+
+        Returns
+        -------
+        None
+            This method initializes the instance attributes and sets up the
+            appropriate filter and processing components based on the specified method.
+
+        Notes
+        -----
+        The initialization creates different filter types based on the method parameter:
+        - 'standard': Uses PPGKalmanFilter with fixed measurement noise
+        - 'adaptive': Uses AdaptivePPGKalmanFilter with adaptive noise estimation
+        - 'ekf': Uses ExtendedPPGKalmanFilter with extended Kalman filter approach
+
+        Examples
+        --------
+        >>> processor = PPGProcessor(fs=125.0, method='ekf', hr_estimate=80.0)
+        >>> processor = PPGProcessor()  # Uses default parameters
+        """
         self.fs = fs
         self.dt = 1.0 / fs
         self.method = method
@@ -1829,22 +1829,22 @@ class RobustPPGProcessor:
         quality_threshold: float = 0.5,
     ) -> dict:
         """
-            Complete processing pipeline.
+        Complete processing pipeline.
 
-            Parameters:
-            -----------
-            signal_data : array
-                Raw PPG signal
-            missing_indices : array, optional
-                Indices of missing data
-            quality_threshold : float
-                Minimum quality score (0-1) for accepting segments
+        Parameters:
+        -----------
+        signal_data : array
+            Raw PPG signal
+        missing_indices : array, optional
+            Indices of missing data
+        quality_threshold : float
+            Minimum quality score (0-1) for accepting segments
 
-            Returns:
-            --------
-            results : dict
-                Dictionary containing all processing results
-            """
+        Returns:
+        --------
+        results : dict
+            Dictionary containing all processing results
+        """
         results = {}
 
         # Step 1: Filter signal
@@ -1908,50 +1908,50 @@ class PPGFeatureExtractor:
 
     def __init__(self, fs: float = 100.0) -> None:
         """
-            Initialize the object with sampling frequency.
-    
-            Parameters
-            ----------
-            fs : float, default=100.0
-                Sampling frequency in Hz. This parameter determines the rate at which
-                signals are sampled and is crucial for proper signal processing.
-        
-            Returns
-            -------
-            None
-                This method does not return any value.
-        
-            Notes
-            -----
-            The sampling frequency is stored as an instance attribute and is used
-            throughout the class for time-domain and frequency-domain calculations.
-    
-            Examples
-            --------
-            >>> obj = MyClass()
-            >>> obj.fs
-            100.0
-    
-            >>> obj = MyClass(fs=200.0)
-            >>> obj.fs
-            200.0
-            """
+        Initialize the object with sampling frequency.
+
+        Parameters
+        ----------
+        fs : float, default=100.0
+            Sampling frequency in Hz. This parameter determines the rate at which
+            signals are sampled and is crucial for proper signal processing.
+
+        Returns
+        -------
+        None
+            This method does not return any value.
+
+        Notes
+        -----
+        The sampling frequency is stored as an instance attribute and is used
+        throughout the class for time-domain and frequency-domain calculations.
+
+        Examples
+        --------
+        >>> obj = MyClass()
+        >>> obj.fs
+        100.0
+
+        >>> obj = MyClass(fs=200.0)
+        >>> obj.fs
+        200.0
+        """
         self.fs = fs
 
     def extract_hrv_features(self, peak_indices: NDArray) -> dict | None:
         """
-            Extract Heart Rate Variability (HRV) features.
+        Extract Heart Rate Variability (HRV) features.
 
-            Parameters:
-            -----------
-            peak_indices : array
-                Indices of detected peaks
+        Parameters:
+        -----------
+        peak_indices : array
+            Indices of detected peaks
 
-            Returns:
-            --------
-            hrv_features : dict
-                Dictionary of HRV metrics
-            """
+        Returns:
+        --------
+        hrv_features : dict
+            Dictionary of HRV metrics
+        """
         if len(peak_indices) < 3:
             return None
 
@@ -2006,20 +2006,20 @@ class PPGFeatureExtractor:
 
     def extract_morphology_features(self, signal_segment: NDArray, peak_idx: int) -> dict:
         """
-            Extract morphological features from a single PPG pulse.
+        Extract morphological features from a single PPG pulse.
 
-            Parameters:
-            -----------
-            signal_segment : array
-                PPG signal segment containing one pulse
-            peak_idx : int
-                Index of the systolic peak within the segment
+        Parameters:
+        -----------
+        signal_segment : array
+            PPG signal segment containing one pulse
+        peak_idx : int
+            Index of the systolic peak within the segment
 
-            Returns:
-            --------
-            features : dict
-                Morphological features
-            """
+        Returns:
+        --------
+        features : dict
+            Morphological features
+        """
         features = {}
 
         # Pulse amplitude
@@ -2055,20 +2055,20 @@ class PPGFeatureExtractor:
 
     def compute_spo2_proxy(self, filtered_signal: NDArray) -> float:
         """
-            Compute a proxy for SpO2 (oxygen saturation) based on AC/DC ratio.
-            Note: This is a simplified proxy and not a real SpO2 measurement.
-            Real SpO2 requires red and infrared PPG signals.
+        Compute a proxy for SpO2 (oxygen saturation) based on AC/DC ratio.
+        Note: This is a simplified proxy and not a real SpO2 measurement.
+        Real SpO2 requires red and infrared PPG signals.
 
-            Parameters:
-            -----------
-            filtered_signal : array
-                Filtered PPG signal
+        Parameters:
+        -----------
+        filtered_signal : array
+            Filtered PPG signal
 
-            Returns:
-            --------
-            spo2_proxy : float
-                Proxy value (not actual SpO2)
-            """
+        Returns:
+        --------
+        spo2_proxy : float
+            Proxy value (not actual SpO2)
+        """
         # AC component (pulsatile)
         ac = np.std(filtered_signal)
 
@@ -2144,23 +2144,23 @@ def generate_synthetic_ppg(
     motion_artifacts: bool = True,
 ) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray]:
     """
-        Generate synthetic PPG signal for testing.
+    Generate synthetic PPG signal for testing.
 
-        Parameters:
-        -----------
-        duration : float
-            Duration in seconds
-        fs : float
-            Sampling frequency in Hz (typically 50-250 Hz for PPG)
-        hr : int
-            Heart rate in beats per minute
-        noise_level : float
-            Standard deviation of additive noise
-        missing_percent : float
-            Percentage of data points to randomly remove
-        motion_artifacts : bool
-            Whether to add motion artifacts
-        """
+    Parameters:
+    -----------
+    duration : float
+        Duration in seconds
+    fs : float
+        Sampling frequency in Hz (typically 50-250 Hz for PPG)
+    hr : int
+        Heart rate in beats per minute
+    noise_level : float
+        Standard deviation of additive noise
+    missing_percent : float
+        Percentage of data points to randomly remove
+    motion_artifacts : bool
+        Whether to add motion artifacts
+    """
     t = np.arange(0, duration, 1 / fs)
 
     # PPG signal: slower, more sinusoidal than ECG

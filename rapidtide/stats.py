@@ -50,6 +50,7 @@ if pyfftwpresent:
 defaultbutterorder = 6
 MAXLINES = 10000000
 
+
 # --------------------------- probability functions -------------------------------------------------
 def printthresholds(pcts: ArrayLike, thepercentiles: ArrayLike, labeltext: str) -> None:
     """Print significance thresholds with formatted output.
@@ -1201,9 +1202,7 @@ def symmetrize(a: NDArray, antisymmetric: bool = False, zerodiagonal: bool = Fal
         return intermediate
 
 
-def makepmask(
-    rvals: NDArray, pval: float, sighistfit: NDArray, onesided: bool = True
-) -> NDArray:
+def makepmask(rvals: NDArray, pval: float, sighistfit: NDArray, onesided: bool = True) -> NDArray:
     """Create significance mask from p-value threshold and distribution fit.
 
     Parameters

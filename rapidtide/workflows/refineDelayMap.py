@@ -60,112 +60,112 @@ def refineDelay(
     debug: bool = False,
 ) -> None:
     """
-        Refine delay estimates using regression derivative ratios and histogram-based calibration.
+    Refine delay estimates using regression derivative ratios and histogram-based calibration.
 
-        This function performs calibration of delay estimates by computing regression derivative
-        ratios, filtering them, training a mapping from ratios to delays, and finally calculating
-        delay offsets for each voxel. It also generates a histogram of the computed delay offsets.
+    This function performs calibration of delay estimates by computing regression derivative
+    ratios, filtering them, training a mapping from ratios to delays, and finally calculating
+    delay offsets for each voxel. It also generates a histogram of the computed delay offsets.
 
-        Parameters
-        ----------
-        fmri_data_valid : Any
-            Valid fMRI data used for delay refinement.
-        initial_fmri_x : Any
-            Initial fMRI design matrix.
-        xdim : Any
-            X dimension of the data.
-        ydim : Any
-            Y dimension of the data.
-        slicethickness : Any
-            Thickness of the slices in the data.
-        sLFOfiltmask : Any
-            Mask for filtering based on SLOF (slice timing) effects.
-        genlagtc : Any
-            Generated lag time course.
-        oversamptr : Any
-            Oversampling time resolution.
-        sLFOfitmean : Any
-            Mean SLOF fit values.
-        rvalue : Any
-            R-values from regression.
-        r2value : Any
-            R-squared values from regression.
-        fitNorm : Any
-            Normalized fit coefficients.
-        fitcoeff : Any
-            Fit coefficients.
-        lagtc : Any
-            Lag time course.
-        outputname : Any
-            Base name for output files.
-        validvoxels : Any
-            Indices of valid voxels.
-        nativespaceshape : Any
-            Shape of the native space.
-        theinputdata : Any
-            Input data object.
-        lagtimes : Any
-            Time lags used for analysis.
-        optiondict : Any
-            Dictionary of options for processing.
-        LGR : Any
-            Logger for general messages.
-        TimingLGR : Any
-            Logger for timing-related messages.
-        outputlevel : str, optional
-            Level of output verbosity, default is "normal".
-        gausssigma : int, optional
-            Sigma for Gaussian filtering, default is -1 (no filtering).
-        patchthresh : float, optional
-            Threshold for patch-based filtering, default is 3.0.
-        mindelay : float, optional
-            Minimum delay value, default is -5.0.
-        maxdelay : float, optional
-            Maximum delay value, default is 5.0.
-        numpoints : int, optional
-            Number of points for delay interpolation, default is 501.
-        histlen : int, optional
-            Length of histogram bins, default is 101.
-        rt_floatset : Any, optional
-            Data type for real-time float operations, default is np.float64.
-        rt_floattype : str, optional
-            String representation of float type, default is "float64".
-        debug : bool, optional
-            Enable debug mode, default is False.
+    Parameters
+    ----------
+    fmri_data_valid : Any
+        Valid fMRI data used for delay refinement.
+    initial_fmri_x : Any
+        Initial fMRI design matrix.
+    xdim : Any
+        X dimension of the data.
+    ydim : Any
+        Y dimension of the data.
+    slicethickness : Any
+        Thickness of the slices in the data.
+    sLFOfiltmask : Any
+        Mask for filtering based on SLOF (slice timing) effects.
+    genlagtc : Any
+        Generated lag time course.
+    oversamptr : Any
+        Oversampling time resolution.
+    sLFOfitmean : Any
+        Mean SLOF fit values.
+    rvalue : Any
+        R-values from regression.
+    r2value : Any
+        R-squared values from regression.
+    fitNorm : Any
+        Normalized fit coefficients.
+    fitcoeff : Any
+        Fit coefficients.
+    lagtc : Any
+        Lag time course.
+    outputname : Any
+        Base name for output files.
+    validvoxels : Any
+        Indices of valid voxels.
+    nativespaceshape : Any
+        Shape of the native space.
+    theinputdata : Any
+        Input data object.
+    lagtimes : Any
+        Time lags used for analysis.
+    optiondict : Any
+        Dictionary of options for processing.
+    LGR : Any
+        Logger for general messages.
+    TimingLGR : Any
+        Logger for timing-related messages.
+    outputlevel : str, optional
+        Level of output verbosity, default is "normal".
+    gausssigma : int, optional
+        Sigma for Gaussian filtering, default is -1 (no filtering).
+    patchthresh : float, optional
+        Threshold for patch-based filtering, default is 3.0.
+    mindelay : float, optional
+        Minimum delay value, default is -5.0.
+    maxdelay : float, optional
+        Maximum delay value, default is 5.0.
+    numpoints : int, optional
+        Number of points for delay interpolation, default is 501.
+    histlen : int, optional
+        Length of histogram bins, default is 101.
+    rt_floatset : Any, optional
+        Data type for real-time float operations, default is np.float64.
+    rt_floattype : str, optional
+        String representation of float type, default is "float64".
+    debug : bool, optional
+        Enable debug mode, default is False.
 
-        Returns
-        -------
-        tuple
-            A tuple containing:
-            - delayoffset : ndarray
-                Calculated delay offsets for each voxel.
-            - regressderivratios : ndarray
-                Raw regression derivative ratios.
-            - medfiltregressderivratios : ndarray
-                Median-filtered regression derivative ratios.
-            - filteredregressderivratios : ndarray
-                Final filtered regression derivative ratios.
-            - delayoffsetMAD : ndarray
-                Median absolute deviation of delay offsets.
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - delayoffset : ndarray
+            Calculated delay offsets for each voxel.
+        - regressderivratios : ndarray
+            Raw regression derivative ratios.
+        - medfiltregressderivratios : ndarray
+            Median-filtered regression derivative ratios.
+        - filteredregressderivratios : ndarray
+            Final filtered regression derivative ratios.
+        - delayoffsetMAD : ndarray
+            Median absolute deviation of delay offsets.
 
-        Notes
-        -----
-        The function uses the `tide_refinedelay` module to perform various steps:
-        1. Computes regression derivative ratios using `getderivratios`.
-        2. Filters these ratios using `filterderivratios`.
-        3. Trains a ratio-to-delay mapping using `trainratiotooffset`.
-        4. Converts ratios to delay offsets using `ratiotodelay`.
-        5. Saves a histogram of delay offsets to disk.
+    Notes
+    -----
+    The function uses the `tide_refinedelay` module to perform various steps:
+    1. Computes regression derivative ratios using `getderivratios`.
+    2. Filters these ratios using `filterderivratios`.
+    3. Trains a ratio-to-delay mapping using `trainratiotooffset`.
+    4. Converts ratios to delay offsets using `ratiotodelay`.
+    5. Saves a histogram of delay offsets to disk.
 
-        Examples
-        --------
-        >>> delayoffset, regressderivratios, medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = refineDelay(
-        ...     fmri_data_valid, initial_fmri_x, xdim, ydim, slicethickness,
-        ...     sLFOfiltmask, genlagtc, oversamptr, sLFOfitmean, rvalue, r2value,
-        ...     fitNorm, fitcoeff, lagtc, outputname, validvoxels, nativespaceshape,
-        ...     theinputdata, lagtimes, optiondict, LGR, TimingLGR
-        ... )
-        """
+    Examples
+    --------
+    >>> delayoffset, regressderivratios, medfiltregressderivratios, filteredregressderivratios, delayoffsetMAD = refineDelay(
+    ...     fmri_data_valid, initial_fmri_x, xdim, ydim, slicethickness,
+    ...     sLFOfiltmask, genlagtc, oversamptr, sLFOfitmean, rvalue, r2value,
+    ...     fitNorm, fitcoeff, lagtc, outputname, validvoxels, nativespaceshape,
+    ...     theinputdata, lagtimes, optiondict, LGR, TimingLGR
+    ... )
+    """
     # do the calibration
     TimingLGR.info("Refinement calibration start")
     regressderivratios, regressrvalues = tide_refinedelay.getderivratios(

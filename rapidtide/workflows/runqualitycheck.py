@@ -26,33 +26,33 @@ import rapidtide.qualitycheck as tide_quality
 
 def _get_parser() -> Any:
     """
-        Argument parser for runqualitycheck.
-    
-        This function creates and configures an argument parser for the runqualitycheck
-        command-line tool. The parser handles both required and optional arguments needed
-        to perform quality checks on rapidtide datasets.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser object with all required and optional arguments
-            for the runqualitycheck tool.
-        
-        Notes
-        -----
-        The argument parser is configured with:
-        - Required input file root name
-        - Optional gray matter mask specification
-        - Optional white matter mask specification
-        - Debug flag for additional output
-    
-        Examples
-        --------
-        >>> parser = _get_parser()
-        >>> args = parser.parse_args(['dataset_root'])
-        >>> print(args.inputfileroot)
-        'dataset_root'
-        """
+    Argument parser for runqualitycheck.
+
+    This function creates and configures an argument parser for the runqualitycheck
+    command-line tool. The parser handles both required and optional arguments needed
+    to perform quality checks on rapidtide datasets.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser object with all required and optional arguments
+        for the runqualitycheck tool.
+
+    Notes
+    -----
+    The argument parser is configured with:
+    - Required input file root name
+    - Optional gray matter mask specification
+    - Optional white matter mask specification
+    - Debug flag for additional output
+
+    Examples
+    --------
+    >>> parser = _get_parser()
+    >>> args = parser.parse_args(['dataset_root'])
+    >>> print(args.inputfileroot)
+    'dataset_root'
+    """
     parser = argparse.ArgumentParser(
         prog="runqualitycheck",
         description=("Run a quality check on a rapidtide dataset."),
@@ -95,46 +95,46 @@ def _get_parser() -> Any:
 
 def runqualitycheck(args: Any) -> None:
     """
-        Run quality check on input data and write results to JSON file.
-    
-        This function performs a quality check on the input data using the tide_quality
-        module and writes the results to a JSON file with a standardized naming convention.
-    
-        Parameters
-        ----------
-        args : Any
-            An object containing input arguments with the following attributes:
-            - inputfileroot : str
-                Root name of the input file(s)
-            - graymaskspec : str, optional
-                Specification for gray matter masking
-            - whitemaskspec : str, optional
-                Specification for white matter masking
-            - debug : bool, optional
-                Flag to enable debug mode
-            
-        Returns
-        -------
-        None
-            This function does not return any value but writes results to a JSON file.
-        
-        Notes
-        -----
-        The output JSON file will be named as '{inputfileroot}_desc-qualitymetrics_info.json'
-        where inputfileroot is the root name provided in the args object.
-    
-        Examples
-        --------
-        >>> class Args:
-        ...     def __init__(self):
-        ...         self.inputfileroot = "sub-01_task-rest"
-        ...         self.graymaskspec = "gray_mask.nii.gz"
-        ...         self.whitemaskspec = "white_mask.nii.gz"
-        ...         self.debug = False
-        ...
-        >>> args = Args()
-        >>> runqualitycheck(args)
-        """
+    Run quality check on input data and write results to JSON file.
+
+    This function performs a quality check on the input data using the tide_quality
+    module and writes the results to a JSON file with a standardized naming convention.
+
+    Parameters
+    ----------
+    args : Any
+        An object containing input arguments with the following attributes:
+        - inputfileroot : str
+            Root name of the input file(s)
+        - graymaskspec : str, optional
+            Specification for gray matter masking
+        - whitemaskspec : str, optional
+            Specification for white matter masking
+        - debug : bool, optional
+            Flag to enable debug mode
+
+    Returns
+    -------
+    None
+        This function does not return any value but writes results to a JSON file.
+
+    Notes
+    -----
+    The output JSON file will be named as '{inputfileroot}_desc-qualitymetrics_info.json'
+    where inputfileroot is the root name provided in the args object.
+
+    Examples
+    --------
+    >>> class Args:
+    ...     def __init__(self):
+    ...         self.inputfileroot = "sub-01_task-rest"
+    ...         self.graymaskspec = "gray_mask.nii.gz"
+    ...         self.whitemaskspec = "white_mask.nii.gz"
+    ...         self.debug = False
+    ...
+    >>> args = Args()
+    >>> runqualitycheck(args)
+    """
     resultsdict = tide_quality.qualitycheck(
         args.inputfileroot,
         graymaskspec=args.graymaskspec,

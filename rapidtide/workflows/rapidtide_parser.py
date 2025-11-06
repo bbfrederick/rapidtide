@@ -115,33 +115,33 @@ DEFAULT_PREWHITEN_LAGS = -1
 
 def _get_parser() -> Any:
     """
-        Set up the argument parser for rapidtide command-line interface.
-    
-        This function configures all available command-line arguments for the rapidtide
-        tool, organizing them into logical groups for easy reference and use.
-    
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser with all rapidtide options added
-        
-        Notes
-        -----
-        The parser includes several groups of options:
-        - Input/Output options
-        - Processing options
-        - Performance options
-        - Miscellaneous options
-        - Experimental options (not fully tested)
-        - Deprecated options (will be removed in future versions)
-        - Debugging options (for development and troubleshooting)
-    
-        Examples
-        --------
-        >>> parser = setup_parser()
-        >>> args = parser.parse_args()
-        >>> print(args.version)
-        """
+    Set up the argument parser for rapidtide command-line interface.
+
+    This function configures all available command-line arguments for the rapidtide
+    tool, organizing them into logical groups for easy reference and use.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser with all rapidtide options added
+
+    Notes
+    -----
+    The parser includes several groups of options:
+    - Input/Output options
+    - Processing options
+    - Performance options
+    - Miscellaneous options
+    - Experimental options (not fully tested)
+    - Deprecated options (will be removed in future versions)
+    - Debugging options (for development and troubleshooting)
+
+    Examples
+    --------
+    >>> parser = setup_parser()
+    >>> args = parser.parse_args()
+    >>> print(args.version)
+    """
     parser = argparse.ArgumentParser(
         prog="rapidtide",
         description=("Perform a RIPTiDe time delay analysis on a dataset."),
@@ -1780,50 +1780,50 @@ def _get_parser() -> Any:
 
 def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
     """
-        Compile arguments for rapidtide workflow.
+    Compile arguments for rapidtide workflow.
 
-        This function processes command-line arguments and sets up the configuration
-        for the rapidtide workflow. It handles argument parsing, logging setup,
-        command-line saving, and various parameter defaults and overrides based on
-        analysis modes and macros.
+    This function processes command-line arguments and sets up the configuration
+    for the rapidtide workflow. It handles argument parsing, logging setup,
+    command-line saving, and various parameter defaults and overrides based on
+    analysis modes and macros.
 
-        Parameters
-        ----------
-        inputargs : optional
-            Input arguments to be processed. If None, arguments are parsed from
-            sys.argv. Default is None.
+    Parameters
+    ----------
+    inputargs : optional
+        Input arguments to be processed. If None, arguments are parsed from
+        sys.argv. Default is None.
 
-        Returns
-        -------
-        tuple
-            A tuple containing:
-            - args : dict
-                Dictionary of processed arguments.
-            - theprefilter : object
-                Preprocessing filter object.
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - args : dict
+            Dictionary of processed arguments.
+        - theprefilter : object
+            Preprocessing filter object.
 
-        Notes
-        -----
-        The function performs the following key operations:
-        1. Parses command-line arguments using `_get_parser`
-        2. Sets up logging based on debug flag
-        3. Saves raw and formatted command lines to files
-        4. Applies default values and overrides for various parameters
-        5. Handles analysis modes (delaymapping, denoising, cvrmap, etc.)
-        6. Processes macros (venousrefine, nirs)
-        7. Configures output options based on `outputlevel`
-        8. Sets up pass options and dispersion calculation parameters
-        9. Handles mask specifications and file processing
-        10. Initializes filter options
+    Notes
+    -----
+    The function performs the following key operations:
+    1. Parses command-line arguments using `_get_parser`
+    2. Sets up logging based on debug flag
+    3. Saves raw and formatted command lines to files
+    4. Applies default values and overrides for various parameters
+    5. Handles analysis modes (delaymapping, denoising, cvrmap, etc.)
+    6. Processes macros (venousrefine, nirs)
+    7. Configures output options based on `outputlevel`
+    8. Sets up pass options and dispersion calculation parameters
+    9. Handles mask specifications and file processing
+    10. Initializes filter options
 
-        Examples
-        --------
-        >>> args, prefilter = process_args()
-        >>> print(args['passes'])
-        1
-        >>> print(args['outputlevel'])
-        'normal'
-        """
+    Examples
+    --------
+    >>> args, prefilter = process_args()
+    >>> print(args['passes'])
+    1
+    >>> print(args['outputlevel'])
+    'normal'
+    """
     inargs, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
     args = vars(inargs)
 
@@ -1855,7 +1855,9 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
         else:
             suffix = ""
         formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
-    tide_io.writevec(np.array(formattedcommandline), args["outputname"] + "_formattedcommandline.txt")
+    tide_io.writevec(
+        np.array(formattedcommandline), args["outputname"] + "_formattedcommandline.txt"
+    )
 
     LGR.debug("\nbefore postprocessing:\n{}".format(args))
 
