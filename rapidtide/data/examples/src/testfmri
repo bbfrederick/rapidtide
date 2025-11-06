@@ -14,46 +14,9 @@ rapidtide \
     --nofitfilt \
     --refinedelayeachpass \
     --similaritymetric correlation \
-    --echocancel \
+    --nonumba \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_echocancel
-
-rapidtide \
-    --spatialfilt 2.5 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel more \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --acfix \
-    --echocancel \
-    --nofitfilt \
-    --refinedelayeachpass \
-    --similaritymetric correlation \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_acfix_echocancel
-
-rapidtide \
-    --spatialfilt 2.5 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel more \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --acfix \
-    --nofitfilt \
-    --refinedelayeachpass \
-    --similaritymetric correlation \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_acfix
+    ../dst/sub-RAPIDTIDETEST_nonumba
 
 rapidtide \
     --spatialfilt 2.5 \
@@ -70,7 +33,7 @@ rapidtide \
     --refinedelayeachpass \
     --similaritymetric correlation \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+    ../dst/sub-RAPIDTIDETEST_numba
 
 #rapidtide \
     #--spatialfilt 2.5 \
