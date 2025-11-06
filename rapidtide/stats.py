@@ -23,6 +23,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from rapidtide.decorators import conditionaljit, conditionaljit2
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
@@ -47,63 +49,6 @@ if pyfftwpresent:
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
-donotbeaggressive = True
-
-# ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from numba import jit
-except ImportError:
-    donotusenumba = True
-else:
-    donotusenumba = False
-
-
-def disablenumba() -> None:
-    """Disable numba JIT compilation for all functions in this module.
-
-    Sets the global flag to prevent numba JIT compilation, causing decorated
-    functions to run as normal Python functions without optimization.
-    """
-    global donotusenumba
-    donotusenumba = True
-
-
-def conditionaljit() -> Callable:
-    """Return a decorator that conditionally applies numba JIT compilation.
-
-    Returns
-    -------
-    decorator
-        A decorator that applies numba JIT compilation with nopython=True if numba
-        is enabled, otherwise returns the function unchanged.
-    """
-
-    def resdec(f):
-        if donotusenumba:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def conditionaljit2() -> Callable:
-    """Return a decorator that conditionally applies numba JIT compilation (conservative mode).
-
-    Returns
-    -------
-    decorator
-        A decorator that applies numba JIT compilation with nopython=True if numba
-        is enabled and aggressive optimization is allowed, otherwise returns the function unchanged.
-        This is more conservative than conditionaljit() as it also checks the donotbeaggressive flag.
-    """
-
-    def resdec(f):
-        if donotusenumba or donotbeaggressive:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
 
 # --------------------------- probability functions -------------------------------------------------
 def printthresholds(pcts: ArrayLike, thepercentiles: ArrayLike, labeltext: str) -> None:

@@ -33,7 +33,7 @@ with warnings.catch_warnings():
 
 from typing import Any, Callable, Optional, Tuple, Union
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import scipy as sp
 from numpy.typing import ArrayLike, NDArray
 from scipy import fftpack, signal
@@ -42,6 +42,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
+from rapidtide.decorators import conditionaljit, conditionaljit2
 
 if pyfftwpresent:
     fftpack = pyfftw.interfaces.scipy_fftpack
@@ -53,200 +54,8 @@ import warnings
 
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
-# ---------------------------------------- Global constants -------------------------------------------
-donotbeaggressive = True
-
-# ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from numba import jit
-except ImportError:
-    donotusenumba = True
-else:
-    donotusenumba = False
-
-
-def conditionaljit() -> Callable:
-    """
-        Return a decorator that conditionally applies Numba's jit decorator.
-
-        This function creates a decorator that conditionally applies Numba's `jit` 
-        decorator with `nopython=True` mode. The decoration is skipped when the 
-        global variable `donotusenumba` is True.
-
-        Returns
-        -------
-        Callable
-            A decorator function that can be applied to other functions.
-
-        Notes
-        -----
-        The behavior of this decorator is controlled by the global variable `donotusenumba`.
-        When `donotusenumba` is True, the original function is returned unchanged.
-        When `donotusenumba` is False, the function is compiled with Numba's `jit` 
-        decorator in `nopython=True` mode.
-
-        Examples
-        --------
-        >>> donotusenumba = False
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        >>> result = my_function(5)
-        >>> print(result)
-        10
-    
-        >>> donotusenumba = True
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        >>> result = my_function(5)
-        >>> print(result)
-        10
-        """
-    def resdec(f: Callable) -> Callable:
-        """
-            Decorator to conditionally apply Numba JIT compilation.
-    
-            This decorator provides a conditional mechanism to apply Numba's JIT compilation
-            to functions. When the global flag `donotusenumba` is True, the original function
-            is returned unchanged. Otherwise, the function is compiled with Numba's `jit` 
-            decorator in `nopython=True` mode for optimal performance.
-    
-            Parameters
-            ----------
-            f : callable
-                The function to be decorated and potentially compiled with Numba.
-        
-            Returns
-            -------
-            callable
-                The original function if `donotusenumba` is True, otherwise a Numba-compiled
-                version of the function with `nopython=True` mode enabled.
-        
-            Notes
-            -----
-            This decorator is useful for conditional compilation where you want to disable
-            Numba compilation for debugging or compatibility purposes while maintaining
-            the same function interface.
-    
-            Examples
-            --------
-            >>> donotusenumba = False
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> my_function(5)
-            10
-    
-            >>> donotusenumba = True
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> my_function(5)
-            10
-            """
-        if donotusenumba:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def conditionaljit2() -> Callable:
-    """
-        Return a jit decorator that conditionally applies Numba compilation.
-
-        This function creates a decorator that conditionally applies Numba's jit
-        decorator based on global flags. If either `donotusenumba` or `donotbeaggressive`
-        flags are True, the original function is returned without compilation.
-        Otherwise, the function is compiled with `nopython=True` for maximum performance.
-
-        Returns
-        -------
-        Callable
-            A decorator function that either returns the original function or
-            a Numba-compiled version depending on the global flags.
-
-        Notes
-        -----
-        The behavior of this decorator is controlled by two global boolean flags:
-        - `donotusenumba`: If True, disables Numba compilation entirely
-        - `donotbeaggressive`: If True, disables aggressive compilation optimizations
-
-        Examples
-        --------
-        >>> @conditionaljit2()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)  # Returns 10
-        """
-    def resdec(f: Callable) -> Callable:
-        """
-            Decorator to conditionally apply Numba JIT compilation.
-    
-            This decorator conditionally applies Numba's JIT compilation to a function
-            based on global configuration flags. If either `donotusenumba` or `donotbeaggressive`
-            is True, the original function is returned without compilation. Otherwise,
-            the function is compiled with `nopython=True` for maximum performance.
-    
-            Parameters
-            ----------
-            f : callable
-                The function to be decorated and potentially compiled with Numba.
-        
-            Returns
-            -------
-            callable
-                The original function if compilation is disabled, or the JIT-compiled
-                version of the function if compilation is enabled.
-        
-            Notes
-            -----
-            This decorator provides a convenient way to toggle Numba compilation
-            without modifying the function code. The compilation is only applied when
-            both `donotusenumba` and `donotbeaggressive` are False.
-    
-            Examples
-            --------
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> result = my_function(5)
-            >>> print(result)
-            10
-            """
-        if donotusenumba or donotbeaggressive:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def disablenumba() -> None:
-    """
-        Disable Numba compilation globally.
-
-        This function sets a global flag that prevents Numba from being used in subsequent
-        function calls. This is useful when debugging or when Numba compilation is causing
-        issues in the application.
-
-        Notes
-        -----
-        This function modifies a global variable `donotusenumba`. Once called, all subsequent
-        functions that check this flag will skip Numba compilation and fall back to pure Python
-        execution.
-
-        Examples
-        --------
-        >>> disablenumba()
-        >>> # All subsequent functions will run in pure Python mode
-        """
-    global donotusenumba
-    donotusenumba = True
-
 # --------------------------- Resampling and time shifting functions -------------------------------------------
-congridyvals = {}
+congridyvals : dict = {}
 congridyvals["kernel"] = "kaiser"
 congridyvals["width"] = 3.0
 
@@ -525,12 +334,12 @@ class FastResampler:
         if doplot:
             import matplolib.pyplot as pl
 
-            fig = pl.figure()
+            fig = plt.figure()
             ax = fig.add_subplot(111)
             ax.set_title("FastResampler initial timecourses")
-            pl.plot(timeaxis, timecourse, self.hires_x, self.hires_y)
-            pl.legend(("input", "hires"))
-            pl.show()
+            plt.plot(timeaxis, timecourse, self.hires_x, self.hires_y)
+            plt.legend(("input", "hires"))
+            plt.show()
 
     def getdata(self):
         """
@@ -731,12 +540,12 @@ class FastResampler:
             print("    requested axis limits:", newtimeaxis[0], newtimeaxis[-1])
             sys.exit()
         if doplot:
-            fig = pl.figure()
+            fig = plt.figure()
             ax = fig.add_subplot(111)
             ax.set_title("FastResampler timecourses")
-            pl.plot(self.hires_x, self.hires_y, newtimeaxis, out_y)
-            pl.legend(("hires", "output"))
-            pl.show()
+            plt.plot(self.hires_x, self.hires_y, newtimeaxis, out_y)
+            plt.legend(("hires", "output"))
+            plt.show()
         return out_y
 
 
@@ -884,11 +693,11 @@ def doresample(
         print("lens:", len(pad_x), len(pad_y))
         print(pad_x)
         print(pad_y)
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title("Original and padded vector")
-        pl.plot(orig_x, orig_y + 1.0, pad_x, pad_y)
-        pl.show()
+        plt.plot(orig_x, orig_y + 1.0, pad_x, pad_y)
+        plt.show()
 
     # antialias and ringstop filter
     init_freq = len(pad_x) / (pad_x[-1] - pad_x[0])
@@ -1487,17 +1296,17 @@ def timeshift(
         print("thelen:", thelen)
         print("thepaddedlen:", thepaddedlen)
 
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title("Initial vector")
-        pl.plot(xvec, preshifted_y)
+        plt.plot(xvec, preshifted_y)
 
-        fig = pl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title("Initial and shifted vector")
-        pl.plot(xvec, preshifted_y, xvec, shifted_y)
+        plt.plot(xvec, preshifted_y, xvec, shifted_y)
 
-        pl.show()
+        plt.show()
 
     return [
         shifted_y[padtrs : padtrs + thelen],

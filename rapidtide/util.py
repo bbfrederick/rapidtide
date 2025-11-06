@@ -36,6 +36,7 @@ from numpy.typing import NDArray
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
+from rapidtide.decorators import getdecoratorvars
 
 try:
     import mkl
@@ -52,16 +53,8 @@ MemoryLGR = logging.getLogger("MEMORY")
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
-donotbeaggressive = True
 
 # ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from numba import jit
-except ImportError:
-    donotusenumba = True
-else:
-    donotusenumba = False
-
 try:
     import pyfftw
 except ImportError:
@@ -115,6 +108,7 @@ def checkimports(optiondict: dict[str, Any]) -> None:
         >>> print(options)
         {'pfftwexists': False, 'donotbeaggressive': False, 'donotusenumba': False}
         """
+    donotusenumba, donotbeaggressive = getdecoratorvars()
     if pyfftwpresent:
         print("pfftw exists")
     else:
@@ -127,7 +121,6 @@ def checkimports(optiondict: dict[str, Any]) -> None:
         print("aggressive optimization")
     optiondict["donotbeaggressive"] = donotbeaggressive
 
-    global donotusenumba
     if donotusenumba:
         print("will not use numba even if present")
     else:
@@ -135,203 +128,14 @@ def checkimports(optiondict: dict[str, Any]) -> None:
     optiondict["donotusenumba"] = donotusenumba
 
 
-# ----------------------------------------- Conditional jit handling ----------------------------------
-def conditionaljit() -> Callable:
-    """
-        Create a conditional JIT decorator that optionally applies Numba JIT compilation.
-
-        This function returns a decorator that conditionally applies Numba's JIT compilation
-        to functions. The JIT compilation is skipped when the global flag `donotusenumba`
-        is set to True, allowing for easier debugging and testing without JIT overhead.
-
-        Returns
-        -------
-        Callable
-            A decorator function that can be applied to other functions. When applied,
-            the decorator will either return the original function unchanged (if
-            `donotusenumba` is True) or return the JIT-compiled version of the function
-            (if `donotusenumba` is False).
-
-        Notes
-        -----
-        The behavior of this decorator is controlled by the global variable `donotusenumba`.
-        When `donotusenumba` is True, the decorator acts as an identity function and
-        returns the original function without any JIT compilation. When `donotusenumba`
-        is False, the function is compiled with `@jit(nopython=True)` for maximum
-        performance.
-
-        Examples
-        --------
-        >>> donotusenumba = False
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)
-        >>> print(result)
-        10
-
-        >>> donotusenumba = True
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)
-        >>> print(result)
-        10
-        """
-    def resdec(f: Callable) -> Callable:
-        """
-            Decorator to conditionally apply Numba JIT compilation.
-    
-            This decorator conditionally applies Numba's JIT compilation to a function
-            based on the global `donotusenumba` flag. When `donotusenumba` is True,
-            the original function is returned unchanged. Otherwise, the function is
-            compiled with `nopython=True` mode for optimal performance.
-    
-            Parameters
-            ----------
-            f : callable
-                The function to be decorated and potentially compiled with Numba.
-        
-            Returns
-            -------
-            callable
-                The original function if `donotusenumba` is True, otherwise a
-                Numba-compiled version of the function with `nopython=True` mode.
-        
-            Notes
-            -----
-            This decorator provides a convenient way to enable or disable Numba
-            compilation globally by setting the `donotusenumba` flag. This is useful
-            for debugging purposes when you want to run code without JIT compilation.
-    
-            Examples
-            --------
-            >>> donotusenumba = False  # Enable Numba compilation
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> my_function(5)
-            10
-    
-            >>> donotusenumba = True   # Disable Numba compilation
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> my_function(5)
-            10
-            """
-        if donotusenumba:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def conditionaljit2() -> Callable:
-    """
-        Create a conditional JIT decorator based on global flags.
-
-        This function returns a decorator that conditionally applies Numba's JIT
-        compilation to functions. The JIT compilation is skipped if either
-        `donotusenumba` or `donotbeaggressive` global flags are set to True.
-
-        Returns
-        -------
-        Callable
-            A decorator function that can be applied to other functions. The
-            decorator returns the original function unchanged if JIT should be
-            disabled, otherwise returns the JIT-compiled version.
-
-        Notes
-        -----
-        The behavior of this decorator depends on the global variables:
-        - `donotusenumba`: If True, disables JIT compilation entirely
-        - `donotbeaggressive`: If True, disables aggressive JIT compilation
-    
-        This allows for easy switching between JIT-compiled and regular Python
-        execution for debugging and performance testing purposes.
-
-        Examples
-        --------
-        >>> @conditionaljit2()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)  # Will be JIT compiled if flags allow
-        """
-    def resdec(f: Callable) -> Callable:
-        """
-            Decorator that conditionally applies Numba JIT compilation to a function.
-    
-            This decorator checks global flags to determine whether to apply Numba's
-            JIT compilation with `nopython=True` or return the function unchanged.
-    
-            Parameters
-            ----------
-            f : callable
-                The function to be decorated and potentially compiled with Numba.
-        
-            Returns
-            -------
-            callable
-                The original function if compilation is disabled, or a Numba-compiled
-                version of the function with `nopython=True` enabled.
-        
-            Notes
-            -----
-            The behavior is controlled by two global flags:
-            - `donotusenumba`: If True, returns the function unchanged
-            - `donotbeaggressive`: If True, returns the function unchanged
-    
-            Examples
-            --------
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> result = my_function(5)
-            >>> print(result)
-            10
-            """
-        if donotusenumba or donotbeaggressive:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def disablenumba() -> None:
-    """
-        Disable Numba compilation globally.
-    
-        This function sets a global flag that prevents Numba from being used in subsequent
-        function calls. This is useful when debugging or when Numba compilation causes
-        issues in a particular environment.
-    
-        Notes
-        -----
-        This function modifies a global variable `donotusenumba`. Once called, all
-        subsequent function calls that would normally use Numba will execute without
-        compilation.
-    
-        Examples
-        --------
-        >>> disablenumba()
-        >>> # Subsequent Numba-annotated functions will run in regular Python mode
-        """
-    global donotusenumba
-    donotusenumba = True
-
-
 def disablemkl(numprocs: int, debug: bool = False) -> None:
     """
         Disable MKL threading for parallel execution.
-    
+
         This function configures Intel MKL (Math Kernel Library) to use only a single
         thread when the number of processes exceeds 1. This is useful for avoiding
         oversubscription of CPU resources in parallel computing environments.
-    
+
         Parameters
         ----------
         numprocs : int
@@ -340,22 +144,22 @@ def disablemkl(numprocs: int, debug: bool = False) -> None:
         debug : bool, optional
             If True, prints debug information about the threading configuration
             (default is False).
-        
+
         Returns
         -------
         None
             This function does not return any value.
-        
+
         Notes
         -----
         This function only has an effect if MKL is available (mklexists is True).
         The function uses mkl.set_num_threads(1) to disable parallel threading in MKL.
-    
+
         Examples
         --------
         >>> disablemkl(numprocs=4, debug=True)
         disablemkl: setting threads to 1
-    
+
         >>> disablemkl(numprocs=1)
         # No output, no threading changes
         """
@@ -369,11 +173,11 @@ def disablemkl(numprocs: int, debug: bool = False) -> None:
 def enablemkl(numthreads: int, debug: bool = False) -> None:
     """
         Enable Intel MKL threading with specified number of threads.
-    
+
         This function configures the Intel MKL (Math Kernel Library) to use the
         specified number of threads for parallel execution. It only has an effect
         if MKL is available in the current environment.
-    
+
         Parameters
         ----------
         numthreads : int
@@ -381,17 +185,17 @@ def enablemkl(numthreads: int, debug: bool = False) -> None:
         debug : bool, optional
             If True, print debug information about the thread setting operation.
             Default is False.
-        
+
         Returns
         -------
         None
             This function does not return any value.
-        
+
         Notes
         -----
         This function only has an effect if MKL is available (mklexists is True).
         The function uses mkl.set_num_threads() internally to configure the threading.
-    
+
         Examples
         --------
         >>> enablemkl(4)

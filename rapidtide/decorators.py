@@ -29,6 +29,10 @@ else:
     donotusenumba = False
 
 
+def getdecoratorvars():
+    return donotusenumba, donotbeaggressive
+
+
 def disablenumba() -> None:
     """
         Set a global variable to disable numba.

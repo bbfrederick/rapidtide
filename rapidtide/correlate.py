@@ -46,6 +46,7 @@ import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
+from rapidtide.decorators import conditionaljit
 
 if pyfftwpresent:
     fftpack = pyfftw.interfaces.scipy_fftpack
@@ -56,119 +57,6 @@ LGR = logging.getLogger("GENERAL")
 defaultbutterorder = 6
 MAXLINES = 10000000
 donotbeaggressive = True
-
-
-# ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from numba import jit
-except ImportError:
-    donotusenumba = True
-else:
-    donotusenumba = False
-
-
-def conditionaljit() -> Callable:
-    """
-        Wrap functions in jit if numba is enabled.
-
-        This function creates a decorator that conditionally applies Numba's jit
-        decorator to functions. If the `donotusenumba` flag is True, the original
-        function is returned unchanged. Otherwise, the function is compiled with
-        `jit(nopython=True)` for optimal performance.
-
-        Returns
-        -------
-        Callable
-            A decorator function that can be applied to other functions.
-
-        Notes
-        -----
-        This decorator provides a convenient way to conditionally enable Numba
-        compilation based on a global flag. It's useful for debugging and
-        development where you want to disable JIT compilation temporarily.
-
-        Examples
-        --------
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)
-        >>> print(result)
-        10
-        """
-
-    def resdec(f: Callable) -> Callable:
-        """
-            Decorator that conditionally applies Numba JIT compilation to a function.
-    
-            If the global variable `donotusenumba` is True, the function is returned unchanged.
-            Otherwise, the function is compiled with Numba's `jit` decorator in `nopython=True` mode.
-    
-            Parameters
-            ----------
-            f : callable
-                The function to be decorated and potentially compiled with Numba.
-        
-            Returns
-            -------
-            callable
-                The original function if `donotusenumba` is True, otherwise a Numba-compiled
-                version of the function in nopython mode.
-        
-            Notes
-            -----
-            This decorator provides a convenient way to conditionally enable Numba compilation
-            for performance optimization. It allows for easy switching between compiled and
-            uncompiled versions of functions for debugging and testing purposes.
-    
-            Examples
-            --------
-            >>> donotusenumba = False
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> result = my_function(5)
-            >>> print(result)
-            10
-    
-            >>> donotusenumba = True
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> result = my_function(5)
-            >>> print(result)
-            10
-            """
-        if donotusenumba:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def disablenumba() -> None:
-    """
-        Set a global variable to disable numba.
-
-        This function sets the global variable `donotusenumba` to `True`, which
-        effectively disables the use of numba in subsequent operations that check
-        this variable.
-
-        Notes
-        -----
-        This function modifies a global variable. The variable `donotusenumba` should
-        be checked by other functions in the codebase to determine whether to use
-        numba or not.
-
-        Examples
-        --------
-        >>> disablenumba()
-        >>> print(donotusenumba)
-        True
-        """
-    global donotusenumba
-    donotusenumba = True
 
 
 # --------------------------- Correlation functions -------------------------------------------------
@@ -1709,7 +1597,7 @@ def convolve_weighted_fft(
     weighting: str = "None",
     compress: bool = False,
     displayplots: bool = False,
-) -> NDArray:
+) -> NDArray[np.floating[Any]]:
     """
         Convolve two N-dimensional arrays using FFT with optional weighting.
 
@@ -1752,7 +1640,7 @@ def convolve_weighted_fft(
 
         Returns
         -------
-        out : ndarray
+        out : NDArray[np.floating[Any]]
             An N-dimensional array containing a subset of the discrete linear
             convolution of `in1` with `in2`. The shape of the output depends on
             the `mode` parameter.
@@ -1777,9 +1665,9 @@ def convolve_weighted_fft(
         [[1. 2.]
          [3. 4.]]
         """
-    if np.isscalar(in1) and np.isscalar(in2):  # scalar inputs
-        return in1 * in2
-    elif not in1.ndim == in2.ndim:
+    #if np.isscalar(in1) and np.isscalar(in2):  # scalar inputs
+    #    return in1 * in2
+    if not in1.ndim == in2.ndim:
         raise ValueError("in1 and in2 should have the same rank")
     elif in1.size == 0 or in2.size == 0:  # empty arrays
         return np.array([])

@@ -23,11 +23,13 @@ package.
 
 import sys
 import warnings
-from typing import Callable, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
+
+from rapidtide.decorators import conditionaljit, conditionaljit2
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -45,130 +47,8 @@ if pyfftwpresent:
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
 
-# ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from numba import jit
-except ImportError:
-    donotusenumba = True
-else:
-    donotusenumba = False
-
-
-# ----------------------------------------- Conditional jit handling ----------------------------------
-def conditionaljit() -> Callable:
-    """
-        Return a jit decorator that conditionally applies Numba compilation.
-    
-        This function creates a decorator that conditionally applies Numba's jit
-        compilation based on the global `donotusenumba` flag. When `donotusenumba`
-        is True, the function is returned unchanged. When False, the function is
-        compiled with `jit(nopython=True)` for maximum performance.
-    
-        Returns
-        -------
-        Callable
-            A decorator function that either returns the input function unchanged
-            or applies Numba jit compilation based on the global flag.
-    
-        Notes
-        -----
-        The global variable `donotusenumba` controls whether Numba compilation is
-        applied. This allows for easy disabling of Numba for debugging or testing
-        purposes.
-    
-        Examples
-        --------
-        >>> from numba import jit
-        >>> global donotusenumba
-        >>> donotusenumba = False
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        >>> my_function(5)
-        10
-    
-        >>> donotusenumba = True
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        >>> my_function(5)
-        10
-        """
-    def resdec(f: Callable) -> Callable:
-        """
-            Decorator that conditionally applies Numba JIT compilation to a function.
-    
-            This decorator checks a global flag `donotusenumba` to determine whether
-            to apply Numba's JIT compilation to the input function. If the flag is True,
-            the original function is returned unchanged. Otherwise, the function is
-            compiled with `jit(nopython=True)` for improved performance.
-    
-            Parameters
-            ----------
-            f : callable
-                The function to be decorated and potentially compiled with Numba.
-        
-            Returns
-            -------
-            callable
-                The original function if `donotusenumba` is True, otherwise a Numba-compiled
-                version of the function with `nopython=True` mode enabled.
-        
-            Notes
-            -----
-            This decorator provides a convenient way to enable/disable Numba compilation
-            globally without modifying function calls. The `donotusenumba` global variable
-            controls the compilation behavior.
-    
-            Examples
-            --------
-            >>> import numpy as np
-            >>> from numba import jit
-            >>> 
-            >>> # Define a simple function
-            >>> @resdec
-            >>> def add_arrays(a, b):
-            ...     return a + b
-            ...
-            >>> # Function works normally
-            >>> result = add_arrays(np.array([1, 2, 3]), np.array([4, 5, 6]))
-            >>> print(result)
-            [5 7 9]
-            """
-        global donotusenumba
-        if donotusenumba:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def disablenumba() -> None:
-    """
-        Disable Numba compilation globally.
-    
-        This function sets a global flag that prevents Numba from being used in subsequent
-        function calls. This is useful when debugging or when Numba compilation is causing
-        issues in an application.
-    
-        Notes
-        -----
-        This function modifies a global variable `donotusenumba`. Once called, all subsequent
-        functions that check this flag will skip Numba compilation and fall back to pure Python
-        execution.
-    
-        Examples
-        --------
-        >>> disablenumba()
-        >>> # All subsequent Numba-enabled functions will now run in pure Python
-        """
-    global donotusenumba
-    donotusenumba = True
-
-
 # --------------------------- Filtering functions -------------------------------------------------
 # NB: No automatic padding for precalculated filters
-
 
 @conditionaljit()
 def padvec(
@@ -1022,7 +902,6 @@ def getlptransfunc(
         Examples
         --------
         >>> import numpy as np
-        >>> from typing import NDArray
         >>> input_signal = np.random.rand(1024)
         >>> Fs = 100.0
         >>> upperpass = 20.0
@@ -1864,7 +1743,6 @@ def harmonicnotchfilter(
         Examples
         --------
         >>> import numpy as np
-        >>> from your_module import harmonicnotchfilter
         >>> timecourse = np.random.randn(1000)
         >>> Fs = 100.0
         >>> Ffundamental = 50.0
@@ -3193,7 +3071,7 @@ def ifftfrompolar(r: NDArray, theta: NDArray) -> NDArray:
 
 
 # --------------------------- Window functions -------------------------------------------------
-BHwindows = {}
+BHwindows: dict = {}
 
 
 def blackmanharris(length: int, debug: bool = False) -> NDArray:
@@ -3253,7 +3131,7 @@ def blackmanharris(length: int, debug: bool = False) -> NDArray:
         return BHwindows[str(length)]
 
 
-hannwindows = {}
+hannwindows: dict = {}
 
 
 def hann(length: int, debug: bool = False) -> NDArray:
@@ -3307,7 +3185,7 @@ def hann(length: int, debug: bool = False) -> NDArray:
         return hannwindows[str(length)]
 
 
-hammingwindows = {}
+hammingwindows: dict = {}
 
 
 def rect(length: int, L: float) -> NDArray:

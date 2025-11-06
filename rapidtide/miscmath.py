@@ -24,6 +24,8 @@ import numpy as np
 from numpy.polynomial import Polynomial
 from numpy.typing import NDArray
 
+from rapidtide.decorators import conditionaljit, conditionaljit2
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
@@ -46,203 +48,6 @@ if pyfftwpresent:
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
 MAXLINES = 10000000
-donotbeaggressive = True
-
-# ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    from numba import jit
-except ImportError:
-    donotusenumba = True
-else:
-    donotusenumba = False
-
-
-# ----------------------------------------- Conditional jit handling ----------------------------------
-def conditionaljit() -> Callable:
-    """
-        Create a conditional JIT decorator that optionally uses Numba.
-
-        This function returns a decorator that conditionally applies Numba's JIT
-        compilation to functions. When `donotusenumba` is True, the function is
-        returned unchanged. When `donotusenumba` is False, the function is compiled
-        with Numba's `jit` decorator in nopython mode for optimal performance.
-
-        Returns
-        -------
-        Callable
-            A decorator function that either returns the input function unchanged
-            or applies Numba JIT compilation to it.
-
-        Notes
-        -----
-        The behavior of this decorator is controlled by the global variable
-        `donotusenumba`. If this variable is set to True, no JIT compilation will
-        occur. If it's False (or not set), the function will be compiled with
-        `nopython=True` mode.
-
-        Examples
-        --------
-        >>> donotusenumba = False
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)
-        >>> print(result)
-        10
-
-        >>> donotusenumba = True
-        >>> @conditionaljit()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)
-        >>> print(result)
-        10
-        """
-    def resdec(f: Callable) -> Callable:
-        """
-            Decorator that applies Numba JIT compilation to a function.
-    
-            This decorator conditionally applies Numba's JIT compilation to functions,
-            bypassing compilation when the `donotusenumba` flag is set to True.
-    
-            Parameters
-            ----------
-            f : callable
-                The function to be decorated and potentially compiled with Numba.
-        
-            Returns
-            -------
-            callable
-                The original function if `donotusenumba` is True, otherwise the
-                Numba-compiled version of the function with `nopython=True` mode enabled.
-        
-            Notes
-            -----
-            This decorator provides a convenient way to conditionally enable Numba
-            compilation based on a global flag. When `donotusenumba` is False (default),
-            the function will be compiled with `nopython=True` for maximum performance.
-            When `donotusenumba` is True, the function remains unchanged, allowing
-            for easier debugging and development.
-    
-            Examples
-            --------
-            >>> donotusenumba = False
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> result = my_function(5)
-            >>> print(result)
-            10
-    
-            >>> donotusenumba = True
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> result = my_function(5)
-            >>> print(result)
-            10
-            """
-        if donotusenumba:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def conditionaljit2() -> Callable:
-    """
-        Create a conditional JIT decorator based on global flags.
-
-        This function returns a decorator that conditionally applies Numba's JIT
-        compilation to functions. The JIT compilation is skipped if either
-        `donotusenumba` or `donotbeaggressive` global flags are set to True.
-
-        Returns
-        -------
-        Callable
-            A decorator function that can be applied to other functions. When
-            applied, the decorator will either return the original function unchanged
-            or return a JIT-compiled version depending on the global flags.
-
-        Notes
-        -----
-        The behavior of this decorator depends on the global variables:
-        - `donotusenumba`: If True, no JIT compilation is applied
-        - `donotbeaggressive`: If True, no JIT compilation is applied
-
-        Examples
-        --------
-        >>> @conditionaljit2()
-        ... def my_function(x):
-        ...     return x * 2
-        ...
-        >>> result = my_function(5)
-        """
-    def resdec(f: Callable) -> Callable:
-        """
-            Decorator to conditionally apply Numba JIT compilation.
-    
-            This decorator conditionally applies Numba's JIT compilation to a function
-            based on global flags. If either `donotusenumba` or `donotbeaggressive` 
-            flags are set to True, the original function is returned without compilation.
-            Otherwise, the function is compiled with `nopython=True` for maximum performance.
-    
-            Parameters
-            ----------
-            f : callable
-                The function to be decorated and potentially compiled with Numba.
-        
-            Returns
-            -------
-            callable
-                The original function if compilation is skipped, or the JIT-compiled 
-                version of the function if compilation is applied.
-        
-            Notes
-            -----
-            This decorator provides a way to toggle Numba compilation on/off based on
-            global configuration flags. It's useful for debugging and performance testing
-            where you want to easily disable compilation without modifying the code.
-    
-            Examples
-            --------
-            >>> @resdec
-            ... def my_function(x):
-            ...     return x * 2
-            >>> result = my_function(5)
-            >>> print(result)
-            10
-            """
-        if donotusenumba or donotbeaggressive:
-            return f
-        return jit(f, nopython=True)
-
-    return resdec
-
-
-def disablenumba() -> None:
-    """
-        Disable Numba compilation globally.
-    
-        This function sets a global flag that prevents Numba from being used in subsequent
-        operations. This can be useful when debugging or when Numba compilation is causing
-        issues in an application.
-    
-        Notes
-        -----
-        This function modifies a global variable `donotusenumba`. Once called, all subsequent
-        calls to functions that use Numba will execute in pure Python mode.
-    
-        Examples
-        --------
-        >>> disablenumba()
-        >>> # Subsequent Numba-enabled functions will now run in pure Python
-        """
-    global donotusenumba
-    donotusenumba = True
-
 
 # --------------------------- Spectral analysis functions ---------------------------------------
 def phase(mcv: NDArray) -> NDArray:
@@ -1105,7 +910,7 @@ def noiseamp(
     thetimepoints = np.arange(0.0, len(filtrms), 1.0) - len(filtrms) / 2.0
     try:
         thecoffs = Polynomial.fit(thetimepoints, filtrms, 1).convert().coef[::-1]
-    except np.lib.RankWarning:
+    except np.exceptions.RankWarning:
         thecoffs = [0.0, 0.0]
     thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
     startamp = thefittc[0]
@@ -1281,7 +1086,7 @@ def trendfilt(
     thetimepoints = np.arange(0.0, len(inputdata), 1.0) - len(inputdata) / 2.0
     try:
         thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]
-    except np.lib.RankWarning:
+    except np.exceptions.RankWarning:
         thecoffs = [0.0, 0.0]
     thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
     detrended = inputdata - thefittc
