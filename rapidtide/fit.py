@@ -486,7 +486,7 @@ def kaiserbessel_eval(x: NDArray, p: NDArray) -> NDArray:
 
 
 @conditionaljit()
-def gauss_eval(x: NDArray, p: NDArray) -> NDArray:
+def gauss_eval(x: NDArray[np.floating[Any]], p: NDArray[np.floating[Any]]) -> NDArray[np.floating[Any]]:
     """
         Evaluate a Gaussian function.
     
@@ -495,9 +495,9 @@ def gauss_eval(x: NDArray, p: NDArray) -> NDArray:
     
         Parameters
         ----------
-        x : NDArray
+        x : NDArray[np.floating[Any]]
             x values at which to evaluate the Gaussian function
-        p : NDArray
+        p : NDArray[np.floating[Any]]
             Gaussian parameters [amplitude, center, width] where:
             - amplitude: peak height of the Gaussian
             - center: x-value of the Gaussian center
@@ -505,7 +505,7 @@ def gauss_eval(x: NDArray, p: NDArray) -> NDArray:
     
         Returns
         -------
-        y : NDArray
+        y : NDArray[np.floating[Any]]
             Evaluated Gaussian values with the same shape as x
     
         Notes
@@ -2443,7 +2443,7 @@ def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
         print("gram_schmidt, input dimensions:", theregressors.shape)
     basis: list[float] = []
     for i in range(theregressors.shape[0]):
-        w = theregressors[i, :] - np.sum(np.array(np.dot(theregressors[i, :], b) * b) for b in basis)
+        w = theregressors[i, :] - np.sum(np.array(list(np.dot(theregressors[i, :], b) * b) for b in basis))
         if (np.fabs(w) > 1e-10).any():
             basis.append(w / np.linalg.norm(w))
     outputbasis = np.array(basis)

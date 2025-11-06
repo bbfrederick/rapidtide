@@ -252,7 +252,7 @@ congridyvals["width"] = 3.0
 
 
 def congrid(
-    xaxis: ArrayLike,
+    xaxis: NDArray[np.floating[Any]],
     loc: float,
     val: float,
     width: float,
@@ -261,7 +261,7 @@ def congrid(
     cyclic: bool = True,
     debug: bool = False,
     onlykeynotices: bool = True,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> Tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]], NDArray[np.floating[Any]]]:
     """
         Perform a convolution gridding operation with a Kaiser-Bessel or Gaussian kernel.
 
@@ -271,7 +271,7 @@ def congrid(
 
         Parameters
         ----------
-        xaxis : array-like
+        xaxis : NDArray[np.floating[Any]]
             The target axis for resampling. Should be a 1D array of evenly spaced points.
         loc : float
             The location, in x-axis units, of the sample to be gridded.
@@ -297,11 +297,11 @@ def congrid(
 
         Returns
         -------
-        vals : array-like
+        vals : NDArray[np.floating[Any]]
             The input value, convolved with the gridding kernel, projected onto x-axis points.
-        weights : array-like
+        weights : NDArray[np.floating[Any]]
             The values of the convolution kernel, projected onto x-axis points (used for normalization).
-        indices : array-like
+        indices : NDArray[int[Any]]
             The indices along the x-axis where the vals and weights fall.
 
         Notes
@@ -394,7 +394,7 @@ def congrid(
         offsetinpts = center + offset
         startpt = int(np.ceil(offsetinpts - width / 2.0))
         endpt = int(np.floor(offsetinpts + width / 2.0))
-        indices = np.remainder(range(startpt, endpt + 1), len(xaxis))
+        indices = np.remainder(np.array(list(range(startpt, endpt + 1))), len(xaxis))
         try:
             yvals = congridyvals[offsetkey]
         except KeyError:
