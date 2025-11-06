@@ -215,7 +215,7 @@ def prepareband(
     regressorname: Any,
     padtime: float = 30.0,
     debug: bool = False,
-) -> Tuple[NDArray, bool, NDArray, FastResampler]:
+) -> Tuple[NDArray, bool, NDArray, object]:
     """
         Prepare band-specific regressor data for time series analysis.
 
