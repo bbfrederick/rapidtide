@@ -32,8 +32,46 @@ from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 
 def _get_parser(decompaxis: Any) -> Any:
     """
-    Argument parser for spatialdecomp and temporaldecomp
-    """
+        Argument parser for spatialdecomp and temporaldecomp.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object
+        configured for either spatial or temporal decomposition tasks. The parser
+        is tailored to handle common arguments required for PCA or ICA decomposition
+        of neuroimaging data (e.g., NIfTI files).
+
+        Parameters
+        ----------
+        decompaxis : Any
+            Specifies the axis along which decomposition is performed. Must be
+            either "temporal" or "spatial". Determines the program name and
+            description of the parser.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for the specified decomposition type.
+
+        Raises
+        ------
+        ValueError
+            If `decompaxis` is not "temporal" or "spatial".
+
+        Notes
+        -----
+        The returned parser includes support for:
+        - Input data file validation
+        - Output root naming
+        - Data masking
+        - Number of components to extract
+        - Spatial smoothing
+        - Decomposition type (PCA, ICA, sparse)
+        - Preprocessing options such as demeaning and variance normalization
+
+        Examples
+        --------
+        >>> parser = _get_parser("temporal")
+        >>> args = parser.parse_args(['data.nii', 'output_root'])
+        """
     if decompaxis == "temporal":
         parser = argparse.ArgumentParser(
             prog="temporaldecomp",
@@ -113,14 +151,95 @@ def _get_parser(decompaxis: Any) -> Any:
 
 
 def _get_parser_temporal() -> Any:
+    """
+        Get parser for the temporal variant of the program.
+    
+        This function is a convenience wrapper that calls the internal `_get_parser` 
+        function with the argument "temporal" to obtain the temporal parser object.
+    
+        Returns
+        -------
+        Any
+            The temporal parser instance. The specific type depends on the implementation 
+            of the underlying `_get_parser` function and the temporal parser configuration.
+        
+        Notes
+        -----
+        This function is intended for internal use only and should not be called directly 
+        by end users. The returned parser is typically used for parsing temporal data 
+        such as dates, times, and time intervals.
+    
+        Examples
+        --------
+        >>> parser = _get_parser_temporal()
+        >>> # Use parser for temporal data processing
+        """
     return _get_parser("temporal")
 
 
 def _get_parser_spatial() -> Any:
+    """
+        Get parser for the spatial variant of the program.
+
+        Returns
+        -------
+        Any
+            The spatial parser object returned by `_get_parser` function.
+
+        Notes
+        -----
+        This function is a convenience wrapper that calls `_get_parser` with the
+        argument "spatial". It is used internally to retrieve spatial parsing
+        capabilities for the application.
+
+        Examples
+        --------
+        >>> parser = _get_parser_spatial()
+        >>> isinstance(parser, SomeParserClass)
+        True
+        """
     return _get_parser("spatial")
 
 
 def transposeifspatial(data: Any, decompaxis: str = "temporal") -> None:
+    """
+        Transpose data if decomposition axis is spatial.
+
+        Parameters
+        ----------
+        data : Any
+            Input data to be transposed if necessary
+        decompaxis : str, default="temporal"
+            Decomposition axis specification. If "spatial", the data will be transposed
+            using numpy.transpose() function. Otherwise, the original data is returned
+            unchanged.
+
+        Returns
+        -------
+        Any
+            Transposed data if decompaxis is "spatial", otherwise returns the original data
+
+        Notes
+        -----
+        This function provides a conditional transpose operation based on the decomposition
+        axis specification. It's useful in scenarios where data processing needs to
+        adapt based on the spatial or temporal nature of the decomposition.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> data = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> transposed = transposeifspatial(data, decompaxis="spatial")
+        >>> print(transposed)
+        [[1 4]
+         [2 5]
+         [3 6]]
+    
+        >>> original = transposeifspatial(data, decompaxis="temporal")
+        >>> print(original)
+        [[1 2 3]
+         [4 5 6]]
+        """
     if decompaxis == "spatial":
         return np.transpose(data)
     else:
@@ -138,6 +257,80 @@ def niftidecomp_workflow(
     demean: bool = True,
     sigma: float = 0.0,
 ) -> None:
+    """
+        Perform PCA or ICA decomposition on 4D NIfTI data along a specified axis.
+
+        This function reads a list of NIfTI files, applies optional smoothing and masking,
+        and performs either Principal Component Analysis (PCA) or Independent Component Analysis (ICA)
+        on the data. The decomposition is performed along either the temporal or spatial axis,
+        depending on the `decompaxis` parameter. The results include component images, coefficients,
+        and inverse-transformed data.
+
+        Parameters
+        ----------
+        decompaxis : Any
+            Axis along which to perform decomposition. Either "temporal" or "spatial".
+        datafilelist : Any
+            List of paths to NIfTI data files to be processed.
+        datamaskname : Any, optional
+            Path to a NIfTI mask file. If provided, only voxels within the mask will be processed.
+            Default is None.
+        decomptype : str, optional
+            Type of decomposition to perform. Either "pca" or "ica". Default is "pca".
+        pcacomponents : float, optional
+            Number of components to retain for PCA. If less than 1, specifies the fraction of
+            variance to retain. Default is 0.5.
+        icacomponents : Any, optional
+            Number of components to retain for ICA. If None, all components are returned.
+            Default is None.
+        varnorm : bool, optional
+            Whether to perform variance normalization. Default is True.
+        demean : bool, optional
+            Whether to demean the data. Default is True.
+        sigma : float, optional
+            Standard deviation for Gaussian smoothing. If 0.0, no smoothing is applied.
+            Default is 0.0.
+
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - outputcomponents : ndarray
+                Decomposed components reshaped to original spatial dimensions.
+            - outputcoefficients : ndarray
+                Coefficients of the decomposition.
+            - outinvtrans : ndarray
+                Inverse-transformed data.
+            - exp_var : ndarray
+                Explained variance for each component.
+            - exp_var_pct : ndarray
+                Explained variance percentage for each component.
+            - datafile_hdr : dict
+                Header of the input data file.
+            - datafiledims : list
+                Dimensions of the input data file.
+            - datafilesizes : list
+                Size parameters of the input data file.
+
+        Notes
+        -----
+        - The function assumes all input NIfTI files have matching spatial and temporal dimensions.
+        - For ICA, the `FastICA` algorithm is used.
+        - For PCA, both regular PCA and Sparse PCA are supported.
+        - If `datamaskname` is provided, the mask is applied before decomposition.
+        - The output data is reshaped to match the original NIfTI dimensions.
+
+        Examples
+        --------
+        >>> niftidecomp_workflow(
+        ...     decompaxis="temporal",
+        ...     datafilelist=["data1.nii", "data2.nii"],
+        ...     decomptype="pca",
+        ...     pcacomponents=0.95,
+        ...     varnorm=True,
+        ...     demean=True
+        ... )
+        """
     print(f"Will perform {decomptype} analysis along the {decompaxis} axis")
 
     if decompaxis == "temporal":
@@ -364,6 +557,54 @@ def niftidecomp_workflow(
 
 
 def main(decompaxis: Any, args: Any) -> None:
+    """
+        Main function for performing decomposition analysis on neuroimaging data.
+
+        This function handles the configuration of decomposition parameters based on
+        the number of components specified (`ncomp`), and then executes the decomposition
+        workflow using `niftidecomp_workflow`. It saves the results including components,
+        coefficients, and explained variance to disk.
+
+        Parameters
+        ----------
+        decompaxis : Any
+            The axis along which decomposition is performed (e.g., 'temporal' or 'spatial').
+        args : Any
+            A dictionary containing various configuration parameters such as:
+            - `ncomp`: Number of components to extract.
+            - `datafile`: Path to the input data file.
+            - `datamaskname`: Path to the data mask file.
+            - `decomptype`: Type of decomposition (e.g., PCA, ICA).
+            - `varnorm`: Whether to normalize variance.
+            - `demean`: Whether to demean the data.
+            - `sigma`: Sigma value for smoothing.
+            - `outputroot`: Root name for output files.
+
+        Returns
+        -------
+        None
+            This function does not return a value but writes multiple output files to disk.
+
+        Notes
+        -----
+        - If `ncomp` is less than 0.0, `pcacomponents` is set to 0.5 and `icacomponents` is set to None.
+        - If `ncomp` is between 0.0 and 1.0, `pcacomponents` is set to `ncomp` and `icacomponents` is set to None.
+        - Otherwise, both `pcacomponents` and `icacomponents` are set to the integer value of `ncomp`.
+
+        Examples
+        --------
+        >>> args = {
+        ...     "ncomp": 5,
+        ...     "datafile": "data.nii.gz",
+        ...     "datamaskname": "mask.nii.gz",
+        ...     "decomptype": "pca",
+        ...     "varnorm": True,
+        ...     "demean": True,
+        ...     "sigma": 2.0,
+        ...     "outputroot": "output"
+        ... }
+        >>> main("temporal", args)
+        """
     if args["ncomp"] < 0.0:
         args["pcacomponents"] = 0.5
         args["icacomponents"] = None
@@ -452,8 +693,68 @@ def main(decompaxis: Any, args: Any) -> None:
 
 
 def main_temporal(args: Any) -> None:
+    """
+        Execute main function for temporal processing.
+
+        This function serves as a wrapper that calls the main execution function
+        with "temporal" as the processor type and converts the arguments to a dictionary.
+
+        Parameters
+        ----------
+        args : Any
+            Command line arguments or configuration arguments containing
+            parameters needed for temporal processing. Typically contains
+            various temporal processing options and settings.
+
+        Returns
+        -------
+        None
+            This function does not return any value.
+
+        Notes
+        -----
+        The function delegates to a main execution function with "temporal" processor
+        type, making it a specialized entry point for temporal data processing workflows.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> parser = argparse.ArgumentParser()
+        >>> parser.add_argument('--input', type=str, help='Input file path')
+        >>> args = parser.parse_args(['--input', 'data.csv'])
+        >>> main_temporal(args)
+        """
     main("temporal", vars(args))
 
 
 def main_spatial(args: Any) -> None:
+    """
+        Main function for spatial processing pipeline.
+
+        This function serves as the entry point for spatial data processing operations,
+        delegating to the main processing function with "spatial" as the operation type.
+
+        Parameters
+        ----------
+        args : Any
+            Command line arguments or configuration parameters containing spatial
+            processing options. Expected to be an argparse.Namespace or similar
+            structure with relevant attributes for spatial operations.
+
+        Returns
+        -------
+        None
+            This function does not return any value.
+
+        Notes
+        -----
+        The function internally calls `main("spatial", vars(args))` which routes
+        the spatial processing workflow to the main execution engine.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(input_file="data.csv", output_dir="output/")
+        >>> main_spatial(args)
+        """
     main("spatial", vars(args))

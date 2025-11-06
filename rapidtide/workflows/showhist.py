@@ -29,6 +29,32 @@ import rapidtide.stats as tide_stats
 
 
 def _get_parser() -> Any:
+    """
+        Create and configure an argument parser for the showhist command-line tool.
+    
+        This function sets up an `argparse.ArgumentParser` with specific arguments
+        to control the behavior of the histogram plotting script. It defines
+        required and optional parameters for input file, axis labels, title,
+        output file, plot style, and debugging options.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with defined arguments for
+            controlling histogram plotting behavior.
+        
+        Notes
+        -----
+        The parser is configured with `allow_abbrev=False` to prevent
+        abbreviated argument names from being accepted.
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['data.txt'])
+        >>> print(args.infilename)
+        'data.txt'
+        """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="showhist",
@@ -94,6 +120,61 @@ def _get_parser() -> Any:
 
 
 def showhist(args: Any) -> None:
+    """
+        Display or save a histogram or line plot based on input data and arguments.
+
+        This function reads data from a specified input file, computes a histogram if
+        requested, and visualizes the results using matplotlib. The plot can be displayed
+        on screen or saved to a file depending on the provided arguments.
+
+        Parameters
+        ----------
+        args : Any
+            An object containing the following attributes:
+            - infilename : str
+                Path to the input file containing data to be plotted.
+            - debug : bool
+                If True, prints the args object for debugging purposes.
+            - calcdist : bool
+                If True, computes a histogram from the input data.
+            - dobars : bool
+                If True, displays the histogram as bars; otherwise, as a line plot.
+            - thetitle : str, optional
+                Title for the plot.
+            - thexlabel : str, optional
+                Label for the x-axis.
+            - theylabel : str, optional
+                Label for the y-axis.
+            - outputfile : str, optional
+                Path to save the plot. If None, the plot is displayed on screen.
+
+        Returns
+        -------
+        None
+            This function does not return any value. It either displays the plot
+            or saves it to a file.
+
+        Notes
+        -----
+        - The function uses `tide_io.readvecs` to read input data.
+        - If `calcdist` is True, `tide_stats.makehistogram` is used to compute the histogram.
+        - The histogram is displayed as either bars or a line, depending on the `dobars` flag.
+        - If `outputfile` is provided, the plot is saved using `savefig`; otherwise, `show()` is called.
+
+        Examples
+        --------
+        >>> args = type('Args', (), {
+        ...     'infilename': 'data.txt',
+        ...     'debug': False,
+        ...     'calcdist': True,
+        ...     'dobars': True,
+        ...     'thetitle': 'Sample Histogram',
+        ...     'thexlabel': 'Values',
+        ...     'theylabel': 'Frequency',
+        ...     'outputfile': 'output.png'
+        ... })()
+        >>> showhist(args)
+        """
     if args.debug:
         print(args)
     if args.calcdist:

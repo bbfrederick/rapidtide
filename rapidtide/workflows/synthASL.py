@@ -28,6 +28,31 @@ from rapidtide.RapidtideDataset import RapidtideDataset
 
 
 def _get_parser() -> Any:
+    """
+        Get the argument parser for the synthASL command-line tool.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object configured
+        with the necessary arguments for running the synthASL tool, which uses rapidtide
+        output to predict ASL (Arterial Spin Labeling) images.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser with required and optional arguments for synthASL.
+        
+        Notes
+        -----
+        The parser includes both required positional arguments and several optional
+        arguments that control the ASL synthesis process. Default values are set according
+        to typical parameters used in ASL analysis.
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['dataset_name', 'output.nii.gz'])
+        >>> print(args.dataset)
+        'dataset_name'
+        """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="synthASL",
@@ -83,6 +108,62 @@ def calcASL(
     TI: float = 1.8,
     bloodT1: float = 1.841,
 ) -> None:
+    """
+        Calculate ASL (Arterial Spin Labeling) signal based on lags, strengths, and timing parameters.
+    
+        This function computes the ASL signal by applying temporal dynamics to the input lags and
+        strengths, considering blood T1 relaxation effects and tagging timing parameters.
+    
+        Parameters
+        ----------
+        lags : array-like
+            Time lags for the ASL signal calculation
+        strengths : array-like
+            Signal strengths corresponding to the lags
+        widths : array-like
+            Widths parameter (not used in current implementation)
+        mask : array-like
+            Binary mask for region of interest
+        tagoffset : float, optional
+            Tagging offset in seconds, default is 2.945
+        pld : float, optional
+            Preparation delay in seconds, default is 1.8
+        TI : float, optional
+            Inversion time in seconds, default is 1.8
+        bloodT1 : float, optional
+            Blood T1 relaxation time in seconds, default is 1.841
+    
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - theaslimage : array-like
+              Calculated ASL image signal
+            - tagdecayfac : array-like
+              Tagging decay factor
+            - oxyfac : array-like
+              Oxygenation factor (constant value of 1.0)
+            - cbvfac : array-like
+              CBV (Cerebral Blood Volume) factor
+            - calcmask : array-like
+              Calculated mask with time constraints
+            - offsets : array-like
+              Time offsets after adding tagoffset
+    
+        Notes
+        -----
+        The function applies exponential decay based on blood T1 relaxation and only considers
+        positive delays after the preparation delay (pld). The calculation uses a linear
+        interpolation over 50 time points between pld and pld + TI.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> lags = np.array([0.5, 1.0, 1.5])
+        >>> strengths = np.array([1.0, 1.5, 2.0])
+        >>> mask = np.array([1, 1, 1])
+        >>> result = calcASL(lags, strengths, None, mask)
+        """
     theaslimage = lags * 0.0
 
     # convert rapidtide delays to time from tagging, and only keep positive delays after pld
@@ -98,6 +179,64 @@ def calcASL(
 
 
 def synthASL(args: Any) -> None:
+    """
+        Generate synthetic ASL (Arterial Spin Labeling) images and associated parameters.
+
+        This function reads ASL dataset parameters from a specified input dataset,
+        computes synthetic ASL signal using the `calcASL` function, and saves the
+        resulting images and intermediate outputs as NIfTI files.
+
+        Parameters
+        ----------
+        args : Any
+            Command-line arguments object containing the following attributes:
+            - dataset : str
+                Path to the input dataset.
+            - outputfilename : str
+                Base name for output NIfTI files.
+            - bloodT1 : float
+                Blood T1 relaxation time in seconds.
+            - tagoffset : float
+                Tag offset in seconds.
+            - pld : float
+                Post-labeling delay in seconds.
+            - labelduration : float
+                Labeling pulse duration in seconds.
+
+        Returns
+        -------
+        None
+            This function does not return a value but writes multiple NIfTI files
+            to disk, including:
+            - `<outputfilename>_ASL.nii.gz`
+            - `<outputfilename>_tagdecayfac.nii.gz`
+            - `<outputfilename>_oxyfac.nii.gz`
+            - `<outputfilename>_cbvfac.nii.gz`
+            - `<outputfilename>_calcmask.nii.gz`
+            - `<outputfilename>_offsets.nii.gz`
+            - `<outputfilename>_lagmask.nii.gz`
+            - `<outputfilename>_lagtimes.nii.gz`
+            - `<outputfilename>_lagstrengths.nii.gz`
+
+        Notes
+        -----
+        The function relies on the `RapidtideDataset` class to load overlay data
+        and uses `calcASL` to compute the synthetic ASL signal. All outputs are
+        saved using `tide_io.savetonifti`.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     dataset="path/to/dataset",
+        ...     outputfilename="output",
+        ...     bloodT1=1.6,
+        ...     tagoffset=0.0,
+        ...     pld=1.5,
+        ...     labelduration=1.0
+        ... )
+        >>> synthASL(args)
+        """
     # get the command line parameters
     try:
         args = _get_parser().parse_args()

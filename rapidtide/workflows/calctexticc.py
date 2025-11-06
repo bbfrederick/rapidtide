@@ -34,6 +34,41 @@ from rapidtide.workflows.parser_funcs import is_valid_file
 
 
 def _get_parser() -> Any:
+    """
+        Create and configure an argument parser for the calcicc command-line tool.
+
+        This function sets up an `argparse.ArgumentParser` with required and optional
+        arguments needed to run the ICC(3,1) calculation on text-based data files.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with all required and optional arguments
+            for the calcicc tool.
+
+        Notes
+        -----
+        The parser is configured with:
+        - A program name "calcicc"
+        - A description explaining the purpose of the tool
+        - Three required positional arguments:
+            1. `datafile`: comma-separated list of 2D text files
+            2. `measurementlist`: multicolumn file specifying how to group measurements
+            3. `outputroot`: root name for output text files
+        - Several optional flags for controlling behavior:
+            - `--demedian`: subtract median from each map before ICC calculation
+            - `--demean`: subtract mean from each map before ICC calculation
+            - `--nocache`: disable caching for ICC calculation (not recommended)
+            - `--debug`: enable basic debugging output
+            - `--deepdebug`: enable verbose debugging output
+
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['file1.txt', 'measurements.txt', 'output_root'])
+        >>> print(args.datafile)
+        'file1.txt'
+        """
     parser = argparse.ArgumentParser(
         prog="calcicc",
         description="Calculate per-column ICC(3,1) on a set of text files.",
@@ -108,7 +143,53 @@ def _get_parser() -> Any:
     return parser
 
 
-def parsetextmeasurementlist(measlist: Any, numfiles: Any, debug: bool = False) -> None:
+def parsetextmeasurementlist(measlist: Any, numfiles: Any, debug: bool = False) -> Tuple[NDArray, NDArray]:
+    """
+        Parse a measurement list from text format into file and volume indices.
+
+        This function processes a 2D array of strings representing measurement entries,
+        where each entry is expected to contain either one or two comma-separated values.
+        The first value represents the file index, and the second represents the volume index.
+        If only one value is present, the file index is assumed to be 0.
+
+        Parameters
+        ----------
+        measlist : array-like
+            A 2D array of strings where each string contains either one or two
+            comma-separated integers representing file and volume indices.
+        numfiles : int
+            The total number of available files, used to validate file indices.
+        debug : bool, optional
+            If True, prints debug information for each parsed element. Default is False.
+
+        Returns
+        -------
+        tuple of ndarray
+            A tuple containing two 2D arrays:
+            - `filesel`: File indices for each measurement.
+            - `volumesel`: Volume indices for each measurement.
+
+        Notes
+        -----
+        - Each entry in `measlist` should be a string of the form "file,volume" or "volume".
+        - File indices are validated to ensure they do not exceed `numfiles - 1`.
+        - The function will exit with an error if:
+            1. An entry contains more than one comma.
+            2. A file index is out of bounds.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> measlist = np.array([["0,1", "1,2"], ["0", "2,3"]])
+        >>> numfiles = 3
+        >>> filesel, volumesel = parsetextmeasurementlist(measlist, numfiles)
+        >>> print(filesel)
+        [[0 1]
+         [0 2]]
+        >>> print(volumesel)
+        [[1 2]
+         [0 3]]
+        """
     # how do we get the number of subjects?
     nummeas, numsubjs = measlist.shape[0], measlist.shape[1]
     filesel = np.zeros((nummeas, numsubjs), dtype=int)
@@ -139,7 +220,52 @@ def parsetextmeasurementlist(measlist: Any, numfiles: Any, debug: bool = False) 
 
 def makdcommandlinelist(
     arglist: Any, starttime: Any, endtime: Any, extra: Optional[Any] = None
-) -> None:
+) -> Tuple[str, str, str, str, str] | Tuple[str, str, str, str]:
+    """
+        Create a list of command line information for processing metadata.
+    
+        This function generates a list of descriptive strings containing processing
+        information including timestamps, version details, and the command line
+        that was executed.
+    
+        Parameters
+        ----------
+        arglist : Any
+            List of command line arguments that were used to invoke the process
+        starttime : Any
+            Start time of the process, typically a timestamp or time object
+        endtime : Any
+            End time of the process, typically a timestamp or time object
+        extra : Any, optional
+            Additional descriptive text to include in the output list, by default None
+    
+        Returns
+        -------
+        list of str
+            List containing metadata strings with processing information:
+            - Processing date and time
+            - Processing duration
+            - Version and system information
+            - Extra information (if provided)
+            - The original command line
+        
+        Notes
+        -----
+        The function uses `time.strftime` to format the start time and calculates
+        the processing duration by subtracting starttime from endtime. It also
+        retrieves version information using `tide_util.version()` and system
+        information using `platform.node()`.
+    
+        Examples
+        --------
+        >>> import time
+        >>> args = ['python', 'script.py', '--input', 'data.txt']
+        >>> start = time.time() - 10
+        >>> end = time.time()
+        >>> result = makdcommandlinelist(args, start, end)
+        >>> print(result[0])
+        '# Processed on Mon, 01 Jan 2024 12:00:00 UTC.'
+        """
     # get the processing date
     dateline = (
         "# Processed on "
@@ -171,12 +297,71 @@ def makdcommandlinelist(
     commandline = " ".join(arglist)
 
     if extra is not None:
-        return [dateline, timeline, nodeline, "# " + extra, commandline]
+        return dateline, timeline, nodeline, f"# {extra}", commandline
     else:
-        return [dateline, timeline, nodeline, commandline]
+        return dateline, timeline, nodeline, commandline
 
 
 def calctexticc(args: Any) -> None:
+    """
+        Calculate intraclass correlation coefficients (ICC) for text-based measurement data across subjects.
+
+        This function reads measurement lists and corresponding data files, processes the data to
+        compute ICC(3,1) values for each voxel, and writes out the results along with variance components
+        and session effect F-values.
+
+        Parameters
+        ----------
+        args : Any
+            An object containing command-line arguments. Expected attributes include:
+            - datafile : str
+                Comma-separated list of input data file paths.
+            - measurementlist : str
+                Path to the measurement list file.
+            - outputroot : str
+                Root name for output files.
+            - debug : bool, optional
+                Enable debug printing.
+            - deepdebug : bool, optional
+                Enable deep debug printing.
+            - demedian : bool, optional
+                Remove median from each subject's measurements.
+            - demean : bool, optional
+                Remove mean from each subject's measurements.
+            - nocache : bool, optional
+                Disable caching during ICC calculation.
+
+        Returns
+        -------
+        None
+            The function does not return a value but writes multiple output files:
+            - `{outputroot}_ICC.txt`
+            - `{outputroot}_r_var.txt`
+            - `{outputroot}_e_var.txt`
+            - `{outputroot}_session_effect_F.txt`
+            - `{outputroot}_commandline.txt`
+
+        Notes
+        -----
+        The function reshapes data into a voxel-by-subject-by-measurement format and computes ICC(3,1)
+        using a repeated measures ANOVA approach. It supports optional mean/median removal for each
+        subject and measurement.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     datafile="data1.txt,data2.txt",
+        ...     measurementlist="meas_list.txt",
+        ...     outputroot="output",
+        ...     debug=False,
+        ...     deepdebug=False,
+        ...     demedian=False,
+        ...     demean=False,
+        ...     nocache=False
+        ... )
+        >>> calctexticc(args)
+        """
     runstarttime = time.time()
 
     datafiles = (args.datafile).split(",")
@@ -302,4 +487,4 @@ def calctexticc(args: Any) -> None:
 
     runendtime = time.time()
     thecommandfilelines = makdcommandlinelist(sys.argv, runstarttime, runendtime, extra=extraline)
-    tide_io.writevec(thecommandfilelines, args.outputroot + "_commandline.txt")
+    tide_io.writevec(np.asarray(thecommandfilelines), args.outputroot + "_commandline.txt")

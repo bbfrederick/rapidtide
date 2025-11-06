@@ -45,8 +45,30 @@ DEFAULT_SIGMAMIN = 0.25
 
 def _get_parser() -> Any:
     """
-    Argument parser for showxcorrx
-    """
+        Argument parser for showxcorrx.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object configured
+        to handle command-line arguments for the `showxcorrx` utility. It supports a wide
+        range of options for loading time series data, preprocessing, cross-correlation
+        computation, and output formatting.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for `showxcorrx`.
+        
+        Notes
+        -----
+        The parser includes groups for general options, preprocessing, similarity function
+        options, output settings, and debugging. It supports optional arguments such as
+        sample rate specification, data filtering, detrending, correlation weighting,
+        and plotting controls.
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args()
+        """
     parser = argparse.ArgumentParser(
         prog="showxcorrx",
         description=("Calculate and display crosscorrelation between two timeseries."),
@@ -321,12 +343,167 @@ def _get_parser() -> Any:
 
 
 def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
+    """
+        Print thresholds with corresponding percentiles.
+    
+        This function prints a formatted list of thresholds along with their 
+        corresponding percentile values for statistical analysis reporting.
+    
+        Parameters
+        ----------
+        pcts : Any
+            Array or list of percentile values to be printed
+        thepercentiles : Any
+            Array or list of percentile thresholds (typically between 0 and 1)
+        labeltext : Any
+            Text label to be printed before the threshold values
+        
+        Returns
+        -------
+        None
+            This function prints to stdout and does not return any value
+        
+        Notes
+        -----
+        The function formats the output to show "p < threshold: value" format
+        where the threshold is calculated as 1.0 - thepercentiles[i].
+    
+        Examples
+        --------
+        >>> printthresholds([0.05, 0.01], [0.95, 0.99], "Significance Levels:")
+        Significance Levels:
+            p < 0.050 : 0.05
+            p < 0.010 : 0.01
+        """
     print(labeltext)
     for i in range(0, len(pcts)):
         print("\tp <", "{:.3f}".format(1.0 - thepercentiles[i]), ": ", pcts[i])
 
 
 def showxcorrx(args: Any) -> None:
+    """
+        Compute and display cross-correlation or mutual information between two time series.
+
+        This function performs cross-correlation or mutual information analysis between two
+        time series, with optional filtering, normalization, and statistical significance
+        testing. It supports various similarity metrics and can output results to files or
+        display plots.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            Command-line arguments containing parameters for the analysis. Expected attributes include:
+            - infilename1, infilename2 : str
+                File names for the two time series.
+            - display : bool
+                Whether to display plots.
+            - samplerate : float or str
+                Sampling rate of the time series. If "auto", defaults to 1.0 Hz.
+            - startpoint, endpoint : float
+                Time range to analyze.
+            - trimdata : bool
+                Whether to trim data to the shortest length.
+            - invert : bool
+                Whether to invert the second time series.
+            - theprefilter : object
+                Filter object for preprocessing data.
+            - detrendorder : int
+                Order of detrending for correlation normalization.
+            - windowfunc : str
+                Window function for correlation normalization.
+            - corrweighting : str
+                Weighting method for correlation.
+            - zeropadding : int
+                Zero padding for correlation.
+            - smoothingtime : float
+                Smoothing time for mutual information calculation.
+            - minorm : bool
+                Whether to normalize mutual information.
+            - similaritymetric : str
+                Similarity metric to use ("correlation", "mutualinfo", "hybrid").
+            - lagmin, lagmax : float
+                Minimum and maximum lag for analysis.
+            - absmaxsigma, absminsigma : float
+                Sigma thresholds for peak fitting.
+            - cepstral : bool
+                Whether to compute cepstral delay.
+            - calccoherence : bool
+                Whether to compute coherence.
+            - calccsd : bool
+                Whether to compute cross-spectral density.
+            - numestreps : int
+                Number of bootstrap replicates for significance testing.
+            - showprogressbar : bool
+                Whether to show progress bar during bootstrap.
+            - permutationmethod : str
+                Permutation method for bootstrap.
+            - nprocs : int
+                Number of processes for parallel computation.
+            - summarymode : bool
+                Whether to output in summary format.
+            - resoutputfile : str
+                Output file for results.
+            - label : str
+                Label for output.
+            - labelline : bool
+                Whether to include label in output.
+            - colors : str
+                Comma-separated list of colors for plots.
+            - linewidths : str
+                Comma-separated list of line widths for plots.
+            - legendloc : int
+                Legend location for plots.
+            - legends : str
+                Legend labels for plots.
+            - dolegend : bool
+                Whether to display legend.
+            - thetitle : str
+                Title for plots.
+            - showxax, showyax : bool
+                Whether to show x and y axes.
+            - xlabel, ylabel : str
+                Axis labels.
+            - outputfile : str
+                Output file for plot.
+            - saveres : int
+                Resolution for saved plots.
+            - corroutputfile : str
+                Output file for correlation data.
+            - debug : bool
+                Whether to print debug information.
+            - verbose : bool
+                Whether to print verbose output.
+            - fontscalefac : float
+                Font scaling factor for plots.
+
+        Returns
+        -------
+        None
+            This function does not return a value but may display plots or write output files.
+
+        Notes
+        -----
+        The function supports multiple similarity metrics:
+        - "correlation": Pearson correlation coefficient
+        - "mutualinfo": Mutual information
+        - "hybrid": Combination of both metrics
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     infilename1='data1.txt',
+        ...     infilename2='data2.txt',
+        ...     display=True,
+        ...     samplerate=1.0,
+        ...     startpoint=0,
+        ...     endpoint=100,
+        ...     similaritymetric='correlation',
+        ...     lagmin=-10,
+        ...     lagmax=10
+        ... )
+        >>> showxcorrx(args)
+        """
     # set some default values
     zerooutbadfit = False
     peakfittype = "gauss"

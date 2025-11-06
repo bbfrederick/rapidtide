@@ -43,8 +43,28 @@ DEFAULT_CORRWEIGHTING = "phat"
 
 def _get_parser() -> Any:
     """
-    Argument parser for ccorrica
-    """
+        Argument parser for ccorrica.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object configured
+        with all required and optional arguments for the `ccorrica` tool, which computes
+        temporal cross-correlations between timecourses.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for the ccorrica tool.
+        
+        Notes
+        -----
+        The parser includes support for specifying sample rate or timestep, windowing options,
+        search range parameters, filtering, correlation weighting methods, detrending, and
+        oversampling factors. It also supports debugging output.
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['--timecoursefile', 'data.txt', '--outputroot', 'out'])
+        """
     parser = argparse.ArgumentParser(
         prog="ccorrica",
         description=("Find temporal crosscorrelations between a set of timecourses"),
@@ -138,6 +158,76 @@ def _get_parser() -> Any:
 
 
 def ccorrica(args: Any) -> None:
+    """
+        Compute cross-correlations between time series components and save results in NIfTI and text formats.
+
+        This function reads time course data from a text file, applies preprocessing including
+        filtering, resampling, detrending, and windowing, then computes cross-correlations
+        between all pairs of components. The results are saved as NIfTI files and text vectors
+        for further analysis.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            Command-line arguments containing configuration options such as:
+            - timecoursefile : str
+                Path to the input time course file.
+            - samplerate : float or str
+                Sampling rate of the data. If "auto", it must be specified in the file header.
+            - oversampfactor : int
+                Oversampling factor for upsampling the data. If less than 0, it is auto-computed.
+            - detrendorder : int
+                Order of detrending to apply.
+            - windowfunc : str
+                Windowing function to apply.
+            - corrweighting : str
+                Type of weighting to use in correlation computation.
+            - debug : bool
+                If True, display plots during correlation computation.
+            - outputroot : str
+                Root name for output files.
+
+        Returns
+        -------
+        None
+            This function does not return a value but saves multiple output files:
+            - `_filtereddata.txt`: Filtered time series.
+            - `_xcorr.nii.gz`: Cross-correlation data as 4D NIfTI.
+            - `_pxcorr.nii.gz`: Pearson correlation coefficients.
+            - `_corrmax.nii.gz`: Maximum correlation values.
+            - `_corrlag.nii.gz`: Lag at maximum correlation.
+            - `_corrwidth.nii.gz`: Width of the correlation peak.
+            - `_corrmask.nii.gz`: Mask indicating correlation significance.
+            - `_reformdata.txt`: Final reformatted and normalized data.
+
+        Notes
+        -----
+        The function performs the following steps:
+        1. Reads input data from a text file.
+        2. Applies post-processing filter options.
+        3. Resamples data if necessary.
+        4. Filters data using a specified prefilter.
+        5. Normalizes data using standard and correlation normalization.
+        6. Computes cross-correlations using fast FFT-based methods.
+        7. Fits Gaussian peaks to find maximum correlation lag and width.
+        8. Saves symmetric matrices for correlation maxima, lags, widths, and masks.
+        9. Outputs results in both NIfTI and text formats.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     timecoursefile='data.txt',
+        ...     samplerate=2.0,
+        ...     oversampfactor=1,
+        ...     detrendorder=1,
+        ...     windowfunc='hanning',
+        ...     corrweighting='none',
+        ...     debug=False,
+        ...     outputroot='output'
+        ... )
+        >>> ccorrica(args)
+        """
     args, theprefilter = pf.postprocessfilteropts(args)
 
     # read in data
@@ -175,7 +265,7 @@ def ccorrica(args: Any) -> None:
     if args.oversampfactor == 1:
         print("data array shape is ", reformdata.shape)
     else:
-        resampdata = np.zeros((numcomponents, tclen * args.oversampfactor), dtype=np.float)
+        resampdata = np.zeros((numcomponents, tclen * args.oversampfactor), dtype=float)
         for component in range(0, numcomponents):
             resampdata[component, :] = tide_resample.upsample(
                 reformdata[component, :], Fs, Fs * args.oversampfactor, intfac=True

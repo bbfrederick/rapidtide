@@ -58,7 +58,143 @@ def cleanregressor(
     debug: bool = False,
     rt_floattype: str = "float64",
     rt_floatset: Any = np.float64,
-) -> None:
+) -> Tuple[
+        NDArray,
+        NDArray,
+        NDArray,
+        float,
+        float | None,
+        float | None,
+        float,
+        float | None,
+        float | None,
+    ]:
+    """
+        Clean and preprocess a regressor signal by checking and correcting autocorrelation properties.
+
+        This function performs several operations on the input regressor signal, including:
+        detrending, normalization, optional filtering to remove periodic components, and
+        autocorrelation analysis to detect and correct sidelobes. It returns cleaned versions
+        of the regressor and associated metadata for further use in time series analysis.
+
+        Parameters
+        ----------
+        outputname : Any
+            Base name for output files.
+        thepass : Any
+            Pass identifier, used for labeling output files.
+        referencetc : Any
+            Reference time course data (normalized).
+        resampref_y : Any
+            Resampled reference signal.
+        resampnonosref_y : Any
+            Non-oversampled reference signal.
+        fmrifreq : Any
+            fMRI sampling frequency.
+        oversampfreq : Any
+            Oversampled frequency.
+        osvalidsimcalcstart : Any
+            Start index for valid data in oversampled signal.
+        osvalidsimcalcend : Any
+            End index for valid data in oversampled signal.
+        lagmininpts : Any
+            Minimum lag in samples for autocorrelation calculation.
+        lagmaxinpts : Any
+            Maximum lag in samples for autocorrelation calculation.
+        theFitter : Any
+            Fitter object for fitting autocorrelation data.
+        theCorrelator : Any
+            Correlator object for computing cross-correlations.
+        lagmin : Any
+            Minimum lag in seconds.
+        lagmax : Any
+            Maximum lag in seconds.
+        LGR : Optional[Any], optional
+            Logger object for logging messages. Default is None.
+        check_autocorrelation : bool, optional
+            If True, perform autocorrelation checks. Default is True.
+        fix_autocorrelation : bool, optional
+            If True, attempt to fix detected autocorrelation issues. Default is True.
+        despeckle_thresh : float, optional
+            Threshold for despeckling autocorrelation data. Default is 5.0.
+        lthreshval : float, optional
+            Low threshold value for fitting. Default is 0.0.
+        fixdelay : bool, optional
+            If True, fix delay in fitting. Default is False.
+        detrendorder : int, optional
+            Order of detrending polynomial. Default is 3.
+        windowfunc : str, optional
+            Window function to use for normalization. Default is "hamming".
+        respdelete : bool, optional
+            If True, remove periodic components from the reference signal. Default is False.
+        displayplots : bool, optional
+            If True, display plots during processing. Default is False.
+        debug : bool, optional
+            If True, print debugging information. Default is False.
+        rt_floattype : str, optional
+            Data type for real-time processing. Default is "float64".
+        rt_floatset : Any, optional
+            Float type setting for real-time processing. Default is np.float64.
+
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - cleaned_resampref_y : np.ndarray
+                Cleaned resampled reference signal.
+            - cleaned_referencetc : np.ndarray
+                Cleaned reference time course.
+            - cleaned_nonosreferencetc : np.ndarray
+                Cleaned non-oversampled reference signal.
+            - despeckle_thresh : float
+                Updated despeckle threshold.
+            - sidelobeamp : float or None
+                Amplitude of detected sidelobe, or None if not found.
+            - sidelobetime : float or None
+                Time of detected sidelobe in seconds, or None if not found.
+            - lagmod : float
+                Lag modulus value used for correction.
+            - acwidth : float or None
+                Width of autocorrelation function, or None if not computed.
+            - absmaxsigma : float or None
+                Absolute maximum sigma value, or None if not computed.
+
+        Notes
+        -----
+        - If `respdelete` is True, the function applies frequency tracking and filtering to remove
+          periodic components from the reference signal.
+        - Autocorrelation analysis is performed using `tide_corr.check_autocorrelation` to detect
+          sidelobes that may affect the regressor quality.
+        - If `fix_autocorrelation` is True, detected sidelobes are corrected by applying a notch filter
+          and adjusting the lag modulus.
+
+        Examples
+        --------
+        >>> cleanregressor(
+        ...     outputname="test_output",
+        ...     thepass=1,
+        ...     referencetc=ref_tc,
+        ...     resampref_y=resamp_ref,
+        ...     resampnonosref_y=resamp_nonos_ref,
+        ...     fmrifreq=2.0,
+        ...     oversampfreq=10.0,
+        ...     osvalidsimcalcstart=0,
+        ...     osvalidsimcalcend=100,
+        ...     lagmininpts=5,
+        ...     lagmaxinpts=20,
+        ...     theFitter=fitter,
+        ...     theCorrelator=correlator,
+        ...     lagmin=-10,
+        ...     lagmax=10,
+        ...     check_autocorrelation=True,
+        ...     fix_autocorrelation=True,
+        ...     detrendorder=3,
+        ...     windowfunc="hamming",
+        ...     respdelete=False,
+        ...     displayplots=False,
+        ...     debug=False,
+        ... )
+        """
     # print debugging info
     if debug:
         print("cleanregressor:")

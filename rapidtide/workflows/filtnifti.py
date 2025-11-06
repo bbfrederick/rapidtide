@@ -29,9 +29,29 @@ import rapidtide.io as tide_io
 
 def _get_parser() -> Any:
     """
-    Argument parser for filtnifti
-
-    """
+        Argument parser for filtnifti.
+    
+        Creates and configures an argument parser for the filtnifti command-line tool
+        that temporally filters NIFTI files.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with required command-line arguments
+        
+        Notes
+        -----
+        The parser expects four command-line arguments in the following order:
+        1. inputfilename - path to input NIFTI file
+        2. outputfilename - path to output NIFTI file
+        3. lowestfreq - low passband frequency limit in Hz (negative values disable HPF)
+        4. highestfreq - high passband frequency limit in Hz (negative values disable LPF)
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['input.nii', 'output.nii', '0.01', '0.1'])
+        """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="filtnifti",
@@ -54,6 +74,50 @@ def _get_parser() -> Any:
 
 
 def filtnifti(args: Any) -> None:
+    """
+        Apply a frequency-domain filter to a 4D NIfTI file containing fMRI data.
+
+        This function reads an input NIfTI file, applies a bandpass or arbitrary frequency filter
+        to each voxel's time series, and saves the filtered data to a new NIfTI file. The filter
+        parameters are specified via the `args` object, which should contain attributes such as
+        `inputfilename`, `outputfilename`, `lowestfreq`, and `highestfreq`.
+
+        Parameters
+        ----------
+        args : Any
+            An object containing the following attributes:
+            - inputfilename : str
+                Path to the input NIfTI file.
+            - outputfilename : str
+                Path to the output NIfTI file.
+            - lowestfreq : float
+                Lowest frequency for the filter. If negative, highpass filtering is disabled.
+            - highestfreq : float
+                Highest frequency for the filter. If negative, lowpass filtering is disabled.
+
+        Returns
+        -------
+        None
+            This function does not return a value but saves the filtered data to a NIfTI file.
+
+        Notes
+        -----
+        - The function uses a non-causal filter (`tide_filt.NoncausalFilter`) for filtering.
+        - The TR (repetition time) is read from the NIfTI header, and the sampling frequency
+          is computed as `Fs = 1 / TR`.
+        - Filtering is applied slice-by-slice to each voxel's time series.
+        - If `lowestfreq` or `highestfreq` is set to a negative value, the corresponding filter
+          is disabled.
+
+        Examples
+        --------
+        Assuming `args` is an object with the required attributes:
+
+        >>> filtnifti(args)
+
+        This will read the input NIfTI file, apply the specified filter, and save the result
+        to the output file.
+        """
     # get the input TR
     inputtr_fromfile, numinputtrs = tide_io.fmritimeinfo(args.inputfilename)
     print("input data: ", numinputtrs, " timepoints, tr = ", inputtr_fromfile)

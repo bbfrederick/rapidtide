@@ -33,8 +33,36 @@ DEFAULT_QUALTHRESH = 0.5
 
 def _get_parser() -> Any:
     """
-    Argument parser for applyppgproc
-    """
+        Argument parser for applyppgproc.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object configured
+        to parse command-line arguments for the `applyppgproc` tool. The tool calculates
+        PPG (Photoplethysmography) metrics from a cardiacfromfmri output file.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for the applyppgproc tool.
+        
+        Notes
+        -----
+        The parser includes both required and optional arguments. Required arguments are:
+        - `infileroot`: Root name of the cardiacfromfmri input file (without extension).
+        - `outfileroot`: Root name of the output files.
+    
+        Optional arguments include:
+        - `--process_noise`: Process noise for the PPG filter (default: `DEFAULT_PROCESSNOISE`).
+        - `--hr_estimate`: Starting guess for heart rate in BPM (default: `DEFAULT_HRESTIMATE`).
+        - `--qual_thresh`: Quality threshold for PPG, between 0 and 1 (default: `DEFAULT_QUALTHRESH`).
+        - `--measurement_noise`: Assumed measurement noise (default: `DEFAULT_MEASUREMENTNOISE`).
+        - `--display`: Graph the processed waveforms.
+        - `--debug`: Print debugging information.
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args()
+        """
     parser = argparse.ArgumentParser(
         prog="applyppgproc",
         description=("Calculate PPG metrics from a happy cardiacfromfmri output file."),
@@ -106,6 +134,86 @@ def _get_parser() -> Any:
 
 
 def procppg(args: Any) -> None:
+    """
+        Process PPG (Photoplethysmography) signal using a combination of filtering, 
+        heart rate extraction, and signal quality assessment techniques.
+
+        This function performs a complete PPG signal processing pipeline including:
+        - Reading and preprocessing PPG data
+        - Applying Extended Kalman Filter with sinusoidal model
+        - Extracting heart rate using FFT, EKF, and peak detection methods
+        - Assessing signal quality
+        - Computing performance metrics and additional features like HRV and pulse morphology
+        - Optionally displaying plots and printing detailed results
+
+        Parameters
+        ----------
+        args : Any
+            An object containing the following attributes:
+            - infileroot : str
+                Root path to the input data file(s)
+            - display : bool
+                Whether to display plots
+            - debug : bool
+                Whether to print debug information
+            - hr_estimate : float
+                Initial heart rate estimate for EKF
+            - process_noise : float
+                Process noise for EKF
+            - measurement_noise : float
+                Measurement noise for EKF
+            - qual_thresh : float
+                Threshold for determining good quality signal segments
+
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - ppginfo : dict
+                Dictionary with various performance metrics and computed features
+            - peak_indices : array_like
+                Indices of detected peaks in the filtered signal
+            - rri : array_like
+                Inter-beat intervals (RRIs) derived from peak detection
+            - hr_waveform_from_peaks : array_like
+                Heart rate waveform computed from peaks
+            - hr_times : array_like
+                Time points for heart rate estimates
+            - hr_values : array_like
+                Heart rate values (FFT-based)
+            - filtered_ekf : array_like
+                Signal filtered using Extended Kalman Filter
+            - ekf_heart_rates : array_like
+                Heart rate estimates from EKF
+            - cardiacfromfmri_qual_times : array_like
+                Time points for quality scores from raw fMRI signal
+            - cardiacfromfmri_qual_scores : array_like
+                Quality scores for raw fMRI signal
+            - dlfiltered_qual_times : array_like
+                Time points for quality scores from DL-filtered signal
+            - dlfiltered_qual_scores : array_like
+                Quality scores for DL-filtered signal
+
+        Notes
+        -----
+        The function uses the `tide_ppg` module for signal processing and analysis.
+        It supports visualization via matplotlib when `args.display` is True.
+        Heart rate variability (HRV) and pulse morphology features are computed if sufficient peaks are detected.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     infileroot='data/ppg_data',
+        ...     display=True,
+        ...     debug=False,
+        ...     hr_estimate=70.0,
+        ...     process_noise=1e-4,
+        ...     measurement_noise=1e-2,
+        ...     qual_thresh=0.7
+        ... )
+        >>> procppg(args)
+        """
     if args.display:
         import matplotlib as mpl
 

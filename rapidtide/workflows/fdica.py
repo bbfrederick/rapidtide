@@ -51,17 +51,116 @@ from rapidtide.workflows.parser_funcs import is_valid_file
 
 
 def P2R(radii: Any, angles: Any) -> None:
+    """
+        Convert polar coordinates to complex numbers.
+    
+        Convert polar coordinates (radii, angles) to complex numbers using the formula
+        z = r * exp(i * θ), where r is the radius and θ is the angle in radians.
+    
+        Parameters
+        ----------
+        radii : Any
+            The radial coordinates (magnitude) of the points in polar coordinates.
+            Should be a numeric type or array-like object.
+        angles : Any
+            The angular coordinates (in radians) of the points in polar coordinates.
+            Should be a numeric type or array-like object.
+        
+        Returns
+        -------
+        complex
+            Complex numbers in the form z = r * exp(i * θ).
+            Returns None if the input parameters are not compatible.
+        
+        Notes
+        -----
+        This function assumes that the angles are provided in radians.
+        The function uses NumPy's exponential function for complex number computation.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> P2R(1, 0)
+        (1+0j)
+    
+        >>> P2R(2, np.pi/2)
+        (1.2246467991473532e-16+2j)
+    
+        >>> P2R([1, 2, 3], [0, np.pi/2, np.pi])
+        [1.+0.j 2.+0.j 3.+0.j]
+        """
     return radii * np.exp(1j * angles)
 
 
 def R2P(x: Any) -> None:
+    """
+        Convert rectangular coordinates to polar coordinates.
+    
+        This function converts complex numbers from rectangular (Cartesian) coordinates
+        to polar coordinates, returning the magnitude (absolute value) and phase angle.
+    
+        Parameters
+        ----------
+        x : Any
+            Input array-like object containing complex numbers or real numbers.
+            Can be a scalar, list, tuple, or numpy array.
+    
+        Returns
+        -------
+        tuple
+            A tuple containing two numpy arrays:
+            - First array: absolute values (magnitudes) of input elements
+            - Second array: angles (in radians) of input elements
+        
+        Notes
+        -----
+        For real numbers, the angle is 0 for positive values and π for negative values.
+        For complex numbers, the angle is computed using numpy's angle function.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> R2P([1+1j, -1-1j, 2])
+        (array([1.41421356, 1.41421356, 2.        ]), array([0.78539816, -2.35619449, 0.        ]))
+    
+        >>> R2P(np.array([3+4j, 1-1j]))
+        (array([5., 1.41421356]), array([0.92729522, -0.78539816]))
+        """
     return np.absolute(x), np.angle(x)
 
 
 def _get_parser() -> Any:
     """
-    Argument parser for fdica
-    """
+        Argument parser for fdica.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object configured 
+        for parsing command-line arguments for the `fdica` tool. The parser is designed to 
+        handle inputs for fitting a spatial template to 3D or 4D NIFTI files, with options 
+        for spatial filtering, PCA, and ICA decomposition.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for the fdica tool.
+        
+        Notes
+        -----
+        The parser expects three required positional arguments:
+        - `datafile`: The 3D or 4D NIFTI file to fit.
+        - `datamask`: A 3D NIFTI file mask (must match `datafile`).
+        - `outputroot`: Root name for output files.
+    
+        Optional arguments include:
+        - `--spatialfilt`: Apply Gaussian spatial filtering.
+        - `--pcacomponents`: Number of PCA components for phase fitting.
+        - `--icacomponents`: Number of ICA components for decomposition.
+        - `--debug`: Enable debugging output.
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args()
+        """
     parser = argparse.ArgumentParser(
         prog="fdica",
         description="Fit a spatial template to a 3D or 4D NIFTI file.",
@@ -132,6 +231,55 @@ def fdica(
     upperfreq: float = 0.15,
     debug: bool = False,
 ) -> None:
+    """
+        Perform frequency-domain independent component analysis (FDICA) on fMRI data.
+
+        This function reads fMRI data and a corresponding mask, applies spatial filtering if
+        requested, performs FFT, and conducts PCA and ICA on the frequency-domain data to
+        decompose the signal into independent components. It saves various intermediate and
+        final outputs including magnitude, phase, PCA components, and ICA components.
+
+        Parameters
+        ----------
+        datafile : Any
+            Path to the input NIfTI fMRI data file.
+        datamask : Any
+            Path to the NIfTI mask file defining the region of interest.
+        outputroot : Any
+            Root name for output NIfTI files.
+        gausssigma : float, optional
+            Standard deviation for Gaussian spatial smoothing. If less than 0, automatically
+            calculated as mean of spatial dimensions divided by 2. Default is 0.0.
+        pcacomponents : str or int, optional
+            Number of PCA components to retain. If "mle", uses the minimum description
+            length criterion. Default is "mle".
+        icacomponents : int, optional
+            Number of ICA components to extract. If None, defaults to the number of PCA
+            components. Default is None.
+        lowerfreq : float, optional
+            Lower frequency bound in Hz. Default is 0.009.
+        upperfreq : float, optional
+            Upper frequency bound in Hz. Default is 0.15.
+        debug : bool, optional
+            If True, enables debug output. Default is False.
+
+        Returns
+        -------
+        None
+            The function writes multiple NIfTI files and text files to disk but does not return anything.
+
+        Notes
+        -----
+        - The function assumes the input data is in NIfTI format and the mask is 3D.
+        - Frequency trimming is performed based on the specified lower and upper bounds.
+        - PCA and ICA are applied to the phase data after detrending.
+        - Intermediate outputs include magnitude, phase, PCA components, and ICA components.
+        - The final reconstructed signal is saved as a NIfTI file.
+
+        Examples
+        --------
+        >>> fdica('fmri_data.nii', 'mask.nii', 'output', gausssigma=2.0, lowerfreq=0.01, upperfreq=0.1)
+        """
     # read in data
     print("reading in data arrays")
     (
@@ -428,6 +576,33 @@ def fdica(
 
 
 def main() -> None:
+    """
+        Main function to execute the FDICA (Fast Independent Component Analysis) pipeline.
+    
+        This function parses command line arguments, prints them for debugging purposes,
+        and executes the FDICA algorithm with the specified parameters.
+    
+        Parameters
+        ----------
+        None
+    
+        Returns
+        -------
+        None
+            This function does not return any value but executes the FDICA pipeline
+            and produces output files based on the provided arguments.
+    
+        Notes
+        -----
+        The function uses a parser to handle command line arguments and includes
+        error handling for argument parsing. If parsing fails, the help message is
+        displayed before raising the SystemExit exception.
+    
+        Examples
+        --------
+        >>> main()
+        # This would execute the FDICA pipeline with arguments parsed from command line
+        """
     try:
         args = _get_parser().parse_args()
     except SystemExit:

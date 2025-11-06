@@ -31,8 +31,37 @@ from rapidtide.workflows.parser_funcs import is_valid_file
 
 def _get_parser() -> Any:
     """
-    Argument parser for polyfitim
-    """
+        Argument parser for polyfitim.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object configured
+        to parse command-line arguments for the `polyfitim` tool. It is designed to handle
+        the fitting of a spatial template to 3D or 4D NIFTI files, with optional region-specific
+        fitting using an atlas file.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for `polyfitim` command-line interface.
+
+        Notes
+        -----
+        The parser expects several required NIFTI files:
+        - Data file (`datafile`)
+        - Data mask file (`datamask`)
+        - Template file (`templatefile`)
+        - Template mask file (`templatemask`)
+    
+        Optional arguments include:
+        - `--regionatlas`: File containing a 3D NIFTI atlas for region-specific fitting.
+        - `--order`: Polynomial order for the fit (default is 1).
+
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['data.nii', 'mask.nii', 'template.nii', 'template_mask.nii', 'output'])
+        >>> print(args.datafile)
+        'data.nii'
+        """
     parser = argparse.ArgumentParser(
         prog="polyfitim",
         description="Fit a spatial template to a 3D or 4D NIFTI file.",
@@ -89,6 +118,61 @@ def polyfitim(
     regionatlas: Optional[Any] = None,
     order: int = 1,
 ) -> None:
+    """
+        Fit polynomial models to time series data within regions defined by masks.
+
+        This function performs polynomial fitting of specified order to time series data
+        within spatial regions defined by a template mask. It supports both global and
+        region-specific fitting, and outputs fitted time series, polynomial coefficients,
+        and R² values.
+
+        Parameters
+        ----------
+        datafile : Any
+            Path to the input NIfTI file containing the time series data.
+        datamask : Any
+            Path to the NIfTI file containing the data mask. Can be 3D or 4D.
+        templatefile : Any
+            Path to the NIfTI file containing the template (e.g., a regressor) for fitting.
+        templatemask : Any
+            Path to the NIfTI file containing the mask for the template.
+        outputroot : Any
+            Root name for output files (e.g., 'output' will produce 'output_fit.nii.gz').
+        regionatlas : Any, optional
+            Path to the NIfTI file containing region labels. If provided, fitting is
+            performed separately for each region. Default is None.
+        order : int, optional
+            Order of the polynomial to fit. Must be >= 1. Default is 1 (linear fit).
+
+        Returns
+        -------
+        None
+            Function writes multiple output files:
+            - Fitted time series (NIfTI format)
+            - Residuals (NIfTI format)
+            - R² values (text file)
+            - Polynomial coefficients (text files)
+
+        Notes
+        -----
+        - The function assumes that all input files are in NIfTI format.
+        - If `datamask` is 4D, it is treated as a time-varying mask.
+        - If `regionatlas` is provided, fitting is performed separately for each region.
+        - The function uses `tide_io` for reading/writing NIfTI files and `tide_fit.mlregress`
+          for polynomial regression.
+
+        Examples
+        --------
+        >>> polyfitim(
+        ...     datafile='data.nii.gz',
+        ...     datamask='mask.nii.gz',
+        ...     templatefile='template.nii.gz',
+        ...     templatemask='template_mask.nii.gz',
+        ...     outputroot='output',
+        ...     regionatlas='atlas.nii.gz',
+        ...     order=2
+        ... )
+        """
     # check the order
     if order < 1:
         print("order must be >= 1")
@@ -283,6 +367,59 @@ def polyfitim(
 
 
 def main(args: Any) -> None:
+    """
+        Main function to perform polynomial fitting on imaging data.
+    
+        This function serves as the entry point for polynomial fitting operations
+        on medical imaging data using template-based registration and fitting.
+    
+        Parameters
+        ----------
+        args : Any
+            Namespace object containing all required arguments for the polynomial fitting
+            operation. Expected attributes include:
+        
+            - datafile : str
+                Path to the input data file to be fitted
+            - datamask : str
+                Path to the data mask file for region of interest specification
+            - templatefile : str
+                Path to the template file for reference
+            - templatemask : str
+                Path to the template mask file for reference region specification
+            - outputroot : str
+                Root path for output files
+            - regionatlas : str, optional
+                Path to region atlas file for anatomical labeling
+            - order : int, optional
+                Order of the polynomial to fit (default is typically 1)
+    
+        Returns
+        -------
+        None
+            This function does not return any value. It performs the polynomial fitting
+            operation and saves results to the specified output directory.
+    
+        Notes
+        -----
+        The function internally calls `polyfitim` with the provided arguments to
+        perform the actual polynomial fitting computation. All input files must be
+        properly formatted and accessible.
+    
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     datafile='data.nii.gz',
+        ...     datamask='data_mask.nii.gz',
+        ...     templatefile='template.nii.gz',
+        ...     templatemask='template_mask.nii.gz',
+        ...     outputroot='output',
+        ...     regionatlas='atlas.nii.gz',
+        ...     order=2
+        ... )
+        >>> main(args)
+        """
     polyfitim(
         args.datafile,
         args.datamask,

@@ -45,6 +45,75 @@ def makeRIPTiDeRegressors(
     rt_floattype: str = "float64",
     debug: bool = False,
 ) -> None:
+    """
+        Generate regressors for RIPTiDe (Regressors for Inverse Temporal Deconvolution).
+
+        This function creates a set of lagged temporal regressors based on the provided
+        parameters, which are used in the context of fMRI data analysis for temporal
+        deconvolution. It leverages the `tide_makelagged.makelaggedtcs` function to
+        compute the actual regressor matrix.
+
+        Parameters
+        ----------
+        initial_fmri_x : array_like
+            The initial fMRI time series data used to generate the regressors.
+        lagmin : float
+            The minimum lag (in seconds) to consider for regressor generation.
+        lagmax : float
+            The maximum lag (in seconds) to consider for regressor generation.
+        lagtcgenerator : callable
+            A function or callable object that generates lagged time courses.
+        LGR : object
+            An object containing parameters for the lagged time course generation.
+        nprocs : int, optional
+            Number of processes to use for parallel computation (default is 1).
+        alwaysmultiproc : bool, optional
+            If True, always use multiprocessing even for small datasets (default is False).
+        showprogressbar : bool, optional
+            If True, display a progress bar during computation (default is True).
+        chunksize : int, optional
+            Size of chunks for processing in multiprocessing (default is 1000).
+        targetstep : float, optional
+            Target step size (in seconds) between lags (default is 2.5).
+        edgepad : int, optional
+            Number of padding steps at the beginning and end of the lag range (default is 0).
+        rt_floatset : dtype, optional
+            Data type for the regressor matrix (default is np.float64).
+        rt_floattype : str, optional
+            String representation of the float data type (default is "float64").
+        debug : bool, optional
+            If True, print debug information during execution (default is False).
+
+        Returns
+        -------
+        tuple of (np.ndarray, np.ndarray)
+            A tuple containing:
+            - regressorset : np.ndarray
+                The computed regressor matrix of shape (num_lags, num_timepoints).
+            - delaystouse : np.ndarray
+                The array of delay values used for regressor generation.
+
+        Notes
+        -----
+        This function is intended for use in fMRI data analysis workflows where
+        temporal deconvolution is required. The regressors generated can be used
+        in subsequent steps such as GLM fitting or temporal filtering.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from some_module import makeRIPTiDeRegressors
+        >>> fmri_data = np.random.rand(100, 50)
+        >>> regressors, delays = makeRIPTiDeRegressors(
+        ...     initial_fmri_x=fmri_data,
+        ...     lagmin=0.0,
+        ...     lagmax=10.0,
+        ...     lagtcgenerator=my_lag_generator,
+        ...     LGR=my_lgr_object,
+        ...     nprocs=4,
+        ...     debug=True
+        ... )
+        """
     # make the RIPTiDe evs
     numdelays = int(np.round((lagmax - lagmin) / targetstep, 0))
     numregressors = numdelays + 2 * edgepad
@@ -138,6 +207,164 @@ def calcSimFunc(
     threaddebug: bool = False,
     debug: bool = False,
 ) -> None:
+    """
+        Compute similarity metrics (correlation, mutual information, or RIPtiDe) between fMRI data and a reference time series.
+
+        This function performs similarity calculations across voxels using either correlation, mutual information,
+        or a hybrid method, depending on the specified `similaritymetric`. It supports multi-processing and can
+        optionally save intermediate results.
+
+        Parameters
+        ----------
+        numvalidspatiallocs : Any
+            Number of valid spatial locations in the fMRI data.
+        fmri_data_valid : Any
+            Valid fMRI data array, typically of shape (n_voxels, n_timepoints).
+        validsimcalcstart : Any
+            Start index for valid timepoints to use in similarity calculation.
+        validsimcalcend : Any
+            End index for valid timepoints to use in similarity calculation.
+        osvalidsimcalcstart : Any
+            Start index for oversampled valid timepoints.
+        osvalidsimcalcend : Any
+            End index for oversampled valid timepoints.
+        initial_fmri_x : Any
+            Initial fMRI timepoints (e.g., for correlation).
+        os_fmri_x : Any
+            Oversampled fMRI timepoints.
+        theCorrelator : Any
+            Correlator object used for computing correlations.
+        theMutualInformationator : Any
+            Mutual information calculator object.
+        cleaned_referencetc : Any
+            Cleaned reference time series.
+        corrout : Any
+            Output array for storing correlation results.
+        regressorset : Any
+            Set of regressors for fitting.
+        delayvals : Any
+            Array of delay values for RIPtiDe calculation.
+        sLFOfitmean : Any
+            Mean value for fitting.
+        r2value : Any
+            R² values for model fit.
+        fitcoeff : Any
+            Fitting coefficients.
+        fitNorm : Any
+            Normalization values for fitting.
+        meanval : Any
+            Mean value used in normalization.
+        corrscale : Any
+            Correlation scale for lag calculation.
+        outputname : Any
+            Base name for output files.
+        outcorrarray : Any
+            Array to store correlation output for checkpointing.
+        validvoxels : Any
+            Indices of valid voxels.
+        nativecorrshape : Any
+            Shape of the native correlation array.
+        theinputdata : Any
+            Input data object.
+        theheader : Any
+            Header information for NIfTI output.
+        lagmininpts : Any
+            Minimum lag in timepoints.
+        lagmaxinpts : Any
+            Maximum lag in timepoints.
+        thepass : Any
+            Pass number for tracking multiple iterations.
+        optiondict : Any
+            Dictionary of options for saving results.
+        LGR : Any
+            Logger for general messages.
+        TimingLGR : Any
+            Logger for timing information.
+        similaritymetric : str, optional
+            Type of similarity metric to compute. Options are:
+            'correlation', 'mutualinfo', 'riptide', or 'hybrid'. Default is 'correlation'.
+        simcalcoffset : int, optional
+            Offset to subtract from computed lags. Default is 0.
+        echocancel : bool, optional
+            Whether to cancel echo effects. Default is False.
+        checkpoint : bool, optional
+            Whether to save intermediate results. Default is False.
+        nprocs : int, optional
+            Number of processes for multiprocessing. Default is 1.
+        alwaysmultiproc : bool, optional
+            Force multiprocessing even for single-core cases. Default is False.
+        oversampfactor : int, optional
+            Oversampling factor for interpolation. Default is 2.
+        interptype : str, optional
+            Interpolation type. Default is 'univariate'.
+        showprogressbar : bool, optional
+            Whether to show a progress bar. Default is True.
+        chunksize : int, optional
+            Size of chunks for processing. Default is 1000.
+        rt_floatset : Any, optional
+            Real-time floating-point data type. Default is np.float64.
+        rt_floattype : str, optional
+            String representation of floating-point type. Default is 'float64'.
+        mklthreads : int, optional
+            Number of threads for Intel MKL. Default is 1.
+        threaddebug : bool, optional
+            Enable thread debugging. Default is False.
+        debug : bool, optional
+            Enable debug mode. Default is False.
+
+        Returns
+        -------
+        str
+            The type of similarity metric used in the calculation.
+
+        Notes
+        -----
+        - For 'riptide', the function fits linear models to delayed regressors.
+        - The function logs timing and processing information using `TimingLGR` and `LGR`.
+        - If `checkpoint` is True, intermediate correlation results are saved to disk.
+        - This function modifies `corrout` and `outcorrarray` in-place.
+
+        Examples
+        --------
+        >>> calcSimFunc(
+        ...     numvalidspatiallocs=100,
+        ...     fmri_data_valid=np.random.rand(100, 100),
+        ...     validsimcalcstart=0,
+        ...     validsimcalcend=99,
+        ...     osvalidsimcalcstart=0,
+        ...     osvalidsimcalcend=99,
+        ...     initial_fmri_x=np.linspace(0, 1, 100),
+        ...     os_fmri_x=np.linspace(0, 1, 100),
+        ...     theCorrelator=correlator_obj,
+        ...     theMutualInformationator=mi_obj,
+        ...     cleaned_referencetc=np.random.rand(100),
+        ...     corrout=np.zeros((100, 100)),
+        ...     regressorset=np.random.rand(10, 100),
+        ...     delayvals=np.array([0, 1, 2]),
+        ...     sLFOfitmean=np.mean(np.random.rand(100)),
+        ...     r2value=np.zeros(100),
+        ...     fitcoeff=np.zeros((100, 1)),
+        ...     fitNorm=np.ones(100),
+        ...     meanval=np.mean(np.random.rand(100)),
+        ...     corrscale=np.arange(100),
+        ...     outputname="test_output",
+        ...     outcorrarray=np.zeros((100, 100)),
+        ...     validvoxels=np.arange(100),
+        ...     nativecorrshape=(100, 100),
+        ...     theinputdata=input_data_obj,
+        ...     theheader=header,
+        ...     lagmininpts=-5,
+        ...     lagmaxinpts=5,
+        ...     thepass=1,
+        ...     optiondict={},
+        ...     LGR=logging.getLogger(),
+        ...     TimingLGR=logging.getLogger(),
+        ...     similaritymetric="correlation",
+        ...     nprocs=2,
+        ...     checkpoint=True,
+        ... )
+        'Correlation'
+        """
     # Step 1 - Correlation step
     if similaritymetric == "mutualinfo":
         similaritytype = "Mutual information"

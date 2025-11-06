@@ -46,8 +46,36 @@ if pyfftwpresent:
 
 def _get_parser() -> Any:
     """
-    Argument parser for resamplenifti
-    """
+        Argument parser for resamplenifti.
+    
+        Creates and configures an argument parser for the resamplenifti command-line tool
+        that resamples NIfTI files to a different temporal resolution (TR).
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with all required and optional arguments
+            for the resamplenifti tool.
+        
+        Notes
+        -----
+        The returned parser includes the following positional arguments:
+        - inputfile: Path to the input NIfTI file
+        - outputfile: Path to the output NIfTI file
+        - outputtr: Target temporal resolution in seconds
+    
+        And the following optional arguments:
+        - --noantialias: Disable antialiasing filter (enabled by default)
+        - --normalize: Normalize data and save as UINT16 (disabled by default)
+        - --debug: Print debugging information (disabled by default)
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['input.nii', 'output.nii', '2.0'])
+        >>> print(args.inputfile)
+        'input.nii'
+        """
     parser = argparse.ArgumentParser(
         prog="resamplenifti",
         description="Resamples a nifti file to a different TR.",
@@ -83,6 +111,56 @@ def _get_parser() -> Any:
 
 
 def resamplenifti(args: Any) -> None:
+    """
+        Resample a 4D NIfTI file to a specified temporal resolution.
+
+        This function reads a 4D NIfTI file, resamples its time series data to a
+        new temporal resolution specified by `args.outputtr`, and saves the
+        resampled data to a new NIfTI file. The resampling is performed using
+        spline interpolation, and optional antialiasing is applied based on the
+        input and output temporal resolutions.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            An object containing the following attributes:
+            - inputfile : str
+                Path to the input NIfTI file.
+            - outputfile : str
+                Path to the output NIfTI file.
+            - outputtr : float
+                Desired output temporal resolution (TR) in seconds.
+            - antialias : bool, optional
+                Whether to apply antialiasing during resampling. Default is True.
+            - debug : bool, optional
+                If True, print debugging information. Default is False.
+
+        Returns
+        -------
+        None
+            This function does not return a value but saves the resampled NIfTI
+            file to the specified output path.
+
+        Notes
+        -----
+        - If the input TR is greater than the output TR (i.e., upsampling), antialiasing
+          is automatically disabled.
+        - The function processes each voxel individually, which may be time-consuming
+          for large datasets.
+        - The output NIfTI header is updated to reflect the new temporal resolution.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     inputfile='input.nii.gz',
+        ...     outputfile='output.nii.gz',
+        ...     outputtr=1.0,
+        ...     antialias=True,
+        ...     debug=False
+        ... )
+        >>> resamplenifti(args)
+        """
     # get the input TR
     inputtr, numinputtrs = tide_io.fmritimeinfo(args.inputfile)
     if args.debug:

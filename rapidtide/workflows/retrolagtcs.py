@@ -44,8 +44,31 @@ DEFAULT_REGRESSIONFILTDERIVS = 0
 
 def _get_parser() -> Any:
     """
-    Argument parser for retrolagtcs
-    """
+        Argument parser for retrolagtcs.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object configured
+        for the `retrolagtcs` command-line tool. It defines all required and optional
+        arguments needed to generate voxel-specific lagged timecourses from rapidtide
+        analysis maps.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for retrolagtcs.
+        
+        Notes
+        -----
+        The parser expects several input files and parameters to define the processing
+        pipeline. The function uses `pf.is_valid_file` to validate the existence of
+        the input 4D NIfTI file.
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args()
+        >>> print(args.fmrifile)
+        'sub-01_task-rest_bold.nii.gz'
+        """
     parser = argparse.ArgumentParser(
         prog="retrolagtcs",
         description="Generate voxel specific lagged timecourses using the maps generated from a previous rapidtide analysis.",
@@ -130,6 +153,68 @@ def _get_parser() -> Any:
 
 
 def retrolagtcs(args: Any) -> None:
+    """
+        Generate lagged time series regressors from fMRI data using a lag-time map and a generator file.
+
+        This function reads fMRI data, a mask, and a lag-time map to compute lagged time series
+        regressors for each voxel in the mask. It supports both single-process and multi-process
+        execution using shared memory. The computed regressors are saved as NIfTI files.
+
+        Parameters
+        ----------
+        args : Any
+            An object containing the following attributes:
+            - fmrifile : str
+                Path to the input fMRI NIfTI file.
+            - maskfile : str
+                Path to the processing mask NIfTI file.
+            - lagtimesfile : str
+                Path to the lag times NIfTI file.
+            - lagtcgeneratorfile : str
+                Path to the lagtc generator file (used for resampling).
+            - outputroot : str
+                Root path for output files.
+            - nprocs : int
+                Number of processes to use for parallel execution. If less than 1, defaults to max CPU count.
+            - numskip : int
+                Number of initial time points to skip.
+            - regressderivs : int
+                Number of time derivatives to include in the regressor set.
+            - showprogressbar : bool
+                Whether to display a progress bar during processing.
+            - debug : bool
+                Whether to enable debug mode for additional logging.
+
+        Returns
+        -------
+        None
+            This function does not return a value but writes output files to disk.
+
+        Notes
+        -----
+        - The function requires the input files to have matching spatial dimensions.
+        - Shared memory is used for multi-process execution to improve performance.
+        - Output files include:
+            - Regressor time series (4D NIfTI)
+            - Optional mask and lag time maps (3D NIfTI)
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     fmrifile='fmri.nii.gz',
+        ...     maskfile='mask.nii.gz',
+        ...     lagtimesfile='lagtimes.nii.gz',
+        ...     lagtcgeneratorfile='generator.txt',
+        ...     outputroot='output',
+        ...     nprocs=4,
+        ...     numskip=5,
+        ...     regressderivs=2,
+        ...     showprogressbar=True,
+        ...     debug=False
+        ... )
+        >>> retrolagtcs(args)
+        """
     rt_floatset = np.float64
     rt_floattype = "float64"
     rt_outfloatset = np.float64

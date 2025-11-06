@@ -23,7 +23,7 @@ import platform
 import sys
 import warnings
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -68,7 +68,36 @@ ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
 
-def checkforzeromean(thedataset: Any) -> None:
+def checkforzeromean(thedataset: Any) -> bool:
+    """
+        Check if the mean of dataset is zero.
+    
+        Parameters
+        ----------
+        thedataset : array-like
+            Input dataset to check for zero mean. Should be array-like structure
+            that can be processed by numpy mean and std functions.
+    
+        Returns
+        -------
+        bool
+            True if the mean of standard deviations is greater than the mean of means,
+            False otherwise.
+    
+        Notes
+        -----
+        This function calculates the mean and standard deviation along axis 1,
+        then compares the means of these two arrays. The function name suggests
+        checking for zero mean, but the implementation actually compares means
+        and standard deviations rather than directly checking if mean equals zero.
+    
+        Examples
+        --------
+        >>> import numpy as np
+        >>> data = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> checkforzeromean(data)
+        False
+        """
     themean = np.mean(thedataset, axis=1)
     thestd = np.std(thedataset, axis=1)
     if np.mean(thestd) > np.mean(themean):
@@ -79,7 +108,57 @@ def checkforzeromean(thedataset: Any) -> None:
 
 def echocancel(
     thetimecourse: Any, echooffset: Any, thetimestep: Any, outputname: Any, padtimepoints: Any
-) -> None:
+) -> Tuple[NDArray, NDArray, float]:
+    """
+        Perform echo cancellation on a timecourse using linear regression.
+
+        This function applies echo cancellation to a given timecourse by modeling the echo signal
+        and subtracting its contribution from the original signal. The echo is shifted in time
+        according to `echooffset` and then fitted using maximum likelihood regression. The
+        resulting filtered timecourse is saved along with the original and echo components.
+
+        Parameters
+        ----------
+        thetimecourse : array-like
+            The input timecourse data to be processed.
+        echooffset : float
+            The time offset (in seconds) of the echo signal relative to the input timecourse.
+        thetimestep : float
+            The time step (in seconds) of the input timecourse.
+        outputname : str
+            Base name for output files; used to construct filenames for saved results.
+        padtimepoints : int
+            Number of timepoints to pad during resampling of the echo signal.
+
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - `outputtimecourse`: The timecourse after echo cancellation.
+            - `echofit`: The regression coefficients from fitting the echo signal.
+            - `echoR2`: The R-squared value of the echo fit.
+
+        Notes
+        -----
+        - The function writes three separate TSV files:
+            1. Original timecourse.
+            2. Echo signal.
+            3. Filtered (echo-cancelled) timecourse.
+        - The echo signal is shifted in time using `tide_resample.timeshift`.
+        - The echo is zeroed out at the beginning up to the computed shift.
+        - The function uses `tide_fit.mlregress` for linear regression fitting.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> timecourse = np.random.rand(100)
+        >>> echo_offset = 2.0
+        >>> time_step = 1.0
+        >>> output_name = "test_output"
+        >>> pad_points = 10
+        >>> result = echocancel(timecourse, echo_offset, time_step, output_name, pad_points)
+        >>> filtered_tc, fit_coeffs, r2 = result
+        """
     tide_io.writebidstsv(
         f"{outputname}_desc-echocancellation_timeseries",
         thetimecourse,
@@ -120,11 +199,82 @@ def echocancel(
 
 
 def setpassoptions(passdict: Any, optiondict: Any) -> None:
+    """
+        Copy key-value pairs from passdict to optiondict.
+    
+        This function updates the optiondict with key-value pairs from passdict,
+        effectively passing options from one dictionary to another.
+    
+        Parameters
+        ----------
+        passdict : Any
+            Dictionary containing options to be passed
+        optiondict : Any
+            Dictionary that will receive the options from passdict
+        
+        Returns
+        -------
+        None
+            This function modifies optiondict in-place and returns None
+        
+        Notes
+        -----
+        This function performs an in-place update of optiondict. Any existing keys
+        in optiondict that are also present in passdict will be overwritten with
+        the values from passdict.
+    
+        Examples
+        --------
+        >>> options = {'verbose': True, 'timeout': 30}
+        >>> new_options = {'debug': False}
+        >>> setpassoptions(options, new_options)
+        >>> print(new_options)
+        {'debug': False, 'verbose': True, 'timeout': 30}
+        """
     for key, value in passdict.items():
         optiondict[key] = value
 
 
 def rapidtide_main(argparsingfunc: Any) -> None:
+    """
+        Process fMRI data to perform spatially localized signal-to-noise ratio (sLFO) analysis.
+    
+        This function performs a comprehensive analysis of fMRI data including correlation
+        analysis, signal filtering, and various statistical computations to identify and
+        remove spatially localized noise components.
+    
+        Parameters
+        ----------
+        None
+    
+        Returns
+        -------
+        None
+            The function performs in-place processing and saves results to files.
+    
+        Notes
+        -----
+        This function is designed to be called as part of a larger pipeline for fMRI
+        preprocessing and analysis. It handles multiple stages including:
+    
+        1. Data initialization and validation
+        2. Correlation analysis across spatial locations
+        3. Signal filtering and noise removal
+        4. Statistical computations and result saving
+        5. Timing and logging management
+    
+        Examples
+        --------
+        >>> process_fmri_data()
+        # Processes fMRI data and saves results to output files
+    
+        See Also
+        --------
+        tide_regressfrommaps : Performs regression analysis on fMRI data
+        tide_io : Handles input/output operations for fMRI data
+        tide_util : Utility functions for processing fMRI data
+    
+        """
     optiondict, theprefilter = argparsingfunc
     optiondict["threaddebug"] = False
 

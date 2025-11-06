@@ -31,6 +31,32 @@ from rapidtide.workflows.parser_funcs import is_valid_file
 
 
 def _get_parser() -> Any:
+    """
+        Create and configure argument parser for pairproc command-line tool.
+    
+        This function sets up an argument parser for comparing even and odd volumes
+        of 4D nifti files. It defines required and optional command-line arguments
+        needed for the pairproc workflow.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with all required and optional
+            arguments for the pairproc tool.
+        
+        Notes
+        -----
+        The parser is configured with:
+        - Required positional arguments: inputfile and outputroot
+        - Optional arguments for data masking, distribution analysis, demeaning, and debugging
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['input.nii.gz', 'output_root'])
+        >>> print(args.inputfile)
+        'input.nii.gz'
+        """
     parser = argparse.ArgumentParser(
         prog="pairproc",
         description="Compare the even and odd volumes of a 4D nifti file.",
@@ -72,6 +98,63 @@ def _get_parser() -> Any:
 
 
 def pairproc(args: Any) -> None:
+    """
+        Process paired time series data from NIfTI files and compute temporal and spatial correlations.
+
+        This function reads input NIfTI data, splits the time series into pairs (even and odd indices),
+        and computes Pearson correlations between the paired time series both temporally and spatially.
+        It supports optional demeaning and masking of data, and can output correlation maps and
+        statistics for real and shifted (rolled) odd time series.
+
+        Parameters
+        ----------
+        args : Any
+            An object containing the following attributes:
+            - inputfile : str
+                Path to the input NIfTI file.
+            - datamaskname : str, optional
+                Path to the data mask NIfTI file. If provided, only voxels with mask values > 0.5
+                will be processed.
+            - outputroot : str
+                Root name for output files.
+            - demean : bool
+                If True, demean the time series before computing correlations.
+            - getdist : bool
+                If True, compute correlations for both real and shifted (rolled) odd time series.
+            - debug : bool
+                If True, print additional debug information.
+
+        Returns
+        -------
+        None
+            This function does not return a value but saves multiple NIfTI files and text files
+            containing correlation maps and statistics.
+
+        Notes
+        -----
+        - The input time series must have an even number of time points.
+        - The function assumes that the input data is organized as (x, y, z, t) where t is the time dimension.
+        - Temporal correlations are computed between even and odd time series for each voxel.
+        - Spatial correlations are computed between even and odd time series for each subject.
+        - Output files include:
+            - Temporal correlation maps (NIfTI)
+            - Temporal p-values (NIfTI)
+            - Spatial correlation values (text file)
+            - Spatial p-values (text file)
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     inputfile="data.nii.gz",
+        ...     datamaskname="mask.nii.gz",
+        ...     outputroot="output",
+        ...     demean=True,
+        ...     getdist=False,
+        ...     debug=False
+        ... )
+        >>> pairproc(args)
+        """
     # read in the data files
     print("reading input file")
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)

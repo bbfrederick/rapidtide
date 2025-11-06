@@ -27,6 +27,36 @@ import rapidtide.io as tide_io
 
 
 def _get_parser() -> Any:
+    """
+        Create and configure argument parser for pairwisemergenifti tool.
+
+        This function initializes an ArgumentParser object with specific arguments
+        required for merging adjacent timepoints in NIfTI files.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser with the following arguments:
+            - inputfile: The name of the input NIfTI file, including extension
+            - inputmask: The name of the mask NIfTI file, including extension
+            - outputfile: The name of the output NIfTI file, including extension
+            - --maskmerge: Input is a mask (boolean flag)
+            - --debug: Print debugging information (boolean flag)
+
+        Notes
+        -----
+        The parser is configured with:
+        - prog="pairwisemergenifti"
+        - description="Merges adjacent timepoints in a nifti file."
+        - allow_abbrev=False
+
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['input.nii', 'mask.nii', 'output.nii'])
+        >>> print(args.inputfile)
+        'input.nii'
+        """
     parser = argparse.ArgumentParser(
         prog="pairwisemergenifti",
         description="Merges adjacent timepoints in a nifti file.",
@@ -54,6 +84,56 @@ def _get_parser() -> Any:
 
 
 def pairwisemergenifti(args: Any) -> None:
+    """
+        Pairwise merge NIfTI time series data based on a mask.
+
+        This function reads input NIfTI image and mask files, performs pairwise
+        averaging of time series data, and saves the result as a new NIfTI file.
+        The input image is expected to have an even number of time points, which
+        are merged in pairs. The mask is used to determine which voxels contribute
+        to the averaging.
+
+        Parameters
+        ----------
+        args : Any
+            An object containing the following attributes:
+            - inputfile : str
+                Path to the input NIfTI image file.
+            - inputmask : str
+                Path to the input NIfTI mask file.
+            - outputfile : str
+                Path to the output NIfTI file.
+            - maskmerge : bool
+                If True, the mask is binarized before merging. If False, the
+                average of the input data is computed using the mask.
+
+        Returns
+        -------
+        None
+            The function does not return a value but saves the merged data to a
+            NIfTI file.
+
+        Notes
+        -----
+        - The function requires that the spatial dimensions of the input image
+          and mask match.
+        - The time dimension of the input image must be even.
+        - If `maskmerge` is True, the mask is converted to binary (0 or 1) before
+          merging.
+        - If `maskmerge` is False, the average of the input data is computed
+          using the mask to weight the voxels.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     inputfile='input.nii.gz',
+        ...     inputmask='mask.nii.gz',
+        ...     outputfile='output.nii.gz',
+        ...     maskmerge=False
+        ... )
+        >>> pairwisemergenifti(args)
+        """
     print("reading input data")
     input_img, input_data, input_hdr, thedims, thesizes = tide_io.readfromnifti(args.inputfile)
     print("reading input mask")

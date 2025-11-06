@@ -21,6 +21,7 @@ from argparse import Namespace
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from matplotlib.pyplot import *
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
@@ -32,8 +33,33 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-    Argument parser for simdata
-    """
+        Argument parser for simdata.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object
+        configured for parsing command-line arguments used by the `simdata` tool.
+        The parser supports both required and optional arguments for generating
+        simulated fMRI data with known correlation parameters.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for simdata command-line interface.
+
+        Notes
+        -----
+        The function sets up argument groups for LFO, respiratory, and cardiac
+        bands, each with mutually exclusive options for specifying signal strength
+        (either as a percentage of mean or as a fraction of inband variance).
+        Each band group also accepts optional files for specifying lag, regressor,
+        sample rate, and start time.
+
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['--lfo pctfile', 'lfo.nii', 'output'])
+        >>> print(args.lfo_pctfile)
+        'lfo.nii'
+        """
     parser = argparse.ArgumentParser(
         prog="simdata",
         description=("Generate simulated fMRI data with known correlation parameters"),
@@ -189,7 +215,73 @@ def prepareband(
     regressorname: Any,
     padtime: float = 30.0,
     debug: bool = False,
-) -> None:
+) -> Tuple[NDArray, bool, NDArray, FastResampler]:
+    """
+        Prepare band-specific regressor data for time series analysis.
+
+        This function reads in a regressor timecourse from a text file and resamples it
+        to match the dimensions of fMRI data. It also loads percentile and lag data
+        from NIfTI files, performing necessary checks for spatial dimension matching.
+        A FastResampler is initialized for later use in resampling the regressor.
+
+        Parameters
+        ----------
+        simdatadims : Any
+            Spatial dimensions of the fMRI data.
+        pctfile : Any
+            Path to the NIfTI file containing percentile data. If None, `sigfracfile` is used.
+        sigfracfile : Any
+            Path to the NIfTI file containing signal fraction data. Used if `pctfile` is None.
+        lagfile : Any
+            Path to the NIfTI file containing lag data.
+        regressorfile : Any
+            Path to the text file containing the regressor timecourse.
+        samprate : Any
+            Sampling rate of the regressor. If None, uses the value from `regressorfile`.
+        starttime : Any
+            Start time of the regressor. If None, uses the value from `regressorfile`.
+        regressorname : Any
+            Name of the regressor, used for logging and debugging.
+        padtime : float, optional
+            Padding time (in seconds) for the resampler. Default is 30.0.
+        debug : bool, optional
+            If True, prints debug information. Default is False.
+
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - pctdata : ndarray
+                The loaded and possibly scaled percentile or signal fraction data.
+            - pctscale : bool
+                Indicates whether the data was scaled from a percentile file.
+            - lagdata : ndarray
+                The loaded lag data from the NIfTI file.
+            - generator : FastResampler
+                An initialized FastResampler object for resampling the regressor.
+
+        Notes
+        -----
+        - The function checks that the spatial dimensions of the NIfTI files match
+          those of the fMRI data.
+        - If `pctfile` is None, the function uses `sigfracfile` and scales the data by 100.
+        - The regressor is normalized using standard normalization.
+
+        Examples
+        --------
+        >>> prepareband(
+        ...     simdatadims=[64, 64, 32],
+        ...     pctfile='pct.nii.gz',
+        ...     sigfracfile=None,
+        ...     lagfile='lag.nii.gz',
+        ...     regressorfile='regressor.txt',
+        ...     samprate=2.0,
+        ...     starttime=0.0,
+        ...     regressorname='band1',
+        ...     padtime=30.0,
+        ...     debug=False
+        ... )
+        """
     if debug:
         print("simdatadims:", simdatadims)
         print("pctfile:", pctfile)
@@ -285,6 +377,81 @@ def fmrisignal(
     cardiacnoise: float = 0.0,
     cardiacfilter: Optional[Any] = None,
 ) -> None:
+    """
+        Generate an fMRI signal by combining multiple physiological waveforms.
+
+        This function constructs an fMRI signal by summing a base mean signal with
+        contributions from low-frequency oscillations (LFO), respiratory signals,
+        and cardiac signals, each optionally modulated by amplitude, delay, noise,
+        and filtering.
+
+        Parameters
+        ----------
+        Fs : Any
+            Sampling frequency of the signal.
+        times : Any
+            Time vector for the signal.
+        meanvalue : Any
+            Base mean signal value.
+        dolfo : bool, optional
+            Whether to include low-frequency oscillation (LFO) component. Default is False.
+        lfowave : Optional[Any], optional
+            Waveform object for LFO signal. Default is None.
+        lfomag : Optional[Any], optional
+            Magnitude of LFO signal. Default is None.
+        lfodelay : Optional[Any], optional
+            Delay for LFO signal. Default is None.
+        lfonoise : float, optional
+            Noise level for LFO signal. Default is 0.0.
+        lfofilter : Optional[Any], optional
+            Filter object for LFO noise. Default is None.
+        doresp : bool, optional
+            Whether to include respiratory signal component. Default is False.
+        respwave : Optional[Any], optional
+            Waveform object for respiratory signal. Default is None.
+        respmag : Optional[Any], optional
+            Magnitude of respiratory signal. Default is None.
+        respdelay : Optional[Any], optional
+            Delay for respiratory signal. Default is None.
+        respnoise : float, optional
+            Noise level for respiratory signal. Default is 0.0.
+        respfilter : Optional[Any], optional
+            Filter object for respiratory noise. Default is None.
+        docardiac : bool, optional
+            Whether to include cardiac signal component. Default is False.
+        cardiacwave : Optional[Any], optional
+            Waveform object for cardiac signal. Default is None.
+        cardiacmag : Optional[Any], optional
+            Magnitude of cardiac signal. Default is None.
+        cardiacdelay : Optional[Any], optional
+            Delay for cardiac signal. Default is None.
+        cardiacnoise : float, optional
+            Noise level for cardiac signal. Default is 0.0.
+        cardiacfilter : Optional[Any], optional
+            Filter object for cardiac noise. Default is None.
+
+        Returns
+        -------
+        None
+            The function currently returns None. The actual signal is computed and returned
+            by the function body, but the return statement is not correctly implemented.
+
+        Notes
+        -----
+        The function modifies the signal in-place and returns a signal array that includes
+        contributions from all enabled physiological components. Each component is scaled
+        by `meanvalue` and optionally processed with delay, magnitude, noise, and filtering.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> Fs = 100
+        >>> times = np.linspace(0, 10, 1000)
+        >>> meanvalue = 1.0
+        >>> signal = fmrisignal(Fs, times, meanvalue)
+        >>> # With LFO component enabled
+        >>> signal = fmrisignal(Fs, times, meanvalue, dolfo=True, lfowave=wave, lfomag=0.5)
+        """
     thesignal = np.zeros((len(times)), dtype=float)
     if dolfo:
         thesignal += meanvalue * (
@@ -305,6 +472,63 @@ def fmrisignal(
 
 
 def simdata(args: Any) -> None:
+    """
+        Generate simulated fMRI data based on physiological signal regressors.
+
+        This function simulates fMRI time series data by incorporating physiological
+        signals such as low-frequency oscillations (LFO), respiratory, and cardiac
+        signals. It reads in regressor files, applies filtering, and generates
+        voxel-wise time series using a signal simulation function.
+
+        Parameters
+        ----------
+        args : Any
+            An object containing command-line arguments specifying input and output
+            parameters. Expected attributes include:
+            - lfopctfile, lfosigfracfile, lfolagfile, lforegressor, lfosamprate,
+              lfostarttime: LFO-related input files and parameters.
+            - resppctfile, respsigfracfile, resplagfile, respregressor, respsamprate,
+              respstarttime: Respiratory-related input files and parameters.
+            - cardiacpctfile, cardiacsigfracfile, cardiaclagfile, cardiacregressor,
+              cardiacsamprate, cardiacstarttime: Cardiac-related input files and parameters.
+            - immeanfilename: Path to the mean image file.
+            - numtrs, numskip, fmritr: fMRI time series parameters.
+            - slicetimefile: Optional path to slice timing file.
+            - outputroot: Root name for output NIfTI files.
+            - globalnoiselevel, voxelnoiselevel: Noise parameters.
+            - debug: Boolean flag for debug output.
+
+        Returns
+        -------
+        None
+            This function does not return a value but saves the simulated fMRI data
+            to NIfTI files.
+
+        Notes
+        -----
+        The function requires at least one of LFO, respiratory, or cardiac signal
+        parameters to be specified. If none are provided, the function will print
+        help and exit.
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     lfopctfile='lfo_pct.nii.gz',
+        ...     lfolagfile='lfo_lag.nii.gz',
+        ...     lforegressor='lfo_regressor.txt',
+        ...     lfosamprate=10.0,
+        ...     immeanfilename='mean_func.nii.gz',
+        ...     numtrs=200,
+        ...     numskip=10,
+        ...     fmritr=2.0,
+        ...     outputroot='simulated_data',
+        ...     globalnoiselevel=0.1,
+        ...     voxelnoiselevel=0.05,
+        ...     debug=False
+        ... )
+        >>> simdata(args)
+        """
     # set default variable values
     lfopctdata = None
     lfolagdata = None

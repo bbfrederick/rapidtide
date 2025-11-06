@@ -73,6 +73,155 @@ def fitSimFunc(
     rt_floatset: Any = np.float64,
     rt_floattype: str = "float64",
 ) -> None:
+    """
+        Perform similarity function fitting and time lag estimation for fMRI data.
+
+        This function conducts either a simple or full fitting process for estimating time lags
+        between fMRI signals and a reference time course. It supports hybrid similarity metrics
+        and includes optional despeckling and patch shifting steps.
+
+        Parameters
+        ----------
+        fmri_data_valid : array_like
+            Valid fMRI data for processing.
+        validsimcalcstart : int
+            Start index for valid similarity calculation.
+        validsimcalcend : int
+            End index for valid similarity calculation.
+        osvalidsimcalcstart : int
+            Start index for oversampled valid similarity calculation.
+        osvalidsimcalcend : int
+            End index for oversampled valid similarity calculation.
+        initial_fmri_x : array_like
+            Initial fMRI x values.
+        os_fmri_x : array_like
+            Oversampled fMRI x values.
+        theMutualInformationator : object
+            Mutual information calculator.
+        cleaned_referencetc : array_like
+            Cleaned reference time course.
+        corrout : array_like
+            Correlation output array.
+        outputname : str
+            Output filename prefix.
+        validvoxels : array_like
+            Indices of valid voxels.
+        nativespaceshape : tuple
+            Native space shape of the data.
+        bidsbasedict : dict
+            BIDS-based dictionary for output metadata.
+        numspatiallocs : int
+            Number of spatial locations.
+        gaussout : array_like
+            Gaussian output array.
+        theinitialdelay : float
+            Initial delay value.
+        windowout : array_like
+            Window output array.
+        R2 : array_like
+            R-squared values.
+        thesizes : array_like
+            Sizes for processing.
+        internalspaceshape : tuple
+            Internal space shape.
+        numvalidspatiallocs : int
+            Number of valid spatial locations.
+        theinputdata : object
+            Input data object.
+        theheader : dict
+            Header information.
+        theFitter : object
+            Fitter object for similarity function fitting.
+        fitmask : array_like
+            Mask for fitting.
+        lagtimes : array_like
+            Array to store estimated lag times.
+        lagstrengths : array_like
+            Array to store lag strengths.
+        lagsigma : array_like
+            Array to store sigma values for lags.
+        failreason : array_like
+            Array to store failure reasons.
+        outmaparray : array_like
+            Output map array.
+        trimmedcorrscale : array_like
+            Trimmed correlation scale.
+        similaritytype : str
+            Type of similarity metric used.
+        thepass : int
+            Current pass number.
+        optiondict : dict
+            Dictionary of options for processing.
+        LGR : object
+            Logger for general messages.
+        TimingLGR : object
+            Logger for timing information.
+        simplefit : bool, optional
+            If True, perform simple fitting using upsampling. Default is False.
+        upsampfac : int, optional
+            Upsampling factor for simple fitting. Default is 8.
+        rt_floatset : dtype, optional
+            Real-time floating-point data type. Default is np.float64.
+        rt_floattype : str, optional
+            Real-time floating-point type as string. Default is "float64".
+
+        Returns
+        -------
+        internaldespeckleincludemask : array_like or None
+            Mask indicating which voxels were included in despeckling, or None if no despeckling was performed.
+
+        Notes
+        -----
+        - This function supports both simple and hybrid similarity metrics.
+        - Despeckling and patch shifting steps are optional and controlled by `optiondict`.
+        - The function modifies `lagtimes`, `lagstrengths`, `lagsigma`, and `fitmask` in-place.
+
+        Examples
+        --------
+        >>> fitSimFunc(
+        ...     fmri_data_valid,
+        ...     validsimcalcstart,
+        ...     validsimcalcend,
+        ...     osvalidsimcalcstart,
+        ...     osvalidsimcalcend,
+        ...     initial_fmri_x,
+        ...     os_fmri_x,
+        ...     theMutualInformationator,
+        ...     cleaned_referencetc,
+        ...     corrout,
+        ...     outputname,
+        ...     validvoxels,
+        ...     nativespaceshape,
+        ...     bidsbasedict,
+        ...     numspatiallocs,
+        ...     gaussout,
+        ...     theinitialdelay,
+        ...     windowout,
+        ...     R2,
+        ...     thesizes,
+        ...     internalspaceshape,
+        ...     numvalidspatiallocs,
+        ...     theinputdata,
+        ...     theheader,
+        ...     theFitter,
+        ...     fitmask,
+        ...     lagtimes,
+        ...     lagstrengths,
+        ...     lagsigma,
+        ...     failreason,
+        ...     outmaparray,
+        ...     trimmedcorrscale,
+        ...     similaritytype,
+        ...     thepass,
+        ...     optiondict,
+        ...     LGR,
+        ...     TimingLGR,
+        ...     simplefit=False,
+        ...     upsampfac=8,
+        ...     rt_floatset=np.float64,
+        ...     rt_floattype="float64",
+        ... )
+        """
     # Do a peak prefit if doing hybrid
     if optiondict["similaritymetric"] == "hybrid":
         LGR.info(f"\n\nPeak prefit calculation, pass {thepass}")

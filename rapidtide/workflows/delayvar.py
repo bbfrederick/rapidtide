@@ -73,8 +73,28 @@ DEFAULT_TRAINSTEP = 0.5
 
 def _get_parser() -> Any:
     """
-    Argument parser for glmfilt
-    """
+        Argument parser for glmfilt.
+    
+        This function constructs and returns an `argparse.ArgumentParser` object configured
+        for parsing command-line arguments used by the `glmfilt` tool. It defines required
+        and optional arguments for processing fMRI data, including file paths, filtering
+        options, output settings, and experimental parameters.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser for the glmfilt tool.
+
+        Notes
+        -----
+        The parser includes both standard and experimental options. Experimental options
+        are marked as such and may not be fully tested or stable.
+
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args()
+        """
     parser = argparse.ArgumentParser(
         prog="delayvar",
         description="Calculate variation in delay time over the course of an acquisition.",
@@ -269,6 +289,101 @@ def _get_parser() -> Any:
 
 
 def delayvar(args: Any) -> None:
+    """
+        Perform windowed delay variance analysis on fMRI data.
+
+        This function conducts a comprehensive delay variance analysis on fMRI data,
+        computing delay offsets for each voxel across temporal windows. It supports
+        various filtering options, PCA-based systemic component removal, and outputs
+        detailed timing information and processed maps.
+
+        Parameters
+        ----------
+        args : Any
+            Namespace object containing all required arguments for the analysis.
+            Expected attributes include:
+            - fmrifile : str
+                Path to the input fMRI NIfTI file.
+            - datafileroot : str
+                Root name for output files.
+            - lag_extrema : tuple of int
+                Minimum and maximum lag values for analysis.
+            - alternateoutput : str, optional
+                Alternate output name.
+            - debug : bool
+                Enable debug mode.
+            - outputlevel : str
+                Level of output files to save ('min', 'less', 'normal', 'more', 'max').
+            - nprocs : int
+                Number of processes to use.
+            - hpf : bool
+                Apply highpass filtering.
+            - windowsize : float
+                Size of temporal windows in seconds.
+            - windelayoffsetgausssigma : float
+                Sigma for Gaussian smoothing of delay offsets.
+            - delaypatchthresh : float
+                Threshold for patch-based delay correction.
+            - systemicfittype : str
+                Type of systemic component removal ('pca' or 'mean').
+            - pcacomponents : float
+                Number of PCA components to use.
+            - trainstep : float
+                Step size for training the delay model.
+            - numskip : int
+                Number of initial timepoints to skip.
+            - focaldebug : bool
+                Enable focal debugging mode.
+            - verbose : bool
+                Enable verbose output.
+            - showprogressbar : bool
+                Show progress bar during processing.
+
+        Returns
+        -------
+        None
+            This function does not return a value but writes multiple output files
+            including:
+            - Delay offset maps in temporal windows
+            - Systemic component timeseries
+            - PCA component information
+            - Timing and runoptions files
+            - Histograms of delay offsets
+            - Various intermediate processing results
+
+        Notes
+        -----
+        The function performs the following key steps:
+        1. Windowed processing of fMRI data
+        2. Derivative ratio calculation and filtering
+        3. Delay offset training and calculation
+        4. Systemic component removal (PCA or mean)
+        5. Output generation and cleanup
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     fmrifile='data.nii.gz',
+        ...     datafileroot='output',
+        ...     lag_extrema=(0, 10),
+        ...     debug=False,
+        ...     outputlevel='normal',
+        ...     nprocs=4,
+        ...     hpf=True,
+        ...     windowsize=30.0,
+        ...     windelayoffsetgausssigma=2.0,
+        ...     delaypatchthresh=0.5,
+        ...     systemicfittype='pca',
+        ...     pcacomponents=0.8,
+        ...     trainstep=0.1,
+        ...     numskip=5,
+        ...     focaldebug=False,
+        ...     verbose=True,
+        ...     showprogressbar=True
+        ... )
+        >>> delayvar(args)
+        """
     # get the pid of the parent process
     args.pid = os.getpid()
 
@@ -1123,7 +1238,36 @@ def delayvar(args: Any) -> None:
 
 def process_args(inputargs: Optional[Any] = None) -> None:
     """
-    Compile arguments for delayvar workflow.
-    """
+        Compile arguments for delayvar workflow.
+    
+        This function processes input arguments for the delayvar workflow by parsing
+        command line arguments or provided input arguments using a predefined parser.
+    
+        Parameters
+        ----------
+        inputargs : Any, optional
+            Input arguments to be processed. Can be None (default) to use command line
+            arguments, or a list of arguments to parse. Default is None.
+    
+        Returns
+        -------
+        dict
+            Parsed arguments as a dictionary. The exact structure depends on the
+            argument parser (_get_parser) used internally.
+    
+        Notes
+        -----
+        This function internally calls `pf.setargs` with the `_get_parser` function
+        and the provided input arguments. The returned arguments are typically used
+        to configure the delayvar workflow parameters.
+    
+        Examples
+        --------
+        >>> # Using default command line arguments
+        >>> args = process_args()
+    
+        >>> # Using custom arguments
+        >>> args = process_args(['--input', 'data.txt', '--output', 'result.txt'])
+        """
     args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
     return args

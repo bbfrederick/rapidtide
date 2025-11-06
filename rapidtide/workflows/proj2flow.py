@@ -29,6 +29,33 @@ import rapidtide.io as tide_io
 
 
 def _get_parser() -> Any:
+    """
+        Create and configure argument parser for phase projection to velocity map conversion.
+    
+        This function sets up the command line argument parser for the proj2flow tool,
+        which converts phase projection movies to velocity maps. It defines required
+        positional arguments for input and output files, as well as optional debugging
+        flag.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with defined command line arguments
+        
+        Notes
+        -----
+        The function currently has commented-out frequency filter arguments (lowestfreq
+        and highestfreq) that can be enabled if needed for specific use cases.
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['input.nii', 'output_root'])
+        >>> print(args.inputfilename)
+        'input.nii'
+        >>> print(args.outputroot)
+        'output_root'
+        """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="proj2flow",
@@ -61,6 +88,49 @@ def _get_parser() -> Any:
 
 
 def proj2flow(args: Any) -> None:
+    """
+        Compute 3D velocity fields from projected 4D fMRI data using forward and backward differences.
+
+        This function reads 4D NIfTI fMRI data, computes velocity fields at each timepoint by
+        calculating forward and backward differences in spatial and temporal dimensions, and
+        saves the resulting velocity fields as 3D NIfTI files. It also saves an average velocity
+        field across all timepoints.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            Command-line arguments parsed by `_get_parser()`. Expected attributes include:
+            - `inputfilename` : str
+                Path to the input NIfTI file containing 4D fMRI data.
+            - `outputroot` : str
+                Root name for output NIfTI files.
+            - `debug` : bool, optional
+                If True, enables debug printing and additional checks.
+
+        Returns
+        -------
+        None
+            This function does not return a value. It writes NIfTI files to disk.
+
+        Notes
+        -----
+        - The function assumes the input data is in the same spatial and temporal dimensions
+          as specified by the NIfTI header.
+        - Forward and backward differences are computed using a 3x3x3 neighborhood in space
+          and a single timepoint difference.
+        - Velocity fields are saved with intent code 2003 (indicating a vector field).
+        - The output files are named using the format:
+            - `{outputroot}_{timepoint:02d}.nii.gz` for each timepoint
+            - `{outputroot}_average.nii.gz` for the average velocity field
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(inputfilename='fmri_data.nii.gz',
+        ...                           outputroot='velocity',
+        ...                           debug=False)
+        >>> proj2flow(args)
+        """
     # set default variable values
     displayplots = False
 

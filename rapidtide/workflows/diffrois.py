@@ -32,8 +32,33 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser() -> Any:
     """
-    Argument parser for diffrois
-    """
+        Argument parser for diffrois.
+    
+        This function creates and configures an argument parser for the diffrois command-line tool.
+        It defines required and optional arguments needed to process ROI (Region of Interest) data
+        from a CSV file and generate difference matrices.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with defined arguments for diffrois.
+        
+        Notes
+        -----
+        The parser is configured with:
+        - A required datafile argument (CSV input)
+        - A required outputroot argument (root name for output files)
+        - Optional keyfile argument to specify region label order
+        - Optional maxlines argument to limit processing to first N lines
+        - Optional debug flag for verbose output
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['data.csv', 'output_root'])
+        >>> print(args.datafile)
+        'data.csv'
+        """
     parser = argparse.ArgumentParser(
         prog="diffrois",
         description="Create matrices showing the difference in values between ROIs in a CSV file.",
@@ -81,6 +106,56 @@ def _get_parser() -> Any:
 
 
 def diffrois(args: Any) -> None:
+    """
+        Compute pairwise differences between regions in a CSV file and save results as NIfTI images.
+
+        This function reads region data from a CSV file, computes pairwise differences between
+        regions, and saves the results as NIfTI images. It also computes mean and standard
+        deviation maps of the differences and saves those as well. The function supports
+        optional masking of invalid (NaN) values and can limit the number of input lines
+        processed.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            An object containing the following attributes:
+            - datafile : str
+                Path to the input CSV file containing region data.
+            - keyfile : str, optional
+                Path to a file listing column keys in the CSV to use for processing.
+            - outputroot : str
+                Root name for output NIfTI files.
+            - maxlines : int, optional
+                Maximum number of lines to process from the input CSV.
+            - debug : bool
+                If True, print debug information during execution.
+
+        Returns
+        -------
+        None
+            This function does not return any value but saves multiple NIfTI files to disk.
+
+        Notes
+        -----
+        The function saves the following NIfTI files:
+        - `{outputroot}_diffs.nii.gz`: Pairwise differences between regions.
+        - `{outputroot}_mask.nii.gz`: Binary mask indicating valid (non-NaN) values.
+        - `{outputroot}_meandiffs.nii.gz`: Mean of differences for each region pair.
+        - `{outputroot}_stddiffs.nii.gz`: Standard deviation of differences for each region pair.
+        - `{outputroot}_demeaneddiffs.nii.gz`: Demeaned differences (difference minus mean).
+
+        Examples
+        --------
+        >>> import argparse
+        >>> args = argparse.Namespace(
+        ...     datafile='data.csv',
+        ...     keyfile='keys.txt',
+        ...     outputroot='output',
+        ...     maxlines=100,
+        ...     debug=False
+        ... )
+        >>> diffrois(args)
+        """
     df = pd.read_csv(args.datafile)
 
     theregions = np.array(df.columns[1:].values)

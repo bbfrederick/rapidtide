@@ -28,6 +28,31 @@ import rapidtide.util as tide_util
 
 
 def _get_parser() -> Any:
+    """
+        Create and configure argument parser for tcfrom2col command line tool.
+    
+        This function sets up an argument parser with required and optional arguments
+        for processing two-column data files into time course output.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with all required and optional arguments
+            for the tcfrom2col tool.
+        
+        Notes
+        -----
+        The parser includes the following required arguments:
+        - infilename: input two column file name
+        - timestep: time step of output time course in seconds
+        - numpoints: number of output time points
+        - outfilename: output time course file name
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args()
+        """
     # get the command line parameters
     parser = argparse.ArgumentParser(
         prog="tcfrom2col",
@@ -52,6 +77,52 @@ def _get_parser() -> Any:
 
 
 def tcfrom2col(args: Any) -> None:
+    """
+        Convert two-column data to tidal constituent data.
+    
+        This function reads two-column input data, processes it to extract tidal constituents,
+        and writes the results to an output file. The input data is expected to be in a format
+        suitable for tidal analysis, and the output contains the computed tidal constituents.
+    
+        Parameters
+        ----------
+        args : Any
+            An object containing the following attributes:
+            - infilename : str
+                Path to the input file containing two-column data
+            - outfilename : str
+                Path to the output file for writing tidal constituent data
+            - numpoints : int
+                Number of data points in the time series
+            - timestep : float
+                Time step between data points
+            - debug : bool
+                Flag to enable debug printing
+        
+        Returns
+        -------
+        None
+            This function does not return a value but writes output to a file.
+        
+        Notes
+        -----
+        The function uses `tide_io.readvecs` to read input data and `tide_util.maketcfrom2col`
+        to perform the tidal constituent calculation. The time axis is generated based on the
+        number of points and time step provided in the args object.
+        
+        Examples
+        --------
+        >>> class Args:
+        ...     def __init__(self):
+        ...         self.infilename = 'input.txt'
+        ...         self.outfilename = 'output.txt'
+        ...         self.numpoints = 1000
+        ...         self.timestep = 300.0
+        ...         self.debug = False
+        ...
+        >>> args = Args()
+        >>> tcfrom2col(args)
+        """
     if args.debug:
         print(args)
 

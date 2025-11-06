@@ -59,6 +59,124 @@ def regressfrommaps(
     coefficientsonly: bool = False,
     debug: bool = False,
 ) -> None:
+    """
+        Perform regression analysis on fMRI data using lagged timecourses.
+
+        This function generates voxel-specific regressors from lagged timecourses,
+        applies filtering, and performs regression to estimate model coefficients.
+        It supports various modes including cross-validation regression (cvrmap),
+        and can optionally save intermediate results or quit early.
+
+        Parameters
+        ----------
+        fmri_data_valid : array-like
+            Valid fMRI data to be processed.
+        validvoxels : array-like
+            Indices or mask of valid voxels.
+        initial_fmri_x : array-like
+            Initial fMRI timecourse (e.g., stimulus timing).
+        lagtimes : array-like
+            Time lags to be used for generating lagged regressors.
+        fitmask : array-like
+            Mask for selecting voxels to fit.
+        genlagtc : object
+            Generator for lagged timecourses.
+        mode : str
+            Processing mode (e.g., 'cvrmap').
+        outputname : str
+            Base name for output files.
+        oversamptr : float
+            Oversampling rate for timecourse generation.
+        sLFOfitmean : array-like
+            Mean of sLFO fit values.
+        rvalue : array-like
+            R-values from regression.
+        r2value : array-like
+            R-squared values from regression.
+        fitNorm : array-like
+            Normalization values for fit.
+        fitcoeff : array-like
+            Coefficients from the fit.
+        movingsignal : array-like
+            Moving signal components.
+        lagtc : array-like
+            Lagged timecourses.
+        filtereddata : array-like
+            Filtered fMRI data.
+        LGR : object, optional
+            Logger for general logging.
+        TimingLGR : object, optional
+            Logger for timing information.
+        regressfiltthreshval : float
+            Threshold for regression filtering.
+        saveminimumsLFOfiltfiles : bool
+            Whether to save noise removed timeseries.
+        nprocs_makelaggedtcs : int, optional
+            Number of processes for making lagged timecourses (default is 1).
+        nprocs_regressionfilt : int, optional
+            Number of processes for regression filtering (default is 1).
+        regressderivs : int, optional
+            Order of derivatives to include in regressors (default is 0).
+        chunksize : int, optional
+            Size of chunks for processing (default is 50000).
+        showprogressbar : bool, optional
+            Whether to show progress bar (default is True).
+        alwaysmultiproc : bool, optional
+            Force multiprocessing even for small tasks (default is False).
+        saveEVsandquit : bool, optional
+            Save EVs and quit early (default is False).
+        coefficientsonly : bool, optional
+            Return only coefficients (default is False).
+        debug : bool, optional
+            Enable debug output (default is False).
+
+        Returns
+        -------
+        tuple
+            If `saveEVsandquit` is True, returns (0, regressorset, evset).
+            Otherwise, returns (voxelsprocessed_regressionfilt, regressorset, evset).
+
+        Notes
+        -----
+        - The function modifies `fitcoeff` in-place when `mode == "cvrmap"` by multiplying by 100.
+        - The function uses multiprocessing if `alwaysmultiproc` is True or if `nprocs > 1`.
+        - Filtering is performed using `tide_linfitfiltpass.linfitfiltpass`.
+
+        Examples
+        --------
+        >>> regressfrommaps(
+        ...     fmri_data_valid=data,
+        ...     validvoxels=voxels,
+        ...     initial_fmri_x=stimulus,
+        ...     lagtimes=lags,
+        ...     fitmask=mask,
+        ...     genlagtc=gen,
+        ...     mode="cvrmap",
+        ...     outputname="output",
+        ...     oversamptr=2.0,
+        ...     sLFOfitmean=mean,
+        ...     rvalue=r_vals,
+        ...     r2value=r2_vals,
+        ...     fitNorm=norm,
+        ...     fitcoeff=coeffs,
+        ...     movingsignal=moving,
+        ...     lagtc=lagged_tc,
+        ...     filtereddata=filtered,
+        ...     LGR=logger,
+        ...     TimingLGR=timing_logger,
+        ...     regressfiltthreshval=0.5,
+        ...     saveminimumsLFOfiltfiles=True,
+        ...     nprocs_makelaggedtcs=4,
+        ...     nprocs_regressionfilt=2,
+        ...     regressderivs=2,
+        ...     chunksize=10000,
+        ...     showprogressbar=True,
+        ...     alwaysmultiproc=False,
+        ...     saveEVsandquit=False,
+        ...     coefficientsonly=False,
+        ...     debug=False,
+        ... )
+        """
     if debug:
         print("regressfrommaps: Starting")
         print(f"\t{nprocs_makelaggedtcs=}")

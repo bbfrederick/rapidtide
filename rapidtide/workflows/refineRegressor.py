@@ -90,6 +90,172 @@ class RegressorRefiner:
         rt_floattype: str = "float64",
         rt_floatset: Any = np.float64,
     ) -> None:
+        """
+            Initialize the object with configuration parameters for fMRI data processing.
+
+            This constructor sets up internal attributes and performs initial setup tasks such as
+            allocating memory and applying masks based on provided parameters.
+
+            Parameters
+            ----------
+            internalvalidfmrishape : Any
+                Shape of the internal valid fMRI data.
+            internalvalidpaddedfmrishape : Any
+                Shape of the padded internal valid fMRI data.
+            pid : Any
+                Process identifier used for memory allocation.
+            outputname : Any
+                Name of the output file or dataset.
+            initial_fmri_x : Any
+                Initial fMRI data array.
+            paddedinitial_fmri_x : Any
+                Padded version of the initial fMRI data.
+            os_fmri_x : Any
+                Oversampled fMRI data array.
+            sharedmem : bool, optional
+                Whether to use shared memory for processing (default is False).
+            offsettime : float, optional
+                Time offset in seconds (default is 0.0).
+            ampthresh : float, optional
+                Amplitude threshold for filtering (default is 0.3).
+            lagminthresh : float, optional
+                Minimum lag threshold for correlation analysis (default is 0.25).
+            lagmaxthresh : float, optional
+                Maximum lag threshold for correlation analysis (default is 3.0).
+            sigmathresh : float, optional
+                Significance threshold for statistical tests (default is 1000.0).
+            cleanrefined : bool, optional
+                Whether to apply refined cleaning steps (default is False).
+            bipolar : bool, optional
+                Whether to use bipolar filtering (default is False).
+            fixdelay : bool, optional
+                Whether to fix delay in the processing pipeline (default is False).
+            includemask : Optional[Any], optional
+                Mask to include specific regions (default is None).
+            excludemask : Optional[Any], optional
+                Mask to exclude specific regions (default is None).
+            LGR : Optional[Any], optional
+                Logarithmic gradient or related parameter (default is None).
+            nprocs : int, optional
+                Number of processes to use (default is 1).
+            detrendorder : int, optional
+                Order of detrending polynomial (default is 1).
+            alwaysmultiproc : bool, optional
+                Force multiprocessing even for small tasks (default is False).
+            showprogressbar : bool, optional
+                Show progress bar during processing (default is True).
+            chunksize : int, optional
+                Size of data chunks for processing (default is 50000).
+            padtrs : int, optional
+                Number of TRs to pad (default is 10).
+            refineprenorm : str, optional
+                Pre-normalization method for refinement ("var", "mean", etc.) (default is "var").
+            refineweighting : Optional[Any], optional
+                Weighting scheme for refinement (default is None).
+            refinetype : str, optional
+                Type of refinement to perform ("pca", "ica", etc.) (default is "pca").
+            pcacomponents : float, optional
+                Fraction of PCA components to retain (default is 0.8).
+            dodispersioncalc : bool, optional
+                Whether to perform dispersion calculation (default is False).
+            dispersioncalc_lower : float, optional
+                Lower bound for dispersion calculation (default is -5.0).
+            dispersioncalc_upper : float, optional
+                Upper bound for dispersion calculation (default is 5.0).
+            dispersioncalc_step : float, optional
+                Step size for dispersion calculation (default is 0.5).
+            windowfunc : str, optional
+                Window function used in spectral analysis (default is "hamming").
+            passes : int, optional
+                Number of filter passes (default is 3).
+            maxpasses : int, optional
+                Maximum allowed number of passes (default is 15).
+            convergencethresh : Optional[Any], optional
+                Convergence threshold for iterative algorithms (default is None).
+            interptype : str, optional
+                Interpolation type for resampling ("univariate", "multivariate") (default is "univariate").
+            usetmask : bool, optional
+                Whether to use temporal mask (default is False).
+            tmask_y : Optional[Any], optional
+                Temporal mask for y-axis (default is None).
+            tmaskos_y : Optional[Any], optional
+                Oversampled temporal mask for y-axis (default is None).
+            fastresamplerpadtime : float, optional
+                Padding time for fast resampling (default is 45.0).
+            prewhitenregressor : bool, optional
+                Apply pre-whitening to regressors (default is False).
+            prewhitenlags : int, optional
+                Number of lags for pre-whitening (default is 10).
+            debug : bool, optional
+                Enable debug mode (default is False).
+            rt_floattype : str, optional
+                Real-time floating-point data type (default is "float64").
+            rt_floatset : Any, optional
+                Real-time float type setting (default is np.float64).
+
+            Returns
+            -------
+            None
+                This method initializes the object and does not return any value.
+
+            Notes
+            -----
+            - The function internally calls `setmasks` and `_allocatemem` to initialize
+              masks and allocate memory respectively.
+            - The parameters are stored as instance attributes for use in subsequent processing steps.
+
+            Examples
+            --------
+            >>> obj = MyClass(
+            ...     internalvalidfmrishape=(64, 64, 30),
+            ...     internalvalidpaddedfmrishape=(64, 64, 35),
+            ...     pid=12345,
+            ...     outputname="output.nii",
+            ...     initial_fmri_x=np.random.rand(64, 64, 30),
+            ...     paddedinitial_fmri_x=np.random.rand(64, 64, 35),
+            ...     os_fmri_x=np.random.rand(64, 64, 60),
+            ...     sharedmem=True,
+            ...     offsettime=0.5,
+            ...     ampthresh=0.5,
+            ...     lagminthresh=0.3,
+            ...     lagmaxthresh=2.0,
+            ...     sigmathresh=500.0,
+            ...     cleanrefined=True,
+            ...     bipolar=False,
+            ...     fixdelay=False,
+            ...     includemask=None,
+            ...     excludemask=None,
+            ...     LGR=None,
+            ...     nprocs=4,
+            ...     detrendorder=2,
+            ...     alwaysmultiproc=False,
+            ...     showprogressbar=True,
+            ...     chunksize=10000,
+            ...     padtrs=5,
+            ...     refineprenorm="mean",
+            ...     refineweighting=None,
+            ...     refinetype="pca",
+            ...     pcacomponents=0.9,
+            ...     dodispersioncalc=True,
+            ...     dispersioncalc_lower=-4.0,
+            ...     dispersioncalc_upper=4.0,
+            ...     dispersioncalc_step=0.25,
+            ...     windowfunc="hann",
+            ...     passes=2,
+            ...     maxpasses=10,
+            ...     convergencethresh=None,
+            ...     interptype="multivariate",
+            ...     usetmask=True,
+            ...     tmask_y=np.ones((64, 64)),
+            ...     tmaskos_y=np.ones((64, 64)),
+            ...     fastresamplerpadtime=30.0,
+            ...     prewhitenregressor=True,
+            ...     prewhitenlags=5,
+            ...     debug=False,
+            ...     rt_floattype="float32",
+            ...     rt_floatset=np.float32,
+            ... )
+            """
         self.internalvalidfmrishape = internalvalidfmrishape
         self.internalvalidpaddedfmrishape = internalvalidpaddedfmrishape
         self.sharedmem = sharedmem
@@ -140,10 +306,73 @@ class RegressorRefiner:
         self.totalrefinementbytes = self._allocatemem(pid)
 
     def setmasks(self, includemask: Any, excludemask: Any) -> None:
+        """
+            Set the include and exclude masks for the object.
+    
+            Parameters
+            ----------
+            includemask : Any
+                The mask to be used for including elements. Type and structure depends
+                on the specific implementation and usage context.
+            excludemask : Any
+                The mask to be used for excluding elements. Type and structure depends
+                on the specific implementation and usage context.
+        
+            Returns
+            -------
+            None
+                This method does not return any value.
+        
+            Notes
+            -----
+            This method assigns the provided masks to instance attributes `includemask`
+            and `excludemask`. The masks are typically used for filtering or selection
+            operations in data processing workflows.
+        
+            Examples
+            --------
+            >>> obj = MyClass()
+            >>> obj.setmasks([1, 0, 1], [0, 1, 0])
+            >>> print(obj.includemask)
+            [1, 0, 1]
+            >>> print(obj.excludemask)
+            [0, 1, 0]
+            """
         self.includemask = includemask
         self.excludemask = excludemask
 
     def _allocatemem(self, pid: Any) -> None:
+        """
+            Allocate memory for refinement arrays using shared memory if specified.
+
+            This function allocates four arrays used in the refinement process:
+            `shiftedtcs`, `weights`, `paddedshiftedtcs`, and `paddedweights`. These
+            arrays are allocated with shapes determined by `internalvalidfmrishape` and
+            `internalvalidpaddedfmrishape`, using the specified data type and memory
+            sharing settings.
+
+            Parameters
+            ----------
+            pid : Any
+                Process identifier used to name shared memory segments.
+
+            Returns
+            -------
+            int
+                Total number of bytes allocated for the refinement arrays.
+
+            Notes
+            -----
+            If `sharedmem` is True, the arrays are allocated in shared memory; otherwise,
+            they are allocated locally. The function prints information about the
+            allocation size and location, and logs memory usage after allocation.
+
+            Examples
+            --------
+            >>> self._allocatemem(pid=1234)
+            allocated 10.500 MB in shared memory for refinement
+            11010048
+            """
         self.shiftedtcs, self.shiftedtcs_shm = tide_util.allocarray(
             self.internalvalidfmrishape,
             self.rt_floattype,
@@ -184,6 +413,33 @@ class RegressorRefiner:
         return totalrefinementbytes
 
     def cleanup(self) -> None:
+        """
+            Clean up memory resources by deleting internal attributes and shared memory segments.
+    
+            This method removes all internal arrays and their corresponding shared memory segments
+            when shared memory is being used. It's designed to free up memory resources that were
+            allocated during processing.
+    
+            Returns
+            -------
+            None
+                This method does not return any value.
+    
+            Notes
+            -----
+            - Deletes the following internal attributes: paddedshiftedtcs, paddedweights, 
+              shiftedtcs, weights
+            - If shared memory is enabled (sharedmem=True), also cleans up the corresponding 
+              shared memory segments using tide_util.cleanup_shm()
+            - This method should be called when the object is no longer needed to prevent 
+              memory leaks
+    
+            Examples
+            --------
+            >>> obj = MyClass()
+            >>> obj.cleanup()
+            >>> # All internal memory resources are now freed
+            """
         del self.paddedshiftedtcs
         del self.paddedweights
         del self.shiftedtcs
@@ -195,6 +451,53 @@ class RegressorRefiner:
             tide_util.cleanup_shm(self.weights_shm)
 
     def makemask(self, lagstrengths: Any, lagtimes: Any, lagsigma: Any, fitmask: Any) -> None:
+        """
+            Create a refinement mask based on lag strength, lag time, and sigma thresholds.
+    
+            This function generates a mask for refining regressor parameters by evaluating
+            the quality of lag estimates against specified thresholds. The mask determines
+            which voxels should be included in the refinement process based on their
+            lag strength, lag time, and sigma values.
+    
+            Parameters
+            ----------
+            lagstrengths : array-like
+                Array containing lag strength values for each voxel
+            lagtimes : array-like
+                Array containing lag time values for each voxel
+            lagsigma : array-like
+                Array containing sigma values for each voxel
+            fitmask : array-like
+                Boolean mask indicating which voxels to consider for fitting
+        
+            Returns
+            -------
+            bool
+                True if voxels are included in the refine mask, False if no voxels
+                meet the refinement criteria
+        
+            Notes
+            -----
+            The function uses internal threshold parameters to determine which voxels
+            should be included in the refinement process. These include:
+    
+            - ampthresh: amplitude threshold
+            - lagminthresh: minimum lag threshold  
+            - lagmaxthresh: maximum lag threshold
+            - sigmathresh: sigma threshold
+    
+            If no voxels meet the criteria, a critical log message is generated and
+            the function returns False.
+    
+            Examples
+            --------
+            >>> # Assuming self is an instance of a class with the required attributes
+            >>> result = self.makemask(lagstrengths, lagtimes, lagsigma, fitmask)
+            >>> if result:
+            ...     print("Refinement mask created successfully")
+            ... else:
+            ...     print("No voxels in refine mask")
+            """
         # create the refinement mask
         (
             self.refinemaskvoxels,
@@ -229,12 +532,94 @@ class RegressorRefiner:
             return True
 
     def getrefinemask(self) -> None:
+        """
+            Return the refinement mask.
+    
+            Returns
+            -------
+            None
+                The refinement mask stored in the instance.
+    
+            Notes
+            -----
+            This method provides access to the refinement mask attribute. The refinement
+            mask is typically used in computational physics or data analysis workflows
+            to identify regions of interest or apply specific processing to certain data
+            points.
+    
+            Examples
+            --------
+            >>> mask = obj.getrefinemask()
+            >>> print(mask)
+            [True, False, True, False]
+            """
         return self.refinemask
 
     def getpaddedshiftedtcs(self) -> None:
+        """
+            Return the padded and shifted time-course data.
+    
+            This method retrieves the pre-computed padded and shifted time-course data
+            that has been processed for analysis. The data is typically used in
+            time-series analysis or signal processing applications where temporal
+            alignment and padding are required.
+    
+            Returns
+            -------
+            array-like
+                The padded and shifted time-course data stored in the instance variable
+                `paddedshiftedtcs`. The exact format depends on the data processing
+                pipeline that generated this data.
+    
+            Notes
+            -----
+            This method serves as a simple getter function for the `paddedshiftedtcs`
+            attribute. The actual computation of padded and shifted time-course data
+            should be performed prior to calling this method.
+    
+            Examples
+            --------
+            >>> processor = TimeCourseProcessor()
+            >>> processor.compute_padded_shifted_tcs()
+            >>> result = processor.getpaddedshiftedtcs()
+            >>> print(result.shape)
+            (1000, 50)
+            """
         return self.paddedshiftedtcs
 
     def alignvoxels(self, fmri_data_valid: Any, fmritr: Any, lagtimes: Any) -> None:
+        """
+            Align timecourses to prepare for refinement.
+    
+            This function aligns voxel timecourses for further refinement processing by
+            coordinating the alignment of fMRI data with specified lag times and processing
+            parameters.
+    
+            Parameters
+            ----------
+            fmri_data_valid : Any
+                Valid fMRI data to be aligned
+            fmritr : Any
+                fMRI temporal resolution information
+            lagtimes : Any
+                Lag times to be used for alignment
+        
+            Returns
+            -------
+            None
+                This function does not return a value but updates internal state
+        
+            Notes
+            -----
+            The function utilizes the `tide_refineregressor.alignvoxels` function internally
+            and passes all relevant processing parameters including multiprocessing settings,
+            detrending options, and padding parameters.
+        
+            Examples
+            --------
+            >>> alignvoxels(fmri_data_valid, fmritr, lagtimes)
+            >>> # Function processes data and updates internal state
+            """
         # align timecourses to prepare for refinement
         self.LGR.info("aligning timecourses")
         voxelsprocessed_rra = tide_refineregressor.alignvoxels(
@@ -260,6 +645,42 @@ class RegressorRefiner:
         # self.LGR.info(f"align complete: {voxelsprocessed_rra=}")
 
     def prenormalize(self, lagtimes: Any, lagstrengths: Any, R2: Any) -> None:
+        """
+            Pre-normalize time series data for refinement regression.
+    
+            This function applies pre-normalization to the padded and shifted time series
+            data using the specified lag times, lag strengths, and R2 values. The
+            normalization is performed through the underlying tide_refineregressor.prenorm
+            function with the appropriate internal parameters.
+    
+            Parameters
+            ----------
+            lagtimes : Any
+                Array or list of lag times to be used in the pre-normalization process.
+            lagstrengths : Any
+                Array or list of lag strengths corresponding to the lag times.
+            R2 : Any
+                Array or list of R2 values used for the pre-normalization calculation.
+        
+            Returns
+            -------
+            None
+                This function does not return any value. It modifies internal attributes
+                in-place.
+        
+            Notes
+            -----
+            The function internally uses:
+            - self.paddedshiftedtcs: padded and shifted time series data
+            - self.refinemask: refinement mask for the normalization process
+            - self.lagmaxthresh: maximum lag threshold
+            - self.refineprenorm: refinement pre-normalization parameters
+            - self.refineweighting: refinement weighting parameters
+    
+            Examples
+            --------
+            >>> prenormalize(lagtimes=[1, 2, 3], lagstrengths=[0.5, 0.3, 0.8], R2=[0.9, 0.85, 0.92])
+            """
         tide_refineregressor.prenorm(
             self.paddedshiftedtcs,
             self.refinemask,
@@ -281,6 +702,61 @@ class RegressorRefiner:
         previousnormoutputdata: Any,
         corrmasksize: Any,
     ) -> None:
+        """
+            Refine the regressor by iteratively applying filtering and resampling operations.
+
+            This method performs iterative refinement of a regressor using a series of
+            filtering, resampling, and normalization steps. It tracks convergence and
+            updates internal state variables accordingly.
+
+            Parameters
+            ----------
+            theprefilter : Any
+                The prefilter to be applied to the data.
+            fmritr : Any
+                The fMRI temporal resolution (TR).
+            thepass : Any
+                The current pass number in the refinement process.
+            lagstrengths : Any
+                The lag strengths used in the refinement.
+            lagtimes : Any
+                The lag times used in the refinement.
+            previousnormoutputdata : Any
+                The normalized output data from the previous pass.
+            corrmasksize : Any
+                The size of the correlation mask.
+
+            Returns
+            -------
+            tuple
+                A tuple containing:
+                - voxelsprocessed_rr : int
+                    Number of voxels processed in this pass.
+                - outputdict : dict
+                    Dictionary of output statistics for this pass.
+                - previousnormoutputdata : ndarray
+                    Updated normalized output data for the next pass.
+                - resampref_y : ndarray
+                    Resampled refined regressor at oversampled frequency.
+                - resampnonosref_y : ndarray
+                    Resampled refined regressor at original frequency.
+                - stoprefining : bool
+                    Flag indicating whether refinement should stop.
+                - refinestopreason : str or None
+                    Reason for stopping refinement.
+                - genlagtc : FastResampler
+                    Generator for lag time courses.
+
+            Notes
+            -----
+            This function modifies internal attributes of the class, such as `paddedoutputdata`,
+            `locationfails`, `ampfails`, `lagfails`, and `sigmafails`. It also writes output
+            files using `tide_io.writebidstsv`.
+
+            Examples
+            --------
+            >>> refine(prefilter, fmritr, 1, lagstrengths, lagtimes, prev_data, mask_size)
+            """
         (
             voxelsprocessed_rr,
             self.paddedoutputdata,
@@ -504,6 +980,109 @@ def refineRegressor(
     rt_floattype: str = "float64",
     debug: bool = False,
 ) -> None:
+    """
+        Refine the regressor by adjusting masks, aligning timecourses, and performing refinement steps.
+
+        This function performs regressor refinement during a specified pass, including:
+        - Updating offset time based on lag properties
+        - Managing masks for refinement and despeckling
+        - Aligning timecourses
+        - Pre-normalizing data
+        - Executing the refinement step using a regressor refiner object
+
+        Parameters
+        ----------
+        LGR : logging.Logger
+            Logger instance for general logging.
+        TimingLGR : logging.Logger
+            Logger instance for timing-related messages.
+        thepass : int
+            Current pass number in the refinement process.
+        optiondict : dict
+            Dictionary containing various options and settings for the refinement process.
+        fitmask : array_like
+            Boolean mask indicating voxels to be considered in fitting.
+        internaloffsetincludemask_valid : array_like or None
+            Mask for including voxels in offset calculation.
+        internaloffsetexcludemask_valid : array_like or None
+            Mask for excluding voxels from offset calculation.
+        internalrefineincludemask_valid : array_like or None
+            Mask for including voxels in refinement.
+        internalrefineexcludemask_valid : array_like or None
+            Mask for excluding voxels from refinement.
+        internaldespeckleincludemask : array_like
+            Mask for including voxels in despeckling.
+        validvoxels : array_like
+            Indices of valid voxels.
+        theRegressorRefiner : object
+            Regressor refiner object with methods for mask setting, masking, alignment, etc.
+        lagtimes : array_like
+            Array of lag times.
+        lagstrengths : array_like
+            Array of lag strengths.
+        lagsigma : array_like
+            Array of lag sigma values.
+        fmri_data_valid : array_like
+            Valid fMRI data.
+        fmritr : float
+            fMRI repetition time.
+        R2 : array_like
+            R2 values.
+        theprefilter : object
+            Filter object used for preprocessing.
+        previousnormoutputdata : array_like
+            Previously normalized output data.
+        theinputdata : object
+            Input data object (e.g., Nifti1Image).
+        numpadtrs : int
+            Number of padded timepoints.
+        outputname : str
+            Base name for output files.
+        nativefmrishape : tuple
+            Shape of the native fMRI data.
+        bidsbasedict : dict
+            Dictionary for BIDS metadata.
+        rt_floatset : numpy.dtype, optional
+            Data type for floating-point operations, default is np.float64.
+        rt_floattype : str, optional
+            String representation of floating-point data type, default is "float64".
+        debug : bool, optional
+            Enable debug mode, default is False.
+
+        Returns
+        -------
+        tuple
+            A tuple containing:
+            - resampref_y : array_like
+              Resampled refined y values.
+            - resampnonosref_y : array_like
+              Resampled non-oscillatory refined y values.
+            - stoprefining : bool
+              Flag indicating whether refinement should stop.
+            - refinestopreason : str
+              Reason for stopping refinement.
+            - genlagtc : array_like
+              Generated lag timecourses.
+
+        Notes
+        -----
+        - This function modifies `optiondict` in-place, updating offset times and other parameters.
+        - The function uses `theRegressorRefiner` to perform various refinement steps including:
+          `setmasks`, `makemask`, `alignvoxels`, `prenormalize`, and `refine`.
+        - If `refinedespeckled` is False and `despeckle_passes` > 0, the exclude mask for refinement
+          is adjusted to include voxels being despeckled.
+        - The function may exit early if no voxels qualify for refinement.
+
+        Examples
+        --------
+        >>> refineRegressor(
+        ...     LGR, TimingLGR, 1, optiondict, fitmask, offset_incl, offset_excl,
+        ...     refine_incl, refine_excl, despeckle_incl, valid_voxels, refiner,
+        ...     lagtimes, lagstrengths, lagsigma, fmri_data, fmritr, R2, prefilter,
+        ...     prev_norm_data, input_data, numpadtrs, output_name, native_shape,
+        ...     bids_dict, debug=True
+        ... )
+        """
     LGR.info(f"\n\nRegressor refinement, pass {thepass}")
     TimingLGR.info(f"Regressor refinement start, pass {thepass}")
     if optiondict["refineoffset"]:

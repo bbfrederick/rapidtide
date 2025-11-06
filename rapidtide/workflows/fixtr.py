@@ -25,8 +25,32 @@ import rapidtide.io as tide_io
 
 def _get_parser() -> Any:
     """
-    Argument parser for resamplenifti
-    """
+        Argument parser for resamplenifti.
+    
+        Creates and configures an argument parser for the resamplenifti command-line tool
+        that changes the TR (repetition time) in a NIFTI header.
+    
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser object with all required and optional arguments
+            for the resamplenifti tool.
+        
+        Notes
+        -----
+        The parser is configured with:
+        - Required positional arguments: inputfile, outputfile, and outputtr
+        - Optional debug flag for additional output
+        - Program name set to "fixtr"
+        - Description explaining the purpose of changing TR in NIFTI headers
+    
+        Examples
+        --------
+        >>> parser = _get_parser()
+        >>> args = parser.parse_args(['input.nii', 'output', '2.0'])
+        >>> print(args.inputfile)
+        'input.nii'
+        """
     parser = argparse.ArgumentParser(
         prog="fixtr",
         description="Change the TR in a NIFTI header.",
@@ -48,6 +72,50 @@ def _get_parser() -> Any:
 
 
 def fixtr(args: Any) -> None:
+    """
+        Fix the temporal resolution (TR) of a NIfTI file.
+    
+        This function reads a NIfTI file and modifies its header to change the
+        temporal resolution (TR) while preserving the original data. The output
+        file is saved with the new TR value in the header.
+    
+        Parameters
+        ----------
+        args : Any
+            An object containing the following attributes:
+            - inputfile : str
+                Path to the input NIfTI file
+            - outputfile : str
+                Path to the output NIfTI file
+            - outputtr : float
+                Desired output temporal resolution in seconds
+            - debug : bool, optional
+                If True, print debug information including input timepoints and TR
+    
+        Returns
+        -------
+        None
+            This function does not return a value but saves the modified NIfTI file
+            to the specified output path.
+    
+        Notes
+        -----
+        The function preserves the original data type and spatial dimensions of the
+        input file. The temporal dimension (t) in the output header is updated based
+        on the units specified in the input header. If the input header specifies
+        millisecond units, the output TR is converted from seconds to milliseconds.
+    
+        Examples
+        --------
+        >>> class Args:
+        ...     def __init__(self):
+        ...         self.inputfile = "input.nii"
+        ...         self.outputfile = "output.nii"
+        ...         self.outputtr = 2.0
+        ...         self.debug = False
+        >>> args = Args()
+        >>> fixtr(args)
+        """
     # get the input TR
     inputtr, numinputtrs = tide_io.fmritimeinfo(args.inputfile)
     if args.debug:
