@@ -54,6 +54,30 @@ MemoryLGR = logging.getLogger("MEMORY")
 defaultbutterorder = 6
 MAXLINES = 10000000
 
+def disablenumba() -> None:
+    """
+        Set a global variable to disable numba.
+
+        This function sets the global variable `donotusenumba` to `True`, which
+        effectively disables the use of numba in subsequent operations that check
+        this variable.
+
+        Notes
+        -----
+        This function modifies a global variable. The variable `donotusenumba` should
+        be checked by other functions in the codebase to determine whether to use
+        numba or not.
+
+        Examples
+        --------
+        >>> disablenumba()
+        >>> print(donotusenumba)
+        True
+        """
+    global donotusenumba
+    donotusenumba = True
+
+
 # ----------------------------------------- Conditional imports ---------------------------------------
 try:
     import pyfftw
