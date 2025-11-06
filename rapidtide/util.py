@@ -27,7 +27,7 @@ import sys
 import time
 from datetime import datetime
 from multiprocessing import shared_memory
-from typing import Any, Callable
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,6 +35,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 import rapidtide._version as tide_versioneer
+import rapidtide.decorators
 import rapidtide.io as tide_io
 from rapidtide.decorators import getdecoratorvars
 
