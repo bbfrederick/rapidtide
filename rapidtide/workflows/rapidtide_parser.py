@@ -1778,7 +1778,7 @@ def _get_parser() -> Any:
     return parser
 
 
-def process_args(inputargs: Optional[Any] = None) -> None:
+def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
     """
         Compile arguments for rapidtide workflow.
 
