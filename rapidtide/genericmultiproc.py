@@ -44,6 +44,80 @@ def run_multiproc(
     debug: bool = False,
     **kwargs: Any,
 ) -> int:
+    """
+        Execute voxel-wise processing with optional multiprocessing support.
+
+        This function performs voxel-wise computations using the provided functions
+        for processing, packing, and unpacking data. It supports both single-threaded
+        and multi-process execution depending on the input parameters.
+
+        Parameters
+        ----------
+        voxelfunc : callable
+            Function to be applied to each voxel. It should accept a voxel index,
+            packed arguments, and optional debug and keyword arguments.
+        packfunc : callable
+            Function to pack voxel arguments for use in `voxelfunc`. It takes a voxel
+            index and `voxelargs` as input.
+        unpackfunc : callable
+            Function to unpack results from `voxelfunc` and store them in `voxelproducts`.
+        voxelargs : list
+            List of arguments to be passed to `packfunc`.
+        voxelproducts : list
+            List of arrays or data structures to be updated with results from `unpackfunc`.
+        inputshape : tuple
+            Shape of the input data, used to determine the number of voxels to process.
+        voxelmask : ndarray
+            Boolean or integer mask indicating which voxels to process.
+        LGR : logging.Logger or None
+            Logger instance for logging messages. If None, no logging is performed.
+        nprocs : int
+            Number of processes to use for multiprocessing. If 1, single-threaded execution is used.
+        alwaysmultiproc : bool
+            If True, forces multiprocessing even when `nprocs` is 1.
+        showprogressbar : bool
+            If True, displays a progress bar during processing.
+        chunksize : int
+            Size of chunks to process in each step for multiprocessing.
+        indexaxis : int, optional
+            Axis along which to iterate over voxels, default is 0.
+        procunit : str, optional
+            Unit of processing for progress bar, default is "voxels".
+        debug : bool, optional
+            If True, prints debug information, default is False.
+        **kwargs : dict
+            Additional keyword arguments passed to `voxelfunc`.
+
+        Returns
+        -------
+        int
+            Total number of voxels processed.
+
+        Notes
+        -----
+        - If `nprocs` > 1 or `alwaysmultiproc` is True, multiprocessing is used.
+        - Otherwise, a single-threaded loop is used with optional progress bar.
+        - The function uses `tide_multiproc.run_multiproc` internally for multiprocessing.
+        - Garbage collection is performed after processing.
+
+        Examples
+        --------
+        >>> run_multiproc(
+        ...     voxelfunc=my_voxel_func,
+        ...     packfunc=pack_voxel_args,
+        ...     unpackfunc=unpack_results,
+        ...     voxelargs=[arg1, arg2],
+        ...     voxelproducts=[output_array],
+        ...     inputshape=(100, 100, 100),
+        ...     voxelmask=mask_array,
+        ...     LGR=None,
+        ...     nprocs=4,
+        ...     alwaysmultiproc=False,
+        ...     showprogressbar=True,
+        ...     chunksize=10,
+        ... )
+        1000
+        """
     if debug:
         print(f"{len(voxelproducts)=}, {voxelproducts[0].shape}")
     if nprocs > 1 or alwaysmultiproc:

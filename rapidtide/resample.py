@@ -66,7 +66,8 @@ else:
 
 
 def conditionaljit() -> Callable:
-    """Return a decorator that conditionally applies Numba's jit decorator.
+    """
+        Return a decorator that conditionally applies Numba's jit decorator.
 
         This function creates a decorator that conditionally applies Numba's `jit` 
         decorator with `nopython=True` mode. The decoration is skipped when the 
@@ -103,7 +104,8 @@ def conditionaljit() -> Callable:
         10
         """
     def resdec(f: Callable) -> Callable:
-        """Decorator to conditionally apply Numba JIT compilation.
+        """
+            Decorator to conditionally apply Numba JIT compilation.
     
             This decorator provides a conditional mechanism to apply Numba's JIT compilation
             to functions. When the global flag `donotusenumba` is True, the original function
@@ -151,7 +153,8 @@ def conditionaljit() -> Callable:
 
 
 def conditionaljit2() -> Callable:
-    """Return a jit decorator that conditionally applies Numba compilation.
+    """
+        Return a jit decorator that conditionally applies Numba compilation.
 
         This function creates a decorator that conditionally applies Numba's jit
         decorator based on global flags. If either `donotusenumba` or `donotbeaggressive`
@@ -179,7 +182,8 @@ def conditionaljit2() -> Callable:
         >>> result = my_function(5)  # Returns 10
         """
     def resdec(f: Callable) -> Callable:
-        """Decorator to conditionally apply Numba JIT compilation.
+        """
+            Decorator to conditionally apply Numba JIT compilation.
     
             This decorator conditionally applies Numba's JIT compilation to a function
             based on global configuration flags. If either `donotusenumba` or `donotbeaggressive`
@@ -220,26 +224,26 @@ def conditionaljit2() -> Callable:
 
 
 def disablenumba() -> None:
+    """
+        Disable Numba compilation globally.
+
+        This function sets a global flag that prevents Numba from being used in subsequent
+        function calls. This is useful when debugging or when Numba compilation is causing
+        issues in the application.
+
+        Notes
+        -----
+        This function modifies a global variable `donotusenumba`. Once called, all subsequent
+        functions that check this flag will skip Numba compilation and fall back to pure Python
+        execution.
+
+        Examples
+        --------
+        >>> disablenumba()
+        >>> # All subsequent functions will run in pure Python mode
+        """
     global donotusenumba
     donotusenumba = True
-"""Disable Numba compilation globally.
-    
-    This function sets a global flag that prevents Numba from being used in subsequent
-    function calls. This is useful when debugging or when Numba compilation is causing
-    issues in the application.
-    
-    Notes
-    -----
-    This function modifies a global variable `donotusenumba`. Once called, all subsequent
-    functions that check this flag will skip Numba compilation and fall back to pure Python
-    execution.
-    
-    Examples
-    --------
-    >>> disablenumba()
-    >>> # All subsequent functions will run in pure Python mode
-    """
-
 
 # --------------------------- Resampling and time shifting functions -------------------------------------------
 congridyvals = {}
@@ -529,7 +533,8 @@ class FastResampler:
             pl.show()
 
     def getdata(self):
-        """Retrieve time series data and related parameters.
+        """
+            Retrieve time series data and related parameters.
 
             Returns
             -------
@@ -562,7 +567,8 @@ class FastResampler:
         return self.timeaxis, self.timecourse, self.hires_x, self.hires_y, 1.0 / self.initstep
 
     def info(self, prefix=""):
-        """Print information about the object's time and sampling parameters.
+        """
+            Print information about the object's time and sampling parameters.
 
             This method displays various time-related attributes and sampling parameters
             of the object, with optional prefix for better formatting in output.
@@ -628,7 +634,8 @@ class FastResampler:
         print(f"{prefix}{self.hires_y[-1]=}")
 
     def save(self, outputname):
-        """Save the timecourse data to a TSV file.
+        """
+            Save the timecourse data to a TSV file.
 
             This method writes the internal timecourse data to a tab-separated values file
             with additional metadata in the header. The output includes the timecourse data
@@ -736,7 +743,8 @@ class FastResampler:
 def FastResamplerFromFile(
     inputname: str, colspec: Optional[str] = None, debug: bool = False, **kwargs
 ) -> FastResampler:
-    """Create a FastResampler from a BIDS TSV file.
+    """
+        Create a FastResampler from a BIDS TSV file.
 
         This function reads data from a BIDS TSV file and creates a FastResampler object
         for efficient time series resampling operations. The input file must contain

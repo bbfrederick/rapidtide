@@ -36,6 +36,57 @@ def _procOneRegressionFitItem(
     rt_floatset: type = np.float64,
     rt_floattype: str = "float64",
 ) -> tuple[int, Any, Any, Any, Any, Any, NDArray, NDArray]:
+    """
+        Perform single regression fit on voxel data and return fit results.
+
+        This function fits a linear regression model to the provided evs and data,
+        handling both univariate and multivariate cases. It computes fit coefficients,
+        R-squared value, and residual data.
+
+        Parameters
+        ----------
+        vox : int
+            Voxel index.
+        theevs : numpy.ndarray
+            Experimental design matrix. If 2D, dimension 0 is number of points,
+            dimension 1 is number of evs.
+        thedata : numpy.ndarray
+            Dependent variable data corresponding to the evs.
+        rt_floatset : type, optional
+            Data type for floating-point results, default is ``np.float64``.
+        rt_floattype : str, optional
+            String representation of the floating-point type, default is ``"float64"``.
+
+        Returns
+        -------
+        tuple[int, Any, Any, Any, Any, Any, numpy.ndarray, numpy.ndarray]
+            A tuple containing:
+            - voxel index (`int`)
+            - intercept term (`Any`)
+            - signed square root of R-squared (`Any`)
+            - R-squared value (`Any`)
+            - fit coefficients (`Any` or `numpy.ndarray`)
+            - normalized fit coefficients (`Any`)
+            - data removed by fitting (`numpy.ndarray`)
+            - residuals (`numpy.ndarray`)
+
+        Notes
+        -----
+        For multivariate regressions (2D `theevs`), the function computes the fit
+        using `tide_fit.mlregress`. If the fit fails, a zero matrix is returned.
+        For univariate regressions (1D `theevs`), the function directly computes
+        the fit and handles edge cases such as zero coefficients.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from tide_fit import mlregress
+        >>> theevs = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+        >>> thedata = np.array([1, 2, 3], dtype=np.float64)
+        >>> result = _procOneRegressionFitItem(0, theevs, thedata)
+        >>> print(result[0])  # voxel index
+        0
+        """
     # NOTE: if theevs is 2D, dimension 0 is number of points, dimension 1 is number of evs
     thefit, R2 = tide_fit.mlregress(theevs, thedata)
     if theevs.ndim > 1:
@@ -109,6 +160,101 @@ def linfitfiltpass(
     verbose: bool = True,
     debug: bool = False,
 ) -> int:
+    """
+        Perform linear regression fitting and filtering on fMRI data.
+
+        This function fits a linear model to fMRI data using specified experimental variables
+        and applies filtering to remove noise. It supports both voxel-wise and timepoint-wise
+        processing, with optional multiprocessing for performance.
+
+        Parameters
+        ----------
+        numprocitems : int
+            Number of items to process (voxels or timepoints depending on ``procbyvoxel``).
+        fmri_data : ndarray
+            Input fMRI data array with shape ``(n_voxels, n_timepoints)`` or ``(n_timepoints, n_voxels)``.
+        threshval : float, optional
+            Threshold value for masking. If ``None``, no masking is applied.
+        theevs : ndarray
+            Experimental variables (design matrix) with shape ``(n_voxels, n_timepoints)`` or ``(n_timepoints, n_voxels)``.
+        meanvalue : ndarray, optional
+            Array to store mean values of the data. Shape depends on ``procbyvoxel``.
+        rvalue : ndarray, optional
+            Array to store correlation coefficients. Shape depends on ``procbyvoxel``.
+        r2value : ndarray
+            Array to store R-squared values. Shape depends on ``procbyvoxel``.
+        fitcoeff : ndarray, optional
+            Array to store fit coefficients. Shape depends on ``procbyvoxel`` and ``constantevs``.
+        fitNorm : ndarray, optional
+            Array to store normalized fit coefficients. Shape depends on ``procbyvoxel``.
+        datatoremove : ndarray, optional
+            Array to store data to be removed after fitting. Shape depends on ``procbyvoxel``.
+        filtereddata : ndarray
+            Array to store filtered data after regression. Shape depends on ``procbyvoxel``.
+        nprocs : int, default: 1
+            Number of processes to use for multiprocessing. If 1 and ``alwaysmultiproc`` is False, uses single-threaded processing.
+        alwaysmultiproc : bool, default: False
+            If True, always use multiprocessing even if ``nprocs`` is 1.
+        constantevs : bool, default: False
+            If True, treat experimental variables as constant across voxels/timepoints.
+        confoundregress : bool, default: False
+            If True, perform confound regression only (no output of coefficients or residuals).
+        coefficientsonly : bool, default: False
+            If True, store only regression coefficients and R-squared values.
+        procbyvoxel : bool, default: True
+            If True, process data voxel-wise; otherwise, process by timepoint.
+        showprogressbar : bool, default: True
+            If True, display a progress bar during processing.
+        chunksize : int, default: 1000
+            Size of chunks for multiprocessing.
+        rt_floatset : type, default: np.float64
+            Data type for internal floating-point calculations.
+        rt_floattype : str, default: "float64"
+            String representation of the floating-point data type.
+        verbose : bool, default: True
+            If True, print verbose output.
+        debug : bool, default: False
+            If True, enable debug printing.
+
+        Returns
+        -------
+        int
+            Total number of items processed.
+
+        Notes
+        -----
+        - The function modifies the output arrays in-place.
+        - For ``confoundregress=True``, only ``r2value`` and ``filtereddata`` are populated.
+        - When ``coefficientsonly=True``, only ``meanvalue``, ``rvalue``, ``r2value``, ``fitcoeff``, and ``fitNorm`` are populated.
+        - If ``threshval`` is provided, a mask is generated based on mean or standard deviation of the data.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from typing import NDArray
+        >>> fmri_data = np.random.rand(100, 200)
+        >>> theevs = np.random.rand(100, 200)
+        >>> r2value = np.zeros(100)
+        >>> filtereddata = np.zeros_like(fmri_data)
+        >>> numprocitems = 100
+        >>> items_processed = linfitfiltpass(
+        ...     numprocitems=numprocitems,
+        ...     fmri_data=fmri_data,
+        ...     threshval=None,
+        ...     theevs=theevs,
+        ...     meanvalue=None,
+        ...     rvalue=None,
+        ...     r2value=r2value,
+        ...     fitcoeff=None,
+        ...     fitNorm=None,
+        ...     datatoremove=None,
+        ...     filtereddata=filtereddata,
+        ...     nprocs=4,
+        ...     procbyvoxel=True,
+        ...     showprogressbar=True
+        ... )
+        >>> print(f"Processed {items_processed} items.")
+        """
     inputshape = np.shape(fmri_data)
     if debug:
         print(f"{numprocitems=}")
@@ -446,24 +592,48 @@ def linfitfiltpass(
 
 def makevoxelspecificderivs(theevs: NDArray, nderivs: int = 1, debug: bool = False) -> NDArray:
     """
-    Perform multicomponent expansion on theevs (each ev replaced by itself,
-    its square, its cube, etc.).
+        Perform multicomponent expansion on voxel-specific explanatory variables by computing
+        derivatives up to a specified order.
 
-    Parameters
-    ----------
-    theevs : 2D numpy array
-        NxP array of voxel specific explanatory variables (one timecourse per voxel)
-        :param theevs:
+        This function takes an array of voxel-specific timecourses and expands each one
+        into a set of components representing the original signal and its derivatives.
+        Each component corresponds to a higher-order derivative of the signal, scaled by
+        the inverse factorial of the derivative order (Taylor series coefficients).
 
-    nderivs : integer
-        Number of components to use for each ev.  Each successive component is a
-        higher power of the initial ev (initial, square, cube, etc.)
-        :param nderivs:
+        Parameters
+        ----------
+        theevs : 2D numpy array
+            NxP array of voxel-specific explanatory variables, where N is the number of voxels
+            and P is the number of timepoints.
+        nderivs : int, optional
+            Number of derivative components to compute for each voxel. Default is 1.
+            If 0, the original `theevs` are returned without modification.
+        debug : bool, optional
+            If True, print debugging information including input and output shapes.
+            Default is False.
 
-    debug: bool
-        Flag to toggle debugging output
-        :param debug:
-    """
+        Returns
+        -------
+        3D numpy array
+            Array of shape (N, P, nderivs + 1) containing the original signal and its
+            derivatives up to order `nderivs` for each voxel. The first component is the
+            original signal, followed by the first, second, ..., up to `nderivs`-th derivative.
+
+        Notes
+        -----
+        - The function uses `numpy.gradient` to compute numerical derivatives.
+        - Each derivative component is scaled by the inverse factorial of the derivative order
+          to align with Taylor series expansion coefficients.
+        - If `nderivs=0`, the function returns a copy of the input `theevs`.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> theevs = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
+        >>> result = makevoxelspecificderivs(theevs, nderivs=2)
+        >>> print(result.shape)
+        (2, 4, 3)
+        """
     if debug:
         print(f"{theevs.shape=}")
     if nderivs == 0:
@@ -501,6 +671,73 @@ def confoundregress(
     showprogressbar: bool = True,
     debug: bool = False,
 ) -> tuple[NDArray, list[str], NDArray, NDArray]:
+    """
+        Perform confound regression on fMRI data using linear regression.
+
+        This function applies confound regression to remove noise from fMRI time series
+        by regressing out specified confounding variables (e.g., motion parameters,
+        physiological signals). It supports optional filtering, orthogonalization of
+        regressors, and parallel processing for performance.
+
+        Parameters
+        ----------
+        theregressors : ndarray
+            Array of confounding variables with shape (n_regressors, n_timepoints).
+        theregressorlabels : list of str
+            List of labels corresponding to each regressor.
+        thedataarray : ndarray
+            3D or 4D array of fMRI data with shape (n_voxels, n_timepoints) or
+            (n_voxels, n_timepoints, n_volumes).
+        tr : float
+            Repetition time (TR) in seconds.
+        nprocs : int, optional
+            Number of processes to use for parallel processing. Default is 1.
+        orthogonalize : bool, optional
+            If True, orthogonalize the regressors to reduce multicollinearity.
+            Default is True.
+        tcstart : int, optional
+            Start timepoint index for regressor data. Default is 0.
+        tcend : int, optional
+            End timepoint index for regressor data. If -1, use all timepoints
+            from `tcstart`. Default is -1.
+        tchp : float, optional
+            High-pass cutoff frequency for filtering. If None, no high-pass filtering
+            is applied.
+        tclp : float, optional
+            Low-pass cutoff frequency for filtering. If None, no low-pass filtering
+            is applied.
+        showprogressbar : bool, optional
+            If True, display a progress bar during processing. Default is True.
+        debug : bool, optional
+            If True, enable debug output. Default is False.
+
+        Returns
+        -------
+        tuple of (NDArray, list of str, NDArray, NDArray)
+            - `theregressors`: Processed regressors (possibly orthogonalized).
+            - `theregressorlabels`: Updated labels for the regressors.
+            - `filtereddata`: Data with confounds removed.
+            - `r2value`: R-squared values for each voxel (or None if not computed).
+
+        Notes
+        -----
+        - The function applies standard deviation normalization to regressors for
+          numerical stability.
+        - If `orthogonalize` is True, Gram-Schmidt orthogonalization is applied to
+          the regressors.
+        - Filtering is applied using a trapezoidal filter if `tchp` or `tclp` are provided.
+        - The function uses `linfitfiltpass` internally for the actual regression.
+
+        Examples
+        --------
+        >>> regressors = np.random.rand(3, 100)
+        >>> labels = ['motion_x', 'motion_y', 'motion_z']
+        >>> data = np.random.rand(50, 100)
+        >>> tr = 2.0
+        >>> processed_regressors, labels, filtered_data, r2 = confoundregress(
+        ...     regressors, labels, data, tr, nprocs=4
+        ... )
+        """
     if tcend == -1:
         theregressors = theregressors[:, tcstart:]
     else:
