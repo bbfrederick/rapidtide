@@ -318,13 +318,13 @@ def retrolagtcs(args: Any) -> None:
         if args.debug:
             print("allocating memory")
     fitNorm, fitNorm_shm = tide_util.allocarray(
-        internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
+        internalvalidspaceshapederivs, rt_outfloatset, shared=usesharedmem
     )
     fitcoeff, fitcoeff_shm = tide_util.allocarray(
-        internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
+        internalvalidspaceshapederivs, rt_outfloatset, shared=usesharedmem
     )
     lagtc, lagtc_shm = tide_util.allocarray(
-        internalvalidfmrishape, rt_floattype, shared=usesharedmem
+        internalvalidfmrishape, rt_floatset, shared=usesharedmem
     )
 
     outputpath = os.path.dirname(args.outputroot)
