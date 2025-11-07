@@ -164,7 +164,7 @@ def _get_parser() -> Any:
 
 
 def getneighborhood(
-    indata: Any,
+    indata: NDArray[np.floating[Any]],
     xloc: Any,
     yloc: Any,
     zloc: Any,
@@ -176,7 +176,7 @@ def getneighborhood(
     kernelwidth: float = 1.5,
     slop: float = 0.01,
     debug: bool = False,
-) -> None:
+) -> NDArray[np.floating[Any]]:
     """
     Extract a neighborhood from a 3D dataset, either as a weighted kernel or a spherical region.
 
@@ -186,7 +186,7 @@ def getneighborhood(
 
     Parameters
     ----------
-    indata : array_like
+    indata : NDArray[np.floating[Any]]
         Input 3D dataset from which the neighborhood is extracted.
     xloc, yloc, zloc : float or int
         The center coordinates of the neighborhood in the dataset.
@@ -207,7 +207,7 @@ def getneighborhood(
 
     Returns
     -------
-    ndarray
+    NDArray[np.floating[Any]]
         A flattened array of the neighborhood values. When `spherical=False`, the values
         are weighted by a Gaussian kernel. When `spherical=True`, the values are unweighted.
 
@@ -234,7 +234,7 @@ def getneighborhood(
     if not spherical:
         global usedwidth, kernel
         try:
-            kernel
+            dummy = kernel
         except NameError:
             usedwidth = kernelwidth
             kernel = None
