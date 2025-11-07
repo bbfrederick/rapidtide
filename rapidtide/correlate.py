@@ -473,85 +473,191 @@ def calc_MI(x: NDArray, y: NDArray, bins: int = 50) -> float:
 
 
 # @conditionaljit()
-def mutual_info_2d(
+def mutual_info_2d_fast(
     x: NDArray[np.floating[Any]],
     y: NDArray[np.floating[Any]],
+    bins: Tuple[NDArray, NDArray],
     sigma: float = 1,
-    bins: Union[Tuple[int, int], Tuple[NDArray, NDArray]] = (256, 256),
-    fast: bool = False,
     normalized: bool = True,
     EPS: float = 1.0e-6,
     debug: bool = False,
 ) -> float:
     """
-    Compute (normalized) mutual information between two 1D variates from a joint histogram.
+        Compute (normalized) mutual information between two 1D variates from a joint histogram.
 
-    Parameters
-    ----------
-    x : 1D NDArray[np.floating[Any]]
-        First variable.
-    y : 1D NDArray[np.floating[Any]]
-        Second variable.
-    sigma : float, optional
-        Sigma for Gaussian smoothing of the joint histogram. Default is 1.
-    bins : tuple of int or array_like, optional
-        Number of bins or bin edges for the histogram. If a tuple of ints, the first
-        element is the number of bins for `x` and the second for `y`. If a tuple of
-        arrays, the arrays define bin edges for `x` and `y`. Default is (256, 256).
-    fast : bool, optional
-        If True, use a fast precomputed binning approach. Default is False.
-    normalized : bool, optional
-        If True, compute normalized mutual information as defined in [1]_. Default is True.
-    EPS : float, optional
-        Small constant to avoid numerical errors in logarithms. Default is 1e-6.
-    debug : bool, optional
-        If True, print intermediate values for debugging. Default is False.
+        Parameters
+        ----------
+        x : 1D NDArray[np.floating[Any]]
+            First variable.
+        y : 1D NDArray[np.floating[Any]]
+            Second variable.
+        bins : tuple of NDArray
+            Bin edges for the histogram. The first element corresponds to `x` and the second to `y`.
+        sigma : float, optional
+            Sigma for Gaussian smoothing of the joint histogram. Default is 1.
+        normalized : bool, optional
+            If True, compute normalized mutual information as defined in [1]_. Default is True.
+        EPS : float, optional
+            Small constant to avoid numerical errors in logarithms. Default is 1e-6.
+        debug : bool, optional
+            If True, print intermediate values for debugging. Default is False.
 
-    Returns
-    -------
-    float
-        The computed mutual information (or normalized mutual information if `normalized=True`).
+        Returns
+        -------
+        float
+            The computed mutual information (or normalized mutual information if `normalized=True`).
 
-    Notes
-    -----
-    This function computes mutual information using a 2D histogram and Gaussian smoothing.
-    The normalization follows the approach described in [1]_.
+        Notes
+        -----
+        This function computes mutual information using a 2D histogram and Gaussian smoothing.
+        The normalization follows the approach described in [1]_.
 
-    References
-    ----------
-    .. [1] Colin Studholme, David John Hawkes, Derek L.G. Hill (1998).
-           "Normalized entropy measure for multimodality image alignment".
-           in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
+        References
+        ----------
+        .. [1] Colin Studholme, David John Hawkes, Derek L.G. Hill (1998).
+               "Normalized entropy measure for multimodality image alignment".
+               in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> x = np.random.randn(1000)
-    >>> y = np.random.randn(1000)
-    >>> mi = mutual_info_2d(x, y)
-    >>> print(mi)
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.random.randn(1000)
+        >>> y = np.random.randn(1000)
+        >>> bins = (np.linspace(-3, 3, 64), np.linspace(-3, 3, 64))
+        >>> mi = mutual_info_2d_fast(x, y, bins)
+        >>> print(mi)
+        """
+    xstart = bins[0][0]
+    xend = bins[0][-1]
+    ystart = bins[1][0]
+    yend = bins[1][-1]
+    numxbins = int(len(bins[0]) - 1)
+    numybins = int(len(bins[1]) - 1)
+    cuts = (x >= xstart) & (x < xend) & (y >= ystart) & (y < yend)
+    c = ((x[cuts] - xstart) / (xend - xstart) * numxbins).astype(np.int_)
+    c += ((y[cuts] - ystart) / (yend - ystart) * numybins).astype(np.int_) * numxbins
+    jh = np.bincount(c, minlength=numxbins * numybins).reshape(numxbins, numybins)
+
+    return proc_MI_histogram(jh, sigma=sigma, normalized=normalized, EPS=EPS, debug=debug)
+
+
+# @conditionaljit()
+def mutual_info_2d(
+    x: NDArray[np.floating[Any]],
+    y: NDArray[np.floating[Any]],
+    bins: Tuple[int, int],
+    sigma: float = 1,
+    normalized: bool = True,
+    EPS: float = 1.0e-6,
+    debug: bool = False,
+) -> float:
     """
-    if fast:
-        xstart = bins[0][0]
-        xend = bins[0][-1]
-        ystart = bins[1][0]
-        yend = bins[1][-1]
-        if np.isscalar(bins[0]):
-            numxbins = bins[0]
-        else:
-            numxbins = len(bins[0]) - 1
-        if np.isscalar(bins[1]):
-            numybins = bins[1]
-        else:
-            numybins = len(bins[1]) - 1
-        cuts = (x >= xstart) & (x < xend) & (y >= ystart) & (y < yend)
-        c = ((x[cuts] - xstart) / (xend - xstart) * numxbins).astype(np.int_)
-        c += ((y[cuts] - ystart) / (yend - ystart) * numybins).astype(np.int_) * numxbins
-        jh = np.bincount(c, minlength=numxbins * numybins).reshape(numxbins, numybins)
-    else:
-        jh, xbins, ybins = np.histogram2d(x, y, bins=bins)
-        if debug:
-            print(f"{xbins} {ybins}")
+        Compute (normalized) mutual information between two 1D variates from a joint histogram.
+
+        Parameters
+        ----------
+        x : 1D NDArray[np.floating[Any]]
+            First variable.
+        y : 1D NDArray[np.floating[Any]]
+            Second variable.
+        bins : tuple of int
+            Number of bins for the histogram. The first element is the number of bins for `x`
+            and the second for `y`.
+        sigma : float, optional
+            Sigma for Gaussian smoothing of the joint histogram. Default is 1.
+        normalized : bool, optional
+            If True, compute normalized mutual information as defined in [1]_. Default is True.
+        EPS : float, optional
+            Small constant to avoid numerical errors in logarithms. Default is 1e-6.
+        debug : bool, optional
+            If True, print intermediate values for debugging. Default is False.
+
+        Returns
+        -------
+        float
+            The computed mutual information (or normalized mutual information if `normalized=True`).
+
+        Notes
+        -----
+        This function computes mutual information using a 2D histogram and Gaussian smoothing.
+        The normalization follows the approach described in [1]_.
+
+        References
+        ----------
+        .. [1] Colin Studholme, David John Hawkes, Derek L.G. Hill (1998).
+               "Normalized entropy measure for multimodality image alignment".
+               in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> x = np.random.randn(1000)
+        >>> y = np.random.randn(1000)
+        >>> mi = mutual_info_2d(x, y)
+        >>> print(mi)
+        """
+    jh, xbins, ybins = np.histogram2d(x, y, bins=bins)
+    if debug:
+        print(f"{xbins} {ybins}")
+
+    return proc_MI_histogram(jh, sigma=sigma, normalized=normalized, EPS=EPS, debug=debug)
+
+
+def proc_MI_histogram(
+        jh: NDArray[np.floating[Any]],
+        sigma: float = 1,
+        normalized: bool = True,
+        EPS: float = 1.0e-6,
+        debug: bool = False,
+) -> float:
+    """
+        Compute the mutual information (MI) between two variables from a joint histogram.
+
+        This function calculates mutual information using the joint histogram of two variables,
+        applying Gaussian smoothing and computing entropy-based MI. It supports both normalized
+        and unnormalized versions of the mutual information.
+
+        Parameters
+        ----------
+        jh : ndarray of shape (m, n)
+            Joint histogram of two variables. Should be a 2D array of floating point values.
+        sigma : float, optional
+            Standard deviation for Gaussian smoothing of the joint histogram. Default is 1.0.
+        normalized : bool, optional
+            If True, returns normalized mutual information. If False, returns unnormalized
+            mutual information. Default is True.
+        EPS : float, optional
+            Small constant added to the histogram to avoid numerical issues in log computation.
+            Default is 1e-6.
+        debug : bool, optional
+            If True, prints intermediate values for debugging purposes. Default is False.
+
+        Returns
+        -------
+        float
+            The computed mutual information (MI) between the two variables. The value is
+            positive and indicates the amount of information shared between the variables.
+
+        Notes
+        -----
+        The function applies Gaussian smoothing to the joint histogram before computing
+        marginal and joint entropies. The mutual information is computed as:
+
+        .. math::
+            MI = \\frac{H(X) + H(Y)}{H(X,Y)} - 1
+
+        where :math:`H(X)`, :math:`H(Y)`, and :math:`H(X,Y)` are the marginal and joint entropies,
+        respectively. If `normalized=False`, the unnormalized MI is returned instead.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from scipy import ndimage
+        >>> jh = np.random.rand(10, 10)
+        >>> mi = proc_MI_histogram(jh, sigma=0.5, normalized=True)
+        >>> print(mi)
+        0.123456789
+        """
 
     # smooth the jh with a gaussian filter of given sigma
     sp.ndimage.gaussian_filter(jh, sigma=sigma, mode="constant", output=jh)
@@ -714,32 +820,56 @@ def cross_mutual_info(
         else:
             destloc += 1
         if i < 0:
-            thexmi_y[destloc] = mutual_info_2d(
-                normx[: i + len(normy)],
-                normy[-i:],
-                bins=bins2d,
-                normalized=norm,
-                fast=fast,
-                sigma=sigma,
-            )
+            if fast:
+                thexmi_y[destloc] = mutual_info_2d_fast(
+                    normx[: i + len(normy)],
+                    normy[-i:],
+                    bins2d,
+                    normalized=norm,
+                    sigma=sigma,
+                )
+            else:
+                thexmi_y[destloc] = mutual_info_2d(
+                    normx[: i + len(normy)],
+                    normy[-i:],
+                    bins2d,
+                    normalized=norm,
+                    sigma=sigma,
+                )
         elif i == 0:
-            thexmi_y[destloc] = mutual_info_2d(
-                normx,
-                normy,
-                bins=bins2d,
-                normalized=norm,
-                fast=fast,
-                sigma=sigma,
-            )
+            if fast:
+                thexmi_y[destloc] = mutual_info_2d_fast(
+                    normx,
+                    normy,
+                    bins2d,
+                    normalized=norm,
+                    sigma=sigma,
+                )
+            else:
+                thexmi_y[destloc] = mutual_info_2d(
+                    normx,
+                    normy,
+                    bins2d,
+                    normalized=norm,
+                    sigma=sigma,
+                )
         else:
-            thexmi_y[destloc] = mutual_info_2d(
-                normx[i:],
-                normy[: len(normy) - i],
-                bins=bins2d,
-                normalized=norm,
-                fast=fast,
-                sigma=sigma,
-            )
+            if fast:
+                thexmi_y[destloc] = mutual_info_2d_fast(
+                    normx[i:],
+                    normy[: len(normy) - i],
+                    bins2d,
+                    normalized=norm,
+                    sigma=sigma,
+                )
+            else:
+                thexmi_y[destloc] = mutual_info_2d(
+                    normx[i:],
+                    normy[: len(normy) - i],
+                    bins2d,
+                    normalized=norm,
+                    sigma=sigma,
+                )
 
     if madnorm:
         thexmi_y = tide_math.madnormalize(thexmi_y)

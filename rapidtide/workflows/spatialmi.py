@@ -413,15 +413,25 @@ def getMI(
             f"normy min, max, mean, std: {np.min(normy)}, {np.max(normy)}, {np.mean(normy)}, {np.std(normy)}"
         )
 
-    return tide_corr.mutual_info_2d(
-        normx,
-        normy,
-        bins=thebins,
-        normalized=norm,
-        fast=fast,
-        sigma=sigma,
-        debug=debug,
-    )
+    if fast:
+        return tide_corr.mutual_info_2d_fast(
+            normx,
+            normy,
+            thebins,
+            normalized=norm,
+            sigma=sigma,
+            debug=debug,
+        )
+    else:
+        return tide_corr.mutual_info_2d(
+            normx,
+            normy,
+            thebins,
+            normalized=norm,
+            sigma=sigma,
+            debug=debug,
+        )
+
 
 
 def spatialmi(args: Any) -> None:
