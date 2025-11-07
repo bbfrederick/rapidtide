@@ -2383,7 +2383,7 @@ def olsregress(
     return thefit.params, np.sqrt(thefit.rsquared)
 
 
-@conditionaljit()
+# @conditionaljit()
 def mlregress(
     X: NDArray[np.floating[Any]],
     y: NDArray[np.floating[Any]],
