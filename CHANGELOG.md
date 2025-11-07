@@ -1,16 +1,16 @@
 # Release history
 
-## Version 3.1 (11/6/25)
+## Version 3.1 (11/7/25)
 * (happy) Moved to a pytorch implementation of the deep learning filter, as tensorflow seems to be barely maintained these days.  The pytorch filter is now the default, and performance seems indistinguishable.  I'll keep the tensorflow version around until it becomes (more) cumbersome to do so.  Use ``--usetensorflow`` to get the old filter.
-* (happy) Added "pulsatility" map output - the percentage pulsatile variation around the mean in each voxel.
+* (happy) Added "pulsatility" map output - the percentage pulsatile cardiac variation around the mean in each voxel.
 * (happy) Made pass labelling consistent for output files.
 * (happy) Switched nifti file output to use maplist (jsons have description fields now).
 * (rapidtide) Output some timecourse statistics before and after sLFO regression.
 * (atlasaverage) Fixed label output when extracting data from 3D files.
-* (package) Added type hints to all core routines (thanks Claude!).
+* (package) Added type hints to all core routines (thanks Claude!).  Everything works, but I'll probably be finetuning the type hints for a while to make them more specific (and I'll be resolving sloppy type handling that I'm now aware of due to mypy).
 * (package) Added docstrings to all core routines (thanks script I wrote that calls qwen3-coder locally so I don't run out of Claude tokens!).
-* (package) Added support for python 3.13.
-* (package) Dropped support for python 3.9.
+* (package) Added support for python 3.13 (now that tensorflow is FINALLY available for 3.13).
+* (package) Dropped support for python 3.9 (it doesn't support modern type hint formats).
 * (package) More dependabot PRs.
 
 ## Version 3.0.11 (8/27/25)
