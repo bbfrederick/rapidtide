@@ -1,6 +1,6 @@
 # Release history
 
-## Version 3.1 (11/7/25)
+## Version 3.1 (11/8/25)
 * (happy) Moved to a pytorch implementation of the deep learning filter, as tensorflow seems to be barely maintained these days.  The pytorch filter is now the default, and performance seems indistinguishable.  I'll keep the tensorflow version around until it becomes (more) cumbersome to do so.  Use ``--usetensorflow`` to get the old filter.
 * (happy) Added "pulsatility" map output - the percentage pulsatile cardiac variation around the mean in each voxel.
 * (happy) Made pass labelling consistent for output files.
