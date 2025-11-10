@@ -51,6 +51,7 @@ def refineDelay(
     outputlevel: str = "normal",
     gausssigma: int = -1,
     patchthresh: float = 3.0,
+    timemask: NDArray | None = None,
     mindelay: float = -5.0,
     maxdelay: float = 5.0,
     numpoints: int = 501,
@@ -118,6 +119,8 @@ def refineDelay(
         Sigma for Gaussian filtering, default is -1 (no filtering).
     patchthresh : float, optional
         Threshold for patch-based filtering, default is 3.0.
+    timemask : NDArray, optional
+       Mask of timepoints to include in regression filtering. Default is None.
     mindelay : float, optional
         Minimum delay value, default is -5.0.
     maxdelay : float, optional
@@ -190,6 +193,7 @@ def refineDelay(
         TimingLGR,
         optiondict,
         regressderivs=1,
+        timemask=timemask,
         debug=debug,
     )
 

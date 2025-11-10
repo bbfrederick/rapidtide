@@ -555,6 +555,7 @@ def getderivratios(
     TimingLGR: Optional[Any],
     optiondict: dict,
     regressderivs: int = 1,
+    timemask: Optional[NDArray] = None,
     starttr: Optional[int] = None,
     endtr: Optional[int] = None,
     debug: bool = False,
@@ -611,6 +612,8 @@ def getderivratios(
         Dictionary of options for regression and processing.
     regressderivs : int, optional
         Number of derivative regressors to include (default is 1).
+    timemask : NDArray, optional
+       Mask of timepoints to include in regression filtering.
     starttr : Optional[int], optional
         Start timepoint for processing (default is 0).
     endtr : Optional[int], optional
@@ -671,6 +674,11 @@ def getderivratios(
         print(f"\t{regressderivs=}")
         print(f"\t{starttr=}")
         print(f"\t{endtr=}")
+        
+    if timemask is not None:
+        trimmedtimemask = timemask[starttr:endtr]
+    else:
+        trimmedtimemask = None
 
     voxelsprocessed_regressionfilt, regressorset, evset = tide_regressfrommaps.regressfrommaps(
         fmri_data_valid[:, starttr:endtr],
@@ -701,6 +709,7 @@ def getderivratios(
         showprogressbar=optiondict["showprogressbar"],
         alwaysmultiproc=optiondict["alwaysmultiproc"],
         coefficientsonly=True,
+        timemask=trimmedtimemask,
         debug=debug,
     )
 

@@ -1327,7 +1327,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # save the factor used to normalize the input regressor
     optiondict["initialmovingregressornormfac"] = np.std(resampnonosref_y)
 
-    # prepare the temporal mask
+    # prepare the temporal masks
     if optiondict["tincludemaskname"] is not None:
         print("creating temporal include mask")
         includetmask_y = tide_mask.maketmask(
@@ -1375,6 +1375,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         resampref_y -= thefit[0, 1] * tmaskos_y
     else:
         tmaskos_y = None
+
+    # construct refine temporal masks here
+    optiondict["windowedrefinemasks"] = None
 
     (
         optiondict["kurtosis_reference_pass1"],
@@ -2341,7 +2344,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     cifti_hdr=theinputdata.cifti_hdr,
                 )
 
-        # Step 2b - make a rank order map
+        # Step 2c - make a rank order map
         timepercentile = (
             100.0 * (rankdata(lagtimes, method="dense") - 1) / (numvalidspatiallocs - 1)
         )
@@ -2383,7 +2386,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             or optiondict["initregressorpreselect"]
             or optiondict["dofinalrefine"]
         ):
-            (resampref_y, resampnonosref_y, stoprefining, refinestopreason, genlagtc) = (
+            resampref_y, resampnonosref_y, stoprefining, refinestopreason, genlagtc = (
                 tide_refineRegressor.refineRegressor(
                     LGR,
                     TimingLGR,
@@ -2786,6 +2789,54 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 debug=optiondict["debug"],
             )
             lagtimesrefined = lagtimes + delayoffset
+
+            if optiondict["windowedrefinemasks"] is not None:
+                windoweddelayoffsets = []
+                for thetimemask in optiondict["windowedrefinemasks"]:
+                    (
+                        windoweddelayoffset,
+                        dummy,
+                        dummy,
+                        dummy,
+                        dummy,
+                    ) = tide_refineDelayMap.refineDelay(
+                        fmri_data_valid,
+                        initial_fmri_x,
+                        xdim,
+                        ydim,
+                        slicethickness,
+                        sLFOfiltmask,
+                        genlagtc,
+                        oversamptr,
+                        sLFOfitmean,
+                        rvalue,
+                        r2value,
+                        fitNorm,
+                        fitcoeff,
+                        lagtc,
+                        outputname,
+                        validvoxels,
+                        nativespaceshape,
+                        theinputdata,
+                        lagtimes,
+                        optiondict,
+                        LGR,
+                        TimingLGR,
+                        outputlevel=optiondict["outputlevel"],
+                        gausssigma=optiondict["delayoffsetgausssigma"],
+                        patchthresh=optiondict["delaypatchthresh"],
+                        timemask=thetimemask,
+                        mindelay=optiondict["mindelay"],
+                        maxdelay=optiondict["maxdelay"],
+                        numpoints=optiondict["numpoints"],
+                        histlen=optiondict["histlen"],
+                        rt_floatset=rt_floatset,
+                        rt_floattype=rt_floattype,
+                        debug=optiondict["debug"],
+                    )
+                    windoweddelayoffsets.append(windoweddelayoffset)
+
+
             ####################################################
             #  Delay refinement end
             ####################################################

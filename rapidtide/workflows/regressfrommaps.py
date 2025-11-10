@@ -57,6 +57,7 @@ def regressfrommaps(
     alwaysmultiproc: bool = False,
     saveEVsandquit: bool = False,
     coefficientsonly: bool = False,
+    timemask: Optional[NDArray] = None,
     debug: bool = False,
 ) -> None:
     """
@@ -127,6 +128,8 @@ def regressfrommaps(
         Save EVs and quit early (default is False).
     coefficientsonly : bool, optional
         Return only coefficients (default is False).
+    timemask : NDArray, optional
+       Mask of timepoints to include in regression filtering.
     debug : bool, optional
         Enable debug output (default is False).
 
@@ -214,6 +217,9 @@ def regressfrommaps(
         rt_floattype=rt_floattype,
         debug=debug,
     )
+    if timemask is not None:
+        lagtc = lagtc * timemask[None, :]
+
     if debug:
         print(f"\t{lagtimes.shape=}")
         threshmask = np.where(fitmask > 0, 1, 0)
