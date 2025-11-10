@@ -67,6 +67,9 @@ LGR = logging.getLogger("GENERAL")
 ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
+global rt_floattype, rt_floatset
+rt_floatset:str = "empty"
+rt_floattype: np.float32 | np.float64 = np.float64
 
 def checkforzeromean(thedataset: Any) -> bool:
     """
@@ -540,8 +543,8 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             )
             anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
         else:
-            anatomicmasks.append(None)
-            # anatomicmasks[-1] = np.uint16(np.ones(nativespaceshape, dtype=np.uint16))
+            anatomicmasks.append(np.uint16(np.ones(nativespaceshape, dtype=np.uint16)))
+
     brainmask = anatomicmasks[0]
     graymask = anatomicmasks[1]
     whitemask = anatomicmasks[2]
