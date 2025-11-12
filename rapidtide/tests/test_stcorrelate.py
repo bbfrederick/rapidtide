@@ -58,6 +58,7 @@ def test_stcorrelate(debug=False):
     times, corrpertime, ppertime = shorttermcorr_1D(
         sig1, sig2, tr, windowtime, samplestep=int(stepsize // tr), detrendorder=0
     )
+    print(f"1D correlation: {corrpertime=}, {ppertime=}")
     # plength = len(times)
     times, xcorrpertime, Rvals, delayvals, valid = shorttermcorr_2D(
         sig1,
@@ -69,6 +70,7 @@ def test_stcorrelate(debug=False):
         detrendorder=0,
         displayplots=debug,
     )
+    print(f"2D correlation: {Rvals=}, {delayvals=}, {valid=}")
     # xlength = len(times)
     writenpvecs(corrpertime, outfilename + "_pearson.txt")
     writenpvecs(ppertime, outfilename + "_pvalue.txt")
