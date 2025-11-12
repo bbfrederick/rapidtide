@@ -532,36 +532,47 @@ def getregionsignal(
     if signalgenmethod == "sum":
         globalmean = np.mean(selectedvoxels, axis=0)
         globalmean -= np.mean(globalmean)
+        if debug:
+            print("Sum method")
+            print(f"getregionsignal: {globalmean.shape=}")
     elif signalgenmethod == "meanscale":
         themean = np.mean(indata, axis=1)
         for vox in range(0, thesize[0]):
             if themask[vox] > 0.0:
                 if themean[vox] != 0.0:
                     globalmean += indata[vox, :] / themean[vox] - 1.0
+        if debug:
+            print("Meanscale method")
+            print(f"getregionsignal: {globalmean.shape=}")
     elif signalgenmethod == "pca":
         themean = np.mean(indata, axis=1)
         thevar = np.var(indata, axis=1)
-        scaledvoxels = selectedvoxels * 0.0
+        scaledvoxels = np.zeros_like(selectedvoxels)
         for vox in range(0, selectedvoxels.shape[0]):
             scaledvoxels[vox, :] = selectedvoxels[vox, :] - themean[vox]
             if thevar[vox] > 0.0:
                 scaledvoxels[vox, :] = selectedvoxels[vox, :] / thevar[vox]
         try:
-            thefit = PCA(n_components=pcacomponents).fit(np.transpose(scaledvoxels))
+            thefit = PCA(n_components=pcacomponents).fit(scaledvoxels)
         except ValueError:
             if pcacomponents == "mle":
                 LGR.warning("mle estimation failed - falling back to pcacomponents=0.8")
-                thefit = PCA(n_components=0.8).fit(np.transpose(scaledvoxels))
+                thefit = PCA(n_components=0.8).fit(scaledvoxels)
             else:
                 raise ValueError("unhandled math exception in PCA refinement - exiting")
 
         varex = 100.0 * np.cumsum(thefit.explained_variance_ratio_)[len(thefit.components_) - 1]
-        thetransform = thefit.transform(np.transpose(scaledvoxels))
-        if debug:
-            print(f"getregionsignal: {thetransform.shape=}")
-        globalmean = np.mean(thetransform, axis=0)
+        # thetransform = thefit.transform(np.transpose(scaledvoxels))
+        thetransform = thefit.transform(scaledvoxels)
+        cleanedvoxels = thefit.inverse_transform(thetransform) * thevar[:, None]
+        globalmean = np.mean(cleanedvoxels, axis=0)
         globalmean -= np.mean(globalmean)
         if debug:
+            print("PCA method")
+            print(f"getregionsignal: {cleanedvoxels.shape=}, {thetransform.shape=}, {scaledvoxels.shape=}, {globalmean.shape=}")
+            print(
+                f"getregionsignal: {(thefit.components_).shape=}, {thefit.n_samples_=}, {thefit.n_features_in_=}"
+            )
             print(f"getregionsignal: {varex=}")
         LGR.info(
             f"Using {len(thefit.components_)} component(s), accounting for "
@@ -569,6 +580,9 @@ def getregionsignal(
         )
     elif signalgenmethod == "random":
         globalmean = np.random.standard_normal(size=len(globalmean))
+        if debug:
+            print("Random method")
+            print(f"getregionsignal: {globalmean.shape=}")
     else:
         raise ValueError(f"illegal signal generation method: {signalgenmethod}")
     LGR.info(f"used {numvoxelsused} voxels to calculate {signame} signal")
