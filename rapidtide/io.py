@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import nibabel as nib
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from rapidtide.tests.utils import mse
 
@@ -34,7 +35,7 @@ from rapidtide.tests.utils import mse
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 def readfromnifti(
     inputfile: str, headeronly: bool = False
-) -> Tuple[Any, Optional[np.ndarray], Any, np.ndarray, np.ndarray]:
+) -> Tuple[Any, Optional[NDArray], Any, NDArray, NDArray]:
     """
     Open a nifti file and read in the various important parts
 
@@ -93,7 +94,7 @@ def readfromnifti(
 
 def readfromcifti(
     inputfile: str, debug: bool = False
-) -> Tuple[Any, Any, np.ndarray, Any, np.ndarray, np.ndarray, Optional[float]]:
+) -> Tuple[Any, Any, NDArray, Any, NDArray, NDArray, Optional[float]]:
     """
     Open a cifti file and read in the various important parts
 
@@ -200,7 +201,7 @@ def getciftitr(cifti_hdr: Any) -> Tuple[float, float]:
 
 
 # dims are the array dimensions along each axis
-def parseniftidims(thedims: np.ndarray) -> Tuple[int, int, int, int]:
+def parseniftidims(thedims: NDArray) -> Tuple[int, int, int, int]:
     """
     Split the dims array into individual elements
 
@@ -209,7 +210,7 @@ def parseniftidims(thedims: np.ndarray) -> Tuple[int, int, int, int]:
 
     Parameters
     ----------
-    thedims : numpy.ndarray of int
+    thedims : NDArray of int
         The NIfTI dimensions structure, where:
         - thedims[0] contains the data type
         - thedims[1] contains the number of points along x-axis (nx)
@@ -246,7 +247,7 @@ def parseniftidims(thedims: np.ndarray) -> Tuple[int, int, int, int]:
 
 
 # sizes are the mapping between voxels and physical coordinates
-def parseniftisizes(thesizes: np.ndarray) -> Tuple[float, float, float, float]:
+def parseniftisizes(thesizes: NDArray) -> Tuple[float, float, float, float]:
     """
     Split the size array into individual elements
 
@@ -255,7 +256,7 @@ def parseniftisizes(thesizes: np.ndarray) -> Tuple[float, float, float, float]:
 
     Parameters
     ----------
-    thesizes : np.ndarray of float
+    thesizes : NDArray of float
         The NIfTI voxel size structure containing scaling information.
         Expected to be an array where indices 1-4 correspond to
         x, y, z, and t scaling factors respectively.
@@ -291,7 +292,7 @@ def parseniftisizes(thesizes: np.ndarray) -> Tuple[float, float, float, float]:
     return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
 
-def dumparraytonifti(thearray: np.ndarray, filename: str) -> None:
+def dumparraytonifti(thearray: NDArray, filename: str) -> None:
     """
     Save a numpy array to a NIFTI file with an identity affine transform.
 
@@ -301,7 +302,7 @@ def dumparraytonifti(thearray: np.ndarray, filename: str) -> None:
 
     Parameters
     ----------
-    thearray : numpy.ndarray
+    thearray : NDArray
         The data array to save. Can be 2D, 3D, or 4D array representing
         medical imaging data or other volumetric data.
     filename : str
@@ -338,7 +339,7 @@ def dumparraytonifti(thearray: np.ndarray, filename: str) -> None:
     savetonifti(thearray, outputheader, filename)
 
 
-def savetonifti(thearray: np.ndarray, theheader: Any, thename: str, debug: bool = False) -> None:
+def savetonifti(thearray: NDArray, theheader: Any, thename: str, debug: bool = False) -> None:
     """
     Save a data array out to a nifti file
 
@@ -426,7 +427,7 @@ def savetonifti(thearray: np.ndarray, theheader: Any, thename: str, debug: bool 
     output_nifti = None
 
 
-def niftifromarray(data: np.ndarray) -> Any:
+def niftifromarray(data: NDArray) -> Any:
     """
     Create a NIFTI image object from a numpy array with identity affine.
 
@@ -436,7 +437,7 @@ def niftifromarray(data: np.ndarray) -> Any:
 
     Parameters
     ----------
-    data : numpy.ndarray
+    data : NDArray
         The data array to convert to NIFTI format. Can be 2D, 3D, or 4D array
         representing image data with arbitrary data types.
 
@@ -470,7 +471,7 @@ def niftifromarray(data: np.ndarray) -> Any:
     return nib.Nifti1Image(data, affine=np.eye(4))
 
 
-def niftihdrfromarray(data: np.ndarray) -> Any:
+def niftihdrfromarray(data: NDArray) -> Any:
     """
     Create a NIFTI header from a numpy array with identity affine.
 
@@ -481,7 +482,7 @@ def niftihdrfromarray(data: np.ndarray) -> Any:
 
     Parameters
     ----------
-    data : numpy.ndarray
+    data : NDArray
         The data array to create a header for. The array can be of any shape and
         data type, but should typically represent medical imaging data.
 
@@ -508,10 +509,10 @@ def niftihdrfromarray(data: np.ndarray) -> Any:
 
 
 def makedestarray(
-    destshape: Union[Tuple, np.ndarray],
+    destshape: Union[Tuple, NDArray],
     filetype: str = "nifti",
     rt_floattype: np.dtype = np.float64,
-) -> Tuple[np.ndarray, int]:
+) -> Tuple[NDArray, int]:
     """
     Create a destination array for output data based on file type and shape.
 
@@ -591,12 +592,12 @@ def makedestarray(
 
 
 def populatemap(
-    themap: np.ndarray,
+    themap: NDArray,
     internalspaceshape: int,
-    validvoxels: Optional[np.ndarray],
-    outmaparray: np.ndarray,
+    validvoxels: Optional[NDArray],
+    outmaparray: NDArray,
     debug: bool = False,
-) -> np.ndarray:
+) -> NDArray:
     """
     Populate an output array with data from a map, handling valid voxel masking.
 
@@ -605,16 +606,16 @@ def populatemap(
 
     Parameters
     ----------
-    themap : numpy.ndarray
+    themap : NDArray
         The source data to populate into the output array. Shape is either
         ``(internalspaceshape,)`` for 1D or ``(internalspaceshape, N)`` for 2D.
     internalspaceshape : int
         The total spatial dimension size, used to determine the expected shape
         of the input map and the output array.
-    validvoxels : numpy.ndarray or None
+    validvoxels : NDArray or None
         Indices of valid voxels to populate. If None, all voxels are populated.
         Shape should be ``(M,)`` where M is the number of valid voxels.
-    outmaparray : numpy.ndarray
+    outmaparray : NDArray
         The destination array to populate. Shape should be either ``(internalspaceshape,)``
         for 1D or ``(internalspaceshape, N)`` for 2D.
     debug : bool, optional
@@ -622,7 +623,7 @@ def populatemap(
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         The populated output array with the same shape as `outmaparray`.
 
     Notes
@@ -671,8 +672,8 @@ def populatemap(
 def savemaplist(
     outputname: str,
     maplist: List[Tuple],
-    validvoxels: Optional[np.ndarray],
-    destshape: Union[Tuple, np.ndarray],
+    validvoxels: Optional[NDArray],
+    destshape: Union[Tuple, NDArray],
     theheader: Any,
     bidsbasedict: Dict[str, Any],
     filetype: str = "nifti",
@@ -808,7 +809,7 @@ def savemaplist(
 
 
 def savetocifti(
-    thearray: np.ndarray,
+    thearray: NDArray,
     theciftiheader: Any,
     theniftiheader: Any,
     thename: str,
@@ -1130,7 +1131,7 @@ def niftimerge(
     axis: int = 3,
     returndata: bool = False,
     debug: bool = False,
-) -> Optional[Tuple[np.ndarray, Any]]:
+) -> Optional[Tuple[NDArray, Any]]:
     """
     Merge multiple NIFTI files along a specified axis.
 
@@ -1157,7 +1158,7 @@ def niftimerge(
 
     Returns
     -------
-    tuple of (numpy.ndarray, Any) or None
+    tuple of (NDArray, Any) or None
         If `returndata` is True, returns a tuple of:
             - `output_data`: The merged NIFTI data as a numpy array.
             - `infile_hdr`: The header from the last input file.
@@ -1374,7 +1375,7 @@ def getniftiroot(filename: str) -> str:
         return filename
 
 
-def fmriheaderinfo(niftifilename: str) -> Tuple[np.ndarray, np.ndarray]:
+def fmriheaderinfo(niftifilename: str) -> Tuple[NDArray, NDArray]:
     """
     Retrieve the header information from a nifti file.
 
@@ -1389,7 +1390,7 @@ def fmriheaderinfo(niftifilename: str) -> Tuple[np.ndarray, np.ndarray]:
 
     Returns
     -------
-    tuple of (np.ndarray, np.ndarray)
+    tuple of (NDArray, NDArray)
         A tuple containing:
         - tr : float
           The repetition time, in seconds
@@ -1495,7 +1496,7 @@ def checkspacematch(hdr1: Any, hdr2: Any, tolerance: float = 1.0e-3) -> bool:
     return dimmatch and resmatch
 
 
-def checkspaceresmatch(sizes1: np.ndarray, sizes2: np.ndarray, tolerance: float = 1.0e-3) -> bool:
+def checkspaceresmatch(sizes1: NDArray, sizes2: NDArray, tolerance: float = 1.0e-3) -> bool:
     """
     Check the spatial pixdims of two nifti files to determine if they have the same resolution (within tolerance)
 
@@ -1547,17 +1548,17 @@ def checkspaceresmatch(sizes1: np.ndarray, sizes2: np.ndarray, tolerance: float 
             return True
 
 
-def checkspacedimmatch(dims1: np.ndarray, dims2: np.ndarray, verbose: bool = False) -> bool:
+def checkspacedimmatch(dims1: NDArray, dims2: NDArray, verbose: bool = False) -> bool:
     """
     Check the dimension arrays of two nifti files to determine if they cover the same number of voxels in each dimension.
 
     Parameters
     ----------
-    dims1 : np.ndarray
+    dims1 : NDArray
         The dimension array from the first nifti file. Should contain spatial dimensions
         (typically the first dimension is the number of time points, and dimensions 1-3
         represent x, y, z spatial dimensions).
-    dims2 : np.ndarray
+    dims2 : NDArray
         The dimension array from the second nifti file. Should contain spatial dimensions
         (typically the first dimension is the number of time points, and dimensions 1-3
         represent x, y, z spatial dimensions).
@@ -1600,8 +1601,8 @@ def checkspacedimmatch(dims1: np.ndarray, dims2: np.ndarray, verbose: bool = Fal
 
 
 def checktimematch(
-    dims1: np.ndarray,
-    dims2: np.ndarray,
+    dims1: NDArray,
+    dims2: NDArray,
     numskip1: int = 0,
     numskip2: int = 0,
     verbose: bool = False,
@@ -1615,9 +1616,9 @@ def checktimematch(
 
     Parameters
     ----------
-    dims1 : np.ndarray
+    dims1 : NDArray
         The dimension array from the first NIfTI file. The time dimension is expected to be at index 4.
-    dims2 : np.ndarray
+    dims2 : NDArray
         The dimension array from the second NIfTI file. The time dimension is expected to be at index 4.
     numskip1 : int, optional
         Number of timepoints skipped at the beginning of file 1. Default is 0.
@@ -1670,8 +1671,8 @@ def checktimematch(
 
 
 def checkdatamatch(
-    data1: np.ndarray,
-    data2: np.ndarray,
+    data1: NDArray,
+    data2: NDArray,
     absthresh: float = 1e-12,
     msethresh: float = 1e-12,
     debug: bool = False,
@@ -1684,9 +1685,9 @@ def checkdatamatch(
 
     Parameters
     ----------
-    data1 : numpy.ndarray
+    data1 : NDArray
         First data array to compare
-    data2 : numpy.ndarray
+    data2 : NDArray
         Second data array to compare
     absthresh : float, optional
         Absolute difference threshold. Default is 1e-12
@@ -1853,7 +1854,7 @@ def checkifparfile(filename: str) -> bool:
         return False
 
 
-def readconfounds(filename: str, debug: bool = False) -> Dict[str, np.ndarray]:
+def readconfounds(filename: str, debug: bool = False) -> Dict[str, NDArray]:
     """
     Read confound regressors from a text file.
 
@@ -1870,7 +1871,7 @@ def readconfounds(filename: str, debug: bool = False) -> Dict[str, np.ndarray]:
 
     Returns
     -------
-    dict of str to numpy.ndarray
+    dict of str to NDArray
         Dictionary mapping confound names to timecourse arrays. Each key is a confound name
         and each value is a 1D numpy array containing the timecourse data for that confound.
 
@@ -1907,7 +1908,7 @@ def readconfounds(filename: str, debug: bool = False) -> Dict[str, np.ndarray]:
     return theconfounddict
 
 
-def readparfile(filename: str) -> Dict[str, np.ndarray]:
+def readparfile(filename: str) -> Dict[str, NDArray]:
     """
     Read motion parameters from an FSL-style .par file.
 
@@ -1923,7 +1924,7 @@ def readparfile(filename: str) -> Dict[str, np.ndarray]:
 
     Returns
     -------
-    dict of numpy.ndarray
+    dict of NDArray
         Dictionary containing the motion parameters as timecourses. Keys are:
         - 'X': translation along x-axis
         - 'Y': translation along y-axis
@@ -2098,7 +2099,7 @@ def readmotion(filename: str, tr: float = 1.0, colspec: Optional[str] = None) ->
     return motiondict
 
 
-def sliceinfo(slicetimes: np.ndarray, tr: float) -> Tuple[int, float, np.ndarray]:
+def sliceinfo(slicetimes: NDArray, tr: float) -> Tuple[int, float, NDArray]:
     """
     Find out what slicetimes we have, their spacing, and which timepoint each slice occurs at.  This assumes
     uniform slice time spacing, but supports any slice acquisition order and multiband acquisitions.
@@ -2142,7 +2143,7 @@ def sliceinfo(slicetimes: np.ndarray, tr: float) -> Tuple[int, float, np.ndarray
     return numsteps, minstep, sliceoffsets
 
 
-def getslicetimesfromfile(slicetimename: str) -> Tuple[np.ndarray, bool, bool]:
+def getslicetimesfromfile(slicetimename: str) -> Tuple[NDArray, bool, bool]:
     """
     Read slice timing information from a file.
 
@@ -2158,9 +2159,9 @@ def getslicetimesfromfile(slicetimename: str) -> Tuple[np.ndarray, bool, bool]:
 
     Returns
     -------
-    tuple of (np.ndarray, bool, bool)
+    tuple of (NDArray, bool, bool)
         A tuple containing:
-        - slicetimes : np.ndarray
+        - slicetimes : NDArray
           Array of slice timing values as floats
         - normalizedtotr : bool
           True if the slice times were normalized to TR (time resolution),
@@ -2275,7 +2276,7 @@ def writedicttojson(thedict: Dict[str, Any], thefilename: str) -> None:
     The function automatically converts numpy data types:
     - numpy.integer → Python int
     - numpy.floating → Python float
-    - numpy.ndarray → Python list
+    - NDArray → Python list
 
     The output JSON file will be formatted with:
     - Sorted keys
@@ -2356,7 +2357,7 @@ def readdictfromjson(inputfilename: str) -> Dict[str, Any]:
         return {}
 
 
-def readlabelledtsv(inputfilename: str, compressed: bool = False) -> Dict[str, np.ndarray]:
+def readlabelledtsv(inputfilename: str, compressed: bool = False) -> Dict[str, NDArray]:
     """
     Read time series out of an fmriprep confounds tsv file
 
@@ -2370,7 +2371,7 @@ def readlabelledtsv(inputfilename: str, compressed: bool = False) -> Dict[str, n
 
     Returns
     -------
-    dict of str to numpy.ndarray
+    dict of str to NDArray
         Dictionary containing all the timecourses in the file, keyed by the
         column names from the first row of the tsv file. Each value is a
         numpy array containing the time series data for that column.
@@ -2413,7 +2414,7 @@ def readlabelledtsv(inputfilename: str, compressed: bool = False) -> Dict[str, n
     return confounddict
 
 
-def readcsv(inputfilename: str, debug: bool = False) -> Dict[str, np.ndarray]:
+def readcsv(inputfilename: str, debug: bool = False) -> Dict[str, NDArray]:
     """
     Read time series out of an unlabelled csv file.
 
@@ -2431,7 +2432,7 @@ def readcsv(inputfilename: str, debug: bool = False) -> Dict[str, np.ndarray]:
 
     Returns
     -------
-    dict of str to np.ndarray
+    dict of str to NDArray
         A dictionary where keys are column names (or generated names like "col0", "col1", etc.)
         and values are NumPy arrays containing the time series data. If the file does not exist
         or is invalid, an empty dictionary is returned.
@@ -2494,7 +2495,7 @@ def readcsv(inputfilename: str, debug: bool = False) -> Dict[str, np.ndarray]:
     return timeseriesdict
 
 
-def readfslmat(inputfilename: str, debug: bool = False) -> Dict[str, np.ndarray]:
+def readfslmat(inputfilename: str, debug: bool = False) -> Dict[str, NDArray]:
     """
     Read time series out of an FSL design.mat file
 
@@ -2507,7 +2508,7 @@ def readfslmat(inputfilename: str, debug: bool = False) -> Dict[str, np.ndarray]
 
     Returns
     -------
-    dict of numpy.ndarray
+    dict of NDArray
         Dictionary containing all the timecourses in the file, keyed by column names.
         If the first row exists, it is used as keys; otherwise, keys are generated as
         "col1, col2...colN". Returns an empty dictionary if file does not exist or is not valid.
@@ -2691,7 +2692,7 @@ def makecolname(colnum: int, startcol: int) -> str:
 
 def writebidstsv(
     outputfileroot: str,
-    data: np.ndarray,
+    data: NDArray,
     samplerate: float,
     extraheaderinfo: Optional[Dict[str, Any]] = None,
     compressed: bool = True,
@@ -2719,7 +2720,7 @@ def writebidstsv(
     outputfileroot : str
         Root name of the output files (without extension). The function will write
         ``<outputfileroot>.tsv`` or ``<outputfileroot>.tsv.gz`` and ``<outputfileroot>.json``.
-    data : np.ndarray
+    data : NDArray
         Time series data to be written. If 1D, it will be reshaped to (1, n_timesteps).
         Shape should be (n_channels, n_timesteps).
     samplerate : float
@@ -2890,7 +2891,7 @@ def writebidstsv(
 
 def readvectorsfromtextfile(
     fullfilespec: str, onecol: bool = False, debug: bool = False
-) -> Tuple[Optional[float], Optional[float], Optional[List[str]], np.ndarray, Optional[bool], str]:
+) -> Tuple[Optional[float], Optional[float], Optional[List[str]], NDArray, Optional[bool], str]:
     """
     Read time series data from a text-based file (TSV, CSV, MAT, or BIDS-style TSV).
 
@@ -3081,7 +3082,7 @@ def readbidstsv(
     Optional[float],
     Optional[float],
     Optional[List[str]],
-    Optional[np.ndarray],
+    Optional[NDArray],
     Optional[bool],
     Optional[str],
 ]:
@@ -3115,7 +3116,7 @@ def readbidstsv(
             Time of first point in seconds.
         columns : list of str
             Names of the timecourses contained in the file.
-        data : numpy.ndarray, optional
+        data : NDArray, optional
             2D array of timecourses from the file. Returns None if file does not exist or is invalid.
         is_compressed : bool
             Indicates whether the TSV file was gzipped.
@@ -3295,7 +3296,7 @@ def readcolfrombidstsv(
     columnname: Optional[str] = None,
     neednotexist: bool = False,
     debug: bool = False,
-) -> Tuple[Optional[float], Optional[float], Optional[np.ndarray]]:
+) -> Tuple[Optional[float], Optional[float], Optional[NDArray]]:
     """
     Read a specific column from a BIDS TSV file.
 
@@ -3327,7 +3328,7 @@ def readcolfrombidstsv(
           Sampling rate extracted from the file, or None if no valid data found
         - starttime : float or None
           Start time extracted from the file, or None if no valid data found
-        - data : numpy.ndarray or None
+        - data : NDArray or None
           The extracted column data as a 1D array, or None if no valid data found
 
     Notes
@@ -3712,7 +3713,7 @@ def processnamespec(
     return thename, thevals
 
 
-def readcolfromtextfile(inputfilespec: str) -> np.ndarray:
+def readcolfromtextfile(inputfilespec: str) -> NDArray:
     """
     Read columns from a text file and return as numpy array.
 
@@ -3739,7 +3740,7 @@ def readcolfromtextfile(inputfilespec: str) -> np.ndarray:
 
     Returns
     -------
-    np.ndarray
+    NDArray
         Numpy array containing the read data. Shape depends on the number of
         columns specified and the number of rows in the input file.
 
@@ -3783,7 +3784,7 @@ def readvecs(
     numskip: int = 0,
     debug: bool = False,
     thedtype: type = float,
-) -> np.ndarray:
+) -> NDArray:
     """
     Read vectors from a text file and return them as a transposed numpy array.
 
@@ -3805,7 +3806,7 @@ def readvecs(
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         A 2D numpy array where each row corresponds to a vector read from the file.
         The array is transposed such that each column represents a vector.
 
@@ -3858,7 +3859,7 @@ def readvecs(
     return theoutarray
 
 
-def readvec(inputfilename: str, numskip: int = 0) -> np.ndarray:
+def readvec(inputfilename: str, numskip: int = 0) -> NDArray:
     """
     Read a timecourse from a text or BIDS TSV file.
 
@@ -3881,7 +3882,7 @@ def readvec(inputfilename: str, numskip: int = 0) -> np.ndarray:
     -------
     tuple
         A tuple containing:
-        - np.ndarray: The read timecourse data
+        - NDArray: The read timecourse data
         - float, optional: Minimum value in the data
         - float, optional: Maximum value in the data
 
@@ -3913,7 +3914,7 @@ def readtc(
     colnum: Optional[int] = None,
     colname: Optional[str] = None,
     debug: bool = False,
-) -> Tuple[np.ndarray, Optional[float], Optional[float]]:
+) -> Tuple[NDArray, Optional[float], Optional[float]]:
     """
     Read timecourse data from a file, supporting BIDS TSV and other formats.
 
@@ -3937,7 +3938,7 @@ def readtc(
 
     Returns
     -------
-    timecourse : numpy.ndarray
+    timecourse : NDArray
         The timecourse data as a 1D numpy array.
     inputfreq : float or None
         Sampling frequency (Hz) if available from the file metadata. Default is None.
@@ -4154,7 +4155,7 @@ def readdict(inputfilename: str) -> Dict[str, Any]:
         return {}
 
 
-def writevec(thevec: np.ndarray, outputfile: str, lineend: str = "") -> None:
+def writevec(thevec: NDArray, outputfile: str, lineend: str = "") -> None:
     """
     Write a vector to a text file, one value per line.
 
@@ -4206,7 +4207,7 @@ def writevec(thevec: np.ndarray, outputfile: str, lineend: str = "") -> None:
 
 
 def writevectorstotextfile(
-    thevecs: np.ndarray,
+    thevecs: NDArray,
     outputfile: str,
     samplerate: float = 1.0,
     starttime: float = 0.0,
@@ -4226,7 +4227,7 @@ def writevectorstotextfile(
 
     Parameters
     ----------
-    thevecs : numpy.ndarray
+    thevecs : NDArray
         Data vectors to write. Should be a 2D array where each row is a vector.
     outputfile : str
         Output file path. The extension determines the file format if not explicitly specified.
@@ -4313,7 +4314,7 @@ def writevectorstotextfile(
 
 # rewritten to guarantee file closure, combines writenpvec and writenpvecs
 def writenpvecs(
-    thevecs: np.ndarray,
+    thevecs: NDArray,
     outputfile: str,
     ascsv: bool = False,
     headers: Optional[List[str]] = None,
@@ -4328,7 +4329,7 @@ def writenpvecs(
 
     Parameters
     ----------
-    thevecs : np.ndarray
+    thevecs : NDArray
         A 1D or 2D numpy array containing the data to be written. If 1D,
         the array is written as a single column. If 2D, each column is
         written as a separate line in the output file.
