@@ -37,7 +37,8 @@ def test_colortables():
     thestate = tide_colortables.gen_g2y2r_state()
     thestate = tide_colortables.gen_mask_state()
     thestate = tide_colortables.gen_greyclip_state()
-    thewidget = tide_colortables.getagradient()
+    thestate = tide_colortables.gen_thermal_state()
+    #thewidget = tide_colortables.getagradient()
 
 
 if __name__ == "__main__":
