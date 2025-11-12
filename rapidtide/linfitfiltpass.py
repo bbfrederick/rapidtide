@@ -16,7 +16,7 @@
 #   limitations under the License.
 #
 #
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -142,7 +142,7 @@ def linfitfiltpass(
     fitcoeff: NDArray | None,
     fitNorm: NDArray | None,
     datatoremove: NDArray | None,
-    filtereddata: NDArray,
+    filtereddata: NDArray | None,
     nprocs: int = 1,
     alwaysmultiproc: bool = False,
     constantevs: bool = False,
