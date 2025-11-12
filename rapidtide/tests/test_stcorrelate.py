@@ -67,7 +67,7 @@ def test_stcorrelate(debug=False):
         samplestep=int(stepsize // tr),
         weighting=corrweighting,
         detrendorder=0,
-        displayplots=False,
+        displayplots=debug,
     )
     # xlength = len(times)
     writenpvecs(corrpertime, outfilename + "_pearson.txt")

@@ -253,7 +253,7 @@ def shorttermcorr_1D(
             detrendorder=detrendorder,
             windowfunc=windowfunc,
         )
-        thepearsonresult = sp.stats.pearsonr(dataseg1, dataseg2).statistic
+        thepearsonresult = sp.stats.pearsonr(dataseg1, dataseg2)
         thepcorrR, thepcorrp = thepearsonresult.statistic, thepearsonresult.pvalue
         times.append(i * sampletime)
         corrpertime.append(thepcorrR)
