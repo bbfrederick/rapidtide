@@ -2843,8 +2843,7 @@ def confoundregress(
     regressors: NDArray,
     debug: bool = False,
     showprogressbar: bool = True,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> Tuple[NDArray, NDArray]:
     """
     Filters multiple regressors out of an array of data using linear regression.
@@ -2864,10 +2863,8 @@ def confoundregress(
         Print additional diagnostic information if True. Default is False.
     showprogressbar : bool, optional
         Show progress bar during processing. Default is True.
-    rt_floatset : type, optional
+    rt_floattype : np.dtype, optional
         The data type used for floating-point calculations. Default is np.float64.
-    rt_floattype : str, optional
-        The string representation of the floating-point data type. Default is "float64".
 
     Returns
     -------
@@ -2905,7 +2902,7 @@ def confoundregress(
         if i == 0 and debug:
             print("fit shape:", thefit.shape)
         for j in range(regressors.shape[0]):
-            datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * regressors[j, :])
+            datatoremove += (thefit[0, 1 + j] * regressors[j, :]).astype(rt_floattype)
         filtereddata[i, :] = data[i, :] - datatoremove
         r2value[i] = R2
     return filtereddata, r2value

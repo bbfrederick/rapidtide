@@ -56,8 +56,7 @@ def cleanregressor(
     respdelete: bool = False,
     displayplots: bool = False,
     debug: bool = False,
-    rt_floattype: str = "float64",
-    rt_floatset: Any = np.float64,
+    rt_floattype: np.dtype = np.float64,
 ) -> Tuple[
     NDArray,
     NDArray,
@@ -131,10 +130,8 @@ def cleanregressor(
         If True, display plots during processing. Default is False.
     debug : bool, optional
         If True, print debugging information. Default is False.
-    rt_floattype : str, optional
-        Data type for real-time processing. Default is "float64".
-    rt_floatset : Any, optional
-        Float type setting for real-time processing. Default is np.float64.
+    rt_floattype : np.dtype, optional
+        Float type setting for rapidtide processing. Default is np.float64.
 
     Returns
     -------
@@ -214,7 +211,6 @@ def cleanregressor(
         print(f"\t{check_autocorrelation=}")
         print(f"\t{displayplots=}")
         print(f"\t{rt_floattype=}")
-        print(f"\t{rt_floatset=}")
 
     # check the regressor for periodic components in the passband
     dolagmod = True
@@ -262,7 +258,6 @@ def cleanregressor(
             despeckle_thresh=despeckle_thresh,
             lthreshval=lthreshval,
             fixdelay=fixdelay,
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
         tide_io.writebidstsv(

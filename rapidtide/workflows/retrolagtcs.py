@@ -215,10 +215,8 @@ def retrolagtcs(args: Any) -> None:
     ... )
     >>> retrolagtcs(args)
     """
-    rt_floatset = np.float64
-    rt_floattype = "float64"
-    rt_outfloatset = np.float64
-    rt_outfloattype = "float64"
+    rt_floattype = np.float64
+    rt_outfloattype = np.float64
 
     # get the pid of the parent process
     args.pid = os.getpid()
@@ -318,13 +316,13 @@ def retrolagtcs(args: Any) -> None:
         if args.debug:
             print("allocating memory")
     fitNorm, fitNorm_shm = tide_util.allocarray(
-        internalvalidspaceshapederivs, rt_outfloatset, shared=usesharedmem
+        internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
     )
     fitcoeff, fitcoeff_shm = tide_util.allocarray(
-        internalvalidspaceshapederivs, rt_outfloatset, shared=usesharedmem
+        internalvalidspaceshapederivs, rt_outfloattype, shared=usesharedmem
     )
     lagtc, lagtc_shm = tide_util.allocarray(
-        internalvalidfmrishape, rt_floatset, shared=usesharedmem
+        internalvalidfmrishape, rt_floattype, shared=usesharedmem
     )
 
     outputpath = os.path.dirname(args.outputroot)

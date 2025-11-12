@@ -139,8 +139,7 @@ def correlationpass(
     interptype="univariate",
     showprogressbar=True,
     chunksize=1000,
-    rt_floatset=np.float64,
-    rt_floattype="float64",
+    rt_floattype=np.float64,
 ):
     """
 
@@ -161,7 +160,6 @@ def correlationpass(
     interptype
     showprogressbar
     chunksize
-    rt_floatset
     rt_floattype
 
     Returns
@@ -245,7 +243,6 @@ def correlationpass(
                 os_fmri_x,
                 oversampfactor=oversampfactor,
                 interptype=interptype,
-                rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
             )
             theglobalmaxlist.append(theglobalmax + 0)

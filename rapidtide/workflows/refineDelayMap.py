@@ -56,8 +56,7 @@ def refineDelay(
     maxdelay: float = 5.0,
     numpoints: int = 501,
     histlen: int = 101,
-    rt_floatset: Any = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     debug: bool = False,
 ) -> None:
     """
@@ -129,10 +128,8 @@ def refineDelay(
         Number of points for delay interpolation, default is 501.
     histlen : int, optional
         Length of histogram bins, default is 101.
-    rt_floatset : Any, optional
-        Data type for real-time float operations, default is np.float64.
-    rt_floattype : str, optional
-        String representation of float type, default is "float64".
+    rt_floattype : np.dtype, optional
+        Data type for rapidtide float operations, default is np.float64.
     debug : bool, optional
         Enable debug mode, default is False.
 

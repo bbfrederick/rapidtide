@@ -320,7 +320,7 @@ def ccorrica(args: Any) -> None:
                 zeropadding=0,
                 displayplots=args.debug,
             )
-            thepxcorr = pearsonr(reformdata[component1, :] / tclen, reformdata[component2, :])
+            thepxcorr = pearsonr(reformdata[component1, :] / tclen, reformdata[component2, :]).statistic
             outputdata[component1, component2, 0, :] = thexcorr
             outputpdata[component1, component2, 0, :] = thepxcorr[0]
             (

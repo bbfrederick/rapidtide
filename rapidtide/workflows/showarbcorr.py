@@ -531,7 +531,7 @@ def showarbcorr(args: Any) -> None:
     print("trimmed Correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     print(f"{len(filtereddata1)=}, {len(filtereddata2)=}")
-    thepxcorr = pearsonr(filtereddata1, filtereddata2)
+    thepxcorr = pearsonr(filtereddata1, filtereddata2).statistic
 
     # initialize the correlation fitter
     thexsimfuncfitter = tide_simFuncClasses.SimilarityFunctionFitter(

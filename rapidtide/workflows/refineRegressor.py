@@ -87,8 +87,7 @@ class RegressorRefiner:
         prewhitenregressor: bool = False,
         prewhitenlags: int = 10,
         debug: bool = False,
-        rt_floattype: str = "float64",
-        rt_floatset: Any = np.float64,
+        rt_floattype: np.dtype = np.float64,
     ) -> None:
         """
         Initialize the object with configuration parameters for fMRI data processing.
@@ -188,10 +187,8 @@ class RegressorRefiner:
             Number of lags for pre-whitening (default is 10).
         debug : bool, optional
             Enable debug mode (default is False).
-        rt_floattype : str, optional
-            Real-time floating-point data type (default is "float64").
-        rt_floatset : Any, optional
-            Real-time float type setting (default is np.float64).
+        rt_floattype : np.dtype, optional
+            Rapidtide floating-point data type (default is np.float64).
 
         Returns
         -------
@@ -252,8 +249,7 @@ class RegressorRefiner:
         ...     prewhitenregressor=True,
         ...     prewhitenlags=5,
         ...     debug=False,
-        ...     rt_floattype="float32",
-        ...     rt_floatset=np.float32,
+        ...     rt_floattype=np.float32,
         ... )
         """
         self.internalvalidfmrishape = internalvalidfmrishape
@@ -300,7 +296,6 @@ class RegressorRefiner:
         self.prewhitenlags = prewhitenlags
         self.debug = debug
         self.rt_floattype = rt_floattype
-        self.rt_floatset = rt_floatset
 
         self.setmasks(includemask, excludemask)
         self.totalrefinementbytes = self._allocatemem(pid)
@@ -638,7 +633,6 @@ class RegressorRefiner:
             showprogressbar=self.showprogressbar,
             chunksize=self.chunksize,
             padtrs=self.padtrs,
-            rt_floatset=self.rt_floatset,
             rt_floattype=self.rt_floattype,
         )
         return voxelsprocessed_rra
@@ -781,7 +775,6 @@ class RegressorRefiner:
             windowfunc=self.windowfunc,
             cleanrefined=self.cleanrefined,
             bipolar=self.bipolar,
-            rt_floatset=self.rt_floatset,
             rt_floattype=self.rt_floattype,
         )
         outputdict = {}
@@ -976,8 +969,7 @@ def refineRegressor(
     outputname: Any,
     nativefmrishape: Any,
     bidsbasedict: Any,
-    rt_floatset: Any = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     debug: bool = False,
 ) -> None:
     """
@@ -1042,10 +1034,8 @@ def refineRegressor(
         Shape of the native fMRI data.
     bidsbasedict : dict
         Dictionary for BIDS metadata.
-    rt_floatset : numpy.dtype, optional
+    rt_floattype : numpy.dtype, optional
         Data type for floating-point operations, default is np.float64.
-    rt_floattype : str, optional
-        String representation of floating-point data type, default is "float64".
     debug : bool, optional
         Enable debug mode, default is False.
 

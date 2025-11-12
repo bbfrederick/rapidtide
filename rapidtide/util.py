@@ -2022,7 +2022,7 @@ def comparehappyruns(root1: str, root2: str, debug: bool = False) -> dict[str, A
 
 # shared memory routines
 def numpy2shared(
-    inarray: NDArray, theouttype: type, name: str | None = None
+    inarray: NDArray, theouttype: np.dtype, name: str | None = None
 ) -> tuple[NDArray, shared_memory.SharedMemory]:
     """
     Convert a numpy array to a shared memory array.
@@ -2035,7 +2035,7 @@ def numpy2shared(
     ----------
     inarray : numpy.ndarray
         Input numpy array to be converted to shared memory.
-    theouttype : type
+    theouttype : dtype
         Data type of the output shared memory array.
     name : str, optional
         Name of the shared memory block. If None, an anonymous shared memory
@@ -2078,7 +2078,7 @@ def numpy2shared(
 
 
 def allocshared(
-    theshape: tuple[int, ...], thetype: type, name: str | None = None
+    theshape: tuple[int, ...], thetype: np.dtype, name: str | None = None
 ) -> tuple[NDArray, shared_memory.SharedMemory]:
     """
     Allocate shared memory for a numpy array.
@@ -2137,7 +2137,7 @@ def allocshared(
 
 
 def allocarray(
-    theshape: tuple[int, ...], thetype: type, shared: bool = False, name: str | None = None
+    theshape: tuple[int, ...], thetype: np.dtype, shared: bool = False, name: str | None = None
 ) -> tuple[NDArray, shared_memory.SharedMemory | None]:
     """
     Allocate and return a numpy array with specified shape and type.

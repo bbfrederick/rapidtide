@@ -510,7 +510,7 @@ def niftihdrfromarray(data: np.ndarray) -> Any:
 def makedestarray(
     destshape: Union[Tuple, np.ndarray],
     filetype: str = "nifti",
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> Tuple[np.ndarray, int]:
     """
     Create a destination array for output data based on file type and shape.
@@ -524,8 +524,8 @@ def makedestarray(
         to time; for 'text', it is expected to be a 1D or 2D shape.
     filetype : str, optional
         Type of output file. Must be one of 'nifti', 'cifti', or 'text'. Default is 'nifti'.
-    rt_floattype : str, optional
-        Data type for the output array. Default is 'float64'.
+    rt_floattype : np.dtype, optional
+        Data type for the output array. Default is 'np.float64'.
 
     Returns
     -------
@@ -676,7 +676,7 @@ def savemaplist(
     theheader: Any,
     bidsbasedict: Dict[str, Any],
     filetype: str = "nifti",
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     cifti_hdr: Optional[Any] = None,
     savejson: bool = True,
     debug: bool = False,

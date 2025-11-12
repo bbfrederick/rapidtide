@@ -483,19 +483,15 @@ def delayvar(args: Any) -> None:
         sys.exit()
 
     if therunoptions["internalprecision"] == "double":
-        rt_floattype = "float64"
-        rt_floatset = np.float64
+        rt_floattype = np.float64
     else:
-        rt_floattype = "float32"
-        rt_floatset = np.float32
+        rt_floattype = np.float32
 
     # set the output precision
     if therunoptions["outputprecision"] == "double":
-        rt_outfloattype = "float64"
-        rt_outfloatset = np.float64
+        rt_outfloattype = np.float64
     else:
-        rt_outfloattype = "float32"
-        rt_outfloatset = np.float32
+        rt_outfloattype = np.float32
     therunoptions["saveminimumsLFOfiltfiles"] = args.saveminimumsLFOfiltfiles
 
     # read the fmri input files
@@ -960,7 +956,7 @@ def delayvar(args: Any) -> None:
         # pcadata = np.mean(reduceddata, axis=0)
         pcadata = thefit.components_[0]
         averagedata = np.mean(windoweddelayoffset, axis=0)
-        thepxcorr = pearsonr(averagedata, pcadata)[0]
+        thepxcorr = pearsonr(averagedata, pcadata).statistic
         LGR.info(f"pca/avg correlation = {thepxcorr}")
         if thepxcorr > 0.0:
             systemiccomp = 1.0 * pcadata

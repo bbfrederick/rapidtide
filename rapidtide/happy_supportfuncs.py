@@ -3545,10 +3545,12 @@ def wrightmap(
         )
         for theslice in range(numslices):
             for thepoint in validlocslist[theslice]:
-                theRvalue, thepvalue = pearsonr(
+                theresult = pearsonr(
                     rawapp_byslice1[thepoint, theslice, :],
                     rawapp_byslice2[thepoint, theslice, :],
                 )
+                theRvalue = theresult.statistic
+                thepvalue = theresult.pvalue
                 if debug:
                     print("theRvalue = ", theRvalue)
                 wrightcorrs_byslice[thepoint, theslice, theiteration] = theRvalue

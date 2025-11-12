@@ -48,7 +48,7 @@ def _procOneVoxelTimeShift(
         "debug": False,
     }
     options.update(kwargs)
-    detrendorder = options["detrendorder"]
+    detrendorder = int(options["detrendorder"])
     offsettime = options["offsettime"]
     debug = options["debug"]
     if debug:
@@ -234,8 +234,7 @@ def alignvoxels(
     chunksize: int = 1000,
     padtrs: int = 60,
     debug: bool = False,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> int:
     """
     Apply temporal alignment (timeshift) to all voxels in fMRI data based on correlation peaks.
@@ -278,10 +277,8 @@ def alignvoxels(
         Number of timepoints to pad on each end of the timecourses (default is 60)
     debug : bool, optional
         If True, enable additional debugging output (default is False)
-    rt_floatset : type, optional
+    rt_floattype : np.dtype, optional
         Function to coerce variable types (default is np.float64)
-    rt_floattype : str, optional
-        Data type for internal variables ('float32' or 'float64') (default is 'float64')
 
     Returns
     -------
@@ -378,8 +375,7 @@ def makerefinemask(
     excludemask: NDArray | None = None,
     fixdelay: bool = False,
     debug: bool = False,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> tuple[int, NDArray | None, int, int, int, int, int]:
     """
     Determine which voxels should be used for regressor refinement based on correlation strength,
@@ -426,10 +422,8 @@ def makerefinemask(
         If True, uses the raw `lagmask` without applying delay thresholds. Default is False.
     debug : bool, optional
         Enable additional debugging output. Default is False.
-    rt_floatset : callable, optional
-        Function to coerce variable types. Default is `np.float64`.
-    rt_floattype : str, optional
-        Data type for internal variables. Must be 'float32' or 'float64'. Default is 'float64'.
+    rt_floattype : np.dtype, optional
+        Data type for internal arrays. Default is `np.float64`.
 
     Returns
     -------
@@ -693,8 +687,7 @@ def dorefine(
     cleanrefined: bool = False,
     bipolar: bool = False,
     debug: bool = False,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> tuple[int, NDArray]:
     """
     Refine timecourses using specified method (ICA, PCA, weighted average, or unweighted average).
@@ -748,10 +741,8 @@ def dorefine(
         If True, flip sign of negative lag strengths (default is False).
     debug : bool, optional
         If True, print debug information (default is False).
-    rt_floatset : type, optional
+    rt_floattype : np.dtype, optional
         Data type for floating-point numbers (default is np.float64).
-    rt_floattype : str, optional
-        String representation of floating-point data type (default is "float64").
 
     Returns
     -------
@@ -883,7 +874,7 @@ def dorefine(
             theprefilter.apply(fmrifreq, icadata),
             detrendorder=detrendorder,
         )
-        thepxcorr = pearsonr(filteredavg, filteredica)[0]
+        thepxcorr = pearsonr(filteredavg, filteredica).statistic
         LGR.info(f"ica/avg correlation = {thepxcorr}")
         if thepxcorr > 0.0:
             outputdata = 1.0 * icadata
@@ -918,7 +909,7 @@ def dorefine(
             theprefilter.apply(fmrifreq, pcadata),
             detrendorder=detrendorder,
         )
-        thepxcorr = pearsonr(filteredavg, filteredpca)[0]
+        thepxcorr = pearsonr(filteredavg, filteredpca).statistic
         LGR.info(f"pca/avg correlation = {thepxcorr}")
         if thepxcorr > 0.0:
             outputdata = 1.0 * pcadata
@@ -934,8 +925,8 @@ def dorefine(
     if cleanrefined:
         thefit, R2 = tide_fit.mlregress(averagediscard, averagedata)
 
-        fitcoff = rt_floatset(thefit[0, 1])
-        datatoremove = rt_floatset(fitcoff * averagediscard)
+        fitcoff = thefit[0, 1]
+        datatoremove = (fitcoff * averagediscard).astype(rt_floattype)
         outputdata -= datatoremove
 
     # garbage collect

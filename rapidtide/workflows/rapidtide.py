@@ -67,9 +67,8 @@ LGR = logging.getLogger("GENERAL")
 ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
-global rt_floattype, rt_floatset
-rt_floatset:str = "empty"
-rt_floattype: np.float32 | np.float64 = np.float64
+global rt_floattype
+rt_floattype: np.dtype = np.float64
 
 def checkforzeromean(thedataset: Any) -> bool:
     """
@@ -369,25 +368,21 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         tide_util.disablenumba()
 
     # set the internal precision
-    global rt_floatset, rt_floattype
+    global rt_floattype
     if optiondict["internalprecision"] == "double":
         LGR.debug("setting internal precision to double")
-        rt_floattype = "float64"
-        rt_floatset = np.float64
+        rt_floattype = np.float64
     else:
         LGR.debug("setting internal precision to single")
-        rt_floattype = "float32"
-        rt_floatset = np.float32
+        rt_floattype = np.float32
 
     # set the output precision
     if optiondict["outputprecision"] == "double":
         LGR.debug("setting output precision to double")
-        rt_outfloattype = "float64"
-        rt_outfloatset = np.float64
+        rt_outfloattype = np.float64
     else:
         LGR.debug("setting output precision to single")
-        rt_outfloattype = "float32"
-        rt_outfloatset = np.float32
+        rt_outfloattype = np.float32
 
     # set the number of worker processes if multiprocessing
     if optiondict["nprocs"] < 1:
@@ -796,7 +791,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         LGR.info("moving fmri data to shared memory")
         TimingLGR.verbose("Start moving fmri_data to shared memory")
         fmri_data_valid, fmri_data_valid_shm = tide_util.numpy2shared(
-            fmri_data_valid, rt_floatset, name=f"fmri_data_valid_{optiondict['pid']}"
+            fmri_data_valid, rt_floattype, name=f"fmri_data_valid_{optiondict['pid']}"
         )
         TimingLGR.verbose("End moving fmri_data to shared memory")
 
@@ -1266,7 +1261,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             padlen=int(inputfreq * optiondict["padseconds"]),
             debug=optiondict["debug"],
         )
-        reference_y = rt_floatset(reference_y_filt.real)
+        reference_y = (reference_y_filt.real).astype(rt_floattype)
 
     warnings.filterwarnings("ignore", "Casting*")
 
@@ -1331,7 +1326,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     if optiondict["tincludemaskname"] is not None:
         print("creating temporal include mask")
         includetmask_y = tide_mask.maketmask(
-            optiondict["tincludemaskname"], reference_x, rt_floatset(reference_y) + 0.0
+            optiondict["tincludemaskname"], reference_x, reference_y.astype(rt_floattype) + 0.0
         )
     else:
         includetmask_y = (reference_x * 0.0) + 1.0
@@ -1340,7 +1335,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         excludetmask_y = (
             -1.0
             * tide_mask.maketmask(
-                optiondict["texcludemaskname"], reference_x, rt_floatset(reference_y) + 0.0
+                optiondict["texcludemaskname"], reference_x, reference_y.astype(rt_floattype) + 0.0
             )
             + 1.0
         )
@@ -1569,7 +1564,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             chunksize=optiondict["mp_chunksize"],
             nprocs=optiondict["nprocs"],
             alwaysmultiproc=optiondict["alwaysmultiproc"],
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
             debug=optiondict["debug"],
         )
@@ -1595,25 +1589,25 @@ def rapidtide_main(argparsingfunc: Any) -> None:
 
     corrout, corrout_shm = tide_util.allocarray(
         internalvalidcorrshape,
-        rt_floatset,
+        rt_floattype,
         shared=optiondict["sharedmem"],
         name=f"corrout_{optiondict['pid']}",
     )
     gaussout, gaussout_shm = tide_util.allocarray(
         internalvalidcorrshape,
-        rt_floatset,
+        rt_floattype,
         shared=optiondict["sharedmem"],
         name=f"gaussout_{optiondict['pid']}",
     )
     windowout, windowout_shm = tide_util.allocarray(
         internalvalidcorrshape,
-        rt_floatset,
+        rt_floattype,
         shared=optiondict["sharedmem"],
         name=f"windowout_{optiondict['pid']}",
     )
     outcorrarray, outcorrarray_shm = tide_util.allocarray(
         internalcorrshape,
-        rt_floatset,
+        rt_floattype,
         shared=optiondict["sharedmem"],
         name=f"outcorrarray_{optiondict['pid']}",
     )
@@ -1845,7 +1839,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             interptype=optiondict["interptype"],
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
@@ -1998,7 +1991,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             respdelete=optiondict["respdelete"],
             debug=optiondict["debug"],
             rt_floattype=rt_floattype,
-            rt_floatset=rt_floatset,
         )
         if optiondict["debug"]:
             print(
@@ -2051,8 +2043,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 showprogressbar=optiondict["showprogressbar"],
                 chunksize=optiondict["mp_chunksize"],
                 permutationmethod=optiondict["permutationmethod"],
-                rt_floatset=np.float64,
-                rt_floattype="float64",
+                rt_floattype=np.float64,
             )
             tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
@@ -2196,7 +2187,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             interptype=optiondict["interptype"],
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
             threaddebug=optiondict["threaddebug"],
             debug=optiondict["debug"],
@@ -2266,8 +2256,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             LGR,
             TimingLGR,
             simplefit=(optiondict["similaritymetric"] == "riptide"),
-            rt_floatset=np.float64,
-            rt_floattype="float64",
+            rt_floattype=np.float64,
         )
 
         # Step 2b - refine delay (optional)
@@ -2319,7 +2308,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 maxdelay=optiondict["maxdelay"],
                 numpoints=optiondict["numpoints"],
                 histlen=optiondict["histlen"],
-                rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
                 debug=optiondict["debug"],
             )
@@ -2413,8 +2401,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     outputname,
                     nativefmrishape,
                     bidsbasedict,
-                    rt_floatset=np.float64,
-                    rt_floattype="float64",
+                    rt_floattype=np.float64,
                 )
             )
         # End of main pass loop
@@ -2481,19 +2468,19 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         # now allocate the arrays needed for the coherence calculation
         coherencefunc, coherencefunc_shm = tide_util.allocarray(
             internalvalidcoherenceshape,
-            rt_outfloatset,
+            rt_outfloattype,
             shared=optiondict["sharedmem"],
             name=f"coherencefunc_{optiondict['pid']}",
         )
         coherencepeakval, coherencepeakval_shm = tide_util.allocarray(
             numvalidspatiallocs,
-            rt_outfloatset,
+            rt_outfloattype,
             shared=optiondict["sharedmem"],
             name=f"coherencepeakval_{optiondict['pid']}",
         )
         coherencepeakfreq, coherencepeakfreq_shm = tide_util.allocarray(
             numvalidspatiallocs,
-            rt_outfloatset,
+            rt_outfloattype,
             shared=optiondict["sharedmem"],
             name=f"coherencepeakfreq_{optiondict['pid']}",
         )
@@ -2557,13 +2544,13 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         # now allocate the arrays needed for Wiener deconvolution
         wienerdeconv, wienerdeconv_shm = tide_util.allocarray(
             internalvalidspaceshape,
-            rt_outfloatset,
+            rt_outfloattype,
             shared=optiondict["sharedmem"],
             name=f"wienerdeconv_{optiondict['pid']}",
         )
         wpeak, wpeak_shm = tide_util.allocarray(
             internalvalidspaceshape,
-            rt_outfloatset,
+            rt_outfloattype,
             shared=optiondict["sharedmem"],
             name=f"wpeak_{optiondict['pid']}",
         )
@@ -2584,7 +2571,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             wienerdeconv,
             wpeak,
             resampref_y,
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
         TimingLGR.info(
@@ -2668,7 +2654,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 TimingLGR.info("Start moving fmri_data to shared memory")
                 fmri_data_valid, fmri_data_valid_shm = tide_util.numpy2shared(
                     fmri_data_valid,
-                    rt_floatset,
+                    rt_floattype,
                     name=f"fmri_data_valid_regressionfilt_{optiondict['pid']}",
                 )
                 TimingLGR.info("End moving fmri_data to shared memory")
@@ -2784,7 +2770,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 maxdelay=optiondict["maxdelay"],
                 numpoints=optiondict["numpoints"],
                 histlen=optiondict["histlen"],
-                rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
                 debug=optiondict["debug"],
             )
@@ -2830,7 +2815,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                         maxdelay=optiondict["maxdelay"],
                         numpoints=optiondict["numpoints"],
                         histlen=optiondict["histlen"],
-                        rt_floatset=rt_floatset,
                         rt_floattype=rt_floattype,
                         debug=optiondict["debug"],
                     )

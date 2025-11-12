@@ -79,7 +79,7 @@ def getNullDistributionData(
         corrlist[i] = theshuffledxcorr_trim[argmax(theshuffledxcorr_trim)]
 
         # find and tabulate correlation coefficient at 0 lag
-        corrlist_pear[i] = pearsonr(filteredindata, filteredshuffleddata)[0]
+        corrlist_pear[i] = pearsonr(filteredindata, filteredshuffleddata).statistic
 
         # progress
         # tide_util.progressbar(i + 1, numreps, label='Percent complete')
@@ -352,7 +352,7 @@ def main():
         )
     else:
         thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr)
-    thepxcorr = pearsonr(filtereddata1, filtereddata2)
+    thepxcorr = pearsonr(filtereddata1, filtereddata2).statistic
 
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / Fs

@@ -40,8 +40,7 @@ def onesimfuncfit(
     lthreshval: float = 0.0,
     fixdelay: bool = False,
     initialdelayvalue: float = 0.0,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> Tuple[int, float, float, float, int, int, int, int]:
     """
     Perform a single fit on a correlation function using the provided fitter.
@@ -70,10 +69,8 @@ def onesimfuncfit(
         Default is False.
     initialdelayvalue : float, optional
         The fixed delay value to use when `fixdelay=True`. Default is 0.0.
-    rt_floatset : type, optional
+    rt_floattype : np.dtype, optional
         The data type to use for floating-point values. Default is `np.float64`.
-    rt_floattype : str, optional
-        String representation of the floating-point type. Default is "float64".
 
     Returns
     -------
@@ -96,7 +93,6 @@ def onesimfuncfit(
     Examples
     --------
     >>> import numpy as np
-    >>> from some_module import some_fitter_class
     >>> corr_func = np.random.rand(100)
     >>> fitter = some_fitter_class()
     >>> result = onesimfuncfit(corr_func, fitter)
@@ -128,10 +124,10 @@ def onesimfuncfit(
     else:
         # do something different
         failreason = np.uint32(0)
-        maxlag = rt_floatset(initialdelayvalue)
+        maxlag = initialdelayvalue
         maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, initialdelayvalue))
-        maxval = rt_floatset(correlationfunc[maxindex])
-        maxsigma = rt_floatset(1.0)
+        maxval = correlationfunc[maxindex]
+        maxsigma = 1.0
         maskval = np.uint16(1)
         peakstart = maxindex
         peakend = maxindex
@@ -148,8 +144,7 @@ def _procOneVoxelFitcorr(
     initiallag: Optional[float] = None,
     fixdelay: bool = False,
     initialdelayvalue: float = 0.0,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> Tuple[int, int, float, float, float, NDArray, NDArray, float, int, int]:
     """
     Process a single voxel for correlation fitting.
@@ -176,10 +171,8 @@ def _procOneVoxelFitcorr(
         If True, fixes the delay during fitting. Default is False.
     initialdelayvalue : float, optional
         Initial delay value if `fixdelay` is True. Default is 0.0.
-    rt_floatset : type, optional
+    rt_floattype : np.dtype, optional
         Type to use for real-valued floating-point arrays. Default is `np.float64`.
-    rt_floattype : str, optional
-        String representation of the floating-point type. Default is "float64".
 
     Returns
     -------
@@ -212,8 +205,7 @@ def _procOneVoxelFitcorr(
     ...     despeckle_thresh=5.0,
     ...     fixdelay=False,
     ...     initialdelayvalue=0.0,
-    ...     rt_floatset=np.float64,
-    ...     rt_floattype="float64"
+    ...     rt_floattype=np.float64,
     ... )
     >>> print(result)
     (10, 1, 1.23, 0.95, 0.12, array([...]), array([...]), 0.90, 1, 0)
@@ -235,7 +227,6 @@ def _procOneVoxelFitcorr(
         fixdelay=fixdelay,
         initialdelayvalue=initialdelayvalue,
         initiallag=initiallag,
-        rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
     )
 
@@ -244,29 +235,27 @@ def _procOneVoxelFitcorr(
 
     # now tuck everything away in the appropriate output array
     volumetotalinc = 0
-    thewindowout = rt_floatset(0.0 * corr_y)
+    thewindowout = np.zeros_like(corr_y, rt_floattype)
     thewindowout[peakstart : peakend + 1] = 1.0
     if (maskval == 0) and thefitter.zerooutbadfit:
-        thetime = rt_floatset(0.0)
-        thestrength = rt_floatset(0.0)
-        thesigma = rt_floatset(0.0)
-        thegaussout = 0.0 * corr_y
-        theR2 = rt_floatset(0.0)
+        thetime = 0.0
+        thestrength = 0.0
+        thesigma = 0.0
+        thegaussout = np.zeros_like(corr_y, rt_floattype)
+        theR2 = 0.0
     else:
         volumetotalinc = 1
-        thetime = rt_floatset(np.fmod(maxlag, thefitter.lagmod))
-        thestrength = rt_floatset(maxval)
-        thesigma = rt_floatset(maxsigma)
-        thegaussout = rt_floatset(0.0 * corr_y)
-        thewindowout = rt_floatset(0.0 * corr_y)
+        thetime = np.fmod(maxlag, thefitter.lagmod)
+        thestrength = maxval
+        thesigma = maxsigma
+        thegaussout = np.zeros_like(corr_y, rt_floattype)
+        thewindowout = np.zeros_like(corr_y, rt_floattype)
         if (not fixdelay) and (maxsigma != 0.0):
-            thegaussout = rt_floatset(
-                tide_fit.gauss_eval(thefitter.corrtimeaxis, [maxval, maxlag, maxsigma])
-            )
+            thegaussout = tide_fit.gauss_eval(thefitter.corrtimeaxis, [maxval, maxlag, maxsigma]).astype(rt_floattype)
         else:
-            thegaussout = rt_floatset(0.0)
-            thewindowout = rt_floatset(0.0)
-        theR2 = rt_floatset(thestrength * thestrength)
+            thegaussout = 0.0
+            thewindowout = 0.0
+        theR2 = thestrength * thestrength
 
     return (
         vox,
@@ -304,8 +293,7 @@ def fitcorr(
     chunksize: int = 1000,
     despeckle_thresh: float = 5.0,
     initiallags: Optional[NDArray] = None,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> int:
     """
     Fit correlation data to extract lag parameters and related statistics for each voxel.
@@ -358,10 +346,8 @@ def fitcorr(
         Threshold for despeckling, by default 5.0.
     initiallags : NDArray, optional
         Initial lag values for each voxel, by default None.
-    rt_floatset : type, optional
+    rt_floattype : np.dtype, optional
         Floating-point type for runtime, by default np.float64.
-    rt_floattype : str, optional
-        String representation of floating-point type, by default "float64".
 
     Returns
     -------
@@ -443,7 +429,6 @@ def fitcorr(
                             initiallag=thislag,
                             fixdelay=fixdelay,
                             initialdelayvalue=thisinitialdelayvalue,
-                            rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
                     )
@@ -528,7 +513,6 @@ def fitcorr(
                     initiallag=thislag,
                     fixdelay=fixdelay,
                     initialdelayvalue=thisinitialdelayvalue,
-                    rt_floatset=rt_floatset,
                     rt_floattype=rt_floattype,
                 )
                 if (

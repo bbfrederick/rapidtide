@@ -144,7 +144,6 @@ def eval_refinedelay(
     theheader["pixdim"][4] = 1.0
 
     rt_floattype = "float64"
-    rt_floatset = np.float64
     sLFOfitmean = np.zeros(numlags, dtype=rt_floattype)
     rvalue = np.zeros(numlags, dtype=rt_floattype)
     r2value = np.zeros(numlags, dtype=rt_floattype)

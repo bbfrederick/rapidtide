@@ -703,7 +703,7 @@ def showxcorrx(args: Any) -> None:
             filtereddata1, filtereddata2, cepdelay, 1.0 / args.samplerate
         )
         print("cepstral delay time is", cepdelay, ", correlation is", cepcoff)
-    thepxcorr = pearsonr(filtereddata1, filtereddata2)
+    thepxcorr = pearsonr(filtereddata1, filtereddata2).statistic
 
     if args.calccoherence:
         # calculate the coherence

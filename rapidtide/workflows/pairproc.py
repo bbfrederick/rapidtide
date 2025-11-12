@@ -235,9 +235,10 @@ def pairproc(args: Any) -> None:
             desc="Voxel",
             unit="voxels",
         ):
-            temporalcorrelations[vox], temporalpvalues[vox] = pearsonr(
+            thepearsonresult = pearsonr(
                 tide_math.stdnormalize(evenims[vox, :]), tide_math.stdnormalize(oddims[vox, :])
             )
+            temporalcorrelations[vox], temporalpvalues[vox] = thepearsonresult.statistic, thepearsonresult.pvalue
         print()
 
         outarray = np.zeros((xsize, ysize, numslices), dtype=np.double)
@@ -259,10 +260,11 @@ def pairproc(args: Any) -> None:
             desc="Subject",
             unit="subjects",
         ):
-            spatialcorrelations[subject], spatialpvalues[subject] = pearsonr(
+            thepearsonresult = pearsonr(
                 tide_math.stdnormalize(evenims[:, subject]),
                 tide_math.stdnormalize(oddims[:, subject]),
             )
+            spatialcorrelations[subject], spatialpvalues[subject] = thepearsonresult.statistic, thepearsonresult.pvalue
         print()
 
         tide_io.writenpvecs(

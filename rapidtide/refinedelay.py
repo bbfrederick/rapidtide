@@ -735,7 +735,7 @@ def filterderivratios(
     patchthresh: float = 3.0,
     gausssigma: float = 0,
     filetype: str = "nifti",
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     verbose: bool = True,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray, float]:

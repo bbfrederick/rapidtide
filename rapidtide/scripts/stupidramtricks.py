@@ -102,19 +102,15 @@ def stupidramtricks(args):
         args.nprocs = tide_multiproc.maxcpus()
 
     if args.internalprecision == "double":
-        rt_floattype = "float64"
-        rt_floatset = np.float64
+        rt_floattype = np.float64
     else:
-        rt_floattype = "float32"
-        rt_floatset = np.float32
+        rt_floattype = np.float32
 
     # set the output precision
     if args.outputprecision == "double":
-        rt_outfloattype = "float64"
-        rt_outfloatset = np.float64
+        rt_outfloattype = np.float64
     else:
-        rt_outfloattype = "float32"
-        rt_outfloatset = np.float32
+        rt_outfloattype = np.float32
 
     # select the voxels in the mask
     print("setting sizes")
@@ -139,23 +135,23 @@ def stupidramtricks(args):
             print("allocating shared memory")
         # first move fmridata into shared memory
         fmridata, fmridata_shm = tide_util.numpy2shared(
-            fmridata, rt_floatset, name=f"fmridata_{args.pid}"
+            fmridata, rt_floattype, name=f"fmridata_{args.pid}"
         )
         sLFOfitmean, sLFOfitmean_shm = tide_util.allocshared(
-            internalvalidspaceshape, rt_outfloatset
+            internalvalidspaceshape, rt_outfloattype
         )
-        rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloatset)
-        fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloatset)
+        rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloattype)
+        r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloattype)
+        fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloattype)
         fitcoeff, fitcoeff_shm = tide_util.allocshared(
-            internalvalidspaceshapederivs, rt_outfloatset
+            internalvalidspaceshapederivs, rt_outfloattype
         )
         movingsignal, movingsignal_shm = tide_util.allocshared(
-            internalvalidfmrishape, rt_outfloatset
+            internalvalidfmrishape, rt_outfloattype
         )
-        lagtc, lagtc_shm = tide_util.allocshared(internalvalidfmrishape, rt_floatset)
+        lagtc, lagtc_shm = tide_util.allocshared(internalvalidfmrishape, rt_floattype)
         filtereddata, filtereddata_shm = tide_util.allocshared(
-            internalvalidfmrishape, rt_outfloatset
+            internalvalidfmrishape, rt_outfloattype
         )
 
         location = "in shared memory"

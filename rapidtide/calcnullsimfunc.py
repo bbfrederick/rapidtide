@@ -216,8 +216,7 @@ def getNullDistributionData(
     showprogressbar: bool = True,
     chunksize: int = 1000,
     permutationmethod: str = "shuffle",
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     debug: bool = False,
 ) -> NDArray:
     """
@@ -249,10 +248,8 @@ def getNullDistributionData(
         Size of chunks for multiprocessing. Default is 1000.
     permutationmethod : str, optional
         Permutation method to use ('shuffle' or other supported methods). Default is 'shuffle'.
-    rt_floatset : type, optional
-        The floating-point type to use for internal calculations. Default is np.float64.
     rt_floattype : str, optional
-        String representation of the floating-point type. Default is 'float64'.
+        String representation of the floating-point type. Default is np.float64.
     debug : bool, optional
         If True, enable debug output. Default is False.
 

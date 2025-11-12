@@ -445,7 +445,7 @@ def getregionsignal(
     signalgenmethod: str = "sum",
     pcacomponents: Union[float, str] = 0.8,
     signame: str = "global mean",
-    rt_floatset: type = np.float64,
+    rt_floattype: type = np.float64,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray]:
     """
@@ -482,7 +482,7 @@ def getregionsignal(
         if "mle", uses maximum likelihood estimation. Default is 0.8.
     signame : str, optional
         Name of the signal for logging purposes. Default is "global mean".
-    rt_floatset : type, optional
+    rt_floattype : type, optional
         Data type for internal computations. Default is np.float64.
     debug : bool, optional
         If True, print debugging information. Default is False.
@@ -522,7 +522,7 @@ def getregionsignal(
         themask = themask * (1 - excludemask)
 
     # combine all the voxels using one of the three methods
-    globalmean = rt_floatset(indata[0, :])
+    globalmean = (indata[0, :]).astype(rt_floattype)
     thesize = np.shape(themask)
     numvoxelsused = int(np.sum(np.where(themask > 0.0, 1, 0)))
     selectedvoxels = indata[np.where(themask > 0.0), :][0]
@@ -593,7 +593,7 @@ def saveregionaltimeseries(
     suffix: str = "",
     signalgenmethod: str = "sum",
     pcacomponents: Union[float, str] = 0.8,
-    rt_floatset: type = np.float64,
+    rt_floattype: type = np.float64,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray]:
     """
@@ -632,7 +632,7 @@ def saveregionaltimeseries(
         Method for generating the signal ('sum', 'mean', 'pca', etc.)
     pcacomponents : Union[float, str], default=0.8
         Number of PCA components to use (or fraction of variance explained)
-    rt_floatset : type, default=np.float64
+    rt_floattype : np.dtype, default=np.float64
         Data type for floating point operations
     debug : bool, default=False
         If True, enables debug mode for additional logging
@@ -678,7 +678,7 @@ def saveregionaltimeseries(
         signalgenmethod=signalgenmethod,
         pcacomponents=pcacomponents,
         signame=tcdesc,
-        rt_floatset=rt_floatset,
+        rt_floattype=rt_floattype,
         debug=debug,
     )
     tide_io.writebidstsv(

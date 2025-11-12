@@ -49,7 +49,7 @@ def _procOneVoxelMakelagtc(
         3. `timeaxis` - Time axis array for evaluation
     **kwargs : Any
         Additional keyword arguments that can override default options:
-        - `rt_floatset` : float type for computations (default: np.float64)
+        - `rt_floattype` : float type for computations (default: np.float64)
         - `debug` : boolean for debug printing (default: False)
 
     Returns
@@ -82,11 +82,11 @@ def _procOneVoxelMakelagtc(
     """
     # unpack arguments
     options = {
-        "rt_floatset": np.float64,
+        "rt_floattype": np.float64,
         "debug": False,
     }
     options.update(kwargs)
-    rt_floatset = options["rt_floatset"]
+    rt_floattype = options["rt_floattype"]
     debug = options["debug"]
     (lagtcgenerator, thelag, timeaxis) = voxelargs
     if debug:
@@ -94,7 +94,7 @@ def _procOneVoxelMakelagtc(
 
     # question - should maxlag be added or subtracted?  As of 10/18, it is subtracted
     #  potential answer - tried adding, results are terrible.
-    thelagtc = rt_floatset(lagtcgenerator.yfromx(timeaxis - thelag))
+    thelagtc = (lagtcgenerator.yfromx(timeaxis - thelag)).astype(rt_floattype)
 
     return (
         vox,
@@ -189,8 +189,7 @@ def makelaggedtcs(
     alwaysmultiproc: bool = False,
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     debug: bool = False,
 ) -> int:
     """
@@ -226,12 +225,9 @@ def makelaggedtcs(
     chunksize : int, optional
         Size of chunks to process in each step when using multiprocessing.
         Default is 1000.
-    rt_floatset : type, optional
-        The floating-point type to use for internal computations.
-        Default is `np.float64`.
     rt_floattype : str, optional
         String representation of the floating-point type.
-        Default is "float64".
+        Default is `np.float64`.
     debug : bool, optional
         If True, print debug information. Default is False.
 
@@ -249,7 +245,6 @@ def makelaggedtcs(
     Examples
     --------
     >>> import numpy as np
-    >>> from some_module import makelaggedtcs
     >>> timeaxis = np.arange(100)
     >>> lagtimes = np.array([0, 1, 2])
     >>> lagmask = np.ones((10, 10, 10), dtype=bool)
@@ -294,7 +289,7 @@ def makelaggedtcs(
         alwaysmultiproc,
         showprogressbar,
         chunksize,
-        rt_floatset=rt_floatset,
+        rt_floattype=rt_floattype,
     )
     if LGR is not None:
         LGR.info(f"\nLagged timecourses created for {volumetotal} voxels")

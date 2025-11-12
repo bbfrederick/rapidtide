@@ -70,8 +70,7 @@ def fitSimFunc(
     TimingLGR: Any,
     simplefit: bool = False,
     upsampfac: int = 8,
-    rt_floatset: Any = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> NDArray | None:
     """
     Perform similarity function fitting and time lag estimation for fMRI data.
@@ -160,10 +159,8 @@ def fitSimFunc(
         If True, perform simple fitting using upsampling. Default is False.
     upsampfac : int, optional
         Upsampling factor for simple fitting. Default is 8.
-    rt_floatset : dtype, optional
+    rt_floattype : np.dtype, optional
         Real-time floating-point data type. Default is np.float64.
-    rt_floattype : str, optional
-        Real-time floating-point type as string. Default is "float64".
 
     Returns
     -------
@@ -218,7 +215,6 @@ def fitSimFunc(
     ...     TimingLGR,
     ...     simplefit=False,
     ...     upsampfac=8,
-    ...     rt_floatset=np.float64,
     ...     rt_floattype="float64",
     ... )
     """
@@ -243,7 +239,6 @@ def fitSimFunc(
             interptype=optiondict["interptype"],
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
@@ -318,7 +313,6 @@ def fitSimFunc(
             chunksize=optiondict["mp_chunksize"],
             despeckle_thresh=optiondict["despeckle_thresh"],
             initiallags=initlags,
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
@@ -386,7 +380,6 @@ def fitSimFunc(
                             chunksize=optiondict["mp_chunksize"],
                             despeckle_thresh=optiondict["despeckle_thresh"],
                             initiallags=initlags,
-                            rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
                         tide_util.enablemkl(

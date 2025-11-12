@@ -41,8 +41,7 @@ def makeRIPTiDeRegressors(
     chunksize: int = 1000,
     targetstep: float = 2.5,
     edgepad: int = 0,
-    rt_floatset: Any = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     debug: bool = False,
 ) -> None:
     """
@@ -77,10 +76,8 @@ def makeRIPTiDeRegressors(
         Target step size (in seconds) between lags (default is 2.5).
     edgepad : int, optional
         Number of padding steps at the beginning and end of the lag range (default is 0).
-    rt_floatset : dtype, optional
+    rt_floattype : np.dtype, optional
         Data type for the regressor matrix (default is np.float64).
-    rt_floattype : str, optional
-        String representation of the float data type (default is "float64").
     debug : bool, optional
         If True, print debug information during execution (default is False).
 
@@ -134,7 +131,7 @@ def makeRIPTiDeRegressors(
         print(f"{delaystouse=}, {len(delaystouse)}")
         print(f"{len(initial_fmri_x)}")
 
-    regressorset = np.zeros((len(delaystouse), len(initial_fmri_x)), dtype=rt_floatset)
+    regressorset = np.zeros((len(delaystouse), len(initial_fmri_x)), dtype=rt_floattype)
 
     dummy = tide_makelagged.makelaggedtcs(
         lagtcgenerator,
@@ -147,7 +144,6 @@ def makeRIPTiDeRegressors(
         alwaysmultiproc=alwaysmultiproc,
         showprogressbar=showprogressbar,
         chunksize=chunksize,
-        rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
         debug=debug,
     )
@@ -201,8 +197,7 @@ def calcSimFunc(
     interptype: str = "univariate",
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floatset: Any = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     mklthreads: int = 1,
     threaddebug: bool = False,
     debug: bool = False,
@@ -301,10 +296,8 @@ def calcSimFunc(
         Whether to show a progress bar. Default is True.
     chunksize : int, optional
         Size of chunks for processing. Default is 1000.
-    rt_floatset : Any, optional
-        Real-time floating-point data type. Default is np.float64.
-    rt_floattype : str, optional
-        String representation of floating-point type. Default is 'float64'.
+    rt_floattype : np.dtype, optional
+        Rapidtide floating-point data type. Default is np.float64.
     mklthreads : int, optional
         Number of threads for Intel MKL. Default is 1.
     threaddebug : bool, optional
@@ -400,7 +393,6 @@ def calcSimFunc(
             interptype=interptype,
             showprogressbar=showprogressbar,
             chunksize=chunksize,
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
             debug=debug,
         )
@@ -425,7 +417,6 @@ def calcSimFunc(
             interptype=interptype,
             showprogressbar=showprogressbar,
             chunksize=chunksize,
-            rt_floatset=rt_floatset,
             rt_floattype=rt_floattype,
             debug=debug,
         )
@@ -452,7 +443,6 @@ def calcSimFunc(
                 showprogressbar=showprogressbar,
                 verbose=(LGR is not None),
                 chunksize=chunksize,
-                rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
                 debug=debug,
             )

@@ -150,8 +150,7 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
             respdelete=False,
             displayplots=displayplots,
             debug=debug,
-            rt_floattype="float64",
-            rt_floatset=np.float64,
+            rt_floattype=np.float64,
         )
         print(f"\t{len(referencetc)=}")
         print(f"\t{len(resampref_y)=}")

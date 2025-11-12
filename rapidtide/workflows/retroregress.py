@@ -414,7 +414,7 @@ def retroregress(args: Any) -> None:
     # save the raw and formatted command lines
     argstowrite = sys.argv
     thecommandline = " ".join(sys.argv[1:])
-    tide_io.writevec([thecommandline], f"{outputname}_retrocommandline.txt")
+    tide_io.writevec(np.asarray([thecommandline]), f"{outputname}_retrocommandline.txt")
     formattedcommandline = []
     for thetoken in argstowrite[0:3]:
         formattedcommandline.append(thetoken)
@@ -433,7 +433,7 @@ def retroregress(args: Any) -> None:
         else:
             suffix = ""
         formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
-    tide_io.writevec(formattedcommandline, f"{outputname}_retroformattedcommandline.txt")
+    tide_io.writevec(np.asarray(formattedcommandline), f"{outputname}_retroformattedcommandline.txt")
 
     if args.nprocs < 1:
         args.nprocs = tide_multiproc.maxcpus()
@@ -469,19 +469,15 @@ def retroregress(args: Any) -> None:
         sys.exit()
 
     if therunoptions["internalprecision"] == "double":
-        rt_floattype = "float64"
-        rt_floatset = np.float64
+        rt_floattype = np.float64
     else:
-        rt_floattype = "float32"
-        rt_floatset = np.float32
+        rt_floattype = np.float32
 
     # set the output precision
     if therunoptions["outputprecision"] == "double":
-        rt_outfloattype = "float64"
-        rt_outfloatset = np.float64
+        rt_outfloattype = np.float64
     else:
-        rt_outfloattype = "float32"
-        rt_outfloatset = np.float32
+        rt_outfloattype = np.float32
     therunoptions["saveminimumsLFOfiltfiles"] = args.saveminimumsLFOfiltfiles
 
     # read the fmri input files
@@ -773,7 +769,6 @@ def retroregress(args: Any) -> None:
                 maxdelay=args.maxdelay,
                 numpoints=args.numpoints,
                 histlen=therunoptions["histlen"],
-                rt_floatset=rt_floatset,
                 rt_floattype=rt_floattype,
                 debug=args.debug,
             )

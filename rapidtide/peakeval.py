@@ -79,8 +79,7 @@ def peakevalpass(
     interptype: str = "univariate",
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
 ) -> tuple[int, dict]:
     """
 
@@ -100,7 +99,6 @@ def peakevalpass(
     interptype
     showprogressbar
     chunksize
-    rt_floatset
     rt_floattype
 
     Returns

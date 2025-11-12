@@ -236,8 +236,7 @@ def correlationpass(
     interptype: str = "univariate",
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     debug: bool = False,
 ) -> tuple[int, list[float], NDArray]:
     """
@@ -279,8 +278,6 @@ def correlationpass(
         Whether to display a progress bar. Default is True.
     chunksize : int, optional
         Size of chunks for multiprocessing. Default is 1000.
-    rt_floatset : type, optional
-        Floating-point type for internal computations. Default is np.float64.
     rt_floattype : str, optional
         String representation of floating-point type. Default is 'float64'.
     debug : bool, optional

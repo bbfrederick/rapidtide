@@ -33,9 +33,8 @@ def _procOneRegressionFitItem(
     vox: int,
     theevs: NDArray,
     thedata: NDArray,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
-) -> tuple[int, Any, Any, Any, Any, Any, NDArray, NDArray]:
+    rt_floattype: np.dtype = np.float64,
+) -> tuple[int, float, float, float, float | NDArray, Any, NDArray, NDArray]:
     """
     Perform single regression fit on voxel data and return fit results.
 
@@ -52,20 +51,18 @@ def _procOneRegressionFitItem(
         dimension 1 is number of evs.
     thedata : numpy.ndarray
         Dependent variable data corresponding to the evs.
-    rt_floatset : type, optional
-        Data type for floating-point results, default is ``np.float64``.
     rt_floattype : str, optional
-        String representation of the floating-point type, default is ``"float64"``.
+        String representation of the floating-point type, default is ``np.float64``.
 
     Returns
     -------
-    tuple[int, Any, Any, Any, Any, Any, numpy.ndarray, numpy.ndarray]
+    tuple[int, float, float, float, float, Any, numpy.ndarray, numpy.ndarray]
         A tuple containing:
         - voxel index (`int`)
-        - intercept term (`Any`)
-        - signed square root of R-squared (`Any`)
-        - R-squared value (`Any`)
-        - fit coefficients (`Any` or `numpy.ndarray`)
+        - intercept term (`float`)
+        - signed square root of R-squared (`float`)
+        - R-squared value (`float`)
+        - fit coefficients (`float` or `numpy.ndarray`)
         - normalized fit coefficients (`Any`)
         - data removed by fitting (`numpy.ndarray`)
         - residuals (`numpy.ndarray`)
@@ -80,7 +77,6 @@ def _procOneRegressionFitItem(
     Examples
     --------
     >>> import numpy as np
-    >>> from tide_fit import mlregress
     >>> theevs = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
     >>> thedata = np.array([1, 2, 3], dtype=np.float64)
     >>> result = _procOneRegressionFitItem(0, theevs, thedata)
@@ -92,31 +88,31 @@ def _procOneRegressionFitItem(
     if theevs.ndim > 1:
         if thefit is None:
             thefit = np.matrix(np.zeros((1, theevs.shape[1] + 1), dtype=rt_floattype))
-        fitcoeffs = rt_floatset(thefit[0, 1:])
+        fitcoeffs = (thefit[0, 1:]).astype(rt_floattype)
         if fitcoeffs[0, 0] < 0.0:
             coeffsign = -1.0
         else:
             coeffsign = 1.0
         datatoremove = theevs[:, 0] * 0.0
         for j in range(theevs.shape[1]):
-            datatoremove += rt_floatset(rt_floatset(thefit[0, 1 + j]) * theevs[:, j])
+            datatoremove += (thefit[0, 1 + j] * theevs[:, j]).astype(rt_floattype)
         if np.any(fitcoeffs) != 0.0:
             pass
         else:
             R2 = 0.0
         return (
             vox,
-            rt_floatset(thefit[0, 0]),
-            rt_floatset(coeffsign * np.sqrt(R2)),
-            rt_floatset(R2),
+            thefit[0, 0],
+            coeffsign * np.sqrt(R2),
+            R2,
             fitcoeffs,
-            rt_floatset(thefit[0, 1:] / thefit[0, 0]),
+            (thefit[0, 1:] / thefit[0, 0]).astype(rt_floattype),
             datatoremove,
-            rt_floatset(thedata - datatoremove),
+            (thedata - datatoremove).astype(rt_floattype),
         )
     else:
-        fitcoeff = rt_floatset(thefit[0, 1])
-        datatoremove = rt_floatset(fitcoeff * theevs)
+        fitcoeff = (thefit[0, 1]).astype(rt_floattype)
+        datatoremove = (fitcoeff * theevs).astype(rt_floattype)
         if fitcoeff < 0.0:
             coeffsign = -1.0
         else:
@@ -125,13 +121,13 @@ def _procOneRegressionFitItem(
             R2 = 0.0
         return (
             vox,
-            rt_floatset(thefit[0, 0]),
-            rt_floatset(coeffsign * np.sqrt(R2)),
-            rt_floatset(R2),
+            thefit[0, 0],
+            coeffsign * np.sqrt(R2),
+            R2,
             fitcoeff,
-            rt_floatset(thefit[0, 1] / thefit[0, 0]),
+            (thefit[0, 1] / thefit[0, 0]).astype(rt_floattype),
             datatoremove,
-            rt_floatset(thedata - datatoremove),
+            (thedata - datatoremove).astype(rt_floattype),
         )
 
 
@@ -155,8 +151,7 @@ def linfitfiltpass(
     procbyvoxel: bool = True,
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floatset: type = np.float64,
-    rt_floattype: str = "float64",
+    rt_floattype: np.dtype = np.float64,
     verbose: bool = True,
     debug: bool = False,
 ) -> int:
@@ -207,10 +202,8 @@ def linfitfiltpass(
         If True, display a progress bar during processing.
     chunksize : int, default: 1000
         Size of chunks for multiprocessing.
-    rt_floatset : type, default: np.float64
+    rt_floattype : str, default: np.float64
         Data type for internal floating-point calculations.
-    rt_floattype : str, default: "float64"
-        String representation of the floating-point data type.
     verbose : bool, default: True
         If True, print verbose output.
     debug : bool, default: False
@@ -303,7 +296,6 @@ def linfitfiltpass(
                                     val,
                                     theevs,
                                     fmri_data[val, :],
-                                    rt_floatset=rt_floatset,
                                     rt_floattype=rt_floattype,
                                 )
                             )
@@ -313,7 +305,6 @@ def linfitfiltpass(
                                     val,
                                     theevs[val, :],
                                     fmri_data[val, :],
-                                    rt_floatset=rt_floatset,
                                     rt_floattype=rt_floattype,
                                 )
                             )
@@ -324,7 +315,6 @@ def linfitfiltpass(
                                     val,
                                     theevs,
                                     fmri_data[:, val],
-                                    rt_floatset=rt_floatset,
                                     rt_floattype=rt_floattype,
                                 )
                             )
@@ -334,7 +324,6 @@ def linfitfiltpass(
                                     val,
                                     theevs[:, val],
                                     fmri_data[:, val],
-                                    rt_floatset=rt_floatset,
                                     rt_floattype=rt_floattype,
                                 )
                             )
@@ -449,7 +438,6 @@ def linfitfiltpass(
                             vox,
                             theevs,
                             thedata,
-                            rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
                     elif coefficientsonly:
@@ -467,7 +455,6 @@ def linfitfiltpass(
                                 vox,
                                 theevs[vox, :],
                                 thedata,
-                                rt_floatset=rt_floatset,
                                 rt_floattype=rt_floattype,
                             )
                         else:
@@ -484,7 +471,6 @@ def linfitfiltpass(
                                 vox,
                                 theevs,
                                 thedata,
-                                rt_floatset=rt_floatset,
                                 rt_floattype=rt_floattype,
                             )
                     else:
@@ -501,7 +487,6 @@ def linfitfiltpass(
                             vox,
                             theevs[vox, :],
                             thedata,
-                            rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
                     itemstotal += 1
@@ -528,7 +513,6 @@ def linfitfiltpass(
                             timepoint,
                             theevs,
                             thedata,
-                            rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
                     elif coefficientsonly:
@@ -546,7 +530,6 @@ def linfitfiltpass(
                                 timepoint,
                                 theevs[:, timepoint],
                                 thedata,
-                                rt_floatset=rt_floatset,
                                 rt_floattype=rt_floattype,
                             )
                         else:
@@ -563,7 +546,6 @@ def linfitfiltpass(
                                 timepoint,
                                 theevs,
                                 thedata,
-                                rt_floatset=rt_floatset,
                                 rt_floattype=rt_floattype,
                             )
                     else:
@@ -580,7 +562,6 @@ def linfitfiltpass(
                             timepoint,
                             theevs[:, timepoint],
                             thedata,
-                            rt_floatset=rt_floatset,
                             rt_floattype=rt_floattype,
                         )
 

@@ -192,8 +192,7 @@ def regressfrommaps(
         print(f"\t{outputname=}")
         print(f"\t{oversamptr=}")
         print(f"\t{regressfiltthreshval=}")
-    rt_floatset = np.float64
-    rt_floattype = "float64"
+    rt_floattype = np.float64
     numvalidspatiallocs = np.shape(validvoxels)[0]
 
     # generate the voxel specific regressors
@@ -213,7 +212,6 @@ def regressfrommaps(
         alwaysmultiproc=alwaysmultiproc,
         showprogressbar=showprogressbar,
         chunksize=chunksize,
-        rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
         debug=debug,
     )
@@ -240,7 +238,7 @@ def regressfrommaps(
         if debug:
             print(f"adding derivatives up to order {regressderivs} prior to regression")
         regressorset = tide_linfitfiltpass.makevoxelspecificderivs(lagtc, regressderivs)
-        baseev = rt_floatset(genlagtc.yfromx(initial_fmri_x))
+        baseev = (genlagtc.yfromx(initial_fmri_x)).astype(rt_floattype)
         evset = tide_linfitfiltpass.makevoxelspecificderivs(
             baseev.reshape((1, -1)), regressderivs
         ).reshape((-1, 2))
@@ -248,7 +246,7 @@ def regressfrommaps(
         if debug:
             print(f"using raw lagged regressors for regression")
         regressorset = lagtc
-        evset = rt_floatset(genlagtc.yfromx(initial_fmri_x))
+        evset = (genlagtc.yfromx(initial_fmri_x)).astype(rt_floattype)
     if debug:
         print(f"{regressorset.shape=}")
 
@@ -279,7 +277,6 @@ def regressfrommaps(
         showprogressbar=showprogressbar,
         verbose=(LGR is not None),
         chunksize=chunksize,
-        rt_floatset=rt_floatset,
         rt_floattype=rt_floattype,
         debug=debug,
     )
