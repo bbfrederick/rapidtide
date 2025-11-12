@@ -253,10 +253,11 @@ def shorttermcorr_1D(
             detrendorder=detrendorder,
             windowfunc=windowfunc,
         )
-        thepcorr = sp.stats.pearsonr(dataseg1, dataseg2).statistic
+        thepearsonresult = sp.stats.pearsonr(dataseg1, dataseg2).statistic
+        thepcorrR, thepcorrp = thepearsonresult.statistic, thepearsonresult.pvalue
         times.append(i * sampletime)
-        corrpertime.append(thepcorr[0])
-        ppertime.append(thepcorr[1])
+        corrpertime.append(thepcorrR)
+        ppertime.append(thepcorrp)
     return (
         np.asarray(times, dtype="float64"),
         np.asarray(corrpertime, dtype="float64"),

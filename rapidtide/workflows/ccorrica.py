@@ -322,7 +322,7 @@ def ccorrica(args: Any) -> None:
             )
             thepxcorr = pearsonr(reformdata[component1, :] / tclen, reformdata[component2, :]).statistic
             outputdata[component1, component2, 0, :] = thexcorr
-            outputpdata[component1, component2, 0, :] = thepxcorr[0]
+            outputpdata[component1, component2, 0, :] = thepxcorr
             (
                 maxindex,
                 maxlag,

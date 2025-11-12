@@ -352,7 +352,7 @@ def main():
         )
     else:
         thexcorr = tide_corr.fastcorrelate(filtereddata1, filtereddata2, usefft=dofftcorr)
-    thepxcorr = pearsonr(filtereddata1, filtereddata2).statistic
+    thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / Fs
@@ -455,7 +455,7 @@ def main():
 
     # report the pearson correlation
     if showpearson and verbose:
-        print("Pearson_R:\t", thepxcorr[0])
+        print("Pearson_R:\t", thepxcorr.statistic)
         if estimate_significance:
             for idx, percentile in enumerate(thepercentiles):
                 print(
@@ -467,7 +467,7 @@ def main():
         print("")
 
     if debug:
-        print(thepxcorr)
+        print(thepxcorr.statistic, thepxcorr.pvalue)
 
     if verbose:
         if uselabel:
@@ -497,7 +497,7 @@ def main():
                         "xcorr_R(P=0.05)",
                         "xcorr_maxdelay",
                     )
-                print(thelabel, thepxcorr[0], pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
+                print(thelabel, thepxcorr.statistic, pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
             else:
                 if labelline:
                     print(
@@ -507,7 +507,7 @@ def main():
                         "xcorr_R(P=0.05)",
                         "xcorr_maxdelay",
                     )
-                print(thepxcorr[0], pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
+                print(thepxcorr.statistic, pearpcts_fit[0], R, pcts_fit[0], -maxdelay)
         else:
             if uselabel:
                 if labelline:
@@ -518,11 +518,11 @@ def main():
                         "xcorr_R",
                         "xcorr_maxdelay",
                     )
-                print(thelabel, thepxcorr[0], thepxcorr[1], R, -maxdelay)
+                print(thelabel, thepxcorr.statistic, thepxcorr.pvalue, R, -maxdelay)
             else:
                 if labelline:
                     print("pearson_r\tpearson_p\txcorr_R\txcorr_t\txcorr_maxdelay")
-                print(thepxcorr[0], "\t", thepxcorr[1], "\t", R, "\t", -maxdelay)
+                print(thepxcorr.statistic, "\t", thepxcorr.pvalue, "\t", R, "\t", -maxdelay)
 
     if displayplots:
         fig = figure()

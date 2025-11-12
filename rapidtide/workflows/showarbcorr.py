@@ -597,7 +597,7 @@ def showarbcorr(args: Any) -> None:
     else:
         # report the pearson correlation
         if showpearson:
-            print("Pearson_R:\t", thepxcorr[0])
+            print("Pearson_R:\t", thepxcorr)
             print("")
         if args.label is not None:
             print(args.label, ":\t", -maxdelay)

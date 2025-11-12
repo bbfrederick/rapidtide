@@ -703,7 +703,7 @@ def showxcorrx(args: Any) -> None:
             filtereddata1, filtereddata2, cepdelay, 1.0 / args.samplerate
         )
         print("cepstral delay time is", cepdelay, ", correlation is", cepcoff)
-    thepxcorr = pearsonr(filtereddata1, filtereddata2).statistic
+    thepxcorr = pearsonr(filtereddata1, filtereddata2)
 
     if args.calccoherence:
         # calculate the coherence
@@ -927,7 +927,7 @@ def showxcorrx(args: Any) -> None:
             tide_io.writenpvecs(corrlist_pear, "corrlist_pear.txt")
 
     if args.debug:
-        print(thepxcorr)
+        print(thepxcorr.statistic, thepxcorr.pvalue)
 
     if args.similaritymetric == "mutualinfo":
         print(f"{tcname1}[0] = {tcname2}[{-maxdelaymi} seconds]")
@@ -961,7 +961,7 @@ def showxcorrx(args: Any) -> None:
                     "xcorr_maxdelay",
                 ]
                 thedataitems = [
-                    str(thepxcorr[0]),
+                    str(thepxcorr.statistic),
                     str(pearpcts_fit[0]),
                     str(R),
                     str(pcts_fit[0]),
@@ -970,8 +970,8 @@ def showxcorrx(args: Any) -> None:
             else:
                 thelabelitems = ["pearson_R", "pearson_p", "xcorr_R", "xcorr_maxdelay"]
                 thedataitems = [
-                    str(thepxcorr[0]),
-                    str(thepxcorr[1]),
+                    str(thepxcorr.statistic),
+                    str(thepxcorr.pvalue),
                     str(R),
                     str(-maxdelay),
                 ]
@@ -990,7 +990,7 @@ def showxcorrx(args: Any) -> None:
     """else:
         # report the pearson correlation
         if showpearson:
-            print("Pearson_R:\t", thepxcorr[0])
+            print("Pearson_R:\t", thepxcorr.statistic)
             if args.numestreps > 0:
                 for idx, percentile in enumerate(thepercentiles):
                     print(

@@ -3550,7 +3550,6 @@ def wrightmap(
                     rawapp_byslice2[thepoint, theslice, :],
                 )
                 theRvalue = theresult.statistic
-                thepvalue = theresult.pvalue
                 if debug:
                     print("theRvalue = ", theRvalue)
                 wrightcorrs_byslice[thepoint, theslice, theiteration] = theRvalue
