@@ -57,6 +57,8 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
+    print("initial rapidtide run complete")
+
     # now simulate data from maps
     print(testtemproot)
     inputargs = [
@@ -77,6 +79,7 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
     ]
 
     pf.generic_init(rapidtide_simdata._get_parser, rapidtide_simdata.simdata, inputargs=inputargs)
+    print("simulated dataset generated")
 
     # run repeat rapidtide
     inputargs = [
@@ -97,6 +100,7 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
         "4.0",
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+    print("repeat rapidtide completed")
 
     absthresh = 1e-10
     msethresh = 1e-12
