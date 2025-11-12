@@ -431,7 +431,7 @@ class DeepLearningFilter:
         """
         self.model.eval()
         with torch.no_grad():
-            if isinstance(X, NDArray):
+            if isinstance(X, np.ndarray):
                 X = torch.from_numpy(X).float().to(self.device)
             # PyTorch expects (batch, channels, length) but we have (batch, length, channels)
             X = X.permute(0, 2, 1)
