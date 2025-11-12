@@ -116,22 +116,22 @@ def wienerpass(
     ----------
     numspatiallocs : int
         Number of spatial locations (voxels) in the fMRI data.
-    fmri_data : numpy.ndarray
+    fmri_data : NDArray
         2D array of fMRI data with shape (numspatiallocs, timepoints).
     threshval : float
         Threshold value for masking voxels based on mean signal intensity.
-    lagtc : numpy.ndarray
+    lagtc : NDArray
         2D array of lagged time courses with shape (numspatiallocs, timepoints).
     optiondict : dict
         Dictionary containing processing options including:
         - 'nprocs': number of processors to use (default: 1)
         - 'showprogressbar': whether to show progress bar (default: True)
         - 'mp_chunksize': chunk size for multiprocessing (default: 10)
-    wienerdeconv : numpy.ndarray
+    wienerdeconv : NDArray
         Wiener deconvolution kernel or filter.
-    wpeak : numpy.ndarray
+    wpeak : NDArray
         Peak values associated with the Wiener deconvolution.
-    resampref_y : numpy.ndarray
+    resampref_y : NDArray
         Resampled reference signal for filtering.
     rt_floattype : np.dtype, optional
         Data type for floating-point numbers, default is `np.float64`.

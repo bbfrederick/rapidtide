@@ -26,6 +26,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
+from numpy.typing import NDArray
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -395,20 +396,20 @@ class DeepLearningFilter:
                 countlim=self.countlim,
             )
 
-    def predict_model(self, X: np.ndarray) -> np.ndarray:
+    def predict_model(self, X: NDArray) -> NDArray:
         """
         Make predictions using the trained model.
 
         Parameters
         ----------
-        X : np.ndarray
+        X : NDArray
             Input features for prediction. Shape should be (n_samples, n_features)
             where n_samples is the number of samples and n_features is the number
             of features expected by the model.
 
         Returns
         -------
-        np.ndarray
+        NDArray
             Model predictions. Shape will depend on the specific model type but
             typically follows (n_samples,) for regression or (n_samples, n_classes)
             for classification.
@@ -430,7 +431,7 @@ class DeepLearningFilter:
         """
         self.model.eval()
         with torch.no_grad():
-            if isinstance(X, np.ndarray):
+            if isinstance(X, NDArray):
                 X = torch.from_numpy(X).float().to(self.device)
             # PyTorch expects (batch, channels, length) but we have (batch, length, channels)
             X = X.permute(0, 2, 1)
@@ -1067,7 +1068,7 @@ class DeepLearningFilter:
         self.savemodel()
         self.trained = True
 
-    def apply(self, inputdata: np.ndarray, badpts: np.ndarray | None = None) -> np.ndarray:
+    def apply(self, inputdata: NDArray, badpts: NDArray | None = None) -> NDArray:
         """
         Apply a sliding-window prediction model to the input data, optionally incorporating bad points.
 
@@ -1078,15 +1079,15 @@ class DeepLearningFilter:
 
         Parameters
         ----------
-        inputdata : np.ndarray
+        inputdata : NDArray
             Input data array of shape (N,) to be processed.
-        badpts : np.ndarray | None, optional
+        badpts : NDArray | None, optional
             Array of same shape as `inputdata` indicating bad or invalid points. If None, no bad points
             are considered. Default is None.
 
         Returns
         -------
-        np.ndarray
+        NDArray
             Predicted data array of the same shape as `inputdata`, with predictions aggregated and
             weighted across overlapping windows.
 
@@ -3958,14 +3959,14 @@ class HybridDLFilter(DeepLearningFilter):
 
 
 def filtscale(
-    data: np.ndarray,
+    data: NDArray,
     scalefac: float = 1.0,
     reverse: bool = False,
     hybrid: bool = False,
     lognormalize: bool = True,
     epsilon: float = 1e-10,
     numorders: int = 6,
-) -> tuple[np.ndarray, float] | np.ndarray:
+) -> tuple[NDArray, float] | NDArray:
     """
     Apply or reverse a scaling transformation to spectral data.
 
@@ -3977,7 +3978,7 @@ def filtscale(
 
     Parameters
     ----------
-    data : np.ndarray
+    data : NDArray
         Input time-domain signal or scaled spectral data depending on `reverse` flag.
     scalefac : float, optional
         Scaling factor used in normalization. Default is 1.0.
@@ -3996,7 +3997,7 @@ def filtscale(
 
     Returns
     -------
-    tuple[np.ndarray, float] or np.ndarray
+    tuple[NDArray, float] or NDArray
         - If `reverse` is False: Returns a tuple of (scaled_data, scalefac).
           `scaled_data` is a stacked array of magnitude and phase (or original signal
           and magnitude in hybrid mode).
@@ -4218,7 +4219,7 @@ def readindata(
     readskip: int | None = None,
     debug: bool = False,
 ) -> (
-    tuple[np.ndarray, np.ndarray, list[str]] | tuple[np.ndarray, np.ndarray, list[str], np.ndarray]
+    tuple[NDArray, NDArray, list[str]] | tuple[NDArray, NDArray, list[str], NDArray]
 ):
     """
     Read and process time-series data from a list of matched files.
@@ -4258,7 +4259,7 @@ def readindata(
 
     Returns
     -------
-    tuple of (np.ndarray, np.ndarray, list[str]) or (np.ndarray, np.ndarray, list[str], np.ndarray)
+    tuple of (NDArray, NDArray, list[str]) or (NDArray, NDArray, list[str], NDArray)
         - `x1`: Array of shape `(tclen, count)` containing x-time series data.
         - `y1`: Array of shape `(tclen, count)` containing y-time series data.
         - `names`: List of file names that passed quality checks.
@@ -4441,8 +4442,8 @@ def prep(
     countlim: int | None = None,
     debug: bool = False,
 ) -> (
-    tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int]
-    | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int, np.ndarray, np.ndarray]
+    tuple[NDArray, NDArray, NDArray, NDArray, int, int, int]
+    | tuple[NDArray, NDArray, NDArray, NDArray, int, int, int, NDArray, NDArray]
 ):
     """
     Prepare time-series data for training and validation by reading, normalizing,
@@ -4497,7 +4498,7 @@ def prep(
 
     Returns
     -------
-    tuple of (np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int)
+    tuple of (NDArray, NDArray, NDArray, NDArray, int, int, int)
         If `dofft` is False:
             - train_x : Training input data (shape: [n_windows, window_size, 1])
             - train_y : Training target data (shape: [n_windows, window_size, 1])
@@ -4507,7 +4508,7 @@ def prep(
             - tclen : Total time points after skipping
             - batchsize : Number of windows per subject
 
-        tuple of (np.ndarray, np.ndarray, np.ndarray, np.ndarray, int, int, int, np.ndarray, np.ndarray)
+        tuple of (NDArray, NDArray, NDArray, NDArray, int, int, int, NDArray, NDArray)
         If `dofft` is True:
             - train_x : Training input data (shape: [n_windows, window_size, 2])
             - train_y : Training target data (shape: [n_windows, window_size, 2])

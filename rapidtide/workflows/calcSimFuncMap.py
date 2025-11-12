@@ -83,11 +83,11 @@ def makeRIPTiDeRegressors(
 
     Returns
     -------
-    tuple of (np.ndarray, np.ndarray)
+    tuple of (NDArray, NDArray)
         A tuple containing:
-        - regressorset : np.ndarray
+        - regressorset : NDArray
             The computed regressor matrix of shape (num_lags, num_timepoints).
-        - delaystouse : np.ndarray
+        - delaystouse : NDArray
             The array of delay values used for regressor generation.
 
     Notes

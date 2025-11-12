@@ -226,9 +226,9 @@ def gethistmetrics(
 
     Parameters
     ----------
-    themap : numpy.ndarray
+    themap : NDArray
         The input data array from which metrics are computed.
-    themask : numpy.ndarray
+    themask : NDArray
         A boolean or numeric mask array used to select valid data points.
     thedict : dict[str, Any]
         Dictionary to store computed metrics. Keys will be updated with statistical

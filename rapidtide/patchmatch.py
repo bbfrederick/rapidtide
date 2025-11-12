@@ -21,7 +21,6 @@ import math
 import os
 import sys
 import warnings
-from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -41,15 +40,15 @@ def interpolate_masked_voxels(
     from the unmasked region. Supports boundary extrapolation and multiple interpolation methods.
 
     Parameters:
-        data (np.ndarray): A 3D numpy array containing the data.
-        mask (np.ndarray): A 3D binary numpy array of the same shape as `data`,
+        data (NDArray): A 3D numpy array containing the data.
+        mask (NDArray): A 3D binary numpy array of the same shape as `data`,
                            where 1 indicates masked voxels and 0 indicates unmasked voxels.
         method (str): Interpolation method ('linear', 'nearest', or 'cubic').
         extrapolate (bool): Whether to extrapolate values for masked voxels outside the convex hull
                             of the unmasked points.
 
     Returns:
-        np.ndarray: A new 3D array with interpolated (and optionally extrapolated)
+        NDArray: A new 3D array with interpolated (and optionally extrapolated)
                     values replacing masked regions.
     """
     if data.shape != mask.shape:
@@ -97,7 +96,7 @@ def get_bounding_box(mask: NDArray, value: int, buffer: int = 0) -> tuple[tuple,
 
     Parameters
     ----------
-    mask : np.ndarray
+    mask : NDArray
         A 3D binary mask where non-zero values indicate the masked region.
     value : int
         The masked region value to compute the bounding box for.
@@ -411,19 +410,19 @@ def _smooth_array(
 
     Parameters
     ----------
-    arr : :class:`numpy.ndarray`
+    arr : :class:`NDArray`
         4D array, with image number as last dimension. 3D arrays are also
         accepted.
 
-    affine : :class:`numpy.ndarray`
+    affine : :class:`NDArray`
         (4, 4) matrix, giving affine transformation for image. (3, 3) matrices
         are also accepted (only these coefficients are used).
         If `fwhm='fast'`, the affine is not used and can be None.
 
-    fwhm : scalar, :class:`numpy.ndarray`/:obj:`tuple`/:obj:`list`, 'fast' or None, optional
+    fwhm : scalar, :class:`NDArray`/:obj:`tuple`/:obj:`list`, 'fast' or None, optional
         Smoothing strength, as a full-width at half maximum, in millimeters.
         If a nonzero scalar is given, width is identical in all 3 directions.
-        A :class:`numpy.ndarray`, :obj:`tuple`, or :obj:`list` must have 3 elements,
+        A :class:`NDArray`, :obj:`tuple`, or :obj:`list` must have 3 elements,
         giving the FWHM along each axis.
         If any of the elements is zero or None, smoothing is not performed
         along that axis.
@@ -443,7 +442,7 @@ def _smooth_array(
 
     Returns
     -------
-    :class:`numpy.ndarray`
+    :class:`NDArray`
         Filtered `arr`.
 
     Notes
@@ -517,7 +516,7 @@ def difference_of_gaussian(
     Parameters
     ----------
     fdata : numpy.memmap from Niimg-like object
-    affine : :class:`numpy.ndarray`
+    affine : :class:`NDArray`
         (4, 4) matrix, giving affine transformation for image. (3, 3) matrices
         are also accepted (only these coefficients are used).
     fwhmNarrow : int

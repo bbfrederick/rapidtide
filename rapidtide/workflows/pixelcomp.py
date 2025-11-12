@@ -25,7 +25,6 @@ from numpy.polynomial import Polynomial
 import rapidtide.io as tide_io
 
 mpl.use("Agg")
-from argparse import Namespace
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -236,7 +235,7 @@ def pairdata(input1_data: Any, input2_data: Any, totalmask: Any) -> None:
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         2D array where each row contains a pair of corresponding elements
         from input1_data and input2_data at positions where totalmask > 0.
 

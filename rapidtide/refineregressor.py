@@ -19,7 +19,7 @@
 import gc
 import logging
 import sys
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import statsmodels as sm
@@ -245,21 +245,21 @@ def alignvoxels(
 
     Parameters
     ----------
-    fmridata : 4D numpy.ndarray
+    fmridata : 4D NDArray
         fMRI data, filtered to the passband, with shape (nx, ny, nz, nt)
     fmritr : float
         Data repetition time (TR), in seconds
-    shiftedtcs : 4D numpy.ndarray
+    shiftedtcs : 4D NDArray
         Destination array for time-aligned voxel timecourses, shape (nx, ny, nz, nt)
-    weights : 4D numpy.ndarray
+    weights : 4D NDArray
         Weights for each timepoint in the final regressor, shape (nx, ny, nz, nt)
-    paddedshiftedtcs : 4D numpy.ndarray
+    paddedshiftedtcs : 4D NDArray
         Time-aligned voxel timecourses with padding, shape (nx, ny, nz, nt + 2*padtrs)
-    paddedweights : 4D numpy.ndarray
+    paddedweights : 4D NDArray
         Weights for each timepoint in the padded regressor, shape (nx, ny, nz, nt + 2*padtrs)
-    lagtimes : 3D numpy.ndarray
+    lagtimes : 3D NDArray
         Time delay of maximum crosscorrelation in seconds, shape (nx, ny, nz)
-    lagmask : 3D numpy.ndarray
+    lagmask : 3D NDArray
         Mask of voxels with successful correlation fits, shape (nx, ny, nz)
     detrendorder : int, optional
         Order of polynomial used to detrend the data (default is 1)

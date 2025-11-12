@@ -203,14 +203,14 @@ def makelaggedtcs(
     ----------
     lagtcgenerator : Any
         A callable or object that generates lagged timecourses for a single voxel.
-    timeaxis : numpy.ndarray
+    timeaxis : NDArray
         1D array representing the time axis (e.g., TRs or time points).
-    lagmask : numpy.ndarray
+    lagmask : NDArray
         3D or 4D boolean or integer array defining the voxels to process.
         Non-zero entries indicate voxels to be processed.
-    lagtimes : numpy.ndarray
+    lagtimes : NDArray
         1D array of lag times (in seconds or time units) to be applied.
-    lagtc : numpy.ndarray
+    lagtc : NDArray
         4D array of shape (ntimepoints, nvoxels, nlags) to store the output lagged
         timecourses. This is updated in-place.
     LGR : logging.Logger, optional

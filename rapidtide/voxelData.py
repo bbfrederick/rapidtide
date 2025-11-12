@@ -681,7 +681,7 @@ class VoxelData:
 
         Parameters
         ----------
-        validvoxels : numpy.ndarray
+        validvoxels : NDArray
             Array containing the valid voxel coordinates. The first dimension
             represents the number of valid spatial locations.
 

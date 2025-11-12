@@ -46,26 +46,26 @@ def _procOneRegressionFitItem(
     ----------
     vox : int
         Voxel index.
-    theevs : numpy.ndarray
+    theevs : NDArray
         Experimental design matrix. If 2D, dimension 0 is number of points,
         dimension 1 is number of evs.
-    thedata : numpy.ndarray
+    thedata : NDArray
         Dependent variable data corresponding to the evs.
     rt_floattype : str, optional
         String representation of the floating-point type, default is ``np.float64``.
 
     Returns
     -------
-    tuple[int, float, float, float, float, Any, numpy.ndarray, numpy.ndarray]
+    tuple[int, float, float, float, float, Any, NDArray, NDArray]
         A tuple containing:
         - voxel index (`int`)
         - intercept term (`float`)
         - signed square root of R-squared (`float`)
         - R-squared value (`float`)
-        - fit coefficients (`float` or `numpy.ndarray`)
+        - fit coefficients (`float` or `NDArray`)
         - normalized fit coefficients (`Any`)
-        - data removed by fitting (`numpy.ndarray`)
-        - residuals (`numpy.ndarray`)
+        - data removed by fitting (`NDArray`)
+        - residuals (`NDArray`)
 
     Notes
     -----

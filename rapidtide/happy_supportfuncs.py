@@ -21,6 +21,7 @@ import time
 import warnings
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.signal import savgol_filter, welch
 from scipy.stats import kurtosis, pearsonr, skew
 from statsmodels.robust import mad
@@ -46,7 +47,7 @@ except ImportError:
     mklexists = False
 
 
-def rrifromphase(timeaxis: np.ndarray, thephase: np.ndarray) -> None:
+def rrifromphase(timeaxis: NDArray, thephase: NDArray) -> None:
     """
     Convert phase to range rate.
 
@@ -55,9 +56,9 @@ def rrifromphase(timeaxis: np.ndarray, thephase: np.ndarray) -> None:
 
     Parameters
     ----------
-    timeaxis : np.ndarray
+    timeaxis : NDArray
         Time axis values corresponding to the phase measurements.
-    thephase : np.ndarray
+    thephase : NDArray
         Phase measurements to be converted to range rate.
 
     Returns
@@ -82,13 +83,13 @@ def rrifromphase(timeaxis: np.ndarray, thephase: np.ndarray) -> None:
 
 
 def calc_3d_optical_flow(
-    video: np.ndarray,
-    projmask: np.ndarray,
+    video: NDArray,
+    projmask: NDArray,
     flowhdr: dict,
     outputroot: str,
     window_size: int = 3,
     debug: bool = False,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[NDArray, NDArray]:
     """
     Compute 3D optical flow for a video volume using the Lucas-Kanade method.
 
@@ -99,10 +100,10 @@ def calc_3d_optical_flow(
 
     Parameters
     ----------
-    video : np.ndarray
+    video : NDArray
         4D array of shape (xsize, ysize, zsize, num_frames) representing the
         input video data.
-    projmask : np.ndarray
+    projmask : NDArray
         3D boolean or integer mask of shape (xsize, ysize, zsize) indicating
         which voxels to process for optical flow computation.
     flowhdr : dict
@@ -118,7 +119,7 @@ def calc_3d_optical_flow(
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray]
+    tuple[NDArray, NDArray]
         A tuple containing:
         - `flow_vectors`: 5D array of shape (xsize, ysize, zsize, num_frames, 3)
           representing the computed optical flow vectors for each frame.
@@ -220,7 +221,7 @@ def calc_3d_optical_flow(
     return flow_vectors
 
 
-def phasejolt(phaseimage: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def phasejolt(phaseimage: NDArray) -> tuple[NDArray, NDArray, NDArray]:
     """
     Compute phase gradient-based metrics including jump, jolt, and laplacian.
 
@@ -231,12 +232,12 @@ def phasejolt(phaseimage: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarra
 
     Parameters
     ----------
-    phaseimage : numpy.ndarray
+    phaseimage : NDArray
         Input phase image array of arbitrary dimensions (typically 2D or 3D).
 
     Returns
     -------
-    tuple of numpy.ndarray
+    tuple of NDArray
         A tuple containing three arrays:
         - jump: array of same shape as input, representing average absolute gradient
         - jolt: array of same shape as input, representing average absolute second-order gradient
@@ -277,11 +278,11 @@ def phasejolt(phaseimage: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarra
 
 
 def cardiacsig(
-    thisphase: float | np.ndarray,
-    amps: tuple | np.ndarray = (1.0, 0.0, 0.0),
-    phases: np.ndarray | None = None,
+    thisphase: float | NDArray,
+    amps: tuple | NDArray = (1.0, 0.0, 0.0),
+    phases: NDArray | None = None,
     overallphase: float = 0.0,
-) -> float | np.ndarray:
+) -> float | NDArray:
     """
     Generate a cardiac signal model using harmonic components.
 
@@ -291,14 +292,14 @@ def cardiacsig(
 
     Parameters
     ----------
-    thisphase : float or np.ndarray
+    thisphase : float or NDArray
         The phase value(s) at which to evaluate the cardiac signal.
         Can be a scalar or array of phase values.
-    amps : tuple or np.ndarray, optional
+    amps : tuple or NDArray, optional
         Amplitude coefficients for each harmonic component. Default is
         (1.0, 0.0, 0.0) representing the fundamental frequency with
         amplitude 1.0 and higher harmonics with amplitude 0.0.
-    phases : np.ndarray or None, optional
+    phases : NDArray or None, optional
         Phase shifts for each harmonic component. If None, all phase shifts
         are set to zero. Default is None.
     overallphase : float, optional
@@ -306,7 +307,7 @@ def cardiacsig(
 
     Returns
     -------
-    float or np.ndarray
+    float or NDArray
         The computed cardiac signal value(s) at the given phase(s).
         Returns a scalar if input is scalar, or array if input is array.
 
@@ -343,12 +344,12 @@ def cardiacsig(
 
 
 def cardiacfromimage(
-    normdata_byslice: np.ndarray,
-    estweights_byslice: np.ndarray,
+    normdata_byslice: NDArray,
+    estweights_byslice: NDArray,
     numslices: int,
     timepoints: int,
     tr: float,
-    slicetimes: np.ndarray,
+    slicetimes: NDArray,
     cardprefilter: object,
     respprefilter: object,
     notchpct: float = 1.5,
@@ -359,11 +360,11 @@ def cardiacfromimage(
     arteriesonly: bool = False,
     fliparteries: bool = False,
     debug: bool = False,
-    appflips_byslice: np.ndarray | None = None,
+    appflips_byslice: NDArray | None = None,
     verbose: bool = False,
     usemask: bool = True,
     multiplicative: bool = True,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
     """
         Extract cardiac and respiratory signals from 4D fMRI data using slice timing information.
 
@@ -374,9 +375,9 @@ def cardiacfromimage(
 
         Parameters
         ----------
-        normdata_byslice : np.ndarray
+        normdata_byslice : NDArray
             Normalized fMRI data organized by slice, shape (timepoints, numslices, timepoints).
-        estweights_byslice : np.ndarray
+        estweights_byslice : NDArray
             Estimated weights for each voxel and slice, shape (timepoints, numslices).
         numslices : int
             Number of slices in the acquisition.
@@ -384,7 +385,7 @@ def cardiacfromimage(
             Number of time points in the fMRI time series.
         tr : float
             Repetition time (TR) in seconds.
-        slicetimes : np.ndarray
+        slicetimes : NDArray
             Slice acquisition times relative to the start of the TR, shape (numslices,).
         cardprefilter : object
             Cardiac prefilter object with an `apply` method for filtering physiological signals.
@@ -406,7 +407,7 @@ def cardiacfromimage(
             If True, flip the arterial signal, default is False.
         debug : bool, optional
             If True, enable debug output, default is False.
-        appflips_byslice : np.ndarray | None, optional
+        appflips_byslice : NDArray | None, optional
             Array of application flips for each slice, default is None.
         verbose : bool, optional
             If True, print verbose output, default is False.
@@ -417,7 +418,7 @@ def cardiacfromimage(
 
         Returns
         -------
-        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]
             - `hirescardtc`: High-resolution cardiac time course.
             - `cardnormfac`: Normalization factor for cardiac signal.
             - `hiresresptc`: High-resolution respiratory time course.
@@ -551,15 +552,15 @@ def cardiacfromimage(
     )
 
 
-def theCOM(X: np.ndarray, data: np.ndarray) -> float:
+def theCOM(X: NDArray, data: NDArray) -> float:
     """
     Calculate the center of mass of a system of particles.
 
     Parameters
     ----------
-    X : np.ndarray
+    X : NDArray
         Array of positions (coordinates) of particles. Shape should be (n_particles, n_dimensions).
-    data : np.ndarray
+    data : NDArray
         Array of mass values for each particle. Shape should be (n_particles,).
 
     Returns
@@ -587,7 +588,7 @@ def theCOM(X: np.ndarray, data: np.ndarray) -> float:
     return np.sum(X * data) / np.sum(data)
 
 
-def savgolsmooth(data: np.ndarray, smoothlen: int = 101, polyorder: int = 3) -> np.ndarray:
+def savgolsmooth(data: NDArray, smoothlen: int = 101, polyorder: int = 3) -> NDArray:
     """
     Apply Savitzky-Golay filter to smooth data.
 
@@ -598,7 +599,7 @@ def savgolsmooth(data: np.ndarray, smoothlen: int = 101, polyorder: int = 3) -> 
 
     Parameters
     ----------
-    data : np.ndarray
+    data : NDArray
         Input data to be smoothed. Can be 1D or 2D array.
     smoothlen : int, optional
         Length of the filter window (i.e., the number of coefficients).
@@ -609,7 +610,7 @@ def savgolsmooth(data: np.ndarray, smoothlen: int = 101, polyorder: int = 3) -> 
 
     Returns
     -------
-    np.ndarray
+    NDArray
         Smoothed data with the same shape as the input `data`.
 
     Notes
@@ -633,13 +634,13 @@ def savgolsmooth(data: np.ndarray, smoothlen: int = 101, polyorder: int = 3) -> 
 
 
 def getperiodic(
-    inputdata: np.ndarray,
+    inputdata: NDArray,
     Fs: float,
     fundfreq: float,
     ncomps: int = 1,
     width: float = 0.4,
     debug: bool = False,
-) -> np.ndarray:
+) -> NDArray:
     """
     Apply a periodic filter to extract harmonic components from input data.
 
@@ -650,7 +651,7 @@ def getperiodic(
 
     Parameters
     ----------
-    inputdata : np.ndarray
+    inputdata : NDArray
         Input signal data to be filtered.
     Fs : float
         Sampling frequency of the input signal (Hz).
@@ -666,7 +667,7 @@ def getperiodic(
 
     Returns
     -------
-    np.ndarray
+    NDArray
         Filtered output signal containing the specified harmonic components.
 
     Notes
@@ -700,7 +701,7 @@ def getperiodic(
 
 
 def getcardcoeffs(
-    cardiacwaveform: np.ndarray,
+    cardiacwaveform: NDArray,
     slicesamplerate: float,
     minhr: float = 40.0,
     maxhr: float = 140.0,
@@ -717,7 +718,7 @@ def getcardcoeffs(
 
     Parameters
     ----------
-    cardiacwaveform : np.ndarray
+    cardiacwaveform : NDArray
         Input cardiac waveform signal as a 1D numpy array.
     slicesamplerate : float
         Sampling rate of the input waveform in Hz.
@@ -787,7 +788,7 @@ def _procOneVoxelDetrend(
     vox: int,
     voxelargs: tuple,
     **kwargs,
-) -> tuple[int, np.ndarray]:
+) -> tuple[int, NDArray]:
     """
     Detrend fMRI voxel data for a single voxel.
 
@@ -859,7 +860,7 @@ def _procOneVoxelDetrend(
     )
 
 
-def _packDetrendvoxeldata(voxnum: int, voxelargs: list) -> list[np.ndarray]:
+def _packDetrendvoxeldata(voxnum: int, voxelargs: list) -> list[NDArray]:
     """
     Extract voxel data for a specific voxel number from voxel arguments.
 
@@ -929,9 +930,9 @@ def _unpackDetrendvoxeldata(retvals: tuple, voxelproducts: list) -> None:
 
 
 def normalizevoxels(
-    fmri_data: np.ndarray,
+    fmri_data: NDArray,
     detrendorder: int,
-    validvoxels: np.ndarray,
+    validvoxels: NDArray,
     time: object,
     timings: list,
     LGR: object | None = None,
@@ -941,7 +942,7 @@ def normalizevoxels(
     showprogressbar: bool = True,
     chunksize: int = 1000,
     debug: bool = False,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[NDArray, NDArray, NDArray, NDArray]:
     """
     Normalize fMRI voxel data by detrending and z-scoring.
 
@@ -951,11 +952,11 @@ def normalizevoxels(
 
     Parameters
     ----------
-    fmri_data : np.ndarray
+    fmri_data : NDArray
         2D array of fMRI data with shape (n_voxels, n_timepoints).
     detrendorder : int
         Order of detrending to apply. If 0, no detrending is performed.
-    validvoxels : np.ndarray
+    validvoxels : NDArray
         1D array of indices indicating which voxels are valid for processing.
     time : object
         Module or object with a `time.time()` method for timing operations.
@@ -978,7 +979,7 @@ def normalizevoxels(
 
     Returns
     -------
-    tuple of np.ndarray
+    tuple of NDArray
         A tuple containing:
         - `normdata`: Normalized fMRI data (z-scored).
         - `demeandata`: Detrended and mean-centered data.
@@ -1077,13 +1078,13 @@ def normalizevoxels(
 
 def cleanphysio(
     Fs: float,
-    physiowaveform: np.ndarray,
+    physiowaveform: NDArray,
     cutoff: float = 0.4,
     thresh: float = 0.2,
     nyquist: float | None = None,
     iscardiac: bool = True,
     debug: bool = False,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+) -> tuple[NDArray, NDArray, NDArray, float]:
     """
     Apply filtering and normalization to a physiological waveform to extract a cleaned signal and envelope.
 
@@ -1095,7 +1096,7 @@ def cleanphysio(
     ----------
     Fs : float
         Sampling frequency of the input waveform in Hz.
-    physiowaveform : np.ndarray
+    physiowaveform : NDArray
         Input physiological waveform signal (1D array).
     cutoff : float, optional
         Cutoff frequency for envelope detection, by default 0.4.
@@ -1110,7 +1111,7 @@ def cleanphysio(
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray, np.ndarray, float]
+    tuple[NDArray, NDArray, NDArray, float]
         A tuple containing:
         - `filtphysiowaveform`: The high-pass filtered waveform.
         - `normphysio`: The normalized waveform using the envelope.
@@ -1172,7 +1173,7 @@ def cleanphysio(
 
 
 def findbadpts(
-    thewaveform: np.ndarray,
+    thewaveform: NDArray,
     nameroot: str,
     outputroot: str,
     samplerate: float,
@@ -1182,7 +1183,7 @@ def findbadpts(
     mingap: float = 2.0,
     outputlevel: int = 0,
     debug: bool = True,
-) -> tuple[np.ndarray, float | tuple[float, float]]:
+) -> tuple[NDArray, float | tuple[float, float]]:
     """
     Identify bad points in a waveform based on statistical thresholding and gap filling.
 
@@ -1192,7 +1193,7 @@ def findbadpts(
 
     Parameters
     ----------
-    thewaveform : np.ndarray
+    thewaveform : NDArray
         Input waveform data as a 1D numpy array.
     nameroot : str
         Root name used for labeling output files and dictionary keys.
@@ -1217,7 +1218,7 @@ def findbadpts(
 
     Returns
     -------
-    tuple[np.ndarray, float | tuple[float, float]]
+    tuple[NDArray, float | tuple[float, float]]
         A tuple containing:
         - `thebadpts`: A 1D numpy array of the same length as `thewaveform`, with 1.0 for bad points and 0.0 for good.
         - `thresh`: The calculated threshold value(s) used for bad point detection.
@@ -1307,7 +1308,7 @@ def findbadpts(
     return thebadpts
 
 
-def approximateentropy(waveform: np.ndarray, m: int, r: float) -> float:
+def approximateentropy(waveform: NDArray, m: int, r: float) -> float:
     """
     Calculate the approximate entropy of a waveform.
 
@@ -1489,7 +1490,7 @@ def summarizerun(theinfodict: dict, getkeys: bool = False) -> str:
         return ",".join(outputline)
 
 
-def entropy(waveform: np.ndarray) -> float:
+def entropy(waveform: NDArray) -> float:
     """
     Calculate the entropy of a waveform.
 
@@ -1522,7 +1523,7 @@ def entropy(waveform: np.ndarray) -> float:
 
 
 def calcplethquality(
-    waveform: np.ndarray,
+    waveform: NDArray,
     Fs: float,
     infodict: dict,
     suffix: str,
@@ -1534,7 +1535,7 @@ def calcplethquality(
     outputlevel: int = 0,
     initfile: bool = True,
     debug: bool = False,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[NDArray, NDArray, NDArray]:
     """
     Calculate windowed skewness, kurtosis, and entropy quality metrics for a plethysmogram.
 
@@ -1701,7 +1702,7 @@ def getphysiofile(
     waveformfile: str,
     inputfreq: float,
     inputstart: float | None,
-    slicetimeaxis: np.ndarray,
+    slicetimeaxis: NDArray,
     stdfreq: float,
     stdpoints: int,
     envcutoff: float,
@@ -1712,7 +1713,7 @@ def getphysiofile(
     outputlevel: int = 0,
     iscardiac: bool = True,
     debug: bool = False,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
     """
     Read, process, and resample physiological waveform data.
 
@@ -1919,7 +1920,7 @@ def readextmask(
     ysize: int,
     numslices: int,
     debug: bool = False,
-) -> np.ndarray:
+) -> NDArray:
     """
     Read and validate external mask from NIfTI file.
 
@@ -1944,7 +1945,7 @@ def readextmask(
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         The mask data array with shape (xsize, ysize, numslices)
 
     Raises
@@ -1993,8 +1994,8 @@ def readextmask(
 
 
 def checkcardmatch(
-    reference: np.ndarray,
-    candidate: np.ndarray,
+    reference: NDArray,
+    candidate: NDArray,
     samplerate: float,
     refine: bool = True,
     zeropadding: int = 0,
@@ -2106,16 +2107,16 @@ def checkcardmatch(
 
 
 def cardiaccycleaverage(
-    sourcephases: np.ndarray,
-    destinationphases: np.ndarray,
-    waveform: np.ndarray,
+    sourcephases: NDArray,
+    destinationphases: NDArray,
+    waveform: NDArray,
     procpoints: int,
     congridbins: int,
     gridkernel: str,
     centric: bool,
     cache: bool = True,
     cyclic: bool = True,
-) -> np.ndarray:
+) -> NDArray:
     """
     Compute the average waveform over a cardiac cycle using phase-based resampling.
 
@@ -2205,7 +2206,7 @@ def cardiaccycleaverage(
     return rawapp_bypoint, weight_bypoint
 
 
-def circularderivs(timecourse: np.ndarray) -> tuple[np.ndarray, float, float]:
+def circularderivs(timecourse: NDArray) -> tuple[NDArray, float, float]:
     """
     Compute circular first derivatives and their extremal values.
 
@@ -2483,7 +2484,7 @@ def _unpackslicedataPhaseProject(retvals, voxelproducts):
 
 
 def preloadcongrid(
-    outphases: np.ndarray,
+    outphases: NDArray,
     congridbins: int,
     gridkernel: str = "kaiser",
     cyclic: bool = True,
@@ -2909,13 +2910,13 @@ def tcsmoothingpass(
         Number of slices in the dataset
     validlocslist : list
         List of valid locations for processing
-    rawapp_byslice : numpy.ndarray
+    rawapp_byslice : NDArray
         Raw application data organized by slice
-    appsmoothingfilter : numpy.ndarray
+    appsmoothingfilter : NDArray
         Smoothing filter to be applied
     phaseFs : float
         Phase frequency parameter for smoothing operations
-    derivatives_byslice : numpy.ndarray
+    derivatives_byslice : NDArray
         Derivative data organized by slice
     nprocs : int, optional
         Number of processors to use for multiprocessing (default is 1)
@@ -2928,7 +2929,7 @@ def tcsmoothingpass(
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         Processed data after smoothing operations have been applied
 
     Notes
@@ -3232,11 +3233,11 @@ def findvessels(
 
     Parameters
     ----------
-    app : numpy.ndarray
+    app : NDArray
         Raw app data array
-    normapp : numpy.ndarray
+    normapp : NDArray
         Normalized app data array
-    validlocs : numpy.ndarray
+    validlocs : NDArray
         Array of valid locations for processing
     numspatiallocs : int
         Number of spatial locations

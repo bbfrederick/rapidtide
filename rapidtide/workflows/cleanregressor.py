@@ -137,11 +137,11 @@ def cleanregressor(
     -------
     tuple
         A tuple containing:
-        - cleaned_resampref_y : np.ndarray
+        - cleaned_resampref_y : NDArray
             Cleaned resampled reference signal.
-        - cleaned_referencetc : np.ndarray
+        - cleaned_referencetc : NDArray
             Cleaned reference time course.
-        - cleaned_nonosreferencetc : np.ndarray
+        - cleaned_nonosreferencetc : NDArray
             Cleaned non-oversampled reference signal.
         - despeckle_thresh : float
             Updated despeckle threshold.

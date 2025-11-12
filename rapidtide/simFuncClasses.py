@@ -158,7 +158,7 @@ class SimilarityFunctionator:
 
         Parameters
         ----------
-        thetc : numpy.ndarray
+        thetc : NDArray
             Input timecourse data to be prepared
         isreftc : bool, optional
             Flag indicating whether the input is a reference timecourse. If True, the timecourse
@@ -166,7 +166,7 @@ class SimilarityFunctionator:
 
         Returns
         -------
-        numpy.ndarray
+        NDArray
             Prepared and normalized timecourse data after filtering, normalization, detrending,
             and window function application
 

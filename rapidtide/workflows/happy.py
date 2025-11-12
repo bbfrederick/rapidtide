@@ -66,17 +66,17 @@ def happy_main(argparsingfunc: Any) -> None:
         Command line arguments containing processing options
     infodict : dict
         Dictionary containing processing information including shared memory settings
-    fmri_data : numpy.ndarray
+    fmri_data : NDArray
         4D fMRI data array (x, y, z, time)
-    mask : numpy.ndarray
+    mask : NDArray
         3D mask array indicating valid voxels
-    projmask_byslice : numpy.ndarray
+    projmask_byslice : NDArray
         2D mask array for each slice indicating valid projection locations
-    cardphasevals : numpy.ndarray
+    cardphasevals : NDArray
         2D array of cardiac phase values for each slice and timepoint
-    rawapp_byslice : numpy.ndarray
+    rawapp_byslice : NDArray
         3D array of raw cardiac signals for each slice and timepoint
-    outphases : numpy.ndarray
+    outphases : NDArray
         Array of cardiac phases
     timepoints : int
         Number of timepoints in the fMRI data

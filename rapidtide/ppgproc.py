@@ -1623,7 +1623,7 @@ class HeartRateExtractor:
 
         Parameters
         ----------
-        ppg_signal : numpy.ndarray
+        ppg_signal : NDArray
             Input photoplethysmography (PPG) signal.
         hr_range : tuple of float, optional
             Expected heart rate range in beats per minute (BPM). Default is (40.0, 180.0).
@@ -1636,9 +1636,9 @@ class HeartRateExtractor:
         frequency : float or None
             Dominant frequency in Hz. Returns None if no valid peak is found in the
             specified range.
-        psd : numpy.ndarray
+        psd : NDArray
             Power spectral density values corresponding to the frequency array.
-        freqs : numpy.ndarray
+        freqs : NDArray
             Frequency values corresponding to the power spectral density.
 
         Notes

@@ -1056,13 +1056,13 @@ def territorydecomp(
     ----------
     inputmap : NDArray[np.floating[Any]]
         Input data to be decomposed. Can be 3D or 4D (e.g., time series).
-    template : numpy.ndarray
+    template : NDArray
         Template values corresponding to the spatial locations in `inputmap`.
         Should have the same shape as `inputmap` (or be broadcastable).
-    atlas : numpy.ndarray
+    atlas : NDArray
         Atlas defining the territories. Each unique integer value represents a distinct region.
         Must have the same shape as `inputmap`.
-    inputmask : numpy.ndarray, optional
+    inputmask : NDArray, optional
         Mask to define valid voxels in `inputmap`. If None, all voxels are considered valid.
         Should have the same shape as `inputmap`.
     intercept : bool, optional
@@ -1074,14 +1074,14 @@ def territorydecomp(
 
     Returns
     -------
-    tuple of numpy.ndarray
+    tuple of NDArray
         A tuple containing:
-        - fitmap : numpy.ndarray
+        - fitmap : NDArray
             The decomposed map with fitted values projected back onto the original spatial locations.
-        - thecoffs : numpy.ndarray
+        - thecoffs : NDArray
             Array of polynomial coefficients for each territory and map. Shape is (nummaps, numterritories, fitorder+1)
             if `intercept` is True, or (nummaps, numterritories, fitorder) otherwise.
-        - theR2s : numpy.ndarray
+        - theR2s : NDArray
             R-squared values for the fits for each territory and map. Shape is (nummaps, numterritories).
 
     Notes
@@ -2232,7 +2232,7 @@ def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
 
     Parameters
     ----------
-    theregressors : numpy.ndarray
+    theregressors : NDArray
         A 2D NumPy array where each row represents a vector to be orthogonalized.
     debug : bool, optional
         If True, prints debug information about input and output dimensions.
@@ -2240,7 +2240,7 @@ def gram_schmidt(theregressors: NDArray, debug: bool = False) -> NDArray:
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         A 2D NumPy array representing the orthonormal basis. Each row is an
         orthonormal vector. The number of rows may be less than the input if
         some vectors were linearly dependent.
@@ -2292,7 +2292,7 @@ def mlproject(thefit: NDArray, theevs: list, intercept: bool) -> NDArray:
         A 1D array or list of coefficients (weights) to be applied to the
         explanatory variables. If `intercept` is True, the first element of
         `thefit` is treated as the intercept.
-    theevs : list of numpy.ndarray
+    theevs : list of NDArray
         A list where each element is a 1D NumPy array representing an
         explanatory variable (feature time series). The length of `theevs`
         should match the number of non-intercept coefficients in `thefit`.
@@ -2510,9 +2510,9 @@ def calcexpandedregressors(
 
     Returns
     -------
-    tuple of (numpy.ndarray, list)
+    tuple of (NDArray, list)
         A tuple containing:
-        - outputregressors : numpy.ndarray
+        - outputregressors : NDArray
           A 2D NumPy array where each row represents a generated regressor
           (original, polynomial, or derivative) and columns represent time points.
         - outlabels : list of str

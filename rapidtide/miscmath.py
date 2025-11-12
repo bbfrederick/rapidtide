@@ -565,12 +565,12 @@ def stdnormalize(vector: NDArray) -> NDArray:
 
     Parameters
     ----------
-    vector : numpy.ndarray
+    vector : NDArray
         Input vector to be standardized.
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         Standardized vector with zero mean and unit variance. If the input vector
         has zero standard deviation, the demeaned vector is returned unchanged.
 

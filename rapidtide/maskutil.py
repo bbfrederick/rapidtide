@@ -44,7 +44,7 @@ def resampmask(themask: ArrayLike, thetargetres: float) -> NDArray:
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         Resampled mask array with the specified target resolution.
 
     Notes

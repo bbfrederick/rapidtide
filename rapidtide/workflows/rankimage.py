@@ -94,7 +94,7 @@ def imtopercentile(image: Any, mask: Any, debug: bool = False) -> None:
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         Array of same shape as input image containing percentile scores for
         valid voxels, with zeros for masked-out voxels
 

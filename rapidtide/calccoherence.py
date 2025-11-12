@@ -227,15 +227,15 @@ def coherencepass(
 
     Parameters
     ----------
-    fmridata : numpy.ndarray
+    fmridata : NDArray
         Input fMRI data array with shape (time, voxels).
     theCoherer : Any
         Object or function used to perform coherence calculations.
-    coherencefunc : numpy.ndarray
+    coherencefunc : NDArray
         Array to store coherence function results for each voxel.
-    coherencepeakval : numpy.ndarray
+    coherencepeakval : NDArray
         Array to store peak coherence values for each voxel.
-    coherencepeakfreq : numpy.ndarray
+    coherencepeakfreq : NDArray
         Array to store peak coherence frequencies for each voxel.
     alt : bool, optional
         If True, use alternative coherence calculation method. Default is False.

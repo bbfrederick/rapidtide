@@ -1513,9 +1513,9 @@ def wiener_deconvolution(signal: NDArray, kernel: NDArray, lambd: float) -> NDAr
 
     Parameters
     ----------
-    signal : numpy.NDArray
+    signal : NDArray
         Input signal to be deconvolved, 1D array.
-    kernel : numpy.NDArray
+    kernel : NDArray
         Convolution kernel (point spread function), 1D array.
     lambd : float
         Regularization parameter representing the signal-to-noise ratio in
@@ -1523,7 +1523,7 @@ def wiener_deconvolution(signal: NDArray, kernel: NDArray, lambd: float) -> NDAr
 
     Returns
     -------
-    numpy.NDArray
+    NDArray
         Deconvolved signal, same length as input signal.
 
     Notes
@@ -1601,7 +1601,7 @@ def spectrum(
 
     Parameters
     ----------
-    spectrum : numpy.NDArray
+    spectrum : NDArray
         Input spectrum array. Should contain non-negative values.
 
     Returns

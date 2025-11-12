@@ -2033,7 +2033,7 @@ def numpy2shared(
 
     Parameters
     ----------
-    inarray : numpy.ndarray
+    inarray : NDArray
         Input numpy array to be converted to shared memory.
     theouttype : dtype
         Data type of the output shared memory array.
@@ -2043,7 +2043,7 @@ def numpy2shared(
 
     Returns
     -------
-    tuple[numpy.ndarray, multiprocessing.shared_memory.SharedMemory]
+    tuple[NDArray, multiprocessing.shared_memory.SharedMemory]
         A tuple containing:
         - The shared memory array with the same shape as input array
         - The shared memory object that manages the memory block

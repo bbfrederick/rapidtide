@@ -3672,7 +3672,7 @@ def updateLUT() -> None:
         timecourse_ax.plot(timeaxis, selected, clear=True)"""
 
 
-def mapwithLUT(theimage: Any, themask: Any, theLUT: Any, dispmin: Any, dispmax: Any) -> None:
+def mapwithLUT(theimage: NDArray, themask: NDArray, theLUT: Any, dispmin: Any, dispmax: Any) -> None:
     """
     Map image data using a lookup table with optional masking.
 
@@ -3681,9 +3681,9 @@ def mapwithLUT(theimage: Any, themask: Any, theLUT: Any, dispmin: Any, dispmax: 
 
     Parameters
     ----------
-    theimage : array-like
+    theimage : NDArray
         Input image data to be mapped
-    themask : array-like
+    themask : NDArray
         Mask array where values less than 1 will be set to 0 in the output
     theLUT : array-like
         Lookup table array used for mapping
@@ -3694,7 +3694,7 @@ def mapwithLUT(theimage: Any, themask: Any, theLUT: Any, dispmin: Any, dispmax: 
 
     Returns
     -------
-    numpy.ndarray
+    NDArray
         Mapped data with shape matching input image, where values are
         mapped using the lookup table and masked according to themask parameter
 

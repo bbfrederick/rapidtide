@@ -18,7 +18,6 @@
 #
 import argparse
 import sys
-from argparse import Namespace
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -128,8 +127,8 @@ def _get_parser() -> Any:
 
 
 def summarize4Dbylabel(
-    inputvoxels: Any, templatevoxels: Any, normmethod: str = "z", debug: bool = False
-) -> None:
+    inputvoxels: NDArray, templatevoxels: NDArray, normmethod: str = "z", debug: bool = False
+) -> NDArray:
     """
     Summarize 4D voxel data by region labels from a template.
 
@@ -138,9 +137,9 @@ def summarize4Dbylabel(
 
     Parameters
     ----------
-    inputvoxels : array-like
+    inputvoxels : NDArray
         4D array containing voxel data with shape (n_voxels, n_timepoints, n_other_dims)
-    templatevoxels : array-like
+    templatevoxels : NDArray
         3D array containing region labels with shape (n_voxels, 1, 1)
     normmethod : str, optional
         Normalization method to apply to time courses, default is "z"
@@ -151,7 +150,7 @@ def summarize4Dbylabel(
 
     Returns
     -------
-    timecourses : numpy.ndarray
+    timecourses : NDArray
         2D array of shape (n_regions, n_timepoints) containing normalized mean
         time courses for each region
 
@@ -187,7 +186,7 @@ def summarize4Dbylabel(
     return timecourses
 
 
-def summarize3Dbylabel(inputvoxels: Any, templatevoxels: Any, debug: bool = False) -> None:
+def summarize3Dbylabel(inputvoxels: NDArray, templatevoxels: NDArray, debug: bool = False) -> Tuple[NDArray, list]:
     """
     Summarize 3D voxel data by label using mean, standard deviation, and median statistics.
 
@@ -197,9 +196,9 @@ def summarize3Dbylabel(inputvoxels: Any, templatevoxels: Any, debug: bool = Fals
 
     Parameters
     ----------
-    inputvoxels : array-like
+    inputvoxels : NDArray
         3D array containing the voxel values to be summarized
-    templatevoxels : array-like
+    templatevoxels : NDArray
         3D array containing integer labels defining regions of interest
     debug : bool, optional
         Flag to enable debug output (default is False)
@@ -208,7 +207,7 @@ def summarize3Dbylabel(inputvoxels: Any, templatevoxels: Any, debug: bool = Fals
     -------
     tuple
         A tuple containing:
-        - outputvoxels : ndarray
+        - outputvoxels : NDArray
           3D array with each labeled region replaced by its mean value
         - regionstats : list
           List of lists containing [mean, std, median] statistics for each region

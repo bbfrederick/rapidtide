@@ -528,7 +528,7 @@ class Coherer:
             Maximum frequency for filtering. If None, no maximum frequency filtering is applied.
         ncprefilter : Any, optional
             Pre-filtering configuration for non-coherent filtering.
-        reftc : numpy.ndarray, optional
+        reftc : NDArray, optional
             Reference time course for coherence calculations.
         detrendorder : int, default=1
             Order of detrending to apply to the data. 0 for no detrending, 1 for linear detrending.
@@ -705,7 +705,7 @@ class Coherer:
 
         Parameters
         ----------
-        reftc : numpy.ndarray
+        reftc : NDArray
             Reference time series data to be processed. The array will be copied and converted
             to float type to ensure proper numerical operations.
 

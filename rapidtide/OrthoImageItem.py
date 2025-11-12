@@ -843,11 +843,11 @@ class OrthoImageItem(QtWidgets.QWidget):
 
         Parameters
         ----------
-        theimage : numpy.ndarray
+        theimage : NDArray
             Input image array to be mapped using the lookup table
-        mask : numpy.ndarray
+        mask : NDArray
             Mask array where values less than 1 will be set to transparent (alpha = 0)
-        theLUT : numpy.ndarray
+        theLUT : NDArray
             Lookup table array for color mapping, typically with shape (N, 4) for RGBA values
         dispmin : float
             Minimum display value for scaling the input image
@@ -856,7 +856,7 @@ class OrthoImageItem(QtWidgets.QWidget):
 
         Returns
         -------
-        numpy.ndarray
+        NDArray
             Mapped image array with the same shape as input image, with colors applied
             from the lookup table and masked regions set to transparent
 

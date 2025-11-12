@@ -20,7 +20,7 @@ from typing import Any, Callable, Optional, Tuple, Union
 
 import numpy as np
 import numpy.polynomial.polynomial as poly
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 from scipy.interpolate import CubicSpline, UnivariateSpline
 from scipy.ndimage import median_filter
 from statsmodels.robust import mad
@@ -101,7 +101,7 @@ def trainratiotooffset(
     ----------
     lagtcgenerator : Any
         An object that provides the `yfromx` method for generating lagged time courses.
-    timeaxis : numpy.ndarray
+    timeaxis : NDArray
         The time axis (in seconds) for the fMRI data.
     outputname : str
         Base name for output files (e.g., BIDS entity).
