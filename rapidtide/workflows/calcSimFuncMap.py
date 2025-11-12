@@ -43,7 +43,7 @@ def makeRIPTiDeRegressors(
     edgepad: int = 0,
     rt_floattype: np.dtype = np.float64,
     debug: bool = False,
-) -> None:
+) -> Tuple[NDArray, NDArray]:
     """
     Generate regressors for RIPTiDe (Regressors for Inverse Temporal Deconvolution).
 
@@ -99,7 +99,6 @@ def makeRIPTiDeRegressors(
     Examples
     --------
     >>> import numpy as np
-    >>> from some_module import makeRIPTiDeRegressors
     >>> fmri_data = np.random.rand(100, 50)
     >>> regressors, delays = makeRIPTiDeRegressors(
     ...     initial_fmri_x=fmri_data,
@@ -201,7 +200,7 @@ def calcSimFunc(
     mklthreads: int = 1,
     threaddebug: bool = False,
     debug: bool = False,
-) -> None:
+) -> str:
     """
     Compute similarity metrics (correlation, mutual information, or RIPtiDe) between fMRI data and a reference time series.
 
