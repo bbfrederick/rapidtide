@@ -33,8 +33,9 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install .[tests,doc]
+                pip install --upgrade pytest
             fi
+            pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-39-{{ checksum "pyproject.toml" }}
           paths:
@@ -59,9 +60,13 @@ jobs:
             if [[ -e CHANGELOG.md ]]; then
                 echo "Using cached environment"
             else
-                pip install --upgrade pip
+                pip install --upgrade uv
+                uv pip install --upgrade "setuptools>=54"
+                uv pip install --upgrade pip
+                uv pip install --upgrade distlib
+                uv pip install --upgrade pytest
             fi
-            pip install .[tests,doc]
+            uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -92,8 +97,9 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install .[tests,doc]
+                pip install --upgrade pytest
             fi
+            pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310-{{ checksum "pyproject.toml" }}
           paths:
@@ -115,9 +121,12 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            pip install --upgrade pip
-            pip install .[tests,doc]
-            ls -l /
+            pip install --upgrade uv
+            uv pip install --upgrade "setuptools>=54"
+            uv pip install --upgrade pip
+            uv pip install --upgrade distlib
+            uv pip install --upgrade pytest
+            uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -148,8 +157,9 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install .[tests,doc]
+                pip install --upgrade pytest
             fi
+            pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}
           paths:
@@ -180,8 +190,9 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install .[tests,doc]
+                pip install --upgrade pytest
             fi
+            pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}
           paths:
@@ -203,9 +214,12 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            pip install --upgrade pip
-            pip install .[tests,doc]
-            ls -l /
+            pip install --upgrade uv
+            uv pip install --upgrade "setuptools>=54"
+            uv pip install --upgrade pip
+            uv pip install --upgrade distlib
+            uv pip install --upgrade pytest
+            uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-312alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -236,8 +250,9 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install .[tests,doc]
+                pip install --upgrade pytest
             fi
+            pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-312-{{ checksum "pyproject.toml" }}
           paths:
@@ -259,9 +274,12 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            pip install --upgrade pip
-            pip install .[tests,doc]
-            ls -l /
+            pip install --upgrade uv
+            uv pip install --upgrade "setuptools>=54"
+            uv pip install --upgrade pip
+            uv pip install --upgrade distlib
+            uv pip install --upgrade pytest
+            uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -292,8 +310,9 @@ jobs:
                 pip install --upgrade "setuptools>=54"
                 pip install --upgrade pip
                 pip install --upgrade distlib
-                pip install .[tests,doc]
+                pip install --upgrade pytest
             fi
+            pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313-{{ checksum "pyproject.toml" }}
           paths:
@@ -317,9 +336,12 @@ jobs:
           command:  |
             (sudo apt-get update || sudo apt-get update) # Robust apt update
             sudo apt-get install -y gfortran libopenblas-dev
-            pip install --upgrade pip
-            pip install .[tests,doc]
-            ls -l /
+            pip install --upgrade uv
+            uv pip install --upgrade "setuptools>=54"
+            uv pip install --upgrade pip
+            uv pip install --upgrade distlib
+            uv pip install --upgrade pytest
+            uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-314alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -345,7 +367,6 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             source activate py39_env
-            pip install --upgrade pytest
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -384,7 +405,6 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             source activate py310_env
-            pip install --upgrade pytest
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -422,7 +442,6 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             source activate py311_env
-            pip install --upgrade pytest
             pwd
             pip install --upgrade numba
             pip install --upgrade pyfftw
@@ -511,7 +530,6 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             source activate py312_env
-            pip install --upgrade pytest
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -551,7 +569,6 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             source activate py313_env
-            pip install --upgrade pytest
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
