@@ -35,7 +35,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[tests,doc]
+            pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-39-{{ checksum "pyproject.toml" }}
           paths:
@@ -69,11 +69,11 @@ jobs:
                 uv pip install --upgrade pytest
             fi
             source .venv/bin/activate
-            uv pip install .[tests,doc]
+            uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310alt-{{ checksum "pyproject.toml" }}
           paths:
-            - "/tmp/src/rapidtide/.venv/bin"
+            - "/tmp/src/rapidtide/.venv"
 
   build_py310:
     working_directory: /tmp/src/rapidtide
@@ -102,7 +102,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[tests,doc]
+            pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310-{{ checksum "pyproject.toml" }}
           paths:
@@ -131,7 +131,7 @@ jobs:
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
             source .venv/bin/activate
-            uv pip install .[tests,doc]
+            uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -164,7 +164,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[tests,doc]
+            pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}
           paths:
@@ -197,7 +197,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[tests,doc]
+            pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}
           paths:
@@ -226,7 +226,7 @@ jobs:
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
             source .venv/bin/activate
-            uv pip install .[tests,doc]
+            uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-312alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -259,7 +259,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[tests,doc]
+            pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-312-{{ checksum "pyproject.toml" }}
           paths:
@@ -288,7 +288,7 @@ jobs:
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
             source .venv/bin/activate
-            uv pip install .[tests,doc]
+            uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -321,7 +321,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[tests,doc]
+            pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313-{{ checksum "pyproject.toml" }}
           paths:
@@ -352,7 +352,7 @@ jobs:
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
             source .venv/bin/activate
-            uv pip install .[tests,doc]
+            uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-314alt-{{ checksum "pyproject.toml" }}
           paths:
