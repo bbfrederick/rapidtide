@@ -41,6 +41,10 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
     inputargs = [
         os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETESTSIM"),
+        "--corrmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),
+        "--globalmeaninclude",
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz"),
         "--spatialfilt",
         "2",
         "--simcalcrange",
