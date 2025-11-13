@@ -635,6 +635,45 @@ jobs:
           path: test-results
 
 
+  test_py314:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    parallelism: 4
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run:
+          no_output_timeout: 20m
+          name: Run tests on py3.14
+          command:  |
+            apt-get update
+            apt-get install -yqq curl gpg 
+            source activate py314_env
+            pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
+            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            shopt -s globstar
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p test-results
+            shopt -u globstar
+            pytest \
+                $TESTFILES \
+                -W ignore \
+                --ignore=rapidtide/candidatetests \
+                --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+
+
   build_docs:
     working_directory: /tmp/src/rapidtide
     docker:
