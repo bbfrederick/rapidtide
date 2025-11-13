@@ -415,8 +415,9 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             #source activate py310_env
-            source .venv/bin/activate
+            deactivate
             uv pip install pytest
+            source .venv/bin/activate
             deactivate && source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
