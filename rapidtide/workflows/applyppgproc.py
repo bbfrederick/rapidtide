@@ -19,6 +19,7 @@
 import argparse
 from typing import Any, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
@@ -138,6 +139,7 @@ def procppg(
     args: Any,
 ) -> Tuple[
     dict,
+    NDArray,
     NDArray,
     NDArray,
     NDArray,
