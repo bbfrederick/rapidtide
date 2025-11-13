@@ -3672,7 +3672,9 @@ def updateLUT() -> None:
         timecourse_ax.plot(timeaxis, selected, clear=True)"""
 
 
-def mapwithLUT(theimage: NDArray, themask: NDArray, theLUT: Any, dispmin: Any, dispmax: Any) -> None:
+def mapwithLUT(
+    theimage: NDArray, themask: NDArray, theLUT: Any, dispmin: Any, dispmax: Any
+) -> None:
     """
     Map image data using a lookup table with optional masking.
 

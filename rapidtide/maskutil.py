@@ -569,7 +569,9 @@ def getregionsignal(
         globalmean -= np.mean(globalmean)
         if debug:
             print("PCA method")
-            print(f"getregionsignal: {cleanedvoxels.shape=}, {thetransform.shape=}, {scaledvoxels.shape=}, {globalmean.shape=}")
+            print(
+                f"getregionsignal: {cleanedvoxels.shape=}, {thetransform.shape=}, {scaledvoxels.shape=}, {globalmean.shape=}"
+            )
             print(
                 f"getregionsignal: {(thefit.components_).shape=}, {thefit.n_samples_=}, {thefit.n_features_in_=}"
             )

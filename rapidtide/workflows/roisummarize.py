@@ -186,7 +186,9 @@ def summarize4Dbylabel(
     return timecourses
 
 
-def summarize3Dbylabel(inputvoxels: NDArray, templatevoxels: NDArray, debug: bool = False) -> Tuple[NDArray, list]:
+def summarize3Dbylabel(
+    inputvoxels: NDArray, templatevoxels: NDArray, debug: bool = False
+) -> Tuple[NDArray, list]:
     """
     Summarize 3D voxel data by label using mean, standard deviation, and median statistics.
 

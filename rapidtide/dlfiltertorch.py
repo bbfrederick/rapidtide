@@ -4218,9 +4218,7 @@ def readindata(
     readlim: int | None = None,
     readskip: int | None = None,
     debug: bool = False,
-) -> (
-    tuple[NDArray, NDArray, list[str]] | tuple[NDArray, NDArray, list[str], NDArray]
-):
+) -> tuple[NDArray, NDArray, list[str]] | tuple[NDArray, NDArray, list[str], NDArray]:
     """
     Read and process time-series data from a list of matched files.
 

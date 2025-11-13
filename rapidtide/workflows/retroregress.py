@@ -433,7 +433,9 @@ def retroregress(args: Any) -> None:
         else:
             suffix = ""
         formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
-    tide_io.writevec(np.asarray(formattedcommandline), f"{outputname}_retroformattedcommandline.txt")
+    tide_io.writevec(
+        np.asarray(formattedcommandline), f"{outputname}_retroformattedcommandline.txt"
+    )
 
     if args.nprocs < 1:
         args.nprocs = tide_multiproc.maxcpus()

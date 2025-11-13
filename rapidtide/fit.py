@@ -2587,6 +2587,7 @@ def calcexpandedregressors(
             activecolumn += 1
     return outputregressors, outlabels
 
+
 @conditionaljit()
 def derivativelinfitfilt(
     thedata: NDArray, theevs: NDArray, nderivs: int = 1, debug: bool = False
@@ -2670,6 +2671,7 @@ def derivativelinfitfilt(
 
     return filtered, thenewevs, datatoremove, R, coffs
 
+
 @conditionaljit()
 def expandedlinfitfilt(
     thedata: NDArray, theevs: NDArray, ncomps: int = 1, debug: bool = False
@@ -2751,6 +2753,7 @@ def expandedlinfitfilt(
         print(f"{R=}")
 
     return filtered, thenewevs, datatoremove, R, coffs
+
 
 @conditionaljit()
 def linfitfilt(

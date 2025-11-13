@@ -70,6 +70,7 @@ TimingLGR = logging.getLogger("TIMING")
 global rt_floattype
 rt_floattype: np.dtype = np.float64
 
+
 def checkforzeromean(thedataset: Any) -> bool:
     """
     Check if the mean of dataset is zero.
@@ -2819,7 +2820,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                         debug=optiondict["debug"],
                     )
                     windoweddelayoffsets.append(windoweddelayoffset)
-
 
             ####################################################
             #  Delay refinement end

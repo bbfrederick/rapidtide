@@ -484,50 +484,50 @@ def mutual_info_2d_fast(
     debug: bool = False,
 ) -> float:
     """
-        Compute (normalized) mutual information between two 1D variates from a joint histogram.
+    Compute (normalized) mutual information between two 1D variates from a joint histogram.
 
-        Parameters
-        ----------
-        x : 1D NDArray[np.floating[Any]]
-            First variable.
-        y : 1D NDArray[np.floating[Any]]
-            Second variable.
-        bins : tuple of NDArray
-            Bin edges for the histogram. The first element corresponds to `x` and the second to `y`.
-        sigma : float, optional
-            Sigma for Gaussian smoothing of the joint histogram. Default is 1.
-        normalized : bool, optional
-            If True, compute normalized mutual information as defined in [1]_. Default is True.
-        EPS : float, optional
-            Small constant to avoid numerical errors in logarithms. Default is 1e-6.
-        debug : bool, optional
-            If True, print intermediate values for debugging. Default is False.
+    Parameters
+    ----------
+    x : 1D NDArray[np.floating[Any]]
+        First variable.
+    y : 1D NDArray[np.floating[Any]]
+        Second variable.
+    bins : tuple of NDArray
+        Bin edges for the histogram. The first element corresponds to `x` and the second to `y`.
+    sigma : float, optional
+        Sigma for Gaussian smoothing of the joint histogram. Default is 1.
+    normalized : bool, optional
+        If True, compute normalized mutual information as defined in [1]_. Default is True.
+    EPS : float, optional
+        Small constant to avoid numerical errors in logarithms. Default is 1e-6.
+    debug : bool, optional
+        If True, print intermediate values for debugging. Default is False.
 
-        Returns
-        -------
-        float
-            The computed mutual information (or normalized mutual information if `normalized=True`).
+    Returns
+    -------
+    float
+        The computed mutual information (or normalized mutual information if `normalized=True`).
 
-        Notes
-        -----
-        This function computes mutual information using a 2D histogram and Gaussian smoothing.
-        The normalization follows the approach described in [1]_.
+    Notes
+    -----
+    This function computes mutual information using a 2D histogram and Gaussian smoothing.
+    The normalization follows the approach described in [1]_.
 
-        References
-        ----------
-        .. [1] Colin Studholme, David John Hawkes, Derek L.G. Hill (1998).
-               "Normalized entropy measure for multimodality image alignment".
-               in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
+    References
+    ----------
+    .. [1] Colin Studholme, David John Hawkes, Derek L.G. Hill (1998).
+           "Normalized entropy measure for multimodality image alignment".
+           in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> x = np.random.randn(1000)
-        >>> y = np.random.randn(1000)
-        >>> bins = (np.linspace(-3, 3, 64), np.linspace(-3, 3, 64))
-        >>> mi = mutual_info_2d_fast(x, y, bins)
-        >>> print(mi)
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x = np.random.randn(1000)
+    >>> y = np.random.randn(1000)
+    >>> bins = (np.linspace(-3, 3, 64), np.linspace(-3, 3, 64))
+    >>> mi = mutual_info_2d_fast(x, y, bins)
+    >>> print(mi)
+    """
     xstart = bins[0][0]
     xend = bins[0][-1]
     ystart = bins[1][0]
@@ -553,50 +553,50 @@ def mutual_info_2d(
     debug: bool = False,
 ) -> float:
     """
-        Compute (normalized) mutual information between two 1D variates from a joint histogram.
+    Compute (normalized) mutual information between two 1D variates from a joint histogram.
 
-        Parameters
-        ----------
-        x : 1D NDArray[np.floating[Any]]
-            First variable.
-        y : 1D NDArray[np.floating[Any]]
-            Second variable.
-        bins : tuple of int
-            Number of bins for the histogram. The first element is the number of bins for `x`
-            and the second for `y`.
-        sigma : float, optional
-            Sigma for Gaussian smoothing of the joint histogram. Default is 1.
-        normalized : bool, optional
-            If True, compute normalized mutual information as defined in [1]_. Default is True.
-        EPS : float, optional
-            Small constant to avoid numerical errors in logarithms. Default is 1e-6.
-        debug : bool, optional
-            If True, print intermediate values for debugging. Default is False.
+    Parameters
+    ----------
+    x : 1D NDArray[np.floating[Any]]
+        First variable.
+    y : 1D NDArray[np.floating[Any]]
+        Second variable.
+    bins : tuple of int
+        Number of bins for the histogram. The first element is the number of bins for `x`
+        and the second for `y`.
+    sigma : float, optional
+        Sigma for Gaussian smoothing of the joint histogram. Default is 1.
+    normalized : bool, optional
+        If True, compute normalized mutual information as defined in [1]_. Default is True.
+    EPS : float, optional
+        Small constant to avoid numerical errors in logarithms. Default is 1e-6.
+    debug : bool, optional
+        If True, print intermediate values for debugging. Default is False.
 
-        Returns
-        -------
-        float
-            The computed mutual information (or normalized mutual information if `normalized=True`).
+    Returns
+    -------
+    float
+        The computed mutual information (or normalized mutual information if `normalized=True`).
 
-        Notes
-        -----
-        This function computes mutual information using a 2D histogram and Gaussian smoothing.
-        The normalization follows the approach described in [1]_.
+    Notes
+    -----
+    This function computes mutual information using a 2D histogram and Gaussian smoothing.
+    The normalization follows the approach described in [1]_.
 
-        References
-        ----------
-        .. [1] Colin Studholme, David John Hawkes, Derek L.G. Hill (1998).
-               "Normalized entropy measure for multimodality image alignment".
-               in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
+    References
+    ----------
+    .. [1] Colin Studholme, David John Hawkes, Derek L.G. Hill (1998).
+           "Normalized entropy measure for multimodality image alignment".
+           in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> x = np.random.randn(1000)
-        >>> y = np.random.randn(1000)
-        >>> mi = mutual_info_2d(x, y)
-        >>> print(mi)
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x = np.random.randn(1000)
+    >>> y = np.random.randn(1000)
+    >>> mi = mutual_info_2d(x, y)
+    >>> print(mi)
+    """
     jh, xbins, ybins = np.histogram2d(x, y, bins=bins)
     if debug:
         print(f"{xbins} {ybins}")
@@ -605,60 +605,60 @@ def mutual_info_2d(
 
 
 def proc_MI_histogram(
-        jh: NDArray[np.floating[Any]],
-        sigma: float = 1,
-        normalized: bool = True,
-        EPS: float = 1.0e-6,
-        debug: bool = False,
+    jh: NDArray[np.floating[Any]],
+    sigma: float = 1,
+    normalized: bool = True,
+    EPS: float = 1.0e-6,
+    debug: bool = False,
 ) -> float:
     """
-        Compute the mutual information (MI) between two variables from a joint histogram.
+    Compute the mutual information (MI) between two variables from a joint histogram.
 
-        This function calculates mutual information using the joint histogram of two variables,
-        applying Gaussian smoothing and computing entropy-based MI. It supports both normalized
-        and unnormalized versions of the mutual information.
+    This function calculates mutual information using the joint histogram of two variables,
+    applying Gaussian smoothing and computing entropy-based MI. It supports both normalized
+    and unnormalized versions of the mutual information.
 
-        Parameters
-        ----------
-        jh : ndarray of shape (m, n)
-            Joint histogram of two variables. Should be a 2D array of floating point values.
-        sigma : float, optional
-            Standard deviation for Gaussian smoothing of the joint histogram. Default is 1.0.
-        normalized : bool, optional
-            If True, returns normalized mutual information. If False, returns unnormalized
-            mutual information. Default is True.
-        EPS : float, optional
-            Small constant added to the histogram to avoid numerical issues in log computation.
-            Default is 1e-6.
-        debug : bool, optional
-            If True, prints intermediate values for debugging purposes. Default is False.
+    Parameters
+    ----------
+    jh : ndarray of shape (m, n)
+        Joint histogram of two variables. Should be a 2D array of floating point values.
+    sigma : float, optional
+        Standard deviation for Gaussian smoothing of the joint histogram. Default is 1.0.
+    normalized : bool, optional
+        If True, returns normalized mutual information. If False, returns unnormalized
+        mutual information. Default is True.
+    EPS : float, optional
+        Small constant added to the histogram to avoid numerical issues in log computation.
+        Default is 1e-6.
+    debug : bool, optional
+        If True, prints intermediate values for debugging purposes. Default is False.
 
-        Returns
-        -------
-        float
-            The computed mutual information (MI) between the two variables. The value is
-            positive and indicates the amount of information shared between the variables.
+    Returns
+    -------
+    float
+        The computed mutual information (MI) between the two variables. The value is
+        positive and indicates the amount of information shared between the variables.
 
-        Notes
-        -----
-        The function applies Gaussian smoothing to the joint histogram before computing
-        marginal and joint entropies. The mutual information is computed as:
+    Notes
+    -----
+    The function applies Gaussian smoothing to the joint histogram before computing
+    marginal and joint entropies. The mutual information is computed as:
 
-        .. math::
-            MI = \\frac{H(X) + H(Y)}{H(X,Y)} - 1
+    .. math::
+        MI = \\frac{H(X) + H(Y)}{H(X,Y)} - 1
 
-        where :math:`H(X)`, :math:`H(Y)`, and :math:`H(X,Y)` are the marginal and joint entropies,
-        respectively. If `normalized=False`, the unnormalized MI is returned instead.
+    where :math:`H(X)`, :math:`H(Y)`, and :math:`H(X,Y)` are the marginal and joint entropies,
+    respectively. If `normalized=False`, the unnormalized MI is returned instead.
 
-        Examples
-        --------
-        >>> import numpy as np
-        >>> from scipy import ndimage
-        >>> jh = np.random.rand(10, 10)
-        >>> mi = proc_MI_histogram(jh, sigma=0.5, normalized=True)
-        >>> print(mi)
-        0.123456789
-        """
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from scipy import ndimage
+    >>> jh = np.random.rand(10, 10)
+    >>> mi = proc_MI_histogram(jh, sigma=0.5, normalized=True)
+    >>> print(mi)
+    0.123456789
+    """
 
     # smooth the jh with a gaussian filter of given sigma
     sp.ndimage.gaussian_filter(jh, sigma=sigma, mode="constant", output=jh)
@@ -933,7 +933,9 @@ def mutual_info_to_r(themi: float, d: int = 1) -> float:
 def delayedcorr(
     data1: NDArray, data2: NDArray, delayval: float, timestep: float
 ) -> Tuple[float, float]:
-    return sp.stats.pearsonr(data1, tide_resample.timeshift(data2, delayval / timestep, 30).statistic)
+    return sp.stats.pearsonr(
+        data1, tide_resample.timeshift(data2, delayval / timestep, 30).statistic
+    )
 
 
 def cepstraldelay(

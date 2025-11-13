@@ -142,7 +142,9 @@ def stupidramtricks(args):
         )
         rvalue, rvalue_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloattype)
         r2value, r2value_shm = tide_util.allocshared(internalvalidspaceshape, rt_outfloattype)
-        fitNorm, fitNorm_shm = tide_util.allocshared(internalvalidspaceshapederivs, rt_outfloattype)
+        fitNorm, fitNorm_shm = tide_util.allocshared(
+            internalvalidspaceshapederivs, rt_outfloattype
+        )
         fitcoeff, fitcoeff_shm = tide_util.allocshared(
             internalvalidspaceshapederivs, rt_outfloattype
         )

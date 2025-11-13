@@ -251,7 +251,9 @@ def _procOneVoxelFitcorr(
         thegaussout = np.zeros_like(corr_y, rt_floattype)
         thewindowout = np.zeros_like(corr_y, rt_floattype)
         if (not fixdelay) and (maxsigma != 0.0):
-            thegaussout = tide_fit.gauss_eval(thefitter.corrtimeaxis, [maxval, maxlag, maxsigma]).astype(rt_floattype)
+            thegaussout = tide_fit.gauss_eval(
+                thefitter.corrtimeaxis, [maxval, maxlag, maxsigma]
+            ).astype(rt_floattype)
         else:
             thegaussout = 0.0
             thewindowout = 0.0

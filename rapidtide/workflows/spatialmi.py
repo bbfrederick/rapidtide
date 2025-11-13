@@ -433,7 +433,6 @@ def getMI(
         )
 
 
-
 def spatialmi(args: Any) -> None:
     """
     Compute spatial mutual information (MI) between two 3D images over a specified neighborhood.

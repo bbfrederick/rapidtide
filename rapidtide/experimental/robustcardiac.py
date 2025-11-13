@@ -22,8 +22,8 @@ import numpy as np
 import rapidtide.filter as tide_filt
 import rapidtide.ppgproc as tide_ppg
 
-def main():# Example usage
-if __name__ == "__main__":
+
+def main():  # Example usage
     Fs = 25.0
     process_noise = 0.001
     hr_estimate = 65.0
@@ -37,7 +37,9 @@ if __name__ == "__main__":
 
     # read in some real data
     filenameroot = "/Users/frederic/code/rapidtide/rapidtide/data/examples/dst/happy_desc-slicerescardfromfmri_timeseries"
-    t, Fs, clean_ppg, corrupted_ppg, missing_indices = tide_ppg.read_happy_ppg(filenameroot, debug=True)
+    t, Fs, clean_ppg, corrupted_ppg, missing_indices = tide_ppg.read_happy_ppg(
+        filenameroot, debug=True
+    )
     print(f"{t.shape=}")
     print(f"{t=}")
     print(f"{Fs=}")
@@ -87,15 +89,17 @@ if __name__ == "__main__":
 
     # Assess signal quality
     quality_assessor = tide_ppg.SignalQualityAssessor(fs=Fs, window_size=5.0)
-    #qual_times, qual_scores = quality_assessor.assess_continuous(
+    # qual_times, qual_scores = quality_assessor.assess_continuous(
     #    corrupted_ppg, filtered_ekf, stride=1.0
-    #)
+    # )
     qual_times, qual_scores = quality_assessor.assess_continuous(
         clean_ppg, filtered_ekf, stride=1.0
     )
 
     # Also get single HR estimate from peaks and beat to beat
-    hr_from_peaks, peak_indices, rri, hr_waveform_from_peaks = hr_extractor.extract_from_peaks(filtered_ekf)
+    hr_from_peaks, peak_indices, rri, hr_waveform_from_peaks = hr_extractor.extract_from_peaks(
+        filtered_ekf
+    )
     print(f"HR from peaks: {hr_from_peaks}")
     print(f"Peak indices: {peak_indices}")
     print(f"RRIs: {rri}")
@@ -330,7 +334,9 @@ if __name__ == "__main__":
     print(f"COMPLETE PROCESSING PIPELINE DEMO")
     print(f"{'='*60}")
 
-    processor = tide_ppg.RobustPPGProcessor(fs=Fs, method="ekf", hr_estimate=75.0, process_noise=0.1)
+    processor = tide_ppg.RobustPPGProcessor(
+        fs=Fs, method="ekf", hr_estimate=75.0, process_noise=0.1
+    )
     pipeline_results = processor.process(
         filtered_ekf, missing_indices, quality_threshold=qual_thresh
     )
@@ -421,3 +427,7 @@ For your own PPG data:
    - Check quality scores after interpolation
     """
     )
+
+
+if __name__ == "__main__":
+    main()

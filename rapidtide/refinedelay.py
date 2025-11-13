@@ -674,7 +674,7 @@ def getderivratios(
         print(f"\t{regressderivs=}")
         print(f"\t{starttr=}")
         print(f"\t{endtr=}")
-        
+
     if timemask is not None:
         trimmedtimemask = timemask[starttr:endtr]
     else:
