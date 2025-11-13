@@ -318,9 +318,9 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            pip install --upgrade pip
             (sudo apt-get update || sudo apt-get update) # Robust apt update
             sudo apt-get install -y gfortran
+            pip install --upgrade pip
             pip install .[tests,doc]
             ls -l /
       - save_cache:  # environment cache tied to requirements
