@@ -36,12 +36,12 @@ dependencies = [
   'requests',
   'statsmodels',
   'pywavelets',
-  'tensorflow >= 2.18.0',
-  'tf-keras >= 2.18.0',
   'torch',
   'tqdm',
   'versioneer',
 ]
+#  'tensorflow >= 2.18.0',
+#  'tf-keras >= 2.18.0',
 dynamic = ["version"]
 authors = [
     {name = 'Blaise deB. Frederick', email='blaise.frederick@gmail.com'},
