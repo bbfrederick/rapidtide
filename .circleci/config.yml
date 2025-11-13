@@ -59,6 +59,7 @@ jobs:
           command:  |
             if [[ -e .venv/bin/activate ]]; then
                 echo "Using cached environment"
+                source .venv/bin/activate
             else
                 echo "Building environment"
                 sudo apt remove python3-pytest
@@ -137,7 +138,7 @@ jobs:
       - save_cache:  # environment cache tied to requirements
           key: deps2-311alt-{{ checksum "pyproject.toml" }}
           paths:
-            - "/opt/py311alt_env"
+            - "/tmp/src/rapidtide/.venv"
 
   build_py311:
     working_directory: /tmp/src/rapidtide
@@ -232,7 +233,7 @@ jobs:
       - save_cache:  # environment cache tied to requirements
           key: deps2-312alt-{{ checksum "pyproject.toml" }}
           paths:
-            - "/opt/py312alt_env"
+            - "/tmp/src/rapidtide/.venv"
 
   build_py312:
     working_directory: /tmp/src/rapidtide
@@ -294,7 +295,7 @@ jobs:
       - save_cache:  # environment cache tied to requirements
           key: deps2-313alt-{{ checksum "pyproject.toml" }}
           paths:
-            - "/opt/py313alt_env"
+            - "/tmp/src/rapidtide/.venv"
 
   build_py313:
     working_directory: /tmp/src/rapidtide
@@ -358,8 +359,7 @@ jobs:
       - save_cache:  # environment cache tied to requirements
           key: deps2-314alt-{{ checksum "pyproject.toml" }}
           paths:
-            - "/opt/py314alt_env"
-
+            - "/tmp/src/rapidtide/.venv"
 
   test_py39:
     working_directory: /tmp/src/rapidtide
@@ -418,7 +418,7 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             #source activate py310_env
-            source .venv/bin/activate
+            #source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -654,7 +654,7 @@ workflows:
       #- test_py39:
       #    requires:
       #      - build_py39
-      #- build_py310
+      - build_py310
       - build_py310_alt
       - test_py310:
           requires:
@@ -680,7 +680,7 @@ workflows:
       - test_py313:
           requires:
             - build_py313
-      #- build_py314_alt
+      - build_py314_alt
       #- style_check:
       #    requires:
       #      - build_py313
