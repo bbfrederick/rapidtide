@@ -1098,21 +1098,21 @@ def delayvar(args: Any) -> None:
                     "systemicsLFOfitmean",
                     "info",
                     None,
-                    f"Constant coefficient for systemic filter",
+                    "Constant coefficient for systemic filter",
                 ),
                 (
                     systemicfitcoeff[:, 0],
                     "systemiccoffEV0",
                     "info",
                     None,
-                    f"Coefficient 0 for systemic filter",
+                    "Coefficient 0 for systemic filter",
                 ),
                 (
                     systemicfitcoeff[:, 1],
                     "systemiccoffEV1",
                     "info",
                     None,
-                    f"Coefficient 1 for systemic filter",
+                    "Coefficient 1 for systemic filter",
                 ),
             ]
     if reduceddata is not None:
