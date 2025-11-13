@@ -56,6 +56,7 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
+            pip install --upgrade pip
             pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310-{{ checksum "pyproject.toml" }}
