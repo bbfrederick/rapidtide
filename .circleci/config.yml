@@ -57,20 +57,23 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            if [[ -e CHANGELOG.md ]]; then
+            if [[ -e .venv/bin/activate ]]; then
                 echo "Using cached environment"
             else
+                echo "Building environment"
                 pip install --upgrade uv
+                uv venv
                 uv pip install --upgrade "setuptools>=54"
                 uv pip install --upgrade pip
                 uv pip install --upgrade distlib
                 uv pip install --upgrade pytest
             fi
+            source .venv/bin/activate
             uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310alt-{{ checksum "pyproject.toml" }}
           paths:
-            - "/tmp/src/rapidtide"
+            - "/tmp/src/rapidtide/.venv/bin"
 
   build_py310:
     working_directory: /tmp/src/rapidtide
@@ -122,10 +125,12 @@ jobs:
           name: Generate environment
           command:  |
             pip install --upgrade uv
+            uv venv
             uv pip install --upgrade "setuptools>=54"
             uv pip install --upgrade pip
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
+            source .venv/bin/activate
             uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311alt-{{ checksum "pyproject.toml" }}
@@ -215,10 +220,12 @@ jobs:
           name: Generate environment
           command:  |
             pip install --upgrade uv
+            uv venv
             uv pip install --upgrade "setuptools>=54"
             uv pip install --upgrade pip
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
+            source .venv/bin/activate
             uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-312alt-{{ checksum "pyproject.toml" }}
@@ -275,10 +282,12 @@ jobs:
           name: Generate environment
           command:  |
             pip install --upgrade uv
+            uv venv
             uv pip install --upgrade "setuptools>=54"
             uv pip install --upgrade pip
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
+            source .venv/bin/activate
             uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313alt-{{ checksum "pyproject.toml" }}
@@ -337,10 +346,12 @@ jobs:
             (sudo apt-get update || sudo apt-get update) # Robust apt update
             sudo apt-get install -y gfortran libopenblas-dev
             pip install --upgrade uv
+            uv venv
             uv pip install --upgrade "setuptools>=54"
             uv pip install --upgrade pip
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
+            source .venv/bin/activate
             uv pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-314alt-{{ checksum "pyproject.toml" }}
