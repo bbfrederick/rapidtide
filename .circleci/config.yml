@@ -53,7 +53,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}
+          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -68,12 +68,10 @@ jobs:
                 uv pip install --upgrade "setuptools>=54"
                 uv pip install --upgrade pip
                 uv pip install --upgrade distlib
-                uv pip install pytest
-                deactivate && source .venv/bin/activate
             fi
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}
+          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
@@ -409,7 +407,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}
+          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 20m
           name: Run tests on py3.10
@@ -418,6 +416,8 @@ jobs:
             apt-get install -yqq curl gpg 
             #source activate py310_env
             source .venv/bin/activate
+            uv pip install pytest
+            deactivate && source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -427,7 +427,7 @@ jobs:
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p test-results
             shopt -u globstar
-            python -m pytest  \
+            pytest  \
                 $TESTFILES \
                 --junitxml=test-results/junit.xml
       - store_test_results:
