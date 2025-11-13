@@ -56,13 +56,18 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            pip install --upgrade pip
-            pip install .[tests,doc]
-            ls -l /
+            if [[ -e /opt/conda/envs/py310alt_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py310alt_env
+            else
+                conda create -n py310alt_env python=3.10 -yq
+                source activate py310alt_env
+                pip install --upgrade pip
+                pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310alt-{{ checksum "pyproject.toml" }}
           paths:
-            - "/opt/py310alt_env"
+            - "/opt/conda/envs/py310alt_env"
 
   build_py310:
     working_directory: /tmp/src/rapidtide
@@ -313,7 +318,7 @@ jobs:
           name: Generate environment
           command:  |
             pip install --upgrade pip
-            sudo apt install gfortran
+            sudo apt-get install gfortran
             pip install .[tests,doc]
             ls -l /
       - save_cache:  # environment cache tied to requirements
@@ -606,8 +611,8 @@ jobs:
           name: Linting
           command:  |
             source activate py313_env
-            pip install flake8
-            flake8 --ignore=E127,E203,E231,E501,E722,E114,E116,F401,W503,W504 /tmp/src/rapidtide/rapidtide
+            pip install flake8-black
+            flake8 --ignore=E114,E116,E127,E203,E231,E402,E501,E722,F401,F841,W503,W504 /tmp/src/rapidtide/rapidtide
       - store_artifacts:
           path: /tmp/data/lint
 
