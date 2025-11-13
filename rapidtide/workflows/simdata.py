@@ -17,10 +17,10 @@
 #
 #
 import argparse
-from argparse import Namespace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+import sys
+from typing import Any, Optional, Tuple
 
-from matplotlib.pyplot import *
+import numpy as np
 from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
@@ -206,7 +206,7 @@ def _get_parser() -> Any:
 
 def prepareband(
     simdatadims: Any,
-    pctfile: Any,
+    pctfile: str,
     sigfracfile: Any,
     lagfile: Any,
     regressorfile: Any,
@@ -228,7 +228,7 @@ def prepareband(
     ----------
     simdatadims : Any
         Spatial dimensions of the fMRI data.
-    pctfile : Any
+    pctfile : str
         Path to the NIfTI file containing percentile data. If None, `sigfracfile` is used.
     sigfracfile : Any
         Path to the NIfTI file containing signal fraction data. Used if `pctfile` is None.
@@ -355,28 +355,28 @@ def prepareband(
 
 
 def fmrisignal(
-    Fs: Any,
-    times: Any,
-    meanvalue: Any,
+    Fs: float,
+    times: NDArray,
+    meanvalue: float,
     dolfo: bool = False,
-    lfowave: Optional[Any] = None,
-    lfomag: Optional[Any] = None,
+    lfowave: Optional[object] = None,
+    lfomag: Optional[NDArray] = None,
     lfodelay: Optional[Any] = None,
     lfonoise: float = 0.0,
-    lfofilter: Optional[Any] = None,
+    lfofilter: Optional[object] = None,
     doresp: bool = False,
-    respwave: Optional[Any] = None,
-    respmag: Optional[Any] = None,
-    respdelay: Optional[Any] = None,
+    respwave: Optional[object] = None,
+    respmag: Optional[NDArray] = None,
+    respdelay: Optional[NDArray] = None,
     respnoise: float = 0.0,
-    respfilter: Optional[Any] = None,
+    respfilter: Optional[object] = None,
     docardiac: bool = False,
-    cardiacwave: Optional[Any] = None,
-    cardiacmag: Optional[Any] = None,
-    cardiacdelay: Optional[Any] = None,
+    cardiacwave: Optional[object] = None,
+    cardiacmag: Optional[NDArray] = None,
+    cardiacdelay: Optional[NDArray] = None,
     cardiacnoise: float = 0.0,
-    cardiacfilter: Optional[Any] = None,
-) -> None:
+    cardiacfilter: Optional[object] = None,
+) -> NDArray:
     """
     Generate an fMRI signal by combining multiple physiological waveforms.
 
@@ -387,15 +387,15 @@ def fmrisignal(
 
     Parameters
     ----------
-    Fs : Any
+    Fs : float
         Sampling frequency of the signal.
-    times : Any
+    times : NDArray
         Time vector for the signal.
-    meanvalue : Any
+    meanvalue : float
         Base mean signal value.
     dolfo : bool, optional
         Whether to include low-frequency oscillation (LFO) component. Default is False.
-    lfowave : Optional[Any], optional
+    lfowave : Optional[object], optional
         Waveform object for LFO signal. Default is None.
     lfomag : Optional[Any], optional
         Magnitude of LFO signal. Default is None.
@@ -403,11 +403,11 @@ def fmrisignal(
         Delay for LFO signal. Default is None.
     lfonoise : float, optional
         Noise level for LFO signal. Default is 0.0.
-    lfofilter : Optional[Any], optional
+    lfofilter : Optional[object], optional
         Filter object for LFO noise. Default is None.
     doresp : bool, optional
         Whether to include respiratory signal component. Default is False.
-    respwave : Optional[Any], optional
+    respwave : Optional[object], optional
         Waveform object for respiratory signal. Default is None.
     respmag : Optional[Any], optional
         Magnitude of respiratory signal. Default is None.
@@ -415,11 +415,11 @@ def fmrisignal(
         Delay for respiratory signal. Default is None.
     respnoise : float, optional
         Noise level for respiratory signal. Default is 0.0.
-    respfilter : Optional[Any], optional
+    respfilter : Optional[object], optional
         Filter object for respiratory noise. Default is None.
     docardiac : bool, optional
         Whether to include cardiac signal component. Default is False.
-    cardiacwave : Optional[Any], optional
+    cardiacwave : Optional[object], optional
         Waveform object for cardiac signal. Default is None.
     cardiacmag : Optional[Any], optional
         Magnitude of cardiac signal. Default is None.
@@ -427,7 +427,7 @@ def fmrisignal(
         Delay for cardiac signal. Default is None.
     cardiacnoise : float, optional
         Noise level for cardiac signal. Default is 0.0.
-    cardiacfilter : Optional[Any], optional
+    cardiacfilter : Optional[object], optional
         Filter object for cardiac noise. Default is None.
 
     Returns
@@ -444,7 +444,6 @@ def fmrisignal(
 
     Examples
     --------
-    >>> import numpy as np
     >>> Fs = 100
     >>> times = np.linspace(0, 10, 1000)
     >>> meanvalue = 1.0
@@ -468,7 +467,8 @@ def fmrisignal(
             cardiacmag * cardiacwave.yfromx(times - cardiacdelay)
             + cardiacnoise * cardiacfilter.apply(Fs, np.random.standard_normal(len(times)))
         )
-    return thesignal + meanvalue
+    thesignal += meanvalue
+    return thesignal
 
 
 def simdata(args: Any) -> None:
