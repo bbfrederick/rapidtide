@@ -84,7 +84,6 @@ def test_parsers(debug=False):
     parserlist = [
         adjustoffset_getparser,
         aligntcs_getparser,
-        applydlfilter_getparser,
         atlasaverage_getparser,
         atlastool_getparser,
         calctexticc_getparser,
@@ -137,6 +136,12 @@ def test_parsers(debug=False):
         tcfrom3col_getparser,
         variabilityizer_getparser,
     ]
+    try:
+        import rapidtide.dlfilter as tide_dlfilt
+
+        parserlist += [applydlfilter_getparser]
+    except ImportError:
+        pass
 
     for thegetparser in parserlist:
         theusage = thegetparser().format_help()
