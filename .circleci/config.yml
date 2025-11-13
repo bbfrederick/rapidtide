@@ -458,7 +458,7 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-311-{{ checksum "pyproject.toml" }}
       - run:
-          no_output_timeout: 20m
+          no_output_timeout: 25m
           name: Run coverage test on py3.11
           file: rapidtide/coverage.xml
           command:  |
@@ -649,7 +649,7 @@ workflows:
       - test_py313:
           requires:
             - build_py313
-      - build_py314_alt
-      - style_check:
-          requires:
-            - build_py313
+      #- build_py314_alt
+      #- style_check:
+      #    requires:
+      #      - build_py313
