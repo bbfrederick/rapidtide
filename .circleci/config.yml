@@ -408,14 +408,15 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-310-{{ checksum "pyproject.toml" }}
+          key: deps2-310alt-{{ checksum "pyproject.toml" }}
       - run:
           no_output_timeout: 20m
           name: Run tests on py3.10
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
-            source activate py310_env
+            #source activate py310_env
+            source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -651,11 +652,11 @@ workflows:
       #- test_py39:
       #    requires:
       #      - build_py39
-      - build_py310
+      #- build_py310
       - build_py310_alt
       - test_py310:
           requires:
-            - build_py310
+            - build_py310_alt
       - build_py311
       - build_py311_alt
       - test_py311_with_coverage:
