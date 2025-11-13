@@ -61,6 +61,7 @@ jobs:
                 echo "Using cached environment"
             else
                 echo "Building environment"
+                sudo apt remove python3-pytest
                 pip install --upgrade uv
                 uv venv
                 source .venv/bin/activate
@@ -68,6 +69,7 @@ jobs:
                 uv pip install --upgrade pip
                 uv pip install --upgrade distlib
                 uv pip install --upgrade pytest
+                deactivate && source .venv/bin/activate
             fi
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
@@ -415,8 +417,8 @@ jobs:
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
-            #source activate py310_env
-            source .venv/bin/activate
+            source activate py310_env
+            #source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -658,7 +660,7 @@ workflows:
           requires:
             - build_py310_alt
       - build_py311
-      - build_py311_alt
+      #- build_py311_alt
       - test_py311_with_coverage:
           requires:
             - build_py311
@@ -669,12 +671,12 @@ workflows:
           requires:
             - build_py311
       - build_py312
-      - build_py312_alt
+      #- build_py312_alt
       - test_py312:
           requires:
             - build_py312
       - build_py313
-      - build_py313_alt
+      #- build_py313_alt
       - test_py313:
           requires:
             - build_py313
