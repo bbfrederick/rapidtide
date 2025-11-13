@@ -58,6 +58,7 @@ jobs:
           command:  |
             pip install --upgrade pip
             pip install .[tests,doc]
+            ls -l /
       - save_cache:  # environment cache tied to requirements
           key: deps2-310alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -113,6 +114,7 @@ jobs:
           command:  |
             pip install --upgrade pip
             pip install .[tests,doc]
+            ls -l /
       - save_cache:  # environment cache tied to requirements
           key: deps2-311alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -200,6 +202,7 @@ jobs:
           command:  |
             pip install --upgrade pip
             pip install .[tests,doc]
+            ls -l /
       - save_cache:  # environment cache tied to requirements
           key: deps2-312alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -255,6 +258,7 @@ jobs:
           command:  |
             pip install --upgrade pip
             pip install .[tests,doc]
+            ls -l /
       - save_cache:  # environment cache tied to requirements
           key: deps2-313alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -309,7 +313,9 @@ jobs:
           name: Generate environment
           command:  |
             pip install --upgrade pip
+            sudo apt install gfortran
             pip install .[tests,doc]
+            ls -l /
       - save_cache:  # environment cache tied to requirements
           key: deps2-314alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -600,6 +606,7 @@ jobs:
           name: Linting
           command:  |
             source activate py313_env
+            pip install flake8
             flake8 --ignore=E127,E203,E231,E501,E722,E114,E116,F401,W503,W504 /tmp/src/rapidtide/rapidtide
       - store_artifacts:
           path: /tmp/data/lint
