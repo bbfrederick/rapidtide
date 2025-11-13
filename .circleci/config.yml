@@ -62,14 +62,13 @@ jobs:
                 source .venv/bin/activate
             else
                 echo "Building environment"
-                sudo apt remove pytest
                 pip install --upgrade uv
                 uv venv
                 source .venv/bin/activate
                 uv pip install --upgrade "setuptools>=54"
                 uv pip install --upgrade pip
                 uv pip install --upgrade distlib
-                uv pip install --upgrade pytest
+                uv pip install pytest
                 deactivate && source .venv/bin/activate
             fi
             uv pip install .[test,doc]
@@ -418,7 +417,7 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             #source activate py310_env
-            #source .venv/bin/activate
+            source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -428,7 +427,7 @@ jobs:
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p test-results
             shopt -u globstar
-            pytest  \
+            python -m pytest  \
                 $TESTFILES \
                 --junitxml=test-results/junit.xml
       - store_test_results:
