@@ -43,7 +43,7 @@ jobs:
   build_py310_alt:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: cimg/pythohn:3.10
+      - image: cimg/python:3.10
     resource_class: medium
     steps:
       - checkout
