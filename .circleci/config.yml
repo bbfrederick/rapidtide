@@ -62,7 +62,7 @@ jobs:
                 source .venv/bin/activate
             else
                 echo "Building environment"
-                sudo apt remove python3-pytest
+                sudo apt remove pytest
                 pip install --upgrade uv
                 uv venv
                 source .venv/bin/activate
