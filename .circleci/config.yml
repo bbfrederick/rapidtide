@@ -20,7 +20,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-39-{{ checksum "pyproject.toml" }}
+          key: deps2-39-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -37,7 +37,7 @@ jobs:
             fi
             pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-39-{{ checksum "pyproject.toml" }}
+          key: deps2-39-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/opt/conda/envs/py39_env"
 
@@ -87,7 +87,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-310-{{ checksum "pyproject.toml" }}
+          key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -104,7 +104,7 @@ jobs:
             fi
             pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-310-{{ checksum "pyproject.toml" }}
+          key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/opt/conda/envs/py310_env"
 
@@ -120,7 +120,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}
+          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -133,7 +133,7 @@ jobs:
             uv pip install --upgrade pytest
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}
+          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
@@ -149,7 +149,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311-{{ checksum "pyproject.toml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -166,7 +166,7 @@ jobs:
             fi
             pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-311-{{ checksum "pyproject.toml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/opt/conda/envs/py311_env"
 
@@ -182,7 +182,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311-{{ checksum "pyproject.toml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -199,7 +199,7 @@ jobs:
             fi
             pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-311-{{ checksum "pyproject.toml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/opt/conda/envs/py311_env"
 
@@ -215,7 +215,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-312alt-{{ checksum "pyproject.toml" }}
+          key: deps2-312alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -228,7 +228,7 @@ jobs:
             uv pip install --upgrade pytest
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-312alt-{{ checksum "pyproject.toml" }}
+          key: deps2-312alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
@@ -244,7 +244,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-312-{{ checksum "pyproject.toml" }}
+          key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -261,7 +261,7 @@ jobs:
             fi
             pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-312-{{ checksum "pyproject.toml" }}
+          key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/opt/conda/envs/py312_env"
 
@@ -277,7 +277,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-313alt-{{ checksum "pyproject.toml" }}
+          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -290,7 +290,7 @@ jobs:
             uv pip install --upgrade pytest
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-313alt-{{ checksum "pyproject.toml" }}
+          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
@@ -306,7 +306,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-313-{{ checksum "pyproject.toml" }}
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -323,7 +323,7 @@ jobs:
             fi
             pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-313-{{ checksum "pyproject.toml" }}
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/opt/conda/envs/py313_env"
 
@@ -339,7 +339,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}
+          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -354,7 +354,7 @@ jobs:
             uv pip install --upgrade pytest
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}
+          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
@@ -369,7 +369,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-39-{{ checksum "pyproject.toml" }}
+          key: deps2-39-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 20m
           name: Run tests on py3.9
@@ -415,9 +415,8 @@ jobs:
             apt-get update
             apt-get install -yqq curl gpg 
             #source activate py310_env
-            deactivate
-            uv pip install pytest
             source .venv/bin/activate
+            pip install pytest
             deactivate && source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
@@ -448,7 +447,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "pyproject.toml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 20m
           name: Run tests on py3.11 with options
@@ -489,7 +488,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "pyproject.toml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 25m
           name: Run coverage test on py3.11
@@ -536,7 +535,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-312-{{ checksum "pyproject.toml" }}
+          key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 20m
           name: Run tests on py3.12
@@ -575,7 +574,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-313-{{ checksum "pyproject.toml" }}
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 20m
           name: Run tests on py3.13
@@ -612,7 +611,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "pyproject.toml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           name: Build documentation
           command: |
@@ -636,7 +635,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-313-{{ checksum "pyproject.toml" }}
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           name: Linting
           command:  |
