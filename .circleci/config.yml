@@ -358,6 +358,39 @@ jobs:
           paths:
             - "/tmp/src/rapidtide/.venv"
 
+  build_py314:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    resource_class: medium
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py314_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py314_env
+            else
+                conda create -n py314_env python=3.14 -yq
+                source activate py314_env
+                pip install --upgrade "setuptools>=54"
+                pip install --upgrade pip
+                pip install --upgrade distlib
+                pip install --upgrade pytest
+            fi
+            pip install .[test,doc]
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          paths:
+            - "/opt/conda/envs/py314_env"
+
   test_py39:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -407,17 +440,17 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 20m
           name: Run tests on py3.10
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
-            #source activate py310_env
-            source .venv/bin/activate
-            pip install pytest
-            deactivate && source .venv/bin/activate
+            source activate py310_env
+            #source .venv/bin/activate
+            #pip install pytest
+            #deactivate && source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -654,10 +687,10 @@ workflows:
       #    requires:
       #      - build_py39
       - build_py310
-      - build_py310_alt
+      #- build_py310_alt
       - test_py310:
           requires:
-            - build_py310_alt
+            - build_py310
       - build_py311
       #- build_py311_alt
       - test_py311_with_coverage:
@@ -679,7 +712,11 @@ workflows:
       - test_py313:
           requires:
             - build_py313
-      - build_py314_alt
+      - build_py314
+      #- build_py314_alt
+      - test_py314:
+          requires:
+            - build_py314
       #- style_check:
       #    requires:
       #      - build_py313
