@@ -64,6 +64,7 @@ jobs:
                 source activate py310alt_env
                 pip install --upgrade pip
                 pip install .[tests,doc]
+            fi
       - save_cache:  # environment cache tied to requirements
           key: deps2-310alt-{{ checksum "pyproject.toml" }}
           paths:
@@ -318,7 +319,8 @@ jobs:
           name: Generate environment
           command:  |
             pip install --upgrade pip
-            sudo apt-get install gfortran
+            (sudo apt-get update || sudo apt-get update) # Robust apt update
+            sudo apt-get install -y gfortran
             pip install .[tests,doc]
             ls -l /
       - save_cache:  # environment cache tied to requirements
