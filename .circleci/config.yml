@@ -56,19 +56,16 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            if [[ -e /opt/conda/envs/py310alt_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py310alt_env
+            if [[ -e CHANGELOG.md ]]; then
+                echo "Using cached environment"
             else
-                conda create -n py310alt_env python=3.10 -yq
-                source activate py310alt_env
                 pip install --upgrade pip
-                pip install .[tests,doc]
             fi
+            pip install .[tests,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310alt-{{ checksum "pyproject.toml" }}
           paths:
-            - "/opt/conda/envs/py310alt_env"
+            - "/tmp/src/rapidtide"
 
   build_py310:
     working_directory: /tmp/src/rapidtide
@@ -319,7 +316,7 @@ jobs:
           name: Generate environment
           command:  |
             (sudo apt-get update || sudo apt-get update) # Robust apt update
-            sudo apt-get install -y gfortran
+            sudo apt-get install -y gfortran libopenblas-dev
             pip install --upgrade pip
             pip install .[tests,doc]
             ls -l /
