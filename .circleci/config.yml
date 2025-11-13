@@ -40,6 +40,28 @@ jobs:
           paths:
             - "/opt/conda/envs/py39_env"
 
+  build_py310_alt:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/pythohn:3.10
+    resource_class: medium
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-310alt-{{ checksum "pyproject.toml" }}
+      - run:  # will overwrite rapidtide installation each time
+          name: Generate environment
+          command:  |
+            pip install .[tests,doc]
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-310-{{ checksum "pyproject.toml" }}
+          paths:
+            - "/opt/py310alt_env"
+
   build_py310:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -497,6 +519,7 @@ workflows:
       #- test_py39:
       #    requires:
       #      - build_py39
+      - build_py310_alt
       - build_py310
       - test_py310:
           requires:
