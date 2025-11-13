@@ -17,9 +17,10 @@
 #
 #
 import argparse
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.ppgproc as tide_ppg
@@ -133,7 +134,22 @@ def _get_parser() -> Any:
     return parser
 
 
-def procppg(args: Any) -> None:
+def procppg(
+    args: Any,
+) -> Tuple[
+    dict,
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+]:
     """
     Process PPG (Photoplethysmography) signal using a combination of filtering,
     heart rate extraction, and signal quality assessment techniques.
@@ -171,27 +187,27 @@ def procppg(args: Any) -> None:
         A tuple containing:
         - ppginfo : dict
             Dictionary with various performance metrics and computed features
-        - peak_indices : array_like
+        - peak_indices : NDArray
             Indices of detected peaks in the filtered signal
-        - rri : array_like
+        - rri : NDArray
             Inter-beat intervals (RRIs) derived from peak detection
-        - hr_waveform_from_peaks : array_like
+        - hr_waveform_from_peaks : NDArray
             Heart rate waveform computed from peaks
-        - hr_times : array_like
+        - hr_times : NDArray
             Time points for heart rate estimates
-        - hr_values : array_like
+        - hr_values : NDArray
             Heart rate values (FFT-based)
-        - filtered_ekf : array_like
+        - filtered_ekf : NDArray
             Signal filtered using Extended Kalman Filter
-        - ekf_heart_rates : array_like
+        - ekf_heart_rates : NDArray
             Heart rate estimates from EKF
-        - cardiacfromfmri_qual_times : array_like
+        - cardiacfromfmri_qual_times : NDArray
             Time points for quality scores from raw fMRI signal
-        - cardiacfromfmri_qual_scores : array_like
+        - cardiacfromfmri_qual_scores : NDArray
             Quality scores for raw fMRI signal
-        - dlfiltered_qual_times : array_like
+        - dlfiltered_qual_times : NDArray
             Time points for quality scores from DL-filtered signal
-        - dlfiltered_qual_scores : array_like
+        - dlfiltered_qual_scores : NDArray
             Quality scores for DL-filtered signal
 
     Notes
@@ -348,7 +364,7 @@ def procppg(args: Any) -> None:
         ax6.set_title("Heart Rate Extraction")
         ax6.legend(loc="upper right")
         ax6.grid(True, alpha=0.3)
-        ax6.set_ylim([40, 110])
+        ax6.set_ylim((40.0, 110.0))
 
         # Plot 7: Signal quality assessment
         ax7 = fig.add_subplot(gs[thissubfig, 0])
@@ -372,7 +388,7 @@ def procppg(args: Any) -> None:
         ax7.set_title("Signal Quality Assessment (0=Poor, 1=Excellent)")
         ax7.legend(loc="upper right")
         ax7.grid(True, alpha=0.3)
-        ax7.set_ylim([0, 1])
+        ax7.set_ylim((0.0, 1.0))
 
         plt.tight_layout()
         plt.show()
