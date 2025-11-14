@@ -378,8 +378,8 @@ jobs:
                 echo "Restoring environment from cache"
                 source activate py314_env
             else
-                (sudo apt-get update || sudo apt-get update) # Robust apt update
-                sudo apt-get install -y gcc gfortran libopenblas-dev
+                (apt-get update || apt-get update) # Robust apt update
+                apt-get install -y gcc gfortran libopenblas-dev
                 conda create -n py314_env python=3.14 -yq
                 source activate py314_env
                 pip install --upgrade "setuptools>=54"
