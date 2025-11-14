@@ -35,7 +35,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[test,doc]
+            pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-39-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -69,7 +69,7 @@ jobs:
                 uv pip install --upgrade pip
                 uv pip install --upgrade distlib
             fi
-            uv pip install .[test,doc]
+            uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -102,7 +102,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[test,doc]
+            pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -131,7 +131,7 @@ jobs:
             uv pip install --upgrade pip
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
-            uv pip install .[test,doc]
+            uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -164,7 +164,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[test,doc]
+            pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -197,7 +197,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[test,doc]
+            pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -226,7 +226,7 @@ jobs:
             uv pip install --upgrade pip
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
-            uv pip install .[test,doc]
+            uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-312alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -259,7 +259,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[test,doc]
+            pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -288,7 +288,7 @@ jobs:
             uv pip install --upgrade pip
             uv pip install --upgrade distlib
             uv pip install --upgrade pytest
-            uv pip install .[test,doc]
+            uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -321,7 +321,7 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
-            pip install .[test,doc]
+            pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -751,11 +751,11 @@ workflows:
       - test_py313:
           requires:
             - build_py313
-      #- build_py314
+      - build_py314
       #- build_py314_alt
-      #- test_py314:
-      #    requires:
-      #      - build_py314
+      - test_py314:
+          requires:
+            - build_py314
       #- style_check:
       #    requires:
       #      - build_py313
