@@ -5,8 +5,8 @@ conda init
 conda activate micfix
 mamba install \
     numpy \
-    "scipy<=1.15.3" \
-    "matplotlib>=3.3.0" \
+    "scipy>=1.16.1" \
+    matplotlib \
     pandas \
     pyarrow \
     statsmodels \
@@ -18,7 +18,7 @@ mamba install \
     pywavelets \
     pyqt6 \
     pyqt6-sip \
-    "pyqtgraph>=0.13.4" \
+    pyqtgraph \
     tqdm \
     versioneer \
     requests
