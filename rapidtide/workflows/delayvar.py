@@ -30,7 +30,6 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA
-from tf_keras.src.dtensor.integration_test_utils import train_step
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
