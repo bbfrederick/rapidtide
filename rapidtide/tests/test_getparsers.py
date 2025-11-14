@@ -20,12 +20,6 @@ import numpy as np
 
 from rapidtide.workflows.adjustoffset import _get_parser as adjustoffset_getparser
 from rapidtide.workflows.aligntcs import _get_parser as aligntcs_getparser
-
-try:
-    from rapidtide.workflows.applydlfilter import _get_parser as applydlfilter_getparser
-    dlfilterloads = True
-except ImportError:
-    dlfilterloads = False
 from rapidtide.workflows.atlasaverage import _get_parser as atlasaverage_getparser
 from rapidtide.workflows.atlastool import _get_parser as atlastool_getparser
 from rapidtide.workflows.calctexticc import _get_parser as calctexticc_getparser
@@ -141,9 +135,14 @@ def test_parsers(debug=False):
         tcfrom3col_getparser,
         variabilityizer_getparser,
     ]
+    try:
+        import tensorflow as tf
+        dlfilterloads = True
+    except ImportError:
+        dlfilterloads = False
     if dlfilterloads:
-        parserlist += [applydlfilter_getparser]
-
+        parserlist.append(applydlfilter_getparser)
+    
     for thegetparser in parserlist:
         theusage = thegetparser().format_help()
         if debug:
