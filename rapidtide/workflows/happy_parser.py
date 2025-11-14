@@ -17,15 +17,19 @@
 #
 #
 import argparse
-from argparse import Namespace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional
 
 import numpy as np
-from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.workflows.parser_funcs as pf
+
+try:
+    import tensorflow as tf
+    tensorflowpresent = True
+except ImportError:
+    tensorflowpresent = False
 
 DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
 DEFAULT_PULSATILITYSIGMA = 6.0
@@ -73,6 +77,7 @@ def _get_parser() -> Any:
         description="Hypersampling by Analytic Phase Projection - Yay!.",
         allow_abbrev=False,
     )
+    
 
     # Required arguments
     parser.add_argument(
@@ -109,18 +114,19 @@ def _get_parser() -> Any:
         help="Disable deep learning cardiac waveform filter.  ",
         default=True,
     )
-    processing_steps.add_argument(
-        "--usesuperdangerousworkaround",
-        dest="mpfix",
-        action="store_true",
-        help=(
-            "Some versions of tensorflow seem to have some weird conflict with MKL which"
-            "I don't seem to be able to fix.  If the dl filter bombs complaining about "
-            "multiple openmp libraries, try rerunning with the secret and inadvisable "
-            "'--usesuperdangerousworkaround' flag.  Good luck! "
-        ),
-        default=False,
-    )
+    if tensorflowpresent:
+        processing_steps.add_argument(
+            "--usesuperdangerousworkaround",
+            dest="mpfix",
+            action="store_true",
+            help=(
+                "Some versions of tensorflow seem to have some weird conflict with MKL which"
+                "I don't seem to be able to fix.  If the dl filter bombs complaining about "
+                "multiple openmp libraries, try rerunning with the secret and inadvisable "
+                "'--usesuperdangerousworkaround' flag.  Good luck! "
+            ),
+            default=False,
+        )
     processing_steps.add_argument(
         "--slicetimesareinseconds",
         action="store_true",
@@ -815,13 +821,14 @@ def _get_parser() -> Any:
         help="Disable the congrid value cache completely.",
         default=True,
     )
-    debug_opts.add_argument(
-        "--usetensorflow",
-        dest="usepytorch",
-        action="store_false",
-        help=("Switch to the old style tensorflow deep learning filter"),
-        default=True,
-    )
+    if tensorflowpresent:
+        debug_opts.add_argument(
+            "--usetensorflow",
+            dest="usepytorch",
+            action="store_false",
+            help=("Switch to the old style tensorflow deep learning filter"),
+            default=True,
+        )
     debug_opts.add_argument(
         "--focaldebug",
         dest="focaldebug",
@@ -833,7 +840,7 @@ def _get_parser() -> Any:
     return parser
 
 
-def process_args(inputargs: Optional[Any] = None) -> None:
+def process_args(inputargs: Optional[Any] = None) -> Any:
     """
     Compile arguments for happy workflow.
 
@@ -871,7 +878,7 @@ def process_args(inputargs: Optional[Any] = None) -> None:
 
     # save the raw and formatted command lines
     args.commandline = " ".join(argstowrite)
-    tide_io.writevec([args.commandline], args.outputroot + "_commandline.txt")
+    tide_io.writevec(np.array([args.commandline]), args.outputroot + "_commandline.txt")
     formattedcommandline = []
     for thetoken in argstowrite[0:3]:
         formattedcommandline.append(thetoken)
@@ -890,7 +897,11 @@ def process_args(inputargs: Optional[Any] = None) -> None:
         else:
             suffix = ""
         formattedcommandline[i] = prefix + formattedcommandline[i] + suffix
-    tide_io.writevec(formattedcommandline, args.outputroot + "_formattedcommandline.txt")
+    tide_io.writevec(np.array(formattedcommandline), args.outputroot + "_formattedcommandline.txt")
+
+    if not tensorflowpresent:
+        args.usepytorch = True
+        args.mpfix = False
 
     # if user did not specify a model, set the default, depending on DL library
     if args.modelname is None:
