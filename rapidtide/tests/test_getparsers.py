@@ -141,6 +141,9 @@ def test_parsers(debug=False):
     except ImportError:
         dlfilterloads = False
     if dlfilterloads:
+        from rapidtide.workflows.applydlfilter import (
+            _get_parser as applydlfilter_getparser,
+        )
         parserlist.append(applydlfilter_getparser)
     
     for thegetparser in parserlist:

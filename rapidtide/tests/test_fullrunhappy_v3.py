@@ -24,6 +24,13 @@ import rapidtide.workflows.happy as happy_workflow
 import rapidtide.workflows.happy_parser as happy_parser
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
+try:
+    import tensorflow as tf
+
+    tensorflowexists = True
+except ImportError:
+    tensorflowexists = False
+
 
 def test_fullrunhappy_v3(debug=False, local=False, displayplots=False):
     # set input and output directories
@@ -45,13 +52,12 @@ def test_fullrunhappy_v3(debug=False, local=False, displayplots=False):
         os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
         "--mklthreads",
         "-1",
-        "--usetensorflow",
-        "--model",
-        "model_revised_tf2",
         "--cardcalconly",
     ]
-    # "--motionfile",
-    # os.path.join(exampleroot, "sub-HAPPYTEST_mcf.par"),
+    if tensorflowexists:
+        inputargs.append("--usetensorflow")
+        inputargs.append("--model")
+        inputargs.append("model_revised_tf2")
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 
 
