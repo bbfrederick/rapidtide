@@ -204,7 +204,7 @@ def _get_parser() -> Any:
         default=False,
     )
 
-    pf.addpermutationopts(preproc, numreps=0)
+    pf.addpermutationopts(parser, numreps=0)
 
     # similarity function options
     similarityopts = parser.add_argument_group("Similarity function options")
