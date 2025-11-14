@@ -3026,7 +3026,7 @@ def getmatchedtcs(
     >>> matched_files, length = getmatchedtcs("sub-*/func/*cardiacfromfmri_25.0Hz*")
     >>> print(f"Found {len(matched_files)} files with {length} timepoints each.")
     """
-    # list all of the target files
+    # list all the target files
     fromfile = sorted(glob.glob(searchstring))
     if debug:
         print(f"searchstring: {searchstring} -> {fromfile}")
