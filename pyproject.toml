@@ -22,22 +22,20 @@ classifiers = [
 requires-python = '>=3.10'
 dependencies = [
   'numpy',
-  'scipy<=1.15.3',
+  'scipy<=1.16.1',
   'pandas',
   'pyarrow',
   'scikit-image',
   'scikit-learn',
   'nibabel',
   'nilearn',
-  'matplotlib >= 3.3.0',
-  'pyqtgraph >= 0.13.4',
+  'matplotlib',
+  'pyqtgraph',
   'pyqt6-sip',
   'pyqt6',
   'requests',
   'statsmodels',
   'pywavelets',
-  'tensorflow >= 2.18.0',
-  'tf-keras >= 2.18.0',
   'torch',
   'tqdm',
   'versioneer',
@@ -60,6 +58,10 @@ authors = [
 'Changelog' = 'https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md'
 
 [project.optional-dependencies]
+tf = [
+  'tensorflow >= 2.18.0',
+  'tf-keras >= 2.18.0',
+]
 test = [
   'codecov',
   'coverage',
