@@ -379,7 +379,7 @@ jobs:
                 source activate py314_env
             else
                 (apt-get update || apt-get update) # Robust apt update
-                apt-get install -y gcc gfortran libopenblas-dev
+                apt-get install -y gcc g++ gfortran libopenblas-dev
                 conda create -n py314_env python=3.14 -yq
                 source activate py314_env
                 pip install --upgrade "setuptools>=54"
