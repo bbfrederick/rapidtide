@@ -1,11 +1,11 @@
 #!/bin/bash
 
-conda create --name micfix "python<3.13"
+conda create --name micfix python
 conda init
 conda activate micfix
 mamba install \
     numpy \
-    "scipy>=1.16.1" \
+    scipy \
     matplotlib \
     pandas \
     pyarrow \
@@ -25,5 +25,4 @@ mamba install \
 
 mamba install \
     tf-keras \
-    "tensorflow >= 2.10.0" \
-    keras
+    tensorflow 

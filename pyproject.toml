@@ -22,7 +22,7 @@ classifiers = [
 requires-python = '>=3.10'
 dependencies = [
   'numpy',
-  'scipy>=1.16.1',
+  'scipy',
   'pandas',
   'pyarrow',
   'scikit-image',
