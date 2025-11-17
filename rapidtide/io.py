@@ -751,14 +751,18 @@ def savemaplist(
         filetype=filetype,
         rt_floattype=rt_floattype,
     )
+    if debug:
+        print("maplist:")
+        print(maplist)
     for themap, mapsuffix, maptype, theunit, thedescription in maplist:
         # copy the data into the output array, remapping if warranted
         if debug:
+            print(f"processing map {mapsuffix}")
             if validvoxels is None:
-                print(f"savemaplist: saving {mapsuffix}  to {destshape}")
+                print(f"savemaplist: saving {mapsuffix} of shape {themap.shape} to {destshape}")
             else:
                 print(
-                    f"savemaplist: saving {mapsuffix}  to {destshape} from {np.shape(validvoxels)[0]} valid voxels"
+                    f"savemaplist: saving {mapsuffix} of shape {themap.shape} to {destshape} from {np.shape(validvoxels)[0]} valid voxels"
                 )
         outmaparray = populatemap(
             themap,
