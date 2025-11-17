@@ -3366,12 +3366,12 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     "Squared R value of the sLFO fit (proportion of variance explained)",
                 ),
                 (
-                    fitcoeff,
+                    fitcoeff[:, 0],
                     "CVR",
                     "map",
                     "percent",
                     "Percent signal change due to the CVR regressor",
-                ),
+                )
             ]
 
         tide_io.savemaplist(

@@ -1057,7 +1057,7 @@ def retroregress(args: Any) -> None:
                 (varchange, "CVRVariance", "map", None),
                 (rvalue, "CVRR", "map", None),
                 (r2value, "CVRR2", "map", None),
-                (fitcoeff, "CVR", "map", "percent"),
+                (fitcoeff[:, 0], "CVR", "map", "percent"),
             ]
         bidsdict = bidsbasedict.copy()
 
