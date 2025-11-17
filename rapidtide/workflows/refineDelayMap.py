@@ -28,10 +28,10 @@ import rapidtide.stats as tide_stats
 def refineDelay(
     fmri_data_valid: NDArray,
     initial_fmri_x: NDArray,
-    xdim: int,
-    ydim: int,
-    slicethickness: int,
-    sLFOfiltmask: Any,
+    xdim: float,
+    ydim: float,
+    slicethickness: float,
+    sLFOfiltmask: NDArray,
     genlagtc: Any,
     oversamptr: float,
     sLFOfitmean: NDArray,
@@ -84,7 +84,7 @@ def refineDelay(
         Y dimension of the data.
     slicethickness : Any
         Thickness of the slices in the data.
-    sLFOfiltmask : Any
+    sLFOfiltmask : NDArray
         Mask for filtering based on SLOF (slice timing) effects.
     genlagtc : Any
         Generated lag time course.

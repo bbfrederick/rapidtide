@@ -1200,6 +1200,8 @@ def niftimerge(
         savetonifti(output_data, theheader, outputname)
     if returndata:
         return output_data, infile_hdr
+    else:
+        return None
 
 
 def niftiroi(inputfile: str, outputfile: str, startpt: int, numpoints: int) -> None:
@@ -1548,8 +1550,8 @@ def checkspaceresmatch(sizes1: NDArray, sizes2: NDArray, tolerance: float = 1.0e
             print(f"File spatial resolutions do not match within tolerance of {tolerance}")
             print(f"\tsize of dimension {i}: {sizes1[i]} != {sizes2[i]} ({fracdiff} difference)")
             return False
-        else:
-            return True
+    return True
+
 
 
 def checkspacedimmatch(dims1: NDArray, dims2: NDArray, verbose: bool = False) -> bool:
@@ -1600,8 +1602,7 @@ def checkspacedimmatch(dims1: NDArray, dims2: NDArray, verbose: bool = False) ->
                 print("File spatial voxels do not match")
                 print("dimension ", i, ":", dims1[i], "!=", dims2[i])
             return False
-        else:
-            return True
+    return True
 
 
 def checktimematch(
@@ -3296,7 +3297,7 @@ def readbidstsv(
 
 def readcolfrombidstsv(
     inputfilename: str,
-    columnnum: int = 0,
+    columnnum: Optional[int] = 0,
     columnname: Optional[str] = None,
     neednotexist: bool = False,
     debug: bool = False,
@@ -3787,7 +3788,7 @@ def readvecs(
     colspec: Optional[str] = None,
     numskip: int = 0,
     debug: bool = False,
-    thedtype: type = float,
+    thedtype: np.dtype = np.dtype(np.float64),
 ) -> NDArray:
     """
     Read vectors from a text file and return them as a transposed numpy array.
@@ -3857,7 +3858,7 @@ def readvecs(
             thetokens = line.split()
             thisvec = []
             for vecnum in collist:
-                thisvec.append(thedtype(thetokens[vecnum]))
+                thisvec.append(thedtype.type(thetokens[vecnum]))
             inputvec.append(thisvec)
     theoutarray = np.transpose(np.asarray(inputvec, dtype=thedtype))
     return theoutarray

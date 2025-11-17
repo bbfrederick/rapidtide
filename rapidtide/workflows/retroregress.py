@@ -471,15 +471,15 @@ def retroregress(args: Any) -> None:
         sys.exit()
 
     if therunoptions["internalprecision"] == "double":
-        rt_floattype = np.float64
+        rt_floattype = np.dtype(np.float64)
     else:
-        rt_floattype = np.float32
+        rt_floattype = np.dtype(np.float32)
 
     # set the output precision
     if therunoptions["outputprecision"] == "double":
-        rt_outfloattype = np.float64
+        rt_outfloattype = np.dtype(np.float64)
     else:
-        rt_outfloattype = np.float32
+        rt_outfloattype = np.dtype(np.float32)
     therunoptions["saveminimumsLFOfiltfiles"] = args.saveminimumsLFOfiltfiles
 
     # read the fmri input files
@@ -1443,7 +1443,7 @@ def retroregress(args: Any) -> None:
         f"{outputname}_retroruntimings.tsv"
     )
     tide_io.writevec(
-        timingdata,
+        np.asarray(timingdata),
         f"{outputname}_desc-formattedretroruntimings_info.tsv",
     )
     Path(f"{outputname}_retroruntimings.tsv").unlink(missing_ok=True)
@@ -1465,7 +1465,7 @@ def retroregress(args: Any) -> None:
     Path(f"{outputname}_RETRODONE.txt").touch()
 
 
-def process_args(inputargs: Optional[Any] = None) -> None:
+def process_args(inputargs: Optional[Any] = None) -> argparse.Namespace:
     """
     Compile arguments for retroregress workflow.
 

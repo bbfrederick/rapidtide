@@ -1118,7 +1118,7 @@ class xyztlocation(QtWidgets.QWidget):
         # print('done resetting T spinbox values')
         self.updatedT.emit()
 
-    def real2tr(self, time: Any) -> None:
+    def real2tr(self, time: Any) -> int:
         """
         Convert real time to trigger time.
 
@@ -1148,7 +1148,7 @@ class xyztlocation(QtWidgets.QWidget):
         """
         return int(np.round((time - self.toffset) / self.tr, 0))
 
-    def tr2real(self, tpos: Any) -> None:
+    def tr2real(self, tpos: Any) -> float:
         """
         Convert time position to real time.
 
@@ -1176,7 +1176,7 @@ class xyztlocation(QtWidgets.QWidget):
         """
         return self.toffset + self.tr * tpos
 
-    def real2vox(self, xcoord: Any, ycoord: Any, zcoord: Any) -> None:
+    def real2vox(self, xcoord: Any, ycoord: Any, zcoord: Any) -> Tuple[int, int, int]:
         """
         Convert real coordinates to voxel coordinates using inverse affine transformation.
 
@@ -1212,7 +1212,7 @@ class xyztlocation(QtWidgets.QWidget):
         x, y, z = apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         return int(np.round(x, 0)), int(np.round(y, 0)), int(np.round(z, 0))
 
-    def vox2real(self, xpos: Any, ypos: Any, zpos: Any) -> None:
+    def vox2real(self, xpos: Any, ypos: Any, zpos: Any) -> NDArray:
         """
         Convert voxel coordinates to real-world coordinates using the affine transformation.
 
@@ -2412,7 +2412,7 @@ class RectangleItem(pg.GraphicsObject):
         """
         p.drawPicture(0, 0, self.picture)
 
-    def boundingRect(self) -> None:
+    def boundingRect(self) -> QtCore.QRectF:
         """
         Return the bounding rectangle of the picture.
 

@@ -217,7 +217,7 @@ def bland_altman_plot(
     plt.axhline(md - 2 * sd, color="gray", linestyle="--")
 
 
-def pairdata(input1_data: Any, input2_data: Any, totalmask: Any) -> None:
+def pairdata(input1_data: Any, input2_data: Any, totalmask: Any) -> NDArray:
     """
     Pair corresponding elements from two 3D arrays based on a mask.
 
@@ -396,8 +396,8 @@ def pixelcomp(args: Any) -> None:
         thecoffs = (
             Polynomial.fit(thearray[:, 0], thearray[:, 1], args.fitorder).convert().coef[::-1]
         )
-    except np.RankWarning:
-        thecoffs = [0.0, 0.0]
+    except np.exceptions.RankWarning:
+        thecoffs = np.asarray([0.0, 0.0])
     print("thecoffs=", thecoffs)
     with open(f"{args.outputroot}_order_{args.fitorder}_fit", "w") as file:
         file.writelines(str(thecoffs))

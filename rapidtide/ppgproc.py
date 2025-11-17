@@ -358,7 +358,7 @@ class AdaptivePPGKalmanFilter:
         self.x = self.F @ self.x
         self.P = self.F @ self.P @ self.F.T + Q
 
-    def update(self, measurement: NDArray) -> None:
+    def update(self, measurement: NDArray) -> bool:
         """
         Update the state estimate using the Kalman filter update step.
 
