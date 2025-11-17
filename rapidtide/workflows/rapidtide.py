@@ -1779,7 +1779,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             fastresamplerpadtime=optiondict["fastresamplerpadtime"],
             prewhitenregressor=False,
             prewhitenlags=optiondict["prewhitenlags"],
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
 
     # cycle over all voxels
@@ -1892,7 +1892,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # Preprocessing - prewhitening
     if optiondict["prewhitenregressor"]:
         resampref_y = tide_fit.prewhiten(
-            resampref_y, optiondict["prewhitenlags"], debug=optiondict["focaldebug"]
+            resampref_y, optiondict["prewhitenlags"], debug=optiondict["debug"]
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-oversampledmovingregressor_timeseries",
@@ -2634,7 +2634,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
 
             if optiondict["docvrmap"]:
                 # percent normalize the fmri data
-                LGR.info("normalzing data for CVR map")
+                LGR.info("normalizing data for CVR map")
                 themean = np.mean(fmri_data_valid, axis=1)
                 fmri_data_valid /= themean[:, None]
 
@@ -3357,25 +3357,22 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     None,
                     "Percentage of inband variance attributable to CVR regressor",
                 ),
+                (rvalue, "CVRR", "map", None, "R value of the sLFO fit"),
+                (
+                    r2value,
+                    "CVRR2",
+                    "map",
+                    None,
+                    "Squared R value of the sLFO fit (proportion of variance explained)",
+                ),
+                (
+                    fitcoeff,
+                    "CVR",
+                    "map",
+                    "percent",
+                    "Percent signal change due to the CVR regressor",
+                ),
             ]
-            if optiondict["savenormalsLFOfiltfiles"]:
-                maplist = [
-                    (rvalue, "CVRR", "map", None, "R value of the sLFO fit"),
-                    (
-                        r2value,
-                        "CVRR2",
-                        "map",
-                        None,
-                        "Squared R value of the sLFO fit (proportion of variance explained)",
-                    ),
-                    (
-                        fitcoeff,
-                        "CVR",
-                        "map",
-                        "percent",
-                        "Percent signal change due to the CVR regressor",
-                    ),
-                ]
 
         tide_io.savemaplist(
             outputname,

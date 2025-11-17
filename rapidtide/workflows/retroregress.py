@@ -1055,13 +1055,10 @@ def retroregress(args: Any) -> None:
                 (initialvariance, "lfofilterInbandVarianceBefore", "map", None),
                 (finalvariance, "lfofilterInbandVarianceAfter", "map", None),
                 (varchange, "CVRVariance", "map", None),
+                (rvalue, "CVRR", "map", None),
+                (r2value, "CVRR2", "map", None),
+                (fitcoeff, "CVR", "map", "percent"),
             ]
-            if args.savenormalsLFOfiltfiles:
-                maplist += [
-                    (rvalue, "CVRR", "map", None),
-                    (r2value, "CVRR2", "map", None),
-                    (fitcoeff, "CVR", "map", "percent"),
-                ]
         bidsdict = bidsbasedict.copy()
 
         if args.debug or args.focaldebug:
