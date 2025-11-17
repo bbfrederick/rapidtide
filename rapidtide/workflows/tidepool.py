@@ -40,6 +40,7 @@ from rapidtide.OrthoImageItem import OrthoImageItem
 from rapidtide.RapidtideDataset import RapidtideDataset, check_rt_spatialmatch
 from rapidtide.simFuncClasses import SimilarityFunctionFitter
 from rapidtide.workflows.atlasaverage import summarizevoxels
+from rapidtide.workflows.tidepool import xyztlocation
 
 try:
     from PySide6.QtCore import __version__
@@ -55,6 +56,20 @@ else:
 print(f"using {pyqtbinding=}")
 
 os.environ["QT_MAC_WANTS_LAYER"] = "1"
+
+thesubjects: List[RapidtideDataset] = []
+currentdataset: RapidtideDataset = None
+whichsubject: int = 0
+datafileroots: List[str] = []
+verbosity: int = 0
+win: KeyPressWindow = None
+defaultdict: dict = {}
+ui: uiTemplate.Ui_MainWindow = None
+overlays: dict = None
+currentloc: xyztlocation = None
+timeaxis: NDArray = None
+averagingmode: str = None
+atlasaveragingdone: bool = False
 
 
 def _get_parser() -> Any:
@@ -4477,7 +4492,7 @@ def loadpane(
         panemap[thepane] = themap.name
 
 
-def tidepool(args: Any) -> None:
+def tidepool(args: argparse.Namespace) -> None:
     """
     Initialize and run the TiDePool GUI application for rapidtide data analysis.
 

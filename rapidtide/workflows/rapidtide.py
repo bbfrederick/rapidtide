@@ -372,18 +372,18 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     global rt_floattype
     if optiondict["internalprecision"] == "double":
         LGR.debug("setting internal precision to double")
-        rt_floattype = np.float64
+        rt_floattype = np.dtype(np.float64)
     else:
         LGR.debug("setting internal precision to single")
-        rt_floattype = np.float32
+        rt_floattype = np.dtype(np.float32)
 
     # set the output precision
     if optiondict["outputprecision"] == "double":
         LGR.debug("setting output precision to double")
-        rt_outfloattype = np.float64
+        rt_outfloattype = np.dtype(np.float64)
     else:
         LGR.debug("setting output precision to single")
-        rt_outfloattype = np.float32
+        rt_outfloattype = np.dtype(np.float32)
 
     # set the number of worker processes if multiprocessing
     if optiondict["nprocs"] < 1:

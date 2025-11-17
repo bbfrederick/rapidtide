@@ -350,8 +350,8 @@ def cardiacfromimage(
     timepoints: int,
     tr: float,
     slicetimes: NDArray,
-    cardprefilter: object,
-    respprefilter: object,
+    cardprefilter: tide_filt.NoncausalFilter,
+    respprefilter: tide_filt.NoncausalFilter,
     notchpct: float = 1.5,
     notchrolloff: float = 0.5,
     invertphysiosign: bool = False,
@@ -364,7 +364,7 @@ def cardiacfromimage(
     verbose: bool = False,
     usemask: bool = True,
     multiplicative: bool = True,
-) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, float, NDArray, float, float, int, NDArray, NDArray, NDArray]:
     """
         Extract cardiac and respiratory signals from 4D fMRI data using slice timing information.
 
@@ -418,7 +418,7 @@ def cardiacfromimage(
 
         Returns
         -------
-        tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]
+        tuple[NDArray, float, NDArray, float, float, int, NDArray, NDArray, NDArray]
             - `hirescardtc`: High-resolution cardiac time course.
             - `cardnormfac`: Normalization factor for cardiac signal.
             - `hiresresptc`: High-resolution respiratory time course.
@@ -942,7 +942,7 @@ def normalizevoxels(
     showprogressbar: bool = True,
     chunksize: int = 1000,
     debug: bool = False,
-) -> tuple[NDArray, NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray]:
     """
     Normalize fMRI voxel data by detrending and z-scoring.
 
@@ -1535,7 +1535,7 @@ def calcplethquality(
     outputlevel: int = 0,
     initfile: bool = True,
     debug: bool = False,
-) -> tuple[NDArray, NDArray, NDArray]:
+) -> None:
     """
     Calculate windowed skewness, kurtosis, and entropy quality metrics for a plethysmogram.
 
@@ -1572,6 +1572,8 @@ def calcplethquality(
 
     Returns
     -------
+    None
+        All generated values are returned in infodict
     tuple
         A tuple containing the following elements in order:
 
@@ -1599,6 +1601,26 @@ def calcplethquality(
     The function applies a detrending polynomial to the input waveform before computing
     the quality metrics. Window sizes are rounded to the nearest odd number of samples
     to ensure symmetric windows.
+
+    The following values are put into infodict:
+        - S_sqi_mean : float
+            Mean value of the skewness quality index over all time.
+        - S_sqi_std : float
+            Standard deviation of the skewness quality index over all time.
+        - S_waveform : array
+            The skewness quality metric over all timepoints.
+        - K_sqi_mean : float
+            Mean value of the kurtosis quality index over all time.
+        - K_sqi_std : float
+            Standard deviation of the kurtosis quality index over all time.
+        - K_waveform : array
+            The kurtosis quality metric over all timepoints.
+        - E_sqi_mean : float
+            Mean value of the entropy quality index over all time.
+        - E_sqi_std : float
+            Standard deviation of the entropy quality index over all time.
+        - E_waveform : array
+            The entropy quality metric over all timepoints.
 
     References
     ----------
@@ -1713,7 +1735,7 @@ def getphysiofile(
     outputlevel: int = 0,
     iscardiac: bool = True,
     debug: bool = False,
-) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
+) -> tuple[NDArray, NDArray, float, int]:
     """
     Read, process, and resample physiological waveform data.
 
@@ -1756,9 +1778,9 @@ def getphysiofile(
 
     Returns
     -------
-    waveform_sliceres : ndarray
+    waveform_sliceres : NDArray
         Physiological signal resampled to slice time resolution.
-    waveform_stdres : ndarray
+    waveform_stdres : NDArray
         Physiological signal resampled to standard time resolution.
     inputfreq : float
         The actual input sampling frequency used.

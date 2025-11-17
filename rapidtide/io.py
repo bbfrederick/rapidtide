@@ -511,7 +511,7 @@ def niftihdrfromarray(data: NDArray) -> Any:
 def makedestarray(
     destshape: Union[Tuple, NDArray],
     filetype: str = "nifti",
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: np.dtype = np.dtype(np.float64),
 ) -> Tuple[NDArray, int]:
     """
     Create a destination array for output data based on file type and shape.
@@ -677,7 +677,7 @@ def savemaplist(
     theheader: Any,
     bidsbasedict: Dict[str, Any],
     filetype: str = "nifti",
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: np.dtype = np.dtype(np.float64),
     cifti_hdr: Optional[Any] = None,
     savejson: bool = True,
     debug: bool = False,
@@ -1100,32 +1100,35 @@ def niftisplit(inputfile: str, outputroot: str, axis: int = 3) -> None:
     numpoints = infiledims[axis + 1]
     print(infiledims)
     theheader["dim"][axis + 1] = 1
-    for i in range(numpoints):
-        if infiledims[0] == 5:
-            if axis == 0:
-                thisslice = infile_data[i : i + 1, :, :, :, :]
-            elif axis == 1:
-                thisslice = infile_data[:, i : i + 1, :, :, :]
-            elif axis == 2:
-                thisslice = infile_data[:, :, i : i + 1, :, :]
-            elif axis == 3:
-                thisslice = infile_data[:, :, :, i : i + 1, :]
-            elif axis == 4:
-                thisslice = infile_data[:, :, :, :, i : i + 1]
-            else:
-                raise ValueError("illegal axis")
-        elif infiledims[0] == 4:
-            if axis == 0:
-                thisslice = infile_data[i : i + 1, :, :, :]
-            elif axis == 1:
-                thisslice = infile_data[:, i : i + 1, :, :]
-            elif axis == 2:
-                thisslice = infile_data[:, :, i : i + 1, :]
-            elif axis == 3:
-                thisslice = infile_data[:, :, :, i : i + 1]
-            else:
-                raise ValueError("illegal axis")
-        savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
+    if infile_data is not None:
+        for i in range(numpoints):
+            if infiledims[0] == 5:
+                if axis == 0:
+                    thisslice = infile_data[i : i + 1, :, :, :, :]
+                elif axis == 1:
+                    thisslice = infile_data[:, i : i + 1, :, :, :]
+                elif axis == 2:
+                    thisslice = infile_data[:, :, i : i + 1, :, :]
+                elif axis == 3:
+                    thisslice = infile_data[:, :, :, i : i + 1, :]
+                elif axis == 4:
+                    thisslice = infile_data[:, :, :, :, i : i + 1]
+                else:
+                    raise ValueError("illegal axis")
+            elif infiledims[0] == 4:
+                if axis == 0:
+                    thisslice = infile_data[i : i + 1, :, :, :]
+                elif axis == 1:
+                    thisslice = infile_data[:, i : i + 1, :, :]
+                elif axis == 2:
+                    thisslice = infile_data[:, :, i : i + 1, :]
+                elif axis == 3:
+                    thisslice = infile_data[:, :, :, i : i + 1]
+                else:
+                    raise ValueError("illegal axis")
+            savetonifti(thisslice, theheader, outputroot + str(i).zfill(4))
+    else:
+        raise ValueError("file contains no data!")
 
 
 def niftimerge(
@@ -3084,8 +3087,8 @@ def readbidstsv(
     neednotexist: bool = False,
     debug: bool = False,
 ) -> Tuple[
-    Optional[float],
-    Optional[float],
+    float,
+    float,
     Optional[List[str]],
     Optional[NDArray],
     Optional[bool],

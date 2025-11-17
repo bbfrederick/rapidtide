@@ -601,8 +601,11 @@ def FastResamplerFromFile(
         incompressed,
         incolsource,
     ) = tide_io.readbidstsv(inputname, colspec=colspec, debug=debug)
-    if len(incolumns) > 1:
-        raise ValueError("Multiple columns in input file")
+    if incolumns is not None:
+        if len(incolumns) > 1:
+            raise ValueError("Multiple columns in input file")
+    else:
+        raise ValueError("No column names in file")
     intimecourse = indata[0, :]
     intimeaxis = np.linspace(
         instarttime,
@@ -616,9 +619,9 @@ def FastResamplerFromFile(
 
 
 def doresample(
-    orig_x: ArrayLike,
-    orig_y: ArrayLike,
-    new_x: ArrayLike,
+    orig_x: NDArray,
+    orig_y: NDArray,
+    new_x: NDArray,
     method: str = "cubic",
     padlen: int = 0,
     padtype: str = "reflect",
@@ -632,11 +635,11 @@ def doresample(
 
     Parameters
     ----------
-    orig_x : array-like
+    orig_x : NDArray
         Original x-coordinates of the data to be resampled.
-    orig_y : array-like
+    orig_y : NDArray
         Original y-values corresponding to `orig_x`.
-    new_x : array-like
+    new_x : NDArray
         New x-coordinates at which to evaluate the resampled data.
     method : str, optional
         Interpolation method to use. Options are:
@@ -721,14 +724,14 @@ def doresample(
     elif method == "univariate":
         interpolator = sp.interpolate.UnivariateSpline(pad_x, pad_y, k=3, s=0)  # s=0 interpolates
         # return tide_filt.unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
-        return np.float64(interpolator(new_x))
+        return (interpolator(new_x)).astype(np.float64)
     else:
         print("invalid interpolation method")
         return None
 
 
 def arbresample(
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     init_freq: float,
     final_freq: float,
     intermed_freq: float = 0.0,
@@ -747,7 +750,7 @@ def arbresample(
 
     Parameters
     ----------
-    inputdata : ArrayLike
+    inputdata : NDArray
         Input signal or data to be resampled. Should be a 1-D array-like object.
     init_freq : float
         Initial sampling frequency of the input data in Hz.
@@ -869,7 +872,7 @@ def arbresample(
 
 
 def upsample(
-    inputdata: ArrayLike,
+    inputdata: NDArray,
     Fs_init: float,
     Fs_higher: float,
     method: str = "univariate",
@@ -886,7 +889,7 @@ def upsample(
 
     Parameters
     ----------
-    inputdata : ArrayLike
+    inputdata : NDArray
         Input time series data to be upsampled.
     Fs_init : float
         Initial sampling frequency of the input data (Hz).
@@ -952,8 +955,8 @@ def upsample(
 
 
 def dotwostepresample(
-    orig_x: ArrayLike,
-    orig_y: ArrayLike,
+    orig_x: NDArray,
+    orig_y: NDArray,
     intermed_freq: float,
     final_freq: float,
     method: str = "univariate",
@@ -971,9 +974,9 @@ def dotwostepresample(
 
     Parameters
     ----------
-    orig_x : array-like
+    orig_x : NDArray
         Original time axis values (must be monotonically increasing).
-    orig_y : array-like
+    orig_y : NDArray
         Original signal values corresponding to `orig_x`.
     intermed_freq : float
         Intermediate frequency to which the signal is upsampled.
@@ -1308,18 +1311,18 @@ def timeshift(
 
         plt.show()
 
-    return [
+    return (
         shifted_y[padtrs : padtrs + thelen],
         shifted_weights[padtrs : padtrs + thelen],
         shifted_y,
         shifted_weights,
-    ]
+    )
 
 
 def timewarp(
-    orig_x: ArrayLike,
-    orig_y: ArrayLike,
-    timeoffset: ArrayLike,
+    orig_x: NDArray,
+    orig_y: NDArray,
+    timeoffset: NDArray,
     demean: bool = True,
     method: str = "univariate",
     debug: bool = False,
@@ -1333,11 +1336,11 @@ def timewarp(
 
     Parameters
     ----------
-    orig_x : ArrayLike
+    orig_x : NDArray
         Original time axis values (x-coordinates) for the data to be warped.
-    orig_y : ArrayLike
+    orig_y : NDArray
         Original signal values (y-coordinates) corresponding to orig_x.
-    timeoffset : ArrayLike
+    timeoffset : NDArray
         Time offsets to be applied to each point in the time axis. Positive values
         shift data forward in time, negative values shift backward.
     demean : bool, optional

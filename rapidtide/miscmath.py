@@ -728,7 +728,7 @@ def ppnormalize(vector: NDArray) -> NDArray:
 
 def imagevariance(
     thedata: NDArray,
-    thefilter: Optional[object],
+    thefilter: Optional[tide_filt.NoncausalFilter],
     samplefreq: float,
     meannorm: bool = True,
     debug: bool = False,
@@ -911,7 +911,7 @@ def noiseamp(
     try:
         thecoffs = Polynomial.fit(thetimepoints, filtrms, 1).convert().coef[::-1]
     except np.exceptions.RankWarning:
-        thecoffs = [0.0, 0.0]
+        thecoffs = np.asarray([0.0, 0.0])
     thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
     startamp = thefittc[0]
     endamp = thefittc[-1]
@@ -1002,7 +1002,7 @@ def envdetect(Fs: float, inputdata: NDArray, cutoff: float = 0.25, padlen: int =
     return tide_filt.unpadvec(theenvbpf.apply(Fs, tide_filt.padvec(sigabs, padlen)), padlen)
 
 
-def phasemod(phase: NDArray, centric: bool = True) -> NDArray:
+def phasemod(phase: NDArray, centric: bool = True) -> NDArray | float:
     """
     Perform phase modulation with optional centric adjustment.
 
@@ -1087,7 +1087,7 @@ def trendfilt(
     try:
         thecoffs = Polynomial.fit(thetimepoints, inputdata, order).convert().coef[::-1]
     except np.exceptions.RankWarning:
-        thecoffs = [0.0, 0.0]
+        thecoffs = np.asarray([0.0, 0.0])
     thefittc = tide_fit.trendgen(thetimepoints, thecoffs, True)
     detrended = inputdata - thefittc
     if debug:
