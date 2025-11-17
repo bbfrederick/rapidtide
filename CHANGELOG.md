@@ -1,5 +1,13 @@
 # Release history
 
+## Version 3.1.1 (11/17/25)
+* (rapidtide, retroregress) Correctly output relevant maps when doing CVR processing.  Closes https://github.com/bbfrederick/rapidtide/issues/226.  Thank you to https://github.com/beccaclements99 for finding this!
+* (rapiditde) Fixed a crashing bug when using PCA to estimate the initial sLFO regressor.
+* (happy) Made tensorflow an optional install because of more tf weirdness.  If tensorflow is not present, default to using the pytorch deep learning filter.  If tensorflow is present, enable the ``--usetensorflow`` option.
+* (package) Added support for python 3.14 (if you use 3.14, you cannot currently install tensorflow, so happy will use the pytorch deep learning filter).
+* (package) Lots of type hint refinements.
+* (package) Fixed lots of typos and minor bugs.
+
 ## Version 3.1 (11/8/25)
 * (happy) Moved to a pytorch implementation of the deep learning filter, as tensorflow seems to be barely maintained these days.  The pytorch filter is now the default, and performance seems indistinguishable.  I'll keep the tensorflow version around until it becomes (more) cumbersome to do so.  Use ``--usetensorflow`` to get the old filter.
 * (happy) Added "pulsatility" map output - the percentage pulsatile cardiac variation around the mean in each voxel.
