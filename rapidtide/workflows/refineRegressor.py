@@ -336,7 +336,7 @@ class RegressorRefiner:
         self.includemask = includemask
         self.excludemask = excludemask
 
-    def _allocatemem(self, pid: Any) -> None:
+    def _allocatemem(self, pid: Any) -> int:
         """
         Allocate memory for refinement arrays using shared memory if specified.
 
@@ -445,7 +445,7 @@ class RegressorRefiner:
             tide_util.cleanup_shm(self.shiftedtcs_shm)
             tide_util.cleanup_shm(self.weights_shm)
 
-    def makemask(self, lagstrengths: Any, lagtimes: Any, lagsigma: Any, fitmask: Any) -> None:
+    def makemask(self, lagstrengths: Any, lagtimes: Any, lagsigma: Any, fitmask: Any) -> bool:
         """
         Create a refinement mask based on lag strength, lag time, and sigma thresholds.
 
@@ -526,13 +526,13 @@ class RegressorRefiner:
         else:
             return True
 
-    def getrefinemask(self) -> None:
+    def getrefinemask(self) -> NDArray:
         """
         Return the refinement mask.
 
         Returns
         -------
-        None
+        NDArray
             The refinement mask stored in the instance.
 
         Notes
@@ -550,7 +550,7 @@ class RegressorRefiner:
         """
         return self.refinemask
 
-    def getpaddedshiftedtcs(self) -> None:
+    def getpaddedshiftedtcs(self) -> NDArray:
         """
         Return the padded and shifted time-course data.
 
@@ -561,7 +561,7 @@ class RegressorRefiner:
 
         Returns
         -------
-        array-like
+        NDArray
             The padded and shifted time-course data stored in the instance variable
             `paddedshiftedtcs`. The exact format depends on the data processing
             pipeline that generated this data.
@@ -582,7 +582,7 @@ class RegressorRefiner:
         """
         return self.paddedshiftedtcs
 
-    def alignvoxels(self, fmri_data_valid: Any, fmritr: Any, lagtimes: Any) -> None:
+    def alignvoxels(self, fmri_data_valid: Any, fmritr: Any, lagtimes: Any) -> int:
         """
         Align timecourses to prepare for refinement.
 
@@ -601,8 +601,8 @@ class RegressorRefiner:
 
         Returns
         -------
-        None
-            This function does not return a value but updates internal state
+        int
+            Returns the number of voxels processed
 
         Notes
         -----
@@ -695,7 +695,7 @@ class RegressorRefiner:
         lagtimes: Any,
         previousnormoutputdata: Any,
         corrmasksize: Any,
-    ) -> None:
+    ) -> Tuple[int, dict, NDArray, NDArray, NDArray, bool, Optional[str], Any]:
         """
         Refine the regressor by iteratively applying filtering and resampling operations.
 
@@ -728,11 +728,11 @@ class RegressorRefiner:
                 Number of voxels processed in this pass.
             - outputdict : dict
                 Dictionary of output statistics for this pass.
-            - previousnormoutputdata : ndarray
+            - previousnormoutputdata : NDArray
                 Updated normalized output data for the next pass.
-            - resampref_y : ndarray
+            - resampref_y : NDArray
                 Resampled refined regressor at oversampled frequency.
-            - resampnonosref_y : ndarray
+            - resampnonosref_y : NDArray
                 Resampled refined regressor at original frequency.
             - stoprefining : bool
                 Flag indicating whether refinement should stop.
@@ -948,19 +948,19 @@ def refineRegressor(
     TimingLGR: Any,
     thepass: Any,
     optiondict: Any,
-    fitmask: Any,
-    internaloffsetincludemask_valid: Any,
-    internaloffsetexcludemask_valid: Any,
-    internalrefineincludemask_valid: Any,
-    internalrefineexcludemask_valid: Any,
-    internaldespeckleincludemask: Any,
-    validvoxels: Any,
+    fitmask: NDArray,
+    internaloffsetincludemask_valid: NDArray,
+    internaloffsetexcludemask_valid: NDArray,
+    internalrefineincludemask_valid: NDArray,
+    internalrefineexcludemask_valid: NDArray,
+    internaldespeckleincludemask: NDArray,
+    validvoxels: NDArray,
     theRegressorRefiner: Any,
-    lagtimes: Any,
-    lagstrengths: Any,
-    lagsigma: Any,
-    fmri_data_valid: Any,
-    fmritr: Any,
+    lagtimes: NDArray,
+    lagstrengths: NDArray,
+    lagsigma: NDArray,
+    fmri_data_valid: NDArray,
+    fmritr: float,
     R2: Any,
     theprefilter: Any,
     previousnormoutputdata: Any,
@@ -969,9 +969,9 @@ def refineRegressor(
     outputname: Any,
     nativefmrishape: Any,
     bidsbasedict: Any,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: np.dtype = np.dtype(np.float64),
     debug: bool = False,
-) -> None:
+) -> Tuple[NDArray, NDArray, bool, str, Any]:
     """
     Refine the regressor by adjusting masks, aligning timecourses, and performing refinement steps.
 
@@ -1043,9 +1043,9 @@ def refineRegressor(
     -------
     tuple
         A tuple containing:
-        - resampref_y : array_like
+        - resampref_y : NDArray
           Resampled refined y values.
-        - resampnonosref_y : array_like
+        - resampnonosref_y : NDArray
           Resampled non-oscillatory refined y values.
         - stoprefining : bool
           Flag indicating whether refinement should stop.
@@ -1079,9 +1079,9 @@ def refineRegressor(
         # check that we won't end up excluding all voxels from offset calculation before accepting mask
         offsetmask = np.uint16(fitmask)
         if internaloffsetincludemask_valid is not None:
-            offsetmask[np.where(internaloffsetincludemask_valid == 0)] = 0
+            offsetmask[np.where(internaloffsetincludemask_valid == 0)] = np.uint16(0)
         if internaloffsetexcludemask_valid is not None:
-            offsetmask[np.where(internaloffsetexcludemask_valid != 0.0)] = 0
+            offsetmask[np.where(internaloffsetexcludemask_valid != 0.0)] = np.uint16(0)
         if tide_stats.getmasksize(offsetmask) == 0:
             LGR.warning(
                 "NB: cannot exclude voxels from offset calculation mask - including for this pass"
@@ -1125,9 +1125,9 @@ def refineRegressor(
         # now check that we won't end up excluding all voxels from refinement before accepting mask
         overallmask = np.uint16(fitmask)
         if internalrefineincludemask_valid is not None:
-            overallmask[np.where(internalrefineincludemask_valid == 0)] = 0
+            overallmask[np.where(internalrefineincludemask_valid == 0)] = np.uint16(0)
         if thisinternalrefineexcludemask_valid is not None:
-            overallmask[np.where(thisinternalrefineexcludemask_valid != 0.0)] = 0
+            overallmask[np.where(thisinternalrefineexcludemask_valid != 0.0)] = np.uint16(0)
         if tide_stats.getmasksize(overallmask) == 0:
             LGR.warning(
                 "NB: cannot exclude despeckled voxels from refinement - including for this pass"

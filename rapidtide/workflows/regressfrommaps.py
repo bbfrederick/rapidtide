@@ -59,7 +59,7 @@ def regressfrommaps(
     coefficientsonly: bool = False,
     timemask: Optional[NDArray] = None,
     debug: bool = False,
-) -> None:
+) -> Tuple[int, NDArray, NDArray]:
     """
     Perform regression analysis on fMRI data using lagged timecourses.
 

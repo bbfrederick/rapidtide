@@ -26,21 +26,21 @@ import rapidtide.stats as tide_stats
 
 
 def refineDelay(
-    fmri_data_valid: Any,
-    initial_fmri_x: Any,
-    xdim: Any,
-    ydim: Any,
-    slicethickness: Any,
+    fmri_data_valid: NDArray,
+    initial_fmri_x: NDArray,
+    xdim: int,
+    ydim: int,
+    slicethickness: int,
     sLFOfiltmask: Any,
     genlagtc: Any,
-    oversamptr: Any,
-    sLFOfitmean: Any,
-    rvalue: Any,
-    r2value: Any,
+    oversamptr: float,
+    sLFOfitmean: NDArray,
+    rvalue: NDArray,
+    r2value: NDArray,
     fitNorm: Any,
-    fitcoeff: Any,
-    lagtc: Any,
-    outputname: Any,
+    fitcoeff: NDArray,
+    lagtc: NDArray,
+    outputname: str,
     validvoxels: Any,
     nativespaceshape: Any,
     theinputdata: Any,
@@ -56,9 +56,15 @@ def refineDelay(
     maxdelay: float = 5.0,
     numpoints: int = 501,
     histlen: int = 101,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: np.dtype = np.dtype(np.float64),
     debug: bool = False,
-) -> None:
+) -> Tuple[
+    NDArray,
+    NDArray,
+    NDArray,
+    NDArray,
+    float
+    ]:
     """
     Refine delay estimates using regression derivative ratios and histogram-based calibration.
 

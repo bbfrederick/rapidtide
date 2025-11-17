@@ -189,7 +189,7 @@ def makelaggedtcs(
     alwaysmultiproc: bool = False,
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: np.dtype = np.dtype(np.float64),
     debug: bool = False,
 ) -> int:
     """

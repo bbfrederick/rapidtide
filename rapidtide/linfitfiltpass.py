@@ -151,7 +151,7 @@ def linfitfiltpass(
     procbyvoxel: bool = True,
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: np.dtype = np.dtype(np.float64),
     verbose: bool = True,
     debug: bool = False,
 ) -> int:
@@ -224,7 +224,6 @@ def linfitfiltpass(
     Examples
     --------
     >>> import numpy as np
-    >>> from typing import NDArray
     >>> fmri_data = np.random.rand(100, 200)
     >>> theevs = np.random.rand(100, 200)
     >>> r2value = np.zeros(100)
