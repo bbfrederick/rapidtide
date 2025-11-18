@@ -873,7 +873,7 @@ def cross_mutual_info(
                 )
 
     if madnorm:
-        thexmi_y = tide_math.madnormalize(thexmi_y)
+        thexmi_y = tide_math.madnormalize(thexmi_y)[0]
 
     if returnaxis:
         if locs is None:

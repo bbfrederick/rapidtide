@@ -690,7 +690,7 @@ def happy_main(argparsingfunc: Any) -> None:
                 decimate=True,
                 debug=False,
             )
-        )
+        )[0]
 
         if thispass == numpasses - 1:
             tide_io.writebidstsv(
@@ -821,7 +821,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
                 # downsample to sliceres from stdres
                 # cardfromfmri_sliceres = tide_math.madnormalize(
-                #    tide_resample.arbresample(dlfilteredcard_stdres, args.stdfreq, slicesamplerate, decimate=True, debug=False))
+                #    tide_resample.arbresample(dlfilteredcard_stdres, args.stdfreq, slicesamplerate, decimate=True, debug=False))[0]
                 stdtimeaxis = (1.0 / args.stdfreq) * np.linspace(
                     0.0,
                     len(dlfilteredcard_stdres),
@@ -843,7 +843,7 @@ def happy_main(argparsingfunc: Any) -> None:
                         method="univariate",
                         padlen=0,
                     )
-                )
+                )[0]
                 if thispass == numpasses - 1:
                     tide_io.writebidstsv(
                         outputroot + "_desc-slicerescardfromfmri_timeseries",
@@ -1095,7 +1095,7 @@ def happy_main(argparsingfunc: Any) -> None:
             # find key components of cardiac waveform
             filtpleth = tide_math.madnormalize(
                 thecardbandfilter.apply(slicesamplerate, pleth_sliceres)
-            )
+            )[0]
             peakfreq_file = happy_support.getcardcoeffs(
                 (1.0 - thebadplethpts_sliceres) * filtpleth,
                 slicesamplerate,
@@ -1181,7 +1181,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     peakfreq,
                     ncomps=args.hilbertcomponents,
                 )
-            )
+            )[0]
         else:
             filthiresfund = tide_math.madnormalize(
                 happy_support.getperiodic(
@@ -1190,7 +1190,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     peakfreq,
                     ncomps=args.hilbertcomponents,
                 )
-            )
+            )[0]
         if args.outputlevel > 1:
             if thispass == numpasses - 1:
                 tide_io.writebidstsv(

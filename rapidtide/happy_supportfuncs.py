@@ -497,7 +497,6 @@ def cardiacfromimage(
                         * theseweights_byslice[validestvoxels, theslice, np.newaxis],
                         axis=0,
                     ),
-                    returnnormfac=True,
                 )
             else:
                 sliceavs[theslice, :] = np.mean(
@@ -528,13 +527,13 @@ def cardiacfromimage(
 
     # now get the cardiac and respiratory waveforms
     hirescardtc, cardnormfac = tide_math.madnormalize(
-        cardprefilter.apply(slicesamplerate, filthirestc), returnnormfac=True
+        cardprefilter.apply(slicesamplerate, filthirestc)
     )
     hirescardtc *= -1.0
     cardnormfac *= np.mean(slicenorms)
 
     hiresresptc, respnormfac = tide_math.madnormalize(
-        respprefilter.apply(slicesamplerate, filthirestc), returnnormfac=True
+        respprefilter.apply(slicesamplerate, filthirestc)
     )
     hiresresptc *= -1.0
     respnormfac *= np.mean(slicenorms)
@@ -1141,7 +1140,7 @@ def cleanphysio(
     print("Envelope detection")
     envelope = tide_math.envdetect(
         Fs,
-        tide_math.madnormalize(physiofilter.apply(Fs, tide_math.madnormalize(physiowaveform))),
+        tide_math.madnormalize(physiofilter.apply(Fs, tide_math.madnormalize(physiowaveform)[0]))[0],
         cutoff=cutoff,
     )
     envmean = np.mean(envelope)
@@ -1161,10 +1160,10 @@ def cleanphysio(
             arb_upperstop = nyquist
     physiofilter.setfreqs(arb_lowerstop, arb_lowerpass, arb_upperpass, arb_upperstop)
     filtphysiowaveform = tide_math.madnormalize(
-        physiofilter.apply(Fs, tide_math.madnormalize(physiowaveform))
-    )
+        physiofilter.apply(Fs, tide_math.madnormalize(physiowaveform)[0])
+    )[0]
     print("Normalizing")
-    normphysio = tide_math.madnormalize(envmean * filtphysiowaveform / envelope)
+    normphysio = tide_math.madnormalize(envmean * filtphysiowaveform / envelope)[0]
 
     # return the filtered waveform, the normalized waveform, and the envelope
     if debug:
@@ -1919,7 +1918,7 @@ def getphysiofile(
             method="univariate",
             padlen=0,
         )
-    )
+    )[0]
 
     timings.append(
         [

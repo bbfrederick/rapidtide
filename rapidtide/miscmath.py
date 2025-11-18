@@ -451,7 +451,7 @@ def normalize(vector: NDArray, method: str = "stddev") -> NDArray:
     elif method == "p2p":
         return ppnormalize(vector)
     elif method == "mad":
-        return madnormalize(vector)
+        return madnormalize(vector)[0]
     else:
         raise ValueError("Illegal normalization type")
 
@@ -502,9 +502,7 @@ def removeoutliers(
     return cleaneddata, themedian, sigmad
 
 
-def madnormalize(
-    vector: NDArray, returnnormfac: bool = False
-) -> Union[NDArray, Tuple[NDArray, float]]:
+def madnormalize(vector: NDArray) -> Tuple[NDArray, float]:
     """
     Normalize a vector using the median absolute deviation (MAD).
 
@@ -517,14 +515,11 @@ def madnormalize(
     ----------
     vector : array_like
         Input vector to be normalized.
-    returnnormfac : bool, optional
-        If True, also return the normalization factor (MAD). Default is False.
 
     Returns
     -------
     ndarray or tuple
-        If `returnnormfac` is False, returns the normalized vector.
-        If `returnnormfac` is True, returns a tuple of (normalized_vector, mad).
+        Returns a tuple of (normalized_vector, mad).
 
     Notes
     -----
@@ -536,26 +531,20 @@ def madnormalize(
     --------
     >>> import numpy as np
     >>> vector = np.array([1, 2, 3, 4, 5])
-    >>> normalized = madnormalize(vector)
-    >>> print(normalized)
-    [-1.4826  -0.7413   0.    0.7413  1.4826]
 
-    >>> normalized, mad_val = madnormalize(vector, returnnormfac=True)
+
+    >>> normalized, mad_val = madnormalize(vector)
     >>> print(f"Normalized: {normalized}")
     >>> print(f"MAD: {mad_val}")
+    >>> print(normalized)
+    [-1.4826  -0.7413   0.    0.7413  1.4826]
     """
     demedianed = vector - np.median(vector)
     sigmad = mad(demedianed).astype(np.float64)
     if sigmad > 0.0:
-        if returnnormfac:
-            return demedianed / sigmad, sigmad
-        else:
-            return demedianed / sigmad
+        return demedianed / sigmad, sigmad
     else:
-        if returnnormfac:
-            return demedianed, sigmad
-        else:
-            return demedianed
+        return demedianed, sigmad
 
 
 @conditionaljit()
@@ -1093,7 +1082,7 @@ def trendfilt(
     if debug:
         plt.figure()
         plt.plot(detrended)
-    detrended[np.where(np.fabs(madnormalize(detrended)) > ndevs)] = 0.0
+    detrended[np.where(np.fabs(madnormalize(detrended)[0]) > ndevs)] = 0.0
     if debug:
         plt.plot(detrended)
         plt.show()
