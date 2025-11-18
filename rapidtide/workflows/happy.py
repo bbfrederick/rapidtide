@@ -170,6 +170,9 @@ def happy_main(argparsingfunc: Any) -> None:
         else:
             print("running in CircleCI environment - not messing with memory")
 
+    # load pyfftw wisdom
+    args.pyfftw_wisdom = tide_util.configurepyfftw()
+
     # Set up loggers for workflow
     setup_logger(
         logger_filename=f"{outputroot}_log.txt",
@@ -2494,6 +2497,9 @@ def happy_main(argparsingfunc: Any) -> None:
             tide_util.cleanup_shm(fitNorm_shm)
 
     timings.append(["Done", time.time(), None, None])
+
+    # save pyfftw wisdom
+    tide_util.savewisdom(args.pyfftw_wisdom)
 
     # Process and save timing information
     nodeline = "Processed on " + platform.node()

@@ -328,6 +328,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         else:
             print("running in CircleCI environment - not messing with memory")
 
+    # load pyfftw wisdom
+    optiondict["pyfftw_wisdom"] = tide_util.configurepyfftw()
+
     # write out the current version of the run options
     optiondict["currentstage"] = "init"
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
@@ -3779,6 +3782,10 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         f"{outputname}_desc-formattedruntimings_info.tsv",
     )
     Path(f"{outputname}_runtimings.tsv").unlink(missing_ok=True)
+
+    # save pyfftw wisdom
+    tide_util.savewisdom(optiondict["pyfftw_wisdom"])
+
 
     # do a final save of the options file
     optiondict["currentstage"] = "done"

@@ -27,7 +27,7 @@ import sys
 import time
 from datetime import datetime
 from multiprocessing import shared_memory
-from typing import Any
+from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -52,8 +52,9 @@ MemoryLGR = logging.getLogger("MEMORY")
 
 
 # ---------------------------------------- Global constants -------------------------------------------
-defaultbutterorder = 6
-MAXLINES = 10000000
+defaultbutterorder: int = 6
+MAXLINES: int = 10000000
+donotusenumba: bool = False
 
 
 def disablenumba() -> None:
@@ -232,6 +233,49 @@ def enablemkl(numthreads: int, debug: bool = False) -> None:
             print(f"enablemkl: setting threads to {numthreads}")
         mkl.set_num_threads(numthreads)
 
+
+def configurepyfftw(threads: int = 1, debug: bool = False) -> Optional[str]:
+    if pyfftwpresent:
+        if threads < 1:
+            pyfftw.config.NUM_THREADS = os.environ.get("PYFFTW_NUM_THREADS")
+        else:
+            pyfftw.config.NUM_THREADS = threads
+
+        # check for wisdom file, load it if it exists
+        wisdomfilename = os.path.join(
+            os.environ.get("HOME"), ".config", f"rapidtide_wisdom_{pyfftw.config.PLANNER_EFFORT}.txt"
+        )
+        if os.path.isfile(wisdomfilename):
+            # load the wisdom
+            # You need to parse the string
+            # For simple cases, eval() can work but is generally not recommended for untrusted input.
+            # For more complex cases, manual parsing or using a library like ast.literal_eval is safer.
+            with open(wisdomfilename, "r") as file:
+                loaded_string = file.read()
+                # Example using eval (use with caution)
+                thewisdom = eval(loaded_string)
+                if debug:
+                    print("----------------------Loaded wisdom---------------------------------")
+                    print(thewisdom)
+                    print("----------------------Loaded wisdom---------------------------------")
+                pyfftw.import_wisdom(thewisdom)
+        return wisdomfilename
+    else:
+        return None
+
+def savewisdom(wisdomfilename: str, debug: bool = False) -> None:
+    if pyfftwpresent and (wisdomfilename is not None):
+        thewisdom = pyfftw.export_wisdom()
+        makeadir(os.path.split(wisdomfilename)[0])
+
+        if debug:
+            print("----------------------Saved wisdom---------------------------------")
+            print(thewisdom)
+            print("----------------------Saved wisdom---------------------------------")
+
+        # Save the tuple as a string to a text file
+        with open(wisdomfilename, "w") as file:
+            file.write(str(thewisdom))
 
 # --------------------------- Utility functions -------------------------------------------------
 def findavailablemem() -> tuple[int, int]:
