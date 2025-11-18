@@ -1,0 +1,35 @@
+#!/bin/bash
+
+rm -f fft_timings
+touch fft_timings
+for RUN in INIT REPEAT
+do
+    for EFFORT in FFTW_ESTIMATE FFTW_MEASURE FFTW_PATIENT FFTW_EXHAUSTIVE
+    do
+        export PYFFTW_PLANNER_EFFORT=${EFFORT}
+        rapidtide \
+            --spatialfilt 2.5 \
+            --nprocs -1 \
+            --searchrange -7.5 30 \
+            --simcalcrange 50 -1 \
+            --outputlevel more \
+            --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
+            --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+            --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
+            --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+            --cleanrefined \
+            --nofitfilt \
+            sub-RAPIDTIDETEST.nii.gz \
+            ../dst/sub-RAPIDTIDETEST_${RUN}_${EFFORT}
+        RUNTIME=`grep Done ../dst/sub-RAPIDTIDETEST_${RUN}_${EFFORT}_desc-formattedruntimings_info.tsv | awk '{print $1}'`
+        echo rapidtide ${RUN} ${EFFORT} ${RUNTIME} >> fft_timings
+        happy \
+            sub-HAPPYTEST.nii.gz \
+            sub-HAPPYTEST.json \
+            ../dst/sub-HAPPYTEST_${RUN}_${EFFORT} \
+            --usenewvesselmethod \
+            --nprocs -1
+        RUNTIME=`grep Done ../dst/sub-HAPPYTEST_${RUN}_${EFFORT}_desc-formattedruntimings_info.tsv | awk '{print $1}'`
+        echo happy ${RUN} ${EFFORT} ${RUNTIME} >> fft_timings
+    done
+done
