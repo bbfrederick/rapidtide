@@ -50,22 +50,7 @@ rapidtide \
     --nofitfilt \
     --focaldebug \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
-
-rapidtide \
-    --CVR \
-    --spatialfilt 2.5 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel more \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --regressor ../dst/sub-RAPIDTIDETEST_desc-movingregressor_timeseries.json:pass3 \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/CVRTEST
+    ../dst/sub-RAPIDTIDETEST_optlen
 
 #rapidtide \
     #--spatialfilt 2.5 \

@@ -27,9 +27,11 @@ from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from derivdelay.filter import NoncausalFilter
 from numpy.typing import NDArray
 
 from rapidtide.decorators import conditionaljit, conditionaljit2
+from rapidtide.ffttools import optfftlen
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -1655,7 +1657,7 @@ def spectrum(
     return specaxis, specvals
 
 
-def setnotchfilter(thefilter: object, thefreq: float, notchwidth: float = 1.0) -> None:
+def setnotchfilter(thefilter: NoncausalFilter, thefreq: float, notchwidth: float = 1.0) -> None:
     """
     Set notch filter parameters for the specified filter.
 
@@ -1874,7 +1876,6 @@ def csdfilter(
     obsdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
 
-
 # @conditionaljit()
 def arb_pass(
     Fs: float,
@@ -1960,6 +1961,11 @@ def arb_pass(
     ...     transferfunc="trapezoidal"
     ... )
     """
+    # adjust the padding for speed
+    if pyfftwpresent:
+        thefftlen = optfftlen(len(inputdata), padlen=padlen)
+        padlen = int((thefftlen - len(inputdata)) // 2)
+
     # check filter limits to see if we should do a lowpass, bandpass, or highpass
     if lowerpass <= 0.0:
         # set up for lowpass

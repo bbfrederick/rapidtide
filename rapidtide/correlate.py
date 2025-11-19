@@ -25,6 +25,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
+from rapidtide.ffttools import optfftlen
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
@@ -40,7 +42,6 @@ from numpy.fft import irfftn, rfftn
 from scipy import fftpack, signal
 from sklearn.metrics import mutual_info_score
 
-import rapidtide.correlate as tide_corr
 import rapidtide.fit as tide_fit
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
@@ -1152,7 +1153,7 @@ class AliasedCorrelator:
             print(offset, self.numsteps)
         osvec = self.hiressignal * 0.0
         osvec[offset :: self.numsteps] = loressignal[:]
-        corrfunc = tide_corr.fastcorrelate(
+        corrfunc = fastcorrelate(
             tide_math.corrnormalize(osvec), self.hiressignal
         ) * np.sqrt(self.numsteps)
         return corrfunc
@@ -1480,43 +1481,6 @@ def primefacs(thelen: int) -> list:
             thelen //= i
     factors.append(thelen)
     return factors
-
-
-def optfftlen(thelen: int) -> int:
-    """
-    Calculate optimal FFT length for given input length.
-
-    This function currently returns the input length as-is, but is designed
-    to be extended for optimal FFT length calculation based on hardware
-    constraints or performance considerations.
-
-    Parameters
-    ----------
-    thelen : int
-        The input length for which to calculate optimal FFT length.
-        Must be a positive integer.
-
-    Returns
-    -------
-    int
-        The optimal FFT length. For the current implementation, this
-        simply returns the input `thelen` value.
-
-    Notes
-    -----
-    In a more complete implementation, this function would calculate
-    the optimal FFT length by finding the smallest number >= thelen
-    that has only small prime factors (2, 3, 5, 7) for optimal
-    performance on most FFT implementations.
-
-    Examples
-    --------
-    >>> optfftlen(1024)
-    1024
-    >>> optfftlen(1000)
-    1000
-    """
-    return thelen
 
 
 def fastcorrelate(

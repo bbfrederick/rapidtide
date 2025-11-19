@@ -53,6 +53,7 @@ import rapidtide.workflows.fitSimFuncMap as tide_fitSimFuncMap
 import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.refineRegressor as tide_refineRegressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
+from rapidtide.ffttools import showfftcache
 
 from .utils import setup_logger
 
@@ -3786,6 +3787,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # save pyfftw wisdom
     tide_util.savewisdom(optiondict["pyfftw_wisdom"])
 
+    # show fft cache information
+    if optiondict["focaldebug"]:
+        showfftcache()
 
     # do a final save of the options file
     optiondict["currentstage"] = "done"
