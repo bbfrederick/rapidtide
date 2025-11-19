@@ -35,7 +35,6 @@ import pandas as pd
 from numpy.typing import NDArray
 
 import rapidtide._version as tide_versioneer
-import rapidtide.decorators
 import rapidtide.io as tide_io
 from rapidtide.decorators import getdecoratorvars
 
@@ -237,11 +236,15 @@ def enablemkl(numthreads: int, debug: bool = False) -> None:
 def configurepyfftw(threads: int = 1, debug: bool = False) -> Optional[str]:
     if pyfftwpresent:
         if threads < 1:
-            pyfftw.config.NUM_THREADS = os.environ.get("PYFFTW_NUM_THREADS")
+            if os.environ.get("PYFFTW_NUM_THREADS") is not None:
+                pyfftw.config.NUM_THREADS = os.environ.get("PYFFTW_NUM_THREADS")
         else:
             pyfftw.config.NUM_THREADS = threads
 
-        # check for wisdom file, load it if it exists
+        if os.environ.get("PYFFTW_PLANNER_EFFORT") is None:
+            pyfftw.config.PLANNER_EFFORT = "FFTW_ESTIMATE"
+
+        # check for wisdom file, load it if it exist
         wisdomfilename = os.path.join(
             os.environ.get("HOME"), ".config", f"rapidtide_wisdom_{pyfftw.config.PLANNER_EFFORT}.txt"
         )
@@ -259,6 +262,7 @@ def configurepyfftw(threads: int = 1, debug: bool = False) -> Optional[str]:
                     print(thewisdom)
                     print("----------------------Loaded wisdom---------------------------------")
                 pyfftw.import_wisdom(thewisdom)
+                print(f"Loaded pyfftw wisdom from {wisdomfilename}")
         return wisdomfilename
     else:
         return None
