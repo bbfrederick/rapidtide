@@ -29,7 +29,7 @@ do
             ../dst/sub-HAPPYTEST_${RUN}_${EFFORT} \
             --usenewvesselmethod \
             --nprocs -1
-        RUNTIME=`grep Done ../dst/sub-HAPPYTEST_${RUN}_${EFFORT}_desc-formattedruntimings_info.tsv | awk '{print $1}'`
+        RUNTIME=`grep Done ../dst/sub-HAPPYTEST_${RUN}_${EFFORT}_runtimings.txt | awk '{print $2}'`
         echo happy ${RUN} ${EFFORT} ${RUNTIME} >> fft_timings
     done
 done
