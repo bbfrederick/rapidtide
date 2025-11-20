@@ -573,7 +573,7 @@ def happy_main(argparsingfunc: Any) -> None:
             slicetimes,
             thecardbandfilter,
             therespbandfilter,
-            config=cardiac_config,
+            cardiac_config,
             appflips_byslice=appflips_byslice,
         )
 
@@ -1506,7 +1506,7 @@ def happy_main(argparsingfunc: Any) -> None:
             timediff = minloc - maxloc
             zerophaselocs.append(1.0 * minloc - (minval - outphases[0]) * timediff / phasediff)
             # print(idx, [maxloc, maxval], [minloc, minval], phasediff, timediff, zerophaselocs[-1])
-        instantaneous_cardiactime = instantaneous_cardiacphase * 0.0
+        instantaneous_cardiactime = np.zeros_like(instantaneous_cardiacphase)
 
         whichpeak = 0
         for t in procpoints:
@@ -2078,8 +2078,8 @@ def happy_main(argparsingfunc: Any) -> None:
                 estweights_byslice = pulsatilitymask.reshape((xsize * ysize, numslices)) + 0
 
     # calculate the lf and hf pulsatility maps
-    lfnormapp = normapp * 0.0
-    hfnormapp = normapp * 0.0
+    lfnormapp = np.zeros_like(normapp)
+    hfnormapp = np.zeros_like(normapp)
     for thephase in range(args.destpoints):
         lfnormapp[:, :, :, thephase] = (
             tide_filt.ssmooth(
@@ -2229,9 +2229,9 @@ def happy_main(argparsingfunc: Any) -> None:
         timings.append(["Cardiac signal regression started", time.time(), None, None])
         tide_util.logmem("before cardiac regression")
         print("Generating cardiac regressors")
-        cardiacnoise = fmri_data * 0.0
+        cardiacnoise = np.zeros_like(fmri_data)
         cardiacnoise_byslice = cardiacnoise.reshape((xsize * ysize, numslices, timepoints))
-        phaseindices = (cardiacnoise * 0.0).astype(np.int16)
+        phaseindices = np.zeros_like(cardiacnoise, np.int16)
         phaseindices_byslice = phaseindices.reshape((xsize * ysize, numslices, timepoints))
         for theslice in range(numslices):
             print("Calculating cardiac noise for slice", theslice)

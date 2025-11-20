@@ -338,7 +338,7 @@ def cardiacsig(
     """
     total = 0.0
     if phases is None:
-        phases = amps * 0.0
+        phases = np.zeros_like(amps)
     for i in range(len(amps)):
         total += amps[i] * np.cos((i + 1) * thisphase + phases[i] + overallphase)
     return total
@@ -352,7 +352,8 @@ SIGNAL_INVERSION_FACTOR = -1.0
 
 @dataclass
 class CardiacExtractionConfig:
-    """Configuration for cardiac signal extraction.
+    """
+    Configuration for cardiac signal extraction.
 
     Parameters
     ----------
@@ -395,7 +396,8 @@ class CardiacExtractionConfig:
 
 @dataclass
 class CardiacExtractionResult:
-    """Results from cardiac signal extraction.
+    """
+    Results from cardiac signal extraction.
 
     This dataclass supports tuple unpacking for backward compatibility.
 
@@ -455,7 +457,8 @@ def _validate_cardiacfromimage_inputs(
     timepoints: int,
     tr: float,
 ) -> None:
-    """Validate input dimensions and values for cardiacfromimage.
+    """
+    Validate input dimensions and values for cardiacfromimage.
 
     Parameters
     ----------
@@ -509,7 +512,8 @@ def _prepare_weights(
     arteriesonly: bool,
     fliparteries: bool,
 ) -> tuple[NDArray, NDArray]:
-    """Prepare appflips and weight arrays based on configuration.
+    """
+    Prepare appflips and weight arrays based on configuration.
 
     Parameters
     ----------
@@ -529,7 +533,7 @@ def _prepare_weights(
     """
     # Make sure there is an appflips array
     if appflips_byslice is None:
-        appflips_byslice = estweights_byslice * 0.0 + 1.0
+        appflips_byslice = np.ones_like(estweights_byslice)
     else:
         if arteriesonly:
             appflips_byslice[np.where(appflips_byslice > 0.0)] = 0.0
@@ -556,7 +560,8 @@ def _compute_slice_averages(
     multiplicative: bool,
     verbose: bool,
 ) -> tuple[NDArray, NDArray, NDArray]:
-    """Compute averaged signals for each slice with normalization.
+    """
+    Compute averaged signals for each slice with normalization.
 
     Parameters
     ----------
@@ -654,7 +659,8 @@ def _normalize_and_filter_signal(
     filtered_timecourse: NDArray,
     slicenorms: NDArray,
 ) -> tuple[NDArray, float]:
-    """Apply filter and MAD normalization to signal.
+    """
+    Apply filter and MAD normalization to signal.
 
     Parameters
     ----------
@@ -686,7 +692,8 @@ def _extract_physiological_signals(
     respprefilter: tide_filt.NoncausalFilter,
     slicenorms: NDArray,
 ) -> tuple[NDArray, float, NDArray, float]:
-    """Extract and normalize cardiac and respiratory signals.
+    """
+    Extract and normalize cardiac and respiratory signals.
 
     Parameters
     ----------
@@ -729,22 +736,11 @@ def cardiacfromimage(
     slicetimes: NDArray,
     cardprefilter: tide_filt.NoncausalFilter,
     respprefilter: tide_filt.NoncausalFilter,
-    config: CardiacExtractionConfig | None = None,
+    config: CardiacExtractionConfig,
     appflips_byslice: NDArray | None = None,
-    # Backward compatibility parameters
-    notchpct: float | None = None,
-    notchrolloff: float | None = None,
-    invertphysiosign: bool | None = None,
-    madnorm: bool | None = None,
-    nprocs: int | None = None,
-    arteriesonly: bool | None = None,
-    fliparteries: bool | None = None,
-    debug: bool | None = None,
-    verbose: bool | None = None,
-    usemask: bool | None = None,
-    multiplicative: bool | None = None,
 ) -> CardiacExtractionResult:
-    """Extract cardiac and respiratory signals from 4D fMRI data using slice timing.
+    """
+    Extract cardiac and respiratory signals from 4D fMRI data using slice timing.
 
     This function processes preprocessed fMRI data to isolate cardiac and respiratory
     physiological signals by leveraging slice timing information and filtering techniques.
@@ -774,28 +770,6 @@ def cardiacfromimage(
         If provided along with individual parameters, individual parameters override config values.
     appflips_byslice : NDArray | None, optional
         Array of application flips for each slice, default is None.
-    notchpct : float | None, optional
-        Percentage of notch bandwidth. Overrides config if provided.
-    notchrolloff : float | None, optional
-        Notch filter rolloff (unused, kept for backward compatibility).
-    invertphysiosign : bool | None, optional
-        If True, invert the physiological signal sign. Overrides config if provided.
-    madnorm : bool | None, optional
-        If True, use median absolute deviation normalization. Overrides config if provided.
-    nprocs : int | None, optional
-        Number of processes to use (unused, kept for backward compatibility).
-    arteriesonly : bool | None, optional
-        If True, only use arterial signal. Overrides config if provided.
-    fliparteries : bool | None, optional
-        If True, flip the arterial signal. Overrides config if provided.
-    debug : bool | None, optional
-        If True, enable debug output. Overrides config if provided.
-    verbose : bool | None, optional
-        If True, print verbose output. Overrides config if provided.
-    usemask : bool | None, optional
-        If True, use masking for valid voxels. Overrides config if provided.
-    multiplicative : bool | None, optional
-        If True, apply multiplicative normalization. Overrides config if provided.
 
     Returns
     -------
@@ -836,26 +810,6 @@ def cardiacfromimage(
     ...     tr, slicetimes, cardprefilter, respprefilter
     ... )
     """
-    # Handle backward compatibility: merge config and individual parameters
-    if config is None:
-        config = CardiacExtractionConfig()
-
-    # Override config with any explicitly provided parameters
-    effective_config = CardiacExtractionConfig(
-        notchpct=notchpct if notchpct is not None else config.notchpct,
-        notchrolloff=notchrolloff if notchrolloff is not None else config.notchrolloff,
-        invertphysiosign=(
-            invertphysiosign if invertphysiosign is not None else config.invertphysiosign
-        ),
-        madnorm=madnorm if madnorm is not None else config.madnorm,
-        nprocs=nprocs if nprocs is not None else config.nprocs,
-        arteriesonly=arteriesonly if arteriesonly is not None else config.arteriesonly,
-        fliparteries=fliparteries if fliparteries is not None else config.fliparteries,
-        debug=debug if debug is not None else config.debug,
-        verbose=verbose if verbose is not None else config.verbose,
-        usemask=usemask if usemask is not None else config.usemask,
-        multiplicative=multiplicative if multiplicative is not None else config.multiplicative,
-    )
 
     # Validate inputs
     _validate_cardiacfromimage_inputs(
@@ -873,14 +827,14 @@ def cardiacfromimage(
     )
 
     # Determine signal sign
-    signal_sign = SIGN_INVERTED if effective_config.invertphysiosign else SIGN_NORMAL
+    signal_sign = SIGN_INVERTED if config.invertphysiosign else SIGN_NORMAL
 
     # Prepare weights
     appflips_byslice, theseweights_byslice = _prepare_weights(
         estweights_byslice,
         appflips_byslice,
-        effective_config.arteriesonly,
-        effective_config.fliparteries,
+        config.arteriesonly,
+        config.fliparteries,
     )
 
     # Compute slice averages
@@ -893,10 +847,10 @@ def cardiacfromimage(
         numsteps,
         sliceoffsets,
         signal_sign,
-        effective_config.madnorm,
-        effective_config.usemask,
-        effective_config.multiplicative,
-        effective_config.verbose,
+        config.madnorm,
+        config.usemask,
+        config.multiplicative,
+        config.verbose,
     )
 
     # Calculate slice sample rate
@@ -909,8 +863,8 @@ def cardiacfromimage(
         high_res_timecourse,
         slicesamplerate,
         1.0 / tr,
-        notchpct=effective_config.notchpct,
-        debug=effective_config.debug,
+        notchpct=config.notchpct,
+        debug=config.debug,
     )
 
     # Extract cardiac and respiratory waveforms
@@ -1060,7 +1014,7 @@ def getperiodic(
     using an arbitrary filter with stopband and passband frequencies defined
     based on the `width` parameter.
     """
-    outputdata = inputdata * 0.0
+    outputdata = np.zeros_like(inputdata)
     lowerdist = fundfreq - fundfreq / (1.0 + width)
     upperdist = fundfreq * width
     if debug:
@@ -1390,8 +1344,8 @@ def normalizevoxels(
     ... )
     """
     print("Normalizing voxels...")
-    normdata = fmri_data * 0.0
-    demeandata = fmri_data * 0.0
+    normdata = np.zeros_like(fmri_data)
+    demeandata = np.zeros_like(fmri_data)
     starttime = time.time()
     # detrend if we are going to
     numspatiallocs = fmri_data.shape[0]
@@ -1408,7 +1362,7 @@ def normalizevoxels(
             voxelfunc = _procOneVoxelDetrend
             packfunc = _packDetrendvoxeldata
             unpackfunc = _unpackDetrendvoxeldata
-            voxelmask = fmri_data[:, 0] * 0.0
+            voxelmask = np.zeros_like(fmri_data[:, 0])
             voxelmask[validvoxels] = 1
             voxeltargets = [fmri_data]
 
@@ -2031,13 +1985,13 @@ def calcplethquality(
     # calculate S_sqi and K_sqi over a sliding window.  Window size should be an odd number of points.
     S_windowpts = int(np.round(S_windowsecs * Fs, 0))
     S_windowpts += 1 - S_windowpts % 2
-    S_waveform = dt_waveform * 0.0
+    S_waveform = np.zeros_like(dt_waveform)
     K_windowpts = int(np.round(K_windowsecs * Fs, 0))
     K_windowpts += 1 - K_windowpts % 2
-    K_waveform = dt_waveform * 0.0
+    K_waveform = np.zeros_like(dt_waveform)
     E_windowpts = int(np.round(E_windowsecs * Fs, 0))
     E_windowpts += 1 - E_windowpts % 2
-    E_waveform = dt_waveform * 0.0
+    E_waveform = np.zeros_like(dt_waveform)
 
     if debug:
         print("S_windowsecs, S_windowpts:", S_windowsecs, S_windowpts)
@@ -3077,7 +3031,7 @@ def phaseprojectpass(
         packfunc = _packslicedataPhaseProject
         unpackfunc = _unpackslicedataPhaseProject
         slicetargets = [rawapp_byslice, cine_byslice, weights_byslice]
-        slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
+        slicemask = np.ones_like(rawapp_byslice[0, :, 0])
 
         slicetotal = tide_genericmultiproc.run_multiproc(
             slicefunc,
@@ -3363,7 +3317,7 @@ def tcsmoothingpass(
     packfunc = _packslicedataSliceSmoothing
     unpackfunc = _unpackslicedataSliceSmoothing
     slicetargets = [rawapp_byslice, derivatives_byslice]
-    slicemask = rawapp_byslice[0, :, 0] * 0.0 + 1
+    slicemask = np.ones_like(rawapp_byslice[0, :, 0])
 
     slicetotal = tide_genericmultiproc.run_multiproc(
         slicefunc,
@@ -3911,9 +3865,9 @@ def wrightmap(
             print(f"{proctrs1=}, {proctrs2=}")
 
         # phase project each slice
-        rawapp_byslice1 = rawapp_byslice * 0.0
-        cine_byslice1 = rawapp_byslice * 0.0
-        weights_byslice1 = rawapp_byslice * 0.0
+        rawapp_byslice1 = np.zeros_like(rawapp_byslice)
+        cine_byslice1 = np.zeros_like(rawapp_byslice)
+        weights_byslice1 = np.zeros_like(rawapp_byslice)
         phaseprojectpass(
             numslices,
             demeandata_byslice,
@@ -3931,9 +3885,9 @@ def wrightmap(
             nprocs=nprocs,
             showprogressbar=False,
         )
-        rawapp_byslice2 = rawapp_byslice * 0.0
-        cine_byslice2 = rawapp_byslice * 0.0
-        weights_byslice2 = rawapp_byslice * 0.0
+        rawapp_byslice2 = np.zeros_like(rawapp_byslice)
+        cine_byslice2 = np.zeros_like(rawapp_byslice)
+        weights_byslice2 = np.zeros_like(rawapp_byslice)
         phaseprojectpass(
             numslices,
             demeandata_byslice,
