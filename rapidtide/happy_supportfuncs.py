@@ -19,6 +19,7 @@
 import copy
 import time
 import warnings
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -343,6 +344,382 @@ def cardiacsig(
     return total
 
 
+# Constants for signal processing
+SIGN_NORMAL = 1.0
+SIGN_INVERTED = -1.0
+SIGNAL_INVERSION_FACTOR = -1.0
+
+
+@dataclass
+class CardiacExtractionConfig:
+    """Configuration for cardiac signal extraction.
+
+    Parameters
+    ----------
+    notchpct : float
+        Percentage of notch bandwidth, default is 1.5.
+    notchrolloff : float
+        Notch filter rolloff, default is 0.5.
+    invertphysiosign : bool
+        If True, invert the physiological signal sign, default is False.
+    madnorm : bool
+        If True, use median absolute deviation normalization, default is True.
+    nprocs : int
+        Number of processes to use for computation, default is 1.
+    arteriesonly : bool
+        If True, only use arterial signal, default is False.
+    fliparteries : bool
+        If True, flip the arterial signal, default is False.
+    debug : bool
+        If True, enable debug output, default is False.
+    verbose : bool
+        If True, print verbose output, default is False.
+    usemask : bool
+        If True, use masking for valid voxels, default is True.
+    multiplicative : bool
+        If True, apply multiplicative normalization, default is True.
+    """
+
+    notchpct: float = 1.5
+    notchrolloff: float = 0.5
+    invertphysiosign: bool = False
+    madnorm: bool = True
+    nprocs: int = 1
+    arteriesonly: bool = False
+    fliparteries: bool = False
+    debug: bool = False
+    verbose: bool = False
+    usemask: bool = True
+    multiplicative: bool = True
+
+
+@dataclass
+class CardiacExtractionResult:
+    """Results from cardiac signal extraction.
+
+    This dataclass supports tuple unpacking for backward compatibility.
+
+    Attributes
+    ----------
+    hirescardtc : NDArray
+        High-resolution cardiac time course.
+    cardnormfac : float
+        Normalization factor for cardiac signal.
+    hiresresptc : NDArray
+        High-resolution respiratory time course.
+    respnormfac : float
+        Normalization factor for respiratory signal.
+    slicesamplerate : float
+        Slice sampling rate in Hz.
+    numsteps : int
+        Number of unique slice times.
+    sliceoffsets : NDArray
+        Slice offsets relative to TR.
+    cycleaverage : NDArray
+        Average signal per slice time step.
+    slicenorms : NDArray
+        Slice-wise normalization factors.
+    """
+
+    hirescardtc: NDArray
+    cardnormfac: float
+    hiresresptc: NDArray
+    respnormfac: float
+    slicesamplerate: float
+    numsteps: int
+    sliceoffsets: NDArray
+    cycleaverage: NDArray
+    slicenorms: NDArray
+
+    def __iter__(self):
+        """Support tuple unpacking for backward compatibility."""
+        return iter(
+            (
+                self.hirescardtc,
+                self.cardnormfac,
+                self.hiresresptc,
+                self.respnormfac,
+                self.slicesamplerate,
+                self.numsteps,
+                self.sliceoffsets,
+                self.cycleaverage,
+                self.slicenorms,
+            )
+        )
+
+
+def _validate_cardiacfromimage_inputs(
+    normdata_byslice: NDArray,
+    estweights_byslice: NDArray,
+    numslices: int,
+    timepoints: int,
+    tr: float,
+) -> None:
+    """Validate input dimensions and values for cardiacfromimage.
+
+    Parameters
+    ----------
+    normdata_byslice : NDArray
+        Normalized fMRI data organized by slice.
+    estweights_byslice : NDArray
+        Estimated weights for each voxel and slice.
+    numslices : int
+        Number of slices in the acquisition.
+    timepoints : int
+        Number of time points in the fMRI time series.
+    tr : float
+        Repetition time (TR) in seconds.
+
+    Raises
+    ------
+    ValueError
+        If input dimensions or values are invalid.
+    """
+    if timepoints <= 0:
+        raise ValueError(f"timepoints must be positive, got {timepoints}")
+
+    if numslices <= 0:
+        raise ValueError(f"numslices must be positive, got {numslices}")
+
+    if tr <= 0:
+        raise ValueError(f"tr must be positive, got {tr}")
+
+    if normdata_byslice.shape[1] != numslices:
+        raise ValueError(
+            f"normdata_byslice slice dimension {normdata_byslice.shape[1]} "
+            f"does not match numslices {numslices}"
+        )
+
+    if normdata_byslice.shape[2] != timepoints:
+        raise ValueError(
+            f"normdata_byslice timepoint dimension {normdata_byslice.shape[2]} "
+            f"does not match timepoints {timepoints}"
+        )
+
+    if estweights_byslice.shape[1] != numslices:
+        raise ValueError(
+            f"estweights_byslice slice dimension {estweights_byslice.shape[1]} "
+            f"does not match numslices {numslices}"
+        )
+
+
+def _prepare_weights(
+    estweights_byslice: NDArray,
+    appflips_byslice: NDArray | None,
+    arteriesonly: bool,
+    fliparteries: bool,
+) -> tuple[NDArray, NDArray]:
+    """Prepare appflips and weight arrays based on configuration.
+
+    Parameters
+    ----------
+    estweights_byslice : NDArray
+        Estimated weights for each voxel and slice.
+    appflips_byslice : NDArray | None
+        Array of application flips for each slice.
+    arteriesonly : bool
+        If True, only use arterial signal.
+    fliparteries : bool
+        If True, flip the arterial signal.
+
+    Returns
+    -------
+    tuple[NDArray, NDArray]
+        Processed appflips_byslice and theseweights_byslice arrays.
+    """
+    # Make sure there is an appflips array
+    if appflips_byslice is None:
+        appflips_byslice = estweights_byslice * 0.0 + 1.0
+    else:
+        if arteriesonly:
+            appflips_byslice[np.where(appflips_byslice > 0.0)] = 0.0
+
+    # Prepare weights
+    if fliparteries:
+        theseweights_byslice = appflips_byslice.astype(np.float64) * estweights_byslice
+    else:
+        theseweights_byslice = estweights_byslice
+
+    return appflips_byslice, theseweights_byslice
+
+
+def _compute_slice_averages(
+    normdata_byslice: NDArray,
+    theseweights_byslice: NDArray,
+    numslices: int,
+    timepoints: int,
+    numsteps: int,
+    sliceoffsets: NDArray,
+    signal_sign: float,
+    madnorm: bool,
+    usemask: bool,
+    multiplicative: bool,
+    verbose: bool,
+) -> tuple[NDArray, NDArray, NDArray]:
+    """Compute averaged signals for each slice with normalization.
+
+    Parameters
+    ----------
+    normdata_byslice : NDArray
+        Normalized fMRI data organized by slice.
+    theseweights_byslice : NDArray
+        Processed weights for each voxel and slice.
+    numslices : int
+        Number of slices in the acquisition.
+    timepoints : int
+        Number of time points in the fMRI time series.
+    numsteps : int
+        Number of unique slice times.
+    sliceoffsets : NDArray
+        Slice offsets relative to TR.
+    signal_sign : float
+        Sign factor for physiological signal (+1.0 or -1.0).
+    madnorm : bool
+        If True, use median absolute deviation normalization.
+    usemask : bool
+        If True, use masking for valid voxels.
+    multiplicative : bool
+        If True, apply multiplicative normalization.
+    verbose : bool
+        If True, print verbose output.
+
+    Returns
+    -------
+    tuple[NDArray, NDArray, NDArray]
+        - high_res_timecourse: High-resolution time course across all slices
+        - cycleaverage: Average signal per slice time step
+        - slicenorms: Normalization factors for each slice
+    """
+    high_res_timecourse = np.zeros((timepoints * numsteps), dtype=np.float64)
+    cycleaverage = np.zeros((numsteps), dtype=np.float64)
+    slice_averages = np.zeros((numslices, timepoints), dtype=np.float64)
+    slicenorms = np.zeros((numslices), dtype=np.float64)
+
+    if not verbose:
+        print("Averaging slices...")
+
+    for slice_idx in range(numslices):
+        if verbose:
+            print("Averaging slice", slice_idx)
+
+        # Find valid voxels for this slice
+        if usemask:
+            valid_voxel_indices = np.where(np.abs(theseweights_byslice[:, slice_idx]) > 0)[0]
+        else:
+            valid_voxel_indices = np.where(np.abs(theseweights_byslice[:, slice_idx] >= 0))[0]
+
+        if len(valid_voxel_indices) > 0:
+            # Compute weighted average for this slice
+            weighted_slice_data = np.mean(
+                normdata_byslice[valid_voxel_indices, slice_idx, :]
+                * theseweights_byslice[valid_voxel_indices, slice_idx, np.newaxis],
+                axis=0,
+            )
+
+            # Apply normalization if requested
+            if madnorm:
+                slice_averages[slice_idx, :], slicenorms[slice_idx] = tide_math.madnormalize(
+                    weighted_slice_data
+                )
+            else:
+                slice_averages[slice_idx, :] = weighted_slice_data
+                slicenorms[slice_idx] = 1.0
+
+            # Build high-resolution time course
+            for t in range(timepoints):
+                high_res_timecourse[numsteps * t + sliceoffsets[slice_idx]] += (
+                    signal_sign * slice_averages[slice_idx, t]
+                )
+
+    # Compute cycle average
+    for i in range(numsteps):
+        cycleaverage[i] = np.mean(high_res_timecourse[i:-1:numsteps])
+
+    # Apply cycle average correction
+    for t in range(len(high_res_timecourse)):
+        if multiplicative:
+            high_res_timecourse[t] /= cycleaverage[t % numsteps] + 1.0
+        else:
+            high_res_timecourse[t] -= cycleaverage[t % numsteps]
+
+    if not verbose:
+        print("done")
+
+    return high_res_timecourse, cycleaverage, slicenorms
+
+
+def _normalize_and_filter_signal(
+    prefilter: tide_filt.NoncausalFilter,
+    slicesamplerate: float,
+    filtered_timecourse: NDArray,
+    slicenorms: NDArray,
+) -> tuple[NDArray, float]:
+    """Apply filter and MAD normalization to signal.
+
+    Parameters
+    ----------
+    prefilter : tide_filt.NoncausalFilter
+        Prefilter object with an `apply` method for filtering physiological signals.
+    slicesamplerate : float
+        Slice sampling rate in Hz.
+    filtered_timecourse : NDArray
+        Input time course to filter and normalize.
+    slicenorms : NDArray
+        Slice-wise normalization factors.
+
+    Returns
+    -------
+    tuple[NDArray, float]
+        - Filtered and normalized signal
+        - Normalization factor
+    """
+    signal, normfac = tide_math.madnormalize(prefilter.apply(slicesamplerate, filtered_timecourse))
+    signal *= SIGNAL_INVERSION_FACTOR
+    normfac *= np.mean(slicenorms)
+    return signal, normfac
+
+
+def _extract_physiological_signals(
+    filtered_timecourse: NDArray,
+    slicesamplerate: float,
+    cardprefilter: tide_filt.NoncausalFilter,
+    respprefilter: tide_filt.NoncausalFilter,
+    slicenorms: NDArray,
+) -> tuple[NDArray, float, NDArray, float]:
+    """Extract and normalize cardiac and respiratory signals.
+
+    Parameters
+    ----------
+    filtered_timecourse : NDArray
+        Notch-filtered high-resolution time course.
+    slicesamplerate : float
+        Slice sampling rate in Hz.
+    cardprefilter : tide_filt.NoncausalFilter
+        Cardiac prefilter object.
+    respprefilter : tide_filt.NoncausalFilter
+        Respiratory prefilter object.
+    slicenorms : NDArray
+        Slice-wise normalization factors.
+
+    Returns
+    -------
+    tuple[NDArray, float, NDArray, float]
+        - hirescardtc: High-resolution cardiac time course
+        - cardnormfac: Cardiac normalization factor
+        - hiresresptc: High-resolution respiratory time course
+        - respnormfac: Respiratory normalization factor
+    """
+    hirescardtc, cardnormfac = _normalize_and_filter_signal(
+        cardprefilter, slicesamplerate, filtered_timecourse, slicenorms
+    )
+
+    hiresresptc, respnormfac = _normalize_and_filter_signal(
+        respprefilter, slicesamplerate, filtered_timecourse, slicenorms
+    )
+
+    return hirescardtc, cardnormfac, hiresresptc, respnormfac
+
+
 def cardiacfromimage(
     normdata_byslice: NDArray,
     estweights_byslice: NDArray,
@@ -352,202 +729,209 @@ def cardiacfromimage(
     slicetimes: NDArray,
     cardprefilter: tide_filt.NoncausalFilter,
     respprefilter: tide_filt.NoncausalFilter,
-    notchpct: float = 1.5,
-    notchrolloff: float = 0.5,
-    invertphysiosign: bool = False,
-    madnorm: bool = True,
-    nprocs: int = 1,
-    arteriesonly: bool = False,
-    fliparteries: bool = False,
-    debug: bool = False,
+    config: CardiacExtractionConfig | None = None,
     appflips_byslice: NDArray | None = None,
-    verbose: bool = False,
-    usemask: bool = True,
-    multiplicative: bool = True,
-) -> tuple[NDArray, float, NDArray, float, float, int, NDArray, NDArray, NDArray]:
+    # Backward compatibility parameters
+    notchpct: float | None = None,
+    notchrolloff: float | None = None,
+    invertphysiosign: bool | None = None,
+    madnorm: bool | None = None,
+    nprocs: int | None = None,
+    arteriesonly: bool | None = None,
+    fliparteries: bool | None = None,
+    debug: bool | None = None,
+    verbose: bool | None = None,
+    usemask: bool | None = None,
+    multiplicative: bool | None = None,
+) -> CardiacExtractionResult:
+    """Extract cardiac and respiratory signals from 4D fMRI data using slice timing.
+
+    This function processes preprocessed fMRI data to isolate cardiac and respiratory
+    physiological signals by leveraging slice timing information and filtering techniques.
+    It applies normalization, averaging across slices, and harmonic notch filtering to
+    extract clean physiological time series.
+
+    Parameters
+    ----------
+    normdata_byslice : NDArray
+        Normalized fMRI data organized by slice, shape (voxels, numslices, timepoints).
+    estweights_byslice : NDArray
+        Estimated weights for each voxel and slice, shape (voxels, numslices).
+    numslices : int
+        Number of slices in the acquisition.
+    timepoints : int
+        Number of time points in the fMRI time series.
+    tr : float
+        Repetition time (TR) in seconds.
+    slicetimes : NDArray
+        Slice acquisition times relative to the start of the TR, shape (numslices,).
+    cardprefilter : tide_filt.NoncausalFilter
+        Cardiac prefilter object with an `apply` method for filtering physiological signals.
+    respprefilter : tide_filt.NoncausalFilter
+        Respiratory prefilter object with an `apply` method for filtering physiological signals.
+    config : CardiacExtractionConfig | None, optional
+        Configuration object containing all processing parameters. If None, uses default config.
+        If provided along with individual parameters, individual parameters override config values.
+    appflips_byslice : NDArray | None, optional
+        Array of application flips for each slice, default is None.
+    notchpct : float | None, optional
+        Percentage of notch bandwidth. Overrides config if provided.
+    notchrolloff : float | None, optional
+        Notch filter rolloff (unused, kept for backward compatibility).
+    invertphysiosign : bool | None, optional
+        If True, invert the physiological signal sign. Overrides config if provided.
+    madnorm : bool | None, optional
+        If True, use median absolute deviation normalization. Overrides config if provided.
+    nprocs : int | None, optional
+        Number of processes to use (unused, kept for backward compatibility).
+    arteriesonly : bool | None, optional
+        If True, only use arterial signal. Overrides config if provided.
+    fliparteries : bool | None, optional
+        If True, flip the arterial signal. Overrides config if provided.
+    debug : bool | None, optional
+        If True, enable debug output. Overrides config if provided.
+    verbose : bool | None, optional
+        If True, print verbose output. Overrides config if provided.
+    usemask : bool | None, optional
+        If True, use masking for valid voxels. Overrides config if provided.
+    multiplicative : bool | None, optional
+        If True, apply multiplicative normalization. Overrides config if provided.
+
+    Returns
+    -------
+    CardiacExtractionResult
+        Dataclass containing:
+        - hirescardtc: High-resolution cardiac time course
+        - cardnormfac: Normalization factor for cardiac signal
+        - hiresresptc: High-resolution respiratory time course
+        - respnormfac: Normalization factor for respiratory signal
+        - slicesamplerate: Slice sampling rate in Hz
+        - numsteps: Number of unique slice times
+        - sliceoffsets: Slice offsets relative to TR
+        - cycleaverage: Average signal per slice time step
+        - slicenorms: Slice-wise normalization factors
+
+    Notes
+    -----
+    - The function assumes that `normdata_byslice` and `estweights_byslice` are properly
+      preprocessed and aligned with slice timing information.
+    - The cardiac and respiratory signals are extracted using harmonic notch filtering
+      and prefiltering steps.
+    - For backward compatibility, individual parameters can be passed instead of config.
+      Individual parameters override config values when both are provided.
+
+    Examples
+    --------
+    >>> # Using config object (recommended)
+    >>> config = CardiacExtractionConfig(madnorm=True, verbose=False)
+    >>> result = cardiacfromimage(
+    ...     normdata_byslice, estweights_byslice, numslices, timepoints,
+    ...     tr, slicetimes, cardprefilter, respprefilter, config=config
+    ... )
+    >>> print(result.slicesamplerate)
+
+    >>> # Backward compatible usage (returns same result)
+    >>> result = cardiacfromimage(
+    ...     normdata_byslice, estweights_byslice, numslices, timepoints,
+    ...     tr, slicetimes, cardprefilter, respprefilter
+    ... )
     """
-        Extract cardiac and respiratory signals from 4D fMRI data using slice timing information.
+    # Handle backward compatibility: merge config and individual parameters
+    if config is None:
+        config = CardiacExtractionConfig()
 
-        This function processes preprocessed fMRI data to isolate cardiac and respiratory
-        physiological signals by leveraging slice timing information and filtering techniques.
-        It applies normalization, averaging across slices, and harmonic notch filtering to
-        extract clean physiological time series.
+    # Override config with any explicitly provided parameters
+    effective_config = CardiacExtractionConfig(
+        notchpct=notchpct if notchpct is not None else config.notchpct,
+        notchrolloff=notchrolloff if notchrolloff is not None else config.notchrolloff,
+        invertphysiosign=(
+            invertphysiosign if invertphysiosign is not None else config.invertphysiosign
+        ),
+        madnorm=madnorm if madnorm is not None else config.madnorm,
+        nprocs=nprocs if nprocs is not None else config.nprocs,
+        arteriesonly=arteriesonly if arteriesonly is not None else config.arteriesonly,
+        fliparteries=fliparteries if fliparteries is not None else config.fliparteries,
+        debug=debug if debug is not None else config.debug,
+        verbose=verbose if verbose is not None else config.verbose,
+        usemask=usemask if usemask is not None else config.usemask,
+        multiplicative=multiplicative if multiplicative is not None else config.multiplicative,
+    )
 
-        Parameters
-        ----------
-        normdata_byslice : NDArray
-            Normalized fMRI data organized by slice, shape (timepoints, numslices, timepoints).
-        estweights_byslice : NDArray
-            Estimated weights for each voxel and slice, shape (timepoints, numslices).
-        numslices : int
-            Number of slices in the acquisition.
-        timepoints : int
-            Number of time points in the fMRI time series.
-        tr : float
-            Repetition time (TR) in seconds.
-        slicetimes : NDArray
-            Slice acquisition times relative to the start of the TR, shape (numslices,).
-        cardprefilter : object
-            Cardiac prefilter object with an `apply` method for filtering physiological signals.
-        respprefilter : object
-            Respiratory prefilter object with an `apply` method for filtering physiological signals.
-        notchpct : float, optional
-            Percentage of notch bandwidth, default is 1.5.
-        notchrolloff : float, optional
-            Notch filter rolloff, default is 0.5.
-        invertphysiosign : bool, optional
-            If True, invert the physiological signal sign, default is False.
-        madnorm : bool, optional
-            If True, use median absolute deviation normalization, default is True.
-        nprocs : int, optional
-            Number of processes to use for computation, default is 1.
-        arteriesonly : bool, optional
-            If True, only use arterial signal, default is False.
-        fliparteries : bool, optional
-            If True, flip the arterial signal, default is False.
-        debug : bool, optional
-            If True, enable debug output, default is False.
-        appflips_byslice : NDArray | None, optional
-            Array of application flips for each slice, default is None.
-        verbose : bool, optional
-            If True, print verbose output, default is False.
-        usemask : bool, optional
-            If True, use masking for valid voxels, default is True.
-        multiplicative : bool, optional
-            If True, apply multiplicative normalization, default is True.
+    # Validate inputs
+    _validate_cardiacfromimage_inputs(
+        normdata_byslice, estweights_byslice, numslices, timepoints, tr
+    )
 
-        Returns
-        -------
-        tuple[NDArray, float, NDArray, float, float, int, NDArray, NDArray, NDArray]
-            - `hirescardtc`: High-resolution cardiac time course.
-            - `cardnormfac`: Normalization factor for cardiac signal.
-            - `hiresresptc`: High-resolution respiratory time course.
-            - `respnormfac`: Normalization factor for respiratory signal.
-            - `slicesamplerate`: Slice sampling rate in Hz.
-            - `numsteps`: Number of unique slice times.
-            - `sliceoffsets`: Slice offsets relative to TR.
-            - `cycleaverage`: Average signal per slice time step.
-            - `slicenorms`: Slice-wise normalization factors.
-
-        Notes
-        -----
-        - The function assumes that `normdata_byslice` and `estweights_byslice` are properly
-          preprocessed and aligned with slice timing information.
-        - The cardiac and respiratory signals are extracted using harmonic notch filtering
-          and prefiltering steps.
-        - The returned time courses are normalized using median absolute deviation (MAD) unless
-          `madnorm` is set to False.
-
-        Examples
-        --------
-        >>> # Assuming all inputs are prepared
-        >>> card_signal, card_norm, resp_signal, resp_norm, samplerate, numsteps, \
-        ...     sliceoffsets, cycleavg, slicenorms = cardiacfromimage(
-        ...         normdata_byslice, estweights_byslice, numslices, timepoints,
-        ...         tr, slicetimes, cardprefilter, respprefilter
-        ...     )
-        """
-    # find out what timepoints we have, and their spacing
+    # Find out what timepoints we have, and their spacing
     numsteps, minstep, sliceoffsets = tide_io.sliceinfo(slicetimes, tr)
     print(
         len(slicetimes),
         "slice times with",
         numsteps,
         "unique values - diff is",
-        "{:.3f}".format(minstep),
+        f"{minstep:.3f}",
     )
 
-    # set inversion factor
-    if invertphysiosign:
-        thesign = -1.0
-    else:
-        thesign = 1.0
+    # Determine signal sign
+    signal_sign = SIGN_INVERTED if effective_config.invertphysiosign else SIGN_NORMAL
 
-    # make sure there is an appflips array
-    if appflips_byslice is None:
-        appflips_byslice = estweights_byslice * 0.0 + 1.0
-    else:
-        if arteriesonly:
-            appflips_byslice[np.where(appflips_byslice > 0.0)] = 0.0
+    # Prepare weights
+    appflips_byslice, theseweights_byslice = _prepare_weights(
+        estweights_byslice,
+        appflips_byslice,
+        effective_config.arteriesonly,
+        effective_config.fliparteries,
+    )
 
-    # make slice means
+    # Compute slice averages
     print("Making slice means...")
-    hirestc = np.zeros((timepoints * numsteps), dtype=np.float64)
-    cycleaverage = np.zeros((numsteps), dtype=np.float64)
-    sliceavs = np.zeros((numslices, timepoints), dtype=np.float64)
-    slicenorms = np.zeros((numslices), dtype=np.float64)
-    if not verbose:
-        print("Averaging slices...")
-    if fliparteries:
-        theseweights_byslice = appflips_byslice.astype(np.float64) * estweights_byslice
-    else:
-        theseweights_byslice = estweights_byslice
-    for theslice in range(numslices):
-        if verbose:
-            print("Averaging slice", theslice)
-        if usemask:
-            validestvoxels = np.where(np.abs(theseweights_byslice[:, theslice]) > 0)[0]
-        else:
-            validestvoxels = np.where(np.abs(theseweights_byslice[:, theslice] >= 0))[0]
-        if len(validestvoxels) > 0:
-            if madnorm:
-                sliceavs[theslice, :], slicenorms[theslice] = tide_math.madnormalize(
-                    np.mean(
-                        normdata_byslice[validestvoxels, theslice, :]
-                        * theseweights_byslice[validestvoxels, theslice, np.newaxis],
-                        axis=0,
-                    ),
-                )
-            else:
-                sliceavs[theslice, :] = np.mean(
-                    normdata_byslice[validestvoxels, theslice, :]
-                    * theseweights_byslice[validestvoxels, theslice, np.newaxis],
-                    axis=0,
-                )
-                slicenorms[theslice] = 1.0
-            for t in range(timepoints):
-                hirestc[numsteps * t + sliceoffsets[theslice]] += thesign * sliceavs[theslice, t]
-    for i in range(numsteps):
-        cycleaverage[i] = np.mean(hirestc[i:-1:numsteps])
-    for t in range(len(hirestc)):
-        if multiplicative:
-            hirestc[t] /= cycleaverage[t % numsteps] + 1.0
-        else:
-            hirestc[t] -= cycleaverage[t % numsteps]
-    if not verbose:
-        print("done")
-    slicesamplerate = 1.0 * numsteps / tr
-    print("Slice sample rate is ", "{:.3f}".format(slicesamplerate))
-
-    # delete the TR frequency and the first subharmonic
-    print("Notch filtering...")
-    filthirestc = tide_filt.harmonicnotchfilter(
-        hirestc, slicesamplerate, 1.0 / tr, notchpct=notchpct, debug=debug
-    )
-
-    # now get the cardiac and respiratory waveforms
-    hirescardtc, cardnormfac = tide_math.madnormalize(
-        cardprefilter.apply(slicesamplerate, filthirestc)
-    )
-    hirescardtc *= -1.0
-    cardnormfac *= np.mean(slicenorms)
-
-    hiresresptc, respnormfac = tide_math.madnormalize(
-        respprefilter.apply(slicesamplerate, filthirestc)
-    )
-    hiresresptc *= -1.0
-    respnormfac *= np.mean(slicenorms)
-
-    return (
-        hirescardtc,
-        cardnormfac,
-        hiresresptc,
-        respnormfac,
-        slicesamplerate,
+    high_res_timecourse, cycleaverage, slicenorms = _compute_slice_averages(
+        normdata_byslice,
+        theseweights_byslice,
+        numslices,
+        timepoints,
         numsteps,
         sliceoffsets,
-        cycleaverage,
+        signal_sign,
+        effective_config.madnorm,
+        effective_config.usemask,
+        effective_config.multiplicative,
+        effective_config.verbose,
+    )
+
+    # Calculate slice sample rate
+    slicesamplerate = 1.0 * numsteps / tr
+    print(f"Slice sample rate is {slicesamplerate:.3f}")
+
+    # Delete the TR frequency and the first subharmonic
+    print("Notch filtering...")
+    filtered_timecourse = tide_filt.harmonicnotchfilter(
+        high_res_timecourse,
+        slicesamplerate,
+        1.0 / tr,
+        notchpct=effective_config.notchpct,
+        debug=effective_config.debug,
+    )
+
+    # Extract cardiac and respiratory waveforms
+    hirescardtc, cardnormfac, hiresresptc, respnormfac = _extract_physiological_signals(
+        filtered_timecourse,
+        slicesamplerate,
+        cardprefilter,
+        respprefilter,
         slicenorms,
+    )
+
+    return CardiacExtractionResult(
+        hirescardtc=hirescardtc,
+        cardnormfac=cardnormfac,
+        hiresresptc=hiresresptc,
+        respnormfac=respnormfac,
+        slicesamplerate=slicesamplerate,
+        numsteps=numsteps,
+        sliceoffsets=sliceoffsets,
+        cycleaverage=cycleaverage,
+        slicenorms=slicenorms,
     )
 
 
@@ -1140,7 +1524,9 @@ def cleanphysio(
     print("Envelope detection")
     envelope = tide_math.envdetect(
         Fs,
-        tide_math.madnormalize(physiofilter.apply(Fs, tide_math.madnormalize(physiowaveform)[0]))[0],
+        tide_math.madnormalize(physiofilter.apply(Fs, tide_math.madnormalize(physiowaveform)[0]))[
+            0
+        ],
         cutoff=cutoff,
     )
     envmean = np.mean(envelope)

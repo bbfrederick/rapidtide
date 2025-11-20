@@ -548,17 +548,23 @@ def happy_main(argparsingfunc: Any) -> None:
         print("estimating cardiac signal from fmri data")
         tide_util.logmem("before cardiacfromimage")
         tide_util.disablemkl(args.nprocs)
-        (
-            cardfromfmri_sliceres,
-            cardfromfmri_normfac,
-            respfromfmri_sliceres,
-            respfromfmri_normfac,
-            slicesamplerate,
-            numsteps,
-            sliceoffsets,
-            cycleaverage,
-            slicenorms,
-        ) = happy_support.cardiacfromimage(
+
+        # Create configuration for cardiac extraction
+        cardiac_config = happy_support.CardiacExtractionConfig(
+            notchpct=args.notchpct,
+            notchrolloff=args.notchrolloff,
+            invertphysiosign=args.invertphysiosign,
+            madnorm=args.domadnorm,
+            nprocs=args.nprocs,
+            arteriesonly=args.arteriesonly,
+            fliparteries=args.fliparteries,
+            debug=args.debug,
+            verbose=args.verbose,
+            usemask=args.usemaskcardfromfmri,
+            multiplicative=True,
+        )
+
+        result = happy_support.cardiacfromimage(
             normdata_byslice,
             estweights_byslice,
             numslices,
@@ -567,18 +573,21 @@ def happy_main(argparsingfunc: Any) -> None:
             slicetimes,
             thecardbandfilter,
             therespbandfilter,
-            invertphysiosign=args.invertphysiosign,
-            madnorm=args.domadnorm,
-            nprocs=args.nprocs,
-            notchpct=args.notchpct,
-            notchrolloff=args.notchrolloff,
-            fliparteries=args.fliparteries,
-            arteriesonly=args.arteriesonly,
-            usemask=args.usemaskcardfromfmri,
+            config=cardiac_config,
             appflips_byslice=appflips_byslice,
-            debug=args.debug,
-            verbose=args.verbose,
         )
+
+        # Extract results
+        cardfromfmri_sliceres = result.hirescardtc
+        cardfromfmri_normfac = result.cardnormfac
+        respfromfmri_sliceres = result.hiresresptc
+        respfromfmri_normfac = result.respnormfac
+        slicesamplerate = result.slicesamplerate
+        numsteps = result.numsteps
+        sliceoffsets = result.sliceoffsets
+        cycleaverage = result.cycleaverage
+        slicenorms = result.slicenorms
+
         tide_util.enablemkl(args.mklthreads)
         timings.append(
             [
