@@ -51,6 +51,786 @@ if pyfftwpresent:
 # --------------------------- Filtering functions -------------------------------------------------
 # NB: No automatic padding for precalculated filters
 
+class NoncausalFilter:
+    def __init__(
+        self,
+        filtertype="None",
+        transitionfrac=0.05,
+        transferfunc="trapezoidal",
+        initlowerstop=None,
+        initlowerpass=None,
+        initupperpass=None,
+        initupperstop=None,
+        butterworthorder=6,
+        correctfreq=True,
+        padtime=30.0,
+        padtype="reflect",
+        debug=False,
+    ):
+        """
+        Initialize a zero time delay filter for one-dimensional signals, especially physiological ones.
+
+        This constructor sets up the filter parameters and initializes the filter type.
+        The filter can be configured for various physiological signal processing tasks,
+        including VLF, LFO, respiratory, cardiac, and HRV-related filtering.
+
+        Parameters
+        ----------
+        filtertype : {'None', 'vlf', 'lfo', 'resp', 'cardiac', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop',
+                     'hrv_ulf', 'hrv_vlf', 'hrv_lf', 'hrv_hf', 'hrv_vhf', 'hrv_ulf_stop', 'hrv_vlf_stop',
+                     'hrv_lf_stop', 'hrv_hf_stop', 'hrv_vhf_stop', 'arb', 'arb_stop', 'ringstop'}, optional
+            The type of filter to apply. Default is 'None'.
+        transitionfrac : float, optional
+            Fraction of the transition band used for filter transition. Default is 0.05.
+        transferfunc : {'trapezoidal', 'butterworth'}, optional
+            Transfer function to use for filter design. Default is 'trapezoidal'.
+        initlowerstop : float, optional
+            Initial lower stop frequency for 'arb' and 'arb_stop' filters. Default is None.
+        initlowerpass : float, optional
+            Initial lower pass frequency for 'arb' and 'arb_stop' filters. Default is None.
+        initupperpass : float, optional
+            Initial upper pass frequency for 'arb' and 'arb_stop' filters. Default is None.
+        initupperstop : float, optional
+            Initial upper stop frequency for 'arb' and 'arb_stop' filters. Default is None.
+        butterworthorder : int, optional
+            Order of the Butterworth filter. Default is 6.
+        correctfreq : bool, optional
+            Whether to correct impossible pass frequencies. Default is True.
+        padtime : float, optional
+            Amount of time (in seconds) to pad the signal to reduce edge effects. Default is 30.0.
+        padtype : {'reflect', 'zero', 'constant'}, optional
+            Type of padding to use. Default is 'reflect'.
+        debug : bool, optional
+            Enable extended debugging messages. Default is False.
+
+        Returns
+        -------
+        None
+            This method initializes the instance and does not return any value.
+
+        Notes
+        -----
+        For 'arb' and 'arb_stop' filter types, the pass and stop frequencies are initialized
+        based on the provided values or default values if not specified.
+        The default frequencies for 'arb' filters are:
+            - lowerpass = 0.05 Hz
+            - lowerstop = 0.9 * lowerpass
+            - upperpass = 0.20 Hz
+            - upperstop = 1.1 * upperpass
+
+        Examples
+        --------
+        >>> filter_instance = ZeroDelayFilter(filtertype='resp', padtime=60.0)
+        >>> filter_instance.settype('cardiac')
+        >>> filter_instance.gettype()
+        'cardiac'
+        """
+        self.filtertype = filtertype
+        self.species = "human"
+        self.transitionfrac = transitionfrac
+        self.transferfunc = transferfunc
+        if initlowerpass is None:
+            self.arb_lowerpass = 0.05
+            self.arb_lowerstop = 0.9 * self.arb_lowerpass
+        else:
+            self.arb_lowerpass = initlowerpass
+            self.arb_lowerstop = initlowerstop
+        if initupperpass is None:
+            self.arb_upperpass = 0.20
+            self.arb_upperstop = 1.1 * self.arb_upperpass
+        else:
+            self.arb_upperpass = initupperpass
+            self.arb_upperstop = initupperstop
+        self.lowerstop = 0.0
+        self.lowerpass = 0.0
+        self.upperpass = -1.0
+        self.upperstop = -1.0
+        self.butterworthorder = butterworthorder
+        self.correctfreq = correctfreq
+        self.padtime = padtime
+        self.padtype = padtype
+        self.debug = debug
+
+        self.settype(self.filtertype)
+
+    def settype(self, thetype):
+        """
+        Set the filter type and corresponding frequency bands for the filter object.
+
+        This method configures the filter parameters based on the specified filter type.
+        It assigns passband and stopband frequencies depending on the filter type,
+        using predefined frequency ranges or user-defined values for arbitrary filters.
+
+        Parameters
+        ----------
+        thetype : str
+            The type of filter to set. Supported values include:
+            - "vlf", "vlf_stop": Very Low Frequency
+            - "lfo", "lfo_stop": Low Frequency Oscillation
+            - "lfo_legacy", "lfo_legacy_stop": Legacy Low Frequency Oscillation
+            - "lfo_tight", "lfo_tight_stop": Tight Low Frequency Oscillation
+            - "resp", "resp_stop": Respiration
+            - "cardiac", "cardiac_stop": Cardiac
+            - "hrv_ulf", "hrv_ulf_stop": HRV Ultra Low Frequency
+            - "hrv_vlf", "hrv_vlf_stop": HRV Very Low Frequency
+            - "hrv_lf", "hrv_lf_stop": HRV Low Frequency
+            - "hrv_hf", "hrv_hf_stop": HRV High Frequency
+            - "hrv_vhf", "hrv_vhf_stop": HRV Very High Frequency
+            - "arb", "arb_stop": Arbitrary filter with custom frequency limits
+
+        Notes
+        -----
+        For arbitrary filters ("arb" or "arb_stop"), the method uses the following
+        attributes from the object:
+        - `self.arb_lowerstop`
+        - `self.arb_lowerpass`
+        - `self.arb_upperpass`
+        - `self.arb_upperstop`
+
+        For all other filter types, the method calls `getfilterbandfreqs` with the
+        specified filter type and additional parameters like `transitionfrac` and `species`.
+
+        Examples
+        --------
+        >>> obj.settype("lfo")
+        >>> print(obj.lowerpass)
+        0.01
+        >>> print(obj.upperstop)
+        0.5
+        """
+        self.filtertype = thetype
+        if self.filtertype == "vlf" or self.filtertype == "vlf_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "vlf", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "lfo" or self.filtertype == "lfo_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "lfo", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "lfo_legacy" or self.filtertype == "lfo_legacy_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "lfo_legacy", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "lfo_tight" or self.filtertype == "lfo_tight_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "lfo_tight", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "resp" or self.filtertype == "resp_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "resp", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "cardiac" or self.filtertype == "cardiac_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "cardiac", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "hrv_ulf" or self.filtertype == "hrv_ulf_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_ulf", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "hrv_vlf" or self.filtertype == "hrv_vlf_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_vlf", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "hrv_lf" or self.filtertype == "hrv_lf_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_lf", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "hrv_hf" or self.filtertype == "hrv_hf_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_hf", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "hrv_vhf" or self.filtertype == "hrv_vhf_stop":
+            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
+                "hrv_vhf", transitionfrac=self.transitionfrac, species=self.species
+            )
+        elif self.filtertype == "arb" or self.filtertype == "arb_stop":
+            self.lowerstop = 1.0 * self.arb_lowerstop
+            self.lowerpass = 1.0 * self.arb_lowerpass
+            self.upperpass = 1.0 * self.arb_upperpass
+            self.upperstop = 1.0 * self.arb_upperstop
+        else:
+            self.lowerstop = 0.0
+            self.lowerpass = 0.0
+            self.upperpass = 1.0e20
+            self.upperstop = 1.0e20
+
+    def gettype(self):
+        """
+        Return the filter type of the object.
+
+        Returns
+        -------
+        filtertype : str or int
+            The filter type associated with the object. The specific type depends
+            on the implementation of the filtertype attribute.
+
+        Notes
+        -----
+        This method provides access to the internal filtertype attribute.
+        The return value type may vary depending on the specific implementation
+        of the class that contains this method.
+
+        Examples
+        --------
+        >>> obj = MyClass()
+        >>> obj.gettype()
+        'some_filter_type'
+        """
+        return self.filtertype
+
+    def setbutterorder(self, order=3):
+        """
+        Set the Butterworth filter order for the system.
+
+        This method assigns the specified order to the Butterworth filter configuration.
+        The order determines the steepness of the filter's roll-off characteristics.
+
+        Parameters
+        ----------
+        order : int, optional
+            The order of the Butterworth filter. Must be a positive integer.
+            Default is 3.
+
+        Returns
+        -------
+        None
+            This method does not return any value.
+
+        Notes
+        -----
+        A higher filter order results in a steeper roll-off but may introduce
+        more phase distortion. The order should be chosen based on the specific
+        requirements of the signal processing application.
+
+        Examples
+        --------
+        >>> system = SomeFilterClass()
+        >>> system.setbutterorder(5)
+        >>> print(system.butterworthorder)
+        5
+
+        >>> system.setbutterorder()
+        >>> print(system.butterworthorder)
+        3
+        """
+        self.butterworthorder = order
+
+    def setdebug(self, debug):
+        """
+        Set the debug flag for the object.
+
+        Parameters
+        ----------
+        debug : bool
+            If True, enables debug mode. If False, disables debug mode.
+
+        Returns
+        -------
+        None
+            This method does not return any value.
+
+        Notes
+        -----
+        This method sets the internal `debug` attribute of the object. When debug mode
+        is enabled, additional logging or verbose output may be generated during
+        object operations.
+
+        Examples
+        --------
+        >>> obj = MyClass()
+        >>> obj.setdebug(True)
+        >>> print(obj.debug)
+        True
+        """
+        self.debug = debug
+
+    def setpadtime(self, padtime):
+        """
+        Set the padding time for the object.
+
+        Parameters
+        ----------
+        padtime : float or int
+            The padding time value to be assigned to the object's padtime attribute.
+
+        Returns
+        -------
+        None
+            This method does not return any value.
+
+        Notes
+        -----
+        This method directly assigns the provided padtime value to the instance's padtime attribute,
+        replacing any existing value.
+
+        Examples
+        --------
+        >>> obj = MyClass()
+        >>> obj.setpadtime(5.0)
+        >>> print(obj.padtime)
+        5.0
+        """
+        self.padtime = padtime
+
+    def getpadtime(self):
+        """
+        Return the padding time value.
+
+        Returns
+        -------
+        padtime : float or int
+            The padding time value stored in the instance variable `self.padtime`.
+
+        Notes
+        -----
+        This is a simple getter method that returns the value of the internal
+        `padtime` attribute. The actual meaning and units of this value depend
+        on the context in which the class is used.
+
+        Examples
+        --------
+        >>> obj = MyClass()
+        >>> obj.padtime = 5.0
+        >>> obj.getpadtime()
+        5.0
+        """
+        return self.padtime
+
+    def setpadtype(self, padtype):
+        """
+        Set the padding type for the object.
+
+        Parameters
+        ----------
+        padtype : str
+            The padding type to be set. This parameter determines how padding
+            will be applied in subsequent operations.
+
+        Returns
+        -------
+        None
+            This method does not return any value.
+
+        Notes
+        -----
+        This method directly assigns the provided padding type to the internal
+        `padtype` attribute of the object. The valid values for `padtype` depend
+        on the specific implementation of the class this method belongs to.
+
+        Examples
+        --------
+        >>> obj = MyClass()
+        >>> obj.setpadtype('constant')
+        >>> print(obj.padtype)
+        'constant'
+        """
+        self.padtype = padtype
+
+    def getpadtype(self):
+        """
+        Return the padding type of the object.
+
+        Returns
+        -------
+        str
+            The padding type as a string identifier.
+
+        Notes
+        -----
+        This method provides access to the internal `padtype` attribute
+        which defines the padding behavior for the object.
+
+        Examples
+        --------
+        >>> obj = MyClass()
+        >>> obj.padtype = 'constant'
+        >>> obj.getpadtype()
+        'constant'
+        """
+        return self.padtype
+
+    def settransferfunc(self, transferfunc):
+        """
+        Set the transfer function for the system.
+
+        Parameters
+        ----------
+        transferfunc : callable
+            The transfer function to be assigned to the system. This should be a
+            callable object that defines the system's transfer function behavior.
+
+        Returns
+        -------
+        None
+            This method does not return any value.
+
+        Notes
+        -----
+        This method directly assigns the provided transfer function to the
+        internal `transferfunc` attribute of the object. The transfer function
+        should be compatible with the system's expected input and output formats.
+
+        Examples
+        --------
+        >>> system = MySystem()
+        >>> def my_transfer_func(x):
+        ...     return x * 2
+        >>> system.settransferfunc(my_transfer_func)
+        >>> system.transferfunc(5)
+        10
+        """
+        self.transferfunc = transferfunc
+
+    def setfreqs(self, lowerstop, lowerpass, upperpass, upperstop):
+        """
+        Set frequency parameters for filter design.
+
+        This method configures the frequency boundaries for a filter design, ensuring
+        proper causal relationships between the stopband and passband frequencies.
+
+        Parameters
+        ----------
+        lowerstop : float
+            Lower stopband frequency boundary. Must be less than or equal to lowerpass.
+        lowerpass : float
+            Lower passband frequency boundary. Must be greater than or equal to lowerstop.
+        upperpass : float
+            Upper passband frequency boundary. Must be less than or equal to upperstop.
+        upperstop : float
+            Upper stopband frequency boundary. Must be greater than or equal to upperpass.
+
+        Returns
+        -------
+        None
+            This method does not return a value but modifies instance attributes.
+
+        Notes
+        -----
+        The method performs validation checks to ensure causal filter design:
+        - lowerstop must be <= lowerpass
+        - upperstop must be >= upperpass
+        - lowerpass must be < upperpass when upperpass >= 0.0
+
+        All frequency values are stored as instance attributes with the prefix 'arb_'
+        for internal use and without the prefix for public access.
+
+        Examples
+        --------
+        >>> filter = NoncausalFilter()
+        >>> filter.setfreqs(0.1, 0.2, 0.8, 0.9)
+        >>> print(filter.lowerstop)
+        0.1
+        """
+        if lowerstop > lowerpass:
+            print(
+                "NoncausalFilter error: lowerstop (",
+                lowerstop,
+                ") must be <= lowerpass (",
+                lowerpass,
+                ")",
+            )
+            sys.exit()
+        if upperpass > upperstop:
+            print(
+                "NoncausalFilter error: upperstop (",
+                upperstop,
+                ") must be >= upperpass (",
+                upperpass,
+                ")",
+            )
+            sys.exit()
+        if (lowerpass > upperpass) and (upperpass >= 0.0):
+            print(
+                "NoncausalFilter error: lowerpass (",
+                lowerpass,
+                ") must be < upperpass (",
+                upperpass,
+                ")",
+            )
+            sys.exit()
+        self.arb_lowerstop = 1.0 * lowerstop
+        self.arb_lowerpass = 1.0 * lowerpass
+        self.arb_upperpass = 1.0 * upperpass
+        self.arb_upperstop = 1.0 * upperstop
+        self.lowerstop = 1.0 * self.arb_lowerstop
+        self.lowerpass = 1.0 * self.arb_lowerpass
+        self.upperpass = 1.0 * self.arb_upperpass
+        self.upperstop = 1.0 * self.arb_upperstop
+
+    def getfreqs(self):
+        """
+        Return frequency boundaries for filter design.
+
+        Returns
+        -------
+        tuple
+            A tuple containing four frequency values in the order:
+            (lowerstop, lowerpass, upperpass, upperstop)
+
+        Notes
+        -----
+        This function returns the frequency boundaries used for filter design specifications.
+        The values represent:
+        - lowerstop: Lower stopband frequency
+        - lowerpass: Lower passband frequency
+        - upperpass: Upper passband frequency
+        - upperstop: Upper stopband frequency
+
+        Examples
+        --------
+        >>> filter_obj = FilterDesign()
+        >>> freqs = filter_obj.getfreqs()
+        >>> print(freqs)
+        (100, 200, 300, 400)
+        """
+        return self.lowerstop, self.lowerpass, self.upperpass, self.upperstop
+
+    def apply(self, Fs, data):
+        """
+        Apply the filter to a dataset.
+
+        Parameters
+        ----------
+        Fs : float
+            Sample frequency (Hz) of the input data.
+        data : 1D float array
+            The data to be filtered.
+
+        Returns
+        -------
+        filtereddata : 1D float array
+            The filtered data with the same shape as the input `data`.
+
+        Notes
+        -----
+        This function applies a filter based on the `filtertype` attribute of the object.
+        It performs bounds checking and handles various error conditions, including cases
+        where filter frequencies exceed the Nyquist limit or fall below the minimum
+        resolvable frequency. If `correctfreq` is True, invalid frequencies are adjusted
+        to valid values instead of raising an error.
+
+        The function supports multiple predefined filter types such as 'vlf', 'lfo',
+        'cardiac', 'hrv_*' and custom 'arb' types. For stopband filters (e.g., 'vlf_stop'),
+        the result is the difference between the input and the filtered signal.
+
+        Examples
+        --------
+        >>> filtered_data = filter_instance.apply(100.0, data)
+        >>> filtered_data = filter_instance.apply(256.0, data)
+        """
+        # if filterband is None, just return the data
+        if self.filtertype == "None":
+            return data
+
+        # do some bounds checking
+        nyquistlimit = 0.5 * Fs
+        lowestfreq = 2.0 * Fs / np.shape(data)[0]
+
+        # first see if entire range is out of bounds
+        if self.lowerpass >= nyquistlimit:
+            print(
+                "NoncausalFilter error: filter lower pass ",
+                self.lowerpass,
+                " exceeds nyquist frequency ",
+                nyquistlimit,
+            )
+            sys.exit()
+        if self.lowerstop >= nyquistlimit:
+            print(
+                "NoncausalFilter error: filter lower stop ",
+                self.lowerstop,
+                " exceeds nyquist frequency ",
+                nyquistlimit,
+            )
+            sys.exit()
+        if -1.0 < self.upperpass <= lowestfreq:
+            print(
+                "NoncausalFilter error: filter upper pass ",
+                self.upperpass,
+                " is below minimum frequency ",
+                lowestfreq,
+            )
+            sys.exit()
+        if -1.0 < self.upperstop <= lowestfreq:
+            print(
+                "NoncausalFilter error: filter upper stop ",
+                self.upperstop,
+                " is below minimum frequency ",
+                lowestfreq,
+            )
+            sys.exit()
+
+        # now look for fixable errors
+        if self.upperpass >= nyquistlimit:
+            if self.correctfreq:
+                self.upperpass = nyquistlimit
+            else:
+                print(
+                    "NoncausalFilter error: filter upper pass ",
+                    self.upperpass,
+                    " exceeds nyquist frequency ",
+                    nyquistlimit,
+                )
+                sys.exit()
+        if self.upperstop > nyquistlimit:
+            if self.correctfreq:
+                self.upperstop = nyquistlimit
+            else:
+                print(
+                    "NoncausalFilter error: filter upper stop ",
+                    self.upperstop,
+                    " exceeds nyquist frequency ",
+                    nyquistlimit,
+                )
+                sys.exit()
+        if self.lowerpass < lowestfreq:
+            if self.correctfreq:
+                self.lowerpass = lowestfreq
+            else:
+                print(
+                    "NoncausalFilter error: filter lower pass ",
+                    self.lowerpass,
+                    " is below minimum frequency ",
+                    lowestfreq,
+                )
+                sys.exit()
+        if self.lowerstop < lowestfreq:
+            if self.correctfreq:
+                self.lowerstop = lowestfreq
+            else:
+                print(
+                    "NoncausalFilter error: filter lower stop ",
+                    self.lowerstop,
+                    " is below minimum frequency ",
+                    lowestfreq,
+                )
+                sys.exit()
+
+        if self.padtime < 0.0:
+            padlen = int(len(data) // 2)
+        else:
+            padlen = int(self.padtime * Fs)
+        if self.lowerpass <= 0.0:
+            avlen = 1
+        else:
+            avlen = np.min([int(Fs / self.lowerpass), padlen])
+        if self.debug:
+            print("Fs=", Fs)
+            print("lowerstop=", self.lowerstop)
+            print("lowerpass=", self.lowerpass)
+            print("upperpass=", self.upperpass)
+            print("upperstop=", self.upperstop)
+            print("butterworthorder=", self.butterworthorder)
+            print("padtime=", self.padtime)
+            print("padlen=", padlen)
+            print("avlen=", avlen)
+            print("padtype=", self.padtype)
+
+        # now do the actual filtering
+        if self.filtertype == "None":
+            return data
+        elif self.filtertype == "ringstop":
+            return arb_pass(
+                Fs,
+                data,
+                0.0,
+                0.0,
+                Fs / 4.0,
+                1.1 * Fs / 4.0,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                padtype=self.padtype,
+                debug=self.debug,
+            )
+        elif (
+            self.filtertype == "vlf"
+            or self.filtertype == "lfo"
+            or self.filtertype == "lfo_legacy"
+            or self.filtertype == "lfo_tight"
+            or self.filtertype == "resp"
+            or self.filtertype == "cardiac"
+            or self.filtertype == "hrv_ulf"
+            or self.filtertype == "hrv_vlf"
+            or self.filtertype == "hrv_lf"
+            or self.filtertype == "hrv_hf"
+            or self.filtertype == "hrv_vhf"
+        ):
+            return arb_pass(
+                Fs,
+                data,
+                self.lowerstop,
+                self.lowerpass,
+                self.upperpass,
+                self.upperstop,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                avlen=avlen,
+                padtype=self.padtype,
+                debug=self.debug,
+            )
+        elif (
+            self.filtertype == "vlf_stop"
+            or self.filtertype == "lfo_stop"
+            or self.filtertype == "lfo_legacy_stop"
+            or self.filtertype == "lfo_tight_stop"
+            or self.filtertype == "resp_stop"
+            or self.filtertype == "cardiac_stop"
+            or self.filtertype == "hrv_ulf_stop"
+            or self.filtertype == "hrv_vlf_stop"
+            or self.filtertype == "hrv_lf_stop"
+            or self.filtertype == "hrv_hf_stop"
+            or self.filtertype == "hrv_vhf_stop"
+        ):
+            return data - arb_pass(
+                Fs,
+                data,
+                self.lowerstop,
+                self.lowerpass,
+                self.upperpass,
+                self.upperstop,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                avlen=avlen,
+                padtype=self.padtype,
+                debug=self.debug,
+            )
+        elif self.filtertype == "arb":
+            return arb_pass(
+                Fs,
+                data,
+                self.arb_lowerstop,
+                self.arb_lowerpass,
+                self.arb_upperpass,
+                self.arb_upperstop,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                avlen=avlen,
+                padtype=self.padtype,
+                debug=self.debug,
+            )
+        elif self.filtertype == "arb_stop":
+            return data - arb_pass(
+                Fs,
+                data,
+                self.arb_lowerstop,
+                self.arb_lowerpass,
+                self.arb_upperpass,
+                self.arb_upperstop,
+                transferfunc=self.transferfunc,
+                butterorder=self.butterworthorder,
+                padlen=padlen,
+                avlen=avlen,
+                padtype=self.padtype,
+                debug=self.debug,
+            )
+        else:
+            print(f"bad filter type: {self.filtertype}")
+            sys.exit()
+
 
 @conditionaljit()
 def padvec(
@@ -1640,15 +2420,15 @@ def spectrum(
         maxfreq = Fs
         specaxis = np.linspace(0.0, maxfreq, len(specvals), endpoint=False)
     if mode == "real":
-        specvals = specvals.real
+        specvals = (specvals.real).astype(specvals.dtype)
     elif mode == "imag":
-        specvals = specvals.imag
+        specvals = (specvals.imag).astype(specvals.dtype)
     elif mode == "complex":
         pass
     elif mode == "mag":
         specvals = np.absolute(specvals)
     elif mode == "phase":
-        specvals = np.angle(specvals)
+        specvals = (np.angle(specvals)).astype(specvals.dtype)
     elif mode == "power":
         specvals = np.sqrt(np.absolute(specvals))
     else:
@@ -2212,785 +2992,6 @@ def getfilterbandfreqs(
         return lowerpass, upperpass, lowerstop, upperstop
 
 
-class NoncausalFilter:
-    def __init__(
-        self,
-        filtertype="None",
-        transitionfrac=0.05,
-        transferfunc="trapezoidal",
-        initlowerstop=None,
-        initlowerpass=None,
-        initupperpass=None,
-        initupperstop=None,
-        butterworthorder=6,
-        correctfreq=True,
-        padtime=30.0,
-        padtype="reflect",
-        debug=False,
-    ):
-        """
-        Initialize a zero time delay filter for one-dimensional signals, especially physiological ones.
-
-        This constructor sets up the filter parameters and initializes the filter type.
-        The filter can be configured for various physiological signal processing tasks,
-        including VLF, LFO, respiratory, cardiac, and HRV-related filtering.
-
-        Parameters
-        ----------
-        filtertype : {'None', 'vlf', 'lfo', 'resp', 'cardiac', 'vlf_stop', 'lfo_stop', 'resp_stop', 'card_stop',
-                     'hrv_ulf', 'hrv_vlf', 'hrv_lf', 'hrv_hf', 'hrv_vhf', 'hrv_ulf_stop', 'hrv_vlf_stop',
-                     'hrv_lf_stop', 'hrv_hf_stop', 'hrv_vhf_stop', 'arb', 'arb_stop', 'ringstop'}, optional
-            The type of filter to apply. Default is 'None'.
-        transitionfrac : float, optional
-            Fraction of the transition band used for filter transition. Default is 0.05.
-        transferfunc : {'trapezoidal', 'butterworth'}, optional
-            Transfer function to use for filter design. Default is 'trapezoidal'.
-        initlowerstop : float, optional
-            Initial lower stop frequency for 'arb' and 'arb_stop' filters. Default is None.
-        initlowerpass : float, optional
-            Initial lower pass frequency for 'arb' and 'arb_stop' filters. Default is None.
-        initupperpass : float, optional
-            Initial upper pass frequency for 'arb' and 'arb_stop' filters. Default is None.
-        initupperstop : float, optional
-            Initial upper stop frequency for 'arb' and 'arb_stop' filters. Default is None.
-        butterworthorder : int, optional
-            Order of the Butterworth filter. Default is 6.
-        correctfreq : bool, optional
-            Whether to correct impossible pass frequencies. Default is True.
-        padtime : float, optional
-            Amount of time (in seconds) to pad the signal to reduce edge effects. Default is 30.0.
-        padtype : {'reflect', 'zero', 'constant'}, optional
-            Type of padding to use. Default is 'reflect'.
-        debug : bool, optional
-            Enable extended debugging messages. Default is False.
-
-        Returns
-        -------
-        None
-            This method initializes the instance and does not return any value.
-
-        Notes
-        -----
-        For 'arb' and 'arb_stop' filter types, the pass and stop frequencies are initialized
-        based on the provided values or default values if not specified.
-        The default frequencies for 'arb' filters are:
-            - lowerpass = 0.05 Hz
-            - lowerstop = 0.9 * lowerpass
-            - upperpass = 0.20 Hz
-            - upperstop = 1.1 * upperpass
-
-        Examples
-        --------
-        >>> filter_instance = ZeroDelayFilter(filtertype='resp', padtime=60.0)
-        >>> filter_instance.settype('cardiac')
-        >>> filter_instance.gettype()
-        'cardiac'
-        """
-        self.filtertype = filtertype
-        self.species = "human"
-        self.transitionfrac = transitionfrac
-        self.transferfunc = transferfunc
-        if initlowerpass is None:
-            self.arb_lowerpass = 0.05
-            self.arb_lowerstop = 0.9 * self.arb_lowerpass
-        else:
-            self.arb_lowerpass = initlowerpass
-            self.arb_lowerstop = initlowerstop
-        if initupperpass is None:
-            self.arb_upperpass = 0.20
-            self.arb_upperstop = 1.1 * self.arb_upperpass
-        else:
-            self.arb_upperpass = initupperpass
-            self.arb_upperstop = initupperstop
-        self.lowerstop = 0.0
-        self.lowerpass = 0.0
-        self.upperpass = -1.0
-        self.upperstop = -1.0
-        self.butterworthorder = butterworthorder
-        self.correctfreq = correctfreq
-        self.padtime = padtime
-        self.padtype = padtype
-        self.debug = debug
-
-        self.settype(self.filtertype)
-
-    def settype(self, thetype):
-        """
-        Set the filter type and corresponding frequency bands for the filter object.
-
-        This method configures the filter parameters based on the specified filter type.
-        It assigns passband and stopband frequencies depending on the filter type,
-        using predefined frequency ranges or user-defined values for arbitrary filters.
-
-        Parameters
-        ----------
-        thetype : str
-            The type of filter to set. Supported values include:
-            - "vlf", "vlf_stop": Very Low Frequency
-            - "lfo", "lfo_stop": Low Frequency Oscillation
-            - "lfo_legacy", "lfo_legacy_stop": Legacy Low Frequency Oscillation
-            - "lfo_tight", "lfo_tight_stop": Tight Low Frequency Oscillation
-            - "resp", "resp_stop": Respiration
-            - "cardiac", "cardiac_stop": Cardiac
-            - "hrv_ulf", "hrv_ulf_stop": HRV Ultra Low Frequency
-            - "hrv_vlf", "hrv_vlf_stop": HRV Very Low Frequency
-            - "hrv_lf", "hrv_lf_stop": HRV Low Frequency
-            - "hrv_hf", "hrv_hf_stop": HRV High Frequency
-            - "hrv_vhf", "hrv_vhf_stop": HRV Very High Frequency
-            - "arb", "arb_stop": Arbitrary filter with custom frequency limits
-
-        Notes
-        -----
-        For arbitrary filters ("arb" or "arb_stop"), the method uses the following
-        attributes from the object:
-        - `self.arb_lowerstop`
-        - `self.arb_lowerpass`
-        - `self.arb_upperpass`
-        - `self.arb_upperstop`
-
-        For all other filter types, the method calls `getfilterbandfreqs` with the
-        specified filter type and additional parameters like `transitionfrac` and `species`.
-
-        Examples
-        --------
-        >>> obj.settype("lfo")
-        >>> print(obj.lowerpass)
-        0.01
-        >>> print(obj.upperstop)
-        0.5
-        """
-        self.filtertype = thetype
-        if self.filtertype == "vlf" or self.filtertype == "vlf_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "vlf", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "lfo" or self.filtertype == "lfo_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "lfo", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "lfo_legacy" or self.filtertype == "lfo_legacy_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "lfo_legacy", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "lfo_tight" or self.filtertype == "lfo_tight_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "lfo_tight", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "resp" or self.filtertype == "resp_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "resp", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "cardiac" or self.filtertype == "cardiac_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "cardiac", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "hrv_ulf" or self.filtertype == "hrv_ulf_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "hrv_ulf", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "hrv_vlf" or self.filtertype == "hrv_vlf_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "hrv_vlf", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "hrv_lf" or self.filtertype == "hrv_lf_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "hrv_lf", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "hrv_hf" or self.filtertype == "hrv_hf_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "hrv_hf", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "hrv_vhf" or self.filtertype == "hrv_vhf_stop":
-            self.lowerpass, self.upperpass, self.lowerstop, self.upperstop = getfilterbandfreqs(
-                "hrv_vhf", transitionfrac=self.transitionfrac, species=self.species
-            )
-        elif self.filtertype == "arb" or self.filtertype == "arb_stop":
-            self.lowerstop = 1.0 * self.arb_lowerstop
-            self.lowerpass = 1.0 * self.arb_lowerpass
-            self.upperpass = 1.0 * self.arb_upperpass
-            self.upperstop = 1.0 * self.arb_upperstop
-        else:
-            self.lowerstop = 0.0
-            self.lowerpass = 0.0
-            self.upperpass = 1.0e20
-            self.upperstop = 1.0e20
-
-    def gettype(self):
-        """
-        Return the filter type of the object.
-
-        Returns
-        -------
-        filtertype : str or int
-            The filter type associated with the object. The specific type depends
-            on the implementation of the filtertype attribute.
-
-        Notes
-        -----
-        This method provides access to the internal filtertype attribute.
-        The return value type may vary depending on the specific implementation
-        of the class that contains this method.
-
-        Examples
-        --------
-        >>> obj = MyClass()
-        >>> obj.gettype()
-        'some_filter_type'
-        """
-        return self.filtertype
-
-    def setbutterorder(self, order=3):
-        """
-        Set the Butterworth filter order for the system.
-
-        This method assigns the specified order to the Butterworth filter configuration.
-        The order determines the steepness of the filter's roll-off characteristics.
-
-        Parameters
-        ----------
-        order : int, optional
-            The order of the Butterworth filter. Must be a positive integer.
-            Default is 3.
-
-        Returns
-        -------
-        None
-            This method does not return any value.
-
-        Notes
-        -----
-        A higher filter order results in a steeper roll-off but may introduce
-        more phase distortion. The order should be chosen based on the specific
-        requirements of the signal processing application.
-
-        Examples
-        --------
-        >>> system = SomeFilterClass()
-        >>> system.setbutterorder(5)
-        >>> print(system.butterworthorder)
-        5
-
-        >>> system.setbutterorder()
-        >>> print(system.butterworthorder)
-        3
-        """
-        self.butterworthorder = order
-
-    def setdebug(self, debug):
-        """
-        Set the debug flag for the object.
-
-        Parameters
-        ----------
-        debug : bool
-            If True, enables debug mode. If False, disables debug mode.
-
-        Returns
-        -------
-        None
-            This method does not return any value.
-
-        Notes
-        -----
-        This method sets the internal `debug` attribute of the object. When debug mode
-        is enabled, additional logging or verbose output may be generated during
-        object operations.
-
-        Examples
-        --------
-        >>> obj = MyClass()
-        >>> obj.setdebug(True)
-        >>> print(obj.debug)
-        True
-        """
-        self.debug = debug
-
-    def setpadtime(self, padtime):
-        """
-        Set the padding time for the object.
-
-        Parameters
-        ----------
-        padtime : float or int
-            The padding time value to be assigned to the object's padtime attribute.
-
-        Returns
-        -------
-        None
-            This method does not return any value.
-
-        Notes
-        -----
-        This method directly assigns the provided padtime value to the instance's padtime attribute,
-        replacing any existing value.
-
-        Examples
-        --------
-        >>> obj = MyClass()
-        >>> obj.setpadtime(5.0)
-        >>> print(obj.padtime)
-        5.0
-        """
-        self.padtime = padtime
-
-    def getpadtime(self):
-        """
-        Return the padding time value.
-
-        Returns
-        -------
-        padtime : float or int
-            The padding time value stored in the instance variable `self.padtime`.
-
-        Notes
-        -----
-        This is a simple getter method that returns the value of the internal
-        `padtime` attribute. The actual meaning and units of this value depend
-        on the context in which the class is used.
-
-        Examples
-        --------
-        >>> obj = MyClass()
-        >>> obj.padtime = 5.0
-        >>> obj.getpadtime()
-        5.0
-        """
-        return self.padtime
-
-    def setpadtype(self, padtype):
-        """
-        Set the padding type for the object.
-
-        Parameters
-        ----------
-        padtype : str
-            The padding type to be set. This parameter determines how padding
-            will be applied in subsequent operations.
-
-        Returns
-        -------
-        None
-            This method does not return any value.
-
-        Notes
-        -----
-        This method directly assigns the provided padding type to the internal
-        `padtype` attribute of the object. The valid values for `padtype` depend
-        on the specific implementation of the class this method belongs to.
-
-        Examples
-        --------
-        >>> obj = MyClass()
-        >>> obj.setpadtype('constant')
-        >>> print(obj.padtype)
-        'constant'
-        """
-        self.padtype = padtype
-
-    def getpadtype(self):
-        """
-        Return the padding type of the object.
-
-        Returns
-        -------
-        str
-            The padding type as a string identifier.
-
-        Notes
-        -----
-        This method provides access to the internal `padtype` attribute
-        which defines the padding behavior for the object.
-
-        Examples
-        --------
-        >>> obj = MyClass()
-        >>> obj.padtype = 'constant'
-        >>> obj.getpadtype()
-        'constant'
-        """
-        return self.padtype
-
-    def settransferfunc(self, transferfunc):
-        """
-        Set the transfer function for the system.
-
-        Parameters
-        ----------
-        transferfunc : callable
-            The transfer function to be assigned to the system. This should be a
-            callable object that defines the system's transfer function behavior.
-
-        Returns
-        -------
-        None
-            This method does not return any value.
-
-        Notes
-        -----
-        This method directly assigns the provided transfer function to the
-        internal `transferfunc` attribute of the object. The transfer function
-        should be compatible with the system's expected input and output formats.
-
-        Examples
-        --------
-        >>> system = MySystem()
-        >>> def my_transfer_func(x):
-        ...     return x * 2
-        >>> system.settransferfunc(my_transfer_func)
-        >>> system.transferfunc(5)
-        10
-        """
-        self.transferfunc = transferfunc
-
-    def setfreqs(self, lowerstop, lowerpass, upperpass, upperstop):
-        """
-        Set frequency parameters for filter design.
-
-        This method configures the frequency boundaries for a filter design, ensuring
-        proper causal relationships between the stopband and passband frequencies.
-
-        Parameters
-        ----------
-        lowerstop : float
-            Lower stopband frequency boundary. Must be less than or equal to lowerpass.
-        lowerpass : float
-            Lower passband frequency boundary. Must be greater than or equal to lowerstop.
-        upperpass : float
-            Upper passband frequency boundary. Must be less than or equal to upperstop.
-        upperstop : float
-            Upper stopband frequency boundary. Must be greater than or equal to upperpass.
-
-        Returns
-        -------
-        None
-            This method does not return a value but modifies instance attributes.
-
-        Notes
-        -----
-        The method performs validation checks to ensure causal filter design:
-        - lowerstop must be <= lowerpass
-        - upperstop must be >= upperpass
-        - lowerpass must be < upperpass when upperpass >= 0.0
-
-        All frequency values are stored as instance attributes with the prefix 'arb_'
-        for internal use and without the prefix for public access.
-
-        Examples
-        --------
-        >>> filter = NoncausalFilter()
-        >>> filter.setfreqs(0.1, 0.2, 0.8, 0.9)
-        >>> print(filter.lowerstop)
-        0.1
-        """
-        if lowerstop > lowerpass:
-            print(
-                "NoncausalFilter error: lowerstop (",
-                lowerstop,
-                ") must be <= lowerpass (",
-                lowerpass,
-                ")",
-            )
-            sys.exit()
-        if upperpass > upperstop:
-            print(
-                "NoncausalFilter error: upperstop (",
-                upperstop,
-                ") must be >= upperpass (",
-                upperpass,
-                ")",
-            )
-            sys.exit()
-        if (lowerpass > upperpass) and (upperpass >= 0.0):
-            print(
-                "NoncausalFilter error: lowerpass (",
-                lowerpass,
-                ") must be < upperpass (",
-                upperpass,
-                ")",
-            )
-            sys.exit()
-        self.arb_lowerstop = 1.0 * lowerstop
-        self.arb_lowerpass = 1.0 * lowerpass
-        self.arb_upperpass = 1.0 * upperpass
-        self.arb_upperstop = 1.0 * upperstop
-        self.lowerstop = 1.0 * self.arb_lowerstop
-        self.lowerpass = 1.0 * self.arb_lowerpass
-        self.upperpass = 1.0 * self.arb_upperpass
-        self.upperstop = 1.0 * self.arb_upperstop
-
-    def getfreqs(self):
-        """
-        Return frequency boundaries for filter design.
-
-        Returns
-        -------
-        tuple
-            A tuple containing four frequency values in the order:
-            (lowerstop, lowerpass, upperpass, upperstop)
-
-        Notes
-        -----
-        This function returns the frequency boundaries used for filter design specifications.
-        The values represent:
-        - lowerstop: Lower stopband frequency
-        - lowerpass: Lower passband frequency
-        - upperpass: Upper passband frequency
-        - upperstop: Upper stopband frequency
-
-        Examples
-        --------
-        >>> filter_obj = FilterDesign()
-        >>> freqs = filter_obj.getfreqs()
-        >>> print(freqs)
-        (100, 200, 300, 400)
-        """
-        return self.lowerstop, self.lowerpass, self.upperpass, self.upperstop
-
-    def apply(self, Fs, data):
-        """
-        Apply the filter to a dataset.
-
-        Parameters
-        ----------
-        Fs : float
-            Sample frequency (Hz) of the input data.
-        data : 1D float array
-            The data to be filtered.
-
-        Returns
-        -------
-        filtereddata : 1D float array
-            The filtered data with the same shape as the input `data`.
-
-        Notes
-        -----
-        This function applies a filter based on the `filtertype` attribute of the object.
-        It performs bounds checking and handles various error conditions, including cases
-        where filter frequencies exceed the Nyquist limit or fall below the minimum
-        resolvable frequency. If `correctfreq` is True, invalid frequencies are adjusted
-        to valid values instead of raising an error.
-
-        The function supports multiple predefined filter types such as 'vlf', 'lfo',
-        'cardiac', 'hrv_*' and custom 'arb' types. For stopband filters (e.g., 'vlf_stop'),
-        the result is the difference between the input and the filtered signal.
-
-        Examples
-        --------
-        >>> filtered_data = filter_instance.apply(100.0, data)
-        >>> filtered_data = filter_instance.apply(256.0, data)
-        """
-        # if filterband is None, just return the data
-        if self.filtertype == "None":
-            return data
-
-        # do some bounds checking
-        nyquistlimit = 0.5 * Fs
-        lowestfreq = 2.0 * Fs / np.shape(data)[0]
-
-        # first see if entire range is out of bounds
-        if self.lowerpass >= nyquistlimit:
-            print(
-                "NoncausalFilter error: filter lower pass ",
-                self.lowerpass,
-                " exceeds nyquist frequency ",
-                nyquistlimit,
-            )
-            sys.exit()
-        if self.lowerstop >= nyquistlimit:
-            print(
-                "NoncausalFilter error: filter lower stop ",
-                self.lowerstop,
-                " exceeds nyquist frequency ",
-                nyquistlimit,
-            )
-            sys.exit()
-        if -1.0 < self.upperpass <= lowestfreq:
-            print(
-                "NoncausalFilter error: filter upper pass ",
-                self.upperpass,
-                " is below minimum frequency ",
-                lowestfreq,
-            )
-            sys.exit()
-        if -1.0 < self.upperstop <= lowestfreq:
-            print(
-                "NoncausalFilter error: filter upper stop ",
-                self.upperstop,
-                " is below minimum frequency ",
-                lowestfreq,
-            )
-            sys.exit()
-
-        # now look for fixable errors
-        if self.upperpass >= nyquistlimit:
-            if self.correctfreq:
-                self.upperpass = nyquistlimit
-            else:
-                print(
-                    "NoncausalFilter error: filter upper pass ",
-                    self.upperpass,
-                    " exceeds nyquist frequency ",
-                    nyquistlimit,
-                )
-                sys.exit()
-        if self.upperstop > nyquistlimit:
-            if self.correctfreq:
-                self.upperstop = nyquistlimit
-            else:
-                print(
-                    "NoncausalFilter error: filter upper stop ",
-                    self.upperstop,
-                    " exceeds nyquist frequency ",
-                    nyquistlimit,
-                )
-                sys.exit()
-        if self.lowerpass < lowestfreq:
-            if self.correctfreq:
-                self.lowerpass = lowestfreq
-            else:
-                print(
-                    "NoncausalFilter error: filter lower pass ",
-                    self.lowerpass,
-                    " is below minimum frequency ",
-                    lowestfreq,
-                )
-                sys.exit()
-        if self.lowerstop < lowestfreq:
-            if self.correctfreq:
-                self.lowerstop = lowestfreq
-            else:
-                print(
-                    "NoncausalFilter error: filter lower stop ",
-                    self.lowerstop,
-                    " is below minimum frequency ",
-                    lowestfreq,
-                )
-                sys.exit()
-
-        if self.padtime < 0.0:
-            padlen = int(len(data) // 2)
-        else:
-            padlen = int(self.padtime * Fs)
-        if self.lowerpass <= 0.0:
-            avlen = 1
-        else:
-            avlen = np.min([int(Fs / self.lowerpass), padlen])
-        if self.debug:
-            print("Fs=", Fs)
-            print("lowerstop=", self.lowerstop)
-            print("lowerpass=", self.lowerpass)
-            print("upperpass=", self.upperpass)
-            print("upperstop=", self.upperstop)
-            print("butterworthorder=", self.butterworthorder)
-            print("padtime=", self.padtime)
-            print("padlen=", padlen)
-            print("avlen=", avlen)
-            print("padtype=", self.padtype)
-
-        # now do the actual filtering
-        if self.filtertype == "None":
-            return data
-        elif self.filtertype == "ringstop":
-            return arb_pass(
-                Fs,
-                data,
-                0.0,
-                0.0,
-                Fs / 4.0,
-                1.1 * Fs / 4.0,
-                transferfunc=self.transferfunc,
-                butterorder=self.butterworthorder,
-                padlen=padlen,
-                padtype=self.padtype,
-                debug=self.debug,
-            )
-        elif (
-            self.filtertype == "vlf"
-            or self.filtertype == "lfo"
-            or self.filtertype == "lfo_legacy"
-            or self.filtertype == "lfo_tight"
-            or self.filtertype == "resp"
-            or self.filtertype == "cardiac"
-            or self.filtertype == "hrv_ulf"
-            or self.filtertype == "hrv_vlf"
-            or self.filtertype == "hrv_lf"
-            or self.filtertype == "hrv_hf"
-            or self.filtertype == "hrv_vhf"
-        ):
-            return arb_pass(
-                Fs,
-                data,
-                self.lowerstop,
-                self.lowerpass,
-                self.upperpass,
-                self.upperstop,
-                transferfunc=self.transferfunc,
-                butterorder=self.butterworthorder,
-                padlen=padlen,
-                avlen=avlen,
-                padtype=self.padtype,
-                debug=self.debug,
-            )
-        elif (
-            self.filtertype == "vlf_stop"
-            or self.filtertype == "lfo_stop"
-            or self.filtertype == "lfo_legacy_stop"
-            or self.filtertype == "lfo_tight_stop"
-            or self.filtertype == "resp_stop"
-            or self.filtertype == "cardiac_stop"
-            or self.filtertype == "hrv_ulf_stop"
-            or self.filtertype == "hrv_vlf_stop"
-            or self.filtertype == "hrv_lf_stop"
-            or self.filtertype == "hrv_hf_stop"
-            or self.filtertype == "hrv_vhf_stop"
-        ):
-            return data - arb_pass(
-                Fs,
-                data,
-                self.lowerstop,
-                self.lowerpass,
-                self.upperpass,
-                self.upperstop,
-                transferfunc=self.transferfunc,
-                butterorder=self.butterworthorder,
-                padlen=padlen,
-                avlen=avlen,
-                padtype=self.padtype,
-                debug=self.debug,
-            )
-        elif self.filtertype == "arb":
-            return arb_pass(
-                Fs,
-                data,
-                self.arb_lowerstop,
-                self.arb_lowerpass,
-                self.arb_upperpass,
-                self.arb_upperstop,
-                transferfunc=self.transferfunc,
-                butterorder=self.butterworthorder,
-                padlen=padlen,
-                avlen=avlen,
-                padtype=self.padtype,
-                debug=self.debug,
-            )
-        elif self.filtertype == "arb_stop":
-            return data - arb_pass(
-                Fs,
-                data,
-                self.arb_lowerstop,
-                self.arb_lowerpass,
-                self.arb_upperpass,
-                self.arb_upperstop,
-                transferfunc=self.transferfunc,
-                butterorder=self.butterworthorder,
-                padlen=padlen,
-                avlen=avlen,
-                padtype=self.padtype,
-                debug=self.debug,
-            )
-        else:
-            print(f"bad filter type: {self.filtertype}")
-            sys.exit()
 
 
 # --------------------------- FFT helper functions ---------------------------------------------
