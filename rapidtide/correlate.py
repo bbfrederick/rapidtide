@@ -1151,7 +1151,7 @@ class AliasedCorrelator:
         """
         if debug:
             print(offset, self.numsteps)
-        osvec = self.hiressignal * 0.0
+        osvec = np.zeros_like(self.hiressignal)
         osvec[offset :: self.numsteps] = loressignal[:]
         corrfunc = fastcorrelate(
             tide_math.corrnormalize(osvec), self.hiressignal

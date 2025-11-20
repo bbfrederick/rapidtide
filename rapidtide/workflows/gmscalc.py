@@ -279,7 +279,7 @@ def gmscalc_main() -> None:
             sys.exit()
         print("done reading in mask array")
     else:
-        datamask_data = datafile_data[:, :, :, 0] * 0.0 + 1.0
+        datamask_data = np.ones_like(datafile_data[:, :, :, 0])
 
     # now reformat from x, y, z, time to voxelnumber, measurement, subject
     numvoxels = int(xsize) * int(ysize) * int(numslices)

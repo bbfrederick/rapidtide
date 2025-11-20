@@ -198,7 +198,7 @@ def eval_refinedelay(
         debug=debug,
     )
 
-    delayoffset = filteredregressderivratios * 0.0
+    delayoffset = np.zeros_like(filteredregressderivratios)
     for i in range(filteredregressderivratios.shape[0]):
         delayoffset[i], closestoffset = tide_refinedelay.ratiotodelay(
             filteredregressderivratios[i]

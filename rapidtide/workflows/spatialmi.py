@@ -575,7 +575,7 @@ def spatialmi(args: Any) -> None:
     totalmask = mask1_data * mask2_data
     print(f"totalmask.shape = {totalmask.shape}")
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims1)
-    outputdata = image1 * 0
+    outputdata = np.zeros_like(image1)
 
     # spatial filter if desired
     if args.sigma is not None:

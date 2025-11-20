@@ -645,7 +645,7 @@ def prenorm(
     elif refineprenorm == "invlag":
         thedivisor = np.where(np.fabs(lagtimes) < lagmaxthresh, lagmaxthresh - lagtimes, 0.0)
     else:
-        thedivisor = shiftedtcs[:, 0] * 0.0 + 1.0
+        thedivisor = np.ones_like(shiftedtcs[:, 0])
 
     normfac = np.where(thedivisor != 0.0, 1.0 / thedivisor, 0.0)
 

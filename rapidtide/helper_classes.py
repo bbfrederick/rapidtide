@@ -80,7 +80,7 @@ class fMRIDataset:
         >>> obj = MyClass(data_array, copydata=True, numskip=5)
         """
         if zerodata:
-            self.thedata = thedata * 0.0
+            self.thedata = np.zeros_like(thedata)
         else:
             if copydata:
                 self.thedata = thedata + 0.0

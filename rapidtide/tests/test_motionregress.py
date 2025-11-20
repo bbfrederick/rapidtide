@@ -130,7 +130,7 @@ def test_motionregress(debug=False, displayplots=False):
 
                 thedataarray = makedataarray(motionregressors)
                 numprocitems = thedataarray.shape[0]
-                filtereddata = thedataarray * 0.0
+                filtereddata = np.zeros_like(thedataarray)
                 r2value = np.zeros(numprocitems)
                 dummy = tide_linfitfiltpass.linfitfiltpass(
                     numprocitems,

@@ -164,7 +164,7 @@ def calcASL(
     >>> mask = np.array([1, 1, 1])
     >>> result = calcASL(lags, strengths, None, mask)
     """
-    theaslimage = lags * 0.0
+    theaslimage = np.zeros_like(lags)
 
     # convert rapidtide delays to time from tagging, and only keep positive delays after pld
     offsets = lags + tagoffset
@@ -172,7 +172,7 @@ def calcASL(
 
     for imtime in np.linspace(pld, pld + TI, num=50, endpoint=True):
         tagdecayfac = np.exp(-(offsets + imtime) / bloodT1) * calcmask
-        oxyfac = strengths * 0.0 + 1.0
+        oxyfac = np.ones_like(strengths)
         cbvfac = np.fabs(strengths) * oxyfac
         theaslimage += tagdecayfac * cbvfac
     return theaslimage, tagdecayfac, oxyfac, cbvfac, calcmask, offsets

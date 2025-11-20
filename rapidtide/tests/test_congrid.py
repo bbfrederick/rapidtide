@@ -57,7 +57,7 @@ def test_congrid(debug=False, displayplots=False):
         binslist = [1.5, 2.0, 2.5, 3.0]
 
     for cycles in cyclist:
-        timecoursein = np.float64(sourceaxis * 0.0)
+        timecoursein = np.zeros_like(sourceaxis, np.float64)
         for i in range(len(sourceaxis)):
             timecoursein[i] = funcvalue2(sourceaxis[i], frequency=cycles)
 
@@ -103,7 +103,7 @@ def test_congrid(debug=False, displayplots=False):
 
                     griddeddata = np.where(weights > 0.0, griddeddata / weights, 0.0)
 
-                    target = np.float64(gridaxis * 0.0)
+                    target = np.zeros_like(gridaxis,np.float64)
                     for i in range(len(gridaxis)):
                         target[i] = funcvalue2(gridaxis[i], frequency=cycles)
 

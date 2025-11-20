@@ -764,7 +764,7 @@ def imagevariance(
     """
     if debug:
         print(f"IMAGEVARIANCE: {thedata.shape}, {thefilter}, {samplefreq}")
-    filteredim = thedata * 0.0
+    filteredim = np.zeros_like(thedata)
     if thefilter is not None:
         for thevoxel in range(thedata.shape[0]):
             filteredim[thevoxel, :] = thefilter.apply(samplefreq, thedata[thevoxel, :])

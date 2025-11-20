@@ -666,7 +666,7 @@ class MutualInformationator(SimilarityFunctionator):
         self.datavalid = True
 
         # make a dummy filtered baseline
-        self.filteredbaseline = self.thesimfunc * 0.0
+        self.filteredbaseline = np.zeros_like(self.thesimfunc)
 
         if trim:
             return (
@@ -874,7 +874,7 @@ class Correlator(SimilarityFunctionator):
         if self.baselinefilter is not None:
             self.filteredbaseline = self.baselinefilter.apply(self.Fs, self.thesimfunc)
         else:
-            self.filteredbaseline = self.thesimfunc * 0.0
+            self.filteredbaseline = np.zeros_like(self.thesimfunc)
 
         # find the global maximum value
         self.theglobalmax = np.argmax(self.thesimfunc)
@@ -2065,11 +2065,11 @@ class FrequencyTracker:
         >>> cleaned_signal = obj.clean(x, fs=1000.0, times=[0.1, 0.5], peakfreqs=[50.0, 100.0])
         """
         nyquistfreq = 0.5 * fs
-        y = x * 0.0
+        y = np.zeros_like(x)
         halfwidth = int(self.nperseg // 2)
         padx = np.concatenate([np.zeros(halfwidth), x, np.zeros(halfwidth)], axis=0)
         pady = np.concatenate([np.zeros(halfwidth), y, np.zeros(halfwidth)], axis=0)
-        padweight = padx * 0.0
+        padweight = np.zeros_like(padx)
         if self.debug:
             print(fs, len(times), len(peakfreqs))
         for i in range(0, len(times)):

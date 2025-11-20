@@ -127,7 +127,7 @@ def plethquality(waveform: Any, Fs: Any, S_windowsecs: float = 5.0, debug: bool 
     # calculate S_sqi over a sliding window.  Window size should be an odd number of points.
     S_windowpts = int(np.round(S_windowsecs * Fs, 0))
     S_windowpts += 1 - S_windowpts % 2
-    S_waveform = waveform * 0.0
+    S_waveform = np.zeros_like(waveform)
     if debug:
         print("S_windowsecs, S_windowpts:", S_windowsecs, S_windowpts)
     for i in range(0, len(waveform)):

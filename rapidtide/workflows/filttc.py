@@ -207,7 +207,7 @@ def filttc(args: Any) -> None:
     else:
         print("there are", numvecs, "timecourses")
     print("samplerate is", samplerate)
-    outvecs = invecs * 0.0
+    outvecs = np.zeros_like(invecs)
     for i in range(numvecs):
         if args.normfirst:
             outvecs[i, :] = thefilter.apply(

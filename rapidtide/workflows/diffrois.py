@@ -219,8 +219,8 @@ def diffrois(args: Any) -> None:
     numvox = numoutregions * numoutregions
     thediffs_rs = thediffs.reshape((numvox, numlabels))
     themask_rs = themask.reshape((numvox, numlabels))
-    themeandiffs_rs = thediffs_rs[:, 0] * 0.0
-    thestddiffs_rs = thediffs_rs[:, 0] * 0.0
+    themeandiffs_rs = np.zeros_like(thediffs_rs[:, 0])
+    thestddiffs_rs = np.zeros_like(thediffs_rs[:, 0])
     for idx in range(numvox):
         inputvec = thediffs_rs[idx, :]
         inputmask = themask_rs[idx, :]

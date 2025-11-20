@@ -93,7 +93,7 @@ def _procOneRegressionFitItem(
             coeffsign = -1.0
         else:
             coeffsign = 1.0
-        datatoremove = theevs[:, 0] * 0.0
+        datatoremove = np.zeros_like(theevs[:, 0])
         for j in range(theevs.shape[1]):
             datatoremove += (thefit[0, 1 + j] * theevs[:, j]).astype(rt_floattype)
         if np.any(fitcoeffs) != 0.0:
@@ -758,7 +758,7 @@ def confoundregress(
     print("start confound filtering")
 
     numprocitems = thedataarray.shape[0]
-    filtereddata = thedataarray * 0.0
+    filtereddata = np.zeros_like(thedataarray)
     r2value = np.zeros(numprocitems)
     numfiltered = linfitfiltpass(
         numprocitems,

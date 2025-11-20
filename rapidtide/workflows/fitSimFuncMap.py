@@ -250,7 +250,7 @@ def fitSimFunc(
                 "message3": "voxels",
             },
         )
-        mipeaks = lagtimes * 0.0
+        mipeaks = np.zeros_like(lagtimes)
         for i in range(numvalidspatiallocs):
             if len(thepeakdict[str(i)]) > 0:
                 mipeaks[i] = thepeakdict[str(i)][0][0]

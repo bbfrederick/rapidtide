@@ -512,9 +512,9 @@ def niftistats_main(calctype: str = "icc") -> None:
         print("done reading in mask array")
     else:
         if calctype == "icc":
-            datamask_data = datafile_data[:, :, :, 0] * 0.0 + 1.0
+            datamask_data = np.ones_like(datafile_data[:, :, :, 0])
         elif calctype == "ttest":
-            datamask_data = datafile_data[:, :, :, 0, 0] * 0.0 + 1.0
+            datamask_data = np.ones_like(datafile_data[:, :, :, 0, 0])
 
     # now reformat from x, y, z, time to voxelnumber, measurement, subject
     numvoxels = int(xsize) * int(ysize) * int(numslices)
@@ -621,7 +621,7 @@ def niftistats_main(calctype: str = "icc") -> None:
         )
         print(extraline)
 
-    outarray_in_vox = mask_in_vox * 0.0
+    outarray_in_vox = np.zeros_like(mask_in_vox)
 
     theheader = copy.deepcopy(datafile_hdr)
     theheader["dim"][0] = 3

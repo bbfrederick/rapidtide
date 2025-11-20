@@ -267,7 +267,7 @@ def fingerprint_main(
             thetemplatesizes,
         ) = tide_io.readfromnifti(thetemplatename)
     else:
-        thetemplate_data = atlas_data * 0.0
+        thetemplate_data = np.zeros_like(atlas_data)
         thetemplate_data[np.where(atlas_data > 0)] = 1.0
 
     if debug:
@@ -315,7 +315,7 @@ def fingerprint_main(
         extramask=extramaskname,
     )
 
-    theflatmask = themap_data.reshape((numspatiallocs)) * 0 + 1
+    theflatmask = np.ones_like(themap_data.reshape((numspatiallocs)))
     if includemask is not None:
         theflatmask = theflatmask * includemask.reshape((numspatiallocs))
     if excludemask is not None:

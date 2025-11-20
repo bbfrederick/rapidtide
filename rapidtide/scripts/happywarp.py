@@ -136,7 +136,7 @@ def filterintime(filelist, extractedfile, workdir, filtcycles, dumpinput=False):
     filterdata, filter_hdr = tide_io.niftimerge(
         filelist, filterinput, returndata=True, writetodisk=dumpinput
     )
-    outdata = filterdata * 0.0
+    outdata = np.zeros_like(filterdata)
     thedims = filterdata.shape
     print(thedims)
     numvoxels = thedims[0] * thedims[1] * thedims[2]

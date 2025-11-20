@@ -184,7 +184,7 @@ def flood3d(image: NDArray, newvalue: int) -> NDArray:
     >>> result = flood3d(image, 5)
     >>> print(result)
     """
-    filledim = image * 0
+    filledim = np.zeros_like(image)
     for slice in range(image.shape[2]):
         filledim[:, :, slice] = flood_fill(image[:, :, slice], (0, 0), newvalue, connectivity=1)
     return filledim
@@ -257,7 +257,7 @@ def growregion(
 
 
 def separateclusters(image: NDArray, sizethresh: int = 0, debug: bool = False) -> NDArray:
-    separatedclusters = image * 0
+    separatedclusters = np.zeros_like(image)
     stop = False
     value = 1
     while not stop:
@@ -656,7 +656,7 @@ def interppatch(
     >>> interpolated, boxes = interppatch(img, labels, method="linear")
     """
     interpolated = img_data + 0.0
-    justboxes = img_data * 0.0
+    justboxes = np.zeros_like(img_data)
     numregions = np.max(separatedimage)
     for region in range(1, numregions + 1):
         if debug:

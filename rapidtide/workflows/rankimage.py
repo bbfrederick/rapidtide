@@ -113,7 +113,7 @@ def imtopercentile(image: Any, mask: Any, debug: bool = False) -> None:
     >>> mask[0:5, :, :] = 0  # Mask out first 5 slices
     >>> result = imtopercentile(image, mask)
     """
-    outmaparray = image * 0.0
+    outmaparray = np.zeros_like(image)
     nativespaceshape = image.shape
     validvoxels = np.where(mask > 0)
     numvalidspatiallocs = np.shape(validvoxels[0])[0]
@@ -199,7 +199,7 @@ def rankimage(args: Any) -> None:
 
     if is4d:
         print("processing 4D nifti file")
-        percentiles = input_data * 0.0
+        percentiles = np.zeros_like(input_data)
         for i in range(timepoints):
             percentiles[:, :, :, i] = imtopercentile(
                 input_data[:, :, :, i], mask_data[:, :, :, i], debug=args.debug

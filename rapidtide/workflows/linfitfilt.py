@@ -191,7 +191,7 @@ def linfitfilt(
             sys.exit()
         print("done reading in mask array")
     else:
-        datamask_data = nim_data[:, :, :, 0] * 0.0 + 1.0
+        datamask_data = np.ones_like(nim_data[:, :, :, 0])
 
     numregressors = 0
     for i in range(0, len(evfilename)):

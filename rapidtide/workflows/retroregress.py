@@ -617,7 +617,7 @@ def retroregress(args: Any) -> None:
     if args.sLFOfiltmask:
         sLFOfiltmask_valid = corrmask_spacebytime[validvoxels] + 0.0
     else:
-        sLFOfiltmask_valid = corrmask_spacebytime[validvoxels] * 0.0 + 1.0
+        sLFOfiltmask_valid = np.ones_like(corrmask_spacebytime[validvoxels])
     if args.debug:
         print(f"{fmri_data_valid.shape=}")
 
@@ -840,7 +840,7 @@ def retroregress(args: Any) -> None:
         finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
 
         divlocs = np.where(finalvariance > 0.0)
-        varchange = initialvariance * 0.0
+        varchange = np.zeros_like(initialvariance)
         varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
 
         # calculate the voxelwise mean of the filtered data

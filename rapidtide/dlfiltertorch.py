@@ -1107,12 +1107,12 @@ class DeepLearningFilter:
         """
         initscale = mad(inputdata)
         scaleddata = inputdata / initscale
-        predicteddata = scaleddata * 0.0
-        weightarray = scaleddata * 0.0
+        predicteddata = np.zeros_like(scaleddata)
+        weightarray = np.zeros_like(scaleddata)
         N_pts = len(scaleddata)
         if self.usebadpts:
             if badpts is None:
-                badpts = scaleddata * 0.0
+                badpts = np.zeros_like(scaleddata)
             X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 2))
             for i in range(X.shape[0]):
                 X[i, :, 0] = scaleddata[i : i + self.window_size]

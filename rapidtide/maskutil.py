@@ -513,7 +513,7 @@ def getregionsignal(
     (50,)
     """
     # Start with all voxels
-    themask = indata[:, 0] * 0 + 1
+    themask = np.ones_like(indata[:, 0])
 
     # modify the mask if needed
     if includemask is not None:

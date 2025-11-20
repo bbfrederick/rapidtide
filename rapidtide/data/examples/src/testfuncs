@@ -31,8 +31,8 @@ def test_funcs(displayplots=False, debug=False):
     loc = 5.0
     baseline = 0.0
 
-    gaussvals = xvals * 0.0
-    sincvals = xvals * 0.0
+    gaussvals = np.zeros_like(xvals)
+    sincvals = np.zeros_like(xvals)
 
     for i in range(len(xvals)):
         gaussvals[i] = tide_fit.gaussfunc(xvals[i], height, loc, width)

@@ -283,7 +283,7 @@ def coherencepass(
     packfunc = _packvoxeldata
     unpackfunc = _unpackvoxeldata
     voxeltargets = [coherencefunc, coherencepeakval, coherencepeakfreq]
-    voxelmask = fmridata[:, 0] * 0.0 + 1
+    voxelmask = np.ones_like(fmridata[:, 0])
 
     volumetotal = tide_genericmultiproc.run_multiproc(
         voxelfunc,

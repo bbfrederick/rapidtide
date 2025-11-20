@@ -42,7 +42,7 @@ def maketestwaves(timeaxis):
         }
     )
 
-    scratch = timeaxis * 0.0
+    scratch = np.zeros_like(timeaxis)
     scratch[int(tclen / 5) : int(2 * tclen / 5)] = 1.0
     scratch[int(3 * tclen / 5) : int(4 * tclen / 5)] = 1.0
     testwaves.append(
@@ -53,7 +53,7 @@ def maketestwaves(timeaxis):
         }
     )
 
-    scratch = timeaxis * 0.0
+    scratch = np.zeros_like(timeaxis)
     scratch[int(tclen / 2) :] = 1.0
     testwaves.append(
         {

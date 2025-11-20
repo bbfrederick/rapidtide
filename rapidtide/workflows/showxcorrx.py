@@ -779,7 +779,7 @@ def showxcorrx(args: Any) -> None:
         print("\n\nmaxdelay before refinement", maxdelay)
 
     timeaxis = np.linspace(0, 1.0, num=len(trimdata1), endpoint=False) / args.samplerate
-    thetc = trimdata1 * 0.0
+    thetc = np.zeros_like(trimdata1)
 
     if args.similaritymetric == "hybrid" or args.similaritymetric == "correlation":
         peakstartind = tide_util.valtoindex(xcorr_x, args.lagmin, discretization="floor")

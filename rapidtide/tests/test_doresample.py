@@ -32,7 +32,7 @@ def test_doresample(debug=False):
     shiftdist = 30
     timeaxis = np.arange(0.0, 1.0 * testlen) * tr
     # timecoursein = np.zeros((testlen), dtype='float64')
-    timecoursein = np.float64(timeaxis * 0.0)
+    timecoursein = np.zeros_like(timeaxis, np.float64)
     midpoint = int(testlen // 2) + 1
     timecoursein[midpoint - 1] = np.float64(1.0)
     timecoursein[midpoint] = np.float64(1.0)

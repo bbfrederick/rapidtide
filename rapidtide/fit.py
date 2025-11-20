@@ -1107,10 +1107,10 @@ def territorydecomp(
 
     if nummaps > 1:
         if inputmask is None:
-            inputmask = inputmap[:, :, :, 0] * 0.0 + 1.0
+            inputmask = np.ones_like(inputmap[:, :, :, 0])
     else:
         if inputmask is None:
-            inputmask = inputmap * 0.0 + 1.0
+            inputmask = np.ones_like(inputmap)
 
     tempmask = np.where(inputmask > 0.0, 1, 0)
     maskdims = len(tempmask.shape)
@@ -1119,7 +1119,7 @@ def territorydecomp(
     else:
         nummasks = 1
 
-    fitmap = inputmap * 0.0
+    fitmap = np.zeros_like(inputmap)
 
     if intercept:
         thecoffs = np.zeros((nummaps, np.max(atlas), fitorder + 1))
@@ -1241,10 +1241,10 @@ def territorystats(
 
     if nummaps > 1:
         if inputmask is None:
-            inputmask = inputmap[:, :, :, 0] * 0.0 + 1.0
+            inputmask = np.ones_like(inputmap[:, :, :, 0])
     else:
         if inputmask is None:
-            inputmask = inputmap * 0.0 + 1.0
+            inputmask = np.ones_like(inputmap)
 
     tempmask = np.where(inputmask > 0.0, 1, 0)
     maskdims = len(tempmask.shape)
@@ -1253,7 +1253,7 @@ def territorystats(
     else:
         nummasks = 1
 
-    statsmap = inputmap * 0.0
+    statsmap = np.zeros_like(inputmap)
 
     themeans = np.zeros((nummaps, np.max(atlas)))
     thestds = np.zeros((nummaps, np.max(atlas)))
@@ -2324,7 +2324,7 @@ def mlproject(thefit: NDArray, theevs: list, intercept: bool) -> NDArray:
     [ 9. 14. 19.]
     """
 
-    thedest = theevs[0] * 0.0
+    thedest = np.zeros_like(theevs[0])
     if intercept:
         thedest[:] = thefit[0]
         startpt = 1
@@ -2818,7 +2818,7 @@ def linfitfilt(
         print(f"{thefit=}")
         print(f"{R2=}")
         print(f"{retcoffs.shape=}")
-    datatoremove = thedata * 0.0
+    datatoremove = np.zeros_like(thedata)
 
     if theevs.ndim > 1:
         for ev in range(1, thefit.shape[1]):
@@ -2892,8 +2892,8 @@ def confoundregress(
         print("data shape:", data.shape)
         print("regressors shape:", regressors.shape)
     datatoremove = np.zeros(data.shape[1], dtype=rt_floattype)
-    filtereddata = data * 0.0
-    r2value = data[:, 0] * 0.0
+    filtereddata = np.zeros_like(data)
+    r2value = np.zeros_like(data[:, 0])
     for i in tqdm(
         range(data.shape[0]),
         desc="Voxel",
@@ -3300,9 +3300,9 @@ def ocscreetest(eigenvals: NDArray, debug: bool = False, displayplots: bool = Fa
     3
     """
     num = len(eigenvals)
-    a = eigenvals * 0.0
-    b = eigenvals * 0.0
-    prediction = eigenvals * 0.0
+    a = np.zeros_like(eigenvals)
+    b = np.zeros_like(eigenvals)
+    prediction = np.zeros_like(eigenvals)
     for i in range(num - 3, 1, -1):
         b[i] = (eigenvals[-1] - eigenvals[i + 1]) / (num - 1 - i - 1)
         a[i] = eigenvals[i + 1] - b[i + 1]

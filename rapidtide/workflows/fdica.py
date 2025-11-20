@@ -422,7 +422,7 @@ def fdica(
     # remove mean and linear component
     phasemeans = np.zeros((numfitvoxels), dtype="float")
     phaseslopes = np.zeros((numfitvoxels), dtype="float")
-    detrendedphasedata = phasedata * 0.0
+    detrendedphasedata = np.zeros_like(phasedata)
     print(f"shape of detrendedphasedata: {detrendedphasedata.shape}")
     X = np.linspace(lowerbin * hzperpoint, upperbin * hzperpoint, trimmedsize)
     for i in range(numfitvoxels):

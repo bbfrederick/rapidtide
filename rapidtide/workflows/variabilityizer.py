@@ -115,7 +115,7 @@ def cvttovariability(windowhalfwidth: Any, data: Any) -> None:
     """
     themean = np.mean(data)
     if themean > 0.0:
-        thestd = data * 0.0
+        thestd = np.zeros_like(data)
         for i in range(windowhalfwidth):
             thestd[i] = np.std(data[: i + windowhalfwidth + 1])
             thestd[-(i + 1)] = np.std(data[-(i + 1) - windowhalfwidth :])

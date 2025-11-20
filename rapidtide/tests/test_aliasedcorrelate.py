@@ -62,7 +62,7 @@ def aliasedcorrelate(
     lowresaxis = np.arange(0.0, len(lowressignal)) * (1.0 / lowres_Fs) - lowresstarttime
     tcgenerator = tide_resample.FastResampler(highresaxis, hiressignal, padtime=padtime)
     targetsignal = tide_math.corrnormalize(lowressignal)
-    corrfunc = timerange * 0.0
+    corrfunc = np.zeros_like(timerange)
     for i in range(len(timerange)):
         aliasedhiressignal = tide_math.corrnormalize(tcgenerator.yfromx(lowresaxis + timerange[i]))
         corrfunc[i] = np.dot(aliasedhiressignal, targetsignal)
@@ -83,8 +83,8 @@ def test_aliasedcorrelate(displayplots=False):
     timerange = np.linspace(0.0, width, num=101) - width / 2.0
     hiaxis = np.linspace(0.0, 2.0 * np.pi * inlenhi / Fs_hi, num=inlenhi, endpoint=False)
     loaxis = np.linspace(0.0, 2.0 * np.pi * inlenlo / Fs_lo, num=inlenlo, endpoint=False)
-    sighi = hiaxis * 0.0
-    siglo = loaxis * 0.0
+    sighi = np.zeros_like(hiaxis)
+    siglo = np.zeros_like(loaxis)
     for theinfo in siginfo:
         sighi += theinfo[0] * np.sin(theinfo[1] * hiaxis)
         siglo += theinfo[0] * np.sin(theinfo[1] * loaxis)

@@ -38,7 +38,7 @@ def eval_filterprops(sampletime=0.72, tclengthinsecs=300.0, numruns=100, display
         tclen,
     )
     timeaxis = np.arange(0.0, 1.0 * tclen) * sampletime
-    values = timeaxis * 0.0
+    values = np.zeros_like(timeaxis)
     # sinseg(timeaxis, values, 50.0, 30.0, 0.1, 1.0)
     # sinseg(timeaxis, values, 150.0, 30.0, 0.2, 0.5)
     # sinseg(timeaxis, values, 100.0, 100.0, 0.15, 0.5)

@@ -914,7 +914,7 @@ def delayvar(args: Any) -> None:
     # now see if there are common timecourses in the delay offsets
     themean = np.mean(windoweddelayoffset, axis=1)
     thevar = np.var(windoweddelayoffset, axis=1)
-    scaledvoxels = windoweddelayoffset * 0.0
+    scaledvoxels = np.zeros_like(windoweddelayoffset)
     for vox in range(0, windoweddelayoffset.shape[0]):
         scaledvoxels[vox, :] = windoweddelayoffset[vox, :] - themean[vox]
         if thevar[vox] > 0.0:

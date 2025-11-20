@@ -231,7 +231,7 @@ def eval_filterprops(sampletime=0.50, tclengthinsecs=300.0, numruns=100, display
         assert response["upperstopmax"] < 1e4
         assert response["upperstopmean"] < 1e4
 
-    scratch = timeaxis * 0.0
+    scratch = np.zeros_like(timeaxis)
     scratch[int(tclen / 5) : int(2 * tclen / 5)] = 1.0
     scratch[int(3 * tclen / 5) : int(4 * tclen / 5)] = 1.0
     testwaves.append(

@@ -179,7 +179,7 @@ def summarize4Dbylabel(
         if thevoxels.shape[1] > 0:
             regiontimecourse = np.nan_to_num(np.mean(thevoxels, axis=0))
         else:
-            regiontimecourse = timecourses[0, :] * 0.0
+            regiontimecourse = np.zeros_like(timecourses[0, :])
         if debug:
             print("thevoxels, data shape are:", thevoxels.shape, regiontimecourse.shape)
         timecourses[theregion - 1, :] = tide_math.normalize(regiontimecourse, method=normmethod)

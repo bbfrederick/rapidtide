@@ -410,7 +410,7 @@ def histnifti(args: Any) -> None:
         if args.transform:
             thehist, bins = np.histogram(validdata, bins=thehistlen, range=(histmin, histmax))
             npbins = np.asarray(bins[:-1], dtype=float) + (bins[1] - bins[0]) / 2.0
-            transformeddataasmatrix = dataasmatrix * 0.0
+            transformeddataasmatrix = np.zeros_like(dataasmatrix)
             for thevoxel in validvoxels:
                 transformeddataasmatrix[thevoxel] = (
                     100.0 * tide_util.valtoindex(npbins, dataasmatrix[thevoxel]) / len(npbins)

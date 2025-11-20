@@ -57,7 +57,7 @@ def makedivisible(number, highestfac, debug=False):
 def undecimate(inputarray, factor, outlen):
     inlen = inputarray.shape[0]
     outputarray = np.zeros(outlen, dtype=np.float64)
-    weights = outputarray * 0.0
+    weights = np.zeros_like(outputarray)
     centerloc = int(outlen // 2)
     resampwidth = inlen * (factor + 1)
     xin = np.linspace(-1.0, 1.0, num=inlen, endpoint=True)

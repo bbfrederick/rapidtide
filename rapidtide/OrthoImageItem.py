@@ -1547,7 +1547,7 @@ class OrthoImageItem(QtWidgets.QWidget):
         ) = newColorbar(0, 0, maximpervox, maximpervox, maxdim)
         cbim = self.applyLUT(
             colorbarvals,
-            (colorbarvals * 0 + 1).astype("int"),
+            np.ones_like(colorbarvals, "int"),
             self.map.theLUT,
             0.0,
             1.0,
