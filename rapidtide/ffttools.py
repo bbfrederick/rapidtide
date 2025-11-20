@@ -18,6 +18,7 @@
 #
 import warnings
 
+import numpy as np
 from scipy import fftpack
 
 with warnings.catch_warnings():
@@ -32,6 +33,7 @@ with warnings.catch_warnings():
 if pyfftwpresent:
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
+
 
 def primefacs(thelen: int) -> list:
     """
@@ -80,7 +82,11 @@ def primefacs(thelen: int) -> list:
 
 
 lencache: dict = {}
-def optfftlen(thelen: int, padlen: int = 0, debug: bool = False) -> int:
+
+
+def optfftlen(
+    thelen: np.uint64, padlen: np.uint64 = 0, _depth: int = 0, debug: bool = False
+) -> np.uint64:
     """
     Calculate optimal FFT length for given input length.
 
@@ -96,6 +102,8 @@ def optfftlen(thelen: int, padlen: int = 0, debug: bool = False) -> int:
     padlen : optional, int
         Number of points the data is symmetrically padded with.  Ensure that
         the optimal length accounts for symmetric padding.  Default is 0.
+    _depth: optional, int
+         How deep we are in the recursion
     debug :optional, bool
         Print out detailed information about how the length is calculated.  Default is False.
 
@@ -121,7 +129,9 @@ def optfftlen(thelen: int, padlen: int = 0, debug: bool = False) -> int:
     """
     cachekey = f"{thelen}_{padlen}"
     if debug:
-        print(f"entering optfftlen with {thelen=}, {padlen=}, {cachekey=} totallen={thelen + 2 * padlen}")
+        print(
+            f"entering optfftlen with {thelen=}, {padlen=}, {_depth=}, {cachekey=} totallen={thelen + 2 * padlen}"
+        )
     if pyfftwpresent:
         try:
             thelen = lencache[cachekey]
@@ -131,17 +141,28 @@ def optfftlen(thelen: int, padlen: int = 0, debug: bool = False) -> int:
             if padlen == 0:
                 thelen = pyfftw.interfaces.scipy_fft.next_fast_len(thelen)
             else:
+                startlen = thelen
                 optpadded = pyfftw.interfaces.scipy_fft.next_fast_len(thelen + 2 * padlen)
                 if debug:
                     print(f"{optpadded=}")
                 if (optpadded - thelen) % 2 == 0:
                     thelen = optpadded
                 else:
-                    thelen = optfftlen(thelen, padlen=(padlen + 1))
+                    # we get here if the optimal value - the initial value is not divisible by 2
+                    # so we need to start one greater than that and and go to the next highest value.
+                    if _depth < 500:
+                        newpadlen = int((optpadded + 1 - startlen) // 2)
+                        thelen = optfftlen(
+                            thelen, padlen=newpadlen, _depth=(_depth + 1)
+                        )
+                    else:
+                        thelen = initval
+
     lencache[cachekey] = thelen
     if debug:
         print(f"optfftlen returning {thelen=}")
     return thelen
+
 
 def showfftcache() -> None:
     print("FFT length cache entries:")

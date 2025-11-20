@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 
+from rapidtide.ffttools import showfftcache
 from rapidtide.filter import NoncausalFilter
 
 
@@ -296,6 +297,10 @@ def test_filterprops(displayplots=False, debug=False):
     eval_filterprops(
         sampletime=0.1, tclengthinsecs=30000.0, numruns=10, displayplots=displayplots, debug=debug
     )
+    eval_filterprops(
+        sampletime=0.1, tclengthinsecs=30000.1, numruns=10, displayplots=displayplots, debug=debug
+    )
+    showfftcache()
 
 
 if __name__ == "__main__":
