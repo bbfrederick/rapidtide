@@ -27,7 +27,6 @@ from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from derivdelay.filter import NoncausalFilter
 from numpy.typing import NDArray
 
 from rapidtide.decorators import conditionaljit, conditionaljit2
