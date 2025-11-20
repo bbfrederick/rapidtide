@@ -420,7 +420,7 @@ def atlasaverage(args: Any) -> None:
         numvoxels,
         extramask=args.extramaskname,
     )
-    themask = inputvoxels[:, 0] * 0 + 1
+    themask = np.ones_like(inputvoxels[:, 0])
     if args.debug:
         print(f"{themask.shape=}")
     if includemask is not None:
@@ -502,7 +502,7 @@ def atlasaverage(args: Any) -> None:
             theregionvoxels -= themeans[:, None]
 
             if args.normmethod == "none":
-                thenormfac = themeans * 0.0 + 1.0
+                thenormfac = np.ones_like(themeans)
             elif args.normmethod == "pct":
                 thenormfac = themeans
             elif args.normmethod == "var":
@@ -535,14 +535,14 @@ def atlasaverage(args: Any) -> None:
         )
     else:
         print("processing 3D input file")
-        outputvoxels = inputvoxels * 0.0
+        outputvoxels = np.zeros_like(inputvoxels)
         thereglabels = []
         thevals = []
         thepercentiles = []
         theregsizes = []
         thefracs = np.linspace(0.0, 1.0, args.numpercentiles + 2, endpoint=True).tolist()
         numsubregions = len(thefracs) - 1
-        segmentedatlasvoxels = inputvoxels * 0.0
+        segmentedatlasvoxels = np.zeros_like(inputvoxels)
         if args.debug:
             print(f"{len(regionlist)=}, {regionlist=}")
             print(f"{len(regionlabels)=}, {regionlabels=}")
@@ -594,7 +594,7 @@ def atlasaverage(args: Any) -> None:
                     print(f"\tregion {theregion} is empty")
                 thevals.append("None")
             for thesubregion in range(numsubregions):
-                scratchvoxels = inputvoxels * 0.0
+                scratchvoxels = np.zeros_like(inputvoxels)
                 subregionkey = 1 + (theregion - 1) * numsubregions + thesubregion
                 lowerlim = float(regionpercentiles[thesubregion])
                 upperlim = float(regionpercentiles[thesubregion + 1])

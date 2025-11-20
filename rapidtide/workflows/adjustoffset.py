@@ -311,7 +311,7 @@ def adjustoffset(args: Any) -> None:
     )
 
     theflatmap = themap_data.reshape((numspatiallocs))
-    theflatmask = theflatmap * 0 + 1
+    theflatmask = np.ones_like(theflatmap)
     if includemask is not None:
         theflatmask = theflatmask * includemask.reshape((numspatiallocs))
     if excludemask is not None:

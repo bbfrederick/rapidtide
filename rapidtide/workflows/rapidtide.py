@@ -691,7 +691,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     else:
         # check to see if the data has been demeaned
         if theinputdata.filetype != "nifti":
-            corrmask = np.uint(theinputdata.byvoxel()[:, 0] * 0 + 1)
+            corrmask = np.ones_like(theinputdata.byvoxel()[:, 0], np.uint)
         else:
             if not optiondict["dataiszeromean"]:
                 LGR.verbose("generating correlation mask from mean image")
@@ -1334,7 +1334,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             optiondict["tincludemaskname"], reference_x, reference_y.astype(rt_floattype) + 0.0
         )
     else:
-        includetmask_y = (reference_x * 0.0) + 1.0
+        includetmask_y = np.ones_like(reference_x)
     if optiondict["texcludemaskname"] is not None:
         print("creating temporal exclude mask")
         excludetmask_y = (
@@ -1345,7 +1345,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             + 1.0
         )
     else:
-        excludetmask_y = (reference_x * 0.0) + 1.0
+        excludetmask_y = np.ones_like(reference_x)
     tmask_y = includetmask_y * excludetmask_y
     tmask_y = np.where(tmask_y == 0.0, 0.0, 1.0)
     if optiondict["debug"]:
@@ -2273,7 +2273,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             if optiondict["sLFOfiltmask"]:
                 sLFOfiltmask = fitmask + 0.0
             else:
-                sLFOfiltmask = fitmask * 0.0 + 1.0
+                sLFOfiltmask = np.ones_like(fitmask)
 
             optiondict["regressfiltthreshval"] = 0.0
 
@@ -2602,7 +2602,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         if optiondict["sLFOfiltmask"]:
             sLFOfiltmask = fitmask + 0.0
         else:
-            sLFOfiltmask = fitmask * 0.0 + 1.0
+            sLFOfiltmask = np.ones_like(fitmask)
         if optiondict["dolinfitfilt"]:
             if optiondict["refinedelay"]:
                 TimingLGR.info("Setting up for delay refinement and sLFO filtering")
@@ -2899,7 +2899,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             finalvariance = tide_math.imagevariance(filtereddata, theprefilter, 1.0 / fmritr)
 
             divlocs = np.where(finalvariance > 0.0)
-            varchange = initialvariance * 0.0
+            varchange = np.zeros_like(initialvariance)
             varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
 
             # calculate the voxelwise mean of the filtered data
@@ -3516,7 +3516,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             if sigfit is not None:
                 neglogpmax = np.log10(optiondict["numestreps"])
                 # generate a neglogp map
-                neglog10pmap = lagstrengths * 0.0
+                neglog10pmap = np.zeros_like(lagstrengths)
                 for voxel in range(neglog10pmap.shape[0]):
                     neglog10pmap[voxel] = tide_stats.neglog10pfromr(
                         lagstrengths[voxel],
