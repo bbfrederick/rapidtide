@@ -75,7 +75,7 @@ def _get_parser() -> Any:
     return parser
 
 
-def imtopercentile(image: Any, mask: Any, debug: bool = False) -> None:
+def imtopercentile(image: Any, mask: Any, debug: bool = False) -> NDArray:
     """
     Convert image values to percentile scores within masked region.
 
