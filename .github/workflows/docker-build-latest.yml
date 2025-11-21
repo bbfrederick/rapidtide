@@ -20,7 +20,7 @@ jobs:
           versionSpec: '6.x'
 
       - name: Install Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.head_ref }}   # checkout the correct branch name
           fetch-depth: 0
