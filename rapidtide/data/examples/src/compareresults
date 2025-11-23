@@ -1,0 +1,11 @@
+#!/bin/bash
+
+showtc \
+    ../dst/sub-HAPPYTEST_v3.0.11_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
+    ../dst/sub-HAPPYTEST_v3.1_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
+    ../dst/sub-HAPPYTEST_latest_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz 
+showtc \
+    ../dst/sub-HAPPYTEST_v3.0.11_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_dlfiltered_25.0Hz \
+    ../dst/sub-HAPPYTEST_v3.1_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_dlfiltered_25.0Hz \
+    ../dst/sub-HAPPYTEST_latest_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_dlfiltered_25.0Hz 
+#    --format separate
