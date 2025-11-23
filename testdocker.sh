@@ -3,7 +3,7 @@
 DATADIR=/Users/frederic/code/rapidtide
 
 MYIPADDRESS=$(ifconfig en0 | grep 'inet ' | awk '{print $2}')
-VERSION=latest-release
+VERSION=latest
 
 # allow network connections in Xquartz Security settings
 xhost +
@@ -42,27 +42,26 @@ docker pull fredericklab/rapidtide:${VERSION}
 #        --nodenoise
 
 
-#docker run \
-    #--rm \
-    #--ipc host \
-    #--mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
-    #-it \
-    #-v /tmp/.X11-unix:/tmp/.X11-unix \
-    #-u rapidtide fredericklab/rapidtide:${VERSION} \
-    #happy \
-        #/data/src/sub-HAPPYTEST.nii.gz \
-        #/data/src/sub-HAPPYTEST.json \
-        #/data/dst/sub-HAPPYTEST \
-        #--model model_revised_tf2 \
-        #--mklthreads -1 
-        #--nprocs -1 
-
-
 docker run \
-    --network host \
+    --rm \
+    --ipc host \
     --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
     -it \
-    -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide:${VERSION} \
-    tidepool --dataset /data/dst/sub-RAPIDTIDETEST_
+    happy \
+        /data/src/sub-HAPPYTEST.nii.gz \
+        /data/src/sub-HAPPYTEST.json \
+        /data/dst/sub-HAPPYTEST_${VERSION} \
+        --nprocs -1
+
+
+
+#docker run \
+#    --network host \
+#    --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
+#    -it \
+#    -e DISPLAY=${MYIPADDRESS}:0 \
+#    -v /tmp/.X11-unix:/tmp/.X11-unix \
+#    -u rapidtide fredericklab/rapidtide:${VERSION} \
+#    tidepool --dataset /data/dst/sub-RAPIDTIDETEST_
