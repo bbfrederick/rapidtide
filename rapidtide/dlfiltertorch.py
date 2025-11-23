@@ -1117,6 +1117,8 @@ class DeepLearningFilter:
             for i in range(X.shape[0]):
                 X[i, :, 0] = scaleddata[i : i + self.window_size]
                 X[i, :, 1] = badpts[i : i + self.window_size]
+                # zero out data in badpts regions
+                X[i, np.where(X[i, :, 1] != 0.0), 0] = 0.0
         else:
             X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 1))
             for i in range(X.shape[0]):
@@ -4198,7 +4200,7 @@ def getmatchedtcs(
         columnsource,
     ) = tide_io.readbidstsv(
         matchedfilelist[0],
-        colspec="cardiacfromfmri_25.0Hz,normpleth",
+        colspec="cardiacfromfmri_25.0Hz,normpleth,badpts",
     )
     print(f"{inputarray.shape=}")
     tclen = inputarray.shape[1]
@@ -4310,6 +4312,9 @@ def readindata(
         if infodict["corrcoeff_raw2pleth"] < corrthresh:
             lowcorrfound = True
             lowcorrfiles.append(matchedfilelist[i])
+        thecolspec = "cardiacfromfmri_25.0Hz,normpleth"
+        if usebadpts:
+            thecolspec = thecolspec + ",badpts"
         (
             samplerate,
             starttime,
@@ -4319,10 +4324,12 @@ def readindata(
             columnsource,
         ) = tide_io.readbidstsv(
             matchedfilelist[i],
-            colspec="cardiacfromfmri_25.0Hz,normpleth",
+            colspec=thecolspec,
         )
         tempy = inputarray[1, :]
         tempx = inputarray[0, :]
+        if usebadpts:
+            tempbad1 = inputarray[2, :]
 
         if np.any(np.isnan(tempy)):
             LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
@@ -4375,7 +4382,7 @@ def readindata(
             if debug:
                 print(f"{matchedfilelist[i]} included:")
             if usebadpts:
-                bad1[:tclen, count] = inputarray[2, :]
+                bad1[:tclen, count] = tempx[:tclen]
             count += 1
         else:
             print(f"{matchedfilelist[i]} excluded:")
