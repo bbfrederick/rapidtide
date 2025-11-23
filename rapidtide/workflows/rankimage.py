@@ -117,7 +117,7 @@ def imtopercentile(image: Any, mask: Any, debug: bool = False) -> NDArray:
     nativespaceshape = image.shape
     validvoxels = np.where(mask > 0)
     numvalidspatiallocs = np.shape(validvoxels[0])[0]
-    input_data_valid = image[validvoxels] + 0.0
+    input_data_valid = image[validvoxels].copy()
 
     if debug:
         print(
