@@ -739,6 +739,7 @@ class DeepLearningFilter:
             print(self.infodict)
         self.window_size = self.infodict["window_size"]
         self.usebadpts = self.infodict["usebadpts"]
+        self.dofft = self.infodict["dofft"]
 
         # Load the model as a dict
         checkpoint = torch.load(
@@ -1237,7 +1238,7 @@ class CNNModel(nn.Module):
                 self.layers.append(nn.ReLU())
 
         # Output layer
-        self.layers.append(nn.Conv1d(num_filters, inputsize, kernel_size, padding="same"))
+        self.layers.append(nn.Conv1d(num_filters, 1, kernel_size, padding="same"))
 
     def forward(self, x):
         """
@@ -1447,6 +1448,8 @@ class CNNDLFilter(DeepLearningFilter):
         )
         if self.usebadpts:
             self.modelname += "_usebadpts"
+        if self.dofft:
+            self.modelname += "_dofft"
         if self.excludebysubject:
             self.modelname += "_excludebysubject"
         if self.namesuffix is not None:
@@ -4172,7 +4175,7 @@ def getmatchedtcs(
     >>> matched_files, tc_length = getmatchedtcs("data/*cardiac*.tsv")
     >>> print(f"Found {len(matched_files)} files with {tc_length} timepoints")
     """
-    # list all of the target files
+    # list all the target files
     fromfile = sorted(glob.glob(searchstring))
     if debug:
         print(f"searchstring: {searchstring} -> {fromfile}")
@@ -4295,6 +4298,7 @@ def readindata(
 
     # now read the data in
     count = 0
+    badcount = 0
     LGR.info("checking data")
     lowcorrfiles = []
     nanfiles = []
@@ -4386,6 +4390,7 @@ def readindata(
             count += 1
         else:
             print(f"{matchedfilelist[i]} excluded:")
+            badcount += 1
             if ntempx < tclen:
                 print("\tx data too short")
             if ntempy < tclen:
@@ -4413,6 +4418,7 @@ def readindata(
             LGR.info(f"\t{thefile}")
 
     print(f"training set contains {count} runs of length {tclen}")
+    print(f"{badcount} runs were excluded")
     if usebadpts:
         return (
             x1[startskip:-endskip, :count],
@@ -4665,26 +4671,27 @@ def prep(
             LGR.info(f"{names[subj]} starts at {subjectstarts[subj]}")
 
         LGR.info("copying data into windows")
-        Xb = np.zeros((numgoodwindows, window_size, 1))
-        Yb = np.zeros((numgoodwindows, window_size, 1))
         if usebadpts:
-            Xb_withbad = np.zeros((numgoodwindows, window_size, 1))
+            Xb = np.zeros((numgoodwindows, window_size, 2))
+        else:
+            Xb = np.zeros((numgoodwindows, window_size, 1))
+        Yb = np.zeros((numgoodwindows, window_size, 1))
         LGR.info(f"dimensions of Xb: {Xb.shape}")
         thiswindow = 0
         for subj in range(N_subjs):
             for windownumber in range(windowspersubject):
                 if usewindow[subj * windowspersubject + windownumber] == 1:
+                    if usebadpts:
+                        Xb[thiswindow, :, 1] = bad[
+                            step * windownumber : (step * windownumber + window_size),
+                            subj,
+                        ]
                     Xb[thiswindow, :, 0] = x[
                         step * windownumber : (step * windownumber + window_size), subj
                     ]
                     Yb[thiswindow, :, 0] = y[
                         step * windownumber : (step * windownumber + window_size), subj
                     ]
-                    if usebadpts:
-                        Xb_withbad[thiswindow, :, 0] = bad[
-                            step * windownumber : (step * windownumber + window_size),
-                            subj,
-                        ]
                     thiswindow += 1
 
     else:
@@ -4732,7 +4739,10 @@ def prep(
         )
         LGR.info(f"{windowspersubject} {cleancount} {totalcount}")
 
-        Xb = np.zeros((N_subjs * windowspersubject, window_size, 1))
+        if usebadpts:
+            Xb = np.zeros((N_subjs * windowspersubject, window_size, 2))
+        else:
+            Xb = np.zeros((N_subjs * windowspersubject, window_size, 1))
         LGR.info(f"dimensions of Xb: {Xb.shape}")
         for j in range(N_subjs):
             LGR.info(
@@ -4742,6 +4752,9 @@ def prep(
             )
             for i in range(windowspersubject):
                 Xb[j * windowspersubject + i, :, 0] = X[0, step * i : (step * i + window_size), j]
+                Xb[j * windowspersubject + i, :, 1] = BAD[
+                    0, step * i : (step * i + window_size), j
+                ]
 
         Yb = np.zeros((N_subjs * windowspersubject, window_size, 1))
         LGR.info(f"dimensions of Yb: {Yb.shape}")
@@ -4749,27 +4762,13 @@ def prep(
             for i in range(windowspersubject):
                 Yb[j * windowspersubject + i, :, 0] = Y[0, step * i : (step * i + window_size), j]
 
-        if usebadpts:
-            Xb_withbad = np.zeros((N_subjs * windowspersubject, window_size, 2))
-            LGR.info(f"dimensions of Xb_withbad: {Xb_withbad.shape}")
-            for j in range(N_subjs):
-                LGR.info(f"packing data for subject {j}")
-                for i in range(windowspersubject):
-                    Xb_withbad[j * windowspersubject + i, :, 0] = X[
-                        0, step * i : (step * i + window_size), j
-                    ]
-                    Xb_withbad[j * windowspersubject + i, :, 1] = BAD[
-                        0, step * i : (step * i + window_size), j
-                    ]
-            Xb = Xb_withbad
-
         subjectstarts = [i * windowspersubject for i in range(N_subjs)]
         for subj in range(N_subjs):
             LGR.info(f"{names[subj]} starts at {subjectstarts[subj]}")
 
-    LGR.info(f"Xb.shape: {Xb.shape}")
-    LGR.info(f"Yb.shape: {Yb.shape}")
-
+    print(f"Xb.shape: {Xb.shape}")
+    print(f"Yb.shape: {Yb.shape}")
+    print(f"{usebadpts=}, {dofft=}")
     if dofft:
         Xb_fourier = np.zeros((N_subjs * windowspersubject, window_size, 2))
         LGR.info(f"dimensions of Xb_fourier: {Xb_fourier.shape}")
@@ -4836,6 +4835,9 @@ def prep(
 
         val_x = Xb[perm_val, :, :]
         val_y = Yb[perm_val, :, :]
+
+        LGR.info(f"train, val dims: {train_x.shape} {train_y.shape} {val_x.shape} {val_y.shape}")
+        print(f"in prep: {train_x.shape=}, {train_y.shape=}, {val_x.shape}, {val_y.shape=}")
 
         LGR.info(f"train, val dims: {train_x.shape} {train_y.shape} {val_x.shape} {val_y.shape}")
         return (
