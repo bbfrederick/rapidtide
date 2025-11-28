@@ -91,6 +91,16 @@ happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy_pytorch \
+    --model model_cnn_pytorch \
+    --increaseoutputlevel \
+    --usenewvesselmethod \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy_pytorchbp \
+    --model model_cnnbp_pytorch \
     --increaseoutputlevel \
     --usenewvesselmethod \
     --nprocs -1
