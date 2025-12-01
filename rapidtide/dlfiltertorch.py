@@ -953,6 +953,9 @@ class DeepLearningFilter:
         >>> trainer.train()
         """
         self.model.train()
+        self.model = nn.DataParallel(
+            self.model
+        )  # allow use of parallel GPUs.  Could this possibly work?
         self.model.to(self.device)
 
         # Convert numpy arrays to PyTorch tensors and transpose for Conv1d
