@@ -91,7 +91,7 @@ happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy_pytorch \
-    --model ../../../experimental/model_cnn_pytorch_w064_l19_fn50_fl05_e025_t4.0_ct0.72_s20_d1_relu_normaligned \
+    --model /Users/frederic/code/rapidtide/rapidtide/experimental/model_cnn_pytorch_w064_l19_fn50_fl05_e025_t4.0_ct0.72_s20_d1_relu_normaligned \
     --increaseoutputlevel \
     --usenewvesselmethod \
     --nprocs -1
@@ -100,7 +100,7 @@ happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy_pytorchbp \
-    --model ../../../experimental/model_cnn_pytorch_w064_l19_fn50_fl05_e025_t4.0_ct0.72_s20_d1_relu_usebadpts_normaligned \
+    --model /Users/frederic/code/rapidtide/rapidtide/experimental/model_cnn_pytorch_w064_l19_fn50_fl05_e025_t4.0_ct0.72_s20_d1_relu_usebadpts_normaligned \
     --increaseoutputlevel \
     --usenewvesselmethod \
     --nprocs -1
