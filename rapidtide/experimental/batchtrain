@@ -1,6 +1,363 @@
-#!/bin/bash
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#   Copyright 2019-2025 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#
 
-#SBATCH --mem=16G
-#SBATCH --gres=gpu:1
+import os
 
-/home/frederic/.conda/envs/tftest/bin/python /home/frederic/code/rapidtide/rapidtide/experimental/train
+import rapidtide.dlfiltertorch as tide_dlfilter
+
+
+def dotraining(
+    thedatadir,
+    num_pretrain_epochs=5,
+    num_epochs=1,
+    excludethresh=4.0,
+    corrthresh=0.72,
+    window_size=128,
+    num_layers=4,
+    num_filters=5,
+    kernel_size=5,
+    dropout_rate=0.3,
+    dofft=False,
+    nettype="cnn",
+    activation="relu",
+    usebadpts=False,
+    countlim=None,
+    readlim=None,
+    readskip=0,
+    num_units=128,
+    debug=False,
+    invert=True,
+    startskip=200,
+    endskip=100,
+    step=20,
+    encoding_dim=16,
+    excludebysubject=False,
+):
+    if nettype == "cnn":
+        thefilter = tide_dlfilter.CNNDLFilter(
+            num_epochs=num_epochs,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            excludebysubject=excludebysubject,
+            window_size=window_size,
+            num_layers=num_layers,
+            dropout_rate=dropout_rate,
+            usebadpts=usebadpts,
+            readlim=readlim,
+            readskip=readskip,
+            countlim=countlim,
+            thedatadir=thedatadir,
+            inputfrag="cardfromfmri",
+            targetfrag="normpleth",
+            namesuffix="normaligned",
+            activation=activation,
+            num_filters=num_filters,
+            kernel_size=kernel_size,
+            debug=debug,
+        )
+    elif nettype == "crnn":
+        thefilter = tide_dlfilter.CRNNDLFilter(
+            num_epochs=num_epochs,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            excludebysubject=excludebysubject,
+            window_size=window_size,
+            num_layers=num_layers,
+            dropout_rate=dropout_rate,
+            usebadpts=usebadpts,
+            readlim=readlim,
+            readskip=readskip,
+            countlim=countlim,
+            thedatadir=thedatadir,
+            inputfrag="cardfromfmri",
+            targetfrag="normpleth",
+            namesuffix="normaligned",
+            activation=activation,
+            num_filters=num_filters,
+            kernel_size=kernel_size,
+            debug=debug,
+        )
+    elif nettype == "convautoencoder":
+        thefilter = tide_dlfilter.ConvAutoencoderDLFilter(
+            num_pretrain_epochs=num_pretrain_epochs,
+            num_epochs=num_epochs,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            excludebysubject=excludebysubject,
+            window_size=window_size,
+            num_layers=num_layers,
+            dropout_rate=dropout_rate,
+            usebadpts=usebadpts,
+            readlim=readlim,
+            readskip=readskip,
+            countlim=countlim,
+            thedatadir=thedatadir,
+            inputfrag="cardfromfmri",
+            targetfrag="normpleth",
+            namesuffix="normaligned",
+            activation=activation,
+            encoding_dim=encoding_dim,
+            num_filters=num_filters,
+            kernel_size=kernel_size,
+            debug=debug,
+        )
+    elif nettype == "denseautoencoder":
+        thefilter = tide_dlfilter.DenseAutoencoderDLFilter(
+            num_pretrain_epochs=num_pretrain_epochs,
+            num_epochs=num_epochs,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            excludebysubject=excludebysubject,
+            window_size=window_size,
+            num_layers=num_layers,
+            dropout_rate=dropout_rate,
+            usebadpts=usebadpts,
+            readlim=readlim,
+            readskip=readskip,
+            countlim=countlim,
+            thedatadir=thedatadir,
+            inputfrag="cardfromfmri",
+            targetfrag="normpleth",
+            namesuffix="normaligned",
+            activation=activation,
+            encoding_dim=encoding_dim,
+            debug=debug,
+        )
+    elif nettype == "lstm":
+        thefilter = tide_dlfilter.LSTMDLFilter(
+            num_epochs=num_epochs,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            excludebysubject=excludebysubject,
+            window_size=window_size,
+            num_layers=num_layers,
+            dropout_rate=dropout_rate,
+            usebadpts=usebadpts,
+            readlim=readlim,
+            readskip=readskip,
+            countlim=countlim,
+            thedatadir=thedatadir,
+            inputfrag="cardfromfmri",
+            targetfrag="alignedpleth",
+            num_units=num_units,
+        )
+    elif nettype == "hybrid":
+        thefilter = tide_dlfilter.HybridDLFilter(
+            num_epochs=num_epochs,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            excludebysubject=excludebysubject,
+            window_size=window_size,
+            num_layers=num_layers,
+            dropout_rate=dropout_rate,
+            usebadpts=usebadpts,
+            readlim=readlim,
+            readskip=readskip,
+            countlim=countlim,
+            thedatadir=thedatadir,
+            inputfrag="cardfromfmri",
+            targetfrag="alignedpleth",
+            activation=activation,
+            num_filters=num_filters,
+            kernel_size=kernel_size,
+            num_units=num_units,
+            invert=invert,
+        )
+    else:
+        print(f"{nettype} is not a valid nettype!")
+
+    print("initializing")
+    thefilter.initialize()
+
+    print("loading data")
+    thefilter.loaddata()
+
+    print("training")
+    thefilter.train()
+
+    print("evaluating")
+    thefilter.evaluate()
+
+
+def main():
+    thiscomputer = os.uname().nodename
+    print("thiscomputer:", thiscomputer)
+    if thiscomputer.startswith("bbf-") or thiscomputer.startswith("Mac") or thiscomputer.startswith("DIMR22HDP90N5"):
+        print("setting up to run on mac")
+        thedatadir = "/Users/frederic/Dropbox_PHC/physioconn/output_2025"
+    elif thiscomputer.startswith("DESKTOP"):
+        print("setting up to run on windows bash")
+        thedatadir = "/home/frederic/Dropbox/timecourses"
+    else:
+        print("setting up to run on mclean cluster")
+        thedatadir = "/data/frederic/physioconn/output_2025"
+
+    print(f"will look for input data in {thedatadir}")
+
+    num_pretrain_epochs = 5
+    excludethresh = 4.0
+    corrthresh = 0.72
+    window_size = 128
+    num_layers = 4
+    num_filters = 5
+    kernel_size = 5
+    dropout_rate = 0.3
+    dofft = False
+    activation = "relu"
+    usebadpts = True
+    countlim = None
+    readlim = None
+    readskip = 0
+    num_units = 128
+    debug = False
+    invert = True
+    startskip = 200
+    endskip = 100
+    step = 20
+    encoding_dim = 16
+    excludebysubject = False
+
+    """
+    # train some crnns
+    nettype = "crnn"
+    num_epochs = 50
+    for num_filters in [5, 7, 9, 11]:
+        dotraining(
+            thedatadir,
+            num_pretrain_epochs=num_pretrain_epochs,
+            num_epochs=num_epochs,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            window_size=window_size,
+            num_layers=num_layers,
+            num_filters=num_filters,
+            kernel_size=kernel_size,
+            dropout_rate=dropout_rate,
+            dofft=dofft,
+            nettype=nettype,
+            activation=activation,
+            usebadpts=usebadpts,
+            countlim=countlim,
+            readlim=readlim,
+            readskip=readskip,
+            num_units=num_units,
+            debug=debug,
+            invert=invert,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            encoding_dim=encoding_dim,
+            excludebysubject=excludebysubject,
+        )
+
+
+    # train convolutional autoencoder
+    nettype = "convautoencoder"
+    num_epochs = 100
+    kernel_size = 8
+    num_filters = 20
+    window_size = 64
+    for encoding_dim in [4, 6, 8, 10, 12]:
+        dotraining(
+            thedatadir,
+            num_pretrain_epochs=num_pretrain_epochs,
+            num_epochs=num_epochs,
+            excludethresh=excludethresh,
+            corrthresh=corrthresh,
+            window_size=window_size,
+            num_layers=num_layers,
+            num_filters=num_filters,
+            kernel_size=kernel_size,
+            dropout_rate=dropout_rate,
+            dofft=dofft,
+            nettype=nettype,
+            activation=activation,
+            usebadpts=usebadpts,
+            countlim=countlim,
+            readlim=readlim,
+            readskip=readskip,
+            num_units=num_units,
+            debug=debug,
+            invert=invert,
+            startskip=startskip,
+            endskip=endskip,
+            step=step,
+            encoding_dim=encoding_dim,
+            excludebysubject=excludebysubject,
+        )
+    """
+
+    # train CNN
+    nettype = "cnn"
+    num_epochs = 50
+    window_size = 64
+    for usebadpts in [False, True]:
+        for kernel_size in [5, 7, 9]:
+            for num_layers in [14, 19, 24]:
+                for num_filters in [30, 40, 50]:
+                    dotraining(
+                        thedatadir,
+                        num_pretrain_epochs=num_pretrain_epochs,
+                        num_epochs=num_epochs,
+                        excludethresh=excludethresh,
+                        corrthresh=corrthresh,
+                        window_size=window_size,
+                        num_layers=num_layers,
+                        num_filters=num_filters,
+                        kernel_size=kernel_size,
+                        dropout_rate=dropout_rate,
+                        dofft=dofft,
+                        nettype=nettype,
+                        activation=activation,
+                        usebadpts=usebadpts,
+                        countlim=countlim,
+                        readlim=readlim,
+                        readskip=readskip,
+                        num_units=num_units,
+                        debug=debug,
+                        invert=invert,
+                        startskip=startskip,
+                        endskip=endskip,
+                        step=step,
+                        encoding_dim=encoding_dim,
+                        excludebysubject=excludebysubject,
+                    )
+
+
+
+if __name__ == "__main__":
+    main()
