@@ -21,11 +21,12 @@ import os
 import sys
 from typing import Any
 
-import rapidtide.dlfilter as tide_dlfilt
+import rapidtide.dlfiltertorch as tide_dlfilt
 import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 
+DEFAULT_MODEL = "model_cnn_pytorch"
 
 def _get_parser() -> Any:
     """
@@ -83,8 +84,8 @@ def _get_parser() -> Any:
         action="store",
         metavar="MODELROOT",
         type=str,
-        help=("Use model named MODELROOT (default is model_revised)."),
-        default="model_revised",
+        help=(f"Use model named MODELROOT (default is {DEFAULT_MODEL})."),
+        default=DEFAULT_MODEL,
     )
     parser.add_argument(
         "--filesarelists",
