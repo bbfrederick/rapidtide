@@ -352,7 +352,6 @@ class DeepLearningFilter:
                 dummy,
             ) = prep(
                 self.window_size,
-                thesuffix=self.thesuffix,
                 thedatadir=self.thedatadir,
                 inputfrag=self.inputfrag,
                 targetfrag=self.targetfrag,
@@ -379,7 +378,6 @@ class DeepLearningFilter:
                 self.thebatchsize,
             ) = prep(
                 self.window_size,
-                thesuffix=self.thesuffix,
                 thedatadir=self.thedatadir,
                 inputfrag=self.inputfrag,
                 targetfrag=self.targetfrag,
@@ -1110,20 +1108,40 @@ class DeepLearningFilter:
         scaleddata = inputdata / initscale
         predicteddata = np.zeros_like(scaleddata)
         weightarray = np.zeros_like(scaleddata)
+
+        # make an X array with the proper number of channels
+        if self.usebadpts is None:
+            badptchans = 0
+        else:
+            badptchans = 1
+        if self.dofft:
+            fftchans = 2
+        else:
+            fftchans = 0
+        numchans = 1 + badptchans + fftchans
         N_pts = len(scaleddata)
-        if self.usebadpts:
-            if badpts is None:
-                badpts = np.zeros_like(scaleddata)
-            X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 2))
-            for i in range(X.shape[0]):
-                X[i, :, 0] = scaleddata[i : i + self.window_size]
+        X = np.zeros(((N_pts - self.window_size - 1), self.window_size, numchans))
+
+        # make sure we have a valid badpts vector
+        if badpts is None:
+            badpts = np.zeros_like(scaleddata)
+
+        # now populate all channels
+        for i in range(X.shape[0]):
+            X[i, :, 0] = scaleddata[i : i + self.window_size]
+            if self.usebadpts:
                 X[i, :, 1] = badpts[i : i + self.window_size]
                 # zero out data in badpts regions
                 X[i, np.where(X[i, :, 1] != 0.0), 0] = 0.0
-        else:
-            X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 1))
-            for i in range(X.shape[0]):
-                X[i, :, 0] = scaleddata[i : i + self.window_size]
+            if self.dofft:
+                specvals = fftpack.fft(X[i, :, 0])
+                scalefac = np.std(X[i, :, 0])
+                if scalefac != 0.0:
+                    X[i, :, 1 + badptchans] = np.absolute(specvals) / scalefac
+                    X[i, :, 1 + badptchans + 1] = np.angle(specvals)
+                else:
+                    X[i, :, 1 + badptchans] = 0.0
+                    X[i, :, 1 + badptchans + 1] = 0.0
 
         Y = self.predict_model(X)
         for i in range(X.shape[0]):
@@ -4223,7 +4241,7 @@ def readindata(
     readlim: int | None = None,
     readskip: int | None = None,
     debug: bool = False,
-) -> tuple[NDArray, NDArray, list[str]] | tuple[NDArray, NDArray, list[str], NDArray]:
+) -> tuple[NDArray, NDArray, list[str], NDArray | None]:
     """
     Read and process time-series data from a list of matched files.
 
@@ -4266,7 +4284,7 @@ def readindata(
         - `x1`: Array of shape `(tclen, count)` containing x-time series data.
         - `y1`: Array of shape `(tclen, count)` containing y-time series data.
         - `names`: List of file names that passed quality checks.
-        - `bad1`: Optional array of shape `(tclen, count)` with bad point indicators if `usebadpts=True`.
+        - `bad1`: Optional array of shape `(tclen, count)` with bad point indicators if `usebadpts=True`.  Otherwise None.
 
     Notes
     -----
@@ -4276,8 +4294,7 @@ def readindata(
 
     Examples
     --------
-    >>> x, y, names = readindata(filelist, tclen=1000)
-    >>> x, y, names, bad = readindata(filelist, tclen=1000, usebadpts=True)
+    >>> x, y, names, bad = readindata(filelist, tclen=1000)
     """
     LGR.info(
         "readindata called with usebadpts, startskip, endskip, readlim, readskip, targetfrag, inputfrag = "
@@ -4332,8 +4349,6 @@ def readindata(
         )
         tempy = inputarray[1, :]
         tempx = inputarray[0, :]
-        if usebadpts:
-            tempbad1 = inputarray[2, :]
 
         if np.any(np.isnan(tempy)):
             LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
@@ -4420,19 +4435,15 @@ def readindata(
     print(f"training set contains {count} runs of length {tclen}")
     print(f"{badcount} runs were excluded")
     if usebadpts:
-        return (
-            x1[startskip:-endskip, :count],
-            y1[startskip:-endskip, :count],
-            names[:count],
-            bad1[startskip:-endskip, :count],
-        )
+        item4 = bad1[startskip:-endskip, :count]
     else:
-        return (
-            x1[startskip:-endskip, :count],
-            y1[startskip:-endskip, :count],
-            names[:count],
-        )
-
+        item4 = None
+    return (
+        x1[startskip:-endskip, :count],
+        y1[startskip:-endskip, :count],
+        names[:count],
+        item4,
+    )
 
 def prep(
     window_size: int,
@@ -4442,7 +4453,6 @@ def prep(
     startskip: int = 200,
     endskip: int = 200,
     excludebysubject: bool = True,
-    thesuffix: str = "sliceres",
     thedatadir: str = "/data/frederic/physioconn/output_2025",
     inputfrag: str = "abc",
     targetfrag: str = "xyz",
@@ -4563,31 +4573,19 @@ def prep(
 
     # read in the data from the matched files
     print("about to read in data")
-    if usebadpts:
-        x, y, names, bad = readindata(
-            matchedfilelist,
-            tclen,
-            corrthresh=corrthresh,
-            targetfrag=targetfrag,
-            inputfrag=inputfrag,
-            usebadpts=True,
-            startskip=startskip,
-            endskip=endskip,
-            readlim=readlim,
-            readskip=readskip,
-        )
-    else:
-        x, y, names = readindata(
-            matchedfilelist,
-            tclen,
-            corrthresh=corrthresh,
-            targetfrag=targetfrag,
-            inputfrag=inputfrag,
-            startskip=startskip,
-            endskip=endskip,
-            readlim=readlim,
-            readskip=readskip,
-        )
+    x, y, names, bad = readindata(
+        matchedfilelist,
+        tclen,
+        corrthresh=corrthresh,
+        targetfrag=targetfrag,
+        inputfrag=inputfrag,
+        usebadpts=usebadpts,
+        startskip=startskip,
+        endskip=endskip,
+        readlim=readlim,
+        readskip=readskip,
+    )
+
     print("finished reading in data")
     LGR.info(f"xshape, yshape: {x.shape} {y.shape}")
 

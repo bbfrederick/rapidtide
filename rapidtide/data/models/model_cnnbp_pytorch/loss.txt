@@ -1,0 +1,1 @@
+model_cnn_pytorch_w060_l19_fn50_fl05_e025_t4.0_ct0.72_s20_d1_relu_usebadpts_normaligned: Prediction Error: 1.343090417588959 Raw Error: 0.32607608511802977
