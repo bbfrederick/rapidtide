@@ -947,8 +947,8 @@ class DeepLearningFilter:
         criterion = nn.MSELoss()
 
         print("setting optimizer")
-        optimizer = optim.RMSprop(self.model.parameters())
-        # optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        #optimizer = optim.RMSprop(self.model.parameters())
+        optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
         self.loss = []
         self.val_loss = []
