@@ -88,6 +88,15 @@ def _get_parser() -> Any:
         default=DEFAULT_MODEL,
     )
     parser.add_argument(
+        "--plethfile",
+        dest="plethfile",
+        action="store",
+        metavar="FILE",
+        type=str,
+        help=(f"Check agreement with an actual plethysmogram."),
+        default=None,
+    )
+    parser.add_argument(
         "--filesarelists",
         dest="filesarelists",
         action="store_true",
@@ -133,6 +142,8 @@ def applydlfilter(args: Any) -> None:
             containing lists of input and output filenames, respectively.
         - `model` : str
             Path to the deep learning model to be used for filtering.
+        - `plethfile` : str
+            Path to plethysmogram to evaluate performance.
         - `display` : bool
             If True, displays the original and filtered data using matplotlib.
         - `verbose` : bool
@@ -206,6 +217,17 @@ def applydlfilter(args: Any) -> None:
     thedlfilter.loadmodel(args.model)
     usebadpts = thedlfilter.usebadpts
 
+    plethwave = None
+    if args.plethfile is not None:
+        (
+            thesamplerate,
+            thestarttime,
+            thecolumns,
+            plethwave,
+            compressed,
+            filetype,
+        ) = tide_io.readvectorsfromtextfile(args.plethfile, onecol=True, debug=args.verbose)
+
     badpts = None
     if usebadpts:
         badptsname = f"{(args.infilename.split(':'))[0]}:badpts"
@@ -249,14 +271,24 @@ def applydlfilter(args: Any) -> None:
         if args.verbose:
             print("done...")
 
-        if args.verbose:
-            print("writing to", outfilenamelist[idx])
-        tide_io.writevec(predicteddata, outfilenamelist[idx])
-
+        # performance metrics
+        extradict = {}
         maxval, maxdelay, failreason = happy_support.checkcardmatch(
             fmridata, predicteddata, 25.0, debug=False
         )
-        print(infilename, "max correlation input to output:", maxval)
+        print(infilename, "max correlation of input to output:", maxval)
+        extradict["corrtoinput"] = maxval + 0.0
+
+        if plethwave is not None:
+            maxval, maxdelay, failreason = happy_support.checkcardmatch(
+                fmridata, plethwave, 25.0, debug=False
+            )
+            print(infilename, "max correlation of input to target plethysmogram:", maxval)
+            extradict["corrtopleth"] = maxval + 0.0
+
+        if args.verbose:
+            print("writing to", outfilenamelist[idx])
+        tide_io.writebidstsv(predicteddata, outfilenamelist[idx], 25.0, extraheaderinfo=extradict, columns=["filtered_signal"])
 
         if args.display:
             plt.figure()
