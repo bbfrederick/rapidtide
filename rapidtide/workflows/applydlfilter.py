@@ -24,9 +24,11 @@ from typing import Any
 import rapidtide.dlfiltertorch as tide_dlfilt
 import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_MODEL = "model_cnn_pytorch"
+
 
 def _get_parser() -> Any:
     """
@@ -288,10 +290,21 @@ def applydlfilter(args: Any) -> None:
 
         if args.verbose:
             print("writing to", outfilenamelist[idx])
-        tide_io.writebidstsv(predicteddata, outfilenamelist[idx], 25.0, extraheaderinfo=extradict, columns=["filtered_signal"])
+        tide_io.writebidstsv(
+            outfilenamelist[idx],
+            predicteddata,
+            25.0,
+            extraheaderinfo=extradict,
+            columns=["filtered_signal"],
+            debug=args.verbose,
+        )
+
+        # normalize
+        fmridata = tide_math.stdnormalize(fmridata)
+        predicteddata = tide_math.stdnormalize(predicteddata)
 
         if args.display:
             plt.figure()
-            plt.plot(fmridata)
-            plt.plot(predicteddata)
+            plt.plot(fmridata + 1.5)
+            plt.plot(predicteddata - 1.5)
             plt.show()
