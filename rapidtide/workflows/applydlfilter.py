@@ -208,12 +208,20 @@ def applydlfilter(args: Any) -> None:
 
     badpts = None
     if usebadpts:
+        badptsname = f"{(args.infilename.split(':'))[0]}:badpts"
         try:
-            badpts = tide_io.readvec(args.infilename.replace(".txt", "_badpts.txt"))
+            (
+                thesamplerate,
+                thestarttime,
+                thecolumns,
+                badpts,
+                compressed,
+                filetype,
+            ) = tide_io.readvectorsfromtextfile(badptsname, onecol=True, debug=args.verbose)
         except:
             print(
                 "bad points file",
-                args.infilename.replace(".txt", "_badpts.txt"),
+                badptsname,
                 "not found!",
             )
             sys.exit()
