@@ -28,6 +28,8 @@ import numpy as np
 import tqdm
 from numpy.typing import NDArray
 
+import rapidtide.miscmath as tide_math
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
@@ -206,14 +208,15 @@ class DeepLearningFilter:
         self.num_pretrain_epochs = num_pretrain_epochs
         self.num_epochs = num_epochs
         self.usebadpts = usebadpts
+        self.dofft = dofft
         self.num_layers = num_layers
+        self.inputsize = 1
         if self.usebadpts:
-            self.inputsize = 2
-        else:
-            self.inputsize = 1
+            self.inputsize += 1
+        if self.dofft:
+            self.inputsize += 2
         self.activation = activation
         self.modelroot = modelroot
-        self.dofft = dofft
         self.thesuffix = thesuffix
         self.thedatadir = thedatadir
         self.modelpath = modelpath
@@ -339,60 +342,31 @@ class DeepLearningFilter:
         if not self.initialized:
             raise Exception("model must be initialized prior to loading data")
 
-        if self.dofft:
-            (
-                self.train_x,
-                self.train_y,
-                self.val_x,
-                self.val_y,
-                self.Ns,
-                self.tclen,
-                self.thebatchsize,
-                dummy,
-                dummy,
-            ) = prep(
-                self.window_size,
-                thedatadir=self.thedatadir,
-                inputfrag=self.inputfrag,
-                targetfrag=self.targetfrag,
-                startskip=self.startskip,
-                endskip=self.endskip,
-                corrthresh=self.corrthresh,
-                step=self.step,
-                dofft=self.dofft,
-                usebadpts=self.usebadpts,
-                excludethresh=self.excludethresh,
-                excludebysubject=self.excludebysubject,
-                readlim=self.readlim,
-                readskip=self.readskip,
-                countlim=self.countlim,
-            )
-        else:
-            (
-                self.train_x,
-                self.train_y,
-                self.val_x,
-                self.val_y,
-                self.Ns,
-                self.tclen,
-                self.thebatchsize,
-            ) = prep(
-                self.window_size,
-                thedatadir=self.thedatadir,
-                inputfrag=self.inputfrag,
-                targetfrag=self.targetfrag,
-                startskip=self.startskip,
-                endskip=self.endskip,
-                corrthresh=self.corrthresh,
-                step=self.step,
-                dofft=self.dofft,
-                usebadpts=self.usebadpts,
-                excludethresh=self.excludethresh,
-                excludebysubject=self.excludebysubject,
-                readlim=self.readlim,
-                readskip=self.readskip,
-                countlim=self.countlim,
-            )
+        (
+            self.train_x,
+            self.train_y,
+            self.val_x,
+            self.val_y,
+            self.Ns,
+            self.tclen,
+            self.thebatchsize,
+        ) = prep(
+            self.window_size,
+            thedatadir=self.thedatadir,
+            inputfrag=self.inputfrag,
+            targetfrag=self.targetfrag,
+            startskip=self.startskip,
+            endskip=self.endskip,
+            corrthresh=self.corrthresh,
+            step=self.step,
+            dofft=self.dofft,
+            usebadpts=self.usebadpts,
+            excludethresh=self.excludethresh,
+            excludebysubject=self.excludebysubject,
+            readlim=self.readlim,
+            readskip=self.readskip,
+            countlim=self.countlim,
+        )
 
     def predict_model(self, X: NDArray) -> NDArray:
         """
@@ -974,6 +948,7 @@ class DeepLearningFilter:
 
         print("setting optimizer")
         optimizer = optim.RMSprop(self.model.parameters())
+        # optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
         self.loss = []
         self.val_loss = []
@@ -1110,29 +1085,28 @@ class DeepLearningFilter:
         weightarray = np.zeros_like(scaleddata)
 
         # make an X array with the proper number of channels
-        if self.usebadpts is None:
-            badptchans = 0
-        else:
+        if self.usebadpts:
             badptchans = 1
+        else:
+            badptchans = 0
         if self.dofft:
             fftchans = 2
         else:
             fftchans = 0
         numchans = 1 + badptchans + fftchans
         N_pts = len(scaleddata)
-        if self.usebadpts:
-            if badpts is None:
-                badpts = np.zeros_like(scaleddata)
-            X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 2))
-            for i in range(X.shape[0]):
-                X[i, :, 0] = scaleddata[i : i + self.window_size]
-                X[i, :, 1] = badpts[i : i + self.window_size]
-                # zero out data in badpts regions
-                X[i, np.where(X[i, :, 1] != 0.0), 0] = 0.0
-        else:
-            X = np.zeros(((N_pts - self.window_size - 1), self.window_size, 1))
-            for i in range(X.shape[0]):
-                X[i, :, 0] = scaleddata[i : i + self.window_size]
+        X = np.zeros(((N_pts - self.window_size - 1), self.window_size, numchans))
+
+        # make sure we have a valid badpts vector
+        if badpts is None:
+            badpts = np.zeros_like(scaleddata)
+
+        # now populate all channels
+        for i in range(X.shape[0]):
+            X[i, :, :] = datatochannels(scaleddata[i : i + self.window_size],
+                                        badpts[i : i + self.window_size],
+                                        self.usebadpts,
+                                        self.dofft)
 
         Y = self.predict_model(X)
         for i in range(X.shape[0]):
@@ -4232,9 +4206,9 @@ def readindata(
     readlim: int | None = None,
     readskip: int | None = None,
     debug: bool = False,
-) -> tuple[NDArray, NDArray, list[str]] | tuple[NDArray, NDArray, list[str], NDArray]:
+) -> tuple[NDArray, NDArray, list[str], NDArray | None]:
     """
-    Read and process time-series data from a list of matched files.
+    Read and process time-series data from a list of matched files for training.
 
     This function reads cardiac and plethysmographic time-series data from a list of
     files, performs quality checks, and returns the data in arrays suitable for
@@ -4285,7 +4259,6 @@ def readindata(
 
     Examples
     --------
-    >>> x, y, names = readindata(filelist, tclen=1000)
     >>> x, y, names, bad = readindata(filelist, tclen=1000, usebadpts=True)
     """
     LGR.info(
@@ -4304,6 +4277,8 @@ def readindata(
     names = []
     if usebadpts:
         bad1 = np.zeros((tclen, s))
+    else:
+        bad1 = None
 
     # now read the data in
     count = 0
@@ -4341,8 +4316,6 @@ def readindata(
         )
         tempy = inputarray[1, :]
         tempx = inputarray[0, :]
-        if usebadpts:
-            tempbad1 = inputarray[2, :]
 
         if np.any(np.isnan(tempy)):
             LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
@@ -4440,7 +4413,55 @@ def readindata(
             x1[startskip:-endskip, :count],
             y1[startskip:-endskip, :count],
             names[:count],
+            None,
         )
+
+
+def calcnumchannels(usebadpts, dofft):
+    if usebadpts:
+        badptchans = 1
+    else:
+        badptchans = 0
+    if dofft:
+        fftchans = 2
+    else:
+        fftchans = 0
+    numchans = 1 + badptchans + fftchans
+    
+    return numchans, badptchans, fftchans
+
+
+def datatochannels(timecourse, badpts, usebadpts, dofft, logtrans=True, stdnorm=True, magthresh=0.001):
+    # make an X array with the proper number of channels
+    numchans, badptchans, fftchans = calcnumchannels(usebadpts, dofft)
+    channeldata = np.zeros((len(timecourse), numchans), dtype=float)
+
+    # now populate all channels
+    channeldata[:, 0] = timecourse
+    if usebadpts:
+        channeldata[:, 1] = badpts
+        # zero out data in badpts regions
+        channeldata[np.where(channeldata[:, 1] != 0.0), 0] = 0.0
+    if dofft:
+        if stdnorm:
+            specvals = fftpack.fft(tide_math.stdnormalize(channeldata[:, 0]))
+        else:
+            specvals = fftpack.fft(channeldata[:, 0])
+        magvals = np.absolute(specvals)
+        themax = np.max(magvals)
+        if themax > 0.0:
+            magvals /= themax
+            if logtrans:
+                magvals[np.where(magvals < magthresh)] = magthresh
+                magvals = (np.log(magvals) - np.log(magthresh)) / np.abs(np.log(magthresh))
+            phasevals = np.angle(specvals)
+            channeldata[:, 1 + badptchans] = magvals
+            channeldata[:, 1 + badptchans + 1] = phasevals
+        else:
+            channeldata[:, 1 + badptchans] = 0.0
+            channeldata[:, 1 + badptchans + 1] = 0.0
+
+    return channeldata
 
 
 def prep(
@@ -4571,31 +4592,19 @@ def prep(
 
     # read in the data from the matched files
     print("about to read in data")
-    if usebadpts:
-        x, y, names, bad = readindata(
-            matchedfilelist,
-            tclen,
-            corrthresh=corrthresh,
-            targetfrag=targetfrag,
-            inputfrag=inputfrag,
-            usebadpts=True,
-            startskip=startskip,
-            endskip=endskip,
-            readlim=readlim,
-            readskip=readskip,
-        )
-    else:
-        x, y, names = readindata(
-            matchedfilelist,
-            tclen,
-            corrthresh=corrthresh,
-            targetfrag=targetfrag,
-            inputfrag=inputfrag,
-            startskip=startskip,
-            endskip=endskip,
-            readlim=readlim,
-            readskip=readskip,
-        )
+    x, y, names, bad = readindata(
+        matchedfilelist,
+        tclen,
+        corrthresh=corrthresh,
+        targetfrag=targetfrag,
+        inputfrag=inputfrag,
+        usebadpts=True,
+        startskip=startskip,
+        endskip=endskip,
+        readlim=readlim,
+        readskip=readskip,
+    )
+
     print("finished reading in data")
     LGR.info(f"xshape, yshape: {x.shape} {y.shape}")
 
@@ -4679,24 +4688,23 @@ def prep(
             LGR.info(f"{names[subj]} starts at {subjectstarts[subj]}")
 
         LGR.info("copying data into windows")
-        if usebadpts:
-            Xb = np.zeros((numgoodwindows, window_size, 2))
-        else:
-            Xb = np.zeros((numgoodwindows, window_size, 1))
+        numchans, badptchans, fftchans = calcnumchannels(usebadpts, dofft)
+        Xb = np.zeros((numgoodwindows, window_size, numchans))
         Yb = np.zeros((numgoodwindows, window_size, 1))
         LGR.info(f"dimensions of Xb: {Xb.shape}")
         thiswindow = 0
         for subj in range(N_subjs):
             for windownumber in range(windowspersubject):
                 if usewindow[subj * windowspersubject + windownumber] == 1:
-                    if usebadpts:
-                        Xb[thiswindow, :, 1] = bad[
+                    Xb[thiswindow, :, :] = datatochannels(
+                        x[step * windownumber : (step * windownumber + window_size), subj],
+                        bad[
                             step * windownumber : (step * windownumber + window_size),
                             subj,
-                        ]
-                    Xb[thiswindow, :, 0] = x[
-                        step * windownumber : (step * windownumber + window_size), subj
-                    ]
+                        ],
+                        usebadpts,
+                        dofft,
+                    )
                     Yb[thiswindow, :, 0] = y[
                         step * windownumber : (step * windownumber + window_size), subj
                     ]
@@ -4747,10 +4755,8 @@ def prep(
         )
         LGR.info(f"{windowspersubject} {cleancount} {totalcount}")
 
-        if usebadpts:
-            Xb = np.zeros((N_subjs * windowspersubject, window_size, 2))
-        else:
-            Xb = np.zeros((N_subjs * windowspersubject, window_size, 1))
+        numchans, badptchans, fftchans = calcnumchannels(usebadpts, dofft)
+        Xb = np.zeros((N_subjs * windowspersubject, window_size, numchans))
         LGR.info(f"dimensions of Xb: {Xb.shape}")
         for j in range(N_subjs):
             LGR.info(
@@ -4759,10 +4765,9 @@ def prep(
                 f"{np.max(Y[0, :, j])}"
             )
             for i in range(windowspersubject):
-                Xb[j * windowspersubject + i, :, 0] = X[0, step * i : (step * i + window_size), j]
-                Xb[j * windowspersubject + i, :, 1] = BAD[
+                Xb[j * windowspersubject + i, :, :] = datatochannels(X[0, step * i : (step * i + window_size), j], BAD[
                     0, step * i : (step * i + window_size), j
-                ]
+                ], usebadpts, dofft)
 
         Yb = np.zeros((N_subjs * windowspersubject, window_size, 1))
         LGR.info(f"dimensions of Yb: {Yb.shape}")
@@ -4777,26 +4782,6 @@ def prep(
     print(f"Xb.shape: {Xb.shape}")
     print(f"Yb.shape: {Yb.shape}")
     print(f"{usebadpts=}, {dofft=}")
-    if dofft:
-        Xb_fourier = np.zeros((N_subjs * windowspersubject, window_size, 2))
-        LGR.info(f"dimensions of Xb_fourier: {Xb_fourier.shape}")
-        Xscale_fourier = np.zeros((N_subjs, windowspersubject))
-        LGR.info(f"dimensions of Xscale_fourier: {Xscale_fourier.shape}")
-        Yb_fourier = np.zeros((N_subjs * windowspersubject, window_size, 2))
-        LGR.info(f"dimensions of Yb_fourier: {Yb_fourier.shape}")
-        Yscale_fourier = np.zeros((N_subjs, windowspersubject))
-        LGR.info(f"dimensions of Yscale_fourier: {Yscale_fourier.shape}")
-        for j in range(N_subjs):
-            LGR.info(f"transforming subject {j}")
-            for i in range((N_pts - window_size - 1)):
-                (
-                    Xb_fourier[j * windowspersubject + i, :, :],
-                    Xscale_fourier[j, i],
-                ) = filtscale(X[0, step * i : (step * i + window_size), j])
-                (
-                    Yb_fourier[j * windowspersubject + i, :, :],
-                    Yscale_fourier[j, i],
-                ) = filtscale(Y[0, step * i : (step * i + window_size), j])
 
     limit = np.int64(0.8 * Xb.shape[0])
     LGR.info(f"limit: {limit} out of {len(subjectstarts)}")
@@ -4819,41 +4804,22 @@ def prep(
 
     batchsize = windowspersubject
 
-    if dofft:
-        train_x = Xb_fourier[perm[:limit], :, :]
-        train_y = Yb_fourier[perm[:limit], :, :]
+    train_x = Xb[perm_train, :, :]
+    train_y = Yb[perm_train, :, :]
 
-        val_x = Xb_fourier[perm[limit:], :, :]
-        val_y = Yb_fourier[perm[limit:], :, :]
-        LGR.info(f"train, val dims: {train_x.shape} {train_y.shape} {val_x.shape} {val_y.shape}")
-        return (
-            train_x,
-            train_y,
-            val_x,
-            val_y,
-            N_subjs,
-            tclen - startskip - endskip,
-            batchsize,
-            Xscale_fourier,
-            Yscale_fourier,
-        )
-    else:
-        train_x = Xb[perm_train, :, :]
-        train_y = Yb[perm_train, :, :]
+    val_x = Xb[perm_val, :, :]
+    val_y = Yb[perm_val, :, :]
 
-        val_x = Xb[perm_val, :, :]
-        val_y = Yb[perm_val, :, :]
+    LGR.info(f"train, val dims: {train_x.shape} {train_y.shape} {val_x.shape} {val_y.shape}")
+    print(f"in prep: {train_x.shape=}, {train_y.shape=}, {val_x.shape}, {val_y.shape=}")
 
-        LGR.info(f"train, val dims: {train_x.shape} {train_y.shape} {val_x.shape} {val_y.shape}")
-        print(f"in prep: {train_x.shape=}, {train_y.shape=}, {val_x.shape}, {val_y.shape=}")
-
-        LGR.info(f"train, val dims: {train_x.shape} {train_y.shape} {val_x.shape} {val_y.shape}")
-        return (
-            train_x,
-            train_y,
-            val_x,
-            val_y,
-            N_subjs,
-            tclen - startskip - endskip,
-            batchsize,
-        )
+    LGR.info(f"train, val dims: {train_x.shape} {train_y.shape} {val_x.shape} {val_y.shape}")
+    return (
+        train_x,
+        train_y,
+        val_x,
+        val_y,
+        N_subjs,
+        tclen - startskip - endskip,
+        batchsize,
+    )
