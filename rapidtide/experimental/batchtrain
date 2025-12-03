@@ -46,6 +46,7 @@ def dotraining(
     startskip=200,
     endskip=100,
     step=20,
+    batch_size=1024,
     encoding_dim=16,
     excludebysubject=False,
 ):
@@ -54,7 +55,6 @@ def dotraining(
             num_epochs=num_epochs,
             startskip=startskip,
             endskip=endskip,
-            step=step,
             excludethresh=excludethresh,
             corrthresh=corrthresh,
             excludebysubject=excludebysubject,
@@ -73,6 +73,8 @@ def dotraining(
             activation=activation,
             num_filters=num_filters,
             kernel_size=kernel_size,
+            step=step,
+            batch_size=batch_size,
             debug=debug,
         )
     elif nettype == "crnn":
@@ -248,7 +250,8 @@ def main():
     invert = True
     startskip = 200
     endskip = 100
-    step = 20
+    step = 9
+    batch_size = 1024
     encoding_dim = 16
     excludebysubject = False
 
@@ -324,40 +327,42 @@ def main():
 
     # train CNN
     nettype = "cnn"
-    num_epochs = 3
+    num_epochs = 25
     for window_size in [64]:
-        for usebadpts in [True, False]:
+        for usebadpts in [True]:
             for kernel_size in [7]:
                 for num_layers in [19]:
                     for num_filters in [30]:
                         for dofft in [True]:
-                            dotraining(
-                                thedatadir,
-                                num_pretrain_epochs=num_pretrain_epochs,
-                                num_epochs=num_epochs,
-                                excludethresh=excludethresh,
-                                corrthresh=corrthresh,
-                                window_size=window_size,
-                                num_layers=num_layers,
-                                num_filters=num_filters,
-                                kernel_size=kernel_size,
-                                dropout_rate=dropout_rate,
-                                dofft=dofft,
-                                nettype=nettype,
-                                activation=activation,
-                                usebadpts=usebadpts,
-                                countlim=countlim,
-                                readlim=readlim,
-                                readskip=readskip,
-                                num_units=num_units,
-                                debug=debug,
-                                invert=invert,
-                                startskip=startskip,
-                                endskip=endskip,
-                                step=step,
-                                encoding_dim=encoding_dim,
-                                excludebysubject=excludebysubject,
-                            )
+                            for batch_size in [1024]:
+                                dotraining(
+                                    thedatadir,
+                                    num_pretrain_epochs=num_pretrain_epochs,
+                                    num_epochs=num_epochs,
+                                    excludethresh=excludethresh,
+                                    corrthresh=corrthresh,
+                                    window_size=window_size,
+                                    num_layers=num_layers,
+                                    num_filters=num_filters,
+                                    kernel_size=kernel_size,
+                                    dropout_rate=dropout_rate,
+                                    dofft=dofft,
+                                    nettype=nettype,
+                                    activation=activation,
+                                    usebadpts=usebadpts,
+                                    countlim=countlim,
+                                    readlim=readlim,
+                                    readskip=readskip,
+                                    num_units=num_units,
+                                    debug=debug,
+                                    invert=invert,
+                                    startskip=startskip,
+                                    endskip=endskip,
+                                    step=step,
+                                    batch_size=batch_size,
+                                    encoding_dim=encoding_dim,
+                                    excludebysubject=excludebysubject,
+                                )
 
 
 

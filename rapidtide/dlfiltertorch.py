@@ -120,6 +120,7 @@ class DeepLearningFilter:
         startskip: int = 200,
         endskip: int = 200,
         step: int = 1,
+        batch_size: int = 1024,
         namesuffix: str | None = None,
         readlim: int | None = None,
         readskip: int | None = None,
@@ -176,6 +177,8 @@ class DeepLearningFilter:
             Number of samples to skip at the end of each timecourse. Default is 200.
         step : int, optional
             Step size for sliding window. Default is 1.
+        batch_size: int, optional
+            Training batch size.  Default is 1024.
         namesuffix : str, optional
             Suffix to append to model name. Default is None.
         readlim : int, optional
@@ -236,6 +239,7 @@ class DeepLearningFilter:
         self.startskip = startskip
         self.endskip = endskip
         self.step = step
+        self.batch_size = batch_size
         self.excludebysubject = excludebysubject
         self.device = device
 
@@ -940,8 +944,8 @@ class DeepLearningFilter:
         train_dataset = TensorDataset(train_x_tensor, train_y_tensor)
         val_dataset = TensorDataset(val_x_tensor, val_y_tensor)
 
-        train_loader = DataLoader(train_dataset, batch_size=1024, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=1024, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False)
 
         print("setting criterion")
         criterion = nn.MSELoss()
