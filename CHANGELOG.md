@@ -1,5 +1,17 @@
 # Release history
 
+## Version 3.1.2 (12/4/25)
+* (rapidtide) Partial fix for https://github.com/bbfrederick/rapidtide/issues/229.  You should at least be able to specify filtering properly when the ``--delaymapping`` macro is used.  Another shoutout to https://github.com/beccaclements99 for finding this!
+* (happy) Refactored cardiacfromimage (well, Claude did, but I helped).
+* (happy) Made several tweaks and improvements the pytorch implementation of CNNModel to try to improve performance around bad or missing data.
+* (happy) Improved the training workflow for the pytorch implementation of CNNModel.
+* (applydlfilter) Improved the interface to make this more useful as an evaluation tool.
+* (package) Fixed a lot of array allocations and copies to hopefully get a little speed boost.
+* (package) Made several more type hint refinements.
+* (package) Save pyfftw wisdom for faster startup after first run.
+* (package) Optimize the length of a lot of FFTs for faster processing.
+* (package) Accepted some dependabot PRs.
+
 ## Version 3.1.1 (11/17/25)
 * (rapidtide, retroregress) Correctly output relevant maps when doing CVR processing.  Closes https://github.com/bbfrederick/rapidtide/issues/226.  Thank you to https://github.com/beccaclements99 for finding this!
 * (rapiditde) Fixed a crashing bug when using PCA to estimate the initial sLFO regressor.
