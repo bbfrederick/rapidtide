@@ -18,7 +18,8 @@
 #
 import numpy as np
 
-from rapidtide.workflows.rapidtide_parser import process_args
+import rapidtide.workflows.rapidtide_parser as rp
+import rapidtide.workflows.parser_funcs as pf
 
 testlist = {}
 testlist["searchrange"] = {
@@ -84,6 +85,21 @@ testlist["nodelayfit"] = {
         ["fixdelay", True],
     ],
 }
+testlist["delaymapping"] = {
+    "command": ["--delaymapping"],
+    "results": [
+        ["fixdelay", True],
+        ["passes", rp.DEFAULT_DELAYMAPPING_PASSES],
+        ["despeckle_passes", rp.DEFAULT_DELAYMAPPING_DESPECKLE_PASSES],
+        ["gausssigma", rp.DEFAULT_DELAYMAPPING_SPATIALFILT],
+        ["lagmin", rp.DEFAULT_DELAYMAPPING_LAGMIN],
+        ["lagmax", rp.DEFAULT_DELAYMAPPING_LAGMAX],
+        ["refineoffset",True],
+        ["refinedelay", True],
+        ["outputlevel", "normal"],
+        ["dolinfitfilt", True],
+    ],
+}
 
 
 def checktests(testvec, testlist, theargs, epsilon):
@@ -106,6 +122,28 @@ def checktests(testvec, testlist, theargs, epsilon):
                 else:
                     assert np.fabs(theargs[theresult[0]] - theresult[1]) < epsilon
 
+def testavector(testvec, epsilon):
+    print(testlist)
+    print(testvec)
+
+    # make the argument and results lists
+    arglist = [
+        "../data/examples/src/sub-RAPIDTIDETEST.nii.gz",
+        "../data/examples/dst/parsertestdummy",
+    ]
+    resultlist = []
+    for thetest in testvec:
+        arglist += testlist[thetest]["command"]
+        for theresult in testlist[thetest]["results"]:
+            resultlist += [theresult]
+
+    print(arglist)
+    print(resultlist)
+
+    theargs, ncprefilter = rp.process_args(inputargs=arglist)
+
+    checktests(testvec, testlist, theargs, epsilon)
+
 
 def main():
     epsilon = 0.00001
@@ -123,27 +161,7 @@ def main():
     testvec.append("interptype")
     testvec.append("offsettime")
     testvec.append("datafreq")
-
-    print(testlist)
-    print(testvec)
-
-    # make the argument and results lists
-    arglist = [
-        "../data/examples/src/sub-RAPIDTIDETEST.nii.gz",
-        "../data/examples/dst/parsertestdummy",
-    ]
-    resultlist = []
-    for thetest in testvec:
-        arglist += testlist[thetest]["command"]
-        for theresult in testlist[thetest]["results"]:
-            resultlist += [theresult]
-
-    print(arglist)
-    print(resultlist)
-
-    theargs, ncprefilter = process_args(inputargs=arglist)
-
-    checktests(testvec, testlist, theargs, epsilon)
+    testavector(testvec, epsilon)
 
     # construct the second test vector
     testvec = []
@@ -151,28 +169,9 @@ def main():
     testvec.append("datatstep")
     testvec.append("timerange")
     testvec.append("numnull")
-    testvec.append("fixdelay")
-
-    print(testlist)
-    print(testvec)
-
-    # make the argument and results lists
-    arglist = [
-        "../data/examples/src/sub-RAPIDTIDETEST.nii.gz",
-        "../data/examples/dst/parsertestdummy",
-    ]
-    resultlist = []
-    for thetest in testvec:
-        arglist += testlist[thetest]["command"]
-        for theresult in testlist[thetest]["results"]:
-            resultlist += [theresult]
-
-    print(arglist)
-    print(resultlist)
-
-    theargs, ncprefilter = process_args(inputargs=arglist)
-
-    checktests(testvec, testlist, theargs, epsilon)
+    testvec.append("initialdelay")
+    testvec.append("nodelayfit")
+    testavector(testvec, epsilon)
 
 
 if __name__ == "__main__":
