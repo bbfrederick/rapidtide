@@ -2019,7 +2019,6 @@ def postprocesstimerangeopts(args: Namespace) -> Namespace:
 
     Examples
     --------
-    >>> from types import Namespace
     >>> args = Namespace()
     >>> args.timerange = [100, 200]
     >>> result = postprocesstimerangeopts(args)
