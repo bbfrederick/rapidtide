@@ -325,11 +325,11 @@ def main():
     nettype = "cnn"
     num_epochs = 60
     window_size = 64
-    for window_size in [64, 96]:
+    for window_size in [64]:
         for usebadpts in [True]:
-            for kernel_size in [11]:
-                for num_layers in [24]:
-                    for num_filters in [25]:
+            for kernel_size in [3]:
+                for num_layers in [19, 29]:
+                    for num_filters in [50]:
                         dotraining(
                             thedatadir,
                             num_pretrain_epochs=num_pretrain_epochs,
