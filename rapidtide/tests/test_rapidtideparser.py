@@ -102,8 +102,8 @@ testlist["delaymapping"] = {
 }
 
 
-def checktests(testvec, testlist, theargs, epsilon):
-    for thetest in testvec:
+def checktests(thetestvec, testlist, theargs, epsilon):
+    for thetest in thetestvec:
         for theresult in testlist[thetest]["results"]:
             print("testing", testlist[thetest]["command"], "effect on", theresult[0])
             if len(theresult) <= 2:
@@ -122,9 +122,9 @@ def checktests(testvec, testlist, theargs, epsilon):
                 else:
                     assert np.fabs(theargs[theresult[0]] - theresult[1]) < epsilon
 
-def testavector(testvec, epsilon):
+def checkavector(thetestvec, epsilon):
     print(testlist)
-    print(testvec)
+    print(thetestvec)
 
     # make the argument and results lists
     arglist = [
@@ -132,7 +132,7 @@ def testavector(testvec, epsilon):
         "../data/examples/dst/parsertestdummy",
     ]
     resultlist = []
-    for thetest in testvec:
+    for thetest in thetestvec:
         arglist += testlist[thetest]["command"]
         for theresult in testlist[thetest]["results"]:
             resultlist += [theresult]
@@ -142,36 +142,36 @@ def testavector(testvec, epsilon):
 
     theargs, ncprefilter = rp.process_args(inputargs=arglist)
 
-    checktests(testvec, testlist, theargs, epsilon)
+    checktests(thetestvec, testlist, theargs, epsilon)
 
 
 def main():
     epsilon = 0.00001
 
     # construct the first test vector
-    testvec = []
-    testvec.append("filterband")
-    testvec.append("filtertype")
-    testvec.append("searchrange")
-    testvec.append("pickleft")
-    testvec.append("corrweighting")
-    testvec.append("datafreq")
-    testvec.append("noantialias")
-    testvec.append("invert")
-    testvec.append("interptype")
-    testvec.append("offsettime")
-    testvec.append("datafreq")
-    testavector(testvec, epsilon)
+    thetestvec = []
+    thetestvec.append("filterband")
+    thetestvec.append("filtertype")
+    thetestvec.append("searchrange")
+    thetestvec.append("pickleft")
+    thetestvec.append("corrweighting")
+    thetestvec.append("datafreq")
+    thetestvec.append("noantialias")
+    thetestvec.append("invert")
+    thetestvec.append("interptype")
+    thetestvec.append("offsettime")
+    thetestvec.append("datafreq")
+    checkavector(thetestvec, epsilon)
 
     # construct the second test vector
-    testvec = []
-    testvec.append("filterfreqs")
-    testvec.append("datatstep")
-    testvec.append("timerange")
-    testvec.append("numnull")
-    testvec.append("initialdelay")
-    testvec.append("nodelayfit")
-    testavector(testvec, epsilon)
+    thetestvec = []
+    thetestvec.append("filterfreqs")
+    thetestvec.append("datatstep")
+    thetestvec.append("timerange")
+    thetestvec.append("numnull")
+    thetestvec.append("initialdelay")
+    thetestvec.append("nodelayfit")
+    checkavector(thetestvec, epsilon)
 
 
 if __name__ == "__main__":
