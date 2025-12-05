@@ -231,7 +231,8 @@ def main():
         thedatadir = "/home/frederic/Dropbox/timecourses"
     else:
         print("setting up to run on mclean cluster")
-        thedatadir = "/data/frederic/physioconn/output_2025"
+        #thedatadir = "/data/frederic/physioconn/output_2025"
+        thedatadir = "/data/tmp/frederic/happyruns"
 
     print(f"will look for input data in {thedatadir}")
 

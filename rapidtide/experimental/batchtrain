@@ -234,7 +234,8 @@ def main():
         thedatadir = "/home/frederic/Dropbox/timecourses"
     else:
         print("setting up to run on mclean cluster")
-        thedatadir = "/data/frederic/physioconn/output_2025"
+        #thedatadir = "/data/frederic/physioconn/output_2025"
+        thedatadir = "/data/tmp/frederic/happyruns"
 
     print(f"will look for input data in {thedatadir}")
 
@@ -337,13 +338,13 @@ def main():
 
     # train CNN
     nettype = "cnn"
-    num_epochs = 25
+    num_epochs = 60
     for window_size in [64]:
         for usebadpts in [True]:
-            for kernel_size in [7]:
+            for kernel_size in [5]:
                 for num_layers in [19]:
-                    for num_filters in [30]:
-                        for dofft in [True]:
+                    for num_filters in [50]:
+                        for dofft in [False]:
                             for batch_size in [1024]:
                                 dotraining(
                                     thedatadir,
