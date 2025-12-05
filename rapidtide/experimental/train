@@ -338,7 +338,7 @@ def main():
     for window_size in [64]:
         for usebadpts in [True]:
             for kernel_size in [3]:
-                for num_layers in [19, 29]:
+                for num_layers in [19]:
                     for num_filters in [50]:
                         dotraining(
                             thedatadir,
