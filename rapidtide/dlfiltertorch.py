@@ -4325,6 +4325,7 @@ def readindata(
     strangemagfiles = []
     for i in range(readskip, readskip + s):
         lowcorrfound = False
+        badskewfound = False
         nanfound = False
         LGR.info(f"processing {matchedfilelist[i]}")
 
