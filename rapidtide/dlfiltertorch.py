@@ -115,7 +115,8 @@ class DeepLearningFilter:
         thedatadir: str = "/Users/frederic/Documents/MR_data/physioconn/timecourses",
         inputfrag: str = "abc",
         targetfrag: str = "xyz",
-        corrthresh: float = 0.5,
+        corrthresh_rp: float = 0.5,
+        corrthresh_pp: float = 0.9,
         excludebysubject: bool = True,
         startskip: int = 200,
         endskip: int = 200,
@@ -167,8 +168,10 @@ class DeepLearningFilter:
             Fragment identifier for input data. Default is "abc".
         targetfrag : str, optional
             Fragment identifier for target data. Default is "xyz".
-        corrthresh : float, optional
-            Correlation threshold for filtering. Default is 0.5.
+        corrthresh_rp : float, optional
+            Correlation threshold of raw signal to plethysmogram for filtering. Default is 0.5.
+        corrthresh_pp : float, optional
+            Correlation threshold of raw pleth to filtered plethysmogram for filtering. Default is 0.5.
         excludebysubject : bool, optional
             Whether to exclude data by subject. Default is True.
         startskip : int, optional
@@ -224,7 +227,8 @@ class DeepLearningFilter:
         self.thedatadir = thedatadir
         self.modelpath = modelpath
         LGR.info(f"modeldir from DeepLearningFilter: {self.modelpath}")
-        self.corrthresh = corrthresh
+        self.corrthresh_rp = corrthresh_rp
+        self.corrthresh_pp = corrthresh_pp
         self.excludethresh = excludethresh
         self.readlim = readlim
         self.readskip = readskip
@@ -247,7 +251,8 @@ class DeepLearningFilter:
         self.infodict["window_size"] = self.window_size
         self.infodict["usebadpts"] = self.usebadpts
         self.infodict["dofft"] = self.dofft
-        self.infodict["corrthresh"] = self.corrthresh
+        self.infodict["corrthresh_rp"] = self.corrthresh_rp
+        self.infodict["corrthresh_pp"] = self.corrthresh_pp
         self.infodict["excludethresh"] = self.excludethresh
         self.infodict["num_pretrain_epochs"] = self.num_pretrain_epochs
         self.infodict["num_epochs"] = self.num_epochs
@@ -289,8 +294,10 @@ class DeepLearningFilter:
                 Number of samples to skip at the beginning of each file.
             - endskip : int
                 Number of samples to skip at the end of each file.
-            - corrthresh : float
-                Correlation threshold for filtering data.
+            - corrthresh_rp : float
+                Correlation threshold (raw to pleth) for filtering data.
+            - corrthresh_pp : float
+                Correlation threshold (pleth to filtered pleth) for filtering data.
             - step : int
                 Step size for sliding window.
             - usebadpts : bool
@@ -361,7 +368,7 @@ class DeepLearningFilter:
             targetfrag=self.targetfrag,
             startskip=self.startskip,
             endskip=self.endskip,
-            corrthresh=self.corrthresh,
+            corrthresh_rp=self.corrthresh_rp,
             step=self.step,
             dofft=self.dofft,
             usebadpts=self.usebadpts,
@@ -951,7 +958,7 @@ class DeepLearningFilter:
         criterion = nn.MSELoss()
 
         print("setting optimizer")
-        #optimizer = optim.RMSprop(self.model.parameters())
+        # optimizer = optim.RMSprop(self.model.parameters())
         optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
         self.loss = []
@@ -1107,10 +1114,12 @@ class DeepLearningFilter:
 
         # now populate all channels
         for i in range(X.shape[0]):
-            X[i, :, :] = datatochannels(scaleddata[i : i + self.window_size],
-                                        badpts[i : i + self.window_size],
-                                        self.usebadpts,
-                                        self.dofft)
+            X[i, :, :] = datatochannels(
+                scaleddata[i : i + self.window_size],
+                badpts[i : i + self.window_size],
+                self.usebadpts,
+                self.dofft,
+            )
 
         Y = self.predict_model(X)
         for i in range(X.shape[0]):
@@ -1379,7 +1388,7 @@ class CNNDLFilter(DeepLearningFilter):
         Notes
         -----
         The generated model name follows a specific format:
-        "model_cnn_pytorch_wXXX_lYY_fnZZ_flZZ_eXXX_tY_ctZ_sZ_dZ_activation[options]"
+        "model_cnn_pytorch_wXXX_lYY_fnZZ_flZZ_eXXX_tY_ctrpZ_ctppZ_sZ_dZ_activation[options]"
 
         Where:
         - XXX: window_size (3 digits zero-padded)
@@ -1388,7 +1397,8 @@ class CNNDLFilter(DeepLearningFilter):
         - ZZ: kernel_size (2 digits zero-padded)
         - XXX: num_epochs (3 digits zero-padded)
         - Y: excludethresh (single digit)
-        - Z: corrthresh (single digit)
+        - Z: corrthresh_rp (single digit)
+        - Z: corrthresh_pp (single digit)
         - Z: step (single digit)
         - Z: dilation_rate (single digit)
 
@@ -1405,7 +1415,8 @@ class CNNDLFilter(DeepLearningFilter):
         >>> model.kernel_size = 3
         >>> model.num_epochs = 100
         >>> model.excludethresh = 0.5
-        >>> model.corrthresh = 0.8
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
         >>> model.step = 1
         >>> model.dilation_rate = 2
         >>> model.activation = "relu"
@@ -1427,7 +1438,8 @@ class CNNDLFilter(DeepLearningFilter):
                 "fl" + str(self.kernel_size).zfill(2),
                 "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
-                "ct" + str(self.corrthresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
                 "s" + str(self.step),
                 "d" + str(self.dilation_rate),
                 self.activation,
@@ -1787,8 +1799,10 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
                 Number of training epochs
             - excludethresh : float
                 Threshold for excluding data points
-            - corrthresh : float
-                Correlation threshold for filtering
+            - corrthresh_rp : float
+                Correlation threshold (raw to pleth) for filtering
+            - corrthresh_pp : float
+                Correlation threshold (pleth to filtered pleth) for filtering
             - step : int
                 Step size for sliding window
             - activation : str
@@ -1823,7 +1837,8 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         >>> model.encoding_dim = 50
         >>> model.num_epochs = 1000
         >>> model.excludethresh = 0.5
-        >>> model.corrthresh = 0.8
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
         >>> model.step = 10
         >>> model.activation = 'relu'
         >>> model.usebadpts = True
@@ -1843,7 +1858,8 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
                 "en" + str(self.encoding_dim).zfill(3),
                 "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
-                "ct" + str(self.corrthresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -2238,7 +2254,8 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         >>> model.kernel_sizes = [3, 5, 7]
         >>> model.num_epochs = 100
         >>> model.excludethresh = 0.5
-        >>> model.corrthresh = 0.8
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
         >>> model.step = 16
         >>> model.dilation_rate = 2
         >>> model.activation = "relu"
@@ -2260,7 +2277,8 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
                 "fl" + str(self.kernel_sizes[0]).zfill(2),
                 "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
-                "ct" + str(self.corrthresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
                 "s" + str(self.step),
                 "d" + str(self.dilation_rate),
                 self.activation,
@@ -2643,7 +2661,8 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             - kernel_size : int
             - num_epochs : int
             - excludethresh : float
-            - corrthresh : float
+            - corrthresh_rp : float
+            - corrthresh_pp : float
             - step : int
             - activation : str
             - usebadpts : bool
@@ -2697,7 +2716,8 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
                 "fl" + str(self.kernel_size).zfill(2),
                 "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
-                "ct" + str(self.corrthresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -3074,7 +3094,8 @@ class CRNNDLFilter(DeepLearningFilter):
         >>> model.kernel_size = 5
         >>> model.num_epochs = 100
         >>> model.excludethresh = 0.5
-        >>> model.corrthresh = 0.8
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
         >>> model.step = 10
         >>> model.activation = 'relu'
         >>> model.modelroot = '/path/to/models'
@@ -3093,7 +3114,8 @@ class CRNNDLFilter(DeepLearningFilter):
                 "fl" + str(self.kernel_size).zfill(2),
                 "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
-                "ct" + str(self.corrthresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -3405,7 +3427,8 @@ class LSTMDLFilter(DeepLearningFilter):
         >>> model.dropout_rate = 0.2
         >>> model.num_epochs = 100
         >>> model.excludethresh = 0.5
-        >>> model.corrthresh = 0.8
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
         >>> model.step = 1
         >>> model.excludebysubject = True
         >>> model.getname()
@@ -3424,7 +3447,8 @@ class LSTMDLFilter(DeepLearningFilter):
                 "rd" + str(self.dropout_rate),
                 "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
-                "ct" + str(self.corrthresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
                 "s" + str(self.step),
             ]
         )
@@ -3816,7 +3840,8 @@ class HybridDLFilter(DeepLearningFilter):
             - dropout_rate : float
             - num_epochs : int
             - excludethresh : float
-            - corrthresh : float
+            - corrthresh_rp : float
+            - corrthresh_pp : float
             - step : int
             - activation : str
             - invert : bool
@@ -3863,7 +3888,8 @@ class HybridDLFilter(DeepLearningFilter):
                 "rd" + str(self.dropout_rate),
                 "e" + str(self.num_epochs).zfill(3),
                 "t" + str(self.excludethresh),
-                "ct" + str(self.corrthresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
                 "s" + str(self.step),
                 self.activation,
             ]
@@ -4206,7 +4232,8 @@ def readindata(
     usebadpts: bool = False,
     startskip: int = 0,
     endskip: int = 0,
-    corrthresh: float = 0.5,
+    corrthresh_rp: float = 0.5,
+    corrthresh_pp: float = 0.9,
     readlim: int | None = None,
     readskip: int | None = None,
     debug: bool = False,
@@ -4237,9 +4264,12 @@ def readindata(
         Number of samples to skip at the beginning of each time series. Default is 0.
     endskip : int, optional
         Number of samples to skip at the end of each time series. Default is 0.
-    corrthresh : float, optional
+    corrthresh_rp : float, optional
         Minimum correlation threshold between raw and plethysmographic signals.
         Files with lower correlation are excluded. Default is 0.5.
+    corrthresh_pp : float, optional
+        Minimum correlation threshold between raw and filtered plethysmographic signals.
+        Files with lower correlation are excluded. Default is 0.9.
     readlim : int, optional
         Maximum number of files to read. If None, all files are read. Default is None.
     readskip : int, optional
@@ -4289,6 +4319,7 @@ def readindata(
     badcount = 0
     LGR.info("checking data")
     lowcorrfiles = []
+    badskewfiles = []
     nanfiles = []
     shortfiles = []
     strangemagfiles = []
@@ -4301,9 +4332,14 @@ def readindata(
         infodict = tide_io.readdictfromjson(
             matchedfilelist[i].replace("_desc-stdrescardfromfmri_timeseries", "_info")
         )
-        if infodict["corrcoeff_raw2pleth"] < corrthresh:
+        if (infodict["corrcoeff_raw2pleth"] < corrthresh_rp) or (
+            infodict["corrcoeff_pleth2filtpleth"] < corrthresh_pp
+        ):
             lowcorrfound = True
             lowcorrfiles.append(matchedfilelist[i])
+        if (infodict["S_sqi_mean_pleth"] < 0.1) or (infodict["S_sqi_mean_pleth"] > 1.0):
+            badskewfound = True
+            badskewfiles.append(matchedfilelist[i])
         thecolspec = "cardiacfromfmri_25.0Hz,normpleth"
         if usebadpts:
             thecolspec = thecolspec + ",badpts"
@@ -4365,6 +4401,7 @@ def readindata(
             and (not shortfound)
             and (not strangefound)
             and (not lowcorrfound)
+            and (not badskewfound)
         ):
             x1[:tclen, count] = tempx[:tclen]
             y1[:tclen, count] = tempy[:tclen]
@@ -4385,10 +4422,15 @@ def readindata(
             print(f"\t{shortfound=}")
             print(f"\t{strangefound=}")
             print(f"\t{lowcorrfound=}")
+            print(f"\t{badskewfound=}")
     LGR.info(f"{count} runs pass file length check")
     if len(lowcorrfiles) > 0:
         LGR.info("files with low raw/pleth correlations:")
         for thefile in lowcorrfiles:
+            LGR.info(f"\t{thefile}")
+    if len(badskewfiles) > 0:
+        LGR.info("files with bad plethysmogram skewness:")
+        for thefile in badskewfiles:
             LGR.info(f"\t{thefile}")
     if len(nanfiles) > 0:
         LGR.info("files with NaNs:")
@@ -4431,11 +4473,13 @@ def calcnumchannels(usebadpts, dofft):
     else:
         fftchans = 0
     numchans = 1 + badptchans + fftchans
-    
+
     return numchans, badptchans, fftchans
 
 
-def datatochannels(timecourse, badpts, usebadpts, dofft, logtrans=True, stdnorm=True, magthresh=0.001):
+def datatochannels(
+    timecourse, badpts, usebadpts, dofft, logtrans=True, stdnorm=True, magthresh=0.001
+):
     # make an X array with the proper number of channels
     numchans, badptchans, fftchans = calcnumchannels(usebadpts, dofft)
     channeldata = np.zeros((len(timecourse), numchans), dtype=float)
@@ -4479,7 +4523,8 @@ def prep(
     thedatadir: str = "/data/frederic/physioconn/output_2025",
     inputfrag: str = "abc",
     targetfrag: str = "xyz",
-    corrthresh: float = 0.5,
+    corrthresh_rp: float = 0.5,
+    corrthresh_pp: float = 0.9,
     dofft: bool = False,
     readlim: int | None = None,
     readskip: int | None = None,
@@ -4527,8 +4572,10 @@ def prep(
         Fragment identifier for input data (default is "abc").
     targetfrag : str, optional
         Fragment identifier for target data (default is "xyz").
-    corrthresh : float, optional
-        Correlation threshold for data filtering (default is 0.5).
+    corrthresh_rp : float, optional
+        Correlation threshold (raw to pleth) for data filtering (default is 0.5).
+    corrthresh_pp : float, optional
+        Correlation threshold (pleth to filt pleth) for data filtering (default is 0.9).
     dofft : bool, optional
         If True, apply FFT transformation to the data (default is False).
     readlim : int, optional
@@ -4599,7 +4646,8 @@ def prep(
     x, y, names, bad = readindata(
         matchedfilelist,
         tclen,
-        corrthresh=corrthresh,
+        corrthresh_rp=corrthresh_rp,
+        corrthresh_pp=corrthresh_pp,
         targetfrag=targetfrag,
         inputfrag=inputfrag,
         usebadpts=True,
@@ -4769,9 +4817,12 @@ def prep(
                 f"{np.max(Y[0, :, j])}"
             )
             for i in range(windowspersubject):
-                Xb[j * windowspersubject + i, :, :] = datatochannels(X[0, step * i : (step * i + window_size), j], BAD[
-                    0, step * i : (step * i + window_size), j
-                ], usebadpts, dofft)
+                Xb[j * windowspersubject + i, :, :] = datatochannels(
+                    X[0, step * i : (step * i + window_size), j],
+                    BAD[0, step * i : (step * i + window_size), j],
+                    usebadpts,
+                    dofft,
+                )
 
         Yb = np.zeros((N_subjs * windowspersubject, window_size, 1))
         LGR.info(f"dimensions of Yb: {Yb.shape}")
