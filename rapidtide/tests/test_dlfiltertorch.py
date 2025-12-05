@@ -603,7 +603,8 @@ def test_infodict_population(temp_model_dir):
         dropout_rate=0.3,
         num_epochs=5,
         excludethresh=4.0,
-        corrthresh=0.5,
+        corrthresh_rp=0.5,
+        corrthresh_pp=0.9,
         modelroot=temp_model_dir,
     )
 
