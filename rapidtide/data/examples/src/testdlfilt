@@ -17,5 +17,5 @@ do
         ${ROOT}/data/examples/src/happy_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
         ${ROOT}/data/examples/dst/${MODEL}_filtered \
         --model ${ROOT}/experimental/${MODEL} \
-        --nodisplay
+        --verbose
 done
