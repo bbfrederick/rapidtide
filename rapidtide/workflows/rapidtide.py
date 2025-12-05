@@ -3375,7 +3375,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     "map",
                     "percent",
                     "Percent signal change due to the CVR regressor",
-                )
+                ),
             ]
 
         tide_io.savemaplist(

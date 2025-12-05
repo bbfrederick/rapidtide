@@ -103,7 +103,7 @@ def test_congrid(debug=False, displayplots=False):
 
                     griddeddata = np.where(weights > 0.0, griddeddata / weights, 0.0)
 
-                    target = np.zeros_like(gridaxis,np.float64)
+                    target = np.zeros_like(gridaxis, np.float64)
                     for i in range(len(gridaxis)):
                         target[i] = funcvalue2(gridaxis[i], frequency=cycles)
 

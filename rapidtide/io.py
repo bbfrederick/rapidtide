@@ -1556,7 +1556,6 @@ def checkspaceresmatch(sizes1: NDArray, sizes2: NDArray, tolerance: float = 1.0e
     return True
 
 
-
 def checkspacedimmatch(dims1: NDArray, dims2: NDArray, verbose: bool = False) -> bool:
     """
     Check the dimension arrays of two nifti files to determine if they cover the same number of voxels in each dimension.

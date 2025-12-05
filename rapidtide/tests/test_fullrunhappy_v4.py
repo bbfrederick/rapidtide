@@ -31,7 +31,7 @@ try:
 except ImportError:
     tensorflowexists = False
 
-    
+
 def test_fullrunhappy_v4(debug=False, local=False, displayplots=False):
     # set input and output directories
     if local:

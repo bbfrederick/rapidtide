@@ -58,13 +58,7 @@ def refineDelay(
     histlen: int = 101,
     rt_floattype: np.dtype = np.dtype(np.float64),
     debug: bool = False,
-) -> Tuple[
-    NDArray,
-    NDArray,
-    NDArray,
-    NDArray,
-    float
-    ]:
+) -> Tuple[NDArray, NDArray, NDArray, NDArray, float]:
     """
     Refine delay estimates using regression derivative ratios and histogram-based calibration.
 

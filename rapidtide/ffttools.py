@@ -152,9 +152,7 @@ def optfftlen(
                     # so we need to start one greater than that and and go to the next highest value.
                     if _depth < 500:
                         newpadlen = int((optpadded + 1 - startlen) // 2)
-                        thelen = optfftlen(
-                            thelen, padlen=newpadlen, _depth=(_depth + 1)
-                        )
+                        thelen = optfftlen(thelen, padlen=newpadlen, _depth=(_depth + 1))
                     else:
                         thelen = initval
 

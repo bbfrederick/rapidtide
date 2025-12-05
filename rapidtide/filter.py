@@ -51,6 +51,7 @@ if pyfftwpresent:
 # --------------------------- Filtering functions -------------------------------------------------
 # NB: No automatic padding for precalculated filters
 
+
 class NoncausalFilter:
     def __init__(
         self,
@@ -2655,6 +2656,7 @@ def csdfilter(
     obsdata_trans *= transferfunc
     return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
 
+
 # @conditionaljit()
 def arb_pass(
     Fs: float,
@@ -2990,8 +2992,6 @@ def getfilterbandfreqs(
         return f"{lowerpass}-{upperpass}Hz"
     else:
         return lowerpass, upperpass, lowerstop, upperstop
-
-
 
 
 # --------------------------- FFT helper functions ---------------------------------------------

@@ -246,7 +246,9 @@ def configurepyfftw(threads: int = 1, debug: bool = False) -> Optional[str]:
 
         # check for wisdom file, load it if it exist
         wisdomfilename = os.path.join(
-            os.environ.get("HOME"), ".config", f"rapidtide_wisdom_{pyfftw.config.PLANNER_EFFORT}.txt"
+            os.environ.get("HOME"),
+            ".config",
+            f"rapidtide_wisdom_{pyfftw.config.PLANNER_EFFORT}.txt",
         )
         if os.path.isfile(wisdomfilename):
             # load the wisdom
@@ -267,6 +269,7 @@ def configurepyfftw(threads: int = 1, debug: bool = False) -> Optional[str]:
     else:
         return None
 
+
 def savewisdom(wisdomfilename: str, debug: bool = False) -> None:
     if pyfftwpresent and (wisdomfilename is not None):
         thewisdom = pyfftw.export_wisdom()
@@ -280,6 +283,7 @@ def savewisdom(wisdomfilename: str, debug: bool = False) -> None:
         # Save the tuple as a string to a text file
         with open(wisdomfilename, "w") as file:
             file.write(str(thewisdom))
+
 
 # --------------------------- Utility functions -------------------------------------------------
 def findavailablemem() -> tuple[int, int]:

@@ -27,6 +27,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 try:
     import tensorflow as tf
+
     tensorflowpresent = True
 except ImportError:
     tensorflowpresent = False
@@ -77,7 +78,6 @@ def _get_parser() -> Any:
         description="Hypersampling by Analytic Phase Projection - Yay!.",
         allow_abbrev=False,
     )
-    
 
     # Required arguments
     parser.add_argument(

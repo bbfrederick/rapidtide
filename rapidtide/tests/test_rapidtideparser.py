@@ -94,7 +94,7 @@ testlist["delaymapping"] = {
         ["gausssigma", rp.DEFAULT_DELAYMAPPING_SPATIALFILT],
         ["lagmin", rp.DEFAULT_DELAYMAPPING_LAGMIN],
         ["lagmax", rp.DEFAULT_DELAYMAPPING_LAGMAX],
-        ["refineoffset",True],
+        ["refineoffset", True],
         ["refinedelay", True],
         ["outputlevel", "normal"],
         ["dolinfitfilt", True],
@@ -121,6 +121,7 @@ def checktests(thetestvec, testlist, theargs, epsilon):
                         assert np.fabs(theargs[theresult[0]][i] - theresult[1][i]) < epsilon
                 else:
                     assert np.fabs(theargs[theresult[0]] - theresult[1]) < epsilon
+
 
 def checkavector(thetestvec, epsilon):
     print(testlist)

@@ -137,6 +137,7 @@ def test_parsers(debug=False):
     ]
     try:
         import tensorflow as tf
+
         dlfilterloads = True
     except ImportError:
         dlfilterloads = False
@@ -144,8 +145,9 @@ def test_parsers(debug=False):
         from rapidtide.workflows.applydlfilter import (
             _get_parser as applydlfilter_getparser,
         )
+
         parserlist.append(applydlfilter_getparser)
-    
+
     for thegetparser in parserlist:
         theusage = thegetparser().format_help()
         if debug:
