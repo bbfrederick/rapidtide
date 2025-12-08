@@ -4319,6 +4319,7 @@ def readindata(
     badcount = 0
     LGR.info("checking data")
     lowcorrfiles = []
+    missingmetricfiles = []
     badskewfiles = []
     incompletefiles = []
     nanfiles = []
@@ -4328,20 +4329,29 @@ def readindata(
         lowcorrfound = False
         badskewfound = False
         nanfound = False
+        missingmetric = False
         LGR.info(f"processing {matchedfilelist[i]}")
 
         # read the info dict first
         infodict = tide_io.readdictfromjson(
             matchedfilelist[i].replace("_desc-stdrescardfromfmri_timeseries", "_info")
         )
-        if (infodict["corrcoeff_raw2pleth"] < corrthresh_rp) or (
-            infodict["corrcoeff_pleth2filtpleth"] < corrthresh_pp
-        ):
-            lowcorrfound = True
-            lowcorrfiles.append(matchedfilelist[i])
-        if (infodict["S_sqi_mean_pleth"] < 0.1) or (infodict["S_sqi_mean_pleth"] > 1.0):
-            badskewfound = True
-            badskewfiles.append(matchedfilelist[i])
+        try:
+            if (infodict["corrcoeff_raw2pleth"] < corrthresh_rp) or (
+                infodict["corrcoeff_pleth2filtpleth"] < corrthresh_pp
+            ):
+                lowcorrfound = True
+                lowcorrfiles.append(matchedfilelist[i])
+        except KeyError:
+            missingmetric = True
+            missingmetricfiles.append(matchedfilelist[])
+        try:
+            if (infodict["S_sqi_mean_pleth"] < 0.1) or (infodict["S_sqi_mean_pleth"] > 1.0):
+                badskewfound = True
+                badskewfiles.append(matchedfilelist[i])
+        except KeyError:
+            missingmetric = True
+            missingmetricfiles.append(matchedfilelist[])
         thecolspec = "cardiacfromfmri_25.0Hz,normpleth"
         if usebadpts:
             thecolspec = thecolspec + ",badpts"
@@ -4406,6 +4416,7 @@ def readindata(
                 and (not shortfound)
                 and (not strangefound)
                 and (not lowcorrfound)
+                and (not missingmetric)
                 and (not badskewfound)
             ):
                 x1[:tclen, count] = tempx[:tclen]
@@ -4427,6 +4438,7 @@ def readindata(
                 print(f"\t{shortfound=}")
                 print(f"\t{strangefound=}")
                 print(f"\t{lowcorrfound=}")
+                print(f"\t{missingmetric=}")
                 print(f"\t{badskewfound=}")
         else:
             badcount += 1
@@ -4436,6 +4448,10 @@ def readindata(
     if len(lowcorrfiles) > 0:
         LGR.info("files with low raw/pleth correlations:")
         for thefile in lowcorrfiles:
+            LGR.info(f"\t{thefile}")
+    if len(missingmetricfiles) > 0:
+        LGR.info("files with missing quality metrics:")
+        for thefile in missingmetricfiles:
             LGR.info(f"\t{thefile}")
     if len(badskewfiles) > 0:
         LGR.info("files with bad plethysmogram skewness:")
