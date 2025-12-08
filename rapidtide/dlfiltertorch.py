@@ -4320,6 +4320,7 @@ def readindata(
     LGR.info("checking data")
     lowcorrfiles = []
     badskewfiles = []
+    incompletefiles = []
     nanfiles = []
     shortfiles = []
     strangemagfiles = []
@@ -4355,75 +4356,82 @@ def readindata(
             matchedfilelist[i],
             colspec=thecolspec,
         )
-        tempy = inputarray[1, :]
-        tempx = inputarray[0, :]
+        if inputarray is not None:
+            tempy = inputarray[1, :]
+            tempx = inputarray[0, :]
 
-        if np.any(np.isnan(tempy)):
-            LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
-            nanfound = True
-            nanfiles.append(matchedfilelist[i])
-        if np.any(np.isnan(tempx)):
-            nan_fname = targettoinput(
-                matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
-            )
-            LGR.info(f"NaN found in file {nan_fname} - discarding")
-            nanfound = True
-            nanfiles.append(nan_fname)
-        strangefound = False
-        if not (0.5 < np.std(tempx) < 20.0):
-            strange_fname = matchedfilelist[i]
-            LGR.info(
-                f"file {strange_fname} has an extreme cardiacfromfmri standard deviation - discarding"
-            )
-            strangefound = True
-            strangemagfiles.append(strange_fname)
-        if not (0.5 < np.std(tempy) < 20.0):
-            LGR.info(
-                f"file {matchedfilelist[i]} has an extreme normpleth standard deviation - discarding"
-            )
-            strangefound = True
-            strangemagfiles.append(matchedfilelist[i])
-        shortfound = False
-        ntempx = tempx.shape[0]
-        ntempy = tempy.shape[0]
-        if ntempx < tclen:
-            short_fname = matchedfilelist[i]
-            LGR.info(f"file {short_fname} is short - discarding")
-            shortfound = True
-            shortfiles.append(short_fname)
-        if ntempy < tclen:
-            LGR.info(f"file {matchedfilelist[i]} is short - discarding")
-            shortfound = True
-            shortfiles.append(matchedfilelist[i])
-        if (
-            (ntempx >= tclen)
-            and (ntempy >= tclen)
-            and (not nanfound)
-            and (not shortfound)
-            and (not strangefound)
-            and (not lowcorrfound)
-            and (not badskewfound)
-        ):
-            x1[:tclen, count] = tempx[:tclen]
-            y1[:tclen, count] = tempy[:tclen]
-            names.append(matchedfilelist[i])
-            if debug:
-                print(f"{matchedfilelist[i]} included:")
-            if usebadpts:
-                bad1[:tclen, count] = tempx[:tclen]
-            count += 1
-        else:
-            print(f"{matchedfilelist[i]} excluded:")
-            badcount += 1
+            if np.any(np.isnan(tempy)):
+                LGR.info(f"NaN found in file {matchedfilelist[i]} - discarding")
+                nanfound = True
+                nanfiles.append(matchedfilelist[i])
+            if np.any(np.isnan(tempx)):
+                nan_fname = targettoinput(
+                    matchedfilelist[i], targetfrag=targetfrag, inputfrag=inputfrag
+                )
+                LGR.info(f"NaN found in file {nan_fname} - discarding")
+                nanfound = True
+                nanfiles.append(nan_fname)
+            strangefound = False
+            if not (0.5 < np.std(tempx) < 20.0):
+                strange_fname = matchedfilelist[i]
+                LGR.info(
+                    f"file {strange_fname} has an extreme cardiacfromfmri standard deviation - discarding"
+                )
+                strangefound = True
+                strangemagfiles.append(strange_fname)
+            if not (0.5 < np.std(tempy) < 20.0):
+                LGR.info(
+                    f"file {matchedfilelist[i]} has an extreme normpleth standard deviation - discarding"
+                )
+                strangefound = True
+                strangemagfiles.append(matchedfilelist[i])
+            shortfound = False
+
+            ntempx = tempx.shape[0]
+            ntempy = tempy.shape[0]
             if ntempx < tclen:
-                print("\tx data too short")
+                short_fname = matchedfilelist[i]
+                LGR.info(f"file {short_fname} is short - discarding")
+                shortfound = True
+                shortfiles.append(short_fname)
             if ntempy < tclen:
-                print("\ty data too short")
-            print(f"\t{nanfound=}")
-            print(f"\t{shortfound=}")
-            print(f"\t{strangefound=}")
-            print(f"\t{lowcorrfound=}")
-            print(f"\t{badskewfound=}")
+                LGR.info(f"file {matchedfilelist[i]} is short - discarding")
+                shortfound = True
+                shortfiles.append(matchedfilelist[i])
+
+            if (
+                (ntempx >= tclen)
+                and (ntempy >= tclen)
+                and (not nanfound)
+                and (not shortfound)
+                and (not strangefound)
+                and (not lowcorrfound)
+                and (not badskewfound)
+            ):
+                x1[:tclen, count] = tempx[:tclen]
+                y1[:tclen, count] = tempy[:tclen]
+                names.append(matchedfilelist[i])
+                if debug:
+                    print(f"{matchedfilelist[i]} included:")
+                if usebadpts:
+                    bad1[:tclen, count] = tempx[:tclen]
+                count += 1
+            else:
+                print(f"{matchedfilelist[i]} excluded:")
+                badcount += 1
+                if ntempx < tclen:
+                    print("\tx data too short")
+                if ntempy < tclen:
+                    print("\ty data too short")
+                print(f"\t{nanfound=}")
+                print(f"\t{shortfound=}")
+                print(f"\t{strangefound=}")
+                print(f"\t{lowcorrfound=}")
+                print(f"\t{badskewfound=}")
+        else:
+            badcount += 1
+            incompletefiles.append(matchedfilelist[i])
+            LGR.info(f"Data file {matchedfilelist[i]} is not complete - discarding")
     LGR.info(f"{count} runs pass file length check")
     if len(lowcorrfiles) > 0:
         LGR.info("files with low raw/pleth correlations:")
