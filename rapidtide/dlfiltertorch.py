@@ -4344,14 +4344,14 @@ def readindata(
                 lowcorrfiles.append(matchedfilelist[i])
         except KeyError:
             missingmetric = True
-            missingmetricfiles.append(matchedfilelist[])
+            missingmetricfiles.append(matchedfilelist[i])
         try:
             if (infodict["S_sqi_mean_pleth"] < 0.1) or (infodict["S_sqi_mean_pleth"] > 1.0):
                 badskewfound = True
                 badskewfiles.append(matchedfilelist[i])
         except KeyError:
             missingmetric = True
-            missingmetricfiles.append(matchedfilelist[])
+            missingmetricfiles.append(matchedfilelist[i])
         thecolspec = "cardiacfromfmri_25.0Hz,normpleth"
         if usebadpts:
             thecolspec = thecolspec + ",badpts"
