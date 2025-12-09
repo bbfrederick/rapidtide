@@ -9,13 +9,12 @@ else
     ROOT=/Users/frederic/code/rapidtide/rapidtide
 fi
 
-cd ${ROOT}/experimental
+MODELROOT=${ROOT}/data/models
 
-for MODEL in model_cnn_pytorch*
+for MODEL in model_cnn_pytorch_fulldata
 do
     applydlfilter \
         ${ROOT}/data/examples/src/happy_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
         ${ROOT}/data/examples/dst/${MODEL}_filtered \
-        --model ${ROOT}/experimental/${MODEL} \
-        --verbose
+        --model ${MODELROOT}/${MODEL}
 done

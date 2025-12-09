@@ -635,6 +635,8 @@ def _compute_slice_averages(
                 high_res_timecourse[numsteps * t + sliceoffsets[slice_idx]] += (
                     signal_sign * slice_averages[slice_idx, t]
                 )
+        else:
+            print(f"CARDIACFROMIMAGE: slice {slice_idx} contains no non-zero voxels")
 
     # Compute cycle average
     for i in range(numsteps):
@@ -853,6 +855,17 @@ def cardiacfromimage(
         config.verbose,
     )
 
+    # sanity check the output waveforms
+    hrtc_pp = np.max(high_res_timecourse) - np.min(high_res_timecourse)
+    if hrtc_pp == 0.0:
+        raise ValueError(f"CARDIACFROMIMAGE: high_res_timecourse has no variation prior to filtering!")
+    cycleav_pp = np.max(cycleaverage) - np.min(cycleaverage)
+    if cycleav_pp == 0.0:
+        raise ValueError(f"CARDIACFROMIMAGE: cycleaverage has no variation prior to filtering!")
+    slicenorms_pp = np.max(slicenorms) - np.min(slicenorms)
+    if slicenorms_pp == 0.0:
+        raise ValueError(f"CARDIACFROMIMAGE: slicenorms has no variation prior to filtering!")
+
     # Calculate slice sample rate
     slicesamplerate = 1.0 * numsteps / tr
     print(f"Slice sample rate is {slicesamplerate:.3f}")
@@ -867,6 +880,11 @@ def cardiacfromimage(
         debug=config.debug,
     )
 
+    # sanity check the filtered waveform
+    filtered_pp = np.max(filtered_timecourse) - np.min(filtered_timecourse)
+    if filtered_pp == 0.0:
+        raise ValueError(f"CARDIACFROMIMAGE: high_res_timecourse has no variation after notch filtering!")
+
     # Extract cardiac and respiratory waveforms
     hirescardtc, cardnormfac, hiresresptc, respnormfac = _extract_physiological_signals(
         filtered_timecourse,
@@ -875,6 +893,14 @@ def cardiacfromimage(
         respprefilter,
         slicenorms,
     )
+
+    # sanity check the physiological waveform
+    hirescardtc_pp = np.max(hirescardtc) - np.min(hirescardtc)
+    if hirescardtc_pp == 0.0:
+        raise ValueError(f"CARDIACFROMIMAGE: hirescardtc has no variation after extraction!")
+    hiresresptc_pp = np.max(hiresresptc) - np.min(hiresresptc)
+    if hiresresptc_pp == 0.0:
+        raise ValueError(f"CARDIACFROMIMAGE: hiresresptc has no variation after extraction!")
 
     return CardiacExtractionResult(
         hirescardtc=hirescardtc,
