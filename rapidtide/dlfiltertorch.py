@@ -4317,7 +4317,8 @@ def readindata(
     count = 0
     badcount = 0
     LGR.info("checking data")
-    lowcorrfiles = []
+    lowr2pcorrfiles = []
+    lowp2pcorrfiles = []
     missingmetricfiles = []
     badskewfiles = []
     incompletefiles = []
@@ -4325,7 +4326,8 @@ def readindata(
     shortfiles = []
     strangemagfiles = []
     for i in range(readskip, readskip + s):
-        lowcorrfound = False
+        lowr2pcorrfound = False
+        lowp2pcorrfound = False
         badskewfound = False
         nanfound = False
         missingmetric = False
@@ -4336,13 +4338,18 @@ def readindata(
             matchedfilelist[i].replace("_desc-stdrescardfromfmri_timeseries", "_info")
         )
         try:
-            if (infodict["corrcoeff_raw2pleth"] < corrthresh_rp) or (
-                infodict["corrcoeff_pleth2filtpleth"] < corrthresh_pp
-            ):
-                lowcorrfound = True
-                lowcorrfiles.append(matchedfilelist[i])
+            if infodict["corrcoeff_raw2pleth"] < corrthresh_rp:
+                lowr2pcorrfound = True
+                lowr2pcorrfiles.append(matchedfilelist[i])
         except KeyError:
             missingmetric = True
+        try:
+            if infodict["corrcoeff_pleth2filtpleth"] < corrthresh_pp:
+                lowp2pcorrfound = True
+                lowp2pcorrfiles.append(matchedfilelist[i])
+        except KeyError:
+            missingmetric = True
+        if missingmetric:
             missingmetricfiles.append(matchedfilelist[i])
         try:
             if (infodict["S_sqi_mean_pleth"] < 0.1) or (infodict["S_sqi_mean_pleth"] > 1.0):
@@ -4414,7 +4421,8 @@ def readindata(
                 and (not nanfound)
                 and (not shortfound)
                 and (not strangefound)
-                and (not lowcorrfound)
+                and (not lowr2pcorrfound)
+                and (not lowp2pcorrfound)
                 and (not missingmetric)
                 and (not badskewfound)
             ):
@@ -4436,7 +4444,8 @@ def readindata(
                 print(f"\t{nanfound=}")
                 print(f"\t{shortfound=}")
                 print(f"\t{strangefound=}")
-                print(f"\t{lowcorrfound=}")
+                print(f"\t{lowr2pcorrfound=}")
+                print(f"\t{lowp2pcorrfound=}")
                 print(f"\t{missingmetric=}")
                 print(f"\t{badskewfound=}")
         else:
@@ -4444,30 +4453,34 @@ def readindata(
             incompletefiles.append(matchedfilelist[i])
             LGR.info(f"Data file {matchedfilelist[i]} is not complete - discarding")
     LGR.info(f"{count} runs pass file length check")
-    if len(lowcorrfiles) > 0:
-        LGR.info(f"{len(lowcorrfiles)} files with low raw/pleth correlations:")
-        for thefile in lowcorrfiles:
-            LGR.info(f"\t{thefile}")
+    if len(lowr2pcorrfiles) > 0:
+        print(f"{len(lowr2pcorrfiles)} files with low raw/pleth correlations:")
+        for thefile in lowr2pcorrfiles:
+            print(f"\t{thefile}")
+    if len(lowp2pcorrfiles) > 0:
+        print(f"{len(lowp2pcorrfiles)} files with low pleth/pleth correlations:")
+        for thefile in lowp2pcorrfiles:
+            print(f"\t{thefile}")
     if len(missingmetricfiles) > 0:
-        LGR.info(f"{len(missingmetricfiles)} files with missing quality metrics:")
+        print(f"{len(missingmetricfiles)} files with missing quality metrics:")
         for thefile in missingmetricfiles:
-            LGR.info(f"\t{thefile}")
+            print(f"\t{thefile}")
     if len(badskewfiles) > 0:
-        LGR.info(f"{len(badskewfiles)} files with bad plethysmogram skewness:")
+        print(f"{len(badskewfiles)} files with bad plethysmogram skewness:")
         for thefile in badskewfiles:
-            LGR.info(f"\t{thefile}")
+            print(f"\t{thefile}")
     if len(nanfiles) > 0:
-        LGR.info(f"{len(nanfiles)} files with NaNs:")
+        print(f"{len(nanfiles)} files with NaNs:")
         for thefile in nanfiles:
-            LGR.info(f"\t{thefile}")
+            print(f"\t{thefile}")
     if len(shortfiles) > 0:
-        LGR.info(f"{len(shortfiles)} short files:")
+        print(f"{len(shortfiles)} short files:")
         for thefile in shortfiles:
-            LGR.info(f"\t{thefile}")
+            print(f"\t{thefile}")
     if len(strangemagfiles) > 0:
-        LGR.info(f"{len(strangemagfiles)} files with extreme standard deviations:")
+        print(f"{len(strangemagfiles)} files with extreme standard deviations:")
         for thefile in strangemagfiles:
-            LGR.info(f"\t{thefile}")
+            print(f"\t{thefile}")
 
     print(f"training set contains {count} runs of length {tclen}")
     print(f"{badcount} runs were excluded")
