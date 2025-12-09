@@ -4445,27 +4445,27 @@ def readindata(
             LGR.info(f"Data file {matchedfilelist[i]} is not complete - discarding")
     LGR.info(f"{count} runs pass file length check")
     if len(lowcorrfiles) > 0:
-        LGR.info("files with low raw/pleth correlations:")
+        LGR.info(f"{len(lowcorrfiles)} files with low raw/pleth correlations:")
         for thefile in lowcorrfiles:
             LGR.info(f"\t{thefile}")
     if len(missingmetricfiles) > 0:
-        LGR.info("files with missing quality metrics:")
+        LGR.info(f"{len(missingmetricfiles)} files with missing quality metrics:")
         for thefile in missingmetricfiles:
             LGR.info(f"\t{thefile}")
     if len(badskewfiles) > 0:
-        LGR.info("files with bad plethysmogram skewness:")
+        LGR.info(f"{len(badskewfiles)} files with bad plethysmogram skewness:")
         for thefile in badskewfiles:
             LGR.info(f"\t{thefile}")
     if len(nanfiles) > 0:
-        LGR.info("files with NaNs:")
+        LGR.info(f"{len(nanfiles)} files with NaNs:")
         for thefile in nanfiles:
             LGR.info(f"\t{thefile}")
     if len(shortfiles) > 0:
-        LGR.info("short files:")
+        LGR.info(f"{len(shortfiles)} short files:")
         for thefile in shortfiles:
             LGR.info(f"\t{thefile}")
     if len(strangemagfiles) > 0:
-        LGR.info("files with extreme standard deviations:")
+        LGR.info(f"{len(strangemagfiles)} files with extreme standard deviations:")
         for thefile in strangemagfiles:
             LGR.info(f"\t{thefile}")
 
