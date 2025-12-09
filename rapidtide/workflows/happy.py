@@ -341,6 +341,7 @@ def happy_main(argparsingfunc: Any) -> None:
     # output mask size
     validprojvoxels = np.where(projmask.reshape(numspatiallocs) > 0)[0]
     print(f"projmask has {len(validprojvoxels)} voxels above threshold.")
+    infodict["projmaskvoxels"] = len(validprojvoxels)
 
     # filter out motion regressors here
     if args.motionfilename is not None:
@@ -1864,6 +1865,10 @@ def happy_main(argparsingfunc: Any) -> None:
             vesselmask = np.where(np.max(app, axis=3) > softvesselthresh, 1, 0)
         else:
             vesselmask = np.where(np.max(normapp, axis=3) > softvesselthresh, 1, 0)
+        infodict["vesselmaskvoxels"] = np.int64(np.sum(vesselmask))
+        infodict["vesselmaskpct"] = (
+            100.0 * infodict["vesselmaskvoxels"] / infodict["projmaskvoxels"]
+        )
         maskedapp2d = np.array(app2d)
         maskedapp2d[np.where(vesselmask.reshape(numspatiallocs) == 0)[0], :] = 0.0
         if args.outputlevel > 1:
@@ -2067,6 +2072,14 @@ def happy_main(argparsingfunc: Any) -> None:
         infodict["pulsatilitythresh"] = rawmedian * 3.0
         pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
         pulsatilitymask = np.where(pulsatilitymap > infodict["pulsatilitythresh"], 1.0, 0.0)
+        infodict["pulsatilitymaskvoxels"] = np.int64(np.sum(vesselmask))
+        infodict["pulsatilitymaskpct"] = 100.0 * infodict["pulsatilitymaskvoxels"] / infodict["projmaskvoxels"]
+
+        # save the information file
+        if args.saveinfoasjson:
+            tide_io.writedicttojson(infodict, outputroot + "_info.json")
+        else:
+            tide_io.writedict(infodict, outputroot + "_info.txt")
 
         # now get ready to start again with a new mask
         if args.doaliasedcorrelation and thispass > 0:
@@ -2517,6 +2530,12 @@ def happy_main(argparsingfunc: Any) -> None:
     )
 
     tide_util.logmem("final")
+
+    # save the information file
+    if args.saveinfoasjson:
+        tide_io.writedicttojson(infodict, outputroot + "_info.json")
+    else:
+        tide_io.writedict(infodict, outputroot + "_info.txt")
 
     # delete the canary file
     Path(f"{outputroot}_ISRUNNING.txt").unlink()
