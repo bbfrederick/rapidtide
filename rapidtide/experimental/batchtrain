@@ -228,13 +228,12 @@ def main():
     print("thiscomputer:", thiscomputer)
     if thiscomputer.startswith("bbf-") or thiscomputer.startswith("Mac") or thiscomputer.startswith("DIMR22HDP90N5"):
         print("setting up to run on mac")
-        thedatadir = "/Users/frederic/Dropbox_PHC/physioconn/output_2025"
+        thedatadir = "/Users/frederic/Dropbox_PHC/physioconn/output_2025b"
     elif thiscomputer.startswith("DESKTOP"):
         print("setting up to run on windows bash")
         thedatadir = "/home/frederic/Dropbox/timecourses"
     else:
         print("setting up to run on mclean cluster")
-        #thedatadir = "/data/frederic/physioconn/output_2025"
         thedatadir = "/data/tmp/frederic/happyruns"
 
     print(f"will look for input data in {thedatadir}")
