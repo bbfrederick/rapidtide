@@ -635,6 +635,8 @@ def _compute_slice_averages(
                 high_res_timecourse[numsteps * t + sliceoffsets[slice_idx]] += (
                     signal_sign * slice_averages[slice_idx, t]
                 )
+        else:
+            print(f"CARDIACFROMIMAGE: slice {slice_idx} contains no non-zero voxels")
 
     # Compute cycle average
     for i in range(numsteps):
