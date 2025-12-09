@@ -49,7 +49,7 @@ if pyfftwpresent:
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, random_split
 
 import rapidtide.io as tide_io
 
@@ -958,7 +958,6 @@ class DeepLearningFilter:
         criterion = nn.MSELoss()
 
         print("setting optimizer")
-        # optimizer = optim.RMSprop(self.model.parameters())
         optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
         self.loss = []
@@ -4862,6 +4861,15 @@ def prep(
     print(f"Xb.shape: {Xb.shape}")
     print(f"Yb.shape: {Yb.shape}")
     print(f"{usebadpts=}, {dofft=}")
+    
+    train_size = np.int64(0.8 * Xb.shape[0]) # 80% for training
+    val_size = Xb.shape[0] - train_size # Remaining 20% for validation
+
+    #train_dataset, val_dataset = random_split(
+    #    dataset,
+    #    [train_size, val_size],
+    #    generator=torch.Generator().manual_seed(42) # For reproducibility
+    #)
 
     limit = np.int64(0.8 * Xb.shape[0])
     LGR.info(f"limit: {limit} out of {len(subjectstarts)}")
