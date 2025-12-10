@@ -337,13 +337,13 @@ def main():
 
     # train CNN
     nettype = "cnn"
-    num_epochs = 60
+    num_epochs = 75
     for window_size in [64]:
-        for usebadpts in [False, True]:
+        for usebadpts in [False]:
             for kernel_size in [5]:
-                for num_layers in [19, 29, 39]:
-                    for num_filters in [50]:
-                        for dofft in [False, True]:
+                for num_layers in [35, 39, 45]:
+                    for num_filters in [40, 50, 60]:
+                        for dofft in [True]:
                             for batch_size in [4096]:
                                 dotraining(
                                     thedatadir,
