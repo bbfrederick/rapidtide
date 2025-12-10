@@ -2096,7 +2096,9 @@ def happy_main(argparsingfunc: Any) -> None:
         pulsatilitymap = 100.0 * (np.max(normapp, axis=3) - np.min(normapp, axis=3))
         rawrobustmax = tide_stats.getfracval(pulsatilitymap, 0.98, nozero=True)
         rawmedian = tide_stats.getfracval(pulsatilitymap, 0.50, nozero=True)
-        infodict["pulsatilitythresh"] = rawmedian * 3.0
+        infodict["pulsatilityrobustmax"] = rawrobustmax
+        infodict["pulsatilitymedian"] = rawmedian
+        infodict["pulsatilitythresh"] = np.min([rawmedian * 3.0, 0.95 * rawrobustmax])
         pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
         pulsatilitymask = np.where(pulsatilitymap > infodict["pulsatilitythresh"], 1.0, 0.0)
         infodict["pulsatilitymaskvoxels"] = np.int64(np.sum(vesselmask))
