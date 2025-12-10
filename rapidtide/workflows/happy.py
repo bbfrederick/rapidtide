@@ -42,6 +42,8 @@ import rapidtide.voxelData as tide_voxelData
 
 from .utils import setup_logger
 
+MIN_PULSATILITY_VOX_PCT = 7.0
+
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 try:
@@ -2095,10 +2097,12 @@ def happy_main(argparsingfunc: Any) -> None:
 
         pulsatilitymap = 100.0 * (np.max(normapp, axis=3) - np.min(normapp, axis=3))
         rawrobustmax = tide_stats.getfracval(pulsatilitymap, 0.98, nozero=True)
+        pulsatilityfloor = tide_stats.getfracval(pulsatilitymap, 1.0 - (MIN_PULSATILITY_VOX_PCT / 100.0), nozero=True)
         rawmedian = tide_stats.getfracval(pulsatilitymap, 0.50, nozero=True)
         infodict["pulsatilityrobustmax"] = rawrobustmax
         infodict["pulsatilitymedian"] = rawmedian
-        infodict["pulsatilitythresh"] = np.min([rawmedian * 3.0, 0.95 * rawrobustmax])
+        # make sure at least a minimum percentage of voxels remain in pulsatility mask
+        infodict["pulsatilitythresh"] = np.min([rawmedian * 3.0, pulsatilityfloor])
         pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
         pulsatilitymask = np.where(pulsatilitymap > infodict["pulsatilitythresh"], 1.0, 0.0)
         infodict["pulsatilitymaskvoxels"] = np.int64(np.sum(vesselmask))
