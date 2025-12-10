@@ -226,8 +226,8 @@ def applydlfilter(args: Any) -> None:
 
     # set the list of column names
     datanames = [
-        "normcardiac_25.0Hz",
         "cardiacfromfmri_25.0Hz",
+        "normcardiac_25.0Hz",
         "normcardiacfromfmri_dlfiltered_25.0Hz",
         "cardiacfromfmri_dlfiltered_25.0Hz",
     ]
@@ -303,15 +303,21 @@ def applydlfilter(args: Any) -> None:
         maxval, maxdelay, failreason = happy_support.checkcardmatch(
             fmridata, predicteddata, 25.0, debug=False
         )
-        print(infilename, "max correlation of input to output:", maxval)
-        extradict["corrtoinput"] = maxval + 0.0
+        print(infilename, "max correlation of raw data to dl filtered data:", maxval)
+        extradict["corr_rawtodlfiltered"] = maxval + 0.0
 
         if plethwave is not None:
             maxval, maxdelay, failreason = happy_support.checkcardmatch(
                 fmridata, plethwave, 25.0, debug=False
             )
-            print(infilename, "max correlation of input to target plethysmogram:", maxval)
-            extradict["corrtopleth"] = maxval + 0.0
+            print(infilename, "max correlation of raw data to target plethysmogram:", maxval)
+            extradict["corr_rawtopleth"] = maxval + 0.0
+
+            maxval, maxdelay, failreason = happy_support.checkcardmatch(
+                predicteddata, plethwave, 25.0, debug=False
+            )
+            print(infilename, "max correlation of dl filtered data to target plethysmogram:", maxval)
+            extradict["corr_dlfilteredtopleth"] = maxval + 0.0
 
         if args.verbose:
             print("writing to", outfilenamelist[idx])
@@ -351,4 +357,5 @@ def applydlfilter(args: Any) -> None:
                 plt.plot(badpts + offset)
                 offset += spacing
             plt.legend(legendlist)
+            plt.title(args.model)
             plt.show()
