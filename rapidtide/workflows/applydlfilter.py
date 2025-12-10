@@ -29,6 +29,21 @@ import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_MODEL = "model_cnn_pytorch"
 
+def findfirst(searchlist: list, available:list, debug:bool=False) -> tuple[int, str | None]:
+    if debug:
+        print(f"FINDFIRST: {searchlist=}, {available=}")
+    try:
+        index = available.index(searchlist[0])
+        return index, available[index]
+    except ValueError:
+        if len(searchlist) > 1:
+            if debug:
+                print("FINDFIRST: calling again")
+            findfirst(searchlist[1:], available, debug=debug)
+        else:
+            if debug:
+                print("FINDFIRST: giving up")
+    return -1, None
 
 def _get_parser() -> Any:
     """
@@ -209,42 +224,20 @@ def applydlfilter(args: Any) -> None:
     usebadpts = thedlfilter.usebadpts
     showpleth = True
 
-    """(
-        thesamplerate,
-        thestarttime,
-        thecolumns,
-        thedata,
-        compressed,
-        columnsource,
-    ) = tide_io.readbidstsv(args.infilename)
-
-    # check to see what we have in the file
-    datanames = ["cardiacfromfmri_25.0Hz" ]
+    # set the list of column names
+    datanames = [
+        "normcardiac_25.0Hz",
+        "cardiacfromfmri_25.0Hz",
+        "normcardiacfromfmri_dlfiltered_25.0Hz",
+        "cardiacfromfmri_dlfiltered_25.0Hz",
+    ]
     badptsnames = ["badpts"]
-    plethnames = ["pleth"]
-    datacol, dataname = findfirst(datanames, thecolumns)
-    badptscol, badptsname = findfirst(badptsnames, thecolumns)
-    plethcol, plethame = findfirst(plethnames, thecolumns)"""
-
-    badpts = None
-    if usebadpts:
-        badptsname = f"{(args.infilename.split(':'))[0]}:badpts"
-        try:
-            (
-                thesamplerate,
-                thestarttime,
-                thecolumns,
-                badpts,
-                compressed,
-                filetype,
-            ) = tide_io.readvectorsfromtextfile(badptsname, onecol=True, debug=args.verbose)
-        except:
-            print(
-                "bad points file",
-                badptsname,
-                "not found!",
-            )
-            sys.exit()
+    plethnames = [
+        "pleth",
+        "normpleth",
+        "plethenv",
+        "pleth_dlfiltered",
+    ]
 
     for idx, infilename in enumerate(infilenamelist):
         # read in the data
@@ -254,10 +247,46 @@ def applydlfilter(args: Any) -> None:
             thesamplerate,
             thestarttime,
             thecolumns,
-            fmridata,
+            thedata,
             compressed,
-            filetype,
-        ) = tide_io.readvectorsfromtextfile(infilename, onecol=True, debug=args.verbose)
+            columnsource,
+        ) = tide_io.readbidstsv(infilename, debug=args.verbose)
+
+        # check to see what we have in the file
+        if args.verbose:
+            print(f"File columns: {thecolumns}")
+
+        # get the data
+        datacol, dataname = findfirst(datanames, thecolumns, debug=args.verbose)
+        if dataname is None:
+            print("file contains no usable raw data")
+            sys.exit()
+        if args.verbose:
+            print(f"Data column: {datacol}, ({dataname})")
+        fmridata = thedata[datacol, :]
+
+        # get the badpts
+        badptscol, badptsname = findfirst(badptsnames, thecolumns, debug=args.verbose)
+        if usebadpts and (badptsname is None):
+            print("file contains no usable badpts data")
+            sys.exit()
+        if args.verbose:
+            print(f"Bad points column: {badptscol}, ({badptsname})")
+        if badptsname is None:
+            badpts = None
+        else:
+            badpts = thedata[badptscol, :]
+
+        # get the pleth (if it is there)
+        plethcol, plethname = findfirst(plethnames, thecolumns, debug=args.verbose)
+        if args.verbose:
+            print(f"Pleth column: {plethcol}, ({plethname})")
+            print(f"{thedata.shape=}")
+        if plethname is None:
+            plethwave = None
+        else:
+            plethwave = thedata[plethcol, :]
+
         if args.verbose:
             print("data is read")
         if thesamplerate != 25.0:
@@ -276,26 +305,6 @@ def applydlfilter(args: Any) -> None:
         )
         print(infilename, "max correlation of input to output:", maxval)
         extradict["corrtoinput"] = maxval + 0.0
-
-        plethwave = None
-        if showpleth:
-            plethname = f"{(args.infilename.split(':'))[0]}:pleth"
-            try:
-                (
-                    thesamplerate,
-                    thestarttime,
-                    thecolumns,
-                    plethwave,
-                    compressed,
-                    filetype,
-                ) = tide_io.readvectorsfromtextfile(plethname, onecol=True, debug=args.verbose)
-            except ValueError:
-                print(
-                    "pleth file",
-                    plethname,
-                    "not found!",
-                )
-                sys.exit()
 
         if plethwave is not None:
             maxval, maxdelay, failreason = happy_support.checkcardmatch(
@@ -328,14 +337,18 @@ def applydlfilter(args: Any) -> None:
         offset = (numwaves - 1) * spacing
         if args.display:
             plt.figure()
+            legendlist = [ dataname, "filtereddata" ]
             plt.plot(fmridata + offset)
             offset += spacing
             plt.plot(predicteddata + offset)
             offset += spacing
             if plethwave is not None:
+                legendlist.append(plethname)
                 plt.plot(plethwave + offset)
                 offset += spacing
             if badpts is not None:
+                legendlist.append(badptsname)
                 plt.plot(badpts + offset)
                 offset += spacing
+            plt.legend(legendlist)
             plt.show()
