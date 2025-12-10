@@ -10,9 +10,12 @@ else
 fi
 
 MODELROOT=${ROOT}/data/models
+MODELROOT=${ROOT}/experimental
 
-for MODEL in model_cnn_pytorch_fulldata
+cd ${MODELROOT}
+for MODEL in model_cnn_*
 do
+    echo model: ${MODELROOT}/${MODEL}
     applydlfilter \
         ${ROOT}/data/examples/src/happy_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
         ${ROOT}/data/examples/dst/${MODEL}_filtered \
