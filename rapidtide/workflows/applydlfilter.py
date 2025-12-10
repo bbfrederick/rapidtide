@@ -209,6 +209,23 @@ def applydlfilter(args: Any) -> None:
     usebadpts = thedlfilter.usebadpts
     showpleth = True
 
+    """(
+        thesamplerate,
+        thestarttime,
+        thecolumns,
+        thedata,
+        compressed,
+        columnsource,
+    ) = tide_io.readbidstsv(args.infilename)
+
+    # check to see what we have in the file
+    datanames = ["cardiacfromfmri_25.0Hz" ]
+    badptsnames = ["badpts"]
+    plethnames = ["pleth"]
+    datacol, dataname = findfirst(datanames, thecolumns)
+    badptscol, badptsname = findfirst(badptsnames, thecolumns)
+    plethcol, plethame = findfirst(plethnames, thecolumns)"""
+
     badpts = None
     if usebadpts:
         badptsname = f"{(args.infilename.split(':'))[0]}:badpts"
