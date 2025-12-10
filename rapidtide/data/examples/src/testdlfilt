@@ -17,7 +17,9 @@ for MODEL in model_cnn_*
 do
     echo model: ${MODELROOT}/${MODEL}
     applydlfilter \
-        ${ROOT}/data/examples/src/happy_desc-stdrescardfromfmri_timeseries.json:cardiacfromfmri_25.0Hz \
+        ${ROOT}/data/examples/src/happy_desc-stdrescardfromfmri_timeseries.json \
         ${ROOT}/data/examples/dst/${MODEL}_filtered \
         --model ${MODELROOT}/${MODEL}
+    echo
+    echo
 done
