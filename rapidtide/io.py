@@ -3008,6 +3008,7 @@ def readvectorsfromtextfile(
         if thedata is None:
             raise ValueError(f"specified column {colspectouse} does not exist")
         if onecol and thedata.shape[0] > 1:
+            print(f"{onecol=}, {thedata.shape=}, {colspec=}, {colspectouse=}")
             raise ValueError("specify a single column from", thefilename)
     elif filetype == "plaintsv":
         thedatadict = readlabelledtsv(thefileroot, compressed=compressed)

@@ -258,7 +258,7 @@ def main():
     invert = True
     startskip = 200
     endskip = 100
-    step = 9
+    step = 19
     batch_size = 1024
     encoding_dim = 16
     excludebysubject = False
@@ -339,12 +339,12 @@ def main():
     nettype = "cnn"
     num_epochs = 60
     for window_size in [64]:
-        for usebadpts in [True]:
+        for usebadpts in [False, True]:
             for kernel_size in [5]:
-                for num_layers in [19]:
+                for num_layers in [19, 29, 39]:
                     for num_filters in [50]:
-                        for dofft in [False]:
-                            for batch_size in [1024]:
+                        for dofft in [False, True]:
+                            for batch_size in [4096]:
                                 dotraining(
                                     thedatadir,
                                     num_pretrain_epochs=num_pretrain_epochs,

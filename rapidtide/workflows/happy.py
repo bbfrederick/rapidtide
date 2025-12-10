@@ -1031,12 +1031,39 @@ def happy_main(argparsingfunc: Any) -> None:
                 )
                 tide_io.writebidstsv(
                     outputroot + "_desc-stdrescardfromfmri_timeseries",
+                    filtpleth_stdres,
+                    args.stdfreq,
+                    columns=["pleth_cleaned"],
+                    append=True,
+                    debug=args.debug,
+                )
+                tide_io.writebidstsv(
+                    outputroot + "_desc-stdrescardfromfmri_timeseries",
                     plethenv_stdres,
                     args.stdfreq,
                     columns=["plethenv"],
                     append=True,
                     debug=args.debug,
                 )
+
+            # check the match between the cleaned bold and physio cardiac signals
+            maxval, maxdelay, failreason = happy_support.checkcardmatch(
+                filtpleth_stdres,
+                filtcardfromfmri_stdres,
+                slicesamplerate,
+                debug=args.debug,
+            )
+            print(
+                "Input cardiac waveform delay is",
+                "{:.3f}".format(maxdelay),
+            )
+            print(
+                "Correlation coefficient between cardiac regressors is",
+                "{:.3f}".format(maxval),
+            )
+            infodict["corrcoeff_filtraw2filtpleth"] = maxval + 0
+            infodict["delay_filtraw2filtpleth"] = maxdelay + 0
+            infodict["failreason_filtraw2filtpleth"] = failreason + 0
 
             # calculate quality metrics
             happy_support.calcplethquality(

@@ -90,15 +90,6 @@ def _get_parser() -> Any:
         default=DEFAULT_MODEL,
     )
     parser.add_argument(
-        "--plethfile",
-        dest="plethfile",
-        action="store",
-        metavar="FILE",
-        type=str,
-        help=(f"Check agreement with an actual plethysmogram."),
-        default=None,
-    )
-    parser.add_argument(
         "--filesarelists",
         dest="filesarelists",
         action="store_true",
@@ -144,8 +135,6 @@ def applydlfilter(args: Any) -> None:
             containing lists of input and output filenames, respectively.
         - `model` : str
             Path to the deep learning model to be used for filtering.
-        - `plethfile` : str
-            Path to plethysmogram to evaluate performance.
         - `display` : bool
             If True, displays the original and filtered data using matplotlib.
         - `verbose` : bool
@@ -218,17 +207,7 @@ def applydlfilter(args: Any) -> None:
     thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
     thedlfilter.loadmodel(args.model)
     usebadpts = thedlfilter.usebadpts
-
-    plethwave = None
-    if args.plethfile is not None:
-        (
-            thesamplerate,
-            thestarttime,
-            thecolumns,
-            plethwave,
-            compressed,
-            filetype,
-        ) = tide_io.readvectorsfromtextfile(args.plethfile, onecol=True, debug=args.verbose)
+    showpleth = True
 
     badpts = None
     if usebadpts:
@@ -281,6 +260,26 @@ def applydlfilter(args: Any) -> None:
         print(infilename, "max correlation of input to output:", maxval)
         extradict["corrtoinput"] = maxval + 0.0
 
+        plethwave = None
+        if showpleth:
+            plethname = f"{(args.infilename.split(':'))[0]}:pleth"
+            try:
+                (
+                    thesamplerate,
+                    thestarttime,
+                    thecolumns,
+                    plethwave,
+                    compressed,
+                    filetype,
+                ) = tide_io.readvectorsfromtextfile(plethname, onecol=True, debug=args.verbose)
+            except ValueError:
+                print(
+                    "pleth file",
+                    plethname,
+                    "not found!",
+                )
+                sys.exit()
+
         if plethwave is not None:
             maxval, maxdelay, failreason = happy_support.checkcardmatch(
                 fmridata, plethwave, 25.0, debug=False
@@ -303,8 +302,23 @@ def applydlfilter(args: Any) -> None:
         fmridata = tide_math.stdnormalize(fmridata)
         predicteddata = tide_math.stdnormalize(predicteddata)
 
+        spacing = 3.0
+        numwaves = 2
+        if badpts is not None:
+            numwaves += 1
+        if plethwave is not None:
+            numwaves += 1
+        offset = (numwaves - 1) * spacing
         if args.display:
             plt.figure()
-            plt.plot(fmridata + 1.5)
-            plt.plot(predicteddata - 1.5)
+            plt.plot(fmridata + offset)
+            offset += spacing
+            plt.plot(predicteddata + offset)
+            offset += spacing
+            if plethwave is not None:
+                plt.plot(plethwave + offset)
+                offset += spacing
+            if badpts is not None:
+                plt.plot(badpts + offset)
+                offset += spacing
             plt.show()
