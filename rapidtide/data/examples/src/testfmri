@@ -37,23 +37,6 @@
 #    ../dst/sub-RAPIDTIDETEST_single
 
 rapidtide \
-    --delaymapping \
-    --spatialfilt 0.0 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel more \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --nofitfilt \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_delaymapping_0p0
-
-
-rapidtide \
     --spatialfilt -1 \
     --nprocs -1 \
     --searchrange -7.5 30 \
@@ -67,68 +50,6 @@ rapidtide \
     --nofitfilt \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_auto
-
-rapidtide \
-    --spatialfilt 1.0 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel normal \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --nofitfilt \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_1p0
-
-rapidtide \
-    --delaymapping \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel normal \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --nofitfilt \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_delaymapping
-
-rapidtide \
-    --delaymapping \
-    --spatialfilt 1.0 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel normal \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --nofitfilt \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_delaymapping_1p0
-
-rapidtide \
-    --delaymapping \
-    --spatialfilt -1 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel normal \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --nofitfilt \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_delaymapping_auto
 
 #rapidtide \
     #--spatialfilt 2.5 \
