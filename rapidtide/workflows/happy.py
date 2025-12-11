@@ -716,6 +716,7 @@ def happy_main(argparsingfunc: Any) -> None:
                 args.stdfreq,
                 columns=["cardiacfromfmri_" + str(args.stdfreq) + "Hz"],
                 append=False,
+                extraheaderinfo={"cardiacbpm_bold": float(infodict["cardiacbpm_bold"])},
                 debug=args.debug,
             )
         infodict["numcardpts_stdres"] = len(cardfromfmri_stdres)
