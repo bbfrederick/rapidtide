@@ -2977,7 +2977,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     debug=optiondict["debug"],
                 )
             if csfmask is not None:
-                grayvec, dummy = tide_mask.saveregionaltimeseries(
+                csfvec, dummy = tide_mask.saveregionaltimeseries(
                     "CSF",
                     "CSF",
                     filtereddata,
