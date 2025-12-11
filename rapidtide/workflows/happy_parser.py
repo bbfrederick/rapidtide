@@ -681,11 +681,11 @@ def _get_parser() -> Any:
         default=0,
     )
     misc_opts.add_argument(
-        "--usenewvesselmethod",
+        "--useoldvesselmethod",
         dest="useoriginalvesselmethod",
-        action="store_false",
-        help="Will use the new pulsatility method to find blood vessels. ",
-        default=True,
+        action="store_true",
+        help="Will use the old method to find blood vessels. ",
+        default=False,
     )
     pf.addtagopts(
         misc_opts,
