@@ -2893,6 +2893,11 @@ def writebidstsv(
         for key in inextrainfo:
             headerdict[key] = inextrainfo[key]
 
+    if debug:
+        print(f"{extraheaderinfo=}")
+        print(f"{inextrainfo=}")
+        print(f"{headerdict=}")
+
     if not omitjson:
         with open(outputfileroot + ".json", "wb") as fp:
             fp.write(
