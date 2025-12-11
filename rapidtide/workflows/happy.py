@@ -652,6 +652,7 @@ def happy_main(argparsingfunc: Any) -> None:
         cardiacwaveform = np.array(cardfromfmri_sliceres)
         badpointlist = np.array(thebadcardpts)
 
+        infodict["badptspct"] = 100.0 * np.mean(thebadcardpts)
         infodict["slicesamplerate"] = slicesamplerate
         infodict["numcardpts_sliceres"] = timepoints * numsteps
         infodict["numsteps"] = numsteps
@@ -667,6 +668,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     slicesamplerate,
                     columns=["cardiacfromfmri_censored"],
                     append=True,
+                    extraheaderinfo={"badptspct": infodict["badptspct"]},
                     debug=args.debug,
                 )
                 tide_io.writebidstsv(
@@ -674,7 +676,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     respfromfmri_sliceres * (1.0 - thebadcardpts),
                     slicesamplerate,
                     columns=["respfromfmri_censored"],
-                    append=False,
+                    append=True,
                     debug=args.debug,
                 )
         peakfreq_bold = happy_support.getcardcoeffs(
@@ -714,6 +716,7 @@ def happy_main(argparsingfunc: Any) -> None:
                 args.stdfreq,
                 columns=["cardiacfromfmri_" + str(args.stdfreq) + "Hz"],
                 append=False,
+                extraheaderinfo={"cardiacbpm_bold": infodict["cardiacbpm_bold"]},
                 debug=args.debug,
             )
         infodict["numcardpts_stdres"] = len(cardfromfmri_stdres)
@@ -1208,6 +1211,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     args.stdfreq,
                     columns=["badpts"],
                     append=True,
+                    extraheaderinfo={"badptspct": infodict["badptspct"]},
                     debug=args.debug,
                 )
 
@@ -2097,7 +2101,9 @@ def happy_main(argparsingfunc: Any) -> None:
 
         pulsatilitymap = 100.0 * (np.max(normapp, axis=3) - np.min(normapp, axis=3))
         rawrobustmax = tide_stats.getfracval(pulsatilitymap, 0.98, nozero=True)
-        pulsatilityfloor = tide_stats.getfracval(pulsatilitymap, 1.0 - (MIN_PULSATILITY_VOX_PCT / 100.0), nozero=True)
+        pulsatilityfloor = tide_stats.getfracval(
+            pulsatilitymap, 1.0 - (MIN_PULSATILITY_VOX_PCT / 100.0), nozero=True
+        )
         rawmedian = tide_stats.getfracval(pulsatilitymap, 0.50, nozero=True)
         infodict["pulsatilityrobustmax"] = rawrobustmax
         infodict["pulsatilitymedian"] = rawmedian
@@ -2106,7 +2112,9 @@ def happy_main(argparsingfunc: Any) -> None:
         pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
         pulsatilitymask = np.where(pulsatilitymap > infodict["pulsatilitythresh"], 1.0, 0.0)
         infodict["pulsatilitymaskvoxels"] = np.int64(np.sum(vesselmask))
-        infodict["pulsatilitymaskpct"] = 100.0 * infodict["pulsatilitymaskvoxels"] / infodict["projmaskvoxels"]
+        infodict["pulsatilitymaskpct"] = (
+            100.0 * infodict["pulsatilitymaskvoxels"] / infodict["projmaskvoxels"]
+        )
 
         # save the information file
         if args.saveinfoasjson:
