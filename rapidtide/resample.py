@@ -600,6 +600,7 @@ def FastResamplerFromFile(
         indata,
         incompressed,
         incolsource,
+        inextrainfo,
     ) = tide_io.readbidstsv(inputname, colspec=colspec, debug=debug)
     if incolumns is not None:
         if len(incolumns) > 1:

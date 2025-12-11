@@ -29,7 +29,8 @@ import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_MODEL = "model_cnn_pytorch"
 
-def findfirst(searchlist: list, available:list, debug:bool=False) -> tuple[int, str | None]:
+
+def findfirst(searchlist: list, available: list, debug: bool = False) -> tuple[int, str | None]:
     if debug:
         print(f"FINDFIRST: {searchlist=}, {available=}")
     try:
@@ -44,6 +45,7 @@ def findfirst(searchlist: list, available:list, debug:bool=False) -> tuple[int, 
             if debug:
                 print("FINDFIRST: giving up")
     return -1, None
+
 
 def _get_parser() -> Any:
     """
@@ -250,6 +252,7 @@ def applydlfilter(args: Any) -> None:
             thedata,
             compressed,
             columnsource,
+            extrainfo,
         ) = tide_io.readbidstsv(infilename, debug=args.verbose)
 
         # check to see what we have in the file
@@ -316,7 +319,9 @@ def applydlfilter(args: Any) -> None:
             maxval, maxdelay, failreason = happy_support.checkcardmatch(
                 predicteddata, plethwave, 25.0, debug=False
             )
-            print(infilename, "max correlation of dl filtered data to target plethysmogram:", maxval)
+            print(
+                infilename, "max correlation of dl filtered data to target plethysmogram:", maxval
+            )
             extradict["corr_dlfilteredtopleth"] = maxval + 0.0
 
         if args.verbose:
@@ -343,7 +348,7 @@ def applydlfilter(args: Any) -> None:
         offset = (numwaves - 1) * spacing
         if args.display:
             plt.figure()
-            legendlist = [ dataname, "filtereddata" ]
+            legendlist = [dataname, "filtereddata"]
             plt.plot(fmridata + offset)
             offset += spacing
             plt.plot(predicteddata + offset)

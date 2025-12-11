@@ -2088,10 +2088,12 @@ class PPGFeatureExtractor:
 def read_happy_ppg(
     filenameroot: str, debug: bool = False
 ) -> tuple[NDArray, float, NDArray, NDArray, NDArray | None, list]:
-    Fs, instarttime, incolumns, indata, incompressed, incolsource = tide_io.readbidstsv(
-        f"{filenameroot}.json",
-        neednotexist=True,
-        debug=debug,
+    Fs, instarttime, incolumns, indata, incompressed, incolsource, inextrainfo = (
+        tide_io.readbidstsv(
+            f"{filenameroot}.json",
+            neednotexist=True,
+            debug=debug,
+        )
     )
     if debug:
         print(f"{indata.shape=}")

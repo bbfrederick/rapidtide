@@ -2807,10 +2807,12 @@ def writebidstsv(
     else:
         reshapeddata = data
     if append:
-        insamplerate, instarttime, incolumns, indata, incompressed, incolsource = readbidstsv(
-            outputfileroot + ".json",
-            neednotexist=True,
-            debug=debug,
+        insamplerate, instarttime, incolumns, indata, incompressed, incolsource, inextrainfo = (
+            readbidstsv(
+                outputfileroot + ".json",
+                neednotexist=True,
+                debug=debug,
+            )
         )
         if debug:
             print("appending")
@@ -2848,6 +2850,7 @@ def writebidstsv(
                 sys.exit()
     else:
         startcol = 0
+        inextrainfo = None
 
     if columns is None:
         columns = []
@@ -2886,6 +2889,9 @@ def writebidstsv(
     if extraheaderinfo is not None:
         for key in extraheaderinfo:
             headerdict[key] = extraheaderinfo[key]
+    if inextrainfo is not None:
+        for key in inextrainfo:
+            headerdict[key] = inextrainfo[key]
 
     if not omitjson:
         with open(outputfileroot + ".json", "wb") as fp:
@@ -3002,8 +3008,8 @@ def readvectorsfromtextfile(
                 colspectouse = makecolname(int(colspec), 0)
             except ValueError:
                 colspectouse = colspec
-        thesamplerate, thestarttime, thecolumns, thedata, compressed, colsource = readbidstsv(
-            thefilename, colspec=colspectouse, debug=debug
+        thesamplerate, thestarttime, thecolumns, thedata, compressed, colsource, extrainfo = (
+            readbidstsv(thefilename, colspec=colspectouse, debug=debug)
         )
         if thedata is None:
             raise ValueError(f"specified column {colspectouse} does not exist")
@@ -3093,6 +3099,7 @@ def readbidstsv(
     Optional[NDArray],
     Optional[bool],
     Optional[str],
+    Optional[dict],
 ]:
     """
     Read BIDS-compatible TSV data file with associated JSON metadata.
@@ -3130,6 +3137,8 @@ def readbidstsv(
             Indicates whether the TSV file was gzipped.
         columnsource : str
             Source of column names: either 'json' or 'tsv'.
+        extrainfo: dict
+            Dictionary of any optional tokens in the .json file
 
     Notes
     -----
@@ -3141,11 +3150,11 @@ def readbidstsv(
 
     Examples
     --------
-    >>> samplerate, starttime, columns, data, is_compressed, source = readbidstsv('sub-01_task-rest')
+    >>> samplerate, starttime, columns, data, is_compressed, source, extrainfo = readbidstsv('sub-01_task-rest')
     >>> print(f"Sample rate: {samplerate} Hz")
     Sample rate: 10.0 Hz
 
-    >>> samplerate, starttime, columns, data, is_compressed, source = readbidstsv(
+    >>> samplerate, starttime, columns, data, is_compressed, source, extrainfo = readbidstsv(
     ...     'sub-01_task-rest', colspec='column1,column2'
     ... )
     >>> print(f"Selected columns: {columns}")
@@ -3201,6 +3210,10 @@ def readbidstsv(
                     )
             else:
                 columnsource = "json"
+            extrainfo = {}
+            for key in d:
+                if not key in ["SamplingFrequency", "StartTime", "Columns"]:
+                    extrainfo[key] = d[key]
         if os.path.exists(thefileroot + ".tsv.gz"):
             compression = "gzip"
             theextension = ".tsv.gz"
@@ -3263,6 +3276,7 @@ def readbidstsv(
                 (compression == "gzip"),
                 warn,
                 headerlinefound,
+                extrainfo,
             )
 
         # select a subset of columns if they were specified
@@ -3274,6 +3288,7 @@ def readbidstsv(
                 np.transpose(df.to_numpy()),
                 (compression == "gzip"),
                 columnsource,
+                extrainfo,
             )
         else:
             collist = colspec.split(",")
@@ -3281,7 +3296,7 @@ def readbidstsv(
                 selectedcols = df[collist]
             except KeyError:
                 print("specified column list cannot be found in", inputfilename)
-                return [None, None, None, None, None, None]
+                return [None, None, None, None, None, None, None]
             columns = list(selectedcols.columns.values)
             return (
                 samplerate,
@@ -3290,10 +3305,11 @@ def readbidstsv(
                 np.transpose(selectedcols.to_numpy()),
                 (compression == "gzip"),
                 columnsource,
+                extrainfo,
             )
     else:
         if neednotexist:
-            return [None, None, None, None, None, None]
+            return [None, None, None, None, None, None, None]
         else:
             raise FileNotFoundError(f"file pair {thefileroot}(.json/.tsv[.gz]) does not exist")
 
@@ -3357,7 +3373,7 @@ def readcolfrombidstsv(
     >>> # Read column with debug output
     >>> samplerate, starttime, data = readcolfrombidstsv('data.tsv', columnname='rt', debug=True)
     """
-    samplerate, starttime, columns, data, compressed, colsource = readbidstsv(
+    samplerate, starttime, columns, data, compressed, colsource, extrainfo = readbidstsv(
         inputfilename, neednotexist=neednotexist, debug=debug
     )
     if data is None:

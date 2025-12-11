@@ -234,7 +234,7 @@ class Timecourse:
         >>> print(obj.specdata)
         """
         if self.isbids:
-            dummy, dummy, columns, indata, dummy, dummy = tide_io.readbidstsv(self.filename)
+            dummy, dummy, columns, indata, dummy, dummy, dummy = tide_io.readbidstsv(self.filename)
             try:
                 self.timedata = indata[columns.index(thename), :]
             except ValueError:

@@ -278,6 +278,7 @@ def physiofreq(args: Any) -> None:
             invec,
             compressed,
             fakecolumns,
+            extrainfo,
         ) = tide_io.readbidstsv(textfileinfo[0])
     else:
         invec = tide_io.readvecs(textfileinfo[0])[0]

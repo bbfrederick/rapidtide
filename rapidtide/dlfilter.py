@@ -3052,6 +3052,7 @@ def getmatchedtcs(
         inputarray,
         compression,
         columnsource,
+        extrainfo,
     ) = tide_io.readbidstsv(
         matchedfilelist[0],
         colspec="cardiacfromfmri_25.0Hz,normpleth",
@@ -3242,6 +3243,7 @@ def readindata(
             inputarray,
             compression,
             columnsource,
+            extrainfo,
         ) = tide_io.readbidstsv(
             matchedfilelist[i],
             colspec="cardiacfromfmri_25.0Hz,normpleth",

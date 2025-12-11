@@ -24,7 +24,7 @@ print("file created")
 
 
 # read it back
-samplerate, starttime, columns, data, compressed, fakecolumns = tide_io.readbidstsv(
+samplerate, starttime, columns, data, compressed, fakecolumns, extrainfo = tide_io.readbidstsv(
     "testbids", debug=True
 )
 print("file read back")
@@ -45,7 +45,7 @@ tide_io.writebidstsv(
 print("column appended")
 
 # read it back
-samplerate, starttime, columns, data, compressed, fakecolumns = tide_io.readbidstsv(
+samplerate, starttime, columns, data, compressed, fakecolumns, extrainfo = tide_io.readbidstsv(
     "testbids", debug=True
 )
 print("file read back again")

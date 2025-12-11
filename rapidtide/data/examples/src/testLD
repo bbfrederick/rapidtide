@@ -10,7 +10,7 @@ from statsmodels.tsa.ar_model import AutoReg
 import rapidtide.io as tide_io
 
 debug = True
-insamplerate, instarttime, incolumns, indata, incompressed, incolsource = tide_io.readbidstsv(
+insamplerate, instarttime, incolumns, indata, incompressed, incolsource, inextrainfo = tide_io.readbidstsv(
             "../dst/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json",
             neednotexist=False,
             debug=debug,

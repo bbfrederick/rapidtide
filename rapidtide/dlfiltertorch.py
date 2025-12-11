@@ -4213,6 +4213,7 @@ def getmatchedtcs(
         inputarray,
         compression,
         columnsource,
+        extrainfo,
     ) = tide_io.readbidstsv(
         matchedfilelist[0],
         colspec="cardiacfromfmri_25.0Hz,normpleth,badpts",
@@ -4368,6 +4369,7 @@ def readindata(
             inputarray,
             compression,
             columnsource,
+            extrainfo,
         ) = tide_io.readbidstsv(
             matchedfilelist[i],
             colspec=thecolspec,
@@ -4874,15 +4876,15 @@ def prep(
     print(f"Xb.shape: {Xb.shape}")
     print(f"Yb.shape: {Yb.shape}")
     print(f"{usebadpts=}, {dofft=}")
-    
-    train_size = np.int64(0.8 * Xb.shape[0]) # 80% for training
-    val_size = Xb.shape[0] - train_size # Remaining 20% for validation
 
-    #train_dataset, val_dataset = random_split(
+    train_size = np.int64(0.8 * Xb.shape[0])  # 80% for training
+    val_size = Xb.shape[0] - train_size  # Remaining 20% for validation
+
+    # train_dataset, val_dataset = random_split(
     #    dataset,
     #    [train_size, val_size],
     #    generator=torch.Generator().manual_seed(42) # For reproducibility
-    #)
+    # )
 
     limit = np.int64(0.8 * Xb.shape[0])
     LGR.info(f"limit: {limit} out of {len(subjectstarts)}")

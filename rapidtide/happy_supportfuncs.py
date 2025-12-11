@@ -636,7 +636,8 @@ def _compute_slice_averages(
                     signal_sign * slice_averages[slice_idx, t]
                 )
         else:
-            print(f"CARDIACFROMIMAGE: slice {slice_idx} contains no non-zero voxels")
+            if verbose:
+                print(f"CARDIACFROMIMAGE: slice {slice_idx} contains no non-zero voxels")
 
     # Compute cycle average
     for i in range(numsteps):
@@ -858,7 +859,9 @@ def cardiacfromimage(
     # sanity check the output waveforms
     hrtc_pp = np.max(high_res_timecourse) - np.min(high_res_timecourse)
     if hrtc_pp == 0.0:
-        raise ValueError(f"CARDIACFROMIMAGE: high_res_timecourse has no variation prior to filtering!")
+        raise ValueError(
+            f"CARDIACFROMIMAGE: high_res_timecourse has no variation prior to filtering!"
+        )
     cycleav_pp = np.max(cycleaverage) - np.min(cycleaverage)
     if cycleav_pp == 0.0:
         raise ValueError(f"CARDIACFROMIMAGE: cycleaverage has no variation prior to filtering!")
@@ -883,7 +886,9 @@ def cardiacfromimage(
     # sanity check the filtered waveform
     filtered_pp = np.max(filtered_timecourse) - np.min(filtered_timecourse)
     if filtered_pp == 0.0:
-        raise ValueError(f"CARDIACFROMIMAGE: high_res_timecourse has no variation after notch filtering!")
+        raise ValueError(
+            f"CARDIACFROMIMAGE: high_res_timecourse has no variation after notch filtering!"
+        )
 
     # Extract cardiac and respiratory waveforms
     hirescardtc, cardnormfac, hiresresptc, respnormfac = _extract_physiological_signals(
