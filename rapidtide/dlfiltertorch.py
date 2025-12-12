@@ -427,7 +427,7 @@ class DeepLearningFilter:
             output = output.permute(0, 2, 1)
             return output.cpu().numpy()
 
-    def evaluate(self) -> None:
+    def evaluate(self) -> tuple[list, list, float, float]:
         """
         Evaluate the model performance on validation data and compute loss metrics.
 
