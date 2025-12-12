@@ -13,7 +13,7 @@ MODELROOT=${ROOT}/data/models
 MODELROOT=${ROOT}/experimental
 
 cd ${MODELROOT}
-for MODEL in model_cnn_*
+for MODEL in model_ppgattention_pytorch_w128_hs064_normaligned
 do
     echo model: ${MODELROOT}/${MODEL}
     applydlfilter \
