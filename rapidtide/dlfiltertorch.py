@@ -752,6 +752,7 @@ class DeepLearningFilter:
             )
         elif self.infodict["nettype"] == "ppgattention":
             self.hidden_size = self.infodict["hidden_size"]
+            
             self.model = PPGAttentionModel(self.hidden_size)
         elif self.infodict["nettype"] == "autoencoder":
             self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
@@ -894,8 +895,8 @@ class DeepLearningFilter:
         self.getname()
         self.makenet()
         print(self.model)
-        self.savemodel()
         self.initmetadata()
+        self.savemodel()
         self.initialized = True
         self.trained = False
 
