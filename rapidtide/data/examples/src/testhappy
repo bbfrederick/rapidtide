@@ -90,8 +90,8 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_pytorchbp \
-    --model /Users/frederic/code/rapidtide/rapidtide/experimental/model_cnn_pytorch_w064_l19_fn50_fl05_e060_t4.0_ctrp0.72_ctpp0.9_s19_d1_relu_dofft_normaligned \
+    ../dst/happy_attention \
+    --model /Users/frederic/code/rapidtide/rapidtide/experimental/model_ppgattention_pytorch_w128_hs064_normaligned \
     --increaseoutputlevel \
     --nprocs -1
 
