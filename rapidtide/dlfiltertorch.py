@@ -1185,7 +1185,7 @@ class PPG_Attention_Model(nn.Module):
         c_out = self.cnn(x).permute(0, 2, 1) # (batch, 50, 64)
         l_out, _ = self.lstm(c_out)          # (batch, 50, 128)
         attn_out, weights = self.attention(l_out)
-        return self.fc(attn_out).squeeze(-1), weights
+        return self.fc(attn_out).squeeze(-1)
 
 class PPGAttentionDLFilter(DeepLearningFilter):
 
