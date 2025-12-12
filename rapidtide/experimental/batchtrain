@@ -48,7 +48,7 @@ def dotraining(
     startskip=200,
     endskip=100,
     step=20,
-    batch_size=1024,
+    batch_size=256,
     encoding_dim=16,
     excludebysubject=False,
 ):
@@ -105,6 +105,7 @@ def dotraining(
             activation=activation,
             num_filters=num_filters,
             kernel_size=kernel_size,
+            batch_size=batch_size,
             debug=debug,
         )
     elif nettype == "crnn":
@@ -368,7 +369,7 @@ def main():
     window_size = 128
     hidden_size = 64
     usebadpts = False
-    batch_size = 4096
+    batch_size = 512
     dotraining(
         thedatadir,
         num_pretrain_epochs=num_pretrain_epochs,
