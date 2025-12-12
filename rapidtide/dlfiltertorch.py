@@ -957,6 +957,7 @@ class DeepLearningFilter:
         train_dataset = TensorDataset(train_x_tensor, train_y_tensor)
         val_dataset = TensorDataset(val_x_tensor, val_y_tensor)
 
+        print(f"loading data with {self.batch_size=}")
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False)
 
