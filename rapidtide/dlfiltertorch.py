@@ -23,7 +23,6 @@ import sys
 import warnings
 
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 from numpy.typing import NDArray
@@ -100,6 +99,11 @@ class DeepLearningFilter:
     model = None
     modelpath = None
     inputsize = None
+    hidden_size = None
+    loss = None
+    val_loss = None
+    raw_error = None
+    pred_error = None
     infodict = {}
 
     def __init__(
@@ -266,6 +270,7 @@ class DeepLearningFilter:
         self.infodict["endskip"] = self.endskip
         self.infodict["step"] = self.step
         self.infodict["train_arch"] = sys.platform
+        
 
     def loaddata(self) -> None:
         """
@@ -699,6 +704,7 @@ class DeepLearningFilter:
             },
             os.path.join(modelsavename, "model.pth"),
         )
+        self.updatemetadata()
 
     def loadmodel(self, modelname: str, verbose: bool = False) -> None:
         """
@@ -925,9 +931,9 @@ class DeepLearningFilter:
         False
         """
         self.getname()
+        self.initmetadata()
         self.makenet()
         print(self.model)
-        self.initmetadata()
         self.savemodel()
         self.initialized = True
         self.trained = False
@@ -1239,7 +1245,6 @@ class PPGAttentionDLFilter(DeepLearningFilter):
         self.nettype = "ppgattention"
         self.hidden_size = hidden_size
         self.infodict["nettype"] = self.nettype
-        self.infodict["hidden_size"] = self.hidden_size
         super(PPGAttentionDLFilter, self).__init__(*args, **kwargs)
 
     def getname(self):
@@ -1328,7 +1333,7 @@ class PPGAttentionDLFilter(DeepLearningFilter):
 
     def makenet(self):
         """
-        Create and configure a CNN model for neural network training.
+        Create and configure a PPGAttention model for neural network training.
 
         This method initializes a CNNModel with the specified parameters and moves
         it to the designated device (CPU or GPU). The model configuration is
@@ -1366,7 +1371,41 @@ class PPGAttentionDLFilter(DeepLearningFilter):
         self.model = PPGAttentionModel(
             self.hidden_size,
         )
+        self.infodict["hidden_size"] = self.hidden_size
         self.model.to(self.device)
+
+    def get_config(self):
+        """
+        Get the configuration parameters of the model.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the model configuration parameters with the following keys:
+            - "window_size" (int): The size of the sliding window used for input sequences
+            - "encoding_dim" (int): The dimensionality of the encoding layer
+            - "num_layers" (int): The number of layers in the model
+            - "dropout_rate" (float): The dropout rate for regularization
+            - "activation" (str): The activation function used in the model
+            - "inputsize" (int): The size of the input features
+
+        Notes
+        -----
+        This method returns a copy of the internal configuration parameters. Modifications
+        to the returned dictionary will not affect the original model configuration.
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> config = model.get_config()
+        >>> print(config['window_size'])
+        10
+        """
+        return {
+            "window_size": self.window_size,
+            "hidden_size": self.hidden_size,
+            "inputsize": self.inputsize,
+        }
 
 
 class CNNModel(nn.Module):
