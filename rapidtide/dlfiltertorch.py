@@ -751,8 +751,7 @@ class DeepLearningFilter:
                 self.inputsize,
             )
         elif self.infodict["nettype"] == "ppgattention":
-            self.hidden_size = checkpoint["model_config"]["hidden_size"]
-
+            self.hidden_size = self.infodict["hidden_size"]
             self.model = PPGAttentionModel(self.hidden_size)
         elif self.infodict["nettype"] == "autoencoder":
             self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
@@ -1180,7 +1179,7 @@ class PPGAttentionModel(nn.Module):
         self.lstm = nn.LSTM(64, hidden_size, batch_first=True, bidirectional=True)
         self.attention = SelfAttention(hidden_size * 2)  # *2 for bidirectional
         self.fc = nn.Linear(hidden_size * 2, 1)
-        self.upsample = nn.Upsample(scale_factor=2, mode='linear', align_corners=False)
+        self.upsample = nn.Upsample(scale_factor=2, mode="linear", align_corners=False)
 
     def forward(self, x):
         # x: (batch, 1, 100)
