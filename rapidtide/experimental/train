@@ -361,7 +361,7 @@ def main():
 
     # train PPGAttention
     nettype = "ppgattention"
-    num_epochs = 5
+    num_epochs = 50
     window_size = 128
     hidden_size = 64
     usebadpts = False
