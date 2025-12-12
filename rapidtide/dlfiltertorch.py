@@ -62,6 +62,8 @@ mpl.use("Agg")
 # Disable GPU if desired
 if torch.cuda.is_available():
     device = torch.device("cuda")
+    torch.cuda.empty_cache()
+    torch.cuda.memory_summary(device=None, abbreviated=False)
     LGR.info(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
 elif torch.backends.mps.is_available():
     device = torch.device("mps")
