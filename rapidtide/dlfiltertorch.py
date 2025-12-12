@@ -753,7 +753,7 @@ class DeepLearningFilter:
         elif self.infodict["nettype"] == "ppgattention":
             self.hidden_size = checkpoint["model_config"]["hidden_size"]
 
-            self.model = PPG_Attention_Model(self.hidden_size)
+            self.model = PPGAttentionModel(self.hidden_size)
         elif self.infodict["nettype"] == "autoencoder":
             self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
             self.num_layers = checkpoint["model_config"]["num_layers"]
@@ -1146,7 +1146,7 @@ class SelfAttention(nn.Module):
         self.query = nn.Linear(feature_dim, feature_dim)
         self.key = nn.Linear(feature_dim, feature_dim)
         self.value = nn.Linear(feature_dim, feature_dim)
-        self.scale = feature_dim ** 0.5
+        self.scale = feature_dim**0.5
 
     def forward(self, x):
         # x shape: (batch, seq_len, feature_dim)
@@ -1157,7 +1157,7 @@ class SelfAttention(nn.Module):
         # Dot product attention
         scores = torch.matmul(Q, K.transpose(-2, -1)) / self.scale
         # Softmax along the sequence dimension
-        attention_weights = F.softmax(scores, dim=-1) # (batch, seq_len, seq_len)
+        attention_weights = F.softmax(scores, dim=-1)  # (batch, seq_len, seq_len)
 
         # We aggregate weights to get a single score per time step for visualization
         # In simple temporal attention, we often just want a (batch, seq_len) vector
@@ -1166,26 +1166,33 @@ class SelfAttention(nn.Module):
         out = torch.matmul(attention_weights, V)
         return out, time_step_weights
 
-class PPG_Attention_Model(nn.Module):
+
+class PPGAttentionModel(nn.Module):
     def __init__(self, hidden_size=64):
-        super(PPG_Attention_Model, self).__init__()
+        super(PPGAttentionModel, self).__init__()
         self.cnn = nn.Sequential(
             nn.Conv1d(1, 32, kernel_size=7, padding=3),
             nn.ReLU(),
-            nn.MaxPool1d(2), # Seq down to 50
+            nn.MaxPool1d(2),  # Seq down to 50
             nn.Conv1d(32, 64, kernel_size=5, padding=2),
-            nn.ReLU()
+            nn.ReLU(),
         )
         self.lstm = nn.LSTM(64, hidden_size, batch_first=True, bidirectional=True)
-        self.attention = SelfAttention(hidden_size * 2) # *2 for bidirectional
+        self.attention = SelfAttention(hidden_size * 2)  # *2 for bidirectional
         self.fc = nn.Linear(hidden_size * 2, 1)
+        self.upsample = nn.Upsample(scale_factor=2, mode='linear', align_corners=False)
 
     def forward(self, x):
         # x: (batch, 1, 100)
-        c_out = self.cnn(x).permute(0, 2, 1) # (batch, 50, 64)
-        l_out, _ = self.lstm(c_out)          # (batch, 50, 128)
+        c_out = self.cnn(x).permute(0, 2, 1)  # (batch, 50, 64)
+        l_out, _ = self.lstm(c_out)  # (batch, 50, 128)
         attn_out, weights = self.attention(l_out)
-        return self.fc(attn_out).squeeze(-1)
+        out = self.fc(attn_out).squeeze(-1)  # (batch, 50)
+        # Upsample back to original length
+        out = out.unsqueeze(1)  # (batch, 1, 50)
+        out = self.upsample(out)  # (batch, 1, 100)
+        return out  # (batch, 1, 100)
+
 
 class PPGAttentionDLFilter(DeepLearningFilter):
 
@@ -1323,7 +1330,7 @@ class PPGAttentionDLFilter(DeepLearningFilter):
         >>> print(self.model)
         CNNModel(...)
         """
-        self.model = PPG_Attention_Model(
+        self.model = PPGAttentionModel(
             self.hidden_size,
         )
         self.model.to(self.device)
