@@ -754,7 +754,7 @@ class DeepLearningFilter:
             )
         elif self.infodict["nettype"] == "ppgattention":
             self.hidden_size = self.infodict["hidden_size"]
-            
+
             self.model = PPGAttentionModel(self.hidden_size)
         elif self.infodict["nettype"] == "autoencoder":
             self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
@@ -1006,6 +1006,7 @@ class DeepLearningFilter:
 
             train_loss_epoch /= len(train_loader)
             self.loss.append(train_loss_epoch)
+            print("training complete, starting validation")
 
             # Validation phase
             self.model.eval()
@@ -1019,6 +1020,7 @@ class DeepLearningFilter:
 
             val_loss_epoch /= len(val_loader)
             self.val_loss.append(val_loss_epoch)
+            print("validation complete")
 
             LGR.info(
                 f"Epoch {epoch+1}/{total_epochs} - Loss: {train_loss_epoch:.4f} - Val Loss: {val_loss_epoch:.4f}"
@@ -1038,6 +1040,7 @@ class DeepLearningFilter:
                 },
                 self.intermediatemodelpath,
             )
+            print("checkpoint save complete")
 
             # Early stopping
             if val_loss_epoch < best_val_loss:
