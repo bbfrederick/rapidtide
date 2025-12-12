@@ -46,8 +46,10 @@ if pyfftwpresent:
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset, random_split
 
@@ -748,6 +750,10 @@ class DeepLearningFilter:
                 self.activation,
                 self.inputsize,
             )
+        elif self.infodict["nettype"] == "ppgattention":
+            self.hidden_size = checkpoint["model_config"]["hidden_size"]
+
+            self.model = PPG_Attention_Model(self.hidden_size)
         elif self.infodict["nettype"] == "autoencoder":
             self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
             self.num_layers = checkpoint["model_config"]["num_layers"]
@@ -1132,6 +1138,195 @@ class DeepLearningFilter:
             self.window_size, 1.0, self.window_size, endpoint=False
         )
         return initscale * predicteddata / weightarray
+
+
+class SelfAttention(nn.Module):
+    def __init__(self, feature_dim):
+        super(SelfAttention, self).__init__()
+        self.query = nn.Linear(feature_dim, feature_dim)
+        self.key = nn.Linear(feature_dim, feature_dim)
+        self.value = nn.Linear(feature_dim, feature_dim)
+        self.scale = feature_dim ** 0.5
+
+    def forward(self, x):
+        # x shape: (batch, seq_len, feature_dim)
+        Q = self.query(x)
+        K = self.key(x)
+        V = self.value(x)
+
+        # Dot product attention
+        scores = torch.matmul(Q, K.transpose(-2, -1)) / self.scale
+        # Softmax along the sequence dimension
+        attention_weights = F.softmax(scores, dim=-1) # (batch, seq_len, seq_len)
+
+        # We aggregate weights to get a single score per time step for visualization
+        # In simple temporal attention, we often just want a (batch, seq_len) vector
+        time_step_weights = attention_weights.mean(dim=1)
+
+        out = torch.matmul(attention_weights, V)
+        return out, time_step_weights
+
+class PPG_Attention_Model(nn.Module):
+    def __init__(self, hidden_size=64):
+        super(PPG_Attention_Model, self).__init__()
+        self.cnn = nn.Sequential(
+            nn.Conv1d(1, 32, kernel_size=7, padding=3),
+            nn.ReLU(),
+            nn.MaxPool1d(2), # Seq down to 50
+            nn.Conv1d(32, 64, kernel_size=5, padding=2),
+            nn.ReLU()
+        )
+        self.lstm = nn.LSTM(64, hidden_size, batch_first=True, bidirectional=True)
+        self.attention = SelfAttention(hidden_size * 2) # *2 for bidirectional
+        self.fc = nn.Linear(hidden_size * 2, 1)
+
+    def forward(self, x):
+        # x: (batch, 1, 100)
+        c_out = self.cnn(x).permute(0, 2, 1) # (batch, 50, 64)
+        l_out, _ = self.lstm(c_out)          # (batch, 50, 128)
+        attn_out, weights = self.attention(l_out)
+        return self.fc(attn_out).squeeze(-1), weights
+
+class PPGAttentionDLFilter(DeepLearningFilter):
+
+    def __init__(
+        self,
+        hidden_size=64,
+        *args,
+        **kwargs,
+    ) -> None:
+
+        self.nettype = "ppgattention"
+        self.hidden_size = hidden_size
+        self.infodict["nettype"] = self.nettype
+        self.infodict["hidden_size"] = self.hidden_size
+        super(PPGAttentionDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        """
+        Generate and configure the model name and path based on current parameters.
+
+        This method constructs a descriptive model name string using various instance
+        attributes and creates the corresponding directory path. The generated name
+        includes information about model architecture, hyperparameters, and configuration
+        options. The method also ensures the model directory exists by creating it if
+        necessary.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing model configuration parameters.
+
+        Returns
+        -------
+        None
+            This method does not return a value but modifies instance attributes:
+            - self.modelname: Generated model name string
+            - self.modelpath: Full path to the model directory
+
+        Notes
+        -----
+        The generated model name follows a specific format:
+        "model_cnn_pytorch_wXXX_lYY_fnZZ_flZZ_eXXX_tY_ctrpZ_ctppZ_sZ_dZ_activation[options]"
+
+        Where:
+        - XXX: window_size (3 digits zero-padded)
+        - YY: num_layers (2 digits zero-padded)
+        - ZZ: num_filters (2 digits zero-padded)
+        - ZZ: kernel_size (2 digits zero-padded)
+        - XXX: num_epochs (3 digits zero-padded)
+        - Y: excludethresh (single digit)
+        - Z: corrthresh_rp (single digit)
+        - Z: corrthresh_pp (single digit)
+        - Z: step (single digit)
+        - Z: dilation_rate (single digit)
+
+        Options are appended if corresponding boolean flags are True:
+        - _usebadpts: when usebadpts is True
+        - _excludebysubject: when excludebysubject is True
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> model.window_size = 128
+        >>> model.num_layers = 3
+        >>> model.num_filters = 16
+        >>> model.kernel_size = 3
+        >>> model.num_epochs = 100
+        >>> model.excludethresh = 0.5
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
+        >>> model.step = 1
+        >>> model.dilation_rate = 2
+        >>> model.activation = "relu"
+        >>> model.usebadpts = True
+        >>> model.excludebysubject = False
+        >>> model.namesuffix = "test"
+        >>> model.getname()
+        >>> print(model.modelname)
+        'model_cnn_pytorch_w128_l03_fn16_fl03_e100_t0_ct0_s1_d2_relu_usebadpts_test'
+        """
+        self.modelname = "_".join(
+            [
+                "model",
+                "ppgattention",
+                "pytorch",
+                "w" + str(self.window_size).zfill(3),
+                "hs" + str(self.hidden_size).zfill(3),
+            ]
+        )
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        """
+        Create and configure a CNN model for neural network training.
+
+        This method initializes a CNNModel with the specified parameters and moves
+        it to the designated device (CPU or GPU). The model configuration is
+        determined by the instance attributes set prior to calling this method.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing the following attributes:
+            - hidden_size : int
+                Number of filters in each convolutional layer
+            - kernel_size : int or tuple
+                Size of the convolutional kernel
+
+        Returns
+        -------
+        None
+            This method does not return any value. It modifies the instance
+            by setting the `model` attribute to the created CNNModel.
+
+        Notes
+        -----
+        The method assumes that all required attributes are properly initialized
+        before calling. The model is automatically moved to the specified device
+        using the `.to()` method.
+
+        Examples
+        --------
+        >>> # Assuming all required attributes are set
+        >>> makenet()
+        >>> # Model is now available as self.model
+        >>> print(self.model)
+        CNNModel(...)
+        """
+        self.model = PPG_Attention_Model(
+            self.hidden_size,
+        )
+        self.model.to(self.device)
 
 
 class CNNModel(nn.Module):
