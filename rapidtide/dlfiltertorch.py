@@ -427,7 +427,7 @@ class DeepLearningFilter:
             output = output.permute(0, 2, 1)
             return output.cpu().numpy()
 
-    def evaluate(self) -> tuple[list, list, float, float]:
+    def evaluate(self) -> None:
         """
         Evaluate the model performance on validation data and compute loss metrics.
 
@@ -478,13 +478,43 @@ class DeepLearningFilter:
         self.lossfilename = os.path.join(self.modelname, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
-        YPred = self.predict_model(self.val_x)
+        fullbatches = int(self.val_x.shape[0] // self.batch_size)
+        remainder = self.val_x.shape[0] - (fullbatches * self.batch_size)
 
-        error = self.val_y - YPred
-        self.pred_error = np.mean(np.square(error))
+        self.pred_error = 0.0
+        self.raw_error = 0.0
+        for whichbatch in range(fullbatches):
+            startpos = whichbatch * self.batch_size
+            YPred = self.predict_model(self.val_x[startpos : startpos + self.batch_size, :, :])
 
-        error2 = self.val_x - self.val_y
-        self.raw_error = np.mean(np.square(error2))
+            error = self.val_y[startpos : startpos + self.batch_size, :, :] - YPred
+            self.pred_error += np.sum(np.square(error))
+
+            error2 = (
+                self.val_x[startpos : startpos + self.batch_size, :, :]
+                - self.val_y[startpos : startpos + self.batch_size, :, :]
+            )
+            self.raw_error += np.sum(np.square(error2))
+        if remainder > 0:
+            startpos = fullbatches * self.batch_size
+            YPred = self.predict_model(self.val_x[startpos:, :, :])
+
+            error = self.val_y[startpos:, :, :] - YPred
+            self.pred_error += np.sum(np.square(error))
+
+            error2 = self.val_x[startpos:, :, :] - self.val_y[startpos:, :, :]
+            self.raw_error += np.sum(np.square(error2))
+        self.pred_error /= (
+            np.int64(self.val_x.shape[0])
+            * np.int64(self.val_x.shape[1])
+            * np.int64(self.val_x.shape[2])
+        )
+        self.raw_error /= (
+            np.int64(self.val_x.shape[0])
+            * np.int64(self.val_x.shape[1])
+            * np.int64(self.val_x.shape[2])
+        )
+
         LGR.info(f"Prediction Error: {self.pred_error}\tRaw Error: {self.raw_error}")
 
         f = open(os.path.join(self.modelname, "loss.txt"), "w")
@@ -1006,7 +1036,6 @@ class DeepLearningFilter:
 
             train_loss_epoch /= len(train_loader)
             self.loss.append(train_loss_epoch)
-            print("training complete, starting validation")
 
             # Validation phase
             self.model.eval()
@@ -1020,7 +1049,6 @@ class DeepLearningFilter:
 
             val_loss_epoch /= len(val_loader)
             self.val_loss.append(val_loss_epoch)
-            print("validation complete")
 
             LGR.info(
                 f"Epoch {epoch+1}/{total_epochs} - Loss: {train_loss_epoch:.4f} - Val Loss: {val_loss_epoch:.4f}"
@@ -1040,7 +1068,6 @@ class DeepLearningFilter:
                 },
                 self.intermediatemodelpath,
             )
-            print("checkpoint save complete")
 
             # Early stopping
             if val_loss_epoch < best_val_loss:
