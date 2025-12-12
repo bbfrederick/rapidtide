@@ -1,0 +1,1 @@
+model_ppgattention_pytorch_w128_hs064_normaligned: Prediction Error: 0.09435158982904317 Raw Error: 0.3154415056146118
