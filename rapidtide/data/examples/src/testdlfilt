@@ -9,11 +9,11 @@ else
     ROOT=/Users/frederic/code/rapidtide/rapidtide
 fi
 
-MODELROOT=${ROOT}/data/models
 MODELROOT=${ROOT}/experimental
+MODELROOT=${ROOT}/data/models
 
 cd ${MODELROOT}
-for MODEL in model_ppgattention_pytorch_w128_hs064_normaligned
+for MODEL in model_ppgattention_pytorch_fulldata
 do
     echo model: ${MODELROOT}/${MODEL}
     applydlfilter \
