@@ -740,7 +740,7 @@ def happy_main(argparsingfunc: Any) -> None:
                 outputroot + "_desc-stdrescardfromfmri_timeseries",
                 normcardfromfmri_stdres,
                 args.stdfreq,
-                columns=["normcardiac_" + str(args.stdfreq) + "Hz"],
+                columns=["normcardiacfromfmri_" + str(args.stdfreq) + "Hz"],
                 append=True,
                 debug=args.debug,
             )
