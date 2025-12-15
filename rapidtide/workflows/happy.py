@@ -2119,7 +2119,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
         # save the information file
         if args.saveinfoasjson:
-            tide_io.writedicttojson(infodict, outputroot + "_desc-info.json")
+            tide_io.writedicttojson(infodict, outputroot + "_desc-runinfo.json")
         else:
             tide_io.writedict(infodict, outputroot + "_info.txt")
 
