@@ -45,7 +45,7 @@ def create_dummy_data():
     }
 
 
-def test_cnn_model_creation():
+def cnn_model_creation():
     """Test CNN model instantiation and forward pass."""
     num_filters = 10
     kernel_size = 5
@@ -80,7 +80,7 @@ def test_cnn_model_creation():
 
 
 
-def test_cnn_dlfilter_initialization(testtemproot):
+def cnn_dlfilter_initialization(testtemproot):
     """Test CNNDLFilter initialization."""
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
@@ -98,7 +98,7 @@ def test_cnn_dlfilter_initialization(testtemproot):
     assert not filter_obj.initialized
 
 
-def test_cnn_dlfilter_initialize(testtemproot):
+def cnn_dlfilter_initialize(testtemproot):
     """Test CNNDLFilter model initialization."""
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
@@ -125,7 +125,7 @@ def test_cnn_dlfilter_initialize(testtemproot):
     assert os.path.exists(os.path.join(filter_obj.modelpath, "model.pth"))
 
 
-def test_predict_model(testtemproot, dummy_data):
+def predict_model(testtemproot, dummy_data):
     """Test the predict_model method."""
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
@@ -149,7 +149,7 @@ def test_predict_model(testtemproot, dummy_data):
     assert isinstance(predictions, np.ndarray)
 
 
-def test_apply_method(testtemproot):
+def apply_method(testtemproot):
     """Test the apply method for filtering a signal."""
     window_size = 64
     signal_length = 500
@@ -178,7 +178,7 @@ def test_apply_method(testtemproot):
     assert isinstance(filtered_signal, np.ndarray)
 
 
-def test_apply_method_with_badpts(testtemproot):
+def apply_method_with_badpts(testtemproot):
     """Test the apply method with bad points."""
     window_size = 64
     signal_length = 500
@@ -210,7 +210,7 @@ def test_apply_method_with_badpts(testtemproot):
     assert isinstance(filtered_signal, np.ndarray)
 
 
-def test_save_and_load_model(testtemproot):
+def save_and_load_model(testtemproot):
     """Test saving and loading a model."""
     # This test is skipped because both savemodel() and initmetadata()
     # use self.modelname (a relative path) instead of self.modelpath (full path)
@@ -260,7 +260,7 @@ def test_save_and_load_model(testtemproot):
         assert torch.allclose(original_weights[name], param.data)
 
 
-def test_filtscale_forward():
+def filtscale_forward():
     """Test filtscale function in forward direction."""
     # filtscale expects 1D data (single timecourse)
     data = np.random.randn(64)
@@ -277,7 +277,7 @@ def test_filtscale_forward():
     assert scaled_data_log.shape == (64, 2)
 
 
-def test_filtscale_reverse():
+def filtscale_reverse():
     """Test filtscale function in reverse direction."""
     # filtscale expects 1D data (single timecourse)
     data = np.random.randn(64)
@@ -294,21 +294,21 @@ def test_filtscale_reverse():
     assert mse(data, reconstructed) < 1.0  # Allow some reconstruction error
 
 
-def test_tobadpts():
+def tobadpts():
     """Test tobadpts helper function."""
     filename = "test_file.txt"
     result = dlfiltertorch.tobadpts(filename)
     assert result == "test_file_badpts.txt"
 
 
-def test_targettoinput():
+def targettoinput():
     """Test targettoinput helper function."""
     filename = "test_xyz_file.txt"
     result = dlfiltertorch.targettoinput(filename, targetfrag="xyz", inputfrag="abc")
     assert result == "test_abc_file.txt"
 
 
-def test_model_with_different_activations(testtemproot):
+def model_with_different_activations(testtemproot):
     """Test models with different activation functions."""
     activations = ["relu", "tanh"]
 
@@ -332,14 +332,14 @@ def test_model_with_different_activations(testtemproot):
         assert config["activation"] == activation
 
 
-def test_device_selection():
+def device_selection():
     """Test that device is properly set based on availability."""
     # This test just checks that the device variable is set
     # We can't guarantee CUDA/MPS availability in test environment
     assert dlfiltertorch.device in [torch.device("cuda"), torch.device("mps"), torch.device("cpu")]
 
 
-def test_infodict_population(testtemproot):
+def infodict_population(testtemproot):
     """Test that infodict is properly populated."""
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
@@ -369,7 +369,7 @@ def test_infodict_population(testtemproot):
     assert filter_obj.infodict["window_size"] == 64
 
 
-def main(debug=False, local=False):
+def test_dlfilterops(debug=False, local=False):
     # set input and output directories
     if local:
         testtemproot = "./tmp"
@@ -380,61 +380,61 @@ def main(debug=False, local=False):
 
 
     if debug:
-        print("test_cnn_model_creation()")
-    test_cnn_model_creation()
+        print("cnn_model_creation()")
+    cnn_model_creation()
 
     if debug:
-        print("test_cnn_dlfilter_initialization(testtemproot)")
-    test_cnn_dlfilter_initialization(testtemproot)
+        print("cnn_dlfilter_initialization(testtemproot)")
+    cnn_dlfilter_initialization(testtemproot)
 
     if debug:
-        print("test_cnn_dlfilter_initialize(testtemproot)")
-    test_cnn_dlfilter_initialize(testtemproot)
+        print("cnn_dlfilter_initialize(testtemproot)")
+    cnn_dlfilter_initialize(testtemproot)
 
     if debug:
-        print("test_predict_model(testtemproot, thedummydata)")
-    test_predict_model(testtemproot, thedummydata)
+        print("predict_model(testtemproot, thedummydata)")
+    predict_model(testtemproot, thedummydata)
 
     if debug:
-        print("test_apply_method(testtemproot)")
-    test_apply_method(testtemproot)
+        print("apply_method(testtemproot)")
+    apply_method(testtemproot)
 
     if debug:
-        print("test_apply_method_with_badpts(testtemproot)")
-    test_apply_method_with_badpts(testtemproot)
+        print("apply_method_with_badpts(testtemproot)")
+    apply_method_with_badpts(testtemproot)
 
     if debug:
-        print("test_save_and_load_model(testtemproot)")
-    test_save_and_load_model(testtemproot)
+        print("save_and_load_model(testtemproot)")
+    save_and_load_model(testtemproot)
 
     if debug:
-        print("test_filtscale_forward()")
-    test_filtscale_forward()
+        print("filtscale_forward()")
+    filtscale_forward()
 
     if debug:
-        print("test_filtscale_reverse()")
-    test_filtscale_reverse()
+        print("filtscale_reverse()")
+    filtscale_reverse()
 
     if debug:
-        print("test_tobadpts()")
-    test_tobadpts()
+        print("tobadpts()")
+    tobadpts()
 
     if debug:
-        print("test_targettoinput()")
-    test_targettoinput()
+        print("targettoinput()")
+    targettoinput()
 
     if debug:
-        print("test_model_with_different_activations(testtemproot)")
-    test_model_with_different_activations(testtemproot)
+        print("model_with_different_activations(testtemproot)")
+    model_with_different_activations(testtemproot)
 
     if debug:
-        print("test_device_selection()")
-    test_device_selection()
+        print("device_selection()")
+    device_selection()
 
     if debug:
-        print("test_infodict_population(testtemproot)")
-    test_infodict_population(testtemproot)
+        print("infodict_population(testtemproot)")
+    infodict_population(testtemproot)
 
 
 if __name__ == "__main__":
-    main(debug=True, local=True)
+    test_dlfilterops(debug=True, local=True)
