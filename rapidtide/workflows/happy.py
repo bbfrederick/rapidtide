@@ -782,8 +782,10 @@ def happy_main(argparsingfunc: Any) -> None:
         )
 
         # apply the deep learning filter if we're going to do that
+        infodict["used_dlreconstruction_filter"] = False
         if args.dodlfilter:
             if dlfilterexists:
+                infodict["used_dlreconstruction_filter"] = True
                 if args.mpfix:
                     print("performing super dangerous openmp workaround")
                     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -795,15 +797,6 @@ def happy_main(argparsingfunc: Any) -> None:
                 )
                 thedlfilter = tide_dlfilt.DeepLearningFilter(modelpath=modelpath)
                 thedlfilter.loadmodel(args.modelname)
-                updatemodels = False
-                if updatemodels:
-                    updatedmodelname = f"{args.modelname}_tf2"
-                    newmodeldir = os.path.join(
-                        "/Users/frederic/code/rapidtide/rapidtide/data/models", updatedmodelname
-                    )
-                    print(f"creating {newmodeldir}")
-                    tide_util.makeadir(newmodeldir)
-                    thedlfilter.savemodel(altname=newmodeldir)
                 infodict["dlfiltermodel"] = args.modelname
                 normdlfilteredcard_stdres = thedlfilter.apply(normcardfromfmri_stdres)
                 dlfilteredcard_stdres = thedlfilter.apply(cardfromfmri_stdres)
@@ -871,7 +864,6 @@ def happy_main(argparsingfunc: Any) -> None:
                         append=True,
                         debug=args.debug,
                     )
-                infodict["used_dlreconstruction_filter"] = True
                 peakfreq_dlfiltered = happy_support.getcardcoeffs(
                     cardfromfmri_sliceres,
                     slicesamplerate,
@@ -1003,6 +995,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     append=True,
                     debug=args.debug,
                 )
+
                 tide_io.writebidstsv(
                     outputroot + "_desc-stdrescardfromfmri_timeseries",
                     pleth_stdres,
@@ -1025,6 +1018,19 @@ def happy_main(argparsingfunc: Any) -> None:
                 cutoff=args.envcutoff,
                 thresh=args.envthresh,
             )
+
+            # calculate quality metrics
+            happy_support.calcplethquality(
+                filtpleth_stdres,
+                args.stdfreq,
+                infodict,
+                "_pleth",
+                outputroot,
+                outputlevel=args.outputlevel,
+                initfile=False,
+                debug=args.debug,
+            )
+
             if thispass == numpasses - 1:
                 tide_io.writebidstsv(
                     outputroot + "_desc-stdrescardfromfmri_timeseries",
@@ -1069,18 +1075,6 @@ def happy_main(argparsingfunc: Any) -> None:
             infodict["corrcoeff_filtraw2filtpleth"] = maxval + 0
             infodict["delay_filtraw2filtpleth"] = maxdelay + 0
             infodict["failreason_filtraw2filtpleth"] = failreason + 0
-
-            # calculate quality metrics
-            happy_support.calcplethquality(
-                filtpleth_stdres,
-                args.stdfreq,
-                infodict,
-                "_pleth",
-                outputroot,
-                outputlevel=args.outputlevel,
-                initfile=False,
-                debug=args.debug,
-            )
 
             if args.dodlfilter and dlfilterexists:
                 dlfilteredpleth = thedlfilter.apply(pleth_stdres)
@@ -1186,13 +1180,18 @@ def happy_main(argparsingfunc: Any) -> None:
             infodict["pleth"] = False
             peakfreq = peakfreq_bold
         if args.outputlevel > 0:
+            extraheaderdict = {"badptspct": infodict["badptspct"]}
+            if infodict["pleth"]:
+                extraheaderdict["cardiacbpm_pleth"] = float(infodict["cardiacbpm_pleth"])
+            if infodict["used_dlreconstruction_filter"]:
+                extraheaderdict["cardiacbpm_dlfiltered"] = float(infodict["cardiacbpm_dlfiltered"])
             if thispass == numpasses - 1:
                 tide_io.writebidstsv(
                     outputroot + "_desc-slicerescardfromfmri_timeseries",
                     badpointlist,
                     slicesamplerate,
                     columns=["badpts"],
-                    extraheaderinfo={"badptspct": infodict["badptspct"]},
+                    extraheaderinfo=extraheaderdict,
                     append=True,
                     debug=args.debug,
                 )
@@ -1212,7 +1211,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     args.stdfreq,
                     columns=["badpts"],
                     append=True,
-                    extraheaderinfo={"badptspct": infodict["badptspct"]},
+                    extraheaderinfo=extraheaderdict,
                     debug=args.debug,
                 )
 
