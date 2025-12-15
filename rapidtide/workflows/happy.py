@@ -178,8 +178,8 @@ def happy_main(argparsingfunc: Any) -> None:
     # Set up loggers for workflow
     setup_logger(
         logger_filename=f"{outputroot}_log.txt",
-        timing_filename=f"{outputroot}_runtimings.tsv",
-        memory_filename=f"{outputroot}_memusage.tsv",
+        timing_filename=f"{outputroot}_desc-runtimings.tsv",
+        memory_filename=f"{outputroot}_desc-memusage.tsv",
         isverbose=args.verbose,
         debug=args.debug,
     )
@@ -237,7 +237,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
     # save the information file
     if args.saveinfoasjson:
-        tide_io.writedicttojson(infodict, outputroot + "_info.json")
+        tide_io.writedicttojson(infodict, outputroot + "_desc-runinfo.json")
     else:
         tide_io.writedict(infodict, outputroot + "_info.txt")
 
@@ -1192,6 +1192,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     badpointlist,
                     slicesamplerate,
                     columns=["badpts"],
+                    extraheaderinfo={"badptspct": infodict["badptspct"]},
                     append=True,
                     debug=args.debug,
                 )
@@ -1340,7 +1341,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
         # save the information file
         if args.saveinfoasjson:
-            tide_io.writedicttojson(infodict, outputroot + "_info.json")
+            tide_io.writedicttojson(infodict, outputroot + "_desc-runinfo.json")
         else:
             tide_io.writedict(infodict, outputroot + "_info.txt")
 
@@ -2118,7 +2119,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
         # save the information file
         if args.saveinfoasjson:
-            tide_io.writedicttojson(infodict, outputroot + "_info.json")
+            tide_io.writedicttojson(infodict, outputroot + "_desc-info.json")
         else:
             tide_io.writedict(infodict, outputroot + "_info.txt")
 
@@ -2574,7 +2575,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
     # save the information file
     if args.saveinfoasjson:
-        tide_io.writedicttojson(infodict, outputroot + "_info.json")
+        tide_io.writedicttojson(infodict, outputroot + "_desc-runinfo.json")
     else:
         tide_io.writedict(infodict, outputroot + "_info.txt")
 

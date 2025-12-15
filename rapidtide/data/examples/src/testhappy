@@ -91,7 +91,6 @@ happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy_attention \
-    --increaseoutputlevel \
     --nprocs -1
 
 #happy \
