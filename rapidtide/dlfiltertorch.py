@@ -607,7 +607,7 @@ class DeepLearningFilter:
         self.infodict["dropout_rate"] = self.dropout_rate
         self.infodict["train_arch"] = sys.platform
         self.infodict["modelname"] = self.modelname
-        tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
+        tide_io.writedicttojson(self.infodict, os.path.join(self.modelpath, "model_meta.json"))
 
     def updatemetadata(self) -> None:
         """
@@ -656,7 +656,7 @@ class DeepLearningFilter:
         self.infodict["val_loss"] = self.val_loss
         self.infodict["raw_error"] = self.raw_error
         self.infodict["prediction_error"] = self.pred_error
-        tide_io.writedicttojson(self.infodict, os.path.join(self.modelname, "model_meta.json"))
+        tide_io.writedicttojson(self.infodict, os.path.join(self.modelpath, "model_meta.json"))
 
     def savemodel(self, altname: str | None = None) -> None:
         """
