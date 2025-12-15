@@ -36,7 +36,7 @@ DEFAULT_ALIASEDCORRELATIONWIDTH = 5.0
 DEFAULT_PULSATILITYSIGMA = 6.0
 DEFAULT_PULSATILITYTHRESHOLD = 0.5
 DEFAULT_TF_DL_MODEL = "model_revised_tf2"
-DEFAULT_PT_DL_MODEL = "model_cnn_pytorch"
+DEFAULT_PT_DL_MODEL = "model_ppgattention_pytorch_w128_fulldata"
 
 
 def _get_parser() -> Any:
