@@ -52,7 +52,7 @@ def test_fullrunhappy_v4(debug=False, local=False, displayplots=False):
         os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
         "--mklthreads",
         "-1",
-        "--usenewvesselmethod",
+        "--useoldvesselmethod",
         "--motionfile",
         os.path.join(exampleroot, "sub-HAPPYTEST_mcf.par"),
         "--aliasedcorrelation",
