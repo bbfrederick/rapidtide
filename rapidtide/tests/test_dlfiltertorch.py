@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2025 Blaise Frederick
+#   Copyright 2025-2025 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -25,20 +25,9 @@ import pytest
 import torch
 
 import rapidtide.dlfiltertorch as dlfiltertorch
-from rapidtide.tests.utils import get_test_temp_path, mse
+from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
-@pytest.fixture
-def temp_model_dir():
-    """Create a temporary directory for model testing."""
-    temp_dir = tempfile.mkdtemp()
-    yield temp_dir
-    # Cleanup after test
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-
-
-@pytest.fixture
 def dummy_data():
     """Create dummy training data for testing."""
     window_size = 64
@@ -392,8 +381,12 @@ def test_predict_model(temp_model_dir, dummy_data):
 
     # Just create the model without full initialize
     filter_obj.getname()
+    print(f"{filter_obj.modelname=}")
+    print(f"{filter_obj.modelroot=}")
+    print(f"{filter_obj.modelpath=}")
     filter_obj.makenet()
     filter_obj.model.to(filter_obj.device)
+
 
     # Test prediction with numpy array
     predictions = filter_obj.predict_model(dummy_data["val_x"])
@@ -623,6 +616,85 @@ def test_infodict_population(temp_model_dir):
     assert filter_obj.infodict["window_size"] == 64
 
 
+def main(debug=False, local=False):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
+    thedummydata = dummy_data()
+
+
+    if debug:
+        print("test_cnn_model_creation()")
+    test_cnn_model_creation()
+
+    #test_lstm_model_creation()
+    #test_dense_autoencoder_model_creation()
+    #test_conv_autoencoder_model_creation()
+    #test_crnn_model_creation()
+    #test_hybrid_model_creation()
+    if debug:
+        print("test_cnn_dlfilter_initialization(testtemproot)")
+    test_cnn_dlfilter_initialization(testtemproot)
+
+    if debug:
+        print("test_cnn_dlfilter_initialize(testtemproot)")
+    test_cnn_dlfilter_initialize(testtemproot)
+
+    #test_lstm_dlfilter_initialization(testtemproot)
+    #test_dense_autoencoder_dlfilter_initialization(testtemproot)
+    #test_conv_autoencoder_dlfilter_initialization(testtemproot)
+    #test_crnn_dlfilter_initialization(testtemproot)
+    #test_hybrid_dlfilter_initialization(testtemproot)
+
+    if debug:
+        print("test_predict_model(testtemproot, thedummydata)")
+    test_predict_model(testtemproot, thedummydata)
+
+    if debug:
+        print("test_apply_method(testtemproot)")
+    test_apply_method(testtemproot)
+
+    if debug:
+        print("test_apply_method_with_badpts(testtemproot)")
+    test_apply_method_with_badpts(testtemproot)
+
+    if debug:
+        print("test_save_and_load_model(testtemproot)")
+    test_save_and_load_model(testtemproot)
+
+    if debug:
+        print("test_filtscale_forward()")
+    test_filtscale_forward()
+
+    if debug:
+        print("test_filtscale_reverse()")
+    test_filtscale_reverse()
+
+    if debug:
+        print("test_tobadpts()")
+    test_tobadpts()
+
+    if debug:
+        print("test_targettoinput()")
+    test_targettoinput()
+
+    if debug:
+        print("test_model_with_different_activations(testtemproot)")
+    test_model_with_different_activations(testtemproot)
+
+    if debug:
+        print("test_device_selection()")
+    test_device_selection()
+
+    if debug:
+        print("test_infodict_population(testtemproot)")
+    test_infodict_population(testtemproot)
+
+
 if __name__ == "__main__":
-    # Run tests with pytest
-    pytest.main([__file__, "-v"])
+    main(debug=True, local=True)
