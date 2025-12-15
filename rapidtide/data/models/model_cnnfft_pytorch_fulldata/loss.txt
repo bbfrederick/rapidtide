@@ -1,0 +1,1 @@
+model_cnn_pytorch_w064_l35_fn60_fl05_e075_t4.0_ctrp0.72_ctpp0.9_s19_d1_relu_dofft_normaligned: Prediction Error: 0.10174320227417619 Raw Error: 2.0149830144767074
