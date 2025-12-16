@@ -9,6 +9,7 @@
 * (applydlfilter) Major internal overhaul, making the program more robust.
 * (dlfiltertorch) Added a new model and filter after a chat with Gemini, PPGAttention.  There is now a hybrid CNN/LSTM cardiac timecourse filter with attention, and a longer (~5 second) processing window.  It seems to be give more stable cardiac waveforms.  It's now the default deep learning filter in happy.
 * (dlfiltertorch) Made major changes to how model training works - loss calculation uses batches, there are more filters to exclude bad training data, models can easily incorporate bad points and FFT information.
+* (package) Accepted some dependabot PRs.
 
 ## Version 3.1.2 (12/4/25)
 * (rapidtide) Partial fix for https://github.com/bbfrederick/rapidtide/issues/229.  You should at least be able to specify filtering properly when the ``--delaymapping`` macro is used.  Another shoutout to https://github.com/beccaclements99 for finding this!
