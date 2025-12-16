@@ -1,5 +1,15 @@
 # Release history
 
+## Version 3.1.3 (12/16/25)
+* (happy) Made the new pulsatility based vessel finding method the default.
+* (happy) Dynamically adjust the threshold for the pulsatility mask with some limits on how small the mask is.
+* (happy) Add some new metrics to the runoptions file and the timecourse sidecar files.
+* (happy) Added some sanity checks to make sure cardiac waveform extraction is less likely to fail.
+* (happy) Adjusted the names of some timecourses and output files for consistency.
+* (applydlfilter) Major internal overhaul, making the program more robust.
+* (dlfiltertorch) Added a new model and filter after a chat with Gemini, PPGAttention.  There is now a hybrid CNN/LSTM cardiac timecourse filter with attention, and a longer (~5 second) processing window.  It seems to be give more stable cardiac waveforms.  It's now the default deep learning filter in happy.
+* (dlfiltertorch) Made major changes to how model training works - loss calculation uses batches, there are more filters to exclude bad training data, models can easily incorporate bad points and FFT information.
+
 ## Version 3.1.2 (12/4/25)
 * (rapidtide) Partial fix for https://github.com/bbfrederick/rapidtide/issues/229.  You should at least be able to specify filtering properly when the ``--delaymapping`` macro is used.  Another shoutout to https://github.com/beccaclements99 for finding this!
 * (happy) Refactored cardiacfromimage (well, Claude did, but I helped).
