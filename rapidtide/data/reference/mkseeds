@@ -1,0 +1,11 @@
+#!/bin/bash
+
+fslmaths ${FSLDIR}/data/standard/MNI152_T1_2mm.nii.gz -mul 0 emptyim
+fslmaths ${FSLDIR}/data/standard/MNI152_T1_2mm.nii.gz -mul 0 VanDijkSeeds
+
+grep "label index" VanDijkSeeds.xml | sed 's/=/ /g' | sed 's/"/ /g' > regionlocs
+
+while IFS= read -r line; do
+  # Process the line here
+  echo $line | awk '{print "fslmaths emptyim -add 100 -roi "$5 / 2 + 45" 1 "$7 / 2 + 63" 1 "$9 / 2 + 36" 1 0 1 -kernel sphere 4 -fmean -bin -mul "$3" -add VanDijkSeeds VanDijkSeeds"}'
+done < regionlocs
