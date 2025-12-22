@@ -64,7 +64,7 @@ rapidtide \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --cleanrefined \
     --nofitfilt \
-    --filterfreqs 0.025 0.75 \
+    --filterfreqs 0.025 0.075 \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_band2
 
@@ -83,22 +83,6 @@ rapidtide \
     --filterfreqs 0.075 0.15 \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST_band3
-
-rapidtide \
-    --spatialfilt -1 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --outputlevel normal \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --cleanrefined \
-    --nofitfilt \
-    --filterfreqs 0.009 0.025 \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_band1
 
 #rapidtide \
     #--spatialfilt 2.5 \
