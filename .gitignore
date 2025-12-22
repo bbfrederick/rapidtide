@@ -178,6 +178,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# complexipy data
+.complexipy_cache
+
 default.profraw
 
 *.xlsx
