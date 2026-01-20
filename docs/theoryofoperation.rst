@@ -85,9 +85,9 @@ since the systemic noise signal recorded outside the brain has its own character
 and noise mechanisms that may make it diverge somewhat from what is actually
 getting into the brain
 (although on the plus side, it is inarguably non-neuronal,
-so you don't have to have any arguments about slow neuronal waves).
+so you don't have to have any arguments about slow neuronal waves with Reviewer 2).
 
-In contrast rapidtide (let's say it means Rapid Time Delay) is the newer, faster,
+In contrast, rapidtide (let's say it means Rapid Time Delay) is the newer, faster,
 self-contained Python program that implements an updated version of the RIPTiDe
 algorithm which estimates delay in every voxel and recursively refines an estimate
 of the "true" systemic noise signal propagating through the brain by shifting and
