@@ -1,6 +1,6 @@
 # Release history
 
-## Version 3.1.3 (12/16/25)
+## Version 3.1.3 (1/21/26)
 * (happy) Made the new pulsatility based vessel finding method the default.
 * (happy) Made the new PPGAttention deep learning filter the default (see dlfiltertorch change).
 * (happy) Dynamically adjust the threshold for the pulsatility mask with some limits on how small the mask is.
@@ -10,7 +10,7 @@
 * (applydlfilter) Major internal overhaul, making the program more robust.
 * (dlfiltertorch) Added a new model and filter after a chat with Gemini, PPGAttention.  There is now a hybrid CNN/LSTM cardiac timecourse filter with attention, and a longer (~5 second) processing window.  It seems to be give more stable cardiac waveforms.  It's now the default deep learning filter in happy.
 * (dlfiltertorch) Made major changes to how model training works - loss calculation uses batches, there are more filters to exclude bad training data, models can easily incorporate bad points and FFT information.
-* (refrerence) Added and atlas with the Van Dijk seeds.
+* (refrerence) Added an atlas with the Van Dijk seeds.
 * (package) Fixed a deprecated call to np.sum in fit.py (you can no longer use a generator as an argument).
 * (package) Added a security policy.
 * (package) Accepted some dependabot PRs.
