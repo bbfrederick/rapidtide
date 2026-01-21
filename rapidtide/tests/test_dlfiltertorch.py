@@ -79,7 +79,6 @@ def cnn_model_creation():
     assert config["kernel_size"] == kernel_size
 
 
-
 def cnn_dlfilter_initialization(testtemproot):
     """Test CNNDLFilter initialization."""
     filter_obj = dlfiltertorch.CNNDLFilter(
@@ -140,7 +139,6 @@ def predict_model(testtemproot, dummy_data):
     filter_obj.getname()
     filter_obj.makenet()
     filter_obj.model.to(filter_obj.device)
-
 
     # Test prediction with numpy array
     predictions = filter_obj.predict_model(dummy_data["val_x"])
@@ -377,7 +375,6 @@ def test_dlfilterops(debug=False, local=False):
         testtemproot = get_test_temp_path()
 
     thedummydata = create_dummy_data()
-
 
     if debug:
         print("cnn_model_creation()")

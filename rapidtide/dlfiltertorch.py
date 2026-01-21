@@ -270,7 +270,6 @@ class DeepLearningFilter:
         self.infodict["endskip"] = self.endskip
         self.infodict["step"] = self.step
         self.infodict["train_arch"] = sys.platform
-        
 
     def loaddata(self) -> None:
         """
