@@ -160,7 +160,7 @@ pillow==11.0.0
     #   matplotlib
     #   scikit-image
     #   sphinx-gallery
-protobuf==5.29.5
+protobuf==7.34.0rc1
     # via
     #   tensorboard
     #   tensorflow
