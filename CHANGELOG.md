@@ -1,5 +1,9 @@
 # Release history
 
+## Version 3.1.4 (1/27/26)
+* (docs) Added a new section to address https://github.com/bbfrederick/rapidtide/issues/235.  Thanks to https://github.com/themeo for the suggestion.
+* (package) Accepted several dependabot PRs.
+
 ## Version 3.1.3 (1/21/26)
 * (happy) Made the new pulsatility based vessel finding method the default.
 * (happy) Made the new PPGAttention deep learning filter the default (see dlfiltertorch change).
