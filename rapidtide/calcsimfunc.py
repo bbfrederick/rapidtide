@@ -109,7 +109,7 @@ def _procOneVoxelCorrelation(
     debug = options["debug"]
     if debug:
         print(f"{oversampfactor=} {interptype=}")
-    (thetc, theCorrelator, fmri_x, fmritc, os_fmri_x, theglobalmaxlist, thexcorr_y) = voxelargs
+    thetc, theCorrelator, fmri_x, fmritc, os_fmri_x, theglobalmaxlist, thexcorr_y = voxelargs
     if oversampfactor >= 1:
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:

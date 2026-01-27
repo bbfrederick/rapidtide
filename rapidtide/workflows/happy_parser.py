@@ -940,7 +940,7 @@ def process_args(inputargs: Optional[Any] = None) -> Any:
 
     # process motionfile information
     if args.motionfilespec is not None:
-        (args.motionfilename, args.motionfilecolspec) = tide_io.parsefilespec(args.motionfilespec)
+        args.motionfilename, args.motionfilecolspec = tide_io.parsefilespec(args.motionfilespec)
     else:
         args.motionfilename = None
 

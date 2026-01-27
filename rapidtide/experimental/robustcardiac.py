@@ -398,8 +398,7 @@ def main():  # Example usage
     print(f"\n{'='*60}")
     print(f"USAGE TIPS")
     print(f"{'='*60}")
-    print(
-        f"""
+    print(f"""
 For your own PPG data:
 
 1. Choose the appropriate filter:
@@ -425,8 +424,7 @@ For your own PPG data:
    - Mark missing samples as np.nan or provide missing_indices
    - The Kalman filter will interpolate automatically
    - Check quality scores after interpolation
-    """
-    )
+    """)
 
 
 if __name__ == "__main__":

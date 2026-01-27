@@ -17,6 +17,7 @@
 #
 #
 """This module contains all an alternate filter routine"""
+
 import tensorflow as tf
 from tensorflow.keras.layers import (
     Dense,

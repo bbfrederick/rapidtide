@@ -2171,7 +2171,7 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
 
     # motion processing
     if args["motionfilespec"] is not None:
-        (args["motionfilename"], args["motionfilecolspec"]) = tide_io.parsefilespec(
+        args["motionfilename"], args["motionfilecolspec"] = tide_io.parsefilespec(
             args["motionfilespec"]
         )
     else:

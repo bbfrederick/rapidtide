@@ -3183,7 +3183,7 @@ def _procOneSliceSmoothing(slice, sliceargs, **kwargs):
     }
     options.update(kwargs)
     debug = options["debug"]
-    (validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice) = sliceargs
+    validlocslist, rawapp_byslice, appsmoothingfilter, phaseFs, derivatives_byslice = sliceargs
     # now smooth the projected data along the time dimension
     validlocs = validlocslist[slice]
     if len(validlocs) > 0:

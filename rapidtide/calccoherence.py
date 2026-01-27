@@ -89,7 +89,7 @@ def _procOneVoxelCoherence(
     options.update(kwargs)
     alt = options["alt"]
     debug = options["debug"]
-    (theCoherer, fmritc) = voxelargs
+    theCoherer, fmritc = voxelargs
     if debug:
         print(f"{alt=}")
     if alt:

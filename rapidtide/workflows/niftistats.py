@@ -411,7 +411,7 @@ def niftistats_main(calctype: str = "icc") -> None:
     if calctype == "icc":
         measlist = tide_io.readvecs(args.measurementlist, thedtype=str)
         print(f"measurementlist shape: {measlist.shape}")
-        (nummeas, numsubjs) = measlist.shape[0], measlist.shape[1]
+        nummeas, numsubjs = measlist.shape[0], measlist.shape[1]
         if nummeas < 2:
             print(
                 "ICC requires at least two measurements per subject - specify at least two measurements."

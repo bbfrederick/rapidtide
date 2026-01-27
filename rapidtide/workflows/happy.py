@@ -356,7 +356,7 @@ def happy_main(argparsingfunc: Any) -> None:
             order=args.motfilt_order,
         )
         tide_util.disablemkl(args.nprocs)
-        (motionregressors, motionregressorlabels, filtereddata, confoundr2) = (
+        motionregressors, motionregressorlabels, filtereddata, confoundr2 = (
             tide_linfitfiltpass.confoundregress(
                 confoundregressors,
                 confoundregressorlabels,

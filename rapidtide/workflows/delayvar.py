@@ -893,7 +893,7 @@ def delayvar(args: Any) -> None:
                 f"calculating delayoffsets for {windowedfilteredregressderivratios.shape[0]} voxels"
             )
         for i in range(windowedfilteredregressderivratios.shape[0]):
-            (windoweddelayoffset[i, thewin], windowedclosestoffset[i, thewin]) = (
+            windoweddelayoffset[i, thewin], windowedclosestoffset[i, thewin] = (
                 tide_refinedelay.ratiotodelay(
                     windowedfilteredregressderivratios[i, thewin],
                     offset=lagstouse_valid[i],

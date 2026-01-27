@@ -19,6 +19,7 @@
 """
 A widget for orthographically displaying 3 and 4 dimensional data
 """
+
 import os
 from typing import Any
 

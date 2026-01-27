@@ -88,7 +88,7 @@ def _procOneVoxelMakelagtc(
     options.update(kwargs)
     rt_floattype = options["rt_floattype"]
     debug = options["debug"]
-    (lagtcgenerator, thelag, timeaxis) = voxelargs
+    lagtcgenerator, thelag, timeaxis = voxelargs
     if debug:
         print(f"{vox=}, {thelag=}, {timeaxis=}")
 

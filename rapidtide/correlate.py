@@ -17,6 +17,7 @@
 #
 #
 """Functions for calculating correlations and similar metrics between arrays."""
+
 import logging
 import warnings
 from typing import Any, Callable, Optional, Tuple, Union

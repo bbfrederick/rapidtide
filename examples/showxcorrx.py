@@ -10,6 +10,7 @@
 Calculate and display crosscorrelation between two random timeseries.
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
 
 ###############################################################################
