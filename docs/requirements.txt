@@ -160,7 +160,7 @@ pillow==11.0.0
     #   matplotlib
     #   scikit-image
     #   sphinx-gallery
-protobuf==5.29.5
+protobuf==7.34.0rc1
     # via
     #   tensorboard
     #   tensorflow
@@ -301,7 +301,7 @@ versioneer==0.29
     # via rapidtide (../pyproject.toml)
 werkzeug==3.1.4
     # via tensorboard
-wheel==0.44.0
+wheel==0.46.2
     # via astunparse
 wrapt==1.16.0
     # via tensorflow
