@@ -588,21 +588,43 @@ The majority of the work was already done, I just needed to account for a few qu
 
 Can I use this for other frequency ranges?:
 """""""""""""""""""""""""""""""""""""""""""
-This is actually two questions. The first is: "Can rapidtide be used to clean out noise in other frequency bands?" (to which the answer is very much yes - you can choose to run the rapidtide processing over a number of predefined ranges using the ``--filterband`` argument, or use arbitrary frequency limits with the ``--filterfreqs`` argument. This is in recognition of the fact that LFO, respiratory and cardiac noise are distinct phenomena, with different sources, spatial distributions, and propagation speeds. This type of processing was used in:
+This is actually two questions. The first is: "Can rapidtide be used to clean out noise in other frequency bands?" (to
+which the answer is very much yes - you can choose to run the rapidtide processing over a number of predefined ranges
+using the ``--filterband`` argument, or use arbitrary frequency limits with the ``--filterfreqs`` argument. This is
+in recognition of the fact that LFO, respiratory and cardiac noise are distinct phenomena, with different sources,
+spatial distributions, and propagation speeds. This type of processing was used in:
 
-* Tong, Y., Lindsey, K. P. & Frederick, B. deB. Partitioning of Physiological Noise Signals in the Brain with Concurrent Near-Infrared Spectroscopy and fMRI. J. Cereb. Blood Flow Metab. 31, 2352–2362 (2011). :footcite:t:`tong2011b`
-* Frederick, B. deB., Nickerson, L. D. & Tong, Y. Physiological denoising of BOLD fMRI data using Regressor Interpolation at Progressive Time Delays (RIPTiDe) processing of concurrent fMRI and near-infrared spectroscopy (NIRS). NeuroImage 60, 1913–1923 (2012). :footcite:t:`frederick2012`
-* Tong, Y., Hocke, L. M. & Frederick, B. deB. Short repetition time multiband echo‐planar imaging with simultaneous pulse recording allows dynamic imaging of the cardiac pulsation signal. Magn. Reson. Med. 72, 1268–1276 (2014). :footcite:t:`tong2014studying`
+* Tong, Y., Lindsey, K. P. & Frederick, B. deB. *Partitioning of Physiological Noise Signals in the Brain with Concurrent Near-Infrared Spectroscopy and fMRI*. J. Cereb. Blood Flow Metab. 31, 2352–2362 (2011). :footcite:t:`tong2011b`
+* Frederick, B. deB., Nickerson, L. D. & Tong, Y. *Physiological denoising of BOLD fMRI data using Regressor Interpolation at Progressive Time Delays (RIPTiDe) processing of concurrent fMRI and near-infrared spectroscopy (NIRS)*. NeuroImage 60, 1913–1923 (2012). :footcite:t:`frederick2012`
+* Tong, Y., Hocke, L. M. & Frederick, B. deB. *Short repetition time multiband echo‐planar imaging with simultaneous pulse recording allows dynamic imaging of the cardiac pulsation signal*. Magn. Reson. Med. 72, 1268–1276 (2014). :footcite:t:`tong2014studying`
 
 The second, and more subtle question is "Is this useful?" (to which the answer is "yes and no").
 
-The sLFO signal is clearly traveling with bulk blood flow, giving it a range of delays of several seconds from the ascending carotid and vestibular arteries to the descending jugular veins. Rapidtide processing is a big win here, because simply regressing out the sLFO signal without accounting for delays 1) removes less signal than doing it properly and 2) introduces artifacts like negative correlations between unrelated regions.
+The sLFO signal is clearly traveling with bulk blood flow, giving it a range of delays of several seconds from the
+ascending carotid and vestibular arteries to the descending jugular veins. Rapidtide processing is a big win here,
+because simply regressing out the sLFO signal without accounting for delays 1) removes less signal than doing it
+properly and 2) introduces artifacts like negative correlations between unrelated regions.
 
-As far as I've been able to tell, the respiratory noise (i.e. the direct breathing waveform, not derived metrics like RVT and the like, which seem to end up in the LFO band) doesn't really have any sort of delay between voxels - the signal you want to remove appears to be synchronous across the brain, since it's mostly due to a combination of respiratory related rigid body head motion and through space magnetic field shifts due to the lungs inflating. If you do phase sensitive reconstruction of the rs-fMRI data, the respiratory noise looks mostly like a periodic phase shift across the entire brain at the respiratory frequency, which sort of points to the second cause being more of an issue. So rapidtide doesn't really buy you anything there - a simple GLM filter (and motion correction, especially if your acquisition is fast enough that respiration doesn't alias - TR <= ~800ms) would probably work better.
+As far as I've been able to tell, the respiratory noise (i.e. the direct breathing waveform, not derived metrics
+like RVT and the like, which seem to end up in the LFO band) doesn't really have any sort of delay between voxels -
+the signal you want to remove appears to be synchronous across the brain, since it's mostly due to a combination of
+respiratory related rigid body head motion and through space magnetic field shifts due to the lungs inflating. If
+you do phase sensitive reconstruction of the rs-fMRI data, the respiratory noise looks mostly like a periodic phase
+shift across the entire brain at the respiratory frequency, which sort of points to the second cause being more of
+an issue. So rapidtide doesn't really buy you anything there - a simple GLM filter (and motion correction,
+especially if your acquisition is fast enough that respiration doesn't alias - TR <= ~800ms) would probably work better.
 
-The cardiac signal is the most interesting case - in most situations, the cardiac signal is pretty aliased, but if you have a sufficiently short TR (less than or equal to 415ms is good for up to 72bpm) that the fundamental of the cardiac signal is not aliased, then rapidtide is useful for noise removal (and mapping cardiac propagation, and all that). It's very different from the delay maps you get from rapidtide, because the cardiac signal is a pressure wave, so it goes much faster than the blood that's carrying it. The wave also propagates outside of the vessels, compressing tissue around the arteries and making waves that don't closely follow the vasculature. So it is useful, but only if the acquisition supports it.
+The cardiac signal is the most interesting case - in most situations, the cardiac signal is pretty aliased,
+but if you have a sufficiently short TR (less than or equal to 415ms is good for up to 72bpm) that the
+fundamental of the cardiac signal is not aliased, then rapidtide is useful for noise removal (and mapping
+cardiac propagation, and all that). It's very different from the delay maps you get from rapidtide,
+because the cardiac signal is a pressure wave, so it goes much faster than the blood that's carrying it.
+The wave also propagates outside of the vessels, compressing tissue around the arteries and making waves
+that don't closely follow the vasculature. So it is useful, but only if the acquisition supports it.
 
-If you really want to remove cardiac noise, and you don't have a sufficiently short TR (but you do have multi band data with an appropriate combination of TR and multi band factor), happy might be a better fit for you. The noise removal is still a little experimental, but I've been told people are using it and liking it.
+If you really want to remove cardiac noise, and you don't have a sufficiently short TR (but you do have multiband
+data with an appropriate combination of TR and multi band factor), happy might be a better fit for you. The noise
+removal is still a little experimental, but I've been told people are using it and liking it.
 
 
 References
