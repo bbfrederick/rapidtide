@@ -914,7 +914,8 @@ def process_args(inputargs: Optional[Any] = None) -> Any:
             args.modelname = DEFAULT_PT_DL_MODEL
         else:
             args.modelname = DEFAULT_TF_DL_MODEL
-        print(f"No model specified.  {args.usepytorch=}, so using {args.modelname}")
+        if args.debug:
+            print(f"No model specified.  {args.usepytorch=}, so using {args.modelname}")
 
     if args.debug:
         print()
