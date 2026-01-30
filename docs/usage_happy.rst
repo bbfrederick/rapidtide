@@ -28,11 +28,13 @@ But I have lots of data with no simultaneously recorded cardiac signals, and I w
 find datasets with pleth data to play with, so that's why I did the cardiac waveform extraction part.
 In retrospect, that's part is pretty cool in it's own right, if I do say so myself.
 
-The paper describing the development of this program can be found here :footcite:p:`aslan2019`.
+The paper describing the theory of operation, development, and testing of this program
+can be found here :footcite:p:`aslan2019`.
 
 
 Inputs:
 ^^^^^^^
+
 Happy needs a 4D BOLD fMRI data file (space by time) as input.  This can be Nifti1 or Nifti2.  If you have
 a simultaneously recorded cardiac waveform, it will happily (heh heh) use it, otherwise it will try to
 construct (and refine) one. NOTE: the 4D input dataset needs to be completely unpreprocessed - gradient
@@ -206,23 +208,23 @@ dear reader...
 
 Cardiac noise removal
 '''''''''''''''''''''
-Since we have a good model of the plethysmogram signal over the course of the experiment, a sense of when the
-signal gets to various voxels in the brain, and what
+Since we know the phase of the plethysmogram signal at any given time over the course of the experiment, and what
 the waveform looks like across the cardiac cycle in every voxel, this suggests that we should be able to model
-and remove the cardiac signal from the data.  To this end, I've implemented a cardiac noise removal strategy in
-happy (well, two actually).
+the cardiac signal at every voxel in the brain at every timepoint, and then remove it from the data.  To this end,
+I've implemented a cardiac noise removal strategy in happy (well, two actually).
 
-The first is a simple temporal linear regression of the cardiac signal on the data.  We know the phase of the plethysmogram
-signal at every time during the fMRI acquisition, and we know what the average signal look like in each voxel for at each
-cardiac phase, so we can calculate the value of the cardiac signal in each voxel at each timepoint of fMRI acquisition.
-This won't necessarily look like a cardiac signal, since it's sampled way below the Nyquist rate, so it's aliased, but
+The first is a standard temporal linear regression of the cardiac signal on the data.  We know the phase of the plethysmogram
+signal at every time during the fMRI acquisition, and we know what the signal looks like in each voxel at any given
+cardiac phase (on average), so we can calculate the expected value of the cardiac signal in each voxel at each
+timepoint of the fMRI acquisition.  This won't necessarily look like a cardiac signal, since it's sampled at way
+below the Nyquist rate, so it's aliased, but
 if we have the timing right, that shouldn't really matter that much, and we can regress the signal out of each voxel
 using the ``--temporalregression`` option.  What this fails to account for is the fact that the amplitude of the cardiac
 signal varies over the length of the experiment - or at least the amplitude of the plethysmogram does.  The signal in
 the brain seems to vary far less then in the fingertip.
 
 The second approach is to do a spatial regression - for each timepoint, we simply calculate the cardiac signal in
-each voxel given our known phase of the plethysmogram and the analytic projection at each voxel at that phase, and
+each voxel given our known phase of the plethysmogram and the analytic projection at each voxel at that phase, and regress
 that spatial pattern out of the image at that timepoint.  This allows the absolute amplitude of the signal to vary
 at each timepoint, so it might(?) work better.  This allows you to ignore the concept of aliasing, since you're just
 saying "there will be a certain pattern of response across the brain at each timepoint".  To to this, use
