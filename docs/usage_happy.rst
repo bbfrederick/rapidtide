@@ -230,4 +230,4 @@ Which of these is better?  I don't know.  I haven't done enough systematic testi
 think spatial regression is going to be better, since it allows the size of the cardiac response to vary over time
 even if we don't know the form of the variation (and also, since you'll get a timecourse of signal amplitude over time,
 it gives you a way to _measure_ the variation over time, which probably tells you something interesting about sympathetic
-nervous system function :footcite:p:`ozbay2019commbio`.  It's certainly worth getting to the bottom of it.
+nervous system function.  It's certainly worth getting to the bottom of it.
