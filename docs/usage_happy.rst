@@ -22,7 +22,7 @@ exploit the pseudoperiodic nature of the signal to greatly improve it.  This was
 on using neural nets to process time domain signals.  It seemed like a worthwhile project, so it got grafted in.
 
 The final task (which was actually the initial task, and the reason I wrote happy to begin with) is
-to implement Henning Voss' totally cool hypersampling with analytic phase projection (guess where the
+to implement Henning Voss' totally cool hypersampling with analytic phase projection :footcite:p:`voss2018gm` (guess where the
 name "happy" comes from).  This is fairly straightforward, as Voss describes his method very clearly.
 But I have lots of data with no simultaneously recorded cardiac signals, and I was too lazy to go
 find datasets with pleth data to play with, so that's why I did the cardiac waveform extraction part.
