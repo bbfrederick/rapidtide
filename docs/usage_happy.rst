@@ -189,8 +189,8 @@ multiecho processing stage.
 
 Which brings us to the next question - there's additional timing information from the fact that
 each echo is recorded at a slightly different time - how do we smartly combine the data from all
-the echoes?  The answer for now is - you don't, because I'm not that smart.  What I can confirm
-through, my limited testing, is that in a 60 slice, TR=1.33s MB=4 4 echo acquisition (a trendy
+the echoes?  The answer for now is - you don't, because I'm not that smart.  What I can confirm,
+through my limited testing, is that in a 60 slice, TR=1.33s MB=4 4 echo acquisition (a trendy
 set of parameters in the circles I travel in) you can extract the cardiac waveform from _any_
 of the individual echoes, although the first echo has the highest SNR - it seems that the short echo time
 enhances the cardiac variation.  The noise in the
@@ -200,3 +200,34 @@ Maybe use PCA to extract the most important timecourse from the set of derived
 cardiac regressors?  Or maybe actually using the timing information of the individual echoes
 to enhance the time resolution?  I await your PR implementing this with bated breath,
 dear reader...
+
+
+Cardiac noise removal
+'''''''''''''''''''''
+Since we have a good model of the plethysmogram signal over the course of the experiment, a sense of when the
+signal gets to various voxels in the brain, and what
+the waveform looks like across the cardiac cycle in every voxel, this suggests that we should be able to model
+and remove the cardiac signal from the data.  To this end, I've implemented a cardiac noise removal strategy in
+happy (well, two actually).
+
+The first is a simple temporal linear regression of the cardiac signal on the data.  We know the phase of the plethysmogram
+signal at every time during the fMRI acquisition, and we know what the average signal look like in each voxel for at each
+cardiac phase, so we can calculate the value of the cardiac signal in each voxel at each timepoint of fMRI acquisition.
+This won't necessarily look like a cardiac signal, since it's sampled way below the Nyquist rate, so it's aliased, but
+if we have the timing right, that shouldn't really matter that much, and we can regress the signal out of each voxel
+using the ``--temporalregression`` option.  What this fails to account for is the fact that the amplitude of the cardiac
+signal varies over the length of the experiment - or at least the amplitude of the plethysmogram does.  The signal in
+the brain seems to vary far less then in the fingertip.
+
+The second approach is to do a spatial regression - for each timepoint, we simply calculate the cardiac signal in
+each voxel given our known phase of the plethysmogram and the analytic projection at each voxel at that phase, and
+that spatial pattern out of the image at that timepoint.  This allows the absolute amplitude of the signal to vary
+at each timepoint, so it might(?) work better.  This allows you to ignore the concept of aliasing, since you're just
+saying "there will be a certain pattern of response across the brain at each timepoint".  To to this, use
+``--spatialregression``.
+
+Which of these is better?  I don't know.  I haven't done enough systematic testing to say for sure.  I'm inclined to
+think spatial regression is going to be better, since it allows the size of the cardiac response to vary over time
+even if we don't know the form of the variation (and also, since you'll get a timecourse of signal amplitude over time,
+it gives you a way to _measure_ the variation over time, which probably tells you something interesting about sympathetic
+nervous system function :footcite:p:`ozbay2019commbio`.  It's certainly worth getting to the bottom of it.
