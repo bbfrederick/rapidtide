@@ -1,7 +1,9 @@
 # Release history
 
 ## Version 3.1.4 (1/27/26)
+* (happy) Fixed an option logic error (you could select both spatial and temporal regression).
 * (docs) Added a new section to address https://github.com/bbfrederick/rapidtide/issues/235.  Thanks to https://github.com/themeo for the suggestion.
+* (docs) Expanded happy usage documentation, including a discussion of noise removal.
 * (package) Accepted several dependabot PRs.
 
 ## Version 3.1.3 (1/21/26)
