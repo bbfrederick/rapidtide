@@ -28,7 +28,7 @@ But I have lots of data with no simultaneously recorded cardiac signals, and I w
 find datasets with pleth data to play with, so that's why I did the cardiac waveform extraction part.
 In retrospect, that's part is pretty cool in it's own right, if I do say so myself.
 
-The paper describing the develoopment of this program can be found here :footcite:p:`aslan2019`.
+The paper describing the development of this program can be found here :footcite:p:`aslan2019`.
 
 
 Inputs:
