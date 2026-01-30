@@ -498,7 +498,12 @@ def _get_parser() -> Any:
         )
 
     # Output processing
-    output_proc = parser.add_argument_group("Output processing")
+    output_proc = parser.add_argument_group(
+        title="Output processing - mutually exclusive options",
+        description=(
+            "Optional cardiac noise removal.  You can do either spatial or temporal regression, but not both."
+        ),
+    ).add_mutually_exclusive_group()
     output_proc.add_argument(
         "--spatialregression",
         dest="dospatialregression",
