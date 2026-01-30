@@ -2399,10 +2399,35 @@ def happy_main(argparsingfunc: Any) -> None:
             )
             tide_util.enablemkl(args.mklthreads)
             datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[None, :])
-            print(f"{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
-            print(f"{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
-            print(f"{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
-            filtereddata = fmri_data - datatoremove
+            if args.debug:
+                print(f"{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
+                print(f"{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
+                print(f"{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
+            tide_io.writebidstsv(
+                outputroot + "_desc-cardfilterCoeffs_timeseries",
+                fitcoffs,
+                mrsamplerate,
+                columns=["fitcoeffs"],
+                append=False,
+                debug=args.debug,
+            )
+            tide_io.writebidstsv(
+                outputroot + "_desc-cardfilterR_timeseries",
+                rvals,
+                mrsamplerate,
+                columns=["R"],
+                append=False,
+                debug=args.debug,
+            )
+            tide_io.writebidstsv(
+                outputroot + "_desc-cardfilterR2_timeseries",
+                r2vals,
+                mrsamplerate,
+                columns=["R2"],
+                append=False,
+                debug=args.debug,
+            )
+            filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
             timings.append(
                 [
                     "Cardiac signal spatial regression finished",
@@ -2466,9 +2491,10 @@ def happy_main(argparsingfunc: Any) -> None:
             datatoremove[validlocs, :] = np.multiply(
                 cardiacnoise[validlocs, :], fitcoffs[validlocs, None]
             )
-            print(f"{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
-            print(f"{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
-            print(f"{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
+            if args.debug:
+                print(f"{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
+                print(f"{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
+                print(f"{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
             filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
             timings.append(
                 [
@@ -2482,21 +2508,21 @@ def happy_main(argparsingfunc: Any) -> None:
             maplist = [
                 (
                     fitcoffs.reshape((xsize, ysize, numslices)),
-                    "cardfiltCoeffs",
+                    "cardfilterCoeffs",
                     "map",
                     None,
                     "Coefficients for temporal cardiac noise regression",
                 ),
                 (
                     meanvals.reshape((xsize, ysize, numslices)),
-                    "cardfiltMean",
+                    "cardfilterMean",
                     "map",
                     None,
                     "Mean values after temporal cardiac noise regression",
                 ),
                 (
                     rvals.reshape((xsize, ysize, numslices)),
-                    "cardfiltR",
+                    "cardfilterR",
                     "map",
                     None,
                     "R values for temporal cardiac noise regression",
@@ -2517,14 +2543,14 @@ def happy_main(argparsingfunc: Any) -> None:
         maplist = [
             (
                 filtereddata.reshape((xsize, ysize, numslices, timepoints)),
-                "cardfiltResult",
+                "cardfilterCleaned",
                 "bold",
                 None,
                 f"Cardiac filtered BOLD data after {regressiontype} regression",
             ),
             (
                 datatoremove.reshape((xsize, ysize, numslices, timepoints)),
-                "cardfiltRemoved",
+                "cardfilterRemoved",
                 "bold",
                 None,
                 f"Cardiac noise removed with {regressiontype} regression",
