@@ -230,10 +230,10 @@ def happy_main(argparsingfunc: Any) -> None:
     }
 
     # decide if we need to use shared memory
-    if args.nprocs > 1:
-        infodict["sharedmem"] = True
-    else:
+    if args.nprocs == 1:
         infodict["sharedmem"] = False
+    else:
+        infodict["sharedmem"] = True
 
     # save the information file
     if args.saveinfoasjson:
@@ -2383,26 +2383,29 @@ def happy_main(argparsingfunc: Any) -> None:
             tide_util.disablemkl(args.nprocs)
             tide_linfitfiltpass.linfitfiltpass(
                 timepoints,
-                fmri_data[validlocs, :],
+                fmri_data - (np.mean(fmri_data, axis=1))[:, None],
                 threshval,
-                cardiacnoise[validlocs, :],
+                cardiacnoise,
                 meanvals,
                 rvals,
                 r2vals,
                 fitcoffs,
                 fitNorm,
-                datatoremove[validlocs, :],
-                filtereddata[validlocs, :],
+                datatoremove,
+                filtereddata,
                 chunksize=10,
                 procbyvoxel=False,
                 nprocs=args.nprocs,
             )
             tide_util.enablemkl(args.mklthreads)
-            datatoremove[validlocs, :] = np.multiply(cardiacnoise[validlocs, :], fitcoffs[None, :])
-            if args.debug:
-                print(f"{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
-                print(f"{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
-                print(f"{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
+            # we have to do this because we demeaned the data to get a valid R2
+            filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
+            if args.focaldebug:
+                print("After returning from linfitfiltpass:")
+                print(f"\t{infodict['sharedmem']=}")
+                print(f"\t{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
+                print(f"\t{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
+                print(f"\t{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
             tide_io.writebidstsv(
                 outputroot + "_desc-cardfilterCoeffs_timeseries",
                 fitcoffs,
@@ -2427,7 +2430,6 @@ def happy_main(argparsingfunc: Any) -> None:
                 append=False,
                 debug=args.debug,
             )
-            filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
             timings.append(
                 [
                     "Cardiac signal spatial regression finished",
@@ -2472,30 +2474,28 @@ def happy_main(argparsingfunc: Any) -> None:
             print("Running temporal regression on", numvalidspatiallocs, "voxels")
             tide_util.disablemkl(args.nprocs)
             tide_linfitfiltpass.linfitfiltpass(
-                numvalidspatiallocs,
-                fmri_data[validlocs, :],
+                numspatiallocs,
+                fmri_data,
                 threshval,
-                cardiacnoise[validlocs, :],
-                meanvals[validlocs],
-                rvals[validlocs],
-                r2vals[validlocs],
-                fitcoffs[validlocs],
-                fitNorm[validlocs],
-                datatoremove[validlocs, :],
-                filtereddata[validlocs, :],
+                cardiacnoise,
+                meanvals,
+                rvals,
+                r2vals,
+                fitcoffs,
+                fitNorm,
+                datatoremove,
+                filtereddata,
+                validmask=projmask.reshape(xsize * ysize * numslices),
                 procbyvoxel=True,
                 nprocs=args.nprocs,
                 debug=args.focaldebug,
             )
             tide_util.enablemkl(args.mklthreads)
-            datatoremove[validlocs, :] = np.multiply(
-                cardiacnoise[validlocs, :], fitcoffs[validlocs, None]
-            )
-            if args.debug:
-                print(f"{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
-                print(f"{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
-                print(f"{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")
-            filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
+            if args.focaldebug:
+                print("After returning from linfitfiltpass:")
+                print(f"\t{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
+                print(f"\t{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
+                print(f"\t{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")            #filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
             timings.append(
                 [
                     "Cardiac signal temporal regression finished",
@@ -2526,6 +2526,13 @@ def happy_main(argparsingfunc: Any) -> None:
                     "map",
                     None,
                     "R values for temporal cardiac noise regression",
+                ),
+                (
+                    r2vals.reshape((xsize, ysize, numslices)),
+                    "cardfilterR2",
+                    "map",
+                    None,
+                    "R2 values for temporal cardiac noise regression",
                 ),
             ]
             tide_io.savemaplist(
