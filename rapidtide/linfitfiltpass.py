@@ -144,6 +144,7 @@ def linfitfiltpass(
     datatoremove: NDArray | None,
     filtereddata: NDArray | None,
     nprocs: int = 1,
+    validmask: NDArray = None,
     alwaysmultiproc: bool = False,
     constantevs: bool = False,
     confoundregress: bool = False,
@@ -260,19 +261,23 @@ def linfitfiltpass(
     else:
         indexaxis = 1
         procunit = "timepoints"
-    if threshval is None:
-        themask = None
+    if validmask is None:
+        if threshval is None:
+            themask = None
+        else:
+            if procbyvoxel:
+                meanim = np.mean(fmri_data, axis=1)
+                stdim = np.std(fmri_data, axis=1)
+            else:
+                meanim = np.mean(fmri_data, axis=0)
+                stdim = np.std(fmri_data, axis=0)
+            if np.mean(stdim) < np.mean(meanim):
+                themask = np.where(meanim > threshval, 1, 0)
+            else:
+                themask = np.where(stdim > threshval, 1, 0)
     else:
-        if procbyvoxel:
-            meanim = np.mean(fmri_data, axis=1)
-            stdim = np.std(fmri_data, axis=1)
-        else:
-            meanim = np.mean(fmri_data, axis=0)
-            stdim = np.std(fmri_data, axis=0)
-        if np.mean(stdim) < np.mean(meanim):
-            themask = np.where(meanim > threshval, 1, 0)
-        else:
-            themask = np.where(stdim > threshval, 1, 0)
+        themask = validmask
+
     if (
         nprocs > 1 or alwaysmultiproc
     ):  # temporary workaround until I figure out why nprocs > 1 is failing
@@ -365,6 +370,7 @@ def linfitfiltpass(
                     itemstotal += 1
             else:
                 for voxel in data_out:
+
                     meanvalue[voxel[0]] = voxel[1]
                     rvalue[voxel[0]] = voxel[2]
                     r2value[voxel[0]] = voxel[3]
@@ -567,6 +573,11 @@ def linfitfiltpass(
                     itemstotal += 1
         if showprogressbar:
             print()
+    if debug:
+        print("At end of linfitfiltpass:")
+        print(f"\t{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
+        print(f"\t{filtereddata.shape=}, {np.min(filtereddata)=}, {np.max(filtereddata)=}")
+        print(f"\t{fitcoeff.shape=}, {np.min(fitcoeff)=}, {np.max(fitcoeff)=}")
     return itemstotal
 
 
