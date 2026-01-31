@@ -1,6 +1,7 @@
 # Release history
 
-## Version 3.1.4 (1/27/26)
+## Version 3.1.4 (1/31/26)
+* (happy) Fixed a nasty bug that made temporal regression essentially useless.  Now it seems to be the preferred noise removal method.
 * (happy) Fixed an option logic error (you could select both spatial and temporal regression).
 * (docs) Added a new section to address https://github.com/bbfrederick/rapidtide/issues/235.  Thanks to https://github.com/themeo for the suggestion.
 * (docs) Expanded happy usage documentation, including a discussion of noise removal.
