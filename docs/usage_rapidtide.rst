@@ -623,8 +623,9 @@ The wave also propagates outside of the vessels, compressing tissue around the a
 that don't closely follow the vasculature. So it is useful, but only if the acquisition supports it.
 
 If you really want to remove cardiac noise, and you don't have a sufficiently short TR (but you do have multiband
-data with an appropriate combination of TR and multi band factor), happy might be a better fit for you. The noise
-removal is still a little experimental, but I've been told people are using it and liking it.
+data with an appropriate combination of TR and multi band factor), happy with the ``--temporalregression`` argument
+might be a better fit for you. The noise removal is still a little experimental, but I've been told people are
+using it and liking it.
 
 
 References
