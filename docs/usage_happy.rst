@@ -228,17 +228,17 @@ The second approach is to do a spatial regression - for each timepoint, we simpl
 each voxel given our known phase of the plethysmogram and the analytic projection at each voxel at that phase, and regress
 that spatial pattern out of the image at that timepoint.  This allows the absolute amplitude of the signal to vary
 at each timepoint, so it might(?) work better.  This allows you to ignore the concept of aliasing, since you're just
-saying "there will be a certain pattern of response across the brain at each timepoint".  To to this, use
+saying "there will be a certain pattern of response across the brain at each timepoint".  To do this, use
 ``--spatialregression``.
 
 Which of these is better? I haven't done enough systematic testing to say for sure, so I don't know.  My gut reaction
 was that spatial regression was going to be better, since it allows the size of the cardiac response to vary over time
 even if we don't know the form of the variation (and also, since you'll get a timecourse of signal amplitude over time,
-it gives you a way to _measure_ the variation over time, which probably tells you something interesting about sympathetic
+it gives you a way to *measure* the variation over time, which probably tells you something interesting about sympathetic
 nervous system function :footcite:p:`ozbay2019commbio`).
 
-Be that as it may, it appears, in my (extremely limited) testing, that in the current implementation, temporal
-regression is substantially better.  It certainly removes a lot more variance than the spatial regression, so that's
+Be that as it may, it appears, in my (extremely limited) testing, that in the current implementation, **temporal
+regression works substantially better**.  It certainly removes a lot more variance than the spatial regression, so that's
 a strong argument for it.  The R2 of the temporal fits are pretty high, indicating in some voxels that it's taking out
 around 50% of the variance.  It's certainly worth getting to the bottom of this, but for now,
 use ``--temmporalregression``.
