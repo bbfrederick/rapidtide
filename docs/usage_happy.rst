@@ -205,6 +205,10 @@ cardiac regressors?  Or maybe actually using the timing information of the indiv
 to enhance the time resolution?  I await your PR implementing this with bated breath,
 dear reader...
 
+BTW if you use the cardiac noise removal steps below, you should apply them to each echos data separately prior
+to doing the multiecho processing.  That works fine with an fMRIprep workflow, since happy processing would be done
+before you start fMRIprep (replace the individual raw echo data in the source directory).
+
 
 Cardiac noise removal
 '''''''''''''''''''''
@@ -243,6 +247,15 @@ a strong argument for it.  The R2 of the temporal fits are pretty high, indicati
 around 50% of the variance.  It's certainly worth getting to the bottom of this, but for now,
 use ``--temmporalregression``.
 
+
+WHOCARES
+''''''''
+
+If you want to lean hard into cardiac noise removal, you should also look at WHOCARES :footcite:p:`colenbier2022whocares`
+(https://github.com/gferrazzi/WHOCARES).  It's a more sophisticated approach to cardiac noise removal that
+uses happy as a starting point, but adds a number of additional steps to improve the cardiac regression.  You would use
+this instead of, rather than in addition to, happy.  Happy's regression has improved somewhat since the original
+WHOCARES paper; I'm not sure what the relative performance is now.
 
 References
 ^^^^^^^^^^
