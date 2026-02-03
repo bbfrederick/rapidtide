@@ -1,10 +1,11 @@
 # Release history
 
-## Version 3.1.4 (1/31/26)
+## Version 3.1.4 (2/3/26)
 * (happy) Fixed a nasty bug that made temporal regression essentially useless.  Now it seems to be the preferred noise removal method.
 * (happy) Fixed an option logic error (you could select both spatial and temporal regression).
-* (docs) Added a new section to address https://github.com/bbfrederick/rapidtide/issues/235.  Thanks to https://github.com/themeo for the suggestion.
+* (docs) Added a new section to the rapidtide usage section to address https://github.com/bbfrederick/rapidtide/issues/235.  Thanks to https://github.com/themeo for the suggestion.
 * (docs) Expanded happy usage documentation, including a discussion of noise removal.
+* (docker) Now that FSL works on aarch64, I've gone back to using basecontainer_plus as a starting point for the container.  So FSL tools are available again.
 * (package) Accepted several dependabot PRs.
 
 ## Version 3.1.3 (1/21/26)
