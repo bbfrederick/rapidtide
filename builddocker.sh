@@ -18,7 +18,7 @@ version=localtest
 
 # run build
 docker buildx build . \
-    --platform linux/arm64 \
+    --platform linux/arm64,linux/amd64 \
     --tag $USERNAME/$IMAGE:latest --tag $USERNAME/$IMAGE:$version \
     --build-arg VERSION=$version \
     --build-arg BUILD_DATE=`date +"%Y%m%dT%H%M%S"` \
