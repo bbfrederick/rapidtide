@@ -1,5 +1,5 @@
 # Start from the fredericklab base container
-FROM fredericklab/basecontainer:latest-release
+FROM fredericklab/basecontainer_plus:latest-release
 
 # get build arguments
 ARG BUILD_TIME
@@ -25,7 +25,7 @@ RUN echo "GITDATE: "$GITDATE
 RUN echo "GITDIRECTVERSION: "$GITDIRECTVERSION
 
 # security patches
-RUN uv pip install "cryptography>=42.0.4" "urllib3>=1.26.17" "certifi>=2023.7.22"
+#RUN uv pip install "cryptography>=46.0.4" "urllib3>=2.6.3" "certifi>=2026.1.4"
 
 # Copy rapidtide into container
 COPY . /src/rapidtide
@@ -63,6 +63,11 @@ RUN chown -R $USER /src/$USER
 
 WORKDIR /home/$USER
 ENV HOME="/home/rapidtide"
+
+# clean up
+RUN pip cache purge
+RUN uv cache clean
+RUN mamba clean --all
 
 # set to non-root user
 USER rapidtide
