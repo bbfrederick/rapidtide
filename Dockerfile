@@ -50,6 +50,8 @@ RUN ldconfig
 
 # clean up
 RUN pip cache purge
+RUN uv cache clean
+RUN mamba clean --all
 
 # Create a shared $HOME directory
 ENV USER=rapidtide
@@ -63,11 +65,6 @@ RUN chown -R $USER /src/$USER
 
 WORKDIR /home/$USER
 ENV HOME="/home/rapidtide"
-
-# clean up
-RUN pip cache purge
-RUN uv cache clean
-RUN mamba clean --all
 
 # set to non-root user
 USER rapidtide
