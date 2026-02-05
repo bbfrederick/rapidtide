@@ -402,6 +402,12 @@ class TestPrewhiten:
         whitened = tide_fit.prewhiten(series, nlags=2)
         assert len(whitened) == len(series)
 
+    def test_output_same_length_ARIMA(self):
+        np.random.seed(42)
+        series = np.random.randn(200)
+        whitened = tide_fit.prewhiten(series, nlags=None)
+        assert len(whitened) == len(series)
+
     def test_produces_finite_output(self):
         np.random.seed(42)
         # create strongly autocorrelated series
