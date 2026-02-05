@@ -3310,13 +3310,11 @@ def ocscreetest(eigenvals: NDArray, debug: bool = False, displayplots: bool = Fa
         a[i] = eigenvals[i + 1] - b[i + 1]
         if debug:
             print(f"{i=}, {a[i]=}, {b[i]=}")
-    retained = eigenvals[np.where(eigenvals > 1.0)]
-    retainednum = len(retained)
     for i in range(1, num - 1):
         prediction[i] = a[i + 1] + b[i + 1] * i
         if debug:
             print(f"{i=}, {eigenvals[i]=}, {prediction[i]=}")
-        if eigenvals[i] < retained[i]:
+        if eigenvals[i] < prediction[i]:
             break
     if displayplots:
         print("making plots")
