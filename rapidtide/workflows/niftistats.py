@@ -440,9 +440,9 @@ def niftistats_main(calctype: str = "icc") -> None:
             print(f"data file {i + 1} does not match first file")
             sys.exit()
     xsize, ysize, numslices, dummy = dimlist[0]
+    xdim, ydim, slicethickness, dummy = sizelist[0]
     if calctype == "ttest":
         numsubjs = dimlist[0][3]
-    xdim, ydim, slicethickness, dummy = sizelist[0]
     print(f"{numsubjs=}, {nummeas=}")
 
     # now read in the data
