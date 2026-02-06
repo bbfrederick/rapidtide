@@ -123,7 +123,7 @@ def checktests(thetestvec, testlist, theargs, epsilon):
                     assert np.fabs(theargs[theresult[0]] - theresult[1]) < epsilon
 
 
-def checkavector(thetestvec, epsilon):
+def checkavector(thetestvec, epsilon, debug=False, local=False):
     # set input and output directories
     if local:
         exampleroot = "../data/examples/src"
@@ -132,8 +132,9 @@ def checkavector(thetestvec, epsilon):
         exampleroot = get_examples_path()
         testtemproot = get_test_temp_path()
 
-    print(testlist)
-    print(thetestvec)
+    if debug:
+        print(testlist)
+        print(thetestvec)
 
     # make the argument and results lists
     arglist = [
@@ -154,7 +155,7 @@ def checkavector(thetestvec, epsilon):
     checktests(thetestvec, testlist, theargs, epsilon)
 
 
-def test_rapidtideparser():
+def test_rapidtideparser(debug=False, local=False):
     epsilon = 0.00001
 
     # construct the first test vector
@@ -170,7 +171,7 @@ def test_rapidtideparser():
     thetestvec.append("interptype")
     thetestvec.append("offsettime")
     thetestvec.append("datafreq")
-    checkavector(thetestvec, epsilon)
+    checkavector(thetestvec, epsilon, debug=False, local=False)
 
     # construct the second test vector
     thetestvec = []
@@ -180,8 +181,8 @@ def test_rapidtideparser():
     thetestvec.append("numnull")
     thetestvec.append("initialdelay")
     thetestvec.append("nodelayfit")
-    checkavector(thetestvec, epsilon)
+    checkavector(thetestvec, epsilon, debug=False, local=False)
 
 
 if __name__ == "__main__":
-    test_rapidtideparser()
+    test_rapidtideparser(debug=True, local=True)
