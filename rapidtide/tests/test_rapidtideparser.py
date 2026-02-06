@@ -18,8 +18,8 @@
 #
 import numpy as np
 
-import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.rapidtide_parser as rp
+from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 testlist = {}
 testlist["searchrange"] = {
