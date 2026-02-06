@@ -21,85 +21,139 @@ import numpy as np
 import rapidtide.workflows.rapidtide_parser as rp
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
-testlist = {}
-testlist["searchrange"] = {
-    "command": ["--searchrange", "-7", "15.2"],
-    "results": [["lagmin", -7.0, "isfloat"], ["lagmax", 15.2, "isfloat"]],
-}
-testlist["filterband"] = {
-    "command": ["--filterband", "lfo"],
-    "results": [
-        ["filterband", "lfo"],
-        ["lowerpass", 0.01, "isfloat"],
-        ["upperpass", 0.15, "isfloat"],
-    ],
-}
-testlist["filtertype"] = {
-    "command": ["--filtertype", "trapezoidal"],
-    "results": [["filtertype", "trapezoidal"]],
-}
-testlist["filterfreqs"] = {
-    "command": ["--filterfreqs", "0.1", "0.2"],
-    "results": [["arbvec", [0.1, 0.2, 0.095, 0.21], "isfloat"]],
-}
-testlist["pickleft"] = {"command": ["--pickleft"], "results": [["pickleft", True]]}
-testlist["corrweighting"] = {
-    "command": ["--corrweighting", "phat"],
-    "results": [["corrweighting", "phat"]],
-}
-testlist["datatstep"] = {
-    "command": ["--datatstep", "1.23"],
-    "results": [["realtr", 1.23, "isfloat"]],
-}
-testlist["datafreq"] = {"command": ["--datafreq", "10.0"], "results": [["realtr", 0.1, "isfloat"]]}
-testlist["noantialias"] = {
-    "command": ["--noantialias"],
-    "results": [["antialias", False]],
-}
-testlist["invert"] = {"command": ["--invert"], "results": [["invertregressor", True]]}
-testlist["interptype"] = {
-    "command": ["--interptype", "cubic"],
-    "results": [["interptype", "cubic"]],
-}
-testlist["offsettime"] = {
-    "command": ["--offsettime", "10.1"],
-    "results": [["offsettime", 10.1, "isfloat"]],
-}
-testlist["timerange"] = {
-    "command": ["--timerange", "2", "-1"],
-    "results": [["startpoint", 2], ["endpoint", 100000000]],
-}
-testlist["numnull"] = {
-    "command": ["--numnull", "0"],
-    "results": [["numestreps", 0], ["ampthreshfromsig", False]],
-}
-testlist["initialdelay"] = {
-    "command": ["--initialdelay", "0.0"],
-    "results": [
-        ["initialdelayvalue", 0.0, "isfloat"],
-    ],
-}
-testlist["nodelayfit"] = {
-    "command": ["--nodelayfit"],
-    "results": [
-        ["fixdelay", True],
-    ],
-}
-testlist["delaymapping"] = {
-    "command": ["--delaymapping"],
-    "results": [
-        ["fixdelay", True],
-        ["passes", rp.DEFAULT_DELAYMAPPING_PASSES],
-        ["despeckle_passes", rp.DEFAULT_DELAYMAPPING_DESPECKLE_PASSES],
-        ["gausssigma", rp.DEFAULT_DELAYMAPPING_SPATIALFILT],
-        ["lagmin", rp.DEFAULT_DELAYMAPPING_LAGMIN],
-        ["lagmax", rp.DEFAULT_DELAYMAPPING_LAGMAX],
-        ["refineoffset", True],
-        ["refinedelay", True],
-        ["outputlevel", "normal"],
-        ["dolinfitfilt", True],
-    ],
-}
+global exampleroot, testtemproot# set input and output directories
+global testlist
+
+def setuptestlist():
+    global testlist
+    testlist = {}
+    testlist["searchrange"] = {
+        "command": ["--searchrange", "-7", "15.2"],
+        "results": [["lagmin", -7.0, "isfloat"], ["lagmax", 15.2, "isfloat"]],
+    }
+    testlist["filterband"] = {
+        "command": ["--filterband", "lfo"],
+        "results": [
+            ["filterband", "lfo"],
+            ["lowerpass", 0.01, "isfloat"],
+            ["upperpass", 0.15, "isfloat"],
+        ],
+    }
+    testlist["filtertype"] = {
+        "command": ["--filtertype", "trapezoidal"],
+        "results": [["filtertype", "trapezoidal"]],
+    }
+    testlist["filterfreqs"] = {
+        "command": ["--filterfreqs", "0.1", "0.2"],
+        "results": [["arbvec", [0.1, 0.2, 0.095, 0.21], "isfloat"]],
+    }
+    testlist["pickleft"] = {"command": ["--pickleft"], "results": [["pickleft", True]]}
+    testlist["corrweighting"] = {
+        "command": ["--corrweighting", "phat"],
+        "results": [["corrweighting", "phat"]],
+    }
+    testlist["datatstep"] = {
+        "command": ["--datatstep", "1.23"],
+        "results": [["realtr", 1.23, "isfloat"]],
+    }
+    testlist["datafreq"] = {"command": ["--datafreq", "10.0"], "results": [["realtr", 0.1, "isfloat"]]}
+    testlist["noantialias"] = {
+        "command": ["--noantialias"],
+        "results": [["antialias", False]],
+    }
+    testlist["invert"] = {"command": ["--invert"], "results": [["invertregressor", True]]}
+    testlist["interptype"] = {
+        "command": ["--interptype", "cubic"],
+        "results": [["interptype", "cubic"]],
+    }
+    testlist["offsettime"] = {
+        "command": ["--offsettime", "10.1"],
+        "results": [["offsettime", 10.1, "isfloat"]],
+    }
+    testlist["timerange"] = {
+        "command": ["--timerange", "2", "-1"],
+        "results": [["startpoint", 2], ["endpoint", 100000000]],
+    }
+    testlist["numnull"] = {
+        "command": ["--numnull", "0"],
+        "results": [["numestreps", 0], ["ampthreshfromsig", False]],
+    }
+    testlist["regressor"] = {
+        "command": ["--regressor", f"{exampleroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3"],
+        "results": [["regressorfile", f"{exampleroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3"]],
+    }
+    testlist["initialdelay"] = {
+        "command": ["--initialdelay", "0.0"],
+        "results": [
+            ["initialdelayvalue", 0.0, "isfloat"],
+        ],
+    }
+    testlist["nodelayfit"] = {
+        "command": ["--nodelayfit"],
+        "results": [
+            ["fixdelay", True],
+        ],
+    }
+    testlist["delaymapping"] = {
+        "command": ["--delaymapping"],
+        "results": [
+            ["passes", rp.DEFAULT_DELAYMAPPING_PASSES],
+            ["despeckle_passes", rp.DEFAULT_DELAYMAPPING_DESPECKLE_PASSES],
+            ["gausssigma", rp.DEFAULT_DELAYMAPPING_SPATIALFILT],
+            ["lagmin", rp.DEFAULT_DELAYMAPPING_LAGMIN],
+            ["lagmax", rp.DEFAULT_DELAYMAPPING_LAGMAX],
+            ["refineoffset", True],
+            ["refinedelay", True],
+            ["outputlevel", "normal"],
+            ["dolinfitfilt", True],
+        ],
+    }
+    testlist["denoising"] = {
+        "command": ["--denoising"],
+        "results": [
+            ["passes", rp.DEFAULT_DENOISING_PASSES],
+            ["despeckle_passes", rp.DEFAULT_DENOISING_DESPECKLE_PASSES],
+            ["gausssigma", rp.DEFAULT_DENOISING_SPATIALFILT],
+            ["peakfittype", rp.DEFAULT_PEAKFIT_TYPE],
+            ["lagmin", rp.DEFAULT_DENOISING_LAGMIN],
+            ["lagmax", rp.DEFAULT_DENOISING_LAGMAX],
+            ["refineoffset", True],
+            ["refinedelay", True],
+            ["zerooutbadfit", False],
+            ["dolinfitfilt", True],
+        ],
+    }
+
+    testlist["globalpreselect"] = {
+        "command": ["--globalpreselect"],
+        "results": [
+            ["passes", 1],
+            ["despeckle_passes", 0],
+            ["refinedespeckle", False],
+            ["outputlevel", "normal"],
+            ["dolinfitfilt", False],
+            ["saveintermediatemaps", False],
+        ],
+    }
+
+    testlist["CVR"] = {
+        "command": ["--CVR"],
+        "results": [
+            ["despeckle_passes", rp.DEFAULT_CVRMAPPING_DESPECKLE_PASSES],
+            [
+                "passvec",
+                (rp.DEFAULT_CVRMAPPING_FILTER_LOWERPASS, rp.DEFAULT_CVRMAPPING_FILTER_UPPERPASS),
+            ],
+            ["filterband", "None"],
+            ["lagmin", rp.DEFAULT_CVRMAPPING_LAGMIN],
+            ["lagmax", rp.DEFAULT_CVRMAPPING_LAGMAX],
+            ["preservefiltering", True],
+            ["passes", 1],
+            ["outputlevel", "min"],
+            ["refinedelay", True],
+            ["dolinfitfilt", False],
+        ],
+    }
 
 
 def checktests(thetestvec, testlist, theargs, epsilon):
@@ -124,14 +178,7 @@ def checktests(thetestvec, testlist, theargs, epsilon):
 
 
 def checkavector(thetestvec, epsilon, debug=False, local=False):
-    # set input and output directories
-    if local:
-        exampleroot = "../data/examples/src"
-        testtemproot = "./tmp"
-    else:
-        exampleroot = get_examples_path()
-        testtemproot = get_test_temp_path()
-
+    global testlist
     if debug:
         print(testlist)
         print(thetestvec)
@@ -156,7 +203,18 @@ def checkavector(thetestvec, epsilon, debug=False, local=False):
 
 
 def test_rapidtideparser(debug=False, local=False):
+    global testlist
+    global exampleroot, testtemproot
+
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     epsilon = 0.00001
+    setuptestlist()
 
     # construct the first test vector
     thetestvec = []
@@ -171,7 +229,7 @@ def test_rapidtideparser(debug=False, local=False):
     thetestvec.append("interptype")
     thetestvec.append("offsettime")
     thetestvec.append("datafreq")
-    checkavector(thetestvec, epsilon, debug=False, local=False)
+    checkavector(thetestvec, epsilon, debug=debug, local=local)
 
     # construct the second test vector
     thetestvec = []
@@ -181,7 +239,28 @@ def test_rapidtideparser(debug=False, local=False):
     thetestvec.append("numnull")
     thetestvec.append("initialdelay")
     thetestvec.append("nodelayfit")
-    checkavector(thetestvec, epsilon, debug=False, local=False)
+    checkavector(thetestvec, epsilon, debug=debug, local=local)
+
+    # construct the third test vector
+    thetestvec = []
+    thetestvec.append("delaymapping")
+    checkavector(thetestvec, epsilon, debug=debug, local=local)
+
+    # construct the fourth test vector
+    thetestvec = []
+    thetestvec.append("denoising")
+    checkavector(thetestvec, epsilon, debug=debug, local=local)
+
+    # construct the fifth test vector
+    thetestvec = []
+    thetestvec.append("globalpreselect")
+    checkavector(thetestvec, epsilon, debug=debug, local=local)
+
+    # construct the fifth test vector
+    thetestvec = []
+    thetestvec.append("regressor")
+    thetestvec.append("CVR")
+    checkavector(thetestvec, epsilon, debug=debug, local=local)
 
 
 if __name__ == "__main__":
