@@ -38,7 +38,13 @@ exclude_lines =
     if optiondict['debug']:
     if args.debug:
     if self.debug:
+    if verbose:
+    if optiondict["verbose"]:
+    if optiondict['verbose']:
+    if args.verbose:
+    if self.verbose:
     if False:
     if __name__ == .__main__.:
     except np.lib.RankWarning:
     except IndexError:
+    except ValueError:
