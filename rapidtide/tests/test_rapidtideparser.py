@@ -146,7 +146,7 @@ def checkavector(thetestvec, epsilon):
     checktests(thetestvec, testlist, theargs, epsilon)
 
 
-def main():
+def test_rapidtideparser():
     epsilon = 0.00001
 
     # construct the first test vector
@@ -176,4 +176,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    test_rapidtideparser()
