@@ -97,7 +97,7 @@ def check_rt_spatialmatch(dataset1: Any, dataset2: Any) -> tuple[bool, bool, boo
         spacematch = True
     else:
         spacematch = False
-    if dataset1.affine == dataset2.affine:
+    if np.array_equal(dataset1.affine, dataset2.affine):
         affinematch = True
     else:
         affinematch = False
@@ -810,7 +810,7 @@ class Overlay:
         >>> obj.tr2real(5)
         15.0
         """
-        x, y, z = nib.apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
+        x, y, z = nib.affines.apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         t = self.real2tr(time)
         return (
             int(np.round(x, 0)),
@@ -854,7 +854,7 @@ class Overlay:
         array([12.5, 25.0, 37.5, 2.5])
         """
         return np.concatenate(
-            (nib.apply_affine(self.affine, [xpos, ypos, zpos]), [self.tr2real(tpos)]),
+            (nib.affines.apply_affine(self.affine, [xpos, ypos, zpos]), [self.tr2real(tpos)]),
             axis=0,
         )
 
