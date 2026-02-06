@@ -302,18 +302,18 @@ class FastResampler:
         self.hiresstart = self.hires_x[0]
         self.hiresend = self.hires_x[-1]
         self.method = method
+        pad_samples = int(self.padtime // self.hiresstep)
+        resampled_len = self.upsampleratio * len(timeaxis)
         if self.method == "poly":
             self.hires_y = 0.0 * self.hires_x
-            self.hires_y[
-                int(self.padtime // self.hiresstep)
-                + 1 : -(int(self.padtime // self.hiresstep) + 1)
-            ] = signal.resample_poly(timecourse, int(self.upsampleratio * 10), 10)
+            self.hires_y[pad_samples : pad_samples + resampled_len] = signal.resample_poly(
+                timecourse, int(self.upsampleratio * 10), 10
+            )
         elif self.method == "fourier":
             self.hires_y = 0.0 * self.hires_x
-            self.hires_y[
-                int(self.padtime // self.hiresstep)
-                + 1 : -(int(self.padtime // self.hiresstep) + 1)
-            ] = signal.resample(timecourse, self.upsampleratio * len(timeaxis))
+            self.hires_y[pad_samples : pad_samples + resampled_len] = signal.resample(
+                timecourse, resampled_len
+            )
         else:
             self.hires_y = doresample(timeaxis, timecourse, self.hires_x, method=method)
         self.hires_y[: int(self.padtime // self.hiresstep)] = self.hires_y[
