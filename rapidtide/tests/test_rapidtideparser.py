@@ -124,13 +124,21 @@ def checktests(thetestvec, testlist, theargs, epsilon):
 
 
 def checkavector(thetestvec, epsilon):
+    # set input and output directories
+    if local:
+        exampleroot = "../data/examples/src"
+        testtemproot = "./tmp"
+    else:
+        exampleroot = get_examples_path()
+        testtemproot = get_test_temp_path()
+
     print(testlist)
     print(thetestvec)
 
     # make the argument and results lists
     arglist = [
-        "../data/examples/src/sub-RAPIDTIDETEST.nii.gz",
-        "../data/examples/dst/parsertestdummy",
+        f"{exampleroot}/sub-RAPIDTIDETEST.nii.gz",
+        f"{testtemproot}/parsertestdummy",
     ]
     resultlist = []
     for thetest in thetestvec:
