@@ -23,6 +23,8 @@ omit =
     */proj2flow.py
     */adjustoffset.py
     notreadyforprimetime/*
+    ../setup.py
+    ../versioneer.py
 
 [report]
 exclude_lines = 
