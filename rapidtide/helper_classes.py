@@ -441,7 +441,7 @@ class ProbeRegressor:
         Notes
         -----
         The time axis is calculated as:
-        ``inputtimeaxis = np.linspace(0.0, len(inputvec)) / inputfreq - (inputstarttime + inputoffset)``
+        ``inputtimeaxis = np.linspace(0.0, len(inputvec)) / inputfreq - (inputstart + inputoffset)``
 
         Examples
         --------
@@ -450,7 +450,7 @@ class ProbeRegressor:
         [ 0.          0.001       0.002 ...  0.998       0.999      ]
         """
         self.inputtimeaxis = np.linspace(0.0, len(self.inputvec)) / self.inputfreq - (
-            self.inputstarttime + self.inputoffset
+            self.inputstart + self.inputoffset
         )
 
     def maketargettimeaxis(self) -> None:
