@@ -427,6 +427,44 @@ def savetonifti(thearray: NDArray, theheader: Any, thename: str, debug: bool = F
     output_nifti = None
 
 
+def makeMNI(res, dtype=float, timepoints=1):
+    """
+    Create an MNI152 file
+    """
+    # first check dimensions
+    if res == 0.5:
+        data = np.zeros((364, 436, 364, timepoints), dtype=dtype)
+        affine = [
+            [-0.5, 0.0, 0.0, 90.0],
+            [0.0, 0.5, 0.0, -126.0],
+            [0.0, 0.0, 0.5, -72.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    elif res == 1:
+        data = np.zeros((182, 218, 182, timepoints), dtype=dtype)
+        affine = [
+            [-1.0, 0.0, 0.0, 90.0],
+            [0.0, 1.0, 0.0, -126.0],
+            [0.0, 0.0, 1.0, -72.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    elif res == 2:
+        data = np.zeros((91, 109, 91, timepoints), dtype=dtype)
+        affine = [
+            [-2.0, 0.0, 0.0, 90.0],
+            [0.0, 2.0, 0.0, -126.0],
+            [0.0, 0.0, 2.0, -72.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    else:
+        raise ValueError("resolution must be 0.5, 1, or 2")
+    hdr = nib.Nifti1Header()
+    hdr.set_qform(affine, code=4)
+    hdr.set_sform(affine, code=4)
+    hdr.set_xyzt_units(xyz="mm", t="sec")
+    return data, hdr, affine
+
+
 def niftifromarray(data: NDArray) -> Any:
     """
     Create a NIFTI image object from a numpy array with identity affine.
