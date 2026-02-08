@@ -40,7 +40,7 @@ def findfirst(searchlist: list, available: list, debug: bool = False) -> tuple[i
         if len(searchlist) > 1:
             if debug:
                 print("FINDFIRST: calling again")
-            findfirst(searchlist[1:], available, debug=debug)
+            return findfirst(searchlist[1:], available, debug=debug)
         else:
             if debug:
                 print("FINDFIRST: giving up")
