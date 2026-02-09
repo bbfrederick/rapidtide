@@ -5,7 +5,8 @@
       "Bash(pip install:*)",
       "Bash(python -m pytest:*)",
       "Bash(python rapidtide/tests/test_*.py:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(python3:*)"
     ]
   }
 }
