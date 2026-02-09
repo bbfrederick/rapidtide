@@ -85,7 +85,7 @@ def _get_parser(decompaxis: Any) -> Any:
             allow_abbrev=False,
         )
     else:
-        raise ValueError(f"Illegal decomposition type: {type}")
+        raise ValueError(f"Illegal decomposition type: {decompaxis}")
 
     # Required arguments
     parser.add_argument(
@@ -457,9 +457,14 @@ def niftidecomp_workflow(
             print("will return all significant components")
         else:
             print("will return", icacomponents, "components")
-        thefit = FastICA(n_components=icacomponents).fit(
+        theica = FastICA(n_components=icacomponents)
+        thefit = theica.fit(
             transposeifspatial(procdata, decompaxis=decompaxis)
-        )  # Reconstruct signals
+        )
+        thetransform = theica.transform(transposeifspatial(procdata, decompaxis=decompaxis))
+        theinvtrans = transposeifspatial(
+            theica.inverse_transform(thetransform), decompaxis=decompaxis
+        )
         if icacomponents is None:
             thecomponents = transposeifspatial(thefit.components_[:], decompaxis=decompaxis)
             print(thecomponents.shape[1], "components found")
@@ -468,6 +473,11 @@ def niftidecomp_workflow(
                 thefit.components_[0:icacomponents], decompaxis=decompaxis
             )
             print("returning first", thecomponents.shape[1], "components found")
+
+        # ICA does not provide explained variance
+        numcomponents = thefit.components_.shape[0]
+        exp_var = np.zeros(numcomponents)
+        exp_var_pct = np.zeros(numcomponents)
     else:
         print("performing pca decomposition")
         if pcacomponents < 1.0:
@@ -496,54 +506,53 @@ def niftidecomp_workflow(
             )
 
         # stash the eigenvalues
-        exp_var = thefit.explained_variance_
-        exp_var_pct = 100.0 * thefit.explained_variance_ratio_
-
-        if decompaxis == "temporal":
-            # save the components
-            outputcomponents = thecomponents
-
-            """# save the singular values
-            print("writing singular values")
-            tide_io.writenpvecs(np.transpose(thesingvals), outputroot + "_singvals.txt")"""
-
-            # save the coefficients
-            coefficients = thetransform
-            print("coefficients shape:", coefficients.shape)
-            outputcoefficients = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
-            outputcoefficients[proclocs, :] = coefficients[:, :]
-            outputcoefficients = outputcoefficients.reshape(
-                (xsize, ysize, numslices, coefficients.shape[1])
-            )
-
-            # unnormalize the dimensionality reduced data
-            for i in range(procdata.shape[1 - decompaxisnum]):
-                theinvtrans[i, :] = thevar[i] * theinvtrans[i, :] + themean[i]
-
+        if hasattr(thefit, "explained_variance_"):
+            exp_var = thefit.explained_variance_
+            exp_var_pct = 100.0 * thefit.explained_variance_ratio_
         else:
-            # save the component images
-            outputcomponents = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype="float")
-            outputcomponents[proclocs, :] = thecomponents[:, :]
-            outputcomponents = outputcomponents.reshape(
-                (xsize, ysize, numslices, thecomponents.shape[1])
-            )
+            # SparsePCA does not provide explained_variance_
+            numcomponents = thefit.components_.shape[0]
+            exp_var = np.zeros(numcomponents)
+            exp_var_pct = np.zeros(numcomponents)
 
-            # save the coefficients
-            outputcoefficients = np.transpose(thetransform)
-            # tide_io.writenpvecs(
-            #    outputcoefficients * thevar[i], outputroot + "_denormcoefficients.txt"
-            # )
+    if decompaxis == "temporal":
+        # save the components
+        outputcomponents = thecomponents
 
-            # unnormalize the dimensionality reduced data
-            for i in range(totaltimepoints):
-                theinvtrans[:, i] = thevar[i] * theinvtrans[:, i] + themean[i]
+        # save the coefficients
+        coefficients = thetransform
+        print("coefficients shape:", coefficients.shape)
+        outputcoefficients = np.zeros((numspatiallocs, coefficients.shape[1]), dtype="float")
+        outputcoefficients[proclocs, :] = coefficients[:, :]
+        outputcoefficients = outputcoefficients.reshape(
+            (xsize, ysize, numslices, coefficients.shape[1])
+        )
 
-        print("writing fit data")
-        theheader = datafile_hdr
-        theheader["dim"][4] = theinvtrans.shape[1]
-        outinvtrans = np.zeros((numspatiallocs, theinvtrans.shape[1]), dtype="float")
-        outinvtrans[proclocs, :] = theinvtrans[:, :]
-        outinvtrans = outinvtrans.reshape((xsize, ysize, numslices, theinvtrans.shape[1]))
+        # unnormalize the dimensionality reduced data
+        for i in range(procdata.shape[1 - decompaxisnum]):
+            theinvtrans[i, :] = thevar[i] * theinvtrans[i, :] + themean[i]
+
+    else:
+        # save the component images
+        outputcomponents = np.zeros((numspatiallocs, thecomponents.shape[1]), dtype="float")
+        outputcomponents[proclocs, :] = thecomponents[:, :]
+        outputcomponents = outputcomponents.reshape(
+            (xsize, ysize, numslices, thecomponents.shape[1])
+        )
+
+        # save the coefficients
+        outputcoefficients = np.transpose(thetransform)
+
+        # unnormalize the dimensionality reduced data
+        for i in range(totaltimepoints):
+            theinvtrans[:, i] = thevar[i] * theinvtrans[:, i] + themean[i]
+
+    print("writing fit data")
+    theheader = datafile_hdr
+    theheader["dim"][4] = theinvtrans.shape[1]
+    outinvtrans = np.zeros((numspatiallocs, theinvtrans.shape[1]), dtype="float")
+    outinvtrans[proclocs, :] = theinvtrans[:, :]
+    outinvtrans = outinvtrans.reshape((xsize, ysize, numslices, theinvtrans.shape[1]))
     return (
         outputcomponents,
         outputcoefficients,
