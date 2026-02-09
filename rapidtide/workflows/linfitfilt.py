@@ -223,6 +223,7 @@ def linfitfilt(
                 evisnifti.append(False)
                 evdata.append(1.0 * evtimeseries[j, :])
                 thedims_evinput = 1.0 * thedims_in
+                thedims_evinput[4] = len(evtimeseries[j, :])
                 thesizes_evinput = 1.0 * thesizes_in
                 thedims_ev.append(thedims_evinput)
                 thesizes_ev.append(thesizes_evinput)
@@ -235,6 +236,7 @@ def linfitfilt(
             evisnifti.append(False)
             evdata.append(1.0 * evtimeseries)
             thedims_evinput = 1.0 * thedims_in
+            thedims_evinput[4] = len(evtimeseries)
             thesizes_evinput = 1.0 * thesizes_in
             thedims_ev.append(thedims_evinput)
             thesizes_ev.append(thesizes_evinput)
