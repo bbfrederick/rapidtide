@@ -516,7 +516,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    parallelism: 6
+    parallelism: 8
     resource_class: large
     steps:
       - checkout
