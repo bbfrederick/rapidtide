@@ -86,7 +86,7 @@ pytest --cov=rapidtide rapidtide/tests/
 pytest rapidtide/tests/test_filter.py::test_function_name -v
 ```
 
-Note: Tests are run in CI via CircleCI for Python 3.9, 3.10, 3.11, and 3.12.
+Note: Tests are run in CI via CircleCI for Python 3.10, 3.11, 3.13, and 3.14.
 
 ### Code Formatting
 
@@ -141,8 +141,8 @@ showxcorrx <file1> <file2>
 ## Important Constraints
 
 ### Python Version
-- **Minimum**: Python 3.9
-- **Maximum**: Python 3.12 (tensorflow limitation)
+- **Minimum**: Python 3.10
+- **Maximum**: Python 3.14 
 - Uses modern Python features (f-strings, type hints)
 
 ### Data Formats
