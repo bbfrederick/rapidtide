@@ -409,7 +409,7 @@ def niftistats_main(calctype: str = "icc") -> None:
     numfiles = len(datafiles)
 
     if calctype == "icc":
-        measlist = tide_io.readvecs(args.measurementlist, thedtype=str)
+        measlist = tide_io.readvecs(args.measurementlist, thedtype=np.dtype(str))
         print(f"measurementlist shape: {measlist.shape}")
         nummeas, numsubjs = measlist.shape[0], measlist.shape[1]
         if nummeas < 2:
@@ -602,11 +602,13 @@ def niftistats_main(calctype: str = "icc") -> None:
             disable=(not args.showprogressbar),
         ):
             if args.paired:
-                t_in_valid[voxel], p_in_valid[voxel], df = ttest_rel(
+                result = ttest_rel(
                     validinvms[voxel, :, 0],
                     validinvms[voxel, :, 1],
                     alternative=args.alternative,
                 )
+                t_in_valid[voxel] = result.statistic
+                p_in_valid[voxel] = result.pvalue
             else:
                 t_in_valid[voxel], p_in_valid[voxel] = ttest_ind(
                     validinvms[voxel, :, 0],
