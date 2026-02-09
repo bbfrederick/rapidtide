@@ -512,13 +512,6 @@ def spatialmi(args: Any) -> None:
     global thebins
     thebins = None
 
-    # read the arguments
-    try:
-        args = _get_parser().parse_args()
-    except SystemExit:
-        _get_parser().print_help()
-        raise
-
     if args.debug:
         print(f"Arguments: {args}")
 
