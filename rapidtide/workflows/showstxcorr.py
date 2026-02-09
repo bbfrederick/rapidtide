@@ -404,9 +404,10 @@ def showstxcorr(args: Any) -> None:
     endpoint2 = min(
         [int(args.duration * args.samplerate), int(len(inputdata1)), int(len(inputdata2))]
     )
-    trimmeddata = np.zeros((2, numpoints), dtype="float")
-    trimmeddata[0, :] = inputdata1[startpoint:endpoint1]
-    trimmeddata[1, :] = inputdata2[0:endpoint2]
+    trimlen = min(endpoint1 - startpoint, endpoint2)
+    trimmeddata = np.zeros((2, trimlen), dtype="float")
+    trimmeddata[0, :] = inputdata1[startpoint:startpoint + trimlen]
+    trimmeddata[1, :] = inputdata2[0:trimlen]
 
     # band limit the regressors if that is needed
     if theprefilter.gettype() != "None":
