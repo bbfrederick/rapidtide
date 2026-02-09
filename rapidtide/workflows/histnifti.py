@@ -340,7 +340,7 @@ def histnifti(args: Any) -> None:
             print()
         else:
             for idx, thispercentile in enumerate(thepercentiles):
-                pctindex = int(np.round(timepoints * thispercentile, 0))
+                pctindex = min(int(np.round(timepoints * thispercentile, 0)), timepoints - 1)
                 print(f"percentile {thispercentile} at index {pctindex}")
                 pcts_data[:, idx] = 1.0 * sorteddata[:, pctindex]
         del sorteddata
