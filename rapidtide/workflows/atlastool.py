@@ -530,7 +530,7 @@ def atlastool(args: Any) -> None:
             print()
 
     if args.volumeperregion:
-        outputvoxels = templatevoxels[:, : numnonzero + 1]
+        outputvoxels = templatevoxels[:, :numnonzero]
         template_hdr["dim"][4] = numregions
         tide_io.savetonifti(
             outputvoxels.reshape((xsize, ysize, numslices, numregions)),
