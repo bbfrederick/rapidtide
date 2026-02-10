@@ -1997,9 +1997,9 @@ class PPGFeatureExtractor:
             lf_band = (freqs >= 0.04) & (freqs < 0.15)  # Low frequency
             hf_band = (freqs >= 0.15) & (freqs < 0.4)  # High frequency
 
-            features["vlf_power"] = np.trapz(psd[vlf_band], freqs[vlf_band])
-            features["lf_power"] = np.trapz(psd[lf_band], freqs[lf_band])
-            features["hf_power"] = np.trapz(psd[hf_band], freqs[hf_band])
+            features["vlf_power"] = np.trapezoid(psd[vlf_band], freqs[vlf_band])
+            features["lf_power"] = np.trapezoid(psd[lf_band], freqs[lf_band])
+            features["hf_power"] = np.trapezoid(psd[hf_band], freqs[hf_band])
             features["lf_hf_ratio"] = features["lf_power"] / (features["hf_power"] + 1e-10)
 
         return features
