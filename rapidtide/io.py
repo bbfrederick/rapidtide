@@ -4270,7 +4270,11 @@ def writevec(thevec: NDArray, outputfile: str, lineend: str = "") -> None:
         openmode = "w"
     with open(outputfile, openmode) as FILE:
         for i in thevec:
-            FILE.writelines(str(i) + thelineending)
+            line = str(i) + thelineending
+            if openmode == "wb":
+                FILE.write(line.encode("utf-8"))
+            else:
+                FILE.writelines(line)
 
 
 def writevectorstotextfile(
