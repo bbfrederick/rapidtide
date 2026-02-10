@@ -8,8 +8,8 @@ omit =
     __init__.py
     scripts/__init__.py
     OrthoImageItem.py
+    Colortables.py
     wiener2.py
-    fMRIData_class.py
     _version.py
     tidepoolTemplate.py
     tidepoolTemplate_qt6.py
