@@ -1121,10 +1121,8 @@ def territorydecomp(
 
     fitmap = np.zeros_like(inputmap)
 
-    if intercept:
-        thecoffs = np.zeros((nummaps, np.max(atlas), fitorder + 1))
-    else:
-        thecoffs = np.zeros((nummaps, np.max(atlas), fitorder))
+    # mlregress always returns fitorder + 1 coefficients (intercept prepended, even if zero)
+    thecoffs = np.zeros((nummaps, np.max(atlas), fitorder + 1))
     if debug:
         print(f"thecoffs.shape: {thecoffs.shape}")
         print(f"intercept: {intercept}, fitorder: {fitorder}")

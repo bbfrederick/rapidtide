@@ -194,6 +194,7 @@ def fingerprint(
     excludespec=None,
     extramaskname=None,
     intercept=True,
+    limittomask=False,
     entropybins=101,
     entropyrange=None,
     debug=False,
@@ -336,10 +337,8 @@ def fingerprint(
 
     # get ready to do the fitting
     numregions = len(atlaslabelsinput)
-    if intercept:
-        numcoffs = fitorder + 1
-    else:
-        numcoffs = fitorder
+    # territorydecomp always returns fitorder + 1 coefficients (intercept prepended)
+    numcoffs = fitorder + 1
     coff_array = np.zeros((numcoffs, numregions, nummaps), dtype="float")
     R2_array = np.zeros((numregions, nummaps), dtype="float")
 
@@ -379,7 +378,7 @@ def fingerprint(
         newcols.to_csv(f"{outputroot}_fit_O{str(i + offset)}.tsv", index=False, sep="\t")
 
     # save the fit data as nifti
-    if args.limittomask:
+    if limittomask:
         if nummaps == 1:
             savemap = thefitmap * maskmap
         else:
@@ -389,7 +388,7 @@ def fingerprint(
     tide_io.savetonifti(savemap, themap_hdr, outputroot + "_fit")
 
     # save the fit error
-    if args.limittomask:
+    if limittomask:
         if nummaps == 1:
             diffmap = (themap_data - thefitmap) * maskmap
         else:
@@ -587,6 +586,7 @@ def entrypoint():
         includespec=args.includespec,
         excludespec=args.excludespec,
         extramaskname=args.extramaskname,
+        limittomask=args.limittomask,
         entropybins=args.entropybins,
         entropyrange=args.entropyrange,
         debug=args.debug,
