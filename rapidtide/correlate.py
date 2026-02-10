@@ -936,7 +936,7 @@ def delayedcorr(
     data1: NDArray, data2: NDArray, delayval: float, timestep: float
 ) -> Tuple[float, float]:
     return sp.stats.pearsonr(
-        data1, tide_resample.timeshift(data2, delayval / timestep, 30).statistic
+        data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0]
     )
 
 

@@ -975,6 +975,8 @@ def showxcorrx(args: Any) -> None:
                     str(R),
                     str(-maxdelay),
                 ]
+
+    if args.summarymode:
         if args.label is not None:
             thelabelitems = ["thelabel"] + thelabelitems
             thedataitems = [args.label] + thedataitems
@@ -1088,13 +1090,13 @@ def showxcorrx(args: Any) -> None:
         else:
             plt.show()
 
-    if args.calccoherence:
+    if args.display and args.calccoherence:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.plot(fC, np.sqrt(np.abs(Cxy)) / np.max(np.sqrt(np.abs(Cxy))), "b")
         ax.set_title("Coherence")
 
-    if args.calccsd:
+    if args.display and args.calccsd:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.plot(fP, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))), "g")
