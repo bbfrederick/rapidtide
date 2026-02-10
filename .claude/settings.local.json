@@ -6,7 +6,8 @@
       "Bash(python -m pytest:*)",
       "Bash(python rapidtide/tests/test_*.py:*)",
       "Bash(python:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "WebSearch"
     ]
   }
 }
