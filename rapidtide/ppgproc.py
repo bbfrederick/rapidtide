@@ -1551,7 +1551,7 @@ class HeartRateExtractor:
         peaks, properties = signal.find_peaks(ppg_signal, distance=min_samples, prominence=0.1)
 
         if len(peaks) < 2:
-            return None, peaks
+            return None, peaks, None, None
 
         # Calculate inter-beat intervals
         ibi = np.diff(peaks) / self.fs  # In seconds
@@ -1561,7 +1561,7 @@ class HeartRateExtractor:
         valid_ibi = ibi[(ibi > median_ibi * 0.7) & (ibi < median_ibi * 1.3)]
 
         if len(valid_ibi) == 0:
-            return None, peaks
+            return None, peaks, None, None
 
         # make an RRI waveform
         rri = np.zeros(len(ppg_signal))
@@ -1739,7 +1739,7 @@ class HeartRateExtractor:
             if method == "fft":
                 hr, _, _, _ = self.extract_from_fft(segment)
             else:  # peaks
-                hr, _ = self.extract_from_peaks(segment)
+                hr, _, _, _ = self.extract_from_peaks(segment)
 
             if hr is not None:
                 times.append((start + end) / 2 / self.fs)
