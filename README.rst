@@ -185,11 +185,11 @@ Ok, I\'m sold. What\'s in here?
    estimates the significance of the correlation. It has a range of
    filtering, windowing, and correlation options.
 
--  **rapidtide2x_legacy**, **happy_legacy**, **showxcorr_legacy** - The
-   older versions of the similarly named programs.  These use the old calling
-   conventions, for compatibility with older workflows.  These will go away
-   eventually, and they don't really get updates or bugfixes, so if you're
-   using them, change to the new ones, and if you're not using them, don't.
+-  **showxcorr_legacy** - The
+   older versions of the similarly named program.  This uses the old calling
+   conventions, for compatibility with older workflows.  This will go away
+   eventually, and it doesn't really get updates or bugfixes, so if you're
+   using it, change to the new one, and if you're not using it, don't.
 
 -  **rapidtide2std** - This is a utility for registering rapidtide
    output maps to standard coordinates. It\'s usually much faster to run
