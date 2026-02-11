@@ -92,7 +92,6 @@ def _procOneVoxelCorrelation(
                 searchfrac=0.5,
                 lagmod=1000.0,
                 enforcethresh=True,
-                allowhighfitamps=False,
                 lagmin=lagmin,
                 lagmax=lagmax,
                 absmaxsigma=1000.0,

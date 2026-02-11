@@ -3506,7 +3506,6 @@ def simfuncpeakfit(
     searchfrac: float = 0.5,
     lagmod: float = 1000.0,
     enforcethresh: bool = True,
-    allowhighfitamps: bool = False,
     lagmin: float = -30.0,
     lagmax: float = 30.0,
     absmaxsigma: float = 1000.0,
@@ -3515,6 +3514,7 @@ def simfuncpeakfit(
     bipolar: bool = False,
     lthreshval: float = 0.0,
     uthreshval: float = 1.0,
+    corrtolerance: float = 1e-2,
     zerooutbadfit: bool = True,
     debug: bool = False,
 ) -> Tuple[int, np.float64, np.float64, np.float64, np.uint16, np.uint32, int, int]:
@@ -3554,8 +3554,6 @@ def simfuncpeakfit(
             Default is 1000.0.
         enforcethresh : bool, optional
             If True, enforce amplitude thresholds. Default is True.
-        allowhighfitamps : bool, optional
-            If True, allow fit amplitudes to exceed 1.0. Default is False.
         lagmin : float, optional
             Minimum allowed lag value in seconds. Default is -30.0.
         lagmax : float, optional
@@ -3572,6 +3570,9 @@ def simfuncpeakfit(
             Lower threshold for amplitude validation. Default is 0.0.
         uthreshval : float, optional
             Upper threshold for amplitude validation. Default is 1.0.
+        corrtolerance : float, optional
+            Amount by which the magnitude of a correlation can exceeed one (in a case with
+            almost no noise). Default is 1e-6.
         zerooutbadfit : bool, optional
             If True, set fit results to zero if fit fails. Default is True.
         debug : bool, optional
@@ -3909,16 +3910,15 @@ def simfuncpeakfit(
                 if debug:
                     print("bad fit amp: maxval is lower than lower limit")
                 fitfail = True
-            if np.abs(maxval) > 1.0:
-                if not allowhighfitamps:
-                    failreason |= FML_FITAMPHIGH
-                    if debug:
-                        print(
-                            "bad fit amp: magnitude of",
-                            maxval,
-                            "is greater than 1.0",
-                        )
-                    fitfail = True
+            if np.abs(maxval) > 1.0 + corrtolerance:
+                failreason |= FML_FITAMPHIGH
+                if debug:
+                    print(
+                        "bad fit amp: magnitude of",
+                        maxval,
+                        "is greater than 1.0",
+                    )
+                fitfail = True
                 maxval = 1.0 * np.sign(maxval)
         else:
             # different rules for mutual information peaks

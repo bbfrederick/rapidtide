@@ -70,7 +70,6 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
         lagmin=lagmin,
         lagmax=lagmax,
         debug=debug,
-        allowhighfitamps=True,
         enforcethresh=False,
         zerooutbadfit=False,
     )

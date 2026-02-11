@@ -944,8 +944,8 @@ class SimilarityFunctionFitter:
         searchfrac=0.5,
         lagmod=1000.0,
         enforcethresh=True,
-        allowhighfitamps=False,
         displayplots=False,
+        corrtolerance=1e-2,
         functype="correlation",
         peakfittype="gauss",
     ):
@@ -990,8 +990,9 @@ class SimilarityFunctionFitter:
             Modulus for lag values. Default is 1000.0.
         enforcethresh : bool, optional
             If True, enforce threshold constraints. Default is True.
-        allowhighfitamps : bool, optional
-            If True, allow high amplitude fits. Default is False.
+        corrtolerance : float, optional
+            Amount by which the magnitude of a correlation can exceed 1.0 (in a case with
+            almost no noise) and not be flagged as an error. Default is 1e-6.
         displayplots : bool, optional
             If True, display plots during fitting. Default is False.
         functype : str, optional
@@ -1036,7 +1037,7 @@ class SimilarityFunctionFitter:
         self.searchfrac = searchfrac + 0.0
         self.lagmod = lagmod + 0.0
         self.enforcethresh = enforcethresh
-        self.allowhighfitamps = allowhighfitamps
+        self.corrtolerance = corrtolerance
         self.displayplots = displayplots
 
     def _maxindex_noedge(self, corrfunc: NDArray) -> tuple[int, float]:
@@ -1781,16 +1782,15 @@ class SimilarityFunctionFitter:
                     if self.debug:
                         print("bad fit amp: maxval is lower than lower limit")
                     fitfail = True
-                if np.abs(maxval) > 1.0:
-                    if not self.allowhighfitamps:
-                        failreason |= self.FML_FITAMPHIGH
-                        if self.debug:
-                            print(
-                                "bad fit amp: magnitude of",
-                                maxval,
-                                "is greater than 1.0",
-                            )
-                        fitfail = True
+                if np.abs(maxval) > 1.0 + self.corrtolerance:
+                    failreason |= self.FML_FITAMPHIGH
+                    if self.debug:
+                        print(
+                            "bad fit amp: magnitude of",
+                            maxval,
+                            "is greater than 1.0",
+                        )
+                    fitfail = True
                     maxval = 1.0 * np.sign(maxval)
             else:
                 # different rules for mutual information peaks
