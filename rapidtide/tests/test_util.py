@@ -401,6 +401,36 @@ class TestMakeslicetimes:
         assert result is not None
         assert len(result) == 4
 
+    def test_ascending_sparkplug(self):
+        result = tide_util.makeslicetimes(4, "ascending_sparkplug", tr=1.0)
+        assert result is not None
+        assert len(result) == 4
+
+    def test_descending_sparkplug(self):
+        result = tide_util.makeslicetimes(4, "descending_sparkplug", tr=1.0)
+        assert result is not None
+        assert len(result) == 4
+
+    def test_ascending_interleaved_siemens(self):
+        result = tide_util.makeslicetimes(4, "ascending_interleaved_siemens", tr=1.0)
+        assert result is not None
+        assert len(result) == 4
+
+    def test_descending_interleaved_siemens(self):
+        result = tide_util.makeslicetimes(4, "descending_interleaved_siemens", tr=1.0)
+        assert result is not None
+        assert len(result) == 4
+
+    def test_ascending_interleaved_philips(self):
+        result = tide_util.makeslicetimes(4, "ascending_interleaved_philips", tr=1.0)
+        assert result is not None
+        assert len(result) == 4
+
+    def test_descending_interleaved_philips(self):
+        result = tide_util.makeslicetimes(4, "descending_interleaved_philips", tr=1.0)
+        assert result is not None
+        assert len(result) == 4
+
     def test_multiband(self):
         result = tide_util.makeslicetimes(8, "ascending", tr=1.0, multibandfac=2)
         assert result is not None
