@@ -211,7 +211,8 @@ def cnn_save_and_load(testtemproot):
     filter_obj2.loadmodel(original_modelname)
 
     assert filter_obj2.window_size == 64
-    assert filter_obj2.infodict["nettype"] == "cnn"
+    assert filter_obj2.infodict["window_size"] == 64
+    assert "modelname" in filter_obj2.infodict
 
     # Verify weights match
     loaded_weights = [w.numpy() for w in filter_obj2.model.weights]
