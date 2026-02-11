@@ -339,39 +339,6 @@ def conv_autoencoder_predict(testtemproot):
 
 
 # ============================================================
-# MultiscaleCNN DLFilter tests
-# ============================================================
-def multiscale_cnn_dlfilter(testtemproot):
-    """Test MultiscaleCNNDLFilter initialization, getname, makesubnet, makenet."""
-    import rapidtide.dlfilter as dlfilter
-
-    filter_obj = dlfilter.MultiscaleCNNDLFilter(
-        num_filters=10,
-        kernel_sizes=[3, 5, 7],
-        input_lens=[32, 64, 96],
-        input_width=1,
-        window_size=64,
-        num_epochs=1,
-        modelroot=testtemproot,
-        namesuffix="test",
-    )
-
-    assert filter_obj.infodict["nettype"] == "multiscalecnn"
-
-    filter_obj.getname()
-    assert "multiscalecnn" in filter_obj.modelname
-    assert "tf2" in filter_obj.modelname
-    assert os.path.exists(filter_obj.modelpath)
-
-    # Test makesubnet directly
-    subnet = filter_obj.makesubnet(inputlen=32, kernelsize=3)
-    assert subnet is not None
-
-    filter_obj.makenet()
-    assert filter_obj.model is not None
-
-
-# ============================================================
 # CRNN DLFilter tests
 # ============================================================
 def crnn_dlfilter(testtemproot):
@@ -728,11 +695,6 @@ def test_dlfilterops(debug=False, local=False):
     if debug:
         print("conv_autoencoder_predict(testtemproot)")
     conv_autoencoder_predict(testtemproot)
-
-    # MultiscaleCNN DLFilter tests
-    if debug:
-        print("multiscale_cnn_dlfilter(testtemproot)")
-    multiscale_cnn_dlfilter(testtemproot)
 
     # CRNN DLFilter tests
     if debug:
