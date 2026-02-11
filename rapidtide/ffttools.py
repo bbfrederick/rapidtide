@@ -154,7 +154,7 @@ def optfftlen(
                         newpadlen = int((optpadded + 1 - startlen) // 2)
                         thelen = optfftlen(thelen, padlen=newpadlen, _depth=(_depth + 1))
                     else:
-                        thelen = initval
+                        thelen = startlen
 
     lencache[cachekey] = thelen
     if debug:
@@ -164,5 +164,5 @@ def optfftlen(
 
 def showfftcache() -> None:
     print("FFT length cache entries:")
-    for key, value in enumerate(lencache):
-        print(f"\t{key}: {value}, {lencache[value]}, {primefacs(lencache[value])}")
+    for key, value in lencache.items():
+        print(f"\t{key}: {value}, {primefacs(value)}")
