@@ -1143,7 +1143,7 @@ class MultiscaleCNNDLFilter(DeepLearningFilter):
         self.input_lens = input_lens
         self.input_width = input_width
         self.dilation_rate = dilation_rate
-        self.infodict["nettype"] = "multscalecnn"
+        self.infodict["nettype"] = "multiscalecnn"
         self.infodict["num_filters"] = self.num_filters
         self.infodict["kernel_sizes"] = self.kernel_sizes
         self.infodict["input_lens"] = self.input_lens
