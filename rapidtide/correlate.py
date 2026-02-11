@@ -1230,6 +1230,14 @@ def matchsamplerates(
         corrFs = Fs2
         matchedinput1 = input1
         matchedinput2 = input2
+
+    # Upsampling can produce an off-by-one length difference due to floating-point
+    # arithmetic in the resampled point count calculation. Trim to the shorter length
+    # to guarantee both outputs have the same size.
+    minlen = min(len(matchedinput1), len(matchedinput2))
+    matchedinput1 = matchedinput1[:minlen]
+    matchedinput2 = matchedinput2[:minlen]
+
     return matchedinput1, matchedinput2, corrFs
 
 
