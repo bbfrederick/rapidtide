@@ -21,8 +21,9 @@ import numpy as np
 import rapidtide.workflows.rapidtide_parser as rp
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
-global exampleroot, testtemproot# set input and output directories
+global exampleroot, testtemproot  # set input and output directories
 global testlist
+
 
 def setuptestlist():
     global testlist
@@ -56,7 +57,10 @@ def setuptestlist():
         "command": ["--datatstep", "1.23"],
         "results": [["realtr", 1.23, "isfloat"]],
     }
-    testlist["datafreq"] = {"command": ["--datafreq", "10.0"], "results": [["realtr", 0.1, "isfloat"]]}
+    testlist["datafreq"] = {
+        "command": ["--datafreq", "10.0"],
+        "results": [["realtr", 0.1, "isfloat"]],
+    }
     testlist["noantialias"] = {
         "command": ["--noantialias"],
         "results": [["antialias", False]],
@@ -79,8 +83,16 @@ def setuptestlist():
         "results": [["numestreps", 0], ["ampthreshfromsig", False]],
     }
     testlist["regressor"] = {
-        "command": ["--regressor", f"{exampleroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3"],
-        "results": [["regressorfile", f"{exampleroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3"]],
+        "command": [
+            "--regressor",
+            f"{exampleroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3",
+        ],
+        "results": [
+            [
+                "regressorfile",
+                f"{exampleroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3",
+            ]
+        ],
     }
     testlist["initialdelay"] = {
         "command": ["--initialdelay", "0.0"],

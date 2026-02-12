@@ -560,9 +560,7 @@ class TestIntegration:
 
         # Create filter and coherer
         ncprefilter = tide_filt.NoncausalFilter(filtertype="lfo")
-        coherer = tide_classes.Coherer(
-            Fs=Fs, ncprefilter=ncprefilter, freqmin=0.02, freqmax=0.14
-        )
+        coherer = tide_classes.Coherer(Fs=Fs, ncprefilter=ncprefilter, freqmin=0.02, freqmax=0.14)
 
         # Set reference and run coherence
         coherer.setreftc(reftc)

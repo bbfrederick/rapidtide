@@ -217,7 +217,12 @@ def getcorrloc_identical_signals(debug=False):
     thedata[1, :] = sig_normed
 
     maxcorr, maxtime, maskval, failreason = lf.getcorrloc(
-        thedata, 0, 1, Fs, dofit=False, debug=debug,
+        thedata,
+        0,
+        1,
+        Fs,
+        dofit=False,
+        debug=debug,
     )
     if debug:
         print(f"  maxcorr={maxcorr:.4f}, maxtime={maxtime:.4f}")
@@ -244,16 +249,21 @@ def getcorrloc_delayed_signals(debug=False):
     thedata[1, :] = tide_math.corrnormalize(sig2, detrendorder=3, windowfunc="hamming")
 
     maxcorr, maxtime, maskval, failreason = lf.getcorrloc(
-        thedata, 0, 1, Fs, dofit=False, debug=debug,
+        thedata,
+        0,
+        1,
+        Fs,
+        dofit=False,
+        debug=debug,
     )
     if debug:
         print(f"  maxcorr={maxcorr:.4f}, maxtime={maxtime:.4f}")
     assert maxcorr > 0.5, f"Expected decent correlation, got {maxcorr}"
     # Cross-correlation convention: when sig2 is delayed by +delay relative to sig1,
     # the peak appears at -delay (sig1 leads sig2)
-    assert abs(abs(maxtime) - delay) < 1.0 / Fs + 0.1, (
-        f"Expected lag magnitude near {delay}, got {maxtime}"
-    )
+    assert (
+        abs(abs(maxtime) - delay) < 1.0 / Fs + 0.1
+    ), f"Expected lag magnitude near {delay}, got {maxtime}"
 
 
 def getcorrloc_zero_signal(debug=False):
@@ -264,7 +274,11 @@ def getcorrloc_zero_signal(debug=False):
     npts = 100
     thedata = np.zeros((2, npts), dtype=float)
     maxcorr, maxtime, maskval, failreason = lf.getcorrloc(
-        thedata, 0, 1, Fs, dofit=False,
+        thedata,
+        0,
+        1,
+        Fs,
+        dofit=False,
     )
     assert maxcorr == 0.0
     assert maxtime == 0.0
@@ -288,10 +302,17 @@ def getcorrloc_with_fit(debug=False):
     thedata[1, :] = tide_math.corrnormalize(sig2, detrendorder=3, windowfunc="hamming")
 
     maxcorr, maxtime, maskval, failreason = lf.getcorrloc(
-        thedata, 0, 1, Fs, dofit=True, debug=debug,
+        thedata,
+        0,
+        1,
+        Fs,
+        dofit=True,
+        debug=debug,
     )
     if debug:
-        print(f"  maxcorr={maxcorr:.4f}, maxtime={maxtime:.4f}, maskval={maskval}, failreason={failreason}")
+        print(
+            f"  maxcorr={maxcorr:.4f}, maxtime={maxtime:.4f}, maskval={maskval}, failreason={failreason}"
+        )
     # With fitting, we should get a result (even if fit fails, we get values back)
     # If the fit succeeds, maskval=1
     # If it fails, maskval=0 but we still get numbers
@@ -308,7 +329,11 @@ def getcorrloc_one_zero_signal(debug=False):
     # thedata[1, :] is all zeros
 
     maxcorr, maxtime, maskval, failreason = lf.getcorrloc(
-        thedata, 0, 1, Fs, dofit=False,
+        thedata,
+        0,
+        1,
+        Fs,
+        dofit=False,
     )
     assert maxcorr == 0.0
     assert maxtime == 0.0
@@ -331,8 +356,13 @@ def getcorrloc_search_range(debug=False):
     thedata[1, :] = tide_math.corrnormalize(sig2, detrendorder=3, windowfunc="hamming")
 
     maxcorr, maxtime, maskval, failreason = lf.getcorrloc(
-        thedata, 0, 1, Fs, dofit=False,
-        negsearch=5.0, possearch=5.0,
+        thedata,
+        0,
+        1,
+        Fs,
+        dofit=False,
+        negsearch=5.0,
+        possearch=5.0,
     )
     assert maskval == 1
 
@@ -354,8 +384,15 @@ def preprocdata_basic(debug=False):
     theprefilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
     osfmridata, ostimepoints, oversamptr, numvoxels = lf.preprocdata(
-        fmridata, themask, theprefilter, 2, Fs, tr,
-        detrendorder=1, windowfunc="hamming", padseconds=0,
+        fmridata,
+        themask,
+        theprefilter,
+        2,
+        Fs,
+        tr,
+        detrendorder=1,
+        windowfunc="hamming",
+        padseconds=0,
         showprogressbar=False,
     )
     numspatiallocs = nx * ny * nz
@@ -383,8 +420,15 @@ def preprocdata_with_mask(debug=False):
     theprefilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
     osfmridata, ostimepoints, oversamptr, numvoxels = lf.preprocdata(
-        fmridata, themask, theprefilter, 2, Fs, tr,
-        detrendorder=1, windowfunc="hamming", padseconds=0,
+        fmridata,
+        themask,
+        theprefilter,
+        2,
+        Fs,
+        tr,
+        detrendorder=1,
+        windowfunc="hamming",
+        padseconds=0,
         showprogressbar=False,
     )
     assert numvoxels == 3
@@ -411,14 +455,21 @@ def preprocdata_oversample_factor(debug=False):
 
     for factor in [1, 2, 4]:
         osfmridata, ostimepoints, oversamptr, numvoxels = lf.preprocdata(
-            fmridata.copy(), themask, theprefilter, factor, Fs, tr,
-            detrendorder=1, windowfunc="hamming", padseconds=0,
+            fmridata.copy(),
+            themask,
+            theprefilter,
+            factor,
+            Fs,
+            tr,
+            detrendorder=1,
+            windowfunc="hamming",
+            padseconds=0,
             showprogressbar=False,
         )
         expected_nt = nt * factor - (factor - 1)
-        assert ostimepoints == expected_nt, (
-            f"factor={factor}: expected {expected_nt} timepoints, got {ostimepoints}"
-        )
+        assert (
+            ostimepoints == expected_nt
+        ), f"factor={factor}: expected {expected_nt} timepoints, got {ostimepoints}"
         assert abs(oversamptr - tr / factor) < 1e-10
 
 
@@ -436,8 +487,15 @@ def preprocdata_detrend_order(debug=False):
 
     for order in [0, 1, 3]:
         osfmridata, ostimepoints, oversamptr, numvoxels = lf.preprocdata(
-            fmridata.copy(), themask, theprefilter, 2, Fs, tr,
-            detrendorder=order, windowfunc="hamming", padseconds=0,
+            fmridata.copy(),
+            themask,
+            theprefilter,
+            2,
+            Fs,
+            tr,
+            detrendorder=order,
+            windowfunc="hamming",
+            padseconds=0,
             showprogressbar=False,
         )
         assert osfmridata.shape[0] == nx * ny * nz
@@ -702,6 +760,7 @@ def localflow_with_gausssigma(debug=False):
 def tide_io_readfromnifti(filepath):
     """Helper to read NIfTI files for verification."""
     import rapidtide.io as tide_io
+
     return tide_io.readfromnifti(filepath)
 
 

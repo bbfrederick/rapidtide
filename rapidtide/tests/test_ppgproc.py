@@ -377,9 +377,9 @@ def harmonic_init_default(debug=False):
     assert hkf.Q.shape == (6, 6)
     assert hkf.P.shape == (6, 6)
     # Check initial amplitudes
-    assert hkf.x[1, 0] == pytest.approx(1.0)   # A1
-    assert hkf.x[2, 0] == pytest.approx(0.2)   # A2
-    assert hkf.x[3, 0] == pytest.approx(0.1)   # A3
+    assert hkf.x[1, 0] == pytest.approx(1.0)  # A1
+    assert hkf.x[2, 0] == pytest.approx(0.2)  # A2
+    assert hkf.x[3, 0] == pytest.approx(0.1)  # A3
 
 
 def harmonic_get_heart_rate(debug=False):
@@ -910,6 +910,7 @@ def synthetic_ppg_different_hr(debug=False):
         t, ppg, _, _, _ = generate_synthetic_ppg(duration=10, fs=100.0, hr=hr)
         # Check fundamental frequency via FFT
         from scipy.signal import welch
+
         freqs, psd = welch(ppg, fs=100.0, nperseg=256)
         hr_band = (freqs >= 0.5) & (freqs <= 3.0)
         peak_freq = freqs[hr_band][np.argmax(psd[hr_band])]
@@ -935,13 +936,13 @@ def read_happy_ppg_basic(debug=False):
 
     with patch("rapidtide.ppgproc.tide_io.readbidstsv") as mock_read:
         mock_read.return_value = (
-            fs,            # Fs
-            0.0,           # instarttime
+            fs,  # Fs
+            0.0,  # instarttime
             mock_columns,  # incolumns
-            mock_data,     # indata
-            None,          # incompressed
-            [],            # incolsource
-            {},            # inextrainfo
+            mock_data,  # indata
+            None,  # incompressed
+            [],  # incolsource
+            {},  # inextrainfo
         )
         t, Fs_out, clean_ppg, raw_ppg, pleth_ppg, missing_indices = read_happy_ppg("test_root")
 

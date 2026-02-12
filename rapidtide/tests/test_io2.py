@@ -466,8 +466,14 @@ def savemaplist_nifti(debug=False):
         bidsdict = {"Dataset": "test"}
         outname = os.path.join(tmpdir, "testoutput")
         tide_io.savemaplist(
-            outname, maplist, None, destshape, hdr, bidsdict,
-            filetype="nifti", savejson=True,
+            outname,
+            maplist,
+            None,
+            destshape,
+            hdr,
+            bidsdict,
+            filetype="nifti",
+            savejson=True,
         )
         assert os.path.exists(os.path.join(tmpdir, "testoutput_desc-lagtime_stat.nii.gz"))
         assert os.path.exists(os.path.join(tmpdir, "testoutput_desc-lagtime_stat.json"))
@@ -491,8 +497,14 @@ def savemaplist_text(debug=False):
         bidsdict = {}
         outname = os.path.join(tmpdir, "testtext")
         tide_io.savemaplist(
-            outname, maplist, None, destshape, hdr, bidsdict,
-            filetype="text", savejson=False,
+            outname,
+            maplist,
+            None,
+            destshape,
+            hdr,
+            bidsdict,
+            filetype="text",
+            savejson=False,
         )
         assert os.path.exists(os.path.join(tmpdir, "testtext_values.txt"))
 
@@ -608,11 +620,14 @@ def readlabelledtsv_basic(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         filepath = os.path.join(tmpdir, "confounds.tsv")
         import pandas as pd
-        df = pd.DataFrame({
-            "trans_x": [1.0, 2.0, 3.0],
-            "trans_y": [4.0, 5.0, 6.0],
-            "rot_z": [0.1, 0.2, 0.3],
-        })
+
+        df = pd.DataFrame(
+            {
+                "trans_x": [1.0, 2.0, 3.0],
+                "trans_y": [4.0, 5.0, 6.0],
+                "rot_z": [0.1, 0.2, 0.3],
+            }
+        )
         df.to_csv(filepath, sep="\t", index=False)
         result = tide_io.readlabelledtsv(os.path.join(tmpdir, "confounds"))
         assert "trans_x" in result
@@ -628,6 +643,7 @@ def readlabelledtsv_nan_handling(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         filepath = os.path.join(tmpdir, "data.tsv")
         import pandas as pd
+
         df = pd.DataFrame({"col1": [1.0, np.nan, 3.0]})
         df.to_csv(filepath, sep="\t", index=False)
         result = tide_io.readlabelledtsv(os.path.join(tmpdir, "data"))
@@ -644,6 +660,7 @@ def readcsv_with_header(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         filepath = os.path.join(tmpdir, "data.csv")
         import pandas as pd
+
         df = pd.DataFrame({"signal": [1.0, 2.0, 3.0], "noise": [0.1, 0.2, 0.3]})
         df.to_csv(filepath, index=False)
         result = tide_io.readcsv(os.path.join(tmpdir, "data"))
@@ -675,6 +692,7 @@ def readconfounds_basic(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         filepath = os.path.join(tmpdir, "confounds.tsv")
         import pandas as pd
+
         df = pd.DataFrame({"csf": [0.1, 0.2, 0.3], "wm": [0.4, 0.5, 0.6]})
         df.to_csv(filepath, sep="\t", index=False)
         # Need a json file to make it a bidscontinuous file, or it will be plaintsv
@@ -1092,8 +1110,9 @@ def readbidstsv_basic(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         root = os.path.join(tmpdir, "test_physio")
         data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-        tide_io.writebidstsv(root, data, samplerate=10.0, starttime=0.5,
-                             columns=["sig1", "sig2"], compressed=True)
+        tide_io.writebidstsv(
+            root, data, samplerate=10.0, starttime=0.5, columns=["sig1", "sig2"], compressed=True
+        )
         sr, st, cols, rd, comp, colsrc, extra = tide_io.readbidstsv(root + ".json")
         assert sr == 10.0
         assert st == 0.5
@@ -1119,10 +1138,12 @@ def readbidstsv_colspec(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         root = os.path.join(tmpdir, "test_physio")
         data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
-        tide_io.writebidstsv(root, data, samplerate=10.0,
-                             columns=["a", "b", "c"], compressed=False)
+        tide_io.writebidstsv(
+            root, data, samplerate=10.0, columns=["a", "b", "c"], compressed=False
+        )
         sr, st, cols, rd, comp, colsrc, extra = tide_io.readbidstsv(
-            root + ".json", colspec="b", warn=False)
+            root + ".json", colspec="b", warn=False
+        )
         assert cols == ["b"]
         assert rd.shape == (1, 3)
         np.testing.assert_array_almost_equal(rd[0], [4.0, 5.0, 6.0])
@@ -1138,10 +1159,10 @@ def readcolfrombidstsv_by_name(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         root = os.path.join(tmpdir, "test_physio")
         data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-        tide_io.writebidstsv(root, data, samplerate=10.0,
-                             columns=["sig1", "sig2"], compressed=True)
-        sr, st, col_data = tide_io.readcolfrombidstsv(
-            root + ".json", columnname="sig2")
+        tide_io.writebidstsv(
+            root, data, samplerate=10.0, columns=["sig1", "sig2"], compressed=True
+        )
+        sr, st, col_data = tide_io.readcolfrombidstsv(root + ".json", columnname="sig2")
         assert sr == 10.0
         np.testing.assert_array_almost_equal(col_data, [4.0, 5.0, 6.0])
 
@@ -1153,10 +1174,10 @@ def readcolfrombidstsv_by_number(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         root = os.path.join(tmpdir, "test_physio")
         data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-        tide_io.writebidstsv(root, data, samplerate=10.0,
-                             columns=["sig1", "sig2"], compressed=True)
-        sr, st, col_data = tide_io.readcolfrombidstsv(
-            root + ".json", columnnum=1)
+        tide_io.writebidstsv(
+            root, data, samplerate=10.0, columns=["sig1", "sig2"], compressed=True
+        )
+        sr, st, col_data = tide_io.readcolfrombidstsv(root + ".json", columnnum=1)
         np.testing.assert_array_almost_equal(col_data, [4.0, 5.0, 6.0])
 
 
@@ -1226,8 +1247,16 @@ def savetonifti_various_dtypes(debug=False):
         base_data = np.random.RandomState(42).randn(4, 5, 3).astype(np.float64)
         hdr = tide_io.niftihdrfromarray(base_data)
         dtypes = [
-            np.uint8, np.int16, np.int32, np.float32, np.float64,
-            np.int8, np.uint16, np.uint32, np.int64, np.uint64,
+            np.uint8,
+            np.int16,
+            np.int32,
+            np.float32,
+            np.float64,
+            np.int8,
+            np.uint16,
+            np.uint32,
+            np.int64,
+            np.uint64,
         ]
         for dtype in dtypes:
             outpath = os.path.join(tmpdir, f"test_{dtype.__name__}")

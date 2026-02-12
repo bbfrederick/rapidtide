@@ -76,7 +76,7 @@ def _make_test_data(xsize=4, ysize=4, numslices=2, timepoints=5, order=1):
         intercept = 10.0 + t * 0.5
         for o in range(1, order + 1):
             coeff = 5.0 / (o + 1) + t * 0.1
-            data[:, :, :, t] += coeff * (template ** o)
+            data[:, :, :, t] += coeff * (template**o)
         data[:, :, :, t] += intercept
         data[:, :, :, t] += rng.randn(xsize, ysize, numslices) * 0.01
 
@@ -125,10 +125,12 @@ def parser_defaults(debug=False):
     if debug:
         print("parser_defaults")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f3, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f4:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f3,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f4,
+    ):
         args = parser.parse_args([f1.name, f2.name, f3.name, f4.name, "outroot"])
     assert args.order == 1
     assert args.regionatlas is None
@@ -139,10 +141,12 @@ def parser_order(debug=False):
     if debug:
         print("parser_order")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f3, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f4:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f3,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f4,
+    ):
         args = parser.parse_args([f1.name, f2.name, f3.name, f4.name, "out", "--order", "3"])
     assert args.order == 3
 
@@ -152,26 +156,40 @@ def parser_regionatlas(debug=False):
     if debug:
         print("parser_regionatlas")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f3, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f4, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f5:
-        args = parser.parse_args([
-            f1.name, f2.name, f3.name, f4.name, "out",
-            "--regionatlas", f5.name,
-        ])
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f3,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f4,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f5,
+    ):
+        args = parser.parse_args(
+            [
+                f1.name,
+                f2.name,
+                f3.name,
+                f4.name,
+                "out",
+                "--regionatlas",
+                f5.name,
+            ]
+        )
     assert args.regionatlas is not None
 
 
 # ==================== polyfitim tests ====================
 
 
-def _run_polyfitim(xsize=4, ysize=4, numslices=2, timepoints=5,
-                   order=1, regionatlas_data=None, datamask_4d=False):
+def _run_polyfitim(
+    xsize=4, ysize=4, numslices=2, timepoints=5, order=1, regionatlas_data=None, datamask_4d=False
+):
     """Helper to run polyfitim with mocked IO. Returns saved files dict."""
     data, template, datamask, templatemask = _make_test_data(
-        xsize, ysize, numslices, timepoints, order=order,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+        order=order,
     )
     sizes = _make_sizes()
 
@@ -198,16 +216,31 @@ def _run_polyfitim(xsize=4, ysize=4, numslices=2, timepoints=5,
 
     def mock_readfromnifti(fname, **kwargs):
         if "atlas" in fname:
-            return (MagicMock(), regionatlas_data,
-                    _make_mock_hdr(xsize, ysize, numslices, 1), atlas_dims, sizes)
+            return (
+                MagicMock(),
+                regionatlas_data,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                atlas_dims,
+                sizes,
+            )
         elif "template_mask" in fname or "templatemask" in fname:
-            return (MagicMock(), templatemask,
-                    _make_mock_hdr(xsize, ysize, numslices, 1), tmask_dims, sizes)
+            return (
+                MagicMock(),
+                templatemask,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                tmask_dims,
+                sizes,
+            )
         elif "template" in fname:
             return (MagicMock(), template, template_hdr, template_dims, sizes)
         elif "datamask" in fname or "data_mask" in fname:
-            return (MagicMock(), datamask_full,
-                    _make_mock_hdr(xsize, ysize, numslices, dmask_dims[4]), dmask_dims, sizes)
+            return (
+                MagicMock(),
+                datamask_full,
+                _make_mock_hdr(xsize, ysize, numslices, dmask_dims[4]),
+                dmask_dims,
+                sizes,
+            )
         else:
             return MagicMock(), data, data_hdr, data_dims, sizes
 
@@ -217,11 +250,15 @@ def _run_polyfitim(xsize=4, ysize=4, numslices=2, timepoints=5,
     def mock_writenpvecs(arr, fname, **kwargs):
         saved_text[fname] = np.array(arr).copy()
 
-    with patch("rapidtide.workflows.polyfitim.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.polyfitim.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.polyfitim.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.polyfitim.tide_io.savetonifti", side_effect=mock_savetonifti), \
-         patch("rapidtide.workflows.polyfitim.tide_io.writenpvecs", side_effect=mock_writenpvecs):
+    with (
+        patch(
+            "rapidtide.workflows.polyfitim.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.polyfitim.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.polyfitim.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.polyfitim.tide_io.savetonifti", side_effect=mock_savetonifti),
+        patch("rapidtide.workflows.polyfitim.tide_io.writenpvecs", side_effect=mock_writenpvecs),
+    ):
 
         polyfitim(
             datafile="dummy_data.nii.gz",
@@ -243,14 +280,23 @@ def polyfitim_linear_basic(debug=False):
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
 
     saved_nifti, saved_text = _run_polyfitim(
-        xsize, ysize, numslices, timepoints, order=1,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+        order=1,
     )
 
     # Should save fit and residuals
     assert "/tmp/test_polyfitim_fit" in saved_nifti
     assert "/tmp/test_polyfitim_residuals" in saved_nifti
     assert saved_nifti["/tmp/test_polyfitim_fit"].shape == (xsize, ysize, numslices, timepoints)
-    assert saved_nifti["/tmp/test_polyfitim_residuals"].shape == (xsize, ysize, numslices, timepoints)
+    assert saved_nifti["/tmp/test_polyfitim_residuals"].shape == (
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+    )
 
     # Should save r2vals and coefficient files
     assert "/tmp/test_polyfitim_r2vals.txt" in saved_text
@@ -263,7 +309,11 @@ def polyfitim_quadratic(debug=False):
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
 
     saved_nifti, saved_text = _run_polyfitim(
-        xsize, ysize, numslices, timepoints, order=2,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+        order=2,
     )
 
     assert "/tmp/test_polyfitim_fit" in saved_nifti
@@ -278,7 +328,11 @@ def polyfitim_cubic(debug=False):
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
 
     saved_nifti, saved_text = _run_polyfitim(
-        xsize, ysize, numslices, timepoints, order=3,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+        order=3,
     )
 
     assert "/tmp/test_polyfitim_fit" in saved_nifti
@@ -292,7 +346,11 @@ def polyfitim_r2_quality(debug=False):
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
 
     saved_nifti, saved_text = _run_polyfitim(
-        xsize, ysize, numslices, timepoints, order=1,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+        order=1,
     )
 
     r2 = saved_text["/tmp/test_polyfitim_r2vals.txt"]
@@ -308,14 +366,19 @@ def polyfitim_residuals_small(debug=False):
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
 
     saved_nifti, saved_text = _run_polyfitim(
-        xsize, ysize, numslices, timepoints, order=1,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+        order=1,
     )
 
     residuals = saved_nifti["/tmp/test_polyfitim_residuals"]
     fit = saved_nifti["/tmp/test_polyfitim_fit"]
     # Residuals should be much smaller than the fit values
-    assert np.std(residuals) < 0.1 * np.std(fit), \
-        f"Residuals std ({np.std(residuals)}) too large relative to fit std ({np.std(fit)})"
+    assert np.std(residuals) < 0.1 * np.std(
+        fit
+    ), f"Residuals std ({np.std(residuals)}) too large relative to fit std ({np.std(fit)})"
 
 
 def polyfitim_with_regionatlas(debug=False):
@@ -326,11 +389,15 @@ def polyfitim_with_regionatlas(debug=False):
 
     # Create atlas with 2 regions split along x-axis
     atlas = np.zeros((xsize, ysize, numslices), dtype=np.float64)
-    atlas[:xsize // 2, :, :] = 1
-    atlas[xsize // 2:, :, :] = 2
+    atlas[: xsize // 2, :, :] = 1
+    atlas[xsize // 2 :, :, :] = 2
 
     saved_nifti, saved_text = _run_polyfitim(
-        xsize, ysize, numslices, timepoints, order=1,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+        order=1,
         regionatlas_data=atlas,
     )
 
@@ -350,7 +417,11 @@ def polyfitim_4d_datamask(debug=False):
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
 
     saved_nifti, saved_text = _run_polyfitim(
-        xsize, ysize, numslices, timepoints, order=1,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
+        order=1,
         datamask_4d=True,
     )
 
@@ -379,7 +450,10 @@ def polyfitim_space_mismatch(debug=False):
         print("polyfitim_space_mismatch")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
     data, template, datamask, templatemask = _make_test_data(
-        xsize, ysize, numslices, timepoints,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
     )
     sizes = _make_sizes()
     data_dims = _make_dims(xsize, ysize, numslices, timepoints)
@@ -397,8 +471,15 @@ def polyfitim_space_mismatch(debug=False):
             return False  # First call: data vs datamask fails
         return True
 
-    with patch("rapidtide.workflows.polyfitim.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.polyfitim.tide_io.checkspacedimmatch", side_effect=mock_checkspacedimmatch):
+    with (
+        patch(
+            "rapidtide.workflows.polyfitim.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.polyfitim.tide_io.checkspacedimmatch",
+            side_effect=mock_checkspacedimmatch,
+        ),
+    ):
 
         with pytest.raises(SystemExit):
             polyfitim(
@@ -418,7 +499,10 @@ def polyfitim_fit_plus_residuals_equals_data(debug=False):
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
 
     data, template, datamask, templatemask = _make_test_data(
-        xsize, ysize, numslices, timepoints,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
     )
     sizes = _make_sizes()
     data_dims = _make_dims(xsize, ysize, numslices, timepoints)
@@ -431,25 +515,44 @@ def polyfitim_fit_plus_residuals_equals_data(debug=False):
 
     def mock_readfromnifti(fname, **kwargs):
         if "templatemask" in fname:
-            return (MagicMock(), templatemask,
-                    _make_mock_hdr(xsize, ysize, numslices, 1), tmask_dims, sizes)
+            return (
+                MagicMock(),
+                templatemask,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                tmask_dims,
+                sizes,
+            )
         elif "template" in fname:
-            return (MagicMock(), template,
-                    _make_mock_hdr(xsize, ysize, numslices, 1), template_dims, sizes)
+            return (
+                MagicMock(),
+                template,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                template_dims,
+                sizes,
+            )
         elif "datamask" in fname:
-            return (MagicMock(), datamask,
-                    _make_mock_hdr(xsize, ysize, numslices, 1), dmask_dims, sizes)
+            return (
+                MagicMock(),
+                datamask,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                dmask_dims,
+                sizes,
+            )
         else:
             return MagicMock(), data, data_hdr, data_dims, sizes
 
     def mock_savetonifti(arr, hdr, fname, **kwargs):
         saved_nifti[fname] = arr.copy()
 
-    with patch("rapidtide.workflows.polyfitim.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.polyfitim.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.polyfitim.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.polyfitim.tide_io.savetonifti", side_effect=mock_savetonifti), \
-         patch("rapidtide.workflows.polyfitim.tide_io.writenpvecs"):
+    with (
+        patch(
+            "rapidtide.workflows.polyfitim.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.polyfitim.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.polyfitim.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.polyfitim.tide_io.savetonifti", side_effect=mock_savetonifti),
+        patch("rapidtide.workflows.polyfitim.tide_io.writenpvecs"),
+    ):
 
         polyfitim(
             datafile="dummy_data.nii.gz",
@@ -464,8 +567,9 @@ def polyfitim_fit_plus_residuals_equals_data(debug=False):
     residuals = saved_nifti["/tmp/test_polyfitim_sum_residuals"]
     # fit + residuals should equal original data (within floating point precision)
     reconstructed = fit + residuals
-    assert np.allclose(reconstructed, data, atol=1e-10), \
-        f"Max difference: {np.max(np.abs(reconstructed - data))}"
+    assert np.allclose(
+        reconstructed, data, atol=1e-10
+    ), f"Max difference: {np.max(np.abs(reconstructed - data))}"
 
 
 # ==================== main tests ====================
@@ -477,7 +581,10 @@ def main_function(debug=False):
         print("main_function")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
     data, template, datamask, templatemask = _make_test_data(
-        xsize, ysize, numslices, timepoints,
+        xsize,
+        ysize,
+        numslices,
+        timepoints,
     )
     sizes = _make_sizes()
     data_dims = _make_dims(xsize, ysize, numslices, timepoints)
@@ -488,14 +595,29 @@ def main_function(debug=False):
 
     def mock_readfromnifti(fname, **kwargs):
         if "templatemask" in fname:
-            return (MagicMock(), templatemask,
-                    _make_mock_hdr(xsize, ysize, numslices, 1), tmask_dims, sizes)
+            return (
+                MagicMock(),
+                templatemask,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                tmask_dims,
+                sizes,
+            )
         elif "template" in fname:
-            return (MagicMock(), template,
-                    _make_mock_hdr(xsize, ysize, numslices, 1), template_dims, sizes)
+            return (
+                MagicMock(),
+                template,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                template_dims,
+                sizes,
+            )
         elif "datamask" in fname:
-            return (MagicMock(), datamask,
-                    _make_mock_hdr(xsize, ysize, numslices, 1), dmask_dims, sizes)
+            return (
+                MagicMock(),
+                datamask,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                dmask_dims,
+                sizes,
+            )
         else:
             return MagicMock(), data, data_hdr, data_dims, sizes
 
@@ -509,11 +631,15 @@ def main_function(debug=False):
         order=1,
     )
 
-    with patch("rapidtide.workflows.polyfitim.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.polyfitim.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.polyfitim.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.polyfitim.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.polyfitim.tide_io.writenpvecs"):
+    with (
+        patch(
+            "rapidtide.workflows.polyfitim.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.polyfitim.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.polyfitim.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.polyfitim.tide_io.savetonifti"),
+        patch("rapidtide.workflows.polyfitim.tide_io.writenpvecs"),
+    ):
 
         main(args)
 

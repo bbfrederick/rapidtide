@@ -165,6 +165,7 @@ def test_procOneVoxelWiener_residual_orthogonal(debug=False):
 
 # ==================== wienerpass ====================
 
+
 def test_wienerpass_singleproc(debug=False):
     """Test wienerpass with single processor (exercises the else branch)."""
     rng = np.random.RandomState(42)

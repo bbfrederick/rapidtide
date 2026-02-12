@@ -138,21 +138,25 @@ def _run_pairproc(args, input_info, mask_info=None):
     stn_effect, stn_captured = _capture_savetonifti()
     wnp_effect, wnp_captured = _capture_writenpvecs()
 
-    readfromnifti_returns = [(
-        MagicMock(),
-        input_info["data"],
-        input_info["hdr"],
-        input_info["dims"],
-        input_info["sizes"],
-    )]
-    if mask_info is not None:
-        readfromnifti_returns.append((
+    readfromnifti_returns = [
+        (
             MagicMock(),
-            mask_info["data"],
-            mask_info["hdr"],
-            mask_info["dims"],
-            mask_info["sizes"],
-        ))
+            input_info["data"],
+            input_info["hdr"],
+            input_info["dims"],
+            input_info["sizes"],
+        )
+    ]
+    if mask_info is not None:
+        readfromnifti_returns.append(
+            (
+                MagicMock(),
+                mask_info["data"],
+                mask_info["hdr"],
+                mask_info["dims"],
+                mask_info["sizes"],
+            )
+        )
 
     with (
         patch(
@@ -264,13 +268,17 @@ def test_parser_all_options(debug=False):
     """Parser should accept all optional flags together."""
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
         parser = _get_parser()
-        args = parser.parse_args([
-            "input.nii.gz", "outroot",
-            "--dmask", f.name,
-            "--getdist",
-            "--demean",
-            "--debug",
-        ])
+        args = parser.parse_args(
+            [
+                "input.nii.gz",
+                "outroot",
+                "--dmask",
+                f.name,
+                "--getdist",
+                "--demean",
+                "--debug",
+            ]
+        )
         assert args.datamaskname == f.name
         assert args.getdist is True
         assert args.demean is True
@@ -423,7 +431,13 @@ def test_pairproc_even_odd_split(debug=False):
     with (
         patch(
             "rapidtide.workflows.pairproc.tide_io.readfromnifti",
-            return_value=(MagicMock(), data, input_info["hdr"], input_info["dims"], input_info["sizes"]),
+            return_value=(
+                MagicMock(),
+                data,
+                input_info["hdr"],
+                input_info["dims"],
+                input_info["sizes"],
+            ),
         ),
         patch(
             "rapidtide.workflows.pairproc.tide_io.parseniftidims",
@@ -483,7 +497,13 @@ def test_pairproc_demean(debug=False):
     with (
         patch(
             "rapidtide.workflows.pairproc.tide_io.readfromnifti",
-            return_value=(MagicMock(), data, input_info["hdr"], input_info["dims"], input_info["sizes"]),
+            return_value=(
+                MagicMock(),
+                data,
+                input_info["hdr"],
+                input_info["dims"],
+                input_info["sizes"],
+            ),
         ),
         patch(
             "rapidtide.workflows.pairproc.tide_io.parseniftidims",
@@ -575,7 +595,13 @@ def test_pairproc_shifted_uses_roll(debug=False):
     with (
         patch(
             "rapidtide.workflows.pairproc.tide_io.readfromnifti",
-            return_value=(MagicMock(), data, input_info["hdr"], input_info["dims"], input_info["sizes"]),
+            return_value=(
+                MagicMock(),
+                data,
+                input_info["hdr"],
+                input_info["dims"],
+                input_info["sizes"],
+            ),
         ),
         patch(
             "rapidtide.workflows.pairproc.tide_io.parseniftidims",
@@ -600,7 +626,9 @@ def test_pairproc_with_mask(debug=False):
     """pairproc should use provided mask to select voxels."""
     xsize, ysize, numslices = 2, 2, 1
     timepoints = 4
-    input_info = _make_input_data(xsize=xsize, ysize=ysize, numslices=numslices, timepoints=timepoints)
+    input_info = _make_input_data(
+        xsize=xsize, ysize=ysize, numslices=numslices, timepoints=timepoints
+    )
 
     # Mask out half the voxels
     mask = _make_mask_data(xsize=xsize, ysize=ysize, numslices=numslices)
@@ -670,13 +698,30 @@ def test_pairproc_mask_dim_mismatch_exits(debug=False):
         patch(
             "rapidtide.workflows.pairproc.tide_io.readfromnifti",
             side_effect=[
-                (MagicMock(), input_info["data"], input_info["hdr"], input_info["dims"], input_info["sizes"]),
-                (MagicMock(), mask_info["data"], mask_info["hdr"], mask_info["dims"], mask_info["sizes"]),
+                (
+                    MagicMock(),
+                    input_info["data"],
+                    input_info["hdr"],
+                    input_info["dims"],
+                    input_info["sizes"],
+                ),
+                (
+                    MagicMock(),
+                    mask_info["data"],
+                    mask_info["hdr"],
+                    mask_info["dims"],
+                    mask_info["sizes"],
+                ),
             ],
         ),
         patch(
             "rapidtide.workflows.pairproc.tide_io.parseniftidims",
-            return_value=(input_info["xsize"], input_info["ysize"], input_info["numslices"], input_info["timepoints"]),
+            return_value=(
+                input_info["xsize"],
+                input_info["ysize"],
+                input_info["numslices"],
+                input_info["timepoints"],
+            ),
         ),
         patch(
             "rapidtide.workflows.pairproc.tide_io.checkspacedimmatch",
@@ -704,13 +749,30 @@ def test_pairproc_mask_time_not_one_exits(debug=False):
         patch(
             "rapidtide.workflows.pairproc.tide_io.readfromnifti",
             side_effect=[
-                (MagicMock(), input_info["data"], input_info["hdr"], input_info["dims"], input_info["sizes"]),
-                (MagicMock(), mask_info["data"], mask_info["hdr"], mask_info["dims"], mask_info["sizes"]),
+                (
+                    MagicMock(),
+                    input_info["data"],
+                    input_info["hdr"],
+                    input_info["dims"],
+                    input_info["sizes"],
+                ),
+                (
+                    MagicMock(),
+                    mask_info["data"],
+                    mask_info["hdr"],
+                    mask_info["dims"],
+                    mask_info["sizes"],
+                ),
             ],
         ),
         patch(
             "rapidtide.workflows.pairproc.tide_io.parseniftidims",
-            return_value=(input_info["xsize"], input_info["ysize"], input_info["numslices"], input_info["timepoints"]),
+            return_value=(
+                input_info["xsize"],
+                input_info["ysize"],
+                input_info["numslices"],
+                input_info["timepoints"],
+            ),
         ),
         patch(
             "rapidtide.workflows.pairproc.tide_io.checkspacedimmatch",

@@ -102,8 +102,10 @@ def get_parser_defaults(debug=False):
     if debug:
         print("get_parser_defaults")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name])
         assert args.samplerate1 is None
         assert args.samplerate2 is None
@@ -127,8 +129,10 @@ def get_parser_samplerate1(debug=False):
     if debug:
         print("get_parser_samplerate1")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--samplerate1", "25.0"])
         assert args.samplerate1 == 25.0
 
@@ -138,8 +142,10 @@ def get_parser_samplerate2(debug=False):
     if debug:
         print("get_parser_samplerate2")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--samplerate2", "50.0"])
         assert args.samplerate2 == 50.0
 
@@ -149,8 +155,10 @@ def get_parser_nodisplay(debug=False):
     if debug:
         print("get_parser_nodisplay")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--nodisplay"])
         assert not args.display
 
@@ -160,8 +168,10 @@ def get_parser_debug(debug=False):
     if debug:
         print("get_parser_debug")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--debug"])
         assert args.debug
 
@@ -171,8 +181,10 @@ def get_parser_verbose(debug=False):
     if debug:
         print("get_parser_verbose")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--verbose"])
         assert args.verbose
 
@@ -182,8 +194,10 @@ def get_parser_detrendorder(debug=False):
     if debug:
         print("get_parser_detrendorder")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--detrendorder", "3"])
         assert args.detrendorder == 3
 
@@ -193,8 +207,10 @@ def get_parser_corrweighting(debug=False):
     if debug:
         print("get_parser_corrweighting")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         for choice in ["None", "phat", "liang", "eckart"]:
             args = parser.parse_args([f1.name, f2.name, "--corrweighting", choice])
             assert args.corrweighting == choice
@@ -205,8 +221,10 @@ def get_parser_invert(debug=False):
     if debug:
         print("get_parser_invert")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--invert"])
         assert args.invert
 
@@ -216,8 +234,10 @@ def get_parser_label(debug=False):
     if debug:
         print("get_parser_label")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--label", "test_label"])
         assert args.label == "test_label"
 
@@ -227,8 +247,10 @@ def get_parser_bipolar(debug=False):
     if debug:
         print("get_parser_bipolar")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--bipolar"])
         assert args.bipolar
 
@@ -238,8 +260,10 @@ def get_parser_outputfile(debug=False):
     if debug:
         print("get_parser_outputfile")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--outputfile", "results.txt"])
         assert args.outputfile == "results.txt"
 
@@ -249,8 +273,10 @@ def get_parser_corroutputfile(debug=False):
     if debug:
         print("get_parser_corroutputfile")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--corroutputfile", "corr.txt"])
         assert args.corroutputfile == "corr.txt"
 
@@ -260,8 +286,10 @@ def get_parser_summarymode(debug=False):
     if debug:
         print("get_parser_summarymode")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--summarymode"])
         assert args.summarymode
 
@@ -271,8 +299,10 @@ def get_parser_labelline(debug=False):
     if debug:
         print("get_parser_labelline")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--labelline"])
         assert args.labelline
 
@@ -282,8 +312,10 @@ def get_parser_noprogressbar(debug=False):
     if debug:
         print("get_parser_noprogressbar")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--noprogressbar"])
         assert not args.showprogressbar
 
@@ -293,8 +325,10 @@ def get_parser_nprocs(debug=False):
     if debug:
         print("get_parser_nprocs")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--nprocs", "4"])
         assert args.nprocs == 4
 
@@ -304,8 +338,10 @@ def get_parser_trimdata(debug=False):
     if debug:
         print("get_parser_trimdata")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--trimdata"])
         assert args.trimdata
 
@@ -315,8 +351,10 @@ def get_parser_windowfunc(debug=False):
     if debug:
         print("get_parser_windowfunc")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--windowfunc", "hann"])
         assert args.windowfunc == "hann"
 
@@ -326,8 +364,10 @@ def get_parser_nonorm(debug=False):
     if debug:
         print("get_parser_nonorm")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--nonorm"])
         assert not args.minorm
 
@@ -337,8 +377,10 @@ def get_parser_saveres(debug=False):
     if debug:
         print("get_parser_saveres")
     parser = sac._get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "--saveres", "300"])
         assert args.saveres == 300
 
@@ -418,8 +460,7 @@ def showarbcorr_identical_signals(debug=False):
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
         corroutput = os.path.join(tmpdir, "corr.txt")
-        args = _make_test_args(tmpdir, file1, file2,
-                               corroutputfile=corroutput, debug=debug)
+        args = _make_test_args(tmpdir, file1, file2, corroutputfile=corroutput, debug=debug)
         sac.showarbcorr(args)
 
         # Check that correlation output file was created
@@ -443,8 +484,9 @@ def showarbcorr_delayed_signals(debug=False):
         file2 = _write_plain_signal_file(tmpdir, sig2, name="sig2.txt")
 
         outfile = os.path.join(tmpdir, "results.txt")
-        args = _make_test_args(tmpdir, file1, file2,
-                               summarymode=True, outputfile=outfile, debug=debug)
+        args = _make_test_args(
+            tmpdir, file1, file2, summarymode=True, outputfile=outfile, debug=debug
+        )
         sac.showarbcorr(args)
 
         assert os.path.exists(outfile), "Output file not created"
@@ -459,9 +501,9 @@ def showarbcorr_delayed_signals(debug=False):
         maxdelay_val = float(parts[2])
         assert abs(r_val) > 0.8, f"Expected high R, got {r_val}"
         # maxdelay should be near the delay
-        assert abs(abs(maxdelay_val) - delay) < 0.5, (
-            f"Expected delay near {delay}, got {maxdelay_val}"
-        )
+        assert (
+            abs(abs(maxdelay_val) - delay) < 0.5
+        ), f"Expected delay near {delay}, got {maxdelay_val}"
 
 
 def showarbcorr_summarymode_with_label(debug=False):
@@ -474,9 +516,16 @@ def showarbcorr_summarymode_with_label(debug=False):
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
         outfile = os.path.join(tmpdir, "results.txt")
-        args = _make_test_args(tmpdir, file1, file2,
-                               summarymode=True, labelline=True,
-                               label="test_run", outputfile=outfile, debug=debug)
+        args = _make_test_args(
+            tmpdir,
+            file1,
+            file2,
+            summarymode=True,
+            labelline=True,
+            label="test_run",
+            outputfile=outfile,
+            debug=debug,
+        )
         sac.showarbcorr(args)
 
         with open(outfile, "r") as f:
@@ -503,8 +552,7 @@ def showarbcorr_summarymode_to_stdout(debug=False):
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
-        args = _make_test_args(tmpdir, file1, file2,
-                               summarymode=True, debug=debug)
+        args = _make_test_args(tmpdir, file1, file2, summarymode=True, debug=debug)
         captured = io.StringIO()
         old_stdout = sys.stdout
         sys.stdout = captured
@@ -559,14 +607,14 @@ def showarbcorr_invert(debug=False):
 
         # Without invert
         outfile1 = os.path.join(tmpdir, "results_noinv.txt")
-        args1 = _make_test_args(tmpdir, file1, file2,
-                                summarymode=True, outputfile=outfile1)
+        args1 = _make_test_args(tmpdir, file1, file2, summarymode=True, outputfile=outfile1)
         sac.showarbcorr(args1)
 
         # With invert
         outfile2 = os.path.join(tmpdir, "results_inv.txt")
-        args2 = _make_test_args(tmpdir, file1, file2,
-                                invert=True, summarymode=True, outputfile=outfile2)
+        args2 = _make_test_args(
+            tmpdir, file1, file2, invert=True, summarymode=True, outputfile=outfile2
+        )
         sac.showarbcorr(args2)
 
         # parts: label(0), R(1), delay(2), failreason(3)
@@ -590,8 +638,7 @@ def showarbcorr_corroutputfile(debug=False):
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
         corrfile = os.path.join(tmpdir, "corrfunc.txt")
-        args = _make_test_args(tmpdir, file1, file2,
-                               corroutputfile=corrfile, debug=debug)
+        args = _make_test_args(tmpdir, file1, file2, corroutputfile=corrfile, debug=debug)
         sac.showarbcorr(args)
 
         assert os.path.exists(corrfile)
@@ -617,9 +664,9 @@ def showarbcorr_trimdata(debug=False):
         file2 = _write_plain_signal_file(tmpdir, sig2, name="sig2.txt")
 
         outfile = os.path.join(tmpdir, "results.txt")
-        args = _make_test_args(tmpdir, file1, file2,
-                               trimdata=True, summarymode=True, outputfile=outfile,
-                               debug=debug)
+        args = _make_test_args(
+            tmpdir, file1, file2, trimdata=True, summarymode=True, outputfile=outfile, debug=debug
+        )
         sac.showarbcorr(args)
 
         assert os.path.exists(outfile)
@@ -638,8 +685,16 @@ def showarbcorr_different_samplerates(debug=False):
         file2 = _write_plain_signal_file(tmpdir, sig2, name="sig2.txt")
 
         outfile = os.path.join(tmpdir, "results.txt")
-        args = _make_test_args(tmpdir, file1, file2, Fs1=fs1, Fs2=fs2,
-                               summarymode=True, outputfile=outfile, debug=debug)
+        args = _make_test_args(
+            tmpdir,
+            file1,
+            file2,
+            Fs1=fs1,
+            Fs2=fs2,
+            summarymode=True,
+            outputfile=outfile,
+            debug=debug,
+        )
         sac.showarbcorr(args)
 
         assert os.path.exists(outfile)
@@ -662,9 +717,9 @@ def showarbcorr_bipolar(debug=False):
         file2 = _write_plain_signal_file(tmpdir, -signal, name="sig2.txt")
 
         outfile = os.path.join(tmpdir, "results.txt")
-        args = _make_test_args(tmpdir, file1, file2,
-                               bipolar=True, summarymode=True, outputfile=outfile,
-                               debug=debug)
+        args = _make_test_args(
+            tmpdir, file1, file2, bipolar=True, summarymode=True, outputfile=outfile, debug=debug
+        )
         sac.showarbcorr(args)
 
         assert os.path.exists(outfile)

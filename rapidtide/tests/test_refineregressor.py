@@ -113,8 +113,13 @@ def test_unpackvoxeldata_multiple_voxels(debug=False):
     voxelproducts = [np.zeros((nvoxels, ntimepoints)) for _ in range(4)]
 
     for vox in range(nvoxels):
-        retvals = (vox, np.ones(ntimepoints) * (vox + 1), np.ones(ntimepoints) * (vox + 10),
-                   np.ones(ntimepoints) * (vox + 100), np.ones(ntimepoints) * (vox + 1000))
+        retvals = (
+            vox,
+            np.ones(ntimepoints) * (vox + 1),
+            np.ones(ntimepoints) * (vox + 10),
+            np.ones(ntimepoints) * (vox + 100),
+            np.ones(ntimepoints) * (vox + 1000),
+        )
         _unpackvoxeldata(retvals, voxelproducts)
 
     for vox in range(nvoxels):
@@ -185,9 +190,7 @@ def test_procOneVoxelTimeShift_detrending(debug=False):
     fmritr = 2.0
 
     voxelargs = (fmritc, lagtime, padtrs, fmritr)
-    _, shiftedtc, _, _, _ = _procOneVoxelTimeShift(
-        0, voxelargs, detrendorder=1, offsettime=0.0
-    )
+    _, shiftedtc, _, _, _ = _procOneVoxelTimeShift(0, voxelargs, detrendorder=1, offsettime=0.0)
 
     # After detrending, mean should be near zero
     assert abs(np.mean(shiftedtc)) < 0.5
@@ -271,8 +274,14 @@ def test_makerefinemask_basic(debug=False):
     lagmask = np.ones(shape)
 
     volumetotal, maskarray, locfails, ampfails, lagfails, sigfails, numinmask = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0, sigmathresh=100,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
+        sigmathresh=100,
     )
 
     assert volumetotal > 0
@@ -293,9 +302,13 @@ def test_makerefinemask_ampthresh_filters(debug=False):
     lagmask = np.ones(shape)
 
     volumetotal, maskarray, _, ampfails, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
         ampthresh=0.5,
-        lagminthresh=0.5, lagmaxthresh=5.0,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
     )
 
     # All voxels below ampthresh, so mask should be empty
@@ -315,8 +328,13 @@ def test_makerefinemask_lag_filters(debug=False):
     lagmask = np.ones(shape)
 
     volumetotal, maskarray, _, _, lagfails, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
     )
 
     assert volumetotal == 0
@@ -335,8 +353,14 @@ def test_makerefinemask_sigma_filters(debug=False):
     lagmask = np.ones(shape)
 
     volumetotal, maskarray, _, _, _, sigfails, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0, sigmathresh=100,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
+        sigmathresh=100,
     )
 
     assert volumetotal == 0
@@ -355,8 +379,14 @@ def test_makerefinemask_lagmaskside_upper(debug=False):
     lagmask = np.ones(shape)
 
     volumetotal, maskarray, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagmaskside="upper", lagminthresh=0.5, lagmaxthresh=5.0,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagmaskside="upper",
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
     )
 
     assert volumetotal > 0
@@ -375,8 +405,14 @@ def test_makerefinemask_lagmaskside_lower(debug=False):
     lagmask = np.ones(shape)
 
     volumetotal, maskarray, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagmaskside="lower", lagminthresh=0.5, lagmaxthresh=5.0,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagmaskside="lower",
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
     )
 
     assert volumetotal > 0
@@ -395,14 +431,26 @@ def test_makerefinemask_bipolar(debug=False):
 
     # Without bipolar, negative strengths fail ampthresh
     vol_nobipolar, mask_nobipolar, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0, bipolar=False,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
+        bipolar=False,
     )
 
     # With bipolar, absolute values are used
     vol_bipolar, mask_bipolar, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0, bipolar=True,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
+        bipolar=True,
     )
 
     assert vol_nobipolar == 0
@@ -425,8 +473,13 @@ def test_makerefinemask_includemask(debug=False):
     includemask[2, 2, 2] = 1
 
     volumetotal, maskarray, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
         includemask=includemask,
     )
 
@@ -449,8 +502,13 @@ def test_makerefinemask_excludemask(debug=False):
     excludemask[2, 2, 2] = 0
 
     volumetotal, maskarray, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
         excludemask=excludemask,
     )
 
@@ -470,14 +528,26 @@ def test_makerefinemask_fixdelay(debug=False):
 
     # Without fixdelay, these lags would be filtered out
     vol_nofixdelay, _, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0, fixdelay=False,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
+        fixdelay=False,
     )
 
     # With fixdelay, lag thresholds are ignored
     vol_fixdelay, mask_fixdelay, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0, fixdelay=True,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
+        fixdelay=True,
     )
 
     assert vol_nofixdelay == 0
@@ -497,9 +567,13 @@ def test_makerefinemask_negative_ampthresh(debug=False):
     lagmask = np.ones(shape)
 
     volumetotal, maskarray, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
         ampthresh=-0.5,  # 50th percentile
-        lagminthresh=0.5, lagmaxthresh=5.0,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
     )
 
     # Should keep roughly half the voxels (those above median)
@@ -520,14 +594,24 @@ def test_makerefinemask_cleanrefined(debug=False):
     lagstrengths[0, 0, 0] = 0.1
 
     vol_clean, mask_clean, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
         cleanrefined=True,
     )
 
     vol_noclean, mask_noclean, _, _, _, _, _ = makerefinemask(
-        lagstrengths, lagtimes, lagsigma, lagmask,
-        ampthresh=0.3, lagminthresh=0.5, lagmaxthresh=5.0,
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.3,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
         cleanrefined=False,
     )
 
@@ -554,8 +638,7 @@ def test_prenorm_mean(debug=False):
     R2vals = np.ones(nvoxels) * 0.6
 
     original = shiftedtcs.copy()
-    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals,
-            "mean", "R")
+    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals, "mean", "R")
 
     # After mean normalization and R weighting, values should change
     assert not np.allclose(shiftedtcs, original)
@@ -576,8 +659,7 @@ def test_prenorm_var(debug=False):
     lagstrengths = np.ones(nvoxels) * 0.8
     R2vals = np.ones(nvoxels) * 0.6
 
-    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals,
-            "var", "R")
+    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals, "var", "R")
 
     assert np.all(np.isfinite(shiftedtcs))
 
@@ -597,8 +679,7 @@ def test_prenorm_std(debug=False):
     lagstrengths = np.ones(nvoxels) * 0.8
     R2vals = np.ones(nvoxels) * 0.6
 
-    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals,
-            "std", "R")
+    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals, "std", "R")
 
     assert np.all(np.isfinite(shiftedtcs))
 
@@ -618,8 +699,7 @@ def test_prenorm_invlag(debug=False):
     lagstrengths = np.ones(nvoxels) * 0.8
     R2vals = np.ones(nvoxels) * 0.6
 
-    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals,
-            "invlag", "R")
+    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals, "invlag", "R")
 
     assert np.all(np.isfinite(shiftedtcs))
 
@@ -640,8 +720,9 @@ def test_prenorm_default_norm(debug=False):
     lagstrengths = np.ones(nvoxels) * 0.8
     R2vals = np.ones(nvoxels) * 0.6
 
-    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals,
-            "unknown_method", "R")
+    prenorm(
+        shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals, "unknown_method", "R"
+    )
 
     # With unit normalization and R weighting (all 0.8), result = original * 0.8
     np.testing.assert_allclose(shiftedtcs, original * 0.8, atol=1e-10)
@@ -663,8 +744,16 @@ def test_prenorm_R2_weighting(debug=False):
     lagstrengths = np.ones(nvoxels) * 0.8
     R2vals = np.ones(nvoxels) * 0.5
 
-    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals,
-            "unknown_method", "R2")
+    prenorm(
+        shiftedtcs,
+        refinemask,
+        lagtimes,
+        lagmaxthresh,
+        lagstrengths,
+        R2vals,
+        "unknown_method",
+        "R2",
+    )
 
     # With unit normalization and R2 weighting (all 0.5)
     np.testing.assert_allclose(shiftedtcs, original * 0.5, atol=1e-10)
@@ -686,8 +775,16 @@ def test_prenorm_default_weighting(debug=False):
     lagstrengths = np.ones(nvoxels) * 0.8  # all positive
     R2vals = np.ones(nvoxels) * 0.5
 
-    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals,
-            "unknown_method", "other")
+    prenorm(
+        shiftedtcs,
+        refinemask,
+        lagtimes,
+        lagmaxthresh,
+        lagstrengths,
+        R2vals,
+        "unknown_method",
+        "other",
+    )
 
     # Default weighting: sign of lagstrengths * refinemask = 1.0 * 1.0 = 1.0
     np.testing.assert_allclose(shiftedtcs, original * 1.0, atol=1e-10)
@@ -709,8 +806,7 @@ def test_prenorm_masked_voxels(debug=False):
     lagstrengths = np.ones(nvoxels) * 0.8
     R2vals = np.ones(nvoxels) * 0.6
 
-    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals,
-            "mean", "R")
+    prenorm(shiftedtcs, refinemask, lagtimes, lagmaxthresh, lagstrengths, R2vals, "mean", "R")
 
     # Masked-out voxels should be zeroed
     for v in range(5, 10):
@@ -743,10 +839,17 @@ def test_dorefine_unweighted_average(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         outputname = os.path.join(tmpdir, "test_refine")
         volumetotal, outputdata = dorefine(
-            shiftedtcs, refinemask, weights, mock_prefilter,
-            fmritr=2.0, passnum=1, lagstrengths=lagstrengths,
-            lagtimes=lagtimes, refinetype="unweighted_average",
-            fmrifreq=0.5, outputname=outputname,
+            shiftedtcs,
+            refinemask,
+            weights,
+            mock_prefilter,
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="unweighted_average",
+            fmrifreq=0.5,
+            outputname=outputname,
         )
 
     assert volumetotal == nvoxels
@@ -778,10 +881,17 @@ def test_dorefine_weighted_average(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         outputname = os.path.join(tmpdir, "test_refine")
         volumetotal, outputdata = dorefine(
-            shiftedtcs, refinemask, weights, mock_prefilter,
-            fmritr=2.0, passnum=1, lagstrengths=lagstrengths,
-            lagtimes=lagtimes, refinetype="weighted_average",
-            fmrifreq=0.5, outputname=outputname,
+            shiftedtcs,
+            refinemask,
+            weights,
+            mock_prefilter,
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="weighted_average",
+            fmrifreq=0.5,
+            outputname=outputname,
         )
 
     assert volumetotal == nvoxels
@@ -811,10 +921,17 @@ def test_dorefine_pca(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         outputname = os.path.join(tmpdir, "test_refine")
         volumetotal, outputdata = dorefine(
-            shiftedtcs, refinemask, weights, mock_prefilter,
-            fmritr=2.0, passnum=1, lagstrengths=lagstrengths,
-            lagtimes=lagtimes, refinetype="pca",
-            fmrifreq=0.5, outputname=outputname,
+            shiftedtcs,
+            refinemask,
+            weights,
+            mock_prefilter,
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="pca",
+            fmrifreq=0.5,
+            outputname=outputname,
             pcacomponents=0.8,
         )
 
@@ -845,10 +962,17 @@ def test_dorefine_ica(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         outputname = os.path.join(tmpdir, "test_refine")
         volumetotal, outputdata = dorefine(
-            shiftedtcs, refinemask, weights, mock_prefilter,
-            fmritr=2.0, passnum=1, lagstrengths=lagstrengths,
-            lagtimes=lagtimes, refinetype="ica",
-            fmrifreq=0.5, outputname=outputname,
+            shiftedtcs,
+            refinemask,
+            weights,
+            mock_prefilter,
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="ica",
+            fmrifreq=0.5,
+            outputname=outputname,
         )
 
     assert volumetotal == nvoxels
@@ -878,10 +1002,17 @@ def test_dorefine_partial_mask(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         outputname = os.path.join(tmpdir, "test_refine")
         volumetotal, outputdata = dorefine(
-            shiftedtcs, refinemask, weights, mock_prefilter,
-            fmritr=2.0, passnum=1, lagstrengths=lagstrengths,
-            lagtimes=lagtimes, refinetype="unweighted_average",
-            fmrifreq=0.5, outputname=outputname,
+            shiftedtcs,
+            refinemask,
+            weights,
+            mock_prefilter,
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="unweighted_average",
+            fmrifreq=0.5,
+            outputname=outputname,
         )
 
     assert volumetotal == 10
@@ -913,10 +1044,17 @@ def test_dorefine_bipolar(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         outputname = os.path.join(tmpdir, "test_refine")
         volumetotal, outputdata = dorefine(
-            shiftedtcs, refinemask, weights, mock_prefilter,
-            fmritr=2.0, passnum=1, lagstrengths=lagstrengths,
-            lagtimes=lagtimes, refinetype="unweighted_average",
-            fmrifreq=0.5, outputname=outputname,
+            shiftedtcs,
+            refinemask,
+            weights,
+            mock_prefilter,
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="unweighted_average",
+            fmrifreq=0.5,
+            outputname=outputname,
             bipolar=True,
         )
 
@@ -949,10 +1087,17 @@ def test_dorefine_cleanrefined(debug=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         outputname = os.path.join(tmpdir, "test_refine")
         volumetotal, outputdata = dorefine(
-            shiftedtcs, refinemask, weights, mock_prefilter,
-            fmritr=2.0, passnum=1, lagstrengths=lagstrengths,
-            lagtimes=lagtimes, refinetype="unweighted_average",
-            fmrifreq=0.5, outputname=outputname,
+            shiftedtcs,
+            refinemask,
+            weights,
+            mock_prefilter,
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="unweighted_average",
+            fmrifreq=0.5,
+            outputname=outputname,
             cleanrefined=True,
         )
 
@@ -985,10 +1130,19 @@ def test_alignvoxels_single_proc(debug=False):
     paddedweights = np.zeros((nvoxels, ntimepoints + 2 * padtrs))
 
     volumetotal = alignvoxels(
-        fmridata, fmritr, shiftedtcs, weights, paddedshiftedtcs, paddedweights,
-        lagtimes, lagmask,
-        detrendorder=1, offsettime=0.0,
-        nprocs=1, showprogressbar=False, padtrs=padtrs,
+        fmridata,
+        fmritr,
+        shiftedtcs,
+        weights,
+        paddedshiftedtcs,
+        paddedweights,
+        lagtimes,
+        lagmask,
+        detrendorder=1,
+        offsettime=0.0,
+        nprocs=1,
+        showprogressbar=False,
+        padtrs=padtrs,
     )
 
     assert volumetotal == nvoxels
@@ -1019,10 +1173,19 @@ def test_alignvoxels_partial_mask(debug=False):
     paddedweights = np.zeros((nvoxels, ntimepoints + 2 * padtrs))
 
     volumetotal = alignvoxels(
-        fmridata, fmritr, shiftedtcs, weights, paddedshiftedtcs, paddedweights,
-        lagtimes, lagmask,
-        detrendorder=1, offsettime=0.0,
-        nprocs=1, showprogressbar=False, padtrs=padtrs,
+        fmridata,
+        fmritr,
+        shiftedtcs,
+        weights,
+        paddedshiftedtcs,
+        paddedweights,
+        lagtimes,
+        lagmask,
+        detrendorder=1,
+        offsettime=0.0,
+        nprocs=1,
+        showprogressbar=False,
+        padtrs=padtrs,
     )
 
     assert volumetotal == 5

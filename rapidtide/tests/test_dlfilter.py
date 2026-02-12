@@ -109,9 +109,7 @@ def cnn_predict_model(testtemproot, dummy_data):
     filter_obj.getname()
     filter_obj.makenet()
 
-    predictions = filter_obj.predict_model(
-        tf.constant(dummy_data["val_x"])
-    ).numpy()
+    predictions = filter_obj.predict_model(tf.constant(dummy_data["val_x"])).numpy()
 
     assert predictions.shape == dummy_data["val_y"].shape
     assert isinstance(predictions, np.ndarray)
@@ -514,15 +512,23 @@ def base_filter_inputsize_usebadpts(testtemproot):
 
     # Without badpts
     f1 = dlfilter.CNNDLFilter(
-        num_filters=10, kernel_size=5, window_size=64,
-        num_epochs=1, modelroot=testtemproot, usebadpts=False,
+        num_filters=10,
+        kernel_size=5,
+        window_size=64,
+        num_epochs=1,
+        modelroot=testtemproot,
+        usebadpts=False,
     )
     assert f1.inputsize == 1
 
     # With badpts
     f2 = dlfilter.CNNDLFilter(
-        num_filters=10, kernel_size=5, window_size=64,
-        num_epochs=1, modelroot=testtemproot, usebadpts=True,
+        num_filters=10,
+        kernel_size=5,
+        window_size=64,
+        num_epochs=1,
+        modelroot=testtemproot,
+        usebadpts=True,
     )
     assert f2.inputsize == 2
 
@@ -600,9 +606,7 @@ def filtscale_hybrid():
     assert np.allclose(scaled_data[:, 0], data)
 
     # Reverse hybrid mode returns just the first column
-    reconstructed = dlfilter.filtscale(
-        scaled_data, scalefac=scalefac, reverse=True, hybrid=True
-    )
+    reconstructed = dlfilter.filtscale(scaled_data, scalefac=scalefac, reverse=True, hybrid=True)
     assert np.allclose(reconstructed, data)
 
 
@@ -613,9 +617,7 @@ def filtscale_roundtrip():
     data = np.random.randn(128)
 
     scaled_log, sf_log = dlfilter.filtscale(data, reverse=False, lognormalize=True)
-    recon_log = dlfilter.filtscale(
-        scaled_log, scalefac=sf_log, reverse=True, lognormalize=True
-    )
+    recon_log = dlfilter.filtscale(scaled_log, scalefac=sf_log, reverse=True, lognormalize=True)
     assert recon_log.shape == data.shape
     assert mse(data, recon_log) < 0.1
 

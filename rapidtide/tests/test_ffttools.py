@@ -147,7 +147,9 @@ def optfftlen_with_padding(debug=False):
     padlen = 20
     result = ffttools.optfftlen(length, padlen=padlen)
     # With padding, result should accommodate length + 2*padlen
-    assert result >= length, f"optfftlen({length}, padlen={padlen}) = {result}, expected >= {length}"
+    assert (
+        result >= length
+    ), f"optfftlen({length}, padlen={padlen}) = {result}, expected >= {length}"
     if debug:
         print("optfftlen_with_padding passed")
 
@@ -185,9 +187,9 @@ def optfftlen_debug_output(debug=False):
     finally:
         sys.stdout = old_stdout
     output = captured.getvalue()
-    assert "optfftlen" in output.lower() or "entering" in output.lower(), (
-        f"Expected debug output, got: '{output}'"
-    )
+    assert (
+        "optfftlen" in output.lower() or "entering" in output.lower()
+    ), f"Expected debug output, got: '{output}'"
     ffttools.lencache.clear()
     if debug:
         print("optfftlen_debug_output passed")
@@ -204,9 +206,9 @@ def optfftlen_various_lengths(debug=False):
         max_factor = max(factors)
         if ffttools.pyfftwpresent:
             # pyfftw's next_fast_len should produce numbers with small prime factors
-            assert max_factor <= 13, (
-                f"optfftlen({length}) = {result} has large prime factor {max_factor}"
-            )
+            assert (
+                max_factor <= 13
+            ), f"optfftlen({length}) = {result} has large prime factor {max_factor}"
     ffttools.lencache.clear()
     if debug:
         print("optfftlen_various_lengths passed")
@@ -292,9 +294,9 @@ def integration_primefacs_optfftlen(debug=False):
         product = 1
         for f in factors:
             product *= f
-        assert product == opt_len, (
-            f"Product of factors of optfftlen({length})={opt_len} is {product}"
-        )
+        assert (
+            product == opt_len
+        ), f"Product of factors of optfftlen({length})={opt_len} is {product}"
     ffttools.lencache.clear()
     if debug:
         print("integration_primefacs_optfftlen passed")

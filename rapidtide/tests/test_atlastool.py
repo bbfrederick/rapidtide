@@ -31,18 +31,22 @@ from rapidtide.workflows.atlastool import _get_parser, atlastool
 def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
     """Create a mock NIfTI header."""
     hdr = MagicMock()
-    hdr.__getitem__ = MagicMock(side_effect=lambda key: {
-        "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
-        "pixdim": [1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0],
-    }[key])
+    hdr.__getitem__ = MagicMock(
+        side_effect=lambda key: {
+            "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
+            "pixdim": [1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0],
+        }[key]
+    )
     hdr.__setitem__ = MagicMock()
 
     def copy_fn():
         h = MagicMock()
-        h.__getitem__ = MagicMock(side_effect=lambda key: {
-            "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
-            "pixdim": [1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0],
-        }[key])
+        h.__getitem__ = MagicMock(
+            side_effect=lambda key: {
+                "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
+                "pixdim": [1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0],
+            }[key]
+        )
         h.__setitem__ = MagicMock()
         return h
 
@@ -191,18 +195,25 @@ def get_parser_with_all_options(testtemproot, debug=False):
             fh.write("dummy")
 
     parser = _get_parser()
-    args = parser.parse_args([
-        infile, "output.nii.gz",
-        "--4d",
-        "--split",
-        "--maskthresh", "0.5",
-        "--labelfile", labelfile,
-        "--maskfile", maskfile,
-        "--removeemptyregions",
-        "--RtoL",
-        "--debug",
-        "--maxval", "10",
-    ])
+    args = parser.parse_args(
+        [
+            infile,
+            "output.nii.gz",
+            "--4d",
+            "--split",
+            "--maskthresh",
+            "0.5",
+            "--labelfile",
+            labelfile,
+            "--maskfile",
+            maskfile,
+            "--removeemptyregions",
+            "--RtoL",
+            "--debug",
+            "--maxval",
+            "10",
+        ]
+    )
     assert args.volumeperregion is True
     assert args.dosplit is True
     assert args.maskthresh == 0.5
@@ -224,8 +235,10 @@ def atlastool_3d_to_3d(testtemproot, debug=False):
     args.volumeperregion = False
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -244,8 +257,10 @@ def atlastool_3d_to_4d(testtemproot, debug=False):
     args.volumeperregion = True
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -266,8 +281,10 @@ def atlastool_3d_with_maxval(testtemproot, debug=False):
     args.volumeperregion = False
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data.copy(), hdr, dims, sizes)
 
@@ -289,8 +306,10 @@ def atlastool_4d_to_3d(testtemproot, debug=False):
     args.volumeperregion = False
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -308,8 +327,10 @@ def atlastool_4d_to_4d(testtemproot, debug=False):
     args.volumeperregion = True
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -328,8 +349,10 @@ def atlastool_4d_with_maxval(testtemproot, debug=False):
     args.volumeperregion = True
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -350,8 +373,10 @@ def atlastool_split_LtoR(testtemproot, debug=False):
     args.volumeperregion = True
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -373,8 +398,10 @@ def atlastool_split_RtoL(testtemproot, debug=False):
     args.volumeperregion = True
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -404,14 +431,14 @@ def atlastool_split_with_labels(testtemproot, debug=False):
     args.removeemptyregions = True
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlastool.tide_io.niftisplitext") as mock_split:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlastool.tide_io.niftisplitext") as mock_split,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
-        mock_split.return_value = (
-            os.path.join(testtemproot, "atlasout_splitlabels"), ".nii.gz"
-        )
+        mock_split.return_value = (os.path.join(testtemproot, "atlasout_splitlabels"), ".nii.gz")
 
         atlastool(args)
 
@@ -443,14 +470,14 @@ def atlastool_with_labels_no_split(testtemproot, debug=False):
     args.volumeperregion = False
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlastool.tide_io.niftisplitext") as mock_split:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlastool.tide_io.niftisplitext") as mock_split,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
-        mock_split.return_value = (
-            os.path.join(testtemproot, "atlasout_labelsnosplit"), ".nii.gz"
-        )
+        mock_split.return_value = (os.path.join(testtemproot, "atlasout_labelsnosplit"), ".nii.gz")
 
         atlastool(args)
 
@@ -474,8 +501,10 @@ def atlastool_label_count_mismatch(testtemproot, debug=False):
     args.labelfile = labelfile
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti"):
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -507,9 +536,11 @@ def atlastool_with_maskfile(testtemproot, debug=False):
     args.volumeperregion = False
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save, \
-         patch("rapidtide.workflows.atlastool.tide_io.checkspacematch") as mock_match:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+        patch("rapidtide.workflows.atlastool.tide_io.checkspacematch") as mock_match,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -539,9 +570,11 @@ def atlastool_mask_dimension_mismatch(testtemproot, debug=False):
     args.maskfile = "mask.nii.gz"
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlastool.tide_io.checkspacematch") as mock_match:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlastool.tide_io.checkspacematch") as mock_match,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -570,8 +603,10 @@ def atlastool_4d_mask_raises(testtemproot, debug=False):
     args.maskfile = "mask4d.nii.gz"
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti"):
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -594,8 +629,10 @@ def atlastool_auto_mask(testtemproot, debug=False):
     args.volumeperregion = False
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -626,8 +663,10 @@ def atlastool_remove_empty_regions(testtemproot, debug=False):
     args.volumeperregion = True
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -649,8 +688,10 @@ def atlastool_debug_mode(testtemproot, debug=False):
     args.debug = True
     args.volumeperregion = False
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti"):
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -665,8 +706,10 @@ def atlastool_debug_auto_mask(testtemproot, debug=False):
     args.maskfile = None
     args.volumeperregion = False
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
 
@@ -697,10 +740,12 @@ def atlastool_targetfile_no_fsl(testtemproot, debug=False):
     args.xfm = xfmfile
     args.debug = debug
 
-    with patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.atlastool.tide_io.savetonifti"), \
-         patch.dict(os.environ, {}, clear=True), \
-         patch("rapidtide.workflows.atlastool.sys.exit") as mock_exit:
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch.dict(os.environ, {}, clear=True),
+        patch("rapidtide.workflows.atlastool.sys.exit") as mock_exit,
+    ):
 
         mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
         mock_exit.side_effect = SystemExit(0)

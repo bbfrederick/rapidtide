@@ -69,9 +69,7 @@ class TestCongrid:
         val = 1.0
         width = 2.0
 
-        vals, weights, indices = tide_resample.congrid(
-            xaxis, loc, val, width, kernel="kaiser"
-        )
+        vals, weights, indices = tide_resample.congrid(xaxis, loc, val, width, kernel="kaiser")
 
         assert vals is not None
         assert weights is not None
@@ -88,9 +86,7 @@ class TestCongrid:
         val = 2.0
         width = 2.5
 
-        vals, weights, indices = tide_resample.congrid(
-            xaxis, loc, val, width, kernel="gauss"
-        )
+        vals, weights, indices = tide_resample.congrid(xaxis, loc, val, width, kernel="gauss")
 
         assert vals is not None
         assert weights is not None
@@ -104,9 +100,7 @@ class TestCongrid:
         val = 1.0
         width = 2.0
 
-        vals, weights, indices = tide_resample.congrid(
-            xaxis, loc, val, width, kernel="old"
-        )
+        vals, weights, indices = tide_resample.congrid(xaxis, loc, val, width, kernel="old")
 
         assert vals is not None
         assert weights is not None
@@ -121,9 +115,7 @@ class TestCongrid:
         # Valid widths are half-integral values between 1.5 and 5.0
         valid_widths = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
         for width in valid_widths:
-            vals, weights, indices = tide_resample.congrid(
-                xaxis, loc, val, width, kernel="kaiser"
-            )
+            vals, weights, indices = tide_resample.congrid(xaxis, loc, val, width, kernel="kaiser")
             assert vals is not None, f"Failed for width={width}"
 
     def test_congrid_cyclic(self):
@@ -294,9 +286,7 @@ class TestFastResampler:
         resampler.save(outputpath)
 
         # Check that files were created
-        assert os.path.exists(outputpath + ".tsv.gz") or os.path.exists(
-            outputpath + ".tsv"
-        )
+        assert os.path.exists(outputpath + ".tsv.gz") or os.path.exists(outputpath + ".tsv")
 
     def test_yfromx(self):
         """Test the yfromx method."""
@@ -465,9 +455,7 @@ class TestDoresample:
         orig_y = np.sin(2 * np.pi * 0.05 * orig_x)
         new_x = np.linspace(0, 100, 500)
 
-        result = tide_resample.doresample(
-            orig_x, orig_y, new_x, method="cubic", antialias=True
-        )
+        result = tide_resample.doresample(orig_x, orig_y, new_x, method="cubic", antialias=True)
 
         assert result is not None
         assert len(result) == len(new_x)
@@ -513,9 +501,7 @@ class TestArbresample:
         init_freq = 10.0
         final_freq = 10.0
 
-        result = tide_resample.arbresample(
-            inputdata, init_freq, final_freq, decimate=True
-        )
+        result = tide_resample.arbresample(inputdata, init_freq, final_freq, decimate=True)
 
         assert result is not None
         assert len(result) == len(inputdata)
@@ -526,9 +512,7 @@ class TestArbresample:
         init_freq = 20.0
         final_freq = 10.0
 
-        result = tide_resample.arbresample(
-            inputdata, init_freq, final_freq, decimate=True
-        )
+        result = tide_resample.arbresample(inputdata, init_freq, final_freq, decimate=True)
 
         assert result is not None
         assert len(result) < len(inputdata)
@@ -564,9 +548,7 @@ class TestArbresample:
         init_freq = 10.0
         final_freq = 15.0
 
-        result = tide_resample.arbresample(
-            inputdata, init_freq, final_freq, decimate=False
-        )
+        result = tide_resample.arbresample(inputdata, init_freq, final_freq, decimate=False)
 
         assert result is not None
 
@@ -657,9 +639,7 @@ class TestDotwostepresample:
         intermed_freq = 50.0
         final_freq = 20.0
 
-        result = tide_resample.dotwostepresample(
-            orig_x, orig_y, intermed_freq, final_freq
-        )
+        result = tide_resample.dotwostepresample(orig_x, orig_y, intermed_freq, final_freq)
 
         assert result is not None
         # Final length should be approximately (duration * final_freq)
@@ -796,8 +776,7 @@ class TestCalcsliceoffset:
 
         for sotype in [0, 2, 5, 6]:
             offsets = [
-                tide_resample.calcsliceoffset(sotype, i, numslices, tr)
-                for i in range(numslices)
+                tide_resample.calcsliceoffset(sotype, i, numslices, tr) for i in range(numslices)
             ]
             # All offsets should be non-negative and less than TR
             for offset in offsets:

@@ -918,8 +918,8 @@ class TestSimfuncpeakfit:
 
     def test_gauss_fit(self):
         corr, t = self._make_corrfunc(center=1.0, sigma=2.0, amp=0.7)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss"
         )
         assert maskval == 1
         assert np.isclose(maxlag, 1.0, atol=0.5)
@@ -927,61 +927,61 @@ class TestSimfuncpeakfit:
 
     def test_quad_fit(self):
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="quad")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="quad"
         )
         assert maskval == 1
         assert np.isclose(maxlag, 0.0, atol=0.5)
 
     def test_fastgauss_fit(self):
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="fastgauss")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="fastgauss"
         )
         assert maskval == 1
 
     def test_fastquad_fit(self):
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="fastquad")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="fastquad"
         )
         assert maskval == 1
 
     def test_com_fit(self):
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="COM")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="COM"
         )
         assert maskval == 1
 
     def test_none_fit(self):
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="None")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="None"
         )
         assert maskval == 1
 
     def test_below_threshold(self):
         """With peakfittype='None', init failure is not overridden by fit refinement."""
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.3)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="None", lthreshval=0.5)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="None", lthreshval=0.5
         )
         assert maskval == 0
 
     def test_bipolar(self):
         t = np.linspace(-30, 30, 1001)
         corr = -0.8 * np.exp(-0.5 * ((t - 1.0) / 2.0) ** 2)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", bipolar=True)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", bipolar=True
         )
         assert maskval == 1
         assert maxval < 0.0
 
     def test_useguess(self):
         corr, t = self._make_corrfunc(center=2.0, sigma=2.0, amp=0.7)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", useguess=True, maxguess=2.0)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", useguess=True, maxguess=2.0
         )
         assert maskval == 1
         assert np.isclose(maxlag, 2.0, atol=0.5)
@@ -990,8 +990,8 @@ class TestSimfuncpeakfit:
         t = np.linspace(-30, 30, 1001)
         # mutual info has a nonzero baseline
         corr = 0.5 + 0.5 * np.exp(-0.5 * (t / 2.0) ** 2)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", functype="mutualinfo")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", functype="mutualinfo"
         )
         # just check it runs without error
         assert isinstance(maskval, np.uint16)
@@ -1045,9 +1045,7 @@ class TestTerritorydecomp:
         inputmap = np.random.rand(5, 5, 5)
         template = np.random.rand(5, 5, 5)
         atlas = np.ones((5, 5, 5), dtype=int)
-        fitmap, coffs, r2s = tide_fit.territorydecomp(
-            inputmap, template, atlas, fitorder=0
-        )
+        fitmap, coffs, r2s = tide_fit.territorydecomp(inputmap, template, atlas, fitorder=0)
         assert fitmap.shape == inputmap.shape
 
 

@@ -266,7 +266,12 @@ def territorydecomp_3d_basic(debug=False):
     inputmap = _make_synthetic_inputmap(template, atlas, noise_level=0.01)
 
     fitmap, thecoffs, theR2s = tide_fit.territorydecomp(
-        inputmap, template, atlas, fitorder=1, intercept=True, debug=debug,
+        inputmap,
+        template,
+        atlas,
+        fitorder=1,
+        intercept=True,
+        debug=debug,
     )
     assert fitmap.shape == inputmap.shape
     assert thecoffs.shape == (1, 3, 2)  # (nummaps=1, numregions=3, fitorder+1=2)
@@ -288,7 +293,12 @@ def territorydecomp_3d_no_intercept(debug=False):
     inputmap = _make_synthetic_inputmap(template, atlas, noise_level=0.01)
 
     fitmap, thecoffs, theR2s = tide_fit.territorydecomp(
-        inputmap, template, atlas, fitorder=1, intercept=False, debug=debug,
+        inputmap,
+        template,
+        atlas,
+        fitorder=1,
+        intercept=False,
+        debug=debug,
     )
     # mlregress always returns fitorder+1 coffs (intercept prepended, zero when intercept=False)
     assert thecoffs.shape == (1, 2, 2)
@@ -312,7 +322,12 @@ def territorydecomp_3d_fitorder0(debug=False):
         inputmap[voxels] = region * 5.0
 
     fitmap, thecoffs, theR2s = tide_fit.territorydecomp(
-        inputmap, template, atlas, fitorder=0, intercept=True, debug=debug,
+        inputmap,
+        template,
+        atlas,
+        fitorder=0,
+        intercept=True,
+        debug=debug,
     )
     assert thecoffs.shape == (1, 2, 1)
     # R2 should be 1.0 for constant data
@@ -332,12 +347,17 @@ def territorydecomp_4d(debug=False):
     rng = np.random.RandomState(42)
     inputmap = np.zeros(shape3d + (nummaps,), dtype=float)
     for m in range(nummaps):
-        inputmap[:, :, :, m] = _make_synthetic_inputmap(
-            template, atlas, noise_level=0.01
-        ) + m * 0.5
+        inputmap[:, :, :, m] = (
+            _make_synthetic_inputmap(template, atlas, noise_level=0.01) + m * 0.5
+        )
 
     fitmap, thecoffs, theR2s = tide_fit.territorydecomp(
-        inputmap, template, atlas, fitorder=1, intercept=True, debug=debug,
+        inputmap,
+        template,
+        atlas,
+        fitorder=1,
+        intercept=True,
+        debug=debug,
     )
     assert fitmap.shape == inputmap.shape
     assert thecoffs.shape == (nummaps, 2, 2)
@@ -357,7 +377,12 @@ def territorydecomp_with_mask(debug=False):
     mask[:5, :, :] = 0.0
 
     fitmap, thecoffs, theR2s = tide_fit.territorydecomp(
-        inputmap, template, atlas, inputmask=mask, fitorder=1, intercept=True,
+        inputmap,
+        template,
+        atlas,
+        inputmask=mask,
+        fitorder=1,
+        intercept=True,
         debug=debug,
     )
     assert fitmap.shape == inputmap.shape
@@ -376,7 +401,12 @@ def territorydecomp_higher_order(debug=False):
     inputmap = _make_synthetic_inputmap(template, atlas, noise_level=0.01)
 
     fitmap, thecoffs, theR2s = tide_fit.territorydecomp(
-        inputmap, template, atlas, fitorder=2, intercept=True, debug=debug,
+        inputmap,
+        template,
+        atlas,
+        fitorder=2,
+        intercept=True,
+        debug=debug,
     )
     assert thecoffs.shape == (1, 2, 3)  # fitorder=2, intercept → 3 coffs
     assert theR2s.shape == (1, 2)
@@ -468,7 +498,11 @@ def territorystats_entropy_range(debug=False):
     inputmap = rng.randn(*shape).astype(float)
 
     result = tide_fit.territorystats(
-        inputmap, atlas, entropybins=50, entropyrange=(-3.0, 3.0), debug=debug,
+        inputmap,
+        atlas,
+        entropybins=50,
+        entropyrange=(-3.0, 3.0),
+        debug=debug,
     )
     _, _, _, _, _, _, _, _, entropies = result
     assert entropies.shape == (1, 1)
@@ -545,10 +579,24 @@ def fingerprint_with_constant_template(debug=False):
         assert os.path.exists(root + "_0000_fits.tsv"), "per-map fits tsv not created"
 
         # Check stats files
-        for stat in ["mean", "std", "median", "mad", "variance", "skewness",
-                      "kurtosis", "entropy", "residual_mean", "residual_std",
-                      "residual_median", "residual_mad", "residual_variance",
-                      "residual_skewness", "residual_kurtosis", "residual_entropy"]:
+        for stat in [
+            "mean",
+            "std",
+            "median",
+            "mad",
+            "variance",
+            "skewness",
+            "kurtosis",
+            "entropy",
+            "residual_mean",
+            "residual_std",
+            "residual_median",
+            "residual_mad",
+            "residual_variance",
+            "residual_skewness",
+            "residual_kurtosis",
+            "residual_entropy",
+        ]:
             assert os.path.exists(root + f"_all{stat}.tsv"), f"{stat} tsv not created"
 
         # Read back R2 tsv and verify structure
@@ -569,6 +617,7 @@ def fingerprint_with_real_atlas(debug=False):
     referencedir = None
     try:
         import rapidtide.util as tide_util
+
         referencedir = tide_util.findreferencedir()
     except Exception:
         if debug:
@@ -652,7 +701,9 @@ def fingerprint_output_r2_values(debug=False):
         r2_df = pd.read_csv(root + "_allR2s.tsv", sep="\t")
         # All R2 values should be 1.0 for constant data
         for col in r2_df.columns:
-            assert abs(r2_df[col].values[0] - 1.0) < 1e-10, f"R2 for {col} is {r2_df[col].values[0]}"
+            assert (
+                abs(r2_df[col].values[0] - 1.0) < 1e-10
+            ), f"R2 for {col} is {r2_df[col].values[0]}"
 
         if debug:
             print("  R2 values verified successfully")
@@ -733,7 +784,12 @@ def fingerprint_no_intercept(debug=False):
 
         # Directly call territorydecomp with no intercept
         fitmap, thecoffs, theR2s = tide_fit.territorydecomp(
-            inputmap, template, atlas, fitorder=1, intercept=False, debug=debug,
+            inputmap,
+            template,
+            atlas,
+            fitorder=1,
+            intercept=False,
+            debug=debug,
         )
         # mlregress always returns fitorder+1 coffs (intercept prepended as zero)
         assert thecoffs.shape == (1, numregions, 2)
@@ -749,6 +805,7 @@ def entrypoint_missing_args(debug=False):
     if debug:
         print("entrypoint_missing_args")
     import sys
+
     old_argv = sys.argv
     sys.argv = ["fingerprint"]
     try:

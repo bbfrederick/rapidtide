@@ -116,10 +116,10 @@ def _run_showstxcorr(signal1, signal2, args):
     def mock_writenpvecs(data, fname, **kwargs):
         saved_text[fname] = np.array(data).copy()
 
-    with patch("rapidtide.workflows.showstxcorr.tide_io.readvec",
-               side_effect=mock_readvec), \
-         patch("rapidtide.workflows.showstxcorr.tide_io.writenpvecs",
-               side_effect=mock_writenpvecs):
+    with (
+        patch("rapidtide.workflows.showstxcorr.tide_io.readvec", side_effect=mock_readvec),
+        patch("rapidtide.workflows.showstxcorr.tide_io.writenpvecs", side_effect=mock_writenpvecs),
+    ):
 
         showstxcorr(args)
 
@@ -154,8 +154,10 @@ def parser_defaults(debug=False):
     if debug:
         print("parser_defaults")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "outroot"])
     assert args.samplerate == "auto"
     assert args.corrthresh == 0.5
@@ -177,8 +179,10 @@ def parser_samplerate(debug=False):
     if debug:
         print("parser_samplerate")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "out", "--samplerate", "25.0"])
     assert args.samplerate == 25.0
 
@@ -188,8 +192,10 @@ def parser_sampletime(debug=False):
     if debug:
         print("parser_sampletime")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "out", "--sampletime", "0.5"])
     assert args.samplerate == pytest.approx(2.0)
 
@@ -199,12 +205,21 @@ def parser_boolean_flags(debug=False):
     if debug:
         print("parser_boolean_flags")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
-        args = parser.parse_args([
-            f1.name, f2.name, "out",
-            "--nodisplay", "--debug", "--verbose", "--invert",
-        ])
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
+        args = parser.parse_args(
+            [
+                f1.name,
+                f2.name,
+                "out",
+                "--nodisplay",
+                "--debug",
+                "--verbose",
+                "--invert",
+            ]
+        )
     assert args.display is False
     assert args.debug is True
     assert args.verbose is True
@@ -216,16 +231,27 @@ def parser_corr_options(debug=False):
     if debug:
         print("parser_corr_options")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
-        args = parser.parse_args([
-            f1.name, f2.name, "out",
-            "--corrthresh", "0.3",
-            "--windowwidth", "30.0",
-            "--stepsize", "10.0",
-            "--corrweighting", "phat",
-            "--detrendorder", "2",
-        ])
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
+        args = parser.parse_args(
+            [
+                f1.name,
+                f2.name,
+                "out",
+                "--corrthresh",
+                "0.3",
+                "--windowwidth",
+                "30.0",
+                "--stepsize",
+                "10.0",
+                "--corrweighting",
+                "phat",
+                "--detrendorder",
+                "2",
+            ]
+        )
     assert args.corrthresh == 0.3
     assert args.windowwidth == 30.0
     assert args.stepsize == 10.0
@@ -238,14 +264,22 @@ def parser_samplerate_sampletime_mutual_exclusion(debug=False):
     if debug:
         print("parser_samplerate_sampletime_mutual_exclusion")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
         with pytest.raises(SystemExit):
-            parser.parse_args([
-                f1.name, f2.name, "out",
-                "--samplerate", "10.0",
-                "--sampletime", "0.1",
-            ])
+            parser.parse_args(
+                [
+                    f1.name,
+                    f2.name,
+                    "out",
+                    "--samplerate",
+                    "10.0",
+                    "--sampletime",
+                    "0.1",
+                ]
+            )
 
 
 # ==================== printthresholds tests ====================
@@ -356,7 +390,9 @@ def showstxcorr_correlated_signals(debug=False):
     if debug:
         print("showstxcorr_correlated_signals")
     signal1, signal2 = _make_test_timecourses(
-        samplerate=10.0, duration=200.0, delay=0.5,
+        samplerate=10.0,
+        duration=200.0,
+        delay=0.5,
     )
     args = _make_default_args()
     args.corrthresh = 0.1
@@ -368,11 +404,13 @@ def showstxcorr_correlated_signals(debug=False):
     rvalue = saved[f"{outroot}_Rvalue.txt"]
 
     # Correlated signals should have high Pearson R values
-    assert np.mean(np.abs(pearson)) > 0.3, \
-        f"Mean |Pearson R| = {np.mean(np.abs(pearson))}, expected > 0.3"
+    assert (
+        np.mean(np.abs(pearson)) > 0.3
+    ), f"Mean |Pearson R| = {np.mean(np.abs(pearson))}, expected > 0.3"
     # Max cross-correlation should be even higher
-    assert np.mean(np.abs(rvalue)) > 0.3, \
-        f"Mean |Rvalue| = {np.mean(np.abs(rvalue))}, expected > 0.3"
+    assert (
+        np.mean(np.abs(rvalue)) > 0.3
+    ), f"Mean |Rvalue| = {np.mean(np.abs(rvalue))}, expected > 0.3"
 
 
 def showstxcorr_invert(debug=False):
@@ -380,7 +418,9 @@ def showstxcorr_invert(debug=False):
     if debug:
         print("showstxcorr_invert")
     signal1, signal2 = _make_test_timecourses(
-        samplerate=10.0, duration=200.0, delay=0.5,
+        samplerate=10.0,
+        duration=200.0,
+        delay=0.5,
     )
 
     # Run without invert
@@ -397,8 +437,9 @@ def showstxcorr_invert(debug=False):
     pearson_inv = saved2["/tmp/test_showstxcorr_inv_pearson.txt"]
 
     # Inverting should flip the sign of correlations
-    assert np.mean(pearson_inv) * np.mean(pearson_noinv) < 0, \
-        "Inversion should flip correlation sign"
+    assert (
+        np.mean(pearson_inv) * np.mean(pearson_noinv) < 0
+    ), "Inversion should flip correlation sign"
 
 
 def showstxcorr_zero_delay(debug=False):
@@ -406,7 +447,9 @@ def showstxcorr_zero_delay(debug=False):
     if debug:
         print("showstxcorr_zero_delay")
     signal1, signal2 = _make_test_timecourses(
-        samplerate=10.0, duration=200.0, delay=0.0,
+        samplerate=10.0,
+        duration=200.0,
+        delay=0.0,
     )
     args = _make_default_args(outfilename="/tmp/test_showstxcorr_zerodelay")
     args.corrthresh = 0.1
@@ -420,8 +463,9 @@ def showstxcorr_zero_delay(debug=False):
     # With zero delay, valid delay values should be near zero
     valid_delays = delay[np.where(mask > 0)]
     if len(valid_delays) > 0:
-        assert np.mean(np.abs(valid_delays)) < 1.0, \
-            f"Mean |delay| = {np.mean(np.abs(valid_delays))}, expected < 1.0 for zero-delay signals"
+        assert (
+            np.mean(np.abs(valid_delays)) < 1.0
+        ), f"Mean |delay| = {np.mean(np.abs(valid_delays))}, expected < 1.0 for zero-delay signals"
 
 
 def showstxcorr_starttime_duration(debug=False):
@@ -450,8 +494,9 @@ def showstxcorr_starttime_duration(debug=False):
     # Trimmed run should produce fewer windows than full run
     pearson_full = saved_full[f"{outroot_full}_pearson.txt"]
     pearson_trim = saved_trim[f"{outroot_trim}_pearson.txt"]
-    assert len(pearson_trim) < len(pearson_full), \
-        f"Trimmed ({len(pearson_trim)}) should have fewer windows than full ({len(pearson_full)})"
+    assert len(pearson_trim) < len(
+        pearson_full
+    ), f"Trimmed ({len(pearson_trim)}) should have fewer windows than full ({len(pearson_full)})"
 
 
 def showstxcorr_timewarped_output(debug=False):
@@ -459,7 +504,9 @@ def showstxcorr_timewarped_output(debug=False):
     if debug:
         print("showstxcorr_timewarped_output")
     signal1, signal2 = _make_test_timecourses(
-        samplerate=10.0, duration=200.0, delay=0.5,
+        samplerate=10.0,
+        duration=200.0,
+        delay=0.5,
     )
     args = _make_default_args()
     args.corrthresh = 0.1

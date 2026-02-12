@@ -137,9 +137,12 @@ def parser_defaults(debug=False):
     if debug:
         print("parser_defaults")
     import tempfile
+
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+    ):
         defaults = parser.parse_args([f1.name, f2.name, "outroot"])
     assert defaults.normmethod == "none"
     assert defaults.summarymethod == "mean"
@@ -160,9 +163,12 @@ def parser_normmethod_choices(debug=False):
     if debug:
         print("parser_normmethod_choices")
     import tempfile
+
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+    ):
         for method in ["none", "pct", "var", "std", "p2p"]:
             args = parser.parse_args([f1.name, f2.name, "out", "--normmethod", method])
             assert args.normmethod == method
@@ -173,9 +179,12 @@ def parser_summarymethod_choices(debug=False):
     if debug:
         print("parser_summarymethod_choices")
     import tempfile
+
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+    ):
         for method in ["mean", "median", "sum", "std", "MAD", "CoV"]:
             args = parser.parse_args([f1.name, f2.name, "out", "--summarymethod", method])
             assert args.summarymethod == method
@@ -186,9 +195,12 @@ def parser_numpercentiles(debug=False):
     if debug:
         print("parser_numpercentiles")
     import tempfile
+
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "out", "--numpercentiles", "5"])
     assert args.numpercentiles == 5
 
@@ -198,13 +210,22 @@ def parser_flags(debug=False):
     if debug:
         print("parser_flags")
     import tempfile
+
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2:
-        args = parser.parse_args([
-            f1.name, f2.name, "out",
-            "--ignorezeros", "--headerline", "--debug",
-        ])
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+    ):
+        args = parser.parse_args(
+            [
+                f1.name,
+                f2.name,
+                "out",
+                "--ignorezeros",
+                "--headerline",
+                "--debug",
+            ]
+        )
     assert args.ignorezeros is True
     assert args.headerline is True
     assert args.debug is True
@@ -215,9 +236,12 @@ def parser_datalabel(debug=False):
     if debug:
         print("parser_datalabel")
     import tempfile
+
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+    ):
         args = parser.parse_args([f1.name, f2.name, "out", "--datalabel", "my_label"])
     assert args.datalabel == "my_label"
 
@@ -281,6 +305,7 @@ def summarizevoxels_mad(debug=False):
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     result = summarizevoxels(data, method="MAD")
     from statsmodels.robust import mad
+
     expected = mad(data)
     assert np.isclose(result, expected), f"Expected {expected}, got {result}"
 
@@ -357,14 +382,32 @@ def atlasaverage_3d_basic(debug=False):
     def mock_getfracvals(data, fracs, **kwargs):
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti", side_effect=mock_savetonifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writevec") as mock_writevec, \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 1),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.savetonifti", side_effect=mock_savetonifti
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writevec") as mock_writevec,
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -402,14 +445,30 @@ def atlasaverage_3d_with_headerline(debug=False):
     def mock_writevec(data, fname, **kwargs):
         written_data[fname] = data
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writevec", side_effect=mock_writevec), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 1),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writevec", side_effect=mock_writevec),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -447,14 +506,30 @@ def atlasaverage_3d_no_headerline(debug=False):
     def mock_writevec(data, fname, **kwargs):
         written_data[fname] = data
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writevec", side_effect=mock_writevec), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 1),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writevec", side_effect=mock_writevec),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -496,14 +571,31 @@ def atlasaverage_3d_with_datalabel(debug=False):
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
 
     import pytest
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 1),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
+        ),
+    ):
 
         # Bug: datalabel causes IndexError in regionpercentiles TSV generation
         with pytest.raises(IndexError):
@@ -541,14 +633,30 @@ def atlasaverage_3d_ignorezeros(debug=False):
             return [0.0] * len(fracs)
         return np.percentile(nonzero, np.array(fracs) * 100).tolist()
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 1),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
+        ),
+    ):
 
         atlasaverage(args)
     # No assertion error means it ran successfully with ignorezeros
@@ -583,14 +691,31 @@ def atlasaverage_3d_summary_methods(debug=False):
         args = _make_base_args()
         args.summarymethod = method
 
-        with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-             patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-             patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-             patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-             patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"), \
-             patch("rapidtide.workflows.atlasaverage.tide_io.writevec"), \
-             patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)), \
-             patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+        with (
+            patch(
+                "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+                side_effect=mock_readfromnifti,
+            ),
+            patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+            patch(
+                "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+                return_value=(xsize, ysize, numslices, 1),
+            ),
+            patch(
+                "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+                return_value=(2.0, 2.0, 2.0, 1.5),
+            ),
+            patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
+            patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
+            patch(
+                "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+                return_value=(None, None, None),
+            ),
+            patch(
+                "rapidtide.workflows.atlasaverage.tide_stats.getfracvals",
+                side_effect=mock_getfracvals,
+            ),
+        ):
 
             atlasaverage(args)
 
@@ -620,14 +745,30 @@ def atlasaverage_3d_numpercentiles(debug=False):
             return [0.0] * len(fracs)
         return np.percentile(nonzero, np.array(fracs) * 100).tolist()
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 1),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -659,22 +800,41 @@ def atlasaverage_4d_basic(debug=False):
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
         written_bids[fname] = {"data": data.copy(), "samplerate": samplerate}
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
     assert args.outputroot in written_bids, "BIDS TSV not written"
     bids_data = written_bids[args.outputroot]
-    assert bids_data["data"].shape == (numregions, numtimepoints), \
-        f"Expected shape ({numregions}, {numtimepoints}), got {bids_data['data'].shape}"
+    assert bids_data["data"].shape == (
+        numregions,
+        numtimepoints,
+    ), f"Expected shape ({numregions}, {numtimepoints}), got {bids_data['data'].shape}"
     # samplerate should be 1.0 / tr = 1.0 / 1.5
-    assert np.isclose(bids_data["samplerate"], 1.0 / 1.5), \
-        f"Expected samplerate {1.0/1.5}, got {bids_data['samplerate']}"
+    assert np.isclose(
+        bids_data["samplerate"], 1.0 / 1.5
+    ), f"Expected samplerate {1.0/1.5}, got {bids_data['samplerate']}"
 
 
 def atlasaverage_4d_normmethod_pct(debug=False):
@@ -697,14 +857,34 @@ def atlasaverage_4d_normmethod_pct(debug=False):
         if "data" in fname:
             return MagicMock(), input_data, input_hdr, input_dims, input_sizes
         else:
-            return MagicMock(), atlas_data, _make_mock_hdr(xsize, ysize, numslices, 1), atlas_dims, atlas_sizes
+            return (
+                MagicMock(),
+                atlas_data,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                atlas_dims,
+                atlas_sizes,
+            )
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -729,14 +909,34 @@ def atlasaverage_4d_normmethod_std(debug=False):
         if "data" in fname:
             return MagicMock(), input_data, input_hdr, input_dims, input_sizes
         else:
-            return MagicMock(), atlas_data, _make_mock_hdr(xsize, ysize, numslices, 1), atlas_dims, atlas_sizes
+            return (
+                MagicMock(),
+                atlas_data,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                atlas_dims,
+                atlas_sizes,
+            )
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -761,14 +961,34 @@ def atlasaverage_4d_normmethod_var(debug=False):
         if "data" in fname:
             return MagicMock(), input_data, input_hdr, input_dims, input_sizes
         else:
-            return MagicMock(), atlas_data, _make_mock_hdr(xsize, ysize, numslices, 1), atlas_dims, atlas_sizes
+            return (
+                MagicMock(),
+                atlas_data,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                atlas_dims,
+                atlas_sizes,
+            )
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -793,14 +1013,34 @@ def atlasaverage_4d_normmethod_p2p(debug=False):
         if "data" in fname:
             return MagicMock(), input_data, input_hdr, input_dims, input_sizes
         else:
-            return MagicMock(), atlas_data, _make_mock_hdr(xsize, ysize, numslices, 1), atlas_dims, atlas_sizes
+            return (
+                MagicMock(),
+                atlas_data,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                atlas_dims,
+                atlas_sizes,
+            )
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -825,14 +1065,34 @@ def atlasaverage_4d_median_summary(debug=False):
         if "data" in fname:
             return MagicMock(), input_data, input_hdr, input_dims, input_sizes
         else:
-            return MagicMock(), atlas_data, _make_mock_hdr(xsize, ysize, numslices, 1), atlas_dims, atlas_sizes
+            return (
+                MagicMock(),
+                atlas_data,
+                _make_mock_hdr(xsize, ysize, numslices, 1),
+                atlas_dims,
+                atlas_sizes,
+            )
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -853,8 +1113,14 @@ def atlasaverage_space_mismatch(debug=False):
             return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
 
     import pytest
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=False):
+
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=False),
+    ):
 
         with pytest.raises(SystemExit):
             atlasaverage(args)
@@ -869,9 +1135,7 @@ def atlasaverage_regionlabelfile(debug=False):
     atlas_data, atlas_hdr, atlas_dims, atlas_sizes = _make_3d_atlas(
         xsize, ysize, numslices, numregions
     )
-    input_data, input_hdr, input_dims, input_sizes = _make_4d_data(
-        xsize, ysize, numslices, 10
-    )
+    input_data, input_hdr, input_dims, input_sizes = _make_4d_data(xsize, ysize, numslices, 10)
     args = _make_base_args()
     args.regionlabelfile = "labels.txt"
 
@@ -888,13 +1152,29 @@ def atlasaverage_regionlabelfile(debug=False):
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
         written_bids[fname] = kwargs.get("columns", [])
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 10)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.readlabels", return_value=region_labels), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 10),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.readlabels", return_value=region_labels),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -911,9 +1191,7 @@ def atlasaverage_regionlabelfile_mismatch(debug=False):
     atlas_data, atlas_hdr, atlas_dims, atlas_sizes = _make_3d_atlas(
         xsize, ysize, numslices, numregions
     )
-    input_data, input_hdr, input_dims, input_sizes = _make_4d_data(
-        xsize, ysize, numslices, 10
-    )
+    input_data, input_hdr, input_dims, input_sizes = _make_4d_data(xsize, ysize, numslices, 10)
     args = _make_base_args()
     args.regionlabelfile = "labels.txt"
 
@@ -927,12 +1205,27 @@ def atlasaverage_regionlabelfile_mismatch(debug=False):
             return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
 
     import pytest
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 10)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.readlabels", return_value=region_labels), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 10),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.readlabels", return_value=region_labels),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         with pytest.raises(SystemExit):
             atlasaverage(args)
@@ -947,9 +1240,7 @@ def atlasaverage_regionlistfile(debug=False):
     atlas_data, atlas_hdr, atlas_dims, atlas_sizes = _make_3d_atlas(
         xsize, ysize, numslices, numregions
     )
-    input_data, input_hdr, input_dims, input_sizes = _make_4d_data(
-        xsize, ysize, numslices, 10
-    )
+    input_data, input_hdr, input_dims, input_sizes = _make_4d_data(xsize, ysize, numslices, 10)
     args = _make_base_args()
     args.regionlistfile = "regionlist.txt"
 
@@ -969,13 +1260,29 @@ def atlasaverage_regionlistfile(debug=False):
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
         written_bids[fname] = {"data": data.copy(), "columns": kwargs.get("columns", [])}
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 10)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.readvec", return_value=regionlist), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 10),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.readvec", return_value=regionlist),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -1009,14 +1316,30 @@ def atlasaverage_debug_mode(debug=False):
             return [0.0] * len(fracs)
         return np.percentile(nonzero, np.array(fracs) * 100).tolist()
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 1),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -1030,9 +1353,7 @@ def atlasaverage_auto_labels(debug=False):
     atlas_data, atlas_hdr, atlas_dims, atlas_sizes = _make_3d_atlas(
         xsize, ysize, numslices, numregions
     )
-    input_data, input_hdr, input_dims, input_sizes = _make_4d_data(
-        xsize, ysize, numslices, 10
-    )
+    input_data, input_hdr, input_dims, input_sizes = _make_4d_data(xsize, ysize, numslices, 10)
     args = _make_base_args()
 
     written_bids = {}
@@ -1046,12 +1367,28 @@ def atlasaverage_auto_labels(debug=False):
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
         written_bids[fname] = kwargs.get("columns", [])
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 10)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 10),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -1088,13 +1425,30 @@ def atlasaverage_includemask(debug=False):
         else:
             return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.processnamespec", return_value=("include_mask.nii.gz", [1])), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(include_mask, None, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.processnamespec",
+            return_value=("include_mask.nii.gz", [1]),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(include_mask, None, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -1125,13 +1479,30 @@ def atlasaverage_excludemask(debug=False):
         else:
             return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.processnamespec", return_value=("exclude_mask.nii.gz", None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(None, exclude_mask, None)):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.processnamespec",
+            return_value=("exclude_mask.nii.gz", None),
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(None, exclude_mask, None),
+        ),
+    ):
 
         atlasaverage(args)
 
@@ -1169,21 +1540,44 @@ def atlasaverage_3d_maskedatlas_output(debug=False):
             return [0.0] * len(fracs)
         return np.percentile(nonzero, np.array(fracs) * 100).tolist()
 
-    with patch("rapidtide.workflows.atlasaverage.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, 1)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti", side_effect=mock_savetonifti), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"), \
-         patch("rapidtide.workflows.atlasaverage.tide_io.processnamespec", return_value=("include_mask.nii.gz", None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_mask.getmaskset", return_value=(include_mask, None, None)), \
-         patch("rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals):
+    with (
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.checkspacematch", return_value=True),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, 1),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.savetonifti", side_effect=mock_savetonifti
+        ),
+        patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_io.processnamespec",
+            return_value=("include_mask.nii.gz", None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            return_value=(include_mask, None, None),
+        ),
+        patch(
+            "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
+        ),
+    ):
 
         atlasaverage(args)
 
     # Should save maskedatlas when includename is set
     maskedatlas_key = f"{args.outputroot}_maskedatlas"
-    assert maskedatlas_key in saved_data, f"Expected {maskedatlas_key} in saved files: {list(saved_data.keys())}"
+    assert (
+        maskedatlas_key in saved_data
+    ), f"Expected {maskedatlas_key} in saved files: {list(saved_data.keys())}"
 
 
 # ==================== Main test function ====================

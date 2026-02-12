@@ -63,6 +63,7 @@ def _make_sizes():
 def _reset_getneighborhood_globals():
     """Reset the global variables used by getneighborhood for caching."""
     import rapidtide.workflows.spatialmi as sm
+
     for gname in ("kernel", "usedwidth", "indexlist", "usedradius"):
         if gname in dir(sm):
             try:
@@ -78,6 +79,7 @@ def _reset_getneighborhood_globals():
 def _reset_getMI_globals():
     """Reset the global thebins variable used by getMI."""
     import rapidtide.workflows.spatialmi as sm
+
     sm.thebins = None
 
 
@@ -148,12 +150,29 @@ def parser_optional_args(debug=False):
     if debug:
         print("parser_optional_args")
     parser = _get_parser()
-    args = parser.parse_args([
-        "in1.nii", "mask1.nii", "in2.nii", "mask2.nii", "outroot",
-        "--noprebin", "--nonorm", "--radius", "3.0", "--sigma", "1.5",
-        "--kernelwidth", "2.0", "--spherical", "--index1", "2", "--index2", "3",
-        "--debug",
-    ])
+    args = parser.parse_args(
+        [
+            "in1.nii",
+            "mask1.nii",
+            "in2.nii",
+            "mask2.nii",
+            "outroot",
+            "--noprebin",
+            "--nonorm",
+            "--radius",
+            "3.0",
+            "--sigma",
+            "1.5",
+            "--kernelwidth",
+            "2.0",
+            "--spherical",
+            "--index1",
+            "2",
+            "--index2",
+            "3",
+            "--debug",
+        ]
+    )
     assert args.prebin is False
     assert args.norm is False
     assert args.radius == 3.0
@@ -179,8 +198,16 @@ def getneighborhood_cubic_center(debug=False):
     radius = 1.0
 
     result = getneighborhood(
-        data, 5, 5, 5, xsize, ysize, zsize, radius,
-        spherical=False, kernelwidth=None,
+        data,
+        5,
+        5,
+        5,
+        xsize,
+        ysize,
+        zsize,
+        radius,
+        spherical=False,
+        kernelwidth=None,
     )
     # With radius=1, cubic neighborhood is (2*1+1)^3 = 27 voxels
     assert len(result) == 27
@@ -199,8 +226,16 @@ def getneighborhood_cubic_with_kernel(debug=False):
     radius = 1.0
 
     result = getneighborhood(
-        data, 5, 5, 5, xsize, ysize, zsize, radius,
-        spherical=False, kernelwidth=1.5,
+        data,
+        5,
+        5,
+        5,
+        xsize,
+        ysize,
+        zsize,
+        radius,
+        spherical=False,
+        kernelwidth=1.5,
     )
     # Should have 27 elements
     assert len(result) == 27
@@ -223,8 +258,16 @@ def getneighborhood_cubic_edge(debug=False):
 
     # At corner (0,0,0) with radius=2, neighborhood is clipped
     result = getneighborhood(
-        data, 0, 0, 0, xsize, ysize, zsize, radius,
-        spherical=False, kernelwidth=None,
+        data,
+        0,
+        0,
+        0,
+        xsize,
+        ysize,
+        zsize,
+        radius,
+        spherical=False,
+        kernelwidth=None,
     )
     # At corner, we get 0:3 in each dimension = 3^3 = 27 voxels (clipped)
     expected_size = 3 * 3 * 3  # 0 to radius+1 in each dim
@@ -244,8 +287,16 @@ def getneighborhood_cubic_values(debug=False):
     radius = 1.0
 
     result = getneighborhood(
-        data, 5, 5, 5, xsize, ysize, zsize, radius,
-        spherical=False, kernelwidth=None,
+        data,
+        5,
+        5,
+        5,
+        xsize,
+        ysize,
+        zsize,
+        radius,
+        spherical=False,
+        kernelwidth=None,
     )
     # The entire (2*1+1)^3 = 3^3 block should be 1.0
     assert np.allclose(result, 1.0)
@@ -262,7 +313,14 @@ def getneighborhood_spherical_center(debug=False):
     radius = 2.0
 
     result = getneighborhood(
-        data, 5, 5, 5, xsize, ysize, zsize, radius,
+        data,
+        5,
+        5,
+        5,
+        xsize,
+        ysize,
+        zsize,
+        radius,
         spherical=True,
     )
     # Spherical neighborhood with radius=2 should have fewer voxels
@@ -285,12 +343,26 @@ def getneighborhood_spherical_edge(debug=False):
 
     # At edge, should get fewer voxels than at center
     result_center = getneighborhood(
-        data, 5, 5, 5, xsize, ysize, zsize, radius,
+        data,
+        5,
+        5,
+        5,
+        xsize,
+        ysize,
+        zsize,
+        radius,
         spherical=True,
     )
     _reset_getneighborhood_globals()
     result_edge = getneighborhood(
-        data, 0, 0, 0, xsize, ysize, zsize, radius,
+        data,
+        0,
+        0,
+        0,
+        xsize,
+        ysize,
+        zsize,
+        radius,
         spherical=True,
     )
     assert len(result_edge) < len(result_center)
@@ -308,7 +380,14 @@ def getneighborhood_spherical_values(debug=False):
     radius = 1.0
 
     result = getneighborhood(
-        data, 5, 5, 5, xsize, ysize, zsize, radius,
+        data,
+        5,
+        5,
+        5,
+        xsize,
+        ysize,
+        zsize,
+        radius,
         spherical=True,
     )
     # With radius=1, spherical neighborhood includes center + 6 face neighbors = 7
@@ -326,17 +405,38 @@ def getneighborhood_radius_size_increases(debug=False):
 
     _reset_getneighborhood_globals()
     result_r1 = getneighborhood(
-        data, 7, 7, 7, xsize, ysize, zsize, 1.0,
+        data,
+        7,
+        7,
+        7,
+        xsize,
+        ysize,
+        zsize,
+        1.0,
         spherical=True,
     )
     _reset_getneighborhood_globals()
     result_r2 = getneighborhood(
-        data, 7, 7, 7, xsize, ysize, zsize, 2.0,
+        data,
+        7,
+        7,
+        7,
+        xsize,
+        ysize,
+        zsize,
+        2.0,
         spherical=True,
     )
     _reset_getneighborhood_globals()
     result_r3 = getneighborhood(
-        data, 7, 7, 7, xsize, ysize, zsize, 3.0,
+        data,
+        7,
+        7,
+        7,
+        xsize,
+        ysize,
+        zsize,
+        3.0,
         spherical=True,
     )
     assert len(result_r1) < len(result_r2) < len(result_r3)
@@ -375,8 +475,9 @@ def getMI_independent_signals(debug=False):
     _reset_getMI_globals()
     mi_same = getMI(x, x.copy(), norm=True, bins=10, init=True, prebin=True)
 
-    assert mi_same > mi_indep, \
-        f"MI of identical ({mi_same}) should exceed MI of independent ({mi_indep})"
+    assert (
+        mi_same > mi_indep
+    ), f"MI of identical ({mi_same}) should exceed MI of independent ({mi_indep})"
 
 
 def getMI_correlated_signals(debug=False):
@@ -395,8 +496,9 @@ def getMI_correlated_signals(debug=False):
     y_indep = rng.randn(200).astype(np.float64)
     mi_indep = getMI(x, y_indep, norm=True, bins=10, init=True, prebin=True)
 
-    assert mi_corr > mi_indep, \
-        f"MI of correlated ({mi_corr}) should exceed MI of independent ({mi_indep})"
+    assert (
+        mi_corr > mi_indep
+    ), f"MI of correlated ({mi_corr}) should exceed MI of independent ({mi_indep})"
 
 
 def getMI_no_norm(debug=False):
@@ -511,12 +613,13 @@ def _run_spatialmi(image1, image2, mask1, mask2, args, image1_4d=False, image2_4
     _reset_getneighborhood_globals()
     _reset_getMI_globals()
 
-    with patch("rapidtide.workflows.spatialmi.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.spatialmi.tide_io.checkspacedimmatch",
-               return_value=True), \
-         patch("rapidtide.workflows.spatialmi.tide_io.savetonifti",
-               side_effect=mock_savetonifti):
+    with (
+        patch(
+            "rapidtide.workflows.spatialmi.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.spatialmi.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.spatialmi.tide_io.savetonifti", side_effect=mock_savetonifti),
+    ):
 
         spatialmi(args)
 
@@ -568,8 +671,9 @@ def spatialmi_identical_images(debug=False):
     mi_diff = saved_diff["/tmp/test_spatialmi_diff_result"]
 
     # Mean MI should be higher for identical images
-    assert np.mean(mi_same) > np.mean(mi_diff), \
-        f"Mean MI for identical ({np.mean(mi_same)}) should exceed different ({np.mean(mi_diff)})"
+    assert np.mean(mi_same) > np.mean(
+        mi_diff
+    ), f"Mean MI for identical ({np.mean(mi_same)}) should exceed different ({np.mean(mi_diff)})"
 
 
 def spatialmi_output_nonnegative(debug=False):
@@ -591,8 +695,7 @@ def spatialmi_output_nonnegative(debug=False):
     result = saved["/tmp/test_spatialmi_result"]
     assert np.all(np.isfinite(result)), "Output should have no NaN/Inf values"
     # MI values should be non-negative (allow tiny floating point noise)
-    assert np.all(result >= -1e-10), \
-        f"MI values should be non-negative, min={np.min(result)}"
+    assert np.all(result >= -1e-10), f"MI values should be non-negative, min={np.min(result)}"
 
 
 def spatialmi_with_mask(debug=False):
@@ -615,8 +718,7 @@ def spatialmi_with_mask(debug=False):
 
     result = saved["/tmp/test_spatialmi_result"]
     # Where totalmask (mask1 * mask2) is 0, output should be 0
-    assert np.all(result[0, :, :] == 0.0), \
-        "Masked-out voxels should have zero MI"
+    assert np.all(result[0, :, :] == 0.0), "Masked-out voxels should have zero MI"
 
 
 def spatialmi_radius_check(debug=False):
@@ -654,10 +756,15 @@ def spatialmi_dim_mismatch_input_mask(debug=False):
 
     args = _make_default_args()
 
-    with patch("rapidtide.workflows.spatialmi.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.spatialmi.tide_io.checkspacedimmatch",
-               side_effect=mock_checkspacedimmatch):
+    with (
+        patch(
+            "rapidtide.workflows.spatialmi.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.spatialmi.tide_io.checkspacedimmatch",
+            side_effect=mock_checkspacedimmatch,
+        ),
+    ):
         with pytest.raises(SystemExit):
             spatialmi(args)
 

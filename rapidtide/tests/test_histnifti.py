@@ -42,11 +42,15 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
         hdr = MagicMock()
         hdr.__getitem__ = MagicMock(side_effect=lambda key: s[key])
         hdr.__setitem__ = MagicMock(side_effect=lambda key, val: s.__setitem__(key, val))
-        hdr.__deepcopy__ = MagicMock(side_effect=lambda memo: _build_hdr({
-            "dim": list(s["dim"]),
-            "pixdim": list(s["pixdim"]),
-            "toffset": s["toffset"],
-        }))
+        hdr.__deepcopy__ = MagicMock(
+            side_effect=lambda memo: _build_hdr(
+                {
+                    "dim": list(s["dim"]),
+                    "pixdim": list(s["pixdim"]),
+                    "toffset": s["toffset"],
+                }
+            )
+        )
         return hdr
 
     return _build_hdr(store)
@@ -123,13 +127,17 @@ def _run_histnifti(data, args, mask_data=None, mask_mismatch=False):
     def mock_checkspacematch(hdr1, hdr2):
         return not mask_mismatch
 
-    with patch("rapidtide.workflows.histnifti.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.histnifti.tide_io.checkspacematch",
-               side_effect=mock_checkspacematch), \
-         patch("rapidtide.workflows.histnifti.tide_io.savetonifti",
-               side_effect=mock_savetonifti), \
-         patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram"):
+    with (
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.checkspacematch",
+            side_effect=mock_checkspacematch,
+        ),
+        patch("rapidtide.workflows.histnifti.tide_io.savetonifti", side_effect=mock_savetonifti),
+        patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram"),
+    ):
 
         histnifti(args)
 
@@ -200,10 +208,17 @@ def parser_boolean_flags(debug=False):
     if debug:
         print("parser_boolean_flags")
     parser = _get_parser()
-    args = parser.parse_args([
-        "input.nii", "outroot",
-        "--robustrange", "--transform", "--nozero", "--normhist", "--nodisplay",
-    ])
+    args = parser.parse_args(
+        [
+            "input.nii",
+            "outroot",
+            "--robustrange",
+            "--transform",
+            "--nozero",
+            "--normhist",
+            "--nodisplay",
+        ]
+    )
     assert args.robustrange is True
     assert args.transform is True
     assert args.nozero is True
@@ -278,8 +293,7 @@ def histnifti_4d_sorted_is_sorted(debug=False):
         for y in range(ysize):
             for z in range(numslices):
                 voxel_ts = sorted_data[x, y, z, :]
-                assert np.all(voxel_ts[:-1] <= voxel_ts[1:]), \
-                    f"Voxel ({x},{y},{z}) not sorted"
+                assert np.all(voxel_ts[:-1] <= voxel_ts[1:]), f"Voxel ({x},{y},{z}) not sorted"
 
 
 def histnifti_4d_pcts_shape(debug=False):
@@ -312,8 +326,9 @@ def histnifti_4d_pcts_ordered(debug=False):
         for y in range(ysize):
             for z in range(numslices):
                 vals = pcts[x, y, z, :]
-                assert np.all(vals[:-1] <= vals[1:]), \
-                    f"Percentiles at ({x},{y},{z}) not ordered: {vals}"
+                assert np.all(
+                    vals[:-1] <= vals[1:]
+                ), f"Percentiles at ({x},{y},{z}) not ordered: {vals}"
 
 
 def histnifti_4d_hists_shape(debug=False):
@@ -426,8 +441,9 @@ def histnifti_4d_with_mask(debug=False):
 
     sorted_out = saved["/tmp/test_histnifti_sorted"]
     # Masked-out voxels should be zero
-    assert np.all(sorted_out[0, :, :, :] == 0.0), \
-        "Masked-out voxels should have zero values in sorted output"
+    assert np.all(
+        sorted_out[0, :, :, :] == 0.0
+    ), "Masked-out voxels should have zero values in sorted output"
 
 
 def histnifti_4d_mask_mismatch(debug=False):
@@ -470,15 +486,22 @@ def histnifti_3d_basic(debug=False):
         makeandsavehistogram_called["outname"] = outname
         makeandsavehistogram_called["histlen"] = histlen
 
-    with patch("rapidtide.workflows.histnifti.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.histnifti.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
-               side_effect=mock_makeandsavehistogram):
+    with (
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.histnifti.tide_io.savetonifti"),
+        patch(
+            "rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
+            side_effect=mock_makeandsavehistogram,
+        ),
+    ):
 
         histnifti(args)
 
-    assert makeandsavehistogram_called["called"], "makeandsavehistogram should be called for 3D data"
+    assert makeandsavehistogram_called[
+        "called"
+    ], "makeandsavehistogram should be called for 3D data"
     assert makeandsavehistogram_called["outname"] == "/tmp/test_histnifti_hist"
 
 
@@ -506,19 +529,23 @@ def histnifti_3d_nozero(debug=False):
     def mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
         captured_data["indata"] = np.array(indata).copy()
 
-    with patch("rapidtide.workflows.histnifti.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.histnifti.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
-               side_effect=mock_makeandsavehistogram):
+    with (
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.histnifti.tide_io.savetonifti"),
+        patch(
+            "rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
+            side_effect=mock_makeandsavehistogram,
+        ),
+    ):
 
         histnifti(args)
 
     # The total number of valid voxels is numspatiallocs (all ones mask)
     # nozero should filter out voxels with abs value < nozerothresh
     total_voxels = xsize * ysize * numslices
-    assert len(captured_data["indata"]) < total_voxels, \
-        "nozero should exclude some values"
+    assert len(captured_data["indata"]) < total_voxels, "nozero should exclude some values"
 
 
 def histnifti_3d_transform(debug=False):
@@ -542,11 +569,13 @@ def histnifti_3d_transform(debug=False):
     def mock_savetonifti(arr, hdr_arg, fname, **kwargs):
         saved_nifti[fname] = arr.copy()
 
-    with patch("rapidtide.workflows.histnifti.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.histnifti.tide_io.savetonifti",
-               side_effect=mock_savetonifti), \
-         patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram"):
+    with (
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.histnifti.tide_io.savetonifti", side_effect=mock_savetonifti),
+        patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram"),
+    ):
 
         histnifti(args)
 
@@ -579,11 +608,16 @@ def histnifti_3d_custom_histlen(debug=False):
     def mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
         captured["histlen"] = histlen
 
-    with patch("rapidtide.workflows.histnifti.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.histnifti.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
-               side_effect=mock_makeandsavehistogram):
+    with (
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.histnifti.tide_io.savetonifti"),
+        patch(
+            "rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
+            side_effect=mock_makeandsavehistogram,
+        ),
+    ):
 
         histnifti(args)
 
@@ -611,11 +645,16 @@ def histnifti_3d_normhist(debug=False):
     def mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
         captured["normalize"] = kwargs.get("normalize", False)
 
-    with patch("rapidtide.workflows.histnifti.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.histnifti.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
-               side_effect=mock_makeandsavehistogram):
+    with (
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.histnifti.tide_io.savetonifti"),
+        patch(
+            "rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
+            side_effect=mock_makeandsavehistogram,
+        ),
+    ):
 
         histnifti(args)
 
@@ -643,11 +682,16 @@ def histnifti_3d_display_flag(debug=False):
     def mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
         captured["displayplots"] = kwargs.get("displayplots", True)
 
-    with patch("rapidtide.workflows.histnifti.tide_io.readfromnifti",
-               side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.histnifti.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
-               side_effect=mock_makeandsavehistogram):
+    with (
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch("rapidtide.workflows.histnifti.tide_io.savetonifti"),
+        patch(
+            "rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
+            side_effect=mock_makeandsavehistogram,
+        ),
+    ):
 
         histnifti(args)
 

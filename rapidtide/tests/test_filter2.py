@@ -853,11 +853,28 @@ def ncfilter_allphysio_types(debug=False):
     if debug:
         print("ncfilter_allphysio_types")
     types = [
-        "vlf", "lfo", "lfo_legacy", "lfo_tight", "resp", "cardiac",
-        "hrv_ulf", "hrv_vlf", "hrv_lf", "hrv_hf", "hrv_vhf",
-        "vlf_stop", "lfo_stop", "lfo_legacy_stop", "lfo_tight_stop",
-        "resp_stop", "cardiac_stop",
-        "hrv_ulf_stop", "hrv_vlf_stop", "hrv_lf_stop", "hrv_hf_stop", "hrv_vhf_stop",
+        "vlf",
+        "lfo",
+        "lfo_legacy",
+        "lfo_tight",
+        "resp",
+        "cardiac",
+        "hrv_ulf",
+        "hrv_vlf",
+        "hrv_lf",
+        "hrv_hf",
+        "hrv_vhf",
+        "vlf_stop",
+        "lfo_stop",
+        "lfo_legacy_stop",
+        "lfo_tight_stop",
+        "resp_stop",
+        "cardiac_stop",
+        "hrv_ulf_stop",
+        "hrv_vlf_stop",
+        "hrv_lf_stop",
+        "hrv_hf_stop",
+        "hrv_vhf_stop",
     ]
     for ftype in types:
         filt = NoncausalFilter(filtertype=ftype)
@@ -970,8 +987,14 @@ def arb_pass_lowpass_trapezoidal(debug=False):
         print("arb_pass_lowpass_trapezoidal")
     sig = _make_test_signal()
     result = arb_pass(
-        FS, sig, 0.0, 0.0, 10.0, 12.0,
-        transferfunc="trapezoidal", padlen=PADLEN,
+        FS,
+        sig,
+        0.0,
+        0.0,
+        10.0,
+        12.0,
+        transferfunc="trapezoidal",
+        padlen=PADLEN,
     )
     assert len(result) == len(sig)
 
@@ -982,8 +1005,14 @@ def arb_pass_highpass_trapezoidal(debug=False):
         print("arb_pass_highpass_trapezoidal")
     sig = _make_test_signal()
     result = arb_pass(
-        FS, sig, 13.0, 15.0, FS / 2.0, FS / 2.0,
-        transferfunc="trapezoidal", padlen=PADLEN,
+        FS,
+        sig,
+        13.0,
+        15.0,
+        FS / 2.0,
+        FS / 2.0,
+        transferfunc="trapezoidal",
+        padlen=PADLEN,
     )
     assert len(result) == len(sig)
 
@@ -994,8 +1023,14 @@ def arb_pass_bandpass_trapezoidal(debug=False):
         print("arb_pass_bandpass_trapezoidal")
     sig = _make_test_signal()
     result = arb_pass(
-        FS, sig, 2.0, 3.0, 8.0, 10.0,
-        transferfunc="trapezoidal", padlen=PADLEN,
+        FS,
+        sig,
+        2.0,
+        3.0,
+        8.0,
+        10.0,
+        transferfunc="trapezoidal",
+        padlen=PADLEN,
     )
     assert len(result) == len(sig)
 
@@ -1006,8 +1041,14 @@ def arb_pass_bandpass_butterworth(debug=False):
         print("arb_pass_bandpass_butterworth")
     sig = _make_test_signal()
     result = arb_pass(
-        FS, sig, 2.0, 3.0, 8.0, 10.0,
-        transferfunc="butterworth", padlen=PADLEN,
+        FS,
+        sig,
+        2.0,
+        3.0,
+        8.0,
+        10.0,
+        transferfunc="butterworth",
+        padlen=PADLEN,
     )
     assert len(result) == len(sig)
 
@@ -1018,8 +1059,14 @@ def arb_pass_bandpass_brickwall(debug=False):
         print("arb_pass_bandpass_brickwall")
     sig = _make_test_signal()
     result = arb_pass(
-        FS, sig, 2.0, 3.0, 8.0, 10.0,
-        transferfunc="brickwall", padlen=PADLEN,
+        FS,
+        sig,
+        2.0,
+        3.0,
+        8.0,
+        10.0,
+        transferfunc="brickwall",
+        padlen=PADLEN,
     )
     assert len(result) == len(sig)
 
@@ -1030,8 +1077,14 @@ def arb_pass_lowpass_butterworth(debug=False):
         print("arb_pass_lowpass_butterworth")
     sig = _make_test_signal()
     result = arb_pass(
-        FS, sig, 0.0, 0.0, 10.0, 12.0,
-        transferfunc="butterworth", padlen=PADLEN,
+        FS,
+        sig,
+        0.0,
+        0.0,
+        10.0,
+        12.0,
+        transferfunc="butterworth",
+        padlen=PADLEN,
     )
     assert len(result) == len(sig)
 
@@ -1042,8 +1095,14 @@ def arb_pass_highpass_butterworth(debug=False):
         print("arb_pass_highpass_butterworth")
     sig = _make_test_signal()
     result = arb_pass(
-        FS, sig, 13.0, 15.0, FS / 2.0, FS / 2.0,
-        transferfunc="butterworth", padlen=PADLEN,
+        FS,
+        sig,
+        13.0,
+        15.0,
+        FS / 2.0,
+        FS / 2.0,
+        transferfunc="butterworth",
+        padlen=PADLEN,
     )
     assert len(result) == len(sig)
 
@@ -1056,8 +1115,17 @@ def getfilterbandfreqs_all_bands(debug=False):
     if debug:
         print("getfilterbandfreqs_all_bands")
     bands = [
-        "vlf", "lfo", "lfo_legacy", "lfo_tight", "resp", "cardiac",
-        "hrv_ulf", "hrv_vlf", "hrv_lf", "hrv_hf", "hrv_vhf",
+        "vlf",
+        "lfo",
+        "lfo_legacy",
+        "lfo_tight",
+        "resp",
+        "cardiac",
+        "hrv_ulf",
+        "hrv_vlf",
+        "hrv_lf",
+        "hrv_hf",
+        "hrv_vhf",
     ]
     for band in bands:
         lp, up, ls, us = getfilterbandfreqs(band)

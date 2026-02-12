@@ -556,7 +556,9 @@ def test_interppatch(debug=False):
     assert np.sum(justboxes > 0) > 0
 
     if debug:
-        print(f"interppatch: interpolated range [{np.min(interpolated):.1f}, {np.max(interpolated):.1f}]")
+        print(
+            f"interppatch: interpolated range [{np.min(interpolated):.1f}, {np.max(interpolated):.1f}]"
+        )
 
 
 def test_interppatch_no_regions(debug=False):

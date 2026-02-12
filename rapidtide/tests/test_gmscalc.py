@@ -102,13 +102,18 @@ def test_get_parser_with_valid_args(debug=False):
 def test_get_parser_optional_flags(debug=False):
     """Test parser with optional flags."""
     parser = _get_parser()
-    args = parser.parse_args([
-        "data.nii.gz", "out",
-        "--normfirst",
-        "--smooth", "3.5",
-        "--debug",
-        "--normmethod", "percent",
-    ])
+    args = parser.parse_args(
+        [
+            "data.nii.gz",
+            "out",
+            "--normfirst",
+            "--smooth",
+            "3.5",
+            "--debug",
+            "--normmethod",
+            "percent",
+        ]
+    )
     assert args.normfirst is True
     assert args.sigma == 3.5
     assert args.debug is True

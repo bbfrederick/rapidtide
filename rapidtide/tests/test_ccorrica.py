@@ -156,7 +156,9 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
         ),
         patch(
             "rapidtide.workflows.ccorrica.tide_resample.upsample",
-            side_effect=lambda data, fs_in, fs_out, intfac=False: np.repeat(data, int(fs_out / fs_in)),
+            side_effect=lambda data, fs_in, fs_out, intfac=False: np.repeat(
+                data, int(fs_out / fs_in)
+            ),
         ),
         patch(
             "rapidtide.workflows.ccorrica.tide_math.stdnormalize",
@@ -164,7 +166,8 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
         ),
         patch(
             "rapidtide.workflows.ccorrica.tide_math.corrnormalize",
-            side_effect=lambda x, detrendorder=0, windowfunc="hamming": x / (np.std(x) if np.std(x) > 0 else 1.0),
+            side_effect=lambda x, detrendorder=0, windowfunc="hamming": x
+            / (np.std(x) if np.std(x) > 0 else 1.0),
         ),
         patch(
             "rapidtide.workflows.ccorrica.tide_corr.fastcorrelate",
@@ -324,7 +327,14 @@ def test_ccorrica_output_files(debug=False):
 
     # Check savetonifti output files
     stn_files = [entry[1] for entry in result["savetonifti"]]
-    expected_nifti_suffixes = ["_xcorr", "_pxcorr", "_corrmax", "_corrlag", "_corrwidth", "_corrmask"]
+    expected_nifti_suffixes = [
+        "_xcorr",
+        "_pxcorr",
+        "_corrmax",
+        "_corrlag",
+        "_corrwidth",
+        "_corrmask",
+    ]
     for suffix in expected_nifti_suffixes:
         assert any(suffix in f for f in stn_files), f"Missing nifti file with suffix {suffix}"
 
@@ -567,14 +577,26 @@ def test_ccorrica_oversample(debug=False):
         return np.zeros(xcorrlen)
 
     with (
-        patch("rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)),
-        patch("rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile", return_value=(None, 0.0, None, tcdata, False, "text")),
+        patch(
+            "rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile",
+            return_value=(None, 0.0, None, tcdata, False, "text"),
+        ),
         patch("rapidtide.workflows.ccorrica.tide_resample.upsample", side_effect=mock_upsample),
         patch("rapidtide.workflows.ccorrica.tide_math.stdnormalize", side_effect=lambda x: x),
-        patch("rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x),
-        patch("rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate
+        ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
-        patch("rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss", side_effect=mock_findmaxlag_gauss),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
+            side_effect=mock_findmaxlag_gauss,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
         patch("rapidtide.workflows.ccorrica.tide_io.savetonifti", side_effect=stn_effect),
@@ -638,14 +660,26 @@ def test_ccorrica_auto_oversampfactor(debug=False):
         return np.zeros(xcorrlen)
 
     with (
-        patch("rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)),
-        patch("rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile", return_value=(1.0, 0.0, None, tcdata, False, "text")),
+        patch(
+            "rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile",
+            return_value=(1.0, 0.0, None, tcdata, False, "text"),
+        ),
         patch("rapidtide.workflows.ccorrica.tide_resample.upsample", side_effect=mock_upsample),
         patch("rapidtide.workflows.ccorrica.tide_math.stdnormalize", side_effect=lambda x: x),
-        patch("rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x),
-        patch("rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate
+        ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
-        patch("rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss", side_effect=mock_findmaxlag_gauss),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
+            side_effect=mock_findmaxlag_gauss,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
         patch("rapidtide.workflows.ccorrica.tide_io.savetonifti", side_effect=stn_effect),
@@ -714,10 +748,12 @@ def test_ccorrica_symmetrize_called(debug=False):
     symmetrize_calls = []
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
-        symmetrize_calls.append({
-            "zerodiagonal": zerodiagonal,
-            "antisymmetric": antisymmetric,
-        })
+        symmetrize_calls.append(
+            {
+                "zerodiagonal": zerodiagonal,
+                "antisymmetric": antisymmetric,
+            }
+        )
         result = np.array(matrix, copy=True)
         if zerodiagonal:
             np.fill_diagonal(result, 0.0)
@@ -746,14 +782,29 @@ def test_ccorrica_symmetrize_called(debug=False):
         return mock_img
 
     with (
-        patch("rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)),
-        patch("rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile", return_value=(2.0, 0.0, None, tcdata, False, "text")),
-        patch("rapidtide.workflows.ccorrica.tide_resample.upsample", side_effect=lambda d, fi, fo, intfac=False: d),
+        patch(
+            "rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile",
+            return_value=(2.0, 0.0, None, tcdata, False, "text"),
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_resample.upsample",
+            side_effect=lambda d, fi, fo, intfac=False: d,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_math.stdnormalize", side_effect=lambda x: x),
-        patch("rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x),
-        patch("rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate
+        ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
-        patch("rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss", side_effect=mock_findmaxlag_gauss),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
+            side_effect=mock_findmaxlag_gauss,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
         patch("rapidtide.workflows.ccorrica.tide_io.savetonifti", side_effect=stn_effect),
@@ -765,11 +816,11 @@ def test_ccorrica_symmetrize_called(debug=False):
     # corrmax (zerodiagonal=True), corrlag (antisymmetric=True),
     # corrwidth (neither), corrmask (zerodiagonal=True)
     assert len(symmetrize_calls) == 4
-    assert symmetrize_calls[0]["zerodiagonal"] is True   # corrmax
-    assert symmetrize_calls[1]["antisymmetric"] is True   # corrlag
-    assert symmetrize_calls[2]["zerodiagonal"] is False   # corrwidth
+    assert symmetrize_calls[0]["zerodiagonal"] is True  # corrmax
+    assert symmetrize_calls[1]["antisymmetric"] is True  # corrlag
+    assert symmetrize_calls[2]["zerodiagonal"] is False  # corrwidth
     assert symmetrize_calls[2]["antisymmetric"] is False  # corrwidth
-    assert symmetrize_calls[3]["zerodiagonal"] is True    # corrmask
+    assert symmetrize_calls[3]["zerodiagonal"] is True  # corrmask
 
     if debug:
         print("test_ccorrica_symmetrize_called passed")
@@ -814,14 +865,29 @@ def test_ccorrica_fastcorrelate_call_count(debug=False):
         return mock_img
 
     with (
-        patch("rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)),
-        patch("rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile", return_value=(2.0, 0.0, None, tcdata, False, "text")),
-        patch("rapidtide.workflows.ccorrica.tide_resample.upsample", side_effect=lambda d, fi, fo, intfac=False: d),
+        patch(
+            "rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile",
+            return_value=(2.0, 0.0, None, tcdata, False, "text"),
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_resample.upsample",
+            side_effect=lambda d, fi, fo, intfac=False: d,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_math.stdnormalize", side_effect=lambda x: x),
-        patch("rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x),
-        patch("rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate
+        ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
-        patch("rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss", side_effect=mock_findmaxlag_gauss),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
+            side_effect=mock_findmaxlag_gauss,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
         patch("rapidtide.workflows.ccorrica.tide_io.savetonifti", side_effect=stn_effect),
@@ -887,14 +953,29 @@ def test_ccorrica_findmaxlag_gauss_called(debug=False):
         return mock_img
 
     with (
-        patch("rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)),
-        patch("rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile", return_value=(2.0, 0.0, None, tcdata, False, "text")),
-        patch("rapidtide.workflows.ccorrica.tide_resample.upsample", side_effect=lambda d, fi, fo, intfac=False: d),
+        patch(
+            "rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile",
+            return_value=(2.0, 0.0, None, tcdata, False, "text"),
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_resample.upsample",
+            side_effect=lambda d, fi, fo, intfac=False: d,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_math.stdnormalize", side_effect=lambda x: x),
-        patch("rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x),
-        patch("rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate
+        ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
-        patch("rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss", side_effect=mock_findmaxlag_gauss),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
+            side_effect=mock_findmaxlag_gauss,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
         patch("rapidtide.workflows.ccorrica.tide_io.savetonifti", side_effect=stn_effect),
@@ -949,14 +1030,29 @@ def test_ccorrica_nifti_pixdim_set(debug=False):
     stn_effect, _ = _capture_savetonifti()
 
     with (
-        patch("rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)),
-        patch("rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile", return_value=(None, 0.0, None, tcdata, False, "text")),
-        patch("rapidtide.workflows.ccorrica.tide_resample.upsample", side_effect=lambda d, fi, fo, intfac=False: d),
+        patch(
+            "rapidtide.workflows.ccorrica.pf.postprocessfilteropts", return_value=(args, prefilter)
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_io.readvectorsfromtextfile",
+            return_value=(None, 0.0, None, tcdata, False, "text"),
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_resample.upsample",
+            side_effect=lambda d, fi, fo, intfac=False: d,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_math.stdnormalize", side_effect=lambda x: x),
-        patch("rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x),
-        patch("rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_math.corrnormalize", side_effect=lambda x, **kw: x
+        ),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_corr.fastcorrelate", side_effect=mock_fastcorrelate
+        ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
-        patch("rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss", side_effect=mock_findmaxlag_gauss),
+        patch(
+            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
+            side_effect=mock_findmaxlag_gauss,
+        ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
         patch("rapidtide.workflows.ccorrica.tide_io.savetonifti", side_effect=stn_effect),

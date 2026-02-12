@@ -117,9 +117,7 @@ def _run_diffrois(args, df, keyfile_content=None):
     ]
 
     if keyfile_content is not None:
-        patches.append(
-            patch("builtins.open", mock_open(read_data=keyfile_content))
-        )
+        patches.append(patch("builtins.open", mock_open(read_data=keyfile_content)))
 
     # Enter all context managers
     for p in patches:
@@ -239,7 +237,12 @@ def test_diffrois_diffs_shape(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             assert data.shape == (numregions, numregions, 1, numlabels)
             break
     else:
@@ -332,7 +335,12 @@ def test_diffrois_diagonal_zero(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             for i in range(numregions):
                 np.testing.assert_array_equal(data[i, i, 0, :], 0.0)
             break
@@ -349,7 +357,12 @@ def test_diffrois_symmetric_values(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             for i in range(numregions):
                 for j in range(i + 1, numregions):
                     np.testing.assert_array_equal(data[i, j, 0, :], data[j, i, 0, :])
@@ -373,7 +386,12 @@ def test_diffrois_difference_values(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             # ROI_0[z] - ROI_1[z] for each z: [1-4, 2-5, 3-6] = [-3, -3, -3]
             expected_01 = np.array([-3.0, -3.0, -3.0])
             np.testing.assert_array_almost_equal(data[0, 1, 0, :], expected_01)
@@ -492,7 +510,12 @@ def test_diffrois_nan_diffs_zero(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             # Row 1, pair (0,1) should be 0 (NaN in region 0)
             assert data[0, 1, 0, 1] == 0.0
             break
@@ -570,7 +593,12 @@ def test_diffrois_maxlines(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             # 4th dimension should be maxlines, not numlabels
             assert data.shape == (numregions, numregions, 1, maxlines)
             break
@@ -588,7 +616,12 @@ def test_diffrois_maxlines_larger_than_data(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             assert data.shape == (numregions, numregions, 1, numlabels)
             break
     if debug:
@@ -603,12 +636,14 @@ def test_diffrois_keyfile_reorder(debug=False):
     numregions = 3
     numlabels = 4
     # Create data with known values
-    data_vals = np.array([
-        [10.0, 20.0, 30.0],
-        [11.0, 21.0, 31.0],
-        [12.0, 22.0, 32.0],
-        [13.0, 23.0, 33.0],
-    ])
+    data_vals = np.array(
+        [
+            [10.0, 20.0, 30.0],
+            [11.0, 21.0, 31.0],
+            [12.0, 22.0, 32.0],
+            [13.0, 23.0, 33.0],
+        ]
+    )
     region_names = ["ROI_0", "ROI_1", "ROI_2"]
     labels = [f"label_{z}" for z in range(numlabels)]
     df = pd.DataFrame(data_vals, columns=region_names)
@@ -620,7 +655,12 @@ def test_diffrois_keyfile_reorder(debug=False):
     result = _run_diffrois(args, df, keyfile_content=keyfile_content)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             # With reordered keys: colkeys = [ROI_2, ROI_1, ROI_0]
             # [0,1] = ROI_2 - ROI_1 = 30-20=10 at z=0
             assert abs(data[0, 1, 0, 0] - 10.0) < 1e-10
@@ -637,11 +677,13 @@ def test_diffrois_keyfile_subset(debug=False):
     """Keyfile with subset of regions should only produce that subset."""
     numregions = 3
     numlabels = 3
-    data_vals = np.array([
-        [10.0, 20.0, 30.0],
-        [11.0, 21.0, 31.0],
-        [12.0, 22.0, 32.0],
-    ])
+    data_vals = np.array(
+        [
+            [10.0, 20.0, 30.0],
+            [11.0, 21.0, 31.0],
+            [12.0, 22.0, 32.0],
+        ]
+    )
     region_names = ["ROI_0", "ROI_1", "ROI_2"]
     labels = [f"label_{z}" for z in range(numlabels)]
     df = pd.DataFrame(data_vals, columns=region_names)
@@ -653,7 +695,12 @@ def test_diffrois_keyfile_subset(debug=False):
     result = _run_diffrois(args, df, keyfile_content=keyfile_content)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             # Output should be 2x2 (only 2 regions selected)
             assert data.shape == (2, 2, 1, numlabels)
             # [0,1] = ROI_0 - ROI_2 = 10-30=-20 at z=0
@@ -667,11 +714,13 @@ def test_diffrois_no_keyfile(debug=False):
     """Without keyfile, regions should be in CSV column order."""
     numregions = 3
     numlabels = 3
-    data_vals = np.array([
-        [10.0, 20.0, 30.0],
-        [11.0, 21.0, 31.0],
-        [12.0, 22.0, 32.0],
-    ])
+    data_vals = np.array(
+        [
+            [10.0, 20.0, 30.0],
+            [11.0, 21.0, 31.0],
+            [12.0, 22.0, 32.0],
+        ]
+    )
     region_names = ["ROI_0", "ROI_1", "ROI_2"]
     labels = [f"label_{z}" for z in range(numlabels)]
     df = pd.DataFrame(data_vals, columns=region_names)
@@ -681,7 +730,12 @@ def test_diffrois_no_keyfile(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             # [0,1] = ROI_0 - ROI_1 = 10-20=-10 at z=0
             assert abs(data[0, 1, 0, 0] - (-10.0)) < 1e-10
             break
@@ -717,7 +771,12 @@ def test_diffrois_single_region(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             assert data.shape == (1, 1, 1, 3)
             # Self-difference should be 0
             np.testing.assert_array_equal(data[0, 0, 0, :], 0.0)
@@ -738,7 +797,12 @@ def test_diffrois_single_label(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             assert data.shape == (3, 3, 1, 1)
             # [0,1] = ROI_0 - ROI_1 = 1-2 = -1
             assert abs(data[0, 1, 0, 0] - (-1.0)) < 1e-10
@@ -774,7 +838,12 @@ def test_diffrois_many_regions(debug=False):
     result = _run_diffrois(args, df)
 
     for data, fname in result["savetonifti"]:
-        if "_diffs" in fname and "_meandiffs" not in fname and "_stddiffs" not in fname and "_demeaneddiffs" not in fname:
+        if (
+            "_diffs" in fname
+            and "_meandiffs" not in fname
+            and "_stddiffs" not in fname
+            and "_demeaneddiffs" not in fname
+        ):
             assert data.shape == (numregions, numregions, 1, numlabels)
             break
     if debug:
@@ -788,14 +857,16 @@ def test_diffrois_integration(debug=False):
     """Full integration test verifying all outputs are consistent."""
     numregions = 3
     numlabels = 6
-    data_vals = np.array([
-        [1.0, 2.0, 3.0],
-        [4.0, 5.0, 6.0],
-        [7.0, 8.0, 9.0],
-        [10.0, 11.0, 12.0],
-        [13.0, 14.0, 15.0],
-        [16.0, 17.0, 18.0],
-    ])
+    data_vals = np.array(
+        [
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0],
+            [10.0, 11.0, 12.0],
+            [13.0, 14.0, 15.0],
+            [16.0, 17.0, 18.0],
+        ]
+    )
     region_names = ["ROI_0", "ROI_1", "ROI_2"]
     labels = [f"label_{z}" for z in range(numlabels)]
     df = pd.DataFrame(data_vals, columns=region_names)

@@ -206,9 +206,7 @@ def parser_searchrange(debug=False):
     if debug:
         print("parser_searchrange")
     parser = _get_parser()
-    args = parser.parse_args(
-        ["file1.txt", "file2.txt", "--searchrange", "-5.0", "5.0"]
-    )
+    args = parser.parse_args(["file1.txt", "file2.txt", "--searchrange", "-5.0", "5.0"])
     assert args.lag_extrema[0] == pytest.approx(-5.0)
     assert args.lag_extrema[1] == pytest.approx(5.0)
 
@@ -228,9 +226,7 @@ def parser_corrweighting(debug=False):
         print("parser_corrweighting")
     parser = _get_parser()
     for weight in ["None", "phat", "liang", "eckart"]:
-        args = parser.parse_args(
-            ["file1.txt", "file2.txt", "--corrweighting", weight]
-        )
+        args = parser.parse_args(["file1.txt", "file2.txt", "--corrweighting", weight])
         assert args.corrweighting == weight
 
 
@@ -240,9 +236,7 @@ def parser_similaritymetric(debug=False):
         print("parser_similaritymetric")
     parser = _get_parser()
     for metric in ["correlation", "mutualinfo", "hybrid"]:
-        args = parser.parse_args(
-            ["file1.txt", "file2.txt", "--similaritymetric", metric]
-        )
+        args = parser.parse_args(["file1.txt", "file2.txt", "--similaritymetric", metric])
         assert args.similaritymetric == metric
 
 
@@ -265,9 +259,12 @@ def parser_output_options(debug=False):
     parser = _get_parser()
     args = parser.parse_args(
         [
-            "file1.txt", "file2.txt",
-            "--outputfile", "results.txt",
-            "--corroutputfile", "corr.txt",
+            "file1.txt",
+            "file2.txt",
+            "--outputfile",
+            "results.txt",
+            "--corroutputfile",
+            "corr.txt",
             "--summarymode",
             "--labelline",
         ]
@@ -285,10 +282,12 @@ def parser_preprocessing(debug=False):
     parser = _get_parser()
     args = parser.parse_args(
         [
-            "file1.txt", "file2.txt",
+            "file1.txt",
+            "file2.txt",
             "--invert",
             "--trimdata",
-            "--label", "test_label",
+            "--label",
+            "test_label",
         ]
     )
     assert args.invert is True

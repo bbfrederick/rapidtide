@@ -179,15 +179,20 @@ def get_parser_with_options(testtemproot, debug=False):
         f.write("dummy")
 
     parser = _get_parser()
-    args = parser.parse_args([
-        datafile,
-        maskfile,
-        "output_root",
-        "--spatialfilt", "2.5",
-        "--pcacomponents", "0.95",
-        "--icacomponents", "5",
-        "--debug",
-    ])
+    args = parser.parse_args(
+        [
+            datafile,
+            maskfile,
+            "output_root",
+            "--spatialfilt",
+            "2.5",
+            "--pcacomponents",
+            "0.95",
+            "--icacomponents",
+            "5",
+            "--debug",
+        ]
+    )
     assert args.gausssigma == 2.5
     assert args.pcacomponents == 0.95
     assert args.icacomponents == 5
@@ -222,14 +227,16 @@ def _make_mock_nifti_data(xsize=4, ysize=4, numslices=2, timepoints=64):
     # Create a mock header with required methods
     hdr = MagicMock()
     hdr.get_xyzt_units.return_value = ("mm", "sec")
-    hdr.__getitem__ = MagicMock(side_effect=lambda key: {
-        "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
-        "pixdim": [1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0],
-    }[key])
+    hdr.__getitem__ = MagicMock(
+        side_effect=lambda key: {
+            "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
+            "pixdim": [1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0],
+        }[key]
+    )
     hdr.__setitem__ = MagicMock()
-    hdr.__deepcopy__ = MagicMock(side_effect=lambda memo: _make_simple_header(
-        xsize, ysize, numslices, timepoints
-    ))
+    hdr.__deepcopy__ = MagicMock(
+        side_effect=lambda memo: _make_simple_header(xsize, ysize, numslices, timepoints)
+    )
 
     dims = np.array([4, xsize, ysize, numslices, timepoints, 1, 1, 1])
     sizes = np.array([1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0])
@@ -254,12 +261,14 @@ def fdica_basic(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_basic")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti") as mock_save, \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs") as mock_write, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti") as mock_save,
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs") as mock_write,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -291,13 +300,15 @@ def fdica_with_spatial_filter(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_spatfilt")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check, \
-         patch("rapidtide.workflows.fdica.tide_filt.ssmooth") as mock_ssmooth:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti"),
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+        patch("rapidtide.workflows.fdica.tide_filt.ssmooth") as mock_ssmooth,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -330,13 +341,15 @@ def fdica_auto_gausssigma(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_autogauss")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check, \
-         patch("rapidtide.workflows.fdica.tide_filt.ssmooth") as mock_ssmooth:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti"),
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+        patch("rapidtide.workflows.fdica.tide_filt.ssmooth") as mock_ssmooth,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -369,12 +382,14 @@ def fdica_with_ica_components(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_ica")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti") as mock_save, \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs") as mock_write, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti") as mock_save,
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs") as mock_write,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -411,12 +426,14 @@ def fdica_with_pca_integer(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_pcaint")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti"),
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -444,11 +461,13 @@ def fdica_dim_mismatch_exits(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_mismatch")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check, \
-         patch("rapidtide.workflows.fdica.exit") as mock_exit:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+        patch("rapidtide.workflows.fdica.exit") as mock_exit,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -476,11 +495,13 @@ def fdica_4d_mask_exits(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_4dmask")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check, \
-         patch("rapidtide.workflows.fdica.sys.exit") as mock_exit:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+        patch("rapidtide.workflows.fdica.sys.exit") as mock_exit,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -510,12 +531,14 @@ def fdica_msec_tr(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_msec")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti"),
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -544,12 +567,14 @@ def fdica_negative_freq_bounds(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_negfreq")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti"), \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti"),
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -579,12 +604,14 @@ def fdica_output_files(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_outputs")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti") as mock_save, \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs") as mock_write, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti") as mock_save,
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs") as mock_write,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -619,8 +646,9 @@ def fdica_output_files(testtemproot, debug=False):
             "_movingsignal",
         ]
         for suffix in expected_suffixes:
-            assert any(name.endswith(suffix) for name in save_names), \
-                f"Expected output with suffix '{suffix}' not found in {save_names}"
+            assert any(
+                name.endswith(suffix) for name in save_names
+            ), f"Expected output with suffix '{suffix}' not found in {save_names}"
 
         # Collect the text output names from writenpvecs calls
         write_names = [c[0][1] for c in mock_write.call_args_list]
@@ -639,14 +667,16 @@ def fdica_partial_mask(testtemproot, debug=False):
 
     hdr = MagicMock()
     hdr.get_xyzt_units.return_value = ("mm", "sec")
-    hdr.__getitem__ = MagicMock(side_effect=lambda key: {
-        "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
-        "pixdim": [1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0],
-    }[key])
+    hdr.__getitem__ = MagicMock(
+        side_effect=lambda key: {
+            "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
+            "pixdim": [1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0],
+        }[key]
+    )
     hdr.__setitem__ = MagicMock()
-    hdr.__deepcopy__ = MagicMock(side_effect=lambda memo: _make_simple_header(
-        xsize, ysize, numslices, timepoints
-    ))
+    hdr.__deepcopy__ = MagicMock(
+        side_effect=lambda memo: _make_simple_header(xsize, ysize, numslices, timepoints)
+    )
 
     dims = np.array([4, xsize, ysize, numslices, timepoints, 1, 1, 1])
     sizes = np.array([1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0])
@@ -655,12 +685,14 @@ def fdica_partial_mask(testtemproot, debug=False):
 
     outputroot = os.path.join(testtemproot, "fdica_partial")
 
-    with patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read, \
-         patch("rapidtide.workflows.fdica.tide_io.savetonifti") as mock_save, \
-         patch("rapidtide.workflows.fdica.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes, \
-         patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims, \
-         patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.fdica.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.fdica.tide_io.savetonifti") as mock_save,
+        patch("rapidtide.workflows.fdica.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.fdica.tide_io.parseniftisizes") as mock_sizes,
+        patch("rapidtide.workflows.fdica.tide_io.parseniftidims") as mock_dims,
+        patch("rapidtide.workflows.fdica.tide_io.checkspacedimmatch") as mock_check,
+    ):
 
         mock_read.side_effect = [
             (MagicMock(), data, hdr, dims, sizes),
@@ -686,8 +718,10 @@ def fdica_partial_mask(testtemproot, debug=False):
 
 def main_calls_fdica(debug=False):
     """Test that main parses args and calls fdica."""
-    with patch("rapidtide.workflows.fdica._get_parser") as mock_parser, \
-         patch("rapidtide.workflows.fdica.fdica") as mock_fdica:
+    with (
+        patch("rapidtide.workflows.fdica._get_parser") as mock_parser,
+        patch("rapidtide.workflows.fdica.fdica") as mock_fdica,
+    ):
 
         mock_args = argparse.Namespace(
             datafile="data.nii.gz",

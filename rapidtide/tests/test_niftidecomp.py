@@ -69,11 +69,13 @@ def _make_4d_data(xsize=4, ysize=4, numslices=3, numtimepoints=20):
     numvoxels = xsize * ysize * numslices
     # Generate a few source signals
     t = np.linspace(0, 4 * np.pi, numtimepoints)
-    sources = np.array([
-        np.sin(t),
-        np.cos(t),
-        np.sin(2 * t),
-    ])
+    sources = np.array(
+        [
+            np.sin(t),
+            np.cos(t),
+            np.sin(2 * t),
+        ]
+    )
     # Mix sources into voxels
     mixing = rng.rand(numvoxels, 3)
     data_2d = mixing @ sources + 0.1 * rng.randn(numvoxels, numtimepoints)
@@ -253,10 +255,19 @@ def transpose_3d(debug=False):
 # ==================== niftidecomp_workflow tests ====================
 
 
-def _run_workflow(decompaxis="temporal", decomptype="pca", pcacomponents=0.5,
-                  icacomponents=None, varnorm=True, demean=True, sigma=0.0,
-                  datamaskname=None, mask_data=None, mask_dims=None,
-                  debug=False):
+def _run_workflow(
+    decompaxis="temporal",
+    decomptype="pca",
+    pcacomponents=0.5,
+    icacomponents=None,
+    varnorm=True,
+    demean=True,
+    sigma=0.0,
+    datamaskname=None,
+    mask_data=None,
+    mask_dims=None,
+    debug=False,
+):
     """Helper to run niftidecomp_workflow with mocked IO."""
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
     input_data, input_hdr, input_dims, input_sizes = _make_4d_data(
@@ -272,11 +283,21 @@ def _run_workflow(decompaxis="temporal", decomptype="pca", pcacomponents=0.5,
             return MagicMock(), mask_data, mask_hdr, mask_dims, input_sizes
         return MagicMock(), input_data, input_hdr, input_dims, input_sizes
 
-    with patch("rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True),
+    ):
 
         result = niftidecomp_workflow(
             decompaxis,
@@ -300,8 +321,9 @@ def workflow_pca_temporal(debug=False):
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
         decompaxis="temporal", decomptype="pca", pcacomponents=0.5
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
 
     # Components should be (ncomponents, numtimepoints)
     assert outputcomponents.shape[1] == numtimepoints
@@ -323,8 +345,9 @@ def workflow_pca_spatial(debug=False):
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
         decompaxis="spatial", decomptype="pca", pcacomponents=0.5
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
 
     # Components should be (xsize, ysize, numslices, ncomponents)
     assert outputcomponents.shape[:3] == (xsize, ysize, numslices)
@@ -343,8 +366,9 @@ def workflow_pca_ncomp_fixed(debug=False):
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
         decompaxis="temporal", decomptype="pca", pcacomponents=ncomp
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
 
     assert outputcomponents.shape[0] == ncomp
     assert outputcomponents.shape[1] == numtimepoints
@@ -356,11 +380,14 @@ def workflow_nodemean(debug=False):
     if debug:
         print("workflow_nodemean")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
-        decompaxis="temporal", decomptype="pca", pcacomponents=0.5,
+        decompaxis="temporal",
+        decomptype="pca",
+        pcacomponents=0.5,
         demean=False,
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints)
 
 
@@ -369,11 +396,14 @@ def workflow_novarnorm(debug=False):
     if debug:
         print("workflow_novarnorm")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
-        decompaxis="temporal", decomptype="pca", pcacomponents=0.5,
+        decompaxis="temporal",
+        decomptype="pca",
+        pcacomponents=0.5,
         varnorm=False,
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints)
 
 
@@ -382,11 +412,15 @@ def workflow_nodemean_novarnorm(debug=False):
     if debug:
         print("workflow_nodemean_novarnorm")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
-        decompaxis="temporal", decomptype="pca", pcacomponents=0.5,
-        demean=False, varnorm=False,
+        decompaxis="temporal",
+        decomptype="pca",
+        pcacomponents=0.5,
+        demean=False,
+        varnorm=False,
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints)
 
 
@@ -400,13 +434,16 @@ def workflow_with_3d_mask(debug=False):
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
 
     result, _, _, _, numtimepoints = _run_workflow(
-        decompaxis="temporal", decomptype="pca", pcacomponents=0.5,
+        decompaxis="temporal",
+        decomptype="pca",
+        pcacomponents=0.5,
         datamaskname="dummy_mask.nii.gz",
         mask_data=mask_data,
         mask_dims=mask_dims,
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints)
 
 
@@ -415,10 +452,13 @@ def workflow_sparse_pca(debug=False):
     if debug:
         print("workflow_sparse_pca")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
-        decompaxis="temporal", decomptype="sparse", pcacomponents=3,
+        decompaxis="temporal",
+        decomptype="sparse",
+        pcacomponents=3,
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
     assert outputcomponents.shape[0] == 3
     # SparsePCA doesn't provide explained variance, so zeros are returned
     assert np.all(exp_var == 0.0)
@@ -430,10 +470,13 @@ def workflow_ica_temporal(debug=False):
     if debug:
         print("workflow_ica_temporal")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
-        decompaxis="temporal", decomptype="ica", icacomponents=3,
+        decompaxis="temporal",
+        decomptype="ica",
+        icacomponents=3,
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
 
     # Components should be (ncomponents, numtimepoints)
     assert outputcomponents.shape[1] == numtimepoints
@@ -458,11 +501,21 @@ def workflow_multiple_files(debug=False):
     def mock_readfromnifti(fname, **kwargs):
         return MagicMock(), input_data, input_hdr, input_dims, input_sizes
 
-    with patch("rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True),
+    ):
 
         result = niftidecomp_workflow(
             "temporal",
@@ -471,8 +524,9 @@ def workflow_multiple_files(debug=False):
             pcacomponents=0.5,
         )
 
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
     # With 2 files, totaltimepoints = 2 * numtimepoints = 40
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints * 2)
 
@@ -483,10 +537,13 @@ def workflow_spatial_pca_fixed(debug=False):
         print("workflow_spatial_pca_fixed")
     ncomp = 3
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
-        decompaxis="spatial", decomptype="pca", pcacomponents=ncomp,
+        decompaxis="spatial",
+        decomptype="pca",
+        pcacomponents=ncomp,
     )
-    (outputcomponents, outputcoefficients, outinvtrans,
-     exp_var, exp_var_pct, hdr, dims, sizes) = result
+    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+        result
+    )
 
     # Spatial components should be (xsize, ysize, numslices, ncomponents)
     assert outputcomponents.shape == (xsize, ysize, numslices, ncomp)
@@ -511,12 +568,22 @@ def workflow_smoothing(debug=False):
         smooth_called["count"] += 1
         return data  # Return data unchanged
 
-    with patch("rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_filt.ssmooth", side_effect=mock_ssmooth):
+    with (
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_filt.ssmooth", side_effect=mock_ssmooth),
+    ):
 
         result = niftidecomp_workflow(
             "temporal",
@@ -556,14 +623,24 @@ def main_temporal_pca(debug=False):
         "outputroot": "/tmp/test_niftidecomp_temporal",
     }
 
-    with patch("rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writevec"), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs") as mock_writenpvecs, \
-         patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti") as mock_savetonifti:
+    with (
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writevec"),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs") as mock_writenpvecs,
+        patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti") as mock_savetonifti,
+    ):
 
         main("temporal", args)
 
@@ -599,14 +676,24 @@ def main_spatial_pca(debug=False):
         "outputroot": "/tmp/test_niftidecomp_spatial",
     }
 
-    with patch("rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writevec"), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs") as mock_writenpvecs, \
-         patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti") as mock_savetonifti:
+    with (
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writevec"),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs") as mock_writenpvecs,
+        patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti") as mock_savetonifti,
+    ):
 
         main("spatial", args)
 
@@ -643,14 +730,24 @@ def main_ncomp_fractional(debug=False):
         "outputroot": "/tmp/test_niftidecomp_frac",
     }
 
-    with patch("rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writevec"), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti"):
+    with (
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writevec"),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti"),
+    ):
 
         main("temporal", args)
 
@@ -681,14 +778,24 @@ def main_temporal_wrapper_test(debug=False):
         outputroot="/tmp/test_niftidecomp_temwrap",
     )
 
-    with patch("rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writevec"), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti"):
+    with (
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writevec"),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti"),
+    ):
 
         main_temporal(ns)
 
@@ -716,14 +823,24 @@ def main_spatial_wrapper_test(debug=False):
         outputroot="/tmp/test_niftidecomp_spawrap",
     )
 
-    with patch("rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writevec"), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs"), \
-         patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti"):
+    with (
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.niftidecomp.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checkspacedimmatch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.checktimematch", return_value=True),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writevec"),
+        patch("rapidtide.workflows.niftidecomp.tide_io.writenpvecs"),
+        patch("rapidtide.workflows.niftidecomp.tide_io.savetonifti"),
+    ):
 
         main_spatial(ns)
 

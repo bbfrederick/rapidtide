@@ -196,13 +196,17 @@ def get_parser_all_options(testtemproot, debug=False):
         f.write("1.0\n")
 
     parser = _get_parser()
-    args = parser.parse_args([
-        infile, "output.txt",
-        "--model", "my_model",
-        "--filesarelists",
-        "--nodisplay",
-        "--verbose",
-    ])
+    args = parser.parse_args(
+        [
+            infile,
+            "output.txt",
+            "--model",
+            "my_model",
+            "--filesarelists",
+            "--nodisplay",
+            "--verbose",
+        ]
+    )
     assert args.model == "my_model"
     assert args.filesarelists is True
     assert args.display is False
@@ -245,10 +249,12 @@ def applydlfilter_single_file(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz"]
     data = fmridata.reshape(1, -1)
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write, \
-         patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write,
+        patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -291,10 +297,12 @@ def applydlfilter_single_file_with_pleth(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz", "pleth"]
     data = np.vstack([fmridata, plethdata])
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write, \
-         patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write,
+        patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -335,10 +343,12 @@ def applydlfilter_single_file_with_badpts(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz", "badpts"]
     data = np.vstack([fmridata, badptsdata])
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write, \
-         patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write,
+        patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -387,10 +397,12 @@ def applydlfilter_filesarelists(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz"]
     data = fmridata.reshape(1, -1)
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write, \
-         patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write,
+        patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -423,8 +435,10 @@ def applydlfilter_mismatched_lists(testtemproot, debug=False):
         verbose=debug,
     )
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter"), \
-         patch("rapidtide.workflows.applydlfilter.sys.exit") as mock_exit:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter"),
+        patch("rapidtide.workflows.applydlfilter.sys.exit") as mock_exit,
+    ):
         mock_exit.side_effect = SystemExit(0)
         try:
             applydlfilter(args)
@@ -453,9 +467,11 @@ def applydlfilter_no_usable_data(testtemproot, debug=False):
     columns = ["unrecognized_column"]
     data = np.random.randn(1, signal_length).astype(np.float32)
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.sys.exit") as mock_exit:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.sys.exit") as mock_exit,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -489,9 +505,11 @@ def applydlfilter_wrong_samplerate(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz"]
     data = fmridata.reshape(1, -1)
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.sys.exit") as mock_exit:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.sys.exit") as mock_exit,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (50.0, 0.0, columns, data, False, "tsv", {})
@@ -525,9 +543,11 @@ def applydlfilter_usebadpts_missing_badpts(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz"]
     data = fmridata.reshape(1, -1)
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.sys.exit") as mock_exit:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.sys.exit") as mock_exit,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -564,10 +584,12 @@ def applydlfilter_verbose(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz"]
     data = fmridata.reshape(1, -1)
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write, \
-         patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write,
+        patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -603,10 +625,12 @@ def applydlfilter_alternative_datanames(testtemproot, debug=False):
     columns = ["normcardiac_25.0Hz"]
     data = fmridata.reshape(1, -1)
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write, \
-         patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write,
+        patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -643,10 +667,12 @@ def applydlfilter_all_columns_present(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz", "badpts", "pleth"]
     data = np.vstack([fmridata, badptsdata, plethdata])
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write, \
-         patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write,
+        patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})
@@ -660,8 +686,11 @@ def applydlfilter_all_columns_present(testtemproot, debug=False):
 
         # Verify extra header info includes pleth correlations
         write_call = mock_write.call_args
-        extraheaderinfo = write_call[1].get("extraheaderinfo") or write_call[0][3] \
-            if len(write_call[0]) > 3 else write_call[1].get("extraheaderinfo")
+        extraheaderinfo = (
+            write_call[1].get("extraheaderinfo") or write_call[0][3]
+            if len(write_call[0]) > 3
+            else write_call[1].get("extraheaderinfo")
+        )
         # The function uses keyword args for writebidstsv
         if "extraheaderinfo" in write_call[1]:
             extraheaderinfo = write_call[1]["extraheaderinfo"]
@@ -694,10 +723,12 @@ def applydlfilter_writes_correct_output(testtemproot, debug=False):
     columns = ["cardiacfromfmri_25.0Hz"]
     data = fmridata.reshape(1, -1)
 
-    with patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read, \
-         patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write, \
-         patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check:
+    with (
+        patch("rapidtide.workflows.applydlfilter.tide_dlfilt.DeepLearningFilter") as mock_cls,
+        patch("rapidtide.workflows.applydlfilter.tide_io.readbidstsv") as mock_read,
+        patch("rapidtide.workflows.applydlfilter.tide_io.writebidstsv") as mock_write,
+        patch("rapidtide.workflows.applydlfilter.happy_support.checkcardmatch") as mock_check,
+    ):
 
         mock_cls.return_value = mock_filter
         mock_read.return_value = (25.0, 0.0, columns, data, False, "tsv", {})

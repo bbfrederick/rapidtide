@@ -133,9 +133,11 @@ def parser_evfile(debug=False):
     if debug:
         print("parser_evfile")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f2, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as f3:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f3,
+    ):
         args = parser.parse_args([f1.name, "out", "--evfile", f2.name, f3.name])
     assert len(args.evfile) == 2
 
@@ -145,8 +147,10 @@ def parser_dmask(debug=False):
     if debug:
         print("parser_dmask")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".nii") as f1, \
-         tempfile.NamedTemporaryFile(suffix=".nii") as f2:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+    ):
         args = parser.parse_args([f1.name, "out", "--dmask", f2.name])
     assert args.datamaskname is not None
 
@@ -154,15 +158,14 @@ def parser_dmask(debug=False):
 # ==================== linfitfilt tests ====================
 
 
-def _setup_mocks_for_linfitfilt(xsize, ysize, numslices, numtimepoints, numskip=0,
-                                 ev_type="text", num_evs=1, with_mask=False):
+def _setup_mocks_for_linfitfilt(
+    xsize, ysize, numslices, numtimepoints, numskip=0, ev_type="text", num_evs=1, with_mask=False
+):
     """Build mock functions and data for linfitfilt tests.
 
     Returns a dict with all the mock objects and data needed.
     """
-    data, hdr, dims, sizes, regressor = _make_4d_data(
-        xsize, ysize, numslices, numtimepoints
-    )
+    data, hdr, dims, sizes, regressor = _make_4d_data(xsize, ysize, numslices, numtimepoints)
     effective_tp = numtimepoints - numskip
 
     # Build EV data
@@ -234,14 +237,33 @@ def linfitfilt_text_regressor(debug=False):
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
     m = _setup_mocks_for_linfitfilt(xsize, ysize, numslices, numtimepoints)
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", side_effect=m["mock_checkifnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", side_effect=m["mock_checkifparfile"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+            side_effect=m["mock_readfromnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.checkifnifti",
+            side_effect=m["mock_checkifnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.checkifparfile",
+            side_effect=m["mock_checkifparfile"],
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -274,14 +296,33 @@ def linfitfilt_limitoutput(debug=False):
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
     m = _setup_mocks_for_linfitfilt(xsize, ysize, numslices, numtimepoints)
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", side_effect=m["mock_checkifnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", side_effect=m["mock_checkifparfile"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+            side_effect=m["mock_readfromnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.checkifnifti",
+            side_effect=m["mock_checkifnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.checkifparfile",
+            side_effect=m["mock_checkifparfile"],
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -313,14 +354,33 @@ def linfitfilt_with_numskip(debug=False):
 
     m = _setup_mocks_for_linfitfilt(xsize, ysize, numslices, numtimepoints, numskip=numskip)
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", side_effect=m["mock_checkifnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", side_effect=m["mock_checkifparfile"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+            side_effect=m["mock_readfromnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.checkifnifti",
+            side_effect=m["mock_checkifnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.checkifparfile",
+            side_effect=m["mock_checkifparfile"],
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -334,10 +394,16 @@ def linfitfilt_with_numskip(debug=False):
     saved = m["saved_nifti"]
     # Filtered data should have effective_tp timepoints
     assert saved["/tmp/test_linfitfilt_skip_filtered"].shape == (
-        xsize, ysize, numslices, effective_tp
+        xsize,
+        ysize,
+        numslices,
+        effective_tp,
     )
     assert saved["/tmp/test_linfitfilt_skip_trimmed"].shape == (
-        xsize, ysize, numslices, effective_tp
+        xsize,
+        ysize,
+        numslices,
+        effective_tp,
     )
 
 
@@ -350,14 +416,33 @@ def linfitfilt_with_mask(debug=False):
     # Zero out part of the mask
     m["mask_data"][0, 0, 0] = 0.0
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", side_effect=m["mock_checkifnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", side_effect=m["mock_checkifparfile"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+            side_effect=m["mock_readfromnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.checkifnifti",
+            side_effect=m["mock_checkifnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.checkifparfile",
+            side_effect=m["mock_checkifparfile"],
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -383,13 +468,26 @@ def linfitfilt_nifti_regressor(debug=False):
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
     m = _setup_mocks_for_linfitfilt(xsize, ysize, numslices, numtimepoints, ev_type="nifti")
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=True), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+            side_effect=m["mock_readfromnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=True),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -412,14 +510,27 @@ def linfitfilt_parfile_regressor(debug=False):
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
     m = _setup_mocks_for_linfitfilt(xsize, ysize, numslices, numtimepoints)
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=True), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.readvecs", side_effect=m["mock_readvecs"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+            side_effect=m["mock_readfromnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=True),
+        patch("rapidtide.workflows.linfitfilt.tide_io.readvecs", side_effect=m["mock_readvecs"]),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -433,8 +544,7 @@ def linfitfilt_parfile_regressor(debug=False):
     saved = m["saved_nifti"]
     # Par file produces 6 regressors => fit0 through fit5
     for j in range(6):
-        assert f"/tmp/test_linfitfilt_par_fit{j}" in saved, \
-            f"Expected fit{j} in saved files"
+        assert f"/tmp/test_linfitfilt_par_fit{j}" in saved, f"Expected fit{j} in saved files"
     assert "/tmp/test_linfitfilt_par_filtered" in saved
 
 
@@ -452,14 +562,27 @@ def linfitfilt_multiple_text_regressors(debug=False):
         ev_idx["i"] += 1
         return m["ev_regressors"][idx]
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=mock_readvec), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+            side_effect=m["mock_readfromnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False),
+        patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=mock_readvec),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -484,10 +607,21 @@ def linfitfilt_mask_mismatch(debug=False):
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
     m = _setup_mocks_for_linfitfilt(xsize, ysize, numslices, numtimepoints)
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=False):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+            side_effect=m["mock_readfromnifti"],
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=False),
+    ):
 
         with pytest.raises(SystemExit):
             linfitfilt(
@@ -527,13 +661,23 @@ def linfitfilt_r2_values(debug=False):
     def mock_savetonifti(data_arr, header, fname, **kwargs):
         saved_nifti[fname] = data_arr.copy()
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.readvec", return_value=regressor), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=mock_savetonifti):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False),
+        patch("rapidtide.workflows.linfitfilt.tide_io.readvec", return_value=regressor),
+        patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=mock_savetonifti),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -577,13 +721,23 @@ def linfitfilt_flat_voxel(debug=False):
     def mock_savetonifti(data_arr, header, fname, **kwargs):
         saved_nifti[fname] = data_arr.copy()
 
-    with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=mock_readfromnifti), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.readvec", return_value=regressor), \
-         patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=mock_savetonifti):
+    with (
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+            return_value=(2.0, 2.0, 2.0, 1.5),
+        ),
+        patch(
+            "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+            return_value=(xsize, ysize, numslices, numtimepoints),
+        ),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False),
+        patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False),
+        patch("rapidtide.workflows.linfitfilt.tide_io.readvec", return_value=regressor),
+        patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=mock_savetonifti),
+    ):
 
         linfitfilt(
             inputfile="dummy_data.nii.gz",
@@ -613,19 +767,37 @@ def main_function(debug=False):
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
     m = _setup_mocks_for_linfitfilt(xsize, ysize, numslices, numtimepoints)
 
-    with tempfile.NamedTemporaryFile(suffix=".nii.gz") as input_f, \
-         tempfile.NamedTemporaryFile(suffix=".txt") as ev_f:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii.gz") as input_f,
+        tempfile.NamedTemporaryFile(suffix=".txt") as ev_f,
+    ):
 
-        with patch("rapidtide.workflows.linfitfilt.tide_io.readfromnifti", side_effect=m["mock_readfromnifti"]), \
-             patch("rapidtide.workflows.linfitfilt.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.5)), \
-             patch("rapidtide.workflows.linfitfilt.tide_io.parseniftidims", return_value=(xsize, ysize, numslices, numtimepoints)), \
-             patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False), \
-             patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False), \
-             patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]), \
-             patch("rapidtide.workflows.linfitfilt.tide_io.savetonifti", side_effect=m["mock_savetonifti"]), \
-             patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True), \
-             patch("sys.argv", ["linfitfilt", input_f.name, "/tmp/test_main_out",
-                                "--evfile", ev_f.name]):
+        with (
+            patch(
+                "rapidtide.workflows.linfitfilt.tide_io.readfromnifti",
+                side_effect=m["mock_readfromnifti"],
+            ),
+            patch(
+                "rapidtide.workflows.linfitfilt.tide_io.parseniftisizes",
+                return_value=(2.0, 2.0, 2.0, 1.5),
+            ),
+            patch(
+                "rapidtide.workflows.linfitfilt.tide_io.parseniftidims",
+                return_value=(xsize, ysize, numslices, numtimepoints),
+            ),
+            patch("rapidtide.workflows.linfitfilt.tide_io.checkifnifti", return_value=False),
+            patch("rapidtide.workflows.linfitfilt.tide_io.checkifparfile", return_value=False),
+            patch("rapidtide.workflows.linfitfilt.tide_io.readvec", side_effect=m["mock_readvec"]),
+            patch(
+                "rapidtide.workflows.linfitfilt.tide_io.savetonifti",
+                side_effect=m["mock_savetonifti"],
+            ),
+            patch("rapidtide.workflows.linfitfilt.tide_io.checkspacematch", return_value=True),
+            patch(
+                "sys.argv",
+                ["linfitfilt", input_f.name, "/tmp/test_main_out", "--evfile", ev_f.name],
+            ),
+        ):
 
             main()
 

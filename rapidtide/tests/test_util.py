@@ -331,11 +331,13 @@ class TestMaketcfrom3col:
         timeaxis = np.linspace(0, 10, 11)
         # inputdata format: row 0 = start times, row 1 = durations, row 2 = values
         # Each column is one interval
-        inputdata = np.array([
-            [1.0, 4.0],   # start times
-            [2.0, 2.0],   # durations (end = start + duration)
-            [5.0, 10.0],  # values
-        ])
+        inputdata = np.array(
+            [
+                [1.0, 4.0],  # start times
+                [2.0, 2.0],  # durations (end = start + duration)
+                [5.0, 10.0],  # values
+            ]
+        )
         outputvector = np.zeros(11)
         result = tide_util.maketcfrom3col(inputdata, timeaxis, outputvector)
         # Interval 1: [1, 3) -> value 5

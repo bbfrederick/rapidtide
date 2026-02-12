@@ -206,13 +206,20 @@ def test_get_parser_optional_flags(debug=False):
         "rapidtide.workflows.parser_funcs.is_valid_file",
         side_effect=lambda p, x: x,
     ):
-        args = parser.parse_args([
-            "data.nii.gz", "template.nii.gz", "out",
-            "--datamask", "dmask.nii.gz",
-            "--templatemask", "tmask.nii.gz",
-            "--order", "3",
-            "--debug",
-        ])
+        args = parser.parse_args(
+            [
+                "data.nii.gz",
+                "template.nii.gz",
+                "out",
+                "--datamask",
+                "dmask.nii.gz",
+                "--templatemask",
+                "tmask.nii.gz",
+                "--order",
+                "3",
+                "--debug",
+            ]
+        )
 
     assert args.dmask == "dmask.nii.gz"
     assert args.tmask == "tmask.nii.gz"
@@ -253,8 +260,12 @@ def test_spatialfit_basic_outputs(debug=False):
     ]
 
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, td["mlregress_returns"])
@@ -289,8 +300,12 @@ def test_spatialfit_lincoffs_offsets_r2(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, td["mlregress_returns"])
@@ -319,14 +334,23 @@ def test_spatialfit_fitdata(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, td["mlregress_returns"])
 
     fitdata = stn[0][0]
-    xsize, ysize, numslices, timepoints = td["xsize"], td["ysize"], td["numslices"], td["timepoints"]
+    xsize, ysize, numslices, timepoints = (
+        td["xsize"],
+        td["ysize"],
+        td["numslices"],
+        td["timepoints"],
+    )
     assert fitdata.shape == (xsize, ysize, numslices, timepoints)
 
     # Expected: fitdata[:, :, :, t] = slope_t * template_3d
@@ -348,8 +372,12 @@ def test_spatialfit_residuals(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, td["mlregress_returns"])
@@ -379,8 +407,12 @@ def test_spatialfit_normalized(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, td["mlregress_returns"])
@@ -406,8 +438,12 @@ def test_spatialfit_newtemplate(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, td["mlregress_returns"])
@@ -455,8 +491,12 @@ def test_spatialfit_with_nonzero_intercepts(debug=False):
         (MagicMock(), tmask, MagicMock(), tmask_dims, sizes),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, mlregress_returns)
@@ -496,9 +536,14 @@ def test_spatialfit_with_both_masks(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--datamask", "dmask.nii.gz",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--datamask",
+        "dmask.nii.gz",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, td["mlregress_returns"])
@@ -520,9 +565,7 @@ def test_spatialfit_output_shapes(debug=False):
 
     # Need 4 mlregress returns for 4 timepoints
     slopes = np.array([2.0, 3.0, 1.0, 0.5])
-    mlregress_returns = [
-        (np.array([[0.0, slopes[t]]]), 0.9) for t in range(4)
-    ]
+    mlregress_returns = [(np.array([[0.0, slopes[t]]]), 0.9) for t in range(4)]
     tmask = np.ones((3, 2, 2), dtype=np.float64)
     tmask_dims = np.array([3, 3, 2, 2, 1, 1, 1, 1])
 
@@ -532,8 +575,12 @@ def test_spatialfit_output_shapes(debug=False):
         (MagicMock(), tmask, MagicMock(), tmask_dims, td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, mlregress_returns)
@@ -546,7 +593,7 @@ def test_spatialfit_output_shapes(debug=False):
     assert stn[0][0].shape == (3, 2, 2, 4)  # fit
     assert stn[1][0].shape == (3, 2, 2, 4)  # residuals
     assert stn[2][0].shape == (3, 2, 2, 4)  # normalized
-    assert stn[3][0].shape == (3, 2, 2)      # newtemplate
+    assert stn[3][0].shape == (3, 2, 2)  # newtemplate
 
     if debug:
         print("All output shapes verified")
@@ -629,8 +676,12 @@ def test_spatialfit_datamask_spatial_mismatch(debug=False):
         (MagicMock(), td["template_3d"], MagicMock(), td["template_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--datamask", "dmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--datamask",
+        "dmask.nii.gz",
     ]
 
     with (
@@ -663,8 +714,12 @@ def test_spatialfit_datamask_time_mismatch(debug=False):
         (MagicMock(), td["template_3d"], MagicMock(), td["template_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--datamask", "dmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--datamask",
+        "dmask.nii.gz",
     ]
 
     with (
@@ -697,8 +752,12 @@ def test_spatialfit_templatemask_spatial_mismatch(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), bad_tmask_dims, td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     with (
@@ -731,8 +790,12 @@ def test_spatialfit_templatemask_timedim_not_one(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), bad_tmask_dims, td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     with (
@@ -766,8 +829,12 @@ def test_spatialfit_debug_flag(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
         "--debug",
     ]
 
@@ -790,8 +857,12 @@ def test_spatialfit_mlregress_called_per_timepoint(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp_effect, _ = _capture_writenpvecs()
@@ -849,8 +920,12 @@ def test_spatialfit_single_timepoint(debug=False):
         (MagicMock(), tmask, MagicMock(), tmask_dims, sizes),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, mlregress_returns)
@@ -885,9 +960,7 @@ def test_spatialfit_partial_mask(debug=False):
     sizes = np.array([4, 2.0, 2.0, 3.0, 1.5, 1, 1, 1])
     tmask_dims = template_dims.copy()
 
-    mlregress_returns = [
-        (np.array([[0.0, slopes[t]]]), 0.95) for t in range(timepoints)
-    ]
+    mlregress_returns = [(np.array([[0.0, slopes[t]]]), 0.95) for t in range(timepoints)]
 
     read_returns = [
         (MagicMock(), data_4d, MagicMock(), data_dims, sizes),
@@ -895,8 +968,12 @@ def test_spatialfit_partial_mask(debug=False):
         (MagicMock(), tmask, MagicMock(), tmask_dims, sizes),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "outroot",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "outroot",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, mlregress_returns)
@@ -953,8 +1030,12 @@ def test_spatialfit_output_root_path(debug=False):
         (MagicMock(), td["template_mask"], MagicMock(), td["tmask_dims"], td["template_sizes"]),
     ]
     argv = [
-        "spatialfit", "data.nii.gz", "template.nii.gz", "/tmp/results/myfit",
-        "--templatemask", "tmask.nii.gz",
+        "spatialfit",
+        "data.nii.gz",
+        "template.nii.gz",
+        "/tmp/results/myfit",
+        "--templatemask",
+        "tmask.nii.gz",
     ]
 
     wnp, stn = _run_spatialfit(argv, read_returns, td["mlregress_returns"])

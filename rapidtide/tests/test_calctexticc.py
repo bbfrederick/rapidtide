@@ -98,7 +98,16 @@ def test_get_parser_optional_flags(debug=False):
 
     parser = _get_parser()
     args = parser.parse_args(
-        ["data.txt", measfile, "out", "--demedian", "--demean", "--nocache", "--debug", "--deepdebug"]
+        [
+            "data.txt",
+            measfile,
+            "out",
+            "--demedian",
+            "--demean",
+            "--nocache",
+            "--debug",
+            "--deepdebug",
+        ]
     )
     assert args.demedian is True
     assert args.demean is True
@@ -680,7 +689,9 @@ def test_calctexticc_zero_icc_data(debug=False):
 
             icc_values = captured[0][0]
             # For pure noise, ICC should be close to 0 (but can be slightly negative)
-            assert np.all(np.abs(icc_values) < 0.5), f"Expected low ICC for noise, got {icc_values}"
+            assert np.all(
+                np.abs(icc_values) < 0.5
+            ), f"Expected low ICC for noise, got {icc_values}"
 
             if debug:
                 print(f"Noise ICC values: {icc_values}")

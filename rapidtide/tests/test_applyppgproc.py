@@ -196,15 +196,9 @@ def _run_procppg_with_mocks(args, mock_data):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -258,15 +252,22 @@ def test_get_parser_with_valid_args(debug=False):
 def test_get_parser_optional_flags(debug=False):
     """Test parser with all optional flags set."""
     parser = _get_parser()
-    args = parser.parse_args([
-        "infile", "outfile",
-        "--process_noise", "0.01",
-        "--hr_estimate", "80.0",
-        "--qual_thresh", "0.7",
-        "--measurement_noise", "0.1",
-        "--display",
-        "--debug",
-    ])
+    args = parser.parse_args(
+        [
+            "infile",
+            "outfile",
+            "--process_noise",
+            "0.01",
+            "--hr_estimate",
+            "80.0",
+            "--qual_thresh",
+            "0.7",
+            "--measurement_noise",
+            "0.1",
+            "--display",
+            "--debug",
+        ]
+    )
     assert args.process_noise == 0.01
     assert args.hr_estimate == 80.0
     assert args.qual_thresh == 0.7
@@ -454,15 +455,9 @@ def test_procppg_ekf_params_passed(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -524,15 +519,9 @@ def test_procppg_hr_extractor_called_correctly(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -599,15 +588,9 @@ def test_procppg_quality_assessor_called_twice(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -666,15 +649,9 @@ def test_procppg_pipeline_processor_called(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -755,15 +732,9 @@ def test_procppg_no_hrv_with_few_peaks(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -838,15 +809,9 @@ def test_procppg_no_morphology_with_zero_peaks(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -907,15 +872,9 @@ def test_procppg_spo2_always_computed(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -973,15 +932,9 @@ def test_procppg_read_happy_ppg_called_with_infileroot(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -1051,15 +1004,9 @@ def test_procppg_signal_normalization(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter"),
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -1163,15 +1110,9 @@ def test_procppg_filter_setup(debug=False):
         patch("rapidtide.workflows.applyppgproc.tide_ppg.read_happy_ppg") as mock_read,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter") as mock_ekf_cls,
         patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
-        ) as mock_qa_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-        ) as mock_proc_cls,
-        patch(
-            "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
-        ) as mock_feat_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor") as mock_qa_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
+        patch("rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor") as mock_feat_cls,
         patch("rapidtide.workflows.applyppgproc.tide_filt.NoncausalFilter") as mock_filt,
         patch("rapidtide.workflows.applyppgproc.plt"),
     ):
@@ -1237,15 +1178,11 @@ def test_procppg_num_detected_peaks(debug=False):
             patch(
                 "rapidtide.workflows.applyppgproc.tide_ppg.ExtendedPPGKalmanFilter"
             ) as mock_ekf_cls,
-            patch(
-                "rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor"
-            ) as mock_hr_cls,
+            patch("rapidtide.workflows.applyppgproc.tide_ppg.HeartRateExtractor") as mock_hr_cls,
             patch(
                 "rapidtide.workflows.applyppgproc.tide_ppg.SignalQualityAssessor"
             ) as mock_qa_cls,
-            patch(
-                "rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor"
-            ) as mock_proc_cls,
+            patch("rapidtide.workflows.applyppgproc.tide_ppg.RobustPPGProcessor") as mock_proc_cls,
             patch(
                 "rapidtide.workflows.applyppgproc.tide_ppg.PPGFeatureExtractor"
             ) as mock_feat_cls,
