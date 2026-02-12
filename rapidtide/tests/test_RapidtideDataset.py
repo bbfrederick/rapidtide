@@ -29,6 +29,8 @@ import numpy as np
 import pytest
 
 import rapidtide.io as tide_io
+import rapidtide.workflows.rapidtide as rapidtide_workflow
+import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 from rapidtide.RapidtideDataset import (
     Overlay,
     RapidtideDataset,
@@ -1149,11 +1151,31 @@ class TestIntegration:
 
 def main(debug=False):
     """Run tests manually for local development."""
-    if runninglocally:
-        datafileroot = "../data/examples/dst/sub-RAPIDTIDETEST_"
-    else:
-        print(f"get_test_temp_path={get_test_temp_path(runninglocally)}")
-        datafileroot = os.path.join(get_test_temp_path(runninglocally), "sub-RAPIDTIDETEST1_")
+    exampleroot = get_examples_path(runninglocally)
+    testtemproot = get_test_temp_path(runninglocally)
+    print(f"get_examples_path={exampleroot}")
+    print(f"get_test_temp_path={testtemproot}")
+    datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETESTDATASET_")
+
+    # run rapidtide
+    inputargs = [
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETESTDATASET"),
+        "--spatialfilt",
+        "2",
+        "--simcalcrange",
+        "4",
+        "-1",
+        "--nprocs",
+        "-1",
+        "--passes",
+        "3",
+        "--despecklepasses",
+        "3",
+        "--corrmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),
+    ]
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
 
     anatname = None
     geommaskname = None
