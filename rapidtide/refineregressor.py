@@ -180,11 +180,11 @@ def findecho(
     arcoefs : NDArray
         Output array for autoregressive coefficients, shape (n_voxels, nlags).
     pacf : NDArray
-        Output array for partial autocorrelations, shape (n_voxels, nlags).
+        Output array for partial autocorrelations, shape (n_voxels, nlags + 1).
     sigma : NDArray
-        Output array for sigma values, shape (n_voxels, nlags).
+        Output array for sigma values, shape (n_voxels, nlags + 1).
     phi : NDArray
-        Output array for phi values, shape (n_voxels, nlags).
+        Output array for phi values, shape (n_voxels, nlags + 1, nlags + 1).
 
     Returns
     -------
@@ -205,9 +205,9 @@ def findecho(
     >>> shiftedtcs = np.random.randn(100, 1000)
     >>> sigmav = np.zeros(100)
     >>> arcoefs = np.zeros((100, 5))
-    >>> pacf = np.zeros((100, 5))
-    >>> sigma = np.zeros((100, 5))
-    >>> phi = np.zeros((100, 5))
+    >>> pacf = np.zeros((100, 6))
+    >>> sigma = np.zeros((100, 6))
+    >>> phi = np.zeros((100, 6, 6))
     >>> findecho(nlags, shiftedtcs, sigmav, arcoefs, pacf, sigma, phi)
     """
     inputshape = np.shape(shiftedtcs)
