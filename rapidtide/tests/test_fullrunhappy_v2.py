@@ -20,6 +20,7 @@ import os
 
 import matplotlib as mpl
 
+import rapidtide.util as tide_util
 import rapidtide.workflows.happy as happy_workflow
 import rapidtide.workflows.happy_parser as happy_parser
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
@@ -52,6 +53,13 @@ def test_fullrunhappy_v2(debug=False, local=False, displayplots=False):
         "--increaseoutputlevel",
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
+
+    compareresults = tide_util.comparehappyruns(
+        os.path.join(testtemproot, "happyout2"),
+        os.path.join(testtemproot, "happyout2"),
+    )
+    if debug:
+        print(compareresults)
 
 
 if __name__ == "__main__":
