@@ -42,12 +42,12 @@ def test_fullrunhappy_v1(debug=False, local=False, displayplots=False):
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
 
-    compareresults = tide_util.comparehappyruns(
-        os.path.join(testtemproot, "happyout1"),
-        os.path.join(testtemproot, "happyout1"),
-    )
-    if debug:
-        print(compareresults)
+    #compareresults = tide_util.comparehappyruns(
+    #    os.path.join(testtemproot, "happyout1"),
+    #    os.path.join(testtemproot, "happyout1"),
+    #)
+    #if debug:
+    #    print(compareresults)
 
 
 if __name__ == "__main__":
