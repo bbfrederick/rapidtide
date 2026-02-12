@@ -3571,8 +3571,8 @@ def simfuncpeakfit(
         uthreshval : float, optional
             Upper threshold for amplitude validation. Default is 1.0.
         corrtolerance : float, optional
-            Amount by which the magnitude of a correlation can exceeed one (in a case with
-            almost no noise). Default is 1e-6.
+            Amount by which the magnitude of a correlation can exceed one (in a case with
+            almost no noise). Default is 1e-2.
         zerooutbadfit : bool, optional
             If True, set fit results to zero if fit fails. Default is True.
         debug : bool, optional
