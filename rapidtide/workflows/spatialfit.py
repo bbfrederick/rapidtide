@@ -244,7 +244,7 @@ def spatialfit(args: Any) -> None:
     if args.tmask is not None:
         rs_templatemask = templatemask_data.reshape((numspatiallocs, 1))
     else:
-        rs_templatemask = np.ones((numspatiallocs, timepoints), dtype="float")
+        rs_templatemask = np.ones((numspatiallocs, 1), dtype="float")
 
     bin_templatemask = np.where(rs_templatemask > 0.1, 1.0, 0.0)
 
