@@ -8,7 +8,8 @@
       "Bash(python:*)",
       "Bash(python3:*)",
       "WebSearch",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }
