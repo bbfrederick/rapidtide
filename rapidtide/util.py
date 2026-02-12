@@ -1984,9 +1984,9 @@ def comparehappyruns(root1: str, root2: str, debug: bool = False) -> dict[str, A
         print("comparehappyruns rootnames:", root1, root2)
     for map in ["app_info", "vessels_mask"]:
         filename1 = f"{root1}_desc-{map}.nii.gz"
-        maskname1 = f"{root1}_processvoxels_mask.nii.gz"
+        maskname1 = f"{root1}_desc-processvoxels_mask.nii.gz"
         filename2 = f"{root2}_desc-{map}.nii.gz"
-        maskname2 = f"{root2}_processvoxels_mask.nii.gz"
+        maskname2 = f"{root2}_desc-processvoxels_mask.nii.gz"
         (
             masknim1,
             maskdata1,
