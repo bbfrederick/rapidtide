@@ -53,17 +53,6 @@ def get_test_data_path() -> str:
     return os.path.realpath(os.path.join(get_rapidtide_root(), "tests", "testdata")) + os.path.sep
 
 
-def get_test_target_path() -> str:
-    """
-    Returns the path to test comparison data, terminated with separator. Test-related
-    data are kept in tests folder in "testtargets".
-    Based on function by Yaroslav Halchenko used in Neurosynth Python package.
-    """
-    return (
-        os.path.realpath(os.path.join(get_rapidtide_root(), "tests", "testtargets")) + os.path.sep
-    )
-
-
 def get_test_temp_path(local: bool = False) -> str:
     """
     Returns the path to test temporary directory, terminated with separator.
