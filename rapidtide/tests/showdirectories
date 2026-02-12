@@ -2,5 +2,7 @@
 
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
-print(f"{get_examples_path()=}")
-print(f"{get_test_temp_path()=}")
+for local in [False, True]:
+    print(f"local={local}")
+    print(f"\t{get_examples_path(local=local)=}")
+    print(f"\t{get_test_temp_path(local=local)=}")
