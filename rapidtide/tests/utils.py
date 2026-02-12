@@ -84,7 +84,7 @@ def get_examples_path(local: bool = False) -> str:
     if local:
         return "../data/examples/src"
     else:
-        rootreturn(
+        return(
             os.path.realpath(os.path.join(get_rapidtide_root(), "data", "examples", "src"))
             + os.path.sep
         )
