@@ -64,24 +64,30 @@ def get_test_target_path() -> str:
     )
 
 
-def get_test_temp_path() -> str:
+def get_test_temp_path(local: bool = False) -> str:
     """
     Returns the path to test temporary directory, terminated with separator.
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
     """
-    return os.path.realpath(os.path.join(get_rapidtide_root(), "tests", "tmp")) + os.path.sep
+    if local:
+        return "./tmp"
+    else:
+        return os.path.realpath(os.path.join(get_rapidtide_root(), "tests", "tmp")) + os.path.sep
 
 
-def get_examples_path() -> str:
+def get_examples_path(local: bool = False) -> str:
     """
     Returns the path to examples src directory, where larger test files live, terminated with separator. Test-related
     data are kept in tests folder in "data".
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
     """
-    return (
-        os.path.realpath(os.path.join(get_rapidtide_root(), "data", "examples", "src"))
-        + os.path.sep
-    )
+    if local:
+        return "../data/examples/src"
+    else:
+        rootreturn(
+            os.path.realpath(os.path.join(get_rapidtide_root(), "data", "examples", "src"))
+            + os.path.sep
+        )
 
 
 def create_dir(thedir: str, debug: bool = False) -> None:

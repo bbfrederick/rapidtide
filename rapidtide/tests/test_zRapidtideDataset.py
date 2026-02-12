@@ -37,6 +37,8 @@ from rapidtide.RapidtideDataset import (
 )
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path
 
+runninglocally = False
+
 # ============================================================================
 # Helper functions for creating test data
 # ============================================================================
@@ -54,7 +56,7 @@ def create_synthetic_nifti(
         affine[1, 1] = 2.0
         affine[2, 2] = 2.0
     img = nib.Nifti1Image(data, affine)
-    img.header.set_zooms((2.0, 2.0, 2.0, tr)[:len(shape)])
+    img.header.set_zooms((2.0, 2.0, 2.0, tr)[: len(shape)])
     img.header["toffset"] = toffset
     img.header["sform_code"] = 1
     nib.save(img, filepath)
@@ -158,7 +160,7 @@ class TestTimecourse:
             samplerate=10.0,
             displaysamplerate=10.0,
             starttime=0.0,
-            verbose=0,
+            verbose=2,
         )
 
         assert tc.name == "test"
@@ -182,7 +184,7 @@ class TestTimecourse:
             samplerate=10.0,
             displaysamplerate=10.0,
             label="Custom Label",
-            verbose=0,
+            verbose=2,
         )
 
         assert tc.label == "Custom Label"
@@ -198,7 +200,7 @@ class TestTimecourse:
             namebase="test_timecourse.txt",
             samplerate=10.0,
             displaysamplerate=10.0,
-            verbose=0,
+            verbose=2,
         )
 
         assert tc.label == "myname"
@@ -214,7 +216,7 @@ class TestTimecourse:
             namebase="test_timecourse.txt",
             samplerate=10.0,
             displaysamplerate=10.0,
-            verbose=0,
+            verbose=2,
         )
 
         # Verify attributes set by readTimeData
@@ -239,7 +241,7 @@ class TestTimecourse:
             samplerate=10.0,
             displaysamplerate=10.0,
             limits=(1.0, 5.0),  # time limits in seconds
-            verbose=0,
+            verbose=2,
         )
 
         assert tc.limits == (1.0, 5.0)
@@ -258,7 +260,7 @@ class TestTimecourse:
             namebase="test_timecourse.txt",
             samplerate=10.0,
             displaysamplerate=10.0,
-            verbose=0,
+            verbose=2,
         )
 
         tc.summarize()
@@ -288,7 +290,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert overlay.name == "test"
@@ -311,7 +313,7 @@ class TestOverlay:
             namebase="test_overlay",
             label="Custom Label",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert overlay.label == "Custom Label"
@@ -326,7 +328,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert overlay.label == "myname"
@@ -345,7 +347,7 @@ class TestOverlay:
             namebase="test_overlay",
             funcmask=funcmask,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert overlay.funcmask is not None
@@ -365,7 +367,7 @@ class TestOverlay:
             namebase="test_overlay",
             geommask=geommask,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert overlay.geommask is not None
@@ -375,9 +377,7 @@ class TestOverlay:
         """Test Overlay initialization as a binary mask."""
         filepath = str(tmp_path / "test_mask.nii.gz")
         # Create data with values that should be binarized
-        data = np.array([[[0.2, 0.8], [0.3, 0.9]], [[0.1, 0.7], [0.4, 0.6]]]).astype(
-            np.float32
-        )
+        data = np.array([[[0.2, 0.8], [0.3, 0.9]], [[0.1, 0.7], [0.4, 0.6]]]).astype(np.float32)
         create_synthetic_nifti(filepath, shape=data.shape, data=data)
 
         overlay = Overlay(
@@ -386,7 +386,7 @@ class TestOverlay:
             namebase="test_mask",
             isaMask=True,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Values < 0.5 should be 0, values > 0.5 should be 1
@@ -404,7 +404,7 @@ class TestOverlay:
             namebase="test_overlay",
             invertonload=True,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Data should be inverted (multiplied by -1)
@@ -420,7 +420,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         duplicate = overlay.duplicate("copy", "Copy Label", init_LUT=False)
@@ -440,7 +440,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert hasattr(overlay, "minval")
@@ -462,7 +462,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         new_data = np.ones((5, 5, 5)) * 5.0
@@ -474,9 +474,7 @@ class TestOverlay:
         """Test setData with isaMask=True."""
         filepath = str(tmp_path / "test_overlay.nii.gz")
         # Create data with shape that matches what we'll set
-        data = np.array([[[0.3, 0.7], [0.2, 0.8]], [[0.1, 0.9], [0.4, 0.6]]]).astype(
-            np.float32
-        )
+        data = np.array([[[0.3, 0.7], [0.2, 0.8]], [[0.1, 0.9], [0.4, 0.6]]]).astype(np.float32)
         create_synthetic_nifti(filepath, shape=data.shape, data=data)
 
         overlay = Overlay(
@@ -484,7 +482,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Set new data with same shape
@@ -506,7 +504,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert overlay.xdim == 8
@@ -526,7 +524,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setLabel("New Label")
@@ -543,7 +541,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Verify TR and toffset were set correctly
@@ -564,7 +562,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Verify TR and toffset were set correctly
@@ -584,7 +582,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setXYZpos(5, 6, 7)
@@ -602,7 +600,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setTpos(5)
@@ -623,7 +621,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setXYZpos(2, 3, 4)
@@ -641,7 +639,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setXYZpos(2, 3, 4)
@@ -659,7 +657,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         funcmask = np.ones((10, 10, 10))
@@ -679,7 +677,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setFuncMask(None)
@@ -696,7 +694,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         geommask = np.ones((10, 10, 10))
@@ -716,7 +714,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setGeomMask(None)
@@ -734,7 +732,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Set a mask that zeros out half the data
@@ -757,7 +755,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setReport(True)
@@ -776,7 +774,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setTR(3.5)
@@ -792,7 +790,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.settoffset(5.0)
@@ -808,7 +806,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.setisdisplayed(True)
@@ -827,7 +825,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlay.summarize()
@@ -853,7 +851,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Test coordinate conversion
@@ -874,7 +872,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Test voxel to real coordinate conversion
@@ -896,7 +894,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert overlay.RLfactor == -1.0
@@ -915,7 +913,7 @@ class TestOverlay:
             filespec=filepath,
             namebase="test_overlay",
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert overlay.RLfactor == 1.0
@@ -936,7 +934,7 @@ class TestRapidtideDataset:
     def test_init_basic(self):
         """Test basic RapidtideDataset initialization with full rapidtide output."""
         # Use the output from the rapidtide test run
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         # Skip if the test data doesn't exist (requires fullrun test to be run first)
@@ -955,7 +953,7 @@ class TestRapidtideDataset:
             forceoffset=False,
             offsettime=0.0,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert thesubject.name == "main"
@@ -964,7 +962,7 @@ class TestRapidtideDataset:
 
     def test_getoverlays(self):
         """Test the getoverlays method."""
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
@@ -974,7 +972,7 @@ class TestRapidtideDataset:
             "main",
             datafileroot,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         overlays = thesubject.getoverlays()
@@ -984,7 +982,7 @@ class TestRapidtideDataset:
 
     def test_getregressors(self):
         """Test the getregressors method."""
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
@@ -994,7 +992,7 @@ class TestRapidtideDataset:
             "main",
             datafileroot,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         regressors = thesubject.getregressors()
@@ -1002,7 +1000,7 @@ class TestRapidtideDataset:
 
     def test_setfocusregressor(self):
         """Test the setfocusregressor method."""
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
@@ -1012,7 +1010,7 @@ class TestRapidtideDataset:
             "main",
             datafileroot,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Set to valid regressor
@@ -1029,7 +1027,7 @@ class TestRapidtideDataset:
 
     def test_setfocusmap(self):
         """Test the setfocusmap method."""
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
@@ -1039,7 +1037,7 @@ class TestRapidtideDataset:
             "main",
             datafileroot,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         # Set to valid map
@@ -1053,7 +1051,7 @@ class TestRapidtideDataset:
 
     def test_setFuncMaskName(self):
         """Test the setFuncMaskName method."""
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
@@ -1063,7 +1061,7 @@ class TestRapidtideDataset:
             "main",
             datafileroot,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         thesubject.setFuncMaskName("new_mask_name")
@@ -1071,7 +1069,7 @@ class TestRapidtideDataset:
 
     def test_dataset_dimensions(self):
         """Test that dataset dimensions are properly set."""
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
@@ -1081,7 +1079,7 @@ class TestRapidtideDataset:
             "main",
             datafileroot,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert thesubject.xdim > 0
@@ -1093,7 +1091,7 @@ class TestRapidtideDataset:
 
     def test_regressorfilterlimits(self):
         """Test that regressor filter limits are set."""
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
@@ -1103,7 +1101,7 @@ class TestRapidtideDataset:
             "main",
             datafileroot,
             init_LUT=False,
-            verbose=0,
+            verbose=2,
         )
 
         assert thesubject.regressorfilterlimits is not None
@@ -1121,7 +1119,7 @@ class TestIntegration:
 
     def test_full_workflow(self):
         """Test a complete workflow with RapidtideDataset."""
-        testtemproot = get_test_temp_path()
+        testtemproot = get_test_temp_path(runninglocally)
         datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
 
         if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
@@ -1149,13 +1147,13 @@ class TestIntegration:
         assert thesubject.regressorfilterlimits == (0.01, 0.15)
 
 
-def main(runninglocally=False, debug=False):
+def main(debug=False):
     """Run tests manually for local development."""
     if runninglocally:
         datafileroot = "../data/examples/dst/sub-RAPIDTIDETEST_"
     else:
-        print(f"get_test_temp_path={get_test_temp_path()}")
-        datafileroot = os.path.join(get_test_temp_path(), "sub-RAPIDTIDETEST1_")
+        print(f"get_test_temp_path={get_test_temp_path(runninglocally)}")
+        datafileroot = os.path.join(get_test_temp_path(runninglocally), "sub-RAPIDTIDETEST1_")
 
     anatname = None
     geommaskname = None
@@ -1198,4 +1196,5 @@ def main(runninglocally=False, debug=False):
 
 
 if __name__ == "__main__":
-    main(runninglocally=True, debug=True)
+    runninglocally = True
+    main(debug=True)

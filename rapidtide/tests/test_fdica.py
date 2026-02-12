@@ -730,10 +730,7 @@ def main_parse_error(debug=False):
 
 def test_fdica(debug=False, local=False):
     # set up temp directory
-    if local:
-        testtemproot = "./tmp"
-    else:
-        testtemproot = get_test_temp_path()
+    testtemproot = get_test_temp_path(local)
     create_dir(testtemproot)
 
     # P2R tests

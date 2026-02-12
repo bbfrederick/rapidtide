@@ -206,12 +206,8 @@ def test_rapidtideparser(debug=False, local=False):
     global testlist
     global exampleroot, testtemproot
 
-    if local:
-        exampleroot = "../data/examples/src"
-        testtemproot = "./tmp"
-    else:
-        exampleroot = get_examples_path()
-        testtemproot = get_test_temp_path()
+    exampleroot = get_examples_path(local)
+    testtemproot = get_test_temp_path(local)
 
     epsilon = 0.00001
     setuptestlist()

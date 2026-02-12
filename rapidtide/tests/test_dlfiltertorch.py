@@ -971,10 +971,7 @@ def filtscale_roundtrip():
 
 def test_dlfilterops(debug=False, local=False):
     # set input and output directories
-    if local:
-        testtemproot = "./tmp"
-    else:
-        testtemproot = get_test_temp_path()
+    testtemproot = get_test_temp_path(local)
 
     thedummydata = create_dummy_data()
 

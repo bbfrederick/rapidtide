@@ -70,12 +70,8 @@ def eval_fml_result(
 
 def test_findmaxlag(displayplots=False, local=False, debug=False):
     # set input and output directories
-    if local:
-        exampleroot = "../data/examples/src"
-        testtemproot = "./tmp"
-    else:
-        exampleroot = get_examples_path()
-        testtemproot = get_test_temp_path()
+    exampleroot = get_examples_path(local)
+    testtemproot = get_test_temp_path(local)
 
     if debug:
         print("debug flag is set")

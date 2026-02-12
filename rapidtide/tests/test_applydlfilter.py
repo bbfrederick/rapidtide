@@ -728,10 +728,7 @@ def default_model_value(debug=False):
 
 def test_applydlfilter(debug=False, local=False):
     # set up temp directory
-    if local:
-        testtemproot = "./tmp"
-    else:
-        testtemproot = get_test_temp_path()
+    testtemproot = get_test_temp_path(local)
     create_dir(testtemproot)
 
     # findfirst tests

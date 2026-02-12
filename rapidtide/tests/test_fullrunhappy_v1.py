@@ -27,12 +27,8 @@ from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_p
 
 def test_fullrunhappy_v1(debug=False, local=False, displayplots=False):
     # set input and output directories
-    if local:
-        exampleroot = "../data/examples/src"
-        testtemproot = "./tmp"
-    else:
-        exampleroot = get_examples_path()
-        testtemproot = get_test_temp_path()
+    exampleroot = get_examples_path(local)
+    testtemproot = get_test_temp_path(local)
 
     # run happy
     inputargs = [

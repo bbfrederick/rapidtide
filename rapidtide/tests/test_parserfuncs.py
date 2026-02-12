@@ -59,12 +59,8 @@ def _get_parser():
 
 def test_parserfuncs(debug=False, local=False):
     # set input and output directories
-    if local:
-        exampleroot = "../data/examples/src"
-        testtemproot = "./tmp"
-    else:
-        exampleroot = get_examples_path()
-        testtemproot = get_test_temp_path()
+    exampleroot = get_examples_path(local)
+    testtemproot = get_test_temp_path(local)
 
     theparser = _get_parser()
 

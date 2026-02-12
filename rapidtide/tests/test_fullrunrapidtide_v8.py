@@ -28,12 +28,8 @@ from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 def test_fullrunrapidtide_v8(debug=False, local=False, displayplots=False):
     # set input and output directories
-    if local:
-        exampleroot = "../data/examples/src"
-        testtemproot = "./tmp"
-    else:
-        exampleroot = get_examples_path()
-        testtemproot = get_test_temp_path()
+    exampleroot = get_examples_path(local)
+    testtemproot = get_test_temp_path(local)
 
     # run rapidtide
     inputargs = [

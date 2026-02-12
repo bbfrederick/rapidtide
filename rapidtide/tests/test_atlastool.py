@@ -717,10 +717,7 @@ def atlastool_targetfile_no_fsl(testtemproot, debug=False):
 
 def test_atlastool(debug=False, local=False):
     # set up temp directory
-    if local:
-        testtemproot = "./tmp"
-    else:
-        testtemproot = get_test_temp_path()
+    testtemproot = get_test_temp_path(local)
     create_dir(testtemproot)
 
     # _get_parser tests
