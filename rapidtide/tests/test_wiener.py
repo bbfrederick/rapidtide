@@ -165,7 +165,6 @@ def test_procOneVoxelWiener_residual_orthogonal(debug=False):
 
 # ==================== wienerpass ====================
 
-
 def test_wienerpass_singleproc(debug=False):
     """Test wienerpass with single processor (exercises the else branch)."""
     rng = np.random.RandomState(42)
@@ -187,6 +186,53 @@ def test_wienerpass_singleproc(debug=False):
 
     optiondict = {
         "nprocs": 1,
+        "showprogressbar": False,
+        "mp_chunksize": 10,
+    }
+
+    volumetotal = wienerpass(
+        numspatiallocs=nvoxels,
+        fmri_data=fmri_data,
+        threshval=0.0,
+        lagtc=lagtc_data,
+        optiondict=optiondict,
+        wienerdeconv=np.array([1.0]),
+        wpeak=np.array([0.5]),
+        resampref_y=np.array([1.0]),
+    )
+
+    assert volumetotal == nvoxels
+    # Check that output arrays were populated for above-threshold voxels
+    assert np.any(wiener_mod.fitcoff != 0)
+    assert np.any(wiener_mod.rvalue != 0)
+
+    if debug:
+        print(f"volumetotal={volumetotal}")
+        print(f"fitcoff={wiener_mod.fitcoff}")
+        print(f"rvalue={wiener_mod.rvalue}")
+
+
+def test_wienerpass_multiproc(debug=False):
+    """Test wienerpass with multiple processors (exercises the else branch)."""
+    rng = np.random.RandomState(42)
+    nvoxels = 5
+    ntimepoints = 50
+    fmri_data = rng.randn(nvoxels, ntimepoints) + 10.0  # mean > threshval
+    lagtc_data = rng.randn(nvoxels, ntimepoints)
+
+    # Set up the global arrays that wienerpass writes into
+    import rapidtide.wiener as wiener_mod
+
+    wiener_mod.meanvalue = np.zeros(nvoxels)
+    wiener_mod.rvalue = np.zeros(nvoxels)
+    wiener_mod.r2value = np.zeros(nvoxels)
+    wiener_mod.fitcoff = np.zeros(nvoxels)
+    wiener_mod.fitNorm = np.zeros(nvoxels)
+    wiener_mod.datatoremove = np.zeros((nvoxels, ntimepoints))
+    wiener_mod.filtereddata = np.zeros((nvoxels, ntimepoints))
+
+    optiondict = {
+        "nprocs": 4,
         "showprogressbar": False,
         "mp_chunksize": 10,
     }
@@ -324,6 +370,7 @@ def test_wiener(debug=False):
     test_procOneVoxelWiener_ratio(debug=debug)
     test_procOneVoxelWiener_residual_orthogonal(debug=debug)
     test_wienerpass_singleproc(debug=debug)
+    test_wienerpass_multiproc(debug=debug)
     test_wienerpass_threshold_mask(debug=debug)
     test_wienerpass_consistency_with_procOneVoxelWiener(debug=debug)
 
