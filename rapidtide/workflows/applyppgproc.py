@@ -280,7 +280,7 @@ def procppg(
     )
 
     if args.debug:
-        print(f"HR from peaks: {ppginfo["hr_from_peaks"]}")
+        print(f"HR from peaks: {ppginfo['hr_from_peaks']}")
         print(f"Peak indices: {peak_indices}")
         print(f"RRIs: {rri}")
         print(f"hr_waveform_from_peaks: {hr_waveform_from_peaks}")
@@ -359,7 +359,7 @@ def procppg(
                 y=ppginfo["hr_from_peaks"],
                 color="g",
                 linestyle="--",
-                label=f"Peak-based HR: {ppginfo["hr_from_peaks"]:.1f} BPM",
+                label=f"Peak-based HR: {ppginfo['hr_from_peaks']:.1f} BPM",
                 linewidth=2,
             )
         ax6.set_ylabel("Heart Rate (BPM)")
@@ -419,8 +419,8 @@ def procppg(
     )
     print(f"\nHeart Rate Analysis:")
     print(
-        f"  Peak-based HR: {ppginfo["hr_from_peaks"]:.1f} BPM"
-        if ppginfo["hr_from_peaks"]
+        f"  Peak-based HR: {ppginfo['hr_from_peaks']:.1f} BPM"
+        if ppginfo['hr_from_peaks']
         else "  Peak-based HR: Unable to detect"
     )
     print(f"  FFT-based HR (mean): {ppginfo['mean_fft_hr']:.1f} ± {ppginfo['std_fft_hr']:.1f} BPM")
