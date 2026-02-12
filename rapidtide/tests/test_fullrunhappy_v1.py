@@ -20,7 +20,6 @@ import os
 
 import matplotlib as mpl
 
-import rapidtide.util as tide_util
 import rapidtide.workflows.happy as happy_workflow
 import rapidtide.workflows.happy_parser as happy_parser
 from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
@@ -41,13 +40,6 @@ def test_fullrunhappy_v1(debug=False, local=False, displayplots=False):
         "--spatialregression",
     ]
     happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
-
-    #compareresults = tide_util.comparehappyruns(
-    #    os.path.join(testtemproot, "happyout1"),
-    #    os.path.join(testtemproot, "happyout1"),
-    #)
-    #if debug:
-    #    print(compareresults)
 
 
 if __name__ == "__main__":
