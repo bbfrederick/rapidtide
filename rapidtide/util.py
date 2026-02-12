@@ -2034,21 +2034,39 @@ def comparehappyruns(root1: str, root2: str, debug: bool = False) -> dict[str, A
             sys.exit()
         if debug:
             print("done processing", map)
-    for timecourse in [
-        "cardfromfmri_25.0Hz.txt",
-        "cardfromfmri_dlfiltered_25.0Hz.txt",
-        "cardfromfmrienv_25.0Hz.txt",
-    ]:
-        filename1 = root1 + "_" + timecourse
-        filename2 = root2 + "_" + timecourse
-        if os.path.isfile(filename1) and os.path.isfile(filename2):
+
+    # now compare timecourses
+    filename1 = f"{root1}_desc-stdrescardfromfmri_timeseries.json"
+    filename2 = f"{root2}_desc-stdrescardfromfmri_timeseries.json"
+    if os.path.isfile(filename1) and os.path.isfile(filename2):
+        for timecourse in [
+            "cardiacfromfmri_25.0Hz",
+            "normcardiacfromfmri_25.0Hz",
+            "envelope_25.0Hz",
+            "normcardiacfromfmri_dlfiltered_25.0Hz",
+            "cardiacfromfmri_dlfiltered_25.0Hz",
+            "pleth",
+            "normpleth",
+            "pleth_cleaned",
+            "plethenv",
+            "pleth_dlfiltered",
+            "badpts",
+        ]:
             if debug:
                 print("comparing timecourses:")
                 print("\t", filename1)
                 print("\t", filename2)
-            data1 = np.transpose(tide_io.readvecs(filename1))
-            data2 = np.transpose(tide_io.readvecs(filename2))
-            if len(data1) == len(data2):
+            samplerate1, starttime1, dummy, data1, dummy, dummy, dummy = tide_io.readbidstsv(
+                filename1, timecourse
+            )
+            samplerate2, starttime2, dummy, data2, dummy, dummy, dummy = tide_io.readbidstsv(
+                filename2, timecourse
+            )
+            if (
+                (len(data1) == len(data2))
+                and (samplerate1 == samplerate2)
+                and (starttime1 == starttime2)
+            ):
                 # files match in size
                 results[timecourse] = {}
                 (
@@ -2066,8 +2084,11 @@ def comparehappyruns(root1: str, root2: str, debug: bool = False) -> dict[str, A
                 sys.exit()
         else:
             print("timecourse", timecourse, "does not exist - skipping")
+
+    else:
+        print(f"Either {filename1} or {filename2} does not exist")
         if debug:
-            print("done processing", timecourse)
+            print("done processing", filename1)
 
     return results
 
