@@ -22,13 +22,13 @@ and the check_rt_spatialmatch function.
 """
 
 import os
-import tempfile
 
 import nibabel as nib
 import numpy as np
 import pytest
 
 import rapidtide.io as tide_io
+import rapidtide.util as tide_util
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 from rapidtide.RapidtideDataset import (
@@ -1176,6 +1176,13 @@ def main(debug=False):
         os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),
     ]
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+
+    compareresults = tide_util.comparerapidtideruns(
+        os.path.join(testtemproot, "sub-RAPIDTIDETESTDATASET"),
+        os.path.join(testtemproot, "sub-RAPIDTIDETESTDATASET"),
+    )
+    if debug:
+        print(compareresults)
 
     anatname = None
     geommaskname = None
