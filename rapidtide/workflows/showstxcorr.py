@@ -150,6 +150,13 @@ def _get_parser() -> Any:
         default=1000000.0,
     )
     parser.add_argument(
+        "--matrixoutput",
+        dest="matrixoutput",
+        action="store_true",
+        help=("Format output files as NIFTI files and .csv matrices (default is text files)."),
+        default=False,
+    )
+    parser.add_argument(
         "--nodisplay",
         dest="display",
         action="store_false",
@@ -351,10 +358,7 @@ def showstxcorr(args: Any) -> None:
     ... )
     >>> showstxcorr(args)
     """
-    # get the command line parameters
-    verbose = True
-    matrixoutput = False
-
+    # get the command line parameters and
     # finish up processing arguments, do initial filter setup
     args, theprefilter = pf.postprocessfilteropts(args)
     args = pf.postprocesssearchrangeopts(args)
@@ -411,7 +415,7 @@ def showstxcorr(args: Any) -> None:
 
     # band limit the regressors if that is needed
     if theprefilter.gettype() != "None":
-        if verbose:
+        if args.verbose:
             print("filtering to ", theprefilter.gettype(), " band")
 
     thedims = trimmeddata.shape
@@ -443,7 +447,7 @@ def showstxcorr(args: Any) -> None:
     # We are either doing short term correlations or full timecourse
     # We are either doing two time courses from different (or the same) files, or we are doing more than 2
 
-    if matrixoutput:
+    if args.matrixoutput:
         # find the lengths of the outputfiles
         print("finding timecourse lengths")
         times, corrpertime, ppertime = tide_corr.shorttermcorr_1D(
@@ -639,8 +643,4 @@ def showstxcorr(args: Any) -> None:
             ax4.plot(times[validlocs], delayvals[validlocs], marker=".", linestyle="None")
             ax4.plot(times, smoothdelayvals, "g")
             ax4.set_ylabel("Delay (s)", color="r")
-            # fig, ax5 = plt.subplots()
-            # ax5.set_ylabel("Delay vs xcorr max R", color="k")
-            # ax5.plot(Rvals, delayvals, "r", marker=".", linestyle="None")
-            # ax2.set_yscale('log')
             plt.show()
