@@ -198,8 +198,7 @@ def _get_parser() -> Any:
             f"sets searchrange=({DEFAULT_DELAYMAPPING_LAGMIN}, {DEFAULT_DELAYMAPPING_LAGMAX}), "
             f"passes={DEFAULT_DELAYMAPPING_PASSES}, despeckle_passes={DEFAULT_DELAYMAPPING_DESPECKLE_PASSES}, "
             f"gausssigma={DEFAULT_DELAYMAPPING_SPATIALFILT}, "
-            "refineoffset=True, refinedelay=True, outputlevel='normal', "
-            "dolinfitfilt=False. "
+            "refineoffset=True, refinedelay=True, outputlevel='normal'. "
             "Any of these options can be overridden with the appropriate "
             "additional arguments."
         ),
@@ -591,7 +590,7 @@ def _get_parser() -> Any:
         help=(
             "The method for constructing the initial signal regressor - straight summation, "
             "mean scaling each voxel prior to summation, MLE PCA of the voxels in the initial regressor mask, "
-            "or initializing using random noise."
+            "or initializing using random noise. "
             f'Default is "{DEFAULT_INITREGRESSOR_METHOD}."'
         ),
         default=DEFAULT_INITREGRESSOR_METHOD,
@@ -895,7 +894,7 @@ def _get_parser() -> Any:
         metavar="SIGMALIMIT",
         help=(
             "Reject lag fits with linewidth wider than "
-            f"SIGMALIMIT Hz. Default is {DEFAULT_SIGMAMAX} Hz."
+            f"SIGMALIMIT seconds. Default is {DEFAULT_SIGMAMAX} seconds."
         ),
         default=DEFAULT_SIGMAMAX,
     )
@@ -2191,7 +2190,6 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
         args["refineoffset"] = True
         args["refinedelay"] = True
         args["outputlevel"] = "normal"
-        pf.setifnotset(args, "dolinfitfilt", True)
 
     if args["denoising"]:
         LGR.warning('Using "denoising" analysis mode. Overriding any affected arguments.')
@@ -2235,7 +2233,7 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
         LGR.warning('Using "globalpreselect" analysis mode. Overriding any affected arguments.')
         args["passes"] = 1
         args["despeckle_passes"] = 0
-        args["refinedespeckle"] = False
+        args["refinedespeckled"] = False
         args["outputlevel"] = "normal"
         pf.setifnotset(args, "dolinfitfilt", False)
         args["saveintermediatemaps"] = False
@@ -2261,7 +2259,7 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
         args["refineprenorm"] = "var"
         args["ampthresh"] = 0.7
         args["ampthreshfromsig"] = False
-        args["lagmaskthresh"] = 0.1
+        args["lagminthresh"] = 0.1
         args["despeckle_passes"] = 0
 
     # process limitoutput
