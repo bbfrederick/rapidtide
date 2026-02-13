@@ -235,7 +235,7 @@ def summarize3Dbylabel(
     outputvoxels = 0.0 * inputvoxels
     regionstats = []
     for theregion in range(1, numregions + 1):
-        thevoxels = inputvoxels[np.where(templatevoxels == theregion)][0]
+        thevoxels = inputvoxels[np.where(templatevoxels == theregion)[0]]
         regionmean = np.nan_to_num(np.mean(thevoxels))
         regionstd = np.nan_to_num(np.std(thevoxels))
         regionmedian = np.nan_to_num(np.median(thevoxels))
