@@ -32,6 +32,8 @@ import rapidtide.util as tide_util
 
 
 class IndicateSpecifiedAction(argparse.Action):
+    """Store a value and mark the key as explicitly set (``_nondefault``)."""
+
     def __call__(
         self,
         parser: argparse.ArgumentParser,
@@ -79,6 +81,44 @@ class IndicateSpecifiedAction(argparse.Action):
         True
         """
         setattr(namespace, self.dest, values)
+        setattr(namespace, self.dest + "_nondefault", True)
+
+
+class IndicateSpecifiedStoreTrueAction(argparse.Action):
+    """``store_true`` equivalent that also marks the key as explicitly set."""
+
+    def __init__(self, option_strings, dest, default=None, required=False, help=None):
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=0,
+            const=True,
+            default=default,
+            required=required,
+            help=help,
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, True)
+        setattr(namespace, self.dest + "_nondefault", True)
+
+
+class IndicateSpecifiedStoreFalseAction(argparse.Action):
+    """``store_false`` equivalent that also marks the key as explicitly set."""
+
+    def __init__(self, option_strings, dest, default=None, required=False, help=None):
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=0,
+            const=False,
+            default=default,
+            required=required,
+            help=help,
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, False)
         setattr(namespace, self.dest + "_nondefault", True)
 
 
@@ -133,11 +173,13 @@ def detailedversion() -> None:
 
 def setifnotset(thedict: Dict[str, Any], thekey: str, theval: Any) -> None:
     """
-    Set a value in dictionary if key with "_nondefault" suffix is not present.
+    Set a value in dictionary if the key was not explicitly set by the user.
 
-    This function checks if a key with the suffix "_nondefault" exists in the
-    dictionary. If not found, it prints a message and sets the specified key
-    to the given value.
+    The value is set when either of the following is true:
+
+    1. No key with the ``"_nondefault"`` suffix exists in the dictionary
+       (the ``IndicateSpecifiedAction`` mechanism), **or**
+    2. The current value of *thekey* is the string ``"auto"``.
 
     Parameters
     ----------
@@ -155,9 +197,17 @@ def setifnotset(thedict: Dict[str, Any], thekey: str, theval: Any) -> None:
 
     Notes
     -----
-    The function uses the convention that keys with "_nondefault" suffix indicate
-    that a default value has already been overridden. This is useful for tracking
-    which settings have been explicitly set versus those that remain at default values.
+    The function uses two conventions for detecting whether a value has been
+    explicitly set by the user:
+
+    * Keys with a ``"_nondefault"`` suffix indicate that a value was provided
+      via ``IndicateSpecifiedAction`` (or a previous ``setifnotset`` call).
+    * A value of ``"auto"`` indicates that the parameter was left at its
+      automatic default and should be overridden by presets/macros.
+
+    When the function does override a value, it also sets the
+    ``"_nondefault"`` flag so that subsequent calls for the same key
+    will not override again.
 
     Examples
     --------
@@ -165,16 +215,23 @@ def setifnotset(thedict: Dict[str, Any], thekey: str, theval: Any) -> None:
     >>> setifnotset(config, 'debug', True)
     overriding debug
     >>> print(config)
-    {'debug': True}
+    {'debug': True, 'debug_nondefault': True}
 
     >>> config = {'debug_nondefault': True}
     >>> setifnotset(config, 'debug', False)
     >>> print(config)
     {'debug_nondefault': True}
+
+    >>> config = {'mode': 'auto'}
+    >>> setifnotset(config, 'mode', 'fast')
+    overriding mode
+    >>> print(config)
+    {'mode': 'fast', 'mode_nondefault': True}
     """
-    if (thekey + "_nondefault") not in thedict.keys():
+    if (thekey + "_nondefault") not in thedict.keys() or thedict.get(thekey) == "auto":
         print("overriding " + thekey)
         thedict[thekey] = theval
+        thedict[thekey + "_nondefault"] = True
 
 
 def is_valid_file(parser: argparse.ArgumentParser, arg: Optional[str]) -> Optional[str]:
