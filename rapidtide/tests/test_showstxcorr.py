@@ -22,6 +22,7 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from rapidtide.workflows.showstxcorr import _get_parser, printthresholds, showstxcorr
@@ -79,6 +80,7 @@ def _make_default_args(outfilename="/tmp/test_showstxcorr_out"):
         corrthresh=0.5,
         corrweighting="None",
         detrendorder=1,
+        matrixoutput=False,
         invert=False,
         display=False,
         debug=False,
@@ -105,8 +107,12 @@ def _make_default_args(outfilename="/tmp/test_showstxcorr_out"):
 
 
 def _run_showstxcorr(signal1, signal2, args):
-    """Helper to run showstxcorr with mocked IO. Returns saved text files dict."""
-    saved_text = {}
+    """Helper to run showstxcorr with mocked IO. Returns dict with saved outputs."""
+    saved = {
+        "text": {},
+        "nifti": {},
+        "csv": [],
+    }
 
     def mock_readvec(fname, **kwargs):
         if "in1" in fname:
@@ -114,16 +120,29 @@ def _run_showstxcorr(signal1, signal2, args):
         return signal2.copy()
 
     def mock_writenpvecs(data, fname, **kwargs):
-        saved_text[fname] = np.array(data).copy()
+        saved["text"][fname] = np.array(data).copy()
+
+    def mock_savetonifti(data, hdr, fname, **kwargs):
+        saved["nifti"][fname] = np.array(data).copy()
+
+    original_to_csv = pd.DataFrame.to_csv
+
+    def mock_to_csv(self, path_or_buf=None, *a, **kw):
+        if path_or_buf is not None and isinstance(path_or_buf, str):
+            saved["csv"].append(path_or_buf)
+        return original_to_csv(self, path_or_buf, *a, **kw) if path_or_buf is None else None
 
     with (
         patch("rapidtide.workflows.showstxcorr.tide_io.readvec", side_effect=mock_readvec),
         patch("rapidtide.workflows.showstxcorr.tide_io.writenpvecs", side_effect=mock_writenpvecs),
+        patch(
+            "rapidtide.workflows.showstxcorr.tide_io.savetonifti", side_effect=mock_savetonifti
+        ),
+        patch("pandas.DataFrame.to_csv", mock_to_csv),
     ):
-
         showstxcorr(args)
 
-    return saved_text
+    return saved
 
 
 # ==================== _get_parser tests ====================
@@ -168,6 +187,7 @@ def parser_defaults(debug=False):
     assert args.display is True
     assert args.debug is False
     assert args.verbose is False
+    assert args.matrixoutput is False
     assert args.detrendorder == 1
     assert args.corrweighting == "None"
     assert args.invert is False
@@ -353,13 +373,45 @@ def showstxcorr_basic(debug=False):
     saved = _run_showstxcorr(signal1, signal2, args)
 
     outroot = "/tmp/test_showstxcorr_out"
-    assert f"{outroot}_pearson.txt" in saved
-    assert f"{outroot}_pvalue.txt" in saved
-    assert f"{outroot}_Rvalue.txt" in saved
-    assert f"{outroot}_delay.txt" in saved
-    assert f"{outroot}_mask.txt" in saved
-    assert f"{outroot}_timewarped.txt" in saved
-    assert f"{outroot}_hiresdelayvals.txt" in saved
+    assert f"{outroot}_pearson.txt" in saved["text"]
+    assert f"{outroot}_pvalue.txt" in saved["text"]
+    assert f"{outroot}_Rvalue.txt" in saved["text"]
+    assert f"{outroot}_delay.txt" in saved["text"]
+    assert f"{outroot}_mask.txt" in saved["text"]
+    assert f"{outroot}_timewarped.txt" in saved["text"]
+    assert f"{outroot}_hiresdelayvals.txt" in saved["text"]
+
+
+def showstxcorr_matrixoutput(debug=False):
+    """Test matrixoutput showstxcorr workflow produces output files."""
+    if debug:
+        print("showstxcorr_matrixoutput")
+    signal1, signal2 = _make_test_timecourses(samplerate=10.0, duration=200.0)
+    args = _make_default_args(outfilename="/tmp/test_showstxcorr_matrix")
+    args.corrthresh = 0.1
+    args.matrixoutput = True
+
+    saved = _run_showstxcorr(signal1, signal2, args)
+
+    outroot = "/tmp/test_showstxcorr_matrix"
+    # Matrix mode saves NIfTI files via savetonifti
+    assert f"{outroot}_pearsonR" in saved["nifti"]
+    assert f"{outroot}_corrp" in saved["nifti"]
+    assert f"{outroot}_maxxcorr" in saved["nifti"]
+    assert f"{outroot}_delayvals" in saved["nifti"]
+    assert f"{outroot}_valid" in saved["nifti"]
+
+    # Matrix mode also saves CSV segment files
+    assert len(saved["csv"]) > 0
+    csv_names = saved["csv"]
+    assert any("_pearsonR.csv" in c for c in csv_names)
+    assert any("_corrp.csv" in c for c in csv_names)
+    assert any("_maxxcorr.csv" in c for c in csv_names)
+    assert any("_delayvals.csv" in c for c in csv_names)
+    assert any("_valid.csv" in c for c in csv_names)
+
+    # No text files should be written in matrix mode
+    assert len(saved["text"]) == 0
 
 
 def showstxcorr_output_lengths(debug=False):
@@ -373,11 +425,11 @@ def showstxcorr_output_lengths(debug=False):
     saved = _run_showstxcorr(signal1, signal2, args)
 
     outroot = "/tmp/test_showstxcorr_out"
-    pearson = saved[f"{outroot}_pearson.txt"]
-    pvalue = saved[f"{outroot}_pvalue.txt"]
-    rvalue = saved[f"{outroot}_Rvalue.txt"]
-    delay = saved[f"{outroot}_delay.txt"]
-    mask = saved[f"{outroot}_mask.txt"]
+    pearson = saved["text"][f"{outroot}_pearson.txt"]
+    pvalue = saved["text"][f"{outroot}_pvalue.txt"]
+    rvalue = saved["text"][f"{outroot}_Rvalue.txt"]
+    delay = saved["text"][f"{outroot}_delay.txt"]
+    mask = saved["text"][f"{outroot}_mask.txt"]
 
     # Pearson and pvalue come from shorttermcorr_1D, should have same length
     assert len(pearson) == len(pvalue)
@@ -400,8 +452,8 @@ def showstxcorr_correlated_signals(debug=False):
     saved = _run_showstxcorr(signal1, signal2, args)
 
     outroot = "/tmp/test_showstxcorr_out"
-    pearson = saved[f"{outroot}_pearson.txt"]
-    rvalue = saved[f"{outroot}_Rvalue.txt"]
+    pearson = saved["text"][f"{outroot}_pearson.txt"]
+    rvalue = saved["text"][f"{outroot}_Rvalue.txt"]
 
     # Correlated signals should have high Pearson R values
     assert (
@@ -427,14 +479,14 @@ def showstxcorr_invert(debug=False):
     args1 = _make_default_args(outfilename="/tmp/test_showstxcorr_noinv")
     args1.corrthresh = 0.1
     saved1 = _run_showstxcorr(signal1, signal2, args1)
-    pearson_noinv = saved1["/tmp/test_showstxcorr_noinv_pearson.txt"]
+    pearson_noinv = saved1["text"]["/tmp/test_showstxcorr_noinv_pearson.txt"]
 
     # Run with invert
     args2 = _make_default_args(outfilename="/tmp/test_showstxcorr_inv")
     args2.invert = True
     args2.corrthresh = 0.1
     saved2 = _run_showstxcorr(signal1, signal2, args2)
-    pearson_inv = saved2["/tmp/test_showstxcorr_inv_pearson.txt"]
+    pearson_inv = saved2["text"]["/tmp/test_showstxcorr_inv_pearson.txt"]
 
     # Inverting should flip the sign of correlations
     assert (
@@ -457,8 +509,8 @@ def showstxcorr_zero_delay(debug=False):
     saved = _run_showstxcorr(signal1, signal2, args)
 
     outroot = "/tmp/test_showstxcorr_zerodelay"
-    delay = saved[f"{outroot}_delay.txt"]
-    mask = saved[f"{outroot}_mask.txt"]
+    delay = saved["text"][f"{outroot}_delay.txt"]
+    mask = saved["text"][f"{outroot}_mask.txt"]
 
     # With zero delay, valid delay values should be near zero
     valid_delays = delay[np.where(mask > 0)]
@@ -488,12 +540,12 @@ def showstxcorr_starttime_duration(debug=False):
 
     outroot_full = "/tmp/test_showstxcorr_full"
     outroot_trim = "/tmp/test_showstxcorr_trim"
-    assert f"{outroot_trim}_pearson.txt" in saved_trim
-    assert f"{outroot_trim}_Rvalue.txt" in saved_trim
+    assert f"{outroot_trim}_pearson.txt" in saved_trim["text"]
+    assert f"{outroot_trim}_Rvalue.txt" in saved_trim["text"]
 
     # Trimmed run should produce fewer windows than full run
-    pearson_full = saved_full[f"{outroot_full}_pearson.txt"]
-    pearson_trim = saved_trim[f"{outroot_trim}_pearson.txt"]
+    pearson_full = saved_full["text"][f"{outroot_full}_pearson.txt"]
+    pearson_trim = saved_trim["text"][f"{outroot_trim}_pearson.txt"]
     assert len(pearson_trim) < len(
         pearson_full
     ), f"Trimmed ({len(pearson_trim)}) should have fewer windows than full ({len(pearson_full)})"
@@ -514,8 +566,8 @@ def showstxcorr_timewarped_output(debug=False):
     saved = _run_showstxcorr(signal1, signal2, args)
 
     outroot = "/tmp/test_showstxcorr_out"
-    timewarped = saved[f"{outroot}_timewarped.txt"]
-    hiresdelay = saved[f"{outroot}_hiresdelayvals.txt"]
+    timewarped = saved["text"][f"{outroot}_timewarped.txt"]
+    hiresdelay = saved["text"][f"{outroot}_hiresdelayvals.txt"]
 
     # Both should have the same length
     assert len(timewarped) == len(hiresdelay)
@@ -533,8 +585,8 @@ def showstxcorr_custom_corrweighting(debug=False):
     saved = _run_showstxcorr(signal1, signal2, args)
 
     outroot = "/tmp/test_showstxcorr_phat"
-    assert f"{outroot}_pearson.txt" in saved
-    assert f"{outroot}_Rvalue.txt" in saved
+    assert f"{outroot}_pearson.txt" in saved["text"]
+    assert f"{outroot}_Rvalue.txt" in saved["text"]
 
 
 def showstxcorr_detrendorder_zero(debug=False):
@@ -549,7 +601,7 @@ def showstxcorr_detrendorder_zero(debug=False):
     saved = _run_showstxcorr(signal1, signal2, args)
 
     outroot = "/tmp/test_showstxcorr_nodt"
-    assert f"{outroot}_pearson.txt" in saved
+    assert f"{outroot}_pearson.txt" in saved["text"]
 
 
 def showstxcorr_high_corrthresh(debug=False):
@@ -569,7 +621,7 @@ def showstxcorr_high_corrthresh(debug=False):
         saved = _run_showstxcorr(signal1, signal2, args)
         # If it succeeds, check outputs exist
         outroot = "/tmp/test_showstxcorr_hithresh"
-        assert f"{outroot}_pearson.txt" in saved
+        assert f"{outroot}_pearson.txt" in saved["text"]
     except (np.linalg.LinAlgError, ValueError):
         # Polynomial fit may fail with too few valid points - that's acceptable
         pass
@@ -603,6 +655,7 @@ def test_showstxcorr(debug=False):
         print("Running showstxcorr workflow tests")
     showstxcorr_auto_samplerate_exit(debug=debug)
     showstxcorr_basic(debug=debug)
+    showstxcorr_matrixoutput(debug=debug)
     showstxcorr_output_lengths(debug=debug)
     showstxcorr_correlated_signals(debug=debug)
     showstxcorr_invert(debug=debug)
