@@ -7,6 +7,7 @@ source = .
 omit =
     __init__.py
     scripts/__init__.py
+    scripts/*
     OrthoImageItem.py
     Colortables.py
     fMRIData_class.py
