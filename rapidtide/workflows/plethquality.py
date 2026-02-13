@@ -79,7 +79,7 @@ def _get_parser() -> Any:
     return parser
 
 
-def plethquality(waveform: Any, Fs: Any, S_windowsecs: float = 5.0, debug: bool = False) -> None:
+def plethquality_waveform(waveform: Any, Fs: Any, S_windowsecs: float = 5.0, debug: bool = False) -> None:
     """
     Calculate the windowed skewness quality metrics for a photoplethysmogram (PPG) signal.
 
@@ -133,7 +133,7 @@ def plethquality(waveform: Any, Fs: Any, S_windowsecs: float = 5.0, debug: bool 
     for i in range(0, len(waveform)):
         startpt = np.max([0, i - S_windowpts // 2])
         endpt = np.min([i + S_windowpts // 2, len(waveform)])
-        S_waveform[i] = skew(waveform[startpt : endpt + 1], nan_policy="omit")
+        S_waveform[i] = np.nan_to_num(skew(waveform[startpt : endpt + 1], nan_policy="omit"))
         if debug:
             print(i, startpt, endpt, endpt - startpt + 1, S_waveform[i])
 
@@ -203,7 +203,7 @@ def plethquality(args: Any) -> None:
         sys.exit()
 
     # calculate the quality score
-    s_mean, s_std, quality = plethquality(plethdata, Fs)
+    s_mean, s_std, quality = plethquality_waveform(plethdata, Fs)
     print(args.infilename, s_mean, "+/-", s_std)
     tide_io.writevec(quality, args.outfilename)
 
