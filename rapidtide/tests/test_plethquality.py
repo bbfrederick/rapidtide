@@ -88,9 +88,8 @@ def waveform_quality_constant_is_zero(debug=False):
     if debug:
         print("waveform_quality_constant_is_zero")
     x = np.ones(101, dtype=float)
-    mean_sqi, std_sqi, q = pq.plethquality(x, Fs=100.0, S_windowsecs=0.1, debug=False)
+    mean_sqi, std_sqi, q = pq.plethquality_waveform(x, Fs=100.0, S_windowsecs=0.1, debug=False)
     assert q.shape == x.shape
-    # Constant signal -> skewness should be 0 everywhere
     assert np.allclose(q, 0.0)
     assert abs(mean_sqi) < 1e-12
     assert abs(std_sqi) < 1e-12
@@ -111,14 +110,27 @@ def waveform_quality_windowpts_is_odd(debug=False):
     Fs = 10.0
     S_windowsecs = 0.2  # 2 pts -> should become 3 (odd)
 
+    expected_windowpts = int(np.round(S_windowsecs * Fs, 0))
+    expected_windowpts += 1 - expected_windowpts % 2
+    assert expected_windowpts % 2 == 1  # sanity
+
     with patch("rapidtide.workflows.plethquality.skew", side_effect=fake_skew):
-        mean_sqi, std_sqi, q = pq.plethquality(x, Fs=Fs, S_windowsecs=S_windowsecs, debug=False)
+        mean_sqi, std_sqi, q = pq.plethquality_waveform(
+            x, Fs=Fs, S_windowsecs=S_windowsecs, debug=False
+        )
 
     assert q.shape == x.shape
-    # ensure we saw only odd window lengths
     assert len(lengths) == len(x)
-    assert all((l % 2) == 1 for l in lengths)
-    assert max(lengths) == 3
+
+    # Window is clipped at the edges, so lengths can be smaller (and may be even).
+    assert min(lengths) >= 1
+    assert max(lengths) == expected_windowpts
+    assert all(l <= expected_windowpts for l in lengths)
+
+    # Interior points should use the full (odd) window.
+    halfwin = expected_windowpts // 2
+    for i in range(halfwin, len(x) - halfwin):
+        assert lengths[i] == expected_windowpts
 
 
 def waveform_quality_nan_handling(debug=False):
@@ -126,7 +138,7 @@ def waveform_quality_nan_handling(debug=False):
         print("waveform_quality_nan_handling")
     x = np.random.RandomState(0).randn(200).astype(float)
     x[10:20] = np.nan
-    mean_sqi, std_sqi, q = pq.plethquality(x, Fs=100.0, S_windowsecs=0.1, debug=False)
+    mean_sqi, std_sqi, q = pq.plethquality_waveform(x, Fs=100.0, S_windowsecs=0.1, debug=False)
     assert np.isfinite(mean_sqi)
     assert np.isfinite(std_sqi)
     assert np.all(np.isfinite(q))
@@ -166,7 +178,10 @@ def args_uses_samplerate_override(debug=False):
             "rapidtide.workflows.plethquality.tide_io.readvectorsfromtextfile",
             side_effect=mock_readvectorsfromtextfile,
         ),
-        patch("rapidtide.workflows.plethquality.plethquality", side_effect=mock_core_plethquality),
+        patch(
+            "rapidtide.workflows.plethquality.plethquality_waveform",
+            side_effect=mock_core_plethquality,
+        ),
         patch("rapidtide.workflows.plethquality.tide_io.writevec", side_effect=mock_writevec),
     ):
         pq.plethquality(args)
