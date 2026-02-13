@@ -141,7 +141,7 @@ def setuptestlist():
         "results": [
             ["passes", 1],
             ["despeckle_passes", 0],
-            ["refinedespeckle", False],
+            ["refinedespeckled", False],
             ["outputlevel", "normal"],
             ["dolinfitfilt", False],
             ["saveintermediatemaps", False],
