@@ -908,9 +908,12 @@ def _get_parser() -> Any:
     corr_fit.add_argument(
         "--nofitfilt",
         dest="zerooutbadfit",
-        action="store_false",
-        help=("Do not zero out peak fit values if fit fails."),
-        default=True,
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help=(
+            "Do not zero out peak fit values if fit fails. "
+            "Default is 'auto' (resolves to True unless overridden by a preset)."
+        ),
+        default="auto",
     )
     corr_fit.add_argument(
         "--peakfittype",
@@ -936,10 +939,11 @@ def _get_parser() -> Any:
         help=(
             "Detect and refit suspect correlations to "
             "disambiguate peak locations in PASSES "
-            f"passes.  Default is to perform {DEFAULT_DESPECKLE_PASSES} passes. "
+            f"passes.  Default is 'auto' (resolves to {DEFAULT_DESPECKLE_PASSES} "
+            "unless overridden by a preset). "
             "Set to 0 to disable."
         ),
-        default=DEFAULT_DESPECKLE_PASSES,
+        default="auto",
     )
     corr_fit.add_argument(
         "--despecklethresh",
@@ -988,8 +992,11 @@ def _get_parser() -> Any:
         action=pf.IndicateSpecifiedAction,
         type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="PASSES",
-        help=("Set the number of processing passes to PASSES.  " f"Default is {DEFAULT_PASSES}."),
-        default=DEFAULT_PASSES,
+        help=(
+            "Set the number of processing passes to PASSES.  "
+            f"Default is 'auto' (resolves to {DEFAULT_PASSES} unless overridden by a preset)."
+        ),
+        default="auto",
     )
     reg_ref.add_argument(
         "--refineinclude",
@@ -1016,9 +1023,12 @@ def _get_parser() -> Any:
     reg_ref.add_argument(
         "--norefinedespeckled",
         dest="refinedespeckled",
-        action="store_false",
-        help=("Do not use despeckled pixels in calculating the refined regressor."),
-        default=True,
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help=(
+            "Do not use despeckled pixels in calculating the refined regressor. "
+            "Default is 'auto' (resolves to True unless overridden by a preset)."
+        ),
+        default="auto",
     )
     reg_ref.add_argument(
         "--lagminthresh",
@@ -1096,9 +1106,12 @@ def _get_parser() -> Any:
     reg_ref.add_argument(
         "--norefineoffset",
         dest="refineoffset",
-        action="store_false",
-        help=("Disable realigning refined regressor to zero lag."),
-        default=True,
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help=(
+            "Disable realigning refined regressor to zero lag. "
+            "Default is 'auto' (resolves to True unless overridden by a preset)."
+        ),
+        default="auto",
     )
     reg_ref.add_argument(
         "--nopickleft",
@@ -1229,9 +1242,12 @@ def _get_parser() -> Any:
     slfofilt.add_argument(
         "--preservefiltering",
         dest="preservefiltering",
-        action="store_true",
-        help="Don't reread data prior to performing sLFO filtering.",
-        default=False,
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "Don't reread data prior to performing sLFO filtering. "
+            "Default is 'auto' (resolves to False unless overridden by a preset)."
+        ),
+        default="auto",
     )
     slfofilt.add_argument(
         "--regressderivs",
@@ -1247,9 +1263,12 @@ def _get_parser() -> Any:
     slfofilt.add_argument(
         "--norefinedelay",
         dest="refinedelay",
-        action="store_false",
-        help=("Do not calculate a refined delay map using sLFO regression information."),
-        default=True,
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help=(
+            "Do not calculate a refined delay map using sLFO regression information. "
+            "Default is 'auto' (resolves to True unless overridden by a preset)."
+        ),
+        default="auto",
     )
     slfofilt.add_argument(
         "--nofilterwithrefineddelay",
@@ -1290,18 +1309,18 @@ def _get_parser() -> Any:
     output.add_argument(
         "--outputlevel",
         dest="outputlevel",
-        action="store",
+        action=pf.IndicateSpecifiedAction,
         type=str,
-        choices=["min", "less", "normal", "more", "max"],
+        choices=["auto", "min", "less", "normal", "more", "max"],
         help=(
             "The level of file output produced.  'min' produces only absolutely essential files, 'less' adds in "
             "the sLFO filtered data (rather than just filter efficacy metrics), 'normal' saves what you "
             "would typically want around for interactive data exploration, "
             "'more' adds files that are sometimes useful, and 'max' outputs anything you might possibly want. "
             "Selecting 'max' will produce ~3x your input datafile size as output.  "
-            f'Default is "{DEFAULT_OUTPUTLEVEL}."'
+            f"Default is 'auto' (resolves to \"{DEFAULT_OUTPUTLEVEL}\" unless overridden by a preset)."
         ),
-        default=DEFAULT_OUTPUTLEVEL,
+        default="auto",
     )
     output.add_argument(
         "--savelags",
@@ -1322,9 +1341,12 @@ def _get_parser() -> Any:
     output.add_argument(
         "--saveintermediatemaps",
         dest="saveintermediatemaps",
-        action="store_true",
-        help="Save lag times, strengths, widths, mask (and shiftedtcs, if they'd normally be saved) for each pass.",
-        default=False,
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "Save lag times, strengths, widths, mask (and shiftedtcs, if they'd normally be saved) for each pass. "
+            "Default is 'auto' (resolves to False unless overridden by a preset)."
+        ),
+        default="auto",
     )
     output.add_argument(
         "--calccoherence",
@@ -1926,10 +1948,6 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
     args = vars(theobj)
 
     # Additional argument parsing not handled by argparse
-    args["passes"] = np.max([args["passes"], 1])
-
-    args["despeckle_passes"] = np.max([args["despeckle_passes"], 0])
-
     if "lag_extrema_nondefault" in args.keys():
         args["lagmin_nondefault"] = True
         args["lagmax_nondefault"] = True
@@ -1950,20 +1968,6 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
 
     args["offsettime_total"] = args["offsettime"] + 0.0
 
-    reg_ref_used = (
-        (args["lagminthresh"] != 0.5)
-        or (args["lagmaxthresh"] != 5.0)
-        or (args["ampthresh"] != DEFAULT_AMPTHRESH)
-        or (args["sigmathresh"] != 100.0)
-        or (args["refineoffset"])
-    )
-    if reg_ref_used and args["passes"] == 1:
-        LGR.warning(
-            "One or more arguments have been set that are only "
-            "relevant if performing refinement.  "
-            "If you want to do refinement, set passes > 1."
-        )
-
     if args["numestreps"] == 0:
         args["ampthreshfromsig"] = False
     else:
@@ -1973,14 +1977,6 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
         args["ampthresh"] = DEFAULT_AMPTHRESH
     else:
         args["ampthreshfromsig"] = False
-
-    if args["despeckle_thresh"] != 5.0 and args["despeckle_passes"] == 0:
-        args["despeckle_passes"] = 1
-
-    if args["zerooutbadfit"]:
-        args["nohistzero"] = False
-    else:
-        args["nohistzero"] = True
 
     # sort out initial delay options
     if args["fixdelay"]:
@@ -2178,65 +2174,73 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
 
     # process analysis modes
     if args["delaymapping"]:
-        LGR.warning('Using "delaymapping" analysis mode. Overriding any affected arguments.')
-        if args["passes"] == DEFAULT_PASSES:
-            args["passes"] = DEFAULT_DELAYMAPPING_PASSES
-        if args["despeckle_passes"] == DEFAULT_DESPECKLE_PASSES:
-            args["despeckle_passes"] = DEFAULT_DELAYMAPPING_DESPECKLE_PASSES
+        LGR.warning(
+            'Using "delaymapping" analysis mode. '
+            'Overriding default values for any affected arguments.'
+        )
+        pf.setifnotset(args, "passes", DEFAULT_DELAYMAPPING_PASSES)
+        pf.setifnotset(args, "despeckle_passes", DEFAULT_DELAYMAPPING_DESPECKLE_PASSES)
         if args["gausssigma"] == DEFAULT_SPATIALFILT:
             args["gausssigma"] = DEFAULT_DELAYMAPPING_SPATIALFILT
         pf.setifnotset(args, "lagmin", DEFAULT_DELAYMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DELAYMAPPING_LAGMAX)
-        args["refineoffset"] = True
-        args["refinedelay"] = True
-        args["outputlevel"] = "normal"
+        pf.setifnotset(args, "refineoffset", True)
+        pf.setifnotset(args, "refinedelay", True)
+        pf.setifnotset(args, "outputlevel", "normal")
 
     if args["denoising"]:
-        LGR.warning('Using "denoising" analysis mode. Overriding any affected arguments.')
-        if args["passes"] == DEFAULT_PASSES:
-            args["passes"] = DEFAULT_DENOISING_PASSES
-        if args["despeckle_passes"] == DEFAULT_DESPECKLE_PASSES:
-            args["despeckle_passes"] = DEFAULT_DENOISING_DESPECKLE_PASSES
+        LGR.warning(
+            'Using "denoising" analysis mode. '
+            'Overriding default values for any affected arguments.'
+        )
+        pf.setifnotset(args, "passes", DEFAULT_DENOISING_PASSES)
+        pf.setifnotset(args, "despeckle_passes", DEFAULT_DENOISING_DESPECKLE_PASSES)
         if args["gausssigma"] == DEFAULT_SPATIALFILT:
             args["gausssigma"] = DEFAULT_DENOISING_SPATIALFILT
         if args["peakfittype"] == DEFAULT_PEAKFIT_TYPE:
             args["peakfittype"] = DEFAULT_DENOISING_PEAKFITTYPE
         pf.setifnotset(args, "lagmin", DEFAULT_DENOISING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_DENOISING_LAGMAX)
-        args["refineoffset"] = True
-        args["refinedelay"] = True
-        args["zerooutbadfit"] = False
+        pf.setifnotset(args, "refineoffset", True)
+        pf.setifnotset(args, "refinedelay", True)
+        pf.setifnotset(args, "zerooutbadfit", False)
         args["dolinfitfilt"] = True
 
     if args["docvrmap"]:
-        LGR.warning('Using "CVR" analysis mode. Overriding any affected arguments.')
+        LGR.warning(
+            'Using "CVR" analysis mode. '
+            'Overriding default values for any affected arguments.'
+        )
         if args["regressorfile"] is None:
             raise ValueError(
                 "CVR mapping requires an externally supplied regresssor file - terminating."
             )
-        args["passvec"] = (
-            DEFAULT_CVRMAPPING_FILTER_LOWERPASS,
-            DEFAULT_CVRMAPPING_FILTER_UPPERPASS,
-        )
-        if args["despeckle_passes"] == DEFAULT_DESPECKLE_PASSES:
-            args["despeckle_passes"] = DEFAULT_CVRMAPPING_DESPECKLE_PASSES
+        if args["passvec"] is None:
+            args["passvec"] = (
+                DEFAULT_CVRMAPPING_FILTER_LOWERPASS,
+                DEFAULT_CVRMAPPING_FILTER_UPPERPASS,
+            )
+        pf.setifnotset(args, "despeckle_passes", DEFAULT_CVRMAPPING_DESPECKLE_PASSES)
         if args["filterband"] == pf.DEFAULT_FILTERBAND:
             args["filterband"] = "None"
         pf.setifnotset(args, "lagmin", DEFAULT_CVRMAPPING_LAGMIN)
         pf.setifnotset(args, "lagmax", DEFAULT_CVRMAPPING_LAGMAX)
-        args["preservefiltering"] = True
-        args["passes"] = 1
-        args["outputlevel"] = "min"
+        pf.setifnotset(args, "preservefiltering", True)
+        pf.setifnotset(args, "passes", 1)
+        pf.setifnotset(args, "outputlevel", "min")
         args["dolinfitfilt"] = False
 
     if args["initregressorpreselect"]:
-        LGR.warning('Using "globalpreselect" analysis mode. Overriding any affected arguments.')
-        args["passes"] = 1
-        args["despeckle_passes"] = 0
-        args["refinedespeckled"] = False
-        args["outputlevel"] = "normal"
+        LGR.warning(
+            'Using "globalpreselect" analysis mode. '
+            'Overriding default values for any affected arguments.'
+        )
+        pf.setifnotset(args, "passes", 1)
+        pf.setifnotset(args, "despeckle_passes", 0)
+        pf.setifnotset(args, "refinedespeckled", False)
+        pf.setifnotset(args, "outputlevel", "normal")
         pf.setifnotset(args, "dolinfitfilt", False)
-        args["saveintermediatemaps"] = False
+        pf.setifnotset(args, "saveintermediatemaps", False)
 
     # configure the filter
     theobj, theprefilter = pf.postprocessfilteropts(Namespace(**args))
@@ -2254,17 +2258,59 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
     if args["nirs"]:
         LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
         args["nothresh"] = True
-        pf.setifnotset(args, "preservefiltering", False)
+        args["preservefiltering"] = False
+        args["preservefiltering_nondefault"] = True
         args["dataiszeromean"] = True
         args["refineprenorm"] = "var"
         args["ampthresh"] = 0.7
         args["ampthreshfromsig"] = False
         args["lagminthresh"] = 0.1
         args["despeckle_passes"] = 0
+        args["despeckle_passes_nondefault"] = True
 
     # process limitoutput
     if not args["limitoutput"]:
         args["outputlevel"] = "max"
+
+    # resolve remaining "auto" defaults to their original values
+    pf.setifnotset(args, "refineoffset", True)
+    pf.setifnotset(args, "refinedelay", True)
+    pf.setifnotset(args, "outputlevel", DEFAULT_OUTPUTLEVEL)
+    pf.setifnotset(args, "zerooutbadfit", True)
+    pf.setifnotset(args, "preservefiltering", False)
+    pf.setifnotset(args, "passes", DEFAULT_PASSES)
+    pf.setifnotset(args, "despeckle_passes", DEFAULT_DESPECKLE_PASSES)
+    pf.setifnotset(args, "refinedespeckled", True)
+    pf.setifnotset(args, "saveintermediatemaps", False)
+
+    # clamp passes and despeckle_passes to valid ranges
+    args["passes"] = np.max([args["passes"], 1])
+    args["despeckle_passes"] = np.max([args["despeckle_passes"], 0])
+
+    # check for refinement-related arguments with only 1 pass
+    reg_ref_used = (
+        (args["lagminthresh"] != 0.5)
+        or (args["lagmaxthresh"] != 5.0)
+        or (args["ampthresh"] != DEFAULT_AMPTHRESH)
+        or (args["sigmathresh"] != 100.0)
+        or (args["refineoffset"])
+    )
+    if reg_ref_used and args["passes"] == 1:
+        LGR.warning(
+            "One or more arguments have been set that are only "
+            "relevant if performing refinement.  "
+            "If you want to do refinement, set passes > 1."
+        )
+
+    # set despeckle_passes based on despeckle_thresh
+    if args["despeckle_thresh"] != 5.0 and args["despeckle_passes"] == 0:
+        args["despeckle_passes"] = 1
+
+    # set nohistzero based on zerooutbadfit
+    if args["zerooutbadfit"]:
+        args["nohistzero"] = False
+    else:
+        args["nohistzero"] = True
 
     # output options
     if args["outputlevel"] == "min":
