@@ -1,5 +1,37 @@
 # Release history
 
+## Version 3.1.5 (2/13/26)
+* (package) Used Claude to write a lot of tests.  Test coverage is currently at 84.39%.  This also uncovered a lot of bugs (worst ones listed below).
+* (package) Updated all copyright notices to 2026.
+* (atlastool) Fixed an off by one bug in calculating region volumes.
+* (histnifti) Fixed a percentile calculation when timepoints is small.
+* (spatialmi) Command line arguments always overrode arguments passed to main routine.
+* (showstxcorr) Now properly handles nondefault starttime or very short duration.
+* (showstxcorr) matrixoutput now settable from the command line.
+* (ppgproc) Fixed a crashing bug in HeartRateExtractor.
+* (ppgproc) Fixed deprecated call in PPGFeatureExtractor.
+* (showxcorrx) Fixed command line processing logic.
+* (niftistats) Fixed some bugs in processing ICC values.
+* (niftidecomp) Fixed processing methods other than FastICA to match.
+* (linfitfilt.py) Fixed a bug when numskip != 0.
+* (correlate.py) Return pearsonr values correctly.
+* (correlate.py) matchsamplerates now guarantees that vectors are matched in size.
+* (dlfilter.py) Fixed a bug in specifying model name in DeepLearningFilter.
+* (dlfiltertorch.py) Fixed a shape bug in ConvAutoencoderModel.
+* (fit.py, calcandfitcorrpairs.py, simFuncClasses.py, localflow.py) Made handling of high correlation values more robust.
+* (fit.py) Fixed a bug in oscreetest.
+* (fit.py) Fixed a bug in return values of territorydecomp.
+* (fingerprint.py) Fixed processing of return values of territorydecomp.
+* (RapidtideDataset.py) Updated some deprecated calls.
+* (rapidtide_parser.py) Fixed a number of the issues listed here: https://github.com/bbfrederick/rapidtide/issues/239 (thanks to tsalo).
+* (resample.py) Fixed a bug in FastResampler when using methods other than univariate.
+* (refineregressor) Fixed a bug in findecho.
+* (roisummarize.py) Fixed a nasty bug that only chose one value from every region (!)
+* (helper_classes.py) Fixed initialization bugs in the ProbeRegressor class.
+* (io.py) Fixed an encoding bug in writevec.
+* (io.py) Made a new routine to make empty MNI152 NIFTI files.
+* (docker) Temporarily removed push to Amazon ECR, since I currently don't have an account.
+
 ## Version 3.1.4 (2/4/26)
 * (happy) Fixed a nasty bug that made temporal regression essentially useless.  Now that is works properly, it seems to be the preferred noise removal method.
 * (happy) Fixed an option logic error (you could select both spatial and temporal regression).
