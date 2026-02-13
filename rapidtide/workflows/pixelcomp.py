@@ -381,7 +381,7 @@ def pixelcomp(args: Any) -> None:
     else:
         # construct a 2d histogram
         H, xedges, yedges = np.histogram2d(
-            thearray[:, 0], thearray[:, 1], bins=args.histbins, normed=True
+            thearray[:, 0], thearray[:, 1], bins=args.histbins, density=True
         )
         extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
         plt.contour(H, extent=extent)
