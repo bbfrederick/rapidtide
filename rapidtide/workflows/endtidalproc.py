@@ -283,7 +283,7 @@ def endtidalproc() -> None:
     maxtime = 1.0
     f = 2.0
     lookaheadval = int((args.samplerate * maxtime) / f)
-    maxpeaks, minpeaks = tide_fit.peakdetect(yvec, lookahead=lookaheadval, delta=args.thethresh)
+    maxpeaks, minpeaks = tide_fit.peakdetect(yvec, lookahead=lookaheadval, delta=args.thresh)
 
     if args.isoxygen:
         peaklist = minpeaks
