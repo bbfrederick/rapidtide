@@ -76,7 +76,7 @@ def parser_defaults(debug=False):
     with tempfile.NamedTemporaryFile(suffix=".txt") as infile, tempfile.NamedTemporaryFile(
         suffix=".txt"
     ) as outfile:
-        args = parser.parse_args(["--inputfile", infile.name, "--outputfile", outfile.name])
+        args = parser.parse_args([infile.name, outfile.name])
     assert args.samplerate == "auto"
     assert args.normfirst is False
     assert args.demean is False
@@ -118,7 +118,8 @@ def filttc_samplerate_from_args_when_file_none(debug=False):
     ):
         filttc(args)
 
-    assert np.allclose(captured["outvecs"], invecs)
+    expected = invecs - np.mean(invecs, axis=1, keepdims=True)
+    assert np.allclose(captured["outvecs"], expected)
     assert captured["kwargs"]["samplerate"] == 2.0
 
 
