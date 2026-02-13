@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = 'rapidtide'
 description = 'Tools for performing correlation analysis on fMRI data.'
 keywords = ['fMRI', 'correlation', 'RIPTiDe', 'noise']
-license = {text = 'Apache Software License'}
+license = {text = 'Apache-2.0'}
 readme = 'README.rst'
 classifiers = [
     'Operating System :: OS Independent',
@@ -81,6 +81,11 @@ doc = [
   'sphinxcontrib-bibtex',
   'tomlkit',
 ]
+
+# Aliases
+docs = ['rapidtide[doc]']
+tests = ['rapidtide[test]']
+all = ['rapidtide[doc,test]']
 
 [project.scripts]
 adjustoffset = 'rapidtide.scripts.adjustoffset:entrypoint'
@@ -161,11 +166,6 @@ version = {attr = 'rapidtide.__version__'}
 
 [tool.setuptools.exclude-package-data]
 rapidtide = ['.eggs', '.git', '.github', '.pytest_cache', 'rapidtide/candidatetests', 'rapidtide/disabledtests', 'rapidtide/data/examples']
-
-# Aliases
-docs = ['rapidtide[doc]']
-tests = ['rapidtide[test]']
-all = ['rapidtide[doc,test]']
 
 [tool.black]
 line-length = 99
