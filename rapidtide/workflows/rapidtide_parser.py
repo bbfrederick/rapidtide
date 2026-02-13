@@ -2259,12 +2259,14 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
         LGR.warning('Using "nirs" macro. Overriding any affected arguments.')
         args["nothresh"] = True
         args["preservefiltering"] = False
+        args["preservefiltering_nondefault"] = True
         args["dataiszeromean"] = True
         args["refineprenorm"] = "var"
         args["ampthresh"] = 0.7
         args["ampthreshfromsig"] = False
         args["lagminthresh"] = 0.1
         args["despeckle_passes"] = 0
+        args["despeckle_passes_nondefault"] = True
 
     # process limitoutput
     if not args["limitoutput"]:
