@@ -121,6 +121,9 @@ def transformmaps(
     thefmrimaps: Optional[Any] = None,
     theanatmaps: Optional[Any] = None,
     preponly: bool = False,
+    outputtag: str = "_std_",
+    xformdir: Optional[str] = None,
+    aligntohires: bool = False,
 ) -> None:
     """
     Apply spatial transformations to fMRI and anatomical maps from a happy dataset using FLIRT and/or
@@ -331,7 +334,7 @@ def happy2std(args: Any) -> None:
         thepath, thebase = os.path.split(inputname)
         if os.path.isfile(inputname):
             outputname = os.path.abspath(os.path.join(thepath, outputtag[1:] + thebase))
-            thecommand = makefslcmd(
+            thecommand = tide_extern.makeflirtcmd(
                 inputname, reftarget, xformfuncmat, outputname, warpfile=warpfuncfile
             )
 
@@ -373,4 +376,7 @@ def happy2std(args: Any) -> None:
         thefmrimaps=thefmrimaps,
         theanatmaps=theanatmaps,
         preponly=args.preponly,
+        outputtag=outputtag,
+        xformdir=args.featdirectory,
+        aligntohires=args.aligntohires,
     )
