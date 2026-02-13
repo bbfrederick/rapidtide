@@ -247,7 +247,7 @@ def showspecgram(
         themax = np.max(spec_img)
         themin = themax - 3.0
     elif mode == "phase":
-        spec_img = np.log10(np.angle(thestft))
+        spec_img = np.angle(thestft)
         themax = np.pi
         themin = -np.pi
     elif mode == "real":
