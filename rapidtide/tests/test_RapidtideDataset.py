@@ -21,6 +21,7 @@ Tests for RapidtideDataset module - covers Timecourse, Overlay, RapidtideDataset
 and the check_rt_spatialmatch function.
 """
 
+import json
 import os
 
 import nibabel as nib
@@ -70,6 +71,82 @@ def create_synthetic_timecourse(filepath, length=100, samplerate=1.0):
     timedata = np.sin(np.linspace(0, 4 * np.pi, length))
     tide_io.writevec(timedata, filepath)
     return timedata
+
+
+# ============================================================================
+# Fixture for synthetic rapidtide output
+# ============================================================================
+
+
+@pytest.fixture
+def rapidtide_output(tmp_path):
+    """Create a minimal set of synthetic BIDS-format rapidtide output files."""
+    datafileroot = str(tmp_path / "sub-TESTDATA_")
+    shape = (5, 5, 5)
+
+    # --- Run options JSON ---
+    runoptions = {
+        "lowerpass": 0.01,
+        "upperpass": 0.15,
+        "fmrifreq": 0.5,
+        "inputfreq": 0.5,
+        "inputstarttime": 0.0,
+        "oversampfactor": 2,
+        "similaritymetric": "correlation",
+        "validsimcalcstart": 0,
+        "validsimcalcend": 100,
+        "actual_passes": 2,
+    }
+    with open(datafileroot + "desc-runoptions_info.json", "w") as f:
+        json.dump(runoptions, f)
+
+    # --- Regressor BIDS TSV+JSON files ---
+    # initialmovingregressor: columns prefilt, postfilt
+    n_samples = 100
+    regdata = np.column_stack(
+        [np.sin(np.linspace(0, 4 * np.pi, n_samples)) for _ in range(2)]
+    ).T
+    tide_io.writebidstsv(
+        datafileroot + "desc-initialmovingregressor_timeseries",
+        regdata,
+        samplerate=0.5,
+        columns=["prefilt", "postfilt"],
+        starttime=0.0,
+    )
+
+    # oversampledmovingregressor: columns pass1, pass2
+    oversamp_data = np.column_stack(
+        [np.sin(np.linspace(0, 4 * np.pi, n_samples)) for _ in range(2)]
+    ).T
+    tide_io.writebidstsv(
+        datafileroot + "desc-oversampledmovingregressor_timeseries",
+        oversamp_data,
+        samplerate=1.0,
+        columns=["pass1", "pass2"],
+        starttime=0.0,
+    )
+
+    # --- Functional map NIfTI files (3D) ---
+    func_maps = [
+        "desc-maxtime_map",
+        "desc-maxcorr_map",
+        "desc-maxwidth_map",
+        "desc-neglog10p_map",
+    ]
+    for mapname in func_maps:
+        create_synthetic_nifti(datafileroot + mapname + ".nii.gz", shape=shape)
+
+    # --- Functional mask NIfTI files (3D, binary) ---
+    func_masks = [
+        "desc-corrfit_mask",
+        "desc-refine_mask",
+        "desc-globalmean_mask",
+    ]
+    mask_data = np.ones(shape, dtype=np.float32)
+    for maskname in func_masks:
+        create_synthetic_nifti(datafileroot + maskname + ".nii.gz", shape=shape, data=mask_data)
+
+    return datafileroot
 
 
 # ============================================================================
@@ -927,29 +1004,17 @@ class TestOverlay:
 
 
 class TestRapidtideDataset:
-    """Tests for the RapidtideDataset class.
+    """Tests for the RapidtideDataset class using synthetic output files."""
 
-    Note: These tests require rapidtide output files to be present in the test
-    temp directory, which are created by the full rapidtide run tests.
-    """
-
-    def test_init_basic(self):
-        """Test basic RapidtideDataset initialization with full rapidtide output."""
-        # Use the output from the rapidtide test run
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        # Skip if the test data doesn't exist (requires fullrun test to be run first)
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
+    def test_init_basic(self, rapidtide_output):
+        """Test basic RapidtideDataset initialization."""
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             anatname=None,
             geommaskname=None,
             userise=False,
-            usecorrout=True,
+            usecorrout=False,
             useatlas=False,
             forcetr=False,
             forceoffset=False,
@@ -959,20 +1024,14 @@ class TestRapidtideDataset:
         )
 
         assert thesubject.name == "main"
-        assert thesubject.fileroot == datafileroot
+        assert thesubject.fileroot == rapidtide_output
         assert thesubject.bidsformat is True
 
-    def test_getoverlays(self):
+    def test_getoverlays(self, rapidtide_output):
         """Test the getoverlays method."""
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             init_LUT=False,
             verbose=2,
         )
@@ -982,86 +1041,58 @@ class TestRapidtideDataset:
         assert len(overlays) > 0
         assert "lagtimes" in overlays
 
-    def test_getregressors(self):
+    def test_getregressors(self, rapidtide_output):
         """Test the getregressors method."""
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             init_LUT=False,
             verbose=2,
         )
 
         regressors = thesubject.getregressors()
         assert isinstance(regressors, dict)
+        assert "prefilt" in regressors
 
-    def test_setfocusregressor(self):
+    def test_setfocusregressor(self, rapidtide_output):
         """Test the setfocusregressor method."""
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             init_LUT=False,
             verbose=2,
         )
 
         # Set to valid regressor
-        initial_focus = thesubject.focusregressor
         thesubject.setfocusregressor("pass1")
-
-        # If pass1 exists, it should be set
-        if "pass1" in thesubject.regressors:
-            assert thesubject.focusregressor == "pass1"
+        assert thesubject.focusregressor == "pass1"
 
         # Set to invalid regressor - should fall back to prefilt
         thesubject.setfocusregressor("nonexistent_regressor")
         assert thesubject.focusregressor == "prefilt"
 
-    def test_setfocusmap(self):
+    def test_setfocusmap(self, rapidtide_output):
         """Test the setfocusmap method."""
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             init_LUT=False,
             verbose=2,
         )
 
         # Set to valid map
         thesubject.setfocusmap("lagstrengths")
-        if "lagstrengths" in thesubject.overlays:
-            assert thesubject.focusmap == "lagstrengths"
+        assert thesubject.focusmap == "lagstrengths"
 
         # Set to invalid map - should fall back to lagtimes
         thesubject.setfocusmap("nonexistent_map")
         assert thesubject.focusmap == "lagtimes"
 
-    def test_setFuncMaskName(self):
+    def test_setFuncMaskName(self, rapidtide_output):
         """Test the setFuncMaskName method."""
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             init_LUT=False,
             verbose=2,
         )
@@ -1069,17 +1100,11 @@ class TestRapidtideDataset:
         thesubject.setFuncMaskName("new_mask_name")
         assert thesubject.funcmaskname == "new_mask_name"
 
-    def test_dataset_dimensions(self):
+    def test_dataset_dimensions(self, rapidtide_output):
         """Test that dataset dimensions are properly set."""
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             init_LUT=False,
             verbose=2,
         )
@@ -1091,24 +1116,18 @@ class TestRapidtideDataset:
         assert thesubject.ysize > 0
         assert thesubject.zsize > 0
 
-    def test_regressorfilterlimits(self):
+    def test_regressorfilterlimits(self, rapidtide_output):
         """Test that regressor filter limits are set."""
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             init_LUT=False,
             verbose=2,
         )
 
         assert thesubject.regressorfilterlimits is not None
         assert len(thesubject.regressorfilterlimits) == 2
-        assert thesubject.regressorfilterlimits[0] >= 0
+        assert thesubject.regressorfilterlimits == (0.01, 0.15)
 
 
 # ============================================================================
@@ -1117,20 +1136,14 @@ class TestRapidtideDataset:
 
 
 class TestIntegration:
-    """Integration tests that use complete rapidtide output."""
+    """Integration tests using synthetic rapidtide output."""
 
-    def test_full_workflow(self):
+    def test_full_workflow(self, rapidtide_output):
         """Test a complete workflow with RapidtideDataset."""
-        testtemproot = get_test_temp_path(runninglocally)
-        datafileroot = os.path.join(testtemproot, "sub-RAPIDTIDETEST1_")
-
-        if not os.path.isfile(datafileroot + "desc-maxtime_map.nii.gz"):
-            pytest.skip("Rapidtide output files not found - run fullrun tests first")
-
         # Create dataset
         thesubject = RapidtideDataset(
             "main",
-            datafileroot,
+            rapidtide_output,
             init_LUT=False,
             verbose=2,
         )
@@ -1139,11 +1152,19 @@ class TestIntegration:
         overlays = thesubject.getoverlays()
         regressors = thesubject.getregressors()
 
-        # Test changing focus
+        assert isinstance(overlays, dict)
+        assert "lagtimes" in overlays
+        assert isinstance(regressors, dict)
+        assert "prefilt" in regressors
+
+        # Test changing focus regressor
         assert thesubject.focusregressor == "prefilt"
-        thesubject.setfocusregressor("pass3")
-        if "pass3" in regressors:
-            assert thesubject.focusregressor == "pass3"
+        thesubject.setfocusregressor("pass1")
+        assert thesubject.focusregressor == "pass1"
+
+        # Test changing focus map
+        thesubject.setfocusmap("lagstrengths")
+        assert thesubject.focusmap == "lagstrengths"
 
         # Check that expected filter limits are set
         assert thesubject.regressorfilterlimits == (0.01, 0.15)
