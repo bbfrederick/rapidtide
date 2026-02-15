@@ -534,6 +534,8 @@ jobs:
             source activate py311_env
             pip install --upgrade codecov coverage coveralls flake8-black pytest pytest-cov
             pwd
+            pip install --upgrade numba
+            pip install --upgrade pyfftw
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
