@@ -16,7 +16,11 @@
 #   limitations under the License.
 #
 #
+import os
 import platform
+import sys
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -607,8 +611,193 @@ class TestSetmemlimit:
         assert callable(tide_util.setmemlimit)
 
 
+# ========================= configurepyfftw / savewisdom =========================
+
+
+class TestPyfftwHelpers:
+    def test_configurepyfftw_when_missing(self, monkeypatch):
+        monkeypatch.setattr(tide_util, "pyfftwpresent", False)
+        assert tide_util.configurepyfftw(threads=1, debug=False) is None
+
+    def test_savewisdom_when_missing(self, monkeypatch):
+        monkeypatch.setattr(tide_util, "pyfftwpresent", False)
+        # no-op branch, should not raise
+        tide_util.savewisdom("dummy_wisdom.txt", debug=False)
+
+
+# ========================= findavailablemem =========================
+
+
+class TestFindavailablemem:
+    def test_cgroup_branch(self, monkeypatch):
+        monkeypatch.setattr(tide_util.os.path, "isfile", lambda p: True)
+
+        class DummyFile:
+            def __enter__(self):
+                from io import StringIO
+
+                self._f = StringIO("1048576")
+                return self._f
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        monkeypatch.setattr(tide_util, "open", lambda *args, **kwargs: DummyFile(), raising=False)
+        mem, swap = tide_util.findavailablemem()
+        assert mem == 1048576
+        assert swap == 1048576
+
+    def test_free_command_branch(self, monkeypatch):
+        monkeypatch.setattr(tide_util.os.path, "isfile", lambda p: False)
+        fake_stdout = b"              total        used        free      shared  buff/cache   available\nMem:          1000         500         200          20         300         400\nSwap:         1000         200         300\n"
+        monkeypatch.setattr(
+            tide_util.subprocess,
+            "run",
+            lambda *args, **kwargs: SimpleNamespace(stdout=fake_stdout),
+        )
+        mem, swap = tide_util.findavailablemem()
+        assert mem == 200 * 1024 * 1024
+        assert swap == 300 * 1024 * 1024
+
+
+# ========================= savecommandline =========================
+
+
+class TestSavecommandline:
+    def test_calls_writevec(self):
+        with patch("rapidtide.util.tide_io.writevec") as w:
+            tide_util.savecommandline(["python", "prog.py", "--x", "1"], "testrun")
+        w.assert_called_once()
+        args, kwargs = w.call_args
+        assert args[0] == ["python prog.py --x 1"]
+        assert args[1].endswith("testrun_commandline.txt")
+
+
+# ========================= startendcheck extra branches =========================
+
+
+class TestStartendcheckErrors:
+    def test_start_too_large_exits(self):
+        with pytest.raises(SystemExit):
+            tide_util.startendcheck(10, 20, 30)
+
+    def test_start_greater_equal_end_exits(self):
+        with pytest.raises(SystemExit):
+            tide_util.startendcheck(10, 5, 5)
+
+
+# ========================= valtoindex extra branches =========================
+
+
+class TestValtoindexExtra:
+    def test_continuous_position(self):
+        arr = np.linspace(0, 10, 11)
+        pos = tide_util.valtoindex(arr, 5.5, discrete=False)
+        assert np.fabs(pos - 5.5) < 1e-12
+
+    def test_illegal_discretization_raises(self):
+        arr = np.linspace(0, 10, 11)
+        with pytest.raises(TypeError):
+            tide_util.valtoindex(arr, 5.5, discretization="illegal_mode")
+
+
+# ========================= proctiminglogfile / proctiminginfo =========================
+
+
+class TestTimingHelpers:
+    def test_proctiminglogfile(self, tmp_path):
+        logfile = tmp_path / "timing.tsv"
+        logfile.write_text(
+            "\n".join(
+                [
+                    "20260101T000000.000000\tStart\t\t",
+                    "20260101T000001.000000\tStep1\t100\tvoxels",
+                    "20260101T000003.000000\tStep2\t\t",
+                ]
+            )
+            + "\n"
+        )
+        lines, total = tide_util.proctiminglogfile(str(logfile), timewidth=8)
+        assert len(lines) >= 3
+        assert "Description" in lines[0]
+        assert np.fabs(total - 3.0) < 1e-6
+
+    def test_proctiminginfo_with_output(self):
+        timings = [
+            ("start", 1000.0, None, None),
+            ("step", 1002.0, 200.0, "voxels"),
+            ("end", 1003.0, None, None),
+        ]
+        with patch("rapidtide.util.tide_io.writevec") as w:
+            tide_util.proctiminginfo(timings, outputfile="timing_out.txt", extraheader="HEADER")
+        w.assert_called_once()
+
+
+# ========================= comparemap extra branches =========================
+
+
+class TestComparemapBranches:
+    def test_shape_mismatch_exits(self):
+        with pytest.raises(SystemExit):
+            tide_util.comparemap(np.zeros((2, 2)), np.zeros((3, 3)))
+
+    def test_mask_one_less_dimension(self):
+        map1 = np.arange(12, dtype=float).reshape(2, 2, 3)
+        map2 = map1 + 1.0
+        mask = np.array([[1, 0], [0, 1]], dtype=int)
+        result = tide_util.comparemap(map1, map2, mask=mask)
+        assert len(result) == 8
+        assert result[1] > 0.0
+
+    def test_incompatible_mask_exits(self):
+        map1 = np.zeros((2, 2, 2))
+        map2 = np.zeros((2, 2, 2))
+        badmask = np.zeros((2,), dtype=int)
+        with pytest.raises(SystemExit):
+            tide_util.comparemap(map1, map2, mask=badmask)
+
+
+# ========================= compare run helpers =========================
+
+
+class TestCompareRunHelpers:
+    def test_comparerapidtideruns_smoke(self):
+        mask_hdr = {"dim": [0, 2, 2, 1, 1]}
+        mask_data = np.ones((2, 2, 1), dtype=float)
+
+        with patch("rapidtide.util.tide_io.readfromnifti", return_value=(None, mask_data, mask_hdr, None, None)), patch(
+            "rapidtide.util.tide_io.checkspacematch", return_value=True
+        ), patch("rapidtide.util.os.path.isfile", return_value=False), patch(
+            "rapidtide.util.tide_io.readvectorsfromtextfile", side_effect=FileNotFoundError
+        ):
+            out = tide_util.comparerapidtideruns("run1", "run2", debug=False)
+        assert isinstance(out, dict)
+
+    def test_comparehappyruns_smoke(self):
+        mask_hdr = {"dim": [0, 2, 2, 1, 1]}
+        mask_data = np.ones((2, 2, 1), dtype=float)
+        with patch("rapidtide.util.tide_io.readfromnifti", return_value=(None, mask_data, mask_hdr, None, None)), patch(
+            "rapidtide.util.tide_io.checkspacematch", return_value=True
+        ), patch("rapidtide.util.os.path.isfile", return_value=False):
+            out = tide_util.comparehappyruns("happy1", "happy2", debug=False)
+        assert isinstance(out, dict)
+
+
 # ========================= Run the tests =========================
 
 
+def test_util(debug=False, local=False):
+    # Keep a command-line entrypoint consistent with other test_*.py files.
+    # Use importlib mode to avoid basename collisions with installed package tests.
+    thisfile = os.path.abspath(__file__)
+    reporoot = os.path.abspath(os.path.join(os.path.dirname(thisfile), "..", ".."))
+    if reporoot not in sys.path:
+        sys.path.insert(0, reporoot)
+    args = [thisfile, "-v", "--import-mode=importlib"]
+    if debug:
+        args.append("-s")
+    return pytest.main(args)
+
+
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    test_util(debug=True, local=True)
