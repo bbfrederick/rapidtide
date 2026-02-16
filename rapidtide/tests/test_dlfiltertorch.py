@@ -208,7 +208,7 @@ def apply_method_with_badpts(testtemproot):
     assert isinstance(filtered_signal, np.ndarray)
 
 
-def save_and_load_model(testtemproot):
+def save_and_load_cnn_model(testtemproot):
     """Test saving and loading a model."""
     # This test is skipped because both savemodel() and initmetadata()
     # use self.modelname (a relative path) instead of self.modelpath (full path)
@@ -219,7 +219,7 @@ def save_and_load_model(testtemproot):
         num_layers=3,
         num_epochs=1,
         modelroot=testtemproot,
-        namesuffix="saveloadtest",
+        namesuffix="saveloadcnntest",
     )
 
     # Create and save the model using modelpath
@@ -702,8 +702,8 @@ def test_dlfilterops(debug=False, local=False):
     apply_method_with_badpts(testtemproot)
 
     if debug:
-        print("save_and_load_model(testtemproot)")
-    save_and_load_model(testtemproot)
+        print("save_and_load_cnn_model(testtemproot)")
+    save_and_load_cnn_model(testtemproot)
 
     if debug:
         print("filtscale_forward()")
