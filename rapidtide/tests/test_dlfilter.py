@@ -498,6 +498,118 @@ def cnn_minimal_cpu_training_loop(testtemproot):
     assert preds.shape == val_y.shape
 
 
+def readindata_filters_and_returns_expected_shapes():
+    """Test readindata() filtering logic and returned array shapes."""
+    import rapidtide.dlfilter as dlfilter
+
+    matched = [
+        "sub-01_desc-stdrescardfromfmri_timeseries.json",
+        "sub-02_desc-stdrescardfromfmri_timeseries.json",
+    ]
+    tclen = 20
+
+    info_good = {"corrcoeff_raw2pleth": 0.9}
+    info_bad = {"corrcoeff_raw2pleth": 0.1}  # below threshold -> excluded
+
+    input_good = np.vstack(
+        [
+            np.linspace(0.0, 2.0, tclen),  # cardiacfromfmri_25.0Hz
+            np.linspace(1.0, 3.0, tclen),  # normpleth
+            np.zeros(tclen),  # badpts
+        ]
+    )
+    input_bad = np.vstack(
+        [
+            np.linspace(0.0, 2.0, tclen),
+            np.linspace(1.0, 3.0, tclen),
+            np.zeros(tclen),
+        ]
+    )
+
+    def _mock_readdictfromjson(path):
+        if "sub-01" in path:
+            return info_good
+        return info_bad
+
+    def _mock_readbidstsv(path, colspec=None):
+        arr = input_good if "sub-01" in path else input_bad
+        return (25.0, 0.0, ["x", "y", "badpts"], arr, False, "bids", {})
+
+    with (
+        patch(
+            "rapidtide.dlfilter.tide_io.readdictfromjson",
+            side_effect=_mock_readdictfromjson,
+        ),
+        patch(
+            "rapidtide.dlfilter.tide_io.readbidstsv",
+            side_effect=_mock_readbidstsv,
+        ),
+    ):
+        x, y, names, bad = dlfilter.readindata(
+            matched,
+            tclen=tclen,
+            usebadpts=True,
+            startskip=1,
+            endskip=1,
+            corrthresh_rp=0.5,
+            readlim=None,
+            readskip=0,
+        )
+
+    assert x.shape == (tclen - 2, 1)
+    assert y.shape == (tclen - 2, 1)
+    assert bad.shape == (tclen - 2, 1)
+    assert len(names) == 1
+    assert "sub-01" in names[0]
+
+
+def prep_windowing_and_split_paths():
+    """Test prep() windowing/splitting flow with mocked getmatchedtcs/readindata."""
+    import rapidtide.dlfilter as dlfilter
+
+    window_size = 8
+    step = 4
+    returned_tclen = 40
+    npts_after_skip = 20
+    nsubj = 3
+
+    x = np.tile(np.linspace(-1.0, 1.0, npts_after_skip).reshape(-1, 1), (1, nsubj)).astype(float)
+    y = (0.5 * x + 0.1).astype(float)
+    names = [f"sub-{i:02d}" for i in range(nsubj)]
+
+    with (
+        patch(
+            "rapidtide.dlfilter.getmatchedtcs",
+            return_value=(["dummy_a.json", "dummy_b.json", "dummy_c.json"], returned_tclen),
+        ),
+        patch(
+            "rapidtide.dlfilter.readindata",
+            return_value=(x, y, names),
+        ),
+    ):
+        train_x, train_y, val_x, val_y, n_subjs_out, tclen_out, batchsize = dlfilter.prep(
+            window_size=window_size,
+            step=step,
+            excludethresh=10.0,
+            usebadpts=False,
+            startskip=10,
+            endskip=10,
+            excludebysubject=False,
+            dofft=False,
+            readskip=0,
+        )
+
+    # windows per subject = (20 - 8 - 1)//4 = 2, total windows = 6
+    assert train_x.shape[1:] == (window_size, 1)
+    assert train_y.shape[1:] == (window_size, 1)
+    assert val_x.shape[1:] == (window_size, 1)
+    assert val_y.shape[1:] == (window_size, 1)
+    assert train_x.shape[0] + val_x.shape[0] == 6
+    assert n_subjs_out == nsubj
+    assert tclen_out == returned_tclen - 10 - 10
+    assert batchsize == 2
+
+
 # ============================================================
 # Standalone function tests (filtscale, tobadpts, targettoinput)
 # ============================================================
@@ -655,6 +767,14 @@ def test_dlfilterops(debug=False, local=False):
     if debug:
         print("cnn_minimal_cpu_training_loop(testtemproot)")
     cnn_minimal_cpu_training_loop(testtemproot)
+
+    if debug:
+        print("readindata_filters_and_returns_expected_shapes()")
+    readindata_filters_and_returns_expected_shapes()
+
+    if debug:
+        print("prep_windowing_and_split_paths()")
+    prep_windowing_and_split_paths()
 
     # Standalone function tests
     if debug:
