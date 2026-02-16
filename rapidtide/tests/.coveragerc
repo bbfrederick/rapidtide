@@ -52,3 +52,4 @@ exclude_lines =
     except np.lib.RankWarning:
     except IndexError:
     except ValueError:
+    except ImportError:
