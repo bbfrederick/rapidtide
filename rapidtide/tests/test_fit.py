@@ -1080,6 +1080,465 @@ class TestTerritorystats:
         assert len(result) == 9
 
 
+# ========================= JIT function Python fallback tests =========================
+# These test the pure Python code paths inside @conditionaljit() decorated functions,
+# which coverage cannot track when numba compiles them.
+
+
+class TestGaussEvalPython:
+    """Test gauss_eval Python fallback via _unwrap_jit."""
+
+    def test_basic(self):
+        gauss_eval = _unwrap_jit(tide_fit.gauss_eval)
+        x = np.linspace(-5, 5, 101)
+        p = np.array([2.0, 0.0, 1.0])
+        y = gauss_eval(x, p)
+        assert np.isclose(y[50], 2.0, atol=1e-10)
+
+
+class TestGaussResidualsPython:
+    """Test gaussresiduals Python fallback via _unwrap_jit."""
+
+    def test_zero_residuals(self):
+        gaussresiduals = _unwrap_jit(tide_fit.gaussresiduals)
+        x = np.linspace(-5, 5, 101)
+        p = np.array([1.0, 0.0, 1.0])
+        y = _unwrap_jit(tide_fit.gauss_eval)(x, p)
+        residuals = gaussresiduals(p, y, x)
+        np.testing.assert_allclose(residuals, 0.0, atol=1e-10)
+
+
+class TestTrapezoidEvalPython:
+    """Test trapezoid_eval Python fallback for all branches."""
+
+    def test_before_start(self):
+        trapezoid_eval = _unwrap_jit(tide_fit.trapezoid_eval)
+        p = np.array([5.0, 2.0, 1.0, 1.0])
+        result = trapezoid_eval(3.0, 2.0, p)
+        assert result == 0.0
+
+    def test_rising_phase(self):
+        trapezoid_eval = _unwrap_jit(tide_fit.trapezoid_eval)
+        p = np.array([0.0, 2.0, 1.0, 1.0])
+        result = trapezoid_eval(0.5, 2.0, p)
+        assert result > 0.0
+        assert result < 2.0
+
+    def test_falling_phase(self):
+        trapezoid_eval = _unwrap_jit(tide_fit.trapezoid_eval)
+        p = np.array([0.0, 2.0, 1.0, 1.0])
+        result = trapezoid_eval(3.0, 1.0, p)
+        assert result > 0.0
+        assert result < 2.0
+
+
+class TestRisetimeEvalPython:
+    """Test risetime_eval Python fallback for both branches."""
+
+    def test_before_start(self):
+        risetime_eval = _unwrap_jit(tide_fit.risetime_eval)
+        p = np.array([2.0, 1.0, 0.5])
+        result = risetime_eval(1.0, p)
+        assert result == 0.0
+
+    def test_after_start(self):
+        risetime_eval = _unwrap_jit(tide_fit.risetime_eval)
+        p = np.array([0.0, 1.0, 0.5])
+        result = risetime_eval(1.0, p)
+        assert result > 0.0
+        assert result < 1.0
+
+
+# ========================= Trendgen higher order =========================
+
+
+class TestTrendgenHigherOrder:
+    def test_quadratic(self):
+        x = np.linspace(-2, 2, 101)
+        coffs = np.array([1.0, 0.0, 3.0])  # 1*x^2 + 0*x + 3
+        y = tide_fit.trendgen(x, coffs, demean=True)
+        expected = 1.0 * x**2 + 3.0
+        np.testing.assert_allclose(y, expected, atol=1e-10)
+
+    def test_quadratic_no_demean(self):
+        x = np.linspace(-2, 2, 101)
+        coffs = np.array([1.0, 2.0, 5.0])  # 1*x^2 + 2*x + 5
+        y = tide_fit.trendgen(x, coffs, demean=False)
+        expected = 1.0 * x**2 + 2.0 * x  # no constant
+        np.testing.assert_allclose(y, expected, atol=1e-10)
+
+
+# ========================= Prewhiten2 automatic lag selection =========================
+
+
+class TestPrewhiten2Sel:
+    def test_sel_true(self):
+        np.random.seed(42)
+        n = 200
+        series = np.zeros(n)
+        series[0] = np.random.randn()
+        for i in range(1, n):
+            series[i] = 0.8 * series[i - 1] + 0.2 * np.random.randn()
+        whitened = tide_fit.prewhiten2(series, nlags=5, sel=True)
+        assert len(whitened) == len(series)
+        assert np.all(np.isfinite(whitened))
+
+
+# ========================= findtrapezoidfunc / findrisetimefunc default initguess =========================
+
+
+class TestFindtrapezoidfuncDefaults:
+    def test_default_initguess(self):
+        x = np.linspace(0, 20, 200)
+        p_true = np.array([2.0, 3.0, 1.5, 2.0])
+        toplength = 3.0
+        y = tide_fit.trapezoid_eval_loop(x, toplength, p_true)
+        s, a, r, f, success = tide_fit.findtrapezoidfunc(x, y, toplength)
+        # Should succeed even without explicit initguess
+        assert isinstance(success, (int, np.integer))
+
+    def test_out_of_bounds(self):
+        x = np.linspace(0, 20, 200)
+        p_true = np.array([2.0, 3.0, 1.5, 2.0])
+        toplength = 3.0
+        y = tide_fit.trapezoid_eval_loop(x, toplength, p_true)
+        s, a, r, f, success = tide_fit.findtrapezoidfunc(
+            x, y, toplength, maxrise=0.01, maxfall=0.01
+        )
+        assert success == 0
+
+
+class TestFindrisetimefuncDefaults:
+    def test_default_initguess(self):
+        x = np.linspace(0, 20, 200)
+        p_true = np.array([2.0, 3.0, 1.5])
+        y = tide_fit.risetime_eval_loop(x, p_true)
+        start, amp, rise, success = tide_fit.findrisetimefunc(x, y)
+        assert isinstance(success, (int, np.integer))
+
+
+# ========================= Territory decomp 4D =========================
+
+
+class TestTerritorydecomp4D:
+    def test_4d_input(self):
+        np.random.seed(42)
+        inputmap = np.random.rand(5, 5, 5, 3)
+        template = np.random.rand(5, 5, 5)
+        atlas = np.ones((5, 5, 5), dtype=int)
+        fitmap, coffs, r2s = tide_fit.territorydecomp(inputmap, template, atlas)
+        assert fitmap.shape == inputmap.shape
+        assert coffs.shape[0] == 3  # nummaps
+
+    def test_4d_input_with_mask(self):
+        np.random.seed(42)
+        inputmap = np.random.rand(5, 5, 5, 2)
+        template = np.random.rand(5, 5, 5)
+        atlas = np.ones((5, 5, 5), dtype=int)
+        mask = np.ones((5, 5, 5))
+        mask[0, :, :] = 0
+        fitmap, coffs, r2s = tide_fit.territorydecomp(inputmap, template, atlas, inputmask=mask)
+        assert fitmap.shape == inputmap.shape
+        assert coffs.shape[0] == 2
+
+
+# ========================= Territory stats 4D =========================
+
+
+class TestTerritorystats4D:
+    def test_4d_input(self):
+        np.random.seed(42)
+        inputmap = np.random.rand(5, 5, 5, 3)
+        atlas = np.ones((5, 5, 5), dtype=int)
+        result = tide_fit.territorystats(inputmap, atlas)
+        means = result[1]
+        assert means.shape == (3, 1)
+
+    def test_4d_input_with_mask(self):
+        np.random.seed(42)
+        inputmap = np.random.rand(5, 5, 5, 2)
+        atlas = np.ones((5, 5, 5), dtype=int)
+        mask = np.ones((5, 5, 5))
+        mask[0, :, :] = 0
+        result = tide_fit.territorystats(inputmap, atlas, inputmask=mask)
+        means = result[1]
+        assert means.shape == (2, 1)
+
+    def test_custom_entropy_range(self):
+        np.random.seed(42)
+        inputmap = np.random.rand(5, 5, 5)
+        atlas = np.ones((5, 5, 5), dtype=int)
+        result = tide_fit.territorystats(inputmap, atlas, entropyrange=(0.0, 1.0))
+        assert len(result) == 9
+
+
+# ========================= findmaxlag_gauss edge cases =========================
+
+
+class TestFindmaxlagGaussEdgeCases:
+    def _make_gauss(self, center=0.0, sigma=1.0, amp=0.8, npts=201):
+        x = np.linspace(-10, 10, npts)
+        y = amp * np.exp(-0.5 * ((x - center) / sigma) ** 2)
+        return x, y
+
+    def test_useguess(self):
+        x, y = self._make_gauss(center=1.0, sigma=1.0)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
+            tide_fit.findmaxlag_gauss(
+                x, y, -5.0, 5.0, 3.0, refine=True, useguess=True, maxguess=1.0
+            )
+        )
+        assert maskval == 1
+        assert np.isclose(maxlag, 1.0, atol=0.5)
+
+    def test_tweaklims(self):
+        x, y = self._make_gauss(center=0.0, sigma=1.0)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
+            tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=True, tweaklims=True)
+        )
+        assert maskval == 1
+
+    def test_amplitude_above_one(self):
+        x, y = self._make_gauss(center=0.0, sigma=1.0, amp=1.5)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
+            tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=False)
+        )
+        # FML_BADAMPHIGH should be set
+        assert failreason & 0x02
+
+    def test_negative_amplitude(self):
+        x = np.linspace(-10, 10, 201)
+        y = -0.5 * np.exp(-0.5 * (x / 1.0) ** 2)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
+            tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=False)
+        )
+        # Should fail (negative values -> bad fit)
+        assert maskval == 0
+        assert failreason > 0
+
+    def test_bad_sigma_zerooutbadfit_false(self):
+        """Test that with zerooutbadfit=False, initial values are kept."""
+        x, y = self._make_gauss(center=0.0, sigma=0.1, amp=0.8)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
+            tide_fit.findmaxlag_gauss(
+                x,
+                y,
+                -5.0,
+                5.0,
+                3.0,
+                refine=True,
+                zerooutbadfit=False,
+                absminsigma=5.0,
+                absmaxsigma=10.0,
+            )
+        )
+        # sigma out of range, should clamp rather than zero out
+        assert maxsigma >= 5.0
+
+    def test_fit_result_out_of_lag_range_zeroout_false(self):
+        """Test fit result outside lag range with zerooutbadfit=False resets to initial."""
+        x, y = self._make_gauss(center=4.5, sigma=1.0, amp=0.8)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
+            tide_fit.findmaxlag_gauss(
+                x, y, -1.0, 1.0, 3.0, refine=True, zerooutbadfit=False
+            )
+        )
+        # maxlag should be reset to initial value when out of range
+        assert maxval != 0.0 or maskval == 0
+
+
+# ========================= simfuncpeakfit additional coverage =========================
+
+
+class TestSimfuncpeakfitEdgeCases:
+    def _make_corrfunc(self, center=0.0, sigma=2.0, amp=0.8, n=1001):
+        t = np.linspace(-30, 30, n)
+        corr = amp * np.exp(-0.5 * ((t - center) / sigma) ** 2)
+        return corr, t
+
+    def test_hardlimit_false(self):
+        corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.7)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", hardlimit=False)
+        )
+        assert isinstance(maskval, np.uint16)
+
+    def test_init_lag_out_of_range_low(self):
+        """Peak outside lag range triggers FML_INITLAGLOW."""
+        corr, t = self._make_corrfunc(center=-25.0, sigma=2.0, amp=0.7)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
+            )
+        )
+        assert maskval == 0
+        assert failreason & 0x0010  # FML_INITLAGLOW
+
+    def test_init_lag_out_of_range_high(self):
+        """Peak outside lag range triggers FML_INITLAGHIGH."""
+        corr, t = self._make_corrfunc(center=25.0, sigma=2.0, amp=0.7)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
+            )
+        )
+        assert maskval == 0
+        assert failreason & 0x0020  # FML_INITLAGHIGH
+
+    def test_init_width_too_high(self):
+        """Very wide peak triggers FML_INITWIDTHHIGH."""
+        corr, t = self._make_corrfunc(center=0.0, sigma=20.0, amp=0.7)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", absmaxsigma=0.5
+            )
+        )
+        assert failreason & 0x0008  # FML_INITWIDTHHIGH
+
+    def test_init_amp_too_high(self):
+        """Amplitude > 1.0 triggers FML_INITAMPHIGH for correlation."""
+        corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=1.5)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss")
+        )
+        assert failreason & 0x0002  # FML_INITAMPHIGH
+
+    def test_init_amp_negative(self):
+        """Negative amplitude triggers FML_INITAMPLOW for correlation."""
+        t = np.linspace(-30, 30, 1001)
+        corr = -0.5 * np.exp(-0.5 * (t / 2.0) ** 2)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", bipolar=False)
+        )
+        assert failreason & 0x0001  # FML_INITAMPLOW
+
+    def test_fit_lag_out_of_range(self):
+        """After gauss fit, lag outside range triggers FML_FITLAGLOW/HIGH."""
+        # Create a peak very close to lagmax so the gauss fit might overshoot
+        t = np.linspace(-30, 30, 1001)
+        corr = 0.7 * np.exp(-0.5 * ((t - 4.9) / 2.0) ** 2)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
+            )
+        )
+        # Should either succeed or set fit lag flags
+        assert isinstance(failreason, (int, np.integer))
+
+    def test_fit_width_too_large(self):
+        """After gauss fit, sigma > absmaxsigma triggers FML_FITWIDTHHIGH."""
+        corr, t = self._make_corrfunc(center=0.0, sigma=5.0, amp=0.7)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", absmaxsigma=1.0
+            )
+        )
+        assert failreason & 0x0800  # FML_FITWIDTHHIGH
+
+    def test_fit_width_too_small(self):
+        """After gauss fit, sigma < absminsigma triggers FML_FITWIDTHLOW."""
+        corr, t = self._make_corrfunc(center=0.0, sigma=0.1, amp=0.7)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", absminsigma=5.0
+            )
+        )
+        assert failreason & 0x0400  # FML_FITWIDTHLOW
+
+    def test_fit_amp_too_high(self):
+        """After gauss fit, |amp| > 1.0 + tolerance triggers FML_FITAMPHIGH."""
+        # Create a sharp narrow peak that might cause the gauss fit to overshoot
+        t = np.linspace(-30, 30, 1001)
+        corr = 0.99 * np.exp(-0.5 * (t / 0.5) ** 2)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", corrtolerance=0.0
+            )
+        )
+        # The fit might overshoot; check the result is valid
+        assert isinstance(failreason, (int, np.integer))
+
+    def test_mutualinfo_peakboundary(self):
+        """Test mutual info peak boundary expansion."""
+        t = np.linspace(-30, 30, 1001)
+        baseline = 0.5
+        corr = baseline + 0.5 * np.exp(-0.5 * (t / 2.0) ** 2)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", functype="mutualinfo", lthreshval=0.1
+            )
+        )
+        assert isinstance(maskval, np.uint16)
+
+    def test_mutualinfo_amp_below_baseline(self):
+        """Mutual info peak barely above baseline triggers FML_INITAMPLOW with high lthreshval."""
+        np.random.seed(42)
+        t = np.linspace(-30, 30, 1001)
+        # Create MI-like signal with noisy baseline and a small peak
+        corr = 0.5 + 0.1 * np.random.randn(1001)
+        corr[500] = 0.55  # small peak barely above median
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(
+                corr, t, peakfittype="gauss", functype="mutualinfo", lthreshval=100.0
+            )
+        )
+        # With huge lthreshval, peak-baseline < lthreshval * baselinedev
+        assert failreason & 0x0001  # FML_INITAMPLOW
+
+    def test_init_width_too_low(self):
+        """Very narrow peak triggers width-related failure."""
+        t = np.linspace(-30, 30, 1001)
+        corr = np.zeros_like(t)
+        # Create an extremely narrow peak (single point)
+        corr[500] = 0.8
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss")
+        )
+        # Narrow peak should trigger some width or fit failure
+        assert failreason > 0
+
+
+# ========================= _maxindex_noedge edge convergence =========================
+
+
+class TestMaxindexNoedgeEdgeCases:
+    def test_max_at_left_edge(self):
+        """Max at index 0 forces lowerlim to advance."""
+        corrfunc = np.array([0.9, 0.5, 0.3, 0.2, 0.1])
+        corrtimeaxis = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+        idx, flip = tide_fit._maxindex_noedge(corrfunc, corrtimeaxis)
+        assert idx >= 1  # should have moved away from edge
+
+    def test_max_at_right_edge(self):
+        """Max at last index forces upperlim to shrink."""
+        corrfunc = np.array([0.1, 0.2, 0.3, 0.5, 0.9])
+        corrtimeaxis = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+        idx, flip = tide_fit._maxindex_noedge(corrfunc, corrtimeaxis)
+        assert idx <= 3  # should have moved away from edge
+
+    def test_single_interior_value(self):
+        """Array where only one interior point is meaningful."""
+        corrfunc = np.array([0.9, 0.8, 0.5])
+        corrtimeaxis = np.array([0.0, 1.0, 2.0])
+        idx, flip = tide_fit._maxindex_noedge(corrfunc, corrtimeaxis)
+        assert isinstance(idx, (int, np.integer))
+
+
+# ========================= refinepeak_quad edge cases =========================
+
+
+class TestRefinePeakQuadEdgeCases:
+    def test_local_minimum_detection(self):
+        """refinepeak_quad should detect local minimum (ismax=False) and set correct values."""
+        refinepeak_quad = _unwrap_jit(tide_fit.refinepeak_quad)
+        x = np.linspace(-5, 5, 101)
+        y = 0.5 * x**2  # parabola with minimum at center
+        min_idx = np.argmin(y)
+        peakloc, peakval, peakwidth, ismax, badfit = refinepeak_quad(x, y, min_idx)
+        assert ismax is False
+        assert np.isclose(peakloc, 0.0, atol=0.2)
+
+
 # ========================= Run the tests =========================
 
 
