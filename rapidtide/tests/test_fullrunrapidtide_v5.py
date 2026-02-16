@@ -35,7 +35,7 @@ def test_fullrunrapidtide_v5(debug=False, local=False, displayplots=False):
         os.path.join(exampleroot, "sub-RAPIDTIDETEST_cifti.ptseries.nii"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST5"),
         "--nprocs",
-        "-1",
+        "2",
         "--passes",
         "2",
         "--numnull",
