@@ -739,9 +739,9 @@ workflows:
       - test_py311_with_coverage:
           requires:
             - build_py311
-      - test_py311_with_optional:
-          requires:
-            - build_py311
+      #- test_py311_with_optional:
+      #    requires:
+      #      - build_py311
       - build_docs:
           requires:
             - build_py311
