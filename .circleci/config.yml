@@ -7,73 +7,6 @@ orbs:
   codecov: codecov/codecov@3.2.4
 jobs:
 
-  build_py39:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    resource_class: medium
-    steps:
-      - checkout:
-          method: blobless
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-39-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            if [[ -e /opt/conda/envs/py39_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py39_env
-            else
-                conda create -n py39_env python=3.9 -yq
-                source activate py39_env
-                pip install --upgrade "setuptools>=54"
-                pip install --upgrade pip
-                pip install --upgrade distlib
-                pip install --upgrade pytest
-            fi
-            pip install .[tf,test,doc]
-      - save_cache:  # environment cache tied to requirements
-          key: deps2-39-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/opt/conda/envs/py39_env"
-
-  build_py310_alt:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: cimg/python:3.10
-    resource_class: medium
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            if [[ -e .venv/bin/activate ]]; then
-                echo "Using cached environment"
-                source .venv/bin/activate
-            else
-                echo "Building environment"
-                pip install --upgrade uv
-                uv venv --clear
-                source .venv/bin/activate
-                uv pip install --upgrade "setuptools>=54"
-                uv pip install --upgrade pip
-                uv pip install --upgrade distlib
-            fi
-            uv pip install .[tf,test,doc]
-      - save_cache:  # environment cache tied to requirements
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/tmp/src/rapidtide/.venv"
 
   build_py310:
     working_directory: /tmp/src/rapidtide
@@ -108,34 +41,6 @@ jobs:
           paths:
             - "/opt/conda/envs/py310_env"
 
-  build_py311_alt:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: cimg/python:3.11
-    resource_class: medium
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            pip install --upgrade uv
-            uv venv --clear
-            source .venv/bin/activate
-            uv pip install --upgrade "setuptools>=54"
-            uv pip install --upgrade pip
-            uv pip install --upgrade distlib
-            uv pip install --upgrade pytest
-            uv pip install .[tf,test,doc]
-      - save_cache:  # environment cache tied to requirements
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/tmp/src/rapidtide/.venv"
 
   build_py311:
     working_directory: /tmp/src/rapidtide
@@ -182,7 +87,7 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
@@ -197,40 +102,14 @@ jobs:
                 pip install --upgrade distlib
                 pip install --upgrade pytest
             fi
+            pip install --upgrade numba
+            pip install --upgrade pyfftw
             pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/opt/conda/envs/py311_env"
 
-  build_py312_alt:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: cimg/python:3.12
-    resource_class: medium
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-312alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            pip install --upgrade uv
-            uv venv --clear
-            source .venv/bin/activate
-            uv pip install --upgrade "setuptools>=54"
-            uv pip install --upgrade pip
-            uv pip install --upgrade distlib
-            uv pip install --upgrade pytest
-            uv pip install .[tf,test,doc]
-      - save_cache:  # environment cache tied to requirements
-          key: deps2-312alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/tmp/src/rapidtide/.venv"
 
   build_py312:
     working_directory: /tmp/src/rapidtide
@@ -265,34 +144,6 @@ jobs:
           paths:
             - "/opt/conda/envs/py312_env"
 
-  build_py313_alt:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: cimg/python:3.13
-    resource_class: medium
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            pip install --upgrade uv
-            uv venv --clear
-            source .venv/bin/activate
-            uv pip install --upgrade "setuptools>=54"
-            uv pip install --upgrade pip
-            uv pip install --upgrade distlib
-            uv pip install --upgrade pytest
-            uv pip install .[tf,test,doc]
-      - save_cache:  # environment cache tied to requirements
-          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/tmp/src/rapidtide/.venv"
 
   build_py313:
     working_directory: /tmp/src/rapidtide
@@ -393,43 +244,6 @@ jobs:
           paths:
             - "/opt/conda/envs/py314_env"
 
-  test_py39:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    parallelism: 4
-    resource_class: large
-    steps:
-      - checkout
-      - attach_workspace:  # get rapidtide
-          at: /tmp
-      - restore_cache:  # load environment
-          key: deps2-39-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:
-          no_output_timeout: 20m
-          name: Run tests on py3.9
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py39_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
-            shopt -s globstar
-            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p test-results
-            shopt -u globstar
-            pytest  \
-                $TESTFILES \
-                -W ignore \
-                --ignore=rapidtide/candidatetests \
-                --junitxml=test-results/junit.xml
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
 
   test_py310:
     working_directory: /tmp/src/rapidtide
@@ -482,7 +296,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 20m
           name: Run tests on py3.11 with options
@@ -516,14 +330,14 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    parallelism: 6
+    parallelism: 8
     resource_class: large
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           no_output_timeout: 25m
           name: Run coverage test on py3.11
@@ -534,8 +348,6 @@ jobs:
             source activate py311_env
             pip install --upgrade codecov coverage coveralls flake8-black pytest pytest-cov
             pwd
-            pip install --upgrade numba
-            pip install --upgrade pyfftw
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
@@ -725,20 +537,15 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-      #- build_py39
-      #- test_py39:
-      #    requires:
-      #      - build_py39
       - build_py310
-      #- build_py310_alt
       - test_py310:
           requires:
             - build_py310
       - build_py311
-      #- build_py311_alt
+      - build_py311_with_optional
       - test_py311_with_coverage:
           requires:
-            - build_py311
+            - build_py311_with_optional
       #- test_py311_with_optional:
       #    requires:
       #      - build_py311
@@ -746,12 +553,10 @@ workflows:
           requires:
             - build_py311
       - build_py312
-      #- build_py312_alt
       - test_py312:
           requires:
             - build_py312
       - build_py313
-      #- build_py313_alt
       - test_py313:
           requires:
             - build_py313
