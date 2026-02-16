@@ -347,6 +347,10 @@ jobs:
             apt-get install -yqq curl gpg 
             source activate py311_env
             pip install --upgrade codecov coverage coveralls flake8-black pytest pytest-cov
+            export OMP_NUM_THREADS=1
+            export OPENBLAS_NUM_THREADS=1
+            export MKL_NUM_THREADS=1
+            export NUMEXPR_NUM_THREADS=1
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
