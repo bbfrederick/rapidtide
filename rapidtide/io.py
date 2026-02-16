@@ -334,8 +334,8 @@ def dumparraytonifti(thearray: NDArray, filename: str) -> None:
     outputaffine = np.zeros((4, 4), dtype=float)
     for i in range(4):
         outputaffine[i, i] = 1.0
-    outputheader = nib.nifti1Header
-    outputheader.set_affine(outputaffine)
+    outputheader = nib.Nifti1Header()
+    outputheader.set_data_shape(thearray.shape)
     savetonifti(thearray, outputheader, filename)
 
 
@@ -4159,14 +4159,17 @@ def writedict(
         openmode = "w"
     with open(outputfile, openmode) as FILE:
         if machinereadable:
-            FILE.writelines("{" + thelineending)
+            line = "{" + thelineending
+            FILE.write(line.encode("utf-8") if openmode == "wb" else line)
         for key, value in sorted(thedict.items()):
             if machinereadable:
-                FILE.writelines('"' + str(key) + '"' + ":\t" + str(value) + thelineending)
+                line = '"' + str(key) + '"' + ":\t" + str(value) + thelineending
             else:
-                FILE.writelines(str(key) + ":\t" + str(value) + thelineending)
+                line = str(key) + ":\t" + str(value) + thelineending
+            FILE.write(line.encode("utf-8") if openmode == "wb" else line)
         if machinereadable:
-            FILE.writelines("}" + thelineending)
+            line = "}" + thelineending
+            FILE.write(line.encode("utf-8") if openmode == "wb" else line)
 
 
 def readdict(inputfilename: str) -> Dict[str, Any]:
@@ -4469,16 +4472,19 @@ def writenpvecs(
                 raise ValueError("number of header lines must equal the number of data columns")
     with open(outputfile, openmode) as FILE:
         if headers is not None:
-            FILE.writelines(theseparator.join(headers) + thelineending)
+            line = theseparator.join(headers) + thelineending
+            FILE.write(line.encode("utf-8") if openmode == "wb" else line)
         if thevecs.ndim == 2:
             for i in range(0, theshape[1]):
                 if altmethod:
                     outline = theseparator.join(thevecs[:, i].astype(str).tolist()) + thelineending
-                    FILE.writelines(outline)
+                    FILE.write(outline.encode("utf-8") if openmode == "wb" else outline)
                 else:
                     for j in range(0, theshape[0]):
-                        FILE.writelines(str(thevecs[j, i]) + "\t")
-                    FILE.writelines(thelineending)
+                        line = str(thevecs[j, i]) + "\t"
+                        FILE.write(line.encode("utf-8") if openmode == "wb" else line)
+                    FILE.write(thelineending.encode("utf-8") if openmode == "wb" else thelineending)
         else:
             for i in range(0, theshape[0]):
-                FILE.writelines(str(thevecs[i]) + thelineending)
+                line = str(thevecs[i]) + thelineending
+                FILE.write(line.encode("utf-8") if openmode == "wb" else line)

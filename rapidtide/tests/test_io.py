@@ -2096,6 +2096,578 @@ def test_io2(debug=False):
     parsefilespec_with_colspec(debug=debug)
 
 
+# ==================== readmotion TSV path tests ====================
+
+
+def readmotion_tsv(debug=False):
+    """Test readmotion with TSV file (fmriprep-style confounds)."""
+    if debug:
+        print("readmotion_tsv")
+    import pandas as pd
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "confounds.tsv")
+        df = pd.DataFrame(
+            {
+                "trans_x": [1.0, 2.0, 3.0],
+                "trans_y": [4.0, 5.0, 6.0],
+                "trans_z": [7.0, 8.0, 9.0],
+                "rot_x": [0.01, 0.02, 0.03],
+                "rot_y": [0.04, 0.05, 0.06],
+                "rot_z": [0.07, 0.08, 0.09],
+            }
+        )
+        df.to_csv(filepath, sep="\t", index=False)
+        result = tide_io.readmotion(filepath)
+        assert "xtrans" in result
+        assert "yrot" in result
+        assert "maxtrans" in result
+        assert "minrot" in result
+        np.testing.assert_array_almost_equal(result["xtrans"], [1.0, 2.0, 3.0])
+
+
+def readmotion_generic(debug=False):
+    """Test readmotion with generic 6-column text file."""
+    if debug:
+        print("readmotion_generic")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "motion.txt")
+        data = np.arange(18).reshape(3, 6).astype(float)
+        np.savetxt(filepath, data)
+        result = tide_io.readmotion(filepath)
+        assert "xtrans" in result
+        assert "zrot" in result
+        assert "maxtrans" in result
+
+
+# ==================== readoptionsfile backward compat coverage ====================
+
+
+def readoptionsfile_compat_none(debug=False):
+    """Test readoptionsfile backward compat for filtertype None."""
+    if debug:
+        print("readoptionsfile_compat_none")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "opts.json")
+        with open(filepath, "w") as f:
+            json.dump({"filtertype": "None"}, f)
+        result = tide_io.readoptionsfile(os.path.join(tmpdir, "opts"))
+        assert result["lowerpass"] == 0.0
+        assert result["upperpass"] == -1.0
+
+
+def readoptionsfile_compat_vlf(debug=False):
+    """Test readoptionsfile backward compat for filtertype vlf."""
+    if debug:
+        print("readoptionsfile_compat_vlf")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "opts.json")
+        with open(filepath, "w") as f:
+            json.dump({"filtertype": "vlf"}, f)
+        result = tide_io.readoptionsfile(os.path.join(tmpdir, "opts"))
+        assert result["upperpass"] == 0.009
+        assert result["upperstop"] == 0.010
+
+
+def readoptionsfile_compat_resp(debug=False):
+    """Test readoptionsfile backward compat for filtertype resp."""
+    if debug:
+        print("readoptionsfile_compat_resp")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "opts.json")
+        with open(filepath, "w") as f:
+            json.dump({"filtertype": "resp"}, f)
+        result = tide_io.readoptionsfile(os.path.join(tmpdir, "opts"))
+        assert result["lowerpass"] == 0.20
+        assert result["upperpass"] == 0.4
+
+
+def readoptionsfile_compat_card(debug=False):
+    """Test readoptionsfile backward compat for filtertype card."""
+    if debug:
+        print("readoptionsfile_compat_card")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "opts.json")
+        with open(filepath, "w") as f:
+            json.dump({"filtertype": "card"}, f)
+        result = tide_io.readoptionsfile(os.path.join(tmpdir, "opts"))
+        assert result["lowerpass"] == 0.5
+        assert result["upperpass"] == 2.5
+
+
+def readoptionsfile_compat_arb(debug=False):
+    """Test readoptionsfile backward compat for filtertype arb."""
+    if debug:
+        print("readoptionsfile_compat_arb")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "opts.json")
+        d = {
+            "filtertype": "arb",
+            "arb_lowerstop": 0.05,
+            "arb_lower": 0.1,
+            "arb_upper": 0.3,
+            "arb_upperstop": 0.4,
+        }
+        with open(filepath, "w") as f:
+            json.dump(d, f)
+        result = tide_io.readoptionsfile(os.path.join(tmpdir, "opts"))
+        assert result["lowerpass"] == 0.1
+        assert result["upperpass"] == 0.3
+
+
+def readoptionsfile_compat_unknown(debug=False):
+    """Test readoptionsfile backward compat for unknown filtertype."""
+    if debug:
+        print("readoptionsfile_compat_unknown")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "opts.json")
+        with open(filepath, "w") as f:
+            json.dump({"filtertype": "unknown_type"}, f)
+        result = tide_io.readoptionsfile(os.path.join(tmpdir, "opts"))
+        assert result["lowerpass"] == 0.0
+        assert result["upperpass"] == -1.0
+
+
+# ==================== readbidstsv missing fields tests ====================
+
+
+def readbidstsv_no_samplerate(debug=False):
+    """Test readbidstsv with JSON missing SamplingFrequency."""
+    if debug:
+        print("readbidstsv_no_samplerate")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        # Write a tsv.gz manually
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, columns=["a", "b"])
+        # Overwrite JSON to remove SamplingFrequency
+        with open(root + ".json", "r") as f:
+            d = json.load(f)
+        del d["SamplingFrequency"]
+        with open(root + ".json", "w") as f:
+            json.dump(d, f)
+        sr, st, cols, rd, comp, colsrc, extra = tide_io.readbidstsv(root + ".json", warn=False)
+        assert sr == 1.0  # default fallback
+
+
+def readbidstsv_no_starttime(debug=False):
+    """Test readbidstsv with JSON missing StartTime."""
+    if debug:
+        print("readbidstsv_no_starttime")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        data = np.array([[1.0, 2.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, starttime=5.0, columns=["a"])
+        with open(root + ".json", "r") as f:
+            d = json.load(f)
+        del d["StartTime"]
+        with open(root + ".json", "w") as f:
+            json.dump(d, f)
+        sr, st, cols, rd, comp, colsrc, extra = tide_io.readbidstsv(root + ".json", warn=False)
+        assert st == 0.0  # default fallback
+
+
+def readbidstsv_no_columns(debug=False):
+    """Test readbidstsv with JSON missing Columns key."""
+    if debug:
+        print("readbidstsv_no_columns")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, columns=["a", "b"])
+        with open(root + ".json", "r") as f:
+            d = json.load(f)
+        del d["Columns"]
+        with open(root + ".json", "w") as f:
+            json.dump(d, f)
+        sr, st, cols, rd, comp, colsrc, extra = tide_io.readbidstsv(root + ".json", warn=False)
+        assert cols is not None
+        assert rd.shape[0] == 2
+
+
+def readbidstsv_bad_colspec(debug=False):
+    """Test readbidstsv with bad column specification returns None."""
+    if debug:
+        print("readbidstsv_bad_colspec")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, columns=["a", "b"])
+        result = tide_io.readbidstsv(root + ".json", colspec="nonexistent", warn=False)
+        assert result[3] is None
+
+
+def readbidstsv_missing_raises(debug=False):
+    """Test readbidstsv raises FileNotFoundError when file missing."""
+    if debug:
+        print("readbidstsv_missing_raises")
+    try:
+        tide_io.readbidstsv("/nonexistent/file.json", neednotexist=False)
+        assert False, "Should have raised FileNotFoundError"
+    except FileNotFoundError:
+        pass
+
+
+# ==================== readcolfrombidstsv edge cases ====================
+
+
+def readcolfrombidstsv_missing_file(debug=False):
+    """Test readcolfrombidstsv with neednotexist=True for missing file."""
+    if debug:
+        print("readcolfrombidstsv_missing_file")
+    sr, st, data = tide_io.readcolfrombidstsv("/nonexistent/file.json", neednotexist=True)
+    assert sr is None
+    assert data is None
+
+
+def readcolfrombidstsv_bad_colname(debug=False):
+    """Test readcolfrombidstsv with nonexistent column name."""
+    if debug:
+        print("readcolfrombidstsv_bad_colname")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, columns=["a", "b"])
+        sr, st, col_data = tide_io.readcolfrombidstsv(root + ".json", columnname="nonexistent")
+        assert sr is None
+        assert col_data is None
+
+
+# ==================== writebidstsv append tests ====================
+
+
+def writebidstsv_append(debug=False):
+    """Test writebidstsv append mode."""
+    if debug:
+        print("writebidstsv_append")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        data1 = np.array([[1.0, 2.0, 3.0]])
+        tide_io.writebidstsv(root, data1, samplerate=10.0, columns=["sig1"])
+        data2 = np.array([[4.0, 5.0, 6.0]])
+        tide_io.writebidstsv(root, data2, samplerate=10.0, columns=["sig2"], append=True)
+        sr, st, cols, rd, comp, colsrc, extra = tide_io.readbidstsv(root + ".json")
+        assert "sig1" in cols
+        assert "sig2" in cols
+        assert rd.shape == (2, 3)
+
+
+# ==================== colspectolist error cases ====================
+
+
+def colspectolist_bad_range_order(debug=False):
+    """Test colspectolist with end < start."""
+    if debug:
+        print("colspectolist_bad_range_order")
+    result = tide_io.colspectolist("5-3")
+    assert result is None
+
+
+def colspectolist_bad_format(debug=False):
+    """Test colspectolist with too many hyphens."""
+    if debug:
+        print("colspectolist_bad_format")
+    result = tide_io.colspectolist("1-3-5")
+    assert result is None
+
+
+# ==================== parsefilespec error cases ====================
+
+
+def parsefilespec_too_many_colons(debug=False):
+    """Test parsefilespec with too many colons raises ValueError."""
+    if debug:
+        print("parsefilespec_too_many_colons")
+    try:
+        tide_io.parsefilespec("file:col1:col2:col3")
+        assert False, "Should have raised ValueError"
+    except ValueError:
+        pass
+
+
+# ==================== readtc edge cases ====================
+
+
+def readtc_json(debug=False):
+    """Test readtc with JSON (BIDS) input file."""
+    if debug:
+        print("readtc_json")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, columns=["sig1", "sig2"])
+        tc, freq, start = tide_io.readtc(root + ".json", colname="sig2")
+        np.testing.assert_array_almost_equal(tc, [4.0, 5.0, 6.0])
+        assert freq == 10.0
+
+
+def readtc_json_no_col(debug=False):
+    """Test readtc JSON raises when no column specified."""
+    if debug:
+        print("readtc_json_no_col")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        data = np.array([[1.0, 2.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, columns=["sig1"])
+        try:
+            tide_io.readtc(root + ".json")
+            assert False, "Should have raised ValueError"
+        except ValueError:
+            pass
+
+
+def readtc_json_both_cols(debug=False):
+    """Test readtc JSON raises when both colnum and colname specified."""
+    if debug:
+        print("readtc_json_both_cols")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        data = np.array([[1.0, 2.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, columns=["sig1"])
+        try:
+            tide_io.readtc(root + ".json", colnum=0, colname="sig1")
+            assert False, "Should have raised ValueError"
+        except ValueError:
+            pass
+
+
+def readtc_multicol_no_colnum(debug=False):
+    """Test readtc with multi-column text file but no colnum raises TypeError."""
+    if debug:
+        print("readtc_multicol_no_colnum")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "data.txt")
+        data = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+        np.savetxt(filepath, data)
+        try:
+            tide_io.readtc(filepath)
+            assert False, "Should have raised TypeError"
+        except TypeError:
+            pass
+
+
+# ==================== writedict line endings ====================
+
+
+def writedict_line_endings(debug=False):
+    """Test writedict with explicit line endings."""
+    if debug:
+        print("writedict_line_endings")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        d = {"key1": "val1"}
+        for le in ["mac", "win", "linux"]:
+            filepath = os.path.join(tmpdir, f"dict_{le}.txt")
+            tide_io.writedict(d, filepath, lineend=le)
+            assert os.path.exists(filepath)
+
+
+# ==================== writenpvecs line endings and header validation ====================
+
+
+def writenpvecs_line_endings(debug=False):
+    """Test writenpvecs with explicit line endings."""
+    if debug:
+        print("writenpvecs_line_endings")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+        for le in ["mac", "win", "linux"]:
+            filepath = os.path.join(tmpdir, f"vecs_{le}.txt")
+            tide_io.writenpvecs(data, filepath, lineend=le)
+            assert os.path.exists(filepath)
+
+
+def writenpvecs_bad_header_count(debug=False):
+    """Test writenpvecs raises ValueError when header count doesn't match."""
+    if debug:
+        print("writenpvecs_bad_header_count")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "vecs.txt")
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+        try:
+            tide_io.writenpvecs(data, filepath, headers=["A", "B", "C"])
+            assert False, "Should have raised ValueError"
+        except ValueError:
+            pass
+
+
+def writenpvecs_bad_header_count_1d(debug=False):
+    """Test writenpvecs raises ValueError when 1D data gets wrong header count."""
+    if debug:
+        print("writenpvecs_bad_header_count_1d")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "vec.txt")
+        data = np.array([1.0, 2.0, 3.0])
+        try:
+            tide_io.writenpvecs(data, filepath, headers=["A", "B"])
+            assert False, "Should have raised ValueError"
+        except ValueError:
+            pass
+
+
+# ==================== dumparraytonifti tests ====================
+
+
+def dumparraytonifti_basic(debug=False):
+    """Test dumparraytonifti creates a valid NIfTI file."""
+    if debug:
+        print("dumparraytonifti_basic")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        data = np.random.randn(5, 5, 5).astype(np.float32)
+        filepath = os.path.join(tmpdir, "dump_test")
+        tide_io.dumparraytonifti(data, filepath)
+        _, read_data, _, _, _ = tide_io.readfromnifti(filepath)
+        assert read_data.shape == (5, 5, 5)
+
+
+# ==================== niftisplit 5D test ====================
+
+
+def niftisplit_along_axis4(debug=False):
+    """Test niftisplit with 4D data along axis 3."""
+    if debug:
+        print("niftisplit_along_axis4")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        filepath = os.path.join(tmpdir, "test4d.nii.gz")
+        data = np.random.randn(4, 5, 3, 6).astype(np.float32)
+        img = nib.Nifti1Image(data, np.eye(4))
+        nib.save(img, filepath)
+        outroot = os.path.join(tmpdir, "split")
+        tide_io.niftisplit(filepath, outroot, axis=3)
+        # Check first output file exists
+        assert os.path.isfile(outroot + "0000.nii.gz")
+
+
+# ==================== readbidstsv with header line in TSV ====================
+
+
+def readbidstsv_with_header_line(debug=False):
+    """Test readbidstsv handles TSV file with header line."""
+    if debug:
+        print("readbidstsv_with_header_line")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        # Manually create a BIDS TSV with a header line (non-compliant)
+        with open(root + ".json", "w") as f:
+            json.dump(
+                {"SamplingFrequency": 10.0, "StartTime": 0.0, "Columns": ["a", "b"]}, f
+            )
+        with open(root + ".tsv", "w") as f:
+            f.write("a\tb\n")
+            f.write("1.0\t2.0\n")
+            f.write("3.0\t4.0\n")
+        sr, st, cols, rd, comp, colsrc, extra = tide_io.readbidstsv(root + ".json", warn=False)
+        assert sr == 10.0
+        assert rd.shape[1] == 2
+
+
+# ==================== readbidstsv columns from tsv ====================
+
+
+def readbidstsv_columns_from_tsv(debug=False):
+    """Test readbidstsv gets column names from TSV when JSON has none."""
+    if debug:
+        print("readbidstsv_columns_from_tsv")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = os.path.join(tmpdir, "test")
+        # Write BIDS data, then strip Columns from JSON
+        data = np.array([[1.0, 2.0], [3.0, 4.0]])
+        tide_io.writebidstsv(root, data, samplerate=10.0, columns=["x", "y"])
+        with open(root + ".json", "r") as f:
+            d = json.load(f)
+        del d["Columns"]
+        with open(root + ".json", "w") as f:
+            json.dump(d, f)
+        sr, st, cols, rd, comp, colsrc, extra = tide_io.readbidstsv(root + ".json", warn=False)
+        # Columns should come from the TSV auto-generated names
+        assert cols is not None
+        assert len(cols) == 2
+
+
+# ==================== test_io3 main function ====================
+
+
+def test_io3(debug=False):
+    # readmotion
+    if debug:
+        print("Running readmotion tests")
+    readmotion_tsv(debug=debug)
+    readmotion_generic(debug=debug)
+
+    # readoptionsfile backward compat
+    if debug:
+        print("Running readoptionsfile backward compat tests")
+    readoptionsfile_compat_none(debug=debug)
+    readoptionsfile_compat_vlf(debug=debug)
+    readoptionsfile_compat_resp(debug=debug)
+    readoptionsfile_compat_card(debug=debug)
+    readoptionsfile_compat_arb(debug=debug)
+    readoptionsfile_compat_unknown(debug=debug)
+
+    # readbidstsv missing fields
+    if debug:
+        print("Running readbidstsv missing fields tests")
+    readbidstsv_no_samplerate(debug=debug)
+    readbidstsv_no_starttime(debug=debug)
+    readbidstsv_no_columns(debug=debug)
+    readbidstsv_bad_colspec(debug=debug)
+    readbidstsv_missing_raises(debug=debug)
+    readbidstsv_with_header_line(debug=debug)
+    readbidstsv_columns_from_tsv(debug=debug)
+
+    # readcolfrombidstsv edge cases
+    if debug:
+        print("Running readcolfrombidstsv edge case tests")
+    readcolfrombidstsv_missing_file(debug=debug)
+    readcolfrombidstsv_bad_colname(debug=debug)
+
+    # writebidstsv append
+    if debug:
+        print("Running writebidstsv append tests")
+    writebidstsv_append(debug=debug)
+
+    # colspectolist error cases
+    if debug:
+        print("Running colspectolist error tests")
+    colspectolist_bad_range_order(debug=debug)
+    colspectolist_bad_format(debug=debug)
+
+    # parsefilespec error cases
+    if debug:
+        print("Running parsefilespec error tests")
+    parsefilespec_too_many_colons(debug=debug)
+
+    # readtc edge cases
+    if debug:
+        print("Running readtc edge case tests")
+    readtc_json(debug=debug)
+    readtc_json_no_col(debug=debug)
+    readtc_json_both_cols(debug=debug)
+    readtc_multicol_no_colnum(debug=debug)
+
+    # writedict line endings
+    if debug:
+        print("Running writedict line endings tests")
+    writedict_line_endings(debug=debug)
+
+    # writenpvecs edge cases
+    if debug:
+        print("Running writenpvecs edge case tests")
+    writenpvecs_line_endings(debug=debug)
+    writenpvecs_bad_header_count(debug=debug)
+    writenpvecs_bad_header_count_1d(debug=debug)
+
+    # dumparraytonifti
+    if debug:
+        print("Running dumparraytonifti tests")
+    dumparraytonifti_basic(debug=debug)
+
+    # niftisplit
+    if debug:
+        print("Running niftisplit tests")
+    niftisplit_along_axis4(debug=debug)
+
+
 if __name__ == "__main__":
     test_io(debug=True, local=True, displayplots=True)
     test_io2(debug=True)
+    test_io3(debug=True)
