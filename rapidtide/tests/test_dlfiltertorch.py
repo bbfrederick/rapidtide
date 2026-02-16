@@ -258,6 +258,106 @@ def save_and_load_cnn_model(testtemproot):
         assert torch.allclose(original_weights[name], param.data)
 
 
+def save_and_load_ppgattention_model(testtemproot):
+    """Test saving and loading a PPG attention model."""
+    filter_obj = dlfiltertorch.PPGAttentionDLFilter(
+        hidden_size=32,
+        window_size=100,
+        num_epochs=1,
+        modelroot=testtemproot,
+        namesuffix="saveloadppgattentiontest",
+    )
+
+    # Create and save the model using modelpath
+    filter_obj.getname()
+    filter_obj.makenet()
+    filter_obj.model.to(filter_obj.device)
+    filter_obj.initmetadata()
+    # initmetadata resets infodict, so preserve hidden_size for loadmodel()
+    filter_obj.infodict["hidden_size"] = filter_obj.hidden_size
+    filter_obj.savemodel(altname=filter_obj.modelpath)
+
+    original_modelname = os.path.basename(filter_obj.modelpath)
+
+    # Get original model weights
+    original_weights = {}
+    for name, param in filter_obj.model.named_parameters():
+        original_weights[name] = param.data.clone()
+
+    # Create new filter object and load the saved model
+    filter_obj2 = dlfiltertorch.PPGAttentionDLFilter(
+        hidden_size=16,  # overridden by loaded model metadata
+        window_size=100,
+        num_epochs=1,
+        modelroot=testtemproot,
+        modelpath=testtemproot,
+    )
+
+    filter_obj2.loadmodel(original_modelname)
+
+    # Check that metadata was loaded correctly
+    assert filter_obj2.window_size == 100
+    assert filter_obj2.infodict["nettype"] == "ppgattention"
+    assert filter_obj2.hidden_size == 32
+
+    # Verify weights match
+    for name, param in filter_obj2.model.named_parameters():
+        assert torch.allclose(original_weights[name], param.data)
+
+
+def save_and_load_convautoencoder_model(testtemproot):
+    """Test saving and loading a convolutional autoencoder model."""
+    filter_obj = dlfiltertorch.ConvAutoencoderDLFilter(
+        encoding_dim=8,
+        num_filters=4,
+        kernel_size=3,
+        window_size=65,
+        num_layers=4,
+        num_epochs=1,
+        modelroot=testtemproot,
+        namesuffix="saveloadconvautoencodertest",
+    )
+
+    # Create and save the model using modelpath
+    filter_obj.getname()
+    filter_obj.makenet()
+    filter_obj.model.to(filter_obj.device)
+    filter_obj.initmetadata()
+    filter_obj.savemodel(altname=filter_obj.modelpath)
+
+    original_modelname = os.path.basename(filter_obj.modelpath)
+
+    # Get original model weights
+    original_weights = {}
+    for name, param in filter_obj.model.named_parameters():
+        original_weights[name] = param.data.clone()
+
+    # Create new filter object and load the saved model
+    filter_obj2 = dlfiltertorch.ConvAutoencoderDLFilter(
+        encoding_dim=4,  # overridden by loaded model checkpoint/config
+        num_filters=2,
+        kernel_size=5,
+        window_size=65,
+        num_layers=4,
+        num_epochs=1,
+        modelroot=testtemproot,
+        modelpath=testtemproot,
+    )
+
+    filter_obj2.loadmodel(original_modelname)
+
+    # Check that metadata/config was loaded correctly
+    assert filter_obj2.window_size == 65
+    assert filter_obj2.infodict["nettype"] == "convautoencoder"
+    assert filter_obj2.encoding_dim == 8
+    assert filter_obj2.num_filters == 4
+    assert filter_obj2.kernel_size == 3
+
+    # Verify weights match
+    for name, param in filter_obj2.model.named_parameters():
+        assert torch.allclose(original_weights[name], param.data)
+
+
 def filtscale_forward():
     """Test filtscale function in forward direction."""
     # filtscale expects 1D data (single timecourse)
@@ -704,6 +804,14 @@ def test_dlfilterops(debug=False, local=False):
     if debug:
         print("save_and_load_cnn_model(testtemproot)")
     save_and_load_cnn_model(testtemproot)
+
+    if debug:
+        print("save_and_load_ppgattention_model(testtemproot)")
+    save_and_load_ppgattention_model(testtemproot)
+
+    if debug:
+        print("save_and_load_convautoencoder_model(testtemproot)")
+    save_and_load_convautoencoder_model(testtemproot)
 
     if debug:
         print("filtscale_forward()")
