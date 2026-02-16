@@ -362,6 +362,7 @@ jobs:
             shopt -u globstar
             pytest \
                 $TESTFILES \
+                -vv \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
                 --cov-report xml:rapidtide/coverage.xml \
