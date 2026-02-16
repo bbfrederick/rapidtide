@@ -16,6 +16,8 @@
 #   limitations under the License.
 #
 #
+from unittest.mock import patch
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -146,6 +148,87 @@ def test_linfitfiltpass(debug=True, displayplots=False):
                         assert mse(datatoremove, targetarray) < 1e-3
 
 
+def test_linfitfiltpass_coefficientsonly_constantevs_paths(debug=False):
+    """Exercise coefficientsonly=True with constantevs both False and True."""
+    if debug:
+        print("linfitfiltpass_coefficientsonly_constantevs_paths")
+
+    numvox = 3
+    tpts = 5
+    fmri_data = np.arange(numvox * tpts, dtype=np.float64).reshape((numvox, tpts))
+    theevs = np.vstack(
+        [
+            np.linspace(1.0, 2.0, tpts),
+            np.linspace(11.0, 12.0, tpts),
+            np.linspace(21.0, 22.0, tpts),
+        ]
+    )
+    threshval = None
+    sentinel = -999.0
+
+    for constantevs in [False, True]:
+        meanvalue = np.zeros(numvox, dtype=np.float64)
+        rvalue = np.zeros(numvox, dtype=np.float64)
+        r2value = np.zeros(numvox, dtype=np.float64)
+        fitcoeff = np.zeros(numvox, dtype=np.float64)
+        fitNorm = np.zeros(numvox, dtype=np.float64)
+        datatoremove = np.full((numvox, tpts), sentinel, dtype=np.float64)
+        filtereddata = np.full((numvox, tpts), sentinel, dtype=np.float64)
+        received_evs = []
+
+        def _mock_proc(item, evs, data, rt_floattype=np.dtype(np.float64)):
+            received_evs.append(np.array(evs, copy=True))
+            return (
+                item,  # index
+                1.0 + item,  # mean
+                0.5,  # r
+                0.25,  # r2
+                7.0 + item,  # coeff
+                0.7,  # fitNorm
+                np.ones_like(data),  # datatoremove (ignored in coefficientsonly path)
+                np.ones_like(data) * 2.0,  # filtereddata (ignored in coefficientsonly path)
+            )
+
+        with patch("rapidtide.linfitfiltpass._procOneRegressionFitItem", side_effect=_mock_proc):
+            items = tide_linfitfiltpass.linfitfiltpass(
+                numvox,
+                fmri_data,
+                threshval,
+                theevs,
+                meanvalue,
+                rvalue,
+                r2value,
+                fitcoeff,
+                fitNorm,
+                datatoremove,
+                filtereddata,
+                nprocs=1,
+                procbyvoxel=True,
+                coefficientsonly=True,
+                constantevs=constantevs,
+                showprogressbar=False,
+            )
+
+        assert items == numvox
+        np.testing.assert_allclose(meanvalue, [1.0, 2.0, 3.0])
+        np.testing.assert_allclose(rvalue, [0.5, 0.5, 0.5])
+        np.testing.assert_allclose(r2value, [0.25, 0.25, 0.25])
+        np.testing.assert_allclose(fitcoeff, [7.0, 8.0, 9.0])
+        np.testing.assert_allclose(fitNorm, [0.7, 0.7, 0.7])
+
+        # In coefficientsonly mode, these arrays should not be modified.
+        assert np.all(datatoremove == sentinel)
+        assert np.all(filtereddata == sentinel)
+
+        if not constantevs:
+            for vox in range(numvox):
+                np.testing.assert_allclose(received_evs[vox], theevs[vox, :])
+        else:
+            for vox in range(numvox):
+                np.testing.assert_allclose(received_evs[vox], theevs)
+
+
 if __name__ == "__main__":
     mpl.use("TkAgg")
     test_linfitfiltpass(debug=True, displayplots=True)
+    test_linfitfiltpass_coefficientsonly_constantevs_paths(debug=True)
