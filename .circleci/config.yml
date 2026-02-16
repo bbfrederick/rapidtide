@@ -251,6 +251,11 @@ jobs:
       - image: continuumio/miniconda3
     parallelism: 4
     resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
@@ -274,15 +279,15 @@ jobs:
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p test-results
+            mkdir -p rapidtide/tests/test-results
             shopt -u globstar
             pytest  \
                 $TESTFILES \
-                --junitxml=test-results/junit.xml
+                --junitxml=rapidtide/tests/test-results/junit.xml
       - store_test_results:
-          path: test-results
+          path: rapidtide/tests/test-results
       - store_artifacts:
-          path: test-results
+          path: rapidtide/tests/test-results
 
 
   test_py311_with_optional:
@@ -291,6 +296,11 @@ jobs:
       - image: continuumio/miniconda3
     parallelism: 4
     resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
@@ -305,25 +315,23 @@ jobs:
             apt-get install -yqq curl gpg 
             source activate py311_env
             pwd
-            pip install --upgrade numba
-            pip install --upgrade pyfftw
             pushd rapidtide/data/examples/src
             ./installtestdata
             popd
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p test-results
+            mkdir -p rapidtide/tests/test-results
             shopt -u globstar
             pytest \
                 $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
-                --junitxml=test-results/junit.xml
+                --junitxml=rapidtide/tests/test-results/junit.xml
       - store_test_results:
-          path: test-results
+          path: rapidtide/tests/test-results
       - store_artifacts:
-          path: test-results
+          path: rapidtide/tests/test-results
 
 
   test_py311_with_coverage:
@@ -332,6 +340,11 @@ jobs:
       - image: continuumio/miniconda3
     parallelism: 8
     resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
@@ -341,16 +354,10 @@ jobs:
       - run:
           no_output_timeout: 25m
           name: Run coverage test on py3.11
-          file: rapidtide/coverage.xml
           command:  |
             apt-get update
             apt-get install -yqq curl gpg 
             source activate py311_env
-            pip install --upgrade codecov coverage coveralls flake8-black pytest pytest-cov
-            export OMP_NUM_THREADS=1
-            export OPENBLAS_NUM_THREADS=1
-            export MKL_NUM_THREADS=1
-            export NUMEXPR_NUM_THREADS=1
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -358,7 +365,7 @@ jobs:
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p test-results
+            mkdir -p rapidtide/tests/test-results
             shopt -u globstar
             pytest \
                 $TESTFILES \
@@ -384,6 +391,11 @@ jobs:
       - image: continuumio/miniconda3
     parallelism: 4
     resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
@@ -404,17 +416,17 @@ jobs:
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p test-results
+            mkdir -p rapidtide/tests/test-results
             shopt -u globstar
             pytest \
                 $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
-                --junitxml=test-results/junit.xml
+                --junitxml=rapidtide/tests/test-results/junit.xml
       - store_test_results:
-          path: test-results
+          path: rapidtide/tests/test-results
       - store_artifacts:
-          path: test-results
+          path: rapidtide/tests/test-results
 
 
   test_py313:
@@ -423,6 +435,11 @@ jobs:
       - image: continuumio/miniconda3
     parallelism: 4
     resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
@@ -443,17 +460,17 @@ jobs:
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p test-results
+            mkdir -p rapidtide/tests/test-results
             shopt -u globstar
             pytest \
                 $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
-                --junitxml=test-results/junit.xml
+                --junitxml=rapidtide/tests/test-results/junit.xml
       - store_test_results:
-          path: test-results
+          path: rapidtide/tests/test-results
       - store_artifacts:
-          path: test-results
+          path: rapidtide/tests/test-results
 
 
   test_py314:
@@ -462,6 +479,11 @@ jobs:
       - image: continuumio/miniconda3
     parallelism: 4
     resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
@@ -482,17 +504,17 @@ jobs:
             cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             shopt -s globstar
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p test-results
+            mkdir -p rapidtide/tests/test-results
             shopt -u globstar
             pytest \
                 $TESTFILES \
                 -W ignore \
                 --ignore=rapidtide/candidatetests \
-                --junitxml=test-results/junit.xml
+                --junitxml=rapidtide/tests/test-results/junit.xml
       - store_test_results:
-          path: test-results
+          path: rapidtide/tests/test-results
       - store_artifacts:
-          path: test-results
+          path: rapidtide/tests/test-results
 
 
   build_docs:
