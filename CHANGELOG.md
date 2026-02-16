@@ -1,7 +1,8 @@
 # Release history
 
 ## Version 3.1.6 (2/16/26)
-* (package) Got test coverage over 90%.  Closes https://github.com/bbfrederick/rapidtide/issues/13.
+* (package) Using alternating Codex and Claude, got test coverage to 90.99%.  Closes https://github.com/bbfrederick/rapidtide/issues/13.
+* (package) Cleaned up .circleci/config.yml.
 
 ## Version 3.1.5 (2/13/26)
 * (package) Used Claude to write a lot of tests.  Test coverage is currently at 84.39%.  This also uncovered a lot of bugs (worst ones listed below).
