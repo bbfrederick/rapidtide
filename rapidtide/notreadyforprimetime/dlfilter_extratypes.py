@@ -53,15 +53,20 @@ from tf_keras.callbacks import (
     TerminateOnNaN,
 )
 from tf_keras.layers import (
+    LSTM,
     Activation,
     BatchNormalization,
+    Bidirectional,
+    Concatenate,
     Convolution1D,
     Dense,
     Dropout,
     Flatten,
+    GlobalMaxPool1D,
     Input,
     MaxPooling1D,
     Reshape,
+    TimeDistributed,
     UpSampling1D,
 )
 from tf_keras.models import Model, Sequential, load_model
@@ -1748,6 +1753,739 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.model = Model(inputs=input_layer, outputs=output_layer)
         self.model.compile(optimizer="adam", loss="mse")
 
+
+class CRNNDLFilter(DeepLearningFilter):
+    def __init__(
+        self,
+        encoding_dim: int = 10,
+        num_filters: int = 10,
+        kernel_size: int = 5,
+        dilation_rate: int = 1,
+        *args,
+        **kwargs,
+    ) -> None:
+        """
+        Initialize CRNNDLFilter layer.
+
+        Parameters
+        ----------
+        encoding_dim : int, default=10
+            Dimension of the encoding layer.
+        num_filters : int, default=10
+            Number of filters in the convolutional layer.
+        kernel_size : int, default=5
+            Size of the convolutional kernel.
+        dilation_rate : int, default=1
+            Dilation rate for the convolutional layer.
+        *args
+            Variable length argument list.
+        **kwargs
+            Arbitrary keyword arguments.
+
+        Returns
+        -------
+        None
+            This method does not return any value.
+
+        Notes
+        -----
+        This constructor initializes the CRNNDLFilter layer with specified parameters
+        and sets up the network type information in the infodict.
+
+        Examples
+        --------
+        >>> filter_layer = CRNNDLFilter(
+        ...     encoding_dim=15,
+        ...     num_filters=20,
+        ...     kernel_size=3,
+        ...     dilation_rate=2
+        ... )
+        """
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.dilation_rate = dilation_rate
+        self.encoding_dim = encoding_dim
+        self.infodict["nettype"] = "cnn"
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["encoding_dim"] = self.encoding_dim
+        super(CRNNDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        """
+        Generate and configure the model name and path based on current parameters.
+
+        This method constructs a descriptive model name string using various instance
+        attributes and creates the corresponding directory path for model storage.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing model configuration parameters
+
+        Attributes Used
+        ---------------
+        window_size : int
+            Size of the sliding window
+        encoding_dim : int
+            Dimension of the encoding layer
+        num_filters : int
+            Number of filters in the convolutional layers
+        kernel_size : int
+            Size of the convolutional kernel
+        num_epochs : int
+            Number of training epochs
+        excludethresh : float
+            Threshold for excluding data points
+        corrthresh_rp : float
+            Correlation threshold for filtering
+        step : int
+            Step size for sliding window
+        activation : str
+            Activation function used
+        usebadpts : bool
+            Whether to use bad points in training
+        excludebysubject : bool
+            Whether to exclude data by subject
+        namesuffix : str, optional
+            Additional suffix to append to model name
+        modelroot : str
+            Root directory for model storage
+
+        Returns
+        -------
+        None
+            This method modifies instance attributes in-place:
+            - self.modelname: constructed model name string
+            - self.modelpath: full path to model directory
+
+        Notes
+        -----
+        The generated model name follows a consistent format:
+        "model_crnn_tf2_wXxx_enXxx_fnXX_flXX_eXXX_tX_ctX_sX_activation"
+        where Xxx represents zero-padded numbers and XX represents zero-padded two-digit numbers.
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> model.window_size = 100
+        >>> model.encoding_dim = 50
+        >>> model.getname()
+        >>> print(model.modelname)
+        'model_crnn_tf2_w100_en050_fn10_fl10_e001_t0.5_ct0.8_s1_relu'
+        """
+        self.modelname = "_".join(
+            [
+                "model",
+                "crnn",
+                "tf2",
+                "w" + str(self.window_size).zfill(3),
+                "en" + str(self.encoding_dim).zfill(3),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh_rp),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        """
+        Create and compile a 1D convolutional neural network for temporal feature extraction and reconstruction.
+
+        This function builds a neural network architecture consisting of:
+        - A convolutional front-end for feature extraction
+        - A bidirectional LSTM layer for temporal modeling
+        - A dense output layer mapping to the input size
+
+        The model is compiled with Adam optimizer and mean squared error loss.
+
+        Parameters
+        ----------
+        self : object
+            The class instance containing the following attributes:
+            - window_size : int
+                The size of the input time window.
+            - inputsize : int
+                The number of input channels/features.
+            - num_filters : int
+                Number of filters in the convolutional layers.
+            - kernel_size : int
+                Size of the convolutional kernel.
+            - dropout_rate : float
+                Dropout rate for regularization.
+            - activation : str or callable
+                Activation function for convolutional layers.
+            - encoding_dim : int
+                Number of units in the LSTM layer.
+
+        Returns
+        -------
+        None
+            This method modifies the instance's `model` attribute in-place.
+
+        Notes
+        -----
+        The network architecture follows this pipeline:
+        Input -> Conv1D -> BatchNorm -> Dropout -> Activation ->
+        Conv1D -> BatchNorm -> Dropout -> Activation ->
+        Bidirectional LSTM -> Dense -> Output
+
+        The model is compiled with:
+        - Optimizer: Adam
+        - Loss: Mean Squared Error (MSE)
+
+        Examples
+        --------
+        >>> # Assuming a class with the required attributes
+        >>> model = MyModel()
+        >>> model.window_size = 100
+        >>> model.inputsize = 10
+        >>> model.num_filters = 32
+        >>> model.kernel_size = 3
+        >>> model.dropout_rate = 0.2
+        >>> model.activation = 'relu'
+        >>> model.encoding_dim = 64
+        >>> model.makenet()
+        >>> model.model.summary()
+        """
+        input_layer = Input(shape=(self.window_size, self.inputsize))
+        x = input_layer
+
+        # Convolutional front-end: feature extraction
+        x = Convolution1D(filters=self.num_filters, kernel_size=self.kernel_size, padding="same")(
+            x
+        )
+        x = BatchNormalization()(x)
+        x = Dropout(rate=self.dropout_rate)(x)
+        x = Activation(self.activation)(x)
+
+        x = Convolution1D(
+            filters=self.num_filters * 2, kernel_size=self.kernel_size, padding="same"
+        )(x)
+        x = BatchNormalization()(x)
+        x = Dropout(rate=self.dropout_rate)(x)
+        x = Activation(self.activation)(x)
+
+        # Recurrent layer: temporal modeling
+        x = Bidirectional(LSTM(units=self.encoding_dim, return_sequences=True))(x)
+
+        # Output mapping to inputsize channels
+        output_layer = Dense(self.inputsize)(x)
+
+        # Model definition
+        self.model = Model(inputs=input_layer, outputs=output_layer)
+        self.model.compile(optimizer="adam", loss="mse")
+
+
+class LSTMDLFilter(DeepLearningFilter):
+    def __init__(self, num_units: int = 16, *args, **kwargs) -> None:
+        """
+        Initialize the LSTMDLFilter layer.
+
+        Parameters
+        ----------
+        num_units : int, optional
+            Number of units in the LSTM layer, by default 16
+        *args : tuple
+            Additional positional arguments passed to the parent class
+        **kwargs : dict
+            Additional keyword arguments passed to the parent class
+
+        Returns
+        -------
+        None
+            This method initializes the layer in-place and does not return any value
+
+        Notes
+        -----
+        This method sets up the LSTM layer with the specified number of units and
+        configures the infodict with the network type and unit count. The parent
+        class initialization is called with any additional arguments provided.
+
+        Examples
+        --------
+        >>> layer = LSTMDLFilter(num_units=32)
+        >>> print(layer.num_units)
+        32
+        """
+        self.num_units = num_units
+        self.infodict["nettype"] = "lstm"
+        self.infodict["num_units"] = self.num_units
+        super(LSTMDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        """
+        Generate and return the model name and path based on current configuration parameters.
+
+        This method constructs a standardized model name string using various configuration
+        parameters and creates the corresponding directory path. The generated name includes
+        information about the model architecture, training parameters, and preprocessing settings.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing the following attributes:
+            - window_size : int
+                Size of the sliding window for time series data
+            - num_layers : int
+                Number of LSTM layers in the model
+            - num_units : int
+                Number of units in each LSTM layer
+            - dropout_rate : float
+                Dropout rate for regularization
+            - num_epochs : int
+                Number of training epochs
+            - excludethresh : float
+                Threshold for exclusion criteria
+            - corrthresh_rp : float
+                Correlation threshold for filtering
+            - step : int
+                Step size for data processing
+            - excludebysubject : bool
+                Whether to exclude data by subject
+            - modelroot : str
+                Root directory for model storage
+
+        Returns
+        -------
+        None
+            This method modifies the instance attributes `modelname` and `modelpath` in place.
+            It does not return any value.
+
+        Notes
+        -----
+        The generated model name follows a specific naming convention:
+        "model_lstm_tf2_wXxx_lYY_nuZZZ_dDD_rdDD_eEEE_tT_ctTT_sS"
+        where Xxx, YY, ZZZ, DD, EEEE, T, TT, S represent zero-padded numerical values.
+
+        If `excludebysubject` is True, "_excludebysubject" is appended to the model name.
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> model.window_size = 100
+        >>> model.num_layers = 2
+        >>> model.num_units = 128
+        >>> model.dropout_rate = 0.2
+        >>> model.num_epochs = 100
+        >>> model.excludethresh = 0.5
+        >>> model.corrthresh_rp = 0.8
+        >>> model.step = 1
+        >>> model.excludebysubject = True
+        >>> model.modelroot = "/path/to/models"
+        >>> model.getname()
+        >>> print(model.modelname)
+        'model_lstm_tf2_w100_l02_nu128_d02_rd02_e100_t05_ct08_s1_excludebysubject'
+        """
+        self.modelname = "_".join(
+            [
+                "model",
+                "lstm",
+                "tf2",
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "nu" + str(self.num_units),
+                "d" + str(self.dropout_rate),
+                "rd" + str(self.dropout_rate),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh_rp),
+                "s" + str(self.step),
+            ]
+        )
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        """
+        Create and configure a bidirectional LSTM neural network model.
+
+        This function builds a sequential neural network architecture using bidirectional LSTM layers
+        followed by time-distributed dense layers. The model is compiled with Adam optimizer and MSE loss.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing the following attributes:
+            - num_layers : int
+                Number of LSTM layers in the model
+            - num_units : int
+                Number of units in each LSTM layer
+            - dropout_rate : float
+                Dropout rate for both dropout and recurrent dropout
+            - window_size : int
+                Size of the input window for time series data
+
+        Returns
+        -------
+        None
+            This method modifies the instance in-place by setting the `model` attribute.
+
+        Notes
+        -----
+        The model architecture consists of:
+        1. Bidirectional LSTM layers with specified number of units and dropout rates
+        2. TimeDistributed Dense layers to map outputs back to window size
+        3. Compilation with Adam optimizer and MSE loss function
+
+        Examples
+        --------
+        >>> model_instance = MyModel()
+        >>> model_instance.num_layers = 2
+        >>> model_instance.num_units = 50
+        >>> model_instance.dropout_rate = 0.2
+        >>> model_instance.window_size = 10
+        >>> model_instance.makenet()
+        >>> print(model_instance.model.summary())
+        """
+        self.model = Sequential()
+
+        # each layer consists of an LSTM followed by a dense time distributed layer to get it back to the window size
+        for layer in range(self.num_layers):
+            self.model.add(
+                Bidirectional(
+                    LSTM(
+                        self.num_units,
+                        dropout=self.dropout_rate,
+                        recurrent_dropout=self.dropout_rate,
+                        return_sequences=True,
+                    ),
+                    input_shape=(self.window_size, 1),
+                )
+            )
+            self.model.add(TimeDistributed(Dense(1)))
+
+        self.model.compile(optimizer="adam", loss="mse")
+
+
+class HybridDLFilter(DeepLearningFilter):
+    def __init__(
+        self,
+        invert: bool = False,
+        num_filters: int = 10,
+        kernel_size: int = 5,
+        num_units: int = 16,
+        *args,
+        **kwargs,
+    ) -> None:
+        """
+        Initialize the HybridDLFilter layer.
+
+        Parameters
+        ----------
+        invert : bool, optional
+            If True, inverts the filter operation, by default False
+        num_filters : int, optional
+            Number of filters to use in the convolutional layer, by default 10
+        kernel_size : int, optional
+            Size of the convolutional kernel, by default 5
+        num_units : int, optional
+            Number of units in the dense layer, by default 16
+        *args
+            Variable length argument list
+        **kwargs
+            Arbitrary keyword arguments
+
+        Returns
+        -------
+        None
+            This method does not return a value
+
+        Notes
+        -----
+        This method initializes the hybrid deep learning filter by setting up
+        the convolutional and dense layer parameters. The infodict is populated
+        with configuration information for tracking and debugging purposes.
+
+        Examples
+        --------
+        >>> layer = HybridDLFilter(
+        ...     invert=True,
+        ...     num_filters=20,
+        ...     kernel_size=3,
+        ...     num_units=32
+        ... )
+        """
+        self.invert = invert
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.num_units = num_units
+        self.infodict["nettype"] = "hybrid"
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["invert"] = self.invert
+        self.infodict["num_units"] = self.num_units
+        super(HybridDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        """
+        Generate and return the model name and path based on current configuration parameters.
+
+        This method constructs a descriptive model name string by joining various configuration
+        parameters with specific prefixes and formatting conventions. The resulting model name
+        is used to create a unique directory path for model storage.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing model configuration parameters. Expected attributes include:
+            - `window_size` : int
+            - `num_layers` : int
+            - `num_filters` : int
+            - `kernel_size` : int
+            - `num_units` : int
+            - `dropout_rate` : float
+            - `num_epochs` : int
+            - `excludethresh` : float
+            - `corrthresh_rp` : float
+            - `step` : int
+            - `activation` : str
+            - `invert` : bool
+            - `excludebysubject` : bool
+            - `modelroot` : str
+
+        Returns
+        -------
+        None
+            This method does not return a value but modifies instance attributes:
+            - `self.modelname`: The constructed model name string
+            - `self.modelpath`: The full path to the model directory
+
+        Notes
+        -----
+        The model name is constructed using the following components:
+        - "model_hybrid_tf2_" prefix
+        - Window size with 3-digit zero-padded formatting
+        - Number of layers with 2-digit zero-padded formatting
+        - Number of filters with 2-digit zero-padded formatting
+        - Kernel size with 2-digit zero-padded formatting
+        - Number of units
+        - Dropout rate (appears twice with different prefixes)
+        - Number of epochs with 3-digit zero-padded formatting
+        - Exclusion threshold
+        - Correlation threshold
+        - Step size
+        - Activation function name
+
+        Additional suffixes are appended based on boolean flags:
+        - "_invert" if `self.invert` is True
+        - "_excludebysubject" if `self.excludebysubject` is True
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> model.window_size = 100
+        >>> model.num_layers = 3
+        >>> model.num_filters = 16
+        >>> model.kernel_size = 5
+        >>> model.num_units = 64
+        >>> model.dropout_rate = 0.2
+        >>> model.num_epochs = 100
+        >>> model.excludethresh = 0.5
+        >>> model.corrthresh_rp = 0.8
+        >>> model.step = 1
+        >>> model.activation = "relu"
+        >>> model.invert = True
+        >>> model.excludebysubject = False
+        >>> model.getname()
+        >>> print(model.modelname)
+        'model_hybrid_tf2_w100_l03_fn16_fl05_nu64_d0.2_rd0.2_e100_t0.5_ct0.8_s01_relu_invert'
+        """
+        self.modelname = "_".join(
+            [
+                "model",
+                "hybrid",
+                "tf2",
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "nu" + str(self.num_units),
+                "d" + str(self.dropout_rate),
+                "rd" + str(self.dropout_rate),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ct" + str(self.corrthresh_rp),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.invert:
+            self.modelname += "_invert"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        """
+        Build and compile a neural network model with configurable CNN and LSTM layers.
+
+        This function constructs a neural network model using Keras, with the architecture
+        determined by the `invert` flag. If `invert` is True, the model starts with a
+        Conv1D layer followed by LSTM layers; otherwise, it starts with LSTM layers
+        followed by Conv1D layers. The model is compiled with the RMSprop optimizer
+        and mean squared error loss.
+
+        Parameters
+        ----------
+        self : object
+            The instance of the class containing the model configuration attributes.
+
+        Attributes Used
+        ---------------
+        self.invert : bool
+            If True, the model begins with a Conv1D layer and ends with an LSTM layer.
+            If False, the model begins with an LSTM layer and ends with a Conv1D layer.
+        self.num_filters : int
+            Number of filters in each Conv1D layer.
+        self.kernel_size : int
+            Size of the kernel in Conv1D layers.
+        self.padding : str, default='same'
+            Padding mode for Conv1D layers.
+        self.window_size : int
+            Length of the input sequence.
+        self.inputsize : int
+            Number of features in the input data.
+        self.num_layers : int
+            Total number of layers in the model.
+        self.num_units : int
+            Number of units in the LSTM layers.
+        self.dropout_rate : float
+            Dropout rate for regularization.
+        self.activation : str or callable
+            Activation function for Conv1D layers.
+
+        Returns
+        -------
+        None
+            This method modifies the instance's `self.model` attribute in place.
+
+        Notes
+        -----
+        - The model uses `Sequential` from Keras.
+        - Batch normalization and dropout are applied after each Conv1D layer (except the last).
+        - The final layer is a Dense layer wrapped in `TimeDistributed` for sequence-to-sequence output.
+        - The model is compiled using `RMSprop` optimizer and `mse` loss.
+
+        Examples
+        --------
+        >>> model_builder = MyModelClass()
+        >>> model_builder.invert = True
+        >>> model_builder.num_filters = 32
+        >>> model_builder.kernel_size = 3
+        >>> model_builder.window_size = 100
+        >>> model_builder.inputsize = 1
+        >>> model_builder.num_layers = 5
+        >>> model_builder.num_units = 64
+        >>> model_builder.dropout_rate = 0.2
+        >>> model_builder.activation = 'relu'
+        >>> model_builder.makenet()
+        >>> model_builder.model.summary()
+        """
+        self.model = Sequential()
+
+        if self.invert:
+            # make the input layer
+            self.model.add(
+                Convolution1D(
+                    filters=self.num_filters,
+                    kernel_size=self.kernel_size,
+                    padding="same",
+                    input_shape=(self.window_size, self.inputsize),
+                )
+            )
+            self.model.add(BatchNormalization())
+            self.model.add(Dropout(rate=self.dropout_rate))
+            self.model.add(Activation(self.activation))
+
+            # then make make the intermediate CNN layers
+            for layer in range(self.num_layers - 2):
+                self.model.add(
+                    Convolution1D(
+                        filters=self.num_filters,
+                        kernel_size=self.kernel_size,
+                        padding="same",
+                    )
+                )
+                self.model.add(BatchNormalization())
+                self.model.add(Dropout(rate=self.dropout_rate))
+                self.model.add(Activation(self.activation))
+
+            # finish with an LSTM layer to find hidden states
+            self.model.add(
+                Bidirectional(
+                    LSTM(
+                        self.num_units,
+                        dropout=self.dropout_rate,
+                        recurrent_dropout=self.dropout_rate,
+                        return_sequences=True,
+                    ),
+                    input_shape=(self.window_size, 1),
+                )
+            )
+            self.model.add(TimeDistributed(Dense(1)))
+
+        else:
+            # start with an LSTM layer to find hidden states
+            self.model.add(
+                Bidirectional(
+                    LSTM(
+                        self.num_units,
+                        dropout=self.dropout_rate,
+                        recurrent_dropout=self.dropout_rate,
+                        return_sequences=True,
+                    ),
+                    input_shape=(self.window_size, 1),
+                )
+            )
+            self.model.add(TimeDistributed(Dense(1)))
+            self.model.add(Dropout(rate=self.dropout_rate))
+
+            # then make make the intermediate CNN layers
+            for layer in range(self.num_layers - 2):
+                self.model.add(
+                    Convolution1D(
+                        filters=self.num_filters,
+                        kernel_size=self.kernel_size,
+                        padding="same",
+                    )
+                )
+                self.model.add(BatchNormalization())
+                self.model.add(Dropout(rate=self.dropout_rate))
+                self.model.add(Activation(self.activation))
+
+            # make the output layer
+            self.model.add(
+                Convolution1D(filters=self.inputsize, kernel_size=self.kernel_size, padding="same")
+            )
+
+        self.model.compile(optimizer=RMSprop(), loss="mse")
 
 
 def filtscale(

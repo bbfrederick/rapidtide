@@ -806,6 +806,20 @@ class DeepLearningFilter:
                 self.activation,
                 self.inputsize,
             )
+        elif self.infodict["nettype"] == "multiscalecnn":
+            self.num_filters = checkpoint["model_config"]["num_filters"]
+            self.kernel_sizes = checkpoint["model_config"]["kernel_sizes"]
+            self.input_lens = checkpoint["model_config"]["input_lens"]
+            self.input_width = checkpoint["model_config"]["input_width"]
+            self.dilation_rate = checkpoint["model_config"]["dilation_rate"]
+
+            self.model = MultiscaleCNNModel(
+                self.num_filters,
+                self.kernel_sizes,
+                self.input_lens,
+                self.input_width,
+                self.dilation_rate,
+            )
         elif self.infodict["nettype"] == "convautoencoder":
             self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
             self.num_filters = checkpoint["model_config"]["num_filters"]
@@ -822,6 +836,56 @@ class DeepLearningFilter:
                 self.dropout_rate,
                 self.activation,
                 self.inputsize,
+            )
+        elif self.infodict["nettype"] == "crnn":
+            self.num_filters = checkpoint["model_config"]["num_filters"]
+            self.kernel_size = checkpoint["model_config"]["kernel_size"]
+            self.encoding_dim = checkpoint["model_config"]["encoding_dim"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.activation = checkpoint["model_config"]["activation"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
+
+            self.model = CRNNModel(
+                self.num_filters,
+                self.kernel_size,
+                self.encoding_dim,
+                self.dropout_rate,
+                self.activation,
+                self.inputsize,
+            )
+        elif self.infodict["nettype"] == "lstm":
+            self.num_units = checkpoint["model_config"]["num_units"]
+            self.num_layers = checkpoint["model_config"]["num_layers"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
+
+            self.model = LSTMModel(
+                self.num_units,
+                self.num_layers,
+                self.dropout_rate,
+                self.window_size,
+                self.inputsize,
+            )
+        elif self.infodict["nettype"] == "hybrid":
+            self.num_filters = checkpoint["model_config"]["num_filters"]
+            self.kernel_size = checkpoint["model_config"]["kernel_size"]
+            self.num_units = checkpoint["model_config"]["num_units"]
+            self.num_layers = checkpoint["model_config"]["num_layers"]
+            self.dropout_rate = checkpoint["model_config"]["dropout_rate"]
+            self.activation = checkpoint["model_config"]["activation"]
+            self.inputsize = checkpoint["model_config"]["inputsize"]
+            self.invert = checkpoint["model_config"]["invert"]
+
+            self.model = HybridModel(
+                self.num_filters,
+                self.kernel_size,
+                self.num_units,
+                self.num_layers,
+                self.dropout_rate,
+                self.activation,
+                self.inputsize,
+                self.window_size,
+                self.invert,
             )
         else:
             print(f"nettype {self.infodict['nettype']} is not supported!")
@@ -2142,6 +2206,422 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         self.model.to(self.device)
 
 
+class MultiscaleCNNModel(nn.Module):
+    def __init__(
+        self,
+        num_filters,
+        kernel_sizes,
+        input_lens,
+        input_width,
+        dilation_rate,
+    ):
+        """
+        Initialize the MultiscaleCNNModel.
+
+        This constructor initializes a multiscale CNN model with three parallel branches
+        processing input at different scales. Each branch uses dilated convolutions to
+        capture features at different receptive fields.
+
+        Parameters
+        ----------
+        num_filters : int
+            Number of filters (channels) to use in the convolutional layers.
+        kernel_sizes : list of int
+            List of three kernel sizes for the three branches (small, medium, large scales).
+        input_lens : list of int
+            List of input lengths for each branch, corresponding to the input sequence lengths.
+        input_width : int
+            Width of the input features (number of input channels).
+        dilation_rate : int
+            Dilation rate to use in the dilated convolutional layers.
+
+        Returns
+        -------
+        None
+            This method initializes the model instance and does not return any value.
+
+        Notes
+        -----
+        The model creates three parallel branches with different kernel sizes to capture
+        multi-scale temporal features. Each branch uses dilated convolutions to increase
+        the receptive field without increasing the number of parameters significantly.
+
+        The final dense layer reduces the combined features to a single output value,
+        followed by a sigmoid activation for binary classification.
+
+        Examples
+        --------
+        >>> model = MultiscaleCNNModel(
+        ...     num_filters=64,
+        ...     kernel_sizes=[3, 5, 7],
+        ...     input_lens=[100, 100, 100],
+        ...     input_width=10,
+        ...     dilation_rate=2
+        ... )
+        """
+        super(MultiscaleCNNModel, self).__init__()
+
+        self.num_filters = num_filters
+        self.kernel_sizes = kernel_sizes
+        self.input_lens = input_lens
+        self.input_width = input_width
+        self.dilation_rate = dilation_rate
+
+        # Create three separate branches for different scales
+        self.branch_small = self._make_branch(kernel_sizes[0])
+        self.branch_med = self._make_branch(kernel_sizes[1])
+        self.branch_large = self._make_branch(kernel_sizes[2])
+
+        # Final dense layer
+        self.fc = nn.Linear(150, 1)
+        self.sigmoid = nn.Sigmoid()
+
+    def _make_branch(self, kernel_size):
+        """
+        Create a convolutional branch for the neural network architecture.
+
+        This method constructs a sequential neural network branch consisting of
+        convolutional, pooling, flattening, linear, activation, and dropout layers.
+
+        Parameters
+        ----------
+        kernel_size : int
+            The size of the convolutional kernel to be used in the Conv1d layer.
+
+        Returns
+        -------
+        torch.nn.Sequential
+            A sequential container containing the following layers:
+            - Conv1d: 1D convolutional layer with input_width as input channels
+            - AdaptiveMaxPool1d: 1D adaptive max pooling with output size 1
+            - Flatten: Flattens the tensor for linear layer input
+            - Linear: Linear layer with num_filters input features and 50 output features
+            - Tanh: Hyperbolic tangent activation function
+            - Dropout: 30% dropout regularization
+
+        Notes
+        -----
+        The branch is designed to process 1D input data through a convolutional
+        feature extraction pathway followed by a fully connected classifier head.
+        The padding="same" parameter ensures the output size matches the input size
+        for the convolutional layer.
+
+        Examples
+        --------
+        >>> branch = self._make_branch(kernel_size=3)
+        >>> print(type(branch))
+        <class 'torch.nn.modules.container.Sequential'>
+        """
+        return nn.Sequential(
+            nn.Conv1d(self.input_width, self.num_filters, kernel_size, padding="same"),
+            nn.AdaptiveMaxPool1d(1),
+            nn.Flatten(),
+            nn.Linear(self.num_filters, 50),
+            nn.Tanh(),
+            nn.Dropout(0.3),
+        )
+
+    def forward(self, x_small, x_med, x_large):
+        """
+        Forward pass of the multi-scale feature extraction network.
+
+        This function processes input tensors through three parallel branches with different
+        receptive fields and concatenates the outputs before applying a final fully connected
+        layer with sigmoid activation.
+
+        Parameters
+        ----------
+        x_small : torch.Tensor
+            Input tensor for the small-scale branch with shape (batch_size, channels, height, width)
+        x_med : torch.Tensor
+            Input tensor for the medium-scale branch with shape (batch_size, channels, height, width)
+        x_large : torch.Tensor
+            Input tensor for the large-scale branch with shape (batch_size, channels, height, width)
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor with shape (batch_size, num_classes) containing sigmoid-activated
+            predictions for each class
+
+        Notes
+        -----
+        The function assumes that `self.branch_small`, `self.branch_med`, `self.branch_large`,
+        `self.fc`, and `self.sigmoid` are properly initialized components of the class.
+
+        Examples
+        --------
+        >>> import torch
+        >>> # Assuming model is initialized
+        >>> x_small = torch.randn(1, 3, 32, 32)
+        >>> x_med = torch.randn(1, 3, 64, 64)
+        >>> x_large = torch.randn(1, 3, 128, 128)
+        >>> output = model.forward(x_small, x_med, x_large)
+        >>> print(output.shape)
+        torch.Size([1, num_classes])
+        """
+        # Process each branch
+        out_small = self.branch_small(x_small)
+        out_med = self.branch_med(x_med)
+        out_large = self.branch_large(x_large)
+
+        # Concatenate outputs
+        merged = torch.cat([out_small, out_med, out_large], dim=1)
+
+        # Final output
+        out = self.fc(merged)
+        out = self.sigmoid(out)
+
+        return out
+
+    def get_config(self):
+        """
+        Get the configuration parameters of the layer.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the layer configuration parameters with the following keys:
+            - "num_filters" (int): Number of filters in the layer
+            - "kernel_sizes" (list of int): Size of the convolutional kernels
+            - "input_lens" (list of int): Lengths of input sequences
+            - "input_width" (int): Width of the input data
+            - "dilation_rate" (int): Dilation rate for dilated convolution
+
+        Notes
+        -----
+        This method returns a copy of the internal configuration parameters
+        that can be used to reconstruct the layer with the same settings.
+
+        Examples
+        --------
+        >>> config = layer.get_config()
+        >>> print(config['num_filters'])
+        32
+        """
+        return {
+            "num_filters": self.num_filters,
+            "kernel_sizes": self.kernel_sizes,
+            "input_lens": self.input_lens,
+            "input_width": self.input_width,
+            "dilation_rate": self.dilation_rate,
+        }
+
+
+class MultiscaleCNNDLFilter(DeepLearningFilter):
+    def __init__(
+        self,
+        num_filters=10,
+        kernel_sizes=[4, 8, 12],
+        input_lens=[64, 128, 192],
+        input_width=1,
+        dilation_rate=1,
+        *args,
+        **kwargs,
+    ):
+        """
+        Initialize the MultiscaleCNNDLFilter layer.
+
+        This constructor initializes a multiscale CNN filter with configurable
+        kernel sizes, input lengths, and dilation rates for multi-scale feature extraction.
+
+        Parameters
+        ----------
+        num_filters : int, optional
+            Number of filters to use in each convolutional layer, default is 10
+        kernel_sizes : list of int, optional
+            List of kernel sizes for different convolutional layers, default is [4, 8, 12]
+        input_lens : list of int, optional
+            List of input sequence lengths for different scales, default is [64, 128, 192]
+        input_width : int, optional
+            Width of the input data, default is 1
+        dilation_rate : int, optional
+            Dilation rate for the convolutional layers, default is 1
+        *args : tuple
+            Variable length argument list passed to parent class
+        **kwargs : dict
+            Arbitrary keyword arguments passed to parent class
+
+        Returns
+        -------
+        None
+            This method initializes the object and does not return any value
+
+        Notes
+        -----
+        The multiscale CNN filter uses multiple convolutional layers with different
+        kernel sizes and dilation rates to capture features at multiple scales.
+        The input data is processed through parallel convolutional branches,
+        each with different kernel sizes and dilation rates.
+
+        Examples
+        --------
+        >>> filter_layer = MultiscaleCNNDLFilter(
+        ...     num_filters=20,
+        ...     kernel_sizes=[3, 6, 9],
+        ...     input_lens=[32, 64, 128],
+        ...     input_width=2,
+        ...     dilation_rate=2
+        ... )
+        """
+        self.num_filters = num_filters
+        self.kernel_sizes = kernel_sizes
+        self.input_lens = input_lens
+        self.input_width = input_width
+        self.dilation_rate = dilation_rate
+        self.nettype = "multiscalecnn"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_sizes"] = self.kernel_sizes
+        self.infodict["input_lens"] = self.input_lens
+        self.infodict["input_width"] = self.input_width
+        super(MultiscaleCNNDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        """
+        Generate and return the model name and path based on current configuration parameters.
+
+        This method constructs a descriptive model name string by joining various configuration
+        parameters with specific prefixes and zero-padded numeric values. The resulting name
+        is used to create a unique directory path for model storage.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing model configuration parameters.
+
+        Returns
+        -------
+        None
+            This method does not return a value but sets the following attributes:
+            - self.modelname: str, the generated model name
+            - self.modelpath: str, the full path to the model directory
+
+        Notes
+        -----
+        The generated model name includes the following components:
+        - Model type: "model_multiscalecnn_pytorch"
+        - Window size: "w" + zero-padded window size
+        - Number of layers: "l" + zero-padded layer count
+        - Number of filters: "fn" + zero-padded filter count
+        - First kernel size: "fl" + zero-padded kernel size
+        - Number of epochs: "e" + zero-padded epoch count
+        - Exclusion threshold: "t" + threshold value
+        - Correlation threshold: "ct" + threshold value
+        - Step size: "s" + zero-padded step value
+        - Dilation rate: "d" + dilation rate value
+        - Activation function name
+
+        Additional suffixes are appended if:
+        - usebadpts is True: "_usebadpts"
+        - excludebysubject is True: "_excludebysubject"
+        - namesuffix is not None: "_{namesuffix}"
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> model.window_size = 128
+        >>> model.num_layers = 5
+        >>> model.num_filters = 32
+        >>> model.kernel_sizes = [3, 5, 7]
+        >>> model.num_epochs = 100
+        >>> model.excludethresh = 0.5
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
+        >>> model.step = 16
+        >>> model.dilation_rate = 2
+        >>> model.activation = "relu"
+        >>> model.usebadpts = True
+        >>> model.excludebysubject = False
+        >>> model.namesuffix = "exp1"
+        >>> model.getname()
+        >>> print(model.modelname)
+        'model_multiscalecnn_pytorch_w128_l05_fn32_fl03_e100_t0.5_ct0.8_s16_d2_relu_usebadpts_exp1'
+        """
+        self.modelname = "_".join(
+            [
+                "model",
+                "multiscalecnn",
+                "pytorch",
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_sizes[0]).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
+                "s" + str(self.step),
+                "d" + str(self.dilation_rate),
+                self.activation,
+            ]
+        )
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        """
+        Create and initialize a multiscale CNN model for network construction.
+
+        This method initializes a MultiscaleCNNModel with the specified parameters
+        and moves the model to the designated device (CPU or GPU).
+
+        Parameters
+        ----------
+        self : object
+            The instance containing the following attributes:
+            - num_filters : int
+                Number of filters for the CNN layers
+            - kernel_sizes : list of int
+                List of kernel sizes for different scales
+            - input_lens : list of int
+                List of input lengths for different scales
+            - input_width : int
+                Width of the input data
+            - dilation_rate : int
+                Dilation rate for the convolutional layers
+            - device : torch.device
+                Device to move the model to (e.g., 'cuda' or 'cpu')
+
+        Returns
+        -------
+        None
+            This method does not return any value but modifies the instance
+            by setting the `model` attribute to the created MultiscaleCNNModel.
+
+        Notes
+        -----
+        The method assumes that all required attributes are properly initialized
+        in the instance before calling this method. The model is automatically
+        moved to the specified device using the `.to()` method.
+
+        Examples
+        --------
+        >>> # Assuming instance with required attributes is created
+        >>> instance.makenet()
+        >>> print(instance.model)
+        MultiscaleCNNModel(...)
+        """
+        self.model = MultiscaleCNNModel(
+            self.num_filters,
+            self.kernel_sizes,
+            self.input_lens,
+            self.input_width,
+            self.dilation_rate,
+        )
+        self.model.to(self.device)
+
+
 class ConvAutoencoderModel(nn.Module):
     def __init__(
         self,
@@ -2606,6 +3086,1164 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             self.dropout_rate,
             self.activation,
             self.inputsize,
+        )
+        self.model.to(self.device)
+
+
+class CRNNModel(nn.Module):
+    def __init__(
+        self, num_filters, kernel_size, encoding_dim, dropout_rate, activation, inputsize
+    ):
+        """
+        Initialize the CRNNModel.
+
+        This function initializes a Convolutional Recurrent Neural Network (CRNN) model
+        with convolutional front-end, bidirectional LSTM layers, and output mapping.
+        The model processes sequential data through convolutional layers, applies
+        bidirectional LSTM encoding, and maps the output back to the original input size.
+
+        Parameters
+        ----------
+        num_filters : int
+            Number of filters in the convolutional layers
+        kernel_size : int
+            Size of the convolutional kernel
+        encoding_dim : int
+            Dimension of the LSTM encoding (hidden state size)
+        dropout_rate : float
+            Dropout rate for regularization
+        activation : str
+            Activation function to use ('relu' or 'tanh')
+        inputsize : int
+            Size of the input features
+
+        Returns
+        -------
+        None
+            Initializes the CRNNModel instance
+
+        Notes
+        -----
+        The model uses a bidirectional LSTM with batch_first=True.
+        The convolutional layers use 'same' padding to maintain sequence length.
+        Default activation function is ReLU if an invalid activation is provided.
+
+        Examples
+        --------
+        >>> model = CRNNModel(
+        ...     num_filters=32,
+        ...     kernel_size=3,
+        ...     encoding_dim=64,
+        ...     dropout_rate=0.2,
+        ...     activation='relu',
+        ...     inputsize=128
+        ... )
+        """
+        super(CRNNModel, self).__init__()
+
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.encoding_dim = encoding_dim
+        self.dropout_rate = dropout_rate
+        self.activation = activation
+        self.inputsize = inputsize
+
+        # Get activation function
+        if activation == "relu":
+            act_fn = nn.ReLU
+        elif activation == "tanh":
+            act_fn = nn.Tanh
+        else:
+            act_fn = nn.ReLU
+
+        # Convolutional front-end
+        self.conv1 = nn.Conv1d(inputsize, num_filters, kernel_size, padding="same")
+        self.bn1 = nn.BatchNorm1d(num_filters)
+        self.dropout1 = nn.Dropout(dropout_rate)
+        self.act1 = act_fn()
+
+        self.conv2 = nn.Conv1d(num_filters, num_filters * 2, kernel_size, padding="same")
+        self.bn2 = nn.BatchNorm1d(num_filters * 2)
+        self.dropout2 = nn.Dropout(dropout_rate)
+        self.act2 = act_fn()
+
+        # Bidirectional LSTM
+        self.lstm = nn.LSTM(num_filters * 2, encoding_dim, batch_first=True, bidirectional=True)
+
+        # Output mapping
+        self.fc_out = nn.Linear(encoding_dim * 2, inputsize)
+
+    def forward(self, x):
+        """
+        Forward pass through the neural network architecture.
+
+        This function processes input data through a convolutional neural network
+        followed by an LSTM layer and a fully connected output layer. The input
+        is first processed through two convolutional blocks, then reshaped for
+        LSTM processing, and finally converted back to the original output format.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor of shape (batch_size, channels, length) containing
+            the input sequence data to be processed.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor of shape (batch_size, channels, length) containing
+            the processed sequence data after passing through all layers.
+
+        Notes
+        -----
+        The function performs the following operations in sequence:
+        1. Two convolutional blocks with batch normalization, dropout, and activation
+        2. Permute operation to reshape data for LSTM processing (batch, seq_len, features)
+        3. LSTM layer processing
+        4. Fully connected output layer
+        5. Final permutation to restore original shape (batch, channels, length)
+
+        Examples
+        --------
+        >>> import torch
+        >>> model = YourModelClass()
+        >>> x = torch.randn(32, 1, 100)  # batch_size=32, channels=1, length=100
+        >>> output = model.forward(x)
+        >>> print(output.shape)  # torch.Size([32, 1, 100])
+        """
+        # Conv layers expect (batch, channels, length)
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.dropout1(x)
+        x = self.act1(x)
+
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.dropout2(x)
+        x = self.act2(x)
+
+        # LSTM expects (batch, seq_len, features)
+        x = x.permute(0, 2, 1)
+        x, _ = self.lstm(x)
+
+        # Output layer
+        x = self.fc_out(x)
+
+        # Convert back to (batch, channels, length)
+        x = x.permute(0, 2, 1)
+
+        return x
+
+    def get_config(self):
+        """
+        Get the configuration parameters of the model.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the model configuration parameters with the following keys:
+            - "num_filters" (int): Number of filters in the convolutional layers
+            - "kernel_size" (int): Size of the convolutional kernel
+            - "encoding_dim" (int): Dimension of the encoding layer
+            - "dropout_rate" (float): Dropout rate for regularization
+            - "activation" (str): Activation function used in the layers
+            - "inputsize" (int): Size of the input data
+
+        Notes
+        -----
+        This method returns a copy of the current configuration parameters. Modifications
+        to the returned dictionary will not affect the original model configuration.
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> config = model.get_config()
+        >>> print(config['num_filters'])
+        32
+        """
+        return {
+            "num_filters": self.num_filters,
+            "kernel_size": self.kernel_size,
+            "encoding_dim": self.encoding_dim,
+            "dropout_rate": self.dropout_rate,
+            "activation": self.activation,
+            "inputsize": self.inputsize,
+        }
+
+
+class CRNNDLFilter(DeepLearningFilter):
+    def __init__(
+        self,
+        encoding_dim: int = 10,
+        num_filters: int = 10,
+        kernel_size: int = 5,
+        dilation_rate: int = 1,
+        *args,
+        **kwargs,
+    ) -> None:
+        """
+        Initialize CRNNDLFilter layer.
+
+        Parameters
+        ----------
+        encoding_dim : int, optional
+            Dimension of the encoding layer, by default 10
+        num_filters : int, optional
+            Number of filters in the convolutional layer, by default 10
+        kernel_size : int, optional
+            Size of the convolutional kernel, by default 5
+        dilation_rate : int, optional
+            Dilation rate for the convolutional layer, by default 1
+        *args : tuple
+            Variable length argument list
+        **kwargs : dict
+            Arbitrary keyword arguments
+
+        Returns
+        -------
+        None
+            This method does not return any value
+
+        Notes
+        -----
+        This constructor initializes a CRNN (Convolutional Recurrent Neural Network)
+        with dilated filters. The layer type is set to "crnn" and configuration
+        parameters are stored in infodict for later reference.
+
+        Examples
+        --------
+        >>> layer = CRNNDLFilter(encoding_dim=20, num_filters=15, kernel_size=3)
+        >>> print(layer.nettype)
+        'crnn'
+        """
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.dilation_rate = dilation_rate
+        self.encoding_dim = encoding_dim
+        self.nettype = "crnn"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["encoding_dim"] = self.encoding_dim
+        super(CRNNDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        """
+        Generate and configure model name and path based on configuration parameters.
+
+        This method constructs a descriptive model name string based on various configuration
+        parameters and creates the corresponding model directory path. The generated name
+        includes information about window size, encoding dimensions, filters, kernel size,
+        epochs, thresholds, step size, and activation function.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing configuration parameters for model naming.
+
+        Returns
+        -------
+        None
+            This method modifies instance attributes in-place and does not return a value.
+
+        Notes
+        -----
+        The generated model name follows a consistent naming convention:
+        'model_crnn_pytorch_wXXX_enXXX_fnXX_flXX_eXXX_tX_ctX_sX_activation'
+        where XXX represents zero-padded numeric values and X represents single digits.
+
+        Additional suffixes are appended based on:
+        - usebadpts: '_usebadpts' if True
+        - excludebysubject: '_excludebysubject' if True
+        - namesuffix: '_{suffix}' if not None
+
+        Examples
+        --------
+        >>> model = ModelClass()
+        >>> model.window_size = 100
+        >>> model.encoding_dim = 128
+        >>> model.num_filters = 32
+        >>> model.kernel_size = 5
+        >>> model.num_epochs = 100
+        >>> model.excludethresh = 0.5
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
+        >>> model.step = 10
+        >>> model.activation = 'relu'
+        >>> model.modelroot = '/path/to/models'
+        >>> model.getname()
+        >>> print(model.modelname)
+        'model_crnn_pytorch_w100_en128_fn32_fl05_e100_t0.5_ct0.8_s10_relu'
+        """
+        self.modelname = "_".join(
+            [
+                "model",
+                "crnn",
+                "pytorch",
+                "w" + str(self.window_size).zfill(3),
+                "en" + str(self.encoding_dim).zfill(3),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.usebadpts:
+            self.modelname += "_usebadpts"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        if self.namesuffix is not None:
+            self.modelname += "_" + self.namesuffix
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        """
+        Create and initialize a CRNN model for neural network training.
+
+        This method initializes a CRNN (Convolutional Recurrent Neural Network) model
+        using the specified configuration parameters and moves it to the designated
+        device (CPU or GPU).
+
+        Parameters
+        ----------
+        self : object
+            The instance of the class containing this method. Expected to have the
+            following attributes:
+            - num_filters : int
+                Number of filters in the convolutional layers
+            - kernel_size : int or tuple
+                Size of the convolutional kernel
+            - encoding_dim : int
+                Dimension of the encoding layer
+            - dropout_rate : float
+                Dropout rate for regularization
+            - activation : str or callable
+                Activation function to use
+            - inputsize : tuple
+                Input dimensions for the model
+            - device : torch.device
+                Device to move the model to (CPU or GPU)
+
+        Returns
+        -------
+        None
+            This method does not return any value. It initializes the model attribute
+            of the class instance.
+
+        Notes
+        -----
+        The method assumes that the CRNNModel class is properly imported and available
+        in the namespace. The model is automatically moved to the device specified
+        in self.device.
+
+        Examples
+        --------
+        >>> class MyModel:
+        ...     def __init__(self):
+        ...         self.num_filters = 32
+        ...         self.kernel_size = 3
+        ...         self.encoding_dim = 128
+        ...         self.dropout_rate = 0.2
+        ...         self.activation = 'relu'
+        ...         self.inputsize = (1, 28, 28)
+        ...         self.device = torch.device('cpu')
+        ...
+        ...     def makenet(self):
+        ...         self.model = CRNNModel(
+        ...             self.num_filters,
+        ...             self.kernel_size,
+        ...             self.encoding_dim,
+        ...             self.dropout_rate,
+        ...             self.activation,
+        ...             self.inputsize,
+        ...         )
+        ...         self.model.to(self.device)
+        ...
+        >>> model = MyModel()
+        >>> model.makenet()
+        >>> print(model.model)
+        """
+        self.model = CRNNModel(
+            self.num_filters,
+            self.kernel_size,
+            self.encoding_dim,
+            self.dropout_rate,
+            self.activation,
+            self.inputsize,
+        )
+        self.model.to(self.device)
+
+
+class LSTMModel(nn.Module):
+    def __init__(self, num_units, num_layers, dropout_rate, window_size, inputsize):
+        """
+        Initialize the LSTMModel with specified architecture parameters.
+
+        Parameters
+        ----------
+        num_units : int
+            Number of units in each LSTM layer
+        num_layers : int
+            Number of LSTM layers in the model
+        dropout_rate : float
+            Dropout rate for LSTM layers (applied only if num_layers > 1)
+        window_size : int
+            Size of the sliding window used for sequence processing
+        inputsize : int
+            Dimensionality of input features
+
+        Returns
+        -------
+        None
+            Initializes the LSTMModel instance with the specified architecture
+
+        Notes
+        -----
+        This constructor creates a bidirectional LSTM model with residual connections.
+        The model uses LSTM layers with bidirectional processing and time-distributed
+        dense layers for output transformation. Dropout is applied between layers
+        when multiple layers are present.
+
+        Examples
+        --------
+        >>> model = LSTMModel(num_units=128, num_layers=2, dropout_rate=0.2,
+        ...                   window_size=10, inputsize=20)
+        >>> print(model)
+        """
+        super(LSTMModel, self).__init__()
+
+        self.num_units = num_units
+        self.num_layers = num_layers
+        self.dropout_rate = dropout_rate
+        self.window_size = window_size
+        self.inputsize = inputsize
+
+        self.lstm_layers = nn.ModuleList()
+        self.dense_layers = nn.ModuleList()
+
+        for _ in range(num_layers):
+            # Bidirectional LSTM
+            self.lstm_layers.append(
+                nn.LSTM(
+                    inputsize if len(self.lstm_layers) == 0 else inputsize,
+                    num_units,
+                    batch_first=True,
+                    bidirectional=True,
+                    dropout=dropout_rate if num_layers > 1 else 0,
+                )
+            )
+            # Time-distributed dense layer
+            self.dense_layers.append(nn.Linear(num_units * 2, inputsize))
+
+    def forward(self, x):
+        """
+        Forward pass through LSTM and dense layers.
+
+        Apply a sequence of LSTM layers followed by dense layers to the input tensor,
+        with appropriate dimension permutations to maintain correct data flow.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor with shape (batch, channels, length) containing the sequential data.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor with shape (batch, channels, length) after processing through
+            LSTM and dense layers.
+
+        Notes
+        -----
+        The function performs the following operations:
+        1. Permutes input from (batch, channels, length) to (batch, length, channels)
+        2. Processes through LSTM layers sequentially
+        3. Applies dense layers to each time step
+        4. Permutes output back to (batch, channels, length)
+
+        Examples
+        --------
+        >>> import torch
+        >>> # Assuming self.lstm_layers and self.dense_layers are initialized
+        >>> x = torch.randn(32, 128, 100)  # batch=32, channels=128, length=100
+        >>> output = model.forward(x)
+        >>> output.shape
+        torch.Size([32, 128, 100])
+        """
+        # x is (batch, channels, length), convert to (batch, length, channels)
+        x = x.permute(0, 2, 1)
+
+        for lstm, dense in zip(self.lstm_layers, self.dense_layers):
+            x, _ = lstm(x)
+            # Apply dense layer across time steps
+            x = dense(x)
+
+        # Convert back to (batch, channels, length)
+        x = x.permute(0, 2, 1)
+
+        return x
+
+    def get_config(self):
+        """
+        Get the configuration parameters of the model.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the model configuration parameters with the following keys:
+            - "num_units" (int): Number of units in each layer
+            - "num_layers" (int): Number of layers in the model
+            - "dropout_rate" (float): Dropout rate for regularization
+            - "window_size" (int): Size of the sliding window for sequence processing
+            - "inputsize" (int): Size of the input features
+
+        Notes
+        -----
+        This method returns a copy of the internal configuration parameters.
+        The returned dictionary can be used to recreate the model with the same configuration.
+
+        Examples
+        --------
+        >>> config = model.get_config()
+        >>> print(config['num_units'])
+        128
+        >>> new_model = ModelClass(**config)
+        """
+        return {
+            "num_units": self.num_units,
+            "num_layers": self.num_layers,
+            "dropout_rate": self.dropout_rate,
+            "window_size": self.window_size,
+            "inputsize": self.inputsize,
+        }
+
+
+class LSTMDLFilter(DeepLearningFilter):
+    def __init__(self, num_units: int = 16, *args, **kwargs) -> None:
+        """
+        Initialize the LSTMDLFilter layer.
+
+        Parameters
+        ----------
+        num_units : int, optional
+            Number of units in the LSTM layer, by default 16
+        *args
+            Variable length argument list passed to parent class
+        **kwargs
+            Arbitrary keyword arguments passed to parent class
+
+        Returns
+        -------
+        None
+            This method initializes the instance and does not return any value
+
+        Notes
+        -----
+        This constructor sets up the LSTM layer with specified number of units and
+        initializes the network type identifier. The infodict is updated with both
+        the network type and number of units for tracking purposes.
+
+        Examples
+        --------
+        >>> layer = LSTMDLFilter(num_units=32)
+        >>> print(layer.num_units)
+        32
+        >>> print(layer.nettype)
+        'lstm'
+        """
+        self.num_units = num_units
+        self.nettype = "lstm"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["num_units"] = self.num_units
+        super(LSTMDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        """
+        Generate and configure model name and path based on current parameters.
+
+        This method constructs a descriptive model name string using various
+        hyperparameters and configuration settings. It then creates the
+        corresponding directory path and ensures it exists.
+
+        Parameters
+        ----------
+        self : object
+            The instance containing model configuration attributes.
+
+        Returns
+        -------
+        None
+            This method modifies instance attributes in-place and does not return a value.
+
+        Notes
+        -----
+        The generated model name follows a specific format:
+        "model_lstm_pytorch_wXXX_lYY_nuZZZ_dDD_rdDD_eFFF_tT_ctTT_sS"
+        where XXX, YY, ZZZ, DD, FF, T, TT, S represent formatted parameter values.
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> model.window_size = 100
+        >>> model.num_layers = 2
+        >>> model.num_units = 128
+        >>> model.dropout_rate = 0.2
+        >>> model.num_epochs = 100
+        >>> model.excludethresh = 0.5
+        >>> model.corrthresh_rp = 0.8
+        >>> model.corrthresh_pp = 0.9
+        >>> model.step = 1
+        >>> model.excludebysubject = True
+        >>> model.getname()
+        >>> print(model.modelname)
+        'model_lstm_pytorch_w100_l02_nu128_d02_rd02_e100_t05_ct08_s1_excludebysubject'
+        """
+        self.modelname = "_".join(
+            [
+                "model",
+                "lstm",
+                "pytorch",
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "nu" + str(self.num_units),
+                "d" + str(self.dropout_rate),
+                "rd" + str(self.dropout_rate),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
+                "s" + str(self.step),
+            ]
+        )
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        """
+        Create and initialize an LSTM model for neural network training.
+
+        This method initializes an LSTMModel with the specified architecture parameters
+        and moves the model to the designated device (CPU or GPU).
+
+        Parameters
+        ----------
+        self : object
+            The instance containing the following attributes:
+            - num_units : int
+                Number of units in each LSTM layer
+            - num_layers : int
+                Number of LSTM layers in the model
+            - dropout_rate : float
+                Dropout rate for regularization
+            - window_size : int
+                Size of the input window for time series data
+            - inputsize : int
+                Size of the input features
+            - device : torch.device
+                Device to move the model to (e.g., 'cpu' or 'cuda')
+
+        Returns
+        -------
+        None
+            This method does not return any value. It initializes the model attribute
+            and moves it to the specified device.
+
+        Notes
+        -----
+        The method creates an LSTMModel instance with the following parameters:
+        - num_units: Number of hidden units in LSTM layers
+        - num_layers: Number of stacked LSTM layers
+        - dropout_rate: Dropout probability for regularization
+        - window_size: Input sequence length
+        - inputsize: Feature dimension of input data
+
+        Examples
+        --------
+        >>> # Assuming self is an instance with required attributes
+        >>> self.makenet()
+        >>> # Model is now initialized and moved to specified device
+        """
+        self.model = LSTMModel(
+            self.num_units,
+            self.num_layers,
+            self.dropout_rate,
+            self.window_size,
+            self.inputsize,
+        )
+        self.model.to(self.device)
+
+
+class HybridModel(nn.Module):
+    def __init__(
+        self,
+        num_filters,
+        kernel_size,
+        num_units,
+        num_layers,
+        dropout_rate,
+        activation,
+        inputsize,
+        window_size,
+        invert,
+    ):
+        """
+        Initialize the HybridModel with configurable CNN-LSTM architecture.
+
+        Parameters
+        ----------
+        num_filters : int
+            Number of filters in the convolutional layers.
+        kernel_size : int
+            Size of the convolutional kernel.
+        num_units : int
+            Number of units in the LSTM layers.
+        num_layers : int
+            Total number of layers in the model.
+        dropout_rate : float
+            Dropout rate for regularization.
+        activation : str
+            Activation function to use; options are 'relu' or 'tanh'.
+        inputsize : int
+            Size of the input features.
+        window_size : int
+            Size of the sliding window for input data.
+        invert : bool
+            If True, applies CNN first followed by LSTM. Otherwise, applies LSTM first followed by CNN.
+
+        Returns
+        -------
+        None
+            This method initializes the model's layers and components but does not return any value.
+
+        Notes
+        -----
+        The model supports two architectures:
+        - If `invert=False`: LSTM → CNN
+        - If `invert=True`: CNN → LSTM
+
+        Examples
+        --------
+        >>> model = HybridModel(
+        ...     num_filters=64,
+        ...     kernel_size=3,
+        ...     num_units=128,
+        ...     num_layers=3,
+        ...     dropout_rate=0.2,
+        ...     activation="relu",
+        ...     inputsize=10,
+        ...     window_size=100,
+        ...     invert=True
+        ... )
+        """
+        super(HybridModel, self).__init__()
+
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.num_units = num_units
+        self.num_layers = num_layers
+        self.dropout_rate = dropout_rate
+        self.activation = activation
+        self.inputsize = inputsize
+        self.window_size = window_size
+        self.invert = invert
+
+        # Get activation function
+        if activation == "relu":
+            act_fn = nn.ReLU
+        elif activation == "tanh":
+            act_fn = nn.Tanh
+        else:
+            act_fn = nn.ReLU
+
+        self.layers = nn.ModuleList()
+
+        if invert:
+            # CNN first, then LSTM
+            # Input layer
+            self.layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding="same"))
+            self.layers.append(nn.BatchNorm1d(num_filters))
+            self.layers.append(nn.Dropout(dropout_rate))
+            self.layers.append(act_fn())
+
+            # Intermediate CNN layers
+            for _ in range(num_layers - 2):
+                self.layers.append(
+                    nn.Conv1d(num_filters, num_filters, kernel_size, padding="same")
+                )
+                self.layers.append(nn.BatchNorm1d(num_filters))
+                self.layers.append(nn.Dropout(dropout_rate))
+                self.layers.append(act_fn())
+
+            # LSTM layer
+            self.lstm = nn.LSTM(
+                num_filters, num_units, batch_first=True, bidirectional=True, dropout=dropout_rate
+            )
+            self.lstm_dense = nn.Linear(num_units * 2, inputsize)
+
+        else:
+            # LSTM first, then CNN
+            self.lstm = nn.LSTM(
+                inputsize, num_units, batch_first=True, bidirectional=True, dropout=dropout_rate
+            )
+            self.lstm_dense = nn.Linear(num_units * 2, inputsize)
+            self.lstm_dropout = nn.Dropout(dropout_rate)
+
+            # Intermediate CNN layers
+            for _ in range(num_layers - 2):
+                self.layers.append(nn.Conv1d(inputsize, num_filters, kernel_size, padding="same"))
+                self.layers.append(nn.BatchNorm1d(num_filters))
+                self.layers.append(nn.Dropout(dropout_rate))
+                self.layers.append(act_fn())
+
+            # Output layer
+            self.output_conv = nn.Conv1d(
+                num_filters if num_layers > 2 else inputsize,
+                inputsize,
+                kernel_size,
+                padding="same",
+            )
+
+    def forward(self, x):
+        """
+        Forward pass of the model with optional CNN-LSTM hybrid architecture.
+
+        This method implements a flexible forward pass that can operate in two modes
+        depending on the `invert` flag. When `invert` is True, the sequence processing
+        follows CNN → LSTM → CNN structure. When `invert` is False, the sequence
+        processing follows LSTM → CNN structure.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor of shape (batch_size, channels, sequence_length) or
+            (batch_size, sequence_length, channels) depending on the processing path.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor with the same batch dimension as input, with shape
+            dependent on the specific layers and processing path used.
+
+        Notes
+        -----
+        The function handles different tensor permutations based on the processing
+        order:
+        - CNN → LSTM path: permutes from (B, C, L) to (B, L, C) for LSTM, then back
+        - LSTM → CNN path: permutes from (B, C, L) to (B, L, C) for LSTM, then back
+        The `invert` flag determines which processing order is used.
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> x = torch.randn(32, 10, 128)  # batch_size=32, seq_len=10, features=128
+        >>> output = model.forward(x)
+        >>> print(output.shape)
+        torch.Size([32, 10, 256])
+        """
+        if self.invert:
+            # Apply CNN layers
+            for layer in self.layers:
+                x = layer(x)
+
+            # LSTM expects (batch, seq_len, features)
+            x = x.permute(0, 2, 1)
+            x, _ = self.lstm(x)
+            x = self.lstm_dense(x)
+
+            # Convert back to (batch, channels, length)
+            x = x.permute(0, 2, 1)
+
+        else:
+            # LSTM first
+            x = x.permute(0, 2, 1)
+            x, _ = self.lstm(x)
+            x = self.lstm_dense(x)
+            x = self.lstm_dropout(x)
+            x = x.permute(0, 2, 1)
+
+            # CNN layers
+            for layer in self.layers:
+                x = layer(x)
+
+            # Output layer
+            if hasattr(self, "output_conv"):
+                x = self.output_conv(x)
+
+        return x
+
+    def get_config(self):
+        """
+        Get the configuration parameters of the model.
+
+        Returns
+        -------
+        dict
+            A dictionary containing all configuration parameters with their current values:
+            - num_filters: int, number of filters in the convolutional layers
+            - kernel_size: int, size of the convolutional kernel
+            - num_units: int, number of units in the dense layers
+            - num_layers: int, number of layers in the model
+            - dropout_rate: float, dropout rate for regularization
+            - activation: str or callable, activation function to use
+            - inputsize: int, size of the input features
+            - window_size: int, size of the sliding window
+            - invert: bool, whether to invert the input data
+
+        Notes
+        -----
+        This method returns a copy of the internal configuration dictionary.
+        Modifications to the returned dictionary will not affect the original model configuration.
+
+        Examples
+        --------
+        >>> config = model.get_config()
+        >>> print(config['num_filters'])
+        32
+        """
+        return {
+            "num_filters": self.num_filters,
+            "kernel_size": self.kernel_size,
+            "num_units": self.num_units,
+            "num_layers": self.num_layers,
+            "dropout_rate": self.dropout_rate,
+            "activation": self.activation,
+            "inputsize": self.inputsize,
+            "window_size": self.window_size,
+            "invert": self.invert,
+        }
+
+
+class HybridDLFilter(DeepLearningFilter):
+    def __init__(
+        self,
+        invert: bool = False,
+        num_filters: int = 10,
+        kernel_size: int = 5,
+        num_units: int = 16,
+        *args,
+        **kwargs,
+    ) -> None:
+        """
+        Initialize HybridDLFilter layer.
+
+        Parameters
+        ----------
+        invert : bool, default=False
+            If True, inverts the filter response. If False, applies normal filtering.
+        num_filters : int, default=10
+            Number of filters to apply in the convolutional layer.
+        kernel_size : int, default=5
+            Size of the convolutional kernel.
+        num_units : int, default=16
+            Number of units in the dense layer.
+        *args
+            Variable length argument list.
+        **kwargs
+            Arbitrary keyword arguments.
+
+        Returns
+        -------
+        None
+            This method initializes the HybridDLFilter instance and does not return any value.
+
+        Notes
+        -----
+        This constructor sets up a hybrid deep learning filter that combines convolutional
+        and dense layers. The infodict dictionary is populated with configuration parameters
+        for tracking and logging purposes.
+
+        Examples
+        --------
+        >>> filter_layer = HybridDLFilter(
+        ...     invert=True,
+        ...     num_filters=20,
+        ...     kernel_size=3,
+        ...     num_units=32
+        ... )
+        """
+        self.invert = invert
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.num_units = num_units
+        self.nettype = "hybrid"
+        self.infodict["nettype"] = self.nettype
+        self.infodict["num_filters"] = self.num_filters
+        self.infodict["kernel_size"] = self.kernel_size
+        self.infodict["invert"] = self.invert
+        self.infodict["num_units"] = self.num_units
+        super(HybridDLFilter, self).__init__(*args, **kwargs)
+
+    def getname(self):
+        """
+        Generate and configure the model name and path based on current parameters.
+
+        This method constructs a descriptive model name string using various
+        hyperparameters and configuration settings. The generated name follows
+        a standardized format that includes window size, layer count, filter count,
+        kernel size, number of units, dropout rates, number of epochs, threshold
+        values, step size, and activation function. The method also creates the
+        corresponding model directory path and ensures it exists.
+
+        Parameters
+        ----------
+        self : object
+            The instance of the class containing the model configuration attributes.
+            Required attributes include:
+            - window_size : int
+            - num_layers : int
+            - num_filters : int
+            - kernel_size : int
+            - num_units : int
+            - dropout_rate : float
+            - num_epochs : int
+            - excludethresh : float
+            - corrthresh_rp : float
+            - corrthresh_pp : float
+            - step : int
+            - activation : str
+            - invert : bool
+            - excludebysubject : bool
+            - modelroot : str
+
+        Returns
+        -------
+        None
+            This method modifies the instance attributes in-place:
+            - self.modelname : str
+            - self.modelpath : str
+
+        Notes
+        -----
+        The model name format follows this pattern:
+        "model_hybrid_pytorch_wXXX_lYY_fnZZ_flZZ_nuZZ_dZZ_rdZZ_eXXX_tX_ctX_sX_activation"
+        where XXX, YY, ZZ, etc. represent zero-padded numerical values.
+
+        Additional suffixes are appended based on:
+        - "_invert" if self.invert is True
+        - "_excludebysubject" if self.excludebysubject is True
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> model.window_size = 100
+        >>> model.num_layers = 2
+        >>> model.getname()
+        >>> print(model.modelname)
+        'model_hybrid_pytorch_w100_l02_fn08_fl08_nu128_d05_rd05_e100_t05_ct08_s1_relu'
+        """
+        self.modelname = "_".join(
+            [
+                "model",
+                "hybrid",
+                "pytorch",
+                "w" + str(self.window_size).zfill(3),
+                "l" + str(self.num_layers).zfill(2),
+                "fn" + str(self.num_filters).zfill(2),
+                "fl" + str(self.kernel_size).zfill(2),
+                "nu" + str(self.num_units),
+                "d" + str(self.dropout_rate),
+                "rd" + str(self.dropout_rate),
+                "e" + str(self.num_epochs).zfill(3),
+                "t" + str(self.excludethresh),
+                "ctrp" + str(self.corrthresh_rp),
+                "ctpp" + str(self.corrthresh_pp),
+                "s" + str(self.step),
+                self.activation,
+            ]
+        )
+        if self.invert:
+            self.modelname += "_invert"
+        if self.excludebysubject:
+            self.modelname += "_excludebysubject"
+        self.modelpath = os.path.join(self.modelroot, self.modelname)
+
+        try:
+            os.makedirs(self.modelpath)
+        except OSError:
+            pass
+
+    def makenet(self):
+        """
+        Create and initialize a hybrid neural network model.
+
+        This method constructs a HybridModel with the specified architecture parameters
+        and moves it to the designated device (CPU or GPU).
+
+        Parameters
+        ----------
+        self : object
+            The instance containing the following attributes:
+            - num_filters : int
+                Number of filters in the convolutional layers
+            - kernel_size : int
+                Size of the convolutional kernels
+            - num_units : int
+                Number of units in the dense layers
+            - num_layers : int
+                Number of layers in the model
+            - dropout_rate : float
+                Dropout rate for regularization
+            - activation : str or callable
+                Activation function to use
+            - inputsize : int
+                Size of the input features
+            - window_size : int
+                Size of the sliding window
+            - invert : bool
+                Whether to invert the model architecture
+
+        Returns
+        -------
+        None
+            This method does not return any value. It initializes the model attribute
+            and moves it to the specified device.
+
+        Notes
+        -----
+        The method assumes that the instance has all required attributes set before
+        calling. The model is moved to the device specified by `self.device`.
+
+        Examples
+        --------
+        >>> model = MyModel()
+        >>> model.num_filters = 32
+        >>> model.kernel_size = 3
+        >>> model.num_units = 64
+        >>> model.num_layers = 2
+        >>> model.dropout_rate = 0.2
+        >>> model.activation = 'relu'
+        >>> model.inputsize = 10
+        >>> model.window_size = 5
+        >>> model.invert = False
+        >>> model.device = 'cuda'
+        >>> model.makenet()
+        >>> print(model.model)
+        """
+        self.model = HybridModel(
+            self.num_filters,
+            self.kernel_size,
+            self.num_units,
+            self.num_layers,
+            self.dropout_rate,
+            self.activation,
+            self.inputsize,
+            self.window_size,
+            self.invert,
         )
         self.model.to(self.device)
 
