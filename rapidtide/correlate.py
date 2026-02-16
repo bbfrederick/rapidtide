@@ -1154,9 +1154,12 @@ class AliasedCorrelator:
             print(offset, self.numsteps)
         osvec = np.zeros_like(self.hiressignal)
         osvec[offset :: self.numsteps] = loressignal[:]
-        corrfunc = fastcorrelate(tide_math.corrnormalize(osvec), self.hiressignal) * np.sqrt(
-            self.numsteps
-        )
+        # Pad both inputs by one sample so output length is 2*N+1, matching corrx.
+        # Unpadded full correlation gives 2*N-1 lags.
+        corrfunc = fastcorrelate(
+            np.pad(tide_math.corrnormalize(osvec), (0, 1), mode="constant"),
+            np.pad(self.hiressignal, (0, 1), mode="constant"),
+        ) * np.sqrt(self.numsteps)
         return corrfunc
 
 
