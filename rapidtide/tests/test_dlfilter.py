@@ -17,6 +17,7 @@
 #
 #
 import os
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -391,6 +392,112 @@ def base_filter_infodict(testtemproot):
     assert filter_obj.infodict["kernel_size"] == 5
 
 
+def base_loaddata_requires_initialize(testtemproot):
+    """Test loaddata() raises if called before initialize()."""
+    import rapidtide.dlfilter as dlfilter
+
+    filter_obj = dlfilter.CNNDLFilter(
+        num_filters=4,
+        kernel_size=3,
+        window_size=32,
+        num_layers=1,
+        num_epochs=1,
+        modelroot=testtemproot,
+    )
+
+    with pytest.raises(Exception):
+        filter_obj.loaddata()
+
+
+def base_loaddata_calls_prep_when_initialized(testtemproot):
+    """Test loaddata() calls prep() and populates data attributes."""
+    import rapidtide.dlfilter as dlfilter
+
+    filter_obj = dlfilter.CNNDLFilter(
+        num_filters=4,
+        kernel_size=3,
+        window_size=32,
+        num_layers=1,
+        num_epochs=1,
+        modelroot=testtemproot,
+    )
+    filter_obj.initialized = True
+
+    train_x = np.zeros((4, 32, 1), dtype=np.float32)
+    train_y = np.zeros((4, 32, 1), dtype=np.float32)
+    val_x = np.zeros((2, 32, 1), dtype=np.float32)
+    val_y = np.zeros((2, 32, 1), dtype=np.float32)
+
+    with patch(
+        "rapidtide.dlfilter.prep",
+        return_value=(train_x, train_y, val_x, val_y, 6, 32, 2),
+    ):
+        filter_obj.loaddata()
+
+    assert filter_obj.train_x.shape == (4, 32, 1)
+    assert filter_obj.train_y.shape == (4, 32, 1)
+    assert filter_obj.val_x.shape == (2, 32, 1)
+    assert filter_obj.val_y.shape == (2, 32, 1)
+    assert filter_obj.Ns == 6
+    assert filter_obj.tclen == 32
+    assert filter_obj.thebatchsize == 2
+
+
+def cnn_minimal_cpu_training_loop(testtemproot):
+    """Run a minimal CNN training loop on CPU and verify artifacts."""
+    import rapidtide.dlfilter as dlfilter
+
+    rng = np.random.RandomState(1234)
+    window_size = 32
+    train_n = 8
+    val_n = 4
+
+    train_x = rng.randn(train_n, window_size, 1).astype(np.float32)
+    train_y = (0.8 * train_x + 0.1).astype(np.float32)
+    val_x = rng.randn(val_n, window_size, 1).astype(np.float32)
+    val_y = (0.8 * val_x + 0.1).astype(np.float32)
+
+    filter_obj = dlfilter.CNNDLFilter(
+        num_filters=4,
+        kernel_size=3,
+        window_size=window_size,
+        num_layers=1,
+        dropout_rate=0.1,
+        num_pretrain_epochs=0,
+        num_epochs=1,
+        modelroot=testtemproot,
+        namesuffix="cpu_train_smoke",
+        excludebysubject=False,
+    )
+
+    # Keep model creation/training explicitly on CPU.
+    with tf.device("/CPU:0"):
+        filter_obj.getname()
+        filter_obj.makenet()
+        # Work around modelname/modelpath inconsistency in dlfilter.py.
+        filter_obj.modelname = filter_obj.modelpath
+        filter_obj.initmetadata()
+        filter_obj.train_x = train_x
+        filter_obj.train_y = train_y
+        filter_obj.val_x = val_x
+        filter_obj.val_y = val_y
+        filter_obj.train()
+
+    assert filter_obj.trained is True
+    assert os.path.exists(os.path.join(filter_obj.modelpath, "model.keras"))
+
+    loss, valloss, prederr, rawerr = filter_obj.evaluate()
+    assert len(loss) == 1
+    assert len(valloss) == 1
+    assert np.isfinite(prederr)
+    assert np.isfinite(rawerr)
+    assert os.path.exists(os.path.join(filter_obj.modelpath, "loss.txt"))
+    assert os.path.exists(os.path.join(filter_obj.modelpath, "loss.png"))
+
+    preds = filter_obj.predict_model(tf.constant(val_x)).numpy()
+    assert preds.shape == val_y.shape
+
+
 # ============================================================
 # Standalone function tests (filtscale, tobadpts, targettoinput)
 # ============================================================
@@ -536,6 +643,18 @@ def test_dlfilterops(debug=False, local=False):
     if debug:
         print("base_filter_infodict(testtemproot)")
     base_filter_infodict(testtemproot)
+
+    if debug:
+        print("base_loaddata_requires_initialize(testtemproot)")
+    base_loaddata_requires_initialize(testtemproot)
+
+    if debug:
+        print("base_loaddata_calls_prep_when_initialized(testtemproot)")
+    base_loaddata_calls_prep_when_initialized(testtemproot)
+
+    if debug:
+        print("cnn_minimal_cpu_training_loop(testtemproot)")
+    cnn_minimal_cpu_training_loop(testtemproot)
 
     # Standalone function tests
     if debug:

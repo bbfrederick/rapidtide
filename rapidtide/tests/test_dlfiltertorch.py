@@ -17,8 +17,10 @@
 #
 #
 import os
+from unittest.mock import patch
 
 import numpy as np
+import pytest
 import torch
 
 import rapidtide.dlfiltertorch as dlfiltertorch
@@ -356,6 +358,105 @@ def save_and_load_convautoencoder_model(testtemproot):
     # Verify weights match
     for name, param in filter_obj2.model.named_parameters():
         assert torch.allclose(original_weights[name], param.data)
+
+
+def loaddata_requires_initialize():
+    """Test that loaddata raises if model has not been initialized."""
+    filter_obj = dlfiltertorch.CNNDLFilter(
+        num_filters=4,
+        kernel_size=3,
+        window_size=32,
+        num_layers=1,
+        num_epochs=1,
+    )
+    with pytest.raises(Exception):
+        filter_obj.loaddata()
+
+
+def loaddata_calls_prep_when_initialized():
+    """Test loaddata() calls prep() and populates expected attributes."""
+    filter_obj = dlfiltertorch.CNNDLFilter(
+        num_filters=4,
+        kernel_size=3,
+        window_size=32,
+        num_layers=1,
+        num_epochs=1,
+    )
+    filter_obj.initialized = True
+
+    train_x = np.zeros((4, 32, 1), dtype=np.float32)
+    train_y = np.zeros((4, 32, 1), dtype=np.float32)
+    val_x = np.zeros((2, 32, 1), dtype=np.float32)
+    val_y = np.zeros((2, 32, 1), dtype=np.float32)
+
+    with patch(
+        "rapidtide.dlfiltertorch.prep",
+        return_value=(train_x, train_y, val_x, val_y, 6, 32, 2),
+    ):
+        filter_obj.loaddata()
+
+    assert filter_obj.train_x.shape == (4, 32, 1)
+    assert filter_obj.train_y.shape == (4, 32, 1)
+    assert filter_obj.val_x.shape == (2, 32, 1)
+    assert filter_obj.val_y.shape == (2, 32, 1)
+    assert filter_obj.Ns == 6
+    assert filter_obj.tclen == 32
+    assert filter_obj.thebatchsize == 2
+
+
+def minimal_cpu_training_loop_cnn(testtemproot):
+    """Run a minimal real training loop using CPU only."""
+    rng = np.random.RandomState(1234)
+    window_size = 32
+    train_n = 8
+    val_n = 4
+
+    train_x = rng.randn(train_n, window_size, 1).astype(np.float32)
+    train_y = (0.8 * train_x + 0.1).astype(np.float32)
+    val_x = rng.randn(val_n, window_size, 1).astype(np.float32)
+    val_y = (0.8 * val_x + 0.1).astype(np.float32)
+
+    filter_obj = dlfiltertorch.CNNDLFilter(
+        num_filters=4,
+        kernel_size=3,
+        window_size=window_size,
+        num_layers=1,
+        dropout_rate=0.1,
+        num_pretrain_epochs=0,
+        num_epochs=1,
+        batch_size=2,
+        modelroot=testtemproot,
+        namesuffix="cpu_train_smoke",
+        excludebysubject=False,
+    )
+
+    filter_obj.getname()
+    filter_obj.makenet()
+    filter_obj.device = torch.device("cpu")
+    filter_obj.model.to(filter_obj.device)
+
+    # Work around modelname/modelpath inconsistency by using absolute model dir.
+    filter_obj.modelname = filter_obj.modelpath
+    os.makedirs(filter_obj.modelname, exist_ok=True)
+    filter_obj.initmetadata()
+
+    filter_obj.train_x = train_x
+    filter_obj.train_y = train_y
+    filter_obj.val_x = val_x
+    filter_obj.val_y = val_y
+
+    filter_obj.train()
+
+    assert filter_obj.trained is True
+    assert len(filter_obj.loss) == 1
+    assert len(filter_obj.val_loss) == 1
+    assert next(filter_obj.model.parameters()).device.type == "cpu"
+    assert os.path.exists(os.path.join(filter_obj.modelname, "model.pth"))
+    assert os.path.exists(os.path.join(filter_obj.modelname, "best_model.pth"))
+    assert os.path.exists(os.path.join(filter_obj.modelname, "loss.txt"))
+
+    preds = filter_obj.predict_model(val_x)
+    assert preds.shape == val_y.shape
 
 
 def filtscale_forward():
@@ -812,6 +913,18 @@ def test_dlfilterops(debug=False, local=False):
     if debug:
         print("save_and_load_convautoencoder_model(testtemproot)")
     save_and_load_convautoencoder_model(testtemproot)
+
+    if debug:
+        print("loaddata_requires_initialize()")
+    loaddata_requires_initialize()
+
+    if debug:
+        print("loaddata_calls_prep_when_initialized()")
+    loaddata_calls_prep_when_initialized()
+
+    if debug:
+        print("minimal_cpu_training_loop_cnn(testtemproot)")
+    minimal_cpu_training_loop_cnn(testtemproot)
 
     if debug:
         print("filtscale_forward()")
