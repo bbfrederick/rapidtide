@@ -821,7 +821,6 @@ def prewhiten2(
         ar_fit = ar_model.fit()
     else:
         ar_model = ar_select_order(timecourse, nlags)
-        ar_model.ar_lags
         ar_fit = ar_model.model.fit()
     if debug:
         print(ar_fit.summary())
