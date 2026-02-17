@@ -537,6 +537,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
     # if we have an estimation mask, run procedure once.  If not, run once to get a vessel mask, then rerun.
     appflips_byslice = None
+    cardcalconly_done = False
     for thispass in range(numpasses):
         if numpasses > 1:
             print()
@@ -893,7 +894,7 @@ def happy_main(argparsingfunc: Any) -> None:
                 )
                 infodict["corrcoeff_raw2filt"] = maxval + 0
                 infodict["delay_raw2filt"] = maxdelay + 0
-                infodict["failreason_raw2filt"] = failreason + 0
+                infodict["failreason_raw2filt"] = failreason
 
                 timings.append(
                     [
@@ -953,7 +954,7 @@ def happy_main(argparsingfunc: Any) -> None:
                 )
                 infodict["corrcoeff_filt2pleth"] = maxval + 0
                 infodict["delay_filt2pleth"] = maxdelay + 0
-                infodict["failreason_filt2pleth"] = failreason + 0
+                infodict["failreason_filt2pleth"] = failreason
 
             # check the match between the bold and physio cardiac signals
             maxval, maxdelay, failreason = happy_support.checkcardmatch(
@@ -972,11 +973,11 @@ def happy_main(argparsingfunc: Any) -> None:
             )
             infodict["corrcoeff_raw2pleth"] = maxval + 0
             infodict["delay_raw2pleth"] = maxdelay + 0
-            infodict["failreason_raw2pleth"] = failreason + 0
+            infodict["failreason_raw2pleth"] = failreason
 
             # align the pleth signal with the cardiac signal derived from the data
             if args.aligncardiac:
-                alignpts_sliceres = -maxdelay / slicesamplerate  # maxdelay is in seconds
+                alignpts_sliceres = -maxdelay * slicesamplerate  # maxdelay is in seconds
                 pleth_sliceres, dummy1, dummy2, dummy2 = tide_resample.timeshift(
                     pleth_sliceres, alignpts_sliceres, int(10.0 * slicesamplerate)
                 )
@@ -1074,7 +1075,7 @@ def happy_main(argparsingfunc: Any) -> None:
             )
             infodict["corrcoeff_filtraw2filtpleth"] = maxval + 0
             infodict["delay_filtraw2filtpleth"] = maxdelay + 0
-            infodict["failreason_filtraw2filtpleth"] = failreason + 0
+            infodict["failreason_filtraw2filtpleth"] = failreason
 
             if args.dodlfilter and dlfilterexists:
                 dlfilteredpleth = thedlfilter.apply(pleth_stdres)
@@ -1101,7 +1102,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     )
                     infodict["corrcoeff_pleth2filtpleth"] = maxval + 0
                     infodict["delay_pleth2filtpleth"] = maxdelay + 0
-                    infodict["failreason_pleth2filtpleth"] = failreason + 0
+                    infodict["failreason_pleth2filtpleth"] = failreason
 
             # find bad points in plethysmogram
             thebadplethpts_sliceres = happy_support.findbadpts(
@@ -1310,7 +1311,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     returnedinputfreq,
                     fullrespts,
                 ) = happy_support.getphysiofile(
-                    args.cardiacfilename,
+                    args.respirationfilename,
                     args.respinputfreq,
                     args.respinputstart,
                     slicetimeaxis,
@@ -1379,12 +1380,8 @@ def happy_main(argparsingfunc: Any) -> None:
 
         if args.cardcalconly:
             print("Cardiac waveform calculations done - exiting")
-            # Process and save timing information
-            nodeline = "Processed on " + platform.node()
-            tide_util.proctiminginfo(
-                timings, outputfile=outputroot + "_runtimings.txt", extraheader=nodeline
-            )
-            tide_util.logmem("final")
+            cardcalconly_done = True
+            break
 
         # find the phase values for all timepoints in all slices
         cardphasevals = np.zeros((numslices, timepoints), dtype=np.float64)
@@ -1654,7 +1651,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
         # setup for aliased correlation if we're going to do it
         if args.doaliasedcorrelation:
-            if args.cardiacfilename and False:
+            if args.cardiacfilename:
                 signal_sliceres = pleth_sliceres
             else:
                 signal_sliceres = cardfromfmri_sliceres
@@ -2111,7 +2108,7 @@ def happy_main(argparsingfunc: Any) -> None:
         infodict["pulsatilitythresh"] = np.min([rawmedian * 3.0, pulsatilityfloor])
         pulsatilitymap = np.where(pulsatilitymap < rawrobustmax, pulsatilitymap, rawrobustmax)
         pulsatilitymask = np.where(pulsatilitymap > infodict["pulsatilitythresh"], 1.0, 0.0)
-        infodict["pulsatilitymaskvoxels"] = np.int64(np.sum(vesselmask))
+        infodict["pulsatilitymaskvoxels"] = np.int64(np.sum(pulsatilitymask))
         infodict["pulsatilitymaskpct"] = (
             100.0 * infodict["pulsatilitymaskvoxels"] / infodict["projmaskvoxels"]
         )
@@ -2130,6 +2127,33 @@ def happy_main(argparsingfunc: Any) -> None:
                 estweights_byslice = vesselmask.reshape((xsize * ysize, numslices)) + 0
             else:
                 estweights_byslice = pulsatilitymask.reshape((xsize * ysize, numslices)) + 0
+
+    if cardcalconly_done:
+        timings.append(["Done", time.time(), None, None])
+
+        # save pyfftw wisdom
+        tide_util.savewisdom(args.pyfftw_wisdom)
+
+        # Process and save timing information
+        nodeline = "Processed on " + platform.node()
+        tide_util.proctiminginfo(
+            timings, outputfile=outputroot + "_runtimings.txt", extraheader=nodeline
+        )
+
+        tide_util.logmem("final")
+
+        # save the information file
+        if args.saveinfoasjson:
+            tide_io.writedicttojson(infodict, outputroot + "_desc-runinfo.json")
+        else:
+            tide_io.writedict(infodict, outputroot + "_info.txt")
+
+        # delete the canary file
+        Path(f"{outputroot}_ISRUNNING.txt").unlink(missing_ok=True)
+
+        # create the finished file
+        Path(f"{outputroot}_DONE.txt").touch()
+        return
 
     # calculate the lf and hf pulsatility maps
     lfnormapp = np.zeros_like(normapp)
