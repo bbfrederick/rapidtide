@@ -71,15 +71,17 @@ class DummyDataset:
         verbose=False,
         init_LUT=False,
     ):
-        shape = (4, 4, 4)
+        # Keep masks large enough that post-erosion voxel counts still satisfy
+        # SciPy skew/kurtosis test sample-size requirements.
+        shape = (8, 8, 8)
         lagmask = np.ones(shape, dtype=int)
         lagtimes = np.random.RandomState(1).randn(*shape)
         lagstrengths = np.clip(np.random.RandomState(2).rand(*shape), 0.0, 1.0)
         mtt = np.abs(np.random.RandomState(3).randn(*shape))
         graymask = np.zeros(shape, dtype=int)
-        graymask[:2, :, :] = 1
+        graymask[:4, :, :] = 1
         whitemask = np.zeros(shape, dtype=int)
-        whitemask[2:, :, :] = 1
+        whitemask[4:, :, :] = 1
 
         self.numberofpasses = 2
         self.regressorfilterlimits = [0.2, 0.8]
