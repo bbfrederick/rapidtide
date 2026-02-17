@@ -435,6 +435,13 @@ def happy_main(argparsingfunc: Any) -> None:
 
             timings.append(["Motion filtered data saved", time.time(), numspatiallocs, "voxels"])
 
+    # filter out global mean here
+    if args.gmsfilt:
+        print("removing lfo")
+        thegmsfilter = tide_filt.NoncausalFilter("lfo_stop")
+        for thevoxel in validprojvoxels:
+            fmri_data[thevoxel, :] = thegmsfilter.apply(mrsamplerate, fmri_data[thevoxel, :])
+
     # get slice times
     slicetimes, normalizedtotr, fileisbidsjson = tide_io.getslicetimesfromfile(slicetimename)
     if normalizedtotr and not args.slicetimesareinseconds:
@@ -642,7 +649,7 @@ def happy_main(argparsingfunc: Any) -> None:
         raw_cardfromfmri_sliceres = np.array(cardfromfmri_sliceres)
 
         # find bad points in cardiac from fmri
-        thebadcardpts = happy_support.findbadpts(
+        thebadcardpts, _ = happy_support.findbadpts(
             cardfromfmri_sliceres,
             "cardfromfmri_sliceres",
             outputroot,
@@ -765,7 +772,7 @@ def happy_main(argparsingfunc: Any) -> None:
             debug=args.debug,
         )
 
-        thebadcardpts_stdres = happy_support.findbadpts(
+        thebadcardpts_stdres, _ = happy_support.findbadpts(
             cardfromfmri_stdres,
             "cardfromfmri_" + str(args.stdfreq) + "Hz",
             outputroot,
@@ -1105,7 +1112,7 @@ def happy_main(argparsingfunc: Any) -> None:
                     infodict["failreason_pleth2filtpleth"] = failreason
 
             # find bad points in plethysmogram
-            thebadplethpts_sliceres = happy_support.findbadpts(
+            thebadplethpts_sliceres, _ = happy_support.findbadpts(
                 pleth_sliceres,
                 "pleth_sliceres",
                 outputroot,
@@ -1114,7 +1121,7 @@ def happy_main(argparsingfunc: Any) -> None:
                 thetype="fracval",
             )
 
-            thebadplethpts_stdres = happy_support.findbadpts(
+            thebadplethpts_stdres, _ = happy_support.findbadpts(
                 pleth_stdres,
                 "pleth_" + str(args.stdfreq) + "Hz",
                 outputroot,
