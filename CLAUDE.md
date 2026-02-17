@@ -15,9 +15,9 @@ Rapidtide is a Python package for modeling, characterizing, visualizing, and rem
 
 ```
 rapidtide/
-├── scripts/          # Command-line entry points (~65 utilities)
+├── scripts/          # Command-line entry points (~58 utilities)
 ├── workflows/        # Main processing pipelines (rapidtide, happy, and various utilities)
-├── tests/            # Pytest test suite (~44 test files)
+├── tests/            # Pytest test suite (~105 test files)
 ├── candidatetests/   # Work-in-progress tests (not run in CI)
 ├── data/             # Reference data, models, and examples
 └── [modules]         # Core processing modules (see below)
@@ -64,7 +64,7 @@ Entry points are registered in `pyproject.toml` under `[project.scripts]`.
 
 ```bash
 # Install package in development mode with all dependencies
-pip install -e .[tests,doc]
+pip install -e .[test,doc]
 
 # Or for all optional dependencies
 pip install -e .[all]
@@ -86,7 +86,7 @@ pytest --cov=rapidtide rapidtide/tests/
 pytest rapidtide/tests/test_filter.py::test_function_name -v
 ```
 
-Note: Tests are run in CI via CircleCI for Python 3.10, 3.11, 3.13, and 3.14.
+Note: Tests are run in CI via CircleCI for Python 3.10, 3.11, 3.12, 3.13, and 3.14.
 
 ### Code Formatting
 
@@ -100,7 +100,7 @@ black --check rapidtide/filter.py
 
 Black configuration in `pyproject.toml`:
 - Line length: 99
-- Target: Python 3.9+
+- Target: Python 3.10+
 - Excludes: versioneer files, candidatetests, disabledtests, data/examples
 
 ### Building and Distribution
@@ -139,6 +139,10 @@ showxcorrx <file1> <file2>
 ```
 
 ## Important Constraints
+
+**Code style (NON-NEGOTIABLE)**:
+- Write code that is clean and modular
+- Prefer shorter functions/methods over longer ones
 
 ### Python Version
 - **Minimum**: Python 3.10
