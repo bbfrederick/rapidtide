@@ -15,7 +15,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4.2.0
+        uses: gittools/actions/gitversion/setup@v4.3.0
         with:
           versionSpec: '6.x'
 
@@ -27,7 +27,7 @@ jobs:
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
-        uses: gittools/actions/gitversion/execute@v4.2.0
+        uses: gittools/actions/gitversion/execute@v4.3.0
         with:
           additionalArguments: /config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
