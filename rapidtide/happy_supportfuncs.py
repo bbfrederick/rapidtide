@@ -2392,7 +2392,7 @@ def checkcardmatch(
     refine: bool = True,
     zeropadding: int = 0,
     debug: bool = False,
-) -> tuple[float, float, str]:
+) -> tuple[float, float, np.uint16]:
     """
     Compare two cardiac waveforms using cross-correlation and peak fitting.
 
@@ -2422,7 +2422,7 @@ def checkcardmatch(
         The maximum value of the crosscorrelation function.
     maxdelay : float
         The time, in seconds, where the maximum crosscorrelation occurs.
-    failreason : int
+    failreason : np.uint16
         Reason why the fit failed (0 if no failure).
 
     Notes
