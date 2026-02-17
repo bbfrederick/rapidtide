@@ -92,12 +92,14 @@ happy \
     sub-HAPPYTEST.json \
     ../dst/happy_gmsfilt \
     --gmsfilt \
+    --increaseoutputlevel \
     --nprocs -1
 
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
     ../dst/happy \
+    --increaseoutputlevel \
     --nprocs -1
 
 #happy \
