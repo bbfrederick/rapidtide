@@ -90,8 +90,14 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happy_temporal \
-    --temporalregression \
+    ../dst/happy_gmsfilt \
+    --gmsfilt \
+    --nprocs -1
+
+happy \
+    sub-HAPPYTEST.nii.gz \
+    sub-HAPPYTEST.json \
+    ../dst/happy \
     --nprocs -1
 
 #happy \
