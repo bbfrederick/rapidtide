@@ -303,7 +303,7 @@ def physio_quality_routines(debug=False):
     assert np.isfinite(envmean)
 
     infodict = {}
-    bad_mad = hs.findbadpts(
+    bad_mad, thresh_mad = hs.findbadpts(
         waveform,
         "card",
         "/tmp/unused",
@@ -314,7 +314,8 @@ def physio_quality_routines(debug=False):
         debug=False,
     )
     assert bad_mad.shape == waveform.shape
-    bad_frac = hs.findbadpts(
+    assert np.isscalar(thresh_mad)
+    bad_frac, thresh_frac = hs.findbadpts(
         waveform,
         "resp",
         "/tmp/unused",
@@ -325,6 +326,7 @@ def physio_quality_routines(debug=False):
         debug=False,
     )
     assert bad_frac.shape == waveform.shape
+    assert len(thresh_frac) == 2
     with pytest.raises(ValueError):
         hs.findbadpts(
             waveform,
@@ -655,7 +657,7 @@ def high_level_routines(debug=False):
     normapp2d = normapp.reshape((numspatiallocs * input_data.numslices, destpoints))
     vessel_valid = np.array([0, 1], dtype=int)
     with patch("rapidtide.happy_supportfuncs.tide_util.logmem", return_value=None):
-        hs.findvessels(
+        hardvesselthresh, softvesselthresh = hs.findvessels(
             app=app2d,
             normapp=normapp2d,
             validlocs=vessel_valid,
@@ -668,6 +670,8 @@ def high_level_routines(debug=False):
             outputlevel=0,
             debug=False,
         )
+    assert np.isfinite(hardvesselthresh)
+    assert np.isfinite(softvesselthresh)
 
     with patch("rapidtide.happy_supportfuncs.tide_io.savetonifti") as save_patch:
         hs.upsampleimage(

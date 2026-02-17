@@ -176,7 +176,7 @@ def calc_3d_optical_flow(
             if debug:
                 print(f"\tz={z}")
             for y in range(window_size // 2, ysize - window_size // 2):
-                for x in range(window_size // 2, zsize - window_size // 2):
+                for x in range(window_size // 2, xsize - window_size // 2):
                     if projmask[x, y, z] > 0:
                         # Define the window around the pixel
                         window_prev = prev_frame[
@@ -258,6 +258,9 @@ def phasejolt(phaseimage: NDArray) -> tuple[NDArray, NDArray, NDArray]:
     >>> print(jump.shape, jolt.shape, laplacian.shape)
     (10, 10) (10, 10) (10, 10)
     """
+
+    if phaseimage.ndim != 3:
+        raise ValueError(f"phasejolt expects 3D input, got {phaseimage.ndim}D")
 
     # Compute the gradient of the window in x, y, and z directions
     grad_x, grad_y, grad_z = np.gradient(phaseimage)
@@ -1504,7 +1507,8 @@ def cleanphysio(
         print("Entering cleanphysio")
 
     print("Filtering")
-    physiofilter = tide_filt.NoncausalFilter("cardiac", debug=debug)
+    filtertype = "cardiac" if iscardiac else "resp"
+    physiofilter = tide_filt.NoncausalFilter(filtertype, debug=debug)
 
     print("Envelope detection")
     envelope = tide_math.envdetect(
@@ -1675,7 +1679,7 @@ def findbadpts(
         tide_io.writevec(thebadpts, outputroot + "_" + nameroot + "_badpts.txt")
     infodict[nameroot + "_threshvalue"] = thresh
     infodict[nameroot + "_threshmethod"] = thetype
-    return thebadpts
+    return thebadpts, thresh
 
 
 def approximateentropy(waveform: NDArray, m: int, r: float) -> float:
@@ -3415,7 +3419,7 @@ def phaseproject(
     means_byslice : array_like
         Mean values by slice for normalization.
     rawapp_byslice : array_like
-        Raw APP (Arterial Spin Labeling) data by slice.
+        Raw APP data by slice.
     app_byslice : array_like
         APP data after initial processing.
     normapp_byslice : array_like
@@ -3537,6 +3541,9 @@ def phaseproject(
 
     # now do the flips
     print("Doing flips")
+    appflips_byslice = np.where(
+        -derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0
+    )
     for theslice in tqdm(
         range(numslices),
         desc="Slice",
@@ -3546,9 +3553,6 @@ def phaseproject(
         # now do the flips
         validlocs = validlocslist[theslice]
         if len(validlocs) > 0:
-            appflips_byslice = np.where(
-                -derivatives_byslice[:, :, 2] > derivatives_byslice[:, :, 0], -1.0, 1.0
-            )
             timecoursemean = np.mean(rawapp_byslice[validlocs, theslice, :], axis=1).reshape(
                 (-1, 1)
             )
@@ -3615,7 +3619,7 @@ def findvessels(
     histlen,
     outputlevel,
     debug=False,
-):
+) -> tuple[float, float]:
     """
     Find vessel thresholds and generate vessel masks from app data.
 
@@ -3650,8 +3654,12 @@ def findvessels(
 
     Returns
     -------
-    tuple
-        Tuple containing (hardvesselthresh, softvesselthresh) threshold values
+    tuple[float, float]
+        A tuple containing:
+        - hardvesselthresh: float
+          Hard threshold for vessel detection.
+        - softvesselthresh: float
+          Soft threshold for vessel detection.
 
     Notes
     -----
@@ -3701,6 +3709,7 @@ def findvessels(
         "{:.3f}".format(hardvesselthresh),
         "{:.3f}".format(softvesselthresh),
     )
+    return hardvesselthresh, softvesselthresh
 
 
 def upsampleimage(input_data, numsteps, sliceoffsets, slicesamplerate, outputroot):
