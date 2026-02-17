@@ -437,10 +437,80 @@ def happy_main(argparsingfunc: Any) -> None:
 
     # filter out global mean here
     if args.gmsfilt:
-        print("removing lfo")
-        thegmsfilter = tide_filt.NoncausalFilter("lfo_stop")
-        for thevoxel in validprojvoxels:
-            fmri_data[thevoxel, :] = thegmsfilter.apply(mrsamplerate, fmri_data[thevoxel, :])
+        timings.append(["GMS filtering start", time.time(), None, None])
+        gmsdict = {"gms": tide_math.stdnormalize(np.mean(fmri_data[validprojvoxels, :], axis=0))}
+        gmsregressors, gmsregressorlabels = tide_fit.calcexpandedregressors(
+            gmsdict,
+            labels=["gms"],
+            deriv=True,
+            order=1,
+        )
+        tide_util.disablemkl(args.nprocs)
+        gmsregressors, gmsregressorlabels, filtereddata, gmsr2 = (
+            tide_linfitfiltpass.confoundregress(
+                gmsregressors,
+                gmsregressorlabels,
+                fmri_data[validprojvoxels, :],
+                tr,
+                nprocs=args.nprocs,
+            )
+        )
+        tide_util.enablemkl(args.mklthreads)
+        fmri_data[validprojvoxels, :] = filtereddata[:, :]
+        timings.append(["GMS filtering end", time.time(), numspatiallocs, "voxels"])
+        tide_io.writebidstsv(
+            outputroot + "_desc-GMS_timeseries",
+            gmsregressors,
+            mrsamplerate,
+            columns=gmsregressorlabels,
+            append=False,
+            debug=args.debug,
+        )
+        # save gmsr2 map
+        theheader = input_data.copyheader(numtimepoints=1)
+        bidsdict = bidsbasedict.copy()
+        outarray = np.zeros((xsize, ysize, numslices), dtype=float)
+        outarray.reshape(numspatiallocs)[validprojvoxels] = gmsr2
+        maplist = [
+            (
+                outarray.reshape((xsize, ysize, numslices)),
+                "gmsr2",
+                "map",
+                None,
+                "R2 of GMS regression",
+            ),
+        ]
+        tide_io.savemaplist(
+            outputroot,
+            maplist,
+            None,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
+        if True:
+            print("prior to save - fmri_data has shape", fmri_data.shape)
+            bidsdict = bidsbasedict.copy()
+            maplist = [
+                (
+                    fmri_data.reshape((xsize, ysize, numslices, timepoints)),
+                    "motionfiltered",
+                    "bold",
+                    None,
+                    "fMRI data after motion regression",
+                ),
+            ]
+            tide_io.savemaplist(
+                outputroot,
+                maplist,
+                None,
+                (xsize, ysize, numslices, timepoints),
+                theheader,
+                bidsdict,
+                debug=args.debug,
+            )
+            timings.append(["GMS filtered data saved", time.time(), numspatiallocs, "voxels"])
 
     # get slice times
     slicetimes, normalizedtotr, fileisbidsjson = tide_io.getslicetimesfromfile(slicetimename)
@@ -1810,6 +1880,27 @@ def happy_main(argparsingfunc: Any) -> None:
                 bidsdict,
                 debug=args.debug,
             )
+            if args.outputlevel > 1:
+                theheader = input_data.copyheader()
+                maplist = [
+                    (
+                        demeandata,
+                        "demeandata",
+                        "bold",
+                        None,
+                        "fMRI data used for phase projection",
+                    ),
+                ]
+                # write the 4D demeandata
+                tide_io.savemaplist(
+                    outputroot,
+                    maplist,
+                    None,
+                    (xsize, ysize, numslices, timepoints),
+                    theheader,
+                    bidsdict,
+                    debug=args.debug,
+                )
         timings.append(["Phase projected data saved" + passstring, time.time(), None, None])
 
         if args.doaliasedcorrelation and thispass == numpasses - 1:
