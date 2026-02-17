@@ -256,15 +256,7 @@ def gmscalc_main() -> None:
     xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     print(f"Datafile shape is {datafile_data.shape}")
 
-    # smooth the data
-    if args.sigma > 0.0:
-        print("smoothing data")
-        for i in range(timepoints):
-            datafile_data[:, :, :, i] = tide_filt.ssmooth(
-                xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i]
-            )
-        print("done smoothing data")
-
+    # read in the mask
     if args.datamaskname is not None:
         print("reading in mask array")
         (
@@ -280,6 +272,16 @@ def gmscalc_main() -> None:
         print("done reading in mask array")
     else:
         datamask_data = np.ones_like(datafile_data[:, :, :, 0])
+
+    # smooth the data
+    if args.sigma > 0.0:
+        print("smoothing data")
+        for i in range(timepoints):
+            datafile_data[:, :, :, i] = tide_filt.ssmooth(
+                xdim, ydim, slicethickness, args.sigma, datafile_data[:, :, :, i]
+            )
+        print("done smoothing data")
+
 
     # now reformat from x, y, z, time to voxelnumber, measurement, subject
     numvoxels = int(xsize) * int(ysize) * int(numslices)
