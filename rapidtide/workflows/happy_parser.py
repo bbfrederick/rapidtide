@@ -261,6 +261,14 @@ def _get_parser() -> Any:
         help=("Do not save data after motion filtering. "),
         default=True,
     )
+    preprocessing_opts.add_argument(
+        "--gmsfilt",
+        dest="gmsfilt",
+        action="store_true",
+        help=("Remove low frequency variation (experimental). "),
+        default=False,
+    )
+
 
     # Cardiac estimation tuning
     cardiac_est_tuning = parser.add_argument_group("Cardiac estimation tuning")
