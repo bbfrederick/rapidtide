@@ -94,13 +94,6 @@ happy \
     --temporalregression \
     --nprocs -1
 
-happy \
-    sub-HAPPYTEST.nii.gz \
-    sub-HAPPYTEST.json \
-    ../dst/happy_spatial \
-    --spatialregression \
-    --nprocs -1
-
 #happy \
 #    sub-HAPPYTEST.nii.gz \
 #    sub-HAPPYTEST.json \
