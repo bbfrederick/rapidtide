@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -lt 1 ]; then
+    echo "usage: $0 path/to/test_file.py [args...]" >&2
+    exit 2
+fi
+
+testscript="$1"
+shift
+
+testdir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+reporoot="$(CDPATH= cd -- "$testdir/../.." && pwd)"
+
+mkdir -p "$testdir/tmp/mplconfig"
+
+export PYTHONPATH="$reporoot${PYTHONPATH:+:$PYTHONPATH}"
+export MPLCONFIGDIR="${MPLCONFIGDIR:-$testdir/tmp/mplconfig}"
+export MPLBACKEND="${MPLBACKEND:-Agg}"
+
+exec python "$testscript" "$@"
