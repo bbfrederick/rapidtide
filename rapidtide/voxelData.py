@@ -350,7 +350,7 @@ class VoxelData:
             self.xsize = self.theshape[0]
             self.ysize = 1
             self.numslices = 1
-            self.numslicelocs = None
+            self.numslicelocs = int(self.xsize)
             self.timepoints = int(self.theshape[1])
             self.thesizes = [0, int(self.xsize), 1, 1, int(self.timepoints)]
             self.toffset = 0.0
@@ -361,7 +361,8 @@ class VoxelData:
             if tide_io.checkifcifti(self.filename):
                 self.filetype = "cifti"
                 self.nim_affine = None
-                self.numslicelocs = None
+                self.numslicelocs = int(self.nim_data.shape[0])
+                self.numslices = 1
                 self.timepoints = int(self.nim_data.shape[1])
                 self.numspatiallocs = self.nim_data.shape[0]
                 self.nativespaceshape = (1, 1, 1, 1, self.numspatiallocs)
