@@ -21,8 +21,8 @@ import os
 import sys
 from typing import Any
 
+import rapidtide.core.signal.happy_supportfuncs as happy_support
 import rapidtide.dlfiltertorch as tide_dlfilt
-import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf

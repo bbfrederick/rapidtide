@@ -28,10 +28,10 @@ import numpy as np
 from numpy.typing import NDArray
 
 import rapidtide.core.models.voxel_data as tide_voxelData
+import rapidtide.core.signal.happy_supportfuncs as happy_support
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.happy_supportfuncs as happy_support
 import rapidtide.io as tide_io
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.maskutil as tide_mask
