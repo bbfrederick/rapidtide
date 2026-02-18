@@ -3957,3 +3957,25 @@ def wrightmap(
                 wrightcorrs_byslice[thepoint, theslice, theiteration] = theRvalue
     wrightcorrs = np.mean(wrightcorrs_byslice, axis=2).reshape(xsize, ysize, numslices)
     return wrightcorrs
+
+
+# Use extracted module implementations for cardiac/physio routines.
+from rapidtide.core.signal import cardiac as _core_cardiac
+from rapidtide.core.signal import physio as _core_physio
+
+rrifromphase = _core_cardiac.rrifromphase
+cardiacsig = _core_cardiac.cardiacsig
+CardiacExtractionConfig = _core_cardiac.CardiacExtractionConfig
+CardiacExtractionResult = _core_cardiac.CardiacExtractionResult
+cardiacfromimage = _core_cardiac.cardiacfromimage
+getperiodic = _core_cardiac.getperiodic
+getcardcoeffs = _core_cardiac.getcardcoeffs
+checkcardmatch = _core_cardiac.checkcardmatch
+cardiaccycleaverage = _core_cardiac.cardiaccycleaverage
+
+cleanphysio = _core_physio.cleanphysio
+findbadpts = _core_physio.findbadpts
+approximateentropy = _core_physio.approximateentropy
+entropy = _core_physio.entropy
+calcplethquality = _core_physio.calcplethquality
+getphysiofile = _core_physio.getphysiofile

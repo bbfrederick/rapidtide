@@ -16,12 +16,20 @@
 #   limitations under the License.
 #
 #
+import os
+import sys
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
 import pytest
 
+_THISFILE = os.path.abspath(__file__)
+_REPOROOT = os.path.abspath(os.path.join(os.path.dirname(_THISFILE), "..", ".."))
+if _REPOROOT not in sys.path:
+    sys.path.insert(0, _REPOROOT)
+
+import rapidtide.core.signal as core_signal
 import rapidtide.core.signal.happy_supportfuncs as hs
 import rapidtide.happy_supportfuncs as legacy_hs
 
@@ -750,6 +758,9 @@ def test_happysupportfuncs(debug=False, local=False):
     projection_helpers_routines(debug=debug)
     high_level_routines(debug=debug)
     assert callable(legacy_hs.cardiacfromimage)
+    assert callable(core_signal.cardiacfromimage)
+    assert callable(core_signal.cleanphysio)
+    assert callable(core_signal.findvessels)
 
 
 if __name__ == "__main__":
