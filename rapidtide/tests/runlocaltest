@@ -35,6 +35,7 @@ rm .coverage\.*
 #    --cov-report html:coveragereport \
 #    --cov=rapidtide \
 #    --cov-config=.coveragerc
+export MPLBACKEND=Agg
 python -m coverage run -m pytest -v -s -rs 
 
 
