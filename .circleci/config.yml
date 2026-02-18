@@ -5,6 +5,35 @@
 version: 2.1
 orbs:
   codecov: codecov/codecov@3.2.4
+commands:
+  run_split_pytests:
+    parameters:
+      env_name:
+        type: string
+      timeout:
+        type: string
+        default: "20m"
+      extra_args:
+        type: string
+        default: ""
+    steps:
+      - run:
+          no_output_timeout: << parameters.timeout >>
+          name: Run split pytest suite
+          command: |
+            apt-get update
+            apt-get install -yqq curl gpg
+            source activate << parameters.env_name >>
+            pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p rapidtide/tests/test-results
+            pytest \
+              $TESTFILES \
+              << parameters.extra_args >> \
+              --junitxml=rapidtide/tests/test-results/junit.xml
 jobs:
 
 
@@ -256,34 +285,18 @@ jobs:
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
       NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
           key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:
-          no_output_timeout: 20m
-          name: Run tests on py3.10
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py310_env
-            #source .venv/bin/activate
-            #pip install pytest
-            #deactivate && source .venv/bin/activate
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
-            shopt -s globstar
-            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p rapidtide/tests/test-results
-            shopt -u globstar
-            pytest  \
-                $TESTFILES \
-                --junitxml=rapidtide/tests/test-results/junit.xml
+      - run_split_pytests:
+          env_name: py310_env
+          timeout: "20m"
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -301,33 +314,19 @@ jobs:
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
       NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
           key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:
-          no_output_timeout: 20m
-          name: Run tests on py3.11 with options
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py311_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
-            shopt -s globstar
-            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p rapidtide/tests/test-results
-            shopt -u globstar
-            pytest \
-                $TESTFILES \
-                -W ignore \
-                --ignore=rapidtide/candidatetests \
-                --junitxml=rapidtide/tests/test-results/junit.xml
+      - run_split_pytests:
+          env_name: py311_env
+          timeout: "20m"
+          extra_args: "-W ignore --ignore=rapidtide/candidatetests"
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -345,36 +344,19 @@ jobs:
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
       NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
           key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:
-          no_output_timeout: 25m
-          name: Run coverage test on py3.11
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py311_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
-            shopt -s globstar
-            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p rapidtide/tests/test-results
-            shopt -u globstar
-            pytest \
-                $TESTFILES \
-                -W ignore \
-                --ignore=rapidtide/candidatetests \
-                --cov-report xml:rapidtide/coverage.xml \
-                --cov=rapidtide \
-                --cov-config=rapidtide/tests/.coveragerc \
-                --junitxml=rapidtide/tests/test-results/junit.xml
+      - run_split_pytests:
+          env_name: py311_env
+          timeout: "25m"
+          extra_args: "-W ignore --ignore=rapidtide/candidatetests --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc"
       - codecov/upload:
           file: rapidtide/coverage.xml
       - store_artifacts:
@@ -395,33 +377,19 @@ jobs:
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
       NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
           key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:
-          no_output_timeout: 20m
-          name: Run tests on py3.12
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py312_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
-            shopt -s globstar
-            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p rapidtide/tests/test-results
-            shopt -u globstar
-            pytest \
-                $TESTFILES \
-                -W ignore \
-                --ignore=rapidtide/candidatetests \
-                --junitxml=rapidtide/tests/test-results/junit.xml
+      - run_split_pytests:
+          env_name: py312_env
+          timeout: "20m"
+          extra_args: "-W ignore --ignore=rapidtide/candidatetests"
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -439,33 +407,19 @@ jobs:
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
       NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
           key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:
-          no_output_timeout: 20m
-          name: Run tests on py3.13
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py313_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
-            shopt -s globstar
-            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p rapidtide/tests/test-results
-            shopt -u globstar
-            pytest \
-                $TESTFILES \
-                -W ignore \
-                --ignore=rapidtide/candidatetests \
-                --junitxml=rapidtide/tests/test-results/junit.xml
+      - run_split_pytests:
+          env_name: py313_env
+          timeout: "20m"
+          extra_args: "-W ignore --ignore=rapidtide/candidatetests"
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -483,33 +437,19 @@ jobs:
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
       NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
     steps:
       - checkout
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
           key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:
-          no_output_timeout: 20m
-          name: Run tests on py3.14
-          command:  |
-            apt-get update
-            apt-get install -yqq curl gpg 
-            source activate py314_env
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
-            shopt -s globstar
-            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p rapidtide/tests/test-results
-            shopt -u globstar
-            pytest \
-                $TESTFILES \
-                -W ignore \
-                --ignore=rapidtide/candidatetests \
-                --junitxml=rapidtide/tests/test-results/junit.xml
+      - run_split_pytests:
+          env_name: py314_env
+          timeout: "20m"
+          extra_args: "-W ignore --ignore=rapidtide/candidatetests"
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
