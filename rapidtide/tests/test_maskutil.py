@@ -29,6 +29,15 @@ if _REPOROOT not in sys.path:
     sys.path.insert(0, _REPOROOT)
 
 import rapidtide.maskutil as tide_maskutil
+from rapidtide.core.io.mask_io import (
+    saveregionaltimeseries as core_saveregionaltimeseries,
+)
+from rapidtide.core.masks.mask_ops import getmaskset as core_getmaskset
+from rapidtide.core.masks.mask_ops import makeepimask as core_makeepimask
+from rapidtide.core.masks.mask_ops import maketmask as core_maketmask
+from rapidtide.core.masks.mask_ops import readamask as core_readamask
+from rapidtide.core.masks.mask_ops import resampmask as core_resampmask
+from rapidtide.core.masks.region_signal import getregionsignal as core_getregionsignal
 
 
 class DummyFilter:
@@ -284,6 +293,13 @@ def test_maskutil(debug=False, displayplots=False):
     getmaskset_tests(debug=debug)
     getregionsignal_tests(debug=debug)
     saveregionaltimeseries_tests(debug=debug)
+    assert callable(core_resampmask)
+    assert callable(core_makeepimask)
+    assert callable(core_maketmask)
+    assert callable(core_readamask)
+    assert callable(core_getmaskset)
+    assert callable(core_getregionsignal)
+    assert callable(core_saveregionaltimeseries)
 
 
 if __name__ == "__main__":
