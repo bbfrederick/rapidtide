@@ -21,15 +21,12 @@ import os
 import matplotlib as mpl
 
 import rapidtide.qualitycheck as rapidtide_quality
-import rapidtide.workflows.rapidtide as rapidtide_workflow
-import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-from rapidtide.tests.utils import get_examples_path, get_test_temp_path
+from rapidtide.tests.utils import get_example_and_temp_roots, run_rapidtide
 
 
 def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
     # set input and output directories
-    exampleroot = get_examples_path(local)
-    testtemproot = get_test_temp_path(local)
+    exampleroot, testtemproot = get_example_and_temp_roots(local)
 
     # run rapidtide
     inputargs = [
@@ -49,7 +46,7 @@ def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
         "--delaypatchthresh",
         "4.0",
     ]
-    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+    run_rapidtide(inputargs)
     rapidtide_quality.qualitycheck(os.path.join(testtemproot, "sub-RAPIDTIDETEST1"))
 
     # test fixval
@@ -72,7 +69,7 @@ def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
         "--initialdelay",
         "0.0",
     ]
-    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+    run_rapidtide(inputargs)
 
     # test fixmap
     inputargs = [
@@ -93,7 +90,7 @@ def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
         "--initialdelay",
         os.path.join(testtemproot, "sub-RAPIDTIDETEST1_desc-maxtime_map.nii.gz"),
     ]
-    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+    run_rapidtide(inputargs)
 
 
 if __name__ == "__main__":

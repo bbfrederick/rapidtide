@@ -21,6 +21,7 @@ Utility functions for testing rapidtide.
 """
 
 import os
+from typing import Iterable
 
 import numpy as np
 import numpy.typing as npt
@@ -97,3 +98,96 @@ def mse(ndarr1: npt.NDArray, ndarr2: npt.NDArray) -> np.floating:
     Compute mean-squared error.
     """
     return np.mean(np.square(ndarr2 - ndarr1))
+
+
+def get_example_and_temp_roots(local: bool = False) -> tuple[str, str]:
+    """
+    Return the standard example data and test temp roots as a tuple.
+    """
+    return get_examples_path(local), get_test_temp_path(local)
+
+
+def run_happy(inputargs: list[str]) -> None:
+    """
+    Run happy workflow from CLI-style argument list.
+    """
+    import rapidtide.workflows.happy as happy_workflow
+    import rapidtide.workflows.happy_parser as happy_parser
+
+    happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
+
+
+def run_rapidtide(inputargs: list[str]) -> None:
+    """
+    Run rapidtide workflow from CLI-style argument list.
+    """
+    import rapidtide.workflows.rapidtide as rapidtide_workflow
+    import rapidtide.workflows.rapidtide_parser as rapidtide_parser
+
+    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+
+
+def run_retroregress(inputargs: list[str]) -> None:
+    """
+    Run retroregress workflow from CLI-style argument list.
+    """
+    import rapidtide.workflows.retroregress as rapidtide_retroregress
+
+    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
+
+
+def assert_output_maps_match(
+    map_names: Iterable[str],
+    output_root_1: str,
+    output_root_2: str,
+    temp_root: str,
+    absthresh: float = 1e-10,
+    msethresh: float = 1e-12,
+    spacetolerance: float = 1e-3,
+    debug: bool = False,
+) -> None:
+    """
+    Assert that selected NIFTI output maps match between two output roots.
+    """
+    import rapidtide.io as tide_io
+
+    for map_name in map_names:
+        filename1 = os.path.join(temp_root, f"{output_root_1}_desc-{map_name}_map.nii.gz")
+        filename2 = os.path.join(temp_root, f"{output_root_2}_desc-{map_name}_map.nii.gz")
+        assert tide_io.checkniftifilematch(
+            filename1,
+            filename2,
+            absthresh=absthresh,
+            msethresh=msethresh,
+            spacetolerance=spacetolerance,
+            debug=debug,
+        )
+
+
+def assert_text_vectors_match(
+    infile_spec: str,
+    outfile_spec: str,
+    msethresh: float = 2e-6,
+    aethresh: int = 2,
+    debug: bool = False,
+) -> None:
+    """
+    Assert that two one-column text vectors and metadata match.
+    """
+    import rapidtide.io as tide_io
+
+    insamplerate, instarttime, incolumns, indata, incompressed, infiletype = (
+        tide_io.readvectorsfromtextfile(infile_spec, onecol=True, debug=debug)
+    )
+    outsamplerate, outstarttime, outcolumns, outdata, outcompressed, outfiletype = (
+        tide_io.readvectorsfromtextfile(outfile_spec, onecol=True, debug=debug)
+    )
+
+    assert insamplerate == outsamplerate
+    assert instarttime == outstarttime
+    assert incompressed == outcompressed
+    assert infiletype == outfiletype
+    assert incolumns == outcolumns
+    assert indata.shape == outdata.shape
+    assert mse(indata, outdata) < msethresh
+    np.testing.assert_almost_equal(indata, outdata, aethresh)

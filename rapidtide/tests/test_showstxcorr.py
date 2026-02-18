@@ -145,6 +145,26 @@ def _run_showstxcorr(signal1, signal2, args):
     return saved
 
 
+def _parse_test_args(extra_args=None):
+    """Parse args with two temporary input files and an output root."""
+    parser = _get_parser()
+    if extra_args is None:
+        extra_args = []
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
+        return parser.parse_args([f1.name, f2.name, "out", *extra_args])
+
+
+def _capture_stdout(func, *args, **kwargs):
+    """Run a function and return captured stdout."""
+    captured = io.StringIO()
+    with patch("sys.stdout", captured):
+        func(*args, **kwargs)
+    return captured.getvalue()
+
+
 # ==================== _get_parser tests ====================
 
 
@@ -172,12 +192,7 @@ def parser_defaults(debug=False):
     """Test default values for optional arguments."""
     if debug:
         print("parser_defaults")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "outroot"])
+    args = _parse_test_args()
     assert args.samplerate == "auto"
     assert args.corrthresh == 0.5
     assert args.windowwidth == 50.0
@@ -198,12 +213,7 @@ def parser_samplerate(debug=False):
     """Test --samplerate option."""
     if debug:
         print("parser_samplerate")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "out", "--samplerate", "25.0"])
+    args = _parse_test_args(["--samplerate", "25.0"])
     assert args.samplerate == 25.0
 
 
@@ -211,12 +221,7 @@ def parser_sampletime(debug=False):
     """Test --sampletime option (inverts to samplerate)."""
     if debug:
         print("parser_sampletime")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "out", "--sampletime", "0.5"])
+    args = _parse_test_args(["--sampletime", "0.5"])
     assert args.samplerate == pytest.approx(2.0)
 
 
@@ -224,22 +229,7 @@ def parser_boolean_flags(debug=False):
     """Test boolean flag options."""
     if debug:
         print("parser_boolean_flags")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args(
-            [
-                f1.name,
-                f2.name,
-                "out",
-                "--nodisplay",
-                "--debug",
-                "--verbose",
-                "--invert",
-            ]
-        )
+    args = _parse_test_args(["--nodisplay", "--debug", "--verbose", "--invert"])
     assert args.display is False
     assert args.debug is True
     assert args.verbose is True
@@ -250,28 +240,20 @@ def parser_corr_options(debug=False):
     """Test correlation-related options."""
     if debug:
         print("parser_corr_options")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args(
-            [
-                f1.name,
-                f2.name,
-                "out",
-                "--corrthresh",
-                "0.3",
-                "--windowwidth",
-                "30.0",
-                "--stepsize",
-                "10.0",
-                "--corrweighting",
-                "phat",
-                "--detrendorder",
-                "2",
-            ]
-        )
+    args = _parse_test_args(
+        [
+            "--corrthresh",
+            "0.3",
+            "--windowwidth",
+            "30.0",
+            "--stepsize",
+            "10.0",
+            "--corrweighting",
+            "phat",
+            "--detrendorder",
+            "2",
+        ]
+    )
     assert args.corrthresh == 0.3
     assert args.windowwidth == 30.0
     assert args.stepsize == 10.0
@@ -283,23 +265,8 @@ def parser_samplerate_sampletime_mutual_exclusion(debug=False):
     """Test that --samplerate and --sampletime are mutually exclusive."""
     if debug:
         print("parser_samplerate_sampletime_mutual_exclusion")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        with pytest.raises(SystemExit):
-            parser.parse_args(
-                [
-                    f1.name,
-                    f2.name,
-                    "out",
-                    "--samplerate",
-                    "10.0",
-                    "--sampletime",
-                    "0.1",
-                ]
-            )
+    with pytest.raises(SystemExit):
+        _parse_test_args(["--samplerate", "10.0", "--sampletime", "0.1"])
 
 
 # ==================== printthresholds tests ====================
@@ -313,11 +280,7 @@ def printthresholds_basic(debug=False):
     thepercentiles = [0.95, 0.99, 0.999]
     labeltext = "Test thresholds:"
 
-    captured = io.StringIO()
-    with patch("sys.stdout", captured):
-        printthresholds(pcts, thepercentiles, labeltext)
-
-    output = captured.getvalue()
+    output = _capture_stdout(printthresholds, pcts, thepercentiles, labeltext)
     assert "Test thresholds:" in output
     assert "p < 0.05" in output or "p < 0.050" in output
     assert "p < 0.01" in output or "p < 0.010" in output
@@ -327,11 +290,7 @@ def printthresholds_empty(debug=False):
     """Test printthresholds with empty lists."""
     if debug:
         print("printthresholds_empty")
-    captured = io.StringIO()
-    with patch("sys.stdout", captured):
-        printthresholds([], [], "Empty:")
-
-    output = captured.getvalue()
+    output = _capture_stdout(printthresholds, [], [], "Empty:")
     assert "Empty:" in output
 
 
@@ -339,11 +298,7 @@ def printthresholds_single(debug=False):
     """Test printthresholds with a single threshold."""
     if debug:
         print("printthresholds_single")
-    captured = io.StringIO()
-    with patch("sys.stdout", captured):
-        printthresholds([0.42], [0.95], "Single:")
-
-    output = captured.getvalue()
+    output = _capture_stdout(printthresholds, [0.42], [0.95], "Single:")
     assert "Single:" in output
     assert "0.42" in output
 

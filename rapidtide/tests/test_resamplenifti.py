@@ -17,8 +17,7 @@
 #
 #
 import argparse
-import copy
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -71,6 +70,52 @@ def _make_mock_nifti_data(xsize=2, ysize=2, numslices=1, timepoints=10, inputtr=
             for z in range(numslices):
                 data[x, y, z, :] = np.sin(2 * np.pi * 0.1 * t) + x + y + z
     return data
+
+
+def _run_resamplenifti_with_mocks(
+    args,
+    inputtr,
+    numinputtrs,
+    input_data,
+    input_hdr,
+    thedims,
+    thesizes,
+    doresample_side_effect,
+    savetonifti_side_effect=None,
+    niftisplitext_return=("output", ".nii.gz"),
+    niftisplitext_mock=None,
+):
+    """Run resamplenifti with the common mock stack used in function tests."""
+    mock_img = MagicMock()
+    splitext_patch_target = (
+        niftisplitext_mock
+        if niftisplitext_mock is not None
+        else MagicMock(return_value=niftisplitext_return)
+    )
+    with (
+        patch(
+            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
+            return_value=(inputtr, numinputtrs),
+        ),
+        patch(
+            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
+            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
+        ),
+        patch(
+            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
+            side_effect=doresample_side_effect,
+        ),
+        patch(
+            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
+            splitext_patch_target,
+        ),
+        patch(
+            "rapidtide.workflows.resamplenifti.tide_io.savetonifti",
+            side_effect=savetonifti_side_effect,
+        ),
+    ):
+        resamplenifti(args)
+    return splitext_patch_target
 
 
 # ============================================================================
@@ -135,7 +180,9 @@ def parser_all_flags(debug=False):
     if debug:
         print("parser_all_flags")
     parser = _get_parser()
-    args = parser.parse_args(["in.nii", "out.nii", "0.5", "--noantialias", "--normalize", "--debug"])
+    args = parser.parse_args(
+        ["in.nii", "out.nii", "0.5", "--noantialias", "--normalize", "--debug"]
+    )
     assert args.antialias is False
     assert args.normalize is True
     assert args.debug is True
@@ -171,13 +218,16 @@ def resamplenifti_basic_downsample(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
         captured.setdefault("calls", []).append(
-            {"orig_x": orig_x.copy(), "orig_y": orig_y.copy(), "new_x": new_x.copy(), "antialias": antialias}
+            {
+                "orig_x": orig_x.copy(),
+                "orig_y": orig_y.copy(),
+                "new_x": new_x.copy(),
+                "antialias": antialias,
+            }
         )
         return np.interp(new_x, orig_x, orig_y)
 
@@ -188,29 +238,17 @@ def resamplenifti_basic_downsample(debug=False):
 
     args = _make_default_args(outputtr=outputtr)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.savetonifti",
-            side_effect=_mock_savetonifti,
-        ),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+        savetonifti_side_effect=_mock_savetonifti,
+    )
 
     # Verify doresample was called for every voxel
     num_voxels = xsize * ysize * numslices
@@ -241,8 +279,6 @@ def resamplenifti_upsample_disables_antialias(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
@@ -251,26 +287,16 @@ def resamplenifti_upsample_disables_antialias(debug=False):
 
     args = _make_default_args(outputtr=outputtr, antialias=True)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch("rapidtide.workflows.resamplenifti.tide_io.savetonifti"),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+    )
 
     # Upsampling should force antialias off
     assert captured["antialias"] is False
@@ -290,8 +316,6 @@ def resamplenifti_noantialias_flag(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
@@ -300,26 +324,16 @@ def resamplenifti_noantialias_flag(debug=False):
 
     args = _make_default_args(outputtr=outputtr, antialias=False)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch("rapidtide.workflows.resamplenifti.tide_io.savetonifti"),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+    )
 
     assert captured["antialias"] is False
 
@@ -338,8 +352,6 @@ def resamplenifti_output_shape(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
@@ -350,29 +362,17 @@ def resamplenifti_output_shape(debug=False):
 
     args = _make_default_args(outputtr=outputtr)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.savetonifti",
-            side_effect=_mock_savetonifti,
-        ),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+        savetonifti_side_effect=_mock_savetonifti,
+    )
 
     # Calculate expected number of output timepoints using the same formula as the code
     inputendtime = inputtr * (numinputtrs - 1)
@@ -394,8 +394,6 @@ def resamplenifti_header_updated(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
@@ -406,29 +404,17 @@ def resamplenifti_header_updated(debug=False):
 
     args = _make_default_args(outputtr=outputtr)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.savetonifti",
-            side_effect=_mock_savetonifti,
-        ),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+        savetonifti_side_effect=_mock_savetonifti,
+    )
 
     assert captured["pixdim4"] == outputtr
 
@@ -447,33 +433,21 @@ def resamplenifti_header_not_mutated(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
         return np.interp(new_x, orig_x, orig_y)
 
     args = _make_default_args(outputtr=outputtr)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch("rapidtide.workflows.resamplenifti.tide_io.savetonifti"),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+    )
 
     # Original header should still have the original TR
     assert input_hdr["pixdim"][4] == inputtr
@@ -492,8 +466,6 @@ def resamplenifti_niftisplitext_called(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
         return np.interp(new_x, orig_x, orig_y)
 
@@ -501,26 +473,17 @@ def resamplenifti_niftisplitext_called(debug=False):
 
     mock_splitext = MagicMock(return_value=("myoutput", ".nii.gz"))
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            mock_splitext,
-        ),
-        patch("rapidtide.workflows.resamplenifti.tide_io.savetonifti"),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+        niftisplitext_mock=mock_splitext,
+    )
 
     mock_splitext.assert_called_once_with("myoutput.nii.gz")
 
@@ -541,8 +504,6 @@ def resamplenifti_doresample_receives_correct_data(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
@@ -553,26 +514,16 @@ def resamplenifti_doresample_receives_correct_data(debug=False):
 
     args = _make_default_args(outputtr=outputtr)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch("rapidtide.workflows.resamplenifti.tide_io.savetonifti"),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+    )
 
     # Input x should be linspace(0, inputtr * numinputtrs, numinputtrs, endpoint=False)
     expected_orig_x = np.linspace(0.0, inputtr * numinputtrs, num=numinputtrs, endpoint=False)
@@ -600,34 +551,22 @@ def resamplenifti_debug_mode(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
         return np.interp(new_x, orig_x, orig_y)
 
     args = _make_default_args(outputtr=outputtr, debug=True)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch("rapidtide.workflows.resamplenifti.tide_io.savetonifti"),
-    ):
-        # Should not raise
-        resamplenifti(args)
+    # Should not raise
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+    )
 
 
 def resamplenifti_multi_slice(debug=False):
@@ -644,8 +583,6 @@ def resamplenifti_multi_slice(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     call_count = {"n": 0}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
@@ -654,26 +591,16 @@ def resamplenifti_multi_slice(debug=False):
 
     args = _make_default_args(outputtr=outputtr)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch("rapidtide.workflows.resamplenifti.tide_io.savetonifti"),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+    )
 
     expected_calls = xsize * ysize * numslices
     assert call_count["n"] == expected_calls
@@ -693,8 +620,6 @@ def resamplenifti_same_tr(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
-    mock_img = MagicMock()
-
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
@@ -703,26 +628,16 @@ def resamplenifti_same_tr(debug=False):
 
     args = _make_default_args(outputtr=outputtr, antialias=True)
 
-    with (
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.fmritimeinfo",
-            return_value=(inputtr, numinputtrs),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.readfromnifti",
-            return_value=(mock_img, input_data, input_hdr, thedims, thesizes),
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_resample.doresample",
-            side_effect=_mock_doresample,
-        ),
-        patch(
-            "rapidtide.workflows.resamplenifti.tide_io.niftisplitext",
-            return_value=("output", ".nii.gz"),
-        ),
-        patch("rapidtide.workflows.resamplenifti.tide_io.savetonifti"),
-    ):
-        resamplenifti(args)
+    _run_resamplenifti_with_mocks(
+        args=args,
+        inputtr=inputtr,
+        numinputtrs=numinputtrs,
+        input_data=input_data,
+        input_hdr=input_hdr,
+        thedims=thedims,
+        thesizes=thesizes,
+        doresample_side_effect=_mock_doresample,
+    )
 
     # Same TR: inputtr is NOT > outputtr, so antialias should remain True
     assert captured["antialias"] is True

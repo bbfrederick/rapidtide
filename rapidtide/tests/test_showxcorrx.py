@@ -19,8 +19,7 @@
 import os
 import tempfile
 from argparse import Namespace
-from io import StringIO
-from unittest.mock import MagicMock, patch
+from contextlib import contextmanager
 
 import numpy as np
 import pytest
@@ -151,6 +150,20 @@ def _make_default_args(tmpdir, signal1=None, signal2=None, **overrides):
     )
     args.__dict__.update(overrides)
     return args
+
+
+@contextmanager
+def _showxcorrx_run(**overrides):
+    """Build args in a temporary directory, execute showxcorrx, and yield context."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        run_overrides = dict(overrides)
+        for key in ("resoutputfile", "corroutputfile", "outputfile"):
+            outpath = run_overrides.get(key)
+            if isinstance(outpath, str) and not os.path.isabs(outpath):
+                run_overrides[key] = os.path.join(tmpdir, outpath)
+        args = _make_default_args(tmpdir, **run_overrides)
+        showxcorrx(args)
+        yield tmpdir, args
 
 
 # ==================== Parser tests ====================
@@ -360,25 +373,17 @@ def showxcorrx_correlation_default(debug=False):
     """Test showxcorrx basic correlation workflow with default settings."""
     if debug:
         print("showxcorrx_correlation_default")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir)
-        showxcorrx(args)
+    with _showxcorrx_run():
+        pass
 
 
 def showxcorrx_finds_correct_delay(debug=False):
     """Test that showxcorrx finds approximately correct delay."""
     if debug:
         print("showxcorrx_finds_correct_delay")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        resfile = os.path.join(tmpdir, "results.txt")
-        args = _make_default_args(
-            tmpdir,
-            summarymode=True,
-            resoutputfile=resfile,
-        )
-        showxcorrx(args)
+    with _showxcorrx_run(summarymode=True, resoutputfile="results.txt") as (tmpdir, args):
         # Read the results file
-        with open(resfile, "r") as f:
+        with open(args.resoutputfile, "r") as f:
             content = f.read().strip()
         # Parse out the maxdelay value (last tab-separated field)
         fields = content.split("\t")
@@ -392,16 +397,9 @@ def showxcorrx_correlation_summarymode(debug=False):
     """Test showxcorrx with summarymode output."""
     if debug:
         print("showxcorrx_correlation_summarymode")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        resfile = os.path.join(tmpdir, "summary.txt")
-        args = _make_default_args(
-            tmpdir,
-            summarymode=True,
-            resoutputfile=resfile,
-        )
-        showxcorrx(args)
-        assert os.path.exists(resfile)
-        with open(resfile, "r") as f:
+    with _showxcorrx_run(summarymode=True, resoutputfile="summary.txt") as (_tmpdir, args):
+        assert os.path.exists(args.resoutputfile)
+        with open(args.resoutputfile, "r") as f:
             content = f.read().strip()
         # Should contain tab-separated values
         assert "\t" in content
@@ -411,17 +409,13 @@ def showxcorrx_correlation_labelline(debug=False):
     """Test showxcorrx with label line output."""
     if debug:
         print("showxcorrx_correlation_labelline")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        resfile = os.path.join(tmpdir, "labeled.txt")
-        args = _make_default_args(
-            tmpdir,
-            summarymode=True,
-            labelline=True,
-            label="test_run",
-            resoutputfile=resfile,
-        )
-        showxcorrx(args)
-        with open(resfile, "r") as f:
+    with _showxcorrx_run(
+        summarymode=True,
+        labelline=True,
+        label="test_run",
+        resoutputfile="labeled.txt",
+    ) as (_tmpdir, args):
+        with open(args.resoutputfile, "r") as f:
             content = f.read().strip()
         lines = content.split("\n")
         # With labelline=True, should have header + data line
@@ -434,9 +428,8 @@ def showxcorrx_correlation_invert(debug=False):
     """Test showxcorrx with inverted second timecourse."""
     if debug:
         print("showxcorrx_correlation_invert")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, invert=True)
-        showxcorrx(args)
+    with _showxcorrx_run(invert=True):
+        pass
 
 
 def showxcorrx_correlation_trimdata(debug=False):
@@ -446,9 +439,8 @@ def showxcorrx_correlation_trimdata(debug=False):
     sig1, sig2 = _make_broadband_signals()
     # Make sig2 shorter
     sig2_short = sig2[:1500]
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, signal1=sig1, signal2=sig2_short, trimdata=True)
-        showxcorrx(args)
+    with _showxcorrx_run(signal1=sig1, signal2=sig2_short, trimdata=True):
+        pass
 
 
 def showxcorrx_auto_samplerate(debug=False):
@@ -457,83 +449,72 @@ def showxcorrx_auto_samplerate(debug=False):
         print("showxcorrx_auto_samplerate")
     # Generate signals for samplerate=1.0
     sig1, sig2 = _make_broadband_signals(samplerate=1.0, duration=500.0, delay=2.0, noise=3.0)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, signal1=sig1, signal2=sig2, samplerate="auto")
-        showxcorrx(args)
+    with _showxcorrx_run(signal1=sig1, signal2=sig2, samplerate="auto"):
+        pass
 
 
 def showxcorrx_corroutputfile(debug=False):
     """Test showxcorrx saves correlation function to file."""
     if debug:
         print("showxcorrx_corroutputfile")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        corrfile = os.path.join(tmpdir, "corrfunc.txt")
-        args = _make_default_args(tmpdir, corroutputfile=corrfile)
-        showxcorrx(args)
-        assert os.path.exists(corrfile)
+    with _showxcorrx_run(corroutputfile="corrfunc.txt") as (_tmpdir, args):
+        assert os.path.exists(args.corroutputfile)
 
 
 def showxcorrx_detrendorder_zero(debug=False):
     """Test showxcorrx with no detrending."""
     if debug:
         print("showxcorrx_detrendorder_zero")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, detrendorder=0)
-        showxcorrx(args)
+    with _showxcorrx_run(detrendorder=0):
+        pass
 
 
 def showxcorrx_detrendorder_high(debug=False):
     """Test showxcorrx with higher order detrending."""
     if debug:
         print("showxcorrx_detrendorder_high")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, detrendorder=3)
-        showxcorrx(args)
+    with _showxcorrx_run(detrendorder=3):
+        pass
 
 
 def showxcorrx_hann_window(debug=False):
     """Test showxcorrx with hann window function."""
     if debug:
         print("showxcorrx_hann_window")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, windowfunc="hann")
-        showxcorrx(args)
+    with _showxcorrx_run(windowfunc="hann"):
+        pass
 
 
 def showxcorrx_no_window(debug=False):
     """Test showxcorrx with no windowing."""
     if debug:
         print("showxcorrx_no_window")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, windowfunc="None")
-        showxcorrx(args)
+    with _showxcorrx_run(windowfunc="None"):
+        pass
 
 
 def showxcorrx_phat_weighting(debug=False):
     """Test showxcorrx with PHAT cross-correlation weighting."""
     if debug:
         print("showxcorrx_phat_weighting")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, corrweighting="phat")
-        showxcorrx(args)
+    with _showxcorrx_run(corrweighting="phat"):
+        pass
 
 
 def showxcorrx_liang_weighting(debug=False):
     """Test showxcorrx with Liang cross-correlation weighting."""
     if debug:
         print("showxcorrx_liang_weighting")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, corrweighting="liang")
-        showxcorrx(args)
+    with _showxcorrx_run(corrweighting="liang"):
+        pass
 
 
 def showxcorrx_eckart_weighting(debug=False):
     """Test showxcorrx with Eckart cross-correlation weighting."""
     if debug:
         print("showxcorrx_eckart_weighting")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, corrweighting="eckart")
-        showxcorrx(args)
+    with _showxcorrx_run(corrweighting="eckart"):
+        pass
 
 
 def showxcorrx_zero_delay(debug=False):
@@ -541,17 +522,13 @@ def showxcorrx_zero_delay(debug=False):
     if debug:
         print("showxcorrx_zero_delay")
     sig1, sig2 = _make_broadband_signals(delay=0.0)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        resfile = os.path.join(tmpdir, "results.txt")
-        args = _make_default_args(
-            tmpdir,
-            signal1=sig1,
-            signal2=sig2,
-            summarymode=True,
-            resoutputfile=resfile,
-        )
-        showxcorrx(args)
-        with open(resfile, "r") as f:
+    with _showxcorrx_run(
+        signal1=sig1,
+        signal2=sig2,
+        summarymode=True,
+        resoutputfile="results.txt",
+    ) as (_tmpdir, args):
+        with open(args.resoutputfile, "r") as f:
             content = f.read().strip()
         fields = content.split("\t")
         maxdelay = float(fields[-1])
@@ -563,116 +540,101 @@ def showxcorrx_narrow_search_range(debug=False):
     """Test showxcorrx with narrow search range centered on true delay."""
     if debug:
         print("showxcorrx_narrow_search_range")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, lag_extrema=(-5.0, 5.0))
-        showxcorrx(args)
+    with _showxcorrx_run(lag_extrema=(-5.0, 5.0)):
+        pass
 
 
 def showxcorrx_cepstral(debug=False):
     """Test showxcorrx with cepstral delay estimation."""
     if debug:
         print("showxcorrx_cepstral")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, cepstral=True)
-        showxcorrx(args)
+    with _showxcorrx_run(cepstral=True):
+        pass
 
 
 def showxcorrx_calccoherence(debug=False):
     """Test showxcorrx with coherence calculation (no display)."""
     if debug:
         print("showxcorrx_calccoherence")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, calccoherence=True)
-        showxcorrx(args)
+    with _showxcorrx_run(calccoherence=True):
+        pass
 
 
 def showxcorrx_calccsd(debug=False):
     """Test showxcorrx with cross-spectral density calculation."""
     if debug:
         print("showxcorrx_calccsd")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, calccsd=True)
-        showxcorrx(args)
+    with _showxcorrx_run(calccsd=True):
+        pass
 
 
 def showxcorrx_mutualinfo(debug=False):
     """Test showxcorrx with mutual information metric."""
     if debug:
         print("showxcorrx_mutualinfo")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, similaritymetric="mutualinfo")
-        showxcorrx(args)
+    with _showxcorrx_run(similaritymetric="mutualinfo"):
+        pass
 
 
 def showxcorrx_mutualinfo_summarymode(debug=False):
     """Test showxcorrx with mutual info in summarymode."""
     if debug:
         print("showxcorrx_mutualinfo_summarymode")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        resfile = os.path.join(tmpdir, "mi_results.txt")
-        args = _make_default_args(
-            tmpdir,
-            similaritymetric="mutualinfo",
-            summarymode=True,
-            resoutputfile=resfile,
-        )
-        showxcorrx(args)
-        assert os.path.exists(resfile)
+    with _showxcorrx_run(
+        similaritymetric="mutualinfo",
+        summarymode=True,
+        resoutputfile="mi_results.txt",
+    ) as (_tmpdir, args):
+        assert os.path.exists(args.resoutputfile)
 
 
 def showxcorrx_hybrid(debug=False):
     """Test showxcorrx with hybrid similarity metric."""
     if debug:
         print("showxcorrx_hybrid")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, similaritymetric="hybrid")
-        showxcorrx(args)
+    with _showxcorrx_run(similaritymetric="hybrid"):
+        pass
 
 
 def showxcorrx_with_lfo_filter(debug=False):
     """Test showxcorrx with LFO bandpass filtering."""
     if debug:
         print("showxcorrx_with_lfo_filter")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, filterband="lfo")
-        showxcorrx(args)
+    with _showxcorrx_run(filterband="lfo"):
+        pass
 
 
 def showxcorrx_timerange(debug=False):
     """Test showxcorrx with explicit time range."""
     if debug:
         print("showxcorrx_timerange")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        # Use first 1500 samples (0 to 1499)
-        args = _make_default_args(tmpdir, timerange=(0, 1500))
-        showxcorrx(args)
+    # Use first 1500 samples (0 to 1499)
+    with _showxcorrx_run(timerange=(0, 1500)):
+        pass
 
 
 def showxcorrx_sigma_limits(debug=False):
     """Test showxcorrx with custom sigma limits."""
     if debug:
         print("showxcorrx_sigma_limits")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, absmaxsigma=500.0, absminsigma=0.5)
-        showxcorrx(args)
+    with _showxcorrx_run(absmaxsigma=500.0, absminsigma=0.5):
+        pass
 
 
 def showxcorrx_zeropadding(debug=False):
     """Test showxcorrx with zero padding enabled."""
     if debug:
         print("showxcorrx_zeropadding")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, zeropadding=100)
-        showxcorrx(args)
+    with _showxcorrx_run(zeropadding=100):
+        pass
 
 
 def showxcorrx_butterworth_filter(debug=False):
     """Test showxcorrx with butterworth filter type."""
     if debug:
         print("showxcorrx_butterworth_filter")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        args = _make_default_args(tmpdir, filterband="lfo", filtertype="butterworth")
-        showxcorrx(args)
+    with _showxcorrx_run(filterband="lfo", filtertype="butterworth"):
+        pass
 
 
 # ==================== Main test function ====================

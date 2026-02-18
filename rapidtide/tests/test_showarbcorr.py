@@ -72,6 +72,30 @@ def _make_test_args(tmpdir, file1, file2, Fs1=SAMPLERATE, Fs2=SAMPLERATE, **kwar
     return args
 
 
+def _parse_test_args(extra_args=None):
+    """Parse args using two temporary text files."""
+    parser = sac._get_parser()
+    if extra_args is None:
+        extra_args = []
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
+        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
+    ):
+        return parser.parse_args([f1.name, f2.name, *extra_args])
+
+
+def _capture_stdout(func, *args, **kwargs):
+    """Run a function and return captured stdout."""
+    captured = io.StringIO()
+    old_stdout = sys.stdout
+    sys.stdout = captured
+    try:
+        func(*args, **kwargs)
+    finally:
+        sys.stdout = old_stdout
+    return captured.getvalue()
+
+
 # ==================== _get_parser tests ====================
 
 
@@ -101,288 +125,183 @@ def get_parser_defaults(debug=False):
     """Test _get_parser default values."""
     if debug:
         print("get_parser_defaults")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name])
-        assert args.samplerate1 is None
-        assert args.samplerate2 is None
-        assert args.display
-        assert not args.debug
-        assert not args.verbose
-        assert args.detrendorder == 1
-        assert args.corrweighting == "None"
-        assert not args.invert
-        assert args.label == "None"
-        assert not args.bipolar
-        assert args.outputfile is None
-        assert args.corroutputfile is None
-        assert args.graphfile is None
-        assert args.showprogressbar
-        assert args.nprocs == 1
+    args = _parse_test_args()
+    assert args.samplerate1 is None
+    assert args.samplerate2 is None
+    assert args.display
+    assert not args.debug
+    assert not args.verbose
+    assert args.detrendorder == 1
+    assert args.corrweighting == "None"
+    assert not args.invert
+    assert args.label == "None"
+    assert not args.bipolar
+    assert args.outputfile is None
+    assert args.corroutputfile is None
+    assert args.graphfile is None
+    assert args.showprogressbar
+    assert args.nprocs == 1
 
 
 def get_parser_samplerate1(debug=False):
     """Test _get_parser accepts --samplerate1."""
     if debug:
         print("get_parser_samplerate1")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--samplerate1", "25.0"])
-        assert args.samplerate1 == 25.0
+    args = _parse_test_args(["--samplerate1", "25.0"])
+    assert args.samplerate1 == 25.0
 
 
 def get_parser_samplerate2(debug=False):
     """Test _get_parser accepts --samplerate2."""
     if debug:
         print("get_parser_samplerate2")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--samplerate2", "50.0"])
-        assert args.samplerate2 == 50.0
+    args = _parse_test_args(["--samplerate2", "50.0"])
+    assert args.samplerate2 == 50.0
 
 
 def get_parser_nodisplay(debug=False):
     """Test _get_parser accepts --nodisplay."""
     if debug:
         print("get_parser_nodisplay")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--nodisplay"])
-        assert not args.display
+    args = _parse_test_args(["--nodisplay"])
+    assert not args.display
 
 
 def get_parser_debug(debug=False):
     """Test _get_parser accepts --debug."""
     if debug:
         print("get_parser_debug")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--debug"])
-        assert args.debug
+    args = _parse_test_args(["--debug"])
+    assert args.debug
 
 
 def get_parser_verbose(debug=False):
     """Test _get_parser accepts --verbose."""
     if debug:
         print("get_parser_verbose")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--verbose"])
-        assert args.verbose
+    args = _parse_test_args(["--verbose"])
+    assert args.verbose
 
 
 def get_parser_detrendorder(debug=False):
     """Test _get_parser accepts --detrendorder."""
     if debug:
         print("get_parser_detrendorder")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--detrendorder", "3"])
-        assert args.detrendorder == 3
+    args = _parse_test_args(["--detrendorder", "3"])
+    assert args.detrendorder == 3
 
 
 def get_parser_corrweighting(debug=False):
     """Test _get_parser accepts --corrweighting."""
     if debug:
         print("get_parser_corrweighting")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        for choice in ["None", "phat", "liang", "eckart"]:
-            args = parser.parse_args([f1.name, f2.name, "--corrweighting", choice])
-            assert args.corrweighting == choice
+    for choice in ["None", "phat", "liang", "eckart"]:
+        args = _parse_test_args(["--corrweighting", choice])
+        assert args.corrweighting == choice
 
 
 def get_parser_invert(debug=False):
     """Test _get_parser accepts --invert."""
     if debug:
         print("get_parser_invert")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--invert"])
-        assert args.invert
+    args = _parse_test_args(["--invert"])
+    assert args.invert
 
 
 def get_parser_label(debug=False):
     """Test _get_parser accepts --label."""
     if debug:
         print("get_parser_label")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--label", "test_label"])
-        assert args.label == "test_label"
+    args = _parse_test_args(["--label", "test_label"])
+    assert args.label == "test_label"
 
 
 def get_parser_bipolar(debug=False):
     """Test _get_parser accepts --bipolar."""
     if debug:
         print("get_parser_bipolar")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--bipolar"])
-        assert args.bipolar
+    args = _parse_test_args(["--bipolar"])
+    assert args.bipolar
 
 
 def get_parser_outputfile(debug=False):
     """Test _get_parser accepts --outputfile."""
     if debug:
         print("get_parser_outputfile")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--outputfile", "results.txt"])
-        assert args.outputfile == "results.txt"
+    args = _parse_test_args(["--outputfile", "results.txt"])
+    assert args.outputfile == "results.txt"
 
 
 def get_parser_corroutputfile(debug=False):
     """Test _get_parser accepts --corroutputfile."""
     if debug:
         print("get_parser_corroutputfile")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--corroutputfile", "corr.txt"])
-        assert args.corroutputfile == "corr.txt"
+    args = _parse_test_args(["--corroutputfile", "corr.txt"])
+    assert args.corroutputfile == "corr.txt"
 
 
 def get_parser_summarymode(debug=False):
     """Test _get_parser accepts --summarymode."""
     if debug:
         print("get_parser_summarymode")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--summarymode"])
-        assert args.summarymode
+    args = _parse_test_args(["--summarymode"])
+    assert args.summarymode
 
 
 def get_parser_labelline(debug=False):
     """Test _get_parser accepts --labelline."""
     if debug:
         print("get_parser_labelline")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--labelline"])
-        assert args.labelline
+    args = _parse_test_args(["--labelline"])
+    assert args.labelline
 
 
 def get_parser_noprogressbar(debug=False):
     """Test _get_parser accepts --noprogressbar."""
     if debug:
         print("get_parser_noprogressbar")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--noprogressbar"])
-        assert not args.showprogressbar
+    args = _parse_test_args(["--noprogressbar"])
+    assert not args.showprogressbar
 
 
 def get_parser_nprocs(debug=False):
     """Test _get_parser accepts --nprocs."""
     if debug:
         print("get_parser_nprocs")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--nprocs", "4"])
-        assert args.nprocs == 4
+    args = _parse_test_args(["--nprocs", "4"])
+    assert args.nprocs == 4
 
 
 def get_parser_trimdata(debug=False):
     """Test _get_parser accepts --trimdata."""
     if debug:
         print("get_parser_trimdata")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--trimdata"])
-        assert args.trimdata
+    args = _parse_test_args(["--trimdata"])
+    assert args.trimdata
 
 
 def get_parser_windowfunc(debug=False):
     """Test _get_parser accepts --windowfunc."""
     if debug:
         print("get_parser_windowfunc")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--windowfunc", "hann"])
-        assert args.windowfunc == "hann"
+    args = _parse_test_args(["--windowfunc", "hann"])
+    assert args.windowfunc == "hann"
 
 
 def get_parser_nonorm(debug=False):
     """Test _get_parser accepts --nonorm."""
     if debug:
         print("get_parser_nonorm")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--nonorm"])
-        assert not args.minorm
+    args = _parse_test_args(["--nonorm"])
+    assert not args.minorm
 
 
 def get_parser_saveres(debug=False):
     """Test _get_parser accepts --saveres."""
     if debug:
         print("get_parser_saveres")
-    parser = sac._get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "--saveres", "300"])
-        assert args.saveres == 300
+    args = _parse_test_args(["--saveres", "300"])
+    assert args.saveres == 300
 
 
 # ==================== printthresholds tests ====================
@@ -394,14 +313,7 @@ def printthresholds_basic(debug=False):
         print("printthresholds_basic")
     pcts = [1.96, 2.58, 3.29]
     thepercentiles = [0.95, 0.99, 0.999]
-    captured = io.StringIO()
-    old_stdout = sys.stdout
-    sys.stdout = captured
-    try:
-        sac.printthresholds(pcts, thepercentiles, "Test thresholds:")
-    finally:
-        sys.stdout = old_stdout
-    output = captured.getvalue()
+    output = _capture_stdout(sac.printthresholds, pcts, thepercentiles, "Test thresholds:")
     assert "Test thresholds:" in output
     assert "0.050" in output
     assert "0.010" in output
@@ -417,14 +329,7 @@ def printthresholds_single(debug=False):
         print("printthresholds_single")
     pcts = [0.5]
     thepercentiles = [0.5]
-    captured = io.StringIO()
-    old_stdout = sys.stdout
-    sys.stdout = captured
-    try:
-        sac.printthresholds(pcts, thepercentiles, "Single:")
-    finally:
-        sys.stdout = old_stdout
-    output = captured.getvalue()
+    output = _capture_stdout(sac.printthresholds, pcts, thepercentiles, "Single:")
     assert "Single:" in output
     assert "0.500" in output
 
@@ -433,14 +338,7 @@ def printthresholds_empty(debug=False):
     """Test printthresholds with empty lists."""
     if debug:
         print("printthresholds_empty")
-    captured = io.StringIO()
-    old_stdout = sys.stdout
-    sys.stdout = captured
-    try:
-        sac.printthresholds([], [], "Empty:")
-    finally:
-        sys.stdout = old_stdout
-    output = captured.getvalue()
+    output = _capture_stdout(sac.printthresholds, [], [], "Empty:")
     assert "Empty:" in output
     # Only the label line, no threshold lines
     lines = output.strip().split("\n")
@@ -553,14 +451,7 @@ def showarbcorr_summarymode_to_stdout(debug=False):
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
         args = _make_test_args(tmpdir, file1, file2, summarymode=True, debug=debug)
-        captured = io.StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = captured
-        try:
-            sac.showarbcorr(args)
-        finally:
-            sys.stdout = old_stdout
-        output = captured.getvalue()
+        output = _capture_stdout(sac.showarbcorr, args)
         # Should contain tab-separated values somewhere in the output
         # The last line should be the summary: label\tR\tdelay\tfailreason
         lines = output.strip().split("\n")
@@ -581,14 +472,7 @@ def showarbcorr_normal_mode(debug=False):
         # Set label to None (Python None) to get the Crosscorrelation_Rmax output path
         args = _make_test_args(tmpdir, file1, file2, debug=debug)
         args.label = None
-        captured = io.StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = captured
-        try:
-            sac.showarbcorr(args)
-        finally:
-            sys.stdout = old_stdout
-        output = captured.getvalue()
+        output = _capture_stdout(sac.showarbcorr, args)
         if debug:
             print(f"  Normal mode output: {output}")
         assert "Pearson_R:" in output
@@ -744,14 +628,7 @@ def showarbcorr_with_label_no_summary(debug=False):
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
         args = _make_test_args(tmpdir, file1, file2, label="delay_test", debug=debug)
-        captured = io.StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = captured
-        try:
-            sac.showarbcorr(args)
-        finally:
-            sys.stdout = old_stdout
-        output = captured.getvalue()
+        output = _capture_stdout(sac.showarbcorr, args)
         assert "delay_test" in output
 
 
