@@ -223,7 +223,7 @@ def frequency_routines(debug=False):
             self.count += 1
             return np.asarray(x)
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_filt.NoncausalFilter", DummyArbFilter):
+    with patch("rapidtide.core.signal.cardiac.tide_filt.NoncausalFilter", DummyArbFilter):
         x = np.ones(64)
         y = hs.getperiodic(x, Fs=10.0, fundfreq=3.0, ncomps=5, width=0.4, debug=False)
         assert y.shape == x.shape
@@ -274,7 +274,10 @@ def detrend_normalize_routines(debug=False):
     assert mads.shape == (5,)
     assert len(timings) >= 1
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_genericmultiproc.run_multiproc", return_value=fmri.shape[0]):
+    with patch(
+        "rapidtide.core.signal.happy_supportfuncs.tide_genericmultiproc.run_multiproc",
+        return_value=fmri.shape[0],
+    ):
         timings2 = []
         hs.normalizevoxels(
             fmri.copy(),
@@ -297,7 +300,7 @@ def physio_quality_routines(debug=False):
     fs = 25.0
     t = np.linspace(0.0, 20.0, int(20.0 * fs), endpoint=False)
     waveform = np.sin(2.0 * np.pi * 1.2 * t) + 0.05 * np.random.RandomState(7).randn(len(t))
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_filt.NoncausalFilter", return_value=DummyFilter(scale=1.0)):
+    with patch("rapidtide.core.signal.physio.tide_filt.NoncausalFilter", return_value=DummyFilter(scale=1.0)):
         filt, norm, env, envmean = hs.cleanphysio(
             fs,
             waveform,
@@ -363,10 +366,10 @@ def physio_quality_routines(debug=False):
     assert "E_sqi_mean_x" in qdict
 
     with patch(
-        "rapidtide.core.signal.happy_supportfuncs.tide_io.readvectorsfromtextfile",
+        "rapidtide.core.signal.physio.tide_io.readvectorsfromtextfile",
         return_value=(100.0, 0.0, None, np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)), None, None),
     ), patch(
-        "rapidtide.core.signal.happy_supportfuncs.cleanphysio",
+        "rapidtide.core.signal.physio.cleanphysio",
         return_value=(
             np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)),
             np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)),
@@ -416,13 +419,13 @@ def physio_quality_routines(debug=False):
             hs.readextmask("mask4d.nii.gz", {"dim": [0, 2, 2, 2, 1]}, 2, 2, 2, debug=False)
 
     with patch(
-        "rapidtide.core.signal.happy_supportfuncs.tide_filt.NoncausalFilter",
+        "rapidtide.core.signal.cardiac.tide_filt.NoncausalFilter",
         return_value=DummyFilter(scale=1.0),
     ), patch(
-        "rapidtide.core.signal.happy_supportfuncs.tide_corr.fastcorrelate",
+        "rapidtide.core.signal.cardiac.tide_corr.fastcorrelate",
         return_value=np.array([0.0, 0.3, 1.0, 0.2, 0.0]),
     ), patch(
-        "rapidtide.core.signal.happy_supportfuncs.tide_fit.findmaxlag_gauss",
+        "rapidtide.core.signal.cardiac.tide_fit.findmaxlag_gauss",
         return_value=(2, 0.1, 0.95, 0.2, 1, "ok", 1, 3),
     ):
         maxval, maxdelay, failreason = hs.checkcardmatch(
@@ -451,7 +454,7 @@ def projection_helpers_routines(debug=False):
         idx = int(np.argmin(np.abs(dest - src)))
         return np.array([1.0]), np.array([1.0]), np.array([idx], dtype=int)
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_resample.congrid", side_effect=fake_congrid):
+    with patch("rapidtide.core.signal.cardiac.tide_resample.congrid", side_effect=fake_congrid):
         cycavg, weights = hs.cardiaccycleaverage(
             srcphases,
             destphases,
@@ -478,7 +481,7 @@ def projection_helpers_routines(debug=False):
     cine_byslice = np.zeros((nvox, nslices, destpoints), dtype=float)
     rawapp_byslice = np.zeros((nvox, nslices, destpoints), dtype=float)
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_resample.congrid", side_effect=fake_congrid):
+    with patch("rapidtide.core.signal.vessels.tide_resample.congrid", side_effect=fake_congrid):
         ret = hs._procOnePhaseProject(
             0,
             (
@@ -510,11 +513,11 @@ def projection_helpers_routines(debug=False):
     assert np.all(vp[1][[0, 2], 0, :] == 2.0)
     assert np.all(vp[2][[0, 2], 0, :] == 3.0)
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_resample.congrid", side_effect=fake_congrid) as cg:
+    with patch("rapidtide.core.signal.vessels.tide_resample.congrid", side_effect=fake_congrid) as cg:
         hs.preloadcongrid(np.linspace(0.0, 1.0, 8), congridbins=4, gridkernel="kaiser", cyclic=True, debug=False)
         assert cg.call_count > 1000
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_resample.congrid", side_effect=fake_congrid):
+    with patch("rapidtide.core.signal.vessels.tide_resample.congrid", side_effect=fake_congrid):
         hs.phaseprojectpass(
             numslices=1,
             demeandata_byslice=demean,
@@ -536,7 +539,7 @@ def projection_helpers_routines(debug=False):
         )
     assert np.isfinite(np.sum(rawapp_byslice))
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_genericmultiproc.run_multiproc", return_value=1):
+    with patch("rapidtide.core.signal.vessels.tide_genericmultiproc.run_multiproc", return_value=1):
         hs.phaseprojectpass(
             numslices=1,
             demeandata_byslice=demean,
@@ -576,7 +579,7 @@ def projection_helpers_routines(debug=False):
     assert np.all(vp2[0][:, 0, :] == 1.0)
     assert np.all(vp2[1][:, 0, :] == 2.0)
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_genericmultiproc.run_multiproc", return_value=1):
+    with patch("rapidtide.core.signal.vessels.tide_genericmultiproc.run_multiproc", return_value=1):
         hs.tcsmoothingpass(
             numslices=1,
             validlocslist=validlocslist,
@@ -665,7 +668,7 @@ def high_level_routines(debug=False):
     app2d = app.reshape((numspatiallocs * input_data.numslices, destpoints))
     normapp2d = normapp.reshape((numspatiallocs * input_data.numslices, destpoints))
     vessel_valid = np.array([0, 1], dtype=int)
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_util.logmem", return_value=None):
+    with patch("rapidtide.core.signal.vessels.tide_util.logmem", return_value=None):
         hardvesselthresh, softvesselthresh = hs.findvessels(
             app=app2d,
             normapp=normapp2d,
@@ -682,7 +685,7 @@ def high_level_routines(debug=False):
     assert np.isfinite(hardvesselthresh)
     assert np.isfinite(softvesselthresh)
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.tide_io.savetonifti") as save_patch:
+    with patch("rapidtide.core.signal.vessels.tide_io.savetonifti") as save_patch:
         hs.upsampleimage(
             input_data=DummyInputData(xsize=1, ysize=1, numslices=2, timepoints=3),
             numsteps=2,
@@ -713,7 +716,7 @@ def high_level_routines(debug=False):
             for v in validlocslist[s]:
                 rawapp_byslice[v, s, :] = base + np.arange(destpoints, dtype=float)
 
-    with patch("rapidtide.core.signal.happy_supportfuncs.phaseprojectpass", side_effect=fake_phaseprojectpass):
+    with patch("rapidtide.core.signal.vessels.phaseprojectpass", side_effect=fake_phaseprojectpass):
         wmap = hs.wrightmap(
             input_data=input_data,
             demeandata_byslice=demean,

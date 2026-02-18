@@ -16,6 +16,8 @@
 #   limitations under the License.
 #
 
+import time
+
 import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import kurtosis, skew
@@ -25,6 +27,7 @@ import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 
 
@@ -217,12 +220,107 @@ def calcplethquality(
         )
 
 
-def getphysiofile(*args, **kwargs):
-    from rapidtide.core.signal.happy_supportfuncs import (
-        getphysiofile as _legacy_getphysiofile,
+def getphysiofile(
+    waveformfile: str,
+    inputfreq: float,
+    inputstart: float | None,
+    slicetimeaxis: NDArray,
+    stdfreq: float,
+    stdpoints: int,
+    envcutoff: float,
+    envthresh: float,
+    timings: list,
+    outputroot: str,
+    slop: float = 0.25,
+    outputlevel: int = 0,
+    iscardiac: bool = True,
+    debug: bool = False,
+) -> tuple[NDArray, NDArray, float, int]:
+    if debug:
+        print("Entering getphysiofile")
+    print("Reading physiological signal from file")
+
+    filefreq, filestart, dummy, waveform_fullres, dummy, dummy = tide_io.readvectorsfromtextfile(
+        waveformfile, onecol=True, debug=debug
+    )
+    if inputfreq < 0.0:
+        if filefreq is not None:
+            inputfreq = filefreq
+        else:
+            inputfreq = -inputfreq
+
+    if inputstart is None:
+        if filestart is not None:
+            inputstart = filestart
+        else:
+            inputstart = 0.0
+
+    inputtimeaxis = (
+        np.linspace(
+            0.0,
+            (1.0 / inputfreq) * len(waveform_fullres),
+            num=len(waveform_fullres),
+            endpoint=False,
+        )
+        + inputstart
+    )
+    stdtimeaxis = (
+        np.linspace(0.0, (1.0 / stdfreq) * stdpoints, num=stdpoints, endpoint=False) + inputstart
     )
 
-    return _legacy_getphysiofile(*args, **kwargs)
+    if (inputtimeaxis[0] > slop) or (inputtimeaxis[-1] < slicetimeaxis[-1] - slop):
+        print("\tinputtimeaxis[0]:", inputtimeaxis[0])
+        print("\tinputtimeaxis[-1]:", inputtimeaxis[-1])
+        print("\tslicetimeaxis[0]:", slicetimeaxis[0])
+        print("\tslicetimeaxis[-1]:", slicetimeaxis[-1])
+        if inputtimeaxis[0] > slop:
+            print("\tfailed condition 1:", inputtimeaxis[0], ">", slop)
+        if inputtimeaxis[-1] < slicetimeaxis[-1] - slop:
+            print("\tfailed condition 2:", inputtimeaxis[-1], "<", slicetimeaxis[-1] - slop)
+        raise ValueError("getphysiofile: error - waveform file does not cover the fmri time range")
+    timings.append(["Cardiac signal from physiology data read in", time.time(), None, None])
+
+    cleanwaveform_fullres, normwaveform_fullres, waveformenv_fullres, envmean = cleanphysio(
+        inputfreq,
+        waveform_fullres,
+        iscardiac=iscardiac,
+        cutoff=envcutoff,
+        thresh=envthresh,
+        nyquist=inputfreq / 2.0,
+        debug=debug,
+    )
+
+    if iscardiac:
+        if outputlevel > 1:
+            tide_io.writevec(waveform_fullres, outputroot + "_rawpleth_native.txt")
+            tide_io.writevec(cleanwaveform_fullres, outputroot + "_pleth_native.txt")
+            tide_io.writevec(waveformenv_fullres, outputroot + "_cardenvelopefromfile_native.txt")
+        timings.append(["Cardiac signal from physiology data cleaned", time.time(), None, None])
+
+    waveform_sliceres = tide_resample.doresample(
+        inputtimeaxis, cleanwaveform_fullres, slicetimeaxis, method="univariate", padlen=0
+    )
+    waveform_stdres = tide_math.madnormalize(
+        tide_resample.doresample(
+            inputtimeaxis,
+            cleanwaveform_fullres,
+            stdtimeaxis,
+            method="univariate",
+            padlen=0,
+        )
+    )[0]
+
+    timings.append(
+        [
+            "Cardiac signal from physiology data resampled to slice resolution and saved",
+            time.time(),
+            None,
+            None,
+        ]
+    )
+    if debug:
+        print("Leaving getphysiofile")
+    return waveform_sliceres, waveform_stdres, inputfreq, len(waveform_fullres)
 
 
 __all__ = [

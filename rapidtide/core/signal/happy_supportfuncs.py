@@ -3962,6 +3962,7 @@ def wrightmap(
 # Use extracted module implementations for cardiac/physio routines.
 from rapidtide.core.signal import cardiac as _core_cardiac
 from rapidtide.core.signal import physio as _core_physio
+from rapidtide.core.signal import vessels as _core_vessels
 
 rrifromphase = _core_cardiac.rrifromphase
 cardiacsig = _core_cardiac.cardiacsig
@@ -3979,3 +3980,18 @@ approximateentropy = _core_physio.approximateentropy
 entropy = _core_physio.entropy
 calcplethquality = _core_physio.calcplethquality
 getphysiofile = _core_physio.getphysiofile
+
+circularderivs = _core_vessels.circularderivs
+_procOnePhaseProject = _core_vessels._procOnePhaseProject
+_packslicedataPhaseProject = _core_vessels._packslicedataPhaseProject
+_unpackslicedataPhaseProject = _core_vessels._unpackslicedataPhaseProject
+preloadcongrid = _core_vessels.preloadcongrid
+phaseprojectpass = _core_vessels.phaseprojectpass
+_procOneSliceSmoothing = _core_vessels._procOneSliceSmoothing
+_packslicedataSliceSmoothing = _core_vessels._packslicedataSliceSmoothing
+_unpackslicedataSliceSmoothing = _core_vessels._unpackslicedataSliceSmoothing
+tcsmoothingpass = _core_vessels.tcsmoothingpass
+phaseproject = _core_vessels.phaseproject
+findvessels = _core_vessels.findvessels
+upsampleimage = _core_vessels.upsampleimage
+wrightmap = _core_vessels.wrightmap
