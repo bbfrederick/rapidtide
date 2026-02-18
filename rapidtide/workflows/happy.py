@@ -27,6 +27,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 from numpy.typing import NDArray
 
+import rapidtide.core.models.voxel_data as tide_voxelData
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
@@ -38,7 +39,6 @@ import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-import rapidtide.voxelData as tide_voxelData
 
 from .utils import setup_logger
 

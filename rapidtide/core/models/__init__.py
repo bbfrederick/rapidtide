@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2026 Blaise Frederick
+#   Copyright 2026-2026 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -15,12 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#
-from rapidtide.core.models import voxel_data as _impl
-from rapidtide.core.models.voxel_data import VoxelData, dataVolume
 
-tide_filt = _impl.tide_filt
-tide_io = _impl.tide_io
-tide_util = _impl.tide_util
+from .voxel_data import VoxelData, dataVolume
 
-__all__ = ["dataVolume", "VoxelData", "tide_filt", "tide_io", "tide_util"]
+__all__ = ["VoxelData", "dataVolume"]

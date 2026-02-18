@@ -31,6 +31,7 @@ from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA
 
+import rapidtide.core.models.voxel_data as tide_voxelData
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.multiproc as tide_multiproc
@@ -38,7 +39,6 @@ import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-import rapidtide.voxelData as tide_voxelData
 import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
 

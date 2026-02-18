@@ -32,6 +32,7 @@ from scipy.stats import rankdata
 import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
+import rapidtide.core.models.voxel_data as tide_voxelData
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
@@ -45,7 +46,6 @@ import rapidtide.resample as tide_resample
 import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.calcSimFuncMap as tide_calcSimFuncMap
 import rapidtide.workflows.cleanregressor as tide_cleanregressor

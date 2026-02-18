@@ -30,6 +30,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 from numpy.typing import NDArray
 
+import rapidtide.core.models.voxel_data as tide_voxelData
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.maskutil as tide_mask
@@ -38,7 +39,6 @@ import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-import rapidtide.voxelData as tide_voxelData
 import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
