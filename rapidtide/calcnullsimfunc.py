@@ -23,9 +23,9 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.genericmultiproc as tide_genericmultiproc
-import rapidtide.miscmath as tide_math
 
 
 # note: rawtimecourse has been filtered, but NOT windowed

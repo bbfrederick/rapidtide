@@ -209,7 +209,7 @@ def getcorrloc_identical_signals(debug=False):
     npts = 500
     signal = _make_broadband_signal(npts, Fs, delay=0.0, seed=42)
     # Normalize for correlation
-    import rapidtide.miscmath as tide_math
+    import rapidtide.core.signal.miscmath as tide_math
 
     sig_normed = tide_math.corrnormalize(signal, detrendorder=3, windowfunc="hamming")
     thedata = np.zeros((2, npts), dtype=float)
@@ -242,7 +242,7 @@ def getcorrloc_delayed_signals(debug=False):
     sig1 = _make_broadband_signal(npts, Fs, delay=0.0, seed=42)
     sig2 = _make_broadband_signal(npts, Fs, delay=delay, seed=42)
 
-    import rapidtide.miscmath as tide_math
+    import rapidtide.core.signal.miscmath as tide_math
 
     thedata = np.zeros((2, npts), dtype=float)
     thedata[0, :] = tide_math.corrnormalize(sig1, detrendorder=3, windowfunc="hamming")
@@ -295,7 +295,7 @@ def getcorrloc_with_fit(debug=False):
     sig1 = _make_broadband_signal(npts, Fs, delay=0.0, seed=42)
     sig2 = _make_broadband_signal(npts, Fs, delay=0.5, seed=42)
 
-    import rapidtide.miscmath as tide_math
+    import rapidtide.core.signal.miscmath as tide_math
 
     thedata = np.zeros((2, npts), dtype=float)
     thedata[0, :] = tide_math.corrnormalize(sig1, detrendorder=3, windowfunc="hamming")
@@ -349,7 +349,7 @@ def getcorrloc_search_range(debug=False):
     sig1 = _make_broadband_signal(npts, Fs, delay=0.0, seed=42)
     sig2 = _make_broadband_signal(npts, Fs, delay=0.0, seed=42)
 
-    import rapidtide.miscmath as tide_math
+    import rapidtide.core.signal.miscmath as tide_math
 
     thedata = np.zeros((2, npts), dtype=float)
     thedata[0, :] = tide_math.corrnormalize(sig1, detrendorder=3, windowfunc="hamming")

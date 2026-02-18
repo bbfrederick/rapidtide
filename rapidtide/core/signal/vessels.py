@@ -23,13 +23,13 @@ from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from tqdm import tqdm
 
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
 

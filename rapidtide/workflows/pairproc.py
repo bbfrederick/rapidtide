@@ -25,8 +25,8 @@ from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from tqdm import tqdm
 
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 from rapidtide.workflows.parser_funcs import is_valid_file
 
 

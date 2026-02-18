@@ -28,17 +28,17 @@ import numpy as np
 from numpy.typing import NDArray
 
 import rapidtide.core.models.voxel_data as tide_voxelData
+import rapidtide.core.signal.correlate as tide_corr
 import rapidtide.core.signal.happy_supportfuncs as happy_support
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
-import rapidtide.maskutil as tide_mask
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
+from rapidtide.core.masks.mask_ops import makeepimask, readamask
 
 from .utils import setup_logger
 
@@ -291,7 +291,7 @@ def happy_main(argparsingfunc: Any) -> None:
     # make and save a mask of the voxels to process based on image intensity
     tide_util.logmem("before mask creation")
     if args.processmask is not None:
-        mask = tide_mask.readamask(
+        mask = readamask(
             args.processmask,
             input_data.copyheader(numtimepoints=1),
             xsize,
@@ -301,7 +301,7 @@ def happy_main(argparsingfunc: Any) -> None:
         )
         mask = np.uint16(np.where(mask > 0, 1, 0).reshape(numspatiallocs))
     else:
-        mask = np.uint16(tide_mask.makeepimask(input_data.nim).dataobj.reshape(numspatiallocs))
+        mask = np.uint16(makeepimask(input_data.nim).dataobj.reshape(numspatiallocs))
 
     theheader = input_data.copyheader(numtimepoints=1)
     timings.append(["Mask created", time.time(), None, None])

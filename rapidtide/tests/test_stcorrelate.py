@@ -16,13 +16,26 @@
 #   limitations under the License.
 #
 #
+try:
+    from rapidtide.tests._mplsetup import configure_matplotlib_env
+except Exception:
+    import os
+    import sys
+
+    _TESTSDIR = os.path.dirname(os.path.abspath(__file__))
+    if _TESTSDIR not in sys.path:
+        sys.path.insert(0, _TESTSDIR)
+    from _mplsetup import configure_matplotlib_env
+
+configure_matplotlib_env()
+
 import os.path as op
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rapidtide.correlate import shorttermcorr_1D, shorttermcorr_2D
+from rapidtide.core.signal.correlate import shorttermcorr_1D, shorttermcorr_2D
 from rapidtide.filter import NoncausalFilter
 from rapidtide.io import writenpvecs
 from rapidtide.tests.utils import create_dir, get_test_temp_path

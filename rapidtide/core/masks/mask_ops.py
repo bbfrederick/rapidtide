@@ -24,8 +24,8 @@ import numpy as np
 from nilearn import masking
 from numpy.typing import ArrayLike, NDArray
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
 
 LGR = logging.getLogger("GENERAL")
 

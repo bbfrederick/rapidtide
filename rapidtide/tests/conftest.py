@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#   Copyright 2016-2026 Blaise Frederick
+#   Copyright 2026-2026 Blaise Frederick
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -16,10 +16,6 @@
 #   limitations under the License.
 #
 #
-from rapidtide.core.signal import stats as _impl
-from rapidtide.core.signal.stats import *  # noqa: F401,F403
+from rapidtide.tests._mplsetup import configure_matplotlib_env
 
-tide_fit = _impl.tide_fit
-tide_io = _impl.tide_io
-
-__all__ = [name for name in dir(_impl) if not name.startswith("_")]
+configure_matplotlib_env()

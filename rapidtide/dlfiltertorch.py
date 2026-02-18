@@ -27,7 +27,7 @@ import numpy as np
 import tqdm
 from numpy.typing import NDArray
 
-import rapidtide.miscmath as tide_math
+import rapidtide.core.signal.miscmath as tide_math
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")

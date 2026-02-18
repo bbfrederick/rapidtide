@@ -26,10 +26,10 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.signal import savgol_filter, welch
 
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 
 
 def _get_parser() -> Any:

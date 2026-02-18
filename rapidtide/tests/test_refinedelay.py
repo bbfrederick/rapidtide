@@ -18,7 +18,8 @@
 #
 import numpy as np
 
-import rapidtide.refinedelay as tide_refinedelay
+import rapidtide.core.delay.refinedelay as core_refinedelay
+import rapidtide.core.delay.refinedelay as tide_refinedelay
 
 
 class DummyLagTCGenerator:
@@ -368,6 +369,7 @@ def test_refinedelay(debug=False, local=False):
     coffstodelay_tests(debug=debug)
     getderivratios_tests(debug=debug)
     filterderivratios_tests(debug=debug)
+    assert callable(core_refinedelay.filterderivratios)
 
 
 if __name__ == "__main__":

@@ -22,8 +22,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
 
 
 def _get_parser() -> Any:

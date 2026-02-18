@@ -22,11 +22,11 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.signal import welch
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.util as tide_util
 

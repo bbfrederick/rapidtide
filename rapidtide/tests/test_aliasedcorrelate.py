@@ -16,13 +16,26 @@
 #   limitations under the License.
 #
 #
+try:
+    from rapidtide.tests._mplsetup import configure_matplotlib_env
+except Exception:
+    import os
+    import sys
+
+    _TESTSDIR = os.path.dirname(os.path.abspath(__file__))
+    if _TESTSDIR not in sys.path:
+        sys.path.insert(0, _TESTSDIR)
+    from _mplsetup import configure_matplotlib_env
+
+configure_matplotlib_env()
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-import rapidtide.miscmath as tide_math
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.resample as tide_resample
-from rapidtide.correlate import AliasedCorrelator
+from rapidtide.core.signal.correlate import AliasedCorrelator
 
 
 def aliasedcorrelate(

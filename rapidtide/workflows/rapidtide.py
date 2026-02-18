@@ -33,18 +33,17 @@ import rapidtide.calccoherence as tide_calccoherence
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.core.models.voxel_data as tide_voxelData
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.helper_classes as tide_classes
 import rapidtide.io as tide_io
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
-import rapidtide.maskutil as tide_mask
-import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
 import rapidtide.simFuncClasses as tide_simFuncClasses
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.wiener as tide_wiener
 import rapidtide.workflows.calcSimFuncMap as tide_calcSimFuncMap
@@ -53,6 +52,8 @@ import rapidtide.workflows.fitSimFuncMap as tide_fitSimFuncMap
 import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.refineRegressor as tide_refineRegressor
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
+from rapidtide.core.io.mask_io import saveregionaltimeseries
+from rapidtide.core.masks.mask_ops import getmaskset, makeepimask, maketmask, readamask
 from rapidtide.ffttools import showfftcache
 
 from .utils import setup_logger
@@ -530,7 +531,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     for thisanatomic in anatomiclist:
         if optiondict[thisanatomic[0]] is not None:
             anatomicmasks.append(
-                tide_mask.readamask(
+                readamask(
                     optiondict[thisanatomic[0]],
                     theinputdata.nim_hdr,
                     xsize,
@@ -599,7 +600,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     tide_util.logmem("before setting masks")
 
     internalinitregressorincludemask, internalinitregressorexcludemask, dummy = (
-        tide_mask.getmaskset(
+        getmaskset(
             "global mean",
             optiondict["initregressorincludename"],
             optiondict["initregressorincludevals"],
@@ -618,7 +619,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         else:
             internalinitregressorexcludemask = internalinvbrainmask
 
-    internalrefineincludemask, internalrefineexcludemask, dummy = tide_mask.getmaskset(
+    internalrefineincludemask, internalrefineexcludemask, dummy = getmaskset(
         "refine",
         optiondict["refineincludename"],
         optiondict["refineincludevals"],
@@ -636,7 +637,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         else:
             internalrefineexcludemask = internalinvbrainmask
 
-    internaloffsetincludemask, internaloffsetexcludemask, dummy = tide_mask.getmaskset(
+    internaloffsetincludemask, internaloffsetexcludemask, dummy = getmaskset(
         "offset",
         optiondict["offsetincludename"],
         optiondict["offsetincludevals"],
@@ -660,7 +661,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     threshval = tide_stats.getfracvals(fmri_data[:, :], [0.98])[0] / 25.0
     LGR.debug("constructing correlation mask")
     if optiondict["corrmaskincludename"] is not None:
-        thecorrmask = tide_mask.readamask(
+        thecorrmask = readamask(
             optiondict["corrmaskincludename"],
             theinputdata.nim_hdr,
             xsize,
@@ -696,7 +697,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             if not optiondict["dataiszeromean"]:
                 LGR.verbose("generating correlation mask from mean image")
                 corrmask = np.uint16(
-                    tide_mask.makeepimask(theinputdata.nim).dataobj.reshape(numspatiallocs)
+                    makeepimask(theinputdata.nim).dataobj.reshape(numspatiallocs)
                 )
             else:
                 LGR.verbose("generating correlation mask from std image")
@@ -980,7 +981,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     meanfreq = 1.0 / fmritr
     meanperiod = 1.0 * fmritr
     meanstarttime = 0.0
-    meanvec, meanmask = tide_mask.saveregionaltimeseries(
+    meanvec, meanmask = saveregionaltimeseries(
         "initial regressor",
         "startregressormask",
         fmri_data,
@@ -997,7 +998,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     )
 
     if brainmask is not None:
-        brainvec, dummy = tide_mask.saveregionaltimeseries(
+        brainvec, dummy = saveregionaltimeseries(
             "whole brain",
             "brain",
             fmri_data,
@@ -1013,7 +1014,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         internalgraymask = None
     else:
         internalgraymask = graymask.reshape((numspatiallocs))
-        grayvec, dummy = tide_mask.saveregionaltimeseries(
+        grayvec, dummy = saveregionaltimeseries(
             "gray matter",
             "GM",
             fmri_data,
@@ -1030,7 +1031,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         internalwhitemask = None
     else:
         internalwhitemask = whitemask.reshape((numspatiallocs))
-        whitevec, dummy = tide_mask.saveregionaltimeseries(
+        whitevec, dummy = saveregionaltimeseries(
             "white matter",
             "WM",
             fmri_data,
@@ -1047,7 +1048,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         internalcsfmask = None
     else:
         internalcsfmask = csfmask.reshape((numspatiallocs))
-        csfvec, dummy = tide_mask.saveregionaltimeseries(
+        csfvec, dummy = saveregionaltimeseries(
             "CSF",
             "CSF",
             fmri_data,
@@ -1330,7 +1331,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # prepare the temporal masks
     if optiondict["tincludemaskname"] is not None:
         print("creating temporal include mask")
-        includetmask_y = tide_mask.maketmask(
+        includetmask_y = maketmask(
             optiondict["tincludemaskname"], reference_x, reference_y.astype(rt_floattype) + 0.0
         )
     else:
@@ -1339,7 +1340,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         print("creating temporal exclude mask")
         excludetmask_y = (
             -1.0
-            * tide_mask.maketmask(
+            * maketmask(
                 optiondict["texcludemaskname"], reference_x, reference_y.astype(rt_floattype) + 0.0
             )
             + 1.0
@@ -2925,7 +2926,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             else:
                 thisexcludemask = None
 
-            meanvec, meanmask = tide_mask.saveregionaltimeseries(
+            meanvec, meanmask = saveregionaltimeseries(
                 "initial regressor",
                 "startregressormask",
                 filtereddata,
@@ -2939,7 +2940,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 debug=optiondict["debug"],
             )
             if brainmask is not None:
-                brainvec, dummy = tide_mask.saveregionaltimeseries(
+                brainvec, dummy = saveregionaltimeseries(
                     "whole brain",
                     "brain",
                     filtereddata,
@@ -2951,7 +2952,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     debug=optiondict["debug"],
                 )
             if graymask is not None:
-                grayvec, dummy = tide_mask.saveregionaltimeseries(
+                grayvec, dummy = saveregionaltimeseries(
                     "gray matter",
                     "GM",
                     filtereddata,
@@ -2964,7 +2965,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     debug=optiondict["debug"],
                 )
             if whitemask is not None:
-                whitevec, dummy = tide_mask.saveregionaltimeseries(
+                whitevec, dummy = saveregionaltimeseries(
                     "white matter",
                     "WM",
                     filtereddata,
@@ -2977,7 +2978,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     debug=optiondict["debug"],
                 )
             if csfmask is not None:
-                csfvec, dummy = tide_mask.saveregionaltimeseries(
+                csfvec, dummy = saveregionaltimeseries(
                     "CSF",
                     "CSF",
                     filtereddata,

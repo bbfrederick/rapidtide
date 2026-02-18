@@ -31,17 +31,18 @@ import numpy as np
 from numpy.typing import NDArray
 
 import rapidtide.core.models.voxel_data as tide_voxelData
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
-import rapidtide.maskutil as tide_mask
-import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.refineDelayMap as tide_refineDelayMap
 import rapidtide.workflows.regressfrommaps as tide_regressfrommaps
+from rapidtide.core.io.mask_io import saveregionaltimeseries
+from rapidtide.core.masks.mask_ops import readamask
 
 from .rapidtide_parser import DEFAULT_REGRESSIONFILTDERIVS
 from .utils import setup_logger
@@ -865,7 +866,7 @@ def retroregress(args: Any) -> None:
                 therunoptions[thisanatomic[0]] = None
             if therunoptions[thisanatomic[0]] is not None:
                 anatomicmasks.append(
-                    tide_mask.readamask(
+                    readamask(
                         therunoptions[thisanatomic[0]],
                         theinputdata.nim_hdr,
                         xsize,
@@ -893,7 +894,7 @@ def retroregress(args: Any) -> None:
         else:
             thisexcludemask = None
 
-        meanvec, meanmask = tide_mask.saveregionaltimeseries(
+        meanvec, meanmask = saveregionaltimeseries(
             "initial regressor",
             "startregressormask",
             filtereddata,
@@ -929,7 +930,7 @@ def retroregress(args: Any) -> None:
         else:
             internalcsfmask = csfmask.reshape((numspatiallocs))
         if brainmask is not None:
-            brainvec, dummy = tide_mask.saveregionaltimeseries(
+            brainvec, dummy = saveregionaltimeseries(
                 "whole brain",
                 "brain",
                 filtereddata,
@@ -941,7 +942,7 @@ def retroregress(args: Any) -> None:
                 debug=args.debug,
             )
         if graymask is not None:
-            grayvec, dummy = tide_mask.saveregionaltimeseries(
+            grayvec, dummy = saveregionaltimeseries(
                 "gray matter",
                 "GM",
                 filtereddata,
@@ -954,7 +955,7 @@ def retroregress(args: Any) -> None:
                 debug=args.debug,
             )
         if whitemask is not None:
-            whitevec, dummy = tide_mask.saveregionaltimeseries(
+            whitevec, dummy = saveregionaltimeseries(
                 "white matter",
                 "WM",
                 filtereddata,
@@ -967,7 +968,7 @@ def retroregress(args: Any) -> None:
                 debug=args.debug,
             )
         if csfmask is not None:
-            grayvec, dummy = tide_mask.saveregionaltimeseries(
+            grayvec, dummy = saveregionaltimeseries(
                 "CSF",
                 "CSF",
                 filtereddata,

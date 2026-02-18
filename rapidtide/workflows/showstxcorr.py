@@ -27,10 +27,10 @@ import pandas as pd
 from numpy.polynomial import Polynomial
 from numpy.typing import NDArray
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resamp
 import rapidtide.workflows.parser_funcs as pf
 

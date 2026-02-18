@@ -23,8 +23,8 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.ndimage import binary_erosion
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
-import rapidtide.stats as tide_stats
 from rapidtide.RapidtideDataset import RapidtideDataset
 
 

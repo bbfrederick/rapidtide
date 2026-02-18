@@ -20,7 +20,8 @@ from unittest.mock import patch
 
 import numpy as np
 
-import rapidtide.stats as tide_stats
+import rapidtide.core.signal.stats as core_stats
+import rapidtide.core.signal.stats as tide_stats
 
 
 def distribution_and_significance_tests(debug=False):
@@ -98,7 +99,7 @@ def distribution_and_significance_tests(debug=False):
     assert np.fabs(nlp_low - 0.0) < 1e-12
     assert np.fabs(nlp_high - 4.0) < 1e-12
 
-    with patch("rapidtide.stats.tide_io.readvecs", return_value=[jsbfit]):
+    with patch("rapidtide.core.signal.stats.tide_io.readvecs", return_value=[jsbfit]):
         rvals = tide_stats.rfromp("ignored_fitfile.txt", [0.90, 0.95, 0.99])
     assert len(rvals) == 3
 
@@ -226,8 +227,8 @@ def histogram_and_mask_tests(debug=False):
     assert np.isfinite(echoratio)
 
     # file-writing path
-    with patch("rapidtide.stats.tide_io.writenpvecs", return_value=None), patch(
-        "rapidtide.stats.tide_io.writebidstsv", return_value=None
+    with patch("rapidtide.core.signal.stats.tide_io.writenpvecs", return_value=None), patch(
+        "rapidtide.core.signal.stats.tide_io.writebidstsv", return_value=None
     ):
         tide_stats.makeandsavehistogram(
             data,
@@ -244,7 +245,7 @@ def histogram_and_mask_tests(debug=False):
 
     # dictionary path
     hdict = {}
-    with patch("rapidtide.stats.tide_io.writebidstsv", return_value=None):
+    with patch("rapidtide.core.signal.stats.tide_io.writebidstsv", return_value=None):
         tide_stats.makeandsavehistogram(
             data,
             histlen=101,
@@ -302,6 +303,7 @@ def test_stats(debug=False, displayplots=False):
     correlation_transform_tests(debug=debug)
     timeseries_stats_tests(debug=debug)
     histogram_and_mask_tests(debug=debug)
+    assert callable(core_stats.sigFromDistributionData)
 
 
 if __name__ == "__main__":

@@ -23,12 +23,12 @@ from numpy.typing import NDArray
 from scipy.stats import kurtosis, skew
 from statsmodels.robust import mad
 
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
 
 
 def cleanphysio(

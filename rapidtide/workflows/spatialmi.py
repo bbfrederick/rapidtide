@@ -24,11 +24,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 from numpy.typing import NDArray
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 
 
 def _get_parser() -> Any:

@@ -29,12 +29,12 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import pearsonr
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_DETREND_ORDER = 3

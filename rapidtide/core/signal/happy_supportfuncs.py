@@ -28,14 +28,14 @@ from scipy.stats import kurtosis, pearsonr, skew
 from statsmodels.robust import mad
 from tqdm import tqdm
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
 warnings.simplefilter(action="ignore", category=FutureWarning)

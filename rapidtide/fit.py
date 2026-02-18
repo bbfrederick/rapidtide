@@ -36,7 +36,7 @@ from statsmodels.robust import mad
 from statsmodels.tsa.ar_model import AutoReg, ar_select_order
 from tqdm import tqdm
 
-import rapidtide.miscmath as tide_math
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.util as tide_util
 from rapidtide.decorators import conditionaljit, conditionaljit2
 

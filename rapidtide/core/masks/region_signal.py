@@ -23,7 +23,7 @@ import numpy as np
 from numpy.typing import NDArray
 from sklearn.decomposition import PCA
 
-import rapidtide.miscmath as tide_math
+import rapidtide.core.signal.miscmath as tide_math
 
 LGR = logging.getLogger("GENERAL")
 

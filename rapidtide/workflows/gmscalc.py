@@ -26,9 +26,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 from numpy.typing import NDArray
 
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 

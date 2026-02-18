@@ -22,9 +22,9 @@ import sys
 from typing import Any
 
 import rapidtide.core.signal.happy_supportfuncs as happy_support
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.dlfiltertorch as tide_dlfilt
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_MODEL = "model_cnn_pytorch"
