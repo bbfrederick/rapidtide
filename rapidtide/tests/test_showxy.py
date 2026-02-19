@@ -27,12 +27,8 @@ matplotlib.use("Agg")
 import numpy as np
 import pytest
 
-from rapidtide.workflows.showxy import (
-    _get_parser,
-    bland_altman_plot,
-    showxy,
-    stringtorange,
-)
+from rapidtide.workflows.showxy import (_get_parser, bland_altman_plot, showxy,
+                                        stringtorange)
 
 # ---- helpers ----
 

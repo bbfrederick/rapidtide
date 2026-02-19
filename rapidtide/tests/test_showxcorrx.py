@@ -24,13 +24,9 @@ from contextlib import contextmanager
 import numpy as np
 import pytest
 
-from rapidtide.workflows.showxcorrx import (
-    DEFAULT_SIGMAMAX,
-    DEFAULT_SIGMAMIN,
-    _get_parser,
-    printthresholds,
-    showxcorrx,
-)
+from rapidtide.workflows.showxcorrx import (DEFAULT_SIGMAMAX, DEFAULT_SIGMAMIN,
+                                            _get_parser, printthresholds,
+                                            showxcorrx)
 
 # ==================== Helpers ====================
 

@@ -21,12 +21,9 @@ import os
 import matplotlib as mpl
 import pytest
 
-from rapidtide.tests.utils import (
-    assert_text_vectors_match,
-    get_example_and_temp_roots,
-    run_rapidtide,
-    run_retroregress,
-)
+from rapidtide.tests.utils import (assert_text_vectors_match,
+                                   get_example_and_temp_roots, run_rapidtide,
+                                   run_retroregress)
 
 pytestmark = pytest.mark.slow
 
