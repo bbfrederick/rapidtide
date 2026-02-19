@@ -541,6 +541,25 @@ does tend to make the maps for the gas challenge experiments a lot cleaner to us
 correlation function is pretty well behaved.
 
 
+Getting an initial regressor from the Superior Sagittal Sinus (SSS)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Sometimes a subject will have severe pathology, such as a stroke, that will mean that the global mean signal has a
+wide distribution of delays, which will confuse rapidtide and make it hard to find the driving sLFO signal.  In
+cases like this, using the SSS as a preselection mask is a very good solution. The only two complications are
+that 1) fMRIprep (which I tend to use) uses a very tight mask that pretty efficiently removes the
+SSS from preprocessed data, you have to get it from data prior to skull stripping. Because of
+that, 2) you often have to hand draw a mask, which is quite inconvenient (but on the plus side,
+the SSS is really easy to find - even physicists like me can get it reliably).
+
+If you do have MNI152 data that somehow does NOT have the SSS stripped off, or if you’ve got the transverse
+sinus in your image (what the SSS drains into, often preserved in fMRIprep data), there’s another
+option. Go into the rapidtide/data/reference directory, which has all sorts of useful bric-a-brac and
+find “venous_sinus_template_2mm.nii.gz” (or 1mm, if you have that), and use it to set your initial
+regressor using --globalmeaninclude RAPIDTIDEROOT/rapidtide/data/reference/venous_sinus_template_2mm.nii.gz.
+That should get you a nice clean blood regressor.
+
+
 CVR mapping:
 """"""""""""
 This is a slightly different twist on interpreting the strength of the lagged correlation,
