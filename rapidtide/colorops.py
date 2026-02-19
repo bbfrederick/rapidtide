@@ -62,7 +62,7 @@ def spectrumtospecdist(
     freqs: NDArray[np.float64],
     spec: NDArray[np.float64],
     lowwave: float = 660.0,
-    highwave: float = 400.0,
+    highwave: float = 420.0,
     lowfreq: float = 0.009,
     highfreq: float = 0.15,
     debug: bool = False,
@@ -106,12 +106,10 @@ def spectrumtospecdist(
         data[wavelength] = spec[i]
         if debug:
             print(f"{freqs[i]=}, {wavelength=}, {spec[i]=}")
-    return colour.SpectralDistribution(data, name="sLFO to color").align(
-        colour.SPECTRAL_SHAPE_DEFAULT
-    )
+    return colour.SpectralDistribution(data, name="sLFO to color").align(colour.SpectralShape(int(highwave), int(lowwave), 1))
 
 
-def plot_sd(thespectrum: colour.SpectralDistribution) -> None:
+def plot_sd(thespectrum: colour.SpectralDistribution, modulate=True) -> None:
     """Plot a spectral distribution using colour-science plotting utilities.
 
     Parameters
@@ -126,7 +124,7 @@ def plot_sd(thespectrum: colour.SpectralDistribution) -> None:
     """
     colour.plotting.plot_single_sd(
         thespectrum,
-        modulate_colours_with_sd_amplitude=True,
+        modulate_colours_with_sd_amplitude=modulate,
         y_label="Relative Flux / $F_\\lambda$",
     )
 
@@ -148,6 +146,22 @@ def spectorgb(thespectrum: colour.SpectralDistribution) -> NDArray[np.float64]:
         XYZ = colour.sd_to_XYZ(thespectrum.align(colour.SPECTRAL_SHAPE_DEFAULT))
         RGB = colour.XYZ_to_sRGB(XYZ, illuminant=colour.CCS_ILLUMINANTS["cie_2_1931"]["E"])
     return RGB
+
+
+def normalizergb(RGB: NDArray[np.float64]) -> NDArray[np.float64]:
+    """Normalize an sRGB triplet.
+
+    Parameters
+    ----------
+    RGB:
+        A 3-element array containing sRGB values.
+
+    Returns
+    -------
+    numpy.ndarray
+        A 3-element array containing normalized RGB values.
+    """
+    return colour.algebra.normalise_maximum(RGB)
 
 
 def plot_swatch(rgb: NDArray[np.float64], label: str = "sLFO color") -> None:
@@ -187,6 +201,8 @@ def main(debug: bool = False):
     plot_sd(sLFO_spectrum)
     sLFO_color = spectorgb(sLFO_spectrum)
     print(f"{sLFO_color=}")
+    normrgb = normalizergb(sLFO_color)
+    print(f"{normrgb=}")
     plot_swatch(sLFO_color, label="sLFO color")
 
 
