@@ -16,18 +16,36 @@
 #   limitations under the License.
 #
 #
+"""Utilities to map physiological spectra into visible color representations."""
+
+from __future__ import annotations
+
 import colour
 import numpy as np
+from numpy.typing import NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 
 
-def read_cosmic_spectrum(path='spectrum-Z-0.06e.txt'):
+def read_cosmic_spectrum(path: str = "spectrum-Z-0.06e.txt") -> colour.SpectralDistribution:
+    """Read a tabulated cosmic spectrum and return a spectral distribution.
+
+    Parameters
+    ----------
+    path
+        Path to a two-column text file containing wavelength and flux values.
+        Wavelength values are expected in Angstrom units.
+
+    Returns
+    -------
+    colour.SpectralDistribution
+        Spectral distribution aligned to ``colour.SPECTRAL_SHAPE_DEFAULT``.
+    """
     data = {}
     with open(path) as file:
         for line in file:
-            if line.startswith('#'):
+            if line.startswith("#"):
                 continue
 
             wavelength, value = line.strip().split()
@@ -35,62 +53,142 @@ def read_cosmic_spectrum(path='spectrum-Z-0.06e.txt'):
             # nanometers.
             data[float(wavelength) / 10] = float(value)
 
-    return colour.SpectralDistribution(
-        data, name='Cosmic Spectrum at redshift 0.06').align(colour.SPECTRAL_SHAPE_DEFAULT)
+    return colour.SpectralDistribution(data, name="Cosmic Spectrum at redshift 0.06").align(
+        colour.SPECTRAL_SHAPE_DEFAULT
+    )
 
 
-def spectrumtospecdist(freqs, spec, lowwave=660, highwave=400, lowfreq=0.009, highfreq=0.15, debug=False):
+def spectrumtospecdist(
+    freqs: NDArray[np.float64],
+    spec: NDArray[np.float64],
+    lowwave: float = 660.0,
+    highwave: float = 400.0,
+    lowfreq: float = 0.009,
+    highfreq: float = 0.15,
+    debug: bool = False,
+) -> colour.SpectralDistribution:
+    """Map a frequency-domain spectrum onto a visible wavelength interval.
+
+    Parameters
+    ----------
+    freqs
+        Frequency axis values in Hz.
+    spec
+        Spectrum amplitudes corresponding to ``freqs``.
+    lowwave
+        Wavelength in nm assigned to ``lowfreq``.
+    highwave
+        Wavelength in nm assigned to ``highfreq``.
+    lowfreq
+        Lower frequency bound in Hz used for mapping.
+    highfreq
+        Upper frequency bound in Hz used for mapping.
+    debug
+        If ``True``, print detailed per-bin mapping information.
+
+    Returns
+    -------
+    colour.SpectralDistribution
+        Spectral distribution aligned to ``colour.SPECTRAL_SHAPE_DEFAULT``.
+    """
     data = {}
     freqstep = freqs[1] - freqs[0]
     lowfreqindex = int(np.floor(lowfreq / freqstep))
     highfreqindex = int(np.ceil(highfreq / freqstep))
 
-    theslope = (highwave - lowwave) / (highfreq / lowfreq)
-    intercept = freqs[lowfreqindex] - theslope * lowfreqindex
+    theslope = (highwave - lowwave) / ((highfreq - lowfreq) / freqstep)
+    intercept = lowwave - theslope * (lowfreq / freqstep)
 
-    print(theslope)
+    if debug:
+        print(f"{theslope=}, {intercept=}")
     for i in range(lowfreqindex, highfreqindex + 1):
         wavelength = theslope * i + intercept
         data[wavelength] = spec[i]
         if debug:
             print(f"{freqs[i]=}, {wavelength=}, {spec[i]=}")
-    return colour.SpectralDistribution(
-        data, name='sLFO to color').align(colour.SPECTRAL_SHAPE_DEFAULT)
+    return colour.SpectralDistribution(data, name="sLFO to color").align(
+        colour.SPECTRAL_SHAPE_DEFAULT
+    )
 
 
-def plot_sd(thespectrum):
+def plot_sd(thespectrum: colour.SpectralDistribution) -> None:
+    """Plot a spectral distribution using colour-science plotting utilities.
+
+    Parameters
+    ----------
+    thespectrum
+        Spectral distribution to plot.
+
+    Returns
+    -------
+    None
+        This function is called for its plotting side effects.
+    """
     colour.plotting.plot_single_sd(
         thespectrum,
         modulate_colours_with_sd_amplitude=True,
-        y_label='Relative Flux / $F_\\lambda$')
+        y_label="Relative Flux / $F_\\lambda$",
+    )
 
-def plot_swatch(thespectrum):
-    with colour.utilities.domain_range_scale('1'):
+
+def spectorgb(thespectrum: colour.SpectralDistribution) -> NDArray[np.float64]:
+    """Convert a spectral distribution to an sRGB triplet.
+
+    Parameters
+    ----------
+    thespectrum
+        Spectral distribution to convert.
+
+    Returns
+    -------
+    numpy.ndarray
+        A 3-element array containing sRGB values.
+    """
+    with colour.utilities.domain_range_scale("1"):
         XYZ = colour.sd_to_XYZ(thespectrum.align(colour.SPECTRAL_SHAPE_DEFAULT))
-        RGB = colour.XYZ_to_sRGB(
-            XYZ, illuminant=colour.CCS_ILLUMINANTS['cie_2_1931']['E'])
+        RGB = colour.XYZ_to_sRGB(XYZ, illuminant=colour.CCS_ILLUMINANTS["cie_2_1931"]["E"])
+    return RGB
 
+
+def plot_swatch(rgb: NDArray[np.float64], label: str = "sLFO color") -> None:
+    """Display an RGB swatch for a color sample.
+
+    Parameters
+    ----------
+    rgb
+        A 3-element RGB array.
+
+    Returns
+    -------
+    None
+        This function is called for its plotting side effects.
+    """
     colour.plotting.plot_single_colour_swatch(
-        colour.plotting.ColourSwatch(
-            colour.algebra.normalise_maximum(RGB), 'The Universe Colour'),
-        text_parameters={'size': 'x-large'})
+        colour.plotting.ColourSwatch(colour.algebra.normalise_maximum(rgb), label),
+        text_parameters={"size": "x-large"},
+    )
 
-if __name__ == "__main__":
-    #thespectrum = read_cosmic_spectrum(path='data/examples/src/spectrum-Z-0.06e.txt')
-    #plot_sd(thespectrum)
-    #plot_swatch(thespectrum)
 
-    thissamplerate, thisstartoffset, colnames, invec, compression, columnsource, extrainfo = tide_io.readbidstsv("data/examples/dst/sub-RAPIDTIDETEST_band3_desc-oversampledmovingregressor_timeseries.json", "pass3")
+def main(debug: bool = False):
+    thissamplerate, thisstartoffset, colnames, invec, compression, columnsource, extrainfo = (
+        tide_io.readbidstsv(
+            "data/examples/dst/sub-RAPIDTIDETEST_band3_desc-oversampledmovingregressor_timeseries.json",
+            "pass3",
+        )
+    )
 
-    print(thissamplerate, thisstartoffset, colnames, invec, compression, columnsource, extrainfo)
     freqaxis, spectrum = tide_filt.spectrum(
         tide_filt.hamming(len(invec[0])) * invec[0],
         Fs=thissamplerate,
         mode="power",
     )
-    print(freqaxis)
-    print(spectrum)
 
-    sLFO_spectrum = spectrumtospecdist(freqaxis, spectrum, debug=True)
+    sLFO_spectrum = spectrumtospecdist(freqaxis, spectrum, debug=False)
     plot_sd(sLFO_spectrum)
-    plot_swatch(sLFO_spectrum)
+    sLFO_color = spectorgb(sLFO_spectrum)
+    print(f"{sLFO_color=}")
+    plot_swatch(sLFO_color, label="sLFO color")
+
+
+if __name__ == "__main__":
+    main(debug=True)
