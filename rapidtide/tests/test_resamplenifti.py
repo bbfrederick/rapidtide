@@ -648,30 +648,45 @@ def resamplenifti_same_tr(debug=False):
 # ============================================================================
 
 
-def test_resamplenifti(debug=False):
-    # Parser tests
-    parser_basic(debug=debug)
-    parser_required_args(debug=debug)
-    parser_defaults(debug=debug)
-    parser_noantialias_flag(debug=debug)
-    parser_normalize_flag(debug=debug)
-    parser_debug_flag(debug=debug)
-    parser_all_flags(debug=debug)
-    parser_outputtr_type(debug=debug)
+PARSER_CASES = [
+    parser_basic,
+    parser_required_args,
+    parser_defaults,
+    parser_noantialias_flag,
+    parser_normalize_flag,
+    parser_debug_flag,
+    parser_all_flags,
+    parser_outputtr_type,
+]
 
-    # resamplenifti function tests
-    resamplenifti_basic_downsample(debug=debug)
-    resamplenifti_upsample_disables_antialias(debug=debug)
-    resamplenifti_noantialias_flag(debug=debug)
-    resamplenifti_output_shape(debug=debug)
-    resamplenifti_header_updated(debug=debug)
-    resamplenifti_header_not_mutated(debug=debug)
-    resamplenifti_niftisplitext_called(debug=debug)
-    resamplenifti_doresample_receives_correct_data(debug=debug)
-    resamplenifti_debug_mode(debug=debug)
-    resamplenifti_multi_slice(debug=debug)
-    resamplenifti_same_tr(debug=debug)
+
+WORKFLOW_CASES = [
+    resamplenifti_basic_downsample,
+    resamplenifti_upsample_disables_antialias,
+    resamplenifti_noantialias_flag,
+    resamplenifti_output_shape,
+    resamplenifti_header_updated,
+    resamplenifti_header_not_mutated,
+    resamplenifti_niftisplitext_called,
+    resamplenifti_doresample_receives_correct_data,
+    resamplenifti_debug_mode,
+    resamplenifti_multi_slice,
+    resamplenifti_same_tr,
+]
+
+
+@pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_resamplenifti_parser_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", WORKFLOW_CASES, ids=lambda func: func.__name__)
+@pytest.mark.slow
+def test_resamplenifti_workflow_cases(case_runner, case_func):
+    case_runner(case_func)
 
 
 if __name__ == "__main__":
-    test_resamplenifti(debug=True)
+    for case in PARSER_CASES + WORKFLOW_CASES:
+        case(debug=True)

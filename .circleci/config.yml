@@ -297,6 +297,7 @@ jobs:
       - run_split_pytests:
           env_name: py310_env
           timeout: "20m"
+          extra_args: '-m "not slow"'
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -326,7 +327,37 @@ jobs:
       - run_split_pytests:
           env_name: py311_env
           timeout: "20m"
-          extra_args: "-W ignore --ignore=rapidtide/candidatetests"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
+      - store_test_results:
+          path: rapidtide/tests/test-results
+      - store_artifacts:
+          path: rapidtide/tests/test-results
+
+
+  test_py311_slow:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    parallelism: 1
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
+          env_name: py311_env
+          timeout: "40m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow'
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -356,7 +387,7 @@ jobs:
       - run_split_pytests:
           env_name: py311_env
           timeout: "25m"
-          extra_args: "-W ignore --ignore=rapidtide/candidatetests --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow" --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
       - codecov/upload:
           file: rapidtide/coverage.xml
       - store_artifacts:
@@ -389,7 +420,7 @@ jobs:
       - run_split_pytests:
           env_name: py312_env
           timeout: "20m"
-          extra_args: "-W ignore --ignore=rapidtide/candidatetests"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -419,7 +450,7 @@ jobs:
       - run_split_pytests:
           env_name: py313_env
           timeout: "20m"
-          extra_args: "-W ignore --ignore=rapidtide/candidatetests"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -449,7 +480,7 @@ jobs:
       - run_split_pytests:
           env_name: py314_env
           timeout: "20m"
-          extra_args: "-W ignore --ignore=rapidtide/candidatetests"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
@@ -510,6 +541,9 @@ workflows:
       - build_py311
       - build_py311_with_optional
       - test_py311_with_coverage:
+          requires:
+            - build_py311_with_optional
+      - test_py311_slow:
           requires:
             - build_py311_with_optional
       #- test_py311_with_optional:

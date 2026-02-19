@@ -16,12 +16,11 @@
 #   limitations under the License.
 #
 #
-import io
 import os
-import sys
 import tempfile
 
 import numpy as np
+import pytest
 
 import rapidtide.workflows.showarbcorr as sac
 
@@ -29,18 +28,6 @@ import rapidtide.workflows.showarbcorr as sac
 
 SAMPLERATE = 10.0  # Hz
 NPTS = 500
-
-
-def _make_broadband_signal(npts, Fs, delay=0.0, seed=42):
-    """Generate a broadband signal as a sum of sinusoids."""
-    rng = np.random.RandomState(seed)
-    t = np.arange(npts) / Fs
-    signal = np.zeros(npts, dtype=float)
-    for _ in range(30):
-        freq = rng.uniform(0.01, 0.15)
-        phase = rng.uniform(0, 2 * np.pi)
-        signal += np.sin(2 * np.pi * freq * (t - delay) + phase)
-    return signal
 
 
 def _write_plain_signal_file(tmpdir, signal, name="signal.txt"):
@@ -72,30 +59,6 @@ def _make_test_args(tmpdir, file1, file2, Fs1=SAMPLERATE, Fs2=SAMPLERATE, **kwar
     return args
 
 
-def _parse_test_args(extra_args=None):
-    """Parse args using two temporary text files."""
-    parser = sac._get_parser()
-    if extra_args is None:
-        extra_args = []
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        return parser.parse_args([f1.name, f2.name, *extra_args])
-
-
-def _capture_stdout(func, *args, **kwargs):
-    """Run a function and return captured stdout."""
-    captured = io.StringIO()
-    old_stdout = sys.stdout
-    sys.stdout = captured
-    try:
-        func(*args, **kwargs)
-    finally:
-        sys.stdout = old_stdout
-    return captured.getvalue()
-
-
 # ==================== _get_parser tests ====================
 
 
@@ -121,11 +84,11 @@ def get_parser_required_args(debug=False):
         pass
 
 
-def get_parser_defaults(debug=False):
+def get_parser_defaults(parse_with_temp_inputs, debug=False):
     """Test _get_parser default values."""
     if debug:
         print("get_parser_defaults")
-    args = _parse_test_args()
+    args = parse_with_temp_inputs(sac._get_parser())
     assert args.samplerate1 is None
     assert args.samplerate2 is None
     assert args.display
@@ -143,177 +106,177 @@ def get_parser_defaults(debug=False):
     assert args.nprocs == 1
 
 
-def get_parser_samplerate1(debug=False):
+def get_parser_samplerate1(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --samplerate1."""
     if debug:
         print("get_parser_samplerate1")
-    args = _parse_test_args(["--samplerate1", "25.0"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--samplerate1", "25.0"])
     assert args.samplerate1 == 25.0
 
 
-def get_parser_samplerate2(debug=False):
+def get_parser_samplerate2(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --samplerate2."""
     if debug:
         print("get_parser_samplerate2")
-    args = _parse_test_args(["--samplerate2", "50.0"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--samplerate2", "50.0"])
     assert args.samplerate2 == 50.0
 
 
-def get_parser_nodisplay(debug=False):
+def get_parser_nodisplay(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --nodisplay."""
     if debug:
         print("get_parser_nodisplay")
-    args = _parse_test_args(["--nodisplay"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--nodisplay"])
     assert not args.display
 
 
-def get_parser_debug(debug=False):
+def get_parser_debug(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --debug."""
     if debug:
         print("get_parser_debug")
-    args = _parse_test_args(["--debug"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--debug"])
     assert args.debug
 
 
-def get_parser_verbose(debug=False):
+def get_parser_verbose(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --verbose."""
     if debug:
         print("get_parser_verbose")
-    args = _parse_test_args(["--verbose"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--verbose"])
     assert args.verbose
 
 
-def get_parser_detrendorder(debug=False):
+def get_parser_detrendorder(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --detrendorder."""
     if debug:
         print("get_parser_detrendorder")
-    args = _parse_test_args(["--detrendorder", "3"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--detrendorder", "3"])
     assert args.detrendorder == 3
 
 
-def get_parser_corrweighting(debug=False):
+def get_parser_corrweighting(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --corrweighting."""
     if debug:
         print("get_parser_corrweighting")
     for choice in ["None", "phat", "liang", "eckart"]:
-        args = _parse_test_args(["--corrweighting", choice])
+        args = parse_with_temp_inputs(sac._get_parser(), ["--corrweighting", choice])
         assert args.corrweighting == choice
 
 
-def get_parser_invert(debug=False):
+def get_parser_invert(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --invert."""
     if debug:
         print("get_parser_invert")
-    args = _parse_test_args(["--invert"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--invert"])
     assert args.invert
 
 
-def get_parser_label(debug=False):
+def get_parser_label(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --label."""
     if debug:
         print("get_parser_label")
-    args = _parse_test_args(["--label", "test_label"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--label", "test_label"])
     assert args.label == "test_label"
 
 
-def get_parser_bipolar(debug=False):
+def get_parser_bipolar(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --bipolar."""
     if debug:
         print("get_parser_bipolar")
-    args = _parse_test_args(["--bipolar"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--bipolar"])
     assert args.bipolar
 
 
-def get_parser_outputfile(debug=False):
+def get_parser_outputfile(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --outputfile."""
     if debug:
         print("get_parser_outputfile")
-    args = _parse_test_args(["--outputfile", "results.txt"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--outputfile", "results.txt"])
     assert args.outputfile == "results.txt"
 
 
-def get_parser_corroutputfile(debug=False):
+def get_parser_corroutputfile(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --corroutputfile."""
     if debug:
         print("get_parser_corroutputfile")
-    args = _parse_test_args(["--corroutputfile", "corr.txt"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--corroutputfile", "corr.txt"])
     assert args.corroutputfile == "corr.txt"
 
 
-def get_parser_summarymode(debug=False):
+def get_parser_summarymode(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --summarymode."""
     if debug:
         print("get_parser_summarymode")
-    args = _parse_test_args(["--summarymode"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--summarymode"])
     assert args.summarymode
 
 
-def get_parser_labelline(debug=False):
+def get_parser_labelline(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --labelline."""
     if debug:
         print("get_parser_labelline")
-    args = _parse_test_args(["--labelline"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--labelline"])
     assert args.labelline
 
 
-def get_parser_noprogressbar(debug=False):
+def get_parser_noprogressbar(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --noprogressbar."""
     if debug:
         print("get_parser_noprogressbar")
-    args = _parse_test_args(["--noprogressbar"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--noprogressbar"])
     assert not args.showprogressbar
 
 
-def get_parser_nprocs(debug=False):
+def get_parser_nprocs(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --nprocs."""
     if debug:
         print("get_parser_nprocs")
-    args = _parse_test_args(["--nprocs", "4"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--nprocs", "4"])
     assert args.nprocs == 4
 
 
-def get_parser_trimdata(debug=False):
+def get_parser_trimdata(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --trimdata."""
     if debug:
         print("get_parser_trimdata")
-    args = _parse_test_args(["--trimdata"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--trimdata"])
     assert args.trimdata
 
 
-def get_parser_windowfunc(debug=False):
+def get_parser_windowfunc(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --windowfunc."""
     if debug:
         print("get_parser_windowfunc")
-    args = _parse_test_args(["--windowfunc", "hann"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--windowfunc", "hann"])
     assert args.windowfunc == "hann"
 
 
-def get_parser_nonorm(debug=False):
+def get_parser_nonorm(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --nonorm."""
     if debug:
         print("get_parser_nonorm")
-    args = _parse_test_args(["--nonorm"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--nonorm"])
     assert not args.minorm
 
 
-def get_parser_saveres(debug=False):
+def get_parser_saveres(parse_with_temp_inputs, debug=False):
     """Test _get_parser accepts --saveres."""
     if debug:
         print("get_parser_saveres")
-    args = _parse_test_args(["--saveres", "300"])
+    args = parse_with_temp_inputs(sac._get_parser(), ["--saveres", "300"])
     assert args.saveres == 300
 
 
 # ==================== printthresholds tests ====================
 
 
-def printthresholds_basic(debug=False):
+def printthresholds_basic(capture_stdout, debug=False):
     """Test printthresholds prints correct output."""
     if debug:
         print("printthresholds_basic")
     pcts = [1.96, 2.58, 3.29]
     thepercentiles = [0.95, 0.99, 0.999]
-    output = _capture_stdout(sac.printthresholds, pcts, thepercentiles, "Test thresholds:")
+    output = capture_stdout(sac.printthresholds, pcts, thepercentiles, "Test thresholds:")
     assert "Test thresholds:" in output
     assert "0.050" in output
     assert "0.010" in output
@@ -323,22 +286,22 @@ def printthresholds_basic(debug=False):
     assert "3.29" in output
 
 
-def printthresholds_single(debug=False):
+def printthresholds_single(capture_stdout, debug=False):
     """Test printthresholds with a single threshold."""
     if debug:
         print("printthresholds_single")
     pcts = [0.5]
     thepercentiles = [0.5]
-    output = _capture_stdout(sac.printthresholds, pcts, thepercentiles, "Single:")
+    output = capture_stdout(sac.printthresholds, pcts, thepercentiles, "Single:")
     assert "Single:" in output
     assert "0.500" in output
 
 
-def printthresholds_empty(debug=False):
+def printthresholds_empty(capture_stdout, debug=False):
     """Test printthresholds with empty lists."""
     if debug:
         print("printthresholds_empty")
-    output = _capture_stdout(sac.printthresholds, [], [], "Empty:")
+    output = capture_stdout(sac.printthresholds, [], [], "Empty:")
     assert "Empty:" in output
     # Only the label line, no threshold lines
     lines = output.strip().split("\n")
@@ -348,12 +311,12 @@ def printthresholds_empty(debug=False):
 # ==================== showarbcorr tests ====================
 
 
-def showarbcorr_identical_signals(debug=False):
+def showarbcorr_identical_signals(broadband_signal_factory, debug=False):
     """Test showarbcorr with identical signals."""
     if debug:
         print("showarbcorr_identical_signals")
     with tempfile.TemporaryDirectory() as tmpdir:
-        signal = _make_broadband_signal(NPTS, SAMPLERATE, delay=0.0, seed=42)
+        signal = broadband_signal_factory(NPTS, SAMPLERATE, delay=0.0, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
@@ -370,14 +333,14 @@ def showarbcorr_identical_signals(debug=False):
         assert np.max(data[:, 1]) > 0.9
 
 
-def showarbcorr_delayed_signals(debug=False):
+def showarbcorr_delayed_signals(broadband_signal_factory, debug=False):
     """Test showarbcorr with delayed signals finds correct delay."""
     if debug:
         print("showarbcorr_delayed_signals")
     with tempfile.TemporaryDirectory() as tmpdir:
         delay = 1.0
-        sig1 = _make_broadband_signal(NPTS, SAMPLERATE, delay=0.0, seed=42)
-        sig2 = _make_broadband_signal(NPTS, SAMPLERATE, delay=delay, seed=42)
+        sig1 = broadband_signal_factory(NPTS, SAMPLERATE, delay=0.0, seed=42, freqmax=0.15)
+        sig2 = broadband_signal_factory(NPTS, SAMPLERATE, delay=delay, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, sig1, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, sig2, name="sig2.txt")
 
@@ -404,12 +367,12 @@ def showarbcorr_delayed_signals(debug=False):
         ), f"Expected delay near {delay}, got {maxdelay_val}"
 
 
-def showarbcorr_summarymode_with_label(debug=False):
+def showarbcorr_summarymode_with_label(broadband_signal_factory, debug=False):
     """Test showarbcorr summary mode with label and labelline."""
     if debug:
         print("showarbcorr_summarymode_with_label")
     with tempfile.TemporaryDirectory() as tmpdir:
-        signal = _make_broadband_signal(NPTS, SAMPLERATE, seed=42)
+        signal = broadband_signal_factory(NPTS, SAMPLERATE, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
@@ -441,17 +404,17 @@ def showarbcorr_summarymode_with_label(debug=False):
         assert "test_run" in data_line
 
 
-def showarbcorr_summarymode_to_stdout(debug=False):
+def showarbcorr_summarymode_to_stdout(broadband_signal_factory, capture_stdout, debug=False):
     """Test showarbcorr summary mode printing to stdout."""
     if debug:
         print("showarbcorr_summarymode_to_stdout")
     with tempfile.TemporaryDirectory() as tmpdir:
-        signal = _make_broadband_signal(NPTS, SAMPLERATE, seed=42)
+        signal = broadband_signal_factory(NPTS, SAMPLERATE, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
         args = _make_test_args(tmpdir, file1, file2, summarymode=True, debug=debug)
-        output = _capture_stdout(sac.showarbcorr, args)
+        output = capture_stdout(sac.showarbcorr, args)
         # Should contain tab-separated values somewhere in the output
         # The last line should be the summary: label\tR\tdelay\tfailreason
         lines = output.strip().split("\n")
@@ -460,19 +423,19 @@ def showarbcorr_summarymode_to_stdout(debug=False):
         assert len(parts) >= 4, f"Expected >=4 tab-separated parts, got {len(parts)}: {last_line}"
 
 
-def showarbcorr_normal_mode(debug=False):
+def showarbcorr_normal_mode(broadband_signal_factory, capture_stdout, debug=False):
     """Test showarbcorr normal (non-summary) mode."""
     if debug:
         print("showarbcorr_normal_mode")
     with tempfile.TemporaryDirectory() as tmpdir:
-        signal = _make_broadband_signal(NPTS, SAMPLERATE, seed=42)
+        signal = broadband_signal_factory(NPTS, SAMPLERATE, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
         # Set label to None (Python None) to get the Crosscorrelation_Rmax output path
         args = _make_test_args(tmpdir, file1, file2, debug=debug)
         args.label = None
-        output = _capture_stdout(sac.showarbcorr, args)
+        output = capture_stdout(sac.showarbcorr, args)
         if debug:
             print(f"  Normal mode output: {output}")
         assert "Pearson_R:" in output
@@ -480,12 +443,12 @@ def showarbcorr_normal_mode(debug=False):
         assert "Crosscorrelation_maxdelay:" in output
 
 
-def showarbcorr_invert(debug=False):
+def showarbcorr_invert(broadband_signal_factory, debug=False):
     """Test showarbcorr with --invert."""
     if debug:
         print("showarbcorr_invert")
     with tempfile.TemporaryDirectory() as tmpdir:
-        signal = _make_broadband_signal(NPTS, SAMPLERATE, seed=42)
+        signal = broadband_signal_factory(NPTS, SAMPLERATE, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
@@ -512,12 +475,12 @@ def showarbcorr_invert(debug=False):
         assert r1 * r2 < 0, f"Expected opposite signs, got {r1} and {r2}"
 
 
-def showarbcorr_corroutputfile(debug=False):
+def showarbcorr_corroutputfile(broadband_signal_factory, debug=False):
     """Test showarbcorr writes correlation function to file."""
     if debug:
         print("showarbcorr_corroutputfile")
     with tempfile.TemporaryDirectory() as tmpdir:
-        signal = _make_broadband_signal(NPTS, SAMPLERATE, seed=42)
+        signal = broadband_signal_factory(NPTS, SAMPLERATE, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
@@ -536,14 +499,14 @@ def showarbcorr_corroutputfile(debug=False):
         assert np.max(timeaxis) > 0
 
 
-def showarbcorr_trimdata(debug=False):
+def showarbcorr_trimdata(broadband_signal_factory, debug=False):
     """Test showarbcorr with --trimdata for unequal length signals."""
     if debug:
         print("showarbcorr_trimdata")
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create two signals of different lengths
-        sig1 = _make_broadband_signal(500, SAMPLERATE, seed=42)
-        sig2 = _make_broadband_signal(300, SAMPLERATE, seed=42)
+        sig1 = broadband_signal_factory(500, SAMPLERATE, seed=42, freqmax=0.15)
+        sig2 = broadband_signal_factory(300, SAMPLERATE, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, sig1, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, sig2, name="sig2.txt")
 
@@ -556,15 +519,15 @@ def showarbcorr_trimdata(debug=False):
         assert os.path.exists(outfile)
 
 
-def showarbcorr_different_samplerates(debug=False):
+def showarbcorr_different_samplerates(broadband_signal_factory, debug=False):
     """Test showarbcorr with different sample rates."""
     if debug:
         print("showarbcorr_different_samplerates")
     with tempfile.TemporaryDirectory() as tmpdir:
         fs1 = 10.0
         fs2 = 20.0
-        sig1 = _make_broadband_signal(500, fs1, seed=42)
-        sig2 = _make_broadband_signal(1000, fs2, seed=99)
+        sig1 = broadband_signal_factory(500, fs1, seed=42, freqmax=0.15)
+        sig2 = broadband_signal_factory(1000, fs2, seed=99, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, sig1, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, sig2, name="sig2.txt")
 
@@ -590,12 +553,12 @@ def showarbcorr_different_samplerates(debug=False):
         assert abs(r_val) < 1.1  # reasonable correlation value
 
 
-def showarbcorr_bipolar(debug=False):
+def showarbcorr_bipolar(broadband_signal_factory, debug=False):
     """Test showarbcorr with --bipolar option."""
     if debug:
         print("showarbcorr_bipolar")
     with tempfile.TemporaryDirectory() as tmpdir:
-        signal = _make_broadband_signal(NPTS, SAMPLERATE, seed=42)
+        signal = broadband_signal_factory(NPTS, SAMPLERATE, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         # Negate to make anti-correlated
         file2 = _write_plain_signal_file(tmpdir, -signal, name="sig2.txt")
@@ -618,73 +581,90 @@ def showarbcorr_bipolar(debug=False):
         assert abs(r_val) > 0.9
 
 
-def showarbcorr_with_label_no_summary(debug=False):
+def showarbcorr_with_label_no_summary(broadband_signal_factory, capture_stdout, debug=False):
     """Test showarbcorr normal mode with a label."""
     if debug:
         print("showarbcorr_with_label_no_summary")
     with tempfile.TemporaryDirectory() as tmpdir:
-        signal = _make_broadband_signal(NPTS, SAMPLERATE, seed=42)
+        signal = broadband_signal_factory(NPTS, SAMPLERATE, seed=42, freqmax=0.15)
         file1 = _write_plain_signal_file(tmpdir, signal, name="sig1.txt")
         file2 = _write_plain_signal_file(tmpdir, signal, name="sig2.txt")
 
         args = _make_test_args(tmpdir, file1, file2, label="delay_test", debug=debug)
-        output = _capture_stdout(sac.showarbcorr, args)
+        output = capture_stdout(sac.showarbcorr, args)
         assert "delay_test" in output
 
 
 # ==================== Main test function ====================
 
 
-def test_showarbcorr(debug=False):
-    # _get_parser tests
-    if debug:
-        print("Running _get_parser tests")
-    get_parser_returns_parser(debug=debug)
-    get_parser_required_args(debug=debug)
-    get_parser_defaults(debug=debug)
-    get_parser_samplerate1(debug=debug)
-    get_parser_samplerate2(debug=debug)
-    get_parser_nodisplay(debug=debug)
-    get_parser_debug(debug=debug)
-    get_parser_verbose(debug=debug)
-    get_parser_detrendorder(debug=debug)
-    get_parser_corrweighting(debug=debug)
-    get_parser_invert(debug=debug)
-    get_parser_label(debug=debug)
-    get_parser_bipolar(debug=debug)
-    get_parser_outputfile(debug=debug)
-    get_parser_corroutputfile(debug=debug)
-    get_parser_summarymode(debug=debug)
-    get_parser_labelline(debug=debug)
-    get_parser_noprogressbar(debug=debug)
-    get_parser_nprocs(debug=debug)
-    get_parser_trimdata(debug=debug)
-    get_parser_windowfunc(debug=debug)
-    get_parser_nonorm(debug=debug)
-    get_parser_saveres(debug=debug)
+PARSER_CASES = [
+    get_parser_returns_parser,
+    get_parser_required_args,
+    get_parser_defaults,
+    get_parser_samplerate1,
+    get_parser_samplerate2,
+    get_parser_nodisplay,
+    get_parser_debug,
+    get_parser_verbose,
+    get_parser_detrendorder,
+    get_parser_corrweighting,
+    get_parser_invert,
+    get_parser_label,
+    get_parser_bipolar,
+    get_parser_outputfile,
+    get_parser_corroutputfile,
+    get_parser_summarymode,
+    get_parser_labelline,
+    get_parser_noprogressbar,
+    get_parser_nprocs,
+    get_parser_trimdata,
+    get_parser_windowfunc,
+    get_parser_nonorm,
+    get_parser_saveres,
+]
 
-    # printthresholds tests
-    if debug:
-        print("Running printthresholds tests")
-    printthresholds_basic(debug=debug)
-    printthresholds_single(debug=debug)
-    printthresholds_empty(debug=debug)
 
-    # showarbcorr tests
-    if debug:
-        print("Running showarbcorr tests")
-    showarbcorr_identical_signals(debug=debug)
-    showarbcorr_delayed_signals(debug=debug)
-    showarbcorr_summarymode_with_label(debug=debug)
-    showarbcorr_summarymode_to_stdout(debug=debug)
-    showarbcorr_normal_mode(debug=debug)
-    showarbcorr_invert(debug=debug)
-    showarbcorr_corroutputfile(debug=debug)
-    showarbcorr_trimdata(debug=debug)
-    showarbcorr_different_samplerates(debug=debug)
-    showarbcorr_bipolar(debug=debug)
-    showarbcorr_with_label_no_summary(debug=debug)
+PRINTTHRESHOLD_CASES = [
+    printthresholds_basic,
+    printthresholds_single,
+    printthresholds_empty,
+]
+
+
+WORKFLOW_CASES = [
+    showarbcorr_identical_signals,
+    showarbcorr_delayed_signals,
+    showarbcorr_summarymode_with_label,
+    showarbcorr_summarymode_to_stdout,
+    showarbcorr_normal_mode,
+    showarbcorr_invert,
+    showarbcorr_corroutputfile,
+    showarbcorr_trimdata,
+    showarbcorr_different_samplerates,
+    showarbcorr_bipolar,
+    showarbcorr_with_label_no_summary,
+]
+
+
+@pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_showarbcorr_parser_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", PRINTTHRESHOLD_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_showarbcorr_printthreshold_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", WORKFLOW_CASES, ids=lambda func: func.__name__)
+@pytest.mark.slow
+def test_showarbcorr_workflow_cases(case_runner, case_func):
+    case_runner(case_func)
 
 
 if __name__ == "__main__":
-    test_showarbcorr(debug=True)
+    for case in PARSER_CASES + PRINTTHRESHOLD_CASES + WORKFLOW_CASES:
+        case(debug=True)

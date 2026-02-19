@@ -21,6 +21,7 @@ import os
 from unittest.mock import MagicMock, call, patch
 
 import numpy as np
+import pytest
 
 from rapidtide.tests.utils import create_dir, get_test_temp_path
 from rapidtide.workflows.atlasaverage import _get_parser, atlasaverage, summarizevoxels
@@ -1651,59 +1652,76 @@ def atlasaverage_3d_maskedatlas_output(debug=False):
 # ==================== Main test function ====================
 
 
-def test_atlasaverage(debug=False):
-    # _get_parser tests
-    if debug:
-        print("Running parser tests")
-    parser_basic(debug=debug)
-    parser_required_args(debug=debug)
-    parser_defaults(debug=debug)
-    parser_normmethod_choices(debug=debug)
-    parser_summarymethod_choices(debug=debug)
-    parser_numpercentiles(debug=debug)
-    parser_flags(debug=debug)
-    parser_datalabel(debug=debug)
+PARSER_CASES = [
+    parser_basic,
+    parser_required_args,
+    parser_defaults,
+    parser_normmethod_choices,
+    parser_summarymethod_choices,
+    parser_numpercentiles,
+    parser_flags,
+    parser_datalabel,
+]
 
-    # summarizevoxels tests
-    if debug:
-        print("Running summarizevoxels tests")
-    summarizevoxels_mean_1d(debug=debug)
-    summarizevoxels_mean_2d(debug=debug)
-    summarizevoxels_sum(debug=debug)
-    summarizevoxels_median(debug=debug)
-    summarizevoxels_std(debug=debug)
-    summarizevoxels_mad(debug=debug)
-    summarizevoxels_cov_1d(debug=debug)
-    summarizevoxels_cov_2d(debug=debug)
-    summarizevoxels_nan_handling(debug=debug)
-    summarizevoxels_default_method(debug=debug)
 
-    # atlasaverage tests
-    if debug:
-        print("Running atlasaverage tests")
-    atlasaverage_3d_basic(debug=debug)
-    atlasaverage_3d_with_headerline(debug=debug)
-    atlasaverage_3d_no_headerline(debug=debug)
-    atlasaverage_3d_with_datalabel(debug=debug)
-    atlasaverage_3d_ignorezeros(debug=debug)
-    atlasaverage_3d_summary_methods(debug=debug)
-    atlasaverage_3d_numpercentiles(debug=debug)
-    atlasaverage_4d_basic(debug=debug)
-    atlasaverage_4d_normmethod_pct(debug=debug)
-    atlasaverage_4d_normmethod_std(debug=debug)
-    atlasaverage_4d_normmethod_var(debug=debug)
-    atlasaverage_4d_normmethod_p2p(debug=debug)
-    atlasaverage_4d_median_summary(debug=debug)
-    atlasaverage_space_mismatch(debug=debug)
-    atlasaverage_regionlabelfile(debug=debug)
-    atlasaverage_regionlabelfile_mismatch(debug=debug)
-    atlasaverage_regionlistfile(debug=debug)
-    atlasaverage_debug_mode(debug=debug)
-    atlasaverage_auto_labels(debug=debug)
-    atlasaverage_includemask(debug=debug)
-    atlasaverage_excludemask(debug=debug)
-    atlasaverage_3d_maskedatlas_output(debug=debug)
+SUMMARIZEVOXELS_CASES = [
+    summarizevoxels_mean_1d,
+    summarizevoxels_mean_2d,
+    summarizevoxels_sum,
+    summarizevoxels_median,
+    summarizevoxels_std,
+    summarizevoxels_mad,
+    summarizevoxels_cov_1d,
+    summarizevoxels_cov_2d,
+    summarizevoxels_nan_handling,
+    summarizevoxels_default_method,
+]
+
+
+ATLASAVERAGE_CASES = [
+    atlasaverage_3d_basic,
+    atlasaverage_3d_with_headerline,
+    atlasaverage_3d_no_headerline,
+    atlasaverage_3d_with_datalabel,
+    atlasaverage_3d_ignorezeros,
+    atlasaverage_3d_summary_methods,
+    atlasaverage_3d_numpercentiles,
+    atlasaverage_4d_basic,
+    atlasaverage_4d_normmethod_pct,
+    atlasaverage_4d_normmethod_std,
+    atlasaverage_4d_normmethod_var,
+    atlasaverage_4d_normmethod_p2p,
+    atlasaverage_4d_median_summary,
+    atlasaverage_space_mismatch,
+    atlasaverage_regionlabelfile,
+    atlasaverage_regionlabelfile_mismatch,
+    atlasaverage_regionlistfile,
+    atlasaverage_debug_mode,
+    atlasaverage_auto_labels,
+    atlasaverage_includemask,
+    atlasaverage_excludemask,
+    atlasaverage_3d_maskedatlas_output,
+]
+
+
+@pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_atlasaverage_parser_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", SUMMARIZEVOXELS_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_atlasaverage_summarizevoxels_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", ATLASAVERAGE_CASES, ids=lambda func: func.__name__)
+@pytest.mark.slow
+def test_atlasaverage_workflow_cases(case_runner, case_func):
+    case_runner(case_func)
 
 
 if __name__ == "__main__":
-    test_atlasaverage(debug=True)
+    for case in PARSER_CASES + SUMMARIZEVOXELS_CASES + ATLASAVERAGE_CASES:
+        case(debug=True)

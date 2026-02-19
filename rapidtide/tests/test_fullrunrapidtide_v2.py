@@ -19,9 +19,11 @@
 import os
 
 import matplotlib as mpl
+import pytest
 
 from rapidtide.tests.utils import get_example_and_temp_roots, run_rapidtide
 
+pytestmark = pytest.mark.slow
 
 def test_fullrunrapidtide_v2(debug=False, local=False, displayplots=False):
     # set input and output directories

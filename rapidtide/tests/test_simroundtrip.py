@@ -19,12 +19,14 @@
 import os
 
 import matplotlib as mpl
+import pytest
 
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 import rapidtide.workflows.simdata as rapidtide_simdata
 from rapidtide.tests.utils import get_example_and_temp_roots, run_rapidtide
 
+pytestmark = pytest.mark.slow
 
 def test_simroundtrip(debug=False, local=False, displayplots=False):
     # set input and output directories

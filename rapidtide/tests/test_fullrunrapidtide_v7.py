@@ -19,6 +19,7 @@
 import os
 
 import matplotlib as mpl
+import pytest
 
 from rapidtide.tests.utils import (
     assert_text_vectors_match,
@@ -27,6 +28,7 @@ from rapidtide.tests.utils import (
     run_retroregress,
 )
 
+pytestmark = pytest.mark.slow
 
 def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
     # set input and output directories

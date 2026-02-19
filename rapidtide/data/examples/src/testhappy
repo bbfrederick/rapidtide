@@ -6,6 +6,7 @@ happy \
     ../dst/happygmsfilt \
     --gmsfilt \
     --increaseoutputlevel \
+    --temporalregression \
     --nprocs -1
 
 happy \
