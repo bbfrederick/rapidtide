@@ -417,9 +417,7 @@ def test_denoising_user_overrides(local=False):
 def test_cvr_user_overrides(local=False):
     """User-explicit flags should override values that --CVR would set."""
     exroot = _resolve_examples_path(local)
-    regfile = (
-        f"{exroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3"
-    )
+    regfile = f"{exroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3"
 
     # Override passes
     args, _ = _run_parser(["--CVR", "--regressor", regfile, "--passes", "2"], local=local)

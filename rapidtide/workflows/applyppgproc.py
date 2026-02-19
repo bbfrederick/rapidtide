@@ -420,7 +420,7 @@ def procppg(
     print(f"\nHeart Rate Analysis:")
     print(
         f"  Peak-based HR: {ppginfo['hr_from_peaks']:.1f} BPM"
-        if ppginfo['hr_from_peaks']
+        if ppginfo["hr_from_peaks"]
         else "  Peak-based HR: Unable to detect"
     )
     print(f"  FFT-based HR (mean): {ppginfo['mean_fft_hr']:.1f} ± {ppginfo['std_fft_hr']:.1f} BPM")

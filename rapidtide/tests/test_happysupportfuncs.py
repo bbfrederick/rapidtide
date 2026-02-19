@@ -124,7 +124,9 @@ def cardiac_pipeline_routines(debug=False):
     with pytest.raises(ValueError):
         hs._validate_cardiacfromimage_inputs(normdata, estweights, 2, 0, 2.0)
 
-    appflips, theseweights = hs._prepare_weights(estweights, None, arteriesonly=False, fliparteries=False)
+    appflips, theseweights = hs._prepare_weights(
+        estweights, None, arteriesonly=False, fliparteries=False
+    )
     assert appflips.shape == estweights.shape
     assert np.allclose(theseweights, estweights)
 
@@ -157,7 +159,9 @@ def cardiac_pipeline_routines(debug=False):
     assert cyc.shape == (2,)
     assert slicenorms.shape == (2,)
 
-    signal, normfac = hs._normalize_and_filter_signal(DummyFilter(scale=2.0), 2.0, hrtc, slicenorms)
+    signal, normfac = hs._normalize_and_filter_signal(
+        DummyFilter(scale=2.0), 2.0, hrtc, slicenorms
+    )
     assert signal.shape == hrtc.shape
     assert np.isfinite(normfac)
 
@@ -177,10 +181,15 @@ def cardiac_pipeline_routines(debug=False):
     normdata3 = rng.randn(10, 2, 8)
     normdata3[:, 1, :] *= 3.0
     estweights3 = np.ones((10, 2))
-    config = hs.CardiacExtractionConfig(verbose=False, madnorm=True, usemask=True, multiplicative=True)
+    config = hs.CardiacExtractionConfig(
+        verbose=False, madnorm=True, usemask=True, multiplicative=True
+    )
     # Keep this as a unit test of happy_supportfuncs control flow: short synthetic
     # vectors can violate padding requirements in the underlying filter implementation.
-    with patch("rapidtide.happy_supportfuncs.tide_filt.harmonicnotchfilter", side_effect=lambda x, *args, **kwargs: x):
+    with patch(
+        "rapidtide.happy_supportfuncs.tide_filt.harmonicnotchfilter",
+        side_effect=lambda x, *args, **kwargs: x,
+    ):
         result = hs.cardiacfromimage(
             normdata3,
             estweights3,
@@ -223,7 +232,9 @@ def frequency_routines(debug=False):
     fs = 50.0
     t = np.linspace(0.0, 20.0, int(20.0 * fs), endpoint=False)
     waveform = np.sin(2.0 * np.pi * 1.2 * t)
-    peakfreq = hs.getcardcoeffs(waveform, slicesamplerate=fs, minhr=50.0, maxhr=100.0, smoothlen=51)
+    peakfreq = hs.getcardcoeffs(
+        waveform, slicesamplerate=fs, minhr=50.0, maxhr=100.0, smoothlen=51
+    )
     assert np.fabs(peakfreq - 1.2) < 0.25
 
 
@@ -265,7 +276,10 @@ def detrend_normalize_routines(debug=False):
     assert mads.shape == (5,)
     assert len(timings) >= 1
 
-    with patch("rapidtide.happy_supportfuncs.tide_genericmultiproc.run_multiproc", return_value=fmri.shape[0]):
+    with patch(
+        "rapidtide.happy_supportfuncs.tide_genericmultiproc.run_multiproc",
+        return_value=fmri.shape[0],
+    ):
         timings2 = []
         hs.normalizevoxels(
             fmri.copy(),
@@ -288,7 +302,10 @@ def physio_quality_routines(debug=False):
     fs = 25.0
     t = np.linspace(0.0, 20.0, int(20.0 * fs), endpoint=False)
     waveform = np.sin(2.0 * np.pi * 1.2 * t) + 0.05 * np.random.RandomState(7).randn(len(t))
-    with patch("rapidtide.happy_supportfuncs.tide_filt.NoncausalFilter", return_value=DummyFilter(scale=1.0)):
+    with patch(
+        "rapidtide.happy_supportfuncs.tide_filt.NoncausalFilter",
+        return_value=DummyFilter(scale=1.0),
+    ):
         filt, norm, env, envmean = hs.cleanphysio(
             fs,
             waveform,
@@ -353,16 +370,26 @@ def physio_quality_routines(debug=False):
     assert "K_sqi_mean_x" in qdict
     assert "E_sqi_mean_x" in qdict
 
-    with patch(
-        "rapidtide.happy_supportfuncs.tide_io.readvectorsfromtextfile",
-        return_value=(100.0, 0.0, None, np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)), None, None),
-    ), patch(
-        "rapidtide.happy_supportfuncs.cleanphysio",
-        return_value=(
-            np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)),
-            np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)),
-            np.ones(200),
-            1.0,
+    with (
+        patch(
+            "rapidtide.happy_supportfuncs.tide_io.readvectorsfromtextfile",
+            return_value=(
+                100.0,
+                0.0,
+                None,
+                np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)),
+                None,
+                None,
+            ),
+        ),
+        patch(
+            "rapidtide.happy_supportfuncs.cleanphysio",
+            return_value=(
+                np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)),
+                np.sin(2.0 * np.pi * 1.5 * np.linspace(0.0, 2.0, 200)),
+                np.ones(200),
+                1.0,
+            ),
         ),
     ):
         timings = []
@@ -388,33 +415,53 @@ def physio_quality_routines(debug=False):
     assert npts == 200
     assert len(timings) >= 2
 
-    with patch(
-        "rapidtide.happy_supportfuncs.tide_io.readfromnifti",
-        return_value=(None, np.ones((2, 2, 2)), {"dim": [0, 2, 2, 2, 1]}, [0, 2, 2, 2, 1], None),
-    ), patch("rapidtide.happy_supportfuncs.tide_io.parseniftidims", return_value=(2, 2, 2, 1)), patch(
-        "rapidtide.happy_supportfuncs.tide_io.checkspacematch", return_value=True
+    with (
+        patch(
+            "rapidtide.happy_supportfuncs.tide_io.readfromnifti",
+            return_value=(
+                None,
+                np.ones((2, 2, 2)),
+                {"dim": [0, 2, 2, 2, 1]},
+                [0, 2, 2, 2, 1],
+                None,
+            ),
+        ),
+        patch("rapidtide.happy_supportfuncs.tide_io.parseniftidims", return_value=(2, 2, 2, 1)),
+        patch("rapidtide.happy_supportfuncs.tide_io.checkspacematch", return_value=True),
     ):
         mask = hs.readextmask("mask.nii.gz", {"dim": [0, 2, 2, 2, 1]}, 2, 2, 2, debug=False)
     assert mask.shape == (2, 2, 2)
 
-    with patch(
-        "rapidtide.happy_supportfuncs.tide_io.readfromnifti",
-        return_value=(None, np.ones((2, 2, 2, 2)), {"dim": [0, 2, 2, 2, 2]}, [0, 2, 2, 2, 2], None),
-    ), patch("rapidtide.happy_supportfuncs.tide_io.parseniftidims", return_value=(2, 2, 2, 2)), patch(
-        "rapidtide.happy_supportfuncs.tide_io.checkspacematch", return_value=True
+    with (
+        patch(
+            "rapidtide.happy_supportfuncs.tide_io.readfromnifti",
+            return_value=(
+                None,
+                np.ones((2, 2, 2, 2)),
+                {"dim": [0, 2, 2, 2, 2]},
+                [0, 2, 2, 2, 2],
+                None,
+            ),
+        ),
+        patch("rapidtide.happy_supportfuncs.tide_io.parseniftidims", return_value=(2, 2, 2, 2)),
+        patch("rapidtide.happy_supportfuncs.tide_io.checkspacematch", return_value=True),
     ):
         with pytest.raises(ValueError):
             hs.readextmask("mask4d.nii.gz", {"dim": [0, 2, 2, 2, 1]}, 2, 2, 2, debug=False)
 
-    with patch(
-        "rapidtide.happy_supportfuncs.tide_filt.NoncausalFilter",
-        return_value=DummyFilter(scale=1.0),
-    ), patch(
-        "rapidtide.happy_supportfuncs.tide_corr.fastcorrelate",
-        return_value=np.array([0.0, 0.3, 1.0, 0.2, 0.0]),
-    ), patch(
-        "rapidtide.happy_supportfuncs.tide_fit.findmaxlag_gauss",
-        return_value=(2, 0.1, 0.95, 0.2, 1, "ok", 1, 3),
+    with (
+        patch(
+            "rapidtide.happy_supportfuncs.tide_filt.NoncausalFilter",
+            return_value=DummyFilter(scale=1.0),
+        ),
+        patch(
+            "rapidtide.happy_supportfuncs.tide_corr.fastcorrelate",
+            return_value=np.array([0.0, 0.3, 1.0, 0.2, 0.0]),
+        ),
+        patch(
+            "rapidtide.happy_supportfuncs.tide_fit.findmaxlag_gauss",
+            return_value=(2, 0.1, 0.95, 0.2, 1, "ok", 1, 3),
+        ),
     ):
         maxval, maxdelay, failreason = hs.checkcardmatch(
             reference=np.sin(2.0 * np.pi * 1.0 * np.linspace(0.0, 2.0, 100)),
@@ -496,13 +543,26 @@ def projection_helpers_routines(debug=False):
     assert len(packed_phase) == 12
 
     vp = [np.zeros((3, 1, 4)), np.zeros((3, 1, 4)), np.zeros((3, 1, 4))]
-    hs._unpackslicedataPhaseProject((0, np.ones((3, 4)), 2.0 * np.ones((3, 4)), 3.0 * np.ones((3, 4)), np.array([0, 2], dtype=int)), vp)
+    hs._unpackslicedataPhaseProject(
+        (
+            0,
+            np.ones((3, 4)),
+            2.0 * np.ones((3, 4)),
+            3.0 * np.ones((3, 4)),
+            np.array([0, 2], dtype=int),
+        ),
+        vp,
+    )
     assert np.all(vp[0][[0, 2], 0, :] == 1.0)
     assert np.all(vp[1][[0, 2], 0, :] == 2.0)
     assert np.all(vp[2][[0, 2], 0, :] == 3.0)
 
-    with patch("rapidtide.happy_supportfuncs.tide_resample.congrid", side_effect=fake_congrid) as cg:
-        hs.preloadcongrid(np.linspace(0.0, 1.0, 8), congridbins=4, gridkernel="kaiser", cyclic=True, debug=False)
+    with patch(
+        "rapidtide.happy_supportfuncs.tide_resample.congrid", side_effect=fake_congrid
+    ) as cg:
+        hs.preloadcongrid(
+            np.linspace(0.0, 1.0, 8), congridbins=4, gridkernel="kaiser", cyclic=True, debug=False
+        )
         assert cg.call_count > 1000
 
     with patch("rapidtide.happy_supportfuncs.tide_resample.congrid", side_effect=fake_congrid):

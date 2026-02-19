@@ -173,7 +173,9 @@ def physiofreq_uses_readbidstsv_for_json(debug=False):
 
     captured = io.StringIO()
     with (
-        patch("rapidtide.workflows.physiofreq.tide_io.parsefilespec", side_effect=mock_parsefilespec),
+        patch(
+            "rapidtide.workflows.physiofreq.tide_io.parsefilespec", side_effect=mock_parsefilespec
+        ),
         patch("rapidtide.workflows.physiofreq.tide_io.readbidstsv", side_effect=mock_readbidstsv),
         patch("rapidtide.workflows.physiofreq.tide_io.readvecs") as mocked_readvecs,
         patch("sys.stdout", captured),
@@ -204,7 +206,9 @@ def physiofreq_uses_readvecs_for_text(debug=False):
 
     captured = io.StringIO()
     with (
-        patch("rapidtide.workflows.physiofreq.tide_io.parsefilespec", side_effect=mock_parsefilespec),
+        patch(
+            "rapidtide.workflows.physiofreq.tide_io.parsefilespec", side_effect=mock_parsefilespec
+        ),
         patch("rapidtide.workflows.physiofreq.tide_io.readvecs", side_effect=mock_readvecs),
         patch("rapidtide.workflows.physiofreq.tide_io.readbidstsv") as mocked_readbidstsv,
         patch("sys.stdout", captured),

@@ -1749,7 +1749,6 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         self.model.compile(optimizer="adam", loss="mse")
 
 
-
 def filtscale(
     data: NDArray,
     scalefac: float = 1.0,

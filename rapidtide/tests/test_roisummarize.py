@@ -197,11 +197,17 @@ def parser_samplerate_sampletstep_mutual_exclusion(debug=False):
         tempfile.NamedTemporaryFile(suffix=".txt") as f2,
     ):
         with pytest.raises(SystemExit):
-            parser.parse_args([
-                f1.name, f2.name, "out.txt",
-                "--samplerate", "10.0",
-                "--sampletstep", "0.1",
-            ])
+            parser.parse_args(
+                [
+                    f1.name,
+                    f2.name,
+                    "out.txt",
+                    "--samplerate",
+                    "10.0",
+                    "--sampletstep",
+                    "0.1",
+                ]
+            )
 
     if debug:
         print("parser_samplerate_sampletstep_mutual_exclusion passed")
@@ -303,9 +309,9 @@ def summarize4D_number_of_regions(debug=False):
         inputvoxels = np.random.RandomState(42).normal(0, 1, (numvoxels, timepoints))
 
         result = summarize4Dbylabel(inputvoxels, template, normmethod="None")
-        assert result.shape[0] == numregions, (
-            f"Expected {numregions} regions, got {result.shape[0]}"
-        )
+        assert (
+            result.shape[0] == numregions
+        ), f"Expected {numregions} regions, got {result.shape[0]}"
 
     if debug:
         print("summarize4D_number_of_regions passed")
@@ -329,12 +335,12 @@ def summarize4D_normmethod_z(debug=False):
     result = summarize4Dbylabel(inputvoxels, template, normmethod="z")
 
     for r in range(numregions):
-        assert np.isclose(np.mean(result[r, :]), 0.0, atol=0.1), (
-            f"Region {r}: mean={np.mean(result[r, :]):.4f}, expected ~0"
-        )
-        assert np.isclose(np.std(result[r, :]), 1.0, atol=0.2), (
-            f"Region {r}: std={np.std(result[r, :]):.4f}, expected ~1"
-        )
+        assert np.isclose(
+            np.mean(result[r, :]), 0.0, atol=0.1
+        ), f"Region {r}: mean={np.mean(result[r, :]):.4f}, expected ~0"
+        assert np.isclose(
+            np.std(result[r, :]), 1.0, atol=0.2
+        ), f"Region {r}: std={np.std(result[r, :]):.4f}, expected ~1"
 
     if debug:
         print("summarize4D_normmethod_z passed")
@@ -422,9 +428,9 @@ def summarize4D_distinct_regions(debug=False):
     for r1 in range(numregions):
         for r2 in range(r1 + 1, numregions):
             corr = np.corrcoef(result[r1, :], result[r2, :])[0, 1]
-            assert abs(corr) < 0.99, (
-                f"Regions {r1 + 1} and {r2 + 1} should be distinct, corr={corr:.4f}"
-            )
+            assert (
+                abs(corr) < 0.99
+            ), f"Regions {r1 + 1} and {r2 + 1} should be distinct, corr={corr:.4f}"
 
     if debug:
         print("summarize4D_distinct_regions passed")
@@ -499,9 +505,9 @@ def summarize3D_output_replaced_by_mean(debug=False):
     for i in range(numvoxels):
         region = template[i]
         expected_mean = region * 10.0
-        assert np.isclose(outputvoxels[i], expected_mean), (
-            f"Voxel {i} (region {region}): expected {expected_mean}, got {outputvoxels[i]}"
-        )
+        assert np.isclose(
+            outputvoxels[i], expected_mean
+        ), f"Voxel {i} (region {region}): expected {expected_mean}, got {outputvoxels[i]}"
 
     if debug:
         print("summarize3D_output_replaced_by_mean passed")
@@ -526,9 +532,13 @@ def summarize3D_stats_correct(debug=False):
     for r in range(numregions):
         mean, std, median = regionstats[r]
         expected_val = (r + 1) * 10.0
-        assert np.isclose(mean, expected_val), f"Region {r + 1}: mean={mean}, expected {expected_val}"
+        assert np.isclose(
+            mean, expected_val
+        ), f"Region {r + 1}: mean={mean}, expected {expected_val}"
         assert np.isclose(std, 0.0), f"Region {r + 1}: std={std}, expected 0"
-        assert np.isclose(median, expected_val), f"Region {r + 1}: median={median}, expected {expected_val}"
+        assert np.isclose(
+            median, expected_val
+        ), f"Region {r + 1}: median={median}, expected {expected_val}"
 
     if debug:
         print("summarize3D_stats_correct passed")
@@ -564,15 +574,15 @@ def summarize3D_single_region(debug=False):
     assert len(regionstats) == 1
     mean, std, median = regionstats[0]
 
-    assert np.isclose(mean, np.mean(inputvoxels), atol=0.01), (
-        f"mean should equal np.mean(inputvoxels)={np.mean(inputvoxels):.4f}, got {mean:.4f}"
-    )
-    assert np.isclose(std, np.std(inputvoxels), atol=0.01), (
-        f"std should equal np.std(inputvoxels)={np.std(inputvoxels):.4f}, got {std:.4f}"
-    )
-    assert np.isclose(median, np.median(inputvoxels), atol=0.01), (
-        f"median should equal np.median(inputvoxels)={np.median(inputvoxels):.4f}, got {median:.4f}"
-    )
+    assert np.isclose(
+        mean, np.mean(inputvoxels), atol=0.01
+    ), f"mean should equal np.mean(inputvoxels)={np.mean(inputvoxels):.4f}, got {mean:.4f}"
+    assert np.isclose(
+        std, np.std(inputvoxels), atol=0.01
+    ), f"std should equal np.std(inputvoxels)={np.std(inputvoxels):.4f}, got {std:.4f}"
+    assert np.isclose(
+        median, np.median(inputvoxels), atol=0.01
+    ), f"median should equal np.median(inputvoxels)={np.median(inputvoxels):.4f}, got {median:.4f}"
 
     if debug:
         print("summarize3D_single_region passed")
@@ -581,9 +591,16 @@ def summarize3D_single_region(debug=False):
 # ---- roisummarize workflow tests ----
 
 
-def _run_roisummarize_with_mocks(args, input_data, template_data, input_dims,
-                                  input_sizes, template_dims=None, template_sizes=None,
-                                  space_match=True):
+def _run_roisummarize_with_mocks(
+    args,
+    input_data,
+    template_data,
+    input_dims,
+    input_sizes,
+    template_dims=None,
+    template_sizes=None,
+    space_match=True,
+):
     """Run roisummarize with fully mocked I/O.
 
     Returns dict with captured output calls.
@@ -612,16 +629,20 @@ def _run_roisummarize_with_mocks(args, input_data, template_data, input_dims,
         return space_match
 
     def mock_writenpvecs(data, fname, **kwargs):
-        captured["writenpvecs_calls"].append({
-            "data": np.array(data).copy(),
-            "fname": fname,
-        })
+        captured["writenpvecs_calls"].append(
+            {
+                "data": np.array(data).copy(),
+                "fname": fname,
+            }
+        )
 
     def mock_savetonifti(data, hdr, name, **kwargs):
-        captured["savetonifti_calls"].append({
-            "data": np.array(data).copy(),
-            "name": name,
-        })
+        captured["savetonifti_calls"].append(
+            {
+                "data": np.array(data).copy(),
+                "name": name,
+            }
+        )
 
     mock_filter = MagicMock()
     mock_filter.apply = MagicMock(side_effect=lambda rate, data: data)
@@ -634,16 +655,24 @@ def _run_roisummarize_with_mocks(args, input_data, template_data, input_dims,
                 print_help=MagicMock(),
             ),
         ),
-        patch("rapidtide.workflows.roisummarize.pf.postprocessfilteropts",
-              return_value=(args, mock_filter)),
-        patch("rapidtide.workflows.roisummarize.tide_io.readfromnifti",
-              side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.roisummarize.tide_io.checkspacematch",
-              side_effect=mock_checkspacematch),
-        patch("rapidtide.workflows.roisummarize.tide_io.writenpvecs",
-              side_effect=mock_writenpvecs),
-        patch("rapidtide.workflows.roisummarize.tide_io.savetonifti",
-              side_effect=mock_savetonifti),
+        patch(
+            "rapidtide.workflows.roisummarize.pf.postprocessfilteropts",
+            return_value=(args, mock_filter),
+        ),
+        patch(
+            "rapidtide.workflows.roisummarize.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch(
+            "rapidtide.workflows.roisummarize.tide_io.checkspacematch",
+            side_effect=mock_checkspacematch,
+        ),
+        patch(
+            "rapidtide.workflows.roisummarize.tide_io.writenpvecs", side_effect=mock_writenpvecs
+        ),
+        patch(
+            "rapidtide.workflows.roisummarize.tide_io.savetonifti", side_effect=mock_savetonifti
+        ),
     ):
         roisummarize(args)
 
@@ -653,7 +682,11 @@ def _run_roisummarize_with_mocks(args, input_data, template_data, input_dims,
 def roisummarize_4d_basic(debug=False):
     """Test roisummarize with 4D input data."""
     input_data, template_data, dims, sizes, numvoxels = _make_4d_data(
-        xsize=4, ysize=4, numslices=2, timepoints=50, numregions=3,
+        xsize=4,
+        ysize=4,
+        numslices=2,
+        timepoints=50,
+        numregions=3,
     )
     args = _make_default_args(normmethod="z")
 
@@ -676,7 +709,11 @@ def roisummarize_4d_basic(debug=False):
 def roisummarize_4d_numskip(debug=False):
     """Test roisummarize with numskip > 0 on 4D data."""
     input_data, template_data, dims, sizes, numvoxels = _make_4d_data(
-        xsize=4, ysize=4, numslices=2, timepoints=50, numregions=3,
+        xsize=4,
+        ysize=4,
+        numslices=2,
+        timepoints=50,
+        numregions=3,
     )
     args = _make_default_args(normmethod="None", numskip=10)
 
@@ -684,9 +721,9 @@ def roisummarize_4d_numskip(debug=False):
 
     tc_call = captured["writenpvecs_calls"][0]
     # timepoints should be 50 - 10 = 40
-    assert tc_call["data"].shape[1] == 40, (
-        f"Expected 40 timepoints, got {tc_call['data'].shape[1]}"
-    )
+    assert (
+        tc_call["data"].shape[1] == 40
+    ), f"Expected 40 timepoints, got {tc_call['data'].shape[1]}"
 
     if debug:
         print("roisummarize_4d_numskip passed")
@@ -695,7 +732,10 @@ def roisummarize_4d_numskip(debug=False):
 def roisummarize_3d_basic(debug=False):
     """Test roisummarize with 3D input data."""
     input_data, template_data, dims, sizes, numvoxels = _make_3d_data(
-        xsize=4, ysize=4, numslices=2, numregions=3,
+        xsize=4,
+        ysize=4,
+        numslices=2,
+        numregions=3,
     )
     args = _make_default_args()
 
@@ -719,7 +759,10 @@ def roisummarize_3d_regionstats_shape(debug=False):
     """Test that 3D regionstats have correct shape."""
     numregions = 4
     input_data, template_data, dims, sizes, numvoxels = _make_3d_data(
-        xsize=4, ysize=4, numslices=2, numregions=numregions,
+        xsize=4,
+        ysize=4,
+        numslices=2,
+        numregions=numregions,
     )
     args = _make_default_args()
 
@@ -727,9 +770,10 @@ def roisummarize_3d_regionstats_shape(debug=False):
 
     stats_data = captured["writenpvecs_calls"][0]["data"]
     # regionstats: numregions rows x 3 columns (mean, std, median)
-    assert stats_data.shape == (numregions, 3), (
-        f"Expected ({numregions}, 3), got {stats_data.shape}"
-    )
+    assert stats_data.shape == (
+        numregions,
+        3,
+    ), f"Expected ({numregions}, 3), got {stats_data.shape}"
 
     if debug:
         print("roisummarize_3d_regionstats_shape passed")
@@ -742,7 +786,12 @@ def roisummarize_space_mismatch(debug=False):
 
     with pytest.raises(SystemExit):
         _run_roisummarize_with_mocks(
-            args, input_data, template_data, dims, sizes, space_match=False,
+            args,
+            input_data,
+            template_data,
+            dims,
+            sizes,
+            space_match=False,
         )
 
     if debug:

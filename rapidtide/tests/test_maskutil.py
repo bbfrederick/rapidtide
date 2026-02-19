@@ -82,11 +82,16 @@ def maketmask_tests(debug=False):
     timeaxis = np.arange(0.0, 10.0, 1.0)
     base = np.zeros_like(timeaxis)
 
-    with patch("rapidtide.maskutil.tide_io.readvecs", return_value=np.array([[1, 0, 2, 0, 0, 1, 0, 0, 1, 1]])):
+    with patch(
+        "rapidtide.maskutil.tide_io.readvecs",
+        return_value=np.array([[1, 0, 2, 0, 0, 1, 0, 0, 1, 1]]),
+    ):
         out1 = tide_maskutil.maketmask("dummy.txt", timeaxis, base.copy())
     assert np.array_equal(out1, np.array([1, 0, 1, 0, 0, 1, 0, 0, 1, 1], dtype=float))
 
-    with patch("rapidtide.maskutil.tide_io.readvecs", return_value=np.array([[1.0, 5.0], [2.0, 2.0]])):
+    with patch(
+        "rapidtide.maskutil.tide_io.readvecs", return_value=np.array([[1.0, 5.0], [2.0, 2.0]])
+    ):
         out2 = tide_maskutil.maketmask("dummy.txt", timeaxis, base.copy())
     assert np.sum(out2) > 0
 
@@ -108,26 +113,35 @@ def readamask_tests(debug=False):
         with pytest.raises(ValueError):
             tide_maskutil.readamask("dummy.txt", nim_hdr=None, xsize=4, istext=True)
 
-    with patch(
-        "rapidtide.maskutil.tide_io.readfromnifti",
-        return_value=(None, np.array([[0.2, 0.6], [0.7, 0.1]]), {"hdr": 1}, [0], [0]),
-    ), patch("rapidtide.maskutil.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.maskutil.tide_io.readfromnifti",
+            return_value=(None, np.array([[0.2, 0.6], [0.7, 0.1]]), {"hdr": 1}, [0], [0]),
+        ),
+        patch("rapidtide.maskutil.tide_io.checkspacematch", return_value=True),
+    ):
         out2 = tide_maskutil.readamask("mask.nii.gz", nim_hdr={"hdr": 2}, xsize=4, thresh=0.5)
         assert np.array_equal(out2, np.array([[0, 1], [1, 0]], dtype=np.uint16))
 
-    with patch(
-        "rapidtide.maskutil.tide_io.readfromnifti",
-        return_value=(None, np.array([[1, 2], [3, 4]]), {"hdr": 1}, [0], [0]),
-    ), patch("rapidtide.maskutil.tide_io.checkspacematch", return_value=True):
+    with (
+        patch(
+            "rapidtide.maskutil.tide_io.readfromnifti",
+            return_value=(None, np.array([[1, 2], [3, 4]]), {"hdr": 1}, [0], [0]),
+        ),
+        patch("rapidtide.maskutil.tide_io.checkspacematch", return_value=True),
+    ):
         out3 = tide_maskutil.readamask(
             "mask.nii.gz", nim_hdr={"hdr": 2}, xsize=4, thresh=None, valslist=[2, 4]
         )
         assert np.array_equal(out3, np.array([[0, 1], [0, 1]], dtype=np.uint16))
 
-    with patch(
-        "rapidtide.maskutil.tide_io.readfromnifti",
-        return_value=(None, np.ones((2, 2)), {"hdr": 1}, [0], [0]),
-    ), patch("rapidtide.maskutil.tide_io.checkspacematch", return_value=False):
+    with (
+        patch(
+            "rapidtide.maskutil.tide_io.readfromnifti",
+            return_value=(None, np.ones((2, 2)), {"hdr": 1}, [0], [0]),
+        ),
+        patch("rapidtide.maskutil.tide_io.checkspacematch", return_value=False),
+    ):
         with pytest.raises(ValueError):
             tide_maskutil.readamask("mask.nii.gz", nim_hdr={"hdr": 2}, xsize=4, thresh=None)
 
@@ -181,7 +195,10 @@ def getmaskset_tests(debug=False):
 
     with patch(
         "rapidtide.maskutil.readamask",
-        side_effect=[np.array([1, 0, 0, 0], dtype=np.uint16), np.array([1, 1, 1, 1], dtype=np.uint16)],
+        side_effect=[
+            np.array([1, 0, 0, 0], dtype=np.uint16),
+            np.array([1, 1, 1, 1], dtype=np.uint16),
+        ],
     ):
         with pytest.raises(ValueError):
             tide_maskutil.getmaskset(
@@ -223,9 +240,7 @@ def getregionsignal_tests(debug=False):
     assert s_ms.shape == (4,)
 
     with patch("rapidtide.maskutil.PCA", DummyPCA):
-        s_pca, _ = tide_maskutil.getregionsignal(
-            indata, signalgenmethod="pca"
-        )
+        s_pca, _ = tide_maskutil.getregionsignal(indata, signalgenmethod="pca")
         assert s_pca.shape == (4,)
         s_pca_mle, _ = tide_maskutil.getregionsignal(
             indata,
@@ -251,9 +266,10 @@ def saveregionaltimeseries_tests(debug=False):
 
     fake_tc = np.array([0.1, 0.2, 0.3, 0.4])
     fake_mask = np.array([1, 1, 0, 0], dtype=np.uint16)
-    with patch("rapidtide.maskutil.getregionsignal", return_value=(fake_tc, fake_mask)) as p_get, patch(
-        "rapidtide.maskutil.tide_io.writebidstsv"
-    ) as p_write:
+    with (
+        patch("rapidtide.maskutil.getregionsignal", return_value=(fake_tc, fake_mask)) as p_get,
+        patch("rapidtide.maskutil.tide_io.writebidstsv") as p_write,
+    ):
         out_tc, out_mask = tide_maskutil.saveregionaltimeseries(
             tcdesc="global",
             tcname="gms",

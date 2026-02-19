@@ -133,6 +133,7 @@ def coffstodelay_tests(debug=False):
 
     saved_poly = tide_refinedelay.poly.Polynomial
     try:
+
         class DummyPolyNone:
             def __init__(self, coeffs, domain=None):
                 pass
@@ -141,7 +142,9 @@ def coffstodelay_tests(debug=False):
                 return None
 
         tide_refinedelay.poly.Polynomial = DummyPolyNone
-        d0 = tide_refinedelay.coffstodelay(np.array([-1.0]), mindelay=-3.0, maxdelay=3.0, debug=False)
+        d0 = tide_refinedelay.coffstodelay(
+            np.array([-1.0]), mindelay=-3.0, maxdelay=3.0, debug=False
+        )
         assert np.fabs(d0) < 1e-10
 
         class DummyPolySingle:
@@ -152,7 +155,9 @@ def coffstodelay_tests(debug=False):
                 return np.array([1.25 + 0.0j])
 
         tide_refinedelay.poly.Polynomial = DummyPolySingle
-        d1 = tide_refinedelay.coffstodelay(np.array([-1.0]), mindelay=-3.0, maxdelay=3.0, debug=False)
+        d1 = tide_refinedelay.coffstodelay(
+            np.array([-1.0]), mindelay=-3.0, maxdelay=3.0, debug=False
+        )
         assert np.fabs(d1 - 1.25) < 1e-10
 
         class DummyPolyMany:
@@ -163,7 +168,9 @@ def coffstodelay_tests(debug=False):
                 return np.array([2.5 + 0.0j, -0.5 + 0.0j, 10.0 + 0.0j, 0.0 + 1.0j])
 
         tide_refinedelay.poly.Polynomial = DummyPolyMany
-        d2 = tide_refinedelay.coffstodelay(np.array([0.0, 1.0]), mindelay=-3.0, maxdelay=3.0, debug=False)
+        d2 = tide_refinedelay.coffstodelay(
+            np.array([0.0, 1.0]), mindelay=-3.0, maxdelay=3.0, debug=False
+        )
         assert np.fabs(d2 + 0.5) < 1e-10
     finally:
         tide_refinedelay.poly.Polynomial = saved_poly

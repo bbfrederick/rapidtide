@@ -71,21 +71,21 @@ def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
     ]
     rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
-    #inputargs = [
-        #os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
-        #os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
-        #"--alternateoutput",
-        #os.path.join(testtemproot, "1deriv_refined_corrected"),
-        #"--nprocs",
-        #"1",
-        #"--regressderivs",
-        #"1",
-        #"--makepseudofile",
-        #"--outputlevel",
-        #"max",
-        #"--nofilterwithrefineddelay",
-    #]
-    #rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
+    # inputargs = [
+    # os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+    # os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
+    # "--alternateoutput",
+    # os.path.join(testtemproot, "1deriv_refined_corrected"),
+    # "--nprocs",
+    # "1",
+    # "--regressderivs",
+    # "1",
+    # "--makepseudofile",
+    # "--outputlevel",
+    # "max",
+    # "--nofilterwithrefineddelay",
+    # ]
+    # rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     inputargs = [
         os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),

@@ -321,7 +321,7 @@ def workflow_pca_temporal(debug=False):
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
         decompaxis="temporal", decomptype="pca", pcacomponents=0.5
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
 
@@ -345,7 +345,7 @@ def workflow_pca_spatial(debug=False):
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
         decompaxis="spatial", decomptype="pca", pcacomponents=0.5
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
 
@@ -366,7 +366,7 @@ def workflow_pca_ncomp_fixed(debug=False):
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
         decompaxis="temporal", decomptype="pca", pcacomponents=ncomp
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
 
@@ -385,7 +385,7 @@ def workflow_nodemean(debug=False):
         pcacomponents=0.5,
         demean=False,
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints)
@@ -401,7 +401,7 @@ def workflow_novarnorm(debug=False):
         pcacomponents=0.5,
         varnorm=False,
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints)
@@ -418,7 +418,7 @@ def workflow_nodemean_novarnorm(debug=False):
         demean=False,
         varnorm=False,
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints)
@@ -441,7 +441,7 @@ def workflow_with_3d_mask(debug=False):
         mask_data=mask_data,
         mask_dims=mask_dims,
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
     assert outinvtrans.shape == (xsize, ysize, numslices, numtimepoints)
@@ -456,7 +456,7 @@ def workflow_sparse_pca(debug=False):
         decomptype="sparse",
         pcacomponents=3,
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
     assert outputcomponents.shape[0] == 3
@@ -474,7 +474,7 @@ def workflow_ica_temporal(debug=False):
         decomptype="ica",
         icacomponents=3,
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
 
@@ -524,7 +524,7 @@ def workflow_multiple_files(debug=False):
             pcacomponents=0.5,
         )
 
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
     # With 2 files, totaltimepoints = 2 * numtimepoints = 40
@@ -541,7 +541,7 @@ def workflow_spatial_pca_fixed(debug=False):
         decomptype="pca",
         pcacomponents=ncomp,
     )
-    (outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes) = (
+    outputcomponents, outputcoefficients, outinvtrans, exp_var, exp_var_pct, hdr, dims, sizes = (
         result
     )
 

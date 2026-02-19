@@ -458,9 +458,7 @@ def niftidecomp_workflow(
         else:
             print("will return", icacomponents, "components")
         theica = FastICA(n_components=icacomponents)
-        thefit = theica.fit(
-            transposeifspatial(procdata, decompaxis=decompaxis)
-        )
+        thefit = theica.fit(transposeifspatial(procdata, decompaxis=decompaxis))
         thetransform = theica.transform(transposeifspatial(procdata, decompaxis=decompaxis))
         theinvtrans = transposeifspatial(
             theica.inverse_transform(thetransform), decompaxis=decompaxis

@@ -1339,9 +1339,7 @@ class TestFindmaxlagGaussEdgeCases:
         """Test fit result outside lag range with zerooutbadfit=False resets to initial."""
         x, y = self._make_gauss(center=4.5, sigma=1.0, amp=0.8)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
-            tide_fit.findmaxlag_gauss(
-                x, y, -1.0, 1.0, 3.0, refine=True, zerooutbadfit=False
-            )
+            tide_fit.findmaxlag_gauss(x, y, -1.0, 1.0, 3.0, refine=True, zerooutbadfit=False)
         )
         # maxlag should be reset to initial value when out of range
         assert maxval != 0.0 or maskval == 0
@@ -1358,18 +1356,16 @@ class TestSimfuncpeakfitEdgeCases:
 
     def test_hardlimit_false(self):
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.7)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", hardlimit=False)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", hardlimit=False
         )
         assert isinstance(maskval, np.uint16)
 
     def test_init_lag_out_of_range_low(self):
         """Peak outside lag range triggers FML_INITLAGLOW."""
         corr, t = self._make_corrfunc(center=-25.0, sigma=2.0, amp=0.7)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
         )
         assert maskval == 0
         assert failreason & 0x0010  # FML_INITLAGLOW
@@ -1377,10 +1373,8 @@ class TestSimfuncpeakfitEdgeCases:
     def test_init_lag_out_of_range_high(self):
         """Peak outside lag range triggers FML_INITLAGHIGH."""
         corr, t = self._make_corrfunc(center=25.0, sigma=2.0, amp=0.7)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
         )
         assert maskval == 0
         assert failreason & 0x0020  # FML_INITLAGHIGH
@@ -1388,18 +1382,16 @@ class TestSimfuncpeakfitEdgeCases:
     def test_init_width_too_high(self):
         """Very wide peak triggers FML_INITWIDTHHIGH."""
         corr, t = self._make_corrfunc(center=0.0, sigma=20.0, amp=0.7)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", absmaxsigma=0.5
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", absmaxsigma=0.5
         )
         assert failreason & 0x0008  # FML_INITWIDTHHIGH
 
     def test_init_amp_too_high(self):
         """Amplitude > 1.0 triggers FML_INITAMPHIGH for correlation."""
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=1.5)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss"
         )
         assert failreason & 0x0002  # FML_INITAMPHIGH
 
@@ -1407,8 +1399,8 @@ class TestSimfuncpeakfitEdgeCases:
         """Negative amplitude triggers FML_INITAMPLOW for correlation."""
         t = np.linspace(-30, 30, 1001)
         corr = -0.5 * np.exp(-0.5 * (t / 2.0) ** 2)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", bipolar=False)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", bipolar=False
         )
         assert failreason & 0x0001  # FML_INITAMPLOW
 
@@ -1417,10 +1409,8 @@ class TestSimfuncpeakfitEdgeCases:
         # Create a peak very close to lagmax so the gauss fit might overshoot
         t = np.linspace(-30, 30, 1001)
         corr = 0.7 * np.exp(-0.5 * ((t - 4.9) / 2.0) ** 2)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0
         )
         # Should either succeed or set fit lag flags
         assert isinstance(failreason, (int, np.integer))
@@ -1428,20 +1418,16 @@ class TestSimfuncpeakfitEdgeCases:
     def test_fit_width_too_large(self):
         """After gauss fit, sigma > absmaxsigma triggers FML_FITWIDTHHIGH."""
         corr, t = self._make_corrfunc(center=0.0, sigma=5.0, amp=0.7)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", absmaxsigma=1.0
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", absmaxsigma=1.0
         )
         assert failreason & 0x0800  # FML_FITWIDTHHIGH
 
     def test_fit_width_too_small(self):
         """After gauss fit, sigma < absminsigma triggers FML_FITWIDTHLOW."""
         corr, t = self._make_corrfunc(center=0.0, sigma=0.1, amp=0.7)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", absminsigma=5.0
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", absminsigma=5.0
         )
         assert failreason & 0x0400  # FML_FITWIDTHLOW
 
@@ -1450,10 +1436,8 @@ class TestSimfuncpeakfitEdgeCases:
         # Create a sharp narrow peak that might cause the gauss fit to overshoot
         t = np.linspace(-30, 30, 1001)
         corr = 0.99 * np.exp(-0.5 * (t / 0.5) ** 2)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", corrtolerance=0.0
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", corrtolerance=0.0
         )
         # The fit might overshoot; check the result is valid
         assert isinstance(failreason, (int, np.integer))
@@ -1463,10 +1447,8 @@ class TestSimfuncpeakfitEdgeCases:
         t = np.linspace(-30, 30, 1001)
         baseline = 0.5
         corr = baseline + 0.5 * np.exp(-0.5 * (t / 2.0) ** 2)
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", functype="mutualinfo", lthreshval=0.1
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", functype="mutualinfo", lthreshval=0.1
         )
         assert isinstance(maskval, np.uint16)
 
@@ -1477,10 +1459,8 @@ class TestSimfuncpeakfitEdgeCases:
         # Create MI-like signal with noisy baseline and a small peak
         corr = 0.5 + 0.1 * np.random.randn(1001)
         corr[500] = 0.55  # small peak barely above median
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(
-                corr, t, peakfittype="gauss", functype="mutualinfo", lthreshval=100.0
-            )
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", functype="mutualinfo", lthreshval=100.0
         )
         # With huge lthreshval, peak-baseline < lthreshval * baselinedev
         assert failreason & 0x0001  # FML_INITAMPLOW
@@ -1491,8 +1471,8 @@ class TestSimfuncpeakfitEdgeCases:
         corr = np.zeros_like(t)
         # Create an extremely narrow peak (single point)
         corr[500] = 0.8
-        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
-            tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss")
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss"
         )
         # Narrow peak should trigger some width or fit failure
         assert failreason > 0

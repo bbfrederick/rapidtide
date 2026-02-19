@@ -34,8 +34,12 @@ def distribution_and_significance_tests(debug=False):
 
     tide_stats.printthresholds([0.1, 0.2], [0.95, 0.99], "thresholds")
 
-    gaussfit = tide_stats.fitgausspdf(thehist, histlen, data, displayplots=False, nozero=False, debug=False)
-    jsbfit = tide_stats.fitjsbpdf(thehist, histlen, data, displayplots=False, nozero=False, debug=False)
+    gaussfit = tide_stats.fitgausspdf(
+        thehist, histlen, data, displayplots=False, nozero=False, debug=False
+    )
+    jsbfit = tide_stats.fitjsbpdf(
+        thehist, histlen, data, displayplots=False, nozero=False, debug=False
+    )
     assert len(gaussfit) == 4
     assert len(jsbfit) == 5
 
@@ -91,10 +95,16 @@ def distribution_and_significance_tests(debug=False):
     assert none_histfit is None
 
     # LUT init and clamp branches
-    nlp = tide_stats.neglog10pfromr(0.5, histfit, initialize=True, neglogpmin=0.0, neglogpmax=4.0, debug=False)
+    nlp = tide_stats.neglog10pfromr(
+        0.5, histfit, initialize=True, neglogpmin=0.0, neglogpmax=4.0, debug=False
+    )
     assert np.isfinite(nlp)
-    nlp_low = tide_stats.neglog10pfromr(-1.0, histfit, initialize=False, neglogpmin=0.0, neglogpmax=4.0, debug=False)
-    nlp_high = tide_stats.neglog10pfromr(2.0, histfit, initialize=False, neglogpmin=0.0, neglogpmax=4.0, debug=False)
+    nlp_low = tide_stats.neglog10pfromr(
+        -1.0, histfit, initialize=False, neglogpmin=0.0, neglogpmax=4.0, debug=False
+    )
+    nlp_high = tide_stats.neglog10pfromr(
+        2.0, histfit, initialize=False, neglogpmin=0.0, neglogpmax=4.0, debug=False
+    )
     assert np.fabs(nlp_low - 0.0) < 1e-12
     assert np.fabs(nlp_high - 4.0) < 1e-12
 
@@ -172,7 +182,7 @@ def timeseries_stats_tests(debug=False):
     Y = rng.randn(12, 4)
     icc1 = tide_stats.fast_ICC_rep_anova(Y, nocache=False, debug=False)
     icc2 = tide_stats.fast_ICC_rep_anova(Y, nocache=False, debug=False)  # cached path
-    icc3 = tide_stats.fast_ICC_rep_anova(Y, nocache=True, debug=False)   # explicit no-cache path
+    icc3 = tide_stats.fast_ICC_rep_anova(Y, nocache=True, debug=False)  # explicit no-cache path
     for res in [icc1, icc2, icc3]:
         assert len(res) == 6
         assert np.isfinite(res[0])
@@ -195,12 +205,16 @@ def histogram_and_mask_tests(debug=False):
     assert np.isfinite(peakloc2)
 
     thehist = np.histogram(data, 101)
-    ph, pl, pw, com = tide_stats.prochistogram(thehist, refine=False, pickleft=False, ignorefirstpoint=False, debug=False)
+    ph, pl, pw, com = tide_stats.prochistogram(
+        thehist, refine=False, pickleft=False, ignorefirstpoint=False, debug=False
+    )
     assert np.isfinite(ph)
     assert np.isfinite(pl)
     assert np.isfinite(pw)
     assert np.isfinite(com)
-    ph2, pl2, pw2, com2 = tide_stats.prochistogram(thehist, refine=True, pickleft=True, ignorefirstpoint=True, debug=False)
+    ph2, pl2, pw2, com2 = tide_stats.prochistogram(
+        thehist, refine=True, pickleft=True, ignorefirstpoint=True, debug=False
+    )
     assert np.isfinite(ph2)
     assert np.isfinite(pl2)
     assert np.isfinite(pw2)
@@ -226,8 +240,9 @@ def histogram_and_mask_tests(debug=False):
     assert np.isfinite(echoratio)
 
     # file-writing path
-    with patch("rapidtide.stats.tide_io.writenpvecs", return_value=None), patch(
-        "rapidtide.stats.tide_io.writebidstsv", return_value=None
+    with (
+        patch("rapidtide.stats.tide_io.writenpvecs", return_value=None),
+        patch("rapidtide.stats.tide_io.writebidstsv", return_value=None),
     ):
         tide_stats.makeandsavehistogram(
             data,
@@ -269,16 +284,26 @@ def histogram_and_mask_tests(debug=False):
     assert np.fabs(np.trace(asym)) < 1e-12
 
     # fit-based routines
-    fit_hist = np.histogram(np.clip(rng.normal(loc=0.4, scale=0.12, size=2500), 0.0, 1.0), 101, range=(0.0, 1.0))
-    fit_params = tide_stats.fitjsbpdf(fit_hist, 101, np.clip(rng.normal(loc=0.4, scale=0.12, size=2500), 0.0, 1.0))
-    pmask1 = tide_stats.makepmask(np.array([0.1, 0.3, 0.8]), pval=0.05, sighistfit=fit_params, onesided=True)
-    pmask2 = tide_stats.makepmask(np.array([0.1, -0.3, 0.8]), pval=0.05, sighistfit=fit_params, onesided=False)
+    fit_hist = np.histogram(
+        np.clip(rng.normal(loc=0.4, scale=0.12, size=2500), 0.0, 1.0), 101, range=(0.0, 1.0)
+    )
+    fit_params = tide_stats.fitjsbpdf(
+        fit_hist, 101, np.clip(rng.normal(loc=0.4, scale=0.12, size=2500), 0.0, 1.0)
+    )
+    pmask1 = tide_stats.makepmask(
+        np.array([0.1, 0.3, 0.8]), pval=0.05, sighistfit=fit_params, onesided=True
+    )
+    pmask2 = tide_stats.makepmask(
+        np.array([0.1, -0.3, 0.8]), pval=0.05, sighistfit=fit_params, onesided=False
+    )
     assert pmask1.shape == (3,)
     assert pmask2.shape == (3,)
 
     frac_single = tide_stats.getfracval(data, 0.5, nozero=False)
     frac_multi = tide_stats.getfracvals(data, [0.02, 0.5, 0.98], nozero=False, debug=False)
-    frac_multi_nz = tide_stats.getfracvals(np.array([0.0, 0.0, 1.0, 2.0]), [0.25, 0.75], nozero=True, debug=False)
+    frac_multi_nz = tide_stats.getfracvals(
+        np.array([0.0, 0.0, 1.0, 2.0]), [0.25, 0.75], nozero=True, debug=False
+    )
     frac_fit = tide_stats.getfracvalsfromfit(fit_params, [0.90, 0.95])
     assert np.isfinite(frac_single)
     assert len(frac_multi) == 3
@@ -287,7 +312,9 @@ def histogram_and_mask_tests(debug=False):
 
     image = rng.randn(8, 8, 4) + 10.0
     mask1 = tide_stats.makemask(image, threshpct=25.0, verbose=False, nozero=False, noneg=False)
-    mask2 = tide_stats.makemask(image - 20.0, threshpct=25.0, verbose=False, nozero=True, noneg=True)
+    mask2 = tide_stats.makemask(
+        image - 20.0, threshpct=25.0, verbose=False, nozero=True, noneg=True
+    )
     size1 = tide_stats.getmasksize(mask1)
     size2 = tide_stats.getmasksize(mask2)
     assert mask1.shape == image.shape

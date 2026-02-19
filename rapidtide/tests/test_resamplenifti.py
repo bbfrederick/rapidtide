@@ -135,7 +135,9 @@ def parser_all_flags(debug=False):
     if debug:
         print("parser_all_flags")
     parser = _get_parser()
-    args = parser.parse_args(["in.nii", "out.nii", "0.5", "--noantialias", "--normalize", "--debug"])
+    args = parser.parse_args(
+        ["in.nii", "out.nii", "0.5", "--noantialias", "--normalize", "--debug"]
+    )
     assert args.antialias is False
     assert args.normalize is True
     assert args.debug is True
@@ -177,7 +179,12 @@ def resamplenifti_basic_downsample(debug=False):
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
         captured.setdefault("calls", []).append(
-            {"orig_x": orig_x.copy(), "orig_y": orig_y.copy(), "new_x": new_x.copy(), "antialias": antialias}
+            {
+                "orig_x": orig_x.copy(),
+                "orig_y": orig_y.copy(),
+                "new_x": new_x.copy(),
+                "antialias": antialias,
+            }
         )
         return np.interp(new_x, orig_x, orig_y)
 

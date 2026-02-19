@@ -171,7 +171,9 @@ def args_uses_samplerate_override(debug=False):
         captured["written_vec"] = np.array(vec, copy=True)
         captured["outname"] = outname
 
-    args = _make_args(infilename="in.txt", outfilename="out.txt", samplerate=override_Fs, display=False)
+    args = _make_args(
+        infilename="in.txt", outfilename="out.txt", samplerate=override_Fs, display=False
+    )
 
     with (
         patch(

@@ -135,9 +135,7 @@ def _run_showstxcorr(signal1, signal2, args):
     with (
         patch("rapidtide.workflows.showstxcorr.tide_io.readvec", side_effect=mock_readvec),
         patch("rapidtide.workflows.showstxcorr.tide_io.writenpvecs", side_effect=mock_writenpvecs),
-        patch(
-            "rapidtide.workflows.showstxcorr.tide_io.savetonifti", side_effect=mock_savetonifti
-        ),
+        patch("rapidtide.workflows.showstxcorr.tide_io.savetonifti", side_effect=mock_savetonifti),
         patch("pandas.DataFrame.to_csv", mock_to_csv),
     ):
         showstxcorr(args)

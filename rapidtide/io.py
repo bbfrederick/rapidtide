@@ -4483,7 +4483,9 @@ def writenpvecs(
                     for j in range(0, theshape[0]):
                         line = str(thevecs[j, i]) + "\t"
                         FILE.write(line.encode("utf-8") if openmode == "wb" else line)
-                    FILE.write(thelineending.encode("utf-8") if openmode == "wb" else thelineending)
+                    FILE.write(
+                        thelineending.encode("utf-8") if openmode == "wb" else thelineending
+                    )
         else:
             for i in range(0, theshape[0]):
                 line = str(thevecs[i]) + thelineending

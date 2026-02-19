@@ -103,9 +103,7 @@ def rapidtide_output(tmp_path):
     # --- Regressor BIDS TSV+JSON files ---
     # initialmovingregressor: columns prefilt, postfilt
     n_samples = 100
-    regdata = np.column_stack(
-        [np.sin(np.linspace(0, 4 * np.pi, n_samples)) for _ in range(2)]
-    ).T
+    regdata = np.column_stack([np.sin(np.linspace(0, 4 * np.pi, n_samples)) for _ in range(2)]).T
     tide_io.writebidstsv(
         datafileroot + "desc-initialmovingregressor_timeseries",
         regdata,

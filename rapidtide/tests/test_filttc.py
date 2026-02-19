@@ -73,9 +73,10 @@ def parser_defaults(debug=False):
     if debug:
         print("parser_defaults")
     parser = _get_parser()
-    with tempfile.NamedTemporaryFile(suffix=".txt") as infile, tempfile.NamedTemporaryFile(
-        suffix=".txt"
-    ) as outfile:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".txt") as infile,
+        tempfile.NamedTemporaryFile(suffix=".txt") as outfile,
+    ):
         args = parser.parse_args([infile.name, outfile.name])
     assert args.samplerate == "auto"
     assert args.normfirst is False

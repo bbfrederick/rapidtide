@@ -81,8 +81,9 @@ def _make_3d_test_data(shape=(4, 5, 3), rng=None):
     return input1, mask1, input2, mask2, dims, sizes
 
 
-def _run_pixelcomp_with_mocks(args, input1, mask1, input2, mask2, dims, sizes,
-                               dim_match_results=None):
+def _run_pixelcomp_with_mocks(
+    args, input1, mask1, input2, mask2, dims, sizes, dim_match_results=None
+):
     """Run pixelcomp with fully mocked I/O.
 
     Returns dict with captured output.
@@ -105,8 +106,10 @@ def _run_pixelcomp_with_mocks(args, input1, mask1, input2, mask2, dims, sizes,
         raise ValueError(f"Unexpected file: {fname}")
 
     if dim_match_results is None:
+
         def mock_checkspacedimmatch(d1, d2):
             return True
+
     else:
         call_idx = [0]
 
@@ -135,12 +138,14 @@ def _run_pixelcomp_with_mocks(args, input1, mask1, input2, mask2, dims, sizes,
         return original_open(fname, mode, *a, **kw)
 
     with (
-        patch("rapidtide.workflows.pixelcomp.tide_io.readfromnifti",
-              side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.pixelcomp.tide_io.checkspacedimmatch",
-              side_effect=mock_checkspacedimmatch),
-        patch("rapidtide.workflows.pixelcomp.plt.savefig",
-              side_effect=mock_savefig),
+        patch(
+            "rapidtide.workflows.pixelcomp.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.pixelcomp.tide_io.checkspacedimmatch",
+            side_effect=mock_checkspacedimmatch,
+        ),
+        patch("rapidtide.workflows.pixelcomp.plt.savefig", side_effect=mock_savefig),
         patch("rapidtide.workflows.pixelcomp.plt.show"),
         patch("builtins.open", side_effect=mock_open),
     ):
@@ -608,7 +613,13 @@ def pixelcomp_dim_mismatch_input1_mask1(debug=False):
     # first checkspacedimmatch call fails (input1 vs mask1)
     with pytest.raises(SystemExit):
         _run_pixelcomp_with_mocks(
-            args, input1, mask1, input2, mask2, dims, sizes,
+            args,
+            input1,
+            mask1,
+            input2,
+            mask2,
+            dims,
+            sizes,
             dim_match_results=[False, True, True],
         )
 
@@ -624,7 +635,13 @@ def pixelcomp_dim_mismatch_input2_mask2(debug=False):
     # second checkspacedimmatch call fails (input2 vs mask2)
     with pytest.raises(SystemExit):
         _run_pixelcomp_with_mocks(
-            args, input1, mask1, input2, mask2, dims, sizes,
+            args,
+            input1,
+            mask1,
+            input2,
+            mask2,
+            dims,
+            sizes,
             dim_match_results=[True, False, True],
         )
 
@@ -640,7 +657,13 @@ def pixelcomp_dim_mismatch_input1_input2(debug=False):
     # third checkspacedimmatch call fails (input1 vs input2)
     with pytest.raises(SystemExit):
         _run_pixelcomp_with_mocks(
-            args, input1, mask1, input2, mask2, dims, sizes,
+            args,
+            input1,
+            mask1,
+            input2,
+            mask2,
+            dims,
+            sizes,
             dim_match_results=[True, True, False],
         )
 
@@ -673,9 +696,7 @@ def pixelcomp_mask_intersection(debug=False):
     # check that the pairdata file has the right number of lines
     pairdata_content = captured["written_files"].get(args.outputroot, "")
     lines = [l for l in pairdata_content.strip().split("\n") if l.strip()]
-    assert len(lines) == expected_pairs, (
-        f"Expected {expected_pairs} pairs, got {len(lines)}"
-    )
+    assert len(lines) == expected_pairs, f"Expected {expected_pairs} pairs, got {len(lines)}"
 
     if debug:
         print("pixelcomp_mask_intersection passed")

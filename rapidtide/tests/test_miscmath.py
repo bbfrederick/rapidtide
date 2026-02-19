@@ -29,7 +29,9 @@ def phase_test(debug=False):
     z = np.array([1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j], dtype=np.complex128)
     ph = tide_math.phase(z)
     assert ph.shape == z.shape
-    np.testing.assert_allclose(ph, np.array([np.pi / 4, 3 * np.pi / 4, -3 * np.pi / 4, -np.pi / 4]))
+    np.testing.assert_allclose(
+        ph, np.array([np.pi / 4, 3 * np.pi / 4, -3 * np.pi / 4, -np.pi / 4])
+    )
 
 
 def polarfft_test(debug=False):
@@ -82,12 +84,16 @@ def normalize_family_tests(debug=False):
     z = tide_math.znormalize(v)
     np.testing.assert_allclose(np.mean(z), 0.0, atol=1e-10)
 
-    cleaned, med, sigmad = tide_math.removeoutliers(np.array([0.0, 0.0, 100.0]), zerobad=True, outlierfac=1.0)
+    cleaned, med, sigmad = tide_math.removeoutliers(
+        np.array([0.0, 0.0, 100.0]), zerobad=True, outlierfac=1.0
+    )
     assert med == 0.0
     assert sigmad >= 0.0
     assert cleaned[-1] == 0.0
 
-    cleaned2, med2, sigmad2 = tide_math.removeoutliers(np.array([0.0, 0.0, 100.0]), zerobad=False, outlierfac=1.0)
+    cleaned2, med2, sigmad2 = tide_math.removeoutliers(
+        np.array([0.0, 0.0, 100.0]), zerobad=False, outlierfac=1.0
+    )
     assert cleaned2[-1] == med2
     assert sigmad2 >= 0.0
 
@@ -143,7 +149,9 @@ def noiseamp_test(debug=False):
     if debug:
         print("noiseamp_test")
     x = np.random.RandomState(5).randn(500)
-    filtrms, fit, startamp, endamp, changepct, changerate = tide_math.noiseamp(x, Fs=10.0, windowsize=20.0)
+    filtrms, fit, startamp, endamp, changepct, changerate = tide_math.noiseamp(
+        x, Fs=10.0, windowsize=20.0
+    )
     assert filtrms.shape == x.shape
     assert fit.shape == x.shape
     assert np.isfinite(startamp)

@@ -58,8 +58,9 @@ def load_branch_tests(debug=False):
         print("load_branch_tests")
 
     # text load path
-    with patch("rapidtide.voxelData.tide_io.checkiftext", return_value=True), patch(
-        "rapidtide.voxelData.tide_io.readvecs", return_value=np.ones((3, 10))
+    with (
+        patch("rapidtide.voxelData.tide_io.checkiftext", return_value=True),
+        patch("rapidtide.voxelData.tide_io.readvecs", return_value=np.ones((3, 10))),
     ):
         v = tide_voxelData.VoxelData.__new__(tide_voxelData.VoxelData)
         v.filename = "dummy.txt"
@@ -71,11 +72,21 @@ def load_branch_tests(debug=False):
 
     # cifti load path
     cifti_hdr = {"dim": [5, 1, 1, 1, 10, 7]}
-    with patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False), patch(
-        "rapidtide.voxelData.tide_io.checkifcifti", return_value=True
-    ), patch(
-        "rapidtide.voxelData.tide_io.readfromcifti",
-        return_value=(None, cifti_hdr, np.ones((7, 10)), cifti_hdr, [0, 1, 1, 1, 10, 7], [0, 1, 1, 1, 0.72], None),
+    with (
+        patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False),
+        patch("rapidtide.voxelData.tide_io.checkifcifti", return_value=True),
+        patch(
+            "rapidtide.voxelData.tide_io.readfromcifti",
+            return_value=(
+                None,
+                cifti_hdr,
+                np.ones((7, 10)),
+                cifti_hdr,
+                [0, 1, 1, 1, 10, 7],
+                [0, 1, 1, 1, 0.72],
+                None,
+            ),
+        ),
     ):
         v = tide_voxelData.VoxelData.__new__(tide_voxelData.VoxelData)
         v.filename = "dummy.dtseries.nii"
@@ -89,11 +100,19 @@ def load_branch_tests(debug=False):
     # nifti load path
     nim = SimpleNamespace(affine=np.eye(4))
     hdr = DummyHdr({"dim": [4, 2, 3, 4, 5], "pixdim": [0, 2.0, 2.0, 2.5, 1.5], "toffset": 0.0})
-    with patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False), patch(
-        "rapidtide.voxelData.tide_io.checkifcifti", return_value=False
-    ), patch(
-        "rapidtide.voxelData.tide_io.readfromnifti",
-        return_value=(nim, np.ones((2, 3, 4, 5)), hdr, [4, 2, 3, 4, 5], [0, 2.0, 2.0, 2.5, 1.5]),
+    with (
+        patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False),
+        patch("rapidtide.voxelData.tide_io.checkifcifti", return_value=False),
+        patch(
+            "rapidtide.voxelData.tide_io.readfromnifti",
+            return_value=(
+                nim,
+                np.ones((2, 3, 4, 5)),
+                hdr,
+                [4, 2, 3, 4, 5],
+                [0, 2.0, 2.0, 2.5, 1.5],
+            ),
+        ),
     ):
         v = tide_voxelData.VoxelData.__new__(tide_voxelData.VoxelData)
         v.filename = "dummy.nii.gz"
@@ -110,15 +129,21 @@ def voxeldata_readdata_nifti_tests(debug=False):
 
     nim = SimpleNamespace(affine=np.eye(4))
     hdr = DummyHdr({"dim": [4, 2, 3, 4, 5], "pixdim": [0, 2.0, 2.0, 2.5, 1.5], "toffset": 0.1})
-    with patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False), patch(
-        "rapidtide.voxelData.tide_io.checkifcifti", return_value=False
-    ), patch(
-        "rapidtide.voxelData.tide_io.readfromnifti",
-        return_value=(nim, np.arange(2 * 3 * 4 * 5, dtype=float).reshape(2, 3, 4, 5), hdr, [4, 2, 3, 4, 5], [0, 2.0, 2.0, 2.5, 1.5]),
-    ), patch(
-        "rapidtide.voxelData.tide_io.parseniftidims", return_value=(2, 3, 4, 5)
-    ), patch(
-        "rapidtide.voxelData.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.5, 1.5)
+    with (
+        patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False),
+        patch("rapidtide.voxelData.tide_io.checkifcifti", return_value=False),
+        patch(
+            "rapidtide.voxelData.tide_io.readfromnifti",
+            return_value=(
+                nim,
+                np.arange(2 * 3 * 4 * 5, dtype=float).reshape(2, 3, 4, 5),
+                hdr,
+                [4, 2, 3, 4, 5],
+                [0, 2.0, 2.0, 2.5, 1.5],
+            ),
+        ),
+        patch("rapidtide.voxelData.tide_io.parseniftidims", return_value=(2, 3, 4, 5)),
+        patch("rapidtide.voxelData.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.5, 1.5)),
     ):
         v = tide_voxelData.VoxelData("dummy.nii.gz", timestep=0.0, validstart=1, validend=3)
         assert v.filetype == "nifti"
@@ -153,8 +178,9 @@ def voxeldata_readdata_text_and_cifti_tests(debug=False):
         print("voxeldata_readdata_text_and_cifti_tests")
 
     # text path with timestep enforced
-    with patch("rapidtide.voxelData.tide_io.checkiftext", return_value=True), patch(
-        "rapidtide.voxelData.tide_io.readvecs", return_value=np.ones((3, 9))
+    with (
+        patch("rapidtide.voxelData.tide_io.checkiftext", return_value=True),
+        patch("rapidtide.voxelData.tide_io.readvecs", return_value=np.ones((3, 9))),
     ):
         with pytest.raises(ValueError):
             tide_voxelData.VoxelData("dummy.txt", timestep=0.0)
@@ -171,13 +197,22 @@ def voxeldata_readdata_text_and_cifti_tests(debug=False):
 
     # cifti path
     cifti_hdr = {"dim": [5, 1, 1, 1, 8, 4], "pixdim": [0, 1, 1, 1, 0.72], "toffset": 0.0}
-    with patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False), patch(
-        "rapidtide.voxelData.tide_io.checkifcifti", return_value=True
-    ), patch(
-        "rapidtide.voxelData.tide_io.readfromcifti",
-        return_value=(None, cifti_hdr, np.ones((4, 8)), cifti_hdr, [5, 1, 1, 1, 8, 4], [0, 1, 1, 1, 0.72], None),
-    ), patch(
-        "rapidtide.voxelData.tide_io.parseniftisizes", return_value=(1.0, 1.0, 1.0, 0.72)
+    with (
+        patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False),
+        patch("rapidtide.voxelData.tide_io.checkifcifti", return_value=True),
+        patch(
+            "rapidtide.voxelData.tide_io.readfromcifti",
+            return_value=(
+                None,
+                cifti_hdr,
+                np.ones((4, 8)),
+                cifti_hdr,
+                [5, 1, 1, 1, 8, 4],
+                [0, 1, 1, 1, 0.72],
+                None,
+            ),
+        ),
+        patch("rapidtide.voxelData.tide_io.parseniftisizes", return_value=(1.0, 1.0, 1.0, 0.72)),
     ):
         vc = tide_voxelData.VoxelData("dummy.dtseries.nii", timestep=0.0, validstart=0, validend=7)
         assert vc.filetype == "cifti"
@@ -198,17 +233,24 @@ def smooth_tests(debug=False):
 
     nim = SimpleNamespace(affine=np.eye(4))
     hdr = DummyHdr({"dim": [4, 2, 2, 2, 3], "pixdim": [0, 2.0, 2.0, 2.0, 1.0], "toffset": 0.0})
-    with patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False), patch(
-        "rapidtide.voxelData.tide_io.checkifcifti", return_value=False
-    ), patch(
-        "rapidtide.voxelData.tide_io.readfromnifti",
-        return_value=(nim, np.ones((2, 2, 2, 3)), hdr, [4, 2, 2, 2, 3], [0, 2.0, 2.0, 2.0, 1.0]),
-    ), patch(
-        "rapidtide.voxelData.tide_io.parseniftidims", return_value=(2, 2, 2, 3)
-    ), patch(
-        "rapidtide.voxelData.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.0)
-    ), patch(
-        "rapidtide.voxelData.tide_filt.ssmooth", side_effect=lambda x, y, z, s, arr: arr + 1.0
+    with (
+        patch("rapidtide.voxelData.tide_io.checkiftext", return_value=False),
+        patch("rapidtide.voxelData.tide_io.checkifcifti", return_value=False),
+        patch(
+            "rapidtide.voxelData.tide_io.readfromnifti",
+            return_value=(
+                nim,
+                np.ones((2, 2, 2, 3)),
+                hdr,
+                [4, 2, 2, 2, 3],
+                [0, 2.0, 2.0, 2.0, 1.0],
+            ),
+        ),
+        patch("rapidtide.voxelData.tide_io.parseniftidims", return_value=(2, 2, 2, 3)),
+        patch("rapidtide.voxelData.tide_io.parseniftisizes", return_value=(2.0, 2.0, 2.0, 1.0)),
+        patch(
+            "rapidtide.voxelData.tide_filt.ssmooth", side_effect=lambda x, y, z, s, arr: arr + 1.0
+        ),
     ):
         v = tide_voxelData.VoxelData("dummy.nii.gz", timestep=1.0, validstart=0, validend=2)
 
