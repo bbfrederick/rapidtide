@@ -30,10 +30,18 @@ commands:
             popd
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p rapidtide/tests/test-results
+            set +e
             pytest \
               $TESTFILES \
               << parameters.extra_args >> \
               --junitxml=rapidtide/tests/test-results/junit.xml
+            PYTEST_EXIT=$?
+            set -e
+            if [ "$PYTEST_EXIT" -eq 5 ]; then
+              echo "No tests selected on this shard after filtering; continuing."
+              exit 0
+            fi
+            exit "$PYTEST_EXIT"
 jobs:
 
 
