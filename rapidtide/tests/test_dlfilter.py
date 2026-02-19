@@ -17,7 +17,23 @@
 #
 #
 import os
+import tempfile
+import time
 from unittest.mock import patch
+
+# Ensure matplotlib cache is writable before any transitive matplotlib import.
+_mpl_base = os.path.join(tempfile.gettempdir(), "rapidtide-mpl")
+_mpl_config = os.path.join(_mpl_base, "test-dlfilter", "shared", "mplconfig")
+os.makedirs(_mpl_config, exist_ok=True)
+for _lockfile in [p for p in os.listdir(_mpl_config) if p.endswith(".matplotlib-lock")]:
+    _lockpath = os.path.join(_mpl_config, _lockfile)
+    try:
+        if (time.time() - os.path.getmtime(_lockpath)) > 300.0:
+            os.unlink(_lockpath)
+    except OSError:
+        pass
+os.environ.setdefault("MPLBACKEND", "Agg")
+os.environ.setdefault("MPLCONFIGDIR", _mpl_config)
 
 import numpy as np
 import pytest
@@ -30,6 +46,17 @@ try:
     tensorflowexists = True
 except ImportError:
     tensorflowexists = False
+else:
+    # Keep tests deterministic and avoid CI stalls from GPU probing / oversubscription.
+    try:
+        tf.config.set_visible_devices([], "GPU")
+    except Exception:
+        pass
+    try:
+        tf.config.threading.set_intra_op_parallelism_threads(1)
+        tf.config.threading.set_inter_op_parallelism_threads(1)
+    except Exception:
+        pass
 
 
 def create_dummy_data(window_size=64):

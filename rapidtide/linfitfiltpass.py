@@ -23,9 +23,9 @@ from numpy.typing import NDArray
 from scipy.special import factorial
 from tqdm import tqdm
 
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.miscmath as tide_math
 import rapidtide.multiproc as tide_multiproc
 
 

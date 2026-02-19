@@ -21,7 +21,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as core_corr
+import rapidtide.core.signal.correlate as tide_corr
 
 
 def _make_pair(length=256, shift=5):
@@ -36,7 +37,7 @@ def check_autocorrelation_no_peaks(debug=False):
         print("check_autocorrelation_no_peaks")
     corrscale = np.linspace(-2.0, 2.0, 101)
     thexcorr = np.zeros_like(corrscale)
-    with patch("rapidtide.correlate.tide_fit.peakdetect", return_value=([], [])):
+    with patch("rapidtide.core.signal.correlate.tide_fit.peakdetect", return_value=([], [])):
         t, a = tide_corr.check_autocorrelation(corrscale, thexcorr, displayplots=False)
     assert t is None
     assert a is None
@@ -51,8 +52,8 @@ def check_autocorrelation_detects_sidelobe(debug=False):
     )
     peaks = ([(0.0, 1.0), (1.2, 0.35)], [])
     with (
-        patch("rapidtide.correlate.tide_fit.peakdetect", return_value=peaks),
-        patch("rapidtide.correlate.tide_fit.gaussfit", return_value=(0.35, 1.2, 0.2)),
+        patch("rapidtide.core.signal.correlate.tide_fit.peakdetect", return_value=peaks),
+        patch("rapidtide.core.signal.correlate.tide_fit.gaussfit", return_value=(0.35, 1.2, 0.2)),
     ):
         t, a = tide_corr.check_autocorrelation(
             corrscale,
@@ -281,6 +282,7 @@ def test_correlate(debug=False):
     stfft_prime_and_fastcorr(debug=debug)
     centered_convolve_and_gcc(debug=debug)
     aligntcwithref_basic(debug=debug)
+    assert callable(core_corr.fastcorrelate)
 
 
 if __name__ == "__main__":

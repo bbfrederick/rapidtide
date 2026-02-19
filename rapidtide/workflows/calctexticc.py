@@ -27,8 +27,8 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.linalg import pinv
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_valid_file
 

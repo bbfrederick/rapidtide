@@ -26,9 +26,9 @@ import pandas as pd
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.maskutil as tide_mask
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
+from rapidtide.core.masks.mask_ops import getmaskset
 
 
 def _get_parser():
@@ -305,7 +305,7 @@ def fingerprint(
         excludevals = None
 
     numspatiallocs = int(nx) * int(ny) * int(nz)
-    includemask, excludemask, extramask = tide_mask.getmaskset(
+    includemask, excludemask, extramask = getmaskset(
         "anatomic",
         includename,
         includevals,

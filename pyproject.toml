@@ -157,7 +157,7 @@ tidepool = 'rapidtide.scripts.tidepool:entrypoint'
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ['rapidtide', 'cloud']
+include = ['rapidtide*', 'cloud*']
 
 [tool.setuptools.package-data]
 rapidtide = ['rapidtide/*.py', 'rapidtide/workflows/*.py', 'rapidtide/scripts/*']

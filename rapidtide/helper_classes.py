@@ -24,7 +24,7 @@ import numpy as np
 import scipy as sp
 from numpy.typing import NDArray
 
-import rapidtide.miscmath as tide_math
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.util as tide_util
 
 

@@ -23,10 +23,10 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.maskutil as tide_mask
-import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
+from rapidtide.core.masks.mask_ops import getmaskset
 
 DEFAULT_LAGMIN = -10
 DEFAULT_LAGMAX = 20
@@ -237,7 +237,8 @@ def adjustoffset(args: Any) -> None:
     Notes
     -----
     - The function uses `tide_io.readfromnifti` to read the input map and `tide_io.savetonifti` to save outputs.
-    - Masks are generated using `tide_mask.getmaskset` based on inclusion/exclusion specifications.
+    - Masks are generated using `rapidtide.core.masks.mask_ops.getmaskset`
+      based on inclusion/exclusion specifications.
     - Histogram analysis is performed using `tide_stats.gethistprops` and `tide_stats.makehistogram`.
     - If `args.setoffset` is provided, it overrides the computed peak location as the offset.
 
@@ -299,7 +300,7 @@ def adjustoffset(args: Any) -> None:
         args.extramaskname = (args.inputmap).replace("maxtime_map", "corrfit_mask")
 
     numspatiallocs = int(nx) * int(ny) * int(nz)
-    includemask, excludemask, extramask = tide_mask.getmaskset(
+    includemask, excludemask, extramask = getmaskset(
         "anatomic",
         includename,
         includevals,

@@ -6,7 +6,7 @@ from nilearn import image
 from nilearn.plotting import plot_carpet
 
 import rapidtide.io as tide_io
-import rapidtide.maskutil as tide_mask
+from rapidtide.core.masks.mask_ops import readamask
 
 SUBJ = "100206"
 SESS = "REST1"
@@ -73,7 +73,7 @@ xsize, ysize, numslices, timepoints = tide_io.parseniftidims(graymask_dims)
 whitemaskfile = f"/data/frederic/connectome/reanalysis/derivatives/segmentations/{SUBJ}_resampled_wmparc.nii.gz"
 thevallist = tide_io.colspectolist("APARC_WHITE")
 print(thevallist)
-whitemask = tide_mask.readamask(whitemaskfile, graymask_header, xsize, valslist=tide_io.colspectolist("APARC_WHITE"))
+whitemask = readamask(whitemaskfile, graymask_header, xsize, valslist=tide_io.colspectolist("APARC_WHITE"))
 
 map_labels = {"Gray Matter": 1, "White Matter": 2}
 atlasdata = graymask.astype(int) * fitmask.astype(int) + whitemask.astype(int) * fitmask.astype(int) * 2

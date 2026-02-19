@@ -25,13 +25,13 @@ import nibabel as nib
 import numpy as np
 from numpy.typing import NDArray
 
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 from rapidtide.Colortables import *
-from rapidtide.stats import neglogpfromr_interpolator
+from rapidtide.core.signal.stats import neglogpfromr_interpolator
 
 atlases = {
     "ASPECTS": {"atlasname": "ASPECTS"},

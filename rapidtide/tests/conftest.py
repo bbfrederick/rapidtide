@@ -27,6 +27,9 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from rapidtide.tests._mplsetup import configure_matplotlib_env
+
+configure_matplotlib_env()
 
 
 @pytest.fixture

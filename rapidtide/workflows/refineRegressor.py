@@ -22,12 +22,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 from numpy.typing import NDArray
 
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.refineregressor as tide_refineregressor
 import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 from rapidtide.tests.utils import mse
 

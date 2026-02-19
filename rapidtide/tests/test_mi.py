@@ -14,6 +14,19 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+try:
+    from rapidtide.tests._mplsetup import configure_matplotlib_env
+except Exception:
+    import os
+    import sys
+
+    _TESTSDIR = os.path.dirname(os.path.abspath(__file__))
+    if _TESTSDIR not in sys.path:
+        sys.path.insert(0, _TESTSDIR)
+    from _mplsetup import configure_matplotlib_env
+
+configure_matplotlib_env()
+
 import os
 
 import matplotlib as mpl
@@ -21,7 +34,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.io as tide_io
-from rapidtide.correlate import calc_MI
+from rapidtide.core.signal.correlate import calc_MI
 from rapidtide.tests.utils import get_examples_path
 
 

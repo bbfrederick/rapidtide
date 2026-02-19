@@ -28,10 +28,10 @@ from numpy.typing import NDArray
 from scipy.optimize import curve_fit
 from statsmodels.robust import mad
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
-import rapidtide.miscmath as tide_math
 import rapidtide.util as tide_util
 
 
