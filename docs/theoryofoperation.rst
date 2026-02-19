@@ -187,7 +187,7 @@ you should always supply them, as they have some nice benefits.
    If you have WM and CSF masks rapidtide will save WM and CSF regressors before and after cleaning out the
    sLFO signal, which should be much more effective for denoising in later processing than the ones you
    get from conventional sources, since they are so heavily contaminated with delayed sLFO.  Try it once and
-   compare the XXX_desc-regionalprefilter_timeseries.json and XXX_desc-regionalpostfilter_timeseries.json time
+   compare the XXX_desc-regionalprefilter_timeseries.json and XXX_desc-regionalpostfilter_timeseries.json 
    time series and you'll see what I mean.
 
 **For the global mean mask:**
