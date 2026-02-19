@@ -139,6 +139,57 @@ releases will be somewhat more reliable.  That said, my tests routinely fail, ev
 when things actually work.  Probably should deal with that. Check back often for exciting
 new features and bug fixes!
 
+Testing lanes
+=============
+
+The test suite now supports marker-based lanes so you can run fast checks
+separately from heavier workflow tests.
+
+-  **unit**: fast parser/math/small mocked tests
+-  **slow**: heavier workflow-oriented tests
+
+Using pytest directly:
+
+-  ``pytest -m unit``
+-  ``pytest -m slow``
+-  ``pytest -m "not slow"``
+
+Using the local test helper script:
+
+-  ``cd rapidtide/tests``
+-  ``./runlocaltest unit``
+-  ``./runlocaltest notslow`` (or ``./runlocaltest pr``)
+-  ``./runlocaltest slow``
+-  ``./runlocaltest all``
+
+Recommended CI split:
+
+-  Fast lane (default PR checks): ``pytest -m "not slow"``
+-  Slow lane (scheduled/nightly or dedicated job): ``pytest -m slow``
+
+Current CircleCI lane mapping:
+
+-  Fast lane jobs (``-m "not slow"``):
+   ``test_py310``, ``test_py311_with_optional``, ``test_py311_with_coverage``,
+   ``test_py312``, ``test_py313``, ``test_py314``
+-  Slow lane job (``-m slow``):
+   ``test_py311_slow``
+
+Lane intent and expected runtime:
+
+-  ``unit``: parser/math/mocked checks intended for very fast local feedback.
+   Typical runtime is usually a few minutes or less, depending on hardware.
+-  ``not slow``: primary PR lane. Covers unit tests plus non-heavy workflows while
+   excluding long-running integration tests.
+-  ``slow``: heavy integration-style tests (fullrun/simroundtrip and other marked
+   workflow tests). This lane is intended for dedicated CI jobs.
+
+Suggested pre-push workflow:
+
+-  Before most commits: ``pytest -m unit``
+-  Before opening a PR: ``pytest -m "not slow"``
+-  Before release or in scheduled CI: ``pytest -m slow``
+
 Python version compatibility
 ============================
 Since I depend on a number of
