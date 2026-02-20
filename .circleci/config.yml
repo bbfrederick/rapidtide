@@ -235,8 +235,8 @@ jobs:
                 echo "Restoring environment from cache"
                 source activate py314_env
             else
-                (apt-get update || apt-get update) # Robust apt update
-                apt-get install -y gfortran libopenblas-dev
+                (sudo apt-get update || sudo apt-get update) # Robust apt update
+                sudo apt-get install -y gfortran libopenblas-dev
                 pip install --upgrade uv
                 uv venv --clear
                 source .venv/bin/activate
