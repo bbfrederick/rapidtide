@@ -60,6 +60,8 @@ commands:
                 uv pip install --upgrade pip
                 uv pip install --upgrade distlib
                 uv pip install --upgrade pytest
+                uv pip install --upgrade numba
+                uv pip install --upgrade pyfftw
             fi
   run_split_pytests_alt:
     parameters:
@@ -543,6 +545,39 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
+  test_py311_slow_alt:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.11
+    parallelism: 8
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests_alt:
+          timeout: "40m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow --cov-report xml:rapidtide/coverage_slow.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
+      - codecov/upload:
+          file: rapidtide/coverage_slow.xml
+      - store_artifacts:
+          path: rapidtide/coverage_slow.xml
+          destination: artifact-file
+      - store_test_results:
+          path: rapidtide/tests/test-results
+      - store_artifacts:
+          path: rapidtide/tests/test-results
+
 
   test_py311_with_coverage:
     working_directory: /tmp/src/rapidtide
@@ -576,6 +611,38 @@ jobs:
       - store_test_results:
           path: rapidtide/tests/test-results
       
+  test_py311_alt_with_coverage:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: continuumio/miniconda3
+    parallelism: 4
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests_alt:
+          timeout: "25m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow" --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
+      - codecov/upload:
+          file: rapidtide/coverage.xml
+      - store_artifacts:
+          path: rapidtide/coverage.xml
+          destination: artifact-file
+      - store_test_results:
+          path: rapidtide/tests/test-results
+
+
 
   test_py312:
     working_directory: /tmp/src/rapidtide
@@ -777,6 +844,30 @@ jobs:
       - store_artifacts:
           path: /tmp/src/rapidtide/docs/_build/html
 
+
+  build_docs_alt:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.11
+    resource_class: small
+    steps:
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run:
+          name: Build documentation
+          command: |
+            sudo apt-get update
+            sudo apt-get install -yqq make
+            source .venv/bin/activate
+            uv pip install .[doc]
+            uv pip uninstall -y pyqtgraph
+            uv pip install numpydoc
+            make -C docs html
+      - store_artifacts:
+          path: /tmp/src/rapidtide/docs/_build/html
+
   style_check:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -800,6 +891,10 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
+      - build_py310_alt
+      - test_py310_alt:
+          requires:
+            - build_py310_alt
       - build_py311
       - build_py311_with_optional
       - test_py311_with_coverage:
@@ -811,14 +906,13 @@ workflows:
       #- test_py311_with_optional:
       #    requires:
       #      - build_py311
-      - build_py310_alt
-      - test_py310_alt:
-          requires:
-            - build_py310_alt
       - build_py311_alt
-      #- test_py311_alt:
-      #    requires:
-      #      - build_py311_alt
+      - test_py311_with_coverage:
+          requires:
+            - build_py311_alt
+      - test_py311_slow:
+          requires:
+            - build_py311_alt
       - build_py312_alt
       - test_py312_alt:
           requires:
@@ -847,9 +941,12 @@ workflows:
       #- test_py314:
       #    requires:
       #      - build_py314
-      - build_docs:
+      #- build_docs:
+      #    requires:
+      #      - build_py311
+      - build_docs_alt:
           requires:
-            - build_py311
+            - build_py311_alt
       #- style_check:
       #    requires:
       #      - build_py313
