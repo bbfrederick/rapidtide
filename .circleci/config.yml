@@ -907,10 +907,10 @@ workflows:
       #    requires:
       #      - build_py311
       - build_py311_alt
-      - test_py311_with_coverage:
+      - test_py311_alt_with_coverage:
           requires:
             - build_py311_alt
-      - test_py311_slow:
+      - test_py311_alt_slow:
           requires:
             - build_py311_alt
       - build_py312_alt
