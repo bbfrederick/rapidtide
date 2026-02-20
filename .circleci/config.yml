@@ -247,14 +247,14 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - build_base_environment
       - run:  # will overwrite rapidtide installation each time
           name: Install rapidtide
           command:  |
             uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
@@ -568,6 +568,34 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
+  test_py313_alt:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.13
+    parallelism: 4
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests_alt:
+          timeout: "20m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
+      - store_test_results:
+          path: rapidtide/tests/test-results
+      - store_artifacts:
+          path: rapidtide/tests/test-results
+
 
   test_py314_alt:
     working_directory: /tmp/src/rapidtide
@@ -667,15 +695,18 @@ workflows:
       - test_py312:
           requires:
             - build_py312
-      - build_py313
+      #- build_py313
+      #- test_py313:
+      #    requires:
+      #      - build_py313
       - build_py313_alt
-      - test_py313:
+      - test_py313_alt:
           requires:
-            - build_py313
-      - build_py314
-      - test_py314:
-          requires:
-            - build_py314
+            - build_py313_alt
+      #- build_py314
+      #- test_py314:
+      #    requires:
+      #      - build_py314
       - build_py314_alt
       - test_py314_alt:
           requires:
