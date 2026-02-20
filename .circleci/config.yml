@@ -42,6 +42,25 @@ commands:
               exit 0
             fi
             exit "$PYTEST_EXIT"
+  build_base_environment:
+    steps:
+      - run:
+          name: Build base environment
+          command: |
+            if [[ -e /tmp/src/rapidtide/.venv ]]; then
+                echo "Restoring environment from cache"
+                source .venv/bin/activate
+            else
+                (sudo apt-get update || sudo apt-get update) # Robust apt update
+                sudo apt-get install -y gfortran libopenblas-dev
+                pip install --upgrade uv
+                uv venv --clear
+                source .venv/bin/activate
+                uv pip install --upgrade "setuptools>=70"
+                uv pip install --upgrade pip
+                uv pip install --upgrade distlib
+                uv pip install --upgrade pytest
+            fi
   run_split_pytests_alt:
     parameters:
       timeout:
@@ -262,23 +281,24 @@ jobs:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
           key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - build_base_environment
       - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            if [[ -e /tmp/src/rapidtide/.venv ]]; then
-                echo "Restoring environment from cache"
-                source .venv/bin/activate
-            else
-                (sudo apt-get update || sudo apt-get update) # Robust apt update
-                sudo apt-get install -y gfortran libopenblas-dev
-                pip install --upgrade uv
-                uv venv --clear
-                source .venv/bin/activate
-                uv pip install --upgrade "setuptools>=70"
-                uv pip install --upgrade pip
-                uv pip install --upgrade distlib
-                uv pip install --upgrade pytest
-            fi
+          name: Generate rapidtide environment
+          #command:  |
+          #  if [[ -e /tmp/src/rapidtide/.venv ]]; then
+          #      echo "Restoring environment from cache"
+          #      source .venv/bin/activate
+          #  else
+          #      (sudo apt-get update || sudo apt-get update) # Robust apt update
+          #      sudo apt-get install -y gfortran libopenblas-dev
+          #     pip install --upgrade uv
+          #      uv venv --clear
+          #      source .venv/bin/activate
+          #      uv pip install --upgrade "setuptools>=70"
+          #      uv pip install --upgrade pip
+          #      uv pip install --upgrade distlib
+          #      uv pip install --upgrade pytest
+          #  fi
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
