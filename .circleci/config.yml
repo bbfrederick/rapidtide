@@ -301,8 +301,9 @@ jobs:
             #      uv pip install --upgrade pip
             #      uv pip install --upgrade distlib
             #      uv pip install --upgrade pytest
-            #  fi
-            uv pip install .[test,doc]
+            #
+            command:
+              uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
