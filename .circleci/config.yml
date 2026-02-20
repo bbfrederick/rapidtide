@@ -347,7 +347,7 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     parallelism: 4
-    resource_class: large
+    resource_class: xlarge
     environment:
       OMP_NUM_THREADS: "1"
       OPENBLAS_NUM_THREADS: "1"
@@ -574,7 +574,7 @@ workflows:
           requires:
             - build_py313
       - build_py314
-      #- build_py314_alt
+      - build_py314_alt
       - test_py314:
           requires:
             - build_py314
