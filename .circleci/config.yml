@@ -6,7 +6,8 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@3.2.4
 commands:
-  run_split_pytests: parameters:
+  run_split_pytests:
+    parameters:
       env_name:
         type: string
       timeout:
