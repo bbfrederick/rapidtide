@@ -44,8 +44,6 @@ commands:
             exit "$PYTEST_EXIT"
   run_split_pytests_alt:
     parameters:
-      env_name:
-        type: string
       timeout:
         type: string
         default: "20m"
@@ -59,7 +57,7 @@ commands:
           command: |
             sudo apt-get update
             sudo apt-get install -yqq curl gpg
-            source activate << parameters.env_name >>
+            source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -562,7 +560,6 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run_split_pytests_alt:
-          env_name: py314_env
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
