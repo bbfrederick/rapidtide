@@ -265,9 +265,9 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            if [[ -e /opt/conda/envs/py314_env ]]; then
+            if [[ -e /tmp/src/rapidtide/.venv ]]; then
                 echo "Restoring environment from cache"
-                source activate py314_env
+                source .venv/bin/activate
             else
                 (sudo apt-get update || sudo apt-get update) # Robust apt update
                 sudo apt-get install -y gfortran libopenblas-dev
