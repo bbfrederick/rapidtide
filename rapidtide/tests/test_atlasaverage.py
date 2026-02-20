@@ -24,7 +24,8 @@ import numpy as np
 import pytest
 
 from rapidtide.tests.utils import create_dir, get_test_temp_path
-from rapidtide.workflows.atlasaverage import _get_parser, atlasaverage, summarizevoxels
+from rapidtide.workflows.atlasaverage import (_get_parser, atlasaverage,
+                                              summarizevoxels)
 
 # ==================== Helpers ====================
 

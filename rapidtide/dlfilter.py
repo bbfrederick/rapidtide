@@ -72,24 +72,11 @@ os.environ.setdefault("MPLCONFIGDIR", _mpl_config)
 
 import tensorflow as tf
 import tf_keras.backend as K
-from tf_keras.callbacks import (
-    EarlyStopping,
-    ModelCheckpoint,
-    TensorBoard,
-    TerminateOnNaN,
-)
-from tf_keras.layers import (
-    Activation,
-    BatchNormalization,
-    Convolution1D,
-    Dense,
-    Dropout,
-    Flatten,
-    Input,
-    MaxPooling1D,
-    Reshape,
-    UpSampling1D,
-)
+from tf_keras.callbacks import (EarlyStopping, ModelCheckpoint, TensorBoard,
+                                TerminateOnNaN)
+from tf_keras.layers import (Activation, BatchNormalization, Convolution1D,
+                             Dense, Dropout, Flatten, Input, MaxPooling1D,
+                             Reshape, UpSampling1D)
 from tf_keras.models import Model, Sequential, load_model
 from tf_keras.optimizers.legacy import RMSprop
 

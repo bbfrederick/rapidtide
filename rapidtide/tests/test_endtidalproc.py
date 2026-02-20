@@ -24,12 +24,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from rapidtide.workflows.endtidalproc import (
-    _get_parser,
-    endtidalproc,
-    phase,
-    process_args,
-)
+from rapidtide.workflows.endtidalproc import (_get_parser, endtidalproc, phase,
+                                              process_args)
 
 # ---- helpers ----
 

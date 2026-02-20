@@ -34,11 +34,8 @@ import os
 import matplotlib as mpl
 import pytest
 
-from rapidtide.tests.utils import (
-    get_example_and_temp_roots,
-    run_rapidtide,
-    run_retroregress,
-)
+from rapidtide.tests.utils import (get_example_and_temp_roots, run_rapidtide,
+                                   run_retroregress)
 
 pytestmark = pytest.mark.slow
 

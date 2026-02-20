@@ -23,7 +23,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rapidtide.workflows.showstxcorr import _get_parser, printthresholds, showstxcorr
+from rapidtide.workflows.showstxcorr import (_get_parser, printthresholds,
+                                             showstxcorr)
 
 # ==================== Helpers ====================
 

@@ -24,16 +24,11 @@ import numpy as np
 import pytest
 
 from rapidtide.tests.utils import create_dir, get_test_temp_path
-from rapidtide.workflows.niftidecomp import (
-    _get_parser,
-    _get_parser_spatial,
-    _get_parser_temporal,
-    main,
-    main_spatial,
-    main_temporal,
-    niftidecomp_workflow,
-    transposeifspatial,
-)
+from rapidtide.workflows.niftidecomp import (_get_parser, _get_parser_spatial,
+                                             _get_parser_temporal, main,
+                                             main_spatial, main_temporal,
+                                             niftidecomp_workflow,
+                                             transposeifspatial)
 
 # ==================== Helpers ====================
 

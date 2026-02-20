@@ -346,7 +346,7 @@ jobs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
-    parallelism: 1
+    parallelism: 4
     resource_class: large
     environment:
       OMP_NUM_THREADS: "1"
@@ -365,7 +365,12 @@ jobs:
       - run_split_pytests:
           env_name: py311_env
           timeout: "40m"
-          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow'
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow --cov-report xml:rapidtide/coverage_slow.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
+      - codecov/upload:
+          file: rapidtide/coverage_slow.xml
+      - store_artifacts:
+          path: rapidtide/coverage_slow.xml
+          destination: artifact-file
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:

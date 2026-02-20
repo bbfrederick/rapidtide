@@ -135,7 +135,7 @@ Generation of Masks
 ^^^^^^^^^^^^^^^^^^^
 
 By default, rapidtide calculates masks dynamically at run time.
-There are 5 masks used:
+There are 5 masks used internally:
 
 1. The global mean mask, which determines which voxels
    are used to generate the initial global mean regressor
@@ -146,12 +146,6 @@ There are 5 masks used:
 4. The offset mask, which determines which voxels are used to estimate the "zero" time of
    the delay distribution
 5. The regression mask, which determines which voxels have the rapidtide regressors removed
-
-Below is a description of how this works currently.
-NB: this is not how I THOUGHT is worked - until I looked at the code while writing this.
-It built up over time, and evolved into something that was not quite what I designed.
-I'm going to fix it up, but this what it's doing as of 2.6.1,
-which works most of the time, but may not be what you want.
 
 The default behavior is to first calculate the correlation mask using
 nilearn.masking.compute_epi_mask with default values.  This is a
@@ -169,15 +163,32 @@ So for example ``--corrmask mymask.nii.gz:1,7-9,54`` would include any voxels in
 with values of 1, 7, 8, 9, or 54,
 whereas ``--corrmask mymask.nii.gz`` would include any non-zero voxels in mymask.
 
+In addition, you can supply some anatomic masks using ``--brainmask``, ``--graymattermask``,
+``--whitemattermask`` and ``--csfmask``.  If you have any anatomic masks,
+you should always supply them, as they have some nice benefits.
+
 .. tip::
 
-   The ``--brainmask`` argument will automatically set all five of these masks,
+   The ``--brainmask`` argument will automatically set all five of the internal masks,
    but each can be overridden by specifying individual mask parameters on the command line.
+   A proper anatomic brain mask will probably conform to the shape of the brain better than
+   anything rapidtide estimates from fMRI data, especially if your image intensity is non-uniform.
+
 
 .. tip::
 
    The ``--graymattermask`` argument will automatically set both the global mean mask and the offset mask,
-   but each can be overridden by specifying individual mask parameters on the command line.
+   but each can be overridden by specifying individual mask parameters on the command line.  Since gray matter
+   generally has high SNR and short delays, you’re likely to get a pretty good starting regressor.
+
+
+.. tip::
+
+   If you have WM and CSF masks rapidtide will save WM and CSF regressors before and after cleaning out the
+   sLFO signal, which should be much more effective for denoising in later processing than the ones you
+   get from conventional sources, since they are so heavily contaminated with delayed sLFO.  Try it once and
+   compare the XXX_desc-regionalprefilter_timeseries.json and XXX_desc-regionalpostfilter_timeseries.json
+   time series and you'll see what I mean.
 
 **For the global mean mask:**
 If ``--globalmeaninclude MASK[:VALSPEC]`` is specified, include all voxels selected by ``MASK[:VALSPEC]``.

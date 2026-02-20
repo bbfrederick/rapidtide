@@ -43,12 +43,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from rapidtide.workflows.pixelcomp import (
-    _get_parser,
-    bland_altman_plot,
-    pairdata,
-    pixelcomp,
-)
+from rapidtide.workflows.pixelcomp import (_get_parser, bland_altman_plot,
+                                           pairdata, pixelcomp)
 
 # ---- helpers ----
 
