@@ -2094,24 +2094,23 @@ def updateDispLimits() -> None:
     # Updates the display limits UI elements based on current dataset
     """
     global ui, overlays, currentdataset
-    ui.dispmin_doubleSpinBox.setRange(
-        overlays[currentdataset.focusmap].minval,
-        overlays[currentdataset.focusmap].maxval,
-    )
-    ui.dispmax_doubleSpinBox.setRange(
-        overlays[currentdataset.focusmap].minval,
-        overlays[currentdataset.focusmap].maxval,
-    )
-    ui.dispmin_doubleSpinBox.setSingleStep(
-        (overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval)
-        / 100.0
-    )
-    ui.dispmax_doubleSpinBox.setSingleStep(
-        (overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval)
-        / 100.0
-    )
-    ui.dispmin_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmin)
-    ui.dispmax_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmax)
+    thismap = overlays[currentdataset.focusmap]
+    step = (thismap.maxval - thismap.minval) / 100.0
+
+    # Prevent range/value updates from firing valueChanged callbacks that would
+    # overwrite thismap.dispmin/dispmax during overlay switches.
+    min_was_blocked = ui.dispmin_doubleSpinBox.blockSignals(True)
+    max_was_blocked = ui.dispmax_doubleSpinBox.blockSignals(True)
+    try:
+        ui.dispmin_doubleSpinBox.setRange(thismap.minval, thismap.maxval)
+        ui.dispmax_doubleSpinBox.setRange(thismap.minval, thismap.maxval)
+        ui.dispmin_doubleSpinBox.setSingleStep(step)
+        ui.dispmax_doubleSpinBox.setSingleStep(step)
+        ui.dispmin_doubleSpinBox.setValue(thismap.dispmin)
+        ui.dispmax_doubleSpinBox.setValue(thismap.dispmax)
+    finally:
+        ui.dispmin_doubleSpinBox.blockSignals(min_was_blocked)
+        ui.dispmax_doubleSpinBox.blockSignals(max_was_blocked)
     updateUI(callingfunc="updateDispLimits", orthoimages=True)
 
 
