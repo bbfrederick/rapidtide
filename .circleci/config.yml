@@ -231,15 +231,20 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Generate environment
           command:  |
-            (sudo apt-get update || sudo apt-get update) # Robust apt update
-            sudo apt-get install -y gfortran libopenblas-dev
-            pip install --upgrade uv
-            uv venv --clear
-            source .venv/bin/activate
-            uv pip install --upgrade "setuptools>=54"
-            uv pip install --upgrade pip
-            uv pip install --upgrade distlib
-            uv pip install --upgrade pytest
+            if [[ -e /opt/conda/envs/py314_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py314_env
+            else
+                (apt-get update || apt-get update) # Robust apt update
+                apt-get install -y gfortran libopenblas-dev
+                pip install --upgrade uv
+                uv venv --clear
+                source .venv/bin/activate
+                uv pip install --upgrade "setuptools>=70"
+                uv pip install --upgrade pip
+                uv pip install --upgrade distlib
+                uv pip install --upgrade pytest
+            fi
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
@@ -347,7 +352,7 @@ jobs:
     docker:
       - image: continuumio/miniconda3
     parallelism: 4
-    resource_class: xlarge
+    resource_class: large
     environment:
       OMP_NUM_THREADS: "1"
       OPENBLAS_NUM_THREADS: "1"
