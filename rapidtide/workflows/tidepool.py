@@ -914,6 +914,10 @@ class xyztlocation(QtWidgets.QWidget):
             if verbosity > 1:
                 print("initializing movie button")
             thebutton.setText("Start Movie")
+            try:
+                thebutton.clicked.disconnect(thehandler)
+            except (TypeError, RuntimeError):
+                pass
             thebutton.clicked.connect(thehandler)
 
     def setupTimeSlider(
@@ -959,6 +963,10 @@ class xyztlocation(QtWidgets.QWidget):
         if theslider is not None:
             theslider.setRange(minval, maxval)
             theslider.setSingleStep(1)
+            try:
+                theslider.valueChanged.disconnect(thehandler)
+            except (TypeError, RuntimeError):
+                pass
             theslider.valueChanged.connect(thehandler)
 
     def setupSpinBox(
@@ -1018,6 +1026,10 @@ class xyztlocation(QtWidgets.QWidget):
             thespinbox.setValue(currentval)
             thespinbox.setWrapping(True)
             thespinbox.setKeyboardTracking(False)
+            try:
+                thespinbox.valueChanged.disconnect(thehandler)
+            except (TypeError, RuntimeError):
+                pass
             thespinbox.valueChanged.connect(thehandler)
 
     def updateXYZValues(self, emitsignal: bool = True) -> None:
@@ -1574,7 +1586,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.tcoord = self.tr2real(self.tpos)
             if self.movierunning:
                 self.movieTimer.stop()
-                self.movieTimer.start(int(self.tpos))
+                self.movieTimer.start(int(self.frametime))
             self.updateTValues()
 
     def getXcoord(self, event: Any) -> None:
