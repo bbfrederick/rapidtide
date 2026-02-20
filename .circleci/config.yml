@@ -235,6 +235,30 @@ jobs:
             - "/opt/conda/envs/py312_env"
 
 
+  build_py313_alt:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.13
+    resource_class: medium
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/rapidtide
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - build_base_environment
+      - run:  # will overwrite rapidtide installation each time
+          name: Install rapidtide
+          command:  |
+            uv pip install .[tf,test,doc]
+      - save_cache:  # environment cache tied to requirements
+          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          paths:
+            - "/tmp/src/rapidtide/.venv"
+
+
   build_py313:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -283,7 +307,7 @@ jobs:
           key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - build_base_environment
       - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
+          name: Install rapidtide
           command:  |
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
@@ -644,6 +668,7 @@ workflows:
           requires:
             - build_py312
       - build_py313
+      - build_py313_alt
       - test_py313:
           requires:
             - build_py313
