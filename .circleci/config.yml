@@ -281,7 +281,10 @@ jobs:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
           key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - build_base_environment
+      - build_base_environment:
+          root: /tmp
+          paths:
+            - src/rapidtide
       - run:  # will overwrite rapidtide installation each time
           name: Generate rapidtide environment
             #command:  |
