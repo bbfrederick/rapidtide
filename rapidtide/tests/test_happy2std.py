@@ -980,9 +980,9 @@ def workflow_subjroot_derivation(debug=False):
         # [:-11] strips "mapp.nii.gz" (11 chars) → "sub-01_task-rest_desc-nor"
         passed_subjroot = transformmaps_calls[0]["args"][2]
         expected = "sub-01_task-rest_desc-nor"
-        assert passed_subjroot == expected, (
-            f"Expected subjroot '{expected}', got '{passed_subjroot}'"
-        )
+        assert (
+            passed_subjroot == expected
+        ), f"Expected subjroot '{expected}', got '{passed_subjroot}'"
 
     if debug:
         print("workflow_subjroot_derivation passed")

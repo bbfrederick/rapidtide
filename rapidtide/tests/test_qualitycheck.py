@@ -87,8 +87,12 @@ class DummyDataset:
         self.regressorfilterlimits = [0.2, 0.8]
         self.regressorsimcalclimits = [0.1, 0.9]
         self.regressors = {
-            "pass1": DummyRegressor(np.linspace(0.0, 1.0, 200), np.random.RandomState(4).rand(200)),
-            "pass2": DummyRegressor(np.linspace(0.0, 1.0, 200), np.random.RandomState(5).rand(200)),
+            "pass1": DummyRegressor(
+                np.linspace(0.0, 1.0, 200), np.random.RandomState(4).rand(200)
+            ),
+            "pass2": DummyRegressor(
+                np.linspace(0.0, 1.0, 200), np.random.RandomState(5).rand(200)
+            ),
         }
         self.overlays = {
             "lagmask": DummyOverlay(lagmask),
@@ -125,7 +129,9 @@ def checkregressors_tests(debug=False):
         "pass1": DummyRegressor(np.linspace(0.0, 1.0, 200), np.random.RandomState(10).rand(200)),
         "pass2": DummyRegressor(np.linspace(0.0, 1.0, 200), np.random.RandomState(11).rand(200)),
     }
-    metrics = tide_quality.checkregressors(regressors, numpasses=2, filterlimits=[0.2, 0.8], debug=False)
+    metrics = tide_quality.checkregressors(
+        regressors, numpasses=2, filterlimits=[0.2, 0.8], debug=False
+    )
     required = [
         "first_kurtosis",
         "first_kurtosis_z",

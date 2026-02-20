@@ -406,9 +406,9 @@ def endtidalproc_output_smoothness(debug=False):
     # piecewise linear interpolation should have smaller variance of second differences
     input_diff2 = np.diff(signal, n=2)
     output_diff2 = np.diff(saved["data"], n=2)
-    assert np.std(output_diff2) < np.std(input_diff2), (
-        "Peak-interpolated output should be smoother than input"
-    )
+    assert np.std(output_diff2) < np.std(
+        input_diff2
+    ), "Peak-interpolated output should be smoother than input"
 
     if debug:
         print("endtidalproc_output_smoothness passed")

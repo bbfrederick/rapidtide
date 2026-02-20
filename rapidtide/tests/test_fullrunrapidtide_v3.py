@@ -32,17 +32,19 @@ configure_matplotlib_env()
 import os
 
 import matplotlib as mpl
+import pytest
 
-import rapidtide.workflows.rapidtide as rapidtide_workflow
-import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-import rapidtide.workflows.retroregress as rapidtide_retroregress
-from rapidtide.tests.utils import get_examples_path, get_test_temp_path
+from rapidtide.tests.utils import (
+    get_example_and_temp_roots,
+    run_rapidtide,
+    run_retroregress,
+)
 
+pytestmark = pytest.mark.slow
 
 def test_fullrunrapidtide_v3(debug=False, local=False, displayplots=False):
     # set input and output directories
-    exampleroot = get_examples_path(local)
-    testtemproot = get_test_temp_path(local)
+    exampleroot, testtemproot = get_example_and_temp_roots(local)
 
     # run rapidtide
     inputargs = [
@@ -84,7 +86,7 @@ def test_fullrunrapidtide_v3(debug=False, local=False, displayplots=False):
     ]
     #    "--psdfilter",
     #    "--cleanrefined",
-    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+    run_rapidtide(inputargs)
 
     inputargs = [
         os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
@@ -94,7 +96,7 @@ def test_fullrunrapidtide_v3(debug=False, local=False, displayplots=False):
         "--outputlevel",
         "onlyregressors",
     ]
-    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
+    run_retroregress(inputargs)
 
 
 if __name__ == "__main__":

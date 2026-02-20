@@ -32,19 +32,20 @@ configure_matplotlib_env()
 import os
 
 import matplotlib as mpl
-import numpy as np
+import pytest
 
-import rapidtide.io as tide_io
-import rapidtide.workflows.rapidtide as rapidtide_workflow
-import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-import rapidtide.workflows.retroregress as rapidtide_retroregress
-from rapidtide.tests.utils import get_examples_path, get_test_temp_path, mse
+from rapidtide.tests.utils import (
+    assert_text_vectors_match,
+    get_example_and_temp_roots,
+    run_rapidtide,
+    run_retroregress,
+)
 
+pytestmark = pytest.mark.slow
 
 def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
     # set input and output directories
-    exampleroot = get_examples_path(local)
-    testtemproot = get_test_temp_path(local)
+    exampleroot, testtemproot = get_example_and_temp_roots(local)
 
     # test anatomic masks
     inputargs = [
@@ -63,7 +64,7 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
         "--csfmask",
         os.path.join(exampleroot, "sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF"),
     ]
-    rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=inputargs))
+    run_rapidtide(inputargs)
 
     inputargs = [
         os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
@@ -75,7 +76,7 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
         "--outputlevel",
         "max",
     ]
-    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
+    run_retroregress(inputargs)
 
     inputargs = [
         os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
@@ -87,35 +88,21 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
         "--outputlevel",
         "onlyregressors",
     ]
-    rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
+    run_retroregress(inputargs)
 
     # check to see that rapidtide and retroregress output match
-    msethresh = 2e-6
-    aethresh = 2
     tclist = ["brain", "GM", "WM", "CSF"]
     for timecourse in tclist:
-        infilespec = os.path.join(
-            testtemproot,
-            f"sub-RAPIDTIDETEST_seg_desc-regionalpostfilter_timeseries.json:{timecourse}",
+        assert_text_vectors_match(
+            infile_spec=os.path.join(
+                testtemproot,
+                f"sub-RAPIDTIDETEST_seg_desc-regionalpostfilter_timeseries.json:{timecourse}",
+            ),
+            outfile_spec=os.path.join(
+                testtemproot, f"segtest_desc-regionalpostfilter_timeseries.json:{timecourse}"
+            ),
+            debug=debug,
         )
-        insamplerate, instarttime, incolumns, indata, incompressed, infiletype = (
-            tide_io.readvectorsfromtextfile(infilespec, onecol=True, debug=debug)
-        )
-        outfilespec = os.path.join(
-            testtemproot, f"segtest_desc-regionalpostfilter_timeseries.json:{timecourse}"
-        )
-        outsamplerate, outstarttime, outcolumns, outdata, outcompressed, outfiletype = (
-            tide_io.readvectorsfromtextfile(outfilespec, onecol=True, debug=debug)
-        )
-        assert insamplerate == outsamplerate
-        assert instarttime == outstarttime
-        assert incompressed == outcompressed
-        assert infiletype == outfiletype
-        assert incolumns == outcolumns
-        assert indata.shape == outdata.shape
-        assert indata.shape[0] == indata.shape[0]
-        assert mse(indata, outdata) < msethresh
-        np.testing.assert_almost_equal(indata, outdata, aethresh)
 
 
 if __name__ == "__main__":

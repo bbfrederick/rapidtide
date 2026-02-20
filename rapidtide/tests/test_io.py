@@ -2548,9 +2548,7 @@ def readbidstsv_with_header_line(debug=False):
         root = os.path.join(tmpdir, "test")
         # Manually create a BIDS TSV with a header line (non-compliant)
         with open(root + ".json", "w") as f:
-            json.dump(
-                {"SamplingFrequency": 10.0, "StartTime": 0.0, "Columns": ["a", "b"]}, f
-            )
+            json.dump({"SamplingFrequency": 10.0, "StartTime": 0.0, "Columns": ["a", "b"]}, f)
         with open(root + ".tsv", "w") as f:
             f.write("a\tb\n")
             f.write("1.0\t2.0\n")

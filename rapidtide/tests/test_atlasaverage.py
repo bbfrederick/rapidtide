@@ -21,6 +21,7 @@ import os
 from unittest.mock import MagicMock, call, patch
 
 import numpy as np
+import pytest
 
 from rapidtide.tests.utils import create_dir, get_test_temp_path
 from rapidtide.workflows.atlasaverage import _get_parser, atlasaverage, summarizevoxels
@@ -107,6 +108,40 @@ def _make_base_args(outputroot="/tmp/test_atlasaverage_out"):
     )
 
 
+def _parse_test_args(extra_args=None):
+    """Parse atlasaverage args with temporary input/template NIfTI files."""
+    import tempfile
+
+    parser = _get_parser()
+    if extra_args is None:
+        extra_args = []
+    with (
+        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
+        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
+    ):
+        return parser.parse_args([f1.name, f2.name, "out", *extra_args])
+
+
+def _make_readfromnifti_side_effect(
+    input_data,
+    input_hdr,
+    input_dims,
+    input_sizes,
+    atlas_data,
+    atlas_hdr,
+    atlas_dims,
+    atlas_sizes,
+):
+    """Build a standard readfromnifti side-effect that routes data vs atlas loads."""
+    data_return = (MagicMock(), input_data, input_hdr, input_dims, input_sizes)
+    atlas_return = (MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes)
+
+    def _mock_readfromnifti(fname, **kwargs):
+        return data_return if "data" in fname else atlas_return
+
+    return _mock_readfromnifti
+
+
 # ==================== _get_parser tests ====================
 
 
@@ -136,14 +171,7 @@ def parser_defaults(debug=False):
     """Test default values for optional arguments."""
     if debug:
         print("parser_defaults")
-    import tempfile
-
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
-        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
-    ):
-        defaults = parser.parse_args([f1.name, f2.name, "outroot"])
+    defaults = _parse_test_args()
     assert defaults.normmethod == "none"
     assert defaults.summarymethod == "mean"
     assert defaults.numpercentiles == 1
@@ -162,46 +190,25 @@ def parser_normmethod_choices(debug=False):
     """Test that normmethod accepts only valid choices."""
     if debug:
         print("parser_normmethod_choices")
-    import tempfile
-
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
-        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
-    ):
-        for method in ["none", "pct", "var", "std", "p2p"]:
-            args = parser.parse_args([f1.name, f2.name, "out", "--normmethod", method])
-            assert args.normmethod == method
+    for method in ["none", "pct", "var", "std", "p2p"]:
+        args = _parse_test_args(["--normmethod", method])
+        assert args.normmethod == method
 
 
 def parser_summarymethod_choices(debug=False):
     """Test that summarymethod accepts only valid choices."""
     if debug:
         print("parser_summarymethod_choices")
-    import tempfile
-
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
-        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
-    ):
-        for method in ["mean", "median", "sum", "std", "MAD", "CoV"]:
-            args = parser.parse_args([f1.name, f2.name, "out", "--summarymethod", method])
-            assert args.summarymethod == method
+    for method in ["mean", "median", "sum", "std", "MAD", "CoV"]:
+        args = _parse_test_args(["--summarymethod", method])
+        assert args.summarymethod == method
 
 
 def parser_numpercentiles(debug=False):
     """Test that numpercentiles can be set."""
     if debug:
         print("parser_numpercentiles")
-    import tempfile
-
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
-        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "out", "--numpercentiles", "5"])
+    args = _parse_test_args(["--numpercentiles", "5"])
     assert args.numpercentiles == 5
 
 
@@ -209,23 +216,7 @@ def parser_flags(debug=False):
     """Test boolean flags."""
     if debug:
         print("parser_flags")
-    import tempfile
-
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
-        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
-    ):
-        args = parser.parse_args(
-            [
-                f1.name,
-                f2.name,
-                "out",
-                "--ignorezeros",
-                "--headerline",
-                "--debug",
-            ]
-        )
+    args = _parse_test_args(["--ignorezeros", "--headerline", "--debug"])
     assert args.ignorezeros is True
     assert args.headerline is True
     assert args.debug is True
@@ -235,14 +226,7 @@ def parser_datalabel(debug=False):
     """Test datalabel option."""
     if debug:
         print("parser_datalabel")
-    import tempfile
-
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".nii") as f1,
-        tempfile.NamedTemporaryFile(suffix=".nii") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "out", "--datalabel", "my_label"])
+    args = _parse_test_args(["--datalabel", "my_label"])
     assert args.datalabel == "my_label"
 
 
@@ -370,11 +354,16 @@ def atlasaverage_3d_basic(debug=False):
 
     saved_data = {}
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_savetonifti(data, hdr, fname, **kwargs):
         saved_data[fname] = data.copy()
@@ -431,11 +420,16 @@ def atlasaverage_3d_with_headerline(debug=False):
     args = _make_base_args()
     args.headerline = True
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_getfracvals(data, fracs, **kwargs):
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
@@ -492,11 +486,16 @@ def atlasaverage_3d_no_headerline(debug=False):
     args = _make_base_args()
     args.headerline = False
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_getfracvals(data, fracs, **kwargs):
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
@@ -561,11 +560,16 @@ def atlasaverage_3d_with_datalabel(debug=False):
     args.datalabel = "mydata"
     args.headerline = True
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_getfracvals(data, fracs, **kwargs):
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
@@ -621,11 +625,16 @@ def atlasaverage_3d_ignorezeros(debug=False):
     args = _make_base_args()
     args.ignorezeros = True
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_getfracvals(data, fracs, **kwargs):
         nonzero = data[data != 0]
@@ -673,11 +682,16 @@ def atlasaverage_3d_summary_methods(debug=False):
     )
     input_data, input_hdr, input_dims, input_sizes = _make_3d_data(xsize, ysize, numslices)
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_getfracvals(data, fracs, **kwargs):
         nonzero = data[data != 0]
@@ -733,11 +747,16 @@ def atlasaverage_3d_numpercentiles(debug=False):
     args = _make_base_args()
     args.numpercentiles = 4  # will generate 6 fracs: 0, 0.2, 0.4, 0.6, 0.8, 1.0
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_getfracvals(data, fracs, **kwargs):
         nonzero = data[data != 0]
@@ -791,11 +810,16 @@ def atlasaverage_4d_basic(debug=False):
 
     written_bids = {}
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
         written_bids[fname] = {"data": data.copy(), "samplerate": samplerate}
@@ -853,17 +877,17 @@ def atlasaverage_4d_normmethod_pct(debug=False):
     args = _make_base_args()
     args.normmethod = "pct"
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return (
-                MagicMock(),
-                atlas_data,
-                _make_mock_hdr(xsize, ysize, numslices, 1),
-                atlas_dims,
-                atlas_sizes,
-            )
+    atlas_hdr = _make_mock_hdr(xsize, ysize, numslices, 1)
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     with (
         patch(
@@ -905,17 +929,17 @@ def atlasaverage_4d_normmethod_std(debug=False):
     args = _make_base_args()
     args.normmethod = "std"
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return (
-                MagicMock(),
-                atlas_data,
-                _make_mock_hdr(xsize, ysize, numslices, 1),
-                atlas_dims,
-                atlas_sizes,
-            )
+    atlas_hdr = _make_mock_hdr(xsize, ysize, numslices, 1)
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     with (
         patch(
@@ -957,17 +981,17 @@ def atlasaverage_4d_normmethod_var(debug=False):
     args = _make_base_args()
     args.normmethod = "var"
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return (
-                MagicMock(),
-                atlas_data,
-                _make_mock_hdr(xsize, ysize, numslices, 1),
-                atlas_dims,
-                atlas_sizes,
-            )
+    atlas_hdr = _make_mock_hdr(xsize, ysize, numslices, 1)
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     with (
         patch(
@@ -1009,17 +1033,17 @@ def atlasaverage_4d_normmethod_p2p(debug=False):
     args = _make_base_args()
     args.normmethod = "p2p"
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return (
-                MagicMock(),
-                atlas_data,
-                _make_mock_hdr(xsize, ysize, numslices, 1),
-                atlas_dims,
-                atlas_sizes,
-            )
+    atlas_hdr = _make_mock_hdr(xsize, ysize, numslices, 1)
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     with (
         patch(
@@ -1061,17 +1085,17 @@ def atlasaverage_4d_median_summary(debug=False):
     args = _make_base_args()
     args.summarymethod = "median"
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return (
-                MagicMock(),
-                atlas_data,
-                _make_mock_hdr(xsize, ysize, numslices, 1),
-                atlas_dims,
-                atlas_sizes,
-            )
+    atlas_hdr = _make_mock_hdr(xsize, ysize, numslices, 1)
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     with (
         patch(
@@ -1106,11 +1130,16 @@ def atlasaverage_space_mismatch(debug=False):
     input_data, input_hdr, input_dims, input_sizes = _make_3d_data(xsize, ysize, numslices)
     args = _make_base_args()
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     import pytest
 
@@ -1143,11 +1172,16 @@ def atlasaverage_regionlabelfile(debug=False):
 
     written_bids = {}
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
         written_bids[fname] = kwargs.get("columns", [])
@@ -1198,11 +1232,16 @@ def atlasaverage_regionlabelfile_mismatch(debug=False):
     # Wrong number of labels
     region_labels = ["Frontal", "Parietal"]  # Only 2 labels for 3 regions
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     import pytest
 
@@ -1251,11 +1290,16 @@ def atlasaverage_regionlistfile(debug=False):
 
     written_bids = {}
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
         written_bids[fname] = {"data": data.copy(), "columns": kwargs.get("columns", [])}
@@ -1304,11 +1348,16 @@ def atlasaverage_debug_mode(debug=False):
     args = _make_base_args()
     args.debug = True
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_getfracvals(data, fracs, **kwargs):
         nonzero = data[data != 0]
@@ -1358,11 +1407,16 @@ def atlasaverage_auto_labels(debug=False):
 
     written_bids = {}
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
         written_bids[fname] = kwargs.get("columns", [])
@@ -1419,11 +1473,16 @@ def atlasaverage_includemask(debug=False):
     # Include mask: ones everywhere (so all voxels included)
     include_mask = np.ones(numvoxels)
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     with (
         patch(
@@ -1473,11 +1532,16 @@ def atlasaverage_excludemask(debug=False):
     # Exclude mask: zeros everywhere (so no voxels excluded)
     exclude_mask = np.zeros(numvoxels)
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     with (
         patch(
@@ -1525,11 +1589,16 @@ def atlasaverage_3d_maskedatlas_output(debug=False):
 
     saved_data = {}
 
-    def mock_readfromnifti(fname, **kwargs):
-        if "data" in fname:
-            return MagicMock(), input_data, input_hdr, input_dims, input_sizes
-        else:
-            return MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes
+    mock_readfromnifti = _make_readfromnifti_side_effect(
+        input_data,
+        input_hdr,
+        input_dims,
+        input_sizes,
+        atlas_data,
+        atlas_hdr,
+        atlas_dims,
+        atlas_sizes,
+    )
 
     def mock_savetonifti(data, hdr, fname, **kwargs):
         saved_data[fname] = data.copy()
@@ -1583,59 +1652,76 @@ def atlasaverage_3d_maskedatlas_output(debug=False):
 # ==================== Main test function ====================
 
 
-def test_atlasaverage(debug=False):
-    # _get_parser tests
-    if debug:
-        print("Running parser tests")
-    parser_basic(debug=debug)
-    parser_required_args(debug=debug)
-    parser_defaults(debug=debug)
-    parser_normmethod_choices(debug=debug)
-    parser_summarymethod_choices(debug=debug)
-    parser_numpercentiles(debug=debug)
-    parser_flags(debug=debug)
-    parser_datalabel(debug=debug)
+PARSER_CASES = [
+    parser_basic,
+    parser_required_args,
+    parser_defaults,
+    parser_normmethod_choices,
+    parser_summarymethod_choices,
+    parser_numpercentiles,
+    parser_flags,
+    parser_datalabel,
+]
 
-    # summarizevoxels tests
-    if debug:
-        print("Running summarizevoxels tests")
-    summarizevoxels_mean_1d(debug=debug)
-    summarizevoxels_mean_2d(debug=debug)
-    summarizevoxels_sum(debug=debug)
-    summarizevoxels_median(debug=debug)
-    summarizevoxels_std(debug=debug)
-    summarizevoxels_mad(debug=debug)
-    summarizevoxels_cov_1d(debug=debug)
-    summarizevoxels_cov_2d(debug=debug)
-    summarizevoxels_nan_handling(debug=debug)
-    summarizevoxels_default_method(debug=debug)
 
-    # atlasaverage tests
-    if debug:
-        print("Running atlasaverage tests")
-    atlasaverage_3d_basic(debug=debug)
-    atlasaverage_3d_with_headerline(debug=debug)
-    atlasaverage_3d_no_headerline(debug=debug)
-    atlasaverage_3d_with_datalabel(debug=debug)
-    atlasaverage_3d_ignorezeros(debug=debug)
-    atlasaverage_3d_summary_methods(debug=debug)
-    atlasaverage_3d_numpercentiles(debug=debug)
-    atlasaverage_4d_basic(debug=debug)
-    atlasaverage_4d_normmethod_pct(debug=debug)
-    atlasaverage_4d_normmethod_std(debug=debug)
-    atlasaverage_4d_normmethod_var(debug=debug)
-    atlasaverage_4d_normmethod_p2p(debug=debug)
-    atlasaverage_4d_median_summary(debug=debug)
-    atlasaverage_space_mismatch(debug=debug)
-    atlasaverage_regionlabelfile(debug=debug)
-    atlasaverage_regionlabelfile_mismatch(debug=debug)
-    atlasaverage_regionlistfile(debug=debug)
-    atlasaverage_debug_mode(debug=debug)
-    atlasaverage_auto_labels(debug=debug)
-    atlasaverage_includemask(debug=debug)
-    atlasaverage_excludemask(debug=debug)
-    atlasaverage_3d_maskedatlas_output(debug=debug)
+SUMMARIZEVOXELS_CASES = [
+    summarizevoxels_mean_1d,
+    summarizevoxels_mean_2d,
+    summarizevoxels_sum,
+    summarizevoxels_median,
+    summarizevoxels_std,
+    summarizevoxels_mad,
+    summarizevoxels_cov_1d,
+    summarizevoxels_cov_2d,
+    summarizevoxels_nan_handling,
+    summarizevoxels_default_method,
+]
+
+
+ATLASAVERAGE_CASES = [
+    atlasaverage_3d_basic,
+    atlasaverage_3d_with_headerline,
+    atlasaverage_3d_no_headerline,
+    atlasaverage_3d_with_datalabel,
+    atlasaverage_3d_ignorezeros,
+    atlasaverage_3d_summary_methods,
+    atlasaverage_3d_numpercentiles,
+    atlasaverage_4d_basic,
+    atlasaverage_4d_normmethod_pct,
+    atlasaverage_4d_normmethod_std,
+    atlasaverage_4d_normmethod_var,
+    atlasaverage_4d_normmethod_p2p,
+    atlasaverage_4d_median_summary,
+    atlasaverage_space_mismatch,
+    atlasaverage_regionlabelfile,
+    atlasaverage_regionlabelfile_mismatch,
+    atlasaverage_regionlistfile,
+    atlasaverage_debug_mode,
+    atlasaverage_auto_labels,
+    atlasaverage_includemask,
+    atlasaverage_excludemask,
+    atlasaverage_3d_maskedatlas_output,
+]
+
+
+@pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_atlasaverage_parser_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", SUMMARIZEVOXELS_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_atlasaverage_summarizevoxels_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", ATLASAVERAGE_CASES, ids=lambda func: func.__name__)
+@pytest.mark.slow
+def test_atlasaverage_workflow_cases(case_runner, case_func):
+    case_runner(case_func)
 
 
 if __name__ == "__main__":
-    test_atlasaverage(debug=True)
+    for case in PARSER_CASES + SUMMARIZEVOXELS_CASES + ATLASAVERAGE_CASES:
+        case(debug=True)

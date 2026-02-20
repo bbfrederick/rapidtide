@@ -410,7 +410,7 @@ def showstxcorr(args: Any) -> None:
     )
     trimlen = min(endpoint1 - startpoint, endpoint2)
     trimmeddata = np.zeros((2, trimlen), dtype="float")
-    trimmeddata[0, :] = inputdata1[startpoint:startpoint + trimlen]
+    trimmeddata[0, :] = inputdata1[startpoint : startpoint + trimlen]
     trimmeddata[1, :] = inputdata2[0:trimlen]
 
     # band limit the regressors if that is needed

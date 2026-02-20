@@ -173,6 +173,8 @@ scipy==1.15.2
     #   scikit-image
     #   scikit-learn
     #   statsmodels
+setuptools>=70
+    # required for pkg_resources (imported by pybtex)
 six==1.16.0
     # via
     #   patsy

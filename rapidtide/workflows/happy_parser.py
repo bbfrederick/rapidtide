@@ -269,7 +269,6 @@ def _get_parser() -> Any:
         default=False,
     )
 
-
     # Cardiac estimation tuning
     cardiac_est_tuning = parser.add_argument_group("Cardiac estimation tuning")
     cardiac_est_tuning.add_argument(

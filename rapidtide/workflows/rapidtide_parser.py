@@ -2176,7 +2176,7 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
     if args["delaymapping"]:
         LGR.warning(
             'Using "delaymapping" analysis mode. '
-            'Overriding default values for any affected arguments.'
+            "Overriding default values for any affected arguments."
         )
         pf.setifnotset(args, "passes", DEFAULT_DELAYMAPPING_PASSES)
         pf.setifnotset(args, "despeckle_passes", DEFAULT_DELAYMAPPING_DESPECKLE_PASSES)
@@ -2191,7 +2191,7 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
     if args["denoising"]:
         LGR.warning(
             'Using "denoising" analysis mode. '
-            'Overriding default values for any affected arguments.'
+            "Overriding default values for any affected arguments."
         )
         pf.setifnotset(args, "passes", DEFAULT_DENOISING_PASSES)
         pf.setifnotset(args, "despeckle_passes", DEFAULT_DENOISING_DESPECKLE_PASSES)
@@ -2208,8 +2208,7 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
 
     if args["docvrmap"]:
         LGR.warning(
-            'Using "CVR" analysis mode. '
-            'Overriding default values for any affected arguments.'
+            'Using "CVR" analysis mode. ' "Overriding default values for any affected arguments."
         )
         if args["regressorfile"] is None:
             raise ValueError(
@@ -2233,7 +2232,7 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
     if args["initregressorpreselect"]:
         LGR.warning(
             'Using "globalpreselect" analysis mode. '
-            'Overriding default values for any affected arguments.'
+            "Overriding default values for any affected arguments."
         )
         pf.setifnotset(args, "passes", 1)
         pf.setifnotset(args, "despeckle_passes", 0)

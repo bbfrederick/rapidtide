@@ -16,6 +16,30 @@
 #
 #
 
+mode="${1:-all}"
+if [ "$#" -gt 0 ]; then
+    shift
+fi
+
+case "$mode" in
+    unit)
+        markexpr="unit"
+        ;;
+    notslow|pr)
+        markexpr="not slow"
+        ;;
+    slow)
+        markexpr="slow"
+        ;;
+    all)
+        markexpr=""
+        ;;
+    *)
+        echo "usage: $0 [unit|notslow|pr|slow|all] [pytest-args...]" >&2
+        exit 2
+        ;;
+esac
+
 # make sure the test data is installed
 pushd ../data/examples/src
 ./cleanupdir
@@ -35,9 +59,18 @@ rm .coverage\.*
 #    --cov-report html:coveragereport \
 #    --cov=rapidtide \
 #    --cov-config=.coveragerc
-export MPLBACKEND=Agg
-python -m coverage run -m pytest -v -s -rs 
+
+pytest_args="-v -s -rs"
+if [ -n "$markexpr" ]; then
+    python -m coverage run -m pytest $pytest_args -m "$markexpr" "$@"
+else
+    python -m coverage run -m pytest $pytest_args "$@"
+fi
+
+python -m coverage html -d coveragereport >/dev/null
 
 
 # show the results
-open coveragereport/index.html
+if [ -f coveragereport/index.html ] && command -v open >/dev/null 2>&1; then
+    open coveragereport/index.html
+fi

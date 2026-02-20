@@ -194,8 +194,10 @@ def calcspecgram_basic(debug=False):
     assert thestft.shape[1] == len(segtimes)
 
     if debug:
-        print(f"calcspecgram_basic: freq shape={freq.shape}, "
-              f"segtimes shape={segtimes.shape}, stft shape={thestft.shape}")
+        print(
+            f"calcspecgram_basic: freq shape={freq.shape}, "
+            f"segtimes shape={segtimes.shape}, stft shape={thestft.shape}"
+        )
         print("calcspecgram_basic passed")
 
 
@@ -238,8 +240,9 @@ def calcspecgram_nperseg_affects_resolution(debug=False):
     assert len(freq_large) > len(freq_small)
 
     if debug:
-        print(f"calcspecgram_nperseg: small={len(freq_small)} bins, "
-              f"large={len(freq_large)} bins")
+        print(
+            f"calcspecgram_nperseg: small={len(freq_small)} bins, " f"large={len(freq_large)} bins"
+        )
         print("calcspecgram_nperseg_affects_resolution passed")
 
 
@@ -268,9 +271,9 @@ def calcspecgram_peak_at_signal_freq(debug=False):
 
     # peak should be near the signal frequency (within frequency resolution)
     freq_resolution = freq[1] - freq[0]
-    assert abs(peak_freq - signal_freq) <= freq_resolution, (
-        f"Peak at {peak_freq:.2f} Hz, expected near {signal_freq:.2f} Hz"
-    )
+    assert (
+        abs(peak_freq - signal_freq) <= freq_resolution
+    ), f"Peak at {peak_freq:.2f} Hz, expected near {signal_freq:.2f} Hz"
 
     if debug:
         print(f"calcspecgram_peak_at_signal_freq: peak at {peak_freq:.2f} Hz")
@@ -281,9 +284,7 @@ def calcspecgram_different_window(debug=False):
     """Test calcspecgram with a different window type."""
     x, t = _make_test_signal(samplerate=100.0, duration=5.0, freq=10.0)
 
-    freq, segtimes, thestft, isinvertable = calcspecgram(
-        x, t, nperseg=32, windowtype="hamming"
-    )
+    freq, segtimes, thestft, isinvertable = calcspecgram(x, t, nperseg=32, windowtype="hamming")
 
     assert len(freq) > 0
     assert thestft.shape[0] == len(freq)
@@ -586,9 +587,7 @@ def spectrogram_samplerate_from_args(debug=False):
     # timestep = 1/200 = 0.005, xvec[1] - xvec[0] should be 0.005
     xvec = captured_xvec["xvec"]
     timestep = xvec[1] - xvec[0]
-    assert np.isclose(timestep, 1.0 / 200.0), (
-        f"Expected timestep=0.005, got {timestep}"
-    )
+    assert np.isclose(timestep, 1.0 / 200.0), f"Expected timestep=0.005, got {timestep}"
 
     if debug:
         print("spectrogram_samplerate_from_args passed")
@@ -626,9 +625,7 @@ def spectrogram_samplerate_from_file(debug=False):
 
     xvec = captured_xvec["xvec"]
     timestep = xvec[1] - xvec[0]
-    assert np.isclose(timestep, 1.0 / 50.0), (
-        f"Expected timestep=0.02, got {timestep}"
-    )
+    assert np.isclose(timestep, 1.0 / 50.0), f"Expected timestep=0.02, got {timestep}"
 
     if debug:
         print("spectrogram_samplerate_from_file passed")
@@ -740,7 +737,9 @@ def spectrogram_uses_inputfile_as_label(debug=False):
     """Test that spectrogram uses inputfile name as the plot label."""
     x, _ = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     args = _make_default_args(
-        inputfile="my_data.txt", samplerate=100.0, nperseg=32,
+        inputfile="my_data.txt",
+        samplerate=100.0,
+        nperseg=32,
     )
 
     captured_label = {}

@@ -58,6 +58,3 @@ def parabfit(x_axis: NDArray, y_axis: NDArray, peakloc: int, points: int) -> Tup
     # retrieve tau and c i.e x and y value of peak
     x, y = popt[1:3]
     return x, y
-
-
-

@@ -1,5 +1,11 @@
 # Release history
 
+## Version 3.1.7 (2/18/26)
+* (happy) Added an experimental feature that does cheesy sLFO removal prior to cardiac waveform extraction.  It seems to improve the extracted signal some, and makes the phase projected data a bit cleaner.  Needs further testing.
+* (happy) Codex found several bugs, which are now fixed.
+* (package) Further increases in test coverage.
+* (docs) Added a section about using the superior sagittal sinus as a source of the initial regressor.
+
 ## Version 3.1.6 (2/16/26)
 * (package) Using alternating Codex and Claude, got test coverage to 90.99%.  Closes https://github.com/bbfrederick/rapidtide/issues/13.
 * (package) Cleaned up .circleci/config.yml.

@@ -140,16 +140,22 @@ def parser_all_flags(debug=False):
     if debug:
         print("parser_all_flags")
     parser = _get_parser()
-    args = parser.parse_args([
-        "data.txt",
-        "--xlabel", "X",
-        "--ylabel", "Y",
-        "--title", "T",
-        "--outputfile", "out.png",
-        "--dobars",
-        "--calcdist",
-        "--debug",
-    ])
+    args = parser.parse_args(
+        [
+            "data.txt",
+            "--xlabel",
+            "X",
+            "--ylabel",
+            "Y",
+            "--title",
+            "T",
+            "--outputfile",
+            "out.png",
+            "--dobars",
+            "--calcdist",
+            "--debug",
+        ]
+    )
     assert args.thexlabel == "X"
     assert args.theylabel == "Y"
     assert args.thetitle == "T"
@@ -523,9 +529,7 @@ def showhist_infilename_forwarded(debug=False):
     indata = np.zeros((2, 5))
     args = _make_default_args(infilename="my_data.txt")
 
-    mock_readvecs = patch(
-        "rapidtide.workflows.showhist.tide_io.readvecs", return_value=indata
-    )
+    mock_readvecs = patch("rapidtide.workflows.showhist.tide_io.readvecs", return_value=indata)
 
     with (
         mock_readvecs as m_readvecs,

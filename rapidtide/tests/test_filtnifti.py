@@ -118,8 +118,12 @@ def filtnifti_basic_sec_units(debug=False):
     mock_filter.apply = MagicMock(side_effect=lambda Fs, ts: ts)
 
     with (
-        patch("rapidtide.workflows.filtnifti.tide_io.fmritimeinfo", return_value=(2.0, timepoints)),
-        patch("rapidtide.workflows.filtnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti),
+        patch(
+            "rapidtide.workflows.filtnifti.tide_io.fmritimeinfo", return_value=(2.0, timepoints)
+        ),
+        patch(
+            "rapidtide.workflows.filtnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
         patch("rapidtide.workflows.filtnifti.tide_io.savetonifti", side_effect=mock_savetonifti),
         patch("rapidtide.workflows.filtnifti.tide_filt.NoncausalFilter", return_value=mock_filter),
     ):
@@ -149,8 +153,12 @@ def filtnifti_msec_units(debug=False):
     mock_filter.apply = MagicMock(side_effect=lambda Fs, ts: ts)
 
     with (
-        patch("rapidtide.workflows.filtnifti.tide_io.fmritimeinfo", return_value=(2.0, timepoints)),
-        patch("rapidtide.workflows.filtnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti),
+        patch(
+            "rapidtide.workflows.filtnifti.tide_io.fmritimeinfo", return_value=(2.0, timepoints)
+        ),
+        patch(
+            "rapidtide.workflows.filtnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
         patch("rapidtide.workflows.filtnifti.tide_io.savetonifti"),
         patch("rapidtide.workflows.filtnifti.tide_filt.NoncausalFilter", return_value=mock_filter),
     ):
@@ -179,8 +187,12 @@ def filtnifti_negative_freqs(debug=False):
     mock_filter.apply = MagicMock(side_effect=lambda Fs, ts: ts)
 
     with (
-        patch("rapidtide.workflows.filtnifti.tide_io.fmritimeinfo", return_value=(1.0, timepoints)),
-        patch("rapidtide.workflows.filtnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti),
+        patch(
+            "rapidtide.workflows.filtnifti.tide_io.fmritimeinfo", return_value=(1.0, timepoints)
+        ),
+        patch(
+            "rapidtide.workflows.filtnifti.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
         patch("rapidtide.workflows.filtnifti.tide_io.savetonifti"),
         patch("rapidtide.workflows.filtnifti.tide_filt.NoncausalFilter", return_value=mock_filter),
     ):

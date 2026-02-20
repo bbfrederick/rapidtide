@@ -79,7 +79,9 @@ def _get_parser() -> Any:
     return parser
 
 
-def plethquality_waveform(waveform: Any, Fs: Any, S_windowsecs: float = 5.0, debug: bool = False) -> None:
+def plethquality_waveform(
+    waveform: Any, Fs: Any, S_windowsecs: float = 5.0, debug: bool = False
+) -> None:
     """
     Calculate the windowed skewness quality metrics for a photoplethysmogram (PPG) signal.
 

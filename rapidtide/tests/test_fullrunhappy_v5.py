@@ -32,16 +32,15 @@ configure_matplotlib_env()
 import os
 
 import matplotlib as mpl
+import pytest
 
-import rapidtide.workflows.happy as happy_workflow
-import rapidtide.workflows.happy_parser as happy_parser
-from rapidtide.tests.utils import get_examples_path, get_test_temp_path
+from rapidtide.tests.utils import get_example_and_temp_roots, run_happy
 
+pytestmark = pytest.mark.slow
 
-def test_fullrunhappy_v4(debug=False, local=False, displayplots=False):
+def test_fullrunhappy_v5(debug=False, local=False, displayplots=False):
     # set input and output directories
-    exampleroot = get_examples_path(local)
-    testtemproot = get_test_temp_path(local)
+    exampleroot, testtemproot = get_example_and_temp_roots(local)
 
     # run happy
     inputargs = [
@@ -63,9 +62,9 @@ def test_fullrunhappy_v4(debug=False, local=False, displayplots=False):
         "--motionlp",
         "2.0",
     ]
-    happy_workflow.happy_main(happy_parser.process_args(inputargs=inputargs))
+    run_happy(inputargs)
 
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
-    test_fullrunhappy_v4(debug=True, local=True, displayplots=True)
+    test_fullrunhappy_v5(debug=True, local=True, displayplots=True)

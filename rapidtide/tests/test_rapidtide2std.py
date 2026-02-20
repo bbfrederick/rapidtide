@@ -456,13 +456,15 @@ def workflow_linear_standard(debug=False):
             runcmd_calls.append(cmd)
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
-            flirt_calls.append({
-                "input": inputfile,
-                "target": targetname,
-                "xform": xform,
-                "output": outputname,
-                "kwargs": kwargs,
-            })
+            flirt_calls.append(
+                {
+                    "input": inputfile,
+                    "target": targetname,
+                    "xform": xform,
+                    "output": outputname,
+                    "kwargs": kwargs,
+                }
+            )
             return ["flirt", "-in", inputfile, "-out", outputname]
 
         def mock_readoptionsfile(fname):
@@ -638,9 +640,7 @@ def workflow_hires(debug=False):
         outdir = os.path.join(tmpdir, "output")
         os.makedirs(outdir, exist_ok=True)
 
-        args = _make_default_args(
-            tmpdir, aligntohires=True, preponly=True, sequential=True
-        )
+        args = _make_default_args(tmpdir, aligntohires=True, preponly=True, sequential=True)
 
         runcmd_calls = []
         flirt_calls = []
@@ -650,11 +650,13 @@ def workflow_hires(debug=False):
             runcmd_calls.append(cmd)
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
-            flirt_calls.append({
-                "target": targetname,
-                "xform": xform,
-                "output": outputname,
-            })
+            flirt_calls.append(
+                {
+                    "target": targetname,
+                    "xform": xform,
+                    "output": outputname,
+                }
+            )
             return ["flirt", "-in", inputfile]
 
         def mock_writedicttojson(thedict, fname):
@@ -694,9 +696,7 @@ def workflow_hires(debug=False):
         assert "_hires_" in json_path
 
         # Anatomic map handling: hires mode copies highres instead of transforming
-        anat_cp_calls = [
-            c for c in runcmd_calls if c[0] == "cp" and "highres" in c[1]
-        ]
+        anat_cp_calls = [c for c in runcmd_calls if c[0] == "cp" and "highres" in c[1]]
         assert len(anat_cp_calls) >= 1
 
     if debug:

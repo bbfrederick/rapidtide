@@ -17,8 +17,6 @@
 #
 #
 import argparse
-import io
-import tempfile
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -135,9 +133,7 @@ def _run_showstxcorr(signal1, signal2, args):
     with (
         patch("rapidtide.workflows.showstxcorr.tide_io.readvec", side_effect=mock_readvec),
         patch("rapidtide.workflows.showstxcorr.tide_io.writenpvecs", side_effect=mock_writenpvecs),
-        patch(
-            "rapidtide.workflows.showstxcorr.tide_io.savetonifti", side_effect=mock_savetonifti
-        ),
+        patch("rapidtide.workflows.showstxcorr.tide_io.savetonifti", side_effect=mock_savetonifti),
         patch("pandas.DataFrame.to_csv", mock_to_csv),
     ):
         showstxcorr(args)
@@ -168,16 +164,11 @@ def parser_required_args(debug=False):
     assert "outfilename" in actions
 
 
-def parser_defaults(debug=False):
+def parser_defaults(parse_with_temp_inputs, debug=False):
     """Test default values for optional arguments."""
     if debug:
         print("parser_defaults")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "outroot"])
+    args = parse_with_temp_inputs(_get_parser(), include_output=True)
     assert args.samplerate == "auto"
     assert args.corrthresh == 0.5
     assert args.windowwidth == 50.0
@@ -194,84 +185,57 @@ def parser_defaults(debug=False):
     assert args.label == "None"
 
 
-def parser_samplerate(debug=False):
+def parser_samplerate(parse_with_temp_inputs, debug=False):
     """Test --samplerate option."""
     if debug:
         print("parser_samplerate")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "out", "--samplerate", "25.0"])
+    args = parse_with_temp_inputs(_get_parser(), ["--samplerate", "25.0"], include_output=True)
     assert args.samplerate == 25.0
 
 
-def parser_sampletime(debug=False):
+def parser_sampletime(parse_with_temp_inputs, debug=False):
     """Test --sampletime option (inverts to samplerate)."""
     if debug:
         print("parser_sampletime")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args([f1.name, f2.name, "out", "--sampletime", "0.5"])
+    args = parse_with_temp_inputs(_get_parser(), ["--sampletime", "0.5"], include_output=True)
     assert args.samplerate == pytest.approx(2.0)
 
 
-def parser_boolean_flags(debug=False):
+def parser_boolean_flags(parse_with_temp_inputs, debug=False):
     """Test boolean flag options."""
     if debug:
         print("parser_boolean_flags")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args(
-            [
-                f1.name,
-                f2.name,
-                "out",
-                "--nodisplay",
-                "--debug",
-                "--verbose",
-                "--invert",
-            ]
-        )
+    args = parse_with_temp_inputs(
+        _get_parser(),
+        ["--nodisplay", "--debug", "--verbose", "--invert"],
+        include_output=True,
+    )
     assert args.display is False
     assert args.debug is True
     assert args.verbose is True
     assert args.invert is True
 
 
-def parser_corr_options(debug=False):
+def parser_corr_options(parse_with_temp_inputs, debug=False):
     """Test correlation-related options."""
     if debug:
         print("parser_corr_options")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        args = parser.parse_args(
-            [
-                f1.name,
-                f2.name,
-                "out",
-                "--corrthresh",
-                "0.3",
-                "--windowwidth",
-                "30.0",
-                "--stepsize",
-                "10.0",
-                "--corrweighting",
-                "phat",
-                "--detrendorder",
-                "2",
-            ]
-        )
+    args = parse_with_temp_inputs(
+        _get_parser(),
+        [
+            "--corrthresh",
+            "0.3",
+            "--windowwidth",
+            "30.0",
+            "--stepsize",
+            "10.0",
+            "--corrweighting",
+            "phat",
+            "--detrendorder",
+            "2",
+        ],
+        include_output=True,
+    )
     assert args.corrthresh == 0.3
     assert args.windowwidth == 30.0
     assert args.stepsize == 10.0
@@ -279,33 +243,22 @@ def parser_corr_options(debug=False):
     assert args.detrendorder == 2
 
 
-def parser_samplerate_sampletime_mutual_exclusion(debug=False):
+def parser_samplerate_sampletime_mutual_exclusion(parse_with_temp_inputs, debug=False):
     """Test that --samplerate and --sampletime are mutually exclusive."""
     if debug:
         print("parser_samplerate_sampletime_mutual_exclusion")
-    parser = _get_parser()
-    with (
-        tempfile.NamedTemporaryFile(suffix=".txt") as f1,
-        tempfile.NamedTemporaryFile(suffix=".txt") as f2,
-    ):
-        with pytest.raises(SystemExit):
-            parser.parse_args(
-                [
-                    f1.name,
-                    f2.name,
-                    "out",
-                    "--samplerate",
-                    "10.0",
-                    "--sampletime",
-                    "0.1",
-                ]
-            )
+    with pytest.raises(SystemExit):
+        parse_with_temp_inputs(
+            _get_parser(),
+            ["--samplerate", "10.0", "--sampletime", "0.1"],
+            include_output=True,
+        )
 
 
 # ==================== printthresholds tests ====================
 
 
-def printthresholds_basic(debug=False):
+def printthresholds_basic(capture_stdout, debug=False):
     """Test printthresholds outputs correct format."""
     if debug:
         print("printthresholds_basic")
@@ -313,37 +266,25 @@ def printthresholds_basic(debug=False):
     thepercentiles = [0.95, 0.99, 0.999]
     labeltext = "Test thresholds:"
 
-    captured = io.StringIO()
-    with patch("sys.stdout", captured):
-        printthresholds(pcts, thepercentiles, labeltext)
-
-    output = captured.getvalue()
+    output = capture_stdout(printthresholds, pcts, thepercentiles, labeltext)
     assert "Test thresholds:" in output
     assert "p < 0.05" in output or "p < 0.050" in output
     assert "p < 0.01" in output or "p < 0.010" in output
 
 
-def printthresholds_empty(debug=False):
+def printthresholds_empty(capture_stdout, debug=False):
     """Test printthresholds with empty lists."""
     if debug:
         print("printthresholds_empty")
-    captured = io.StringIO()
-    with patch("sys.stdout", captured):
-        printthresholds([], [], "Empty:")
-
-    output = captured.getvalue()
+    output = capture_stdout(printthresholds, [], [], "Empty:")
     assert "Empty:" in output
 
 
-def printthresholds_single(debug=False):
+def printthresholds_single(capture_stdout, debug=False):
     """Test printthresholds with a single threshold."""
     if debug:
         print("printthresholds_single")
-    captured = io.StringIO()
-    with patch("sys.stdout", captured):
-        printthresholds([0.42], [0.95], "Single:")
-
-    output = captured.getvalue()
+    output = capture_stdout(printthresholds, [0.42], [0.95], "Single:")
     assert "Single:" in output
     assert "0.42" in output
 
@@ -630,42 +571,59 @@ def showstxcorr_high_corrthresh(debug=False):
 # ==================== Main test function ====================
 
 
-def test_showstxcorr(debug=False):
-    # _get_parser tests
-    if debug:
-        print("Running parser tests")
-    parser_basic(debug=debug)
-    parser_required_args(debug=debug)
-    parser_defaults(debug=debug)
-    parser_samplerate(debug=debug)
-    parser_sampletime(debug=debug)
-    parser_boolean_flags(debug=debug)
-    parser_corr_options(debug=debug)
-    parser_samplerate_sampletime_mutual_exclusion(debug=debug)
+PARSER_CASES = [
+    parser_basic,
+    parser_required_args,
+    parser_defaults,
+    parser_samplerate,
+    parser_sampletime,
+    parser_boolean_flags,
+    parser_corr_options,
+    parser_samplerate_sampletime_mutual_exclusion,
+]
 
-    # printthresholds tests
-    if debug:
-        print("Running printthresholds tests")
-    printthresholds_basic(debug=debug)
-    printthresholds_empty(debug=debug)
-    printthresholds_single(debug=debug)
 
-    # showstxcorr workflow tests
-    if debug:
-        print("Running showstxcorr workflow tests")
-    showstxcorr_auto_samplerate_exit(debug=debug)
-    showstxcorr_basic(debug=debug)
-    showstxcorr_matrixoutput(debug=debug)
-    showstxcorr_output_lengths(debug=debug)
-    showstxcorr_correlated_signals(debug=debug)
-    showstxcorr_invert(debug=debug)
-    showstxcorr_zero_delay(debug=debug)
-    showstxcorr_starttime_duration(debug=debug)
-    showstxcorr_timewarped_output(debug=debug)
-    showstxcorr_custom_corrweighting(debug=debug)
-    showstxcorr_detrendorder_zero(debug=debug)
-    showstxcorr_high_corrthresh(debug=debug)
+PRINTTHRESHOLD_CASES = [
+    printthresholds_basic,
+    printthresholds_empty,
+    printthresholds_single,
+]
+
+
+WORKFLOW_CASES = [
+    showstxcorr_auto_samplerate_exit,
+    showstxcorr_basic,
+    showstxcorr_matrixoutput,
+    showstxcorr_output_lengths,
+    showstxcorr_correlated_signals,
+    showstxcorr_invert,
+    showstxcorr_zero_delay,
+    showstxcorr_starttime_duration,
+    showstxcorr_timewarped_output,
+    showstxcorr_custom_corrweighting,
+    showstxcorr_detrendorder_zero,
+    showstxcorr_high_corrthresh,
+]
+
+
+@pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_showstxcorr_parser_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", PRINTTHRESHOLD_CASES, ids=lambda func: func.__name__)
+@pytest.mark.unit
+def test_showstxcorr_printthreshold_cases(case_runner, case_func):
+    case_runner(case_func)
+
+
+@pytest.mark.parametrize("case_func", WORKFLOW_CASES, ids=lambda func: func.__name__)
+@pytest.mark.slow
+def test_showstxcorr_workflow_cases(case_runner, case_func):
+    case_runner(case_func)
 
 
 if __name__ == "__main__":
-    test_showstxcorr(debug=True)
+    for case in PARSER_CASES + PRINTTHRESHOLD_CASES + WORKFLOW_CASES:
+        case(debug=True)

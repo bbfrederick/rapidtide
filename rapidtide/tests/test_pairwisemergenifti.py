@@ -105,9 +105,17 @@ def exits_on_space_dim_mismatch(debug=False):
     args = _make_args()
 
     with (
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti", side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims", return_value=(x, y, z, t)),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=False),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims",
+            return_value=(x, y, z, t),
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=False
+        ),
         patch("rapidtide.workflows.pairwisemergenifti.exit", side_effect=SystemExit),
     ):
         with pytest.raises(SystemExit):
@@ -132,9 +140,17 @@ def exits_on_time_dim_mismatch(debug=False):
     args = _make_args()
 
     with (
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti", side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims", return_value=(x, y, z, t)),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=True),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims",
+            return_value=(x, y, z, t),
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=True
+        ),
         patch("rapidtide.workflows.pairwisemergenifti.tide_io.checktimematch", return_value=False),
         patch("rapidtide.workflows.pairwisemergenifti.exit", side_effect=SystemExit),
     ):
@@ -160,9 +176,17 @@ def exits_on_odd_timepoints(debug=False):
     args = _make_args()
 
     with (
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti", side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims", return_value=(x, y, z, t)),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=True),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims",
+            return_value=(x, y, z, t),
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=True
+        ),
         patch("rapidtide.workflows.pairwisemergenifti.tide_io.checktimematch", return_value=True),
         patch("rapidtide.workflows.pairwisemergenifti.exit", side_effect=SystemExit),
     ):
@@ -202,12 +226,26 @@ def merges_mask_when_maskmerge_true(debug=False):
     args = _make_args(maskmerge=True, outputfile="out.nii.gz")
 
     with (
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti", side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims", return_value=(x, y, z, t)),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=True),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims",
+            return_value=(x, y, z, t),
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=True
+        ),
         patch("rapidtide.workflows.pairwisemergenifti.tide_io.checktimematch", return_value=True),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.niftisplitext", return_value=("out", ".nii.gz")),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.savetonifti", side_effect=mock_savetonifti),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.niftisplitext",
+            return_value=("out", ".nii.gz"),
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.savetonifti",
+            side_effect=mock_savetonifti,
+        ),
     ):
         pairwisemergenifti(args)
 
@@ -265,12 +303,26 @@ def merges_weighted_average_when_maskmerge_false(debug=False):
     args = _make_args(maskmerge=False, outputfile="out.nii.gz")
 
     with (
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti", side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims", return_value=(x, y, z, t)),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=True),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.readfromnifti",
+            side_effect=mock_readfromnifti,
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.parseniftidims",
+            return_value=(x, y, z, t),
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.checkspacedimmatch", return_value=True
+        ),
         patch("rapidtide.workflows.pairwisemergenifti.tide_io.checktimematch", return_value=True),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.niftisplitext", return_value=("out", ".nii.gz")),
-        patch("rapidtide.workflows.pairwisemergenifti.tide_io.savetonifti", side_effect=mock_savetonifti),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.niftisplitext",
+            return_value=("out", ".nii.gz"),
+        ),
+        patch(
+            "rapidtide.workflows.pairwisemergenifti.tide_io.savetonifti",
+            side_effect=mock_savetonifti,
+        ),
     ):
         pairwisemergenifti(args)
 

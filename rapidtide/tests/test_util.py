@@ -765,10 +765,14 @@ class TestCompareRunHelpers:
         mask_hdr = {"dim": [0, 2, 2, 1, 1]}
         mask_data = np.ones((2, 2, 1), dtype=float)
 
-        with patch("rapidtide.util.tide_io.readfromnifti", return_value=(None, mask_data, mask_hdr, None, None)), patch(
-            "rapidtide.util.tide_io.checkspacematch", return_value=True
-        ), patch("rapidtide.util.os.path.isfile", return_value=False), patch(
-            "rapidtide.util.tide_io.readvectorsfromtextfile", side_effect=FileNotFoundError
+        with (
+            patch(
+                "rapidtide.util.tide_io.readfromnifti",
+                return_value=(None, mask_data, mask_hdr, None, None),
+            ),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=True),
+            patch("rapidtide.util.os.path.isfile", return_value=False),
+            patch("rapidtide.util.tide_io.readvectorsfromtextfile", side_effect=FileNotFoundError),
         ):
             out = tide_util.comparerapidtideruns("run1", "run2", debug=False)
         assert isinstance(out, dict)
@@ -776,9 +780,14 @@ class TestCompareRunHelpers:
     def test_comparehappyruns_smoke(self):
         mask_hdr = {"dim": [0, 2, 2, 1, 1]}
         mask_data = np.ones((2, 2, 1), dtype=float)
-        with patch("rapidtide.util.tide_io.readfromnifti", return_value=(None, mask_data, mask_hdr, None, None)), patch(
-            "rapidtide.util.tide_io.checkspacematch", return_value=True
-        ), patch("rapidtide.util.os.path.isfile", return_value=False):
+        with (
+            patch(
+                "rapidtide.util.tide_io.readfromnifti",
+                return_value=(None, mask_data, mask_hdr, None, None),
+            ),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=True),
+            patch("rapidtide.util.os.path.isfile", return_value=False),
+        ):
             out = tide_util.comparehappyruns("happy1", "happy2", debug=False)
         assert isinstance(out, dict)
 

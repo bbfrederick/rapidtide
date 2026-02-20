@@ -133,7 +133,9 @@ def cardiac_pipeline_routines(debug=False):
     with pytest.raises(ValueError):
         hs._validate_cardiacfromimage_inputs(normdata, estweights, 2, 0, 2.0)
 
-    appflips, theseweights = hs._prepare_weights(estweights, None, arteriesonly=False, fliparteries=False)
+    appflips, theseweights = hs._prepare_weights(
+        estweights, None, arteriesonly=False, fliparteries=False
+    )
     assert appflips.shape == estweights.shape
     assert np.allclose(theseweights, estweights)
 
@@ -166,7 +168,9 @@ def cardiac_pipeline_routines(debug=False):
     assert cyc.shape == (2,)
     assert slicenorms.shape == (2,)
 
-    signal, normfac = hs._normalize_and_filter_signal(DummyFilter(scale=2.0), 2.0, hrtc, slicenorms)
+    signal, normfac = hs._normalize_and_filter_signal(
+        DummyFilter(scale=2.0), 2.0, hrtc, slicenorms
+    )
     assert signal.shape == hrtc.shape
     assert np.isfinite(normfac)
 
@@ -186,7 +190,9 @@ def cardiac_pipeline_routines(debug=False):
     normdata3 = rng.randn(10, 2, 8)
     normdata3[:, 1, :] *= 3.0
     estweights3 = np.ones((10, 2))
-    config = hs.CardiacExtractionConfig(verbose=False, madnorm=True, usemask=True, multiplicative=True)
+    config = hs.CardiacExtractionConfig(
+        verbose=False, madnorm=True, usemask=True, multiplicative=True
+    )
     # Keep this as a unit test of happy_supportfuncs control flow: short synthetic
     # vectors can violate padding requirements in the underlying filter implementation.
     with patch("rapidtide.core.signal.happy_supportfuncs.tide_filt.harmonicnotchfilter", side_effect=lambda x, *args, **kwargs: x):
@@ -232,7 +238,9 @@ def frequency_routines(debug=False):
     fs = 50.0
     t = np.linspace(0.0, 20.0, int(20.0 * fs), endpoint=False)
     waveform = np.sin(2.0 * np.pi * 1.2 * t)
-    peakfreq = hs.getcardcoeffs(waveform, slicesamplerate=fs, minhr=50.0, maxhr=100.0, smoothlen=51)
+    peakfreq = hs.getcardcoeffs(
+        waveform, slicesamplerate=fs, minhr=50.0, maxhr=100.0, smoothlen=51
+    )
     assert np.fabs(peakfreq - 1.2) < 0.25
 
 
@@ -508,7 +516,16 @@ def projection_helpers_routines(debug=False):
     assert len(packed_phase) == 12
 
     vp = [np.zeros((3, 1, 4)), np.zeros((3, 1, 4)), np.zeros((3, 1, 4))]
-    hs._unpackslicedataPhaseProject((0, np.ones((3, 4)), 2.0 * np.ones((3, 4)), 3.0 * np.ones((3, 4)), np.array([0, 2], dtype=int)), vp)
+    hs._unpackslicedataPhaseProject(
+        (
+            0,
+            np.ones((3, 4)),
+            2.0 * np.ones((3, 4)),
+            3.0 * np.ones((3, 4)),
+            np.array([0, 2], dtype=int),
+        ),
+        vp,
+    )
     assert np.all(vp[0][[0, 2], 0, :] == 1.0)
     assert np.all(vp[1][[0, 2], 0, :] == 2.0)
     assert np.all(vp[2][[0, 2], 0, :] == 3.0)

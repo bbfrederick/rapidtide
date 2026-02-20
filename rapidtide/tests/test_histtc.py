@@ -182,17 +182,24 @@ def parser_all_flags(debug=False):
         f.write(b"1.0\n")
         tmpname = f.name
     parser = _get_parser()
-    args = parser.parse_args([
-        tmpname, "out",
-        "--numbins", "200",
-        "--minval", "0.0",
-        "--maxval", "100.0",
-        "--robustrange",
-        "--nozero",
-        "--nozerothresh", "0.1",
-        "--normhist",
-        "--debug",
-    ])
+    args = parser.parse_args(
+        [
+            tmpname,
+            "out",
+            "--numbins",
+            "200",
+            "--minval",
+            "0.0",
+            "--maxval",
+            "100.0",
+            "--robustrange",
+            "--nozero",
+            "--nozerothresh",
+            "0.1",
+            "--normhist",
+            "--debug",
+        ]
+    )
     assert args.histlen == 200
     assert args.minval == 0.0
     assert args.maxval == 100.0
@@ -577,9 +584,7 @@ def histtc_percentiles_printed(debug=False):
         histtc(args)
 
     # Should print 5 percentile lines + 1 range line
-    percentile_calls = [
-        c for c in mock_print.call_args_list if "percentile" in str(c)
-    ]
+    percentile_calls = [c for c in mock_print.call_args_list if "percentile" in str(c)]
     assert len(percentile_calls) == 5
 
 

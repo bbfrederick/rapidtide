@@ -98,9 +98,14 @@ def _run_histnifti_with_mocks(args, input_data, mask_data=None, mask_match=True)
         )
 
     with (
-        patch("rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=_mock_readfromnifti),
+        patch(
+            "rapidtide.workflows.histnifti.tide_io.readfromnifti", side_effect=_mock_readfromnifti
+        ),
         patch("rapidtide.workflows.histnifti.tide_io.savetonifti", side_effect=_mock_savetonifti),
-        patch("rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram", side_effect=_mock_makeandsavehistogram),
+        patch(
+            "rapidtide.workflows.histnifti.tide_stats.makeandsavehistogram",
+            side_effect=_mock_makeandsavehistogram,
+        ),
         patch("rapidtide.workflows.histnifti.tide_io.checkspacematch", return_value=mask_match),
     ):
         histnifti(args)
@@ -165,7 +170,9 @@ def test_histnifti_4d_nozero_uses_fractional_percentiles():
     from rapidtide import stats as tide_stats
 
     original_getfracvals = tide_stats.getfracvals
-    with patch("rapidtide.workflows.histnifti.tide_stats.getfracvals", side_effect=_counting_getfracvals):
+    with patch(
+        "rapidtide.workflows.histnifti.tide_stats.getfracvals", side_effect=_counting_getfracvals
+    ):
         saved, _ = _run_histnifti_with_mocks(args, data)
 
     assert args.outputroot + "_pcts" in saved

@@ -2753,7 +2753,9 @@ class ConvAutoencoderModel(nn.Module):
 
         # Final upsampling
         self.decoder_layers.append(nn.Upsample(scale_factor=2, mode="nearest"))
-        self.decoder_layers.append(nn.Conv1d(self.filter_list[0], inputsize, kernel_size, padding="same"))
+        self.decoder_layers.append(
+            nn.Conv1d(self.filter_list[0], inputsize, kernel_size, padding="same")
+        )
 
     def forward(self, x):
         """

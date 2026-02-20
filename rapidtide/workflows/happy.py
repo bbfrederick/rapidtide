@@ -2617,7 +2617,9 @@ def happy_main(argparsingfunc: Any) -> None:
                 print("After returning from linfitfiltpass:")
                 print(f"\t{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
                 print(f"\t{cardiacnoise.shape=}, {np.min(cardiacnoise)=}, {np.max(cardiacnoise)=}")
-                print(f"\t{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}")            #filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
+                print(
+                    f"\t{fitcoffs.shape=}, {np.min(fitcoffs)=}, {np.max(fitcoffs)=}"
+                )  # filtereddata[validlocs, :] = fmri_data[validlocs, :] - datatoremove[validlocs, :]
             timings.append(
                 [
                     "Cardiac signal temporal regression finished",

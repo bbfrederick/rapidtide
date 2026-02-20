@@ -47,7 +47,9 @@ def check_autocorrelation_detects_sidelobe(debug=False):
     if debug:
         print("check_autocorrelation_detects_sidelobe")
     corrscale = np.linspace(-3.0, 3.0, 121)
-    thexcorr = np.exp(-((corrscale - 0.0) ** 2) / 0.04) + 0.35 * np.exp(-((corrscale - 1.2) ** 2) / 0.04)
+    thexcorr = np.exp(-((corrscale - 0.0) ** 2) / 0.04) + 0.35 * np.exp(
+        -((corrscale - 1.2) ** 2) / 0.04
+    )
     peaks = ([(0.0, 1.0), (1.2, 0.35)], [])
     with (
         patch("rapidtide.core.signal.correlate.tide_fit.peakdetect", return_value=peaks),

@@ -282,7 +282,6 @@ def gmscalc_main() -> None:
             )
         print("done smoothing data")
 
-
     # now reformat from x, y, z, time to voxelnumber, measurement, subject
     numvoxels = int(xsize) * int(ysize) * int(numslices)
     mask_in_vox = datamask_data.reshape((numvoxels))

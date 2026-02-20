@@ -146,14 +146,17 @@ def _run_retrolagtcs_with_mocks(args, mock_data, makelagged_side_effect=None):
     def mock_checkspacematch(hdr1, hdr2):
         return True
 
-    def mock_savemaplist(outputname, maplist, validvoxels, destshape, theheader,
-                         bidsdict, **kwargs):
-        captured["savemaplist_calls"].append({
-            "outputname": outputname,
-            "maplist": maplist,
-            "validvoxels": validvoxels,
-            "destshape": destshape,
-        })
+    def mock_savemaplist(
+        outputname, maplist, validvoxels, destshape, theheader, bidsdict, **kwargs
+    ):
+        captured["savemaplist_calls"].append(
+            {
+                "outputname": outputname,
+                "maplist": maplist,
+                "validvoxels": validvoxels,
+                "destshape": destshape,
+            }
+        )
 
     num_active = mock_data["num_active"]
     timepoints = mock_data["timepoints"]
@@ -167,9 +170,7 @@ def _run_retrolagtcs_with_mocks(args, mock_data, makelagged_side_effect=None):
         }
         # fill lagtc with some synthetic data
         for i in range(lagtc.shape[0]):
-            lagtc[i, :] = np.sin(
-                2 * np.pi * 0.1 * np.arange(lagtc.shape[1]) + lagtimes[i]
-            )
+            lagtc[i, :] = np.sin(2 * np.pi * 0.1 * np.arange(lagtc.shape[1]) + lagtimes[i])
         return lagmask.shape[0]
 
     if makelagged_side_effect is not None:
@@ -193,24 +194,35 @@ def _run_retrolagtcs_with_mocks(args, mock_data, makelagged_side_effect=None):
         return result
 
     with (
-        patch("rapidtide.workflows.retrolagtcs.tide_io.readfromnifti",
-              side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
-              side_effect=mock_parseniftidims),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
-              side_effect=mock_parseniftisizes),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
-              side_effect=mock_checkspacematch),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.savemaplist",
-              side_effect=mock_savemaplist),
-        patch("rapidtide.workflows.retrolagtcs.tide_resample.FastResamplerFromFile",
-              return_value=mock_genlagtc),
-        patch("rapidtide.workflows.retrolagtcs.tide_makelagged.makelaggedtcs",
-              side_effect=actual_makelagged),
-        patch("rapidtide.workflows.retrolagtcs.tide_util.allocarray",
-              side_effect=mock_allocarray),
-        patch("rapidtide.workflows.retrolagtcs.tide_linfitfiltpass.makevoxelspecificderivs",
-              side_effect=mock_makevoxelspecificderivs),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
+            side_effect=mock_parseniftidims,
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
+            side_effect=mock_parseniftisizes,
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
+            side_effect=mock_checkspacematch,
+        ),
+        patch("rapidtide.workflows.retrolagtcs.tide_io.savemaplist", side_effect=mock_savemaplist),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_resample.FastResamplerFromFile",
+            return_value=mock_genlagtc,
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_makelagged.makelaggedtcs",
+            side_effect=actual_makelagged,
+        ),
+        patch("rapidtide.workflows.retrolagtcs.tide_util.allocarray", side_effect=mock_allocarray),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_linfitfiltpass.makevoxelspecificderivs",
+            side_effect=mock_makevoxelspecificderivs,
+        ),
     ):
         retrolagtcs(args)
 
@@ -263,9 +275,7 @@ def parser_defaults(debug=False):
     parser = _get_parser()
     # fmrifile uses is_valid_file validation, so we need a real file for that arg
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
-        args = parser.parse_args([
-            f.name, "mask.nii.gz", "lagtimes.nii.gz", "gen.txt", "output"
-        ])
+        args = parser.parse_args([f.name, "mask.nii.gz", "lagtimes.nii.gz", "gen.txt", "output"])
 
     assert args.maskfile == "mask.nii.gz"
     assert args.lagtimesfile == "lagtimes.nii.gz"
@@ -285,10 +295,17 @@ def parser_regressderivs(debug=False):
     """Test --regressderivs option."""
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
-        args = parser.parse_args([
-            f.name, "mask.nii.gz", "lag.nii.gz", "gen.txt", "out",
-            "--regressderivs", "3",
-        ])
+        args = parser.parse_args(
+            [
+                f.name,
+                "mask.nii.gz",
+                "lag.nii.gz",
+                "gen.txt",
+                "out",
+                "--regressderivs",
+                "3",
+            ]
+        )
     assert args.regressderivs == 3
 
     if debug:
@@ -299,10 +316,17 @@ def parser_nprocs(debug=False):
     """Test --nprocs option."""
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
-        args = parser.parse_args([
-            f.name, "mask.nii.gz", "lag.nii.gz", "gen.txt", "out",
-            "--nprocs", "8",
-        ])
+        args = parser.parse_args(
+            [
+                f.name,
+                "mask.nii.gz",
+                "lag.nii.gz",
+                "gen.txt",
+                "out",
+                "--nprocs",
+                "8",
+            ]
+        )
     assert args.nprocs == 8
 
     if debug:
@@ -313,10 +337,17 @@ def parser_numskip(debug=False):
     """Test --numskip option."""
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
-        args = parser.parse_args([
-            f.name, "mask.nii.gz", "lag.nii.gz", "gen.txt", "out",
-            "--numskip", "5",
-        ])
+        args = parser.parse_args(
+            [
+                f.name,
+                "mask.nii.gz",
+                "lag.nii.gz",
+                "gen.txt",
+                "out",
+                "--numskip",
+                "5",
+            ]
+        )
     assert args.numskip == 5
 
     if debug:
@@ -327,10 +358,16 @@ def parser_noprogressbar(debug=False):
     """Test --noprogressbar flag."""
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
-        args = parser.parse_args([
-            f.name, "mask.nii.gz", "lag.nii.gz", "gen.txt", "out",
-            "--noprogressbar",
-        ])
+        args = parser.parse_args(
+            [
+                f.name,
+                "mask.nii.gz",
+                "lag.nii.gz",
+                "gen.txt",
+                "out",
+                "--noprogressbar",
+            ]
+        )
     assert args.showprogressbar is False
 
     if debug:
@@ -341,10 +378,16 @@ def parser_debug(debug=False):
     """Test --debug flag."""
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
-        args = parser.parse_args([
-            f.name, "mask.nii.gz", "lag.nii.gz", "gen.txt", "out",
-            "--debug",
-        ])
+        args = parser.parse_args(
+            [
+                f.name,
+                "mask.nii.gz",
+                "lag.nii.gz",
+                "gen.txt",
+                "out",
+                "--debug",
+            ]
+        )
     assert args.debug is True
 
     if debug:
@@ -355,9 +398,15 @@ def parser_fmrifile_validation(debug=False):
     """Test that fmrifile must exist (is_valid_file check)."""
     parser = _get_parser()
     with pytest.raises(SystemExit):
-        parser.parse_args([
-            "/nonexistent/file.nii.gz", "mask.nii.gz", "lag.nii.gz", "gen.txt", "out",
-        ])
+        parser.parse_args(
+            [
+                "/nonexistent/file.nii.gz",
+                "mask.nii.gz",
+                "lag.nii.gz",
+                "gen.txt",
+                "out",
+            ]
+        )
 
     if debug:
         print("parser_fmrifile_validation passed")
@@ -587,14 +636,22 @@ def retrolagtcs_space_mismatch_mask(debug=False):
 
     with pytest.raises(ValueError, match="procmask dimensions do not match"):
         with (
-            patch("rapidtide.workflows.retrolagtcs.tide_io.readfromnifti",
-                  side_effect=mock_readfromnifti),
-            patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
-                  side_effect=mock_parseniftidims),
-            patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
-                  side_effect=mock_parseniftisizes),
-            patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
-                  side_effect=mock_checkspacematch),
+            patch(
+                "rapidtide.workflows.retrolagtcs.tide_io.readfromnifti",
+                side_effect=mock_readfromnifti,
+            ),
+            patch(
+                "rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
+                side_effect=mock_parseniftidims,
+            ),
+            patch(
+                "rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
+                side_effect=mock_parseniftisizes,
+            ),
+            patch(
+                "rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
+                side_effect=mock_checkspacematch,
+            ),
         ):
             retrolagtcs(args)
 
@@ -632,14 +689,22 @@ def retrolagtcs_space_mismatch_lagtimes(debug=False):
 
     with pytest.raises(ValueError, match="lagtimes dimensions do not match"):
         with (
-            patch("rapidtide.workflows.retrolagtcs.tide_io.readfromnifti",
-                  side_effect=mock_readfromnifti),
-            patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
-                  side_effect=mock_parseniftidims),
-            patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
-                  side_effect=mock_parseniftisizes),
-            patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
-                  side_effect=mock_checkspacematch),
+            patch(
+                "rapidtide.workflows.retrolagtcs.tide_io.readfromnifti",
+                side_effect=mock_readfromnifti,
+            ),
+            patch(
+                "rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
+                side_effect=mock_parseniftidims,
+            ),
+            patch(
+                "rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
+                side_effect=mock_parseniftisizes,
+            ),
+            patch(
+                "rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
+                side_effect=mock_checkspacematch,
+            ),
         ):
             retrolagtcs(args)
 
@@ -681,23 +746,31 @@ def retrolagtcs_nprocs_auto(debug=False):
         return lagmask.shape[0]
 
     with (
-        patch("rapidtide.workflows.retrolagtcs.tide_io.readfromnifti",
-              side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
-              side_effect=mock_parseniftidims),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
-              side_effect=mock_parseniftisizes),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
-              return_value=True),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
+            side_effect=mock_parseniftidims,
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
+            side_effect=mock_parseniftisizes,
+        ),
+        patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch", return_value=True),
         patch("rapidtide.workflows.retrolagtcs.tide_io.savemaplist"),
-        patch("rapidtide.workflows.retrolagtcs.tide_resample.FastResamplerFromFile",
-              return_value=MagicMock()),
-        patch("rapidtide.workflows.retrolagtcs.tide_makelagged.makelaggedtcs",
-              side_effect=mock_makelaggedtcs),
-        patch("rapidtide.workflows.retrolagtcs.tide_util.allocarray",
-              side_effect=mock_allocarray),
-        patch("rapidtide.workflows.retrolagtcs.tide_multiproc.maxcpus",
-              return_value=4) as mock_maxcpus,
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_resample.FastResamplerFromFile",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_makelagged.makelaggedtcs",
+            side_effect=mock_makelaggedtcs,
+        ),
+        patch("rapidtide.workflows.retrolagtcs.tide_util.allocarray", side_effect=mock_allocarray),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_multiproc.maxcpus", return_value=4
+        ) as mock_maxcpus,
         patch("rapidtide.workflows.retrolagtcs.tide_util.cleanup_shm") as mock_cleanup,
         patch("rapidtide.workflows.retrolagtcs.tide_linfitfiltpass.makevoxelspecificderivs"),
     ):
@@ -746,21 +819,28 @@ def retrolagtcs_single_proc_no_shm(debug=False):
         return lagmask.shape[0]
 
     with (
-        patch("rapidtide.workflows.retrolagtcs.tide_io.readfromnifti",
-              side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
-              side_effect=mock_parseniftidims),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
-              side_effect=mock_parseniftisizes),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
-              return_value=True),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
+            side_effect=mock_parseniftidims,
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
+            side_effect=mock_parseniftisizes,
+        ),
+        patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch", return_value=True),
         patch("rapidtide.workflows.retrolagtcs.tide_io.savemaplist"),
-        patch("rapidtide.workflows.retrolagtcs.tide_resample.FastResamplerFromFile",
-              return_value=MagicMock()),
-        patch("rapidtide.workflows.retrolagtcs.tide_makelagged.makelaggedtcs",
-              side_effect=mock_makelaggedtcs),
-        patch("rapidtide.workflows.retrolagtcs.tide_util.allocarray",
-              side_effect=mock_allocarray),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_resample.FastResamplerFromFile",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_makelagged.makelaggedtcs",
+            side_effect=mock_makelaggedtcs,
+        ),
+        patch("rapidtide.workflows.retrolagtcs.tide_util.allocarray", side_effect=mock_allocarray),
         patch("rapidtide.workflows.retrolagtcs.tide_util.cleanup_shm") as mock_cleanup,
         patch("rapidtide.workflows.retrolagtcs.tide_linfitfiltpass.makevoxelspecificderivs"),
     ):
@@ -800,8 +880,9 @@ def retrolagtcs_bids_metadata(debug=False):
     # We need to capture the bidsdict - check via savemaplist
     saved_bidsdicts = []
 
-    def mock_savemaplist(outputname, maplist, validvoxels, destshape, theheader,
-                         bidsdict, **kwargs):
+    def mock_savemaplist(
+        outputname, maplist, validvoxels, destshape, theheader, bidsdict, **kwargs
+    ):
         saved_bidsdicts.append(bidsdict.copy())
 
     def mock_readfromnifti(fname, headeronly=False):
@@ -828,22 +909,28 @@ def retrolagtcs_bids_metadata(debug=False):
         return lagmask.shape[0]
 
     with (
-        patch("rapidtide.workflows.retrolagtcs.tide_io.readfromnifti",
-              side_effect=mock_readfromnifti),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
-              side_effect=mock_parseniftidims),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
-              side_effect=mock_parseniftisizes),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch",
-              return_value=True),
-        patch("rapidtide.workflows.retrolagtcs.tide_io.savemaplist",
-              side_effect=mock_savemaplist),
-        patch("rapidtide.workflows.retrolagtcs.tide_resample.FastResamplerFromFile",
-              return_value=MagicMock()),
-        patch("rapidtide.workflows.retrolagtcs.tide_makelagged.makelaggedtcs",
-              side_effect=mock_makelaggedtcs),
-        patch("rapidtide.workflows.retrolagtcs.tide_util.allocarray",
-              side_effect=mock_allocarray),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.parseniftidims",
+            side_effect=mock_parseniftidims,
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_io.parseniftisizes",
+            side_effect=mock_parseniftisizes,
+        ),
+        patch("rapidtide.workflows.retrolagtcs.tide_io.checkspacematch", return_value=True),
+        patch("rapidtide.workflows.retrolagtcs.tide_io.savemaplist", side_effect=mock_savemaplist),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_resample.FastResamplerFromFile",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "rapidtide.workflows.retrolagtcs.tide_makelagged.makelaggedtcs",
+            side_effect=mock_makelaggedtcs,
+        ),
+        patch("rapidtide.workflows.retrolagtcs.tide_util.allocarray", side_effect=mock_allocarray),
         patch("rapidtide.workflows.retrolagtcs.tide_linfitfiltpass.makevoxelspecificderivs"),
     ):
         retrolagtcs(args)
@@ -925,8 +1012,9 @@ def retrolagtcs_fmri_time_axis(debug=False):
             lagtc[i, :] = 0.0
         return lagmask.shape[0]
 
-    captured = _run_retrolagtcs_with_mocks(args, mock_data,
-                                            makelagged_side_effect=mock_makelaggedtcs)
+    captured = _run_retrolagtcs_with_mocks(
+        args, mock_data, makelagged_side_effect=mock_makelaggedtcs
+    )
 
     t = captured_timeaxis["timeaxis"]
     # validtimepoints = 100 - 5 = 95

@@ -27,7 +27,9 @@ import rapidtide.workflows.rankimage as ri
 # ==================== Helpers ====================
 
 
-def _make_args(inputfilename="in.nii.gz", maskfilename="mask.nii.gz", outputroot="out", debug=False):
+def _make_args(
+    inputfilename="in.nii.gz", maskfilename="mask.nii.gz", outputroot="out", debug=False
+):
     return argparse.Namespace(
         inputfilename=inputfilename,
         maskfilename=maskfilename,
@@ -145,7 +147,9 @@ def rankimage_exits_on_dim_mismatch(debug=False):
     args = _make_args()
 
     with (
-        patch("rapidtide.workflows.rankimage.tide_io.readfromnifti", side_effect=mock_readfromnifti),
+        patch(
+            "rapidtide.workflows.rankimage.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
         patch("rapidtide.workflows.rankimage.tide_io.checkspacedimmatch", return_value=False),
         patch("rapidtide.workflows.rankimage.exit", side_effect=SystemExit),
     ):
@@ -180,11 +184,16 @@ def rankimage_3d_writes_outputs(debug=False):
     args = _make_args(outputroot="outroot", debug=False)
 
     with (
-        patch("rapidtide.workflows.rankimage.tide_io.readfromnifti", side_effect=mock_readfromnifti),
+        patch(
+            "rapidtide.workflows.rankimage.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
         patch("rapidtide.workflows.rankimage.tide_io.checkspacedimmatch", return_value=True),
         patch("rapidtide.workflows.rankimage.tide_io.parseniftisizes", return_value=(2, 2, 1, 1)),
         patch("rapidtide.workflows.rankimage.tide_io.savetonifti", side_effect=mock_savetonifti),
-        patch("rapidtide.workflows.rankimage.tide_io.writedicttojson", side_effect=mock_writedicttojson),
+        patch(
+            "rapidtide.workflows.rankimage.tide_io.writedicttojson",
+            side_effect=mock_writedicttojson,
+        ),
     ):
         ri.rankimage(args)
 
@@ -222,7 +231,9 @@ def rankimage_4d_processes_each_timepoint(debug=False):
     args = _make_args(outputroot="outroot")
 
     with (
-        patch("rapidtide.workflows.rankimage.tide_io.readfromnifti", side_effect=mock_readfromnifti),
+        patch(
+            "rapidtide.workflows.rankimage.tide_io.readfromnifti", side_effect=mock_readfromnifti
+        ),
         patch("rapidtide.workflows.rankimage.tide_io.checkspacedimmatch", return_value=True),
         patch("rapidtide.workflows.rankimage.tide_io.parseniftisizes", return_value=(2, 2, 1, 2)),
         patch("rapidtide.workflows.rankimage.tide_io.savetonifti", side_effect=mock_savetonifti),

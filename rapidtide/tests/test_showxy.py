@@ -348,15 +348,17 @@ def parser_colors(debug=False):
 def parser_boolean_flags(debug=False):
     """Test all boolean flags."""
     parser = _get_parser()
-    args = parser.parse_args([
-        "data.txt",
-        "--blandaltman",
-        "--usex",
-        "--noannotate",
-        "--usepoints",
-        "--dobars",
-        "--debug",
-    ])
+    args = parser.parse_args(
+        [
+            "data.txt",
+            "--blandaltman",
+            "--usex",
+            "--noannotate",
+            "--usepoints",
+            "--dobars",
+            "--debug",
+        ]
+    )
     assert args.blandaltman is True
     assert args.usex is True
     assert args.doannotate is False
