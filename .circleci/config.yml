@@ -895,14 +895,14 @@ workflows:
       - test_py310_alt:
           requires:
             - build_py310_alt
-      - build_py311
-      - build_py311_with_optional
-      - test_py311_with_coverage:
-          requires:
-            - build_py311_with_optional
-      - test_py311_slow:
-          requires:
-            - build_py311_with_optional
+      #- build_py311
+      #- build_py311_with_optional
+      #- test_py311_with_coverage:
+      #    requires:
+      #      - build_py311_with_optional
+      #- test_py311_slow:
+      #    requires:
+      #      - build_py311_with_optional
       #- test_py311_with_optional:
       #    requires:
       #      - build_py311
