@@ -725,6 +725,9 @@ class xyztlocation(QtWidgets.QWidget):
         self.TimeSlider = TimeSlider
         self.runMovieButton = runMovieButton
 
+        self.frametime = 25
+        self.movierunning = False
+
         self.xpos = xpos
         self.ypos = ypos
         self.zpos = zpos
@@ -732,9 +735,6 @@ class xyztlocation(QtWidgets.QWidget):
 
         self.tpos = tpos
         self.setTInfo(tdim, tr, toffset)
-
-        self.frametime = 25
-        self.movierunning = False
         self.movieTimer.timeout.connect(self.updateMovie)
 
     def setXYZInfo(self, xdim: Any, ydim: Any, zdim: Any, affine: Any) -> None:
@@ -875,6 +875,19 @@ class xyztlocation(QtWidgets.QWidget):
         )
         self.setupTimeSlider(self.TimeSlider, self.getTimeSlider, 0, self.tdim - 1, self.tpos)
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
+        if self.runMovieButton is not None:
+            if self.tdim > 1:
+                self.runMovieButton.setDisabled(False)
+                if self.movierunning:
+                    self.runMovieButton.setText("Stop Movie")
+                else:
+                    self.runMovieButton.setText("Start Movie")
+            else:
+                if self.movierunning:
+                    self.stopMovie()
+                else:
+                    self.runMovieButton.setText("Start Movie")
+                self.runMovieButton.setDisabled(True)
 
     def setupRunMovieButton(self, thebutton: Any, thehandler: Any) -> None:
         """
@@ -913,7 +926,6 @@ class xyztlocation(QtWidgets.QWidget):
         if thebutton is not None:
             if verbosity > 1:
                 print("initializing movie button")
-            thebutton.setText("Start Movie")
             try:
                 thebutton.clicked.disconnect(thehandler)
             except (TypeError, RuntimeError):
@@ -3534,7 +3546,6 @@ def overlay_radioButton_clicked(which: Any, enabled: Any) -> None:
 
     if enabled:
         overlaybuttons[which].setChecked(True)
-        currentloc.stopMovie()
         if panetomap[which] != "":
             if atlasaveragingdone and (panetomap[which] != "atlas"):
                 currentdataset.setfocusmap(panetomap[which] + "_atlasstat")
