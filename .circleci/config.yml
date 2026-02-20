@@ -21,8 +21,8 @@ commands:
           no_output_timeout: << parameters.timeout >>
           name: Run split pytest suite
           command: |
-            apt-get update
-            apt-get install -yqq curl gpg
+            sudo apt-get update
+            sudo apt-get install -yqq curl gpg
             source activate << parameters.env_name >>
             pwd
             pushd rapidtide/data/examples/src
