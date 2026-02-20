@@ -1,10 +1,14 @@
 # Release history
 
-## Version 3.1.7 (2/18/26)
-* (happy) Added an experimental feature that does cheesy sLFO removal prior to cardiac waveform extraction.  It seems to improve the extracted signal some, and makes the phase projected data a bit cleaner.  Needs further testing.
+## Version 3.1.7 (2/20/26)
+* (happy) Added an experimental feature that does cheesy sLFO removal prior to cardiac waveform extraction.  It seems to improve the extracted cardiac signal some, and makes the phase projected data a bit cleaner.  Needs further testing.
 * (happy) Codex found several bugs, which are now fixed.
+* (package) Added a new routine for spectral visualization.
 * (package) Further increases in test coverage.
-* (docs) Added a section about using the superior sagittal sinus as a source of the initial regressor.
+* (package) Restructured testing to make is less fragile.
+* (docs) Docs now build properly after fixing requirements (this broke around v3.1.4).
+* (docs) Added a section clarifying masking behavior to "Theory of Operation".
+* (docs) Added a section about using the superior sagittal sinus as a source of the initial regressor to the rapidtide usage section.
 
 ## Version 3.1.6 (2/16/26)
 * (package) Using alternating Codex and Claude, got test coverage to 90.99%.  Closes https://github.com/bbfrederick/rapidtide/issues/13.
