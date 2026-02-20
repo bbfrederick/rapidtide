@@ -611,7 +611,7 @@ jobs:
       - store_test_results:
           path: rapidtide/tests/test-results
       
-  test_py311_alt_with_coverage:
+  test_py311_with_coverage_alt:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: continuumio/miniconda3
@@ -907,10 +907,10 @@ workflows:
       #    requires:
       #      - build_py311
       - build_py311_alt
-      - test_py311_alt_with_coverage:
+      - test_py311_with_coverage_alt:
           requires:
             - build_py311_alt
-      - test_py311_alt_slow:
+      - test_py311_slow_alt:
           requires:
             - build_py311_alt
       - build_py312_alt
