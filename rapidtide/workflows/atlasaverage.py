@@ -24,10 +24,10 @@ import numpy as np
 from numpy.typing import NDArray
 from statsmodels.robust import mad
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.maskutil as tide_mask
-import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
+from rapidtide.core.masks.mask_ops import getmaskset
 
 
 def _get_parser() -> Any:
@@ -410,7 +410,7 @@ def atlasaverage(args: Any) -> None:
         args.excludename = None
         args.excludevals = None
 
-    includemask, excludemask, extramask = tide_mask.getmaskset(
+    includemask, excludemask, extramask = getmaskset(
         "anatomic",
         args.includename,
         args.includevals,

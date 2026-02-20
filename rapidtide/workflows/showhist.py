@@ -25,8 +25,8 @@ from matplotlib.pyplot import (bar, legend, plot, savefig, show, title, xlabel,
                                ylabel)
 from numpy.typing import NDArray
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
 
 
 def _get_parser() -> Any:

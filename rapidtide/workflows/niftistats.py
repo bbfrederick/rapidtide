@@ -29,9 +29,9 @@ from numpy.typing import NDArray
 from scipy.stats import ttest_ind, ttest_rel
 from tqdm import tqdm
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 from rapidtide.workflows.parser_funcs import is_float, is_valid_file
 

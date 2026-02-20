@@ -29,13 +29,13 @@ from scipy.signal import correlate
 from scipy.stats import pearsonr
 
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.simFuncClasses as tide_simFuncClasses
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 

@@ -26,8 +26,8 @@ import numpy as np
 from numpy.typing import NDArray
 from tqdm import tqdm
 
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.io as tide_io
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 

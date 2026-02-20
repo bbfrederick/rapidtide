@@ -22,10 +22,10 @@ import numpy as np
 from numpy.typing import NDArray
 
 import rapidtide.calcsimfunc as tide_calcsimfunc
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.io as tide_io
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
 import rapidtide.makelaggedtcs as tide_makelagged
-import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 
 

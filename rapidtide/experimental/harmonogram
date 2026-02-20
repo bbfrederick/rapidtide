@@ -32,10 +32,10 @@ from scipy import arange, fftpack
 from scipy.interpolate import interp1d
 from scipy.signal import decimate
 
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 
 
 def makedivisible(number, highestfac, debug=False):

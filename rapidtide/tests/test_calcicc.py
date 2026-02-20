@@ -18,7 +18,7 @@
 #
 import numpy as np
 
-from rapidtide.stats import fast_ICC_rep_anova
+from rapidtide.core.signal.stats import fast_ICC_rep_anova
 
 
 def test_ICC_rep_anova():

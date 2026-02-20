@@ -19,7 +19,8 @@
 import numpy as np
 import pytest
 
-import rapidtide.miscmath as tide_math
+import rapidtide.core.signal.miscmath as core_math
+import rapidtide.core.signal.miscmath as tide_math
 from rapidtide.tests.utils import mse
 
 
@@ -228,6 +229,7 @@ def test_miscmath(debug=False, displayplots=False):
     rms_and_envelope_tests(debug=debug)
     phasemod_and_trendfilt_tests(debug=debug)
     complexpca_tests(debug=debug)
+    assert callable(core_math.phase)
 
 
 if __name__ == "__main__":

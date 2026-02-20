@@ -16,6 +16,19 @@
 #   limitations under the License.
 #
 #
+try:
+    from rapidtide.tests._mplsetup import configure_matplotlib_env
+except Exception:
+    import os
+    import sys
+
+    _TESTSDIR = os.path.dirname(os.path.abspath(__file__))
+    if _TESTSDIR not in sys.path:
+        sys.path.insert(0, _TESTSDIR)
+    from _mplsetup import configure_matplotlib_env
+
+configure_matplotlib_env()
+
 import argparse
 import io
 from unittest.mock import MagicMock, patch

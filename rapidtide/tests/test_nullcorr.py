@@ -16,6 +16,19 @@
 #   limitations under the License.
 #
 #
+try:
+    from rapidtide.tests._mplsetup import configure_matplotlib_env
+except Exception:
+    import os
+    import sys
+
+    _TESTSDIR = os.path.dirname(os.path.abspath(__file__))
+    if _TESTSDIR not in sys.path:
+        sys.path.insert(0, _TESTSDIR)
+    from _mplsetup import configure_matplotlib_env
+
+configure_matplotlib_env()
+
 import os
 
 import matplotlib as mpl
@@ -23,11 +36,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.simFuncClasses as tide_simFuncClasses
-import rapidtide.stats as tide_stats
 from rapidtide.tests.utils import get_test_data_path, get_test_temp_path
 
 

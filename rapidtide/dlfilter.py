@@ -20,11 +20,12 @@ import glob
 import logging
 import os
 import sys
+import tempfile
 import time
 import warnings
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+# Configure matplotlib cache/config before importing matplotlib to avoid
+# startup hangs when the default cache location is unwritable or lock-contended.
 import numpy as np
 from numpy.typing import NDArray
 
@@ -44,6 +45,31 @@ if pyfftwpresent:
     fftpack = pyfftw.interfaces.scipy_fftpack
     pyfftw.interfaces.cache.enable()
 
+# Configure matplotlib cache before importing tensorflow, since tensorflow/keras
+# can import matplotlib transitively during initialization.
+_mpl_base = os.environ.get(
+    "RAPIDTIDE_MPL_BASEDIR",
+    os.path.join(tempfile.gettempdir(), "rapidtide-mpl"),
+)
+_mpl_worker = os.environ.get("RAPIDTIDE_MPL_WORKER", "shared")
+_mpl_config = os.path.join(
+    _mpl_base,
+    f"py{sys.version_info.major}{sys.version_info.minor}",
+    _mpl_worker,
+    "mplconfig",
+)
+os.makedirs(_mpl_config, exist_ok=True)
+# Remove stale lockfiles that can block font-cache creation forever after
+# interrupted runs.
+for _lockfile in glob.glob(os.path.join(_mpl_config, "*.matplotlib-lock")):
+    try:
+        if (time.time() - os.path.getmtime(_lockfile)) > 300:
+            os.unlink(_lockfile)
+    except OSError:
+        pass
+os.environ.setdefault("MPLBACKEND", "Agg")
+os.environ.setdefault("MPLCONFIGDIR", _mpl_config)
+
 import tensorflow as tf
 import tf_keras.backend as K
 from tf_keras.callbacks import (EarlyStopping, ModelCheckpoint, TensorBoard,
@@ -59,13 +85,11 @@ import rapidtide.io as tide_io
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 LGR = logging.getLogger("GENERAL")
-LGR.debug("setting backend to Agg")
-mpl.use("Agg")
 
 # Disable GPU if desired
 # figure out what sorts of devices we have
 physical_devices = tf.config.list_physical_devices()
-print(physical_devices)
+LGR.info(f"TensorFlow devices: {physical_devices}")
 # try:
 #    tf.config.set_visible_devices([], "GPU")
 # except Exception as e:
@@ -588,6 +612,23 @@ class DeepLearningFilter:
         epochs = range(len(self.loss))
 
         self.updatemetadata()
+
+        # Import matplotlib lazily to avoid module-import stalls in headless CI.
+        mpl_base = os.environ.get(
+            "RAPIDTIDE_MPL_BASEDIR",
+            os.path.join(tempfile.gettempdir(), "rapidtide-mpl"),
+        )
+        mpl_worker = os.environ.get("RAPIDTIDE_MPL_WORKER", f"pid{os.getpid()}")
+        mpl_config = os.path.join(
+            mpl_base,
+            f"py{sys.version_info.major}{sys.version_info.minor}",
+            mpl_worker,
+            "mplconfig",
+        )
+        os.makedirs(mpl_config, exist_ok=True)
+        os.environ.setdefault("MPLBACKEND", "Agg")
+        os.environ.setdefault("MPLCONFIGDIR", mpl_config)
+        import matplotlib.pyplot as plt
 
         plt.figure()
         plt.plot(epochs, self.loss, "bo", label="Training loss")

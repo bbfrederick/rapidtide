@@ -23,11 +23,11 @@ from typing import Any, Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
+import rapidtide.core.models.voxel_data as tide_voxelData
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
-import rapidtide.voxelData as tide_voxelData
 import rapidtide.workflows.parser_funcs as pf
 
 

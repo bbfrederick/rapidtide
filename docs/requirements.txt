@@ -123,8 +123,6 @@ pillow==12.1.1
     #   sphinx-gallery
 pyarrow==17.0.0; python_version < "3.13"
     # via rapidtide (../pyproject.toml)
-pyarrow>=19.0.0; python_version >= "3.13"
-    # via rapidtide (../pyproject.toml)
 pybtex==0.25.1
     # via
     #   pybtex-docutils

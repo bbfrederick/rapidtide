@@ -25,9 +25,9 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import pearsonr
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.workflows.parser_funcs as pf
 

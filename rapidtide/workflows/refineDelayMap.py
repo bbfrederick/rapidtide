@@ -21,8 +21,8 @@ from typing import Any, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-import rapidtide.refinedelay as tide_refinedelay
-import rapidtide.stats as tide_stats
+import rapidtide.core.delay.refinedelay as tide_refinedelay
+import rapidtide.core.signal.stats as tide_stats
 
 
 def refineDelay(

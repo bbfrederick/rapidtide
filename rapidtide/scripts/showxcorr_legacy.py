@@ -25,12 +25,12 @@ from numpy import argmax, r_, zeros
 from numpy.random import permutation
 from scipy.stats import pearsonr
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
-import rapidtide.stats as tide_stats
 
 
 def getNullDistributionData(

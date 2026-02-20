@@ -391,7 +391,7 @@ def atlasaverage_3d_basic(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.writevec") as mock_writevec,
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
         patch(
@@ -457,7 +457,7 @@ def atlasaverage_3d_with_headerline(debug=False):
         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
         patch("rapidtide.workflows.atlasaverage.tide_io.writevec", side_effect=mock_writevec),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
         patch(
@@ -523,7 +523,7 @@ def atlasaverage_3d_no_headerline(debug=False):
         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
         patch("rapidtide.workflows.atlasaverage.tide_io.writevec", side_effect=mock_writevec),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
         patch(
@@ -594,7 +594,7 @@ def atlasaverage_3d_with_datalabel(debug=False):
         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
         patch(
@@ -660,7 +660,7 @@ def atlasaverage_3d_ignorezeros(debug=False):
         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
         patch(
@@ -723,7 +723,7 @@ def atlasaverage_3d_summary_methods(debug=False):
             patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
             patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
             patch(
-                "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+                "rapidtide.workflows.atlasaverage.getmaskset",
                 return_value=(None, None, None),
             ),
             patch(
@@ -782,7 +782,7 @@ def atlasaverage_3d_numpercentiles(debug=False):
         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
         patch(
@@ -843,7 +843,7 @@ def atlasaverage_4d_basic(debug=False):
             "rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv
         ),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -906,7 +906,7 @@ def atlasaverage_4d_normmethod_pct(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -958,7 +958,7 @@ def atlasaverage_4d_normmethod_std(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -1010,7 +1010,7 @@ def atlasaverage_4d_normmethod_var(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -1062,7 +1062,7 @@ def atlasaverage_4d_normmethod_p2p(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -1114,7 +1114,7 @@ def atlasaverage_4d_median_summary(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -1206,7 +1206,7 @@ def atlasaverage_regionlabelfile(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.readlabels", return_value=region_labels),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -1262,7 +1262,7 @@ def atlasaverage_regionlabelfile_mismatch(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.readlabels", return_value=region_labels),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -1324,7 +1324,7 @@ def atlasaverage_regionlistfile(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.readvec", return_value=regionlist),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -1383,7 +1383,7 @@ def atlasaverage_debug_mode(debug=False):
         patch("rapidtide.workflows.atlasaverage.tide_io.savetonifti"),
         patch("rapidtide.workflows.atlasaverage.tide_io.writevec"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
         patch(
@@ -1440,7 +1440,7 @@ def atlasaverage_auto_labels(debug=False):
             "rapidtide.workflows.atlasaverage.tide_io.writebidstsv", side_effect=mock_writebidstsv
         ),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, None, None),
         ),
     ):
@@ -1505,7 +1505,7 @@ def atlasaverage_includemask(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(include_mask, None, None),
         ),
     ):
@@ -1564,7 +1564,7 @@ def atlasaverage_excludemask(debug=False):
         ),
         patch("rapidtide.workflows.atlasaverage.tide_io.writebidstsv"),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(None, exclude_mask, None),
         ),
     ):
@@ -1633,7 +1633,7 @@ def atlasaverage_3d_maskedatlas_output(debug=False):
             return_value=("include_mask.nii.gz", None),
         ),
         patch(
-            "rapidtide.workflows.atlasaverage.tide_mask.getmaskset",
+            "rapidtide.workflows.atlasaverage.getmaskset",
             return_value=(include_mask, None, None),
         ),
         patch(

@@ -26,13 +26,13 @@ import numpy as np
 from numpy.typing import NDArray
 from tqdm import tqdm
 
-import rapidtide.correlate as tide_corr
+import rapidtide.core.signal.correlate as tide_corr
+import rapidtide.core.signal.miscmath as tide_math
+import rapidtide.core.signal.stats as tide_stats
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
-import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
 DEFAULT_NUMSPACESTEPS = 1
