@@ -6,7 +6,42 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@3.2.4
 commands:
-  run_split_pytests:
+  run_split_pytests: parameters:
+      env_name:
+        type: string
+      timeout:
+        type: string
+        default: "20m"
+      extra_args:
+        type: string
+        default: ""
+    steps:
+      - run:
+          no_output_timeout: << parameters.timeout >>
+          name: Run split pytest suite
+          command: |
+            apt-get update
+            apt-get install -yqq curl gpg
+            source activate << parameters.env_name >>
+            pwd
+            pushd rapidtide/data/examples/src
+            ./installtestdata
+            popd
+            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
+            mkdir -p rapidtide/tests/test-results
+            set +e
+            pytest \
+              $TESTFILES \
+              << parameters.extra_args >> \
+              --junitxml=rapidtide/tests/test-results/junit.xml
+            PYTEST_EXIT=$?
+            set -e
+            if [ "$PYTEST_EXIT" -eq 5 ]; then
+              echo "No tests selected on this shard after filtering; continuing."
+              exit 0
+            fi
+            exit "$PYTEST_EXIT"
+  run_split_pytests_alt:
     parameters:
       env_name:
         type: string
@@ -525,7 +560,7 @@ jobs:
           at: /tmp
       - restore_cache:  # load environment
           key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run_split_pytests:
+      - run_split_pytests_alt:
           env_name: py314_env
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
