@@ -6,42 +6,6 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@3.2.4
 commands:
-  run_split_pytests:
-    parameters:
-      env_name:
-        type: string
-      timeout:
-        type: string
-        default: "20m"
-      extra_args:
-        type: string
-        default: ""
-    steps:
-      - run:
-          no_output_timeout: << parameters.timeout >>
-          name: Run split pytest suite
-          command: |
-            apt-get update
-            apt-get install -yqq curl gpg
-            source activate << parameters.env_name >>
-            pwd
-            pushd rapidtide/data/examples/src
-            ./installtestdata
-            popd
-            TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
-            mkdir -p rapidtide/tests/test-results
-            set +e
-            pytest \
-              $TESTFILES \
-              << parameters.extra_args >> \
-              --junitxml=rapidtide/tests/test-results/junit.xml
-            PYTEST_EXIT=$?
-            set -e
-            if [ "$PYTEST_EXIT" -eq 5 ]; then
-              echo "No tests selected on this shard after filtering; continuing."
-              exit 0
-            fi
-            exit "$PYTEST_EXIT"
   build_base_environment:
     steps:
       - run:
@@ -64,7 +28,7 @@ commands:
                 uv pip install --upgrade numba
                 uv pip install --upgrade pyfftw
             fi
-  run_split_pytests_alt:
+  run_split_pytests:
     parameters:
       timeout:
         type: string
@@ -99,7 +63,7 @@ commands:
             fi
             exit "$PYTEST_EXIT"
 jobs:
-  build_py310_alt:
+  build_py310:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.10
@@ -111,18 +75,18 @@ jobs:
           paths:
             - src/rapidtide
       - restore_cache: # ensure this step occurs *before* installing dependencies
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - build_base_environment
       - run: # will overwrite rapidtide installation each time
           name: Install rapidtide
           command: |
             uv pip install .[tf,test,doc]
       - save_cache: # environment cache tied to requirements
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
-  build_py311_alt:
+  build_py311:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.11
@@ -134,18 +98,18 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - build_base_environment
       - run:  # will overwrite rapidtide installation each time
           name: Install rapidtide
           command:  |
             uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
-  build_py312_alt:
+  build_py312:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.12
@@ -157,18 +121,18 @@ jobs:
           paths:
             - src/rapidtide
       - restore_cache: # ensure this step occurs *before* installing dependencies
-          key: deps2-312alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - build_base_environment
       - run: # will overwrite rapidtide installation each time
           name: Install rapidtide
           command: |
             uv pip install .[tf,test,doc]
       - save_cache: # environment cache tied to requirements
-          key: deps2-312alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
-  build_py313_alt:
+  build_py313:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.13
@@ -180,18 +144,18 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - build_base_environment
       - run:  # will overwrite rapidtide installation each time
           name: Install rapidtide
           command:  |
             uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
-  build_py314_alt:
+  build_py314:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.14
@@ -203,18 +167,18 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - build_base_environment
       - run:  # will overwrite rapidtide installation each time
           name: Install rapidtide
           command:  |
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
 
-  test_py310_alt:
+  test_py310:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.10
@@ -233,8 +197,8 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-310alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run_split_pytests_alt:
+          key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
@@ -242,7 +206,7 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-  test_py311_slow_alt:
+  test_py311_slow:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.11
@@ -261,8 +225,8 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run_split_pytests_alt:
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
           timeout: "40m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow --cov-report xml:rapidtide/coverage_slow.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
       - run:
@@ -274,7 +238,7 @@ jobs:
               ./codecov upload-process \
                 -f rapidtide/coverage_slow.xml \
                 -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
-                -F py311,alt,slow
+                -F py311,slow
             else
               echo "No slow coverage report on this shard; skipping Codecov upload."
             fi
@@ -286,7 +250,7 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-  test_py311_with_coverage_alt:
+  test_py311_with_coverage:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.11
@@ -305,8 +269,8 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run_split_pytests_alt:
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
           timeout: "25m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow" --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
       - run:
@@ -318,7 +282,7 @@ jobs:
               ./codecov upload-process \
                 -f rapidtide/coverage.xml \
                 -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
-                -F py311,alt
+                -F py311
             else
               echo "No coverage report on this shard; skipping Codecov upload."
             fi
@@ -328,7 +292,7 @@ jobs:
       - store_test_results:
           path: rapidtide/tests/test-results
 
-  test_py312_alt:
+  test_py312:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.12
@@ -347,8 +311,8 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-312alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run_split_pytests_alt:
+          key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
@@ -356,7 +320,7 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-  test_py313_alt:
+  test_py313:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.13
@@ -375,8 +339,8 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-313alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run_split_pytests_alt:
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
@@ -384,7 +348,7 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-  test_py314_alt:
+  test_py314:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.14
@@ -403,8 +367,8 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run_split_pytests_alt:
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
@@ -412,7 +376,7 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-  build_docs_alt:
+  build_docs:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.11
@@ -421,7 +385,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           name: Build documentation
           command: |
@@ -444,7 +408,7 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           name: Linting
           command:  |
@@ -458,32 +422,32 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-      - build_py310_alt
-      - test_py310_alt:
+      - build_py310
+      - test_py310:
           requires:
-            - build_py310_alt
-      - build_py311_alt
-      - test_py311_with_coverage_alt:
+            - build_py310
+      - build_py311
+      - test_py311_with_coverage:
           requires:
-            - build_py311_alt
-      - test_py311_slow_alt:
+            - build_py311
+      - test_py311_slow:
           requires:
-            - build_py311_alt
-      - build_py312_alt
-      - test_py312_alt:
+            - build_py311
+      - build_py312
+      - test_py312:
           requires:
-            - build_py312_alt
-      - build_py313_alt
-      - test_py313_alt:
+            - build_py312
+      - build_py313
+      - test_py313:
           requires:
-            - build_py313_alt
-      - build_py314_alt
-      - test_py314_alt:
+            - build_py313
+      - build_py314
+      - test_py314:
           requires:
-            - build_py314_alt
-      - build_docs_alt:
+            - build_py314
+      - build_docs:
           requires:
-            - build_py311_alt
+            - build_py311
       #- style_check:
       #    requires:
-      #      - build_py314_alt
+      #      - build_py314
