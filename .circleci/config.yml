@@ -206,6 +206,34 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
+  test_py311:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.11
+    parallelism: 4
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
+          timeout: "20m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
+      - store_test_results:
+          path: rapidtide/tests/test-results
+      - store_artifacts:
+          path: rapidtide/tests/test-results
+
   test_py311_slow:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -348,6 +376,92 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
+  test_py313_slow:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.13
+    parallelism: 8
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
+          timeout: "40m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow --cov-report xml:rapidtide/coverage_slow.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
+      - run:
+          name: Upload slow coverage if present
+          command: |
+            if [ -s rapidtide/coverage_slow.xml ]; then
+              curl -Os https://cli.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov upload-process \
+                -f rapidtide/coverage_slow.xml \
+                -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
+                -F py313,slow
+            else
+              echo "No slow coverage report on this shard; skipping Codecov upload."
+            fi
+      - store_artifacts:
+          path: rapidtide/coverage_slow.xml
+          destination: artifact-file
+      - store_test_results:
+          path: rapidtide/tests/test-results
+      - store_artifacts:
+          path: rapidtide/tests/test-results
+
+  test_py313_with_coverage:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.13
+    parallelism: 4
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
+          timeout: "25m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow" --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
+      - run:
+          name: Upload coverage if present
+          command: |
+            if [ -s rapidtide/coverage.xml ]; then
+              curl -Os https://cli.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov upload-process \
+                -f rapidtide/coverage.xml \
+                -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
+                -F py313
+            else
+              echo "No coverage report on this shard; skipping Codecov upload."
+            fi
+      - store_artifacts:
+          path: rapidtide/coverage.xml
+          destination: artifact-file
+      - store_test_results:
+          path: rapidtide/tests/test-results
+
   test_py314:
     working_directory: /tmp/src/rapidtide
     docker:
@@ -427,18 +541,27 @@ workflows:
           requires:
             - build_py310
       - build_py311
-      - test_py311_with_coverage:
+      - test_py311:
           requires:
             - build_py311
-      - test_py311_slow:
-          requires:
-            - build_py311
+      #- test_py311_with_coverage:
+      #    requires:
+      #      - build_py311
+      #- test_py311_slow:
+      #    requires:
+      #      - build_py311
       - build_py312
       - test_py312:
           requires:
             - build_py312
       - build_py313
       - test_py313:
+          requires:
+            - build_py313
+      - test_py313_with_coverage:
+          requires:
+            - build_py313
+      - test_py313_slow:
           requires:
             - build_py313
       - build_py314
