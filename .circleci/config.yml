@@ -568,8 +568,19 @@ jobs:
       - run_split_pytests_alt:
           timeout: "40m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow --cov-report xml:rapidtide/coverage_slow.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
-      - codecov/upload:
-          file: rapidtide/coverage_slow.xml
+      - run:
+          name: Upload slow coverage if present
+          command: |
+            if [ -s rapidtide/coverage_slow.xml ]; then
+              curl -Os https://cli.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov upload-process \
+                -f rapidtide/coverage_slow.xml \
+                -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
+                -F py311,alt,slow
+            else
+              echo "No slow coverage report on this shard; skipping Codecov upload."
+            fi
       - store_artifacts:
           path: rapidtide/coverage_slow.xml
           destination: artifact-file
@@ -614,7 +625,7 @@ jobs:
   test_py311_with_coverage_alt:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.11
     parallelism: 4
     resource_class: large
     environment:
@@ -634,8 +645,19 @@ jobs:
       - run_split_pytests_alt:
           timeout: "25m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow" --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
-      - codecov/upload:
-          file: rapidtide/coverage.xml
+      - run:
+          name: Upload coverage if present
+          command: |
+            if [ -s rapidtide/coverage.xml ]; then
+              curl -Os https://cli.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov upload-process \
+                -f rapidtide/coverage.xml \
+                -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
+                -F py311,alt
+            else
+              echo "No coverage report on this shard; skipping Codecov upload."
+            fi
       - store_artifacts:
           path: rapidtide/coverage.xml
           destination: artifact-file
@@ -895,17 +917,6 @@ workflows:
       - test_py310_alt:
           requires:
             - build_py310_alt
-      #- build_py311
-      #- build_py311_with_optional
-      #- test_py311_with_coverage:
-      #    requires:
-      #      - build_py311_with_optional
-      #- test_py311_slow:
-      #    requires:
-      #      - build_py311_with_optional
-      #- test_py311_with_optional:
-      #    requires:
-      #      - build_py311
       - build_py311_alt
       - test_py311_with_coverage_alt:
           requires:
@@ -925,25 +936,6 @@ workflows:
       - test_py314_alt:
           requires:
             - build_py314_alt
-      #- build_py310
-      #- test_py310:
-      #    requires:
-      #      - build_py310
-      #- build_py312
-      #- test_py312:
-      #    requires:
-      #     - build_py312
-      #- build_py313
-      #- test_py313:
-      #    requires:
-      #      - build_py313
-      #- build_py314
-      #- test_py314:
-      #    requires:
-      #      - build_py314
-      #- build_docs:
-      #    requires:
-      #      - build_py311
       - build_docs_alt:
           requires:
             - build_py311_alt
