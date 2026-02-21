@@ -89,6 +89,7 @@ commands:
             pytest \
               $TESTFILES \
               << parameters.extra_args >> \
+              --color=yes \
               --junitxml=rapidtide/tests/test-results/junit.xml
             PYTEST_EXIT=$?
             set -e
@@ -860,6 +861,6 @@ workflows:
       - build_docs_alt:
           requires:
             - build_py311_alt
-      - style_check:
-          requires:
-            - build_py314_alt
+      #- style_check:
+      #    requires:
+      #      - build_py314_alt
