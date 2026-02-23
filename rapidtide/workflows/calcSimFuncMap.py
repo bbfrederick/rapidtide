@@ -398,6 +398,7 @@ def calcSimFunc(
             device=optiondict["gpu_device"],
             batchsize=optiondict["gpu_batchsize"],
             fallback_to_cpu=optiondict["gpu_fallback_to_cpu"],
+            preprocess_mode=optiondict["gpu_preprocess_mode"],
         )
     elif (similaritymetric == "correlation") or (similaritymetric == "hybrid"):
         (
@@ -426,6 +427,7 @@ def calcSimFunc(
             device=optiondict["gpu_device"],
             batchsize=optiondict["gpu_batchsize"],
             fallback_to_cpu=optiondict["gpu_fallback_to_cpu"],
+            preprocess_mode=optiondict["gpu_preprocess_mode"],
         )
     elif similaritymetric == "riptide":
         # do the linear fit to the comb of delayed regressors

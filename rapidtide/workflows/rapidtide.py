@@ -1849,6 +1849,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             device=optiondict["gpu_device"],
             batchsize=optiondict["gpu_batchsize"],
             fallback_to_cpu=optiondict["gpu_fallback_to_cpu"],
+            preprocess_mode=optiondict["gpu_preprocess_mode"],
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 
@@ -3787,6 +3788,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         f"{outputname}_desc-formattedruntimings_info.tsv",
     )
     Path(f"{outputname}_runtimings.tsv").unlink(missing_ok=True)
+    if optiondict["showtimings"]:
+        for line in timingdata:
+            print(line)
 
     # save pyfftw wisdom
     tide_util.savewisdom(optiondict["pyfftw_wisdom"])

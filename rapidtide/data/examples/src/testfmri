@@ -82,8 +82,9 @@ rapidtide \
     --nofitfilt \
     --usegpu \
     --corrweighting None \
+    --gpu-preprocess-mode serial \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_gpu
+    ../dst/sub-RAPIDTIDETEST_serial
 
 rapidtide \
     --spatialfilt -1 \
@@ -97,6 +98,8 @@ rapidtide \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --cleanrefined \
     --nofitfilt \
+    --usegpu \
     --corrweighting None \
+    --gpu-preprocess-mode threaded \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_cpu
+    ../dst/sub-RAPIDTIDETEST_threaded
