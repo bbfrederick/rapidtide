@@ -18,6 +18,7 @@
 #
 import gc
 import logging
+import time
 import warnings
 from typing import Any
 
@@ -396,6 +397,91 @@ def correlationpass_cpu(
     return volumetotal, theglobalmaxlist, thecorrscale
 
 
+def correlationpass(
+    fmridata: NDArray,
+    referencetc: NDArray,
+    theCorrelator: Any,
+    fmri_x: NDArray,
+    os_fmri_x: NDArray,
+    lagmininpts: int,
+    lagmaxinpts: int,
+    corrout: NDArray,
+    meanval: NDArray,
+    nprocs: int = 1,
+    alwaysmultiproc: bool = False,
+    oversampfactor: int = 1,
+    interptype: str = "univariate",
+    showprogressbar: bool = True,
+    chunksize: int = 1000,
+    rt_floattype: np.dtype = np.float64,
+    debug: bool = False,
+    usegpu: bool = False,
+    device: str = "auto",
+    batchsize: int | None = None,
+    fallback_to_cpu: bool = True,
+) -> tuple[int, list[float], NDArray]:
+    """
+    Dispatch correlation pass to CPU or GPU implementation.
+
+    Parameters
+    ----------
+    usegpu : bool, optional
+        If True, call :func:`correlationpass_gpu`; otherwise call
+        :func:`correlationpass_cpu`. Default is False.
+    device : str, optional
+        GPU backend selector used when ``usegpu=True``. One of: "auto", "cuda",
+        "rocm", "mps". Default is "auto".
+    batchsize : int | None, optional
+        GPU batch size used when ``usegpu=True``
+    fallback_to_cpu : bool, optional
+        If True, GPU path falls back to CPU when GPU backends are unavailable or
+        unsupported for current options.
+    """
+    if usegpu:
+        return correlationpass_gpu(
+            fmridata,
+            referencetc,
+            theCorrelator,
+            fmri_x,
+            os_fmri_x,
+            lagmininpts,
+            lagmaxinpts,
+            corrout,
+            meanval,
+            nprocs=nprocs,
+            alwaysmultiproc=alwaysmultiproc,
+            oversampfactor=oversampfactor,
+            interptype=interptype,
+            showprogressbar=showprogressbar,
+            chunksize=chunksize,
+            rt_floattype=rt_floattype,
+            debug=debug,
+            device=device,
+            batchsize=chunksize if batchsize is None else batchsize,
+            fallback_to_cpu=fallback_to_cpu,
+        )
+
+    return correlationpass_cpu(
+        fmridata,
+        referencetc,
+        theCorrelator,
+        fmri_x,
+        os_fmri_x,
+        lagmininpts,
+        lagmaxinpts,
+        corrout,
+        meanval,
+        nprocs=nprocs,
+        alwaysmultiproc=alwaysmultiproc,
+        oversampfactor=oversampfactor,
+        interptype=interptype,
+        showprogressbar=showprogressbar,
+        chunksize=chunksize,
+        rt_floattype=rt_floattype,
+        debug=debug,
+    )
+
+
 def correlationpass_gpu(
     fmridata: NDArray,
     referencetc: NDArray,
@@ -407,9 +493,11 @@ def correlationpass_gpu(
     corrout: NDArray,
     meanval: NDArray,
     nprocs: int = 1,
+    alwaysmultiproc: bool = False,
     oversampfactor: int = 1,
     interptype: str = "univariate",
     showprogressbar: bool = True,
+    chunksize: int = 1000,
     rt_floattype: np.dtype = np.float64,
     debug: bool = False,
     device: str = "auto",
@@ -438,10 +526,10 @@ def correlationpass_gpu(
     theCorrelator.setreftc(referencetc)
     theCorrelator.setlimits(lagmininpts, lagmaxinpts)
 
-    corrweighting = getattr(theCorrelator, "corrweighting", "None")
-    if corrweighting != "None":
+    corrweighting = str(getattr(theCorrelator, "corrweighting", "None"))
+    if corrweighting not in ["None", "phat"]:
         msg = (
-            "correlationpass_gpu currently supports only corrweighting='None'; "
+            "correlationpass_gpu currently supports corrweighting in {'None','phat'}; "
             f"received '{corrweighting}'"
         )
         if fallback_to_cpu:
@@ -457,11 +545,11 @@ def correlationpass_gpu(
                 corrout,
                 meanval,
                 nprocs=nprocs,
-                alwaysmultiproc=False,
+                alwaysmultiproc=alwaysmultiproc,
                 oversampfactor=oversampfactor,
                 interptype=interptype,
                 showprogressbar=showprogressbar,
-                chunksize=1000,
+                chunksize=chunksize,
                 rt_floattype=rt_floattype,
                 debug=debug,
             )
@@ -483,11 +571,11 @@ def correlationpass_gpu(
                 corrout,
                 meanval,
                 nprocs=nprocs,
-                alwaysmultiproc=False,
+                alwaysmultiproc=alwaysmultiproc,
                 oversampfactor=oversampfactor,
                 interptype=interptype,
                 showprogressbar=showprogressbar,
-                chunksize=1000,
+                chunksize=chunksize,
                 rt_floattype=rt_floattype,
                 debug=debug,
             )
@@ -509,17 +597,52 @@ def correlationpass_gpu(
                 corrout,
                 meanval,
                 nprocs=nprocs,
-                alwaysmultiproc=False,
+                alwaysmultiproc=alwaysmultiproc,
                 oversampfactor=oversampfactor,
                 interptype=interptype,
                 showprogressbar=showprogressbar,
-                chunksize=1000,
+                chunksize=chunksize,
                 rt_floattype=rt_floattype,
                 debug=debug,
             )
         raise
     if debug:
         print(f"correlationpass_gpu using device: {torch_device}")
+
+    # Confirm FFT ops actually run on the selected backend. Some backends can
+    # appear available but transparently execute unsupported ops on CPU.
+    try:
+        probe = torch.randn(256, device=torch_device, dtype=torch.float32)
+        probe_fft = torch.fft.rfft(probe)
+        probe_ifft = torch.fft.irfft(probe_fft, n=256)
+        if (probe_fft.device.type != torch_device.type) or (probe_ifft.device.type != torch_device.type):
+            raise RuntimeError(
+                f"FFT ops are not executing on requested device '{torch_device}' "
+                f"(rfft on '{probe_fft.device}', irfft on '{probe_ifft.device}')."
+            )
+    except Exception as e:
+        if fallback_to_cpu:
+            LGR.warning(f"{e} Falling back to CPU implementation.")
+            return correlationpass_cpu(
+                fmridata,
+                referencetc,
+                theCorrelator,
+                fmri_x,
+                os_fmri_x,
+                lagmininpts,
+                lagmaxinpts,
+                corrout,
+                meanval,
+                nprocs=nprocs,
+                alwaysmultiproc=alwaysmultiproc,
+                oversampfactor=oversampfactor,
+                interptype=interptype,
+                showprogressbar=showprogressbar,
+                chunksize=chunksize,
+                rt_floattype=rt_floattype,
+                debug=debug,
+            )
+        raise
 
     tc_len = len(os_fmri_x) if oversampfactor >= 1 else len(fmri_x)
     if len(referencetc) != tc_len:
@@ -569,44 +692,67 @@ def correlationpass_gpu(
     ref_fft = torch.fft.rfft(ref_t, n=fft_len)
 
     numvoxels = int(fmridata.shape[0])
-    voxel_indices: list[int] = []
-    prepped_batch: list[NDArray] = []
     theglobalmaxlist = []
+    preptime = 0.0
+    gputime = 0.0
 
-    def _flush_batch() -> None:
-        if not prepped_batch:
-            return
-        batch_np = np.asarray(prepped_batch, dtype=np.float32)
+    # Precompute all preprocessed voxel timecourses on CPU.
+    t0_pre = time.perf_counter()
+    prepped_tc = np.zeros((numvoxels, tc_len), dtype=np.float32)
+    do_resample = oversampfactor >= 1 and not (
+        (len(fmri_x) == len(os_fmri_x)) and np.array_equal(fmri_x, os_fmri_x)
+    )
+    for vox in range(numvoxels):
+        fmritc = fmridata[vox, :]
+        if do_resample:
+            thetc_local = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
+        else:
+            thetc_local = fmritc + 0.0
+        meanval[vox] = np.mean(thetc_local)
+        prepped_tc[vox, :] = theCorrelator.preptc(thetc_local)
+
+    preptime += time.perf_counter() - t0_pre
+
+    def _run_gpu_batch(batch_np: NDArray, batch_voxels: NDArray) -> None:
+        nonlocal gputime, theglobalmaxlist
+        t0 = time.perf_counter()
         batch_t = torch.as_tensor(batch_np, device=torch_device, dtype=torch.float32)
         batch_fft = torch.fft.rfft(batch_t, n=fft_len, dim=-1)
-        corr_full = torch.fft.irfft(batch_fft * ref_fft.unsqueeze(0), n=fft_len, dim=-1)
+        product = batch_fft * ref_fft.unsqueeze(0)
+        if corrweighting == "phat":
+            # Match gccproduct(..., weighting='phat') thresholding behavior.
+            weighting = torch.abs(product)
+            thresh = torch.max(weighting, dim=-1, keepdim=True).values * 0.1
+            weighting = torch.maximum(weighting, thresh)
+            weighted_product = product / weighting
+        else:
+            weighted_product = product
+        corr_full = torch.fft.irfft(weighted_product, n=fft_len, dim=-1)
+        if torch_device.type == "cuda":
+            torch.cuda.synchronize(device=torch_device)
+        elif torch_device.type == "mps":
+            torch.mps.synchronize()
+        gputime += time.perf_counter() - t0
         corr_trim = corr_full[:, trim_start:trim_stop]
         global_max_idx = torch.argmax(corr_full, dim=-1)
 
         corr_trim_cpu = corr_trim.detach().cpu().numpy().astype(rt_floattype, copy=False)
         global_max_idx_cpu = global_max_idx.detach().cpu().numpy()
-        for local_idx, vox in enumerate(voxel_indices):
+        for local_idx, vox in enumerate(batch_voxels):
             corrout[vox, :] = corr_trim_cpu[local_idx, :]
-            theglobalmaxlist.append(float(global_max_idx_cpu[local_idx]))
+            theglobalmaxlist.append(int(global_max_idx_cpu[local_idx]))
 
-        prepped_batch.clear()
-        voxel_indices.clear()
-
-    for vox in range(numvoxels):
-        fmritc = fmridata[vox, :]
-        if oversampfactor >= 1:
-            thetc = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
-        else:
-            thetc = fmritc + 0.0
-        meanval[vox] = np.mean(thetc)
-        prepped_batch.append(theCorrelator.preptc(thetc))
-        voxel_indices.append(vox)
-        if len(prepped_batch) >= batchsize:
-            _flush_batch()
-
-    _flush_batch()
+    for start in range(0, numvoxels, batchsize):
+        stop = min(start + batchsize, numvoxels)
+        batch_voxels = np.arange(start, stop, dtype=np.int64)
+        _run_gpu_batch(prepped_tc[start:stop, :], batch_voxels)
 
     LGR.info(f"\nSimilarity function calculated on {numvoxels} voxels (GPU)")
+    LGR.info(
+        "correlationpass_gpu timing: "
+        f"cpu_preprocess={preptime:.3f}s, gpu_corr={gputime:.3f}s, "
+        f"batchsize={batchsize}, device={torch_device}"
+    )
     uncollected = gc.collect()
     if uncollected != 0:
         LGR.info(f"garbage collected - unable to collect {uncollected} objects")
