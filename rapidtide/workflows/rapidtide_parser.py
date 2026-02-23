@@ -1354,7 +1354,14 @@ def _get_parser() -> Any:
         help=("Calculate and save the coherence between the final regressor and the data."),
         default=False,
     )
-
+    output.add_argument(
+        "--showtimings",
+        dest="showtimings",
+        action="store_true",
+        help=("Print out summary of run timing at the end of processing."),
+        default=False,
+    )
+    
     # Add version options
     pf.addversionopts(parser)
 
