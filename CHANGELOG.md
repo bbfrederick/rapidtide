@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.1.8 (2/23/26)
+* (rapidtide) Added option to print timing information at the end of a run (``--showtimings``).
+
 ## Version 3.1.7 (2/23/26)
 * (happy) Added an experimental feature that does cheesy sLFO removal prior to cardiac waveform extraction.  It seems to improve the extracted cardiac signal some, and makes the phase projected data a bit cleaner.  Needs further testing.
 * (happy) Codex found several bugs, which are now fixed.
