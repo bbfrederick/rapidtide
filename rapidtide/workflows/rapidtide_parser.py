@@ -1495,7 +1495,6 @@ def _get_parser() -> Any:
         ),
         default=False,
     )
-    """    
     perf.add_argument(
         "--usegpu",
         dest="usegpu",
@@ -1537,7 +1536,19 @@ def _get_parser() -> Any:
             "backend is unavailable or unsupported for the selected settings."
         ),
         default=True,
-    )"""
+    )
+    perf.add_argument(
+        "--gpu-preprocess-mode",
+        dest="gpu_preprocess_mode",
+        action="store",
+        choices=["serial", "threaded"],
+        help=(
+            "CPU preprocessing mode for GPU correlation pass. "
+            "'serial' is lowest overhead and default; "
+            "'threaded' enables threaded preprocessing before GPU correlation."
+        ),
+        default="serial",
+    )
 
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")
@@ -2639,11 +2650,12 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
     # this is new enough to do retrospective regression filtering
     args["retroregresscompatible"] = True
 
-    # lock out new gpu options
-    args["usegpu"] = False
-    args["gpu_device"] = "auto"
-    args["gpu_batchsize"] = 1024
-    args["gpu_fallback_to_cpu"] = False
+    # normalize GPU options if parser defaults were not present
+    args["usegpu"] = args.get("usegpu", False)
+    args["gpu_device"] = args.get("gpu_device", "auto")
+    args["gpu_batchsize"] = args.get("gpu_batchsize", 1024)
+    args["gpu_fallback_to_cpu"] = args.get("gpu_fallback_to_cpu", True)
+    args["gpu_preprocess_mode"] = args.get("gpu_preprocess_mode", "serial")
 
     LGR.debug("\nafter postprocessing\n{}".format(args))
 
