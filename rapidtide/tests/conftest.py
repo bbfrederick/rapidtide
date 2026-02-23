@@ -20,13 +20,58 @@
 
 import inspect
 import io
+import os
+import shutil
 import sys
 import tempfile
 from contextlib import ExitStack
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+
+
+def _configure_test_matplotlib_env() -> None:
+    """
+    Configure matplotlib/xdg cache directories for pytest processes.
+
+    This runs from conftest import time, which is early enough to affect test
+    modules that import matplotlib at module scope.
+    """
+    tests_dir = Path(__file__).resolve().parent
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "main")
+    tmp_dir = tests_dir / "tmp" / f"{worker_id}-{os.getpid()}"
+    mpl_config_dir = tmp_dir / "mplconfig"
+    xdg_cache_home = tmp_dir / "xdg-cache"
+    xdg_config_home = tmp_dir / "xdg-config"
+
+    for dirname in (tmp_dir, mpl_config_dir, xdg_cache_home, xdg_config_home):
+        dirname.mkdir(parents=True, exist_ok=True)
+
+    # Seed the local matplotlib cache with an existing system/user font cache if
+    # available. This avoids expensive font discovery runs that can stall tests.
+    existing_fontlists = []
+    for candidate_dir in (Path.home() / ".cache" / "matplotlib", Path.home() / ".matplotlib"):
+        existing_fontlists.extend(sorted(candidate_dir.glob("fontlist-v*.json"), reverse=True))
+    if existing_fontlists:
+        seeded_fontlist = mpl_config_dir / existing_fontlists[0].name
+        if not seeded_fontlist.exists():
+            try:
+                shutil.copy2(existing_fontlists[0], seeded_fontlist)
+            except OSError:
+                # Best effort only; matplotlib will rebuild if copying fails.
+                pass
+
+    # Force a non-interactive backend and writable cache/config locations to
+    # avoid blocking during font cache creation in headless CI/test runs.
+    os.environ["MPLBACKEND"] = "Agg"
+    os.environ["MPLCONFIGDIR"] = str(mpl_config_dir)
+    os.environ["XDG_CACHE_HOME"] = str(xdg_cache_home)
+    os.environ["XDG_CONFIG_HOME"] = str(xdg_config_home)
+
+
+_configure_test_matplotlib_env()
 
 
 @pytest.fixture
