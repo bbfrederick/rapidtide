@@ -148,7 +148,7 @@ def spectorgb(thespectrum: colour.SpectralDistribution) -> NDArray[np.float64]:
     return RGB
 
 
-def normalizergb(RGB: NDArray[np.float64]) -> NDArray[np.float64]:
+def normalizergb(RGB: NDArray[np.float64], factor: float = 1.0) -> NDArray[np.float64]:
     """Normalize an sRGB triplet.
 
     Parameters
@@ -161,10 +161,12 @@ def normalizergb(RGB: NDArray[np.float64]) -> NDArray[np.float64]:
     numpy.ndarray
         A 3-element array containing normalized RGB values.
     """
-    return colour.algebra.normalise_maximum(RGB)
+    normcolor = colour.algebra.normalise_maximum(RGB, factor=factor)
+    colorstring = f"#{int(255.0 * normcolor[0]):02x}{int(255.0 * normcolor[1]):02x}{int(255.0 * normcolor[2]):02x}"
+    return normcolor, colorstring
 
 
-def plot_swatch(rgb: NDArray[np.float64], label: str = "sLFO color") -> None:
+def plot_swatch(rgb: NDArray[np.float64], factor: float = 1.0, label: str = "sLFO color") -> None:
     """Display an RGB swatch for a color sample.
 
     Parameters
@@ -178,7 +180,7 @@ def plot_swatch(rgb: NDArray[np.float64], label: str = "sLFO color") -> None:
         This function is called for its plotting side effects.
     """
     colour.plotting.plot_single_colour_swatch(
-        colour.plotting.ColourSwatch(colour.algebra.normalise_maximum(rgb), label),
+        colour.plotting.ColourSwatch(colour.algebra.normalise_maximum(rgb, factor=factor), label),
         text_parameters={"size": "x-large"},
     )
 
@@ -186,7 +188,7 @@ def plot_swatch(rgb: NDArray[np.float64], label: str = "sLFO color") -> None:
 def main(debug: bool = False):
     thissamplerate, thisstartoffset, colnames, invec, compression, columnsource, extrainfo = (
         tide_io.readbidstsv(
-            "data/examples/dst/sub-RAPIDTIDETEST_band3_desc-oversampledmovingregressor_timeseries.json",
+            "data/examples/dst/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json",
             "pass3",
         )
     )
@@ -201,9 +203,9 @@ def main(debug: bool = False):
     plot_sd(sLFO_spectrum)
     sLFO_color = spectorgb(sLFO_spectrum)
     print(f"{sLFO_color=}")
-    normrgb = normalizergb(sLFO_color)
-    print(f"{normrgb=}")
-    plot_swatch(sLFO_color, label="sLFO color")
+    normrgb, normstr = normalizergb(sLFO_color, factor=1.0)
+    print(f"{normrgb=}, {normstr=}")
+    plot_swatch(sLFO_color, factor=1.0, label="sLFO color")
 
 
 if __name__ == "__main__":
