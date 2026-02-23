@@ -208,7 +208,7 @@ def test_delayestimation(displayplots=False, debug=False):
             voxelsprocessed_cp,
             theglobalmaxlist,
             trimmedcorrscale,
-        ) = tide_calcsimfunc.correlationpass(
+        ) = tide_calcsimfunc.correlationpass_cpu(
             waveforms[:, :],
             referencetc,
             theCorrelator,

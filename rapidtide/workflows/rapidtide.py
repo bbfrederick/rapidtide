@@ -1828,7 +1828,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             voxelsprocessed_echo,
             theglobalmaxlist,
             trimmedcorrscale,
-        ) = tide_calcsimfunc.correlationpass(
+        ) = tide_calcsimfunc.correlationpass_cpu(
             fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             referencetc,
             theCorrelator,

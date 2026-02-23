@@ -265,7 +265,7 @@ def _unpackvoxeldata(retvals: tuple[Any, ...], voxelproducts: list[Any]) -> None
     (voxelproducts[3]).append(retvals[4] + 0)
 
 
-def correlationpass(
+def correlationpass_cpu(
     fmridata: NDArray,
     referencetc: NDArray,
     theCorrelator: Any,
@@ -446,7 +446,7 @@ def correlationpass_gpu(
         )
         if fallback_to_cpu:
             LGR.warning(f"{msg}. Falling back to CPU implementation.")
-            return correlationpass(
+            return correlationpass_cpu(
                 fmridata,
                 referencetc,
                 theCorrelator,
@@ -472,7 +472,7 @@ def correlationpass_gpu(
     except ImportError as e:
         if fallback_to_cpu:
             LGR.warning("PyTorch not available; falling back to CPU implementation.")
-            return correlationpass(
+            return correlationpass_cpu(
                 fmridata,
                 referencetc,
                 theCorrelator,
@@ -498,7 +498,7 @@ def correlationpass_gpu(
     except RuntimeError as e:
         if fallback_to_cpu:
             LGR.warning(f"{e} Falling back to CPU implementation.")
-            return correlationpass(
+            return correlationpass_cpu(
                 fmridata,
                 referencetc,
                 theCorrelator,

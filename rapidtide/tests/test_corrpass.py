@@ -173,7 +173,7 @@ def test_calcsimfunc(debug=False, displayplots=False):
                 voxelsprocessed_cp,
                 theglobalmaxlist,
                 trimmedcorrscale,
-            ) = tide_calcsimfunc.correlationpass(
+            ) = tide_calcsimfunc.correlationpass_cpu(
                 theinputdata,
                 sourcedata,
                 theCorrelator,
@@ -272,7 +272,7 @@ def test_correlationpass_gpu_matches_cpu(debug=False):
 
     corrout_cpu = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
     meanval_cpu = np.zeros((numvoxels), dtype=np.float64)
-    vox_cpu, gmax_cpu, corrscale_cpu = tide_calcsimfunc.correlationpass(
+    vox_cpu, gmax_cpu, corrscale_cpu = tide_calcsimfunc.correlationpass_cpu(
         fmridata,
         referencetc,
         corr_cpu,

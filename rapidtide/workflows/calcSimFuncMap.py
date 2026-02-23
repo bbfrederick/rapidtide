@@ -376,7 +376,7 @@ def calcSimFunc(
             voxelsprocessed_cp,
             theglobalmaxlist,
             trimmedcorrscale,
-        ) = tide_calcsimfunc.correlationpass(
+        ) = tide_calcsimfunc.correlationpass_cpu(
             fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             cleaned_referencetc,
             theMutualInformationator,
@@ -400,7 +400,7 @@ def calcSimFunc(
             voxelsprocessed_cp,
             theglobalmaxlist,
             trimmedcorrscale,
-        ) = tide_calcsimfunc.correlationpass(
+        ) = tide_calcsimfunc.correlationpass_cpu(
             fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
             cleaned_referencetc,
             theCorrelator,
