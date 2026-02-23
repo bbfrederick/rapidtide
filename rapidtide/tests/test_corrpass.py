@@ -19,6 +19,7 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.correlate as tide_corr
@@ -230,7 +231,135 @@ def test_calcsimfunc(debug=False, displayplots=False):
 
             assert mse(voxelshifts, lagtimes) < msethresh
 
+def test_correlationpass_gpu_matches_cpu(debug=False):
+    # Small deterministic synthetic dataset for CPU/GPU parity checks.
+    oversampfactor = 1
+    numvoxels = 12
+    numtimepoints = 160
+    tr = 0.8
+    Fs = 1.0 / tr
+    init_fmri_x = np.linspace(0.0, numtimepoints, numtimepoints, endpoint=False) * tr
+    os_fmri_x = init_fmri_x.copy()
+
+    testfreq = 0.06
+    referencetc = np.sin(2.0 * np.pi * testfreq * init_fmri_x)
+    fmridata = np.zeros((numvoxels, numtimepoints), dtype=np.float64)
+    for i in range(numvoxels):
+        shift = 0.15 * i
+        fmridata[i, :] = np.sin(2.0 * np.pi * testfreq * (init_fmri_x - shift))
+
+    lagmin = -10.0
+    lagmax = 10.0
+    lagmininpts = int((-lagmin * Fs) - 0.5)
+    lagmaxinpts = int((lagmax * Fs) + 0.5)
+    numcorrpoints = lagmaxinpts + lagmininpts
+
+    prefilt = tide_filt.NoncausalFilter("lfo")
+    corr_cpu = tide_simFuncClasses.Correlator(
+        Fs=Fs,
+        ncprefilter=prefilt,
+        detrendorder=3,
+        windowfunc="hamming",
+        corrweighting="None",
+    )
+    corr_gpu = tide_simFuncClasses.Correlator(
+        Fs=Fs,
+        ncprefilter=prefilt,
+        detrendorder=3,
+        windowfunc="hamming",
+        corrweighting="None",
+    )
+
+    corrout_cpu = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
+    meanval_cpu = np.zeros((numvoxels), dtype=np.float64)
+    vox_cpu, gmax_cpu, corrscale_cpu = tide_calcsimfunc.correlationpass(
+        fmridata,
+        referencetc,
+        corr_cpu,
+        init_fmri_x,
+        os_fmri_x,
+        lagmininpts,
+        lagmaxinpts,
+        corrout_cpu,
+        meanval_cpu,
+        nprocs=1,
+        oversampfactor=oversampfactor,
+        interptype="univariate",
+        showprogressbar=False,
+    )
+
+    corrout_gpu = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
+    meanval_gpu = np.zeros((numvoxels), dtype=np.float64)
+    vox_gpu, gmax_gpu, corrscale_gpu = tide_calcsimfunc.correlationpass_gpu(
+        fmridata,
+        referencetc,
+        corr_gpu,
+        init_fmri_x,
+        os_fmri_x,
+        lagmininpts,
+        lagmaxinpts,
+        corrout_gpu,
+        meanval_gpu,
+        oversampfactor=oversampfactor,
+        interptype="univariate",
+        showprogressbar=False,
+        device="auto",
+        batchsize=4,
+        fallback_to_cpu=True,
+    )
+
+    assert vox_gpu == vox_cpu
+    assert np.array_equal(np.asarray(gmax_gpu, dtype=np.int64), np.asarray(gmax_cpu, dtype=np.int64))
+    assert np.array_equal(corrscale_gpu, corrscale_cpu)
+    assert np.allclose(meanval_gpu, meanval_cpu, atol=1e-10, rtol=1e-7)
+    # Allow small floating-point differences when GPU path executes.
+    assert np.allclose(corrout_gpu, corrout_cpu, atol=5e-4, rtol=2e-3)
+
+    # If torch is present and a supported GPU backend exists, also exercise the strict
+    # non-fallback code path so this test validates a true GPU execution path.
+    torch = pytest.importorskip("torch")
+    has_cuda = torch.cuda.is_available()
+    has_mps = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+    if has_cuda or has_mps:
+        corrout_gpu2 = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
+        meanval_gpu2 = np.zeros((numvoxels), dtype=np.float64)
+        vox_gpu2, gmax_gpu2, corrscale_gpu2 = tide_calcsimfunc.correlationpass_gpu(
+            fmridata,
+            referencetc,
+            tide_simFuncClasses.Correlator(
+                Fs=Fs,
+                ncprefilter=prefilt,
+                detrendorder=3,
+                windowfunc="hamming",
+                corrweighting="None",
+            ),
+            init_fmri_x,
+            os_fmri_x,
+            lagmininpts,
+            lagmaxinpts,
+            corrout_gpu2,
+            meanval_gpu2,
+            oversampfactor=oversampfactor,
+            interptype="univariate",
+            showprogressbar=False,
+            device="auto",
+            batchsize=4,
+            fallback_to_cpu=False,
+        )
+        assert vox_gpu2 == vox_cpu
+        assert np.array_equal(
+            np.asarray(gmax_gpu2, dtype=np.int64), np.asarray(gmax_cpu, dtype=np.int64)
+        )
+        assert np.array_equal(corrscale_gpu2, corrscale_cpu)
+        assert np.allclose(meanval_gpu2, meanval_cpu, atol=1e-10, rtol=1e-7)
+        assert np.allclose(corrout_gpu2, corrout_cpu, atol=5e-4, rtol=2e-3)
+        if debug:
+            print("cpu and gpu outputs match!")
+
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
     test_calcsimfunc(debug=True, displayplots=True)
+    test_correlationpass_gpu_matches_cpu(debug=True)
+
+
