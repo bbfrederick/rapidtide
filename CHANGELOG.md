@@ -1,11 +1,14 @@
 # Release history
 
-## Version 3.1.7 (2/20/26)
+## Version 3.1.7 (2/23/26)
 * (happy) Added an experimental feature that does cheesy sLFO removal prior to cardiac waveform extraction.  It seems to improve the extracted cardiac signal some, and makes the phase projected data a bit cleaner.  Needs further testing.
 * (happy) Codex found several bugs, which are now fixed.
+* (tidepool) Fixed the bug where initial map display limits were sometimes set to full rather than smart.
+* (tidepool) Fixed the bug where the movie toggle button behavior was flaky and inconsistent.
+* (rapidtide) Added some scaffolding to support a GPU version of correlationpass.  Currently locked out.
 * (package) Added a new routine for spectral visualization.
 * (package) Further increases in test coverage.
-* (package) Restructured testing to make is less fragile.
+* (package) Restructured testing to make it faster and less fragile.
 * (docs) Docs now build properly after fixing requirements (this broke around v3.1.4).
 * (docs) Added a section clarifying masking behavior to "Theory of Operation".
 * (docs) Added a section about using the superior sagittal sinus as a source of the initial regressor to the rapidtide usage section.
