@@ -3787,6 +3787,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         f"{outputname}_desc-formattedruntimings_info.tsv",
     )
     Path(f"{outputname}_runtimings.tsv").unlink(missing_ok=True)
+    if optiondict["showtimings"]:
+        for line in timingdata:
+            print(line)
 
     # save pyfftw wisdom
     tide_util.savewisdom(optiondict["pyfftw_wisdom"])
