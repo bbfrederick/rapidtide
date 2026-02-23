@@ -21,11 +21,10 @@ import logging
 import os
 import sys
 from argparse import Namespace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Tuple
 
 import nibabel as nib
 import numpy as np
-from numpy.typing import NDArray
 
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
@@ -1406,6 +1405,49 @@ def _get_parser() -> Any:
         ),
         default=False,
     )
+    """    
+    perf.add_argument(
+        "--usegpu",
+        dest="usegpu",
+        action="store_true",
+        help=(
+            "Use GPU-accelerated similarity calculation when available. "
+            "Currently applies to the correlation pass."
+        ),
+        default=False,
+    )
+    perf.add_argument(
+        "--gpu-device",
+        dest="gpu_device",
+        action="store",
+        choices=["auto", "cuda", "rocm", "mps"],
+        help=(
+            "GPU backend to use when --usegpu is set. "
+            "Default is auto (prefer CUDA/ROCm, then MPS)."
+        ),
+        default="auto",
+    )
+    perf.add_argument(
+        "--gpu-batchsize",
+        dest="gpu_batchsize",
+        action="store",
+        type=lambda x: pf.is_int(parser, x, minval=1),
+        metavar="BATCHSIZE",
+        help=(
+            "Batch size for GPU correlation calculations. "
+        ),
+        default=1024,
+    )
+    perf.add_argument(
+        "--nogpu-fallback",
+        dest="gpu_fallback_to_cpu",
+        action="store_false",
+        help=(
+            "When using --usegpu, fail instead of falling back to CPU if a GPU "
+            "backend is unavailable or unsupported for the selected settings."
+        ),
+        default=True,
+    )"""
 
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")
@@ -2402,6 +2444,12 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
 
     # this is new enough to do retrospective regression filtering
     args["retroregresscompatible"] = True
+
+    # lock out new gpu options
+    args["usegpu"] = False
+    args["gpu_device"] = "auto"
+    args["gpu_batchsize"] = 1024
+    args["gpu_fallback_to_cpu"] = False
 
     LGR.debug("\nafter postprocessing\n{}".format(args))
 

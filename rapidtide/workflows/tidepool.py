@@ -725,6 +725,9 @@ class xyztlocation(QtWidgets.QWidget):
         self.TimeSlider = TimeSlider
         self.runMovieButton = runMovieButton
 
+        self.frametime = 25
+        self.movierunning = False
+
         self.xpos = xpos
         self.ypos = ypos
         self.zpos = zpos
@@ -732,9 +735,6 @@ class xyztlocation(QtWidgets.QWidget):
 
         self.tpos = tpos
         self.setTInfo(tdim, tr, toffset)
-
-        self.frametime = 25
-        self.movierunning = False
         self.movieTimer.timeout.connect(self.updateMovie)
 
     def setXYZInfo(self, xdim: Any, ydim: Any, zdim: Any, affine: Any) -> None:
@@ -875,6 +875,19 @@ class xyztlocation(QtWidgets.QWidget):
         )
         self.setupTimeSlider(self.TimeSlider, self.getTimeSlider, 0, self.tdim - 1, self.tpos)
         self.setupRunMovieButton(self.runMovieButton, self.runMovieToggle)
+        if self.runMovieButton is not None:
+            if self.tdim > 1:
+                self.runMovieButton.setDisabled(False)
+                if self.movierunning:
+                    self.runMovieButton.setText("Stop Movie")
+                else:
+                    self.runMovieButton.setText("Start Movie")
+            else:
+                if self.movierunning:
+                    self.stopMovie()
+                else:
+                    self.runMovieButton.setText("Start Movie")
+                self.runMovieButton.setDisabled(True)
 
     def setupRunMovieButton(self, thebutton: Any, thehandler: Any) -> None:
         """
@@ -913,7 +926,10 @@ class xyztlocation(QtWidgets.QWidget):
         if thebutton is not None:
             if verbosity > 1:
                 print("initializing movie button")
-            thebutton.setText("Start Movie")
+            try:
+                thebutton.clicked.disconnect(thehandler)
+            except (TypeError, RuntimeError):
+                pass
             thebutton.clicked.connect(thehandler)
 
     def setupTimeSlider(
@@ -959,6 +975,10 @@ class xyztlocation(QtWidgets.QWidget):
         if theslider is not None:
             theslider.setRange(minval, maxval)
             theslider.setSingleStep(1)
+            try:
+                theslider.valueChanged.disconnect(thehandler)
+            except (TypeError, RuntimeError):
+                pass
             theslider.valueChanged.connect(thehandler)
 
     def setupSpinBox(
@@ -1018,6 +1038,10 @@ class xyztlocation(QtWidgets.QWidget):
             thespinbox.setValue(currentval)
             thespinbox.setWrapping(True)
             thespinbox.setKeyboardTracking(False)
+            try:
+                thespinbox.valueChanged.disconnect(thehandler)
+            except (TypeError, RuntimeError):
+                pass
             thespinbox.valueChanged.connect(thehandler)
 
     def updateXYZValues(self, emitsignal: bool = True) -> None:
@@ -1574,7 +1598,7 @@ class xyztlocation(QtWidgets.QWidget):
             self.tcoord = self.tr2real(self.tpos)
             if self.movierunning:
                 self.movieTimer.stop()
-                self.movieTimer.start(int(self.tpos))
+                self.movieTimer.start(int(self.frametime))
             self.updateTValues()
 
     def getXcoord(self, event: Any) -> None:
@@ -2082,24 +2106,23 @@ def updateDispLimits() -> None:
     # Updates the display limits UI elements based on current dataset
     """
     global ui, overlays, currentdataset
-    ui.dispmin_doubleSpinBox.setRange(
-        overlays[currentdataset.focusmap].minval,
-        overlays[currentdataset.focusmap].maxval,
-    )
-    ui.dispmax_doubleSpinBox.setRange(
-        overlays[currentdataset.focusmap].minval,
-        overlays[currentdataset.focusmap].maxval,
-    )
-    ui.dispmin_doubleSpinBox.setSingleStep(
-        (overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval)
-        / 100.0
-    )
-    ui.dispmax_doubleSpinBox.setSingleStep(
-        (overlays[currentdataset.focusmap].maxval - overlays[currentdataset.focusmap].minval)
-        / 100.0
-    )
-    ui.dispmin_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmin)
-    ui.dispmax_doubleSpinBox.setValue(overlays[currentdataset.focusmap].dispmax)
+    thismap = overlays[currentdataset.focusmap]
+    step = (thismap.maxval - thismap.minval) / 100.0
+
+    # Prevent range/value updates from firing valueChanged callbacks that would
+    # overwrite thismap.dispmin/dispmax during overlay switches.
+    min_was_blocked = ui.dispmin_doubleSpinBox.blockSignals(True)
+    max_was_blocked = ui.dispmax_doubleSpinBox.blockSignals(True)
+    try:
+        ui.dispmin_doubleSpinBox.setRange(thismap.minval, thismap.maxval)
+        ui.dispmax_doubleSpinBox.setRange(thismap.minval, thismap.maxval)
+        ui.dispmin_doubleSpinBox.setSingleStep(step)
+        ui.dispmax_doubleSpinBox.setSingleStep(step)
+        ui.dispmin_doubleSpinBox.setValue(thismap.dispmin)
+        ui.dispmax_doubleSpinBox.setValue(thismap.dispmax)
+    finally:
+        ui.dispmin_doubleSpinBox.blockSignals(min_was_blocked)
+        ui.dispmax_doubleSpinBox.blockSignals(max_was_blocked)
     updateUI(callingfunc="updateDispLimits", orthoimages=True)
 
 
@@ -3523,7 +3546,6 @@ def overlay_radioButton_clicked(which: Any, enabled: Any) -> None:
 
     if enabled:
         overlaybuttons[which].setChecked(True)
-        currentloc.stopMovie()
         if panetomap[which] != "":
             if atlasaveragingdone and (panetomap[which] != "atlas"):
                 currentdataset.setfocusmap(panetomap[which] + "_atlasstat")

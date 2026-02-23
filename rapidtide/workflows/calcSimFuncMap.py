@@ -394,6 +394,10 @@ def calcSimFunc(
             chunksize=chunksize,
             rt_floattype=rt_floattype,
             debug=debug,
+            usegpu=optiondict["usegpu"],
+            device=optiondict["gpu_device"],
+            batchsize=optiondict["gpu_batchsize"],
+            fallback_to_cpu=optiondict["gpu_fallback_to_cpu"],
         )
     elif (similaritymetric == "correlation") or (similaritymetric == "hybrid"):
         (
@@ -418,6 +422,10 @@ def calcSimFunc(
             chunksize=chunksize,
             rt_floattype=rt_floattype,
             debug=debug,
+            usegpu=optiondict["usegpu"],
+            device=optiondict["gpu_device"],
+            batchsize=optiondict["gpu_batchsize"],
+            fallback_to_cpu=optiondict["gpu_fallback_to_cpu"],
         )
     elif similaritymetric == "riptide":
         # do the linear fit to the comb of delayed regressors

@@ -1846,6 +1846,10 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             showprogressbar=optiondict["showprogressbar"],
             chunksize=optiondict["mp_chunksize"],
             rt_floattype=rt_floattype,
+            usegpu=optiondict["usegpu"],
+            device=optiondict["gpu_device"],
+            batchsize=optiondict["gpu_batchsize"],
+            fallback_to_cpu=optiondict["gpu_fallback_to_cpu"],
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
 

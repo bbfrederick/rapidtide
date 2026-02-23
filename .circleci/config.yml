@@ -6,10 +6,30 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@3.2.4
 commands:
+  build_base_environment:
+    steps:
+      - run:
+          name: Build base environment
+          command: |
+            if [[ -e /tmp/src/rapidtide/.venv ]]; then
+                echo "Restoring environment from cache"
+                source .venv/bin/activate
+            else
+                (sudo apt-get update || sudo apt-get update) # Robust apt update
+                sudo apt-get install -y gfortran libopenblas-dev
+                sudo apt-get install -yqq curl gpg
+                pip install --upgrade uv
+                uv venv --clear
+                source .venv/bin/activate
+                uv pip install --upgrade "setuptools>=70"
+                uv pip install --upgrade pip
+                uv pip install --upgrade distlib
+                uv pip install --upgrade pytest
+                uv pip install --upgrade numba
+                uv pip install --upgrade pyfftw
+            fi
   run_split_pytests:
     parameters:
-      env_name:
-        type: string
       timeout:
         type: string
         default: "20m"
@@ -21,9 +41,8 @@ commands:
           no_output_timeout: << parameters.timeout >>
           name: Run split pytest suite
           command: |
-            apt-get update
-            apt-get install -yqq curl gpg
-            source activate << parameters.env_name >>
+            sudo apt-get update
+            source .venv/bin/activate
             pwd
             pushd rapidtide/data/examples/src
             ./installtestdata
@@ -34,6 +53,7 @@ commands:
             pytest \
               $TESTFILES \
               << parameters.extra_args >> \
+              --color=yes \
               --junitxml=rapidtide/tests/test-results/junit.xml
             PYTEST_EXIT=$?
             set -e
@@ -43,46 +63,33 @@ commands:
             fi
             exit "$PYTEST_EXIT"
 jobs:
-
-
   build_py310:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.10
     resource_class: medium
     steps:
       - checkout
       - persist_to_workspace:
           root: /tmp
           paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
+            - src/rapidtide
+      - restore_cache: # ensure this step occurs *before* installing dependencies
           key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            if [[ -e /opt/conda/envs/py310_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py310_env
-            else
-                conda create -n py310_env python=3.10 -yq
-                source activate py310_env
-                pip install --upgrade "setuptools>=54"
-                pip install --upgrade pip
-                pip install --upgrade distlib
-                pip install --upgrade pytest
-            fi
-            pip install .[tf,test,doc]
-      - save_cache:  # environment cache tied to requirements
+      - build_base_environment
+      - run: # will overwrite rapidtide installation each time
+          name: Install rapidtide
+          command: |
+            uv pip install .[tf,test,doc]
+      - save_cache: # environment cache tied to requirements
           key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
-            - "/opt/conda/envs/py310_env"
-
+            - "/tmp/src/rapidtide/.venv"
 
   build_py311:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.11
     resource_class: medium
     steps:
       - checkout
@@ -92,100 +99,43 @@ jobs:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
           key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - build_base_environment
       - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
+          name: Install rapidtide
           command:  |
-            if [[ -e /opt/conda/envs/py311_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py311_env
-            else
-                conda create -n py311_env python=3.11 -yq
-                source activate py311_env
-                pip install --upgrade "setuptools>=54"
-                pip install --upgrade pip
-                pip install --upgrade distlib
-                pip install --upgrade pytest
-            fi
-            pip install .[tf,test,doc]
+            uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
-            - "/opt/conda/envs/py311_env"
-
-  build_py311_with_optional:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    resource_class: medium
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            if [[ -e /opt/conda/envs/py311_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py311_env
-            else
-                conda create -n py311_env python=3.11 -yq
-                source activate py311_env
-                pip install --upgrade "setuptools>=54"
-                pip install --upgrade pip
-                pip install --upgrade distlib
-                pip install --upgrade pytest
-            fi
-            pip install --upgrade numba
-            pip install --upgrade pyfftw
-            pip install .[tf,test,doc]
-      - save_cache:  # environment cache tied to requirements
-          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/opt/conda/envs/py311_env"
-
+            - "/tmp/src/rapidtide/.venv"
 
   build_py312:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.12
     resource_class: medium
     steps:
       - checkout
       - persist_to_workspace:
           root: /tmp
           paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
+            - src/rapidtide
+      - restore_cache: # ensure this step occurs *before* installing dependencies
           key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            if [[ -e /opt/conda/envs/py312_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py312_env
-            else
-                conda create -n py312_env python=3.12 -yq
-                source activate py312_env
-                pip install --upgrade "setuptools>=54"
-                pip install --upgrade pip
-                pip install --upgrade distlib
-                pip install --upgrade pytest
-            fi
-            pip install .[tf,test,doc]
-      - save_cache:  # environment cache tied to requirements
+      - build_base_environment
+      - run: # will overwrite rapidtide installation each time
+          name: Install rapidtide
+          command: |
+            uv pip install .[tf,test,doc]
+      - save_cache: # environment cache tied to requirements
           key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
-            - "/opt/conda/envs/py312_env"
-
+            - "/tmp/src/rapidtide/.venv"
 
   build_py313:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.13
     resource_class: medium
     steps:
       - checkout
@@ -195,27 +145,17 @@ jobs:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
           key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - build_base_environment
       - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
+          name: Install rapidtide
           command:  |
-            if [[ -e /opt/conda/envs/py313_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py313_env
-            else
-                conda create -n py313_env python=3.13 -yq
-                source activate py313_env
-                pip install --upgrade "setuptools>=54"
-                pip install --upgrade pip
-                pip install --upgrade distlib
-                pip install --upgrade pytest
-            fi
-            pip install .[tf,test,doc]
+            uv pip install .[tf,test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
-            - "/opt/conda/envs/py313_env"
+            - "/tmp/src/rapidtide/.venv"
 
-  build_py314_alt:
+  build_py314:
     working_directory: /tmp/src/rapidtide
     docker:
       - image: cimg/python:3.14
@@ -227,65 +167,21 @@ jobs:
           paths:
               - src/rapidtide
       - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - build_base_environment
       - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
+          name: Install rapidtide
           command:  |
-            (sudo apt-get update || sudo apt-get update) # Robust apt update
-            sudo apt-get install -y gfortran libopenblas-dev
-            pip install --upgrade uv
-            uv venv --clear
-            source .venv/bin/activate
-            uv pip install --upgrade "setuptools>=54"
-            uv pip install --upgrade pip
-            uv pip install --upgrade distlib
-            uv pip install --upgrade pytest
             uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
-          key: deps2-314alt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
             - "/tmp/src/rapidtide/.venv"
-
-  build_py314:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    resource_class: medium
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-              - src/rapidtide
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run:  # will overwrite rapidtide installation each time
-          name: Generate environment
-          command:  |
-            if [[ -e /opt/conda/envs/py314_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py314_env
-            else
-                (apt-get update || apt-get update) # Robust apt update
-                apt-get install -y gcc g++ gfortran libopenblas-dev
-                conda create -n py314_env python=3.14 -yq
-                source activate py314_env
-                pip install --upgrade "setuptools>=54"
-                pip install --upgrade pip
-                pip install --upgrade distlib
-                pip install --upgrade pytest
-            fi
-            pip install .[test,doc]
-      - save_cache:  # environment cache tied to requirements
-          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/opt/conda/envs/py314_env"
-
 
   test_py310:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.10
     parallelism: 4
     resource_class: large
     environment:
@@ -303,37 +199,6 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-310-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run_split_pytests:
-          env_name: py310_env
-          timeout: "20m"
-          extra_args: '-m "not slow"'
-      - store_test_results:
-          path: rapidtide/tests/test-results
-      - store_artifacts:
-          path: rapidtide/tests/test-results
-
-
-  test_py311_with_optional:
-    working_directory: /tmp/src/rapidtide
-    docker:
-      - image: continuumio/miniconda3
-    parallelism: 4
-    resource_class: large
-    environment:
-      OMP_NUM_THREADS: "1"
-      OPENBLAS_NUM_THREADS: "1"
-      MKL_NUM_THREADS: "1"
-      NUMEXPR_NUM_THREADS: "1"
-      MPLBACKEND: "Agg"
-      MPLCONFIGDIR: "/tmp/mplconfig"
-      PYTHONPATH: "/tmp/src/rapidtide"
-    steps:
-      - checkout
-      - attach_workspace:  # get rapidtide
-          at: /tmp
-      - restore_cache:  # load environment
-          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
-      - run_split_pytests:
-          env_name: py311_env
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
@@ -341,11 +206,10 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-
-  test_py311_slow:
+  test_py311:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.11
     parallelism: 4
     resource_class: large
     environment:
@@ -361,26 +225,19 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run_split_pytests:
-          env_name: py311_env
-          timeout: "40m"
-          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow --cov-report xml:rapidtide/coverage_slow.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
-      - codecov/upload:
-          file: rapidtide/coverage_slow.xml
-      - store_artifacts:
-          path: rapidtide/coverage_slow.xml
-          destination: artifact-file
+          timeout: "20m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
           path: rapidtide/tests/test-results
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-
-  test_py311_with_coverage:
+  test_py311_slow:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.11
     parallelism: 8
     resource_class: large
     environment:
@@ -396,24 +253,77 @@ jobs:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-311opt-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run_split_pytests:
-          env_name: py311_env
+          timeout: "40m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow --cov-report xml:rapidtide/coverage_slow.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
+      - run:
+          name: Upload slow coverage if present
+          command: |
+            if [ -s rapidtide/coverage_slow.xml ]; then
+              curl -Os https://cli.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov upload-process \
+                -f rapidtide/coverage_slow.xml \
+                -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
+                -F py311,slow
+            else
+              echo "No slow coverage report on this shard; skipping Codecov upload."
+            fi
+      - store_artifacts:
+          path: rapidtide/coverage_slow.xml
+          destination: artifact-file
+      - store_test_results:
+          path: rapidtide/tests/test-results
+      - store_artifacts:
+          path: rapidtide/tests/test-results
+
+  test_py311_with_coverage:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.11
+    parallelism: 4
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-311-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
           timeout: "25m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow" --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
-      - codecov/upload:
-          file: rapidtide/coverage.xml
+      - run:
+          name: Upload coverage if present
+          command: |
+            if [ -s rapidtide/coverage.xml ]; then
+              curl -Os https://cli.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov upload-process \
+                -f rapidtide/coverage.xml \
+                -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
+                -F py311
+            else
+              echo "No coverage report on this shard; skipping Codecov upload."
+            fi
       - store_artifacts:
           path: rapidtide/coverage.xml
           destination: artifact-file
       - store_test_results:
           path: rapidtide/tests/test-results
-      
 
   test_py312:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.12
     parallelism: 4
     resource_class: large
     environment:
@@ -431,7 +341,6 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-312-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run_split_pytests:
-          env_name: py312_env
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
@@ -439,11 +348,10 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-
   test_py313:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.13
     parallelism: 4
     resource_class: large
     environment:
@@ -461,7 +369,6 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run_split_pytests:
-          env_name: py313_env
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
@@ -469,11 +376,96 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
+  test_py313_slow:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.13
+    parallelism: 8
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
+          timeout: "40m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m slow --cov-report xml:rapidtide/coverage_slow.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
+      - run:
+          name: Upload slow coverage if present
+          command: |
+            if [ -s rapidtide/coverage_slow.xml ]; then
+              curl -Os https://cli.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov upload-process \
+                -f rapidtide/coverage_slow.xml \
+                -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
+                -F py313,slow
+            else
+              echo "No slow coverage report on this shard; skipping Codecov upload."
+            fi
+      - store_artifacts:
+          path: rapidtide/coverage_slow.xml
+          destination: artifact-file
+      - store_test_results:
+          path: rapidtide/tests/test-results
+      - store_artifacts:
+          path: rapidtide/tests/test-results
+
+  test_py313_with_coverage:
+    working_directory: /tmp/src/rapidtide
+    docker:
+      - image: cimg/python:3.13
+    parallelism: 4
+    resource_class: large
+    environment:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MPLBACKEND: "Agg"
+      MPLCONFIGDIR: "/tmp/mplconfig"
+      PYTHONPATH: "/tmp/src/rapidtide"
+    steps:
+      - checkout
+      - attach_workspace:  # get rapidtide
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+      - run_split_pytests:
+          timeout: "25m"
+          extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow" --cov-report xml:rapidtide/coverage.xml --cov=rapidtide --cov-config=rapidtide/tests/.coveragerc'
+      - run:
+          name: Upload coverage if present
+          command: |
+            if [ -s rapidtide/coverage.xml ]; then
+              curl -Os https://cli.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov upload-process \
+                -f rapidtide/coverage.xml \
+                -n "${CIRCLE_JOB}-${CIRCLE_NODE_INDEX}" \
+                -F py313
+            else
+              echo "No coverage report on this shard; skipping Codecov upload."
+            fi
+      - store_artifacts:
+          path: rapidtide/coverage.xml
+          destination: artifact-file
+      - store_test_results:
+          path: rapidtide/tests/test-results
 
   test_py314:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.14
     parallelism: 4
     resource_class: large
     environment:
@@ -491,7 +483,6 @@ jobs:
       - restore_cache:  # load environment
           key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run_split_pytests:
-          env_name: py314_env
           timeout: "20m"
           extra_args: '-W ignore --ignore=rapidtide/candidatetests -m "not slow"'
       - store_test_results:
@@ -499,11 +490,10 @@ jobs:
       - store_artifacts:
           path: rapidtide/tests/test-results
 
-
   build_docs:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.11
     resource_class: small
     steps:
       - attach_workspace:  # get rapidtide
@@ -513,13 +503,12 @@ jobs:
       - run:
           name: Build documentation
           command: |
-            apt-get update
-            apt-get install -yqq make
-            source activate py311_env
-            pip install .[doc]
-            pip uninstall -y pyqtgraph
-            pip install numpydoc
-            #pip install pyqt5-sip
+            sudo apt-get update
+            sudo apt-get install -yqq make
+            source .venv/bin/activate
+            uv pip install .[doc]
+            uv pip uninstall pyqtgraph
+            uv pip install numpydoc
             make -C docs html
       - store_artifacts:
           path: /tmp/src/rapidtide/docs/_build/html
@@ -527,18 +516,18 @@ jobs:
   style_check:
     working_directory: /tmp/src/rapidtide
     docker:
-      - image: continuumio/miniconda3
+      - image: cimg/python:3.14
     resource_class: small
     steps:
       - attach_workspace:  # get rapidtide
           at: /tmp
       - restore_cache:  # load environment
-          key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
+          key: deps2-314-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
       - run:
           name: Linting
           command:  |
-            source activate py313_env
-            pip install flake8-black
+            source .venv/bin/activate
+            uv pip install flake8-black
             flake8 --ignore=E114,E116,E127,E203,E231,E402,E501,E722,F401,F841,W503,W504 /tmp/src/rapidtide/rapidtide
       - store_artifacts:
           path: /tmp/data/lint
@@ -552,19 +541,15 @@ workflows:
           requires:
             - build_py310
       - build_py311
-      - build_py311_with_optional
-      - test_py311_with_coverage:
-          requires:
-            - build_py311_with_optional
-      - test_py311_slow:
-          requires:
-            - build_py311_with_optional
-      #- test_py311_with_optional:
-      #    requires:
-      #      - build_py311
-      - build_docs:
+      - test_py311:
           requires:
             - build_py311
+      #- test_py311_with_coverage:
+      #    requires:
+      #      - build_py311
+      #- test_py311_slow:
+      #    requires:
+      #      - build_py311
       - build_py312
       - test_py312:
           requires:
@@ -573,11 +558,19 @@ workflows:
       - test_py313:
           requires:
             - build_py313
+      - test_py313_with_coverage:
+          requires:
+            - build_py313
+      - test_py313_slow:
+          requires:
+            - build_py313
       - build_py314
-      #- build_py314_alt
       - test_py314:
           requires:
             - build_py314
+      - build_docs:
+          requires:
+            - build_py311
       #- style_check:
       #    requires:
-      #      - build_py313
+      #      - build_py314
