@@ -24,8 +24,7 @@ import numpy as np
 import pytest
 
 from rapidtide.tests.utils import create_dir, get_test_temp_path
-from rapidtide.workflows.atlasaverage import (_get_parser, atlasaverage,
-                                              summarizevoxels)
+from rapidtide.workflows.atlasaverage import _get_parser, atlasaverage, summarizevoxels
 
 # ==================== Helpers ====================
 
@@ -542,12 +541,8 @@ def atlasaverage_3d_no_headerline(debug=False):
 def atlasaverage_3d_with_datalabel(debug=False):
     """Test 3D mode with datalabel prepended.
 
-    NOTE: There is a known bug in atlasaverage.py (line 638-640) where
-    setting datalabel causes an IndexError when building the regionpercentiles
-    TSV. The bug is that thereglabels gets an extra "Region" entry at index 0
-    when datalabel is set, but theregsizes and thepercentiles don't have a
-    corresponding entry, causing an off-by-one IndexError in the for loop.
-    This test verifies the bug exists (expects IndexError).
+    Regression coverage: datalabel should not trigger an off-by-one
+    when writing region percentile outputs.
     """
     if debug:
         print("atlasaverage_3d_with_datalabel")
@@ -575,8 +570,6 @@ def atlasaverage_3d_with_datalabel(debug=False):
     def mock_getfracvals(data, fracs, **kwargs):
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
 
-    import pytest
-
     with (
         patch(
             "rapidtide.workflows.atlasaverage.tide_io.readfromnifti",
@@ -601,10 +594,7 @@ def atlasaverage_3d_with_datalabel(debug=False):
             "rapidtide.workflows.atlasaverage.tide_stats.getfracvals", side_effect=mock_getfracvals
         ),
     ):
-
-        # Bug: datalabel causes IndexError in regionpercentiles TSV generation
-        with pytest.raises(IndexError):
-            atlasaverage(args)
+        atlasaverage(args)
 
 
 def atlasaverage_3d_ignorezeros(debug=False):
