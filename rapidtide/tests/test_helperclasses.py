@@ -105,6 +105,15 @@ class TestFMRIDataset:
         assert dataset.slicesize == 80  # 8 * 10
         assert dataset.numvox == 400  # 80 * 5
 
+    def test_getsizes_3d_input(self):
+        """Test getsizes method with 3D data."""
+        data = np.random.rand(8, 10, 5).astype(np.float32)
+        dataset = tide_classes.fMRIDataset(data)
+
+        assert dataset.theshape == (8, 10, 5)
+        assert dataset.realtimepoints == 1
+        assert dataset.timepoints == 1
+
     def test_setnumskip(self):
         """Test setnumskip method."""
         data = np.random.rand(10, 12, 8, 100).astype(np.float32)
@@ -258,11 +267,10 @@ class TestProbeRegressor:
         regressor.makeinputtimeaxis()
 
         assert regressor.inputtimeaxis is not None
-        # np.linspace default is 50 points from 0 to len(inputvec)
-        assert len(regressor.inputtimeaxis) == 50
+        assert len(regressor.inputtimeaxis) == 100
         assert regressor.inputtimeaxis[0] == pytest.approx(0.0)
-        # Last value should be len(inputvec)/inputfreq = 100/10 = 10
-        assert regressor.inputtimeaxis[-1] == pytest.approx(10.0)
+        # Last value should be (len(inputvec)-1)/inputfreq = 99/10 = 9.9
+        assert regressor.inputtimeaxis[-1] == pytest.approx(9.9)
 
     def test_maketargettimeaxis(self):
         """Test maketargettimeaxis method."""
@@ -271,6 +279,8 @@ class TestProbeRegressor:
         regressor.targetperiod = 0.1
         regressor.targetstartpoint = 0
         regressor.targetpoints = 10
+        regressor.targetstart = 0.0
+        regressor.targetoffset = 0.0
 
         regressor.maketargettimeaxis()
 
@@ -286,11 +296,26 @@ class TestProbeRegressor:
         regressor.targetperiod = 0.1
         regressor.targetstartpoint = 5
         regressor.targetpoints = 10
+        regressor.targetstart = 0.0
+        regressor.targetoffset = 0.0
 
         regressor.maketargettimeaxis()
 
         assert regressor.targettimeaxis[0] == pytest.approx(0.5)  # 0.1 * 5
         assert len(regressor.targettimeaxis) == 10
+
+    def test_maketargettimeaxis_uses_target_start_and_offset(self):
+        """Test maketargettimeaxis applies target start/offset."""
+        regressor = object.__new__(tide_classes.ProbeRegressor)
+        regressor.targetperiod = 0.1
+        regressor.targetstartpoint = 5
+        regressor.targetpoints = 10
+        regressor.targetstart = 0.2
+        regressor.targetoffset = 0.1
+
+        regressor.maketargettimeaxis()
+
+        assert regressor.targettimeaxis[0] == pytest.approx(0.2)  # 0.5 - (0.2 + 0.1)
 
 
 # ============================================================================
@@ -519,6 +544,15 @@ class TestCoherer:
         # Coherence should be between 0 and 1 (with small tolerance for numerical precision)
         assert np.all(coherence >= -1e-10)
         assert np.all(coherence <= 1 + 1e-10)
+
+    def test_run_trim_invalid_range_raises(self, sample_filter, sample_timecourse, sample_fs):
+        """Test run raises on invalid trim range."""
+        coherer = tide_classes.Coherer(Fs=sample_fs, ncprefilter=sample_filter)
+        coherer.setreftc(sample_timecourse)
+        coherer.setlimits(0.10, 0.10)
+
+        with pytest.raises(ValueError, match="invalid coherence trim range"):
+            coherer.run(sample_timecourse, trim=True)
 
 
 # ============================================================================

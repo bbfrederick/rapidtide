@@ -145,7 +145,7 @@ class fMRIDataset:
         self.numslices = self.theshape[2]
         try:
             self.realtimepoints = self.theshape[3]
-        except KeyError:
+        except IndexError:
             self.realtimepoints = 1
         self.slicesize = self.xsize * self.ysize
         self.numvox = self.slicesize * self.numslices
@@ -377,6 +377,8 @@ class ProbeRegressor:
         self.targetoversample = targetoversample
         self.targetpoints = targetpoints
         self.targetstartpoint = targetstartpoint
+        self.targetstart = targetstart
+        self.targetoffset = targetoffset
 
     def setinputvec(self, inputvec: NDArray, inputfreq: float, inputstart: float = 0.0) -> None:
         """
@@ -449,8 +451,9 @@ class ProbeRegressor:
         >>> print(obj.inputtimeaxis)
         [ 0.          0.001       0.002 ...  0.998       0.999      ]
         """
-        self.inputtimeaxis = np.linspace(0.0, len(self.inputvec)) / self.inputfreq - (
-            self.inputstart + self.inputoffset
+        self.inputtimeaxis = (
+            np.arange(len(self.inputvec), dtype=np.float64) / self.inputfreq
+            - (self.inputstart + self.inputoffset)
         )
 
     def maketargettimeaxis(self) -> None:
@@ -484,8 +487,10 @@ class ProbeRegressor:
         [0.   0.1  0.2  0.3  0.4]
         """
         self.targettimeaxis = np.linspace(
-            self.targetperiod * self.targetstartpoint,
-            self.targetperiod * self.targetstartpoint + self.targetperiod * self.targetpoints,
+            self.targetperiod * self.targetstartpoint - (self.targetstart + self.targetoffset),
+            self.targetperiod * self.targetstartpoint
+            + self.targetperiod * self.targetpoints
+            - (self.targetstart + self.targetoffset),
             num=self.targetpoints,
             endpoint=True,
         )
@@ -837,6 +842,10 @@ class Coherer:
         self.datavalid = True
 
         if trim:
+            if self.freqmaxinpts <= self.freqmininpts:
+                raise ValueError(
+                    f"invalid coherence trim range: [{self.freqmininpts}, {self.freqmaxinpts})"
+                )
             if alt:
                 self.themax = np.argmax(self.thecoherence[self.freqmininpts : self.freqmaxinpts])
                 return (
