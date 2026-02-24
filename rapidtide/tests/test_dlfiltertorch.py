@@ -435,9 +435,6 @@ def minimal_cpu_training_loop_cnn(testtemproot):
     filter_obj.device = torch.device("cpu")
     filter_obj.model.to(filter_obj.device)
 
-    # Work around modelname/modelpath inconsistency by using absolute model dir.
-    filter_obj.modelname = filter_obj.modelpath
-    os.makedirs(filter_obj.modelname, exist_ok=True)
     filter_obj.initmetadata()
 
     filter_obj.train_x = train_x
@@ -451,9 +448,9 @@ def minimal_cpu_training_loop_cnn(testtemproot):
     assert len(filter_obj.loss) == 1
     assert len(filter_obj.val_loss) == 1
     assert next(filter_obj.model.parameters()).device.type == "cpu"
-    assert os.path.exists(os.path.join(filter_obj.modelname, "model.pth"))
-    assert os.path.exists(os.path.join(filter_obj.modelname, "best_model.pth"))
-    assert os.path.exists(os.path.join(filter_obj.modelname, "loss.txt"))
+    assert os.path.exists(os.path.join(filter_obj.modelpath, "model.pth"))
+    assert os.path.exists(os.path.join(filter_obj.modelpath, "best_model.pth"))
+    assert os.path.exists(os.path.join(filter_obj.modelpath, "loss.txt"))
 
     preds = filter_obj.predict_model(val_x)
     assert preds.shape == val_y.shape

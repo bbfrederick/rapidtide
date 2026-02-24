@@ -479,7 +479,7 @@ class DeepLearningFilter:
         >>> print(f"Prediction Error: {pred_error}")
         Prediction Error: 0.1234
         """
-        self.lossfilename = os.path.join(self.modelname, "loss.png")
+        self.lossfilename = os.path.join(self.modelpath, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
         fullbatches = int(self.val_x.shape[0] // self.batch_size)
@@ -521,9 +521,9 @@ class DeepLearningFilter:
 
         LGR.info(f"Prediction Error: {self.pred_error}\tRaw Error: {self.raw_error}")
 
-        f = open(os.path.join(self.modelname, "loss.txt"), "w")
+        f = open(os.path.join(self.modelpath, "loss.txt"), "w")
         f.write(
-            self.modelname
+            self.modelpath
             + ": Prediction Error: "
             + str(self.pred_error)
             + " Raw Error: "
@@ -690,7 +690,7 @@ class DeepLearningFilter:
         >>> savemodel(altname="my_custom_model")
         """
         if altname is None:
-            modelsavename = self.modelname
+            modelsavename = self.modelpath
         else:
             modelsavename = altname
         LGR.info(f"saving {modelsavename}")
@@ -997,7 +997,7 @@ class DeepLearningFilter:
 
             # Save checkpoint
             self.intermediatemodelpath = os.path.join(
-                self.modelname, f"model_e{epoch+1:02d}_v{val_loss_epoch:.4f}.pth"
+                self.modelpath, f"model_e{epoch+1:02d}_v{val_loss_epoch:.4f}.pth"
             )
             torch.save(
                 {
@@ -1015,7 +1015,7 @@ class DeepLearningFilter:
                 best_val_loss = val_loss_epoch
                 patience_counter = 0
                 # Save best model
-                torch.save(self.model.state_dict(), os.path.join(self.modelname, "best_model.pth"))
+                torch.save(self.model.state_dict(), os.path.join(self.modelpath, "best_model.pth"))
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
@@ -1023,7 +1023,7 @@ class DeepLearningFilter:
                     # Restore best weights
                     self.model.load_state_dict(
                         torch.load(
-                            os.path.join(self.modelname, "best_model.pth"), weights_only=True
+                            os.path.join(self.modelpath, "best_model.pth"), weights_only=True
                         )
                     )
                     break
