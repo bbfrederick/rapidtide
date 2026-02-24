@@ -203,13 +203,16 @@ def congrid(
         offsetinpts = center + offset
         startpt = int(np.ceil(offsetinpts - width / 2.0))
         endpt = int(np.floor(offsetinpts + width / 2.0))
-        indices = np.remainder(np.array(list(range(startpt, endpt + 1))), len(xaxis))
+        rawindices = np.arange(startpt, endpt + 1)
+        indices = np.remainder(rawindices, len(xaxis))
         try:
             yvals = congridyvals[offsetkey]
         except KeyError:
             if debug:
                 print("new key:", offsetkey)
-            xvals = indices - center + offset
+            # Compute distances from the unwrapped sample location to avoid
+            # edge wrapping artifacts in cyclic mode.
+            xvals = rawindices - offsetinpts
             if kernel == "gauss":
                 sigma = optsigma[kernelindex]
                 yvals = tide_fit.gauss_eval(xvals, np.array([1.0, 0.0, sigma]))
@@ -295,8 +298,8 @@ class FastResampler:
         self.initend = timeaxis[-1]
         self.hiresstep = self.initstep / np.float64(self.upsampleratio)
         self.hires_x = np.arange(
-            timeaxis[0] - self.padtime,
-            self.initstep * len(timeaxis) + self.padtime,
+            self.initstart - self.padtime,
+            self.initstart + self.initstep * len(timeaxis) + self.padtime,
             self.hiresstep,
         )
         self.hiresstart = self.hires_x[0]
@@ -332,7 +335,7 @@ class FastResampler:
         # self.hires_y[:int(self.padtime // self.hiresstep)] = 0.0
         # self.hires_y[-int(self.padtime // self.hiresstep):] = 0.0
         if doplot:
-            import matplolib.pyplot as pl
+            import matplotlib.pyplot as plt
 
             fig = plt.figure()
             ax = fig.add_subplot(111)
@@ -727,8 +730,7 @@ def doresample(
         # return tide_filt.unpadvec(np.float64(interpolator(new_x)), padlen=padlen)
         return (interpolator(new_x)).astype(np.float64)
     else:
-        print("invalid interpolation method")
-        return None
+        raise ValueError(f"invalid interpolation method: {method}")
 
 
 def arbresample(
@@ -936,11 +938,12 @@ def upsample(
     # upsample
     orig_x = np.linspace(0.0, (1.0 / Fs_init) * len(inputdata), num=len(inputdata), endpoint=False)
     endpoint = orig_x[-1] - orig_x[0]
+    duration = endpoint + (1.0 / Fs_init)
     ts_higher = 1.0 / Fs_higher
     if intfac:
         numresamppts = int(Fs_higher // Fs_init) * len(inputdata)
     else:
-        numresamppts = int(endpoint // ts_higher + 1)
+        numresamppts = int(np.round(duration / ts_higher))
     upsampled_x = np.arange(0.0, ts_higher * numresamppts, ts_higher)
     upsampled_y = doresample(orig_x, inputdata, upsampled_x, method=method)
     if dofilt:
@@ -1018,9 +1021,10 @@ def dotwostepresample(
     # upsample
     starttime = time.time()
     endpoint = orig_x[-1] - orig_x[0]
+    duration = endpoint + (orig_x[1] - orig_x[0])
     init_freq = len(orig_x) / endpoint
     intermed_ts = 1.0 / intermed_freq
-    numresamppts = int(endpoint // intermed_ts + 1)
+    numresamppts = int(np.round(duration / intermed_ts))
     intermed_x = intermed_ts * np.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
     intermed_y = doresample(orig_x, orig_y, intermed_x, method=method)
     if debug:
@@ -1050,7 +1054,7 @@ def dotwostepresample(
     # downsample
     starttime = time.time()
     final_ts = 1.0 / final_freq
-    numresamppts = int(np.ceil(endpoint / final_ts))
+    numresamppts = int(np.round(duration / final_ts))
     # final_x = np.arange(0.0, final_ts * numresamppts, final_ts)
     final_x = final_ts * np.linspace(0.0, 1.0 * numresamppts, numresamppts, endpoint=False)
     resampled_y = doresample(intermed_x, antialias_y, final_x, method=method)
