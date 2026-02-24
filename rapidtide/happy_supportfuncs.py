@@ -614,7 +614,7 @@ def _compute_slice_averages(
         if usemask:
             valid_voxel_indices = np.where(np.abs(theseweights_byslice[:, slice_idx]) > 0)[0]
         else:
-            valid_voxel_indices = np.where(np.abs(theseweights_byslice[:, slice_idx] >= 0))[0]
+            valid_voxel_indices = np.arange(theseweights_byslice.shape[0])
 
         if len(valid_voxel_indices) > 0:
             # Compute weighted average for this slice
@@ -644,7 +644,7 @@ def _compute_slice_averages(
 
     # Compute cycle average
     for i in range(numsteps):
-        cycleaverage[i] = np.mean(high_res_timecourse[i:-1:numsteps])
+        cycleaverage[i] = np.mean(high_res_timecourse[i::numsteps])
 
     # Apply cycle average correction
     for t in range(len(high_res_timecourse)):
@@ -2590,15 +2590,13 @@ def cardiaccycleaverage(
         for i in range(len(theindices)):
             weight_bypoint[theindices[i]] += theweights[i]
             rawapp_bypoint[theindices[i]] += theweights[i] * waveform[t]
-    rawapp_bypoint = np.where(
-        weight_bypoint > (np.max(weight_bypoint) / 50.0),
-        np.nan_to_num(rawapp_bypoint / weight_bypoint),
-        0.0,
-    )
-    minval = np.min(rawapp_bypoint[np.where(weight_bypoint > np.max(weight_bypoint) / 50.0)])
-    rawapp_bypoint = np.where(
-        weight_bypoint > np.max(weight_bypoint) / 50.0, rawapp_bypoint - minval, 0.0
-    )
+    threshold = np.max(weight_bypoint) / 50.0
+    validpoints = weight_bypoint > threshold
+    rawapp_bypoint[:] = 0.0
+    if np.any(validpoints):
+        rawapp_bypoint[validpoints] = rawapp_bypoint[validpoints] / weight_bypoint[validpoints]
+        minval = np.min(rawapp_bypoint[validpoints])
+        rawapp_bypoint[validpoints] -= minval
     return rawapp_bypoint, weight_bypoint
 
 
