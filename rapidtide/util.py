@@ -153,6 +153,19 @@ def checkimports(optiondict: dict[str, Any]) -> None:
         print("using numba if present")
     optiondict["donotusenumba"] = donotusenumba
 
+def disablelibthreads() -> None:
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
+    os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+    os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
+
+def enablelibthreads(ompthreads: int, openblasthreads: int, veclibthreads: int, numexprthreads: int, debug: bool = False) -> None:
+    os.environ["OMP_NUM_THREADS"] = str(ompthreads)
+    os.environ["OPENBLAS_NUM_THREADS"] = str(openblasthreads)
+    os.environ["VECLIB_MAXIMUM_THREADS"] = str(veclibthreads)
+    os.environ["NUMEXPR_NUM_THREADS"] = str(numexprthreads)
+
 
 def disablemkl(numprocs: int, debug: bool = False) -> None:
     """
