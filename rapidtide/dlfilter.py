@@ -46,11 +46,24 @@ if pyfftwpresent:
 
 import tensorflow as tf
 import tf_keras.backend as K
-from tf_keras.callbacks import (EarlyStopping, ModelCheckpoint, TensorBoard,
-                                TerminateOnNaN)
-from tf_keras.layers import (Activation, BatchNormalization, Convolution1D,
-                             Dense, Dropout, Flatten, Input, MaxPooling1D,
-                             Reshape, UpSampling1D)
+from tf_keras.callbacks import (
+    EarlyStopping,
+    ModelCheckpoint,
+    TensorBoard,
+    TerminateOnNaN,
+)
+from tf_keras.layers import (
+    Activation,
+    BatchNormalization,
+    Convolution1D,
+    Dense,
+    Dropout,
+    Flatten,
+    Input,
+    MaxPooling1D,
+    Reshape,
+    UpSampling1D,
+)
 from tf_keras.models import Model, Sequential, load_model
 from tf_keras.optimizers.legacy import RMSprop
 
@@ -559,7 +572,7 @@ class DeepLearningFilter:
         >>> print(f"Prediction Error: {pred_error}")
         Prediction Error: 0.1234
         """
-        self.lossfilename = os.path.join(self.modelname, "loss.png")
+        self.lossfilename = os.path.join(self.modelpath, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
         YPred = self.predict_model(self.val_x).numpy()
@@ -571,9 +584,9 @@ class DeepLearningFilter:
         self.raw_error = np.mean(np.square(error2))
         LGR.info(f"Prediction Error: {self.pred_error}\tRaw Error: {self.raw_error}")
 
-        f = open(os.path.join(self.modelname, "loss.txt"), "w")
+        f = open(os.path.join(self.modelpath, "loss.txt"), "w")
         f.write(
-            self.modelname
+            self.modelpath
             + ": Prediction Error: "
             + str(self.pred_error)
             + " Raw Error: "
@@ -898,7 +911,7 @@ class DeepLearningFilter:
         >>> trainer.train()
         """
         self.intermediatemodelpath = os.path.join(
-            self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.keras"
+            self.modelpath, "model_e{epoch:02d}_v{val_loss:.4f}.keras"
         )
         train_dataset = (
             tf.data.Dataset.from_tensor_slices((self.train_x, self.train_y))
