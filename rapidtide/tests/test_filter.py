@@ -19,10 +19,49 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 import scipy as sp
 
 from rapidtide.ffttools import showfftcache
-from rapidtide.filter import NoncausalFilter
+from rapidtide.filter import (
+    NoncausalFilter,
+    Plethfilter,
+    arb_pass,
+    csdfilter,
+    dobpfftfilt,
+    dobpfiltfilt,
+    dobptransfuncfilt,
+    dobptrapfftfilt,
+    dohpfftfilt,
+    dohpfiltfilt,
+    dohptransfuncfilt,
+    dohptrapfftfilt,
+    dolpfftfilt,
+    dolpfiltfilt,
+    dolptransfuncfilt,
+    dolptrapfftfilt,
+    getfilterbandfreqs,
+    gethptransfunc,
+    getlpfftfunc,
+    getlptransfunc,
+    getlptrapfftfunc,
+    harmonicnotchfilter,
+    ifftfrompolar,
+    mRect,
+    padvec,
+    polarfft,
+    pspec,
+    rect,
+    savgolsmooth,
+    setnotchfilter,
+    spectralflatness,
+    spectrum,
+    ssmooth,
+    transferfuncfilt,
+    unpadvec,
+    wiener_deconvolution,
+    windowfunction,
+)
 
 
 def maketestwaves(timeaxis):
@@ -301,6 +340,242 @@ def test_filterprops(displayplots=False, debug=False):
         sampletime=0.1, tclengthinsecs=30000.1, numruns=10, displayplots=displayplots, debug=debug
     )
     showfftcache()
+
+
+def test_plethfilter_initializes_coefficients():
+    filt = Plethfilter(Fs=100.0, Fl=1.0, Fh=8.0)
+
+    assert filt.Fn == 50.0
+    assert filt.b.ndim == 1
+    assert filt.a.ndim == 1
+    assert len(filt.b) > 0
+    assert len(filt.a) > 0
+
+
+def test_plethfilter_apply_returns_finite_output():
+    filt = Plethfilter(Fs=100.0, Fl=1.0, Fh=8.0)
+    t = np.arange(1000) / 100.0
+    signal = np.sin(2.0 * np.pi * 2.0 * t) + 0.5 * np.sin(2.0 * np.pi * 20.0 * t)
+
+    filtered = filt.apply(signal)
+
+    assert filtered.shape == signal.shape
+    assert np.isfinite(filtered).all()
+
+
+def test_padvec_and_unpadvec_round_trip():
+    data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+    padded = padvec(data, padlen=2, avlen=2, padtype="reflect")
+    assert padded.shape[0] == data.shape[0] + 4
+    assert np.allclose(unpadvec(padded, padlen=2), data)
+    assert np.allclose(unpadvec(data, padlen=0), data)
+
+
+def test_padvec_padding_modes_and_errors():
+    data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+    assert np.allclose(padvec(data, padlen=2, padtype="zero"), np.array([0, 0, 1, 2, 3, 4, 0, 0]))
+    assert np.allclose(padvec(data, padlen=2, padtype="cyclic"), np.array([3, 4, 1, 2, 3, 4, 1, 2]))
+    assert np.allclose(
+        padvec(data, padlen=2, padtype="constant"), np.array([1, 1, 1, 2, 3, 4, 4, 4])
+    )
+    assert np.allclose(
+        padvec(data, padlen=2, avlen=2, padtype="constant+"),
+        np.array([1.5, 1.5, 1.0, 2.0, 3.0, 4.0, 3.5, 3.5]),
+    )
+    with pytest.raises(ValueError):
+        padvec(data, padlen=2, padtype="not-a-mode")
+    with pytest.raises(RuntimeError):
+        padvec(data, padlen=8, padtype="reflect")
+
+
+def test_getfilterbandfreqs_valid_and_errors():
+    lowerpass, upperpass, lowerstop, upperstop = getfilterbandfreqs("lfo")
+    assert lowerpass == pytest.approx(0.01)
+    assert upperpass == pytest.approx(0.15)
+    assert lowerstop < lowerpass
+    assert upperstop > upperpass
+    assert getfilterbandfreqs("lfo", asrange=True) == "0.01-0.15Hz"
+    with pytest.raises(SystemExit):
+        getfilterbandfreqs("notaband")
+    with pytest.raises(SystemExit):
+        getfilterbandfreqs("lfo", species="mouse")
+
+
+@pytest.mark.parametrize(
+    "band",
+    ["vlf", "lfo_legacy", "lfo_tight", "hrv_ulf", "hrv_vlf", "hrv_lf", "hrv_hf", "hrv_vhf"],
+)
+def test_getfilterbandfreqs_supported_bands(band):
+    lowerpass, upperpass, lowerstop, upperstop = getfilterbandfreqs(band)
+    assert lowerpass <= upperpass
+    assert lowerstop <= upperstop
+
+
+def test_noncausalfilter_accessors_and_setfreq_validation():
+    filt = NoncausalFilter(filtertype="None")
+    filt.settype("lfo")
+    assert filt.gettype() == "lfo"
+    filt.setbutterorder(5)
+    assert filt.butterworthorder == 5
+    filt.setdebug(True)
+    assert filt.debug is True
+    filt.setpadtime(2.5)
+    assert filt.getpadtime() == pytest.approx(2.5)
+    filt.setpadtype("cyclic")
+    assert filt.getpadtype() == "cyclic"
+    filt.settransferfunc("brickwall")
+    assert filt.transferfunc == "brickwall"
+
+    filt.setfreqs(0.1, 0.2, 0.4, 0.5)
+    assert filt.getfreqs() == pytest.approx((0.1, 0.2, 0.4, 0.5))
+
+    with pytest.raises(SystemExit):
+        filt.setfreqs(0.2, 0.1, 0.4, 0.5)
+    with pytest.raises(SystemExit):
+        filt.setfreqs(0.1, 0.2, 0.5, 0.4)
+    with pytest.raises(SystemExit):
+        filt.setfreqs(0.1, 0.5, 0.4, 0.6)
+
+
+def test_fft_polar_round_trip():
+    x = np.array([0.0, 1.0, 0.5, -0.5, -1.0, 0.25], dtype=np.float64)
+    magnitude, phase = polarfft(x)
+    reconstructed = ifftfrompolar(magnitude, phase)
+    assert reconstructed.shape == x.shape
+    assert np.allclose(reconstructed, x, atol=1e-10)
+
+
+def test_ssmooth_and_spectrum_modes():
+    vol = np.zeros((9, 9, 9), dtype=np.float64)
+    vol[4, 4, 4] = 1.0
+    smoothed = ssmooth(1.0, 1.0, 1.0, 1.0, vol)
+    assert smoothed.shape == vol.shape
+    assert smoothed[4, 4, 4] < 1.0
+
+    trace = np.sin(2.0 * np.pi * np.arange(128) / 32.0)
+    for mode in ["real", "imag", "complex", "mag", "phase", "power"]:
+        freqs, vals = spectrum(trace, Fs=1.0, mode=mode, trim=True)
+        assert freqs.shape == vals.shape
+    with pytest.raises(RuntimeError):
+        spectrum(trace, mode="badmode")
+
+
+def test_window_functions_and_dispatch():
+    length = 16
+    for wtype in ["hamming", "hann", "blackmanharris", "None"]:
+        w = windowfunction(length, type=wtype)
+        assert w.shape == (length,)
+        assert np.isfinite(w).all()
+    assert np.allclose(windowfunction(length, type="None"), np.ones(length))
+    assert rect(10, 4).shape == (10,)
+    mrect = mRect(32)
+    assert mrect.shape == (32,)
+    assert np.max(mrect) == pytest.approx(1.0)
+    with pytest.raises(SystemExit):
+        windowfunction(length, type="not-a-window")
+
+
+def test_filtering_helpers_return_valid_outputs():
+    fs = 50.0
+    t = np.arange(400) / fs
+    x = np.sin(2.0 * np.pi * 1.5 * t) + 0.4 * np.sin(2.0 * np.pi * 9.0 * t)
+
+    y_lp_bw = dolpfiltfilt(fs, 4.0, x, order=3, padlen=20)
+    y_hp_bw = dohpfiltfilt(fs, 0.8, x, order=3, padlen=20)
+    y_bp_bw = dobpfiltfilt(fs, 0.8, 4.0, x, order=3, padlen=20)
+    y_lp_fft = dolpfftfilt(fs, 4.0, x, padlen=20)
+    y_hp_fft = dohpfftfilt(fs, 0.8, x, padlen=20)
+    y_bp_fft = dobpfftfilt(fs, 0.8, 4.0, x, padlen=20)
+    y_lp_trap = dolptrapfftfilt(fs, 4.0, 5.0, x, padlen=20)
+    y_hp_trap = dohptrapfftfilt(fs, 0.6, 0.8, x, padlen=20)
+    y_bp_trap = dobptrapfftfilt(fs, 0.6, 0.8, 4.0, 5.0, x, padlen=20)
+    y_lp_tf = dolptransfuncfilt(fs, x, upperpass=4.0, upperstop=5.0, type="trapezoidal", padlen=20)
+    y_hp_tf = dohptransfuncfilt(fs, x, lowerpass=0.8, lowerstop=0.6, type="trapezoidal", padlen=20)
+    y_bp_tf = dobptransfuncfilt(
+        fs, x, lowerpass=0.8, upperpass=4.0, lowerstop=0.6, upperstop=5.0, type="trapezoidal", padlen=20
+    )
+    y_arb = arb_pass(
+        fs,
+        x,
+        lowerstop=0.6,
+        lowerpass=0.8,
+        upperpass=4.0,
+        upperstop=5.0,
+        transferfunc="butterworth",
+        padlen=20,
+    )
+
+    for y in [
+        y_lp_bw,
+        y_hp_bw,
+        y_bp_bw,
+        y_lp_fft,
+        y_hp_fft,
+        y_bp_fft,
+        y_lp_trap,
+        y_hp_trap,
+        y_bp_trap,
+        y_lp_tf,
+        y_hp_tf,
+        y_bp_tf,
+        y_arb,
+    ]:
+        assert y.shape == x.shape
+        assert np.isfinite(y).all()
+
+
+def test_transfer_functions_and_signal_domain_helpers():
+    fs = 50.0
+    x = np.linspace(0.0, 1.0, 256, endpoint=False)
+    lp_fft = getlpfftfunc(fs, 4.0, x)
+    lp_trap = getlptrapfftfunc(fs, 4.0, 5.0, x)
+    lp_bw = getlptransfunc(fs, x, upperpass=4.0, type="brickwall")
+    lp_gauss = getlptransfunc(fs, x, upperpass=4.0, type="gaussian")
+    hp_tf = gethptransfunc(fs, x, lowerpass=0.8, lowerstop=0.6, type="trapezoidal")
+
+    for tf in [lp_fft, lp_trap, lp_bw, lp_gauss, hp_tf]:
+        assert tf.shape == x.shape
+        assert np.isfinite(tf).all()
+
+    with pytest.raises(SystemExit):
+        getlptransfunc(fs, x, upperpass=None)
+    with pytest.raises(SystemExit):
+        gethptransfunc(fs, x, lowerpass=None)
+
+    y = transferfuncfilt(x, lp_fft)
+    assert y.shape == x.shape
+    assert np.isfinite(y).all()
+
+
+def test_notch_savgol_csd_wiener_and_spectrum_helpers():
+    fs = 100.0
+    t = np.arange(6000) / fs
+    x = np.sin(2.0 * np.pi * 5.0 * t) + 0.2 * np.sin(2.0 * np.pi * 20.0 * t)
+
+    notch = NoncausalFilter(filtertype="arb_stop", padtime=2.0)
+    setnotchfilter(notch, thefreq=20.0, notchwidth=2.0)
+    filtered_notch = notch.apply(fs, x)
+    assert filtered_notch.shape == x.shape
+
+    harmonic = harmonicnotchfilter(x, fs, Ffundamental=5.0, notchpct=1.0)
+    assert harmonic.shape == x.shape
+
+    smooth = savgolsmooth(x, smoothlen=31, polyorder=3)
+    assert smooth.shape == x.shape
+
+    csd = csdfilter(x, x + 0.05 * np.random.RandomState(0).normal(size=x.shape[0]), padlen=20)
+    assert csd.shape == x.shape
+
+    kernel = np.array([1.0, 0.5, 0.25], dtype=np.float64)
+    deconv = wiener_deconvolution(x, kernel, lambd=0.1)
+    assert deconv.shape == x.shape
+
+    p = pspec(x)
+    assert p.shape == x.shape
+    assert np.isfinite(p).all()
+
+    flat = spectralflatness(np.abs(p) + 1e-12)
+    assert np.isfinite(flat)
 
 
 if __name__ == "__main__":

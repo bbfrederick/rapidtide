@@ -2838,7 +2838,7 @@ def arb_pass(
 
 
 class Plethfilter:
-    def __init_(self, Fs, Fl, Fh, order=4, attenuation=20):
+    def __init__(self, Fs, Fl, Fh, order=4, attenuation=20):
         """
         Initialize Chebyshev type II bandpass filter.
 
@@ -2873,6 +2873,7 @@ class Plethfilter:
         >>> print(filter.a)  # Print filter denominator coefficients
         """
         self.Fs = Fs
+        self.Fn = Fs / 2.0
         self.Fh = Fh
         self.Fl = Fl
         self.attenuation = attenuation
