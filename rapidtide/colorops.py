@@ -106,7 +106,9 @@ def spectrumtospecdist(
         data[wavelength] = spec[i]
         if debug:
             print(f"{freqs[i]=}, {wavelength=}, {spec[i]=}")
-    return colour.SpectralDistribution(data, name="sLFO to color").align(colour.SpectralShape(int(highwave), int(lowwave), 1))
+    return colour.SpectralDistribution(data, name="sLFO to color").align(
+        colour.SpectralShape(int(highwave), int(lowwave), 1)
+    )
 
 
 def plot_sd(thespectrum: colour.SpectralDistribution, modulate=True) -> None:

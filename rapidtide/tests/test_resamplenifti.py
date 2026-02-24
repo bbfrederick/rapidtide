@@ -433,6 +433,7 @@ def resamplenifti_header_not_mutated(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
+
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
         return np.interp(new_x, orig_x, orig_y)
 
@@ -466,6 +467,7 @@ def resamplenifti_niftisplitext_called(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
+
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
         return np.interp(new_x, orig_x, orig_y)
 
@@ -551,6 +553,7 @@ def resamplenifti_debug_mode(debug=False):
     input_hdr = _make_mock_header(pixdim=[0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
     thedims = np.array([4, xsize, ysize, numslices, numinputtrs, 0, 0, 0])
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
+
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
         return np.interp(new_x, orig_x, orig_y)
 

@@ -231,6 +231,7 @@ def test_calcsimfunc(debug=False, displayplots=False):
 
             assert mse(voxelshifts, lagtimes) < msethresh
 
+
 def test_correlationpass_gpu_matches_cpu(debug=False):
     # Small deterministic synthetic dataset for CPU/GPU parity checks.
     oversampfactor = 1
@@ -309,7 +310,9 @@ def test_correlationpass_gpu_matches_cpu(debug=False):
     )
 
     assert vox_gpu == vox_cpu
-    assert np.array_equal(np.asarray(gmax_gpu, dtype=np.int64), np.asarray(gmax_cpu, dtype=np.int64))
+    assert np.array_equal(
+        np.asarray(gmax_gpu, dtype=np.int64), np.asarray(gmax_cpu, dtype=np.int64)
+    )
     assert np.array_equal(corrscale_gpu, corrscale_cpu)
     assert np.allclose(meanval_gpu, meanval_cpu, atol=1e-10, rtol=1e-7)
     # Allow small floating-point differences when GPU path executes.
@@ -361,5 +364,3 @@ if __name__ == "__main__":
     mpl.use("TkAgg")
     test_calcsimfunc(debug=True, displayplots=True)
     test_correlationpass_gpu_matches_cpu(debug=True)
-
-

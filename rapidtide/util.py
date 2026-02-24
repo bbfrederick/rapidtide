@@ -155,7 +155,12 @@ def checkimports(optiondict: dict[str, Any]) -> None:
 
 
 def findlibthreads() -> [int, int, int, int]:
-    return os.environ.get("OMP_NUM_THREADS", 1), os.environ.get("OPENBLAS_NUM_THREADS", 1), os.environ.get("VECLIB_MAXIMUM_THREADS", 1), os.environ.get("NUMEXPR_NUM_THREADS", 1)
+    return (
+        os.environ.get("OMP_NUM_THREADS", 1),
+        os.environ.get("OPENBLAS_NUM_THREADS", 1),
+        os.environ.get("VECLIB_MAXIMUM_THREADS", 1),
+        os.environ.get("NUMEXPR_NUM_THREADS", 1),
+    )
 
 
 def disablelibthreads() -> None:
@@ -165,7 +170,13 @@ def disablelibthreads() -> None:
     os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
 
-def enablelibthreads(ompthreads: int, openblasthreads: int, veclibthreads: int, numexprthreads: int, debug: bool = False) -> None:
+def enablelibthreads(
+    ompthreads: int,
+    openblasthreads: int,
+    veclibthreads: int,
+    numexprthreads: int,
+    debug: bool = False,
+) -> None:
     os.environ["OMP_NUM_THREADS"] = str(ompthreads)
     os.environ["OPENBLAS_NUM_THREADS"] = str(openblasthreads)
     os.environ["VECLIB_MAXIMUM_THREADS"] = str(veclibthreads)

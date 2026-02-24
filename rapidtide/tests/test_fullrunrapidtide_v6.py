@@ -21,11 +21,15 @@ import os
 import matplotlib as mpl
 import pytest
 
-from rapidtide.tests.utils import (assert_output_maps_match,
-                                   get_example_and_temp_roots, run_rapidtide,
-                                   run_retroregress)
+from rapidtide.tests.utils import (
+    assert_output_maps_match,
+    get_example_and_temp_roots,
+    run_rapidtide,
+    run_retroregress,
+)
 
 pytestmark = pytest.mark.slow
+
 
 def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
     # set input and output directories
@@ -104,18 +108,18 @@ def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
 
     assert_output_maps_match(
         [
-        "regressderivratios",
-        "medfiltregressderivratios",
-        "filteredregressderivratios",
-        "maxtimerefined",
-        "lfofilterInbandVarianceBefore",
-        "lfofilterInbandVarianceAfter",
-        "lfofilterInbandVarianceChange",
-        "lfofilterCoeff",
-        "lfofilterMean",
-        "lfofilterNorm",
-        "lfofilterR2",
-        "lfofilterR",
+            "regressderivratios",
+            "medfiltregressderivratios",
+            "filteredregressderivratios",
+            "maxtimerefined",
+            "lfofilterInbandVarianceBefore",
+            "lfofilterInbandVarianceAfter",
+            "lfofilterInbandVarianceChange",
+            "lfofilterCoeff",
+            "lfofilterMean",
+            "lfofilterNorm",
+            "lfofilterR2",
+            "lfofilterR",
         ],
         output_root_1="sub-RAPIDTIDETEST6",
         output_root_2="concordance",

@@ -24,9 +24,12 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from rapidtide.workflows.roisummarize import (_get_parser, roisummarize,
-                                              summarize3Dbylabel,
-                                              summarize4Dbylabel)
+from rapidtide.workflows.roisummarize import (
+    _get_parser,
+    roisummarize,
+    summarize3Dbylabel,
+    summarize4Dbylabel,
+)
 
 # ---- helpers ----
 

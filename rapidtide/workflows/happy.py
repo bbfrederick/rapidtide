@@ -1594,9 +1594,9 @@ def happy_main(argparsingfunc: Any) -> None:
         wrappedcardiacphase = tide_math.phasemod(instantaneous_cardiacphase, centric=args.centric)
         max_peaks, min_peaks = tide_fit.peakdetect(wrappedcardiacphase, lookahead=lookaheadval)
         if (len(max_peaks) == 0) or (len(min_peaks) == 0):
-            instantaneous_cardiactime = np.arange(
-                len(instantaneous_cardiacphase), dtype=np.float64
-            ) / slicesamplerate
+            instantaneous_cardiactime = (
+                np.arange(len(instantaneous_cardiacphase), dtype=np.float64) / slicesamplerate
+            )
         else:
             # start on a maximum
             if max_peaks[0][0] > min_peaks[0][0]:
@@ -1622,9 +1622,9 @@ def happy_main(argparsingfunc: Any) -> None:
                 zerophaselocs.append(1.0 * minloc - (minval - outphases[0]) * timediff / phasediff)
                 # print(idx, [maxloc, maxval], [minloc, minval], phasediff, timediff, zerophaselocs[-1])
             if len(zerophaselocs) == 0:
-                instantaneous_cardiactime = np.arange(
-                    len(instantaneous_cardiacphase), dtype=np.float64
-                ) / slicesamplerate
+                instantaneous_cardiactime = (
+                    np.arange(len(instantaneous_cardiacphase), dtype=np.float64) / slicesamplerate
+                )
             else:
                 instantaneous_cardiactime = np.zeros_like(instantaneous_cardiacphase)
                 whichpeak = 0
@@ -1633,7 +1633,9 @@ def happy_main(argparsingfunc: Any) -> None:
                         if t > zerophaselocs[whichpeak + 1]:
                             whichpeak += 1
                     if t > zerophaselocs[whichpeak]:
-                        instantaneous_cardiactime[t] = (t - zerophaselocs[whichpeak]) / slicesamplerate
+                        instantaneous_cardiactime[t] = (
+                            t - zerophaselocs[whichpeak]
+                        ) / slicesamplerate
                     # print(t, whichpeak, zerophaselocs[whichpeak], instantaneous_cardiactime[t])
         maxtime = (
             np.ceil(
@@ -1648,9 +1650,7 @@ def happy_main(argparsingfunc: Any) -> None:
         if (not np.isfinite(maxtime)) or (maxtime <= args.pulsereconstepsize):
             maxtime = 2.0 * args.pulsereconstepsize
         numouttimes = max(2, int(np.ceil(maxtime / args.pulsereconstepsize)))
-        outtimes = np.linspace(
-            0.0, maxtime, num=numouttimes, endpoint=False
-        )
+        outtimes = np.linspace(0.0, maxtime, num=numouttimes, endpoint=False)
         atp_bypoint, atpweights_bypoint = happy_support.cardiaccycleaverage(
             instantaneous_cardiactime,
             outtimes,

@@ -1361,7 +1361,7 @@ def _get_parser() -> Any:
         help=("Print out summary of run timing at the end of processing."),
         default=False,
     )
-    
+
     # Add version options
     pf.addversionopts(parser)
 

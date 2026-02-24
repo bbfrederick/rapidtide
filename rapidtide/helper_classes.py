@@ -451,9 +451,8 @@ class ProbeRegressor:
         >>> print(obj.inputtimeaxis)
         [ 0.          0.001       0.002 ...  0.998       0.999      ]
         """
-        self.inputtimeaxis = (
-            np.arange(len(self.inputvec), dtype=np.float64) / self.inputfreq
-            - (self.inputstart + self.inputoffset)
+        self.inputtimeaxis = np.arange(len(self.inputvec), dtype=np.float64) / self.inputfreq - (
+            self.inputstart + self.inputoffset
         )
 
     def maketargettimeaxis(self) -> None:
