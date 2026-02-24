@@ -153,6 +153,11 @@ def checkimports(optiondict: dict[str, Any]) -> None:
         print("using numba if present")
     optiondict["donotusenumba"] = donotusenumba
 
+
+def findlibthreads() -> [int, int, int, int]:
+    return os.environ.get("OMP_NUM_THREADS", 1), os.environ.get("OPENBLAS_NUM_THREADS", 1), os.environ.get("VECLIB_MAXIMUM_THREADS", 1), os.environ.get("NUMEXPR_NUM_THREADS", 1)
+
+
 def disablelibthreads() -> None:
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
