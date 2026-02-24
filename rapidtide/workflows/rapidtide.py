@@ -570,7 +570,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
 
     # Reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     fmri_data = theinputdata.byvoxel()
-    print(f"{fmri_data.shape=}")
+    LGR.debug(f"{fmri_data.shape=}")
 
     # detect zero mean data
     if not optiondict["dataiszeromean"]:
@@ -1439,8 +1439,8 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     corrorigin = theCorrelator.similarityfuncorigin
     dummy, corrscale, dummy = theCorrelator.getfunction(trim=False)
 
-    lagmininpts = int((-optiondict["lagmin"] / corrtr) - 0.5)
-    lagmaxinpts = int((optiondict["lagmax"] / corrtr) + 0.5)
+    lagmininpts = int(np.floor(-optiondict["lagmin"] / corrtr))
+    lagmaxinpts = int(np.ceil((optiondict["lagmax"] / corrtr)))
 
     if (lagmaxinpts + lagmininpts) < 3:
         raise ValueError(
