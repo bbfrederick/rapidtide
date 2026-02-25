@@ -313,6 +313,7 @@ def test_auto_defaults(local=False):
     assert args["preservefiltering"] is False
     assert args["passes"] == rp.DEFAULT_PASSES
     assert args["despeckle_passes"] == rp.DEFAULT_DESPECKLE_PASSES
+    assert args["despeckle_legacy_mode"] is True
     assert args["refinedespeckled"] is True
     assert args["saveintermediatemaps"] is False
     assert args["passvec"] is None
@@ -355,6 +356,12 @@ def test_explicit_flags_without_preset(local=False):
     # --despecklepasses overrides default
     args, _ = _run_parser(["--despecklepasses", "2"], local=local)
     assert args["despeckle_passes"] == 2
+
+    # despeckle mode toggles
+    args, _ = _run_parser(["--newdespeckle"], local=local)
+    assert args["despeckle_legacy_mode"] is False
+    args, _ = _run_parser(["--legacydespeckle"], local=local)
+    assert args["despeckle_legacy_mode"] is True
 
 
 def test_delaymapping_user_overrides(local=False):
