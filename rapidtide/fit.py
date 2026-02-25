@@ -1388,10 +1388,16 @@ def refinepeak_quad(
     beta = y[peakindex]
     gamma = y[peakindex + stride]
     binsize = x[peakindex + stride] - x[peakindex]
-    offsetbins = 0.5 * (alpha - gamma) / (alpha - 2.0 * beta + gamma)
+    denom = alpha - 2.0 * beta + gamma
+    if denom == 0.0:
+        return x[peakindex], y[peakindex], 0.0, ismax, True
+    offsetbins = 0.5 * (alpha - gamma) / denom
     peakloc = x[peakindex] + offsetbins * binsize
     peakval = beta - 0.25 * (alpha - gamma) * offsetbins
-    a = np.square(x[peakindex - stride] - peakloc) / (alpha - peakval)
+    widthdenom = alpha - peakval
+    if widthdenom == 0.0:
+        return peakloc, peakval, 0.0, ismax, True
+    a = np.square(x[peakindex - stride] - peakloc) / widthdenom
     peakwidth = np.sqrt(np.fabs(a) / 2.0)
     return peakloc, peakval, peakwidth, ismax, badfit
 
@@ -2557,11 +2563,18 @@ def calcexpandedregressors(
             print(f"{labels=}")
 
     numkeys = len(labels)
+    if numkeys == 0:
+        raise ValueError("No confound labels selected.")
     numpoints = len(localconfounddict[labels[0]])
     if end == -1:
         end = numpoints - 1
-    if (0 <= start <= numpoints - 1) and (start < end + 1):
-        numoutputpoints = end - start + 1
+    if not (0 <= start <= numpoints - 1):
+        raise ValueError(f"start index {start} is out of range for length {numpoints}")
+    if not (start <= end <= numpoints - 1):
+        raise ValueError(
+            f"end index {end} must be >= start index {start} and < length {numpoints}"
+        )
+    numoutputpoints = end - start + 1
 
     numoutputregressors = numkeys
     if deriv:
@@ -2569,8 +2582,7 @@ def calcexpandedregressors(
     if numoutputregressors > 0:
         outputregressors = np.zeros((numoutputregressors, numoutputpoints), dtype=float)
     else:
-        print("no output types selected - exiting")
-        sys.exit()
+        raise ValueError("No output regressors selected.")
     activecolumn = 0
     outlabels = []
     for thelabel in labels:
@@ -3760,14 +3772,14 @@ def simfuncpeakfit(
     # refine if necessary
     if peakfittype != "None":
         if peakfittype == "COM":
-            X = corrtimeaxis[peakstart : peakend + 1] - baseline
-            data = corrfunc[peakstart : peakend + 1]
+            X = corrtimeaxis[peakstart : peakend + 1]
+            data = corrfunc[peakstart : peakend + 1] - baseline
             maxval = maxval_init
             maxlag = np.sum(X * data) / np.sum(data)
             maxsigma = np.float64(10.0)
         elif peakfittype == "gauss":
-            X = corrtimeaxis[peakstart : peakend + 1] - baseline
-            data = corrfunc[peakstart : peakend + 1]
+            X = corrtimeaxis[peakstart : peakend + 1]
+            data = corrfunc[peakstart : peakend + 1] - baseline
             # do a least squares fit over the top of the peak
             # p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
             p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype="float64")
@@ -3790,8 +3802,8 @@ def simfuncpeakfit(
             if debug:
                 print("fit output array:", [maxval, maxlag, maxsigma])
         elif peakfittype == "fastgauss":
-            X = corrtimeaxis[peakstart : peakend + 1] - baseline
-            data = corrfunc[peakstart : peakend + 1]
+            X = corrtimeaxis[peakstart : peakend + 1]
+            data = corrfunc[peakstart : peakend + 1] - baseline
             # do a non-iterative fit over the top of the peak
             # 6/12/2015  This is just broken.  Gives quantized maxima
             maxlag = np.float64(1.0 * np.sum(X * data) / np.sum(data))
