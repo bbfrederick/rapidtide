@@ -2265,7 +2265,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             LGR,
             TimingLGR,
             simplefit=(optiondict["similaritymetric"] == "riptide"),
-            despeckleoffset=optiondict["despeckleoffset"],
             rt_floattype=np.float64,
         )
 
@@ -3517,7 +3516,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         masklist = []
 
         # we can only calculate this map if we have enough data for a good fit, and the fit succeeded
-        if optiondict["numestreps"] >= 1000:
+        if optiondict["numestreps"] >= 1000 and optiondict["similaritymetric"] != "mutualinfo":
             if sigfit is not None:
                 neglogpmax = np.log10(optiondict["numestreps"])
                 # generate a neglogp map
@@ -3539,17 +3538,17 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     )
                 ]
 
-        tide_io.savemaplist(
-            outputname,
-            masklist,
-            validvoxels,
-            nativespaceshape,
-            theheader,
-            bidsbasedict,
-            filetype=theinputdata.filetype,
-            rt_floattype=rt_floattype,
-            cifti_hdr=theinputdata.cifti_hdr,
-        )
+            tide_io.savemaplist(
+                outputname,
+                masklist,
+                validvoxels,
+                nativespaceshape,
+                theheader,
+                bidsbasedict,
+                filetype=theinputdata.filetype,
+                rt_floattype=rt_floattype,
+                cifti_hdr=theinputdata.cifti_hdr,
+            )
         del masklist
 
     if (optiondict["passes"] > 1 or optiondict["initregressorpreselect"]) and optiondict[
