@@ -1679,6 +1679,13 @@ def _get_parser() -> Any:
         default=False,
     )
     experimental.add_argument(
+        "--despeckleoffset",
+        dest="despeckleoffset",
+        action="store_true",
+        help=("Add an offset of initlag to the delay search range when despeckling."),
+        default=False,
+    )
+    experimental.add_argument(
         "--prewhitenlags",
         dest="prewhitenlags",
         action="store",

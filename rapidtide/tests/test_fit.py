@@ -473,6 +473,9 @@ class TestRefinePeakQuad:
         y = np.ones_like(x)
         peakloc, peakval, peakwidth, ismax, badfit = refinepeak_quad(x, y, 50)
         assert badfit is True
+        assert np.isfinite(peakloc)
+        assert np.isfinite(peakval)
+        assert np.isfinite(peakwidth)
 
 
 class TestMaxindexNoedge:
@@ -789,6 +792,20 @@ class TestCalcexpandedregressors:
         )
         assert regressors.shape == (1, 3)
         np.testing.assert_allclose(regressors[0], [2.0, 3.0, 4.0])
+
+    def test_invalid_range_raises(self):
+        confounddict = {"a": np.array([1.0, 2.0, 3.0, 4.0, 5.0])}
+        with pytest.raises(ValueError):
+            tide_fit.calcexpandedregressors(confounddict, start=6, end=8)
+        with pytest.raises(ValueError):
+            tide_fit.calcexpandedregressors(confounddict, start=3, end=1)
+        with pytest.raises(ValueError):
+            tide_fit.calcexpandedregressors(confounddict, start=-1, end=2)
+
+    def test_empty_labels_raises(self):
+        confounddict = {"a": np.array([1.0, 2.0, 3.0, 4.0, 5.0])}
+        with pytest.raises(ValueError):
+            tide_fit.calcexpandedregressors(confounddict, labels=[])
 
 
 # ========================= Peak detection =========================
@@ -1476,6 +1493,26 @@ class TestSimfuncpeakfitEdgeCases:
         )
         # Narrow peak should trigger some width or fit failure
         assert failreason > 0
+
+    def test_mutualinfo_com_not_shifted_by_baseline(self):
+        t = np.linspace(-5, 5, 1001)
+        baseline = 10.0
+        corr = baseline + np.exp(-0.5 * ((t - 2.0) / 0.3) ** 2)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="COM", functype="mutualinfo", zerooutbadfit=False
+        )
+        assert np.isclose(maxlag, 2.0, atol=0.2)
+
+    def test_mutualinfo_gauss_amplitude_not_double_counted(self):
+        t = np.linspace(-5, 5, 1001)
+        baseline = 10.0
+        peakamp = 1.0
+        corr = baseline + peakamp * np.exp(-0.5 * ((t - 2.0) / 0.3) ** 2)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", functype="mutualinfo", zerooutbadfit=False
+        )
+        assert np.isclose(maxlag, 2.0, atol=0.2)
+        assert np.isclose(maxval, baseline + peakamp, atol=0.3)
 
 
 # ========================= _maxindex_noedge edge convergence =========================

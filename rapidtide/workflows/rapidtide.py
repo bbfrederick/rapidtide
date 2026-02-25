@@ -2265,6 +2265,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             LGR,
             TimingLGR,
             simplefit=(optiondict["similaritymetric"] == "riptide"),
+            despeckleoffset=optiondict["despeckleoffset"],
             rt_floattype=np.float64,
         )
 

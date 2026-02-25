@@ -39,6 +39,7 @@ def onesimfuncfit(
     despeckle_thresh: float = 5.0,
     lthreshval: float = 0.0,
     fixdelay: bool = False,
+    despeckleoffset: bool = False,
     initialdelayvalue: float = 0.0,
     rt_floattype: np.dtype = np.float64,
 ) -> Tuple[int, float, float, float, int, int, int, int]:
@@ -101,7 +102,10 @@ def onesimfuncfit(
     """
     if initiallag is not None:
         thefitter.setguess(True, maxguess=initiallag)
-        thefitter.setrange(-despeckle_thresh / 2.0, despeckle_thresh / 2.0)
+        if despeckleoffset:
+            thefitter.setrange(initiallag - despeckle_thresh / 2.0, initiallag + despeckle_thresh / 2.0)
+        else:
+            thefitter.setrange(-despeckle_thresh / 2.0, despeckle_thresh / 2.0)
     else:
         thefitter.setguess(False)
 
@@ -144,6 +148,7 @@ def _procOneVoxelFitcorr(
     initiallag: Optional[float] = None,
     fixdelay: bool = False,
     initialdelayvalue: float = 0.0,
+    despeckleoffset: bool = False,
     rt_floattype: np.dtype = np.float64,
 ) -> Tuple[int, int, float, float, float, NDArray, NDArray, float, int, int]:
     """
@@ -227,6 +232,7 @@ def _procOneVoxelFitcorr(
         fixdelay=fixdelay,
         initialdelayvalue=initialdelayvalue,
         initiallag=initiallag,
+        despeckleoffset=despeckleoffset,
         rt_floattype=rt_floattype,
     )
 
@@ -295,6 +301,7 @@ def fitcorr(
     chunksize: int = 1000,
     despeckle_thresh: float = 5.0,
     initiallags: Optional[NDArray] = None,
+    despeckleoffset: bool = False,
     rt_floattype: np.dtype = np.float64,
 ) -> int:
     """
@@ -431,6 +438,7 @@ def fitcorr(
                             initiallag=thislag,
                             fixdelay=fixdelay,
                             initialdelayvalue=thisinitialdelayvalue,
+                            despeckleoffset=despeckleoffset,
                             rt_floattype=rt_floattype,
                         )
                     )
@@ -515,6 +523,7 @@ def fitcorr(
                     initiallag=thislag,
                     fixdelay=fixdelay,
                     initialdelayvalue=thisinitialdelayvalue,
+                    despeckleoffset=despeckleoffset,
                     rt_floattype=rt_floattype,
                 )
                 if (

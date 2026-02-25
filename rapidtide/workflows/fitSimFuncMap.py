@@ -70,6 +70,7 @@ def fitSimFunc(
     TimingLGR: Any,
     simplefit: bool = False,
     upsampfac: int = 8,
+    despeckleoffset: bool = False,
     rt_floattype: np.dtype = np.float64,
 ) -> NDArray | None:
     """
@@ -313,6 +314,7 @@ def fitSimFunc(
             chunksize=optiondict["mp_chunksize"],
             despeckle_thresh=optiondict["despeckle_thresh"],
             initiallags=initlags,
+            despeckleoffset=despeckleoffset,
             rt_floattype=rt_floattype,
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
@@ -380,6 +382,7 @@ def fitSimFunc(
                             chunksize=optiondict["mp_chunksize"],
                             despeckle_thresh=optiondict["despeckle_thresh"],
                             initiallags=initlags,
+                            despeckleoffset=despeckleoffset,
                             rt_floattype=rt_floattype,
                         )
                         tide_util.enablemkl(
