@@ -957,6 +957,27 @@ def _get_parser() -> Any:
         ),
         default=DEFAULT_DESPECKLE_THRESH,
     )
+    despecklemode = corr_fit.add_mutually_exclusive_group()
+    despecklemode.add_argument(
+        "--legacydespeckle",
+        dest="despeckle_legacy_mode",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "Use legacy despeckling behavior (fixed threshold and legacy convergence). "
+            "This is the default."
+        ),
+        default=True,
+    )
+    despecklemode.add_argument(
+        "--newdespeckle",
+        dest="despeckle_legacy_mode",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help=(
+            "Use new despeckling behavior (masked neighborhood statistics, adaptive thresholding, "
+            "and enhanced convergence checks)."
+        ),
+        default=True,
+    )
 
     # Regressor refinement options
     reg_ref = parser.add_argument_group("Regressor refinement options")
@@ -1676,13 +1697,6 @@ def _get_parser() -> Any:
         dest="prewhitenregressor",
         action="store_true",
         help=("Prewhiten probe regressor prior to calculating correlations."),
-        default=False,
-    )
-    experimental.add_argument(
-        "--despeckleoffset",
-        dest="despeckleoffset",
-        action="store_true",
-        help=("Add an offset of initlag to the delay search range when despeckling."),
         default=False,
     )
     experimental.add_argument(
