@@ -98,9 +98,8 @@ rapidtide \
     --outputlevel max \
     --despecklepasses 7 \
     --no-despeckle-multipeak --no-despeckle-progressive-kernel \
-    --despeckle-maskmedian \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_maskmedian
+    ../dst/sub-RAPIDTIDETEST_nomultipeak
 
 rapidtide \
     --spatialfilt -1 \
@@ -114,7 +113,6 @@ rapidtide \
     --nofitfilt \
     --outputlevel max \
     --despecklepasses 7 \
-    --no-despeckle-multipeak --no-despeckle-progressive-kernel \
-    --no-despeckle-maskmedian \
+    --despeckle-multipeak --no-despeckle-progressive-kernel \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_no-maskmedian
+    ../dst/sub-RAPIDTIDETEST_multipeak
