@@ -98,19 +98,19 @@ rapidtide \
     --outputlevel max \
     --newdespeckle \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_newnarrow
+    ../dst/sub-RAPIDTIDETEST_new
 
-#rapidtide \
-    #--spatialfilt -1 \
-    #--nprocs -1 \
-    #--searchrange -7.5 30 \
-    #--simcalcrange 50 -1 \
-    #--graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    #--brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    #--whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    #--csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    #--nofitfilt \
-    #--outputlevel max \
-    #--legacydespeckle \
-    #sub-RAPIDTIDETEST.nii.gz \
-    #../dst/sub-RAPIDTIDETEST_legacy
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --searchrange -7.5 30 \
+    --simcalcrange 50 -1 \
+    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
+    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
+    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+    --nofitfilt \
+    --outputlevel max \
+    --legacydespeckle \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_legacy

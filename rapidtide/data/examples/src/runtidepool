@@ -1,0 +1,7 @@
+#!/bin/bash
+
+tidepool \
+    --uistyle big \
+    --dataset \
+    ../dst/sub-RAPIDTIDETEST_legacy_ \
+    ../dst/sub-RAPIDTIDETEST_new_ 
