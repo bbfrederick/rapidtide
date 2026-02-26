@@ -957,45 +957,6 @@ def _get_parser() -> Any:
         ),
         default=DEFAULT_DESPECKLE_THRESH,
     )
-    despecklemode = corr_fit.add_mutually_exclusive_group()
-    despecklemode.add_argument(
-        "--legacydespeckle",
-        dest="despeckle_legacy_mode",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "Use legacy despeckling behavior (fixed threshold and legacy convergence). "
-            "This is the default."
-        ),
-        default=True,
-    )
-    despecklemode.add_argument(
-        "--newdespeckle",
-        dest="despeckle_legacy_mode",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help=(
-            "Use new despeckling behavior (masked neighborhood statistics, adaptive thresholding, "
-            "and enhanced convergence checks)."
-        ),
-        default=True,
-    )
-    corr_fit.add_argument(
-        "--despeckle-maskmedian",
-        dest="despeckle_maskmedian",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "When generating the despeckling mask, restrict median calculation only to voxels with valid fits.  "
-            "This is the default."
-        ),
-        default=True,
-    )
-    corr_fit.add_argument(
-        "--no-despeckle-maskmedian",
-        dest="despeckle_maskmedian",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="Disable masking during calculation of despeckling mask (use all voxels).",
-        default=True,
-    )
-
     corr_fit.add_argument(
         "--despeckle-multipeak",
         dest="despeckle_multipeak",
@@ -1030,6 +991,50 @@ def _get_parser() -> Any:
         action=pf.IndicateSpecifiedStoreFalseAction,
         help="Disable progressive kernel sizes during despeckling (always use 3x3x3).",
         default=True,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-detection",
+        dest="despeckle_patch_detection",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "On despeckle passes 3+, detect large connected patches of shifted delay values "
+            "using a large reference kernel and flag them for refitting. This catches patches "
+            "that survive the median filter because they are locally consistent. "
+            "This is the default."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-patch-detection",
+        dest="despeckle_patch_detection",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable large patch detection during despeckling.",
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-refkernel",
+        dest="despeckle_patch_refkernel",
+        action=pf.IndicateSpecifiedAction,
+        type=int,
+        metavar="SIZE",
+        help=(
+            "Size of the median filter kernel used to build the large-scale reference "
+            "for patch detection. Must be odd. Larger values detect larger patches but "
+            "may miss very large ones that approach half the kernel volume. Default is 9."
+        ),
+        default=9,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-minsize",
+        dest="despeckle_patch_minsize",
+        action=pf.IndicateSpecifiedAction,
+        type=int,
+        metavar="NVOXELS",
+        help=(
+            "Minimum number of connected voxels for a group to be considered a patch. "
+            "Smaller clusters are ignored (handled by regular despeckle). Default is 10."
+        ),
+        default=10,
     )
 
     # Regressor refinement options
