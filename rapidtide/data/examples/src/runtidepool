@@ -3,5 +3,5 @@
 tidepool \
     --uistyle big \
     --dataset \
-    ../dst/sub-RAPIDTIDETEST_legacy_ \
-    ../dst/sub-RAPIDTIDETEST_new_ 
+    ../dst/sub-RAPIDTIDETEST_maskmedian_ \
+    ../dst/sub-RAPIDTIDETEST_no-maskmedian_ 
