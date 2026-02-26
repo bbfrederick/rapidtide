@@ -140,6 +140,8 @@ showxcorrx <file1> <file2>
 
 ## Important Constraints
 
+- Never change files in rapidtide/notforprimetime or rapidtide/candidatetests
+
 **Code style (NON-NEGOTIABLE)**:
 - Write code that is clean and modular
 - Prefer shorter functions/methods over longer ones
