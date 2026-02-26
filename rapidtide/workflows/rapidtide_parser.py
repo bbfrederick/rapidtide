@@ -978,6 +978,59 @@ def _get_parser() -> Any:
         ),
         default=True,
     )
+    corr_fit.add_argument(
+        "--despeckle-maskmedian",
+        dest="despeckle_maskmedian",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "When generating the despeckling mask, restrict median calculation only to voxels with valid fits.  "
+            "This is the default."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-maskmedian",
+        dest="despeckle_maskmedian",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable masking during calculation of despeckling mask (use all voxels).",
+        default=True,
+    )
+
+    corr_fit.add_argument(
+        "--despeckle-multipeak",
+        dest="despeckle_multipeak",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "During despeckling refit, try multiple correlation peaks sorted by proximity "
+            "to the spatial median (more robust for noisy data). This is the default."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-multipeak",
+        dest="despeckle_multipeak",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable multi-peak search during despeckling refit (use single guess only).",
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--despeckle-progressive-kernel",
+        dest="despeckle_progressive_kernel",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "Use progressively larger median filter kernels on later despeckle passes "
+            "(3x3x3 for passes 1-2, 5x5x5 for passes 3+) to catch medium-sized patches. "
+            "This is the default."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-progressive-kernel",
+        dest="despeckle_progressive_kernel",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable progressive kernel sizes during despeckling (always use 3x3x3).",
+        default=True,
+    )
 
     # Regressor refinement options
     reg_ref = parser.add_argument_group("Regressor refinement options")
