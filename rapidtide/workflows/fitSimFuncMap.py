@@ -153,6 +153,79 @@ def _build_peakdict_for_candidates(
     return peakdict
 
 
+def _detect_shifted_patches(
+    lagmap_3d: NDArray,
+    validmask_3d: NDArray[np.bool_],
+    despeckle_thresh: float,
+    reference_kernel: int = 9,
+    min_patch_size: int = 10,
+) -> tuple[NDArray[np.bool_], NDArray]:
+    """Detect connected patches of shifted delay values.
+
+    After initial median-filter despeckling removes isolated speckles, large
+    patches of wrong-peak selections survive because they fool the small
+    median filter.  This function detects them by comparing each voxel to a
+    heavily smoothed reference computed with a much larger kernel, then
+    labeling connected components of outliers.
+
+    Parameters
+    ----------
+    lagmap_3d : NDArray
+        Lag map in native 3D space.
+    validmask_3d : NDArray[np.bool_]
+        Boolean mask of valid (fitted) voxels, same shape as lagmap_3d.
+    despeckle_thresh : float
+        Deviation threshold for flagging voxels.
+    reference_kernel : int, optional
+        Size of the median filter kernel used to build the large-scale
+        reference.  Must be odd.  Default is 9.
+    min_patch_size : int, optional
+        Minimum number of connected voxels to be considered a patch.
+        Smaller clusters are ignored (already handled by regular despeckle).
+        Default is 10.
+
+    Returns
+    -------
+    patch_mask : NDArray[np.bool_]
+        Boolean mask (same shape as lagmap_3d) where True marks voxels
+        belonging to a detected patch.
+    reference : NDArray
+        The large-kernel-smoothed reference lag map.
+    """
+    # Build reference with large median filter — robust to patches as long as
+    # the patch is smaller than half the kernel volume.
+    reference = masked_median_filter(
+        np.where(validmask_3d, lagmap_3d, 0.0),
+        size=reference_kernel,
+        mode="reflect",
+        mask=validmask_3d,
+    )
+    #reference = ndimage.median_filter(
+    #    np.where(validmask_3d, lagmap_3d, 0.0),
+    #    size=reference_kernel,
+    #    mode="reflect",
+    #
+
+    # Find voxels that deviate from the large-scale reference
+    deviation = np.abs(lagmap_3d - reference)
+    outlier_mask = validmask_3d & (deviation > despeckle_thresh)
+
+    # Label connected components with 26-connectivity
+    structure = ndimage.generate_binary_structure(lagmap_3d.ndim, lagmap_3d.ndim)
+    labels, n_patches = ndimage.label(outlier_mask, structure=structure)
+
+    # Keep only patches above minimum size
+    if n_patches > 0:
+        sizes = ndimage.sum_labels(
+            np.ones_like(labels, dtype=int), labels, range(1, n_patches + 1)
+        )
+        small_labels = [i + 1 for i, s in enumerate(sizes) if s < min_patch_size]
+        if small_labels:
+            labels[np.isin(labels, small_labels)] = 0
+
+    return labels > 0, reference
+
+
 def fitSimFunc(
     fmri_data_valid: NDArray[np.floating[Any]],
     validsimcalcstart: int,
@@ -458,9 +531,11 @@ def fitSimFunc(
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             lastnumdespeckled = 1000000
-            use_median_mask = optiondict.get("despeckle_maskmedian", True)
             use_multipeak = optiondict.get("despeckle_multipeak", True)
             use_progressive_kernel = optiondict.get("despeckle_progressive_kernel", True)
+            use_patch_detection = optiondict.get("despeckle_patch_detection", True)
+            patch_refkernel = optiondict.get("despeckle_patch_refkernel", 9)
+            patch_minsize = optiondict.get("despeckle_patch_minsize", 10)
             for despecklepass in range(optiondict["despeckle_passes"]):
                 # Use larger kernel on later passes to catch medium-sized patches
                 if use_progressive_kernel and despecklepass >= 2:
@@ -475,12 +550,9 @@ def fitSimFunc(
                 outmaparray[validvoxels] = lagtimes[:]
 
                 # find voxels to despeckle
-                if use_median_mask:
-                    medianmask = outmaparray * 0.0
-                    medianmask[validvoxels] = fitmask[:]
-                    medianmask = medianmask.reshape(nativespaceshape)
-                else:
-                    medianmask = None
+                medianmask = outmaparray * 0.0
+                medianmask[validvoxels] = fitmask[:]
+                medianmask = medianmask.reshape(nativespaceshape)
                 medianlags = masked_median_filter(
                     outmaparray.reshape(nativespaceshape), size=kernel_size, mask=medianmask
                 ).reshape(numspatiallocs)
@@ -491,9 +563,43 @@ def fitSimFunc(
                     -1000000.0,
                 )[validvoxels]
 
+                # On later passes, detect large connected patches that survive
+                # median filtering and add them to the refit candidates
+                patches_added = 0
+                if use_patch_detection and despecklepass >= 2:
+                    lagmap_3d = outmaparray.reshape(nativespaceshape)
+                    validmask_3d = np.zeros(nativespaceshape, dtype=bool)
+                    validmask_3d.reshape(-1)[validvoxels] = fitmask[:].astype(bool)
+                    patch_mask_3d, reference_3d = _detect_shifted_patches(
+                        lagmap_3d,
+                        validmask_3d,
+                        optiondict["despeckle_thresh"],
+                        reference_kernel=patch_refkernel,
+                        min_patch_size=patch_minsize,
+                    )
+                    n_patch_voxels = int(patch_mask_3d.sum())
+                    if n_patch_voxels > 0:
+                        patch_mask_flat = patch_mask_3d.reshape(numspatiallocs)
+                        reference_flat = reference_3d.reshape(numspatiallocs)
+                        # Add patch voxels as refit candidates (if not already flagged)
+                        for i, vox in enumerate(validvoxels):
+                            if patch_mask_flat[vox] and initlags[i] == -1000000.0:
+                                initlags[i] = reference_flat[vox]
+                                patches_added += 1
+                        LGR.info(
+                            f"\tPatch detection found {n_patch_voxels} voxels in "
+                            f"large patches, {patches_added} new candidates added"
+                        )
+                    else:
+                        LGR.info("\tPatch detection found no large patches")
+
                 if len(initlags) > 0:
                     numdespeckled = len(np.where(initlags != -1000000.0)[0])
-                    if lastnumdespeckled > numdespeckled > 0:
+                    # Bypass convergence guard when patch detection added new
+                    # candidates, since the count may increase on that pass
+                    if (patches_added > 0 and numdespeckled > 0) or (
+                        lastnumdespeckled > numdespeckled > 0
+                    ):
                         lastnumdespeckled = numdespeckled
                         tide_util.disablemkl(
                             optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"]
@@ -564,7 +670,7 @@ def fitSimFunc(
                                         "Target lags for voxels that underwent despeckling",
                                     ),
                                     (
-                                        medianlags,
+                                        medianlags[validvoxels],
                                         f"despecklemedianlags_p{thepass}_d{despecklepass + 1}",
                                         "map",
                                         None,
