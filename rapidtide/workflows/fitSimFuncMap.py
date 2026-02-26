@@ -22,12 +22,135 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import ndimage
 
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.patchmatch as tide_patch
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
+
+_NDIMAGE_TO_NUMPY_PAD_MODE = {
+    "reflect": "symmetric",  # d c b a | a b c d | d c b a
+    "nearest": "edge",  # a a a a | a b c d | d d d d
+    "constant": "constant",
+    "wrap": "wrap",
+    "mirror": "reflect",  # d c b | a b c d | c b a
+}
+
+# Target maximum bytes for the materialised masked-window buffer.
+_MAX_CHUNK_BYTES = 256 * 1024 * 1024  # 256 MiB
+
+
+def _pad_and_view(
+    data: NDArray,
+    mask: NDArray,
+    kernel_shape: tuple[int, ...],
+    np_pad_mode: str,
+) -> tuple[NDArray, NDArray]:
+    """Pad data and mask, then return sliding-window views."""
+    pad_widths = tuple((k // 2, k // 2) for k in kernel_shape)
+    padded_data = np.pad(data.astype(np.float64), pad_widths, mode=np_pad_mode)
+    padded_mask = np.pad(np.asarray(mask, dtype=np.bool_), pad_widths, mode=np_pad_mode)
+    windows = np.lib.stride_tricks.sliding_window_view(padded_data, kernel_shape)
+    mask_windows = np.lib.stride_tricks.sliding_window_view(padded_mask, kernel_shape)
+    return windows, mask_windows
+
+
+def _nanmedian_chunk(
+    windows: NDArray,
+    mask_windows: NDArray,
+    n_kernel: int,
+    start: int,
+    end: int,
+) -> NDArray:
+    """Compute nanmedian for a contiguous slice of flattened voxels."""
+    flat_w = windows.reshape(-1, n_kernel)[start:end]
+    flat_m = mask_windows.reshape(-1, n_kernel)[start:end]
+    masked = np.where(flat_m, flat_w, np.nan)
+    return np.nanmedian(masked, axis=1)
+
+
+def masked_median_filter(
+    data: NDArray,
+    size: int | tuple[int, ...],
+    mask: NDArray | None = None,
+    mode: str = "reflect",
+) -> NDArray:
+    """Median filter with optional mask support.
+
+    When mask is None, delegates to scipy.ndimage.median_filter (C-speed).
+    When mask is provided, only voxels where mask is nonzero contribute
+    to the median within each filter window.
+
+    Parameters
+    ----------
+    data : NDArray
+        Input array to filter.
+    size : int or tuple of int
+        Filter kernel size. Scalar applies to all dimensions.
+    mask : NDArray or None, optional
+        Boolean or integer mask with same shape as data. Nonzero entries
+        mark voxels that participate in the median calculation. If None,
+        all voxels participate (standard median filter).
+    mode : str, optional
+        Padding mode matching scipy.ndimage conventions: 'reflect',
+        'nearest', 'constant', 'wrap', or 'mirror'. Default is 'reflect'.
+
+    Returns
+    -------
+    NDArray
+        Filtered array with same shape as data, dtype float64.
+    """
+    if mask is None:
+        return ndimage.median_filter(data, size=size, mode=mode)
+
+    if np.isscalar(size):
+        kernel_shape = (int(size),) * data.ndim
+    else:
+        kernel_shape = tuple(int(s) for s in size)
+
+    np_pad_mode = _NDIMAGE_TO_NUMPY_PAD_MODE.get(mode, mode)
+    windows, mask_windows = _pad_and_view(data, mask, kernel_shape, np_pad_mode)
+
+    n_voxels = int(np.prod(data.shape))
+    n_kernel = int(np.prod(kernel_shape))
+
+    # Process in chunks to cap memory at ~256 MiB
+    chunk_size = max(1, _MAX_CHUNK_BYTES // (n_kernel * 8))
+    if chunk_size >= n_voxels:
+        masked = np.where(
+            mask_windows.reshape(n_voxels, n_kernel),
+            windows.reshape(n_voxels, n_kernel),
+            np.nan,
+        )
+        result_flat = np.nanmedian(masked, axis=1)
+    else:
+        result_flat = np.empty(n_voxels, dtype=np.float64)
+        for start in range(0, n_voxels, chunk_size):
+            end = min(start + chunk_size, n_voxels)
+            result_flat[start:end] = _nanmedian_chunk(windows, mask_windows, n_kernel, start, end)
+
+    return result_flat.reshape(data.shape)
+
+
+def _build_peakdict_for_candidates(
+    candidate_mask_valid: NDArray[np.bool_],
+    corrout: NDArray[np.floating[Any]],
+    trimmedcorrscale: NDArray[np.floating[Any]],
+    bipolar: bool = False,
+) -> dict[str, list[list[float]]]:
+    """Build a peak dictionary for candidate (flagged) voxels.
+
+    For each candidate voxel, finds all peaks in its correlation function
+    and returns them in the same format as peakevalpass(): {str(vox_idx): [[lag, strength, strength], ...]}.
+    """
+    peakdict: dict[str, list[list[float]]] = {}
+    for vox_idx in np.where(candidate_mask_valid)[0]:
+        peaks = tide_fit.getpeaks(trimmedcorrscale, corrout[vox_idx, :], bipolar=bipolar)
+        # Convert to peakdict format: [lag, strength, strength]
+        peakdict[str(vox_idx)] = [[p[0], p[1], abs(p[1])] for p in peaks]
+    return peakdict
 
 
 def fitSimFunc(
@@ -70,7 +193,6 @@ def fitSimFunc(
     TimingLGR: Any,
     simplefit: bool = False,
     upsampfac: int = 8,
-    despeckleoffset: bool = False,
     rt_floattype: np.dtype = np.float64,
 ) -> NDArray | None:
     """
@@ -314,7 +436,6 @@ def fitSimFunc(
             chunksize=optiondict["mp_chunksize"],
             despeckle_thresh=optiondict["despeckle_thresh"],
             initiallags=initlags,
-            despeckleoffset=despeckleoffset,
             rt_floattype=rt_floattype,
         )
         tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
@@ -337,14 +458,31 @@ def fitSimFunc(
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             lastnumdespeckled = 1000000
+            use_median_mask = optiondict.get("despeckle_maskmedian", True)
+            use_multipeak = optiondict.get("despeckle_multipeak", True)
+            use_progressive_kernel = optiondict.get("despeckle_progressive_kernel", True)
             for despecklepass in range(optiondict["despeckle_passes"]):
-                LGR.info(f"\n\n{similaritytype} despeckling subpass {despecklepass + 1}")
+                # Use larger kernel on later passes to catch medium-sized patches
+                if use_progressive_kernel and despecklepass >= 2:
+                    kernel_size = 5
+                else:
+                    kernel_size = 3
+                LGR.info(
+                    f"\n\n{similaritytype} despeckling subpass {despecklepass + 1} "
+                    f"(kernel={kernel_size}, multipeak={use_multipeak})"
+                )
                 outmaparray *= 0.0
-                outmaparray[validvoxels] = eval("lagtimes")[:]
+                outmaparray[validvoxels] = lagtimes[:]
 
                 # find voxels to despeckle
-                medianlags = ndimage.median_filter(
-                    outmaparray.reshape(nativespaceshape), 3
+                if use_median_mask:
+                    medianmask = outmaparray * 0.0
+                    medianmask[validvoxels] = fitmask[:]
+                    medianmask = medianmask.reshape(nativespaceshape)
+                else:
+                    medianmask = None
+                medianlags = masked_median_filter(
+                    outmaparray.reshape(nativespaceshape), size=kernel_size, mask=medianmask
                 ).reshape(numspatiallocs)
                 # voxels that we're happy with have initlags set to -1000000.0
                 initlags = np.where(
@@ -382,7 +520,7 @@ def fitSimFunc(
                             chunksize=optiondict["mp_chunksize"],
                             despeckle_thresh=optiondict["despeckle_thresh"],
                             initiallags=initlags,
-                            despeckleoffset=despeckleoffset,
+                            multipeak=use_multipeak,
                             rt_floattype=rt_floattype,
                         )
                         tide_util.enablemkl(
@@ -396,6 +534,54 @@ def fitSimFunc(
                         optiondict[
                             "despecklemaskpct_pass" + str(thepass) + "_d" + str(despecklepass + 1)
                         ] = (100.0 * voxelsprocessed_thispass / optiondict["corrmasksize"])
+                        if optiondict["savedespecklemasks"]:
+                            despecklesavemask = np.where(initlags != -1000000.0, 1, 0)
+                            despeckleinitlags = np.where(initlags != -1000000.0, initlags, 0)
+                            if thepass == optiondict["passes"]:
+                                if theinputdata.filetype != "text":
+                                    if theinputdata.filetype == "cifti":
+                                        timeindex = theheader["dim"][0] - 1
+                                        spaceindex = theheader["dim"][0]
+                                        theheader["dim"][timeindex] = 1
+                                        theheader["dim"][spaceindex] = numspatiallocs
+                                    else:
+                                        theheader["dim"][0] = 3
+                                        theheader["dim"][4] = 1
+                                        theheader["pixdim"][4] = 1.0
+                                masklist = [
+                                    (
+                                        despecklesavemask,
+                                        f"despeckle_p{thepass}_d{despecklepass + 1}",
+                                        "mask",
+                                        None,
+                                        "Voxels that underwent despeckling",
+                                    ),
+                                    (
+                                        despeckleinitlags,
+                                        f"despeckleinitlags_p{thepass}_d{despecklepass + 1}",
+                                        "map",
+                                        None,
+                                        "Target lags for voxels that underwent despeckling",
+                                    ),
+                                    (
+                                        medianlags,
+                                        f"despecklemedianlags_p{thepass}_d{despecklepass + 1}",
+                                        "map",
+                                        None,
+                                        "Median filter targets for despeckling",
+                                    ),
+                                ]
+                                tide_io.savemaplist(
+                                    outputname,
+                                    masklist,
+                                    validvoxels,
+                                    nativespaceshape,
+                                    theheader,
+                                    bidsbasedict,
+                                    filetype=theinputdata.filetype,
+                                    rt_floattype=rt_floattype,
+                                    cifti_hdr=theinputdata.cifti_hdr,
+                                )
                     else:
                         despecklingdone = True
                 else:
