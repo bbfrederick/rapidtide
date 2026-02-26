@@ -22,6 +22,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import ndimage
 
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.patchmatch as tide_patch
 import rapidtide.peakeval as tide_peakeval
@@ -39,14 +40,15 @@ def _build_despeckle_targets(
     validmask_flat: NDArray[np.bool_],
     nativespaceshape: tuple[int, ...],
     base_thresh: float,
+    kernel_size: int = 3,
 ) -> tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]], NDArray[np.bool_]]:
     lagmap_nan = np.full(lagmap_flat.shape, np.nan, dtype=np.float64)
     lagmap_nan[validmask_flat] = lagmap_flat[validmask_flat]
     lagvol = lagmap_nan.reshape(nativespaceshape)
 
-    local_median = ndimage.generic_filter(lagvol, _nan_median, size=3, mode="nearest").reshape(
-        lagmap_flat.shape
-    )
+    local_median = ndimage.generic_filter(
+        lagvol, _nan_median, size=kernel_size, mode="nearest"
+    ).reshape(lagmap_flat.shape)
     fixed_thresh = np.full(lagmap_flat.shape, base_thresh, dtype=np.float64)
     finite = np.isfinite(local_median)
     candidates = validmask_flat & finite & (np.abs(lagmap_flat - local_median) > fixed_thresh)
@@ -199,6 +201,26 @@ def _optimize_despeckle_labels_icm(
         "vox_fallback": float(n_with_fallback),
         "mean_candidates": float(total_cands / n_candidate_vox),
     }
+
+
+def _build_peakdict_for_candidates(
+    candidate_mask_valid: NDArray[np.bool_],
+    corrout: NDArray[np.floating[Any]],
+    trimmedcorrscale: NDArray[np.floating[Any]],
+    bipolar: bool = False,
+) -> dict[str, list[list[float]]]:
+    """Build a peak dictionary for candidate (flagged) voxels.
+
+    For each candidate voxel, finds all peaks in its correlation function
+    and returns them in the same format as peakevalpass(): {str(vox_idx): [[lag, strength, strength], ...]}.
+    """
+    peakdict: dict[str, list[list[float]]] = {}
+    for vox_idx in np.where(candidate_mask_valid)[0]:
+        peaks = tide_fit.getpeaks(
+            trimmedcorrscale, corrout[vox_idx, :], bipolar=bipolar
+        )
+        peakdict[str(vox_idx)] = [[p[0], p[1], abs(p[1])] for p in peaks]
+    return peakdict
 
 
 def fitSimFunc(
@@ -507,7 +529,6 @@ def fitSimFunc(
             validmask_flat = np.zeros(numspatiallocs, dtype=bool)
             validmask_flat[validvoxels] = True
             legacy_mode = optiondict["despeckle_legacy_mode"]
-            confidence_mode = optiondict.get("despeckle_confidence_mode", True)
             last_candidates = None
             last_lagtimes = lagtimes.copy()
             corrstep = (
@@ -519,13 +540,23 @@ def fitSimFunc(
             lastnumdespeckled = 1000000
             medianlags = np.zeros(numspatiallocs, dtype=np.float64)
             candidate_mask_flat = np.zeros(numspatiallocs, dtype=bool)
+            use_multipeak = optiondict.get("despeckle_multipeak", True)
+            use_progressive_kernel = optiondict.get("despeckle_progressive_kernel", True)
             for despecklepass in range(optiondict["despeckle_passes"]):
-                LGR.info(f"\n\n{similaritytype} despeckling subpass {despecklepass + 1}")
+                # Use larger kernel on later passes to catch medium-sized patches
+                if use_progressive_kernel and despecklepass >= 2:
+                    kernel_size = 5
+                else:
+                    kernel_size = 3
+                LGR.info(
+                    f"\n\n{similaritytype} despeckling subpass {despecklepass + 1} "
+                    f"(kernel={kernel_size}, multipeak={use_multipeak})"
+                )
                 if legacy_mode:
                     lagmap_flat = np.zeros(numspatiallocs, dtype=np.float64)
                     lagmap_flat[validvoxels] = lagtimes[:]
                     medianlags = ndimage.median_filter(
-                        lagmap_flat.reshape(nativespaceshape), 3
+                        lagmap_flat.reshape(nativespaceshape), kernel_size
                     ).reshape(numspatiallocs)
                     fixed_thresh = np.full(numspatiallocs, optiondict["despeckle_thresh"], dtype=np.float64)
                     candidate_mask_flat = np.zeros(numspatiallocs, dtype=bool)
@@ -545,32 +576,8 @@ def fitSimFunc(
                         validmask_flat,
                         nativespaceshape,
                         optiondict["despeckle_thresh"],
+                        kernel_size=kernel_size,
                     )
-                    if confidence_mode:
-                        candidate_mask_flat, confinfo = _refine_candidates_with_confidence(
-                            candidate_mask_flat,
-                            lagmap_flat,
-                            medianlags,
-                            fixed_thresh,
-                            validvoxels,
-                            lagstrengths,
-                            lagsigma,
-                            R2,
-                            failreason,
-                            min_r2=optiondict.get("despeckle_min_r2", 0.2),
-                            min_strength=optiondict.get("despeckle_min_strength", 0.2),
-                            max_sigma=optiondict.get("despeckle_max_sigma", 1.0e3),
-                            strong_outlier_factor=optiondict.get(
-                                "despeckle_strong_outlier_factor", 2.0
-                            ),
-                        )
-                        LGR.info(
-                            "\tconfidence filter: "
-                            f"spatial={confinfo['spatial']}, "
-                            f"lowconf={confinfo['conf_low']}, "
-                            f"strong={confinfo['strong_outlier']}, "
-                            f"combined={confinfo['combined']}"
-                        )
                 numdespeckled = int(np.sum(candidate_mask_flat[validvoxels]))
                 LGR.info(
                     f"\tidentified {numdespeckled} candidates "
@@ -614,16 +621,31 @@ def fitSimFunc(
                         chunksize=optiondict["mp_chunksize"],
                         despeckle_thresh=optiondict["despeckle_thresh"],
                         initiallags=initlags,
+                        multipeak=use_multipeak,
                         rt_floattype=rt_floattype,
                     )
                     tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
                 else:
+                    # Build local peakdict for flagged voxels if not available from hybrid mode
+                    candidate_mask_valid = candidate_mask_flat[validvoxels]
+                    local_peakdict = _build_peakdict_for_candidates(
+                        candidate_mask_valid,
+                        corrout,
+                        trimmedcorrscale,
+                        bipolar=optiondict.get("bipolar", False),
+                    )
+                    # Merge with existing peakdict if available
+                    if thepeakdict is not None:
+                        merged_peakdict = dict(thepeakdict)
+                        merged_peakdict.update(local_peakdict)
+                    else:
+                        merged_peakdict = local_peakdict
                     lagmap_after, icminfo = _optimize_despeckle_labels_icm(
                         lagmap_flat,
                         candidate_mask_flat,
                         validmask_flat,
                         validvoxels,
-                        thepeakdict,
+                        merged_peakdict,
                         nativespaceshape,
                         max_candidates=int(optiondict.get("despeckle_peak_candidates", 3)),
                         max_iters=int(optiondict.get("despeckle_label_maxiters", 3)),

@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from rapidtide.workflows.fitSimFuncMap import (
+from rapidtide.notreadyforprimetime.fitSimFuncMap import (
     _optimize_despeckle_labels_icm,
     _refine_candidates_with_confidence,
 )
