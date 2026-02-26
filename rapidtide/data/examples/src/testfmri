@@ -96,9 +96,11 @@ rapidtide \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
     --outputlevel max \
-    --newdespeckle \
+    --despecklepasses 7 \
+    --no-despeckle-multipeak --no-despeckle-progressive-kernel \
+    --despeckle-maskmedian \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_new
+    ../dst/sub-RAPIDTIDETEST_maskmedian
 
 rapidtide \
     --spatialfilt -1 \
@@ -111,6 +113,8 @@ rapidtide \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
     --outputlevel max \
-    --legacydespeckle \
+    --despecklepasses 7 \
+    --no-despeckle-multipeak --no-despeckle-progressive-kernel \
+    --no-despeckle-maskmedian \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_legacy
+    ../dst/sub-RAPIDTIDETEST_no-maskmedian
