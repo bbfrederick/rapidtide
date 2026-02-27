@@ -1258,11 +1258,11 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # filter the input data for antialiasing
     if optiondict["antialias"]:
         LGR.debug("applying trapezoidal antialiasing filter")
-        reference_y_filt = tide_filt.dolptrapfftfilt(
+        reference_y_filt = tide_filt.dolptransfuncfilt(
             inputfreq,
-            0.25 * fmrifreq,
-            0.5 * fmrifreq,
             reference_y,
+            upperpass=(0.25 * fmrifreq),
+            upperstop=(0.5 * fmrifreq),
             padlen=int(inputfreq * optiondict["padseconds"]),
             debug=optiondict["debug"],
         )
