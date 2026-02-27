@@ -42,18 +42,18 @@ docker pull fredericklab/rapidtide:${VERSION}
 #        --nodenoise
 
 
-docker run \
-    --rm \
-    --ipc host \
-    --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
-    -it \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -u rapidtide fredericklab/rapidtide:${VERSION} \
-    happy \
-        /data/src/sub-HAPPYTEST.nii.gz \
-        /data/src/sub-HAPPYTEST.json \
-        /data/dst/sub-HAPPYTEST_${VERSION} \
-        --nprocs -1
+#docker run \
+#    --rm \
+#    --ipc host \
+#    --mount type=bind,source=${DATADIR}/rapidtide/data/examples,destination=/data \
+#    -it \
+#    -v /tmp/.X11-unix:/tmp/.X11-unix \
+#    -u rapidtide fredericklab/rapidtide:${VERSION} \
+#    happy \
+#        /data/src/sub-HAPPYTEST.nii.gz \
+#        /data/src/sub-HAPPYTEST.json \
+#        /data/dst/sub-HAPPYTEST_${VERSION} \
+#        --nprocs -1
 
 
 
@@ -65,3 +65,15 @@ docker run \
 #    -v /tmp/.X11-unix:/tmp/.X11-unix \
 #    -u rapidtide fredericklab/rapidtide:${VERSION} \
 #    tidepool --dataset /data/dst/sub-RAPIDTIDETEST_
+
+docker run \
+    --network host \
+    --mount type=bind,source=/Users/frederic/Downloads,destination=/Users/frederic/Downloads \
+    -it \
+    -e DISPLAY=${MYIPADDRESS}:0 \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -u rapidtide fredericklab/rapidtide:${VERSION} \
+    showxcorrx \
+        /Users/frederic/Downloads/sendtoblaise/network_tc_7thcolumnisDMN/100206_REST1_LR_regiontcs.txt:6 \
+        /Users/frederic/Downloads/sendtoblaise/slfo_tc/100206_REST1_LR_sLFO.txt \
+        --sampletime 0.72 --filtertype brickwall
