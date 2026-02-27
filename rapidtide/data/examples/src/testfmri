@@ -97,9 +97,9 @@ rapidtide \
     --nofitfilt \
     --outputlevel max \
     --despecklepasses 7 \
-    --no-despeckle-multipeak --no-despeckle-progressive-kernel \
+    --no-despeckle-multipeak --despeckle-progressive-kernel \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_nomultipeak
+    ../dst/sub-RAPIDTIDETEST_pk
 
 rapidtide \
     --spatialfilt -1 \
@@ -111,8 +111,7 @@ rapidtide \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
+    --filtertype brickwall \
     --outputlevel max \
-    --despecklepasses 7 \
-    --despeckle-multipeak --no-despeckle-progressive-kernel \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_multipeak
+    ../dst/sub-RAPIDTIDETEST_bw
