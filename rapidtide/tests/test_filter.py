@@ -28,15 +28,12 @@ from rapidtide.filter import (
     Plethfilter,
     arb_pass,
     csdfilter,
-    dobpfftfilt,
     dobpfiltfilt,
     dobptransfuncfilt,
     dobptrapfftfilt,
-    dohpfftfilt,
     dohpfiltfilt,
     dohptransfuncfilt,
     dohptrapfftfilt,
-    dolpfftfilt,
     dolpfiltfilt,
     dolptransfuncfilt,
     dolptrapfftfilt,
@@ -483,15 +480,14 @@ def test_filtering_helpers_return_valid_outputs():
     y_lp_bw = dolpfiltfilt(fs, 4.0, x, order=3, padlen=20)
     y_hp_bw = dohpfiltfilt(fs, 0.8, x, order=3, padlen=20)
     y_bp_bw = dobpfiltfilt(fs, 0.8, 4.0, x, order=3, padlen=20)
-    y_lp_fft = dolpfftfilt(fs, 4.0, x, padlen=20)
-    y_hp_fft = dohpfftfilt(fs, 0.8, x, padlen=20)
-    y_bp_fft = dobpfftfilt(fs, 0.8, 4.0, x, padlen=20)
-    y_lp_trap = dolptrapfftfilt(fs, 4.0, 5.0, x, padlen=20)
-    y_hp_trap = dohptrapfftfilt(fs, 0.6, 0.8, x, padlen=20)
-    y_bp_trap = dobptrapfftfilt(fs, 0.6, 0.8, 4.0, 5.0, x, padlen=20)
-    y_lp_tf = dolptransfuncfilt(fs, x, upperpass=4.0, upperstop=5.0, type="trapezoidal", padlen=20)
-    y_hp_tf = dohptransfuncfilt(fs, x, lowerpass=0.8, lowerstop=0.6, type="trapezoidal", padlen=20)
-    y_bp_tf = dobptransfuncfilt(
+    y_lp_fft = dolptransfuncfilt(fs, x, upperpass=4.0, upperstop=5.0, type="brickwall", padlen=20)
+    y_hp_fft = dohptransfuncfilt(fs, x, lowerpass=0.8, lowerstop=0.6, type="brickwall", padlen=20)
+    y_bp_fft = dobptransfuncfilt(
+        fs, x, lowerpass=0.8, upperpass=4.0, lowerstop=0.6, upperstop=5.0, type="brickwall", padlen=20
+    )
+    y_lp_trap = dolptransfuncfilt(fs, x, upperpass=4.0, upperstop=5.0, type="trapezoidal", padlen=20)
+    y_hp_trap = dohptransfuncfilt(fs, x, lowerpass=0.8, lowerstop=0.6, type="trapezoidal", padlen=20)
+    y_bp_trap = dobptransfuncfilt(
         fs, x, lowerpass=0.8, upperpass=4.0, lowerstop=0.6, upperstop=5.0, type="trapezoidal", padlen=20
     )
     y_arb = arb_pass(
@@ -515,9 +511,6 @@ def test_filtering_helpers_return_valid_outputs():
         y_lp_trap,
         y_hp_trap,
         y_bp_trap,
-        y_lp_tf,
-        y_hp_tf,
-        y_bp_tf,
         y_arb,
     ]:
         assert y.shape == x.shape

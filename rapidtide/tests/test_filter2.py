@@ -24,15 +24,12 @@ from rapidtide.filter import (
     arb_pass,
     blackmanharris,
     csdfilter,
-    dobpfftfilt,
     dobpfiltfilt,
     dobptransfuncfilt,
     dobptrapfftfilt,
-    dohpfftfilt,
     dohpfiltfilt,
     dohptransfuncfilt,
     dohptrapfftfilt,
-    dolpfftfilt,
     dolpfiltfilt,
     dolptransfuncfilt,
     dolptrapfftfilt,
@@ -303,12 +300,12 @@ def getlpfftfunc_basic(debug=False):
     assert tf[len(tf) // 2] == 0.0
 
 
-def dolpfftfilt_basic(debug=False):
+def dolpbrickwall_basic(debug=False):
     """Test FFT brickwall lowpass filter."""
     if debug:
-        print("dolpfftfilt_basic")
+        print("dolpbrickwall_basic")
     sig = _make_test_signal()
-    filtered = dolpfftfilt(FS, 10.0, sig, padlen=PADLEN)
+    filtered = dolptransfuncfilt(FS, sig, upperpass=10.0, type="brickwall", padlen=PADLEN)
     assert len(filtered) == len(sig)
     fft_filt = np.abs(np.fft.rfft(filtered))
     freq_bins = np.fft.rfftfreq(len(sig), 1.0 / FS)
@@ -316,12 +313,12 @@ def dolpfftfilt_basic(debug=False):
     assert fft_filt[idx_25] < 1.0  # 25 Hz should be attenuated
 
 
-def dohpfftfilt_basic(debug=False):
+def dohpbrickwall_basic(debug=False):
     """Test FFT brickwall highpass filter."""
     if debug:
-        print("dohpfftfilt_basic")
+        print("dohpbrickwall_basic")
     sig = _make_test_signal()
-    filtered = dohpfftfilt(FS, 15.0, sig, padlen=PADLEN)
+    filtered = dohptransfuncfilt(FS, sig, lowerpass=15.0, type="brickwall", padlen=PADLEN)
     assert len(filtered) == len(sig)
     fft_filt = np.abs(np.fft.rfft(filtered))
     freq_bins = np.fft.rfftfreq(len(sig), 1.0 / FS)
@@ -329,12 +326,12 @@ def dohpfftfilt_basic(debug=False):
     assert fft_filt[idx_5] < 1.0  # 5 Hz should be attenuated
 
 
-def dobpfftfilt_basic(debug=False):
+def dobpbrickwall_basic(debug=False):
     """Test FFT brickwall bandpass filter."""
     if debug:
-        print("dobpfftfilt_basic")
+        print("dobpbrickwall_basic")
     sig = _make_test_signal()
-    filtered = dobpfftfilt(FS, 3.0, 8.0, sig, padlen=PADLEN)
+    filtered = dobptransfuncfilt(FS, sig, lowerpass=3.0, upperpass=8.0, type="brickwall", padlen=PADLEN)
     assert len(filtered) == len(sig)
 
 
@@ -1365,9 +1362,9 @@ def test_filter2(debug=False):
     if debug:
         print("Running FFT brickwall filter tests")
     getlpfftfunc_basic(debug=debug)
-    dolpfftfilt_basic(debug=debug)
-    dohpfftfilt_basic(debug=debug)
-    dobpfftfilt_basic(debug=debug)
+    dolpbrickwall_basic(debug=debug)
+    dohpbrickwall_basic(debug=debug)
+    dobpbrickwall_basic(debug=debug)
 
     # Trapezoidal FFT filter tests
     if debug:
