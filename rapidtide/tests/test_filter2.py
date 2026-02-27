@@ -358,7 +358,9 @@ def dolptrapfftfilt_basic(debug=False):
     if debug:
         print("dolptrapfftfilt_basic")
     sig = _make_test_signal()
-    filtered = dolptrapfftfilt(FS, 10.0, 12.0, sig, padlen=PADLEN)
+    filtered = dolptransfuncfilt(
+        FS, sig, upperpass=8.0, upperstop=10.0, type="trapezoidal", padlen=PADLEN
+    )
     assert len(filtered) == len(sig)
 
 
@@ -367,7 +369,9 @@ def dohptrapfftfilt_basic(debug=False):
     if debug:
         print("dohptrapfftfilt_basic")
     sig = _make_test_signal()
-    filtered = dohptrapfftfilt(FS, 13.0, 15.0, sig, padlen=PADLEN)
+    filtered = dohptransfuncfilt(
+        FS, sig, lowerstop=2.0, lowerpass=3.0, type="trapezoidal", padlen=PADLEN
+    )
     assert len(filtered) == len(sig)
 
 
@@ -376,7 +380,9 @@ def dobptrapfftfilt_basic(debug=False):
     if debug:
         print("dobptrapfftfilt_basic")
     sig = _make_test_signal()
-    filtered = dobptrapfftfilt(FS, 2.0, 3.0, 8.0, 10.0, sig, padlen=PADLEN)
+    filtered = dobptransfuncfilt(
+        FS, sig, lowerstop=2.0, lowerpass=3.0, upperpass=8.0, upperstop=10.0, type="trapezoidal", padlen=PADLEN
+    )
     assert len(filtered) == len(sig)
 
 
