@@ -1,7 +1,13 @@
 # Release history
 
-## Version 3.1.8 (2/23/26)
+## Version 3.1.8 (3/2/26)
+* (rapidtide) Fixed a bug in how the despeckle search region is set.
+* (rapidtide) Added a number of refinements to despeckling.  This improves behavior in voxels that get selected, but patches of voxels may still not get processed.
 * (rapidtide) Added option to print timing information at the end of a run (``--showtimings``).
+* (happy) Fixed several edge case bugs in phase projection.
+* (filter) Removed a LOT of old, redundant routines.
+* (fit) Fixed baseline calculation for mutual information.
+* (Docker) Started building the ability for containers to self test.
 
 ## Version 3.1.7 (2/23/26)
 * (happy) Added an experimental feature that does cheesy sLFO removal prior to cardiac waveform extraction.  It seems to improve the extracted cardiac signal some, and makes the phase projected data a bit cleaner.  Needs further testing.
