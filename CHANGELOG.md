@@ -1,5 +1,8 @@
 # Release history
 
+## Version 3.1.9 (3/4/26)
+* (rapidtide, retroregress) Fixed calculation of the refined R value.
+
 ## Version 3.1.8 (3/2/26)
 * (rapidtide) Fixed a bug in how the despeckle search region is set.
 * (rapidtide) Added a number of refinements to despeckling.  This improves behavior in voxels that get selected, but patches of voxels may still not get processed.
