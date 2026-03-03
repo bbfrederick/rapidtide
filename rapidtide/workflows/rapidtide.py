@@ -3423,7 +3423,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 filtereddata,
                 LGR,
                 TimingLGR,
-                optiondict["regressfiltthreshval"],
+                0.0,  # fmri_data has been bandpass filtered; original amplitude threshold is invalid
                 optiondict["saveminimumsLFOfiltfiles"],
                 nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
                 nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],

@@ -1036,6 +1036,39 @@ def _get_parser() -> Any:
         ),
         default=10,
     )
+    corr_fit.add_argument(
+        "--despeckle-patch-use-confidence",
+        dest="despeckle_patch_use_confidence",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "When detecting anomalous patches, use correlation quality metrics "
+            "(R², peak strength) to modulate the detection threshold. "
+            "Regions with poor fit quality are flagged as anomalous patches at a "
+            "lower spatial threshold, improving sensitivity for borderline cases. "
+            "Off by default."
+        ),
+        default=False,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-patch-use-confidence",
+        dest="despeckle_patch_use_confidence",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable confidence-based modulation for patch detection (default).",
+        default=False,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-confidence-weight",
+        dest="despeckle_patch_confidence_weight",
+        action=pf.IndicateSpecifiedAction,
+        type=float,
+        metavar="WEIGHT",
+        help=(
+            "Weight [0.0..1.0] controlling how strongly fit confidence modulates the "
+            "patch detection threshold when --despeckle-patch-use-confidence is active. "
+            "0.0 = no effect; 1.0 = maximum modulation. Default is 0.5."
+        ),
+        default=0.5,
+    )
 
     # Regressor refinement options
     reg_ref = parser.add_argument_group("Regressor refinement options")
