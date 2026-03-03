@@ -68,12 +68,12 @@ docker pull fredericklab/rapidtide:${VERSION}
 
 docker run \
     --network host \
-    --mount type=bind,source=/Users/frederic/Downloads,destination=/Users/frederic/Downloads \
+    --mount type=bind,source=/Users/frederic/Downloads/sendtoblaise,destination=/data \
     -it \
     -e DISPLAY=${MYIPADDRESS}:0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -u rapidtide fredericklab/rapidtide:${VERSION} \
     showxcorrx \
-        /Users/frederic/Downloads/sendtoblaise/network_tc_7thcolumnisDMN/100206_REST1_LR_regiontcs.txt:6 \
-        /Users/frederic/Downloads/sendtoblaise/slfo_tc/100206_REST1_LR_sLFO.txt \
-        --sampletime 0.72 --filtertype brickwall
+        /data/network_tc_7thcolumnisDMN/100206_REST1_LR_regiontcs.txt:6 \
+        /data/slfo_tc/100206_REST1_LR_sLFO.txt \
+        --sampletime 0.72 --numnull 10000
