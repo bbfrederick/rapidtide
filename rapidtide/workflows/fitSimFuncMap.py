@@ -24,7 +24,6 @@ from scipy import ndimage
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-import rapidtide.patchmatch as tide_patch
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
@@ -159,6 +158,11 @@ def _detect_shifted_patches(
     despeckle_thresh: float,
     reference_kernel: int = 9,
     min_patch_size: int = 10,
+    consistency_ratio: float = 0.5,
+    use_confidence: bool = False,
+    confidence_weight: float = 0.5,
+    R2_3d: Optional[NDArray] = None,
+    lagstrengths_3d: Optional[NDArray] = None,
 ) -> tuple[NDArray[np.bool_], NDArray]:
     """Detect connected patches of shifted delay values.
 
@@ -166,7 +170,17 @@ def _detect_shifted_patches(
     patches of wrong-peak selections survive because they fool the small
     median filter.  This function detects them by comparing each voxel to a
     heavily smoothed reference computed with a much larger kernel, then
-    labeling connected components of outliers.
+    validating connected components against their exterior boundary.
+
+    For each candidate component the function checks:
+      1. The median lag inside the patch differs from the one-voxel exterior
+         ring by more than ``despeckle_thresh`` (boundary validation).
+      2. The standard deviation of lags inside the patch is small relative to
+         that offset (consistency check — anomalous patches chose the same
+         wrong peak so they are internally uniform).
+    Confirmed patches are then grown inward via a constrained flood-fill to
+    recover interior voxels that were missed because the smooth reference was
+    biased by the patch itself.
 
     Parameters
     ----------
@@ -181,49 +195,128 @@ def _detect_shifted_patches(
         reference.  Must be odd.  Default is 9.
     min_patch_size : int, optional
         Minimum number of connected voxels to be considered a patch.
-        Smaller clusters are ignored (already handled by regular despeckle).
-        Default is 10.
+        Smaller clusters are ignored. Default is 10.
+    consistency_ratio : float, optional
+        Maximum ratio of (std inside patch) / (offset from exterior) for a
+        patch to be confirmed as anomalous.  Lower values require more
+        internal consistency.  Default is 0.5.
+    use_confidence : bool, optional
+        If True, modulate the detection threshold using fit quality metrics
+        (R², peak strength).  Regions with poor fit quality are flagged at a
+        lower spatial threshold.  Default is False.
+    confidence_weight : float, optional
+        Weight [0..1] for the confidence modulation.  Only used when
+        ``use_confidence`` is True.  Default is 0.5.
+    R2_3d : NDArray or None, optional
+        R² map in native 3D space.  Used when ``use_confidence`` is True.
+    lagstrengths_3d : NDArray or None, optional
+        Peak strength map.  Used as secondary confidence metric when provided
+        and ``use_confidence`` is True.
 
     Returns
     -------
     patch_mask : NDArray[np.bool_]
         Boolean mask (same shape as lagmap_3d) where True marks voxels
-        belonging to a detected patch.
+        belonging to a confirmed anomalous patch, including interior voxels
+        recovered by the flood-fill step.
     reference : NDArray
-        The large-kernel-smoothed reference lag map.
+        Reference lag map.  For detected anomalous patch voxels this holds
+        the exterior-ring median (a better initial-lag estimate for refitting);
+        for all other voxels it holds the large-kernel smoothed reference.
     """
-    # Build reference with large median filter — robust to patches as long as
-    # the patch is smaller than half the kernel volume.
+    # Build reference with large median filter.
     reference = masked_median_filter(
         np.where(validmask_3d, lagmap_3d, 0.0),
         size=reference_kernel,
         mode="reflect",
         mask=validmask_3d,
     )
-    #reference = ndimage.median_filter(
-    #    np.where(validmask_3d, lagmap_3d, 0.0),
-    #    size=reference_kernel,
-    #    mode="reflect",
-    #
 
-    # Find voxels that deviate from the large-scale reference
+    # Global confidence baseline (used only when use_confidence=True).
+    global_mean_R2 = 0.0
+    global_mean_strength = 0.0
+    if use_confidence:
+        if R2_3d is not None:
+            valid_R2 = R2_3d[validmask_3d]
+            global_mean_R2 = float(np.mean(valid_R2)) if valid_R2.size > 0 else 0.0
+        if lagstrengths_3d is not None:
+            valid_str = np.abs(lagstrengths_3d[validmask_3d])
+            global_mean_strength = float(np.mean(valid_str)) if valid_str.size > 0 else 0.0
+
+    # Initial candidates: voxels that deviate from the smooth reference.
     deviation = np.abs(lagmap_3d - reference)
     outlier_mask = validmask_3d & (deviation > despeckle_thresh)
 
-    # Label connected components with 26-connectivity
     structure = ndimage.generate_binary_structure(lagmap_3d.ndim, lagmap_3d.ndim)
     labels, n_patches = ndimage.label(outlier_mask, structure=structure)
 
-    # Keep only patches above minimum size
-    if n_patches > 0:
-        sizes = ndimage.sum_labels(
-            np.ones_like(labels, dtype=int), labels, range(1, n_patches + 1)
-        )
-        small_labels = [i + 1 for i, s in enumerate(sizes) if s < min_patch_size]
-        if small_labels:
-            labels[np.isin(labels, small_labels)] = 0
+    if n_patches == 0:
+        return np.zeros_like(validmask_3d, dtype=bool), reference
 
-    return labels > 0, reference
+    confirmed_patch_mask = np.zeros_like(validmask_3d, dtype=bool)
+    # ext_reference will hold the exterior-ring median for confirmed patches.
+    ext_reference = reference.copy()
+
+    for region_id in range(1, n_patches + 1):
+        region_mask = labels == region_id
+        region_valid = region_mask & validmask_3d
+        if int(np.sum(region_valid)) < min_patch_size:
+            continue
+
+        # One-voxel exterior ring.
+        dilated = ndimage.binary_dilation(region_mask, structure=structure)
+        exterior_ring = dilated & ~region_mask & validmask_3d
+        if not np.any(exterior_ring):
+            continue
+
+        interior_lags = lagmap_3d[region_valid]
+        exterior_lags = lagmap_3d[exterior_ring]
+        interior_median = float(np.median(interior_lags))
+        exterior_median = float(np.median(exterior_lags))
+        interior_std = float(np.std(interior_lags))
+        offset = abs(interior_median - exterior_median)
+
+        # Optionally modulate detection threshold by fit quality.
+        effective_thresh = despeckle_thresh
+        if use_confidence:
+            conf_components = []
+            if R2_3d is not None and global_mean_R2 > 0.0:
+                patch_R2 = float(np.mean(R2_3d[region_valid]))
+                conf_components.append(float(np.clip(patch_R2 / global_mean_R2, 0.0, 2.0)))
+            if lagstrengths_3d is not None and global_mean_strength > 0.0:
+                patch_str = float(np.mean(np.abs(lagstrengths_3d[region_valid])))
+                conf_components.append(
+                    float(np.clip(patch_str / global_mean_strength, 0.0, 2.0))
+                )
+            if conf_components:
+                norm_conf = float(np.mean(conf_components))
+                # Low confidence → lower threshold (more suspicious).
+                effective_thresh = despeckle_thresh * max(
+                    0.25, 1.0 - confidence_weight * (1.0 - norm_conf)
+                )
+
+        # Boundary validation and consistency check.
+        if offset <= effective_thresh:
+            continue
+        if interior_std >= consistency_ratio * offset:
+            continue
+
+        # Confirmed anomalous patch.  Grow inward to recover interior voxels
+        # that the smooth reference missed (it was biased by the patch).
+        lag_tolerance = max(2.0 * interior_std, 0.5 * despeckle_thresh)
+        grown = region_valid.copy()
+        for _ in range(50):
+            new_dilated = ndimage.binary_dilation(grown, structure=structure)
+            candidates = new_dilated & ~grown & validmask_3d
+            new_voxels = candidates & (np.abs(lagmap_3d - interior_median) <= lag_tolerance)
+            if not np.any(new_voxels):
+                break
+            grown |= new_voxels
+
+        confirmed_patch_mask |= grown
+        ext_reference[grown] = exterior_median
+
+    return confirmed_patch_mask, ext_reference
 
 
 def fitSimFunc(
@@ -570,12 +663,24 @@ def fitSimFunc(
                     lagmap_3d = outmaparray.reshape(nativespaceshape)
                     validmask_3d = np.zeros(nativespaceshape, dtype=bool)
                     validmask_3d.reshape(-1)[validvoxels] = fitmask[:].astype(bool)
+                    use_conf = optiondict.get("despeckle_patch_use_confidence", False)
+                    R2_3d_ds = lagstrengths_3d_ds = None
+                    if use_conf:
+                        R2_3d_ds = np.zeros(nativespaceshape)
+                        R2_3d_ds.reshape(-1)[validvoxels] = R2[:]
+                        lagstrengths_3d_ds = np.zeros(nativespaceshape)
+                        lagstrengths_3d_ds.reshape(-1)[validvoxels] = lagstrengths[:]
                     patch_mask_3d, reference_3d = _detect_shifted_patches(
                         lagmap_3d,
                         validmask_3d,
                         optiondict["despeckle_thresh"],
                         reference_kernel=patch_refkernel,
                         min_patch_size=patch_minsize,
+                        consistency_ratio=optiondict.get("despeckle_patch_consistency_ratio", 0.5),
+                        use_confidence=use_conf,
+                        confidence_weight=optiondict.get("despeckle_patch_confidence_weight", 0.5),
+                        R2_3d=R2_3d_ds,
+                        lagstrengths_3d=lagstrengths_3d_ds,
                     )
                     n_patch_voxels = int(patch_mask_3d.sum())
                     if n_patch_voxels > 0:
@@ -750,124 +855,125 @@ def fitSimFunc(
         else:
             internaldespeckleincludemask = None
 
-        # Patch shifting
+        # Patch shift correction: detect anomalous patches and refit them.
+        # This runs after all despeckle passes and catches self-consistent
+        # patches of voxels that all chose the same wrong correlation peak.
         if optiondict["patchshift"]:
+            LGR.info(f"\n\nPatch shift correction pass {thepass}")
+            TimingLGR.info(f"Patch shift correction start, pass {thepass}")
+
             outmaparray *= 0.0
-            outmaparray[validvoxels] = eval("lagtimes")[:]
-            # new method
-            masklist = [
-                (
-                    outmaparray[validvoxels],
-                    f"lagtimes_prepatch_pass{thepass}",
-                    "map",
-                    None,
-                    f"Input lagtimes map prior to patch map generation pass {thepass}",
-                ),
-            ]
-            tide_io.savemaplist(
-                outputname,
-                masklist,
-                validvoxels,
-                nativespaceshape,
-                theheader,
-                bidsbasedict,
-                filetype=theinputdata.filetype,
-                rt_floattype=rt_floattype,
-                cifti_hdr=theinputdata.cifti_hdr,
+            outmaparray[validvoxels] = lagtimes[:]
+            lagmap_3d = outmaparray.reshape(nativespaceshape)
+            validmask_3d = np.zeros(nativespaceshape, dtype=bool)
+            validmask_3d.reshape(-1)[validvoxels] = fitmask[:].astype(bool)
+
+            use_conf = optiondict.get("despeckle_patch_use_confidence", False)
+            R2_3d_ps = lagstrengths_3d_ps = None
+            if use_conf:
+                R2_3d_ps = np.zeros(nativespaceshape)
+                R2_3d_ps.reshape(-1)[validvoxels] = R2[:]
+                lagstrengths_3d_ps = np.zeros(nativespaceshape)
+                lagstrengths_3d_ps.reshape(-1)[validvoxels] = lagstrengths[:]
+
+            patch_mask_3d, patch_reference_3d = _detect_shifted_patches(
+                lagmap_3d,
+                validmask_3d,
+                optiondict["despeckle_thresh"],
+                reference_kernel=optiondict.get("despeckle_patch_refkernel", 9),
+                min_patch_size=optiondict.get("despeckle_patch_minsize", 10),
+                consistency_ratio=optiondict.get("despeckle_patch_consistency_ratio", 0.5),
+                use_confidence=use_conf,
+                confidence_weight=optiondict.get("despeckle_patch_confidence_weight", 0.5),
+                R2_3d=R2_3d_ps,
+                lagstrengths_3d=lagstrengths_3d_ps,
             )
 
-            # create list of anomalous 3D regions that don't match surroundings
-            if theinputdata.nim_affine is not None:
-                # make an atlas of anomalous patches - each patch shares the same integer value
-                step1 = tide_patch.calc_DoG(
-                    outmaparray.reshape(nativespaceshape).copy(),
-                    theinputdata.nim_affine,
-                    thesizes,
-                    fwhm=optiondict["patchfwhm"],
-                    ratioopt=False,
-                    debug=True,
-                )
-                masklist = [
-                    (
-                        step1.reshape(internalspaceshape)[validvoxels],
-                        f"DoG_pass{thepass}",
-                        "map",
-                        None,
-                        f"DoG map for pass {thepass}",
-                    ),
-                ]
-                tide_io.savemaplist(
-                    outputname,
-                    masklist,
-                    validvoxels,
-                    nativespaceshape,
-                    theheader,
-                    bidsbasedict,
-                    filetype=theinputdata.filetype,
-                    rt_floattype=rt_floattype,
-                    cifti_hdr=theinputdata.cifti_hdr,
-                )
-                step2 = tide_patch.invertedflood3D(
-                    step1,
-                    1,
-                )
-                masklist = [
-                    (
-                        step2.reshape(internalspaceshape)[validvoxels],
-                        f"invertflood_pass{thepass}",
-                        "map",
-                        None,
-                        f"Inverted flood map for pass {thepass}",
-                    ),
-                ]
-                tide_io.savemaplist(
-                    outputname,
-                    masklist,
-                    validvoxels,
-                    nativespaceshape,
-                    theheader,
-                    bidsbasedict,
-                    filetype=theinputdata.filetype,
-                    rt_floattype=rt_floattype,
-                    cifti_hdr=theinputdata.cifti_hdr,
-                )
+            n_patch_voxels = int(patch_mask_3d.sum())
+            LGR.info(f"\tPatch detection found {n_patch_voxels} anomalous voxels")
 
-                patchmap = tide_patch.separateclusters(
-                    step2,
-                    sizethresh=optiondict["patchminsize"],
-                    debug=True,
-                )
-                # patchmap = tide_patch.getclusters(
-                #   outmaparray.reshape(nativespaceshape),
-                #    theinputdata.nim_affine,
-                #    thesizes,
-                #    fwhm=optiondict["patchfwhm"],
-                #    ratioopt=True,
-                #    sizethresh=optiondict["patchminsize"],
-                #    debug=True,
-                # )
-                masklist = [
-                    (
-                        patchmap[validvoxels],
-                        f"patch_pass{thepass}",
-                        "map",
-                        None,
-                        f"Patch map for despeckling pass {thepass}",
-                    ),
-                ]
-                tide_io.savemaplist(
-                    outputname,
-                    masklist,
-                    validvoxels,
-                    nativespaceshape,
-                    theheader,
-                    bidsbasedict,
-                    filetype=theinputdata.filetype,
-                    rt_floattype=rt_floattype,
-                    cifti_hdr=theinputdata.cifti_hdr,
-                )
+            if n_patch_voxels > 0:
+                patch_mask_flat = patch_mask_3d.reshape(numspatiallocs)
+                reference_flat = patch_reference_3d.reshape(numspatiallocs)
+                initlags_ps = np.full(numvalidspatiallocs, -1000000.0)
+                for i, vox in enumerate(validvoxels):
+                    if patch_mask_flat[vox]:
+                        initlags_ps[i] = reference_flat[vox]
 
-            # now shift the patches to align with the majority of the image
-            tide_patch.interppatch(lagtimes, patchmap[validvoxels])
+                tide_util.disablemkl(optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"])
+                voxelsprocessed_ps = tide_simfuncfit.fitcorr(
+                    trimmedcorrscale,
+                    theFitter,
+                    corrout,
+                    fitmask,
+                    failreason,
+                    lagtimes,
+                    lagstrengths,
+                    lagsigma,
+                    gaussout,
+                    windowout,
+                    R2,
+                    despeckling=True,
+                    peakdict=thepeakdict,
+                    nprocs=optiondict["nprocs_fitcorr"],
+                    alwaysmultiproc=optiondict["alwaysmultiproc"],
+                    fixdelay=optiondict["fixdelay"],
+                    initialdelayvalue=theinitialdelay,
+                    showprogressbar=optiondict["showprogressbar"],
+                    chunksize=optiondict["mp_chunksize"],
+                    despeckle_thresh=optiondict["despeckle_thresh"],
+                    initiallags=initlags_ps,
+                    multipeak=optiondict.get("despeckle_multipeak", True),
+                    rt_floattype=rt_floattype,
+                )
+                tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
+                LGR.info(f"\tPatch shift corrected {voxelsprocessed_ps} voxels")
+
+                if optiondict.get("savedespecklemasks", False) and thepass == optiondict["passes"]:
+                    if theinputdata.filetype != "text":
+                        if theinputdata.filetype == "cifti":
+                            timeindex = theheader["dim"][0] - 1
+                            spaceindex = theheader["dim"][0]
+                            theheader["dim"][timeindex] = 1
+                            theheader["dim"][spaceindex] = numspatiallocs
+                        else:
+                            theheader["dim"][0] = 3
+                            theheader["dim"][4] = 1
+                            theheader["pixdim"][4] = 1.0
+                    masklist = [
+                        (
+                            patch_mask_flat[validvoxels].astype(np.int32),
+                            f"patchmask_p{thepass}",
+                            "mask",
+                            None,
+                            f"Anomalous patch voxels for pass {thepass}",
+                        ),
+                        (
+                            reference_flat[validvoxels],
+                            f"patchreference_p{thepass}",
+                            "map",
+                            None,
+                            f"Reference lag targets for patch shift pass {thepass}",
+                        ),
+                    ]
+                    tide_io.savemaplist(
+                        outputname,
+                        masklist,
+                        validvoxels,
+                        nativespaceshape,
+                        theheader,
+                        bidsbasedict,
+                        filetype=theinputdata.filetype,
+                        rt_floattype=rt_floattype,
+                        cifti_hdr=theinputdata.cifti_hdr,
+                    )
+
+            TimingLGR.info(
+                f"Patch shift correction end, pass {thepass}",
+                {
+                    "message2": n_patch_voxels,
+                    "message3": "voxels detected",
+                },
+            )
 
     return internaldespeckleincludemask
