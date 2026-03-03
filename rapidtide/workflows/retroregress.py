@@ -1292,7 +1292,7 @@ def retroregress(args: Any) -> None:
                     filtereddata,
                     LGR,
                     TimingLGR,
-                    threshval,
+                    0.0,  # fmri_data has been bandpass filtered; original amplitude threshold is invalid
                     args.saveminimumsLFOfiltfiles,
                     nprocs_makelaggedtcs=args.nprocs,
                     nprocs_regressionfilt=args.nprocs,
