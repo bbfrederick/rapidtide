@@ -96,10 +96,9 @@ rapidtide \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
     --outputlevel max \
-    --despecklepasses 7 \
-    --no-despeckle-multipeak --despeckle-progressive-kernel \
+    --no-despeckle-patch-use-confidence \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_pk
+    ../dst/sub-RAPIDTIDETEST_newnopatch
 
 rapidtide \
     --spatialfilt -1 \
@@ -111,7 +110,23 @@ rapidtide \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
-    --filtertype brickwall \
     --outputlevel max \
+    --despeckle-patch-use-confidence \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_bw
+    ../dst/sub-RAPIDTIDETEST_newpatch
+
+rapidtide \
+    --spatialfilt -1 \
+    --nprocs -1 \
+    --searchrange -7.5 30 \
+    --simcalcrange 50 -1 \
+    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
+    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
+    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+    --nofitfilt \
+    --outputlevel max \
+    --despeckle-patch-use-confidence \
+    --despeckle-patch-confidence-weight 0.2 \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_newpatch0p2
