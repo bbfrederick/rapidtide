@@ -17,31 +17,18 @@
 #
 #
 import argparse
-import warnings
+from typing import Any
 
 import numpy as np
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from argparse import Namespace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
-from numpy.typing import NDArray
-from scipy import fftpack
+import pyfftw
+import scipy as sp
 
 import rapidtide.io as tide_io
 import rapidtide.resample as tide_resample
 
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 
 def _get_parser() -> Any:

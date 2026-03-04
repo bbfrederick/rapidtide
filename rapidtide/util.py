@@ -32,11 +32,18 @@ from typing import Any, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pyfftw
+import scipy as sp
 from numpy.typing import NDArray
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
 from rapidtide.decorators import getdecoratorvars
+
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
+
 
 try:
     import mkl
@@ -81,12 +88,6 @@ def disablenumba() -> None:
 
 
 # ----------------------------------------- Conditional imports ---------------------------------------
-try:
-    import pyfftw
-except ImportError:
-    pyfftwpresent = False
-else:
-    pyfftwpresent = True
 
 
 def checkimports(optiondict: dict[str, Any]) -> None:
@@ -135,11 +136,7 @@ def checkimports(optiondict: dict[str, Any]) -> None:
     {'pfftwexists': False, 'donotbeaggressive': False, 'donotusenumba': False}
     """
     donotusenumba, donotbeaggressive = getdecoratorvars()
-    if pyfftwpresent:
-        print("pfftw exists")
-    else:
-        print("pfftw does not exist")
-    optiondict["pfftwexists"] = pyfftwpresent
+    optiondict["pfftwexists"] = True
 
     if donotbeaggressive:
         print("no aggressive optimization")
@@ -263,44 +260,41 @@ def enablemkl(numthreads: int, debug: bool = False) -> None:
 
 
 def configurepyfftw(threads: int = 1, debug: bool = False) -> Optional[str]:
-    if pyfftwpresent:
-        if threads < 1:
-            if os.environ.get("PYFFTW_NUM_THREADS") is not None:
-                pyfftw.config.NUM_THREADS = os.environ.get("PYFFTW_NUM_THREADS")
-        else:
-            pyfftw.config.NUM_THREADS = threads
-
-        if os.environ.get("PYFFTW_PLANNER_EFFORT") is None:
-            pyfftw.config.PLANNER_EFFORT = "FFTW_ESTIMATE"
-
-        # check for wisdom file, load it if it exist
-        wisdomfilename = os.path.join(
-            os.environ.get("HOME"),
-            ".config",
-            f"rapidtide_wisdom_{pyfftw.config.PLANNER_EFFORT}.txt",
-        )
-        if os.path.isfile(wisdomfilename):
-            # load the wisdom
-            # You need to parse the string
-            # For simple cases, eval() can work but is generally not recommended for untrusted input.
-            # For more complex cases, manual parsing or using a library like ast.literal_eval is safer.
-            with open(wisdomfilename, "r") as file:
-                loaded_string = file.read()
-                # Example using eval (use with caution)
-                thewisdom = eval(loaded_string)
-                if debug:
-                    print("----------------------Loaded wisdom---------------------------------")
-                    print(thewisdom)
-                    print("----------------------Loaded wisdom---------------------------------")
-                pyfftw.import_wisdom(thewisdom)
-                print(f"Loaded pyfftw wisdom from {wisdomfilename}")
-        return wisdomfilename
+    if threads < 1:
+        if os.environ.get("PYFFTW_NUM_THREADS") is not None:
+            pyfftw.config.NUM_THREADS = os.environ.get("PYFFTW_NUM_THREADS")
     else:
-        return None
+        pyfftw.config.NUM_THREADS = threads
+
+    if os.environ.get("PYFFTW_PLANNER_EFFORT") is None:
+        pyfftw.config.PLANNER_EFFORT = "FFTW_ESTIMATE"
+
+    # check for wisdom file, load it if it exist
+    wisdomfilename = os.path.join(
+        os.environ.get("HOME"),
+        ".config",
+        f"rapidtide_wisdom_{pyfftw.config.PLANNER_EFFORT}.txt",
+    )
+    if os.path.isfile(wisdomfilename):
+        # load the wisdom
+        # You need to parse the string
+        # For simple cases, eval() can work but is generally not recommended for untrusted input.
+        # For more complex cases, manual parsing or using a library like ast.literal_eval is safer.
+        with open(wisdomfilename, "r") as file:
+            loaded_string = file.read()
+            # Example using eval (use with caution)
+            thewisdom = eval(loaded_string)
+            if debug:
+                print("----------------------Loaded wisdom---------------------------------")
+                print(thewisdom)
+                print("----------------------Loaded wisdom---------------------------------")
+            pyfftw.import_wisdom(thewisdom)
+            print(f"Loaded pyfftw wisdom from {wisdomfilename}")
+    return wisdomfilename
 
 
 def savewisdom(wisdomfilename: str, debug: bool = False) -> None:
-    if pyfftwpresent and (wisdomfilename is not None):
+    if wisdomfilename is not None:
         thewisdom = pyfftw.export_wisdom()
         makeadir(os.path.split(wisdomfilename)[0])
 

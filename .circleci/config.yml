@@ -26,7 +26,6 @@ commands:
                 uv pip install --upgrade distlib
                 uv pip install --upgrade pytest
                 uv pip install --upgrade numba
-                uv pip install --upgrade pyfftw
             fi
   run_split_pytests:
     parameters:

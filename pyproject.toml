@@ -31,6 +31,7 @@ dependencies = [
   'nibabel',
   'nilearn',
   'matplotlib',
+  'pyfftw',
   'pyqtgraph',
   'pyqt6-sip',
   'pyqt6',

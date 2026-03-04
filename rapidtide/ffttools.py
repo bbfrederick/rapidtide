@@ -16,23 +16,14 @@
 #   limitations under the License.
 #
 #
-import warnings
-
 import numpy as np
-from scipy import fftpack
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
+# Use pyfftw as the backend for all scipy.fft operations
+import pyfftw
+import scipy as sp
 
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 
 def primefacs(thelen: int) -> list:
@@ -132,29 +123,28 @@ def optfftlen(
         print(
             f"entering optfftlen with {thelen=}, {padlen=}, {_depth=}, {cachekey=} totallen={thelen + 2 * padlen}"
         )
-    if pyfftwpresent:
-        try:
-            thelen = lencache[cachekey]
+    try:
+        thelen = lencache[cachekey]
+        if debug:
+            print(f"cache hit for {cachekey} ({thelen})")
+    except KeyError:
+        if padlen == 0:
+            thelen = pyfftw.interfaces.scipy_fft.next_fast_len(thelen)
+        else:
+            startlen = thelen
+            optpadded = pyfftw.interfaces.scipy_fft.next_fast_len(thelen + 2 * padlen)
             if debug:
-                print(f"cache hit for {cachekey} ({thelen})")
-        except KeyError:
-            if padlen == 0:
-                thelen = pyfftw.interfaces.scipy_fft.next_fast_len(thelen)
+                print(f"{optpadded=}")
+            if (optpadded - thelen) % 2 == 0:
+                thelen = optpadded
             else:
-                startlen = thelen
-                optpadded = pyfftw.interfaces.scipy_fft.next_fast_len(thelen + 2 * padlen)
-                if debug:
-                    print(f"{optpadded=}")
-                if (optpadded - thelen) % 2 == 0:
-                    thelen = optpadded
+                # we get here if the optimal value - the initial value is not divisible by 2
+                # so we need to start one greater than that and and go to the next highest value.
+                if _depth < 500:
+                    newpadlen = int((optpadded + 1 - startlen) // 2)
+                    thelen = optfftlen(thelen, padlen=newpadlen, _depth=(_depth + 1))
                 else:
-                    # we get here if the optimal value - the initial value is not divisible by 2
-                    # so we need to start one greater than that and and go to the next highest value.
-                    if _depth < 500:
-                        newpadlen = int((optpadded + 1 - startlen) // 2)
-                        thelen = optfftlen(thelen, padlen=newpadlen, _depth=(_depth + 1))
-                    else:
-                        thelen = startlen
+                    thelen = startlen
 
     lencache[cachekey] = thelen
     if debug:

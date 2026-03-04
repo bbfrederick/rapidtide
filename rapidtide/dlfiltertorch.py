@@ -20,39 +20,28 @@ import glob
 import logging
 import os
 import sys
-import warnings
 
 import matplotlib as mpl
-import numpy as np
-import tqdm
-from numpy.typing import NDArray
-
-import rapidtide.miscmath as tide_math
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from scipy import fftpack
-from statsmodels.robust.scale import mad
-
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-
 import matplotlib.pyplot as plt
+import numpy as np
+import pyfftw
+import scipy as sp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import tqdm
+from numpy.typing import NDArray
+from scipy import fft
+from statsmodels.robust.scale import mad
 from torch.utils.data import DataLoader, TensorDataset, random_split
 
 import rapidtide.io as tide_io
+import rapidtide.miscmath as tide_math
+
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 LGR = logging.getLogger("GENERAL")
 LGR.debug("setting backend to Agg")
@@ -2671,13 +2660,13 @@ def filtscale(
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> x = np.random.randn(1024)
     >>> scaled_data, scalefac = filtscale(x)
     >>> reconstructed = filtscale(scaled_data, scalefac=scalefac, reverse=True)
     """
     if not reverse:
-        specvals = fftpack.fft(data)
+        specvals = fft.fft(data)
         if lognormalize:
             themag = np.log(np.absolute(specvals) + epsilon)
             scalefac = np.max(themag)
@@ -2702,7 +2691,7 @@ def filtscale(
             else:
                 themag = data[:, 0] * scalefac
             specvals = themag * np.exp(1.0j * thephase)
-            return fftpack.ifft(specvals).real
+            return fft.ifft(specvals).real
 
 
 def tobadpts(name: str) -> str:
@@ -3168,9 +3157,9 @@ def datatochannels(
         channeldata[np.where(channeldata[:, 1] != 0.0), 0] = 0.0
     if dofft:
         if stdnorm:
-            specvals = fftpack.fft(tide_math.stdnormalize(channeldata[:, 0]))
+            specvals = fft.fft(tide_math.stdnormalize(channeldata[:, 0]))
         else:
-            specvals = fftpack.fft(channeldata[:, 0])
+            specvals = fft.fft(channeldata[:, 0])
         magvals = np.absolute(specvals)
         themax = np.max(magvals)
         if themax > 0.0:

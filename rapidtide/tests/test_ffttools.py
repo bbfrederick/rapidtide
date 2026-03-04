@@ -204,11 +204,10 @@ def optfftlen_various_lengths(debug=False):
         # Check that result has only small prime factors (2, 3, 5, 7, etc.)
         factors = ffttools.primefacs(result)
         max_factor = max(factors)
-        if ffttools.pyfftwpresent:
-            # pyfftw's next_fast_len should produce numbers with small prime factors
-            assert (
-                max_factor <= 13
-            ), f"optfftlen({length}) = {result} has large prime factor {max_factor}"
+        # pyfftw's next_fast_len should produce numbers with small prime factors
+        assert (
+            max_factor <= 13
+        ), f"optfftlen({length}) = {result} has large prime factor {max_factor}"
     ffttools.lencache.clear()
     if debug:
         print("optfftlen_various_lengths passed")
@@ -271,17 +270,6 @@ def showfftcache_with_entries(debug=False):
         print("showfftcache_with_entries passed")
 
 
-# --- pyfftwpresent flag test ---
-
-
-def pyfftw_flag_test(debug=False):
-    """Test that pyfftwpresent flag is a boolean."""
-    assert isinstance(ffttools.pyfftwpresent, bool)
-    if debug:
-        print(f"pyfftwpresent = {ffttools.pyfftwpresent}")
-        print("pyfftw_flag_test passed")
-
-
 # --- integration test: primefacs + optfftlen ---
 
 
@@ -329,7 +317,6 @@ def test_ffttools(debug=False):
     showfftcache_with_entries(debug=debug)
 
     # misc tests
-    pyfftw_flag_test(debug=debug)
     integration_primefacs_optfftlen(debug=debug)
 
 

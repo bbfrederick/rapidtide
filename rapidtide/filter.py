@@ -27,26 +27,18 @@ from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pyfftw
+import scipy as sp
 from numpy.typing import NDArray
+from scipy import fft, ndimage, signal
+from scipy.signal import savgol_filter
 
 from rapidtide.decorators import conditionaljit, conditionaljit2
 from rapidtide.ffttools import optfftlen
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from scipy import fftpack, ndimage, signal
-from scipy.signal import savgol_filter
-
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 # --------------------------- Filtering functions -------------------------------------------------
 # NB: No automatic padding for precalculated filters
@@ -1297,7 +1289,7 @@ def transferfuncfilt(inputdata: NDArray, transferfunc: NDArray) -> NDArray:
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> # Create sample data
     >>> data = np.random.randn(1024)
     >>> # Create a simple low-pass filter transfer function
@@ -1306,8 +1298,8 @@ def transferfuncfilt(inputdata: NDArray, transferfunc: NDArray) -> NDArray:
     >>> # Apply filter
     >>> filtered_data = transferfuncfilt(data, tf)
     """
-    inputdata_trans = transferfunc * fftpack.fft(inputdata)
-    return fftpack.ifft(inputdata_trans).real
+    inputdata_trans = transferfunc * fft.fft(inputdata)
+    return fft.ifft(inputdata_trans).real
 
 
 # - fft brickwall filters
@@ -1364,6 +1356,7 @@ def getlpfftfunc(Fs: float, upperpass: float, inputdata: NDArray, debug: bool = 
         )
     transferfunc[cutoffbin:-cutoffbin] = 0.0
     return transferfunc
+
 
 # - fft trapezoidal filters
 # @conditionaljit()
@@ -1693,7 +1686,7 @@ def dolptransfuncfilt(
     >>> filtered = dolptransfuncfilt(Fs, signal, upperpass=20.0)
     """
     padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
+    inputdata_trans = fft.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type
     )
@@ -1708,7 +1701,7 @@ def dolptransfuncfilt(
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+    return unpadvec(fft.ifft(inputdata_trans).real, padlen=padlen)
 
 
 # @conditionaljit()
@@ -1772,7 +1765,7 @@ def dohptransfuncfilt(
     if lowerstop is None:
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
+    inputdata_trans = fft.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type
     )
@@ -1787,7 +1780,7 @@ def dohptransfuncfilt(
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= 1.0 - transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+    return unpadvec(fft.ifft(inputdata_trans).real, padlen=padlen)
 
 
 # @conditionaljit()
@@ -1849,7 +1842,7 @@ def dobptransfuncfilt(
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> Fs = 100.0
     >>> t = np.linspace(0, 1, int(Fs), endpoint=False)
     >>> signal = np.sin(2 * np.pi * 10 * t)
@@ -1858,7 +1851,7 @@ def dobptransfuncfilt(
     if lowerstop is None:
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
+    inputdata_trans = fft.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs,
         padinputdata,
@@ -1880,7 +1873,7 @@ def dobptransfuncfilt(
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+    return unpadvec(fft.ifft(inputdata_trans).real, padlen=padlen)
 
 
 # Simple example of Wiener deconvolution in Python.
@@ -1927,9 +1920,9 @@ def wiener_deconvolution(signal: NDArray, kernel: NDArray, lambd: float) -> NDAr
     kernel = np.hstack(
         (kernel, np.zeros(len(signal) - len(kernel)))
     )  # zero pad the kernel to same length
-    H = fftpack.fft(kernel)
+    H = fft.fft(kernel)
     deconvolved = np.roll(
-        np.real(fftpack.ifft(fftpack.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd**2))),
+        np.real(fft.ifft(fft.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd**2))),
         int(len(signal) // 2),
     )
     return deconvolved
@@ -1959,13 +1952,13 @@ def pspec(inputdata: NDArray) -> NDArray:
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> signal = np.sin(2 * np.pi * 5 * np.linspace(0, 1, 100))
     >>> spectrum = pspec(signal)
     >>> print(spectrum.shape)
     (100,)
     """
-    S = fftpack.fft(inputdata)
+    S = fft.fft(inputdata)
     return np.sqrt(S * np.conj(S))
 
 
@@ -2014,11 +2007,11 @@ def spectrum(
     >>> flatness = spectralflatness(tone)
     """
     if trim:
-        specvals = fftpack.fft(inputdata)[0 : len(inputdata) // 2]
+        specvals = fft.fft(inputdata)[0 : len(inputdata) // 2]
         maxfreq = Fs / 2.0
         specaxis = np.linspace(0.0, maxfreq, len(specvals), endpoint=False)
     else:
-        specvals = fftpack.fft(inputdata)
+        specvals = fft.fft(inputdata)
         maxfreq = Fs
         specaxis = np.linspace(0.0, maxfreq, len(specvals), endpoint=False)
     if mode == "real":
@@ -2252,10 +2245,10 @@ def csdfilter(
     """
     padobsdata = padvec(obsdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     padcommondata = padvec(commondata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    obsdata_trans = fftpack.fft(padobsdata)
-    transferfunc = np.sqrt(np.abs(fftpack.fft(padobsdata) * np.conj(fftpack.fft(padcommondata))))
+    obsdata_trans = fft.fft(padobsdata)
+    transferfunc = np.sqrt(np.abs(fft.fft(padobsdata) * np.conj(fft.fft(padcommondata))))
     obsdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
+    return unpadvec(fft.ifft(obsdata_trans).real, padlen=padlen)
 
 
 # @conditionaljit()
@@ -2344,9 +2337,8 @@ def arb_pass(
     ... )
     """
     # adjust the padding for speed
-    if pyfftwpresent:
-        thefftlen = optfftlen(len(inputdata), padlen=padlen)
-        padlen = int((thefftlen - len(inputdata)) // 2)
+    thefftlen = optfftlen(len(inputdata), padlen=padlen)
+    padlen = int((thefftlen - len(inputdata)) // 2)
 
     # check filter limits to see if we should do a lowpass, bandpass, or highpass
     if lowerpass <= 0.0:
@@ -2620,20 +2612,20 @@ def polarfft(inputdata: NDArray) -> Tuple[NDArray, NDArray]:
 
     Notes
     -----
-    This function uses `scipy.fftpack.fft` for the FFT computation and returns
+    This function uses `scipy.fft.fft` for the FFT computation and returns
     the polar representation of the complex FFT result. The magnitude represents
     the amplitude spectrum while the phase represents the phase spectrum.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> x = np.array([1, 2, 3, 4])
     >>> magnitude, phase = polarfft(x)
     >>> print("Magnitude:", magnitude)
     >>> print("Phase:", phase)
     """
-    complexxform = fftpack.fft(inputdata)
+    complexxform = fft.fft(inputdata)
     return np.abs(complexxform), np.angle(complexxform)
 
 
@@ -2672,7 +2664,7 @@ def ifftfrompolar(r: NDArray, theta: NDArray) -> NDArray:
     [ 0.54123456 -0.12345678  0.23456789]
     """
     complexxform = r * np.exp(1j * theta)
-    return fftpack.ifft(complexxform).real
+    return fft.ifft(complexxform).real
 
 
 # --------------------------- Window functions -------------------------------------------------

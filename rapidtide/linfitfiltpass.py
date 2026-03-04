@@ -87,8 +87,8 @@ def _procOneRegressionFitItem(
     thefit, R2 = tide_fit.mlregress(theevs, thedata)
     if theevs.ndim > 1:
         if thefit is None:
-            thefit = np.matrix(np.zeros((1, theevs.shape[1] + 1), dtype=rt_floattype))
-        fitcoeffs = (thefit[0, 1:]).astype(rt_floattype)
+            thefit = np.zeros((1, theevs.shape[1] + 1), dtype=rt_floattype)
+        fitcoeffs = np.atleast_2d(thefit[0, 1:]).astype(rt_floattype)
         if fitcoeffs[0, 0] < 0.0:
             coeffsign = -1.0
         else:
@@ -106,7 +106,7 @@ def _procOneRegressionFitItem(
             coeffsign * np.sqrt(R2),
             R2,
             fitcoeffs,
-            (thefit[0, 1:] / thefit[0, 0]).astype(rt_floattype),
+            np.atleast_2d(thefit[0, 1:] / thefit[0, 0]).astype(rt_floattype),
             datatoremove,
             (thedata - datatoremove).astype(rt_floattype),
         )

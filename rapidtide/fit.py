@@ -2468,7 +2468,7 @@ def mlregress(
     theintercept = reg.intercept_
     R2 = reg.score(X, y)
     coffs = np.insert(coffs, 0, theintercept, axis=0)
-    return np.asmatrix(coffs), R2
+    return np.atleast_2d(coffs), R2
 
 
 def calcexpandedregressors(

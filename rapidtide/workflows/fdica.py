@@ -19,25 +19,17 @@
 import argparse
 import copy
 import sys
-import warnings
 
 import numpy as np
+import pyfftw
+import scipy as sp
 from numpy.polynomial import Polynomial
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-from scipy import fftpack
+from scipy import fft
 from sklearn.decomposition import PCA, FastICA
 
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 
 from argparse import Namespace
@@ -374,10 +366,10 @@ def fdica(
 
     # calculating FFT
     print("calculating forward FFT")
-    complexfftdata = fftpack.fft(procvoxels, axis=1)
+    complexfftdata = fft.fft(procvoxels, axis=1)
     print(f"shape of complexfftdata: {complexfftdata.shape}")
 
-    procvoxels2 = fftpack.ifft(complexfftdata, axis=1).real
+    procvoxels2 = fft.ifft(complexfftdata, axis=1).real
     savefullarray = np.zeros((xsize, ysize, numslices, timepoints), dtype="float")
     rs_savefullarray = savefullarray.reshape(numspatiallocs, timepoints)
     rs_savefullarray[voxelstofit, :] = procvoxels2
@@ -407,7 +399,7 @@ def fdica(
 
     # checking IFFT
     print("calculating forward FFT")
-    procvoxels2 = fftpack.ifft(complexfftdata, axis=1).real
+    procvoxels2 = fft.ifft(complexfftdata, axis=1).real
 
     # trim the data
     trimmeddata = complexfftdata[:, lowerbin : min(upperbin + 1, timepoints)]
@@ -562,7 +554,7 @@ def fdica(
     # put the data back into rectangular components and go back to time domain
     complexfftdata[:, :] = 0.0 + 0.0j
     complexfftdata[:, lowerbin : min(upperbin + 1, timepoints)] = P2R(reconmagdata, reconphasedata)
-    procvoxels = fftpack.ifft(complexfftdata, axis=1).real
+    procvoxels = fft.ifft(complexfftdata, axis=1).real
     print(f"shape of procvoxels: {procvoxels.shape}")
 
     savefullarray[:, :, :, :] = 0.0

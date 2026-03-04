@@ -18,35 +18,23 @@
 #
 import sys
 import time
-import warnings
-
-import numpy as np
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Any, Optional, Tuple
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pyfftw
 import scipy as sp
 from numpy.typing import ArrayLike, NDArray
-from scipy import fftpack, signal
+from scipy import fft, signal
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
-from rapidtide.decorators import conditionaljit, conditionaljit2
 
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 
 # this is here until numpy deals with their fft issue
@@ -1251,7 +1239,7 @@ def timeshift(
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> input_signal = np.sin(np.linspace(0, 4*np.pi, 100))
     >>> shifted_sig, weights, full_shifted, full_weights = timeshift(
     ...     input_signal, shifttrs=5.0, padtrs=10, doplot=False
@@ -1290,12 +1278,12 @@ def timeshift(
     modvec = np.cos(argvec) - imag * np.sin(argvec)
 
     # process the data (fft->modulate->ifft->filter)
-    fftdata = fftpack.fft(preshifted_y)  # do the actual shifting
-    shifted_y = fftpack.ifft(modvec * fftdata).real
+    fftdata = fft.fft(preshifted_y)  # do the actual shifting
+    shifted_y = fft.ifft(modvec * fftdata).real
 
     # process the weights
-    w_fftdata = fftpack.fft(weights)  # do the actual shifting
-    shifted_weights = fftpack.ifft(modvec * w_fftdata).real
+    w_fftdata = fft.fft(weights)  # do the actual shifting
+    shifted_weights = fft.ifft(modvec * w_fftdata).real
 
     if doplot:
         xvec = range(0, thepaddedlen)  # make a ramp vector (with pad)

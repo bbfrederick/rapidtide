@@ -16,34 +16,23 @@
 #   limitations under the License.
 #
 #
-import warnings
-from typing import Any, Callable, Optional, Tuple, Union
+
+from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
-
-from rapidtide.decorators import conditionaljit, conditionaljit2
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
+import pyfftw
 import scipy as sp
+from numpy.typing import ArrayLike, NDArray
 from scipy.stats import johnsonsb, kurtosis, kurtosistest, skew, skewtest
 from statsmodels.robust import mad
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 
 # ---------------------------------------- Global constants -------------------------------------------

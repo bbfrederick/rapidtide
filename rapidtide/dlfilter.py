@@ -21,31 +21,17 @@ import logging
 import os
 import sys
 import time
-import warnings
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from scipy import fftpack
-from statsmodels.robust.scale import mad
-
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-
+import pyfftw
+import scipy as sp
 import tensorflow as tf
 import tf_keras.backend as K
+from numpy.typing import NDArray
+from scipy import fft
+from statsmodels.robust.scale import mad
 from tf_keras.callbacks import (
     EarlyStopping,
     ModelCheckpoint,
@@ -68,6 +54,10 @@ from tf_keras.models import Model, Sequential, load_model
 from tf_keras.optimizers.legacy import RMSprop
 
 import rapidtide.io as tide_io
+
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
@@ -1806,13 +1796,13 @@ def filtscale(
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> x = np.random.randn(1024)
     >>> scaled_data, scale = filtscale(x)
     >>> reconstructed = filtscale(scaled_data, scale, reverse=True)
     """
     if not reverse:
-        specvals = fftpack.fft(data)
+        specvals = fft.fft(data)
         if lognormalize:
             themag = np.log(np.absolute(specvals) + epsilon)
             scalefac = np.max(themag)
@@ -1837,7 +1827,7 @@ def filtscale(
             else:
                 themag = data[:, 0] * scalefac
             specvals = themag * np.exp(1.0j * thephase)
-            return fftpack.ifft(specvals).real
+            return fft.ifft(specvals).real
 
 
 def tobadpts(name: str) -> str:
