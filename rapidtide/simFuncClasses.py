@@ -1673,30 +1673,76 @@ class SimilarityFunctionFitter:
                 maxlag = np.sum(X * data) / np.sum(data)
                 maxsigma = 10.0
             elif self.peakfittype == "gauss":
-                X = self.corrtimeaxis[peakstart : peakend + 1] - baseline
+                X_full = self.corrtimeaxis[peakstart : peakend + 1] - baseline
                 data = corrfunc[peakstart : peakend + 1]
-                # do a least squares fit over the top of the peak
-                # p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
-                p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype="float64")
+                # Recenter x about local peak sample to avoid tiny nonzero lag-origin numerical traps.
+                x_center = float(X_full[np.argmax(data)])
+                X = X_full - x_center
+                p0 = np.array([maxval_init, maxlag_init - x_center, maxsigma_init], dtype="float64")
+                if np.abs(p0[1]) < 1.0e-6 * np.abs(binwidth):
+                    p0[1] = 0.0
                 if self.debug:
                     print("fit input array:", p0)
                 try:
-                    plsq, ier = sp.optimize.leastsq(
-                        tide_fit.gaussresiduals, p0, args=(data, X), maxfev=5000
-                    )
-                    if ier not in [1, 2, 3, 4]:  # Check for successful convergence
+                    # Use bounded, multistart least-squares so convergence is robust to poor initial mu.
+                    if self.bipolar:
+                        amp_low = -1.0
+                    else:
+                        amp_low = 0.0
+                    amp_high = 1.0 if self.enforcethresh else np.inf
+                    lag_low = self.lagmin - x_center
+                    lag_high = self.lagmax - x_center
+                    sigma_low = max(self.absminsigma, np.finfo(np.float64).eps)
+                    sigma_high = max(self.absmaxsigma, sigma_low * 1.0001)
+
+                    seed_offsets = [
+                        0.0,
+                        -np.abs(binwidth),
+                        np.abs(binwidth),
+                        -2.0 * np.abs(binwidth),
+                        2.0 * np.abs(binwidth),
+                    ]
+                    best_result = None
+                    for seed_offset in seed_offsets:
+                        pseed = p0.copy()
+                        pseed[1] = np.clip(p0[1] + seed_offset, lag_low, lag_high)
+                        pseed[2] = np.clip(pseed[2], sigma_low, sigma_high)
+                        pseed[0] = np.clip(pseed[0], amp_low, amp_high)
+                        result = sp.optimize.least_squares(
+                            tide_fit.gaussresiduals,
+                            pseed,
+                            args=(data, X),
+                            bounds=([amp_low, lag_low, sigma_low], [amp_high, lag_high, sigma_high]),
+                            method="trf",
+                            x_scale=np.array(
+                                [
+                                    max(np.abs(pseed[0]), 1.0e-3),
+                                    max(np.abs(binwidth), 1.0e-3),
+                                    max(np.abs(pseed[2]), np.abs(binwidth), 1.0e-3),
+                                ],
+                                dtype="float64",
+                            ),
+                            max_nfev=5000,
+                        )
+                        if result.success and (
+                            best_result is None or result.cost < best_result.cost
+                        ):
+                            best_result = result
+
+                    if best_result is None:
                         failreason |= self.FML_FITALGOFAIL
                         maxval = np.float64(0.0)
                         maxlag = np.float64(0.0)
                         maxsigma = np.float64(0.0)
                     else:
+                        plsq = best_result.x
                         maxval = plsq[0] + baseline
                         if self.enforcethresh:
                             if maxval > 1.0:
                                 maxval = 1.0
                             if maxval < -1.0:
                                 maxval = -1.0
-                        maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
+                        maxlag = np.fmod((1.0 * (plsq[1] + x_center)), self.lagmod)
                         maxsigma = plsq[2]
                 except:
                     failreason |= self.FML_FITALGOFAIL
