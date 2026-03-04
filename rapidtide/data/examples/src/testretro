@@ -12,11 +12,11 @@ rapidtide \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST
+    ../dst/sub-RAPIDTIDETESTnewest
 
 retroregress \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST \
+    ../dst/sub-RAPIDTIDETESTnewest \
     --alternateoutput ../dst/specialtest \
     --nprocs -1 \
     --outputlevel normal
