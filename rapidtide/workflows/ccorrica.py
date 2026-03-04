@@ -29,7 +29,6 @@ import pandas as pd
 from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr
-import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
@@ -269,7 +268,7 @@ def ccorrica(args: Any) -> None:
         print("oversample factor set to", args.oversampfactor)
 
     reformdata = np.reshape(tcdata, (numcomponents, tclen))
-    if args.oversampfactor == 1:
+    if args.oversampfactor == 1 and args.debug:
         print("data array shape is ", reformdata.shape)
     else:
         resampdata = np.zeros((numcomponents, tclen * args.oversampfactor), dtype=float)
@@ -300,7 +299,7 @@ def ccorrica(args: Any) -> None:
 
     xcorrlen = 2 * tclen - 1
     sampletime = 1.0 / Fs
-    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
+    xcorr_x = (np.arange(xcorrlen, dtype="float") - (xcorrlen // 2)) * sampletime
     searchrange = 15.0
     widthmax = 15.0
 
@@ -329,7 +328,7 @@ def ccorrica(args: Any) -> None:
         functype="correlation",
         zerooutbadfit=False,
         useguess=False,
-        displayplots=False,
+        displayplots=args.debug,
     )
 
     for component1 in range(0, numcomponents):
@@ -372,11 +371,13 @@ def ccorrica(args: Any) -> None:
                 )
     # symmetrize the matrices
     outputcorrmax[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
-    print("before:", outputcorrlag.reshape(numcomponents, numcomponents))
+    if args.debug:
+        print("before:", outputcorrlag.reshape(numcomponents, numcomponents))
     outputcorrlag[:, :, 0, 0] = tide_stats.symmetrize(
         outputcorrlag[:, :, 0, 0], antisymmetric=True
     )
-    print("after:", outputcorrlag.reshape(numcomponents, numcomponents))
+    if args.debug:
+        print("after:", outputcorrlag.reshape(numcomponents, numcomponents))
     outputcorrwidth[:, :, 0, 0] = tide_stats.symmetrize(outputcorrwidth[:, :, 0, 0])
     outputcorrmask[:, :, 0, 0] = tide_stats.symmetrize(
         outputcorrmask[:, :, 0, 0], zerodiagonal=True

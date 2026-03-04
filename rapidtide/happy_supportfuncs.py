@@ -2462,7 +2462,7 @@ def checkcardmatch(
     )
     xcorrlen = len(thexcorr)
     sampletime = 1.0 / samplerate
-    xcorr_x = np.r_[0.0:xcorrlen] * sampletime - (xcorrlen * sampletime) / 2.0 + sampletime / 2.0
+    xcorr_x = (np.arange(xcorrlen, dtype="float") - (xcorrlen // 2)) * sampletime
     searchrange = 5.0
     trimstart = tide_util.valtoindex(xcorr_x, -2.0 * searchrange)
     trimend = tide_util.valtoindex(xcorr_x, 2.0 * searchrange)
