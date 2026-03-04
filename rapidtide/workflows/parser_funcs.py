@@ -2341,7 +2341,6 @@ def generic_init(
     >>> generic_init(create_parser, main_func)
     """
     if inputargs is None:
-        print("processing command line arguments")
         # write out the command used
         try:
             args = theparser().parse_args()
