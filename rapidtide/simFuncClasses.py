@@ -1039,6 +1039,11 @@ class SimilarityFunctionFitter:
         self.enforcethresh = enforcethresh
         self.corrtolerance = corrtolerance
         self.displayplots = displayplots
+        # lightweight instrumentation counters for performance profiling
+        self.gauss_fit_calls = 0
+        self.gauss_fastpath_calls = 0
+        self.gauss_robust_fallback_calls = 0
+        self.last_fit_used_robust = False
 
     def _maxindex_noedge(self, corrfunc: NDArray) -> tuple[int, float]:
         """
@@ -1673,6 +1678,8 @@ class SimilarityFunctionFitter:
                 maxlag = np.sum(X * data) / np.sum(data)
                 maxsigma = 10.0
             elif self.peakfittype == "gauss":
+                self.gauss_fit_calls += 1
+                self.last_fit_used_robust = False
                 X_full = self.corrtimeaxis[peakstart : peakend + 1] - baseline
                 data = corrfunc[peakstart : peakend + 1]
                 # Recenter x about local peak sample to avoid tiny nonzero lag-origin numerical traps.
@@ -1684,7 +1691,6 @@ class SimilarityFunctionFitter:
                 if self.debug:
                     print("fit input array:", p0)
                 try:
-                    # Use bounded, multistart least-squares so convergence is robust to poor initial mu.
                     if self.bipolar:
                         amp_low = -1.0
                     else:
@@ -1694,48 +1700,73 @@ class SimilarityFunctionFitter:
                     lag_high = self.lagmax - x_center
                     sigma_low = max(self.absminsigma, np.finfo(np.float64).eps)
                     sigma_high = max(self.absmaxsigma, sigma_low * 1.0001)
-
-                    seed_offsets = [
-                        0.0,
-                        -np.abs(binwidth),
-                        np.abs(binwidth),
-                        -2.0 * np.abs(binwidth),
-                        2.0 * np.abs(binwidth),
-                    ]
-                    best_result = None
-                    for seed_offset in seed_offsets:
-                        pseed = p0.copy()
-                        pseed[1] = np.clip(p0[1] + seed_offset, lag_low, lag_high)
-                        pseed[2] = np.clip(pseed[2], sigma_low, sigma_high)
-                        pseed[0] = np.clip(pseed[0], amp_low, amp_high)
-                        result = sp.optimize.least_squares(
-                            tide_fit.gaussresiduals,
-                            pseed,
-                            args=(data, X),
-                            bounds=([amp_low, lag_low, sigma_low], [amp_high, lag_high, sigma_high]),
-                            method="trf",
-                            x_scale=np.array(
-                                [
-                                    max(np.abs(pseed[0]), 1.0e-3),
-                                    max(np.abs(binwidth), 1.0e-3),
-                                    max(np.abs(pseed[2]), np.abs(binwidth), 1.0e-3),
-                                ],
-                                dtype="float64",
-                            ),
-                            max_nfev=5000,
+                    # Fast path: use legacy leastsq first (much faster), then fall back to
+                    # bounded multi-start only for clear numerical-stall cases.
+                    need_robust_refine = True
+                    plsq = None
+                    plsq_fast, ier = sp.optimize.leastsq(
+                        tide_fit.gaussresiduals, p0, args=(data, X), maxfev=5000
+                    )
+                    if ier in [1, 2, 3, 4]:
+                        need_robust_refine = False
+                        # Detect the "stuck at tiny center" failure mode.
+                        asymmetry = np.fabs(data[0] - data[-1]) / max(
+                            np.max(np.fabs(data)), np.finfo(np.float64).eps
                         )
-                        if result.success and (
-                            best_result is None or result.cost < best_result.cost
-                        ):
-                            best_result = result
+                        tiny_center = np.fabs(plsq_fast[1]) < 1.0e-6 * max(
+                            np.fabs(binwidth), np.finfo(np.float64).eps
+                        )
+                        unmoved_center = np.fabs(plsq_fast[1] - p0[1]) < 1.0e-8 * max(
+                            np.fabs(binwidth), 1.0
+                        )
+                        if tiny_center and unmoved_center and (asymmetry > 1.0e-3):
+                            need_robust_refine = True
+                        else:
+                            plsq = plsq_fast
+                            self.gauss_fastpath_calls += 1
 
-                    if best_result is None:
-                        failreason |= self.FML_FITALGOFAIL
-                        maxval = np.float64(0.0)
-                        maxlag = np.float64(0.0)
-                        maxsigma = np.float64(0.0)
-                    else:
-                        plsq = best_result.x
+                    if need_robust_refine:
+                        self.last_fit_used_robust = True
+                        self.gauss_robust_fallback_calls += 1
+                        seed_offsets = [0.0, -np.abs(binwidth), np.abs(binwidth)]
+                        best_result = None
+                        for seed_offset in seed_offsets:
+                            pseed = p0.copy()
+                            pseed[1] = np.clip(p0[1] + seed_offset, lag_low, lag_high)
+                            pseed[2] = np.clip(pseed[2], sigma_low, sigma_high)
+                            pseed[0] = np.clip(pseed[0], amp_low, amp_high)
+                            result = sp.optimize.least_squares(
+                                tide_fit.gaussresiduals,
+                                pseed,
+                                args=(data, X),
+                                bounds=(
+                                    [amp_low, lag_low, sigma_low],
+                                    [amp_high, lag_high, sigma_high],
+                                ),
+                                method="trf",
+                                x_scale=np.array(
+                                    [
+                                        max(np.abs(pseed[0]), 1.0e-3),
+                                        max(np.abs(binwidth), 1.0e-3),
+                                        max(np.abs(pseed[2]), np.abs(binwidth), 1.0e-3),
+                                    ],
+                                    dtype="float64",
+                                ),
+                                max_nfev=5000,
+                            )
+                            if result.success and (
+                                best_result is None or result.cost < best_result.cost
+                            ):
+                                best_result = result
+                        if best_result is None:
+                            failreason |= self.FML_FITALGOFAIL
+                            maxval = np.float64(0.0)
+                            maxlag = np.float64(0.0)
+                            maxsigma = np.float64(0.0)
+                        else:
+                            plsq = best_result.x
+
+                    if plsq is not None:
                         maxval = plsq[0] + baseline
                         if self.enforcethresh:
                             if maxval > 1.0:
