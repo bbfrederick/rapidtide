@@ -606,6 +606,7 @@ def saveregionaltimeseries(
     initfile: bool = False,
     excludemask: Optional[NDArray] = None,
     filedesc: str = "regional",
+    extrainfo: str = "",
     suffix: str = "",
     signalgenmethod: str = "sum",
     pcacomponents: Union[float, str] = 0.8,
@@ -703,7 +704,7 @@ def saveregionaltimeseries(
         fmrifreq,
         columns=[f"{tcname}{suffix}"],
         extraheaderinfo={
-            "Description": "Regional timecourse averages",
+            "Description": f"Regional timecourse averages {extrainfo}",
         },
         append=(not initfile),
     )

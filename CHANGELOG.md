@@ -2,6 +2,7 @@
 
 ## Version 3.1.9 (3/4/26)
 * (rapidtide, retroregress) Fixed calculation of the refined R value.
+* (rapidtide) Expanded and improved regional time course output.
 
 ## Version 3.1.8 (3/2/26)
 * (rapidtide) Fixed a bug in how the despeckle search region is set.

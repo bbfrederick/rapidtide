@@ -992,7 +992,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         pcacomponents=optiondict["initregressorpcacomponents"],
         excludemask=internalinitregressorexcludemask,
         filedesc="regionalprefilter",
-        suffix="",
+        extrainfo="prior to sLFO removal",
+        suffix="_LFO",
+        filter=theprefilter,
         debug=optiondict["debug"],
     )
 
@@ -1005,7 +1007,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             meanfreq,
             outputname,
             filedesc="regionalprefilter",
-            suffix="",
+            extrainfo="prior to sLFO removal",
+            suffix="_LFO",
+            filter=theprefilter,
             debug=optiondict["debug"],
         )
 
@@ -1022,7 +1026,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             outputname,
             excludemask=internalinvbrainmask,
             filedesc="regionalprefilter",
-            suffix="",
+            extrainfo="prior to sLFO removal",
+            suffix="_LFO",
+            filter=theprefilter,
             debug=optiondict["debug"],
         )
 
@@ -1039,7 +1045,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             outputname,
             excludemask=internalinvbrainmask,
             filedesc="regionalprefilter",
-            suffix="",
+            extrainfo="prior to sLFO removal",
+            suffix="_LFO",
+            filter=theprefilter,
             debug=optiondict["debug"],
         )
 
@@ -1056,7 +1064,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             outputname,
             excludemask=internalinvbrainmask,
             filedesc="regionalprefilter",
-            suffix="",
+            extrainfo="prior to sLFO removal",
+            suffix="_LFO",
+            filter=theprefilter,
             debug=optiondict["debug"],
         )
 
@@ -2929,18 +2939,15 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             else:
                 thisexcludemask = None
 
-            meanvec, meanmask = tide_mask.saveregionaltimeseries(
-                "initial regressor",
-                "startregressormask",
-                filtereddata,
-                thisincludemask,
+            tide_io.writebidstsv(
+                f"{outputname}_desc-regionalpostfilter_timeseries",
+                resampnonosref_y,
                 meanfreq,
-                outputname,
-                initfile=True,
-                excludemask=thisexcludemask,
-                filedesc="regionalpostfilter",
-                suffix="",
-                debug=optiondict["debug"],
+                columns=[f"sLFO"],
+                extraheaderinfo={
+                    "Description": "Regional timecourse averages after sLFO removal",
+                },
+                append=False,
             )
             if brainmask is not None:
                 brainvec, dummy = tide_mask.saveregionaltimeseries(
@@ -2951,7 +2958,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     meanfreq,
                     outputname,
                     filedesc="regionalpostfilter",
-                    suffix="",
+                    extrainfo="after sLFO removal",
+                    suffix="_LFO",
+                    filter=theprefilter,
                     debug=optiondict["debug"],
                 )
             if graymask is not None:
@@ -2964,7 +2973,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     outputname,
                     excludemask=internalinvbrainmask[validvoxels],
                     filedesc="regionalpostfilter",
-                    suffix="",
+                    extrainfo="after sLFO removal",
+                    suffix="_LFO",
+                    filter=theprefilter,
                     debug=optiondict["debug"],
                 )
             if whitemask is not None:
@@ -2977,7 +2988,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     outputname,
                     excludemask=internalinvbrainmask[validvoxels],
                     filedesc="regionalpostfilter",
-                    suffix="",
+                    extrainfo="after sLFO removal",
+                    suffix="_LFO",
+                    filter=theprefilter,
                     debug=optiondict["debug"],
                 )
             if csfmask is not None:
@@ -2990,7 +3003,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     outputname,
                     excludemask=internalinvbrainmask[validvoxels],
                     filedesc="regionalpostfilter",
-                    suffix="",
+                    extrainfo="after sLFO removal",
+                    suffix="_LFO",
+                    filter=theprefilter,
                     debug=optiondict["debug"],
                 )
             tide_util.logmem("after sLFO filter")

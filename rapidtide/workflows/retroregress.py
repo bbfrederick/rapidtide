@@ -884,29 +884,16 @@ def retroregress(args: Any) -> None:
         whitemask = anatomicmasks[2]
         csfmask = anatomicmasks[3]
 
-        """if internalinitregressorincludemask is not None:
-            thisincludemask = internalinitregressorincludemask[validvoxels]
-        else:
-            thisincludemask = None
-        if internalinitregressorexcludemask is not None:
-            thisexcludemask = internalinitregressorexcludemask[validvoxels]
-        else:
-            thisexcludemask = None
-
-        meanvec, meanmask = tide_mask.saveregionaltimeseries(
-            "initial regressor",
-            "startregressormask",
-            filtereddata,
-            thisincludemask,
+        tide_io.writebidstsv(
+            f"{outputname}_desc-regionalpostfilter_timeseries",
+            (genlagtc.yfromx(initial_fmri_x)).astype(rt_floattype),
             1.0 / fmritr,
-            outputname,
-            initfile=True,
-            excludemask=thisexcludemask,
-            filedesc="regionalpostfilter",
-            suffix="",
-            debug=args.debug,
-        )"""
-        # reformat the anatomic masks, if they exist
+            columns=[f"sLFO"],
+            extraheaderinfo={
+                "Description": "Regional timecourse averages after sLFO removal",
+            },
+            append=False,
+        )  # reformat the anatomic masks, if they exist
         if brainmask is None:
             invbrainmask = None
 
@@ -937,7 +924,9 @@ def retroregress(args: Any) -> None:
                 1.0 / fmritr,
                 outputname,
                 filedesc="regionalpostfilter",
-                suffix="",
+                extrainfo="after sLFO removal",
+                suffix="_LFO",
+                filter=theprefilter,
                 debug=args.debug,
             )
         if graymask is not None:
@@ -950,7 +939,9 @@ def retroregress(args: Any) -> None:
                 outputname,
                 excludemask=internalinvbrainmask[validvoxels],
                 filedesc="regionalpostfilter",
-                suffix="",
+                extrainfo="after sLFO removal",
+                suffix="_LFO",
+                filter=theprefilter,
                 debug=args.debug,
             )
         if whitemask is not None:
@@ -963,7 +954,9 @@ def retroregress(args: Any) -> None:
                 outputname,
                 excludemask=internalinvbrainmask[validvoxels],
                 filedesc="regionalpostfilter",
-                suffix="",
+                extrainfo="after sLFO removal",
+                suffix="_LFO",
+                filter=theprefilter,
                 debug=args.debug,
             )
         if csfmask is not None:
@@ -976,7 +969,9 @@ def retroregress(args: Any) -> None:
                 outputname,
                 excludemask=internalinvbrainmask[validvoxels],
                 filedesc="regionalpostfilter",
-                suffix="",
+                extrainfo="after sLFO removal",
+                suffix="_LFO",
+                filter=theprefilter,
                 debug=args.debug,
             )
 
