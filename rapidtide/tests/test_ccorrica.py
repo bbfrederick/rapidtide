@@ -112,10 +112,10 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
     wnp_effect, wnp_captured = _capture_writenpvecs()
     stn_effect, stn_captured = _capture_savetonifti()
 
-    # findmaxlag_gauss returns 8-tuple
-    def mock_findmaxlag_gauss(x, y, lagmin, lagmax, widthmax, **kwargs):
-        midx = len(y) // 2
-        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(y))
+    # similarityfunctionfitter_fit returns 8-tuple
+    def mock_similarity_fit(corrfunc, **kwargs):
+        midx = len(corrfunc) // 2
+        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     # symmetrize: return input unchanged
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
@@ -178,8 +178,8 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
             return_value=mock_pearsonr_result,
         ),
         patch(
-            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
-            side_effect=mock_findmaxlag_gauss,
+            "rapidtide.workflows.ccorrica.tide_simFuncClasses.SimilarityFunctionFitter.fit",
+            side_effect=mock_similarity_fit,
         ),
         patch(
             "rapidtide.workflows.ccorrica.tide_stats.symmetrize",
@@ -550,9 +550,9 @@ def test_ccorrica_oversample(debug=False):
         upsample_calls.append((fs_in, fs_out))
         return np.repeat(data, int(fs_out / fs_in))
 
-    def mock_findmaxlag_gauss(x, y, lagmin, lagmax, widthmax, **kwargs):
-        midx = len(y) // 2
-        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(y))
+    def mock_similarity_fit(corrfunc, **kwargs):
+        midx = len(corrfunc) // 2
+        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
         result = np.array(matrix, copy=True)
@@ -594,8 +594,8 @@ def test_ccorrica_oversample(debug=False):
         ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
         patch(
-            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
-            side_effect=mock_findmaxlag_gauss,
+            "rapidtide.workflows.ccorrica.tide_simFuncClasses.SimilarityFunctionFitter.fit",
+            side_effect=mock_similarity_fit,
         ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
@@ -632,9 +632,9 @@ def test_ccorrica_auto_oversampfactor(debug=False):
         upsample_calls.append((fs_in, fs_out))
         return np.repeat(data, int(fs_out / fs_in))
 
-    def mock_findmaxlag_gauss(x, y, lagmin, lagmax, widthmax, **kwargs):
-        midx = len(y) // 2
-        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(y))
+    def mock_similarity_fit(corrfunc, **kwargs):
+        midx = len(corrfunc) // 2
+        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
         result = np.array(matrix, copy=True)
@@ -677,8 +677,8 @@ def test_ccorrica_auto_oversampfactor(debug=False):
         ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
         patch(
-            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
-            side_effect=mock_findmaxlag_gauss,
+            "rapidtide.workflows.ccorrica.tide_simFuncClasses.SimilarityFunctionFitter.fit",
+            side_effect=mock_similarity_fit,
         ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
@@ -767,9 +767,9 @@ def test_ccorrica_symmetrize_called(debug=False):
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
         return np.zeros(xcorrlen)
 
-    def mock_findmaxlag_gauss(x, y, lagmin, lagmax, widthmax, **kwargs):
-        midx = len(y) // 2
-        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(y))
+    def mock_similarity_fit(corrfunc, **kwargs):
+        midx = len(corrfunc) // 2
+        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     mock_pearsonr_result = MagicMock()
     mock_pearsonr_result.statistic = 0.3
@@ -802,8 +802,8 @@ def test_ccorrica_symmetrize_called(debug=False):
         ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
         patch(
-            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
-            side_effect=mock_findmaxlag_gauss,
+            "rapidtide.workflows.ccorrica.tide_simFuncClasses.SimilarityFunctionFitter.fit",
+            side_effect=mock_similarity_fit,
         ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
@@ -844,9 +844,9 @@ def test_ccorrica_fastcorrelate_call_count(debug=False):
         correlate_count[0] += 1
         return np.zeros(xcorrlen)
 
-    def mock_findmaxlag_gauss(x, y, lagmin, lagmax, widthmax, **kwargs):
-        midx = len(y) // 2
-        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(y))
+    def mock_similarity_fit(corrfunc, **kwargs):
+        midx = len(corrfunc) // 2
+        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
         return np.array(matrix, copy=True)
@@ -885,8 +885,8 @@ def test_ccorrica_fastcorrelate_call_count(debug=False):
         ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
         patch(
-            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
-            side_effect=mock_findmaxlag_gauss,
+            "rapidtide.workflows.ccorrica.tide_simFuncClasses.SimilarityFunctionFitter.fit",
+            side_effect=mock_similarity_fit,
         ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
@@ -917,24 +917,24 @@ def test_ccorrica_pearsonr_call_count(debug=False):
         print("test_ccorrica_pearsonr_call_count passed")
 
 
-def test_ccorrica_findmaxlag_gauss_called(debug=False):
-    """findmaxlag_gauss should be called for each component pair."""
+def test_ccorrica_similarityfunctionfitter_fit_called(debug=False):
+    """similarityfunctionfitter_fit should be called for each component pair."""
     numcomponents = 2
     tclen = 40
     args = _make_args()
     tcdata = _make_tc_data(numcomponents, tclen)
     prefilter = _make_mock_prefilter()
 
-    gauss_calls = [0]
+    fit_calls = [0]
     xcorrlen = 2 * tclen - 1
 
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
         return np.zeros(xcorrlen)
 
-    def mock_findmaxlag_gauss(x, y, lagmin, lagmax, widthmax, **kwargs):
-        gauss_calls[0] += 1
-        midx = len(y) // 2
-        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(y))
+    def mock_similarity_fit(corrfunc, **kwargs):
+        fit_calls[0] += 1
+        midx = len(corrfunc) // 2
+        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
         return np.array(matrix, copy=True)
@@ -973,8 +973,8 @@ def test_ccorrica_findmaxlag_gauss_called(debug=False):
         ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
         patch(
-            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
-            side_effect=mock_findmaxlag_gauss,
+            "rapidtide.workflows.ccorrica.tide_simFuncClasses.SimilarityFunctionFitter.fit",
+            side_effect=mock_similarity_fit,
         ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
@@ -983,10 +983,10 @@ def test_ccorrica_findmaxlag_gauss_called(debug=False):
     ):
         ccorrica(args)
 
-    assert gauss_calls[0] == numcomponents * numcomponents
+    assert fit_calls[0] == numcomponents * numcomponents
 
     if debug:
-        print("test_ccorrica_findmaxlag_gauss_called passed")
+        print("test_ccorrica_similarityfunctionfitter_fit_called passed")
 
 
 # ---- nifti header tests ----
@@ -1016,9 +1016,9 @@ def test_ccorrica_nifti_pixdim_set(debug=False):
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
         return np.zeros(xcorrlen)
 
-    def mock_findmaxlag_gauss(x, y, lagmin, lagmax, widthmax, **kwargs):
-        midx = len(y) // 2
-        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(y))
+    def mock_similarity_fit(corrfunc, **kwargs):
+        midx = len(corrfunc) // 2
+        return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
         return np.array(matrix, copy=True)
@@ -1050,8 +1050,8 @@ def test_ccorrica_nifti_pixdim_set(debug=False):
         ),
         patch("rapidtide.workflows.ccorrica.pearsonr", return_value=mock_pearsonr_result),
         patch(
-            "rapidtide.workflows.ccorrica.tide_fit.findmaxlag_gauss",
-            side_effect=mock_findmaxlag_gauss,
+            "rapidtide.workflows.ccorrica.tide_simFuncClasses.SimilarityFunctionFitter.fit",
+            side_effect=mock_similarity_fit,
         ),
         patch("rapidtide.workflows.ccorrica.tide_stats.symmetrize", side_effect=mock_symmetrize),
         patch("rapidtide.workflows.ccorrica.nib.Nifti1Image", side_effect=mock_nifti1image),
@@ -1160,7 +1160,7 @@ def test_ccorrica(debug=False):
     # correlation computation tests
     test_ccorrica_fastcorrelate_call_count(debug=debug)
     test_ccorrica_pearsonr_call_count(debug=debug)
-    test_ccorrica_findmaxlag_gauss_called(debug=debug)
+    test_ccorrica_similarityfunctionfitter_fit_called(debug=debug)
 
     # nifti header tests
     test_ccorrica_nifti_pixdim_set(debug=debug)
