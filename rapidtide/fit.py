@@ -1411,7 +1411,6 @@ def findmaxlag_gauss(
     widthmax: float,
     edgebufferfrac: float = 0.0,
     threshval: float = 0.0,
-    uthreshval: float = 30.0,
     debug: bool = False,
     tweaklims: bool = True,
     zerooutbadfit: bool = True,
