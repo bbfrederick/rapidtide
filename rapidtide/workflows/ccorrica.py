@@ -25,6 +25,7 @@ from typing import Any
 
 import nibabel as nib
 import numpy as np
+import pandas as pd
 from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr
@@ -32,6 +33,7 @@ import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
+import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.stats as tide_stats
 import rapidtide.workflows.parser_funcs as pf
 
@@ -237,7 +239,14 @@ def ccorrica(args: Any) -> None:
         compressed,
         filetype,
     ) = tide_io.readvectorsfromtextfile(args.timecoursefile)
-
+    if colnames is None:
+        print("no column names found in file")
+        colnames = []
+        for i in range(0, tcdata.shape[0]):
+            colnames.append(f"tc_{i+1}")
+    indexnames = colnames
+    if args.debug:
+        print("column names are: ", colnames)
     if samplerate is None:
         if args.samplerate == "auto":
             print(
@@ -307,16 +316,32 @@ def ccorrica(args: Any) -> None:
     outputcorrlag = np.zeros((numcomponents, numcomponents, 1, 1), dtype="float")
     outputcorrwidth = np.zeros((numcomponents, numcomponents, 1, 1), dtype="float")
     outputcorrmask = np.zeros((numcomponents, numcomponents, 1, 1), dtype="float")
+
+    # initialize the correlation fitter
+    thexsimfuncfitter = tide_simFuncClasses.SimilarityFunctionFitter(
+        corrtimeaxis=xcorr_x,
+        lagmin=-searchrange,
+        lagmax=searchrange,
+        debug=args.debug,
+        bipolar=False,
+        enforcethresh=True,
+        peakfittype="gauss",
+        functype="correlation",
+        zerooutbadfit=False,
+        useguess=False,
+        displayplots=False,
+    )
+
     for component1 in range(0, numcomponents):
-        print("correlating with component", component1)
         for component2 in range(0, numcomponents):
+            print(f"correlating {colnames[component1]} with {indexnames[component2]}")
             thexcorr = tide_corr.fastcorrelate(
                 reformdata[component1, :],
                 reformdata[component2, :],
                 usefft=True,
                 weighting=args.corrweighting,
                 zeropadding=0,
-                displayplots=args.debug,
+                displayplots=False,
             )
             thepxcorr = pearsonr(
                 reformdata[component1, :] / tclen, reformdata[component2, :]
@@ -332,27 +357,26 @@ def ccorrica(args: Any) -> None:
                 failreason,
                 peakstart,
                 peakend,
-            ) = tide_fit.findmaxlag_gauss(
-                xcorr_x[searchstart:searchend],
-                thexcorr[searchstart:searchend],
-                -searchrange,
-                searchrange,
-                widthmax,
-                refine=True,
-                useguess=False,
-                fastgauss=False,
-                displayplots=False,
-            )
+            ) = thexsimfuncfitter.fit(thexcorr)
+            if failreason != 0:
+                print(
+                    f"\tfailed to find maxlag for {colnames[component1]} vs {indexnames[component2]}: {thexsimfuncfitter.diagnosefail(failreason)}"
+                )
             outputcorrmax[component1, component2, 0, 0] = maxval + 0.0
             outputcorrlag[component1, component2, 0, 0] = maxlag + 0.0
             outputcorrwidth[component1, component2, 0, 0] = maxsigma + 0.0
             outputcorrmask[component1, component2, 0, 0] = maskval + 0.0
-
+            if args.debug:
+                print(
+                    f"\t{colnames[component1]} vs {indexnames[component2]}: {maxval:.3f} +/- {maxsigma:.3f} @ lag {maxlag:.3f} s",
+                )
     # symmetrize the matrices
     outputcorrmax[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
+    print("before:", outputcorrlag.reshape(numcomponents, numcomponents))
     outputcorrlag[:, :, 0, 0] = tide_stats.symmetrize(
         outputcorrlag[:, :, 0, 0], antisymmetric=True
     )
+    print("after:", outputcorrlag.reshape(numcomponents, numcomponents))
     outputcorrwidth[:, :, 0, 0] = tide_stats.symmetrize(outputcorrwidth[:, :, 0, 0])
     outputcorrmask[:, :, 0, 0] = tide_stats.symmetrize(
         outputcorrmask[:, :, 0, 0], zerodiagonal=True
@@ -362,34 +386,61 @@ def ccorrica(args: Any) -> None:
     outputaffine = np.eye(4)
     out4d_hdr = nib.Nifti1Image(outputdata[:, :, :, searchstart:searchend], outputaffine).header
     out4d_hdr["pixdim"][4] = sampletime
-    out4d_sizes = out4d_hdr["pixdim"]
     tide_io.savetonifti(
         outputdata[:, :, :, searchstart:searchend], out4d_hdr, args.outputroot + "_xcorr"
     )
 
+    # save niftis
     outputaffine = np.eye(4)
     out4d_hdr = nib.Nifti1Image(outputpdata, outputaffine).header
     out4d_hdr["pixdim"][4] = sampletime
-    out4d_sizes = out4d_hdr["pixdim"]
     tide_io.savetonifti(outputpdata, out4d_hdr, args.outputroot + "_pxcorr")
 
     out3d_hdr = nib.Nifti1Image(outputcorrmax, outputaffine).header
     out3d_hdr["pixdim"][4] = sampletime
-    out3d_sizes = out3d_hdr["pixdim"]
     tide_io.savetonifti(outputcorrmax, out3d_hdr, args.outputroot + "_corrmax")
+    tide_io.savetonifti(outputcorrlag, out3d_hdr, args.outputroot + "_corrlag")
+    tide_io.savetonifti(outputcorrwidth, out3d_hdr, args.outputroot + "_corrwidth")
+    tide_io.savetonifti(outputcorrmask, out3d_hdr, args.outputroot + "_corrmask")
+
+    # save csv files
+    df = pd.DataFrame(
+        data=outputcorrmax.reshape(numcomponents, numcomponents),
+        columns=colnames,
+        index=indexnames,
+    )
+    df.to_csv(args.outputroot + "_corrmax.csv")
     tide_io.writenpvecs(
         outputcorrmax.reshape(numcomponents, numcomponents), args.outputroot + "_corrmax.txt"
     )
-    tide_io.savetonifti(outputcorrlag, out3d_hdr, args.outputroot + "_corrlag")
+
+    df = pd.DataFrame(
+        data=outputcorrlag.reshape(numcomponents, numcomponents),
+        columns=colnames,
+        index=indexnames,
+    )
+    df.to_csv(args.outputroot + "_corrlag.csv")
     tide_io.writenpvecs(
         outputcorrlag.reshape(numcomponents, numcomponents), args.outputroot + "_corrlag.txt"
     )
-    tide_io.savetonifti(outputcorrwidth, out3d_hdr, args.outputroot + "_corrwidth")
+
+    df = pd.DataFrame(
+        data=outputcorrwidth.reshape(numcomponents, numcomponents),
+        columns=colnames,
+        index=indexnames,
+    )
+    df.to_csv(args.outputroot + "_corrwidth.csv")
     tide_io.writenpvecs(
         outputcorrwidth.reshape(numcomponents, numcomponents),
         args.outputroot + "_corrwidth.txt",
     )
-    tide_io.savetonifti(outputcorrmask, out3d_hdr, args.outputroot + "_corrmask")
+
+    df = pd.DataFrame(
+        data=outputcorrmask.reshape(numcomponents, numcomponents),
+        columns=colnames,
+        index=indexnames,
+    )
+    df.to_csv(args.outputroot + "_corrmask.csv")
     tide_io.writenpvecs(
         outputcorrmask.reshape(numcomponents, numcomponents),
         args.outputroot + "_corrmask.txt",
