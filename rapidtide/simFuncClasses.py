@@ -894,12 +894,12 @@ class SimilarityFunctionFitter:
     corrtimeaxis = None
     FML_NOERROR = np.uint32(0x0000)
 
-    FML_INITAMPLOW = np.uint32(0x0001)
-    FML_INITAMPHIGH = np.uint32(0x0002)
-    FML_INITWIDTHLOW = np.uint32(0x0004)
-    FML_INITWIDTHHIGH = np.uint32(0x0008)
-    FML_INITLAGLOW = np.uint32(0x0010)
-    FML_INITLAGHIGH = np.uint32(0x0020)
+    FML_INITAMPLOW = np.uint32(0x0001)  # 1
+    FML_INITAMPHIGH = np.uint32(0x0002)  # 2
+    FML_INITWIDTHLOW = np.uint32(0x0004)  # 4
+    FML_INITWIDTHHIGH = np.uint32(0x0008)  # 8
+    FML_INITLAGLOW = np.uint32(0x0010)  # 16
+    FML_INITLAGHIGH = np.uint32(0x0020)  # 32
     FML_INITFAIL = (
         FML_INITAMPLOW
         | FML_INITAMPHIGH
@@ -909,13 +909,13 @@ class SimilarityFunctionFitter:
         | FML_INITLAGHIGH
     )
 
-    FML_FITAMPLOW = np.uint32(0x0100)
-    FML_FITAMPHIGH = np.uint32(0x0200)
-    FML_FITWIDTHLOW = np.uint32(0x0400)
-    FML_FITWIDTHHIGH = np.uint32(0x0800)
-    FML_FITLAGLOW = np.uint32(0x1000)
-    FML_FITLAGHIGH = np.uint32(0x2000)
-    FML_FITALGOFAIL = np.uint32(0x0400)
+    FML_FITAMPLOW = np.uint32(0x0100)  # 256
+    FML_FITAMPHIGH = np.uint32(0x0200)  # 512
+    FML_FITWIDTHLOW = np.uint32(0x0400)  # 1024
+    FML_FITWIDTHHIGH = np.uint32(0x0800)  # 2048
+    FML_FITLAGLOW = np.uint32(0x1000)  # 4096
+    FML_FITLAGHIGH = np.uint32(0x2000)  # 8192
+    FML_FITALGOFAIL = np.uint32(0x4000)  # 16384
     FML_FITFAIL = (
         FML_FITAMPLOW
         | FML_FITAMPHIGH
@@ -1691,6 +1691,11 @@ class SimilarityFunctionFitter:
                         maxsigma = np.float64(0.0)
                     else:
                         maxval = plsq[0] + baseline
+                        if self.enforcethresh:
+                            if maxval > 1.0:
+                                maxval = 1.0
+                            if maxval < -1.0:
+                                maxval = -1.0
                         maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
                         maxsigma = plsq[2]
                 except:
