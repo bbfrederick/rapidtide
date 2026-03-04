@@ -21,12 +21,10 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 import argparse
 import sys
-from argparse import Namespace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import nibabel as nib
 import numpy as np
-from numpy.typing import NDArray
 from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr
@@ -345,10 +343,10 @@ def ccorrica(args: Any) -> None:
                 fastgauss=False,
                 displayplots=False,
             )
-            outputcorrmax[component1, component2, 0, 0] = maxval
-            outputcorrlag[component1, component2, 0, 0] = maxlag
-            outputcorrwidth[component1, component2, 0, 0] = maxsigma
-            outputcorrmask[component1, component2, 0, 0] = maskval
+            outputcorrmax[component1, component2, 0, 0] = maxval + 0.0
+            outputcorrlag[component1, component2, 0, 0] = maxlag + 0.0
+            outputcorrwidth[component1, component2, 0, 0] = maxsigma + 0.0
+            outputcorrmask[component1, component2, 0, 0] = maskval + 0.0
 
     # symmetrize the matrices
     outputcorrmax[:, :, 0, 0] = tide_stats.symmetrize(outputcorrmax[:, :, 0, 0], zerodiagonal=True)
