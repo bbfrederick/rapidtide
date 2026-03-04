@@ -268,8 +268,9 @@ def ccorrica(args: Any) -> None:
         print("oversample factor set to", args.oversampfactor)
 
     reformdata = np.reshape(tcdata, (numcomponents, tclen))
-    if args.oversampfactor == 1 and args.debug:
-        print("data array shape is ", reformdata.shape)
+    if args.oversampfactor == 1:
+        if args.debug:
+            print("data array shape is ", reformdata.shape)
     else:
         resampdata = np.zeros((numcomponents, tclen * args.oversampfactor), dtype=float)
         for component in range(0, numcomponents):
