@@ -25,6 +25,7 @@ from argparse import Namespace
 
 import matplotlib.cm as cm
 import numpy as np
+from matplotlib import rcParams
 from matplotlib.pyplot import figure, savefig, setp, show
 from numpy.typing import NDArray
 
@@ -192,7 +193,6 @@ def _get_parser() -> argparse.ArgumentParser:
         help="Plot multiple timecourses with OFFSET between them (use negative OFFSET to set automatically).",
         default=0.0,
     )
-
     parser.add_argument(
         "--transpose",
         action="store_true",
@@ -299,6 +299,9 @@ def showtc(args: Namespace) -> None:
             Whether to use full x-axis range.
         - voffset : float
             Vertical offset for overlaid plots.
+        - aspectratio : float, optional
+            Physical aspect ratio (width/height) for the plot area. In separate formats,
+            each subplot uses this same ratio.
         - dowaterfall : bool
             Whether to create a waterfall plot.
         - fontscalefac : float
@@ -553,7 +556,6 @@ def showtc(args: Namespace) -> None:
                             linelabels.append("column" + str(j).zfill(2))
                         else:
                             linelabels.append(thisfilename + "_column" + str(j).zfill(2))
-
                     else:
                         if shortcolnames:
                             linelabels.append(colnames[j])
@@ -610,6 +612,10 @@ def showtc(args: Namespace) -> None:
         args.voffset = yrange[1] - yrange[0]
     if args.debug:
         print("voffset:", args.voffset)
+    if args.aspectratio is not None:
+        if args.aspectratio <= 0.0:
+            print("aspectratio must be greater than 0")
+            sys.exit()
     if not separate:
         for i in range(0, numvecs):
             yvecs[i] += (numvecs - i - 1) * args.voffset
@@ -650,14 +656,30 @@ def showtc(args: Namespace) -> None:
     else:
         colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
 
-    fig = figure()
+    if args.aspectratio is not None:
+        figwidth = 8.0
+        subplot_width_frac = rcParams["figure.subplot.right"] - rcParams["figure.subplot.left"]
+        subplot_height_frac = rcParams["figure.subplot.top"] - rcParams["figure.subplot.bottom"]
+        if separate:
+            figheight = (
+                figwidth * subplot_width_frac * numvecs / (args.aspectratio * subplot_height_frac)
+            )
+        else:
+            figheight = figwidth * subplot_width_frac / (args.aspectratio * subplot_height_frac)
+        fig = figure(figsize=(figwidth, figheight))
+    else:
+        fig = figure()
     if separate:
         if args.thetitle is not None:
             fig.suptitle(args.thetitle, fontsize=thesuptitlefontsize)
         if linky:
-            axlist = fig.subplots(numvecs, sharex=True, sharey=True)[:]
+            theaxes = fig.subplots(numvecs, sharex=True, sharey=True)
         else:
-            axlist = fig.subplots(numvecs, sharex=True, sharey=False)[:]
+            theaxes = fig.subplots(numvecs, sharex=True, sharey=False)
+        if numvecs == 1:
+            axlist = [theaxes]
+        else:
+            axlist = np.ravel(theaxes).tolist()
     else:
         ax = fig.add_subplot(1, 1, 1)
         if args.thetitle is not None:
