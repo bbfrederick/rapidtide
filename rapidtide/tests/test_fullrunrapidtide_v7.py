@@ -89,6 +89,7 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
             outfile_spec=os.path.join(
                 testtemproot, f"segtest_desc-regionalpostfilter_timeseries.json:{timecourse}"
             ),
+            msethresh=3e-6,
             debug=debug,
         )
 
