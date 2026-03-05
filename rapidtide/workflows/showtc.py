@@ -299,7 +299,7 @@ def showtc(args: Namespace) -> None:
             Whether to use full x-axis range.
         - voffset : float
             Vertical offset for overlaid plots.
-        - aspectratio : float, optional
+        - aspectratio : float
             Physical aspect ratio (width/height) for the plot area. In separate formats,
             each subplot uses this same ratio.
         - dowaterfall : bool
@@ -436,6 +436,7 @@ def showtc(args: Namespace) -> None:
     overallstarttime = None
 
     # read in all the data
+    numplots = 0
     for i in range(0, len(args.textfilenames)):
         thisfilename, thiscolspec = tide_io.parsefilespec(args.textfilenames[i])
 
@@ -507,6 +508,7 @@ def showtc(args: Namespace) -> None:
             print("   ", invecs.shape[0], " columns")
 
         for j in range(0, invecs.shape[0]):
+            numplots += 1
             if args.debug:
                 print("appending vector number ", j)
             if dospectrum:
@@ -564,7 +566,7 @@ def showtc(args: Namespace) -> None:
                 else:
                     linelabels.append(thisfilename)
             else:
-                linelabels.append(legends[j % len(legends)])
+                linelabels.append(legends[(numplots - 1) % len(legends)])
             samplerates.append(thissamplerate + 0.0)
             if args.debug:
                 print(
@@ -612,10 +614,6 @@ def showtc(args: Namespace) -> None:
         args.voffset = yrange[1] - yrange[0]
     if args.debug:
         print("voffset:", args.voffset)
-    if args.aspectratio is not None:
-        if args.aspectratio <= 0.0:
-            print("aspectratio must be greater than 0")
-            sys.exit()
     if not separate:
         for i in range(0, numvecs):
             yvecs[i] += (numvecs - i - 1) * args.voffset
@@ -656,19 +654,17 @@ def showtc(args: Namespace) -> None:
     else:
         colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
 
-    if args.aspectratio is not None:
-        figwidth = 8.0
-        subplot_width_frac = rcParams["figure.subplot.right"] - rcParams["figure.subplot.left"]
-        subplot_height_frac = rcParams["figure.subplot.top"] - rcParams["figure.subplot.bottom"]
-        if separate:
-            figheight = (
-                figwidth * subplot_width_frac * numvecs / (args.aspectratio * subplot_height_frac)
-            )
-        else:
-            figheight = figwidth * subplot_width_frac / (args.aspectratio * subplot_height_frac)
-        fig = figure(figsize=(figwidth, figheight))
+    figwidth = 8.0
+    subplot_width_frac = rcParams["figure.subplot.right"] - rcParams["figure.subplot.left"]
+    subplot_height_frac = rcParams["figure.subplot.top"] - rcParams["figure.subplot.bottom"]
+    if separate:
+        figheight = (
+            figwidth * subplot_width_frac * numvecs / (args.aspectratio * subplot_height_frac)
+        )
     else:
-        fig = figure()
+        figheight = figwidth * subplot_width_frac / (args.aspectratio * subplot_height_frac)
+    fig = figure(figsize=(figwidth, figheight))
+
     if separate:
         if args.thetitle is not None:
             fig.suptitle(args.thetitle, fontsize=thesuptitlefontsize)
@@ -746,8 +742,6 @@ def showtc(args: Namespace) -> None:
             ax.set_ylabel(args.ylabel, fontsize=theylabelfontsize, fontweight="bold")
         else:
             ax.yaxis.set_visible(False)
-
-    # fig.tight_layout()
 
     if args.outputfile is None:
         show()

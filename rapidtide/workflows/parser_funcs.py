@@ -622,6 +622,7 @@ DEFAULT_FILTERBAND = "lfo"
 DEFAULT_FILTERTYPE = "trapezoidal"
 DEFAULT_PADVAL = 0
 DEFAULT_WINDOWFUNC = "hamming"
+DEFAULT_ASPECTRATIO = 1.5
 
 
 def addreqinputniftifile(
@@ -1709,17 +1710,17 @@ def addplotopts(parser: argparse.ArgumentParser) -> None:
         help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
         default=None,
     )
-    parser.add_argument(
+    plotopts.add_argument(
         "--aspectratio",
         dest="aspectratio",
         metavar="RATIO",
-        type=float,
+        type=lambda x: is_float(parser, x, minval=0.1),
         action="store",
         help=(
             "Initial physical plot aspect ratio (width/height). For separate formats, this applies "
-            "to each subplot and the full stacked figure is scaled accordingly."
+            f"to each subplot and the full stacked figure is scaled accordingly.  Default is {DEFAULT_ASPECTRATIO}."
         ),
-        default=None,
+        default=DEFAULT_ASPECTRATIO,
     )
     plotopts.add_argument(
         "--tofile",
