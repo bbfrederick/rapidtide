@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v4.3.3
