@@ -5,6 +5,8 @@
 * (rapidtide, retroregress) Fixed calculation of the refined R value.
 * (rapidtide, retroregress) Expanded and improved regional time course output.
 * (SimilarityFunctionFitter) Fixed a strange bug where very small delay values were not fit properly.  Affects all programs using correlation fits (most of them).
+* (package) Made pyfftw a required dependency.
+* (package) Resolved future deprecations from scipy.fftpack and np.matrix.
 
 ## Version 3.1.8 (3/2/26)
 * (rapidtide) Fixed a bug in how the despeckle search region is set.
