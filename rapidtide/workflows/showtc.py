@@ -654,16 +654,20 @@ def showtc(args: Namespace) -> None:
     else:
         colorlist = [cm.nipy_spectral(float(i) / numvecs) for i in range(numvecs)]
 
-    figwidth = 8.0
     subplot_width_frac = rcParams["figure.subplot.right"] - rcParams["figure.subplot.left"]
     subplot_height_frac = rcParams["figure.subplot.top"] - rcParams["figure.subplot.bottom"]
     if separate:
         figheight = (
-            figwidth * subplot_width_frac * numvecs / (args.aspectratio * subplot_height_frac)
+            args.figurewidth
+            * subplot_width_frac
+            * numvecs
+            / (args.aspectratio * subplot_height_frac)
         )
     else:
-        figheight = figwidth * subplot_width_frac / (args.aspectratio * subplot_height_frac)
-    fig = figure(figsize=(figwidth, figheight))
+        figheight = (
+            args.figurewidth * subplot_width_frac / (args.aspectratio * subplot_height_frac)
+        )
+    fig = figure(figsize=(args.figurewidth, figheight))
 
     if separate:
         if args.thetitle is not None:

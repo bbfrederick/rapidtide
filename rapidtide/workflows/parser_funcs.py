@@ -622,6 +622,7 @@ DEFAULT_FILTERBAND = "lfo"
 DEFAULT_FILTERTYPE = "trapezoidal"
 DEFAULT_PADVAL = 0
 DEFAULT_WINDOWFUNC = "hamming"
+DEFAULT_FIGUREWIDTH = 8.0
 DEFAULT_ASPECTRATIO = 1.5
 
 
@@ -1709,6 +1710,15 @@ def addplotopts(parser: argparse.ArgumentParser) -> None:
         type=str,
         help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
         default=None,
+    )
+    plotopts.add_argument(
+        "--figurewidth",
+        dest="figurewidth",
+        metavar="WIDTH",
+        type=lambda x: is_float(parser, x, minval=1),
+        action="store",
+        help=(f"Initial figure width in inches.  Default is {DEFAULT_FIGUREWIDTH}."),
+        default=DEFAULT_FIGUREWIDTH,
     )
     plotopts.add_argument(
         "--aspectratio",
