@@ -1591,7 +1591,7 @@ def addwindowopts(parser: argparse.ArgumentParser, windowtype: str = DEFAULT_WIN
     )
 
 
-def addplotopts(parser: argparse.ArgumentParser, multiline: bool = True) -> None:
+def addplotopts(parser: argparse.ArgumentParser) -> None:
     """
     Add general plot appearance options to an argument parser.
 
@@ -1603,9 +1603,6 @@ def addplotopts(parser: argparse.ArgumentParser, multiline: bool = True) -> None
     ----------
     parser : argparse.ArgumentParser
         The argument parser to which the plot options will be added.
-    multiline : bool, optional
-        If True, allows multiple legends and colors to be specified as comma-separated
-        lists. If False, expects single legend and color values. Default is True.
 
     Returns
     -------
@@ -1615,17 +1612,12 @@ def addplotopts(parser: argparse.ArgumentParser, multiline: bool = True) -> None
     Notes
     -----
     The arguments added by this function are grouped under "General plot appearance options".
-    The `multiline` parameter affects the behavior of the `--legends`, `--colors`, and
-    `--linewidth` arguments:
-
-    - When `multiline=True`, these arguments accept comma-separated lists.
-    - When `multiline=False`, they expect single values.
 
     Examples
     --------
     >>> import argparse
     >>> parser = argparse.ArgumentParser()
-    >>> addplotopts(parser, multiline=True)
+    >>> addplotopts(parser)
     >>> args = parser.parse_args()
     """
     plotopts = parser.add_argument_group("General plot appearance options")
@@ -1656,26 +1648,15 @@ def addplotopts(parser: argparse.ArgumentParser, multiline: bool = True) -> None
         help="Label for the plot y axis.",
         default=None,
     )
-    if multiline:
-        plotopts.add_argument(
-            "--legends",
-            dest="legends",
-            metavar="LEGEND[,LEGEND[,LEGEND...]]",
-            type=str,
-            action="store",
-            help="Comma separated list of legends for each timecourse.",
-            default=None,
-        )
-    else:
-        plotopts.add_argument(
-            "--legend",
-            dest="legends",
-            metavar="LEGEND",
-            type=str,
-            action="store",
-            help="Legends for the timecourse.",
-            default=None,
-        )
+    plotopts.add_argument(
+        "--legends",
+        dest="legends",
+        metavar="LEGEND[,LEGEND[,LEGEND...]]",
+        type=str,
+        action="store",
+        help="Comma separated list of legends for each timecourse.",
+        default=None,
+    )
     plotopts.add_argument(
         "--legendloc",
         dest="legendloc",
@@ -1690,26 +1671,15 @@ def addplotopts(parser: argparse.ArgumentParser, multiline: bool = True) -> None
         ),
         default=2,
     )
-    if multiline:
-        plotopts.add_argument(
-            "--colors",
-            dest="colors",
-            metavar="COLOR[,COLOR[,COLOR...]]",
-            type=str,
-            action="store",
-            help="Comma separated list of colors for each timecourse.",
-            default=None,
-        )
-    else:
-        plotopts.add_argument(
-            "--color",
-            dest="colors",
-            metavar="COLOR",
-            type=str,
-            action="store",
-            help="Color of the timecourse plot.",
-            default=None,
-        )
+    plotopts.add_argument(
+        "--colors",
+        dest="colors",
+        metavar="COLOR[,COLOR[,COLOR...]]",
+        type=str,
+        action="store",
+        help="Comma separated list of colors for each timecourse.",
+        default=None,
+    )
     plotopts.add_argument(
         "--nolegend",
         dest="dolegend",
@@ -1731,24 +1701,26 @@ def addplotopts(parser: argparse.ArgumentParser, multiline: bool = True) -> None
         help="Do not show y axis.",
         default=True,
     )
-    if multiline:
-        plotopts.add_argument(
-            "--linewidth",
-            dest="linewidths",
-            metavar="LINEWIDTH[,LINEWIDTH[,LINEWIDTH...]]",
-            type=str,
-            help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
-            default=None,
-        )
-    else:
-        plotopts.add_argument(
-            "--linewidth",
-            dest="linewidths",
-            metavar="LINEWIDTH",
-            type=str,
-            help="Linewidth (in points) for plot.  Default is 1.",
-            default=None,
-        )
+    plotopts.add_argument(
+        "--linewidth",
+        dest="linewidths",
+        metavar="LINEWIDTH[,LINEWIDTH[,LINEWIDTH...]]",
+        type=str,
+        help="A comma separated list of linewidths (in points) for plots.  Default is 1.",
+        default=None,
+    )
+    parser.add_argument(
+        "--aspectratio",
+        dest="aspectratio",
+        metavar="RATIO",
+        type=float,
+        action="store",
+        help=(
+            "Initial physical plot aspect ratio (width/height). For separate formats, this applies "
+            "to each subplot and the full stacked figure is scaled accordingly."
+        ),
+        default=None,
+    )
     plotopts.add_argument(
         "--tofile",
         dest="outputfile",
