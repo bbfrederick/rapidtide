@@ -94,6 +94,22 @@ def test_runmisc(debug=False, displayplots=False):
     ]
     pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
 
+    inputargs = [
+        os.path.join(
+            get_examples_path(),
+            "sub-HAPPYTEST_desc-slicerescardfromfmri_timeseries.json:cardiacfromfmri,cardiacfromfmri_dlfiltered",
+        ),
+        "--format",
+        "separate",
+        "--sampletime",
+        "12.5",
+        "--aspectratio",
+        "1.8",
+        "--tofile",
+        os.path.join(get_test_temp_path(), "showtcout4.jpg"),
+    ]
+    pf.generic_init(showtc._get_parser, showtc.showtc, inputargs=inputargs)
+
 
 if __name__ == "__main__":
     mpl.use("TkAgg")
