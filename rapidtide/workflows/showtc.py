@@ -661,7 +661,7 @@ def showtc(args: Namespace) -> None:
             args.figurewidth
             * subplot_width_frac
             * numvecs
-            / (args.aspectratio * subplot_height_frac)
+            / (args.aspectratio * numplots * subplot_height_frac)
         )
     else:
         figheight = (
