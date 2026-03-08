@@ -27,26 +27,18 @@ from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pyfftw
+import scipy as sp
 from numpy.typing import NDArray
+from scipy import fft, ndimage, signal
+from scipy.signal import savgol_filter
 
 from rapidtide.decorators import conditionaljit, conditionaljit2
 from rapidtide.ffttools import optfftlen
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from scipy import fftpack, ndimage, signal
-from scipy.signal import savgol_filter
-
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 # --------------------------- Filtering functions -------------------------------------------------
 # NB: No automatic padding for precalculated filters
@@ -83,7 +75,7 @@ class NoncausalFilter:
             The type of filter to apply. Default is 'None'.
         transitionfrac : float, optional
             Fraction of the transition band used for filter transition. Default is 0.05.
-        transferfunc : {'trapezoidal', 'butterworth'}, optional
+        transferfunc : {'trapezoidal', 'brickwall', 'butterworth'}, optional
             Transfer function to use for filter design. Default is 'trapezoidal'.
         initlowerstop : float, optional
             Initial lower stop frequency for 'arb' and 'arb_stop' filters. Default is None.
@@ -1297,7 +1289,7 @@ def transferfuncfilt(inputdata: NDArray, transferfunc: NDArray) -> NDArray:
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> # Create sample data
     >>> data = np.random.randn(1024)
     >>> # Create a simple low-pass filter transfer function
@@ -1306,8 +1298,8 @@ def transferfuncfilt(inputdata: NDArray, transferfunc: NDArray) -> NDArray:
     >>> # Apply filter
     >>> filtered_data = transferfuncfilt(data, tf)
     """
-    inputdata_trans = transferfunc * fftpack.fft(inputdata)
-    return fftpack.ifft(inputdata_trans).real
+    inputdata_trans = transferfunc * fft.fft(inputdata)
+    return fft.ifft(inputdata_trans).real
 
 
 # - fft brickwall filters
@@ -1364,194 +1356,6 @@ def getlpfftfunc(Fs: float, upperpass: float, inputdata: NDArray, debug: bool = 
         )
     transferfunc[cutoffbin:-cutoffbin] = 0.0
     return transferfunc
-
-
-# @conditionaljit()
-def dolpfftfilt(
-    Fs: float,
-    upperpass: float,
-    inputdata: NDArray,
-    padlen: int = 20,
-    avlen: int = 20,
-    padtype: str = "reflect",
-    debug: bool = False,
-) -> NDArray:
-    """
-    Performs an FFT brickwall lowpass filter on an input vector and returns the result.
-    Ends are padded to reduce transients.
-
-    Parameters
-    ----------
-    Fs : float
-        Sample rate in Hz.
-    upperpass : float
-        Upper end of passband in Hz.
-    inputdata : NDArray
-        Input data to be filtered, expected as a 1D numpy array.
-    padlen : int, optional
-        Amount of points to reflect around each end of the input vector prior to filtering.
-        Default is 20.
-    avlen : int, optional
-        Length of the averaging window used in padding. Default is 20.
-    padtype : str, optional
-        Type of padding to use. Options are 'reflect' or 'wrap'. Default is 'reflect'.
-    debug : bool, optional
-        When True, internal states of the function will be printed to help debugging.
-        Default is False.
-
-    Returns
-    -------
-    NDArray
-        The filtered data as a 1D float array.
-
-    Notes
-    -----
-    This function applies a lowpass filter in the frequency domain using FFT. The input signal
-    is padded at both ends to minimize edge effects caused by the filtering process.
-    The padding is performed using the `padvec` function, and the inverse FFT is used to
-    transform the filtered signal back to the time domain.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from scipy import fftpack
-    >>> Fs = 100.0
-    >>> upperpass = 20.0
-    >>> data = np.random.randn(1000)
-    >>> filtered_data = dolpfftfilt(Fs, upperpass, data)
-    """
-    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = getlpfftfunc(Fs, upperpass, padinputdata, debug=debug)
-    inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
-
-
-# @conditionaljit()
-def dohpfftfilt(
-    Fs: float,
-    lowerpass: float,
-    inputdata: NDArray,
-    padlen: int = 20,
-    avlen: int = 20,
-    padtype: str = "reflect",
-    debug: bool = False,
-) -> NDArray:
-    """
-    Performs an FFT brickwall highpass filter on an input vector and returns the result.
-    Ends are padded to reduce transients.
-
-    Parameters
-    ----------
-    Fs : float
-        Sample rate in Hz.
-    lowerpass : float
-        Lower end of passband in Hz.
-    inputdata : NDArray
-        Input data to be filtered, expected as a 1D numpy array.
-    padlen : int, optional
-        Amount of points to reflect around each end of the input vector prior to filtering.
-        Default is 20.
-    avlen : int, optional
-        Length of the averaging window used in padding. Default is 20.
-    padtype : str, optional
-        Type of padding to use. Options are 'reflect' or 'cyclic'. Default is 'reflect'.
-    debug : bool, optional
-        When True, internal states of the function will be printed to help debugging.
-        Default is False.
-
-    Returns
-    -------
-    NDArray
-        The filtered data as a 1D float array.
-
-    Notes
-    -----
-    This function applies a highpass filter in the frequency domain using FFT.
-    The input signal is first padded to minimize edge effects, then transformed
-    into the frequency domain, filtered, and inverse transformed back to the time domain.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> Fs = 100.0
-    >>> lowerpass = 10.0
-    >>> data = np.random.randn(1000)
-    >>> filtered = dohpfftfilt(Fs, lowerpass, data)
-    """
-    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = 1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)
-    inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
-
-
-# @conditionaljit()
-def dobpfftfilt(
-    Fs: float,
-    lowerpass: float,
-    upperpass: float,
-    inputdata: NDArray,
-    padlen: int = 20,
-    avlen: int = 20,
-    padtype: str = "reflect",
-    debug: bool = False,
-) -> NDArray:
-    """
-    Performs an FFT brickwall bandpass filter on an input vector and returns the result.
-    Ends are padded to reduce transients.
-
-    Parameters
-    ----------
-    Fs : float
-        Sample rate in Hz.
-    lowerpass : float
-        Lower end of passband in Hz.
-    upperpass : float
-        Upper end of passband in Hz.
-    inputdata : NDArray
-        Input data to be filtered, expected as a 1D numpy array.
-    padlen : int, optional
-        Amount of points to reflect around each end of the input vector prior to filtering.
-        Default is 20.
-    avlen : int, optional
-        Length of averaging window for padding; used only if `padtype` is 'mean'.
-        Default is 20.
-    padtype : str, optional
-        Type of padding to use. Options are 'reflect', 'mean', or 'wrap'.
-        Default is 'reflect'.
-    debug : bool, optional
-        When True, internal states of the function will be printed to help debugging.
-        Default is False.
-
-    Returns
-    -------
-    NDArray
-        The filtered data as a 1D float array, with the same shape as inputdata.
-
-    Notes
-    -----
-    This function applies a brickwall bandpass filter in the frequency domain using FFT.
-    The input signal is first padded to minimize edge effects, then transformed into
-    the frequency domain, filtered, and transformed back. Padding is applied using
-    the specified `padtype` and `padlen`.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from scipy import signal
-    >>> fs = 100.0
-    >>> t = np.linspace(0, 1, int(fs), endpoint=False)
-    >>> x = np.sin(2 * np.pi * 10 * t) + 0.5 * np.sin(2 * np.pi * 25 * t)
-    >>> filtered = dobpfftfilt(fs, 5, 15, x, padlen=30)
-    """
-    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = getlpfftfunc(Fs, upperpass, padinputdata, debug=debug) * (
-        1.0 - getlpfftfunc(Fs, lowerpass, padinputdata, debug=debug)
-    )
-    inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
 
 
 # - fft trapezoidal filters
@@ -1882,7 +1686,7 @@ def dolptransfuncfilt(
     >>> filtered = dolptransfuncfilt(Fs, signal, upperpass=20.0)
     """
     padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
+    inputdata_trans = fft.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs, padinputdata, upperpass=upperpass, upperstop=upperstop, type=type
     )
@@ -1897,7 +1701,7 @@ def dolptransfuncfilt(
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+    return unpadvec(fft.ifft(inputdata_trans).real, padlen=padlen)
 
 
 # @conditionaljit()
@@ -1961,7 +1765,7 @@ def dohptransfuncfilt(
     if lowerstop is None:
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
+    inputdata_trans = fft.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs, padinputdata, upperpass=lowerstop, upperstop=lowerpass, type=type
     )
@@ -1976,7 +1780,7 @@ def dohptransfuncfilt(
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= 1.0 - transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+    return unpadvec(fft.ifft(inputdata_trans).real, padlen=padlen)
 
 
 # @conditionaljit()
@@ -2038,7 +1842,7 @@ def dobptransfuncfilt(
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> Fs = 100.0
     >>> t = np.linspace(0, 1, int(Fs), endpoint=False)
     >>> signal = np.sin(2 * np.pi * 10 * t)
@@ -2047,7 +1851,7 @@ def dobptransfuncfilt(
     if lowerstop is None:
         lowerstop = lowerpass * (1.0 / 1.05)
     padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
+    inputdata_trans = fft.fft(padinputdata)
     transferfunc = getlptransfunc(
         Fs,
         padinputdata,
@@ -2069,217 +1873,7 @@ def dobptransfuncfilt(
         plt.plot(freqaxis, transferfunc)
         plt.show()
     inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
-
-
-# @conditionaljit()
-def dolptrapfftfilt(
-    Fs: float,
-    upperpass: float,
-    upperstop: float,
-    inputdata: NDArray,
-    padlen: int = 20,
-    avlen: int = 20,
-    padtype: str = "reflect",
-    debug: bool = False,
-) -> NDArray:
-    """
-    Performs an FFT filter with a trapezoidal lowpass transfer function on an input vector
-    and returns the result. Ends are padded to reduce transients.
-
-    Parameters
-    ----------
-    Fs : float
-        Sample rate in Hz.
-    upperpass : float
-        Upper end of the passband in Hz.
-    upperstop : float
-        Lower end of the stopband in Hz.
-    inputdata : NDArray
-        Input data to be filtered, as a 1D numpy array.
-    padlen : int, optional
-        Amount of points to reflect around each end of the input vector prior to filtering.
-        Default is 20.
-    avlen : int, optional
-        Length of the averaging window used in padding. Default is 20.
-    padtype : str, optional
-        Type of padding to use. Options are 'reflect' or 'wrap'. Default is 'reflect'.
-    debug : bool, optional
-        When True, internal states of the function will be printed to help debugging.
-        Default is False.
-
-    Returns
-    -------
-    filtereddata : NDArray
-        The filtered data as a 1D float array.
-
-    Notes
-    -----
-    This function applies a trapezoidal lowpass filter in the frequency domain using FFT.
-    The input signal is first padded to reduce edge effects, then filtered using a
-    transfer function, and finally the padding is removed to return the filtered signal.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> Fs = 100.0
-    >>> upperpass = 20.0
-    >>> upperstop = 25.0
-    >>> data = np.random.randn(1000)
-    >>> filtered = dolptrapfftfilt(Fs, upperpass, upperstop, data)
-    """
-    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug)
-    inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
-
-
-# @conditionaljit()
-def dohptrapfftfilt(
-    Fs: float,
-    lowerstop: float,
-    lowerpass: float,
-    inputdata: NDArray,
-    padlen: int = 20,
-    avlen: int = 20,
-    padtype: str = "reflect",
-    debug: bool = False,
-) -> NDArray:
-    """
-    Performs an FFT filter with a trapezoidal highpass transfer function on an input vector
-    and returns the result. Ends are padded to reduce transients.
-
-    Parameters
-    ----------
-    Fs : float
-        Sample rate in Hz.
-    lowerstop : float
-        Upper end of stopband in Hz.
-    lowerpass : float
-        Lower end of passband in Hz.
-    inputdata : NDArray
-        Input data to be filtered, expected as a 1D numpy array.
-    padlen : int, optional
-        Amount of points to reflect around each end of the input vector prior to filtering.
-        Default is 20.
-    avlen : int, optional
-        Length of the averaging window used in padding. Default is 20.
-    padtype : str, optional
-        Type of padding to use. Options are 'reflect' or 'cyclic'. Default is 'reflect'.
-    debug : bool, optional
-        When True, internal states of the function will be printed to help debugging.
-        Default is False.
-
-    Returns
-    -------
-    filtereddata : NDArray
-        The filtered data as a 1D float array.
-
-    Notes
-    -----
-    This function applies a trapezoidal highpass filter in the frequency domain using FFT.
-    The input signal is first padded using the specified padding method to reduce edge effects.
-    The filter transfer function is constructed using `getlptrapfftfunc`, and the filtered
-    signal is obtained by inverse FFT.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> Fs = 100.0
-    >>> lowerstop = 5.0
-    >>> lowerpass = 10.0
-    >>> data = np.random.randn(1000)
-    >>> filtered = dohptrapfftfilt(Fs, lowerstop, lowerpass, data)
-    """
-    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
-    transferfunc = 1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)
-    inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
-
-
-# @conditionaljit()
-def dobptrapfftfilt(
-    Fs: float,
-    lowerstop: float,
-    lowerpass: float,
-    upperpass: float,
-    upperstop: float,
-    inputdata: NDArray,
-    padlen: int = 20,
-    avlen: int = 20,
-    padtype: str = "reflect",
-    debug: bool = False,
-) -> NDArray:
-    """
-    Performs an FFT filter with a trapezoidal bandpass transfer function on an input vector
-    and returns the result. Ends are padded to reduce transients.
-
-    Parameters
-    ----------
-    Fs : float
-        Sample rate in Hz.
-    lowerstop : float
-        Upper end of the lower stopband in Hz.
-    lowerpass : float
-        Lower end of the lower passband in Hz.
-    upperpass : float
-        Upper end of the upper passband in Hz.
-    upperstop : float
-        Lower end of the upper stopband in Hz.
-    inputdata : NDArray
-        Input data to be filtered, expected as a 1D numpy array.
-    padlen : int, optional
-        Amount of points to reflect around each end of the input vector prior to filtering.
-        Default is 20.
-    avlen : int, optional
-        Length of the averaging window used in padding. Default is 20.
-    padtype : str, optional
-        Type of padding to use. Options are 'reflect' or 'wrap'. Default is 'reflect'.
-    debug : bool, optional
-        When True, internal states of the function will be printed to help debugging.
-        Default is False.
-
-    Returns
-    -------
-    NDArray
-        The filtered data as a 1D float array.
-
-    Notes
-    -----
-    This function applies a trapezoidal bandpass filter in the frequency domain using FFT.
-    The input signal is first padded to minimize edge effects, then transformed into the
-    frequency domain, multiplied by the transfer function, and finally inverse transformed
-    back to the time domain.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> Fs = 100.0
-    >>> data = np.random.randn(1000)
-    >>> filtered = dobptrapfftfilt(Fs, 10, 15, 25, 30, data, padlen=50)
-    """
-    padinputdata = padvec(inputdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    inputdata_trans = fftpack.fft(padinputdata)
-    if debug:
-        print(
-            "Fs=",
-            Fs,
-            " Fstopl=",
-            lowerstop,
-            " Fpassl=",
-            lowerpass,
-            " Fpassu=",
-            upperpass,
-            " Fstopu=",
-            upperstop,
-        )
-    transferfunc = getlptrapfftfunc(Fs, upperpass, upperstop, padinputdata, debug=debug) * (
-        1.0 - getlptrapfftfunc(Fs, lowerstop, lowerpass, padinputdata, debug=debug)
-    )
-    inputdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(inputdata_trans).real, padlen=padlen)
+    return unpadvec(fft.ifft(inputdata_trans).real, padlen=padlen)
 
 
 # Simple example of Wiener deconvolution in Python.
@@ -2326,9 +1920,9 @@ def wiener_deconvolution(signal: NDArray, kernel: NDArray, lambd: float) -> NDAr
     kernel = np.hstack(
         (kernel, np.zeros(len(signal) - len(kernel)))
     )  # zero pad the kernel to same length
-    H = fftpack.fft(kernel)
+    H = fft.fft(kernel)
     deconvolved = np.roll(
-        np.real(fftpack.ifft(fftpack.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd**2))),
+        np.real(fft.ifft(fft.fft(signal) * np.conj(H) / (H * np.conj(H) + lambd**2))),
         int(len(signal) // 2),
     )
     return deconvolved
@@ -2358,13 +1952,13 @@ def pspec(inputdata: NDArray) -> NDArray:
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> signal = np.sin(2 * np.pi * 5 * np.linspace(0, 1, 100))
     >>> spectrum = pspec(signal)
     >>> print(spectrum.shape)
     (100,)
     """
-    S = fftpack.fft(inputdata)
+    S = fft.fft(inputdata)
     return np.sqrt(S * np.conj(S))
 
 
@@ -2413,11 +2007,11 @@ def spectrum(
     >>> flatness = spectralflatness(tone)
     """
     if trim:
-        specvals = fftpack.fft(inputdata)[0 : len(inputdata) // 2]
+        specvals = fft.fft(inputdata)[0 : len(inputdata) // 2]
         maxfreq = Fs / 2.0
         specaxis = np.linspace(0.0, maxfreq, len(specvals), endpoint=False)
     else:
-        specvals = fftpack.fft(inputdata)
+        specvals = fft.fft(inputdata)
         maxfreq = Fs
         specaxis = np.linspace(0.0, maxfreq, len(specvals), endpoint=False)
     if mode == "real":
@@ -2651,10 +2245,10 @@ def csdfilter(
     """
     padobsdata = padvec(obsdata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
     padcommondata = padvec(commondata, padlen=padlen, avlen=avlen, padtype=padtype, debug=debug)
-    obsdata_trans = fftpack.fft(padobsdata)
-    transferfunc = np.sqrt(np.abs(fftpack.fft(padobsdata) * np.conj(fftpack.fft(padcommondata))))
+    obsdata_trans = fft.fft(padobsdata)
+    transferfunc = np.sqrt(np.abs(fft.fft(padobsdata) * np.conj(fft.fft(padcommondata))))
     obsdata_trans *= transferfunc
-    return unpadvec(fftpack.ifft(obsdata_trans).real, padlen=padlen)
+    return unpadvec(fft.ifft(obsdata_trans).real, padlen=padlen)
 
 
 # @conditionaljit()
@@ -2743,9 +2337,8 @@ def arb_pass(
     ... )
     """
     # adjust the padding for speed
-    if pyfftwpresent:
-        thefftlen = optfftlen(len(inputdata), padlen=padlen)
-        padlen = int((thefftlen - len(inputdata)) // 2)
+    thefftlen = optfftlen(len(inputdata), padlen=padlen)
+    padlen = int((thefftlen - len(inputdata)) // 2)
 
     # check filter limits to see if we should do a lowpass, bandpass, or highpass
     if lowerpass <= 0.0:
@@ -2838,7 +2431,7 @@ def arb_pass(
 
 
 class Plethfilter:
-    def __init_(self, Fs, Fl, Fh, order=4, attenuation=20):
+    def __init__(self, Fs, Fl, Fh, order=4, attenuation=20):
         """
         Initialize Chebyshev type II bandpass filter.
 
@@ -2873,6 +2466,7 @@ class Plethfilter:
         >>> print(filter.a)  # Print filter denominator coefficients
         """
         self.Fs = Fs
+        self.Fn = Fs / 2.0
         self.Fh = Fh
         self.Fl = Fl
         self.attenuation = attenuation
@@ -3018,20 +2612,20 @@ def polarfft(inputdata: NDArray) -> Tuple[NDArray, NDArray]:
 
     Notes
     -----
-    This function uses `scipy.fftpack.fft` for the FFT computation and returns
+    This function uses `scipy.fft.fft` for the FFT computation and returns
     the polar representation of the complex FFT result. The magnitude represents
     the amplitude spectrum while the phase represents the phase spectrum.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> x = np.array([1, 2, 3, 4])
     >>> magnitude, phase = polarfft(x)
     >>> print("Magnitude:", magnitude)
     >>> print("Phase:", phase)
     """
-    complexxform = fftpack.fft(inputdata)
+    complexxform = fft.fft(inputdata)
     return np.abs(complexxform), np.angle(complexxform)
 
 
@@ -3070,7 +2664,7 @@ def ifftfrompolar(r: NDArray, theta: NDArray) -> NDArray:
     [ 0.54123456 -0.12345678  0.23456789]
     """
     complexxform = r * np.exp(1j * theta)
-    return fftpack.ifft(complexxform).real
+    return fft.ifft(complexxform).real
 
 
 # --------------------------- Window functions -------------------------------------------------

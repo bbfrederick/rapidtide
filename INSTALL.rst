@@ -9,7 +9,7 @@ Required dependencies
 The processing programs in rapidtide require the following to be
 installed:
 
--  Python >= 3.9
+-  Python >= 3.10
 -  numpy
 -  scipy
 -  pandas
@@ -19,6 +19,7 @@ installed:
 -  nibabel
 -  nilearn
 -  matplotlib >= 3.3.0
+-  pyfftw
 -  pyqt6-sip
 -  pyqt6
 -  pyqtgraph >= 0.13.4
@@ -33,7 +34,6 @@ Optional dependencies
 The following optional dependencies will be used if present:
 
 -  numba (for faster performance)
--  pyfftw (faster performance)
 -  mkl and mkl-service (faster performance on Intel CPUs)
 
 

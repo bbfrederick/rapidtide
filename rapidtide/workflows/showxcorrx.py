@@ -283,7 +283,7 @@ def _get_parser() -> Any:
     )
 
     # add plot appearance options
-    pf.addplotopts(parser, multiline=False)
+    pf.addplotopts(parser)
 
     # Miscellaneous options
     misc = parser.add_argument_group("Miscellaneous options")

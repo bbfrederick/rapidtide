@@ -32,10 +32,13 @@ import rapidtide.io as tide_io
 import rapidtide.util as tide_util
 import rapidtide.workflows.rapidtide as rapidtide_workflow
 import rapidtide.workflows.rapidtide_parser as rapidtide_parser
-from rapidtide.RapidtideDataset import (Overlay, RapidtideDataset, Timecourse,
-                                        check_rt_spatialmatch)
-from rapidtide.tests.utils import (create_dir, get_examples_path,
-                                   get_test_temp_path)
+from rapidtide.RapidtideDataset import (
+    Overlay,
+    RapidtideDataset,
+    Timecourse,
+    check_rt_spatialmatch,
+)
+from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path
 
 runninglocally = False
 

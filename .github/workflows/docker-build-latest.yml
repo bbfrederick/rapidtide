@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4.3.2
+        uses: gittools/actions/gitversion/setup@v4.3.3
         with:
           versionSpec: '6.x'
 
@@ -27,7 +27,7 @@ jobs:
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
-        uses: gittools/actions/gitversion/execute@v4.3.2
+        uses: gittools/actions/gitversion/execute@v4.3.3
         with:
           additionalArguments: /config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
@@ -65,17 +65,17 @@ jobs:
         run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to DockerHub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: fredericklab/rapidtide
 
@@ -92,7 +92,7 @@ jobs:
 
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           platforms: linux/amd64,linux/arm64
           push: true

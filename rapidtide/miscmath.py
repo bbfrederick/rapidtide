@@ -21,29 +21,20 @@ from typing import Callable, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pyfftw
+import scipy as sp
 from numpy.polynomial import Polynomial
 from numpy.typing import NDArray
-
-from rapidtide.decorators import conditionaljit, conditionaljit2
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from scipy import fftpack
+from scipy import fft
 from statsmodels.robust import mad
 
 import rapidtide.filter as tide_filt
 import rapidtide.fit as tide_fit
+from rapidtide.decorators import conditionaljit, conditionaljit2
 
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 # ---------------------------------------- Global constants -------------------------------------------
 defaultbutterorder = 6
@@ -123,7 +114,7 @@ def polarfft(invec: NDArray, samplerate: float) -> Tuple[NDArray, NDArray, NDArr
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> # Create a test signal
     >>> t = np.linspace(0, 1, 1000)
     >>> signal = np.sin(2 * np.pi * 50 * t) + 0.5 * np.sin(2 * np.pi * 120 * t)
@@ -134,9 +125,7 @@ def polarfft(invec: NDArray, samplerate: float) -> Tuple[NDArray, NDArray, NDArr
         thevec = invec[:-1]
     else:
         thevec = invec
-    spec = fftpack.fft(tide_filt.hamming(np.shape(thevec)[0]) * thevec)[
-        0 : np.shape(thevec)[0] // 2
-    ]
+    spec = fft.fft(tide_filt.hamming(np.shape(thevec)[0]) * thevec)[0 : np.shape(thevec)[0] // 2]
     magspec = abs(spec)
     phspec = phase(spec)
     maxfreq = samplerate / 2.0
@@ -231,10 +220,10 @@ def complex_cepstrum(x: NDArray) -> Tuple[NDArray, NDArray]:
         unwrapped -= np.pi * ndelay[..., None] * np.arange(samples) / center
         return unwrapped, ndelay
 
-    spectrum = fftpack.fft(x)
+    spectrum = fft.fft(x)
     unwrapped_phase, ndelay = _unwrap(np.angle(spectrum))
     log_spectrum = np.log(np.abs(spectrum)) + 1j * unwrapped_phase
-    ceps = fftpack.ifft(log_spectrum).real
+    ceps = fft.ifft(log_spectrum).real
 
     return ceps, ndelay
 
@@ -278,7 +267,7 @@ def real_cepstrum(x: NDArray) -> NDArray:
       0.74508512  2.53444207]
     """
     # adapted from https://github.com/python-acoustics/python-acoustics/blob/master/acoustics/cepstrum.py
-    return fftpack.ifft(np.log(np.abs(fftpack.fft(x)))).real
+    return fft.ifft(np.log(np.abs(fft.fft(x)))).real
 
 
 # --------------------------- miscellaneous math functions -------------------------------------------------

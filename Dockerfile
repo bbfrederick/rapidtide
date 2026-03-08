@@ -32,10 +32,20 @@ COPY . /src/rapidtide
 RUN ln -s /src/rapidtide/cloud /
 RUN echo $GITVERSION > /src/rapidtide/VERSION
 
-# init and install rapidtide
+# update the environment, install optionals
+ENV QEMU_CPU=max
+ENV PIP_NO_BUILD_ISOLATION=0
+RUN pip install --upgrade uv
+RUN uv pip install --upgrade "setuptools>=70" --no-cache-dir
 RUN uv pip install --upgrade pip
+RUN uv pip install --upgrade distlib
+RUN uv pip install --upgrade pytest
+RUN uv pip install --upgrade numba
+RUN uv pip install --upgrade pyfftw
+
+# init and install rapidtide
 RUN cd /src/rapidtide && \
-    uv pip install .
+    uv pip install .[test]
 RUN chmod -R a+r /src/rapidtide
 
 # clean up install directories

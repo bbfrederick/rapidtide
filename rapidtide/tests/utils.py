@@ -183,11 +183,25 @@ def assert_text_vectors_match(
         tide_io.readvectorsfromtextfile(outfile_spec, onecol=True, debug=debug)
     )
 
+    if debug:
+        print(f"{insamplerate=}, {outsamplerate=}")
     assert insamplerate == outsamplerate
+    if debug:
+        print(f"{instarttime=}, {outstarttime=}")
     assert instarttime == outstarttime
+    if debug:
+        print(f"{incompressed=}, {outcompressed=}")
     assert incompressed == outcompressed
+    if debug:
+        print(f"{infiletype=}, {outfiletype=}")
     assert infiletype == outfiletype
+    if debug:
+        print(f"{incolumns=}, {outcolumns=}")
     assert incolumns == outcolumns
+    if debug:
+        print(f"{indata.shape=}, {outdata.shape=}")
     assert indata.shape == outdata.shape
+    if debug:
+        print(f"{mse(indata, outdata)=}, {msethresh=}")
     assert mse(indata, outdata) < msethresh
     np.testing.assert_almost_equal(indata, outdata, aethresh)

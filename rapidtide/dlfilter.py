@@ -21,40 +21,43 @@ import logging
 import os
 import sys
 import time
-import warnings
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-from scipy import fftpack
-from statsmodels.robust.scale import mad
-
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
-
+import pyfftw
+import scipy as sp
 import tensorflow as tf
 import tf_keras.backend as K
-from tf_keras.callbacks import (EarlyStopping, ModelCheckpoint, TensorBoard,
-                                TerminateOnNaN)
-from tf_keras.layers import (Activation, BatchNormalization, Convolution1D,
-                             Dense, Dropout, Flatten, Input, MaxPooling1D,
-                             Reshape, UpSampling1D)
+from numpy.typing import NDArray
+from scipy import fft
+from statsmodels.robust.scale import mad
+from tf_keras.callbacks import (
+    EarlyStopping,
+    ModelCheckpoint,
+    TensorBoard,
+    TerminateOnNaN,
+)
+from tf_keras.layers import (
+    Activation,
+    BatchNormalization,
+    Convolution1D,
+    Dense,
+    Dropout,
+    Flatten,
+    Input,
+    MaxPooling1D,
+    Reshape,
+    UpSampling1D,
+)
 from tf_keras.models import Model, Sequential, load_model
 from tf_keras.optimizers.legacy import RMSprop
 
 import rapidtide.io as tide_io
+
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
@@ -559,7 +562,7 @@ class DeepLearningFilter:
         >>> print(f"Prediction Error: {pred_error}")
         Prediction Error: 0.1234
         """
-        self.lossfilename = os.path.join(self.modelname, "loss.png")
+        self.lossfilename = os.path.join(self.modelpath, "loss.png")
         LGR.info(f"lossfilename: {self.lossfilename}")
 
         YPred = self.predict_model(self.val_x).numpy()
@@ -571,9 +574,9 @@ class DeepLearningFilter:
         self.raw_error = np.mean(np.square(error2))
         LGR.info(f"Prediction Error: {self.pred_error}\tRaw Error: {self.raw_error}")
 
-        f = open(os.path.join(self.modelname, "loss.txt"), "w")
+        f = open(os.path.join(self.modelpath, "loss.txt"), "w")
         f.write(
-            self.modelname
+            self.modelpath
             + ": Prediction Error: "
             + str(self.pred_error)
             + " Raw Error: "
@@ -898,7 +901,7 @@ class DeepLearningFilter:
         >>> trainer.train()
         """
         self.intermediatemodelpath = os.path.join(
-            self.modelname, "model_e{epoch:02d}_v{val_loss:.4f}.keras"
+            self.modelpath, "model_e{epoch:02d}_v{val_loss:.4f}.keras"
         )
         train_dataset = (
             tf.data.Dataset.from_tensor_slices((self.train_x, self.train_y))
@@ -1793,13 +1796,13 @@ def filtscale(
     Examples
     --------
     >>> import numpy as np
-    >>> from scipy import fftpack
+    >>> from scipy import fft
     >>> x = np.random.randn(1024)
     >>> scaled_data, scale = filtscale(x)
     >>> reconstructed = filtscale(scaled_data, scale, reverse=True)
     """
     if not reverse:
-        specvals = fftpack.fft(data)
+        specvals = fft.fft(data)
         if lognormalize:
             themag = np.log(np.absolute(specvals) + epsilon)
             scalefac = np.max(themag)
@@ -1824,7 +1827,7 @@ def filtscale(
             else:
                 themag = data[:, 0] * scalefac
             specvals = themag * np.exp(1.0j * thephase)
-            return fftpack.ifft(specvals).real
+            return fft.ifft(specvals).real
 
 
 def tobadpts(name: str) -> str:

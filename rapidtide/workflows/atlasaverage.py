@@ -537,6 +537,7 @@ def atlasaverage(args: Any) -> None:
         print("processing 3D input file")
         outputvoxels = np.zeros_like(inputvoxels)
         thereglabels = []
+        summarylabels = []
         thevals = []
         thepercentiles = []
         theregsizes = []
@@ -547,10 +548,11 @@ def atlasaverage(args: Any) -> None:
             print(f"{len(regionlist)=}, {regionlist=}")
             print(f"{len(regionlabels)=}, {regionlabels=}")
         if args.datalabel is not None:
-            thereglabels.append("Region")
+            summarylabels.append("Region")
             thevals.append(args.datalabel)
         for theregion in regionlist:
             thereglabels.append(regionlabels[theregion - 1])
+            summarylabels.append(regionlabels[theregion - 1])
             theregionvoxels = inputvoxels[np.where(templatevoxels * themask == theregion)]
             initnum = theregionvoxels.shape[0]
             if args.ignorezeros:
@@ -593,6 +595,7 @@ def atlasaverage(args: Any) -> None:
                 if args.debug:
                     print(f"\tregion {theregion} is empty")
                 thevals.append("None")
+                continue
             for thesubregion in range(numsubregions):
                 scratchvoxels = np.zeros_like(inputvoxels)
                 subregionkey = 1 + (theregion - 1) * numsubregions + thesubregion
@@ -623,7 +626,7 @@ def atlasaverage(args: Any) -> None:
             )
         if args.headerline:
             tide_io.writevec(
-                np.array([",".join(thereglabels), ",".join(thevals)]),
+                np.array([",".join(summarylabels), ",".join(thevals)]),
                 f"{args.outputroot}_regionsummaries.csv",
             )
         else:

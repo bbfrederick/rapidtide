@@ -1,5 +1,22 @@
 # Release history
 
+## Version 3.1.9 (3/5/26)
+* (ccorrica) Updated to use SimilarityFunctionFitter, output csv files.
+* (rapidtide, retroregress) Fixed calculation of the refined R value.
+* (rapidtide, retroregress) Expanded and improved regional time course output.
+* (SimilarityFunctionFitter) Fixed a strange bug where very small delay values were not fit properly.  Affects all programs using correlation fits (most of them).
+* (package) Made pyfftw a required dependency.
+* (package) Resolved future deprecations from scipy.fftpack and np.matrix.
+
+## Version 3.1.8 (3/2/26)
+* (rapidtide) Fixed a bug in how the despeckle search region is set.
+* (rapidtide) Added a number of refinements to despeckling.  This improves behavior in voxels that get selected, but patches of voxels may still not get processed.
+* (rapidtide) Added option to print timing information at the end of a run (``--showtimings``).
+* (happy) Fixed several edge case bugs in phase projection.
+* (filter) Removed a LOT of old, redundant routines.
+* (fit) Fixed baseline calculation for mutual information.
+* (Docker) Started building the ability for containers to self test.
+
 ## Version 3.1.7 (2/23/26)
 * (happy) Added an experimental feature that does cheesy sLFO removal prior to cardiac waveform extraction.  It seems to improve the extracted cardiac signal some, and makes the phase projected data a bit cleaner.  Needs further testing.
 * (happy) Codex found several bugs, which are now fixed.

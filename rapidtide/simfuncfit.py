@@ -30,6 +30,69 @@ import rapidtide.multiproc as tide_multiproc
 
 LGR = logging.getLogger("GENERAL")
 
+# Width-only failure flags (acceptable during despeckling since lag/amplitude are correct)
+_WIDTH_ONLY_FLAGS = np.uint32(0x0004 | 0x0008 | 0x0400 | 0x0800)
+
+
+def _find_and_try_peaks(
+    correlationfunc: ArrayLike,
+    thefitter: Any,
+    target_lag: float,
+    despeckle_thresh: float = 5.0,
+    max_peaks: int = 5,
+    rt_floattype: np.dtype = np.float64,
+) -> Tuple[int, float, float, float, int, int, int, int]:
+    """Try fitting at multiple peaks in order of proximity to target_lag.
+
+    Finds all peaks in the correlation function, sorts them by distance to
+    target_lag, and attempts a fit at each. Returns the first successful fit,
+    or the best near-miss (width-only failures), or the closest-peak result
+    as a last resort.
+    """
+    corrtimeaxis = thefitter.corrtimeaxis
+    peaks = tide_fit.getpeaks(corrtimeaxis, correlationfunc, bipolar=thefitter.bipolar)
+
+    if len(peaks) == 0:
+        # No peaks found; fall back to single guess at target_lag
+        thefitter.setguess(True, maxguess=target_lag)
+        thefitter.setrange(target_lag - despeckle_thresh / 2.0, target_lag + despeckle_thresh / 2.0)
+        return thefitter.fit(correlationfunc)
+
+    # Sort peaks by proximity to target_lag
+    peaks.sort(key=lambda p: abs(p[0] - target_lag))
+
+    best_nearmiss = None  # Best result with only width flags
+    best_nearmiss_dist = float("inf")
+    first_result = None
+
+    for i, peak in enumerate(peaks[:max_peaks]):
+        peak_lag = peak[0]
+        search_half = despeckle_thresh / 2.0
+        thefitter.setguess(True, maxguess=peak_lag)
+        thefitter.setrange(peak_lag - search_half, peak_lag + search_half)
+
+        result = thefitter.fit(correlationfunc)
+        failreason = result[5]  # failreason is index 5 in the 8-tuple from fit()
+
+        if i == 0:
+            first_result = result
+
+        # Clean success: accept immediately
+        if failreason == 0:
+            return result
+
+        # Near-miss: only width-related flags set (lag and amplitude are good)
+        if (failreason & ~_WIDTH_ONLY_FLAGS) == 0:
+            dist = abs(result[1] - target_lag)  # result[1] is maxlag
+            if dist < best_nearmiss_dist:
+                best_nearmiss = result
+                best_nearmiss_dist = dist
+
+    # Return best near-miss if available, otherwise first (closest) peak result
+    if best_nearmiss is not None:
+        return best_nearmiss
+    return first_result
+
 
 def onesimfuncfit(
     correlationfunc: ArrayLike,
@@ -40,6 +103,7 @@ def onesimfuncfit(
     lthreshval: float = 0.0,
     fixdelay: bool = False,
     initialdelayvalue: float = 0.0,
+    multipeak: bool = False,
     rt_floattype: np.dtype = np.float64,
 ) -> Tuple[int, float, float, float, int, int, int, int]:
     """
@@ -99,18 +163,46 @@ def onesimfuncfit(
     >>> print(result)
     (50, 0.5, 0.95, 0.02, 1, 45, 55, 0)
     """
-    if initiallag is not None:
-        thefitter.setguess(True, maxguess=initiallag)
-        thefitter.setrange(-despeckle_thresh / 2.0, despeckle_thresh / 2.0)
-    else:
-        thefitter.setguess(False)
-
     if disablethresholds:
         thefitter.setlthresh(0.0)
     else:
         thefitter.setlthresh(lthreshval)
 
-    if not fixdelay:
+    if fixdelay:
+        failreason = np.uint32(0)
+        maxlag = initialdelayvalue
+        maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, initialdelayvalue))
+        maxval = correlationfunc[maxindex]
+        maxsigma = 1.0
+        maskval = np.uint16(1)
+        peakstart = maxindex
+        peakend = maxindex
+    elif multipeak and initiallag is not None:
+        # Multi-peak mode: try multiple peaks sorted by proximity to initiallag
+        (
+            maxindex,
+            maxlag,
+            maxval,
+            maxsigma,
+            maskval,
+            failreason,
+            peakstart,
+            peakend,
+        ) = _find_and_try_peaks(
+            correlationfunc,
+            thefitter,
+            target_lag=initiallag,
+            despeckle_thresh=despeckle_thresh,
+            rt_floattype=rt_floattype,
+        )
+    else:
+        if initiallag is not None:
+            thefitter.setguess(True, maxguess=initiallag)
+            thefitter.setrange(
+                initiallag - despeckle_thresh / 2.0, initiallag + despeckle_thresh / 2.0
+            )
+        else:
+            thefitter.setguess(False)
         (
             maxindex,
             maxlag,
@@ -121,16 +213,6 @@ def onesimfuncfit(
             peakstart,
             peakend,
         ) = thefitter.fit(correlationfunc)
-    else:
-        # do something different
-        failreason = np.uint32(0)
-        maxlag = initialdelayvalue
-        maxindex = np.int16(bisect.bisect_left(thefitter.corrtimeaxis, initialdelayvalue))
-        maxval = correlationfunc[maxindex]
-        maxsigma = 1.0
-        maskval = np.uint16(1)
-        peakstart = maxindex
-        peakend = maxindex
 
     return maxindex, maxlag, maxval, maxsigma, maskval, peakstart, peakend, failreason
 
@@ -144,6 +226,7 @@ def _procOneVoxelFitcorr(
     initiallag: Optional[float] = None,
     fixdelay: bool = False,
     initialdelayvalue: float = 0.0,
+    multipeak: bool = False,
     rt_floattype: np.dtype = np.float64,
 ) -> Tuple[int, int, float, float, float, NDArray, NDArray, float, int, int]:
     """
@@ -227,13 +310,10 @@ def _procOneVoxelFitcorr(
         fixdelay=fixdelay,
         initialdelayvalue=initialdelayvalue,
         initiallag=initiallag,
+        multipeak=multipeak,
         rt_floattype=rt_floattype,
     )
 
-    if maxval > 0.3:
-        displayplots = False
-
-    # now tuck everything away in the appropriate output array
     volumetotalinc = 0
     thewindowout = np.zeros_like(corr_y, rt_floattype)
     thewindowout[peakstart : peakend + 1] = 1.0
@@ -295,6 +375,7 @@ def fitcorr(
     chunksize: int = 1000,
     despeckle_thresh: float = 5.0,
     initiallags: Optional[NDArray] = None,
+    multipeak: bool = False,
     rt_floattype: np.dtype = np.float64,
 ) -> int:
     """
@@ -431,6 +512,7 @@ def fitcorr(
                             initiallag=thislag,
                             fixdelay=fixdelay,
                             initialdelayvalue=thisinitialdelayvalue,
+                            multipeak=multipeak,
                             rt_floattype=rt_floattype,
                         )
                     )
@@ -471,7 +553,14 @@ def fitcorr(
                 fitfails += 1
 
             # if this is a despeckle pass, only accept the new values if the fit did not fail
-            if (voxel[9] == 0) or not despeckling:
+            # (or if only width flags are set, which is acceptable during despeckling)
+            fail_flags = np.uint32(voxel[9])
+            accept = (
+                not despeckling
+                or fail_flags == 0
+                or (fail_flags & ~_WIDTH_ONLY_FLAGS) == 0
+            )
+            if accept:
                 volumetotal += voxel[1]
                 lagtimes[voxel[0]] = voxel[2]
                 lagstrengths[voxel[0]] = voxel[3]
@@ -480,7 +569,7 @@ def fitcorr(
                 windowout[voxel[0], :] = voxel[6]
                 R2[voxel[0]] = voxel[7]
                 lagmask[voxel[0]] = voxel[8]
-                failimage[voxel[0]] = voxel[9] & 0xFFFF
+                failimage[voxel[0]] = fail_flags & 0xFFFF
 
         del data_out
     else:
@@ -515,6 +604,7 @@ def fitcorr(
                     initiallag=thislag,
                     fixdelay=fixdelay,
                     initialdelayvalue=thisinitialdelayvalue,
+                    multipeak=multipeak,
                     rt_floattype=rt_floattype,
                 )
                 if (
@@ -538,7 +628,14 @@ def fitcorr(
                     fitfails += 1
 
                 # if this is a despeckle pass, only accept the new values if the fit did not fail
-                if (voxel[9] == 0) or not despeckling:
+                # (or if only width flags are set, which is acceptable during despeckling)
+                fail_flags = np.uint32(voxel[9])
+                accept = (
+                    not despeckling
+                    or fail_flags == 0
+                    or (fail_flags & ~_WIDTH_ONLY_FLAGS) == 0
+                )
+                if accept:
                     volumetotal += voxel[1]
                     lagtimes[vox] = voxel[2]
                     lagstrengths[vox] = voxel[3]
@@ -547,7 +644,7 @@ def fitcorr(
                     windowout[vox, :] = voxel[6]
                     R2[vox] = voxel[7]
                     lagmask[vox] = voxel[8]
-                    failimage[vox] = voxel[9] & 0xFFFF
+                    failimage[vox] = fail_flags & 0xFFFF
 
     LGR.info(f"\nSimilarity function fitted in {volumetotal} voxels")
     LGR.info(

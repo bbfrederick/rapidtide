@@ -28,6 +28,7 @@ from rapidtide.tests.utils import get_example_and_temp_roots, run_rapidtide
 
 pytestmark = pytest.mark.slow
 
+
 def test_simroundtrip(debug=False, local=False, displayplots=False):
     # set input and output directories
     exampleroot, testtemproot = get_example_and_temp_roots(local)

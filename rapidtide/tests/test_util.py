@@ -611,20 +611,6 @@ class TestSetmemlimit:
         assert callable(tide_util.setmemlimit)
 
 
-# ========================= configurepyfftw / savewisdom =========================
-
-
-class TestPyfftwHelpers:
-    def test_configurepyfftw_when_missing(self, monkeypatch):
-        monkeypatch.setattr(tide_util, "pyfftwpresent", False)
-        assert tide_util.configurepyfftw(threads=1, debug=False) is None
-
-    def test_savewisdom_when_missing(self, monkeypatch):
-        monkeypatch.setattr(tide_util, "pyfftwpresent", False)
-        # no-op branch, should not raise
-        tide_util.savewisdom("dummy_wisdom.txt", debug=False)
-
-
 # ========================= findavailablemem =========================
 
 

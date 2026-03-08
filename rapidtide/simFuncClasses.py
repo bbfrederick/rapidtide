@@ -894,12 +894,12 @@ class SimilarityFunctionFitter:
     corrtimeaxis = None
     FML_NOERROR = np.uint32(0x0000)
 
-    FML_INITAMPLOW = np.uint32(0x0001)
-    FML_INITAMPHIGH = np.uint32(0x0002)
-    FML_INITWIDTHLOW = np.uint32(0x0004)
-    FML_INITWIDTHHIGH = np.uint32(0x0008)
-    FML_INITLAGLOW = np.uint32(0x0010)
-    FML_INITLAGHIGH = np.uint32(0x0020)
+    FML_INITAMPLOW = np.uint32(0x0001)  # 1
+    FML_INITAMPHIGH = np.uint32(0x0002)  # 2
+    FML_INITWIDTHLOW = np.uint32(0x0004)  # 4
+    FML_INITWIDTHHIGH = np.uint32(0x0008)  # 8
+    FML_INITLAGLOW = np.uint32(0x0010)  # 16
+    FML_INITLAGHIGH = np.uint32(0x0020)  # 32
     FML_INITFAIL = (
         FML_INITAMPLOW
         | FML_INITAMPHIGH
@@ -909,13 +909,13 @@ class SimilarityFunctionFitter:
         | FML_INITLAGHIGH
     )
 
-    FML_FITAMPLOW = np.uint32(0x0100)
-    FML_FITAMPHIGH = np.uint32(0x0200)
-    FML_FITWIDTHLOW = np.uint32(0x0400)
-    FML_FITWIDTHHIGH = np.uint32(0x0800)
-    FML_FITLAGLOW = np.uint32(0x1000)
-    FML_FITLAGHIGH = np.uint32(0x2000)
-    FML_FITALGOFAIL = np.uint32(0x0400)
+    FML_FITAMPLOW = np.uint32(0x0100)  # 256
+    FML_FITAMPHIGH = np.uint32(0x0200)  # 512
+    FML_FITWIDTHLOW = np.uint32(0x0400)  # 1024
+    FML_FITWIDTHHIGH = np.uint32(0x0800)  # 2048
+    FML_FITLAGLOW = np.uint32(0x1000)  # 4096
+    FML_FITLAGHIGH = np.uint32(0x2000)  # 8192
+    FML_FITALGOFAIL = np.uint32(0x4000)  # 16384
     FML_FITFAIL = (
         FML_FITAMPLOW
         | FML_FITAMPHIGH
@@ -1039,6 +1039,11 @@ class SimilarityFunctionFitter:
         self.enforcethresh = enforcethresh
         self.corrtolerance = corrtolerance
         self.displayplots = displayplots
+        # lightweight instrumentation counters for performance profiling
+        self.gauss_fit_calls = 0
+        self.gauss_fastpath_calls = 0
+        self.gauss_robust_fallback_calls = 0
+        self.last_fit_used_robust = False
 
     def _maxindex_noedge(self, corrfunc: NDArray) -> tuple[int, float]:
         """
@@ -1673,25 +1678,102 @@ class SimilarityFunctionFitter:
                 maxlag = np.sum(X * data) / np.sum(data)
                 maxsigma = 10.0
             elif self.peakfittype == "gauss":
-                X = self.corrtimeaxis[peakstart : peakend + 1] - baseline
+                self.gauss_fit_calls += 1
+                self.last_fit_used_robust = False
+                X_full = self.corrtimeaxis[peakstart : peakend + 1] - baseline
                 data = corrfunc[peakstart : peakend + 1]
-                # do a least squares fit over the top of the peak
-                # p0 = np.array([maxval_init, np.fmod(maxlag_init, lagmod), maxsigma_init], dtype='float64')
-                p0 = np.array([maxval_init, maxlag_init, maxsigma_init], dtype="float64")
+                # Recenter x about local peak sample to avoid tiny nonzero lag-origin numerical traps.
+                x_center = float(X_full[np.argmax(data)])
+                X = X_full - x_center
+                p0 = np.array([maxval_init, maxlag_init - x_center, maxsigma_init], dtype="float64")
+                if np.abs(p0[1]) < 1.0e-6 * np.abs(binwidth):
+                    p0[1] = 0.0
                 if self.debug:
                     print("fit input array:", p0)
                 try:
-                    plsq, ier = sp.optimize.leastsq(
+                    if self.bipolar:
+                        amp_low = -1.0
+                    else:
+                        amp_low = 0.0
+                    amp_high = 1.0 if self.enforcethresh else np.inf
+                    lag_low = self.lagmin - x_center
+                    lag_high = self.lagmax - x_center
+                    sigma_low = max(self.absminsigma, np.finfo(np.float64).eps)
+                    sigma_high = max(self.absmaxsigma, sigma_low * 1.0001)
+                    # Fast path: use legacy leastsq first (much faster), then fall back to
+                    # bounded multi-start only for clear numerical-stall cases.
+                    need_robust_refine = True
+                    plsq = None
+                    plsq_fast, ier = sp.optimize.leastsq(
                         tide_fit.gaussresiduals, p0, args=(data, X), maxfev=5000
                     )
-                    if ier not in [1, 2, 3, 4]:  # Check for successful convergence
-                        failreason |= self.FML_FITALGOFAIL
-                        maxval = np.float64(0.0)
-                        maxlag = np.float64(0.0)
-                        maxsigma = np.float64(0.0)
-                    else:
+                    if ier in [1, 2, 3, 4]:
+                        need_robust_refine = False
+                        # Detect the "stuck at tiny center" failure mode.
+                        asymmetry = np.fabs(data[0] - data[-1]) / max(
+                            np.max(np.fabs(data)), np.finfo(np.float64).eps
+                        )
+                        tiny_center = np.fabs(plsq_fast[1]) < 1.0e-6 * max(
+                            np.fabs(binwidth), np.finfo(np.float64).eps
+                        )
+                        unmoved_center = np.fabs(plsq_fast[1] - p0[1]) < 1.0e-8 * max(
+                            np.fabs(binwidth), 1.0
+                        )
+                        if tiny_center and unmoved_center and (asymmetry > 1.0e-3):
+                            need_robust_refine = True
+                        else:
+                            plsq = plsq_fast
+                            self.gauss_fastpath_calls += 1
+
+                    if need_robust_refine:
+                        self.last_fit_used_robust = True
+                        self.gauss_robust_fallback_calls += 1
+                        seed_offsets = [0.0, -np.abs(binwidth), np.abs(binwidth)]
+                        best_result = None
+                        for seed_offset in seed_offsets:
+                            pseed = p0.copy()
+                            pseed[1] = np.clip(p0[1] + seed_offset, lag_low, lag_high)
+                            pseed[2] = np.clip(pseed[2], sigma_low, sigma_high)
+                            pseed[0] = np.clip(pseed[0], amp_low, amp_high)
+                            result = sp.optimize.least_squares(
+                                tide_fit.gaussresiduals,
+                                pseed,
+                                args=(data, X),
+                                bounds=(
+                                    [amp_low, lag_low, sigma_low],
+                                    [amp_high, lag_high, sigma_high],
+                                ),
+                                method="trf",
+                                x_scale=np.array(
+                                    [
+                                        max(np.abs(pseed[0]), 1.0e-3),
+                                        max(np.abs(binwidth), 1.0e-3),
+                                        max(np.abs(pseed[2]), np.abs(binwidth), 1.0e-3),
+                                    ],
+                                    dtype="float64",
+                                ),
+                                max_nfev=5000,
+                            )
+                            if result.success and (
+                                best_result is None or result.cost < best_result.cost
+                            ):
+                                best_result = result
+                        if best_result is None:
+                            failreason |= self.FML_FITALGOFAIL
+                            maxval = np.float64(0.0)
+                            maxlag = np.float64(0.0)
+                            maxsigma = np.float64(0.0)
+                        else:
+                            plsq = best_result.x
+
+                    if plsq is not None:
                         maxval = plsq[0] + baseline
-                        maxlag = np.fmod((1.0 * plsq[1]), self.lagmod)
+                        if self.enforcethresh:
+                            if maxval > 1.0:
+                                maxval = 1.0
+                            if maxval < -1.0:
+                                maxval = -1.0
+                        maxlag = np.fmod((1.0 * (plsq[1] + x_center)), self.lagmod)
                         maxsigma = plsq[2]
                 except:
                     failreason |= self.FML_FITALGOFAIL

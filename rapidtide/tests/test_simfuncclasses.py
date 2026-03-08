@@ -611,6 +611,46 @@ class TestSimilarityFunctionFitter:
         # Should find the negative peak
         assert maxval < 0
 
+    def test_fit_gaussian_tiny_center_offset_regression(self):
+        """Regression: avoid mu getting stuck at tiny near-zero initial lag."""
+        corrtimeaxis = np.array(
+            [
+                -2.999999910593032,
+                -1.4999999552965158,
+                6.661338147750939e-16,
+                1.499999955296517,
+                2.9999999105930337,
+            ],
+            dtype=float,
+        )
+        corrfunc = np.array(
+            [
+                0.746730398396671,
+                0.9503594598160218,
+                0.9699364939254475,
+                0.7961962032308781,
+                0.49326719303756433,
+            ],
+            dtype=float,
+        )
+
+        fitter = tide_simfunc.SimilarityFunctionFitter(
+            corrtimeaxis=corrtimeaxis,
+            lagmin=-15.0,
+            lagmax=15.0,
+            peakfittype="gauss",
+            zerooutbadfit=False,
+            enforcethresh=True,
+            bipolar=False,
+        )
+        _, maxlag, maxval, maxsigma, maskval, failreason, _, _ = fitter.fit(corrfunc)
+
+        assert failreason == fitter.FML_NOERROR
+        assert maskval == 1
+        assert maxval > 0.8
+        assert maxsigma > 0.25
+        assert -1.2 < maxlag < -0.2
+
     def test_maxindex_noedge(self, sample_corrtimeaxis, sample_gaussian_corrfunc):
         """Test _maxindex_noedge method."""
         fitter = tide_simfunc.SimilarityFunctionFitter(

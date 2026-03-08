@@ -25,8 +25,11 @@ from unittest.mock import MagicMock, call, patch
 import numpy as np
 import pytest
 
-from rapidtide.workflows.retrolagtcs import (DEFAULT_REGRESSIONFILTDERIVS,
-                                             _get_parser, retrolagtcs)
+from rapidtide.workflows.retrolagtcs import (
+    DEFAULT_REGRESSIONFILTDERIVS,
+    _get_parser,
+    retrolagtcs,
+)
 
 # ---- helpers ----
 

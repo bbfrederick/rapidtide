@@ -33,6 +33,7 @@ except ImportError:
 
 pytestmark = pytest.mark.slow
 
+
 def test_fullrunhappy_v3(debug=False, local=False, displayplots=False):
     # set input and output directories
     exampleroot, testtemproot = get_example_and_temp_roots(local)

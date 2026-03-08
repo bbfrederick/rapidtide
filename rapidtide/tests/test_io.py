@@ -27,8 +27,7 @@ import pytest
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
-from rapidtide.tests.utils import (create_dir, get_examples_path,
-                                   get_test_temp_path, mse)
+from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_path, mse
 
 
 def test_io(debug=True, local=False, displayplots=False):

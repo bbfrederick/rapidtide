@@ -109,7 +109,10 @@ def parse_with_temp_inputs():
         if extra_args is None:
             extra_args = []
         with ExitStack() as stack:
-            files = [stack.enter_context(tempfile.NamedTemporaryFile(suffix=suffix)) for _ in range(num_inputs)]
+            files = [
+                stack.enter_context(tempfile.NamedTemporaryFile(suffix=suffix))
+                for _ in range(num_inputs)
+            ]
             argv = [f.name for f in files]
             if include_output:
                 argv.append("out")

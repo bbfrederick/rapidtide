@@ -70,7 +70,9 @@ def _resolve_torch_device(torch_module: Any, device: str = "auto") -> Any:
         return torch_module.device("cuda")
 
     if requested == "mps":
-        if not (hasattr(torch_module.backends, "mps") and torch_module.backends.mps.is_available()):
+        if not (
+            hasattr(torch_module.backends, "mps") and torch_module.backends.mps.is_available()
+        ):
             raise RuntimeError("Requested MPS backend, but MPS is not available.")
         return torch_module.device("mps")
 
@@ -623,7 +625,9 @@ def correlationpass_gpu(
         probe = torch.randn(256, device=torch_device, dtype=torch.float32)
         probe_fft = torch.fft.rfft(probe)
         probe_ifft = torch.fft.irfft(probe_fft, n=256)
-        if (probe_fft.device.type != torch_device.type) or (probe_ifft.device.type != torch_device.type):
+        if (probe_fft.device.type != torch_device.type) or (
+            probe_ifft.device.type != torch_device.type
+        ):
             raise RuntimeError(
                 f"FFT ops are not executing on requested device '{torch_device}' "
                 f"(rfft on '{probe_fft.device}', irfft on '{probe_ifft.device}')."

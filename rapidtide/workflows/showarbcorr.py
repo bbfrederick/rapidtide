@@ -18,11 +18,9 @@
 #
 import argparse
 import sys
-from argparse import Namespace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
 from scipy.stats import pearsonr
 
 import rapidtide.correlate as tide_corr

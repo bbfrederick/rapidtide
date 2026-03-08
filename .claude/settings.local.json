@@ -10,7 +10,9 @@
       "WebSearch",
       "Bash(grep:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(rapidtide:*)",
+      "Bash(black --check:*)"
     ]
   }
 }

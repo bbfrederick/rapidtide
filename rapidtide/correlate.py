@@ -19,28 +19,15 @@
 """Functions for calculating correlations and similar metrics between arrays."""
 
 import logging
-import warnings
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
-
-from rapidtide.ffttools import optfftlen
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import pyfftw
-    except ImportError:
-        pyfftwpresent = False
-    else:
-        pyfftwpresent = True
-
-
+import pyfftw
 import scipy as sp
 from numpy.fft import irfftn, rfftn
-from scipy import fftpack, signal
+from numpy.typing import NDArray
+from scipy import fft, signal
 from sklearn.metrics import mutual_info_score
 
 import rapidtide.fit as tide_fit
@@ -48,11 +35,12 @@ import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-from rapidtide.decorators import conditionaljit
+from rapidtide.ffttools import optfftlen
 
-if pyfftwpresent:
-    fftpack = pyfftw.interfaces.scipy_fftpack
-    pyfftw.interfaces.cache.enable()
+# Use pyfftw as the backend for all scipy.fft operations
+sp.fft.set_backend(pyfftw.interfaces.scipy_fft)
+pyfftw.interfaces.cache.enable()
+
 LGR = logging.getLogger("GENERAL")
 
 # ---------------------------------------- Global constants -------------------------------------------
@@ -1428,11 +1416,11 @@ def faststcorrelate(
 
     acorrfft1 = thestft1 * np.conj(thestft1)
     acorrfft2 = thestft2 * np.conj(thestft2)
-    acorr1 = np.roll(fftpack.ifft(acorrfft1, axis=0).real, nperseg // 2, axis=0)[nperseg // 2, :]
-    acorr2 = np.roll(fftpack.ifft(acorrfft2, axis=0).real, nperseg // 2, axis=0)[nperseg // 2, :]
+    acorr1 = np.roll(fft.ifft(acorrfft1, axis=0).real, nperseg // 2, axis=0)[nperseg // 2, :]
+    acorr2 = np.roll(fft.ifft(acorrfft2, axis=0).real, nperseg // 2, axis=0)[nperseg // 2, :]
     normfacs = np.sqrt(acorr1 * acorr2)
     product = thestft1 * np.conj(thestft2)
-    stcorr = np.roll(fftpack.ifft(product, axis=0).real, nperseg // 2, axis=0)
+    stcorr = np.roll(fft.ifft(product, axis=0).real, nperseg // 2, axis=0)
     for i in range(len(normfacs)):
         stcorr[:, i] /= normfacs[i]
 
@@ -1755,7 +1743,7 @@ def convolve_weighted_fft(
     Notes
     -----
     - This function uses real FFT (`rfftn`) for real inputs and standard FFT
-      (`fftpack.fftn`) for complex inputs.
+      (`fft.fftn`) for complex inputs.
     - The convolution is computed in the frequency domain using the product
       of FFTs of the inputs.
     - For real inputs, the result is scaled to preserve the maximum amplitude.
@@ -1789,28 +1777,39 @@ def convolve_weighted_fft(
 
     # Always use 2**n-sized FFT
     fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+    fftaxes = tuple(range(in1.ndim))
     fslice = tuple([slice(0, int(sz)) for sz in size])
     if not complex_result:
-        fft1 = rfftn(in1, fsize)
-        fft2 = rfftn(in2, fsize)
+        fft1 = rfftn(in1, fsize, axes=fftaxes)
+        fft2 = rfftn(in2, fsize, axes=fftaxes)
         theorigmax = np.max(
-            np.absolute(irfftn(gccproduct(fft1, fft2, "None", compress=compress), fsize)[fslice])
+            np.absolute(
+                irfftn(
+                    gccproduct(fft1, fft2, "None", compress=compress),
+                    fsize,
+                    axes=fftaxes,
+                )[fslice]
+            )
         )
         ret = irfftn(
-            gccproduct(fft1, fft2, weighting, compress=compress, displayplots=displayplots), fsize
+            gccproduct(fft1, fft2, weighting, compress=compress, displayplots=displayplots),
+            fsize,
+            axes=fftaxes,
         )[fslice].copy()
         ret = irfftn(
-            gccproduct(fft1, fft2, weighting, compress=compress, displayplots=displayplots), fsize
+            gccproduct(fft1, fft2, weighting, compress=compress, displayplots=displayplots),
+            fsize,
+            axes=fftaxes,
         )[fslice].copy()
         ret = ret.real
         ret *= theorigmax / np.max(np.absolute(ret))
     else:
-        fft1 = fftpack.fftn(in1, fsize)
-        fft2 = fftpack.fftn(in2, fsize)
+        fft1 = fft.fftn(in1, fsize, axes=fftaxes)
+        fft2 = fft.fftn(in2, fsize, axes=fftaxes)
         theorigmax = np.max(
-            np.absolute(fftpack.ifftn(gccproduct(fft1, fft2, "None", compress=compress))[fslice])
+            np.absolute(fft.ifftn(gccproduct(fft1, fft2, "None", compress=compress))[fslice])
         )
-        ret = fftpack.ifftn(
+        ret = fft.ifftn(
             gccproduct(fft1, fft2, weighting, compress=compress, displayplots=displayplots)
         )[fslice].copy()
         ret *= theorigmax / np.max(np.absolute(ret))

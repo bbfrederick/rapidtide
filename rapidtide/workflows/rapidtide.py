@@ -570,7 +570,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
 
     # Reshape the data and trim to a time range, if specified.  Check for special case of no trimming to save RAM
     fmri_data = theinputdata.byvoxel()
-    print(f"{fmri_data.shape=}")
+    LGR.debug(f"{fmri_data.shape=}")
 
     # detect zero mean data
     if not optiondict["dataiszeromean"]:
@@ -992,7 +992,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         pcacomponents=optiondict["initregressorpcacomponents"],
         excludemask=internalinitregressorexcludemask,
         filedesc="regionalprefilter",
-        suffix="",
+        extrainfo="prior to sLFO removal",
+        suffix="_LFO",
+        filter=theprefilter,
         debug=optiondict["debug"],
     )
 
@@ -1005,7 +1007,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             meanfreq,
             outputname,
             filedesc="regionalprefilter",
-            suffix="",
+            extrainfo="prior to sLFO removal",
+            suffix="_LFO",
+            filter=theprefilter,
             debug=optiondict["debug"],
         )
 
@@ -1022,7 +1026,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             outputname,
             excludemask=internalinvbrainmask,
             filedesc="regionalprefilter",
-            suffix="",
+            extrainfo="prior to sLFO removal",
+            suffix="_LFO",
+            filter=theprefilter,
             debug=optiondict["debug"],
         )
 
@@ -1039,7 +1045,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             outputname,
             excludemask=internalinvbrainmask,
             filedesc="regionalprefilter",
-            suffix="",
+            extrainfo="prior to sLFO removal",
+            suffix="_LFO",
+            filter=theprefilter,
             debug=optiondict["debug"],
         )
 
@@ -1056,7 +1064,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             outputname,
             excludemask=internalinvbrainmask,
             filedesc="regionalprefilter",
-            suffix="",
+            extrainfo="prior to sLFO removal",
+            suffix="_LFO",
+            filter=theprefilter,
             debug=optiondict["debug"],
         )
 
@@ -1258,11 +1268,11 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # filter the input data for antialiasing
     if optiondict["antialias"]:
         LGR.debug("applying trapezoidal antialiasing filter")
-        reference_y_filt = tide_filt.dolptrapfftfilt(
+        reference_y_filt = tide_filt.dolptransfuncfilt(
             inputfreq,
-            0.25 * fmrifreq,
-            0.5 * fmrifreq,
             reference_y,
+            upperpass=(0.25 * fmrifreq),
+            upperstop=(0.5 * fmrifreq),
             padlen=int(inputfreq * optiondict["padseconds"]),
             debug=optiondict["debug"],
         )
@@ -1439,8 +1449,8 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     corrorigin = theCorrelator.similarityfuncorigin
     dummy, corrscale, dummy = theCorrelator.getfunction(trim=False)
 
-    lagmininpts = int((-optiondict["lagmin"] / corrtr) - 0.5)
-    lagmaxinpts = int((optiondict["lagmax"] / corrtr) + 0.5)
+    lagmininpts = int(np.floor(-optiondict["lagmin"] / corrtr))
+    lagmaxinpts = int(np.ceil((optiondict["lagmax"] / corrtr)))
 
     if (lagmaxinpts + lagmininpts) < 3:
         raise ValueError(
@@ -2930,18 +2940,15 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             else:
                 thisexcludemask = None
 
-            meanvec, meanmask = tide_mask.saveregionaltimeseries(
-                "initial regressor",
-                "startregressormask",
-                filtereddata,
-                thisincludemask,
+            tide_io.writebidstsv(
+                f"{outputname}_desc-regionalpostfilter_timeseries",
+                resampnonosref_y,
                 meanfreq,
-                outputname,
-                initfile=True,
-                excludemask=thisexcludemask,
-                filedesc="regionalpostfilter",
-                suffix="",
-                debug=optiondict["debug"],
+                columns=[f"sLFO"],
+                extraheaderinfo={
+                    "Description": "Regional timecourse averages after sLFO removal",
+                },
+                append=False,
             )
             if brainmask is not None:
                 brainvec, dummy = tide_mask.saveregionaltimeseries(
@@ -2952,7 +2959,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     meanfreq,
                     outputname,
                     filedesc="regionalpostfilter",
-                    suffix="",
+                    extrainfo="after sLFO removal",
+                    suffix="_LFO",
+                    filter=theprefilter,
                     debug=optiondict["debug"],
                 )
             if graymask is not None:
@@ -2965,7 +2974,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     outputname,
                     excludemask=internalinvbrainmask[validvoxels],
                     filedesc="regionalpostfilter",
-                    suffix="",
+                    extrainfo="after sLFO removal",
+                    suffix="_LFO",
+                    filter=theprefilter,
                     debug=optiondict["debug"],
                 )
             if whitemask is not None:
@@ -2978,7 +2989,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     outputname,
                     excludemask=internalinvbrainmask[validvoxels],
                     filedesc="regionalpostfilter",
-                    suffix="",
+                    extrainfo="after sLFO removal",
+                    suffix="_LFO",
+                    filter=theprefilter,
                     debug=optiondict["debug"],
                 )
             if csfmask is not None:
@@ -2991,7 +3004,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     outputname,
                     excludemask=internalinvbrainmask[validvoxels],
                     filedesc="regionalpostfilter",
-                    suffix="",
+                    extrainfo="after sLFO removal",
+                    suffix="_LFO",
+                    filter=theprefilter,
                     debug=optiondict["debug"],
                 )
             tide_util.logmem("after sLFO filter")
@@ -3424,7 +3439,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 filtereddata,
                 LGR,
                 TimingLGR,
-                optiondict["regressfiltthreshval"],
+                0.0,  # fmri_data has been bandpass filtered; original amplitude threshold is invalid
                 optiondict["saveminimumsLFOfiltfiles"],
                 nprocs_makelaggedtcs=optiondict["nprocs_makelaggedtcs"],
                 nprocs_regressionfilt=optiondict["nprocs_regressionfilt"],
@@ -3517,7 +3532,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         masklist = []
 
         # we can only calculate this map if we have enough data for a good fit, and the fit succeeded
-        if optiondict["numestreps"] >= 1000:
+        if optiondict["numestreps"] >= 1000 and optiondict["similaritymetric"] != "mutualinfo":
             if sigfit is not None:
                 neglogpmax = np.log10(optiondict["numestreps"])
                 # generate a neglogp map
@@ -3539,17 +3554,17 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     )
                 ]
 
-        tide_io.savemaplist(
-            outputname,
-            masklist,
-            validvoxels,
-            nativespaceshape,
-            theheader,
-            bidsbasedict,
-            filetype=theinputdata.filetype,
-            rt_floattype=rt_floattype,
-            cifti_hdr=theinputdata.cifti_hdr,
-        )
+            tide_io.savemaplist(
+                outputname,
+                masklist,
+                validvoxels,
+                nativespaceshape,
+                theheader,
+                bidsbasedict,
+                filetype=theinputdata.filetype,
+                rt_floattype=rt_floattype,
+                cifti_hdr=theinputdata.cifti_hdr,
+            )
         del masklist
 
     if (optiondict["passes"] > 1 or optiondict["initregressorpreselect"]) and optiondict[

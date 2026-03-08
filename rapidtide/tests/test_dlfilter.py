@@ -474,8 +474,6 @@ def cnn_minimal_cpu_training_loop(testtemproot):
     with tf.device("/CPU:0"):
         filter_obj.getname()
         filter_obj.makenet()
-        # Work around modelname/modelpath inconsistency in dlfilter.py.
-        filter_obj.modelname = filter_obj.modelpath
         filter_obj.initmetadata()
         filter_obj.train_x = train_x
         filter_obj.train_y = train_y

@@ -957,6 +957,118 @@ def _get_parser() -> Any:
         ),
         default=DEFAULT_DESPECKLE_THRESH,
     )
+    corr_fit.add_argument(
+        "--despeckle-multipeak",
+        dest="despeckle_multipeak",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "During despeckling refit, try multiple correlation peaks sorted by proximity "
+            "to the spatial median (more robust for noisy data). This is the default."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-multipeak",
+        dest="despeckle_multipeak",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable multi-peak search during despeckling refit (use single guess only).",
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--despeckle-progressive-kernel",
+        dest="despeckle_progressive_kernel",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "Use progressively larger median filter kernels on later despeckle passes "
+            "(3x3x3 for passes 1-2, 5x5x5 for passes 3+) to catch medium-sized patches. "
+            "This is the default."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-progressive-kernel",
+        dest="despeckle_progressive_kernel",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable progressive kernel sizes during despeckling (always use 3x3x3).",
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-detection",
+        dest="despeckle_patch_detection",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "On despeckle passes 3+, detect large connected patches of shifted delay values "
+            "using a large reference kernel and flag them for refitting. This catches patches "
+            "that survive the median filter because they are locally consistent. "
+            "This is the default."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-patch-detection",
+        dest="despeckle_patch_detection",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable large patch detection during despeckling.",
+        default=True,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-refkernel",
+        dest="despeckle_patch_refkernel",
+        action=pf.IndicateSpecifiedAction,
+        type=int,
+        metavar="SIZE",
+        help=(
+            "Size of the median filter kernel used to build the large-scale reference "
+            "for patch detection. Must be odd. Larger values detect larger patches but "
+            "may miss very large ones that approach half the kernel volume. Default is 9."
+        ),
+        default=9,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-minsize",
+        dest="despeckle_patch_minsize",
+        action=pf.IndicateSpecifiedAction,
+        type=int,
+        metavar="NVOXELS",
+        help=(
+            "Minimum number of connected voxels for a group to be considered a patch. "
+            "Smaller clusters are ignored (handled by regular despeckle). Default is 10."
+        ),
+        default=10,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-use-confidence",
+        dest="despeckle_patch_use_confidence",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "When detecting anomalous patches, use correlation quality metrics "
+            "(R², peak strength) to modulate the detection threshold. "
+            "Regions with poor fit quality are flagged as anomalous patches at a "
+            "lower spatial threshold, improving sensitivity for borderline cases. "
+            "Off by default."
+        ),
+        default=False,
+    )
+    corr_fit.add_argument(
+        "--no-despeckle-patch-use-confidence",
+        dest="despeckle_patch_use_confidence",
+        action=pf.IndicateSpecifiedStoreFalseAction,
+        help="Disable confidence-based modulation for patch detection (default).",
+        default=False,
+    )
+    corr_fit.add_argument(
+        "--despeckle-patch-confidence-weight",
+        dest="despeckle_patch_confidence_weight",
+        action=pf.IndicateSpecifiedAction,
+        type=float,
+        metavar="WEIGHT",
+        help=(
+            "Weight [0.0..1.0] controlling how strongly fit confidence modulates the "
+            "patch detection threshold when --despeckle-patch-use-confidence is active. "
+            "0.0 = no effect; 1.0 = maximum modulation. Default is 0.5."
+        ),
+        default=0.5,
+    )
 
     # Regressor refinement options
     reg_ref = parser.add_argument_group("Regressor refinement options")

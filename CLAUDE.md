@@ -140,13 +140,16 @@ showxcorrx <file1> <file2>
 
 ## Important Constraints
 
-**Code style (NON-NEGOTIABLE)**:
+- Never change files in rapidtide/notforprimetime or rapidtide/candidatetests
+- Always work on feature branches, not main
+
+### Code Style (NON-NEGOTIABLE)
 - Write code that is clean and modular
 - Prefer shorter functions/methods over longer ones
 
 ### Python Version
 - **Minimum**: Python 3.10
-- **Maximum**: Python 3.14 
+- **Maximum**: Python 3.14
 - Uses modern Python features (f-strings, type hints)
 
 ### Data Formats
@@ -192,4 +195,11 @@ Key points:
 - Use Black formatter with 99-character line length
 - Follow NumPy docstring format
 - Keep changes focused on specific issues/features
-- Work on feature branches, not main
+
+## VERIFICATION PROTOCOL (execute before returning control)
+- Re-read the full original task specification.
+- For each stated requirement: test it, confirm it works, and state the evidence.  Do not self-report "done" without executing the actual check.
+- For each implicit quality bar (error handling, edge cases, formatting): apply the same standard.
+- If something fails: fix and re-verify from scratch. Do not patch and assume.
+- After 3 full fix-verify cycles with a persistent failure, stop and report the specific blocker with your diagnosis. Do not return broken work and do not loop silently.
+- Only return control when every requirement has verified evidence of passing, or you've explicitly flagged what you couldn't solve and why.

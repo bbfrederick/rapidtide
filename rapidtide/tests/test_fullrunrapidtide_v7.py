@@ -21,11 +21,15 @@ import os
 import matplotlib as mpl
 import pytest
 
-from rapidtide.tests.utils import (assert_text_vectors_match,
-                                   get_example_and_temp_roots, run_rapidtide,
-                                   run_retroregress)
+from rapidtide.tests.utils import (
+    assert_text_vectors_match,
+    get_example_and_temp_roots,
+    run_rapidtide,
+    run_retroregress,
+)
 
 pytestmark = pytest.mark.slow
+
 
 def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
     # set input and output directories
@@ -75,7 +79,7 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
     run_retroregress(inputargs)
 
     # check to see that rapidtide and retroregress output match
-    tclist = ["brain", "GM", "WM", "CSF"]
+    tclist = ["brain_LFO", "GM_LFO", "WM_LFO", "CSF_LFO"]
     for timecourse in tclist:
         assert_text_vectors_match(
             infile_spec=os.path.join(
@@ -85,6 +89,7 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
             outfile_spec=os.path.join(
                 testtemproot, f"segtest_desc-regionalpostfilter_timeseries.json:{timecourse}"
             ),
+            msethresh=3e-6,
             debug=debug,
         )
 

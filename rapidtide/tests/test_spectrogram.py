@@ -29,9 +29,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from rapidtide.workflows.spectrogram import (_get_parser, calcspecgram,
-                                             make_legend_axes, ndplot,
-                                             showspecgram, spectrogram)
+from rapidtide.workflows.spectrogram import (
+    _get_parser,
+    calcspecgram,
+    make_legend_axes,
+    ndplot,
+    showspecgram,
+    spectrogram,
+)
 
 # ---- helpers ----
 
