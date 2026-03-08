@@ -110,10 +110,11 @@ rapidtide \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
-    --outputlevel max \
-    --despeckle-patch-use-confidence \
+    --usegpu \
+    --corrweighting None \
+    --gpu-preprocess-mode serial \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_newpatch
+    ../dst/sub-RAPIDTIDETEST_serial
 
 rapidtide \
     --spatialfilt -1 \
@@ -125,8 +126,8 @@ rapidtide \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
-    --outputlevel max \
-    --despeckle-patch-use-confidence \
-    --despeckle-patch-confidence-weight 0.2 \
+    --usegpu \
+    --corrweighting None \
+    --gpu-preprocess-mode threaded \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_newpatch0p2
+    ../dst/sub-RAPIDTIDETEST_threaded

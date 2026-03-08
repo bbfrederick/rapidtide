@@ -421,6 +421,7 @@ def correlationpass(
     device: str = "auto",
     batchsize: int | None = None,
     fallback_to_cpu: bool = True,
+    preprocess_mode: str = "serial",
 ) -> tuple[int, list[float], NDArray]:
     """
     Dispatch correlation pass to CPU or GPU implementation.
@@ -438,6 +439,9 @@ def correlationpass(
     fallback_to_cpu : bool, optional
         If True, GPU path falls back to CPU when GPU backends are unavailable or
         unsupported for current options.
+    preprocess_mode : {"serial", "threaded"}, optional
+        Preprocessing mode used by the GPU path. ``"serial"`` is default and
+        lowest overhead. ``"threaded"`` enables threaded CPU preprocessing.
     """
     if usegpu:
         return correlationpass_gpu(
@@ -461,6 +465,7 @@ def correlationpass(
             device=device,
             batchsize=chunksize if batchsize is None else batchsize,
             fallback_to_cpu=fallback_to_cpu,
+            preprocess_mode=preprocess_mode,
         )
 
     return correlationpass_cpu(
@@ -505,6 +510,7 @@ def correlationpass_gpu(
     device: str = "auto",
     batchsize: int = 1024,
     fallback_to_cpu: bool = True,
+    preprocess_mode: str = "serial",
 ) -> tuple[int, list[float], NDArray]:
     """
     GPU-accelerated alternate implementation of :func:`correlationpass`.
@@ -522,6 +528,8 @@ def correlationpass_gpu(
     """
     if batchsize < 1:
         raise ValueError("batchsize must be >= 1")
+    if preprocess_mode not in ["serial", "threaded"]:
+        raise ValueError("preprocess_mode must be 'serial' or 'threaded'")
 
     if debug:
         print(f"calling setreftc in calcsimfunc (gpu) with length {len(referencetc)}")
@@ -706,14 +714,38 @@ def correlationpass_gpu(
     do_resample = oversampfactor >= 1 and not (
         (len(fmri_x) == len(os_fmri_x)) and np.array_equal(fmri_x, os_fmri_x)
     )
-    for vox in range(numvoxels):
-        fmritc = fmridata[vox, :]
-        if do_resample:
-            thetc_local = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
-        else:
-            thetc_local = fmritc + 0.0
-        meanval[vox] = np.mean(thetc_local)
-        prepped_tc[vox, :] = theCorrelator.preptc(thetc_local)
+    if preprocess_mode == "threaded" and nprocs > 1:
+        from concurrent.futures import ThreadPoolExecutor
+
+        chunklen = max(chunksize, 8192)
+        chunk_bounds = [
+            (start, min(start + chunklen, numvoxels)) for start in range(0, numvoxels, chunklen)
+        ]
+
+        def _prep_chunk(bounds: tuple[int, int]) -> None:
+            start, stop = bounds
+            for vox in range(start, stop):
+                fmritc = fmridata[vox, :]
+                if do_resample:
+                    thetc_local = tide_resample.doresample(
+                        fmri_x, fmritc, os_fmri_x, method=interptype
+                    )
+                else:
+                    thetc_local = fmritc + 0.0
+                meanval[vox] = np.mean(thetc_local)
+                prepped_tc[vox, :] = theCorrelator.preptc(thetc_local)
+
+        with ThreadPoolExecutor(max_workers=nprocs) as pool:
+            list(pool.map(_prep_chunk, chunk_bounds))
+    else:
+        for vox in range(numvoxels):
+            fmritc = fmridata[vox, :]
+            if do_resample:
+                thetc_local = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
+            else:
+                thetc_local = fmritc + 0.0
+            meanval[vox] = np.mean(thetc_local)
+            prepped_tc[vox, :] = theCorrelator.preptc(thetc_local)
 
     preptime += time.perf_counter() - t0_pre
 
@@ -755,7 +787,7 @@ def correlationpass_gpu(
     LGR.info(
         "correlationpass_gpu timing: "
         f"cpu_preprocess={preptime:.3f}s, gpu_corr={gputime:.3f}s, "
-        f"batchsize={batchsize}, device={torch_device}"
+        f"batchsize={batchsize}, device={torch_device}, preprocess_mode={preprocess_mode}"
     )
     uncollected = gc.collect()
     if uncollected != 0:
