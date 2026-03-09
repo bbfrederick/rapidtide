@@ -54,6 +54,7 @@ DEFAULT_SIGMAMAX = 1000.0
 DEFAULT_SIGMAMIN = 0.0
 DEFAULT_DESPECKLE_PASSES = 4
 DEFAULT_DESPECKLE_THRESH = 5.0
+DEFAULT_BASELINECUTOFF = 0.0
 DEFAULT_PASSES = 3
 DEFAULT_LAGMIN_THRESH = 0.25
 DEFAULT_LAGMAX_THRESH = 3.0
@@ -956,6 +957,19 @@ def _get_parser() -> Any:
             f"Default is {DEFAULT_DESPECKLE_THRESH} seconds."
         ),
         default=DEFAULT_DESPECKLE_THRESH,
+    )
+    corr_fit.add_argument(
+        "--baselinecutoff",
+        dest="baselinecutoff",
+        action="store",
+        type=float,
+        metavar="VAL",
+        help=(
+            "Cutoff frequency (in seconds) of highpass filter to apply to the "
+            "correlation function to eliminate baseline roll. Set to 0.0 to disable, "
+            f"negative to set automatically. Default is {DEFAULT_BASELINECUTOFF} seconds."
+        ),
+        default=DEFAULT_BASELINECUTOFF,
     )
     corr_fit.add_argument(
         "--despeckle-multipeak",

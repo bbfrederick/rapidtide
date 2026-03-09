@@ -1428,11 +1428,21 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     #  Set up for the delay finding/refinement passes
     ####################################################
     # initialize the Correlator
+    if optiondict["baselinecutoff"] < 0.0:
+        optiondict["baselinecutoff"] = optiondict["lagmax"] - optiondict["lagmin"]
+        print(f"set baselinecutoff to {optiondict['baselinecutoff']}")
+    if optiondict["baselinecutoff"] > 0.0:
+        baselinefilter = tide_filt.NoncausalFilter(filtertype="arb")
+        baselinefilter.setfreqs(
+            1.0 / optiondict["baselinecutoff"], 1.0 / optiondict["baselinecutoff"], 0.0, 0.0)
+    else:
+        baselinefilter = None
     theCorrelator = tide_simFuncClasses.Correlator(
         Fs=oversampfreq,
         ncprefilter=theprefilter,
         negativegradient=optiondict["negativegradient"],
         detrendorder=optiondict["detrendorder"],
+        baselinefilter=optiondict["baselinecutoff"],
         filterinputdata=optiondict["filterinputdata"],
         windowfunc=optiondict["windowfunc"],
         corrweighting=optiondict["corrweighting"],

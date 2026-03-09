@@ -57,6 +57,7 @@ class SimilarityFunctionator:
         reftc=None,
         reftcstart=0.0,
         detrendorder=1,
+        baselinefilter: Any | None = None,
         filterinputdata=True,
         debug=False,
     ):
@@ -83,6 +84,8 @@ class SimilarityFunctionator:
             Start time for reference time course. Default is 0.0.
         detrendorder : int, optional
             Order of detrending to apply to data. Default is 1.
+        baselinefilter : Any | None, default=None
+            Baseline filtering method or object to apply. Can be None to skip filtering.
         filterinputdata : bool, optional
             Flag to indicate if input data should be filtered. Default is True.
         debug : bool, optional
@@ -112,6 +115,7 @@ class SimilarityFunctionator:
         self.negativegradient = negativegradient
         self.reftc = reftc
         self.detrendorder = detrendorder
+        self.baselinefilter = baselinefilter
         self.filterinputdata = filterinputdata
         self.debug = debug
         if self.reftc is not None:
@@ -257,9 +261,9 @@ class SimilarityFunctionator:
 
     def getfunction(self, trim: bool = True) -> tuple[NDArray | None, NDArray | None, int | None]:
         """
-        Retrieve simulation function data with optional trimming.
+        Retrieve similarity function data with optional trimming.
 
-        This method returns the simulation function data and time axis, with optional
+        This method returns the similarity function data and time axis, with optional
         trimming based on the trim parameter. The method handles different validation
         states of the data and returns appropriate tuples of (function, time_axis, max_value)
         or None values depending on the data validity.
@@ -267,14 +271,14 @@ class SimilarityFunctionator:
         Parameters
         ----------
         trim : bool, optional
-            If True, trims the simulation function and time axis using the internal
+            If True, trims the similarity function and time axis using the internal
             trim method. If False, returns the raw data without trimming. Default is True.
 
         Returns
         -------
         tuple
             A tuple containing:
-            - NDArray or None: Trimmed or untrimmed simulation function data
+            - NDArray or None: Trimmed or untrimmed similarity function data
             - NDArray or None: Trimmed or untrimmed time axis data
             - int or None: Global maximum value, or None if not available
 
@@ -324,7 +328,7 @@ class MutualInformationator(SimilarityFunctionator):
         sigma: float = 0.25,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
+    ) -> Any:
         """
         Initialize the MutualInformationator object with specified parameters.
 
@@ -684,10 +688,9 @@ class Correlator(SimilarityFunctionator):
         windowfunc: str = "hamming",
         corrweighting: str = "None",
         corrpadding: int = 0,
-        baselinefilter: Any | None = None,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
+    ) -> Any:
         """
         Initialize the Correlator with specified parameters.
 
@@ -701,8 +704,6 @@ class Correlator(SimilarityFunctionator):
             depending on implementation.
         corrpadding : int, default=0
             Padding size to apply during correlation operations.
-        baselinefilter : Any | None, default=None
-            Baseline filtering method or object to apply. Can be None to skip filtering.
         *args : Any
             Additional positional arguments passed to parent class.
         **kwargs : Any
@@ -722,12 +723,10 @@ class Correlator(SimilarityFunctionator):
         Examples
         --------
         >>> correlator = Correlator(windowfunc="hanning", corrpadding=10)
-        >>> correlator = Correlator(baselinefilter=my_filter_object)
         """
         self.windowfunc = windowfunc
         self.corrweighting = corrweighting
         self.corrpadding = corrpadding
-        self.baselinefilter = baselinefilter
         super(Correlator, self).__init__(*args, **kwargs)
 
     def setlimits(self, lagmininpts: int, lagmaxinpts: int) -> None:
@@ -872,9 +871,7 @@ class Correlator(SimilarityFunctionator):
         self.similarityfuncorigin = self.similarityfunclen // 2 + 1
 
         if self.baselinefilter is not None:
-            self.filteredbaseline = self.baselinefilter.apply(self.Fs, self.thesimfunc)
-        else:
-            self.filteredbaseline = np.zeros_like(self.thesimfunc)
+            self.thesimfunc = self.baselinefilter.apply(self.Fs, self.thesimfunc)
 
         # find the global maximum value
         self.theglobalmax = np.argmax(self.thesimfunc)
