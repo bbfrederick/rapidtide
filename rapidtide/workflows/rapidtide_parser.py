@@ -965,14 +965,14 @@ def _get_parser() -> Any:
             "During despeckling refit, try multiple correlation peaks sorted by proximity "
             "to the spatial median (more robust for noisy data). This is the default."
         ),
-        default=True,
+        default=False,
     )
     corr_fit.add_argument(
         "--no-despeckle-multipeak",
         dest="despeckle_multipeak",
         action=pf.IndicateSpecifiedStoreFalseAction,
         help="Disable multi-peak search during despeckling refit (use single guess only).",
-        default=True,
+        default=False,
     )
     corr_fit.add_argument(
         "--despeckle-progressive-kernel",
@@ -983,14 +983,14 @@ def _get_parser() -> Any:
             "(3x3x3 for passes 1-2, 5x5x5 for passes 3+) to catch medium-sized patches. "
             "This is the default."
         ),
-        default=True,
+        default=False,
     )
     corr_fit.add_argument(
         "--no-despeckle-progressive-kernel",
         dest="despeckle_progressive_kernel",
         action=pf.IndicateSpecifiedStoreFalseAction,
         help="Disable progressive kernel sizes during despeckling (always use 3x3x3).",
-        default=True,
+        default=False,
     )
     corr_fit.add_argument(
         "--despeckle-patch-detection",
@@ -1002,13 +1002,13 @@ def _get_parser() -> Any:
             "that survive the median filter because they are locally consistent. "
             "This is the default."
         ),
-        default=True,
+        default=False,
     )
     corr_fit.add_argument(
         "--no-despeckle-patch-detection",
         dest="despeckle_patch_detection",
         action=pf.IndicateSpecifiedStoreFalseAction,
-        help="Disable large patch detection during despeckling.",
+        help="False large patch detection during despeckling.",
         default=True,
     )
     corr_fit.add_argument(

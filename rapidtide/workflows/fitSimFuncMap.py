@@ -285,9 +285,7 @@ def _detect_shifted_patches(
                 conf_components.append(float(np.clip(patch_R2 / global_mean_R2, 0.0, 2.0)))
             if lagstrengths_3d is not None and global_mean_strength > 0.0:
                 patch_str = float(np.mean(np.abs(lagstrengths_3d[region_valid])))
-                conf_components.append(
-                    float(np.clip(patch_str / global_mean_strength, 0.0, 2.0))
-                )
+                conf_components.append(float(np.clip(patch_str / global_mean_strength, 0.0, 2.0)))
             if conf_components:
                 norm_conf = float(np.mean(conf_components))
                 # Low confidence → lower threshold (more suspicious).
@@ -624,9 +622,9 @@ def fitSimFunc(
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             lastnumdespeckled = 1000000
-            use_multipeak = optiondict.get("despeckle_multipeak", True)
-            use_progressive_kernel = optiondict.get("despeckle_progressive_kernel", True)
-            use_patch_detection = optiondict.get("despeckle_patch_detection", True)
+            use_multipeak = optiondict.get("despeckle_multipeak", False)
+            use_progressive_kernel = optiondict.get("despeckle_progressive_kernel", False)
+            use_patch_detection = optiondict.get("despeckle_patch_detection", False)
             patch_refkernel = optiondict.get("despeckle_patch_refkernel", 9)
             patch_minsize = optiondict.get("despeckle_patch_minsize", 10)
             for despecklepass in range(optiondict["despeckle_passes"]):
