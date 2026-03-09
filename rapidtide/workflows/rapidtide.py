@@ -1429,12 +1429,12 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     ####################################################
     # initialize the Correlator
     if optiondict["baselinecutoff"] < 0.0:
-        optiondict["baselinecutoff"] = optiondict["lagmax"] - optiondict["lagmin"]
+        optiondict["baselinecutoff"] = (optiondict["lagmax"] - optiondict["lagmin"]) / 2.0
         print(f"set baselinecutoff to {optiondict['baselinecutoff']}")
     if optiondict["baselinecutoff"] > 0.0:
         baselinefilter = tide_filt.NoncausalFilter(filtertype="arb")
         baselinefilter.setfreqs(
-            1.0 / optiondict["baselinecutoff"], 1.0 / optiondict["baselinecutoff"], 0.0, 0.0)
+            1.0 / optiondict["baselinecutoff"], 1.0 / optiondict["baselinecutoff"], -1.0, -1.0)
     else:
         baselinefilter = None
     theCorrelator = tide_simFuncClasses.Correlator(
@@ -1442,7 +1442,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         ncprefilter=theprefilter,
         negativegradient=optiondict["negativegradient"],
         detrendorder=optiondict["detrendorder"],
-        baselinefilter=optiondict["baselinecutoff"],
+        baselinefilter=baselinefilter,
         filterinputdata=optiondict["filterinputdata"],
         windowfunc=optiondict["windowfunc"],
         corrweighting=optiondict["corrweighting"],
