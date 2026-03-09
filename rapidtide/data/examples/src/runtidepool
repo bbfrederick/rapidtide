@@ -3,7 +3,5 @@
 tidepool \
     --uistyle big \
     --dataset \
-    ../dst/sub-RAPIDTIDETEST_newpatch_ \
-    ../dst/sub-RAPIDTIDETEST_newpatch0p9_ \
-    ../dst/sub-RAPIDTIDETEST_newpatch0p2_ \
-    ../dst/sub-RAPIDTIDETEST_newnopatch_
+    ../dst/sub-RAPIDTIDETEST_nobaselinefilt_ \
+    ../dst/sub-RAPIDTIDETEST_autobaselinefilt_
