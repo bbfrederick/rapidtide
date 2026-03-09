@@ -11,10 +11,9 @@ rapidtide \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
     --outputlevel max \
-    --donotfilterinputdata \
     --showtimings \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_nofilterinput
+    ../dst/sub-RAPIDTIDETEST_nobaselinefilt
 
 rapidtide \
     --spatialfilt 3 \
@@ -26,7 +25,8 @@ rapidtide \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
+    --baselinecutoff -1 \
     --outputlevel max \
     --showtimings \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_filterinput
+    ../dst/sub-RAPIDTIDETEST_autobaselinefilt
