@@ -26,6 +26,7 @@ from numpy.typing import NDArray
 import rapidtide.filter as tide_filt
 import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.miscmath as tide_math
+import rapidtide.stats as tide_stats
 
 
 # note: rawtimecourse has been filtered, but NOT windowed
@@ -111,7 +112,7 @@ def _procOneNullCorrelationx(
         # apply the appropriate filter
         # permutedtc = theCorrelator.ncprefilter.apply(Fs, permutedtc)
     elif permutationmethod == "phaserandom":
-        permutedtc = tide_filt.ifftfrompolar(rawtcfft_r, np.random.permutation(rawtcfft_ang))
+        permutedtc = tide_stats.permute_phase(normalizedreftc)
     else:
         print("illegal shuffling method")
         sys.exit()
@@ -263,20 +264,6 @@ def getNullDistributionData(
     This function applies normalization and filtering to the reference time course before
     computing correlations. It supports parallel processing via multiprocessing for
     improved performance when `numestreps` is large.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from some_module import getNullDistributionData
-    >>> result = getNullDistributionData(
-    ...     Fs=100.0,
-    ...     theCorrelator=correlator_obj,
-    ...     thefitter=fitter_obj,
-    ...     LGR=logging.getLogger(__name__),
-    ...     numestreps=1000,
-    ...     nprocs=4
-    ... )
-    >>> print(f"Null correlation distribution shape: {result.shape}")
     """
     inputshape = np.asarray([numestreps])
     normalizedreftc = theCorrelator.ncprefilter.apply(
