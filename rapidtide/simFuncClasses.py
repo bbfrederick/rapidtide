@@ -1682,7 +1682,9 @@ class SimilarityFunctionFitter:
                 # Recenter x about local peak sample to avoid tiny nonzero lag-origin numerical traps.
                 x_center = float(X_full[np.argmax(data)])
                 X = X_full - x_center
-                p0 = np.array([maxval_init, maxlag_init - x_center, maxsigma_init], dtype="float64")
+                p0 = np.array(
+                    [maxval_init, maxlag_init - x_center, maxsigma_init], dtype="float64"
+                )
                 if np.abs(p0[1]) < 1.0e-6 * np.abs(binwidth):
                     p0[1] = 0.0
                 if self.debug:

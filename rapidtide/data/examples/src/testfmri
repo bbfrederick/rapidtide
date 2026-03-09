@@ -1,92 +1,7 @@
 #!/bin/bash
 
-#rapidtide \
-#    --spatialfilt 2.5 \
-#    --nprocs -1 \
-#    --searchrange -7.5 30 \
-#    --simcalcrange 50 -1 \
-#    --outputlevel more \
-#    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-#    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-#    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-#    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-#    --cleanrefined \
-#    --nofitfilt \
-#    --refinedelayeachpass \
-#    --similaritymetric correlation \
-#    --nonumba \
-#    sub-RAPIDTIDETEST.nii.gz \
-#    ../dst/sub-RAPIDTIDETEST_nonumba
-
-#rapidtide \
-#    --spatialfilt 2.5 \
-#    --nprocs -1 \
-#    --searchrange -7.5 30 \
-#    --simcalcrange 50 -1 \
-#    --outputlevel more \
-#    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-#    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-#    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-#    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-#    --cleanrefined \
-#    --nofitfilt \
-#    --refinedelayeachpass \
-#    --similaritymetric correlation \
-#    --spcalculation \
-#    sub-RAPIDTIDETEST.nii.gz \
-#    ../dst/sub-RAPIDTIDETEST_single
-
-#rapidtide \
-#    --spatialfilt -1 \
-#    --nprocs -1 \
-#    --searchrange -7.5 30 \
-#    --simcalcrange 50 -1 \
-#    --outputlevel normal \
-#    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-#    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-#    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-#    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-#    --cleanrefined \
-#    --nofitfilt \
-#    --filterfreqs 0.009 0.025 \
-#    sub-RAPIDTIDETEST.nii.gz \
-#    ../dst/sub-RAPIDTIDETEST_band1
-#
-#rapidtide \
-#    --spatialfilt -1 \
-#    --nprocs -1 \
-#    --searchrange -7.5 30 \
-#    --simcalcrange 50 -1 \
-#    --outputlevel normal \
-#    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-#    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-#    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-#    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-#    --cleanrefined \
-#    --nofitfilt \
-#    --filterfreqs 0.025 0.075 \
-#    sub-RAPIDTIDETEST.nii.gz \
-#    ../dst/sub-RAPIDTIDETEST_band2
-#
-#rapidtide \
-    #--spatialfilt -1 \
-    #--nprocs -1 \
-    #--searchrange -7.5 30 \
-    #--simcalcrange 50 -1 \
-    #--outputlevel normal \
-    #--graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    #--brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    #--whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    #--csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    #--cleanrefined \
-    #--nofitfilt \
-    #--usegpu \
-    #--corrweighting None \
-    #sub-RAPIDTIDETEST.nii.gz \
-    #../dst/sub-RAPIDTIDETEST_gpu
-
 rapidtide \
-    --spatialfilt -1 \
+    --spatialfilt 3 \
     --nprocs -1 \
     --searchrange -7.5 30 \
     --simcalcrange 50 -1 \
@@ -96,12 +11,13 @@ rapidtide \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
     --outputlevel max \
-    --no-despeckle-patch-use-confidence \
+    --donotfilterinputdata \
+    --showtimings \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_newnopatch
+    ../dst/sub-RAPIDTIDETEST_nofilterinput
 
 rapidtide \
-    --spatialfilt -1 \
+    --spatialfilt 3 \
     --nprocs -1 \
     --searchrange -7.5 30 \
     --simcalcrange 50 -1 \
@@ -111,22 +27,6 @@ rapidtide \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
     --outputlevel max \
-    --despeckle-patch-use-confidence \
+    --showtimings \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_newpatch
-
-rapidtide \
-    --spatialfilt -1 \
-    --nprocs -1 \
-    --searchrange -7.5 30 \
-    --simcalcrange 50 -1 \
-    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
-    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
-    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
-    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
-    --nofitfilt \
-    --outputlevel max \
-    --despeckle-patch-use-confidence \
-    --despeckle-patch-confidence-weight 0.2 \
-    sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_newpatch0p2
+    ../dst/sub-RAPIDTIDETEST_filterinput
