@@ -1434,7 +1434,8 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     if optiondict["baselinecutoff"] > 0.0:
         baselinefilter = tide_filt.NoncausalFilter(filtertype="arb")
         baselinefilter.setfreqs(
-            1.0 / optiondict["baselinecutoff"], 1.0 / optiondict["baselinecutoff"], -1.0, -1.0)
+            1.0 / optiondict["baselinecutoff"], 1.0 / optiondict["baselinecutoff"], -1.0, -1.0
+        )
     else:
         baselinefilter = None
     theCorrelator = tide_simFuncClasses.Correlator(
