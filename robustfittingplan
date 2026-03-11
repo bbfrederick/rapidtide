@@ -1,0 +1,167 @@
+Robust Correction of Wrong-Peak Artifacts in Rapidtide Delay Maps
+
+ Revised Analysis (v3)
+
+ ---
+ Problem Summary
+
+ Rapidtide's cross-correlation fitter sometimes selects the wrong peak, producing "artifact patches" — spatially coherent regions where all voxels are shifted by the same wrong lag. This must be corrected without disturbing:
+
+ 1. Normal vascular territory boundaries: True sharp discontinuities between adjacent territories fed by different arteries. Within each territory delay is smooth; at boundaries discontinuities are physiologically real.
+ 2. Pathologically delayed territories: In disease, entire territories may be globally more delayed (by many tens of seconds). Within the territory, delay is still smooth; the boundary to adjacent normal tissue is more pronounced than usual but real.
+
+ What makes this hard:
+ - Near artifact patch boundaries, the true-lag peak in the correlation function erodes below the sidelobe peak — so the fitter correctly chose the locally highest peak, which happens to be wrong globally
+ - Pathologically delayed territories look spatially similar to large artifact patches (coherent region with sharp boundary and constant offset from neighbors)
+ - True vascular territory boundaries must not be smoothed away
+
+ ---
+ Why Local Tests Fail
+
+ No purely local test (peak height comparison, R² comparison) can distinguish an artifact from a true delay, because:
+ - At artifact boundaries, C(τ_true) < C(τ_sidelobe) — the fitter was correct locally
+ - Pathological territories can have any delay magnitude (tens of seconds), eliminating magnitude as a discriminator
+ - Territory boundaries cause sharp step discontinuities that look like patch edges
+
+ The correct framework is spatial: the "correct" peak at each voxel is the one that produces a globally consistent map, not the locally tallest one. This is phase unwrapping in a field with real discontinuities (territory boundaries).
+
+ ---
+ Key Discriminator: Does a Peak Exist Near the Extrapolated Lag?
+
+ Even though the true peak may not be the tallest, it is still present in the correlation function (just lower, due to baseline shift). For a genuinely delayed vascular territory, there is NO significant peak at the "normal" lag — the signal simply has not arrived yet.
+
+ This gives a valid discriminator:
+ - Artifact: A real (possibly attenuated) peak EXISTS near the spatially extrapolated expected lag
+ - True pathology / territory boundary: NO significant peak exists near the extrapolated expected lag; the current fit is genuinely the best available
+
+ This replaces "is the expected-lag peak taller?" (which fails) with "does the expected-lag peak exist at all?" (which works, because for artifacts it does).
+
+ ---
+ Proposed Algorithm: Multi-Seed Region Growing
+
+ Conceptual Framing
+
+ Model the brain as a collection of vascular territories, each internally smooth but with potentially large step discontinuities at boundaries. Both normal and pathological territories should be preserved. Artifact patches are distinguished by the fact that the current fit does NOT represent the true peak
+ — the correct peak is still findable from spatial context.
+
+ Step 1: Identify Anchors
+
+ Anchor voxels are those where the peak selection is almost certainly correct:
+ - Peak dominance: The highest peak in corrout is strongly dominant: C_max / C_second > dominance_threshold (e.g., 1.5). A voxel with two nearly equal peaks is ambiguous and must not be an anchor.
+ - Fit quality: High R² (e.g., above the 70th percentile)
+ - Clean fit: No fit failure flags
+
+ Anchors exist in BOTH normal and pathological territories. A delayed-but-correctly-fitted voxel (high R², dominant single peak at the true delayed lag) is a valid anchor. The key is dominance ratio, not lag value.
+
+ Step 2: Multi-Seed Simultaneous Region Growing
+
+ Run region growing from ALL anchor seeds simultaneously using a priority queue (e.g., process frontier voxels ordered by distance from their nearest anchor, or by anchor R²). This is equivalent to building a Voronoi diagram of the lag space seeded by anchor voxels.
+
+ For each frontier voxel v with extrapolated expected lag τ_expected:
+
+ 1. Find all peaks in v's corrout within a search window around τ_expected (window width ≈ ACF_period/2)
+ 2. If a peak is found near τ_expected:
+   - Assign that peak as the lag for v (even if it is not the highest peak)
+   - Mark v as processed and add to the growing front
+   - This handles artifact interior voxels — the true-lag peak is found even though it is attenuated
+ 3. If no peak is found near τ_expected:
+   - Check whether v's current fit has high peak dominance and high R²
+   - If yes: v is at a territory boundary — the signal truly arrives at a very different time from the expected lag. Accept v's current fit, mark v as a new anchor seed (starting point for the territory on the other side), and continue growing from here.
+   - If no: v is uncertain — flag for human review or fall back to highest-peak fit
+
+ Step 3: Territory Boundaries Emerge Naturally
+
+ The growing fronts from different anchor seeds will collide at territory boundaries. At these boundaries:
+ - Growing from the normal side cannot find a peak at the normal lag (signal truly arrives later)
+ - Growing from the pathological side cannot find a peak at the pathological lag in the normal region (signal arrives earlier there)
+ - Both fronts stall at the boundary; the boundary is preserved as a discontinuity
+
+ No special treatment of territory boundaries is needed — they emerge from the algorithm's inability to propagate across them.
+
+ Step 4: Artifact Correction
+
+ After region growing, compare the assigned lag to the current fitted lag for each voxel:
+ - Agreement: No action needed
+ - Disagreement: Refit with the assigned lag as initial value using fitcorr(despeckling=True, multipeak=True) — the existing refitting infrastructure
+
+ Step 5: Uncertain Voxels
+
+ Voxels that region growing could not reach (no peak found near τ_expected, no high-quality current fit) are flagged. Options:
+ - Accept the current highest-peak fit with an uncertainty flag
+ - Use the ICM optimizer from notreadyforprimetime/ as a post-pass to attempt resolution
+
+ ---
+ Handling Territory Boundaries in Practice
+
+ The transition zone problem: Near a true territory boundary, the correct lag changes abruptly. Region growing from the normal side will be approaching voxels where the peak near τ_normal is progressively smaller and the peak near τ_delayed is progressively larger. At some voxel, no peak will be found near
+  τ_normal → the voxel becomes a territory boundary marker.
+
+ Contrast with artifact boundary: Near an artifact patch boundary, region growing from the correct (exterior) side approaches voxels where:
+ - The true-lag peak (near τ_exterior) is progressively smaller
+ - The sidelobe peak (at τ_exterior ± ACF_period) is progressively larger
+ - But the true-lag peak IS still there (just attenuated)
+ - So a peak IS found near τ_expected, and the correct assignment is made
+
+ The algorithm naturally distinguishes these: territory boundaries stall the front (no peak found), artifact interiors are penetrated (peak found even if attenuated).
+
+ ACF period constraint as additional evidence: If a voxel's current lag differs from τ_expected by ≈ N × ACF_period for integer N, it is more likely an artifact (the sidelobe was selected). If the difference does not match any integer multiple, it is more likely a territory boundary. This is a
+ probabilistic weight, not a hard threshold.
+
+ ---
+ Advantages Over Current Approach
+
+ ┌───────────────────────────────┬─────────────────────────────────────────────┬───────────────────────────────────────────────┐
+ │           Property            │      Current (blind patch correction)       │     Proposed (multi-seed region growing)      │
+ ├───────────────────────────────┼─────────────────────────────────────────────┼───────────────────────────────────────────────┤
+ │ Peak selection criterion      │ Highest peak                                │ Spatially consistent peak                     │
+ ├───────────────────────────────┼─────────────────────────────────────────────┼───────────────────────────────────────────────┤
+ │ Reference for comparison      │ Large-kernel median (contaminated by patch) │ Anchor-based propagation (contamination-free) │
+ ├───────────────────────────────┼─────────────────────────────────────────────┼───────────────────────────────────────────────┤
+ │ Territory boundaries          │ Can be erroneously smoothed                 │ Preserved naturally                           │
+ ├───────────────────────────────┼─────────────────────────────────────────────┼───────────────────────────────────────────────┤
+ │ Pathological delays           │ May be incorrectly corrected                │ Preserved if high dominance ratio             │
+ ├───────────────────────────────┼─────────────────────────────────────────────┼───────────────────────────────────────────────┤
+ │ True-peak lower than sidelobe │ Cannot handle                               │ Handles — looks for presence, not height      │
+ ├───────────────────────────────┼─────────────────────────────────────────────┼───────────────────────────────────────────────┤
+ │ Boundary transition zone      │ Blind                                       │ Stalls gracefully at true boundaries          │
+ └───────────────────────────────┴─────────────────────────────────────────────┴───────────────────────────────────────────────┘
+
+ ---
+ Implementation Path
+
+ What already exists and can be reused:
+ - _detect_shifted_patches() and the patchshift section in fitSimFuncMap.py (lines 856–975) — these could remain as a first pass for obvious cases
+ - _find_and_try_peaks() in simfuncfit.py — already finds all peaks in corrout for a voxel
+ - _optimize_despeckle_labels_icm() in notreadyforprimetime/fitSimFuncMap.py — useful as a fallback for uncertain voxels
+ - fitcorr(despeckling=True, multipeak=True) — the refitting call
+ - corrout array already in memory during fitSimFunc()
+
+ What is new:
+ - Peak dominance ratio computation (ratio of top to second peak in corrout)
+ - Anchor identification using dominance ratio + R² criteria
+ - Multi-seed region growing with priority queue
+ - "Peak exists near τ_expected" test (find nearest peak within ±acsidelobelag/2 window, using optiondict["acsidelobelag" + passsuffix])
+ - ACF period constraint for artifact confidence: offset ≈ N × acsidelobelag flags high-confidence artifact; acsidelobeamp tells us the maximum height advantage the sidelobe can have over the true peak, bounding the problem
+ - Territory boundary detection (no-peak-found condition)
+
+ Placement in workflow:
+ - After all current despeckle passes (the region growing handles what the median filter cannot)
+ - Replaces or augments the patchshift section
+
+ ---
+ Open Questions / Design Decisions
+
+ 1. Dominance threshold: What value of C_max / C_second reliably identifies unambiguous anchors without being so strict that few anchors exist?
+ 2. Peak search window: How wide should the window around τ_expected be? Too narrow → misses attenuated true peaks. Too wide → accepts wrong peaks.
+ 3. ACF period: Already available — optiondict["acsidelobelag" + passsuffix] and optiondict["acsidelobeamp" + passsuffix] are computed each pass by cleanregressor. No new computation needed.
+ 4. Priority queue ordering: Process highest-R² anchors first (to maximize reliability of early assignments) or nearest-to-anchor (to prevent wrong-territory "invasion")?
+ 5. What to do with isolated regions with no internal anchors: If an artifact patch has no high-dominance-ratio voxels at all, does exterior region growing always successfully penetrate? Or could the baseline erosion be severe enough that even with τ_expected from outside, no valid peak is found?
+
+ ---
+ Key Files
+
+ - Main workflow: rapidtide/workflows/fitSimFuncMap.py (_detect_shifted_patches lines 155–317; fitSimFunc patchshift lines 856–975)
+ - ICM fallback: rapidtide/notreadyforprimetime/fitSimFuncMap.py (_optimize_despeckle_labels_icm lines 100–203)
+ - Peak finding: rapidtide/simfuncfit.py (_find_and_try_peaks, fitcorr)
+ - Correlation data: corrout array in fitSimFunc() scope
+
