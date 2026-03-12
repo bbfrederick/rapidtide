@@ -1804,6 +1804,20 @@ def _get_parser() -> Any:
         default=1.5,
     )
     experimental.add_argument(
+        "--robustdelay-search-min-peak-fraction",
+        dest="robustdelay_min_peak_fraction",
+        action="store",
+        type=float,
+        metavar="FRACTION",
+        help=(
+            "A candidate peak must have absolute height >= min_peak_fraction * max "
+            "peak height in that voxel's corrout to be considered.  Filters out "
+            "noise bumps that could be selected when tau_expected falls between two "
+            "genuine territory lags.  Default is 0.2."
+        ),
+        default=0.2,
+    )
+    experimental.add_argument(
         "--robustdelay-search-width",
         dest="robustdelay_search_width",
         action="store",
