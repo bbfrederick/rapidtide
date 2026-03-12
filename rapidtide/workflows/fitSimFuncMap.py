@@ -1279,7 +1279,6 @@ def fitSimFunc(
                     chunksize=optiondict["mp_chunksize"],
                     despeckle_thresh=optiondict["despeckle_thresh"],
                     initiallags=initlags_rd,
-                    multipeak=True,
                     rt_floattype=rt_floattype,
                 )
                 tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
