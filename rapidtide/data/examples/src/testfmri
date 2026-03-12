@@ -12,8 +12,9 @@ rapidtide \
     --nofitfilt \
     --outputlevel max \
     --showtimings \
+    --robustdelayfit \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_old
+    ../dst/sub-RAPIDTIDETEST_new
 
 rapidtide \
     --spatialfilt 3 \
@@ -27,6 +28,7 @@ rapidtide \
     --nofitfilt \
     --outputlevel max \
     --showtimings \
-    --robustdelay \
+    --robustdelayfit \
+    --despeckle-kernel 5 \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_new
+    ../dst/sub-RAPIDTIDETEST_newer
