@@ -2424,6 +2424,11 @@ def happy_main(argparsingfunc: Any) -> None:
         # generate the signals
         timings.append(["Cardiac signal regression started", time.time(), None, None])
         tide_util.logmem("before cardiac regression")
+        # reload data
+        # print("reloading fmri data")
+        # fmri_data = input_data.reload().byvoxel()
+
+        # generate regressors
         print("Generating cardiac regressors")
         cardiacnoise = np.zeros_like(fmri_data)
         cardiacnoise_byslice = cardiacnoise.reshape((xsize * ysize, numslices, timepoints))
@@ -2471,7 +2476,7 @@ def happy_main(argparsingfunc: Any) -> None:
 
         # now remove them
         tide_util.logmem("before cardiac removal")
-        print("Removing cardiac signal with GLM")
+        print("Removing cardiac signal with linear fit")
         validlocs = np.where(mask > 0)[0]
         numvalidspatiallocs = len(validlocs)
         if args.focaldebug:
