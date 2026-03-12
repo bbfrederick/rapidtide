@@ -23,9 +23,9 @@ cross-correlation function to have sidelobe peaks spaced at multiples of the
 dominant autocorrelation period (typically 10–20 seconds, depending on the
 dominant LFO frequency in a given dataset).
 
-Under favourable conditions (high SNR, large delay relative to the sidelobe
+Under favorable conditions (high SNR, large delay relative to the sidelobe
 spacing) the true peak is clearly dominant and the fitter selects it
-correctly.  Under less favourable conditions — especially near the boundaries
+correctly.  Under less favorable conditions — especially near the boundaries
 of brain regions where the signal-to-noise ratio is lower or where the
 baseline of the correlation function shifts due to local autocorrelation
 structure — the sidelobe peak can exceed the true peak in height.  When this
@@ -50,7 +50,7 @@ important ways.
 First, **the true peak need not be the highest peak**.  Near the boundary of
 an artifact patch, the true-lag peak in the correlation function is already
 lower than the sidelobe peak (that is precisely why the fitter jumped to the
-sidelobe).  A test of the form "is the neighbour-derived lag associated with
+sidelobe).  A test of the form "is the neighbor-derived lag associated with
 a higher correlation than the current lag?" will incorrectly confirm the
 wrong-peak choice at the boundary, because C(τ\ :sub:`sidelobe`) >
 C(τ\ :sub:`true`) there by construction.
@@ -181,7 +181,7 @@ confidence-weighted Voronoi diagram of the lag space seeded by the anchors.
 
 For each frontier voxel *v* with spatially extrapolated expected lag
 τ\ :sub:`expected` (derived by smoothly extrapolating from the already-processed
-neighbours):
+neighbors):
 
 1. Search the peaks of *v*'s full correlation function (available in the
    ``corrout`` array, which is already resident in memory) within a window of
@@ -244,7 +244,7 @@ can judge the severity of the unresolved cases.
 The ICM (Iterated Conditional Modes) optimizer implemented in
 ``notreadyforprimetime/fitSimFuncMap.py`` is a candidate post-pass for
 resolving some of these uncertain voxels, using a spatial energy function to
-balance data fidelity against neighbourhood consistency.
+balance data fidelity against neighborhood consistency.
 
 
 Comparison with existing approaches
