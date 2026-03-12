@@ -1798,6 +1798,48 @@ def _get_parser() -> Any:
         default=False,
     )
     experimental.add_argument(
+        "--robustdelay",
+        dest="robustdelay",
+        action="store_true",
+        help=(
+            "After all despeckling and patch-shift passes, run anchor-based region growing "
+            "to correct wrong-peak artifact patches.  Correlation peaks are selected by "
+            "spatial consistency rather than peak height, so the algorithm can recover "
+            "voxels where the true-lag peak has been eroded below a sidelobe.  Genuine "
+            "vascular territory boundaries (including pathologically delayed territories) "
+            "are preserved because the growing front stalls when no peak exists near the "
+            "spatially extrapolated expected lag.  Off by default."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--robustdelay-dominance-threshold",
+        dest="robustdelay_dominance_threshold",
+        action="store",
+        type=float,
+        metavar="RATIO",
+        help=(
+            "Minimum ratio of the strongest to the second-strongest correlation peak "
+            "for a voxel to qualify as an anchor in the robust delay estimation step. "
+            "Higher values require a more clearly dominant peak.  Default is 1.5."
+        ),
+        default=1.5,
+    )
+    experimental.add_argument(
+        "--robustdelay-search-width",
+        dest="robustdelay_search_width",
+        action="store",
+        type=float,
+        metavar="SECONDS",
+        help=(
+            "Full width in seconds of the search window around the spatially extrapolated "
+            "expected lag when looking for the true-lag peak during robust delay estimation. "
+            "Should be less than the ACF sidelobe lag to avoid selecting the wrong peak. "
+            "Default is 5.0 seconds."
+        ),
+        default=5.0,
+    )
+    experimental.add_argument(
         "--prewhitenregressor",
         dest="prewhitenregressor",
         action="store_true",
