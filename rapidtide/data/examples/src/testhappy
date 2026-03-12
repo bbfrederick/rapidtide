@@ -3,7 +3,7 @@
 happy \
     sub-HAPPYTEST.nii.gz \
     sub-HAPPYTEST.json \
-    ../dst/happygmsfilt \
+    ../dst/happy \
     --gmsfilt \
     --increaseoutputlevel \
     --temporalregression \
