@@ -1763,11 +1763,11 @@ def _get_parser() -> Any:
         default=False,
     )
     experimental.add_argument(
-        "--robustdelay",
+        "--robustdelayfit",
         dest="robustdelay",
         action="store_true",
         help=(
-            "After all despeckling and patch-shift passes, run anchor-based region growing "
+            "After all despeckling passes, run anchor-based region growing "
             "to correct wrong-peak artifact patches.  Correlation peaks are selected by "
             "spatial consistency rather than peak height, so the algorithm can recover "
             "voxels where the true-lag peak has been eroded below a sidelobe.  Genuine "
