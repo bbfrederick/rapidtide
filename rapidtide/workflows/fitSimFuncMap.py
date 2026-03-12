@@ -134,25 +134,6 @@ def masked_median_filter(
     return result_flat.reshape(data.shape)
 
 
-def _build_peakdict_for_candidates(
-    candidate_mask_valid: NDArray[np.bool_],
-    corrout: NDArray[np.floating[Any]],
-    trimmedcorrscale: NDArray[np.floating[Any]],
-    bipolar: bool = False,
-) -> dict[str, list[list[float]]]:
-    """Build a peak dictionary for candidate (flagged) voxels.
-
-    For each candidate voxel, finds all peaks in its correlation function
-    and returns them in the same format as peakevalpass(): {str(vox_idx): [[lag, strength, strength], ...]}.
-    """
-    peakdict: dict[str, list[list[float]]] = {}
-    for vox_idx in np.where(candidate_mask_valid)[0]:
-        peaks = tide_fit.getpeaks(trimmedcorrscale, corrout[vox_idx, :], bipolar=bipolar)
-        # Convert to peakdict format: [lag, strength, strength]
-        peakdict[str(vox_idx)] = [[p[0], p[1], abs(p[1])] for p in peaks]
-    return peakdict
-
-
 def _detect_shifted_patches(
     lagmap_3d: NDArray,
     validmask_3d: NDArray[np.bool_],
@@ -876,16 +857,11 @@ def fitSimFunc(
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             lastnumdespeckled = 1000000
-            use_progressive_kernel = optiondict.get("despeckle_progressive_kernel", False)
             use_patch_detection = optiondict.get("despeckle_patch_detection", False)
             patch_refkernel = optiondict.get("despeckle_patch_refkernel", 9)
             patch_minsize = optiondict.get("despeckle_patch_minsize", 10)
             for despecklepass in range(optiondict["despeckle_passes"]):
-                # Use larger kernel on later passes to catch medium-sized patches
-                if use_progressive_kernel and despecklepass >= 2:
-                    kernel_size = 5
-                else:
-                    kernel_size = 3
+                kernel_size = 3
                 LGR.info(
                     f"\n\n{similaritytype} despeckling subpass {despecklepass + 1} "
                     f"(kernel={kernel_size})"

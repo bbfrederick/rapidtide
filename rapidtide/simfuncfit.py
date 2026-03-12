@@ -285,7 +285,6 @@ def fitcorr(
     windowout: NDArray,
     R2: NDArray,
     despeckling: bool = False,
-    peakdict: Optional[dict] = None,
     nprocs: int = 1,
     alwaysmultiproc: bool = False,
     fixdelay: bool = False,
@@ -329,8 +328,6 @@ def fitcorr(
         Output array for R² values, shape (n_voxels,).
     despeckling : bool, optional
         If True, performs despeckling pass, only accepting successful fits, by default False.
-    peakdict : dict, optional
-        Dictionary of peak information, by default None.
     nprocs : int, optional
         Number of processes to use for multiprocessing, by default 1.
     alwaysmultiproc : bool, optional

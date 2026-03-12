@@ -972,24 +972,6 @@ def _get_parser() -> Any:
         default=DEFAULT_BASELINECUTOFF,
     )
     corr_fit.add_argument(
-        "--despeckle-progressive-kernel",
-        dest="despeckle_progressive_kernel",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "Use progressively larger median filter kernels on later despeckle passes "
-            "(3x3x3 for passes 1-2, 5x5x5 for passes 3+) to catch medium-sized patches. "
-            "This is the default."
-        ),
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--no-despeckle-progressive-kernel",
-        dest="despeckle_progressive_kernel",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="Disable progressive kernel sizes during despeckling (always use 3x3x3).",
-        default=False,
-    )
-    corr_fit.add_argument(
         "--despeckle-patch-detection",
         dest="despeckle_patch_detection",
         action=pf.IndicateSpecifiedStoreTrueAction,
