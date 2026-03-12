@@ -856,11 +856,11 @@ def fitSimFunc(
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             lastnumdespeckled = 1000000
-            use_patch_detection = optiondict.get("despeckle_patch_detection", False)
-            patch_refkernel = optiondict.get("despeckle_patch_refkernel", 9)
-            patch_minsize = optiondict.get("despeckle_patch_minsize", 10)
+            use_patch_detection = optiondict["despeckle_patch_detection"]
+            patch_refkernel = optiondict["despeckle_patch_refkernel"]
+            patch_minsize = optiondict["despeckle_patch_minsize"]
             for despecklepass in range(optiondict["despeckle_passes"]):
-                kernel_size = 3
+                kernel_size = optiondict["despeckle_kernel_size"]
                 LGR.info(
                     f"\n\n{similaritytype} despeckling subpass {despecklepass + 1} "
                     f"(kernel={kernel_size})"
@@ -889,7 +889,7 @@ def fitSimFunc(
                     lagmap_3d = outmaparray.reshape(nativespaceshape)
                     validmask_3d = np.zeros(nativespaceshape, dtype=bool)
                     validmask_3d.reshape(-1)[validvoxels] = fitmask[:].astype(bool)
-                    use_conf = optiondict.get("despeckle_patch_use_confidence", False)
+                    use_conf = optiondict["despeckle_patch_use_confidence"]
                     R2_3d_ds = lagstrengths_3d_ds = None
                     if use_conf:
                         R2_3d_ds = np.zeros(nativespaceshape)
@@ -902,9 +902,9 @@ def fitSimFunc(
                         optiondict["despeckle_thresh"],
                         reference_kernel=patch_refkernel,
                         min_patch_size=patch_minsize,
-                        consistency_ratio=optiondict.get("despeckle_patch_consistency_ratio", 0.5),
+                        consistency_ratio=optiondict["despeckle_patch_consistency_ratio"],
                         use_confidence=use_conf,
-                        confidence_weight=optiondict.get("despeckle_patch_confidence_weight", 0.5),
+                        confidence_weight=optiondict["despeckle_patch_confidence_weight"],
                         R2_3d=R2_3d_ds,
                         lagstrengths_3d=lagstrengths_3d_ds,
                     )
@@ -1079,7 +1079,7 @@ def fitSimFunc(
         else:
             internaldespeckleincludemask = None
 
-        # Patch shift correction: detect anomalous patches and refit them.
+        """# Patch shift correction: detect anomalous patches and refit them.
         # This runs after all despeckle passes and catches self-consistent
         # patches of voxels that all chose the same wrong correlation peak.
         if optiondict["patchshift"]:
@@ -1092,7 +1092,7 @@ def fitSimFunc(
             validmask_3d = np.zeros(nativespaceshape, dtype=bool)
             validmask_3d.reshape(-1)[validvoxels] = fitmask[:].astype(bool)
 
-            use_conf = optiondict.get("despeckle_patch_use_confidence", False)
+            use_conf = optiondict["despeckle_patch_use_confidence"]
             R2_3d_ps = lagstrengths_3d_ps = None
             if use_conf:
                 R2_3d_ps = np.zeros(nativespaceshape)
@@ -1104,11 +1104,11 @@ def fitSimFunc(
                 lagmap_3d,
                 validmask_3d,
                 optiondict["despeckle_thresh"],
-                reference_kernel=optiondict.get("despeckle_patch_refkernel", 9),
-                min_patch_size=optiondict.get("despeckle_patch_minsize", 10),
-                consistency_ratio=optiondict.get("despeckle_patch_consistency_ratio", 0.5),
+                reference_kernel=optiondict["despeckle_patch_refkernel"],
+                min_patch_size=optiondict["despeckle_patch_minsize"],
+                consistency_ratio=optiondict["despeckle_patch_consistency_ratio"],
                 use_confidence=use_conf,
-                confidence_weight=optiondict.get("despeckle_patch_confidence_weight", 0.5),
+                confidence_weight=optiondict["despeckle_patch_confidence_weight"],
                 R2_3d=R2_3d_ps,
                 lagstrengths_3d=lagstrengths_3d_ps,
             )
@@ -1151,7 +1151,7 @@ def fitSimFunc(
                 tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
                 LGR.info(f"\tPatch shift corrected {voxelsprocessed_ps} voxels")
 
-                if optiondict.get("savedespecklemasks", False) and thepass == optiondict["passes"]:
+                if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
                     if theinputdata.filetype != "text":
                         if theinputdata.filetype == "cifti":
                             timeindex = theheader["dim"][0] - 1
@@ -1197,6 +1197,7 @@ def fitSimFunc(
                     "message3": "voxels detected",
                 },
             )
+        """
 
         # Robust delay estimation via anchor-based region growing.
         # This post-pass selects correlation peaks by spatial consistency rather
@@ -1204,7 +1205,7 @@ def fitSimFunc(
         # the true-lag peak has been eroded below the sidelobe peak.  Territory
         # boundaries (true vascular discontinuities) are preserved naturally.
         # Disabled by default; enable with --robustdelay.
-        if optiondict.get("robustdelay", False):
+        if optiondict["robustdelay"]:
             LGR.info(f"\n\nRobust delay estimation (anchor-based region growing), pass {thepass}")
             TimingLGR.info(f"Robust delay estimation start, pass {thepass}")
 
@@ -1222,7 +1223,7 @@ def fitSimFunc(
             fitmask_3d_rd.reshape(-1)[validvoxels] = fitmask[:]
 
             passsuffix = "_pass" + str(thepass)
-            acsidelobelag = optiondict.get("acsidelobelag" + passsuffix, 10.0)
+            acsidelobelag = optiondict["acsidelobelag" + passsuffix]
 
             refit_mask_3d, target_lags_3d, n_uncertain, n_unprocessed = (
                 _anchor_based_region_growing(
@@ -1235,11 +1236,11 @@ def fitSimFunc(
                     trimmedcorrscale,
                     R2_3d_rd,
                     fitmask_3d_rd,
-                    dominance_threshold=optiondict.get("robustdelay_dominance_threshold", 1.5),
-                    search_width=optiondict.get("robustdelay_search_width", 5.0),
-                    min_peak_fraction=optiondict.get("robustdelay_min_peak_fraction", 0.2),
-                    bipolar=optiondict.get("bipolar", False),
-                    debug=optiondict.get("debug", False),
+                    dominance_threshold=optiondict["robustdelay_dominance_threshold"],
+                    search_width=optiondict["robustdelay_search_width"],
+                    min_peak_fraction=optiondict["robustdelay_min_peak_fraction"],
+                    bipolar=optiondict["bipolar"],
+                    debug=optiondict["debug"],
                 )
             )
 
@@ -1284,7 +1285,7 @@ def fitSimFunc(
                 tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
                 LGR.info(f"\tRobust delay refitted {voxelsprocessed_rd} voxels")
 
-                if optiondict.get("savedespecklemasks", False) and thepass == optiondict["passes"]:
+                if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
                     if theinputdata.filetype != "text":
                         if theinputdata.filetype == "cifti":
                             timeindex = theheader["dim"][0] - 1

@@ -54,6 +54,7 @@ DEFAULT_SIGMAMAX = 1000.0
 DEFAULT_SIGMAMIN = 0.0
 DEFAULT_DESPECKLE_PASSES = 4
 DEFAULT_DESPECKLE_THRESH = 5.0
+DEFAULT_DESPECKLE_KERNEL = 3
 DEFAULT_BASELINECUTOFF = 0.0
 DEFAULT_PASSES = 3
 DEFAULT_LAGMIN_THRESH = 0.25
@@ -1755,12 +1756,24 @@ def _get_parser() -> Any:
         help=("Generate extra data during refinement to allow calculation of dispersion."),
         default=False,
     )
-    experimental.add_argument(
+    """experimental.add_argument(
         "--patchshift",
         dest="patchshift",
         action="store_true",
         help=("Perform patch shift correction."),
         default=False,
+    )
+    """
+    experimental.add_argument(
+        "--despeckle-kernel",  # was -h
+        dest="despeckle_kernel_size",
+        action="store",
+        type=lambda x: pf.is_int(parser, x, minval=3),
+        metavar="SIZE",
+        help=(
+            f"Size of the despeckle kernel in each dimeension.  Default is {DEFAULT_DESPECKLE_KERNEL}."
+        ),
+        default=DEFAULT_DESPECKLE_KERNEL,
     )
     experimental.add_argument(
         "--robustdelayfit",
