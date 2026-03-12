@@ -216,9 +216,7 @@ def _build_peakdict_for_candidates(
     """
     peakdict: dict[str, list[list[float]]] = {}
     for vox_idx in np.where(candidate_mask_valid)[0]:
-        peaks = tide_fit.getpeaks(
-            trimmedcorrscale, corrout[vox_idx, :], bipolar=bipolar
-        )
+        peaks = tide_fit.getpeaks(trimmedcorrscale, corrout[vox_idx, :], bipolar=bipolar)
         peakdict[str(vox_idx)] = [[p[0], p[1], abs(p[1])] for p in peaks]
     return peakdict
 
@@ -550,7 +548,7 @@ def fitSimFunc(
                     kernel_size = 3
                 LGR.info(
                     f"\n\n{similaritytype} despeckling subpass {despecklepass + 1} "
-                    f"(kernel={kernel_size}, multipeak={use_multipeak})"
+                    f"(kernel={kernel_size})"
                 )
                 if legacy_mode:
                     lagmap_flat = np.zeros(numspatiallocs, dtype=np.float64)
@@ -558,7 +556,9 @@ def fitSimFunc(
                     medianlags = ndimage.median_filter(
                         lagmap_flat.reshape(nativespaceshape), kernel_size
                     ).reshape(numspatiallocs)
-                    fixed_thresh = np.full(numspatiallocs, optiondict["despeckle_thresh"], dtype=np.float64)
+                    fixed_thresh = np.full(
+                        numspatiallocs, optiondict["despeckle_thresh"], dtype=np.float64
+                    )
                     candidate_mask_flat = np.zeros(numspatiallocs, dtype=bool)
                     candidate_mask_flat[validvoxels] = (
                         np.abs(lagmap_flat[validvoxels] - medianlags[validvoxels])
@@ -592,13 +592,19 @@ def fitSimFunc(
                         break
                     lastnumdespeckled = numdespeckled
                 else:
-                    if last_candidates is not None and np.array_equal(candidate_mask_flat, last_candidates):
-                        LGR.info("Candidate mask unchanged from previous pass. Terminating despeckling")
+                    if last_candidates is not None and np.array_equal(
+                        candidate_mask_flat, last_candidates
+                    ):
+                        LGR.info(
+                            "Candidate mask unchanged from previous pass. Terminating despeckling"
+                        )
                         break
 
                 if legacy_mode:
                     initlags = np.where(candidate_mask_flat, medianlags, -1000000.0)[validvoxels]
-                    tide_util.disablemkl(optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"])
+                    tide_util.disablemkl(
+                        optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"]
+                    )
                     voxelsprocessed_thispass = tide_simfuncfit.fitcorr(
                         trimmedcorrscale,
                         theFitter,
@@ -621,7 +627,6 @@ def fitSimFunc(
                         chunksize=optiondict["mp_chunksize"],
                         despeckle_thresh=optiondict["despeckle_thresh"],
                         initiallags=initlags,
-                        multipeak=use_multipeak,
                         rt_floattype=rt_floattype,
                     )
                     tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])

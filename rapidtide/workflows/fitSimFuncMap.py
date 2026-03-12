@@ -876,7 +876,6 @@ def fitSimFunc(
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             lastnumdespeckled = 1000000
-            use_multipeak = optiondict.get("despeckle_multipeak", False)
             use_progressive_kernel = optiondict.get("despeckle_progressive_kernel", False)
             use_patch_detection = optiondict.get("despeckle_patch_detection", False)
             patch_refkernel = optiondict.get("despeckle_patch_refkernel", 9)
@@ -889,7 +888,7 @@ def fitSimFunc(
                     kernel_size = 3
                 LGR.info(
                     f"\n\n{similaritytype} despeckling subpass {despecklepass + 1} "
-                    f"(kernel={kernel_size}, multipeak={use_multipeak})"
+                    f"(kernel={kernel_size})"
                 )
                 outmaparray *= 0.0
                 outmaparray[validvoxels] = lagtimes[:]
@@ -983,7 +982,6 @@ def fitSimFunc(
                             chunksize=optiondict["mp_chunksize"],
                             despeckle_thresh=optiondict["despeckle_thresh"],
                             initiallags=initlags,
-                            multipeak=use_multipeak,
                             rt_floattype=rt_floattype,
                         )
                         tide_util.enablemkl(
@@ -1175,7 +1173,6 @@ def fitSimFunc(
                     chunksize=optiondict["mp_chunksize"],
                     despeckle_thresh=optiondict["despeckle_thresh"],
                     initiallags=initlags_ps,
-                    multipeak=optiondict.get("despeckle_multipeak", True),
                     rt_floattype=rt_floattype,
                 )
                 tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])

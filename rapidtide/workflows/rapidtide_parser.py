@@ -972,23 +972,6 @@ def _get_parser() -> Any:
         default=DEFAULT_BASELINECUTOFF,
     )
     corr_fit.add_argument(
-        "--despeckle-multipeak",
-        dest="despeckle_multipeak",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "During despeckling refit, try multiple correlation peaks sorted by proximity "
-            "to the spatial median (more robust for noisy data). This is the default."
-        ),
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--no-despeckle-multipeak",
-        dest="despeckle_multipeak",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="Disable multi-peak search during despeckling refit (use single guess only).",
-        default=False,
-    )
-    corr_fit.add_argument(
         "--despeckle-progressive-kernel",
         dest="despeckle_progressive_kernel",
         action=pf.IndicateSpecifiedStoreTrueAction,
