@@ -1862,14 +1862,14 @@ class RapidtideDataset:
                     self.geommaskname = os.path.join(
                         fsldir, "data", "standard", "MNI152_T1_2mm_brain_mask.nii.gz"
                     )
+                else:
+                    if self.verbose > 1:
+                        print("no geometric mask loaded")
+                    return False
             elif self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
                 self.geommaskname = os.path.join(
                     self.referencedir, "MNI152_T1_3mm_brain_mask_bin.nii.gz"
                 )
-            else:
-                if self.verbose > 1:
-                    print("no geometric mask loaded")
-                return False
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)
                 self.overlays["geommask"] = Overlay(
