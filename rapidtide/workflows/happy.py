@@ -2425,8 +2425,9 @@ def happy_main(argparsingfunc: Any) -> None:
         timings.append(["Cardiac signal regression started", time.time(), None, None])
         tide_util.logmem("before cardiac regression")
         # reload data
-        # print("reloading fmri data")
-        # fmri_data = input_data.reload().byvoxel()
+        print("reloading fmri data")
+        input_data.reload()
+        fmri_data = input_data.byvoxel()
 
         # generate regressors
         print("Generating cardiac regressors")
