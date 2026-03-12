@@ -303,6 +303,12 @@ def happy_main(argparsingfunc: Any) -> None:
     else:
         mask = np.uint16(tide_mask.makeepimask(input_data.nim).dataobj.reshape(numspatiallocs))
 
+    # if we're doing regression later, take a snapshot of the current noise variance
+    if args.dotemporalregression or args.dospatialregression:
+        initialvariance = np.var(fmri_data, axis=1) * np.where(
+            mask.reshape(numspatiallocs) > 0, 1, 0
+        )
+
     theheader = input_data.copyheader(numtimepoints=1)
     timings.append(["Mask created", time.time(), None, None])
     if args.outputlevel > 0:
@@ -2682,6 +2688,48 @@ def happy_main(argparsingfunc: Any) -> None:
                 bidsdict,
                 debug=args.debug,
             )
+
+        # take a snapshot of the current noise variance
+        theheader = input_data.copyheader(numtimepoints=1)
+        finalvariance = np.var(filtereddata, axis=1) * np.where(
+            mask.reshape(numspatiallocs) > 0, 1, 0
+        )
+        divlocs = np.where(finalvariance > 0.0)
+        varchange = np.zeros_like(initialvariance)
+        varchange[divlocs] = 100.0 * (finalvariance[divlocs] / initialvariance[divlocs] - 1.0)
+
+        maplist = [
+            (
+                initialvariance.reshape((xsize, ysize, numslices)),
+                "cardfilterVarianceBefore",
+                "bold",
+                None,
+                f"Voxel variance prior to {regressiontype} regression",
+            ),
+            (
+                finalvariance.reshape((xsize, ysize, numslices)),
+                "cardfilterVarianceAfter",
+                "bold",
+                None,
+                f"Voxel variance after {regressiontype} regression",
+            ),
+            (
+                varchange,
+                "cardfilterVarianceChange",
+                "map",
+                "percent",
+                "Change in variance after filtering, in percent",
+            ),
+        ]
+        tide_io.savemaplist(
+            outputroot,
+            maplist,
+            None,
+            (xsize, ysize, numslices),
+            theheader,
+            bidsdict,
+            debug=args.debug,
+        )
 
         # now write out the filtered data
         theheader = input_data.copyheader()
