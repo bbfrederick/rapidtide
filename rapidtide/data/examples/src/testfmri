@@ -12,8 +12,9 @@ rapidtide \
     --nofitfilt \
     --outputlevel max \
     --showtimings \
+    --robustdelayfit \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_nobaselinefilt
+    ../dst/sub-RAPIDTIDETEST_new
 
 rapidtide \
     --spatialfilt 3 \
@@ -25,8 +26,9 @@ rapidtide \
     --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
     --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
     --nofitfilt \
-    --baselinecutoff -1 \
     --outputlevel max \
     --showtimings \
+    --robustdelayfit \
+    --despeckle-kernel 5 \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_autobaselinefilt
+    ../dst/sub-RAPIDTIDETEST_newer

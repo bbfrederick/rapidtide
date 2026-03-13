@@ -54,6 +54,7 @@ DEFAULT_SIGMAMAX = 1000.0
 DEFAULT_SIGMAMIN = 0.0
 DEFAULT_DESPECKLE_PASSES = 4
 DEFAULT_DESPECKLE_THRESH = 5.0
+DEFAULT_DESPECKLE_KERNEL = 3
 DEFAULT_BASELINECUTOFF = 0.0
 DEFAULT_PASSES = 3
 DEFAULT_LAGMIN_THRESH = 0.25
@@ -972,41 +973,6 @@ def _get_parser() -> Any:
         default=DEFAULT_BASELINECUTOFF,
     )
     corr_fit.add_argument(
-        "--despeckle-multipeak",
-        dest="despeckle_multipeak",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "During despeckling refit, try multiple correlation peaks sorted by proximity "
-            "to the spatial median (more robust for noisy data). This is the default."
-        ),
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--no-despeckle-multipeak",
-        dest="despeckle_multipeak",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="Disable multi-peak search during despeckling refit (use single guess only).",
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--despeckle-progressive-kernel",
-        dest="despeckle_progressive_kernel",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "Use progressively larger median filter kernels on later despeckle passes "
-            "(3x3x3 for passes 1-2, 5x5x5 for passes 3+) to catch medium-sized patches. "
-            "This is the default."
-        ),
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--no-despeckle-progressive-kernel",
-        dest="despeckle_progressive_kernel",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="Disable progressive kernel sizes during despeckling (always use 3x3x3).",
-        default=False,
-    )
-    corr_fit.add_argument(
         "--despeckle-patch-detection",
         dest="despeckle_patch_detection",
         action=pf.IndicateSpecifiedStoreTrueAction,
@@ -1790,12 +1756,80 @@ def _get_parser() -> Any:
         help=("Generate extra data during refinement to allow calculation of dispersion."),
         default=False,
     )
-    experimental.add_argument(
+    """experimental.add_argument(
         "--patchshift",
         dest="patchshift",
         action="store_true",
         help=("Perform patch shift correction."),
         default=False,
+    )
+    """
+    experimental.add_argument(
+        "--despeckle-kernel",  # was -h
+        dest="despeckle_kernel_size",
+        action="store",
+        type=lambda x: pf.is_int(parser, x, minval=3),
+        metavar="SIZE",
+        help=(
+            f"Size of the despeckle kernel in each dimeension.  Default is {DEFAULT_DESPECKLE_KERNEL}."
+        ),
+        default=DEFAULT_DESPECKLE_KERNEL,
+    )
+    experimental.add_argument(
+        "--robustdelayfit",
+        dest="robustdelay",
+        action="store_true",
+        help=(
+            "After all despeckling passes, run anchor-based region growing "
+            "to correct wrong-peak artifact patches.  Correlation peaks are selected by "
+            "spatial consistency rather than peak height, so the algorithm can recover "
+            "voxels where the true-lag peak has been eroded below a sidelobe.  Genuine "
+            "vascular territory boundaries (including pathologically delayed territories) "
+            "are preserved because the growing front stalls when no peak exists near the "
+            "spatially extrapolated expected lag.  Off by default."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--robustdelay-dominance-threshold",
+        dest="robustdelay_dominance_threshold",
+        action="store",
+        type=float,
+        metavar="RATIO",
+        help=(
+            "Minimum ratio of the strongest to the second-strongest correlation peak "
+            "for a voxel to qualify as an anchor in the robust delay estimation step. "
+            "Higher values require a more clearly dominant peak.  Default is 1.5."
+        ),
+        default=1.5,
+    )
+    experimental.add_argument(
+        "--robustdelay-search-min-peak-fraction",
+        dest="robustdelay_min_peak_fraction",
+        action="store",
+        type=float,
+        metavar="FRACTION",
+        help=(
+            "A candidate peak must have absolute height >= min_peak_fraction * max "
+            "peak height in that voxel's corrout to be considered.  Filters out "
+            "noise bumps that could be selected when tau_expected falls between two "
+            "genuine territory lags.  Default is 0.2."
+        ),
+        default=0.2,
+    )
+    experimental.add_argument(
+        "--robustdelay-search-width",
+        dest="robustdelay_search_width",
+        action="store",
+        type=float,
+        metavar="SECONDS",
+        help=(
+            "Full width in seconds of the search window around the spatially extrapolated "
+            "expected lag when looking for the true-lag peak during robust delay estimation. "
+            "Should be less than the ACF sidelobe lag to avoid selecting the wrong peak. "
+            "Default is 5.0 seconds."
+        ),
+        default=5.0,
     )
     experimental.add_argument(
         "--prewhitenregressor",

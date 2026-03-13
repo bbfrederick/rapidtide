@@ -625,6 +625,21 @@ class VoxelData:
                 )
         self.resident = True
 
+    def reload(self) -> None:
+        """
+        Reloads a fresh copy of the data into memory.
+
+        This method removes the Nim data and Nim object references from the instance, then reloads
+        the data from disk.
+
+        Notes
+        -----
+        This method should be called if you've manipulated the data in some destructive way.
+
+        """
+        self.unload()
+        self.load()
+
     def setvalidtimes(self, validstart: int | None, validend: int | None) -> None:
         """
         Set valid time points for the object based on start and end indices.

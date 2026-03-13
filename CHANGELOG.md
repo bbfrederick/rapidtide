@@ -1,6 +1,9 @@
 # Release history
 
-## Version 3.1.9 (3/5/26)
+## Version 3.1.9 (3/12/26)
+* (rapidtide) There's a new optional despeckling procedure, which you can turn on with ``--robustdelayfit``.  It uses a region growing method to try to ensure consistency in delay maps while allowing for discontinuities between vascular territories.
+* (tidepool) Fixed a crash when data is in MNI152 space and FSL is not present.
+* (happy) Now outputs variance metrics so you can see how effective noise regression is.
 * (ccorrica) Updated to use SimilarityFunctionFitter, output csv files.
 * (rapidtide, retroregress) Fixed calculation of the refined R value.
 * (rapidtide, retroregress) Expanded and improved regional time course output.

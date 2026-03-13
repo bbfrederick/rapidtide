@@ -286,7 +286,6 @@ def test_delayestimation(displayplots=False, debug=False):
                 gaussout,
                 windowout,
                 R2,
-                peakdict=thepeakdict,
                 nprocs=nprocs,
                 alwaysmultiproc=False,
                 fixdelay=None,
