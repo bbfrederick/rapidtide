@@ -60,6 +60,7 @@ DEFAULT_PASSES = 3
 DEFAULT_LAGMIN_THRESH = 0.25
 DEFAULT_LAGMAX_THRESH = 3.0
 DEFAULT_AMPTHRESH = 0.3
+DEFAULT_SHARPENREGRESSOR_THRESH = 0.1
 DEFAULT_PICKLEFT_THRESH = 0.33
 DEFAULT_SIGMATHRESH = 100.0
 DEFAULT_MAXPASSES = 15
@@ -1878,6 +1879,18 @@ def _get_parser() -> Any:
             "computing correlations.  Off by default."
         ),
         default=False,
+    )
+    experimental.add_argument(
+        "--sharpenregressor-thresh",
+        dest="sharpenregressor_thresh",
+        action="store",
+        type=float,
+        metavar="FLOAT",
+        help=(
+            "Autocorrelation function sidelobe detection fraction.  Controls the "
+            f"relative height of a sidelobe that triggers removal.  Default is {DEFAULT_SHARPENREGRESSOR_THRESH}."
+        ),
+        default=DEFAULT_SHARPENREGRESSOR_THRESH,
     )
     experimental.add_argument(
         "--sharpenregressor-noise-level",
