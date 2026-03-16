@@ -1832,6 +1832,78 @@ def _get_parser() -> Any:
         default=5.0,
     )
     experimental.add_argument(
+        "--preppass",
+        dest="preppass",
+        action="store_true",
+        help=(
+            "Run an internal single-pass correlation before the main passes to identify "
+            "clean, short-delay voxels, then rebuild the global mean regressor from those "
+            "voxels.  This reduces sidelobe contamination from multi-pool vascular signals. "
+            "Off by default."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--preppass-lag-window",
+        dest="preppass_lag_window",
+        action="store",
+        type=float,
+        metavar="SECONDS",
+        help=(
+            "Width of the one-sided lag window below the modal lag used to select good "
+            "voxels in the preparation pass.  Only voxels with lag in "
+            "[lag_mode - window, lag_mode] are considered clean.  Default is 3.0 seconds."
+        ),
+        default=3.0,
+    )
+    experimental.add_argument(
+        "--preppass-r2-threshold",
+        dest="preppass_r2_threshold",
+        action="store",
+        type=float,
+        metavar="FLOAT",
+        help=(
+            "Minimum R² value for a voxel to be selected as a clean voxel in the "
+            "preparation pass.  Default is 0.3."
+        ),
+        default=0.3,
+    )
+    experimental.add_argument(
+        "--sharpenregressor",
+        dest="sharpenregressor",
+        action="store_true",
+        help=(
+            "Apply Wiener deconvolution (with multi-echo iterative subtraction as fallback) "
+            "to remove autocorrelation sidelobe structure from the regressor before "
+            "computing correlations.  Off by default."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--sharpenregressor-noise-level",
+        dest="sharpenregressor_noise_level",
+        action="store",
+        type=float,
+        metavar="FLOAT",
+        help=(
+            "Wiener regularisation parameter λ for regressor sharpening.  Controls the "
+            "trade-off between noise suppression and sharpening.  Default is 0.01."
+        ),
+        default=0.01,
+    )
+    experimental.add_argument(
+        "--sharpenregressor-max-iters",
+        dest="sharpenregressor_max_iters",
+        action="store",
+        type=int,
+        metavar="INT",
+        help=(
+            "Maximum number of iterations for the multi-echo fallback in regressor "
+            "sharpening.  Default is 5."
+        ),
+        default=5,
+    )
+    experimental.add_argument(
         "--prewhitenregressor",
         dest="prewhitenregressor",
         action="store_true",

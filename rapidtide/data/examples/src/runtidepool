@@ -3,5 +3,7 @@
 tidepool \
     --uistyle big \
     --dataset \
-    ../dst/sub-RAPIDTIDETEST_new_ \
-    ../dst/sub-RAPIDTIDETEST_newer_
+    ../dst/sub-RAPIDTIDETEST_ \
+    ../dst/sub-RAPIDTIDETEST_preppass_ \
+    ../dst/sub-RAPIDTIDETEST_sharpen_ \
+    ../dst/sub-RAPIDTIDETEST_preppass_sharpen_

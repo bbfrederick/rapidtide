@@ -1918,6 +1918,33 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             append=True,
         )
 
+    # Preprocessing - regressor sharpening
+    if optiondict["sharpenregressor"]:
+        LGR.info("\n\nRegressor sharpening")
+        TimingLGR.info("Regressor sharpening start")
+        resampref_y = tide_cleanregressor.sharpen_regressor(
+            resampref_y,
+            oversamptr,
+            oversampfreq,
+            optiondict["lagmax"],
+            numpadtrs,
+            outputname,
+            noise_level=optiondict["sharpenregressor_noise_level"],
+            max_iters=optiondict["sharpenregressor_max_iters"],
+            debug=optiondict["debug"],
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-oversampledmovingregressor_timeseries",
+            tide_math.stdnormalize(resampref_y),
+            oversampfreq,
+            columns=["pass1_sharpen"],
+            extraheaderinfo={
+                "Description": "The probe regressor used in each pass, at the time resolution used for calculating the similarity function"
+            },
+            append=True,
+        )
+        TimingLGR.info("Regressor sharpening end")
+
     # Preprocessing - prewhitening
     if optiondict["prewhitenregressor"]:
         resampref_y = tide_fit.prewhiten(
@@ -1959,6 +1986,197 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             "similaritymetric": optiondict["similaritymetric"]
         }
     )"""
+
+    # --------------------- Preparation pass (--preppass) ---------------------
+    # Run a single correlation+fit pass to identify clean, short-delay voxels,
+    # then rebuild the regressor from those voxels before the main loop begins.
+    if optiondict["preppass"]:
+        LGR.info("\n\nPreparation pass: identifying clean voxels for regressor rebuild")
+        TimingLGR.info("Preparation pass start")
+
+        # Step 1: normalise reference for correlation
+        prep_referencetc = tide_math.corrnormalize(
+            resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1],
+            detrendorder=optiondict["detrendorder"],
+            windowfunc=optiondict["windowfunc"],
+        )
+
+        # Step 2: correlation pass (fills corrout)
+        tide_util.disablemkl(optiondict["nprocs_calcsimilarity"], debug=optiondict["threaddebug"])
+        (
+            voxelsprocessed_pp,
+            _,
+            _,
+        ) = tide_calcsimfunc.correlationpass(
+            fmri_data_valid[:, validsimcalcstart : validsimcalcend + 1],
+            prep_referencetc,
+            theCorrelator,
+            initial_fmri_x[validsimcalcstart : validsimcalcend + 1],
+            os_fmri_x[osvalidsimcalcstart : osvalidsimcalcend + 1],
+            lagmininpts,
+            lagmaxinpts,
+            corrout,
+            meanval,
+            nprocs=optiondict["nprocs_calcsimilarity"],
+            alwaysmultiproc=optiondict["alwaysmultiproc"],
+            oversampfactor=optiondict["oversampfactor"],
+            interptype=optiondict["interptype"],
+            showprogressbar=optiondict["showprogressbar"],
+            chunksize=optiondict["mp_chunksize"],
+            rt_floattype=rt_floattype,
+            usegpu=optiondict["usegpu"],
+            device=optiondict["gpu_device"],
+            batchsize=optiondict["gpu_batchsize"],
+            fallback_to_cpu=optiondict["gpu_fallback_to_cpu"],
+        )
+        tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
+        LGR.info(f"Preparation pass: correlationpass processed {voxelsprocessed_pp} voxels")
+
+        # Step 3: fit the similarity function (despeckling disabled for this pass)
+        saved_despeckle_passes = optiondict["despeckle_passes"]
+        optiondict["despeckle_passes"] = 0
+        tide_fitSimFuncMap.fitSimFunc(
+            fmri_data_valid,
+            validsimcalcstart,
+            validsimcalcend,
+            osvalidsimcalcstart,
+            osvalidsimcalcend,
+            initial_fmri_x,
+            os_fmri_x,
+            theMutualInformationator,
+            prep_referencetc,
+            corrout,
+            outputname,
+            validvoxels,
+            nativespaceshape,
+            bidsbasedict,
+            numspatiallocs,
+            gaussout,
+            theinitialdelay,
+            windowout,
+            R2,
+            thesizes,
+            internalspaceshape,
+            numvalidspatiallocs,
+            theinputdata,
+            theheader,
+            theFitter,
+            fitmask,
+            lagtimes,
+            lagstrengths,
+            lagsigma,
+            failreason,
+            outmaparray,
+            trimmedcorrscale,
+            "Correlation",
+            "preppass",
+            optiondict,
+            LGR,
+            TimingLGR,
+            simplefit=False,
+            rt_floattype=np.float64,
+        )
+        optiondict["despeckle_passes"] = saved_despeckle_passes
+
+        # Step 4: compute lag mode from fitted voxels
+        fitted_lags = lagtimes[fitmask > 0]
+        if len(fitted_lags) > 10:
+            _, _, lag_mode, _, _, _ = tide_stats.makehistogram(
+                fitted_lags,
+                optiondict["histlen"],
+                refine=True,
+            )
+        else:
+            LGR.warning("Preparation pass: too few fitted voxels to compute lag mode; skipping")
+            lag_mode = 0.0
+
+        # Step 5: select good voxels
+        lag_window = optiondict["preppass_lag_window"]
+        r2_thresh = optiondict["preppass_r2_threshold"]
+        good_voxels = (
+            (lagtimes >= lag_mode - lag_window)
+            & (lagtimes <= lag_mode)
+            & (R2 >= r2_thresh)
+            & (fitmask > 0)
+        )
+        n_good = int(np.sum(good_voxels))
+        LGR.info(
+            f"Preparation pass: lag_mode={lag_mode:.3f} s, "
+            f"window=[{lag_mode - lag_window:.3f}, {lag_mode:.3f}] s, "
+            f"R2_thresh={r2_thresh:.2f}, good voxels={n_good}"
+        )
+        MIN_GOOD_VOXELS = 50
+        if n_good < MIN_GOOD_VOXELS:
+            LGR.warning(
+                f"Preparation pass: only {n_good} good voxels found (< {MIN_GOOD_VOXELS}); "
+                "skipping regressor rebuild"
+            )
+        else:
+            # Step 6: rebuild mean regressor from good voxels
+            prep_meanvec, _ = tide_mask.getregionsignal(
+                fmri_data_valid,
+                Fs=fmrifreq,
+                includemask=good_voxels.astype(rt_floattype),
+                signalgenmethod="sum",
+                debug=optiondict["debug"],
+            )
+
+            # apply prefilter
+            prep_ref_y = theprefilter.apply(fmrifreq, prep_meanvec)
+
+            # detrend
+            if optiondict["detrendorder"] > 0:
+                prep_ref_y = tide_fit.detrend(
+                    prep_ref_y,
+                    order=optiondict["detrendorder"],
+                    demean=optiondict["dodemean"],
+                )
+            else:
+                prep_ref_y = prep_ref_y - np.mean(prep_ref_y)
+
+            # resample to oversampled grid
+            prep_resampref_y = tide_resample.doresample(
+                initial_fmri_x,
+                prep_ref_y,
+                os_fmri_x,
+                padlen=int(oversampfreq * optiondict["padseconds"]),
+                method=optiondict["interptype"],
+            )
+            if optiondict["detrendorder"] > 0:
+                prep_resampref_y = tide_fit.detrend(
+                    prep_resampref_y,
+                    order=optiondict["detrendorder"],
+                    demean=optiondict["dodemean"],
+                )
+            resampref_y = prep_resampref_y
+
+            # save the sharpened regressor entry
+            tide_io.writebidstsv(
+                f"{outputname}_desc-oversampledmovingregressor_timeseries",
+                tide_math.stdnormalize(resampref_y),
+                oversampfreq,
+                columns=["pass1_preppass"],
+                extraheaderinfo={
+                    "Description": "The probe regressor used in each pass, at the time resolution used for calculating the similarity function"
+                },
+                append=True,
+            )
+
+        # Step 7: reset fit arrays for main loop
+        lagtimes[:] = 0.0
+        lagstrengths[:] = 0.0
+        lagsigma[:] = 0.0
+        R2[:] = 0.0
+        fitmask[:] = 0
+        failreason[:] = 0
+
+        TimingLGR.info(
+            "Preparation pass end",
+            {
+                "message2": voxelsprocessed_pp,
+                "message3": "voxels",
+            },
+        )
 
     ####################################################
     #  Start the iterative fit and refinement
@@ -2434,6 +2652,33 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     rt_floattype=np.float64,
                 )
             )
+            # postrefinement regressor sharpening
+            if optiondict["sharpenregressor"]:
+                LGR.info("\n\nRegressor sharpening")
+                TimingLGR.info("Regressor sharpening start")
+                resampref_y = tide_cleanregressor.sharpen_regressor(
+                    resampref_y,
+                    oversamptr,
+                    oversampfreq,
+                    optiondict["lagmax"],
+                    numpadtrs,
+                    outputname,
+                    noise_level=optiondict["sharpenregressor_noise_level"],
+                    max_iters=optiondict["sharpenregressor_max_iters"],
+                    debug=optiondict["debug"],
+                )
+                tide_io.writebidstsv(
+                    f"{outputname}_desc-oversampledmovingregressor_timeseries",
+                    tide_math.stdnormalize(resampref_y),
+                    oversampfreq,
+                    columns=[f"{thepass + 1}_sharpen"],
+                    extraheaderinfo={
+                        "Description": "The probe regressor used in each pass, at the time resolution used for calculating the similarity function"
+                    },
+                    append=True,
+                )
+                TimingLGR.info("Regressor sharpening end")
+
         # End of main pass loop
 
     if optiondict["convergencethresh"] is None:

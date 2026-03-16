@@ -171,6 +171,13 @@ def detailedversion() -> None:
     sys.exit()
 
 
+def hidearg(helpstring: str, hide: bool = False) -> Any:
+    if hide:
+        return argparse.SUPPRESS
+    else:
+        return helpstring
+
+
 def setifnotset(thedict: Dict[str, Any], thekey: str, theval: Any) -> None:
     """
     Set a value in dictionary if the key was not explicitly set by the user.
