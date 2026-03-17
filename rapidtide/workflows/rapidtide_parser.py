@@ -986,13 +986,6 @@ def _get_parser() -> Any:
         default=False,
     )
     corr_fit.add_argument(
-        "--no-despeckle-patch-detection",
-        dest="despeckle_patch_detection",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="False large patch detection during despeckling.",
-        default=True,
-    )
-    corr_fit.add_argument(
         "--despeckle-patch-refkernel",
         dest="despeckle_patch_refkernel",
         action=pf.IndicateSpecifiedAction,
