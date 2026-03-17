@@ -2038,6 +2038,11 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         LGR.info(f"Preparation pass: correlationpass processed {voxelsprocessed_pp} voxels")
 
         # Step 3: fit the similarity function (despeckling disabled for this pass)
+        # Pre-populate per-pass keys that fitSimFunc (robustdelay path) reads via
+        # "_pass" + str(thepass).  cleanregressor is not called for the prep pass,
+        # so we seed them with None (= no sidelobe detected).
+        optiondict["acsidelobeamp_passpreppass"] = None
+        optiondict["acsidelobelag_passpreppass"] = None
         saved_despeckle_passes = optiondict["despeckle_passes"]
         optiondict["despeckle_passes"] = 0
         tide_fitSimFuncMap.fitSimFunc(
