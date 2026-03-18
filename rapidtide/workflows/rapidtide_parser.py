@@ -1011,6 +1011,20 @@ def _get_parser() -> Any:
         default=10,
     )
     corr_fit.add_argument(
+        "--despeckle-patch-consistency-ratio",
+        dest="despeckle_patch_consistency_ratio",
+        action="store",
+        type=float,
+        metavar="RATIO",
+        help=(
+            "Internal consistency threshold for patch detection: a candidate patch is "
+            "confirmed only if its internal lag standard deviation divided by its offset "
+            "from the exterior ring is less than this ratio.  Lower values require more "
+            "internally uniform patches.  Default is 0.5."
+        ),
+        default=0.5,
+    )
+    corr_fit.add_argument(
         "--despeckle-patch-use-confidence",
         dest="despeckle_patch_use_confidence",
         action=pf.IndicateSpecifiedStoreTrueAction,
