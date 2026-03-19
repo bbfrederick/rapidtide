@@ -1686,7 +1686,18 @@ def _get_parser() -> Any:
             "all nonzero voxels are used.  If this option is set, certain output measures will be summarized over "
             "each territory in the map, in addition to over the whole brain.  Some interesting territory maps might be: "
             "a gray/white/csf segmentation image, an arterial territory map, lesion area vs. healthy "
-            "tissue segmentation, etc.  NB: at the moment this is just a placeholder - it doesn't do anything."
+            "tissue segmentation, etc."
+        ),
+        default=None,
+    )
+    experimental.add_argument(
+        "--territorylabels",
+        dest="territorylabels",
+        metavar="FILE",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help=(
+            "The name of of a text file containing the labels of the territories, one per line.  The first line is "
+            "the label integer value 1, etc."
         ),
         default=None,
     )

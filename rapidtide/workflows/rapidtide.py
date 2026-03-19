@@ -47,6 +47,7 @@ import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
 import rapidtide.voxelData as tide_voxelData
 import rapidtide.wiener as tide_wiener
+import rapidtide.workflows.atlasaverage as tide_atlasaverage
 import rapidtide.workflows.calcSimFuncMap as tide_calcSimFuncMap
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
 import rapidtide.workflows.fitSimFuncMap as tide_fitSimFuncMap
@@ -972,6 +973,60 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     )
     covvalue = np.where(meanvalue > 0.0, stddevvalue / meanvalue, 0.0)
     covvalue *= corrmask
+
+    if optiondict["territorymapname"] is not None:
+        # read in the territory map
+        (
+            template_img,
+            template_data,
+            template_hdr,
+            templatedims,
+            templatesizes,
+        ) = tide_io.readfromnifti(optiondict["territorymapname"])
+        print("checking territory map dimensions")
+        if not tide_io.checkspacematch(theinputdata.nim_hdr, template_hdr):
+            print("territory file does not match spatial coverage of input fmri file")
+            sys.exit()
+        templatevoxels = np.reshape(template_data, numspatiallocs).astype(int)
+
+        # get the territory names
+        numregions = np.max(templatevoxels)
+        regionlist = [x for x in range(1, numregions + 1)]
+        if optiondict["territorylabels"] is None:
+            regionlabels = []
+            numdigits = int(np.log10(numregions)) + 1
+            for regnum in range(1, numregions + 1):
+                regionlabels.append(f"region_{str(regnum).zfill(numdigits)}")
+        else:
+            regionlabels = tide_io.readlabels(optiondict["territorylabels"])
+            if len(regionlabels) != numregions:
+                print(
+                    f"Error: number of labels in label file ({len(regionlabels)}) does not match the number of regions in the template ({numregions})."
+                )
+                sys.exit()
+        if optiondict["focaldebug"]:
+            print(f"Region list: {regionlist}")
+            print(f"Region labels: {regionlabels}")
+
+        # extract timecourses and write them to a file
+        territorytimecourses = tide_atlasaverage.get4Dtimecourses(
+            regionlist,
+            fmri_data,
+            corrmask,
+            templatevoxels,
+            normmethod="none",
+            summarymethod="mean",
+            debug=optiondict["focaldebug"],
+        )
+        tide_io.writebidstsv(
+            f"{outputname}_desc-territory_timeseries",
+            territorytimecourses,
+            1.0 / fmritr,
+            columns=regionlabels,
+            extraheaderinfo={
+                "Description": "Territory timecourses after spatial smoothing and confound filtering."
+            },
+        )
 
     ####################################################
     #  Get the moving regressor from somewhere
