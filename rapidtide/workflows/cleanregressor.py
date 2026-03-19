@@ -229,6 +229,12 @@ def sharpen_regressor(
                 f"sharpen_regressor: Wiener succeeded "
                 f"(sidelobe max {before_max:.3f} -> {after_max:.3f})"
             )
+        else:
+            LGR_local.info(
+                f"sharpen_regressor: Wiener failed "
+                f"(sidelobe max {before_max:.3f} -> {after_max:.3f})"
+            )
+
     except Exception as exc:
         LGR_local.warning(
             f"sharpen_regressor: Wiener deconvolution failed ({exc}); using fallback"
