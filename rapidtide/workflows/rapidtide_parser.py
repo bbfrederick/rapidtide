@@ -973,83 +973,6 @@ def _get_parser() -> Any:
         ),
         default=DEFAULT_BASELINECUTOFF,
     )
-    corr_fit.add_argument(
-        "--despeckle-patch-detection",
-        dest="despeckle_patch_detection",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "On despeckle passes 3+, detect large connected patches of shifted delay values "
-            "using a large reference kernel and flag them for refitting. This catches patches "
-            "that survive the median filter because they are locally consistent. "
-            "This is the default."
-        ),
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-refkernel",
-        dest="despeckle_patch_refkernel",
-        action=pf.IndicateSpecifiedAction,
-        type=int,
-        metavar="SIZE",
-        help=(
-            "Size of the median filter kernel used to build the large-scale reference "
-            "for patch detection. Must be odd. Larger values detect larger patches but "
-            "may miss very large ones that approach half the kernel volume. Default is 9."
-        ),
-        default=9,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-minsize",
-        dest="despeckle_patch_minsize",
-        action=pf.IndicateSpecifiedAction,
-        type=int,
-        metavar="NVOXELS",
-        help=(
-            "Minimum number of connected voxels for a group to be considered a patch. "
-            "Smaller clusters are ignored (handled by regular despeckle). Default is 10."
-        ),
-        default=10,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-consistency-ratio",
-        dest="despeckle_patch_consistency_ratio",
-        action="store",
-        type=float,
-        metavar="RATIO",
-        help=(
-            "Internal consistency threshold for patch detection: a candidate patch is "
-            "confirmed only if its internal lag standard deviation divided by its offset "
-            "from the exterior ring is less than this ratio.  Lower values require more "
-            "internally uniform patches.  Default is 0.5."
-        ),
-        default=0.5,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-use-confidence",
-        dest="despeckle_patch_use_confidence",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "When detecting anomalous patches, use correlation quality metrics "
-            "(R², peak strength) to modulate the detection threshold. "
-            "Regions with poor fit quality are flagged as anomalous patches at a "
-            "lower spatial threshold, improving sensitivity for borderline cases. "
-            "Off by default."
-        ),
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-confidence-weight",
-        dest="despeckle_patch_confidence_weight",
-        action=pf.IndicateSpecifiedAction,
-        type=float,
-        metavar="WEIGHT",
-        help=(
-            "Weight [0.0..1.0] controlling how strongly fit confidence modulates the "
-            "patch detection threshold when --despeckle-patch-use-confidence is active. "
-            "0.0 = no effect; 1.0 = maximum modulation. Default is 0.5."
-        ),
-        default=0.5,
-    )
 
     # Regressor refinement options
     reg_ref = parser.add_argument_group("Regressor refinement options")
@@ -1768,14 +1691,83 @@ def _get_parser() -> Any:
         help=("Generate extra data during refinement to allow calculation of dispersion."),
         default=False,
     )
-    """experimental.add_argument(
-        "--patchshift",
-        dest="patchshift",
-        action="store_true",
-        help=("Perform patch shift correction."),
+    experimental.add_argument(
+        "--despeckle-patch-detection",
+        dest="despeckle_patch_detection",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "On despeckle passes 3+, detect large connected patches of shifted delay values "
+            "using a large reference kernel and flag them for refitting. This catches patches "
+            "that survive the median filter because they are locally consistent. "
+            "This is the default."
+        ),
         default=False,
     )
-    """
+    experimental.add_argument(
+        "--despeckle-patch-refkernel",
+        dest="despeckle_patch_refkernel",
+        action=pf.IndicateSpecifiedAction,
+        type=int,
+        metavar="SIZE",
+        help=(
+            "Size of the median filter kernel used to build the large-scale reference "
+            "for patch detection. Must be odd. Larger values detect larger patches but "
+            "may miss very large ones that approach half the kernel volume. Default is 9."
+        ),
+        default=9,
+    )
+    experimental.add_argument(
+        "--despeckle-patch-minsize",
+        dest="despeckle_patch_minsize",
+        action=pf.IndicateSpecifiedAction,
+        type=int,
+        metavar="NVOXELS",
+        help=(
+            "Minimum number of connected voxels for a group to be considered a patch. "
+            "Smaller clusters are ignored (handled by regular despeckle). Default is 10."
+        ),
+        default=10,
+    )
+    experimental.add_argument(
+        "--despeckle-patch-consistency-ratio",
+        dest="despeckle_patch_consistency_ratio",
+        action="store",
+        type=float,
+        metavar="RATIO",
+        help=(
+            "Internal consistency threshold for patch detection: a candidate patch is "
+            "confirmed only if its internal lag standard deviation divided by its offset "
+            "from the exterior ring is less than this ratio.  Lower values require more "
+            "internally uniform patches.  Default is 0.5."
+        ),
+        default=0.5,
+    )
+    experimental.add_argument(
+        "--despeckle-patch-use-confidence",
+        dest="despeckle_patch_use_confidence",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "When detecting anomalous patches, use correlation quality metrics "
+            "(R², peak strength) to modulate the detection threshold. "
+            "Regions with poor fit quality are flagged as anomalous patches at a "
+            "lower spatial threshold, improving sensitivity for borderline cases. "
+            "Off by default."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--despeckle-patch-confidence-weight",
+        dest="despeckle_patch_confidence_weight",
+        action=pf.IndicateSpecifiedAction,
+        type=float,
+        metavar="WEIGHT",
+        help=(
+            "Weight [0.0..1.0] controlling how strongly fit confidence modulates the "
+            "patch detection threshold when --despeckle-patch-use-confidence is active. "
+            "0.0 = no effect; 1.0 = maximum modulation. Default is 0.5."
+        ),
+        default=0.5,
+    )
     experimental.add_argument(
         "--despeckle-kernel",  # was -h
         dest="despeckle_kernel_size",
