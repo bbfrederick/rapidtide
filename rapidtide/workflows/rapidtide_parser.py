@@ -1038,13 +1038,6 @@ def _get_parser() -> Any:
         default=False,
     )
     corr_fit.add_argument(
-        "--no-despeckle-patch-use-confidence",
-        dest="despeckle_patch_use_confidence",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="Disable confidence-based modulation for patch detection (default).",
-        default=False,
-    )
-    corr_fit.add_argument(
         "--despeckle-patch-confidence-weight",
         dest="despeckle_patch_confidence_weight",
         action=pf.IndicateSpecifiedAction,
