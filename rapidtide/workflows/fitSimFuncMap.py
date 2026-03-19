@@ -862,7 +862,7 @@ def fitSimFunc(
             for despecklepass in range(optiondict["despeckle_passes"]):
                 kernel_size = optiondict["despeckle_kernel_size"]
                 LGR.info(
-                    f"\n\n{similaritytype} despeckling subpass {despecklepass + 1} "
+                    f"\n\n{similaritytype} despeckling, pass{thepass}, subpass {despecklepass + 1} "
                     f"(kernel={kernel_size})"
                 )
                 outmaparray *= 0.0
