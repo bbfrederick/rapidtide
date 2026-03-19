@@ -170,6 +170,73 @@ def check_autocorrelation(
     return None, None
 
 
+def find_all_acf_sidelobes(
+    corrscale: NDArray,
+    acf: NDArray,
+    ampthresh: float = 0.1,
+    acwidth: float = 2.0,
+    delta: float = 0.05,
+    debug: bool = False,
+) -> list:
+    """Find all significant sidelobe peaks in an autocorrelation function.
+
+    Unlike ``check_autocorrelation``, which returns only the first positive-lag
+    sidelobe, this function returns ALL peaks (both positive and negative lags)
+    that exceed the amplitude threshold and lie outside the central peak region.
+
+    Parameters
+    ----------
+    corrscale : NDArray
+        Array of time lags corresponding to the ACF values.
+    acf : NDArray
+        Autocorrelation function values.
+    ampthresh : float, optional
+        Amplitude threshold as a fraction of the central peak amplitude.
+        Default is 0.1.
+    acwidth : float, optional
+        Half-width of the central peak region to exclude (seconds). Peaks
+        with |lag| <= acwidth are ignored. Default is 2.0.
+    delta : float, optional
+        Minimum separation between detected peaks for ``peakdetect``.
+        Default is 0.05.
+    debug : bool, optional
+        If True, print debug information. Default is False.
+
+    Returns
+    -------
+    list of tuple[float, float]
+        List of ``(lag, amplitude)`` tuples for significant sidelobes, sorted
+        by descending absolute amplitude.  Returns an empty list when no
+        sidelobes are found.
+    """
+    lookahead = 2
+    peaks = tide_fit.peakdetect(acf, x_axis=corrscale, delta=delta, lookahead=lookahead)
+    maxpeaks = np.asarray(peaks[0], dtype="float64")
+    if len(maxpeaks) == 0:
+        if debug:
+            print("find_all_acf_sidelobes: no peaks found")
+        return []
+
+    zeropkindex = np.argmin(abs(maxpeaks[:, 0]))
+    central_amp = maxpeaks[zeropkindex, 1]
+
+    sidelobes = []
+    for i in range(len(maxpeaks)):
+        if i == zeropkindex:
+            continue
+        lag = maxpeaks[i, 0]
+        if abs(lag) <= acwidth:
+            continue
+        amp = maxpeaks[i, 1]
+        if abs(amp) > ampthresh * abs(central_amp):
+            sidelobes.append((lag, amp))
+
+    sidelobes.sort(key=lambda x: abs(x[1]), reverse=True)
+    if debug:
+        print(f"find_all_acf_sidelobes: found {len(sidelobes)} sidelobes: {sidelobes}")
+    return sidelobes
+
+
 def shorttermcorr_1D(
     data1: NDArray,
     data2: NDArray,

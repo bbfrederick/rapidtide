@@ -12,9 +12,8 @@ rapidtide \
     --nofitfilt \
     --outputlevel max \
     --showtimings \
-    --robustdelayfit \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_new
+    ../dst/sub-RAPIDTIDETEST
 
 rapidtide \
     --spatialfilt 3 \
@@ -28,7 +27,40 @@ rapidtide \
     --nofitfilt \
     --outputlevel max \
     --showtimings \
-    --robustdelayfit \
-    --despeckle-kernel 5 \
+    --preppass \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_newer
+    ../dst/sub-RAPIDTIDETEST_preppass
+
+rapidtide \
+    --spatialfilt 3 \
+    --nprocs -1 \
+    --searchrange -7.5 30 \
+    --simcalcrange 50 -1 \
+    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
+    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
+    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+    --nofitfilt \
+    --outputlevel max \
+    --showtimings \
+    --sharpenregressor \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_sharpen
+
+rapidtide \
+    --spatialfilt 3 \
+    --nprocs -1 \
+    --searchrange -7.5 30 \
+    --simcalcrange 50 -1 \
+    --graymattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY \
+    --brainmask sub-RAPIDTIDETEST_brainmask.nii.gz \
+    --whitemattermask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE \
+    --csfmask sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF \
+    --nofitfilt \
+    --outputlevel max \
+    --showtimings \
+    --preppass \
+    --sharpenregressor \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_preppass_sharpen
+

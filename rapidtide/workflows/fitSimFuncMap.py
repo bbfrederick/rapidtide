@@ -862,7 +862,7 @@ def fitSimFunc(
             for despecklepass in range(optiondict["despeckle_passes"]):
                 kernel_size = optiondict["despeckle_kernel_size"]
                 LGR.info(
-                    f"\n\n{similaritytype} despeckling subpass {despecklepass + 1} "
+                    f"\n\n{similaritytype} despeckling, pass{thepass}, subpass {despecklepass + 1} "
                     f"(kernel={kernel_size})"
                 )
                 outmaparray *= 0.0
@@ -1078,126 +1078,6 @@ def fitSimFunc(
             )
         else:
             internaldespeckleincludemask = None
-
-        """# Patch shift correction: detect anomalous patches and refit them.
-        # This runs after all despeckle passes and catches self-consistent
-        # patches of voxels that all chose the same wrong correlation peak.
-        if optiondict["patchshift"]:
-            LGR.info(f"\n\nPatch shift correction pass {thepass}")
-            TimingLGR.info(f"Patch shift correction start, pass {thepass}")
-
-            outmaparray *= 0.0
-            outmaparray[validvoxels] = lagtimes[:]
-            lagmap_3d = outmaparray.reshape(nativespaceshape)
-            validmask_3d = np.zeros(nativespaceshape, dtype=bool)
-            validmask_3d.reshape(-1)[validvoxels] = fitmask[:].astype(bool)
-
-            use_conf = optiondict["despeckle_patch_use_confidence"]
-            R2_3d_ps = lagstrengths_3d_ps = None
-            if use_conf:
-                R2_3d_ps = np.zeros(nativespaceshape)
-                R2_3d_ps.reshape(-1)[validvoxels] = R2[:]
-                lagstrengths_3d_ps = np.zeros(nativespaceshape)
-                lagstrengths_3d_ps.reshape(-1)[validvoxels] = lagstrengths[:]
-
-            patch_mask_3d, patch_reference_3d = _detect_shifted_patches(
-                lagmap_3d,
-                validmask_3d,
-                optiondict["despeckle_thresh"],
-                reference_kernel=optiondict["despeckle_patch_refkernel"],
-                min_patch_size=optiondict["despeckle_patch_minsize"],
-                consistency_ratio=optiondict["despeckle_patch_consistency_ratio"],
-                use_confidence=use_conf,
-                confidence_weight=optiondict["despeckle_patch_confidence_weight"],
-                R2_3d=R2_3d_ps,
-                lagstrengths_3d=lagstrengths_3d_ps,
-            )
-
-            n_patch_voxels = int(patch_mask_3d.sum())
-            LGR.info(f"\tPatch detection found {n_patch_voxels} anomalous voxels")
-
-            if n_patch_voxels > 0:
-                patch_mask_flat = patch_mask_3d.reshape(numspatiallocs)
-                reference_flat = patch_reference_3d.reshape(numspatiallocs)
-                initlags_ps = np.full(numvalidspatiallocs, -1000000.0)
-                for i, vox in enumerate(validvoxels):
-                    if patch_mask_flat[vox]:
-                        initlags_ps[i] = reference_flat[vox]
-
-                tide_util.disablemkl(optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"])
-                voxelsprocessed_ps = tide_simfuncfit.fitcorr(
-                    trimmedcorrscale,
-                    theFitter,
-                    corrout,
-                    fitmask,
-                    failreason,
-                    lagtimes,
-                    lagstrengths,
-                    lagsigma,
-                    gaussout,
-                    windowout,
-                    R2,
-                    despeckling=True,
-                    nprocs=optiondict["nprocs_fitcorr"],
-                    alwaysmultiproc=optiondict["alwaysmultiproc"],
-                    fixdelay=optiondict["fixdelay"],
-                    initialdelayvalue=theinitialdelay,
-                    showprogressbar=optiondict["showprogressbar"],
-                    chunksize=optiondict["mp_chunksize"],
-                    despeckle_thresh=optiondict["despeckle_thresh"],
-                    initiallags=initlags_ps,
-                    rt_floattype=rt_floattype,
-                )
-                tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
-                LGR.info(f"\tPatch shift corrected {voxelsprocessed_ps} voxels")
-
-                if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
-                    if theinputdata.filetype != "text":
-                        if theinputdata.filetype == "cifti":
-                            timeindex = theheader["dim"][0] - 1
-                            spaceindex = theheader["dim"][0]
-                            theheader["dim"][timeindex] = 1
-                            theheader["dim"][spaceindex] = numspatiallocs
-                        else:
-                            theheader["dim"][0] = 3
-                            theheader["dim"][4] = 1
-                            theheader["pixdim"][4] = 1.0
-                    masklist = [
-                        (
-                            patch_mask_flat[validvoxels].astype(np.int32),
-                            f"patchmask_p{thepass}",
-                            "mask",
-                            None,
-                            f"Anomalous patch voxels for pass {thepass}",
-                        ),
-                        (
-                            reference_flat[validvoxels],
-                            f"patchreference_p{thepass}",
-                            "map",
-                            None,
-                            f"Reference lag targets for patch shift pass {thepass}",
-                        ),
-                    ]
-                    tide_io.savemaplist(
-                        outputname,
-                        masklist,
-                        validvoxels,
-                        nativespaceshape,
-                        theheader,
-                        bidsbasedict,
-                        filetype=theinputdata.filetype,
-                        rt_floattype=rt_floattype,
-                        cifti_hdr=theinputdata.cifti_hdr,
-                    )
-
-            TimingLGR.info(
-                f"Patch shift correction end, pass {thepass}",
-                {
-                    "message2": n_patch_voxels,
-                    "message3": "voxels detected",
-                },
-            )
-        """
 
         # Robust delay estimation via anchor-based region growing.
         # This post-pass selects correlation peaks by spatial consistency rather

@@ -60,6 +60,7 @@ DEFAULT_PASSES = 3
 DEFAULT_LAGMIN_THRESH = 0.25
 DEFAULT_LAGMAX_THRESH = 3.0
 DEFAULT_AMPTHRESH = 0.3
+DEFAULT_SHARPENREGRESSOR_THRESH = 0.1
 DEFAULT_PICKLEFT_THRESH = 0.33
 DEFAULT_SIGMATHRESH = 100.0
 DEFAULT_MAXPASSES = 15
@@ -972,83 +973,6 @@ def _get_parser() -> Any:
         ),
         default=DEFAULT_BASELINECUTOFF,
     )
-    corr_fit.add_argument(
-        "--despeckle-patch-detection",
-        dest="despeckle_patch_detection",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "On despeckle passes 3+, detect large connected patches of shifted delay values "
-            "using a large reference kernel and flag them for refitting. This catches patches "
-            "that survive the median filter because they are locally consistent. "
-            "This is the default."
-        ),
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--no-despeckle-patch-detection",
-        dest="despeckle_patch_detection",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="False large patch detection during despeckling.",
-        default=True,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-refkernel",
-        dest="despeckle_patch_refkernel",
-        action=pf.IndicateSpecifiedAction,
-        type=int,
-        metavar="SIZE",
-        help=(
-            "Size of the median filter kernel used to build the large-scale reference "
-            "for patch detection. Must be odd. Larger values detect larger patches but "
-            "may miss very large ones that approach half the kernel volume. Default is 9."
-        ),
-        default=9,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-minsize",
-        dest="despeckle_patch_minsize",
-        action=pf.IndicateSpecifiedAction,
-        type=int,
-        metavar="NVOXELS",
-        help=(
-            "Minimum number of connected voxels for a group to be considered a patch. "
-            "Smaller clusters are ignored (handled by regular despeckle). Default is 10."
-        ),
-        default=10,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-use-confidence",
-        dest="despeckle_patch_use_confidence",
-        action=pf.IndicateSpecifiedStoreTrueAction,
-        help=(
-            "When detecting anomalous patches, use correlation quality metrics "
-            "(R², peak strength) to modulate the detection threshold. "
-            "Regions with poor fit quality are flagged as anomalous patches at a "
-            "lower spatial threshold, improving sensitivity for borderline cases. "
-            "Off by default."
-        ),
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--no-despeckle-patch-use-confidence",
-        dest="despeckle_patch_use_confidence",
-        action=pf.IndicateSpecifiedStoreFalseAction,
-        help="Disable confidence-based modulation for patch detection (default).",
-        default=False,
-    )
-    corr_fit.add_argument(
-        "--despeckle-patch-confidence-weight",
-        dest="despeckle_patch_confidence_weight",
-        action=pf.IndicateSpecifiedAction,
-        type=float,
-        metavar="WEIGHT",
-        help=(
-            "Weight [0.0..1.0] controlling how strongly fit confidence modulates the "
-            "patch detection threshold when --despeckle-patch-use-confidence is active. "
-            "0.0 = no effect; 1.0 = maximum modulation. Default is 0.5."
-        ),
-        default=0.5,
-    )
 
     # Regressor refinement options
     reg_ref = parser.add_argument_group("Regressor refinement options")
@@ -1678,7 +1602,18 @@ def _get_parser() -> Any:
             "all nonzero voxels are used.  If this option is set, certain output measures will be summarized over "
             "each territory in the map, in addition to over the whole brain.  Some interesting territory maps might be: "
             "a gray/white/csf segmentation image, an arterial territory map, lesion area vs. healthy "
-            "tissue segmentation, etc.  NB: at the moment this is just a placeholder - it doesn't do anything."
+            "tissue segmentation, etc."
+        ),
+        default=None,
+    )
+    experimental.add_argument(
+        "--territorylabels",
+        dest="territorylabels",
+        metavar="FILE",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help=(
+            "The name of of a text file containing the labels of the territories, one per line.  The first line is "
+            "the label integer value 1, etc."
         ),
         default=None,
     )
@@ -1756,14 +1691,83 @@ def _get_parser() -> Any:
         help=("Generate extra data during refinement to allow calculation of dispersion."),
         default=False,
     )
-    """experimental.add_argument(
-        "--patchshift",
-        dest="patchshift",
-        action="store_true",
-        help=("Perform patch shift correction."),
+    experimental.add_argument(
+        "--despeckle-patch-detection",
+        dest="despeckle_patch_detection",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "On despeckle passes 3+, detect large connected patches of shifted delay values "
+            "using a large reference kernel and flag them for refitting. This catches patches "
+            "that survive the median filter because they are locally consistent. "
+            "This is the default."
+        ),
         default=False,
     )
-    """
+    experimental.add_argument(
+        "--despeckle-patch-refkernel",
+        dest="despeckle_patch_refkernel",
+        action=pf.IndicateSpecifiedAction,
+        type=int,
+        metavar="SIZE",
+        help=(
+            "Size of the median filter kernel used to build the large-scale reference "
+            "for patch detection. Must be odd. Larger values detect larger patches but "
+            "may miss very large ones that approach half the kernel volume. Default is 9."
+        ),
+        default=9,
+    )
+    experimental.add_argument(
+        "--despeckle-patch-minsize",
+        dest="despeckle_patch_minsize",
+        action=pf.IndicateSpecifiedAction,
+        type=int,
+        metavar="NVOXELS",
+        help=(
+            "Minimum number of connected voxels for a group to be considered a patch. "
+            "Smaller clusters are ignored (handled by regular despeckle). Default is 10."
+        ),
+        default=10,
+    )
+    experimental.add_argument(
+        "--despeckle-patch-consistency-ratio",
+        dest="despeckle_patch_consistency_ratio",
+        action="store",
+        type=float,
+        metavar="RATIO",
+        help=(
+            "Internal consistency threshold for patch detection: a candidate patch is "
+            "confirmed only if its internal lag standard deviation divided by its offset "
+            "from the exterior ring is less than this ratio.  Lower values require more "
+            "internally uniform patches.  Default is 0.5."
+        ),
+        default=0.5,
+    )
+    experimental.add_argument(
+        "--despeckle-patch-use-confidence",
+        dest="despeckle_patch_use_confidence",
+        action=pf.IndicateSpecifiedStoreTrueAction,
+        help=(
+            "When detecting anomalous patches, use correlation quality metrics "
+            "(R², peak strength) to modulate the detection threshold. "
+            "Regions with poor fit quality are flagged as anomalous patches at a "
+            "lower spatial threshold, improving sensitivity for borderline cases. "
+            "Off by default."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--despeckle-patch-confidence-weight",
+        dest="despeckle_patch_confidence_weight",
+        action=pf.IndicateSpecifiedAction,
+        type=float,
+        metavar="WEIGHT",
+        help=(
+            "Weight [0.0..1.0] controlling how strongly fit confidence modulates the "
+            "patch detection threshold when --despeckle-patch-use-confidence is active. "
+            "0.0 = no effect; 1.0 = maximum modulation. Default is 0.5."
+        ),
+        default=0.5,
+    )
     experimental.add_argument(
         "--despeckle-kernel",  # was -h
         dest="despeckle_kernel_size",
@@ -1830,6 +1834,90 @@ def _get_parser() -> Any:
             "Default is 5.0 seconds."
         ),
         default=5.0,
+    )
+    experimental.add_argument(
+        "--preppass",
+        dest="preppass",
+        action="store_true",
+        help=(
+            "Run an internal single-pass correlation before the main passes to identify "
+            "clean, short-delay voxels, then rebuild the global mean regressor from those "
+            "voxels.  This reduces sidelobe contamination from multi-pool vascular signals. "
+            "Off by default."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--preppass-lag-window",
+        dest="preppass_lag_window",
+        action="store",
+        type=float,
+        metavar="SECONDS",
+        help=(
+            "Width of the one-sided lag window below the modal lag used to select good "
+            "voxels in the preparation pass.  Only voxels with lag in "
+            "[lag_mode - window, lag_mode] are considered clean.  Default is 3.0 seconds."
+        ),
+        default=3.0,
+    )
+    experimental.add_argument(
+        "--preppass-r2-threshold",
+        dest="preppass_r2_threshold",
+        action="store",
+        type=float,
+        metavar="FLOAT",
+        help=(
+            "Minimum R² value for a voxel to be selected as a clean voxel in the "
+            "preparation pass.  Default is 0.3."
+        ),
+        default=0.3,
+    )
+    experimental.add_argument(
+        "--sharpenregressor",
+        dest="sharpenregressor",
+        action="store_true",
+        help=(
+            "Apply Wiener deconvolution (with multi-echo iterative subtraction as fallback) "
+            "to remove autocorrelation sidelobe structure from the regressor before "
+            "computing correlations.  Off by default."
+        ),
+        default=False,
+    )
+    experimental.add_argument(
+        "--sharpenregressor-thresh",
+        dest="sharpenregressor_thresh",
+        action="store",
+        type=float,
+        metavar="FLOAT",
+        help=(
+            "Autocorrelation function sidelobe detection fraction.  Controls the "
+            f"relative height of a sidelobe that triggers removal.  Default is {DEFAULT_SHARPENREGRESSOR_THRESH}."
+        ),
+        default=DEFAULT_SHARPENREGRESSOR_THRESH,
+    )
+    experimental.add_argument(
+        "--sharpenregressor-noise-level",
+        dest="sharpenregressor_noise_level",
+        action="store",
+        type=float,
+        metavar="FLOAT",
+        help=(
+            "Wiener regularisation parameter λ for regressor sharpening.  Controls the "
+            "trade-off between noise suppression and sharpening.  Default is 0.01."
+        ),
+        default=0.01,
+    )
+    experimental.add_argument(
+        "--sharpenregressor-max-iters",
+        dest="sharpenregressor_max_iters",
+        action="store",
+        type=int,
+        metavar="INT",
+        help=(
+            "Maximum number of iterations for the multi-echo fallback in regressor "
+            "sharpening.  Default is 5."
+        ),
+        default=5,
     )
     experimental.add_argument(
         "--prewhitenregressor",

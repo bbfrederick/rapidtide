@@ -16,6 +16,7 @@
 #   limitations under the License.
 #
 #
+import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -23,10 +24,271 @@ from numpy.typing import NDArray
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
+import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
+import rapidtide.resample as tide_resample
 import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.simfuncfit as tide_simfuncfit
+
+
+def _compute_acf(
+    signal: NDArray,
+    oversamptr: float,
+    lagmax: float,
+    detrendorder: int = 1,
+    windowfunc: str = "hamming",
+) -> Tuple[NDArray, NDArray]:
+    """Compute a normalised autocorrelation function for *signal*.
+
+    Mirrors the approach used in ``cleanregressor``: the signal is first
+    processed by ``corrnormalize`` (detrend + window function) before
+    computing the ACF.  Using a window function is essential for exposing
+    echo sidelobes — without it the rectangular-window end-effects dominate
+    and prevent reliable sidelobe detection.
+
+    Parameters
+    ----------
+    signal : NDArray
+        Input timecourse at oversampled resolution.  Should be the **valid**
+        window of the regressor (i.e. already trimmed to
+        ``resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1]``) so
+        that padded edges do not corrupt the ACF.
+    oversamptr : float
+        Oversampled TR (seconds per sample).
+    lagmax : float
+        Maximum lag (seconds) to retain in the output.
+    detrendorder : int, optional
+        Detrending order passed to ``corrnormalize``.  Default 1.
+    windowfunc : str, optional
+        Window function passed to ``corrnormalize`` (e.g. ``"hamming"``).
+        Default ``"hamming"``.
+
+    Returns
+    -------
+    lags : NDArray
+        Lag axis in seconds, shape (2*lag_max_pts + 1,).
+    acf : NDArray
+        Normalised ACF values, shape (2*lag_max_pts + 1,).
+    """
+    n = len(signal)
+    lag_max_pts = min(int(lagmax / oversamptr), n - 1)
+    # corrnormalize already normalises energy to 1 (divides by sqrt(n)), so
+    # the zero-lag autocorrelation equals sum(sig²) ≈ 1 — do NOT divide by n
+    # again or the ACF values become 1/n (≈ 0.002 for n=500) which is too
+    # small for reliable peak detection.
+    sig = tide_math.corrnormalize(signal, detrendorder=detrendorder, windowfunc=windowfunc)
+    full = np.correlate(sig, sig, mode="full")
+    center = n - 1
+    acf = full[center - lag_max_pts : center + lag_max_pts + 1]
+    lags = np.arange(-lag_max_pts, lag_max_pts + 1) * oversamptr
+    return lags, acf
+
+
+def sharpen_regressor(
+    resampref_y: NDArray,
+    oversamptr: float,
+    oversampfreq: float,
+    osvalidsimcalcstart: int,
+    osvalidsimcalcend: int,
+    lagmax: float,
+    numpadtrs: int,
+    outputname: str,
+    detrendorder: int = 1,
+    windowfunc: str = "hamming",
+    noise_level: float = 0.01,
+    max_iters: int = 5,
+    ampthresh: float = 0.2,
+    acwidth: float = 2.0,
+    debug: bool = False,
+) -> NDArray:
+    """Remove ACF sidelobe structure from *resampref_y* using Wiener deconvolution.
+
+    Attempts Wiener deconvolution of the regressor against its own ACF
+    structure, then falls back to iterative multi-echo subtraction if the
+    Wiener step does not reduce sidelobe amplitude by at least 20 %.
+
+    The ACF is computed on the **valid window** of the regressor
+    (``resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1]``) after
+    applying ``corrnormalize`` (detrend + window function), matching the
+    approach used by ``cleanregressor.check_autocorrelation``.  Using the
+    full padded array or a plain mean-removal without windowing prevents
+    reliable sidelobe detection.
+
+    Parameters
+    ----------
+    resampref_y : NDArray
+        The regressor at oversampled resolution (full, including padding).
+    oversamptr : float
+        Oversampled TR in seconds.
+    oversampfreq : float
+        Oversampled sampling frequency (Hz).
+    osvalidsimcalcstart : int
+        First valid sample index in *resampref_y* (oversampled coordinates).
+    osvalidsimcalcend : int
+        Last valid sample index in *resampref_y* (oversampled coordinates).
+    lagmax : float
+        Maximum lag searched (seconds); used for ACF window.
+    numpadtrs : int
+        Padding timepoints for ``tide_resample.timeshift``.
+    outputname : str
+        Output file base name for saving the sharpened regressor.
+    detrendorder : int, optional
+        Detrending order for ``corrnormalize``.  Default 1.
+    windowfunc : str, optional
+        Window function for ``corrnormalize``.  Default ``"hamming"``.
+    noise_level : float, optional
+        Wiener regularisation parameter λ.  Default 0.01.
+    max_iters : int, optional
+        Maximum iterations for multi-echo fallback.  Default 5.
+    ampthresh : float, optional
+        Sidelobe amplitude threshold (fraction of central peak).  Default 0.2.
+    acwidth : float, optional
+        Half-width of the central peak region excluded from sidelobe detection
+        (seconds).  Default 2.0.
+    debug : bool, optional
+        Print debug information.  Default False.
+
+    Returns
+    -------
+    NDArray
+        Sharpened regressor, same length as *resampref_y*.
+    """
+    LGR_local = logging.getLogger("rapidtide")
+
+    # Use the valid window (no padding) with windowing for ACF detection —
+    # this matches what cleanregressor/check_autocorrelation does.
+    valid_signal = resampref_y[osvalidsimcalcstart : osvalidsimcalcend + 1]
+
+    # --- Step 1: compute regressor ACF on the valid, windowed window ---
+    acf_lags, acf = _compute_acf(
+        valid_signal, oversamptr, lagmax, detrendorder=detrendorder, windowfunc=windowfunc
+    )
+
+    # check if there is anything to sharpen
+    sidelobes_before = tide_corr.find_all_acf_sidelobes(
+        acf_lags, acf, ampthresh=ampthresh, acwidth=acwidth, debug=debug
+    )
+    if not sidelobes_before:
+        LGR_local.info("sharpen_regressor: no significant sidelobes found; skipping")
+        return resampref_y
+
+    LGR_local.info(f"sharpen_regressor: {len(sidelobes_before)} sidelobe(s) before sharpening")
+
+    # --- Step 2: attempt Wiener deconvolution on the full regressor ---
+    sharpened = resampref_y.copy()
+    wiener_succeeded = False
+    try:
+        n = len(resampref_y)
+        # Fit a Gaussian to the central peak of the ACF to get ACF_s
+        zero_idx = np.argmin(np.abs(acf_lags))
+        central_amp = acf[zero_idx]
+        # estimate central-peak half-width
+        hw = 1
+        while zero_idx + hw < len(acf) - 1 and acf[zero_idx + hw] > central_amp * 0.5:
+            hw += 1
+        central_width = acf_lags[zero_idx + hw] * 2.0
+
+        acf_gauss = tide_fit.gauss_eval(
+            acf_lags, [central_amp, 0.0, max(central_width, oversamptr * 2)]
+        )
+        if debug:
+            print(f"sharpen_regressor: central peak ACF: {acf_gauss}")
+
+        # Wiener deconvolution in frequency domain
+        R_f = np.fft.rfft(resampref_y, n=n)
+        H_f = np.fft.rfft(acf, n=n) / (np.fft.rfft(acf_gauss, n=n) + 1e-30)
+        lam = noise_level * np.max(np.abs(H_f))
+        S_hat_f = R_f / (H_f + lam)
+        sharpened_wiener = np.fft.irfft(S_hat_f, n=n)
+
+        # normalise to same RMS as original
+        rms_orig = np.std(resampref_y)
+        rms_sharp = np.std(sharpened_wiener)
+        if rms_sharp > 1e-10:
+            sharpened_wiener *= rms_orig / rms_sharp
+
+        # --- Step 3: validate using the windowed valid window ---
+        valid_sharpened = sharpened_wiener[osvalidsimcalcstart : osvalidsimcalcend + 1]
+        acf_lags_w, acf_w = _compute_acf(
+            valid_sharpened,
+            oversamptr,
+            lagmax,
+            detrendorder=detrendorder,
+            windowfunc=windowfunc,
+        )
+        sidelobes_after = tide_corr.find_all_acf_sidelobes(
+            acf_lags_w, acf_w, ampthresh=ampthresh, acwidth=acwidth, debug=debug
+        )
+        before_max = max(abs(s[1]) for s in sidelobes_before)
+        after_max = max((abs(s[1]) for s in sidelobes_after), default=0.0)
+        if after_max < 0.8 * before_max:
+            sharpened = sharpened_wiener
+            wiener_succeeded = True
+            LGR_local.info(
+                f"sharpen_regressor: Wiener succeeded "
+                f"(sidelobe max {before_max:.3f} -> {after_max:.3f})"
+            )
+        else:
+            LGR_local.info(
+                f"sharpen_regressor: Wiener failed "
+                f"(sidelobe max {before_max:.3f} -> {after_max:.3f})"
+            )
+
+    except Exception as exc:
+        LGR_local.warning(
+            f"sharpen_regressor: Wiener deconvolution failed ({exc}); using fallback"
+        )
+
+    # --- Step 4: multi-echo fallback ---
+    if not wiener_succeeded:
+        LGR_local.info("sharpen_regressor: using multi-echo iterative fallback")
+        current = resampref_y.copy()
+        for iteration in range(max_iters):
+            valid_current = current[osvalidsimcalcstart : osvalidsimcalcend + 1]
+            acf_lags_c, acf_c = _compute_acf(
+                valid_current,
+                oversamptr,
+                lagmax,
+                detrendorder=detrendorder,
+                windowfunc=windowfunc,
+            )
+            sidelobes = tide_corr.find_all_acf_sidelobes(
+                acf_lags_c, acf_c, ampthresh=ampthresh, acwidth=acwidth, debug=debug
+            )
+            if not sidelobes:
+                LGR_local.info(f"sharpen_regressor: fallback converged at iteration {iteration}")
+                break
+            for tau, amp in sidelobes:
+                shifttr = tau / oversamptr
+                echotc, _, _, _ = tide_resample.timeshift(current, shifttr, numpadtrs)
+                # zero out the extrapolated region
+                nshift = int(np.ceil(abs(shifttr)))
+                if shifttr > 0:
+                    echotc[:nshift] = 0.0
+                elif shifttr < 0:
+                    echotc[-nshift:] = 0.0
+                echofit, _ = tide_fit.mlregress(echotc, current)
+                current -= echofit[0, 1] * echotc
+        sharpened = current
+
+    # --- Step 5: save and return ---
+    tide_io.writebidstsv(
+        f"{outputname}_desc-sharpenedregressor_timeseries",
+        np.vstack(
+            (
+                tide_math.stdnormalize(resampref_y),
+                tide_math.stdnormalize(sharpened),
+            )
+        ),
+        oversampfreq,
+        columns=["original", "sharpened"],
+        extraheaderinfo={
+            "Description": "Original and sharpened probe regressor (ACF sidelobe removal)"
+        },
+        append=False,
+    )
+    return sharpened
 
 
 def cleanregressor(
