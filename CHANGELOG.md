@@ -1,16 +1,18 @@
 # Release history
 
-## Version 3.1.9 (3/12/26)
+## Version 3.1.9 (3/19/26)
 * (rapidtide) There's a new optional despeckling procedure, which you can turn on with ``--robustdelayfit``.  It uses a region growing method to try to ensure consistency in delay maps while allowing for discontinuities between vascular territories.
 * (rapidtide) Added some infrastructure for territory processing.
+* (rapidtide, retroregress) Fixed calculation of the refined R value.
+* (rapidtide, retroregress) Expanded and improved regional time course output.
+* (atlasaverage) Pulled get4Dtimecourses into a separate routine so it can be reused in rapidtide territory processing.
 * (tidepool) Fixed a crash when data is in MNI152 space and FSL is not present.
 * (happy) Now outputs variance metrics so you can see how effective noise regression is.
 * (ccorrica) Updated to use SimilarityFunctionFitter, output csv files.
-* (rapidtide, retroregress) Fixed calculation of the refined R value.
-* (rapidtide, retroregress) Expanded and improved regional time course output.
 * (SimilarityFunctionFitter) Fixed a strange bug where very small delay values were not fit properly.  Affects all programs using correlation fits (most of them).
 * (package) Made pyfftw a required dependency.
 * (package) Resolved future deprecations from scipy.fftpack and np.matrix.
+* (bonus) The date matches the version number (US only :-) )!
 
 ## Version 3.1.8 (3/2/26)
 * (rapidtide) Fixed a bug in how the despeckle search region is set.
