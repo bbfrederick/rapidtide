@@ -110,7 +110,7 @@ pytz==2024.2
     # via pandas
 pywavelets==1.7.0
     # via rapidtide (pyproject.toml)
-requests==2.32.4
+requests==2.33.0
     # via
     #   nilearn
     #   rapidtide (pyproject.toml)

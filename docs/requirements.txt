@@ -157,7 +157,7 @@ pyyaml==6.0.2
     # via
     #   myst-parser
     #   pybtex
-requests==2.32.4
+requests==2.33.0
     # via
     #   nilearn
     #   rapidtide (../pyproject.toml)
