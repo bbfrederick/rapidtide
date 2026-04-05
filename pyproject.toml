@@ -153,6 +153,7 @@ tcfrom3col = 'rapidtide.scripts.tcfrom3col:entrypoint'
 temporaldecomp = 'rapidtide.scripts.temporaldecomp:entrypoint'
 #threeD = 'rapidtide.scripts.threeD:entrypoint'
 tidepool = 'rapidtide.scripts.tidepool:entrypoint'
+tp2rt = 'rapidtide.scripts.tp2rt:entrypoint'
 #variabilityizer = 'rapidtide.scripts.variabilityizer:entrypoint'
 
 [tool.setuptools]
