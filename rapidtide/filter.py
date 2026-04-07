@@ -515,32 +515,17 @@ class NoncausalFilter:
         0.1
         """
         if lowerstop > lowerpass:
-            print(
-                "NoncausalFilter error: lowerstop (",
-                lowerstop,
-                ") must be <= lowerpass (",
-                lowerpass,
-                ")",
+            raise ValueError(
+                f"NoncausalFilter error: lowerstop ({lowerstop}) must be <= lowerpass ({lowerpass})"
             )
-            sys.exit()
         if upperpass > upperstop:
-            print(
-                "NoncausalFilter error: upperstop (",
-                upperstop,
-                ") must be >= upperpass (",
-                upperpass,
-                ")",
+            raise ValueError(
+                f"NoncausalFilter error: upperstop ({upperstop}) must be >= upperpass ({upperpass})"
             )
-            sys.exit()
         if (lowerpass > upperpass) and (upperpass >= 0.0):
-            print(
-                "NoncausalFilter error: lowerpass (",
-                lowerpass,
-                ") must be < upperpass (",
-                upperpass,
-                ")",
+            raise ValueError(
+                f"NoncausalFilter error: lowerpass ({lowerpass}) must be < upperpass ({upperpass})"
             )
-            sys.exit()
         self.arb_lowerstop = 1.0 * lowerstop
         self.arb_lowerpass = 1.0 * lowerpass
         self.arb_upperpass = 1.0 * upperpass
@@ -621,83 +606,75 @@ class NoncausalFilter:
 
         # first see if entire range is out of bounds
         if self.lowerpass >= nyquistlimit:
-            print(
+            raise ValueError(
                 "NoncausalFilter error: filter lower pass ",
                 self.lowerpass,
                 " exceeds nyquist frequency ",
                 nyquistlimit,
             )
-            sys.exit()
         if self.lowerstop >= nyquistlimit:
-            print(
+            raise ValueError(
                 "NoncausalFilter error: filter lower stop ",
                 self.lowerstop,
                 " exceeds nyquist frequency ",
                 nyquistlimit,
             )
-            sys.exit()
         if -1.0 < self.upperpass <= lowestfreq:
-            print(
+            raise ValueError(
                 "NoncausalFilter error: filter upper pass ",
                 self.upperpass,
                 " is below minimum frequency ",
                 lowestfreq,
             )
-            sys.exit()
         if -1.0 < self.upperstop <= lowestfreq:
-            print(
+            raise ValueError(
                 "NoncausalFilter error: filter upper stop ",
                 self.upperstop,
                 " is below minimum frequency ",
                 lowestfreq,
             )
-            sys.exit()
 
         # now look for fixable errors
         if self.upperpass >= nyquistlimit:
             if self.correctfreq:
                 self.upperpass = nyquistlimit
             else:
-                print(
+                raise ValueError(
                     "NoncausalFilter error: filter upper pass ",
                     self.upperpass,
                     " exceeds nyquist frequency ",
                     nyquistlimit,
                 )
-                sys.exit()
         if self.upperstop > nyquistlimit:
             if self.correctfreq:
                 self.upperstop = nyquistlimit
             else:
-                print(
+                raise ValueError(
                     "NoncausalFilter error: filter upper stop ",
                     self.upperstop,
                     " exceeds nyquist frequency ",
                     nyquistlimit,
                 )
-                sys.exit()
         if self.lowerpass < lowestfreq:
             if self.correctfreq:
                 self.lowerpass = lowestfreq
             else:
-                print(
+                raise ValueError(
                     "NoncausalFilter error: filter lower pass ",
                     self.lowerpass,
                     " is below minimum frequency ",
                     lowestfreq,
                 )
-                sys.exit()
         if self.lowerstop < lowestfreq:
             if self.correctfreq:
                 self.lowerstop = lowestfreq
             else:
-                print(
+                raise ValueError(
                     "NoncausalFilter error: filter lower stop ",
                     self.lowerstop,
                     " is below minimum frequency ",
                     lowestfreq,
                 )
-                sys.exit()
 
         if self.padtime < 0.0:
             padlen = int(len(data) // 2)
@@ -821,8 +798,7 @@ class NoncausalFilter:
                 debug=self.debug,
             )
         else:
-            print(f"bad filter type: {self.filtertype}")
-            sys.exit()
+            raise ValueError(f"bad filter type: {self.filtertype}")
 
 
 @conditionaljit()
@@ -1493,8 +1469,7 @@ def getlptransfunc(
     (1024,)
     """
     if upperpass is None:
-        print("getlptransfunc: upperpass must be specified")
-        sys.exit()
+        raise ValueError("getlptransfunc: upperpass must be specified")
     if debug:
         print("getlptransfunc:")
         print("\tFs:", Fs)
@@ -1605,8 +1580,7 @@ def gethptransfunc(
     >>> hp_func = gethptransfunc(Fs, data, lowerpass=10.0, type="brickwall")
     """
     if lowerpass is None:
-        print("gethptransfunc: lowerpass must be specified")
-        sys.exit()
+        raise ValueError("gethptransfunc: lowerpass must be specified")
     if type == "trapezoidal":
         transferfunc = 1.0 - getlptransfunc(
             Fs,
@@ -2577,11 +2551,9 @@ def getfilterbandfreqs(
             lowerstop = lowerpass * (1.0 - transitionfrac)
             upperstop = upperpass * (1.0 + transitionfrac)
         else:
-            print(f"unknown filter band: {band}")
-            sys.exit()
+            raise ValueError(f"unknown filter band: {band}")
     else:
-        print(f"unknown species: {species}")
-        sys.exit()
+        raise ValueError(f"unknown species: {species}")
     if asrange:
         return f"{lowerpass}-{upperpass}Hz"
     else:
@@ -2980,5 +2952,4 @@ def windowfunction(length: int, type: str = "hamming", debug: bool = False) -> N
     elif type == "None":
         return np.ones(length)
     else:
-        print("illegal window function")
-        sys.exit()
+        raise ValueError(f"illegal window function type: {type}")
