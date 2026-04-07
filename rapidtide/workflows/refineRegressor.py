@@ -25,7 +25,7 @@ from numpy.typing import NDArray
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
-import rapidtide.refineregressor as tide_refineregressor
+import rapidtide.refineRegressorFuncs as tide_refineRegressorFuncs
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
@@ -502,7 +502,7 @@ class RegressorRefiner:
             self.lagfails,
             self.sigmafails,
             self.numinmask,
-        ) = tide_refineregressor.makerefinemask(
+        ) = tide_refineRegressorFuncs.makerefinemask(
             lagstrengths,
             lagtimes,
             lagsigma,
@@ -606,7 +606,7 @@ class RegressorRefiner:
 
         Notes
         -----
-        The function utilizes the `tide_refineregressor.alignvoxels` function internally
+        The function utilizes the `tide_refineRegressorFuncs.alignvoxels` function internally
         and passes all relevant processing parameters including multiprocessing settings,
         detrending options, and padding parameters.
 
@@ -617,7 +617,7 @@ class RegressorRefiner:
         """
         # align timecourses to prepare for refinement
         self.LGR.info("aligning timecourses")
-        voxelsprocessed_rra = tide_refineregressor.alignvoxels(
+        voxelsprocessed_rra = tide_refineRegressorFuncs.alignvoxels(
             fmri_data_valid,
             fmritr,
             self.shiftedtcs,
@@ -645,7 +645,7 @@ class RegressorRefiner:
 
         This function applies pre-normalization to the padded and shifted time series
         data using the specified lag times, lag strengths, and R2 values. The
-        normalization is performed through the underlying tide_refineregressor.prenorm
+        normalization is performed through the underlying tide_refineRegressorFuncs.prenorm
         function with the appropriate internal parameters.
 
         Parameters
@@ -676,7 +676,7 @@ class RegressorRefiner:
         --------
         >>> prenormalize(lagtimes=[1, 2, 3], lagstrengths=[0.5, 0.3, 0.8], R2=[0.9, 0.85, 0.92])
         """
-        tide_refineregressor.prenorm(
+        tide_refineRegressorFuncs.prenorm(
             self.paddedshiftedtcs,
             self.refinemask,
             lagtimes,
@@ -755,7 +755,7 @@ class RegressorRefiner:
         (
             voxelsprocessed_rr,
             self.paddedoutputdata,
-        ) = tide_refineregressor.dorefine(
+        ) = tide_refineRegressorFuncs.dorefine(
             self.paddedshiftedtcs,
             self.refinemask,
             self.weights,
@@ -966,7 +966,7 @@ def refineRegressor(
     theprefilter: Any,
     previousnormoutputdata: Any,
     theinputdata: Any,
-    numpadtrs: Any,
+    numpadtrs: int,
     outputname: Any,
     nativefmrishape: Any,
     bidsbasedict: Any,

@@ -21,9 +21,8 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 
-from rapidtide.refineregressor import (
+from rapidtide.refineRegressorFuncs import (
     _packvoxeldata,
     _procOneVoxelTimeShift,
     _unpackvoxeldata,
@@ -1200,7 +1199,7 @@ def test_alignvoxels_partial_mask(debug=False):
 # ==================== Main test entry point ====================
 
 
-def test_refineregressor(debug=False):
+def test_refineRegressorFuncs(debug=False):
     test_packvoxeldata_basic(debug=debug)
     test_packvoxeldata_second_voxel(debug=debug)
     test_unpackvoxeldata_basic(debug=debug)
@@ -1242,4 +1241,4 @@ def test_refineregressor(debug=False):
 
 
 if __name__ == "__main__":
-    test_refineregressor(debug=True)
+    test_refineRegressorFuncs(debug=True)

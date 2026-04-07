@@ -45,27 +45,23 @@ def _procOneVoxelTimeShift(
     options = {
         "detrendorder": 1,
         "offsettime": 0.0,
-        "debug": False,
     }
     options.update(kwargs)
     detrendorder = int(options["detrendorder"])
     offsettime = options["offsettime"]
-    debug = options["debug"]
+    fmritc, lagtime, padtrs, fmritr, debug = voxelargs
     if debug:
         print(f"{detrendorder=} {offsettime=}")
-    (
-        fmritc,
-        lagtime,
-        padtrs,
-        fmritr,
-    ) = voxelargs
     if detrendorder > 0:
         normtc = tide_fit.detrend(fmritc, order=detrendorder, demean=True)
     else:
         normtc = fmritc + 0.0
     shifttr = -(-offsettime + lagtime) / fmritr  # lagtime is in seconds
     [shiftedtc, weights, paddedshiftedtc, paddedweights] = tide_resample.timeshift(
-        normtc, shifttr, padtrs
+        normtc,
+        shifttr,
+        padtrs,
+        debug=debug,
     )
     return vox, shiftedtc, weights, paddedshiftedtc, paddedweights
 
@@ -84,6 +80,7 @@ def _packvoxeldata(voxnum: int, voxelargs: tuple) -> list:
         - voxelargs[1]: 1D array of shape (n_voxels,) containing voxel labels or values
         - voxelargs[2]: Additional voxel parameter (type depends on context)
         - voxelargs[3]: Additional voxel parameter (type depends on context)
+        - voxelargs[4]: Additional voxel parameter (type depends on context)
 
     Returns
     -------
@@ -93,6 +90,7 @@ def _packvoxeldata(voxnum: int, voxelargs: tuple) -> list:
         - [1]: scalar value representing voxel label or value at voxnum
         - [2]: third element from voxelargs tuple
         - [3]: fourth element from voxelargs tuple
+        - [4]: fifth element from voxelargs tuple
 
     Notes
     -----
@@ -109,7 +107,13 @@ def _packvoxeldata(voxnum: int, voxelargs: tuple) -> list:
     >>> print(result)
     [[1, 2, 3], 10, 'param1', 'param2']
     """
-    return [(voxelargs[0])[voxnum, :], (voxelargs[1])[voxnum], voxelargs[2], voxelargs[3]]
+    return [
+        (voxelargs[0])[voxnum, :],
+        (voxelargs[1])[voxnum],
+        voxelargs[2],
+        voxelargs[3],
+        voxelargs[4],
+    ]
 
 
 def _unpackvoxeldata(retvals: tuple, voxelproducts: list) -> None:
@@ -291,26 +295,11 @@ def alignvoxels(
     `paddedweights` in-place. The `lagtimes` and `lagmask` arrays are used to determine the
     appropriate time shifts for each voxel.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from rapidtide import alignvoxels
-    >>> fmridata = np.random.rand(64, 64, 32, 100)
-    >>> fmritr = 2.0
-    >>> shiftedtcs = np.zeros_like(fmridata)
-    >>> weights = np.ones_like(fmridata)
-    >>> paddedshiftedtcs = np.zeros((64, 64, 32, 100 + 2*60))
-    >>> paddedweights = np.ones((64, 64, 32, 100 + 2*60))
-    >>> lagtimes = np.random.rand(64, 64, 32)
-    >>> lagmask = np.ones((64, 64, 32))
-    >>> volumetotal = alignvoxels(
-    ...     fmridata, fmritr, shiftedtcs, weights, paddedshiftedtcs, paddedweights,
-    ...     lagtimes, lagmask, nprocs=4
-    ... )
-    >>> print(f"Processed {volumetotal} voxels")
     """
     inputshape = np.shape(fmridata)
-    voxelargs = [fmridata, lagtimes, padtrs, fmritr]
+    voxelargs = [fmridata, lagtimes, padtrs, fmritr, debug]
+    if debug:
+        print(f"{len(voxelargs)=}")
     voxelfunc = _procOneVoxelTimeShift
     packfunc = _packvoxeldata
     unpackfunc = _unpackvoxeldata
@@ -322,7 +311,6 @@ def alignvoxels(
     ]
     if debug:
         print(f"alignvoxels: {inputshape}")
-        print(f"volumetotal: {volumetotal}")
 
     # timeshift the valid voxels
     # NOTE need to figure out how to use kwargs to pass extra arguments
@@ -343,6 +331,8 @@ def alignvoxels(
         offsettime=offsettime,
         debug=debug,
     )
+    if debug:
+        print(f"volumetotal: {volumetotal}")
 
     LGR.info(
         "Timeshift applied to " + str(int(volumetotal)) + " voxels",
