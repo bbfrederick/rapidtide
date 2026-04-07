@@ -633,6 +633,7 @@ class RegressorRefiner:
             showprogressbar=self.showprogressbar,
             chunksize=self.chunksize,
             padtrs=self.padtrs,
+            debug=self.debug,
             rt_floattype=self.rt_floattype,
         )
         return voxelsprocessed_rra

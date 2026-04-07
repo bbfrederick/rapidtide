@@ -1004,7 +1004,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     f"Error: number of labels in label file ({len(regionlabels)}) does not match the number of regions in the template ({numregions})."
                 )
                 sys.exit()
-        if optiondict["focaldebug"]:
+        if optiondict["debug"]:
             print(f"Region list: {regionlist}")
             print(f"Region labels: {regionlabels}")
 
@@ -1016,7 +1016,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             templatevoxels,
             normmethod="none",
             summarymethod="mean",
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
         tide_io.writebidstsv(
             f"{outputname}_desc-territory_timeseries",
@@ -1859,7 +1859,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             fastresamplerpadtime=optiondict["fastresamplerpadtime"],
             prewhitenregressor=False,
             prewhitenlags=optiondict["prewhitenlags"],
-            debug=optiondict["debug"],
+            debug=optiondict["focaldebug"],
         )
 
     # cycle over all voxels
@@ -4139,7 +4139,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     tide_util.savewisdom(optiondict["pyfftw_wisdom"])
 
     # show fft cache information
-    if optiondict["focaldebug"]:
+    if optiondict["debug"]:
         showfftcache()
 
     # do a final save of the options file
