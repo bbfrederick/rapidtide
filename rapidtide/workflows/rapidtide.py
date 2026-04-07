@@ -1598,7 +1598,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # prepare for fast resampling
     optiondict["fastresamplerpadtime"] = (
         max((-optiondict["lagmin"], optiondict["lagmax"]))
-        + 30.0
+        + optiondict["padseconds"]
         + np.abs(optiondict["offsettime"])
     )
     numpadtrs = int(optiondict["fastresamplerpadtime"] // fmritr)
@@ -1859,7 +1859,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             fastresamplerpadtime=optiondict["fastresamplerpadtime"],
             prewhitenregressor=False,
             prewhitenlags=optiondict["prewhitenlags"],
-            debug=optiondict["focaldebug"],
+            debug=optiondict["debug"],
         )
 
     # cycle over all voxels
