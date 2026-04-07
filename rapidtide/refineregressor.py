@@ -321,8 +321,8 @@ def alignvoxels(
         paddedweights,
     ]
     if debug:
-        print("alignvoxels: {inputshape}")
-        print("volumetotal: {volumetotal}")
+        print(f"alignvoxels: {inputshape}")
+        print(f"volumetotal: {volumetotal}")
 
     # timeshift the valid voxels
     # NOTE need to figure out how to use kwargs to pass extra arguments
