@@ -1251,7 +1251,7 @@ def timeshift(
     thelen = np.shape(inputtc)[0]
     thepaddedlen = thelen + 2 * padtrs
     if debug:
-        print("timesshift: thelen, padtrs, thepaddedlen=", thelen, padtrs, thepaddedlen)
+        print(f"timesshift: {thelen=}, {padtrs=}, {thepaddedlen=}")
     imag = 1.0j
 
     # initialize variables
