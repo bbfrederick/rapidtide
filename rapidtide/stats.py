@@ -1378,3 +1378,113 @@ def getmasksize(themask: NDArray) -> int:
 
     """
     return len(np.where(themask > 0)[0])
+
+
+def summarizevoxels(thevoxels: NDArray, method: str = "mean") -> float:
+    """
+    Summarize voxel data using specified statistical method.
+
+    Parameters
+    ----------
+    thevoxels : ndarray
+        Input voxel data array. Can be 1D or 2D, where 2D arrays are interpreted
+        as time series with shape (voxels, timepoints).
+    method : str, default="mean"
+        Summary method to apply. Options are:
+        - "mean": Compute mean along axis 0
+        - "sum": Compute sum along axis 0
+        - "median": Compute median along axis 0
+        - "std": Compute standard deviation along axis 0
+        - "MAD": Compute median absolute deviation along axis 0
+        - "CoV": Compute coefficient of variation (std/mean) along axis 0
+
+    Returns
+    -------
+    float or ndarray
+        Summary statistic(s) of the voxel data. Returns a scalar for 1D input
+        or array of statistics for 2D input along axis 0.
+
+    Notes
+    -----
+    - NaN values are converted to zero using `np.nan_to_num` before computation
+    - For coefficient of variation ("CoV"), the result is multiplied by 100 to
+      express as percentage
+    - When input is 1D, time dimension is treated as single timepoint
+    - The function handles both 1D and 2D input arrays appropriately
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> voxels = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> summarizevoxels(voxels, method="mean")
+    array([2.5, 3.5, 4.5])
+
+    >>> summarizevoxels(voxels, method="CoV")
+    array([40.82482905, 33.33333333, 25.        ])
+    """
+    theshape = thevoxels.shape
+    if len(theshape) > 1:
+        numtimepoints = theshape[1]
+    else:
+        numtimepoints = 1
+
+    if method == "CoV":
+        if numtimepoints > 1:
+            regionsummary = 100.0 * np.nan_to_num(
+                np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
+            )
+        else:
+            regionsummary = 100.0 * np.nan_to_num(np.std(thevoxels) / np.mean(thevoxels))
+    else:
+        if method == "mean":
+            themethod = np.mean
+        elif method == "sum":
+            themethod = np.sum
+        elif method == "median":
+            themethod = np.median
+        elif method == "std":
+            themethod = np.std
+        elif method == "MAD":
+            themethod = mad
+        else:
+            raise ValueError(f"illegal summary method {method} in summarizevoxels")
+
+        if numtimepoints > 1:
+            regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
+        else:
+            regionsummary = np.nan_to_num(themethod(thevoxels))
+    return regionsummary
+
+
+def regionstats(themap, fitmask, brainmask, graymask, whitemask, csfmask):
+    statsdict = {}
+    thestats = ["mean", "median", "std", "MAD"]
+    fitvoxels = themap[np.where(fitmask > 0)]
+    if brainmask is None:
+        brainvoxels = None
+    else:
+        brainvoxels = themap[np.where(fitmask * brainmask > 0)]
+    if graymask is None:
+        grayvoxels = None
+    else:
+        grayvoxels = themap[np.where(fitmask * graymask > 0)]
+    if whitemask is None:
+        whitevoxels = None
+    else:
+        whitevoxels = themap[np.where(fitmask * whitemask > 0)]
+    if csfmask is None:
+        csfvoxels = None
+    else:
+        csfvoxels = themap[np.where(fitmask * csfmask > 0)]
+    for thisstat in thestats:
+        statsdict["fit_" + thisstat] = summarizevoxels(fitvoxels, method=thisstat)
+        if brainvoxels is not None:
+            statsdict["brain_" + thisstat] = summarizevoxels(brainvoxels, method=thisstat)
+        if grayvoxels is not None:
+            statsdict["gray_" + thisstat] = summarizevoxels(grayvoxels, method=thisstat)
+        if whitevoxels is not None:
+            statsdict["white_" + thisstat] = summarizevoxels(whitevoxels, method=thisstat)
+        if csfvoxels is not None:
+            statsdict["csf_" + thisstat] = summarizevoxels(csfvoxels, method=thisstat)
+
+    return statsdict

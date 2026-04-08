@@ -3439,8 +3439,16 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # write the 3D maps that need to be remapped
     TimingLGR.info("Start saving maps")
     theheader = theinputdata.copyheader(numtimepoints=1)
+    maxtimestats = tide_stats.regionstats(
+        lagtimes,
+        fitmask,
+        internalbrainmask[validvoxels],
+        internalgraymask[validvoxels],
+        internalwhitemask[validvoxels],
+        internalcsfmask[validvoxels],
+    )
     savelist = [
-        (lagtimes, "maxtime", "map", "second", "Lag time in seconds"),
+        (lagtimes, "maxtime", "map", "second", "Lag time in seconds", maxtimestats),
         (
             timepercentile,
             "timepercentile",

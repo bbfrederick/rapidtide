@@ -792,7 +792,15 @@ def savemaplist(
     if debug:
         print("maplist:")
         print(maplist)
-    for themap, mapsuffix, maptype, theunit, thedescription in maplist:
+    for infotuple in maplist:
+        if len(infotuple) == 5:
+            themap, mapsuffix, maptype, theunit, thedescription = infotuple
+            extraheaderinfo = None
+        elif len(infotuple) == 6:
+            themap, mapsuffix, maptype, theunit, thedescription, extraheaderinfo = infotuple
+        else:
+            raise ValueError("Invalid maplist entry: ", infotuple)
+
         # copy the data into the output array, remapping if warranted
         if debug:
             print(f"processing map {mapsuffix}")
@@ -816,6 +824,9 @@ def savemaplist(
             bidsdict["Units"] = theunit
         if thedescription is not None:
             bidsdict["Description"] = thedescription
+        if extraheaderinfo is not None:
+            for key in extraheaderinfo:
+                bidsdict[key] = extraheaderinfo[key]
         if filetype == "text":
             writenpvecs(
                 outmaparray.reshape(destshape),
