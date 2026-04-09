@@ -1463,19 +1463,19 @@ def regionstats(themap, validvoxels, fitmask, brainmask, graymask, whitemask, cs
     if brainmask is None:
         brainvoxels = None
     else:
-        brainvoxels = themap[np.where(fitmask * brainmask > 0)]
+        brainvoxels = themap[np.where(fitmask * brainmask[validvoxels] > 0)]
     if graymask is None:
         grayvoxels = None
     else:
-        grayvoxels = themap[np.where(fitmask * graymask > 0)]
+        grayvoxels = themap[np.where(fitmask * graymask[validvoxels] > 0)]
     if whitemask is None:
         whitevoxels = None
     else:
-        whitevoxels = themap[np.where(fitmask * whitemask > 0)]
+        whitevoxels = themap[np.where(fitmask * whitemask[validvoxels] > 0)]
     if csfmask is None:
         csfvoxels = None
     else:
-        csfvoxels = themap[np.where(fitmask * csfmask > 0)]
+        csfvoxels = themap[np.where(fitmask * csfmask[validvoxels] > 0)]
     for thisstat in thestats:
         statsdict["fit_" + thisstat] = summarizevoxels(fitvoxels, method=thisstat)
         if brainvoxels is not None:
