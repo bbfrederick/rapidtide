@@ -3447,6 +3447,30 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         internalwhitemask[validvoxels],
         internalcsfmask[validvoxels],
     )
+    maxcorrstats = tide_stats.regionstats(
+        lagstrengths,
+        fitmask,
+        internalbrainmask[validvoxels],
+        internalgraymask[validvoxels],
+        internalwhitemask[validvoxels],
+        internalcsfmask[validvoxels],
+    )
+    maxwidthstats = tide_stats.regionstats(
+        lagsigma,
+        fitmask,
+        internalbrainmask[validvoxels],
+        internalgraymask[validvoxels],
+        internalwhitemask[validvoxels],
+        internalcsfmask[validvoxels],
+    )
+    maxcorrsqstats = tide_stats.regionstats(
+        R2,
+        fitmask,
+        internalbrainmask[validvoxels],
+        internalgraymask[validvoxels],
+        internalwhitemask[validvoxels],
+        internalcsfmask[validvoxels],
+    )
     savelist = [
         (lagtimes, "maxtime", "map", "second", "Lag time in seconds", maxtimestats),
         (
@@ -3456,14 +3480,15 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             "percent",
             "Percentile ranking of this voxels delay",
         ),
-        (lagstrengths, "maxcorr", "map", None, "Maximum correlation strength"),
-        (lagsigma, "maxwidth", "map", "second", "Width of corrrelation peak"),
+        (lagstrengths, "maxcorr", "map", None, "Maximum correlation strength", maxcorrstats),
+        (lagsigma, "maxwidth", "map", "second", "Width of corrrelation peak", maxwidthstats),
         (
             R2,
             "maxcorrsq",
             "map",
             None,
             "Squared maximum correlation strength (proportion of variance explained)",
+            maxcorrsqstats
         ),
         (fitmask, "corrfit", "mask", None, "Voxels where correlation value was fit"),
         (failreason, "corrfitfailreason", "info", None, "Result codes for correlation fit"),
@@ -3551,6 +3576,14 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # write the optional 3D maps that need to be remapped
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"]:
         if optiondict["dolinfitfilt"]:
+            varchangestats = tide_stats.regionstats(
+                varchange,
+                fitmask,
+                internalbrainmask[validvoxels],
+                internalgraymask[validvoxels],
+                internalwhitemask[validvoxels],
+                internalcsfmask[validvoxels],
+            )
             maplist = [
                 (
                     initialvariance,
@@ -3572,6 +3605,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     "map",
                     "percent",
                     "Change in inband variance after filtering, in percent",
+                    varchangestats
                 ),
                 # (
                 #    lfofilteredmeanvalue,
