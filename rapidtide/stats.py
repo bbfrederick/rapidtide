@@ -1456,7 +1456,7 @@ def summarizevoxels(thevoxels: NDArray, method: str = "mean") -> float:
     return regionsummary
 
 
-def regionstats(themap, fitmask, brainmask, graymask, whitemask, csfmask):
+def regionstats(themap, validvoxels, fitmask, brainmask, graymask, whitemask, csfmask):
     statsdict = {}
     thestats = ["mean", "median", "std", "MAD"]
     fitvoxels = themap[np.where(fitmask > 0)]

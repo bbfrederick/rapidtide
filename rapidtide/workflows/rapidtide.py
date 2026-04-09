@@ -544,7 +544,8 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             )
             anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
         else:
-            anatomicmasks.append(np.uint16(np.ones(nativespaceshape, dtype=np.uint16)))
+            anatomicmasks.append(None)
+            #anatomicmasks.append(np.uint16(np.ones(nativespaceshape, dtype=np.uint16)))
 
     brainmask = anatomicmasks[0]
     graymask = anatomicmasks[1]
@@ -3292,6 +3293,10 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     filter=theprefilter,
                     debug=optiondict["debug"],
                 )
+            if internalinvbrainmask is None:
+                regionalexcludemask = None
+            else:
+                regionalexcludemask = internalinvbrainmask[validvoxels]
             if graymask is not None:
                 grayvec, dummy = tide_mask.saveregionaltimeseries(
                     "gray matter",
@@ -3300,7 +3305,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     internalgraymask[validvoxels],
                     meanfreq,
                     outputname,
-                    excludemask=internalinvbrainmask[validvoxels],
+                    excludemask=regionalexcludemask,
                     filedesc="regionalpostfilter",
                     extrainfo="after sLFO removal",
                     suffix="_LFO",
@@ -3315,7 +3320,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     internalwhitemask[validvoxels],
                     meanfreq,
                     outputname,
-                    excludemask=internalinvbrainmask[validvoxels],
+                    excludemask=regionalexcludemask,
                     filedesc="regionalpostfilter",
                     extrainfo="after sLFO removal",
                     suffix="_LFO",
@@ -3330,7 +3335,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     internalcsfmask[validvoxels],
                     meanfreq,
                     outputname,
-                    excludemask=internalinvbrainmask[validvoxels],
+                    excludemask=regionalexcludemask,
                     filedesc="regionalpostfilter",
                     extrainfo="after sLFO removal",
                     suffix="_LFO",
@@ -3441,35 +3446,39 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     theheader = theinputdata.copyheader(numtimepoints=1)
     maxtimestats = tide_stats.regionstats(
         lagtimes,
+        validvoxels,
         fitmask,
-        internalbrainmask[validvoxels],
-        internalgraymask[validvoxels],
-        internalwhitemask[validvoxels],
-        internalcsfmask[validvoxels],
+        internalbrainmask,
+        internalgraymask,
+        internalwhitemask,
+        internalcsfmask,
     )
     maxcorrstats = tide_stats.regionstats(
         lagstrengths,
+        validvoxels
         fitmask,
-        internalbrainmask[validvoxels],
-        internalgraymask[validvoxels],
-        internalwhitemask[validvoxels],
-        internalcsfmask[validvoxels],
+        internalbrainmask,
+        internalgraymask,
+        internalwhitemask,
+        internalcsfmask,
     )
     maxwidthstats = tide_stats.regionstats(
         lagsigma,
+        validvoxels
         fitmask,
-        internalbrainmask[validvoxels],
-        internalgraymask[validvoxels],
-        internalwhitemask[validvoxels],
-        internalcsfmask[validvoxels],
+        internalbrainmask,
+        internalgraymask,
+        internalwhitemask,
+        internalcsfmask,
     )
     maxcorrsqstats = tide_stats.regionstats(
         R2,
+        validvoxels
         fitmask,
-        internalbrainmask[validvoxels],
-        internalgraymask[validvoxels],
-        internalwhitemask[validvoxels],
-        internalcsfmask[validvoxels],
+        internalbrainmask,
+        internalgraymask,
+        internalwhitemask,
+        internalcsfmask,
     )
     savelist = [
         (lagtimes, "maxtime", "map", "second", "Lag time in seconds", maxtimestats),
@@ -3578,11 +3587,12 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         if optiondict["dolinfitfilt"]:
             varchangestats = tide_stats.regionstats(
                 varchange,
+                validvoxels,
                 fitmask,
-                internalbrainmask[validvoxels],
-                internalgraymask[validvoxels],
-                internalwhitemask[validvoxels],
-                internalcsfmask[validvoxels],
+                internalbrainmask,
+                internalgraymask,
+                internalwhitemask,
+                internalcsfmask,
             )
             maplist = [
                 (
