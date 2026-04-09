@@ -3455,7 +3455,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     )
     maxcorrstats = tide_stats.regionstats(
         lagstrengths,
-        validvoxels
+        validvoxels,
         fitmask,
         internalbrainmask,
         internalgraymask,
@@ -3464,7 +3464,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     )
     maxwidthstats = tide_stats.regionstats(
         lagsigma,
-        validvoxels
+        validvoxels,
         fitmask,
         internalbrainmask,
         internalgraymask,
@@ -3473,7 +3473,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     )
     maxcorrsqstats = tide_stats.regionstats(
         R2,
-        validvoxels
+        validvoxels,
         fitmask,
         internalbrainmask,
         internalgraymask,
