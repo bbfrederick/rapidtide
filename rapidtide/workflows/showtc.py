@@ -228,6 +228,13 @@ def _get_parser() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument(
+        "--forcezerostart",
+        dest="forcezerostart",
+        action="store_true",
+        help="Set the start time of the plot to zero, regardless of the actual time",
+        default=False,
+    )
+    parser.add_argument(
         "--numskip",
         dest="numskip",
         metavar="NUM",
@@ -596,6 +603,10 @@ def showtc(args: Namespace) -> None:
         xrange = (overallxmin, overallxmax)
     else:
         xrange = (np.max([overallxmin, args.thestarttime]), np.min([overallxmax, args.theendtime]))
+    if args.forcezerostart:
+        displayoffset = xrange[0]
+    else:
+        displayoffset = 0.0
     ymins = []
     ymaxs = []
     for thevec in yvecs:
@@ -690,7 +701,7 @@ def showtc(args: Namespace) -> None:
             ax = axlist[i]
         if haveseaborn:
             sns.lineplot(
-                x=xvecs[i],
+                x=xvecs[i] - displayoffset,
                 y=yvecs[i],
                 ax=ax,
                 color=colorlist[i],
@@ -699,7 +710,7 @@ def showtc(args: Namespace) -> None:
             )
         else:
             ax.plot(
-                xvecs[i],
+                xvecs[i] - displayoffset,
                 yvecs[i],
                 color=colorlist[i],
                 label=linelabels[i],
@@ -707,7 +718,7 @@ def showtc(args: Namespace) -> None:
             )
         if dolegend:
             ax.legend(fontsize=thelegendfontsize, loc=legendloc)
-        ax.set_xlim(xrange)
+        ax.set_xlim((xrange[0] - displayoffset, xrange[1] - displayoffset))
         if linky:
             # print(yrange)
             ax.set_ylim(yrange)
