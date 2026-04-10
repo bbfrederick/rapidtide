@@ -545,7 +545,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             anatomicmasks[-1] = np.uint16(np.where(anatomicmasks[-1] > 0.1, 1, 0))
         else:
             anatomicmasks.append(None)
-            #anatomicmasks.append(np.uint16(np.ones(nativespaceshape, dtype=np.uint16)))
+            # anatomicmasks.append(np.uint16(np.ones(nativespaceshape, dtype=np.uint16)))
 
     brainmask = anatomicmasks[0]
     graymask = anatomicmasks[1]
@@ -3497,7 +3497,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             "map",
             None,
             "Squared maximum correlation strength (proportion of variance explained)",
-            maxcorrsqstats
+            maxcorrsqstats,
         ),
         (fitmask, "corrfit", "mask", None, "Voxels where correlation value was fit"),
         (failreason, "corrfitfailreason", "info", None, "Result codes for correlation fit"),
@@ -3615,7 +3615,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                     "map",
                     "percent",
                     "Change in inband variance after filtering, in percent",
-                    varchangestats
+                    varchangestats,
                 ),
                 # (
                 #    lfofilteredmeanvalue,
@@ -3626,6 +3626,15 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 # ),
             ]
             if optiondict["saveminimumsLFOfiltfiles"]:
+                lfofilterR2stats = tide_stats.regionstats(
+                    r2value,
+                    validvoxels,
+                    fitmask,
+                    internalbrainmask,
+                    internalgraymask,
+                    internalwhitemask,
+                    internalcsfmask,
+                )
                 maplist += [
                     (
                         r2value,
@@ -3633,6 +3642,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                         "map",
                         None,
                         "Squared R value of the sLFO fit (proportion of variance explained)",
+                        lfofilterR2stats,
                     ),
                 ]
             if optiondict["savenormalsLFOfiltfiles"]:
