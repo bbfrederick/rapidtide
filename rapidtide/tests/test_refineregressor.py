@@ -56,12 +56,14 @@ def test_packvoxeldata_basic(debug=False):
     labels = np.array([10.0, 20.0])
     extra1 = "param1"
     extra2 = "param2"
+    extra3 = "param3"
 
-    result = _packvoxeldata(0, (features, labels, extra1, extra2))
+    result = _packvoxeldata(0, (features, labels, extra1, extra2, extra3))
     np.testing.assert_array_equal(result[0], [1.0, 2.0, 3.0])
     assert result[1] == 10.0
     assert result[2] == "param1"
     assert result[3] == "param2"
+    assert result[4] == "param3"
 
     if debug:
         print(f"packvoxeldata result: {result}")
@@ -71,7 +73,7 @@ def test_packvoxeldata_second_voxel(debug=False):
     features = np.array([[1.0, 2.0], [4.0, 5.0], [7.0, 8.0]])
     labels = np.array([10.0, 20.0, 30.0])
 
-    result = _packvoxeldata(2, (features, labels, 0.5, 2.0))
+    result = _packvoxeldata(2, (features, labels, 0.5, 2.0, 5.0))
     np.testing.assert_array_equal(result[0], [7.0, 8.0])
     assert result[1] == 30.0
 
