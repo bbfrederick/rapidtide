@@ -253,6 +253,11 @@ class VoxelData:
     filetype = None
     resident = False
 
+    def __new__(cls, *args, **kwargs):
+        # Correctly create and return the instance
+        instance = super().__new__(cls)
+        return instance
+
     def __init__(
         self,
         filename: str,
