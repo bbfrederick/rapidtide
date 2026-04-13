@@ -391,7 +391,7 @@ def test_getfilterbandfreqs_valid_and_errors():
     assert getfilterbandfreqs("lfo", asrange=True) == "0.01-0.15Hz"
     with pytest.raises(ValueError):
         getfilterbandfreqs("notaband")
-    with pytest.raises(SystemExit):
+    with pytest.raises(ValueError):
         getfilterbandfreqs("lfo", species="mouse")
 
 
