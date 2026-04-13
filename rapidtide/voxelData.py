@@ -251,6 +251,7 @@ class VoxelData:
     validvoxels = None
     cifti_hdr = None
     filetype = None
+    fixNan = True
     resident = False
 
     def __new__(cls, *args, **kwargs):
