@@ -3022,6 +3022,13 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             shared=optiondict["sharedmem"],
             name=f"filtereddata_{optiondict['pid']}",
         )
+        if optiondict["refinedelay"]:
+            refinedfiltereddata, refinedfiltereddata_shm = tide_util.allocarray(
+                internalvalidfmrishape,
+                rt_outfloattype,
+                shared=optiondict["sharedmem"],
+                name=f"refinedfiltereddata_{optiondict['pid']}",
+            )
         if optiondict["sharedmem"]:
             ramlocation = "in shared memory"
         else:
@@ -3800,6 +3807,115 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             cifti_hdr=theinputdata.cifti_hdr,
         )
 
+        # save remaining sLFO filter files before overwriting them
+        # now save all the files that are of the same length as the input data file and masked
+        if outfmriarray is None:
+            outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
+        theheader = theinputdata.copyheader(numtimepoints=np.shape(outfmriarray)[1], tr=fmritr)
+        maplist = []
+        if optiondict["saveallsLFOfiltfiles"] and (
+            optiondict["dolinfitfilt"] or optiondict["docvrmap"]
+        ):
+            if optiondict["regressderivs"] > 0:
+                maplist += [
+                    (
+                        regressorset[:, :, 0],
+                        "lfofilterEV",
+                        "bold",
+                        None,
+                        "Shifted sLFO regressor to filter",
+                    ),
+                ]
+                for thederiv in range(1, optiondict["regressderivs"] + 1):
+                    maplist += [
+                        (
+                            regressorset[:, :, thederiv],
+                            f"lfofilterEVDeriv{thederiv}",
+                            "bold",
+                            None,
+                            f"Time derivative {thederiv} of shifted sLFO regressor",
+                        ),
+                    ]
+            else:
+                maplist += [
+                    (
+                        regressorset,
+                        "lfofilterEV",
+                        "bold",
+                        None,
+                        "Shifted sLFO regressor to filter",
+                    ),
+                ]
+
+        if (optiondict["passes"] > 1) or optiondict["dofinalrefine"]:
+            if optiondict["savelagregressors"]:
+                maplist += [
+                    (
+                        (theRegressorRefiner.getpaddedshiftedtcs())[:, numpadtrs:-numpadtrs],
+                        "shiftedtcs",
+                        "bold",
+                        None,
+                        "The filtered input fMRI data, in voxels used for refinement, time shifted by the negated delay in every voxel so that the moving blood component is aligned.",
+                    ),
+                ]
+
+        if optiondict["dolinfitfilt"]:
+            if optiondict["saveminimumsLFOfiltfiles"]:
+                maplist += [
+                    (
+                        filtereddata,
+                        "lfofilterCleaned",
+                        "bold",
+                        None,
+                        "fMRI data with sLFO signal filtered out",
+                    ),
+                ]
+            if optiondict["savemovingsignal"]:
+                maplist += [
+                    (
+                        movingsignal,
+                        "lfofilterRemoved",
+                        "bold",
+                        None,
+                        "sLFO signal filtered out of this voxel",
+                    ),
+                ]
+
+                # save a pseudofile if we're going to
+                if optiondict["makepseudofile"]:
+                    print("reading mean image")
+                    meanfile = f"{outputname}_desc-mean_map.nii.gz"
+                    (
+                        mean_input,
+                        mean,
+                        mean_header,
+                        mean_dims,
+                        mean_sizes,
+                    ) = tide_io.readfromnifti(meanfile)
+                    if not tide_io.checkspacematch(theheader, mean_header):
+                        raise ValueError("mean dimensions do not match fmri dimensions")
+                    if optiondict["debug"]:
+                        print(f"{mean.shape=}")
+                    mean_spacebytime = mean.reshape((numspatiallocs))
+                    if optiondict["debug"]:
+                        print(f"{mean_spacebytime.shape=}")
+                    pseudofile = mean_spacebytime[validvoxels, None] + movingsignal[:, :]
+                    maplist.append((pseudofile, "pseudofile", "bold", None, None))
+
+        # save maps in the current output list
+        if len(maplist) > 0:
+            tide_io.savemaplist(
+                outputname,
+                maplist,
+                validvoxels,
+                nativefmrishape,
+                theheader,
+                bidsbasedict,
+                filetype=theinputdata.filetype,
+                rt_floattype=rt_floattype,
+                cifti_hdr=theinputdata.cifti_hdr,
+            )
+
         if optiondict["refinedelay"]:
             # filter the fmri data to the lfo band
             print("filtering fmri_data to sLFO band")
@@ -4046,108 +4162,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         tide_util.cleanup_shm(gaussout_shm)
         tide_util.cleanup_shm(corrout_shm)
         tide_util.cleanup_shm(outcorrarray_shm)
-
-    # now save all the files that are of the same length as the input data file and masked
-    if outfmriarray is None:
-        outfmriarray = np.zeros(internalfmrishape, dtype=rt_floattype)
-    theheader = theinputdata.copyheader(numtimepoints=np.shape(outfmriarray)[1], tr=fmritr)
-    maplist = []
-    if optiondict["saveallsLFOfiltfiles"] and (
-        optiondict["dolinfitfilt"] or optiondict["docvrmap"]
-    ):
-        if optiondict["regressderivs"] > 0:
-            maplist += [
-                (
-                    regressorset[:, :, 0],
-                    "lfofilterEV",
-                    "bold",
-                    None,
-                    "Shifted sLFO regressor to filter",
-                ),
-            ]
-            for thederiv in range(1, optiondict["regressderivs"] + 1):
-                maplist += [
-                    (
-                        regressorset[:, :, thederiv],
-                        f"lfofilterEVDeriv{thederiv}",
-                        "bold",
-                        None,
-                        f"Time derivative {thederiv} of shifted sLFO regressor",
-                    ),
-                ]
-        else:
-            maplist += [
-                (regressorset, "lfofilterEV", "bold", None, "Shifted sLFO regressor to filter"),
-            ]
-
-    if (optiondict["passes"] > 1) or optiondict["dofinalrefine"]:
-        if optiondict["savelagregressors"]:
-            maplist += [
-                (
-                    (theRegressorRefiner.getpaddedshiftedtcs())[:, numpadtrs:-numpadtrs],
-                    "shiftedtcs",
-                    "bold",
-                    None,
-                    "The filtered input fMRI data, in voxels used for refinement, time shifted by the negated delay in every voxel so that the moving blood component is aligned.",
-                ),
-            ]
-
-    if optiondict["dolinfitfilt"]:
-        if optiondict["saveminimumsLFOfiltfiles"]:
-            maplist += [
-                (
-                    filtereddata,
-                    "lfofilterCleaned",
-                    "bold",
-                    None,
-                    "fMRI data with sLFO signal filtered out",
-                ),
-            ]
-        if optiondict["savemovingsignal"]:
-            maplist += [
-                (
-                    movingsignal,
-                    "lfofilterRemoved",
-                    "bold",
-                    None,
-                    "sLFO signal filtered out of this voxel",
-                ),
-            ]
-
-            # save a pseudofile if we're going to
-            if optiondict["makepseudofile"]:
-                print("reading mean image")
-                meanfile = f"{outputname}_desc-mean_map.nii.gz"
-                (
-                    mean_input,
-                    mean,
-                    mean_header,
-                    mean_dims,
-                    mean_sizes,
-                ) = tide_io.readfromnifti(meanfile)
-                if not tide_io.checkspacematch(theheader, mean_header):
-                    raise ValueError("mean dimensions do not match fmri dimensions")
-                if optiondict["debug"]:
-                    print(f"{mean.shape=}")
-                mean_spacebytime = mean.reshape((numspatiallocs))
-                if optiondict["debug"]:
-                    print(f"{mean_spacebytime.shape=}")
-                pseudofile = mean_spacebytime[validvoxels, None] + movingsignal[:, :]
-                maplist.append((pseudofile, "pseudofile", "bold", None, None))
-
-    # save maps in the current output list
-    if len(maplist) > 0:
-        tide_io.savemaplist(
-            outputname,
-            maplist,
-            validvoxels,
-            nativefmrishape,
-            theheader,
-            bidsbasedict,
-            filetype=theinputdata.filetype,
-            rt_floattype=rt_floattype,
-            cifti_hdr=theinputdata.cifti_hdr,
-        )
 
     # clean up
     if optiondict["passes"] > 1:

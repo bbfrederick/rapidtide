@@ -1,5 +1,14 @@
 # Release history
 
+## Version 3.1.10 (4/13/26)
+* (rapidtide) Fixed a critical bug in filtered data output - the XXX_desc-lfofilterCleaned_bold.nii.gz map (and a few others) were incorrect.  Thank you to Jakub Szewczyk (https://github.com/themeo) for finding this! Closes https://github.com/bbfrederick/rapidtide/issues/263.
+* (rapidtide) Added summary statistics to some json sidecar files.
+* (rapidtide) Corrected an assumption about dataset lengths that caused crashes with very short datasets.	
+* (rapidtide) Fixed a few rare crashes.
+* (filtnifti) Cleaned up the calling interface and added some new capabilities.
+* (VoxelData) When reading input files, fix NaNs by default.
+* (package) Accepted several dependabot PRs.
+
 ## Version 3.1.9 (3/19/26)
 * (rapidtide) There's a new optional despeckling procedure, which you can turn on with ``--robustdelayfit``.  It uses a region growing method to try to ensure consistency in delay maps while allowing for discontinuities between vascular territories.
 * (rapidtide) Added some infrastructure for territory processing.
