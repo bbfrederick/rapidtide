@@ -144,7 +144,7 @@ def test_procOneVoxelTimeShift_zero_shift(debug=False):
     padtrs = 10
     fmritr = 2.0
 
-    voxelargs = (fmritc, lagtime, padtrs, fmritr)
+    voxelargs = (fmritc, lagtime, padtrs, fmritr, debug)
     vox, shiftedtc, wts, paddedshiftedtc, paddedwts = _procOneVoxelTimeShift(
         0, voxelargs, detrendorder=0, offsettime=0.0
     )
@@ -167,7 +167,7 @@ def test_procOneVoxelTimeShift_nonzero_shift(debug=False):
     padtrs = 20
     fmritr = 1.0
 
-    voxelargs = (fmritc, lagtime, padtrs, fmritr)
+    voxelargs = (fmritc, lagtime, padtrs, fmritr, debug)
     vox, shiftedtc, wts, paddedshiftedtc, paddedwts = _procOneVoxelTimeShift(
         5, voxelargs, detrendorder=0
     )
@@ -190,7 +190,7 @@ def test_procOneVoxelTimeShift_detrending(debug=False):
     padtrs = 10
     fmritr = 2.0
 
-    voxelargs = (fmritc, lagtime, padtrs, fmritr)
+    voxelargs = (fmritc, lagtime, padtrs, fmritr, debug)
     _, shiftedtc, _, _, _ = _procOneVoxelTimeShift(0, voxelargs, detrendorder=1, offsettime=0.0)
 
     # After detrending, mean should be near zero
@@ -208,7 +208,7 @@ def test_procOneVoxelTimeShift_with_offset(debug=False):
     padtrs = 20
     fmritr = 1.0
 
-    voxelargs = (fmritc, lagtime, padtrs, fmritr)
+    voxelargs = (fmritc, lagtime, padtrs, fmritr, debug)
     _, shifted_no_offset, _, _, _ = _procOneVoxelTimeShift(
         0, voxelargs, detrendorder=0, offsettime=0.0
     )
