@@ -389,7 +389,7 @@ def test_getfilterbandfreqs_valid_and_errors():
     assert lowerstop < lowerpass
     assert upperstop > upperpass
     assert getfilterbandfreqs("lfo", asrange=True) == "0.01-0.15Hz"
-    with pytest.raises(SystemExit):
+    with pytest.raises(ValueError):
         getfilterbandfreqs("notaband")
     with pytest.raises(SystemExit):
         getfilterbandfreqs("lfo", species="mouse")
@@ -423,11 +423,11 @@ def test_noncausalfilter_accessors_and_setfreq_validation():
     filt.setfreqs(0.1, 0.2, 0.4, 0.5)
     assert filt.getfreqs() == pytest.approx((0.1, 0.2, 0.4, 0.5))
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(ValueError):
         filt.setfreqs(0.2, 0.1, 0.4, 0.5)
-    with pytest.raises(SystemExit):
+    with pytest.raises(ValueError):
         filt.setfreqs(0.1, 0.2, 0.5, 0.4)
-    with pytest.raises(SystemExit):
+    with pytest.raises(ValueError):
         filt.setfreqs(0.1, 0.5, 0.4, 0.6)
 
 
@@ -465,7 +465,7 @@ def test_window_functions_and_dispatch():
     mrect = mRect(32)
     assert mrect.shape == (32,)
     assert np.max(mrect) == pytest.approx(1.0)
-    with pytest.raises(SystemExit):
+    with pytest.raises(ValueError):
         windowfunction(length, type="not-a-window")
 
 
@@ -527,9 +527,9 @@ def test_transfer_functions_and_signal_domain_helpers():
         assert tf.shape == x.shape
         assert np.isfinite(tf).all()
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(ValueError):
         getlptransfunc(fs, x, upperpass=None)
-    with pytest.raises(SystemExit):
+    with pytest.raises(ValueError):
         gethptransfunc(fs, x, lowerpass=None)
 
     y = transferfuncfilt(x, lp_fft)

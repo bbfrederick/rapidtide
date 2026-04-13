@@ -32,12 +32,14 @@ def _make_default_args(
     outputfilename="dummy_output.nii.gz",
     lowestfreq=0.01,
     highestfreq=0.1,
+    padseconds=30.0,
 ):
     return argparse.Namespace(
         inputfilename=inputfilename,
         outputfilename=outputfilename,
         lowestfreq=lowestfreq,
         highestfreq=highestfreq,
+        padseconds=padseconds,
     )
 
 
