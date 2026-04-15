@@ -88,7 +88,7 @@ numpy==1.26.4
     #   nilearn
     #   pandas
     #   patsy
-    #   pyarrow
+    #   pyfftw
     #   pyqtgraph
     #   pywavelets
     #   rapidtide (../pyproject.toml)
@@ -121,18 +121,17 @@ pillow==12.2.0
     #   matplotlib
     #   scikit-image
     #   sphinx-gallery
-pyarrow==17.0.0; python_version < "3.13"
-    # via rapidtide (../pyproject.toml)
-pyarrow>=19.0.0; python_version >= "3.13"
+pyarrow==23.0.1
     # via rapidtide (../pyproject.toml)
 pybtex==0.25.1
     # via
     #   pybtex-docutils
+    #   rapidtide (../pyproject.toml)
     #   sphinxcontrib-bibtex
 pybtex-docutils==1.0.3
     # via sphinxcontrib-bibtex
 pyfftw==0.15.1
-    # via rapidtide (pyproject.toml)
+    # via rapidtide (../pyproject.toml)
 pygments==2.18.0
     # via sphinx
 pyparsing==3.2.0
@@ -177,12 +176,9 @@ scipy==1.15.2
     #   scikit-image
     #   scikit-learn
     #   statsmodels
-setuptools>=70
-    # required for pkg_resources (imported by pybtex)
 six==1.16.0
     # via
     #   patsy
-    #   pybtex
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
