@@ -874,7 +874,7 @@
 
 ## Version 2.2.0 (3/11/22)
 * (rapidtide) Major rethink of despeckling.  Despeckling no longer causes negative correlation values when bipolar fitting is not enabled, and voxel parameters are only updated in a despeckled voxel if the correlation fit succeeds.  This results in better fits without mysteriously unfit voxels.
-* (showxy) Bland-Altman plots can now use alternative formatting, as per Krouwer, J. S. Why Bland–Altman plots should use X, not (Y+X)/2 when X is a reference method. Stat Med 27, 778–780 (2008).
+* (showxy) Bland-Altman plots can now use alternative formatting, as per Krouwer, J. S. Why Bland-Altman plots should use X, not (Y+X)/2 when X is a reference method. Stat Med 27, 778780 (2008).
 * (fingerprint) This program is now substantially more useful, working on 4D input files.  Output files are more convenient as well.
 * (cleandirs) Cleandirs now keeps cleaning until it runs out of old installations to remove.
  
@@ -966,7 +966,7 @@ Also - all outputs now conform to BIDS naming conventions to improve compatibili
 * (rapidtide) Did some prep work to implement echo cancellation.
 * (rapidtide) Added workaround for occasional MLE PCA component estimation failure (this seems to be an unresolved scikit-learn problem as of 0.23.2)
 * (rapidtide) Significant enhancement to PCA refinement options.
-* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154–165 (2019).
+* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154-165 (2019).
 * (rapidtide) The PCA refinement algorithm has been improved to match the method described in Champagne, et al., and is now the default.
 * (rapidtide, io) Significant improvement to CIFTI handling - now properly read and write parcellated scalars and time series.
 * (rapidtide) Completely revamped CIFTI I/O.  Should now read and write native CIFTI2 files (do not need to convert to NIFTI-2 in workbench).
@@ -1220,7 +1220,7 @@ Miscellaneous changes:
 * (package) Renamed some test data for consistency.
 
 ## Version 2.0alpha7 (12/1/20)
-* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154–165 (2019).
+* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154-165 (2019).
 * (rapidtide) The PCA refinement algorithm has been improved to match the method described in Champagne, et al., and is now the default.
 
 ## Version 2.0alpha6 (11/30/20)
