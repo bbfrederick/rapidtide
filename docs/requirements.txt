@@ -131,7 +131,7 @@ pybtex==0.25.1
     #   sphinxcontrib-bibtex
 pybtex-docutils==1.0.3
     # via sphinxcontrib-bibtex
-pyfftw=0.15.1
+pyfftw==0.15.1
     # via rapidtide (pyproject.toml)
 pygments==2.18.0
     # via sphinx

@@ -90,7 +90,7 @@ pillow==12.2.0
     #   scikit-image
 pyarrow==17.0.0
     # via rapidtide (pyproject.toml)
-pyfftw=0.15.1
+pyfftw==0.15.1
     # via rapidtide (pyproject.toml)
 pyparsing==3.2.0
     # via matplotlib
