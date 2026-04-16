@@ -4,23 +4,15 @@ import numpy as np
 import rapidtide.regionops as tide_regionops
 import rapidtide.io as tide_io
 
-# Create a synthetic 3D shape (e.g., a sphere)
-X, Y, Z = 64, 64, 64
-zz, yy, xx = np.meshgrid(
-    np.linspace(-1, 1, X),
-    np.linspace(-1, 1, Y),
-    np.linspace(-1, 1, Z),
-    indexing="ij",
-)
-mask = (xx**2 + yy**2 + zz**2) <= 0.9**2
+infile, infile_data, infile_hdr, infiledims, infilesizes = tide_io.readfromnifti("/opt/fsl-latest/data/standard/MNI152_T1_2mm_brain_mask.nii.gz")
 
 labels = tide_regionops.partition_3d(
-    mask,
-    n_regions=12,
+    infile_data.astype(np.uint16),
+    n_regions=64,
     connectivity=6,
     seed=42,
     balance_alpha=0.5,  # encourages similar volumes
     jitter=0.1          # reduces grid artifacts
 )
 
-tide_io.dumparraytonifti(labels, "../dst/spherelabels")
+tide_io.savetonifti(labels, infile_hdr, "../dst/MNIrandom_12")

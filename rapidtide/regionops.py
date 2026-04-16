@@ -16,9 +16,11 @@
 #   limitations under the License.
 #
 #
-import numpy as np
 from collections import deque
-from typing import Tuple, Optional
+from typing import Optional, Tuple
+
+import numpy as np
+
 
 def partition_3d(
     mask: np.ndarray,
@@ -29,11 +31,11 @@ def partition_3d(
     jitter: float = 0.0,
 ) -> np.ndarray:
     """
-    Partition a 3D boolean mask into N random simply connected regions.
+    Partition a 3D mask into N random simply connected regions.
 
     Parameters
     ----------
-    mask : (Z, Y, X) bool array
+    mask : (X, Y, Z) uint16 array
         True for voxels inside the domain.
     n_regions : int
         Number of regions.
@@ -49,43 +51,45 @@ def partition_3d(
 
     Returns
     -------
-    labels : (Z, Y, X) int array
+    labels : (X, Y, Z) int array
         Region labels in [0, n_regions-1], -1 outside mask.
     """
-    assert mask.ndim == 3 and mask.dtype == bool
+    assert mask.ndim == 3 and mask.dtype == np.uint16
     rng = np.random.default_rng(seed)
 
-    Z, Y, X = mask.shape
-    labels = -np.ones((Z, Y, X), dtype=np.int32)
+    X, Y, Z = mask.shape
+    labels = -np.ones((X, Y, Z), dtype=np.int32)
 
     # --- neighbor offsets ---
     if connectivity == 6:
-        nbrs = np.array([(1,0,0),(-1,0,0),(0,1,0),(0,-1,0),(0,0,1),(0,0,-1)], dtype=int)
+        nbrs = np.array(
+            [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)], dtype=int
+        )
     elif connectivity == 18:
         nbrs = []
-        for dz in (-1,0,1):
-            for dy in (-1,0,1):
-                for dx in (-1,0,1):
-                    if (dz,dy,dx) != (0,0,0) and (abs(dz)+abs(dy)+abs(dx) <= 2):
-                        nbrs.append((dz,dy,dx))
+        for dz in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    if (dx, dy, dz) != (0, 0, 0) and (abs(dz) + abs(dy) + abs(dx) <= 2):
+                        nbrs.append((dx, dy, dz))
         nbrs = np.array(nbrs, dtype=int)
     elif connectivity == 26:
         nbrs = []
-        for dz in (-1,0,1):
-            for dy in (-1,0,1):
-                for dx in (-1,0,1):
-                    if (dz,dy,dx) != (0,0,0):
-                        nbrs.append((dz,dy,dx))
+        for dz in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    if (dx, dy, dz) != (0, 0, 0):
+                        nbrs.append((dx, dy, dz))
         nbrs = np.array(nbrs, dtype=int)
     else:
         raise ValueError("connectivity must be 6, 18, or 26")
 
     # --- helper to check bounds ---
-    def in_bounds(z, y, x):
+    def in_bounds(x, y, z):
         return (0 <= z < Z) and (0 <= y < Y) and (0 <= x < X)
 
     # --- choose N random seed voxels inside mask ---
-    coords = np.argwhere(mask)
+    coords = np.argwhere(mask > 0)
     if len(coords) < n_regions:
         raise ValueError("mask has fewer voxels than n_regions")
 
@@ -96,14 +100,14 @@ def partition_3d(
     frontier = deque()
     region_sizes = np.zeros(n_regions, dtype=np.int64)
 
-    for i, (z, y, x) in enumerate(seeds):
-        labels[z, y, x] = i
+    for i, (x, y, z) in enumerate(seeds):
+        labels[x, y, z] = i
         region_sizes[i] = 1
         # push neighbors to frontier
-        for dz, dy, dx in nbrs:
-            zz, yy, xx = z + dz, y + dy, x + dx
-            if in_bounds(zz, yy, xx) and mask[zz, yy, xx] and labels[zz, yy, xx] == -1:
-                frontier.append((zz, yy, xx))
+        for dx, dy, dz in nbrs:
+            xx, yy, zz = x + dx, y + dy, z + dz
+            if in_bounds(xx, yy, zz) and mask[xx, yy, zz] and labels[xx, yy, zz] == -1:
+                frontier.append((xx, yy, zz))
 
     # optional jitter: maintain a parallel random priority queue via shuffling chunks
     def maybe_shuffle(q: deque, prob=0.1):
@@ -115,22 +119,22 @@ def partition_3d(
 
     # --- growth loop ---
     while frontier:
-        z, y, x = frontier.popleft()
-        if labels[z, y, x] != -1:
+        x, y, z = frontier.popleft()
+        if labels[x, y, z] != -1:
             continue
 
         # gather neighboring labels
         neigh_labels = []
-        for dz, dy, dx in nbrs:
-            zz, yy, xx = z + dz, y + dy, x + dx
-            if in_bounds(zz, yy, xx):
-                li = labels[zz, yy, xx]
+        for dx, dy, dz in nbrs:
+            xx, yy, zz = x + dx, y + dy, z + dz
+            if in_bounds(xx, yy, zz):
+                li = labels[xx, yy, zz]
                 if li != -1:
                     neigh_labels.append(li)
 
         if not neigh_labels:
             # not yet reachable; re-enqueue
-            frontier.append((z, y, x))
+            frontier.append((x, y, z))
             continue
 
         # unique labels
@@ -145,14 +149,18 @@ def partition_3d(
         else:
             chosen = uniq[rng.integers(len(uniq))]
 
-        labels[z, y, x] = int(chosen)
+        labels[x, y, z] = int(chosen)
         region_sizes[chosen] += 1
 
         # expand frontier
-        for dz, dy, dx in nbrs:
-            zz, yy, xx = z + dz, y + dy, x + dx
-            if in_bounds(zz, yy, xx) and mask[zz, yy, xx] and labels[zz, yy, xx] == -1:
-                frontier.append((zz, yy, xx))
+        for dx, dy, dz in nbrs:
+            xx, yy, zz = (
+                x + dx,
+                y + dy,
+                z + dz,
+            )
+            if in_bounds(xx, yy, zz) and mask[xx, yy, zz] and labels[xx, yy, zz] == -1:
+                frontier.append((xx, yy, zz))
 
         maybe_shuffle(frontier)
 
