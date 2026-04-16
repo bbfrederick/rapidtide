@@ -17,9 +17,95 @@
 #
 #
 from collections import deque
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
+
+
+def _neighbor_offsets(connectivity: int) -> np.ndarray:
+    """Return integer neighbor offsets for a requested 3D connectivity."""
+    if connectivity == 6:
+        return np.array(
+            [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)], dtype=int
+        )
+    if connectivity == 18:
+        nbrs = []
+        for dz in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    if (dx, dy, dz) != (0, 0, 0) and (abs(dz) + abs(dy) + abs(dx) <= 2):
+                        nbrs.append((dx, dy, dz))
+        return np.array(nbrs, dtype=int)
+    if connectivity == 26:
+        nbrs = []
+        for dz in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    if (dx, dy, dz) != (0, 0, 0):
+                        nbrs.append((dx, dy, dz))
+        return np.array(nbrs, dtype=int)
+    raise ValueError("connectivity must be 6, 18, or 26")
+
+
+def _coerce_tensor_field(
+    anisotropy_field: Optional[np.ndarray], expected_shape: tuple[int, int, int]
+) -> Optional[np.ndarray]:
+    """
+    Convert a tensor field into an ``(X, Y, Z, 3, 3)`` array.
+
+    Accepted input layouts are ``(X, Y, Z, 3, 3)``, ``(X, Y, Z, 6)`` with
+    ``[xx, yy, zz, xy, xz, yz]`` ordering, and ``(X, Y, Z, 9)`` storing the
+    flattened 3x3 tensor.
+    """
+    if anisotropy_field is None:
+        return None
+
+    field = np.asarray(anisotropy_field, dtype=np.float64)
+    if field.shape[:3] != expected_shape:
+        raise ValueError(
+            f"anisotropy_field spatial shape {field.shape[:3]} does not match mask shape "
+            f"{expected_shape}"
+        )
+
+    if field.ndim == 5 and field.shape[3:] == (3, 3):
+        return field
+
+    tensor_field = np.zeros(expected_shape + (3, 3), dtype=np.float64)
+    if field.ndim == 4 and field.shape[3] == 6:
+        tensor_field[..., 0, 0] = field[..., 0]
+        tensor_field[..., 1, 1] = field[..., 1]
+        tensor_field[..., 2, 2] = field[..., 2]
+        tensor_field[..., 0, 1] = tensor_field[..., 1, 0] = field[..., 3]
+        tensor_field[..., 0, 2] = tensor_field[..., 2, 0] = field[..., 4]
+        tensor_field[..., 1, 2] = tensor_field[..., 2, 1] = field[..., 5]
+        return tensor_field
+
+    if field.ndim == 4 and field.shape[3] == 9:
+        return field.reshape(expected_shape + (3, 3))
+
+    raise ValueError(
+        "anisotropy_field must have shape (X, Y, Z, 3, 3), (X, Y, Z, 6), or (X, Y, Z, 9)"
+    )
+
+
+def _directional_preference_score(tensor: np.ndarray, step: np.ndarray) -> float:
+    """
+    Convert a local tensor and step direction into a bounded anisotropic score.
+
+    The score ranges from 0 to 1 for positive semidefinite tensors and is larger
+    when the step aligns with high-conductance / low-penalty directions.
+    """
+    stepvec = np.asarray(step, dtype=np.float64)
+    stepnorm = np.linalg.norm(stepvec)
+    if stepnorm == 0.0:
+        return 1.0
+    unitstep = stepvec / stepnorm
+    symtensor = 0.5 * (tensor + tensor.T)
+    trace = float(np.trace(symtensor))
+    if trace <= 0.0:
+        return 1.0
+    preference = float(unitstep @ symtensor @ unitstep)
+    return float(np.clip(preference / trace, 0.0, 1.0))
 
 
 def partition_3d(
@@ -29,6 +115,8 @@ def partition_3d(
     seed: Optional[int] = None,
     balance_alpha: float = 0.0,
     jitter: float = 0.0,
+    anisotropy_field: Optional[np.ndarray] = None,
+    anisotropy_strength: float = 0.0,
 ) -> np.ndarray:
     """
     Partition a 3D mask into N random simply connected regions.
@@ -48,6 +136,13 @@ def partition_3d(
         p(i) ∝ (|R_i| + 1)^(-alpha).
     jitter : float >= 0
         If > 0, adds small random priority to reduce lattice artifacts.
+    anisotropy_field : array-like or None
+        Optional 3D tensor field that biases growth along preferred directions.
+        Accepted layouts are ``(X, Y, Z, 3, 3)``, ``(X, Y, Z, 6)`` with
+        ``[xx, yy, zz, xy, xz, yz]`` ordering, and ``(X, Y, Z, 9)``.
+    anisotropy_strength : float >= 0
+        Strength of the anisotropic weighting. Larger values more strongly favor
+        low-penalty / high-conductance directions defined by ``anisotropy_field``.
 
     Returns
     -------
@@ -59,30 +154,12 @@ def partition_3d(
 
     X, Y, Z = mask.shape
     labels = -np.ones((X, Y, Z), dtype=np.int32)
+    tensor_field = _coerce_tensor_field(anisotropy_field, (X, Y, Z))
+    if anisotropy_strength < 0.0:
+        raise ValueError("anisotropy_strength must be >= 0")
 
     # --- neighbor offsets ---
-    if connectivity == 6:
-        nbrs = np.array(
-            [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)], dtype=int
-        )
-    elif connectivity == 18:
-        nbrs = []
-        for dz in (-1, 0, 1):
-            for dy in (-1, 0, 1):
-                for dx in (-1, 0, 1):
-                    if (dx, dy, dz) != (0, 0, 0) and (abs(dz) + abs(dy) + abs(dx) <= 2):
-                        nbrs.append((dx, dy, dz))
-        nbrs = np.array(nbrs, dtype=int)
-    elif connectivity == 26:
-        nbrs = []
-        for dz in (-1, 0, 1):
-            for dy in (-1, 0, 1):
-                for dx in (-1, 0, 1):
-                    if (dx, dy, dz) != (0, 0, 0):
-                        nbrs.append((dx, dy, dz))
-        nbrs = np.array(nbrs, dtype=int)
-    else:
-        raise ValueError("connectivity must be 6, 18, or 26")
+    nbrs = _neighbor_offsets(connectivity)
 
     # --- helper to check bounds ---
     def in_bounds(x, y, z):
@@ -125,12 +202,17 @@ def partition_3d(
 
         # gather neighboring labels
         neigh_labels = []
+        anisotropic_scores = {}
+        local_tensor = None if tensor_field is None else tensor_field[x, y, z, :, :]
         for dx, dy, dz in nbrs:
             xx, yy, zz = x + dx, y + dy, z + dz
             if in_bounds(xx, yy, zz):
                 li = labels[xx, yy, zz]
                 if li != -1:
                     neigh_labels.append(li)
+                    if local_tensor is not None:
+                        score = _directional_preference_score(local_tensor, np.array([dx, dy, dz]))
+                        anisotropic_scores.setdefault(int(li), []).append(score)
 
         if not neigh_labels:
             # not yet reachable; re-enqueue
@@ -141,10 +223,19 @@ def partition_3d(
         uniq = np.unique(neigh_labels)
 
         # choose label (optionally balanced)
+        weights = np.ones(len(uniq), dtype=np.float64)
         if balance_alpha > 0:
             sizes = region_sizes[uniq] + 1.0
-            probs = sizes ** (-balance_alpha)
-            probs = probs / probs.sum()
+            weights *= sizes ** (-balance_alpha)
+        if local_tensor is not None and anisotropy_strength > 0.0:
+            direction_weights = np.ones(len(uniq), dtype=np.float64)
+            for idx, label in enumerate(uniq):
+                mean_score = np.mean(anisotropic_scores.get(int(label), [1.0 / 3.0]))
+                penalty = 1.0 - mean_score
+                direction_weights[idx] = np.exp(-anisotropy_strength * penalty)
+            weights *= direction_weights
+        if np.any(weights > 0):
+            probs = weights / weights.sum()
             chosen = rng.choice(uniq, p=probs)
         else:
             chosen = uniq[rng.integers(len(uniq))]
