@@ -47,7 +47,7 @@ latexcodec==3.0.0
     # via pybtex
 lazy-loader==0.4
     # via scikit-image
-lxml==5.3.0
+lxml==6.1.0
     # via nilearn
 markdown-it-py==3.0.0
     # via

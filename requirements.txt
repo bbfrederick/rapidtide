@@ -28,7 +28,7 @@ kiwisolver==1.4.7
     # via matplotlib
 lazy-loader==0.4
     # via scikit-image
-lxml==5.3.0
+lxml==6.1.0
     # via nilearn
 markupsafe==3.0.2
     # via jinja2
