@@ -187,7 +187,8 @@ def filttc(args: Any) -> None:
         compressed,
         filetype,
     ) = tide_io.readvectorsfromtextfile(args.inputfile)
-
+    if starttime is None:
+        starttime = 0.0
     if samplerate is None:
         if args.samplerate == "auto":
             print(
