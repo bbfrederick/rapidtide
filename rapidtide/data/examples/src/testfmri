@@ -43,7 +43,7 @@
  
 rapidtide \
     sub-RAPIDTIDETEST.nii.gz \
-    ../dst/sub-RAPIDTIDETEST_current \
+    ../dst/sub-RAPIDTIDETEST_sgfix \
     --nprocs -1 \
     --outputlevel max
 

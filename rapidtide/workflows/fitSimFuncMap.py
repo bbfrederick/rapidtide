@@ -961,6 +961,8 @@ def fitSimFunc(
                         tide_util.enablemkl(
                             optiondict["mklthreads"], debug=optiondict["threaddebug"]
                         )
+                        # restore full lag range (THANK YOU to Suchita Ganesan for finding and fixing this!!!)
+                        theFitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
 
                         voxelsprocessed_fc_ds += voxelsprocessed_thispass
                         optiondict[

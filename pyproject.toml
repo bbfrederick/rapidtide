@@ -50,6 +50,7 @@ authors = [
     {name = 'Jeffrey N Stout'},
     {name = 'Yaroslav O. Halchenko'},
     {name = 'Derek Monroe'},
+    {name = 'Suchita Ganesan, M.S.'},
 ]
 
 [project.urls]
