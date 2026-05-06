@@ -1,5 +1,12 @@
 # Release history
 
+## Version 3.1.11 (5/1/26)
+* (rapidtide) Fixes a serious bug that caused rampant fit failures after the first set of despeckling passes.  Thank you to Suchita Ganesan (https://github.com/suchitag07) for finding this bug, diagnosing it, and fixing it!
+* (randomatlas) Added a new program to generate random brain parcelllations.
+* (docs) Fixed a build failure on readthedocs.
+* (package) Fixed a problem in generating code coverage reports.
+* (package) Accepted several dependabot PRs.
+ 
 ## Version 3.1.10 (4/13/26)
 * (rapidtide) Fixed a critical bug in filtered data output - the XXX_desc-lfofilterCleaned_bold.nii.gz map (and a few others) were incorrect.  Thank you to Jakub Szewczyk (https://github.com/themeo) for finding this! Closes https://github.com/bbfrederick/rapidtide/issues/263.
 * (rapidtide) Added summary statistics to some json sidecar files.
