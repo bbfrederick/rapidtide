@@ -1166,6 +1166,7 @@ def fitSimFunc(
                 )
                 tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
                 LGR.info(f"\tRobust delay refitted {voxelsprocessed_rd} voxels")
+                thefitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
 
                 if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
                     if theinputdata.filetype != "text":
