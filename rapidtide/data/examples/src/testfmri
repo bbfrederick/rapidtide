@@ -47,4 +47,5 @@ rapidtide \
     --searchrange -5 20 \
     --spatialfilt 4 \
     --nprocs -1 \
-    --outputlevel max
+    --outputlevel max \
+    --robustdelayfit
