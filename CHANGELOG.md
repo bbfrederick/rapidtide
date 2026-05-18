@@ -1,7 +1,7 @@
 # Release history
 
-## Version 3.1.11 (5/1/26)
-* (rapidtide) Fixes a serious bug that caused rampant fit failures after the first set of despeckling passes.  Thank you to Suchita Ganesan (https://github.com/suchitag07) for finding this bug, diagnosing it, and fixing it!
+## Version 3.1.11 (5/18/26)
+* (rapidtide) Fixes a serious bug that caused rampant fit failures after the first set of despeckling passes.  Thank you to Suchita Ganesan (https://github.com/suchitag07) for finding the bug, diagnosing it, and fixing it!
 * (randomatlas) Added a new program to generate random brain parcelllations.
 * (docs) Fixed a build failure on readthedocs.
 * (package) Fixed a problem in generating code coverage reports.
