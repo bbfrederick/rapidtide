@@ -235,7 +235,7 @@ typing-extensions==4.12.2
     # via torch
 tzdata==2024.2
     # via pandas
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
 versioneer==0.29
     # via rapidtide (../pyproject.toml)
