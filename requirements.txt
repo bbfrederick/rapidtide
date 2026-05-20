@@ -14,7 +14,7 @@ fonttools==4.61.0
     # via matplotlib
 fsspec==2026.1.0
     # via torch
-idna==3.10
+idna==3.15
     # via requests
 imageio==2.36.0
     # via scikit-image
