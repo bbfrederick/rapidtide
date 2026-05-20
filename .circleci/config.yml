@@ -49,7 +49,7 @@ commands:
             TESTFILES=$(circleci tests glob rapidtide/tests/test*.py | circleci tests split --split-by=timings)
             mkdir -p rapidtide/tests/test-results
             set +e
-            TORCH_INDUCTOR_DISABLE_TRITON=1 pytest \
+            TRITON_EXT_ENABLED=0 pytest \
               $TESTFILES \
               << parameters.extra_args >> \
               --color=yes \
