@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+
+import rapidtide.io as tide_io
+
+infile="fslglmtest.mat"
+
+thesamplerate, thestarttime, thecolumns, thedata, compressed, filetype = tide_io.readvectorsfromtextfile(infile, debug=True)
+
+print(f"{thesamplerate=}")
+print(f"{thestarttime=}")
+print(f"{thecolumns=}")
+print(f"{thedata.shape=}")
+print(f"{compressed=}")
+print(f"{filetype=}")

@@ -2551,6 +2551,58 @@ def readcsv(inputfilename: str, debug: bool = False) -> Dict[str, NDArray]:
     return timeseriesdict
 
 
+def readfslmatEVlabels(fsffilename: str, debug: bool = False) -> [str]:
+    # read the file in
+    with open(fsffilename, "r") as thefile:
+        lines = thefile.readlines()
+
+    # find out how many original evs there are
+    for theline in lines:
+        if "fmri(evs_orig)" in theline:
+            numorig = int(theline.split()[2])
+        if "fmri(evs_real)" in theline:
+            numreal = int(theline.split()[2])
+
+    if debug:
+        print(f"{numorig=}, {numreal=}")
+
+    fsllabels = []
+
+    # now read in the labels
+    thisev = 0
+    lookingforev = True
+    origtarget = "fmri(evtitle1)"
+    for theline in lines:
+        if lookingforev:
+            # searching for a new ev
+            if debug:
+                print(f"looking for {origtarget=}")
+            if origtarget in theline:
+                derivtarget = f"fmri(deriv_yn{thisev + 1})"
+                evname = theline.split()[2][1:-1]
+                thisev += 1
+                origtarget = f"fmri(evtitle{thisev + 1})"
+                fsllabels.append(evname)
+                lookingforev = False
+        else:
+            # checking for derivative
+            if debug:
+                print(f"looking for {derivtarget=}")
+            if derivtarget in theline:
+                if int(theline.split()[2]) > 0:
+                    fsllabels.append(evname + "_deriv")
+                lookingforev = True
+
+    if len(fsllabels) != numreal:
+        print("WARNING: .fsf file does not match columns of .mat file - not setting labels")
+        return []
+
+    if debug:
+        print(f"{fsllabels=}")
+
+    return fsllabels
+
+
 def readfslmat(inputfilename: str, debug: bool = False) -> Dict[str, NDArray]:
     """
     Read time series out of an FSL design.mat file
@@ -2592,18 +2644,28 @@ def readfslmat(inputfilename: str, debug: bool = False) -> Dict[str, NDArray]:
     if not os.path.isfile(inputfilename + ".mat"):
         raise FileNotFoundError(f"FSL mat file {inputfilename}.mat does not exist")
 
+    # check to see if there is a companion .fsf file
+    if os.path.isfile(inputfilename + ".fsf"):
+        fslcolnames = readfslmatEVlabels(inputfilename + ".fsf", debug=debug)
+    else:
+        fslcolnames = None
+
     timeseriesdict = {}
 
     # Read the data in with no header
-    df = pd.read_csv(inputfilename + ".mat", delim_whitespace=True, header=None, skiprows=5)
+    # df = pd.read_csv(inputfilename + ".mat", delim_whitespace=True, header=None, skiprows=5)
+    df = pd.read_csv(inputfilename + ".mat", sep="\s+", header=None, skiprows=5)
 
     if debug:
         print(df)
+
     colnum = 0
     for dummy, theseries in df.items():
-        timeseriesdict[makecolname(colnum, 0)] = theseries.values
+        if fslcolnames is None:
+            timeseriesdict[makecolname(colnum, 0)] = theseries.values
+        else:
+            timeseriesdict[fslcolnames[colnum]] = theseries.values
         colnum += 1
-
     return timeseriesdict
 
 
