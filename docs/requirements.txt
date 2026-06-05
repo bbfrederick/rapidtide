@@ -117,7 +117,7 @@ pillow==12.2.0
     #   matplotlib
     #   scikit-image
     #   sphinx-gallery
-pyarrow==23.0.1
+pyarrow==24.0.0
     # via rapidtide (../pyproject.toml)
 pybtex==0.25.1
     # via
