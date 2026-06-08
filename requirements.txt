@@ -85,7 +85,7 @@ pillow==12.2.0
     #   imageio
     #   matplotlib
     #   scikit-image
-pyarrow==17.0.0
+pyarrow==23.0.1
     # via rapidtide (pyproject.toml)
 pyfftw==0.15.1
     # via rapidtide (pyproject.toml)
