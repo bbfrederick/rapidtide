@@ -26,6 +26,8 @@ from numpy.typing import NDArray
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 
+DEFAULT_PAD_SECONDS = 30
+
 
 def _get_parser() -> Any:
     """
@@ -69,6 +71,19 @@ def _get_parser() -> Any:
         "highestfreq",
         type=float,
         help="The high passband frequency limit in Hz (set less than zero to disable LPF)",
+    )
+    parser.add_argument(
+        "--padseconds",
+        dest="padseconds",
+        action="store",
+        type=float,
+        metavar="SECONDS",
+        help=(
+            "The number of seconds of padding to add to each end of a "
+            "timecourse to be filtered "
+            f"to reduce end effects.  Default is {DEFAULT_PAD_SECONDS}."
+        ),
+        default=DEFAULT_PAD_SECONDS,
     )
     return parser
 
@@ -147,7 +162,7 @@ def filtnifti(args: Any) -> None:
 
     # cycle over all voxels
     print("now cycling over all voxels")
-    theprefilter = tide_filt.NoncausalFilter()
+    theprefilter = tide_filt.NoncausalFilter(padtime=args.padseconds)
     theprefilter.settype("arb")
     theprefilter.setfreqs(args.lowestfreq, args.lowestfreq, args.highestfreq, args.highestfreq)
 

@@ -15,25 +15,25 @@ jobs:
         uses: docker/setup-qemu-action@v4
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4.3.3
+        uses: gittools/actions/gitversion/setup@v4.5.0
         with:
           versionSpec: '6.x'
 
       - name: Install Checkout
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}   # checkout the correct branch name
           fetch-depth: 0
 
       - name: Determine Version
         id:   gitversion # id to later be referenced
-        uses: gittools/actions/gitversion/execute@v4.3.3
+        uses: gittools/actions/gitversion/execute@v4.5.0
         with:
           additionalArguments: /config commit-date-format="yyyy-MM-ddTHH:mm:ss-0000"
 
       - name: Alternate Git Version
         id: alternategitversion
-        uses: codacy/git-version@2.8.6
+        uses: codacy/git-version@2.8.7
         with:
           release-branch: 'main'
           prefix: 'v'

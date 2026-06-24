@@ -12,7 +12,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(ls:*)",
       "Bash(rapidtide:*)",
-      "Bash(black --check:*)"
+      "Bash(black --check:*)",
+      "Bash(/Users/frederic/miniforge3/envs/mic/bin/python *)"
     ]
   }
 }

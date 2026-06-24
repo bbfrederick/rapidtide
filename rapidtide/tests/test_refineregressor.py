@@ -21,9 +21,8 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 
-from rapidtide.refineregressor import (
+from rapidtide.refineRegressorFuncs import (
     _packvoxeldata,
     _procOneVoxelTimeShift,
     _unpackvoxeldata,
@@ -57,12 +56,14 @@ def test_packvoxeldata_basic(debug=False):
     labels = np.array([10.0, 20.0])
     extra1 = "param1"
     extra2 = "param2"
+    extra3 = "param3"
 
-    result = _packvoxeldata(0, (features, labels, extra1, extra2))
+    result = _packvoxeldata(0, (features, labels, extra1, extra2, extra3))
     np.testing.assert_array_equal(result[0], [1.0, 2.0, 3.0])
     assert result[1] == 10.0
     assert result[2] == "param1"
     assert result[3] == "param2"
+    assert result[4] == "param3"
 
     if debug:
         print(f"packvoxeldata result: {result}")
@@ -72,7 +73,7 @@ def test_packvoxeldata_second_voxel(debug=False):
     features = np.array([[1.0, 2.0], [4.0, 5.0], [7.0, 8.0]])
     labels = np.array([10.0, 20.0, 30.0])
 
-    result = _packvoxeldata(2, (features, labels, 0.5, 2.0))
+    result = _packvoxeldata(2, (features, labels, 0.5, 2.0, 5.0))
     np.testing.assert_array_equal(result[0], [7.0, 8.0])
     assert result[1] == 30.0
 
@@ -143,7 +144,7 @@ def test_procOneVoxelTimeShift_zero_shift(debug=False):
     padtrs = 10
     fmritr = 2.0
 
-    voxelargs = (fmritc, lagtime, padtrs, fmritr)
+    voxelargs = (fmritc, lagtime, padtrs, fmritr, debug)
     vox, shiftedtc, wts, paddedshiftedtc, paddedwts = _procOneVoxelTimeShift(
         0, voxelargs, detrendorder=0, offsettime=0.0
     )
@@ -166,7 +167,7 @@ def test_procOneVoxelTimeShift_nonzero_shift(debug=False):
     padtrs = 20
     fmritr = 1.0
 
-    voxelargs = (fmritc, lagtime, padtrs, fmritr)
+    voxelargs = (fmritc, lagtime, padtrs, fmritr, debug)
     vox, shiftedtc, wts, paddedshiftedtc, paddedwts = _procOneVoxelTimeShift(
         5, voxelargs, detrendorder=0
     )
@@ -189,7 +190,7 @@ def test_procOneVoxelTimeShift_detrending(debug=False):
     padtrs = 10
     fmritr = 2.0
 
-    voxelargs = (fmritc, lagtime, padtrs, fmritr)
+    voxelargs = (fmritc, lagtime, padtrs, fmritr, debug)
     _, shiftedtc, _, _, _ = _procOneVoxelTimeShift(0, voxelargs, detrendorder=1, offsettime=0.0)
 
     # After detrending, mean should be near zero
@@ -207,7 +208,7 @@ def test_procOneVoxelTimeShift_with_offset(debug=False):
     padtrs = 20
     fmritr = 1.0
 
-    voxelargs = (fmritc, lagtime, padtrs, fmritr)
+    voxelargs = (fmritc, lagtime, padtrs, fmritr, debug)
     _, shifted_no_offset, _, _, _ = _procOneVoxelTimeShift(
         0, voxelargs, detrendorder=0, offsettime=0.0
     )
@@ -1200,7 +1201,7 @@ def test_alignvoxels_partial_mask(debug=False):
 # ==================== Main test entry point ====================
 
 
-def test_refineregressor(debug=False):
+def test_refineRegressorFuncs(debug=False):
     test_packvoxeldata_basic(debug=debug)
     test_packvoxeldata_second_voxel(debug=debug)
     test_unpackvoxeldata_basic(debug=debug)
@@ -1242,4 +1243,4 @@ def test_refineregressor(debug=False):
 
 
 if __name__ == "__main__":
-    test_refineregressor(debug=True)
+    test_refineRegressorFuncs(debug=True)

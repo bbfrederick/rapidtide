@@ -1,16 +1,34 @@
 # Release history
 
-## Version 3.1.9 (3/12/26)
+## Version 3.1.11 (5/18/26)
+* (rapidtide) Fixes a serious bug that caused rampant fit failures after the first set of despeckling passes.  Thank you to Suchita Ganesan (https://github.com/suchitag07) for finding the bug, diagnosing it, and fixing it!
+* (randomatlas) Added a new program to generate random brain parcelllations.
+* (docs) Fixed a build failure on readthedocs.
+* (package) Fixed a problem in generating code coverage reports.
+* (package) Accepted several dependabot PRs.
+ 
+## Version 3.1.10 (4/13/26)
+* (rapidtide) Fixed a critical bug in filtered data output - the XXX_desc-lfofilterCleaned_bold.nii.gz map (and a few others) were incorrect.  Thank you to Jakub Szewczyk (https://github.com/themeo) for finding this! Closes https://github.com/bbfrederick/rapidtide/issues/263.
+* (rapidtide) Added summary statistics to some json sidecar files.
+* (rapidtide) Corrected an assumption about dataset lengths that caused crashes with very short datasets.	
+* (rapidtide) Fixed a few rare crashes.
+* (filtnifti) Cleaned up the calling interface and added some new capabilities.
+* (VoxelData) When reading input files, fix NaNs by default.
+* (package) Accepted several dependabot PRs.
+
+## Version 3.1.9 (3/19/26)
 * (rapidtide) There's a new optional despeckling procedure, which you can turn on with ``--robustdelayfit``.  It uses a region growing method to try to ensure consistency in delay maps while allowing for discontinuities between vascular territories.
 * (rapidtide) Added some infrastructure for territory processing.
+* (rapidtide, retroregress) Fixed calculation of the refined R value.
+* (rapidtide, retroregress) Expanded and improved regional time course output.
+* (atlasaverage) Pulled get4Dtimecourses into a separate routine so it can be reused in rapidtide territory processing.
 * (tidepool) Fixed a crash when data is in MNI152 space and FSL is not present.
 * (happy) Now outputs variance metrics so you can see how effective noise regression is.
 * (ccorrica) Updated to use SimilarityFunctionFitter, output csv files.
-* (rapidtide, retroregress) Fixed calculation of the refined R value.
-* (rapidtide, retroregress) Expanded and improved regional time course output.
 * (SimilarityFunctionFitter) Fixed a strange bug where very small delay values were not fit properly.  Affects all programs using correlation fits (most of them).
 * (package) Made pyfftw a required dependency.
 * (package) Resolved future deprecations from scipy.fftpack and np.matrix.
+* (bonus) The date matches the version number (US only :-) )!
 
 ## Version 3.1.8 (3/2/26)
 * (rapidtide) Fixed a bug in how the despeckle search region is set.
@@ -863,7 +881,7 @@
 
 ## Version 2.2.0 (3/11/22)
 * (rapidtide) Major rethink of despeckling.  Despeckling no longer causes negative correlation values when bipolar fitting is not enabled, and voxel parameters are only updated in a despeckled voxel if the correlation fit succeeds.  This results in better fits without mysteriously unfit voxels.
-* (showxy) Bland-Altman plots can now use alternative formatting, as per Krouwer, J. S. Why Bland–Altman plots should use X, not (Y+X)/2 when X is a reference method. Stat Med 27, 778–780 (2008).
+* (showxy) Bland-Altman plots can now use alternative formatting, as per Krouwer, J. S. Why Bland-Altman plots should use X, not (Y+X)/2 when X is a reference method. Stat Med 27, 778780 (2008).
 * (fingerprint) This program is now substantially more useful, working on 4D input files.  Output files are more convenient as well.
 * (cleandirs) Cleandirs now keeps cleaning until it runs out of old installations to remove.
  
@@ -955,7 +973,7 @@ Also - all outputs now conform to BIDS naming conventions to improve compatibili
 * (rapidtide) Did some prep work to implement echo cancellation.
 * (rapidtide) Added workaround for occasional MLE PCA component estimation failure (this seems to be an unresolved scikit-learn problem as of 0.23.2)
 * (rapidtide) Significant enhancement to PCA refinement options.
-* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154–165 (2019).
+* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154-165 (2019).
 * (rapidtide) The PCA refinement algorithm has been improved to match the method described in Champagne, et al., and is now the default.
 * (rapidtide, io) Significant improvement to CIFTI handling - now properly read and write parcellated scalars and time series.
 * (rapidtide) Completely revamped CIFTI I/O.  Should now read and write native CIFTI2 files (do not need to convert to NIFTI-2 in workbench).
@@ -1209,7 +1227,7 @@ Miscellaneous changes:
 * (package) Renamed some test data for consistency.
 
 ## Version 2.0alpha7 (12/1/20)
-* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154–165 (2019).
+* (rapidtide) Rapidtide can now run refinement passes until the change in the probe regressor falls below a specified mean square difference.  Set --convergencethresh to a positive number to invoke this (0.0005 is good).  Rapidtide will refine until the M.S.D. falls below this value, or you hit maxpasses (use --maxpasses NUM to set - default is 15).  This implements the procedure used in Champagne, A. A., et al., NeuroImage 187, 154-165 (2019).
 * (rapidtide) The PCA refinement algorithm has been improved to match the method described in Champagne, et al., and is now the default.
 
 ## Version 2.0alpha6 (11/30/20)

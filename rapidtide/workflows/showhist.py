@@ -17,12 +17,10 @@
 #
 #
 import argparse
-from argparse import Namespace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
-from matplotlib.pyplot import bar, legend, plot, savefig, show, title, xlabel, ylabel
-from numpy.typing import NDArray
+from matplotlib.pyplot import bar, plot, savefig, show, title, xlabel, ylabel
 
 import rapidtide.io as tide_io
 import rapidtide.stats as tide_stats

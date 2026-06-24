@@ -1,0 +1,10 @@
+#!/bin/bash
+
+for SEED in 1234 5432 43 728 256
+do
+    randomatlas \
+        ${FSLDIR}/data/standard/MNI152_T1_2mm_brain_mask.nii.gz \
+        ../dst/MNIrandom \
+        128 \
+        --seed ${SEED}
+done

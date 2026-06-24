@@ -17,7 +17,7 @@
 #
 #
 from collections import deque
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -961,6 +961,8 @@ def fitSimFunc(
                         tide_util.enablemkl(
                             optiondict["mklthreads"], debug=optiondict["threaddebug"]
                         )
+                        # restore full lag range (THANK YOU to Suchita Ganesan for finding and fixing this!!!)
+                        theFitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
 
                         voxelsprocessed_fc_ds += voxelsprocessed_thispass
                         optiondict[
@@ -1164,6 +1166,7 @@ def fitSimFunc(
                 )
                 tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
                 LGR.info(f"\tRobust delay refitted {voxelsprocessed_rd} voxels")
+                theFitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
 
                 if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
                     if theinputdata.filetype != "text":

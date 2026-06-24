@@ -119,6 +119,7 @@ def run_multiproc(
     1000
     """
     if debug:
+        print(f"{len(voxelargs)=}, {voxelargs[0].shape}")
         print(f"{len(voxelproducts)=}, {voxelproducts[0].shape}")
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments

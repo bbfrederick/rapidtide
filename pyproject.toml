@@ -38,7 +38,7 @@ dependencies = [
   'requests',
   'statsmodels',
   'pywavelets',
-  'torch',
+  'torch<2.12.0',
   'tqdm',
   'versioneer',
 ]
@@ -50,6 +50,7 @@ authors = [
     {name = 'Jeffrey N Stout'},
     {name = 'Yaroslav O. Halchenko'},
     {name = 'Derek Monroe'},
+    {name = 'Suchita Ganesan, M.S.'},
 ]
 
 [project.urls]
@@ -77,7 +78,7 @@ doc = [
   'sphinx_rtd_theme',
   'sphinx-argparse',
   'sphinx-gallery',
-  'myst-parser',
+  'myst-parser>=2.0',
   'numpydoc',
   'sphinxcontrib-bibtex',
   'pybtex>=0.25.1',
@@ -125,6 +126,7 @@ pixelcomp = 'rapidtide.scripts.pixelcomp:entrypoint'
 plethquality = 'rapidtide.scripts.plethquality:entrypoint'
 polyfitim = 'rapidtide.scripts.polyfitim:entrypoint'
 #proj2flow = 'rapidtide.scripts.proj2flow:entrypoint'
+randomatlas = 'rapidtide.scripts.randomatlas:entrypoint'
 rankimage = 'rapidtide.scripts.rankimage:entrypoint'
 rapidtide = 'rapidtide.scripts.rapidtide:entrypoint'
 rapidtide2std = 'rapidtide.scripts.rapidtide2std:entrypoint'
@@ -153,6 +155,7 @@ tcfrom3col = 'rapidtide.scripts.tcfrom3col:entrypoint'
 temporaldecomp = 'rapidtide.scripts.temporaldecomp:entrypoint'
 #threeD = 'rapidtide.scripts.threeD:entrypoint'
 tidepool = 'rapidtide.scripts.tidepool:entrypoint'
+tp2rt = 'rapidtide.scripts.tp2rt:entrypoint'
 #variabilityizer = 'rapidtide.scripts.variabilityizer:entrypoint'
 
 [tool.setuptools]

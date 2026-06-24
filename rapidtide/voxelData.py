@@ -251,7 +251,13 @@ class VoxelData:
     validvoxels = None
     cifti_hdr = None
     filetype = None
+    fixNaN = True
     resident = False
+
+    def __new__(cls, *args, **kwargs):
+        # Correctly create and return the instance
+        instance = super().__new__(cls)
+        return instance
 
     def __init__(
         self,
@@ -259,6 +265,7 @@ class VoxelData:
         timestep: float = 0.0,
         validstart: int | None = None,
         validend: int | None = None,
+        fixNaN: bool = True,
     ) -> None:
         """
         Initialize the object with filename and optional data reading parameters.
@@ -291,6 +298,7 @@ class VoxelData:
         """
 
         self.filename = filename
+        self.fixNaN = fixNaN
         self.readdata(timestep, validstart, validend)
 
     def readdata(self, timestep: float, validstart: int | None, validend: int | None) -> None:
@@ -623,6 +631,11 @@ class VoxelData:
                 self.nim, self.nim_data, self.nim_hdr, self.thedims, self.thesizes = (
                     tide_io.readfromnifti(self.filename)
                 )
+        if self.fixNaN:
+            nan_count = np.sum(np.isnan(self.nim_data))
+            if nan_count > 0:
+                print(f"VoxelData.load: dataset has {nan_count} NaNs before fixing them.")
+                self.nim_data = np.nan_to_num(self.nim_data)
         self.resident = True
 
     def reload(self) -> None:

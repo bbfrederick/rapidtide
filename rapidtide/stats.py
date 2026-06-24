@@ -198,7 +198,9 @@ def fitjsbpdf(
         thestore[1, 0] = zeroterm
 
     # generate the johnsonsb function
-    johnsonsbvals = johnsonsb.pdf(thestore[0, :], params[0], params[1], params[2], params[3])
+    johnsonsbvals = johnsonsb.pdf(
+        thestore[0, :], params[0], params[1], params[2], params[3]
+    )
     corrfac = (1.0 - zeroterm) / (1.0 * histlen)
     johnsonsbvals *= corrfac
     johnsonsbvals[0] = zeroterm
@@ -207,7 +209,9 @@ def fitjsbpdf(
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_title("fitjsbpdf: histogram")
-        plt.plot(thestore[0, :], thestore[1, :], "b", thestore[0, :], johnsonsbvals, "r")
+        plt.plot(
+            thestore[0, :], thestore[1, :], "b", thestore[0, :], johnsonsbvals, "r"
+        )
         plt.legend(["histogram", "fit to johnsonsb"])
         plt.show()
     return np.append(params, np.array([zeroterm]))
@@ -277,8 +281,8 @@ def sigFromDistributionData(
     if len(np.where(vallist != 0.0)[0]) == 0:
         print("no nonzero values - skipping percentile calculation")
         return None, None, None
-    thehistogram, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = makehistogram(
-        np.abs(vallist), histlen, therange=[0.0, 1.0]
+    thehistogram, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = (
+        makehistogram(np.abs(vallist), histlen, therange=[0.0, 1.0])
     )
     if dosighistfit:
         if similaritymetric == "mutualinfo":
@@ -357,14 +361,18 @@ def neglog10pfromr(
         neglogparray = np.linspace(neglogpmin, neglogpmax, lutlen, endpoint=True)
         pvals = pow(10.0, -neglogparray)
         percentile_list = (1.0 - pvals).tolist()
-        rforneglogp = np.asarray(getfracvalsfromfit(histfit, percentile_list), dtype=float)
+        rforneglogp = np.asarray(
+            getfracvalsfromfit(histfit, percentile_list), dtype=float
+        )
         minrforneglogp = rforneglogp[0]
         maxrforneglogp = rforneglogp[-1]
         if debug:
             print("START NEGLOGPFROMR DEBUG")
             print("neglogp\tpval\tpct\trfornlp")
             for i in range(lutlen):
-                print(f"{neglogparray[i]}\t{pvals[i]}\t{percentile_list[i]}\t{rforneglogp[i]}")
+                print(
+                    f"{neglogparray[i]}\t{pvals[i]}\t{percentile_list[i]}\t{rforneglogp[i]}"
+                )
             print("END NEGLOGPFROMR DEBUG")
         neglogpfromr_interpolator = sp.interpolate.UnivariateSpline(
             rforneglogp, neglogparray, k=3, s=0
@@ -869,7 +877,9 @@ def prochistogram(
     peakloc = xvals[peakindex]
     peakheight = yvals[peakindex]
     numbins = 1
-    while (peakindex + numbins < histlen - 2) and (yvals[peakindex + numbins] > peakheight / 2.0):
+    while (peakindex + numbins < histlen - 2) and (
+        yvals[peakindex + numbins] > peakheight / 2.0
+    ):
         numbins += 1
     peakwidth = (xvals[peakindex + numbins] - xvals[peakindex]) * 2.0
     if debug:
@@ -984,7 +994,9 @@ def makehistogram(
     return thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile
 
 
-def echoloc(indata: NDArray, histlen: int, startoffset: float = 5.0) -> Tuple[float, float]:
+def echoloc(
+    indata: NDArray, histlen: int, startoffset: float = 5.0
+) -> Tuple[float, float]:
     """Detect and analyze echo peak in histogram data.
 
     Identifies a secondary (echo) peak in histogram data that occurs after
@@ -1005,8 +1017,8 @@ def echoloc(indata: NDArray, histlen: int, startoffset: float = 5.0) -> Tuple[fl
         (echo_lag, echo_ratio) where echo_lag is the distance between primary
         and echo peaks, and echo_ratio is the ratio of echo to primary peak areas
     """
-    thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = makehistogram(
-        indata, histlen, refine=True
+    thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = (
+        makehistogram(indata, histlen, refine=True)
     )
     thestore = np.zeros((2, len(thehist[0])), dtype="float64")
     thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
@@ -1015,7 +1027,9 @@ def echoloc(indata: NDArray, histlen: int, startoffset: float = 5.0) -> Tuple[fl
     startpt = np.argmax(thestore[1, :]) + int(startoffset // timestep)
     print(f"primary peak: {peakheight:.2f}, {peakloc:.2f}, {peakwidth}")
     print("startpt, startloc, timestep: {startpt}, {thestore[1, startpt]}, {timestep}")
-    while (thestore[1, startpt] > thestore[1, startpt + 1]) and (startpt < len(thehist[0]) - 2):
+    while (thestore[1, startpt] > thestore[1, startpt + 1]) and (
+        startpt < len(thehist[0]) - 2
+    ):
         startpt += 1
     echopeakindex = np.argmax(thestore[1, startpt:-2]) + startpt
     echopeakloc = thestore[0, echopeakindex + 1]
@@ -1025,11 +1039,15 @@ def echoloc(indata: NDArray, histlen: int, startoffset: float = 5.0) -> Tuple[fl
         thestore[1, echopeakindex + numbins] > echopeakheight / 2.0
     ):
         numbins += 1
-    echopeakwidth = (thestore[0, echopeakindex + numbins] - thestore[0, echopeakindex]) * 2.0
+    echopeakwidth = (
+        thestore[0, echopeakindex + numbins] - thestore[0, echopeakindex]
+    ) * 2.0
     echopeakheight, echopeakloc, echopeakwidth = tide_fit.gaussfit(
         echopeakheight, echopeakloc, echopeakwidth, thestore[0, :], thestore[1, :]
     )
-    return echopeakloc - peakloc, (echopeakheight * echopeakwidth) / (peakheight * peakwidth)
+    return echopeakloc - peakloc, (echopeakheight * echopeakwidth) / (
+        peakheight * peakwidth
+    )
 
 
 def makeandsavehistogram(
@@ -1084,13 +1102,15 @@ def makeandsavehistogram(
     debug : bool, optional
         Enable debug output. Default: False
     """
-    thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = makehistogram(
-        indata,
-        histlen,
-        binsize=binsize,
-        therange=therange,
-        refine=refine,
-        normalize=normalize,
+    thehist, peakheight, peakloc, peakwidth, centerofmass, peakpercentile = (
+        makehistogram(
+            indata,
+            histlen,
+            binsize=binsize,
+            therange=therange,
+            refine=refine,
+            normalize=normalize,
+        )
     )
     thestore = np.zeros((2, len(thehist[0])), dtype="float64")
     thestore[0, :] = (thehist[1][1:] + thehist[1][0:-1]) / 2.0
@@ -1164,7 +1184,9 @@ def makeandsavehistogram(
         plt.show()
 
 
-def symmetrize(a: NDArray, antisymmetric: bool = False, zerodiagonal: bool = False) -> NDArray:
+def symmetrize(
+    a: NDArray, antisymmetric: bool = False, zerodiagonal: bool = False
+) -> NDArray:
     """Symmetrize a matrix.
 
     Parameters
@@ -1191,7 +1213,9 @@ def symmetrize(a: NDArray, antisymmetric: bool = False, zerodiagonal: bool = Fal
         return intermediate
 
 
-def makepmask(rvals: NDArray, pval: float, sighistfit: NDArray, onesided: bool = True) -> NDArray:
+def makepmask(
+    rvals: NDArray, pval: float, sighistfit: NDArray, onesided: bool = True
+) -> NDArray:
     """Create significance mask from p-value threshold and distribution fit.
 
     Parameters
@@ -1350,7 +1374,9 @@ def makemask(
             np.where(image >= 0.0, image, 0.0), [0.02, 0.98, threshpct], nozero=nozero
         )
     else:
-        pct2, pct98, pctthresh = getfracvals(image, [0.02, 0.98, threshpct], nozero=nozero)
+        pct2, pct98, pctthresh = getfracvals(
+            image, [0.02, 0.98, threshpct], nozero=nozero
+        )
     threshval = pct2 + (threshpct / 100.0) * (pct98 - pct2)
     print(f"old style threshval: {threshval:.2f}, new style threshval: {pctthresh:.2f}")
     if verbose:
@@ -1378,3 +1404,175 @@ def getmasksize(themask: NDArray) -> int:
 
     """
     return len(np.where(themask > 0)[0])
+
+
+def summarizevoxels(thevoxels: NDArray, method: str = "mean") -> float:
+    """
+    Summarize voxel data using specified statistical method.
+
+    Parameters
+    ----------
+    thevoxels : ndarray
+        Input voxel data array. Can be 1D or 2D, where 2D arrays are interpreted
+        as time series with shape (voxels, timepoints).
+    method : str, default="mean"
+        Summary method to apply. Options are:
+        - "mean": Compute mean along axis 0
+        - "sum": Compute sum along axis 0
+        - "median": Compute median along axis 0
+        - "std": Compute standard deviation along axis 0
+        - "MAD": Compute median absolute deviation along axis 0
+        - "CoV": Compute coefficient of variation (std/mean) along axis 0
+
+    Returns
+    -------
+    float or ndarray
+        Summary statistic(s) of the voxel data. Returns a scalar for 1D input
+        or array of statistics for 2D input along axis 0.
+
+    Notes
+    -----
+    - NaN values are converted to zero using `np.nan_to_num` before computation
+    - For coefficient of variation ("CoV"), the result is multiplied by 100 to
+      express as percentage
+    - When input is 1D, time dimension is treated as single timepoint
+    - The function handles both 1D and 2D input arrays appropriately
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> voxels = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> summarizevoxels(voxels, method="mean")
+    array([2.5, 3.5, 4.5])
+
+    >>> summarizevoxels(voxels, method="CoV")
+    array([40.82482905, 33.33333333, 25.        ])
+    """
+    theshape = thevoxels.shape
+    if len(theshape) > 1:
+        numtimepoints = theshape[1]
+    else:
+        numtimepoints = 1
+
+    if method == "CoV":
+        if numtimepoints > 1:
+            regionsummary = 100.0 * np.nan_to_num(
+                np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
+            )
+        else:
+            regionsummary = 100.0 * np.nan_to_num(
+                np.std(thevoxels) / np.mean(thevoxels)
+            )
+    else:
+        if method == "mean":
+            themethod = np.mean
+        elif method == "sum":
+            themethod = np.sum
+        elif method == "median":
+            themethod = np.median
+        elif method == "std":
+            themethod = np.std
+        elif method == "MAD":
+            themethod = mad
+        else:
+            raise ValueError(f"illegal summary method {method} in summarizevoxels")
+
+        if numtimepoints > 1:
+            regionsummary = np.nan_to_num(themethod(thevoxels, axis=0))
+        else:
+            regionsummary = np.nan_to_num(themethod(thevoxels))
+    return regionsummary
+
+
+def regionstats(
+    themap: NDArray,
+    validvoxels: NDArray,
+    fitmask: NDArray,
+    brainmask: Optional[NDArray],
+    graymask: Optional[NDArray],
+    whitemask: Optional[NDArray],
+    csfmask: Optional[NDArray],
+) -> dict:
+    """
+    Compute summary statistics of a map over different tissue regions.
+
+    For each region (fit, brain, gray, white, CSF), this function computes
+    mean, median, standard deviation, and median absolute deviation (MAD)
+    of voxel values from the input map that fall within the intersection of
+    the fit mask and the respective tissue mask.
+
+    Parameters
+    ----------
+    themap : ndarray
+        The input data array (e.g., correlation map, delay map) containing
+        voxelwise values to summarize.
+    validvoxels : ndarray
+        Boolean or index array indicating which voxels in the map are valid
+        (used to subset the brainmask, graymask, whitemask, and csfmask arrays
+        which may be full-sized brain volumes).
+    fitmask : ndarray
+        Binary mask array specifying the region of interest (e.g., voxels
+        where a model was successfully fit). Must have shape compatible with
+        validvoxels indexing.
+    brainmask : ndarray or None
+        Binary mask array for the whole brain. If None, brain statistics
+        are not computed.
+    graymask : ndarray or None
+        Binary mask array for gray matter. If None, gray matter statistics
+        are not computed.
+    whitemask : ndarray or None
+        Binary mask array for white matter. If None, white matter statistics
+        are not computed.
+    csfmask : ndarray or None
+        Binary mask array for cerebrospinal fluid. If None, CSF statistics
+        are not computed.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping region_statistic names to their computed values.
+        Keys are formatted as ``{region}_{statistic}`` where region is one
+        of fit, brain, gray, white, csf and statistic is one of mean, median,
+        std, MAD. Brain, gray, white, and csf keys are omitted if the
+        corresponding mask is None. Values are computed using
+        :func:`summarizevoxels`.
+
+    See Also
+    --------
+    summarizevoxels : Underlying function used to compute individual statistics.
+    """
+    statsdict = {}
+    thestats = ["mean", "median", "std", "MAD"]
+    fitvoxels = themap[np.where(fitmask > 0)]
+    if brainmask is None:
+        brainvoxels = None
+    else:
+        brainvoxels = themap[np.where(fitmask * brainmask[validvoxels] > 0)]
+    if graymask is None:
+        grayvoxels = None
+    else:
+        grayvoxels = themap[np.where(fitmask * graymask[validvoxels] > 0)]
+    if whitemask is None:
+        whitevoxels = None
+    else:
+        whitevoxels = themap[np.where(fitmask * whitemask[validvoxels] > 0)]
+    if csfmask is None:
+        csfvoxels = None
+    else:
+        csfvoxels = themap[np.where(fitmask * csfmask[validvoxels] > 0)]
+    for thisstat in thestats:
+        statsdict["fit_" + thisstat] = summarizevoxels(fitvoxels, method=thisstat)
+        if brainvoxels is not None:
+            statsdict["brain_" + thisstat] = summarizevoxels(
+                brainvoxels, method=thisstat
+            )
+        if grayvoxels is not None:
+            statsdict["gray_" + thisstat] = summarizevoxels(grayvoxels, method=thisstat)
+        if whitevoxels is not None:
+            statsdict["white_" + thisstat] = summarizevoxels(
+                whitevoxels, method=thisstat
+            )
+        if csfvoxels is not None:
+            statsdict["csf_" + thisstat] = summarizevoxels(csfvoxels, method=thisstat)
+
+    return statsdict
