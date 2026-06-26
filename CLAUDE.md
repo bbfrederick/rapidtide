@@ -15,9 +15,9 @@ Rapidtide is a Python package for modeling, characterizing, visualizing, and rem
 
 ```
 rapidtide/
-├── scripts/          # Command-line entry points (~58 utilities)
+├── scripts/          # Command-line entry points (~61 utilities)
 ├── workflows/        # Main processing pipelines (rapidtide, happy, and various utilities)
-├── tests/            # Pytest test suite (~105 test files)
+├── tests/            # Pytest test suite (~116 test files)
 ├── candidatetests/   # Work-in-progress tests (not run in CI)
 ├── data/             # Reference data, models, and examples
 └── [modules]         # Core processing modules (see below)
@@ -94,6 +94,9 @@ Note: Tests are run in CI via CircleCI for Python 3.10, 3.11, 3.12, 3.13, and 3.
 # Format code with black (line length: 99)
 black rapidtide/
 
+# Sort imports (configured to match black)
+isort rapidtide/
+
 # Check specific file
 black --check rapidtide/filter.py
 ```
@@ -140,7 +143,7 @@ showxcorrx <file1> <file2>
 
 ## Important Constraints
 
-- Never change files in rapidtide/notforprimetime or rapidtide/candidatetests
+- Never change files in rapidtide/candidatetests
 - Always work on feature branches, not main
 
 ### Code Style (NON-NEGOTIABLE)
@@ -195,6 +198,14 @@ Key points:
 - Use Black formatter with 99-character line length
 - Follow NumPy docstring format
 - Keep changes focused on specific issues/features
+
+## Known Gotchas
+
+- **`postprocessfilteropts` attribute mismatch**: The parser uses `dest="ncfiltpadtype"` but
+  `postprocessfilteropts` reads `args.prefilterpadtype`. The `try/except` fallback hides this — it
+  silently uses the default rather than the user-specified value.
+- **`candidatetests/`**: These tests are not run in CI and may be incomplete or broken. Do not
+  rely on them passing.
 
 ## VERIFICATION PROTOCOL (execute before returning control)
 - Re-read the full original task specification.
