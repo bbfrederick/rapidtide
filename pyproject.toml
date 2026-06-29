@@ -94,6 +94,7 @@ all = ['rapidtide[doc,test]']
 [project.scripts]
 adjustoffset = 'rapidtide.scripts.adjustoffset:entrypoint'
 aligntcs = 'rapidtide.scripts.aligntcs:entrypoint'
+aparcaseg2dseg = 'rapidtide.scripts.aparcaseg2dseg:entrypoint'
 applydlfilter = 'rapidtide.scripts.applydlfilter:entrypoint'
 applyppgproc = 'rapidtide.scripts.applyppgproc:entrypoint'
 atlasaverage = 'rapidtide.scripts.atlasaverage:entrypoint'
