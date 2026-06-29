@@ -1,5 +1,11 @@
 # Release history
 
+## Version 3.1.12 (6/29/26)
+* (aparc2dseg) Added a new program to make gray, white, CSF maps from aparc+aseg maps.
+* (io) readfslmat now reads column names out of the companion .fsf file, if present.
+* (package) Fixed a version incompatibility that broke circleci testing.
+* (package) Accepted several dependabot PRs.
+
 ## Version 3.1.11 (5/18/26)
 * (rapidtide) Fixes a serious bug that caused rampant fit failures after the first set of despeckling passes.  Thank you to Suchita Ganesan (https://github.com/suchitag07) for finding the bug, diagnosing it, and fixing it!
 * (randomatlas) Added a new program to generate random brain parcelllations.
