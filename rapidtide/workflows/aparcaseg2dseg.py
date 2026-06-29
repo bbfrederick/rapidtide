@@ -17,18 +17,10 @@
 #
 #
 import argparse
-import os
-import subprocess
-import sys
-from argparse import Namespace
-from glob import glob
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
-import numpy as np
-from numpy.typing import NDArray
-
-import rapidtide.externaltools as tide_exttools
 import rapidtide.io as tide_io
+import rapidtide.maskutil as tide_mask
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -52,14 +44,10 @@ def _get_parser() -> Any:
     including support for 3D and 4D output formats, splitting regions along the midline,
     applying masks, and debugging options.
 
-    Examples
-    --------
-    >>> parser = _get_parser()
-    >>> args = parser.parse_args()
     """
     parser = argparse.ArgumentParser(
         prog="aparcaseg2dseg",
-        description=("A utility to generate wm parcellation files from a FreeSurfer aparc+aseg file"),
+        description="A utility to generate wm parcellation files from a FreeSurfer aparc+aseg file",
         allow_abbrev=False,
     )
 
@@ -76,7 +64,7 @@ def _get_parser() -> Any:
         "--debug",
         dest="debug",
         action="store_true",
-        help=("Output debugging information"),
+        help="Output debugging information",
         default=False,
     )
     return parser
@@ -95,33 +83,12 @@ def aparcaseg2dseg(args: Any) -> None:
     ----------
     args : Any
         An object containing command-line arguments. Expected attributes include:
-        - inputaparcasegname : str
-            Path to the input NIfTI template file.
+        - aparcasegname : str
+            Path to the input NIfTI aparc+aseg file.
+        - dsegname : str
+            Root name of the output NIfTI dseg file.
         - debug : bool
             If True, print debug information.
-        - maxval : float, optional
-            Maximum value to truncate template data.
-        - labelfile : str, optional
-            Path to a text file containing region labels.
-        - dosplit : bool
-            If True, split regions into left and right hemispheres.
-        - LtoR : bool
-            If True, assign left hemisphere labels first.
-        - targetfile : str, optional
-            Path to a target NIfTI file for resampling.
-        - xfm : str, optional
-            Path to transformation file for resampling.
-        - maskfile : str, optional
-            Path to a mask NIfTI file.
-        - maskthresh : float
-            Threshold for generating mask from template if no maskfile is provided.
-        - removeemptyregions : bool
-            If True, remove regions with no voxels.
-        - volumeperregion : bool
-            If True, save each region as a separate volume; otherwise, save as a
-            single label map.
-        - outputaparcasegname : str
-            Path for the output NIfTI file.
 
     Returns
     -------
@@ -136,25 +103,6 @@ def aparcaseg2dseg(args: Any) -> None:
       `maskthresh`.
     - Labels from `labelfile` are used in the output if provided.
 
-    Examples
-    --------
-    >>> import argparse
-    >>> args = argparse.Namespace(
-    ...     inputaparcasegname='template.nii.gz',
-    ...     debug=False,
-    ...     maxval=None,
-    ...     labelfile='labels.txt',
-    ...     dosplit=True,
-    ...     LtoR=True,
-    ...     targetfile='target.nii.gz',
-    ...     xfm='transform.mat',
-    ...     maskfile=None,
-    ...     maskthresh=0.5,
-    ...     removeemptyregions=True,
-    ...     volumeperregion=False,
-    ...     outputaparcasegname='output.nii.gz'
-    ... )
-    >>> aparcaseg2dseg(args)
     """
     if args.debug:
         print(args)
@@ -167,26 +115,26 @@ def aparcaseg2dseg(args: Any) -> None:
         aparcaseg_hdr,
         aparcasegdims,
         aparcasegsizes,
-    ) = tide_io.readfromnifti(args.inputaparcasegname)
-    xsize, ysize, numslices, timepoints = theinputdata.getdims()
+    ) = tide_io.readfromnifti(args.aparcasegname)
+    xsize, ysize, numslices, timepoints = tide_io.parseniftidims(aparcasegdims)
     numspatiallocs = int(xsize) * int(ysize) * int(numslices)
 
-    thegraymask = readamask(
-        args.inputaparcasegname,
+    thegraymask = tide_mask.readamask(
+        args.aparcasegname,
         aparcaseg_hdr,
         numspatiallocs,
         valslist=tide_io.colspectolist("APARC_GRAY"),
         maskname="gray matter",
     )
-    thewhitemask = readamask(
-        args.inputaparcasegname,
+    thewhitemask = tide_mask.readamask(
+        args.aparcasegname,
         aparcaseg_hdr,
         numspatiallocs,
         valslist=tide_io.colspectolist("APARC_WHITE"),
         maskname="white matter",
     )
-    thecsfmask = readamask(
-        args.inputaparcasegname,
+    thecsfmask = tide_mask.readamask(
+        args.aparcasegname,
         aparcaseg_hdr,
         numspatiallocs,
         valslist=tide_io.colspectolist("APARC_CSF"),
