@@ -140,7 +140,7 @@ threadpoolctl==3.5.0
     # via scikit-learn
 tifffile==2024.9.20
     # via scikit-image
-torch==2.10.0
+torch==2.13.0
     # via rapidtide (pyproject.toml)
 tqdm==4.67.1
     # via rapidtide (pyproject.toml)

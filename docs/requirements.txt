@@ -227,7 +227,7 @@ tifffile==2024.9.20
     # via scikit-image
 tomlkit==0.13.2
     # via rapidtide (../pyproject.toml)
-torch==2.10.0
+torch==2.13.0
     # via rapidtide (../pyproject.toml)
 tqdm==4.67.1
     # via rapidtide (../pyproject.toml)
