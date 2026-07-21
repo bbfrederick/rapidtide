@@ -292,7 +292,7 @@ def parseniftisizes(thesizes: NDArray) -> Tuple[float, float, float, float]:
     return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
 
-def dumparraytonifti(thearray: NDArray, filename: str) -> None:
+def dumparraytonifti(thearray: NDArray, filename: str, nifti2: bool=False) -> None:
     """
     Save a numpy array to a NIFTI file with an identity affine transform.
 
@@ -336,10 +336,10 @@ def dumparraytonifti(thearray: NDArray, filename: str) -> None:
         outputaffine[i, i] = 1.0
     outputheader = nib.Nifti1Header()
     outputheader.set_data_shape(thearray.shape)
-    savetonifti(thearray, outputheader, filename)
+    savetonifti(thearray, outputheader, filename, nifti2=nifti2)
 
 
-def savetonifti(thearray: NDArray, theheader: Any, thename: str, debug: bool = False) -> None:
+def savetonifti(thearray: NDArray, theheader: Any, thename: str, nifti2: bool = False, debug: bool = False) -> None:
     """
     Save a data array out to a nifti file
 
@@ -414,7 +414,7 @@ def savetonifti(thearray: NDArray, theheader: Any, thename: str, debug: bool = F
         targetdatatype = theheader["datatype"]
         print(f"\ttargetdatatype={targetdatatype}")
 
-    if theheader["magic"] == "n+2":
+    if theheader["magic"] == "n+2" or nifti2:
         output_nifti = nib.Nifti2Image(thearray.astype(thedtype), outputaffine, header=theheader)
         suffix = ".nii"
     else:

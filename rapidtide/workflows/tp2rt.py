@@ -216,7 +216,7 @@ def main(args):
     thehdr = tide_io.niftihdrfromarray(data_array)
     thehdr.set_xyzt_units(xyz="mm", t="sec")
     thehdr["pixdim"][4] = 1.0 / args.framerate
-    tide_io.savetonifti(data_array, thehdr, args.outfileroot)
+    tide_io.savetonifti(data_array, thehdr, args.outfileroot, nifti2=True)
 
     # affine = np.eye(4)
     # nifti_img = nib.Nifti1Image(data_array, affine)
