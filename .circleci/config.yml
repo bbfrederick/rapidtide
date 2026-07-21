@@ -12,7 +12,7 @@ commands:
           name: Build base environment
           command: |
             #if [[ -e /tmp/src/rapidtide/.venv ]]; then
-            if [[ -e /tmp/src/rapidtide/.venv/bin/python ]]; then
+            if [[ -e /tmp/src/rapidtide/.venv/bin/python3 ]]; then
                 echo "Restoring environment from cache"
                 source .venv/bin/activate
             else
