@@ -528,10 +528,11 @@ def madnormalize(vector: NDArray) -> Tuple[NDArray, float]:
     >>> print(normalized)
     [-1.4826  -0.7413   0.    0.7413  1.4826]
     """
+    intype = vector.dtype
     demedianed = vector - np.median(vector)
-    sigmad = mad(demedianed).astype(np.float64)
+    sigmad = mad(demedianed).astype(intype)
     if sigmad > 0.0:
-        return (demedianed / sigmad).astype(np.float64), sigmad
+        return (demedianed / sigmad).astype(intype), sigmad
     else:
         return demedianed, sigmad
 
@@ -569,10 +570,11 @@ def stdnormalize(vector: NDArray) -> NDArray:
     >>> stdnormalize(y)
     array([0., 0., 0., 0.])
     """
+    intype = vector.dtype
     demeaned = vector - np.mean(vector)
-    sigstd = (np.std(demeaned)).astype(np.float64)
+    sigstd = np.std(demeaned)
     if sigstd > 0.0:
-        return (demeaned / sigstd).astype(np.float64)
+        return (demeaned / sigstd).astype(intype)
     else:
         return demeaned
 
@@ -614,10 +616,11 @@ def varnormalize(vector: NDArray) -> NDArray:
     >>> varnormalize(constant_vec)
     array([0., 0., 0., 0.])
     """
+    intype = vector.dtype
     demeaned = vector - np.mean(vector)
-    sigvar = (np.var(demeaned)).astype(np.float64)
+    sigvar = np.var(demeaned)
     if sigvar > 0.0:
-        return (demeaned / sigvar).astype(np.float64)
+        return (demeaned / sigvar).astype(intype)
     else:
         return demeaned
 
@@ -658,9 +661,10 @@ def pcnormalize(vector: NDArray) -> NDArray:
     >>> print(normalized)
     [-0.5  0.5  1.5]
     """
-    sigmean = (np.mean(vector)).astype(np.float64)
+    intype = vector.dtype
+    sigmean = np.mean(vector)
     if sigmean > 0.0:
-        return (vector / sigmean - 1.0).astype(np.float64)
+        return (vector / sigmean - 1.0).astype(intype)
     else:
         return vector
 
@@ -696,10 +700,11 @@ def ppnormalize(vector: NDArray) -> NDArray:
     >>> print(normalized)
     [-0.5 -0.25  0.   0.25  0.5 ]
     """
+    intype = vector.dtype
     demeaned = vector - np.mean(vector)
-    sigpp = (np.max(demeaned) - np.min(demeaned)).astype(np.float64)
+    sigpp = np.max(demeaned) - np.min(demeaned)
     if sigpp > 0.0:
-        return (demeaned / sigpp).astype(np.float64)
+        return (demeaned / sigpp).astype(intype)
     else:
         return demeaned
 
