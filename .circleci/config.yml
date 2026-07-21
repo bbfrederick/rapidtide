@@ -11,7 +11,8 @@ commands:
       - run:
           name: Build base environment
           command: |
-            if [[ -e /tmp/src/rapidtide/.venv ]]; then
+            #if [[ -e /tmp/src/rapidtide/.venv ]]; then
+            if [[ -e /tmp/src/rapidtide/.venv/bin/python ]]; then
                 echo "Restoring environment from cache"
                 source .venv/bin/activate
             else
