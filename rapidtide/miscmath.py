@@ -531,7 +531,7 @@ def madnormalize(vector: NDArray) -> Tuple[NDArray, float]:
     demedianed = vector - np.median(vector)
     sigmad = mad(demedianed).astype(np.float64)
     if sigmad > 0.0:
-        return demedianed / sigmad, sigmad
+        return (demedianed / sigmad).astype(np.float64), sigmad
     else:
         return demedianed, sigmad
 
@@ -570,9 +570,9 @@ def stdnormalize(vector: NDArray) -> NDArray:
     array([0., 0., 0., 0.])
     """
     demeaned = vector - np.mean(vector)
-    sigstd = np.std(demeaned)
+    sigstd = (np.std(demeaned)).astype(np.float64)
     if sigstd > 0.0:
-        return demeaned / sigstd
+        return (demeaned / sigstd).astype(np.float64)
     else:
         return demeaned
 
@@ -615,9 +615,9 @@ def varnormalize(vector: NDArray) -> NDArray:
     array([0., 0., 0., 0.])
     """
     demeaned = vector - np.mean(vector)
-    sigvar = np.var(demeaned)
+    sigvar = (np.var(demeaned)).astype(np.float64)
     if sigvar > 0.0:
-        return demeaned / sigvar
+        return (demeaned / sigvar).astype(np.float64)
     else:
         return demeaned
 
@@ -658,9 +658,9 @@ def pcnormalize(vector: NDArray) -> NDArray:
     >>> print(normalized)
     [-0.5  0.5  1.5]
     """
-    sigmean = np.mean(vector)
+    sigmean = (np.mean(vector)).astype(np.float64)
     if sigmean > 0.0:
-        return vector / sigmean - 1.0
+        return (vector / sigmean - 1.0).astype(np.float64)
     else:
         return vector
 
@@ -697,9 +697,9 @@ def ppnormalize(vector: NDArray) -> NDArray:
     [-0.5 -0.25  0.   0.25  0.5 ]
     """
     demeaned = vector - np.mean(vector)
-    sigpp = np.max(demeaned) - np.min(demeaned)
+    sigpp = (np.max(demeaned) - np.min(demeaned)).astype(np.float64)
     if sigpp > 0.0:
-        return demeaned / sigpp
+        return (demeaned / sigpp).astype(np.float64)
     else:
         return demeaned
 
