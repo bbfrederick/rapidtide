@@ -73,6 +73,12 @@ def _get_parser() -> Any:
         help="The high passband frequency limit in Hz (set less than zero to disable LPF)",
     )
     parser.add_argument(
+        "--spatialsmooth",
+        type=float,
+        help="Optional gaussian spatial smoothing to apply, in mm",
+        default=None,
+    )
+    parser.add_argument(
         "--padseconds",
         dest="padseconds",
         action="store",
@@ -158,6 +164,7 @@ def filtnifti(args: Any) -> None:
     print("tr from header =", tr, ", sample frequency is ", Fs)
 
     xsize, ysize, numslices, timepoints = tide_io.parseniftidims(thedims)
+    xdim, ydim, slicethickness, tr = tide_io.parseniftisizes(thesizes)
     filteredtcs = np.zeros((xsize, ysize, numslices, timepoints), dtype="float")
 
     # cycle over all voxels
@@ -173,6 +180,13 @@ def filtnifti(args: Any) -> None:
                 filteredtcs[xloc, yloc, zloc, :] = theprefilter.apply(
                     Fs, input_data[xloc, yloc, zloc, :]
                 )
+
+    if args.spatialsmooth is not None:
+        print(f"spatial filtering with {args.spatialsmooth}mm kernel")
+        for i in range(timepoints):
+            filteredtcs[:, :, :, i] = tide_filt.ssmooth(
+                xdim, ydim, slicethickness, args.spatialsmooth, filteredtcs[:, :, :, i]
+            )
 
     # now do the ones with other numbers of time points
     tide_io.savetonifti(filteredtcs, input_hdr, args.outputfilename)
