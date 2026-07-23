@@ -126,7 +126,7 @@ scipy==1.15.2
     #   scikit-image
     #   scikit-learn
     #   statsmodels
-setuptools==82.0.1
+setuptools==83.0.0
     # via torch
 six==1.16.0
     # via
