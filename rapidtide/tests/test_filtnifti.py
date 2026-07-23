@@ -33,6 +33,7 @@ def _make_default_args(
     lowestfreq=0.01,
     highestfreq=0.1,
     padseconds=30.0,
+    spatialsmooth=3.0,
 ):
     return argparse.Namespace(
         inputfilename=inputfilename,
@@ -40,6 +41,7 @@ def _make_default_args(
         lowestfreq=lowestfreq,
         highestfreq=highestfreq,
         padseconds=padseconds,
+        spatialsmooth=spatialsmooth,
     )
 
 
