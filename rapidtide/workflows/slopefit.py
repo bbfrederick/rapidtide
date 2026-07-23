@@ -225,7 +225,9 @@ def slopefit(
     if maskfile is not None:
         rs_maskfile = maskfile_data.reshape(numspatiallocs)
     else:
-        rs_maskfile = np.ones_like(inputfile1_data[:, :, :, 0], dtype=np.float32).reshape(numspatiallocs)
+        rs_maskfile = np.ones_like(inputfile1_data[:, :, :, 0], dtype=np.float32).reshape(
+            numspatiallocs
+        )
     rs_maskfile_bin = np.where(rs_maskfile > 0.9, 1.0, 0.0)
 
     if debug:

@@ -93,8 +93,7 @@ def _get_parser() -> Any:
         action="store",
         type=lambda x: pf.is_float(parser, x, minval=0.0),
         help=(
-            "Strength of anisotropic growth bias (default is "
-            f"{DEFAULT_ANISOTROPY_STRENGTH})."
+            "Strength of anisotropic growth bias (default is " f"{DEFAULT_ANISOTROPY_STRENGTH})."
         ),
         default=DEFAULT_ANISOTROPY_STRENGTH,
     )

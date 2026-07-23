@@ -368,7 +368,9 @@ def test_padvec_and_unpadvec_round_trip():
 def test_padvec_padding_modes_and_errors():
     data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
     assert np.allclose(padvec(data, padlen=2, padtype="zero"), np.array([0, 0, 1, 2, 3, 4, 0, 0]))
-    assert np.allclose(padvec(data, padlen=2, padtype="cyclic"), np.array([3, 4, 1, 2, 3, 4, 1, 2]))
+    assert np.allclose(
+        padvec(data, padlen=2, padtype="cyclic"), np.array([3, 4, 1, 2, 3, 4, 1, 2])
+    )
     assert np.allclose(
         padvec(data, padlen=2, padtype="constant"), np.array([1, 1, 1, 2, 3, 4, 4, 4])
     )
@@ -480,12 +482,30 @@ def test_filtering_helpers_return_valid_outputs():
     y_lp_fft = dolptransfuncfilt(fs, x, upperpass=4.0, upperstop=5.0, type="brickwall", padlen=20)
     y_hp_fft = dohptransfuncfilt(fs, x, lowerpass=0.8, lowerstop=0.6, type="brickwall", padlen=20)
     y_bp_fft = dobptransfuncfilt(
-        fs, x, lowerpass=0.8, upperpass=4.0, lowerstop=0.6, upperstop=5.0, type="brickwall", padlen=20
+        fs,
+        x,
+        lowerpass=0.8,
+        upperpass=4.0,
+        lowerstop=0.6,
+        upperstop=5.0,
+        type="brickwall",
+        padlen=20,
     )
-    y_lp_trap = dolptransfuncfilt(fs, x, upperpass=4.0, upperstop=5.0, type="trapezoidal", padlen=20)
-    y_hp_trap = dohptransfuncfilt(fs, x, lowerpass=0.8, lowerstop=0.6, type="trapezoidal", padlen=20)
+    y_lp_trap = dolptransfuncfilt(
+        fs, x, upperpass=4.0, upperstop=5.0, type="trapezoidal", padlen=20
+    )
+    y_hp_trap = dohptransfuncfilt(
+        fs, x, lowerpass=0.8, lowerstop=0.6, type="trapezoidal", padlen=20
+    )
     y_bp_trap = dobptransfuncfilt(
-        fs, x, lowerpass=0.8, upperpass=4.0, lowerstop=0.6, upperstop=5.0, type="trapezoidal", padlen=20
+        fs,
+        x,
+        lowerpass=0.8,
+        upperpass=4.0,
+        lowerstop=0.6,
+        upperstop=5.0,
+        type="trapezoidal",
+        padlen=20,
     )
     y_arb = arb_pass(
         fs,

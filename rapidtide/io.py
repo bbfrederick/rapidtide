@@ -292,7 +292,7 @@ def parseniftisizes(thesizes: NDArray) -> Tuple[float, float, float, float]:
     return thesizes[1], thesizes[2], thesizes[3], thesizes[4]
 
 
-def dumparraytonifti(thearray: NDArray, filename: str, nifti2: bool=False) -> None:
+def dumparraytonifti(thearray: NDArray, filename: str, nifti2: bool = False) -> None:
     """
     Save a numpy array to a NIFTI file with an identity affine transform.
 
@@ -339,7 +339,9 @@ def dumparraytonifti(thearray: NDArray, filename: str, nifti2: bool=False) -> No
     savetonifti(thearray, outputheader, filename, nifti2=nifti2)
 
 
-def savetonifti(thearray: NDArray, theheader: Any, thename: str, nifti2: bool = False, debug: bool = False) -> None:
+def savetonifti(
+    thearray: NDArray, theheader: Any, thename: str, nifti2: bool = False, debug: bool = False
+) -> None:
     """
     Save a data array out to a nifti file
 

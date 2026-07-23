@@ -90,9 +90,7 @@ def main() -> None:
 
     total_calls = fitter_new.gauss_fit_calls + fitter_old.gauss_fit_calls
     fast_calls = fitter_new.gauss_fastpath_calls + fitter_old.gauss_fastpath_calls
-    robust_calls = (
-        fitter_new.gauss_robust_fallback_calls + fitter_old.gauss_robust_fallback_calls
-    )
+    robust_calls = fitter_new.gauss_robust_fallback_calls + fitter_old.gauss_robust_fallback_calls
 
     mean_ms = 1.0e3 * np.mean(timings)
     p95_ms = 1.0e3 * np.percentile(timings, 95.0)

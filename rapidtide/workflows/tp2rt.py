@@ -204,7 +204,7 @@ def main(args):
         """
         framenumber += 1
         print()
-        #if framenumber > 300:
+        # if framenumber > 300:
         #    break
 
     cap.release()
@@ -221,7 +221,7 @@ def main(args):
     init_array = np.stack(rawframes, axis=3)
     initshape = init_array.shape
     print(f"{init_array.shape=}")
-    #data_array = init_array.reshape(initshape[0], 1, initshape[1], initshape[2])
+    # data_array = init_array.reshape(initshape[0], 1, initshape[1], initshape[2])
     data_array = init_array
     data_array_mean = np.mean(data_array, axis=3)
     print(f"{data_array.shape=}")

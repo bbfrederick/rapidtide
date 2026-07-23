@@ -328,7 +328,9 @@ def dobpbrickwall_basic(debug=False):
     if debug:
         print("dobpbrickwall_basic")
     sig = _make_test_signal()
-    filtered = dobptransfuncfilt(FS, sig, lowerpass=3.0, upperpass=8.0, type="brickwall", padlen=PADLEN)
+    filtered = dobptransfuncfilt(
+        FS, sig, lowerpass=3.0, upperpass=8.0, type="brickwall", padlen=PADLEN
+    )
     assert len(filtered) == len(sig)
 
 
@@ -378,7 +380,14 @@ def dobptrapfftfilt_basic(debug=False):
         print("dobptrapfftfilt_basic")
     sig = _make_test_signal()
     filtered = dobptransfuncfilt(
-        FS, sig, lowerstop=2.0, lowerpass=3.0, upperpass=8.0, upperstop=10.0, type="trapezoidal", padlen=PADLEN
+        FS,
+        sig,
+        lowerstop=2.0,
+        lowerpass=3.0,
+        upperpass=8.0,
+        upperstop=10.0,
+        type="trapezoidal",
+        padlen=PADLEN,
     )
     assert len(filtered) == len(sig)
 
