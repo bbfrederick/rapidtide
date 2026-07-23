@@ -416,7 +416,10 @@ def savetonifti(thearray: NDArray, theheader: Any, thename: str, nifti2: bool = 
 
     if theheader["magic"] == "n+2" or nifti2:
         output_nifti = nib.Nifti2Image(thearray.astype(thedtype), outputaffine, header=theheader)
-        suffix = ".nii"
+        if nifti2:
+            suffix = ".nii.gz"
+        else:
+            suffix = ".nii"
     else:
         output_nifti = nib.Nifti1Image(thearray.astype(thedtype), outputaffine, header=theheader)
         suffix = ".nii.gz"
