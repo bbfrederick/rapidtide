@@ -22,6 +22,7 @@ import sys
 from typing import Any, Optional
 
 import numpy as np
+from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
@@ -238,8 +239,13 @@ def slopefit(
     r2vals = np.zeros((numspatiallocs), dtype="float")
 
     # cycle over all voxels
+    voxelstofit = np.where(rs_maskfile_bin > 0.0)
     print("now cycling over all voxels")
-    for thevoxel in range(0, numspatiallocs):
+    for thevoxel in tqdm(
+        range(voxelstofit),
+        desc="Voxel",
+        unit="voxels",
+    ):
         # get the appropriate mask
         if rs_maskfile_bin[thevoxel] > 0.0:
             evlist = [np.ones((timepoints), dtype=np.float32)]
@@ -259,12 +265,7 @@ def slopefit(
                 polycoffs[thevoxel, i] = thefit[0, i]
             r2vals[thevoxel] = R2
 
-    # write out the data files
-    print("writing time series")
-
-    tide_io.writenpvecs(r2vals, outputroot + "_r2vals.txt")
-
-    print("writing nifti series")
+    print("writing nifti files")
     theheader = copy.copy(inputfile1_hdr)
     theheader["dim"][0] = 4
     theheader["dim"][4] = order + 1
