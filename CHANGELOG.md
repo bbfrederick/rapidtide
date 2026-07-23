@@ -1,8 +1,13 @@
 # Release history
 
-## Version 3.1.12 (6/29/26)
+## Version 3.1.12 (7/23/26)
+* (slopefit) Added program to find polynomial mapping between two 4D NIFTI files.
 * (aparc2dseg) Added a new program to make gray, white, CSF maps from aparc+aseg maps.
+* (filtnifti) Added option to do spatial as well as temporal filtering.
+* (tp2rt) Added program to convert video to NIFTI.
 * (io) readfslmat now reads column names out of the companion .fsf file, if present.
+* (io) Added a flag to savetonifti to specify NIFTI2 output.
+* (miscmath) Fixed a typing error for some normalization functions.
 * (package) Fixed a version incompatibility that broke circleci testing.
 * (package) Accepted several dependabot PRs.
 
