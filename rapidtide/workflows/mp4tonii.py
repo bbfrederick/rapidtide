@@ -45,6 +45,13 @@ def _get_parser() -> Any:
         help="Show frames while processing them.",
         default=False,
     )
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Show additional diagnostic information.",
+        default=False,
+    )
 
     return parser
 
@@ -66,9 +73,6 @@ def POSproc(theframe: NDArray, xloc, yloc):
 def main(args):
     # first find the shape of the frames
     cap = cv2.VideoCapture(args.infilename)
-    ret, frame = cap.read()
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frameshape = rgb_frame.shape
 
     # get the video properties, then close the file
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -76,10 +80,6 @@ def main(args):
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     print(f"{frame_width=}, {frame_height=}, {fps=}")
     cap.release()
-
-    # set up the output files
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-
 
     # 1. Open the video file using OpenCV
     cap = cv2.VideoCapture(args.infilename)
@@ -93,9 +93,11 @@ def main(args):
 
         # 2. Convert frame to r, g and b
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        print(f"{rgb_frame.shape=}")
+        if args.debug:
+            print(f"{rgb_frame.shape=}")
         rawframes.append(np.transpose(rgb_frame[::-1, :], axes=(1, 0, 2)))
-        print(f"{rawframes[-1].shape=}")
+        if args.debug:
+            print(f"{rawframes[-1].shape=}")
         print(f"{framenumber=}")
 
         if args.showframes:
@@ -106,9 +108,9 @@ def main(args):
         cv2.waitKey(1)
 
         framenumber += 1
-        print()
-        # if framenumber > 300:
-        #    break
+        if args.debug:
+            if framenumber > 300:
+                break
 
     cap.release()
     cv2.destroyAllWindows()
@@ -116,7 +118,8 @@ def main(args):
     # 3. Stack frames into a 3D numpy array (Height, Width, time)
     # Shape will be (NHeight, Width, Number of frames)
     data_array = np.stack(rawframes, axis=3)
-    print(f"{data_array.shape=}")
+    if args.debug:
+        print(f"{data_array.shape=}")
 
     # 4. Create a NIfTI image using NiBabel
     # We use an identity matrix for the affine as MP4 lacks spatial metadata
