@@ -135,7 +135,7 @@ def slopefit(
         Path to the NIfTI file containing the mask for the template.
     outputroot : Any
         Root name for output files (e.g., 'output' will produce 'output_fit.nii.gz').
-    regionatlas : Any, optional
+    maskfile : Any, optional
         Path to the NIfTI file containing region labels. If provided, fitting is
         performed separately for each region. Default is None.
     order : int, optional
@@ -154,21 +154,9 @@ def slopefit(
     -----
     - The function assumes that all input files are in NIfTI format.
     - If `datamask` is 4D, it is treated as a time-varying mask.
-    - If `regionatlas` is provided, fitting is performed separately for each region.
+    - If `maskfile` is provided, fitting is performed only within the specified voxels.
     - The function uses `tide_io` for reading/writing NIfTI files and `tide_fit.mlregress`
       for polynomial regression.
-
-    Examples
-    --------
-    >>> slopefit(
-    ...     datafile='data.nii.gz',
-    ...     datamask='mask.nii.gz',
-    ...     templatefile='template.nii.gz',
-    ...     templatemask='template_mask.nii.gz',
-    ...     outputroot='output',
-    ...     regionatlas='atlas.nii.gz',
-    ...     order=2
-    ... )
     """
     # check the order
     if order < 1:
@@ -236,24 +224,37 @@ def slopefit(
     if maskfile is not None:
         rs_maskfile = maskfile_data.reshape(numspatiallocs)
     else:
-        rs_maskfile = np.ones_like((numspatiallocs), dtype=np.float32)
+        rs_maskfile = np.ones_like(inputfile1_data[:, :, :, 0], dtype=np.float32).reshape(numspatiallocs)
     rs_maskfile_bin = np.where(rs_maskfile > 0.9, 1.0, 0.0)
+
+    if debug:
+        print(f"{inputfile1_data.shape=}, {rs_inputfile1.shape=}")
+        print(f"{inputfile2_data.shape=}, {rs_inputfile2.shape=}")
+        if maskfile is not None:
+            print(f"{maskfile_data.shape=}")
+        print(f"{rs_maskfile.shape=}, {rs_maskfile_bin.shape=}")
 
     polycoffs = np.zeros((numspatiallocs, order + 1), dtype="float")
     r2vals = np.zeros((numspatiallocs), dtype="float")
 
-    # cycle over all images
+    # cycle over all voxels
     print("now cycling over all voxels")
     for thevoxel in range(0, numspatiallocs):
         # get the appropriate mask
         if rs_maskfile_bin[thevoxel] > 0.0:
-            evlist = []
+            evlist = [np.ones((timepoints), dtype=np.float32)]
             for i in range(1, order + 1):
                 evlist.append((rs_inputfile1[thevoxel, :]) ** i)
+                if debug:
+                    print(f"{evlist[-1].shape=}")
+            if debug:
+                print(f"{len(evlist)=}")
             thefit, R2 = tide_fit.mlregress(
                 evlist,
-                rs_inputfile2[thevoxel, :][0],
+                rs_inputfile2[thevoxel, :],
             )
+            if debug:
+                print(f"{thefit=}, {R2=}")
             for i in range(order + 1):
                 polycoffs[thevoxel, i] = thefit[0, i]
             r2vals[thevoxel] = R2
@@ -321,25 +322,12 @@ def main(args: Any) -> None:
     perform the actual polynomial fitting computation. All input files must be
     properly formatted and accessible.
 
-    Examples
-    --------
-    >>> import argparse
-    >>> args = argparse.Namespace(
-    ...     datafile='data.nii.gz',
-    ...     datamask='data_mask.nii.gz',
-    ...     templatefile='template.nii.gz',
-    ...     templatemask='template_mask.nii.gz',
-    ...     outputroot='output',
-    ...     regionatlas='atlas.nii.gz',
-    ...     order=2
-    ... )
-    >>> main(args)
     """
     slopefit(
         args.inputfile1,
         args.inputfile2,
         args.outputroot,
-        maskfile=args.regionatlas,
+        maskfile=args.maskfile,
         order=args.order,
         debug=args.debug,
     )
