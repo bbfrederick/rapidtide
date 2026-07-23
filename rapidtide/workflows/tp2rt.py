@@ -38,17 +38,25 @@ def _get_parser() -> Any:
     parser.add_argument("infilename", help="An mp4 file output by TelePlethy")
     parser.add_argument("tsvfilename", help="A tsv file output by TelePlethy")
     parser.add_argument("outfileroot", help="Root file for NIFTI files")
-
     parser.add_argument(
         "--framerate", type=float, default=30.0, help="The frame rate of the input video"
     )
+    parser.add_argument(
+        "--showframes",
+        dest="showframes",
+        action="store_true",
+        help="Show frames while processing them.",
+        default=False,
+    )
 
     return parser
+
 
 def showminmax(thearray, thelabel):
     themin = np.min(thearray)
     themax = np.max(thearray)
     print(f"\t{thelabel}: {themin=}, {themax=}")
+
 
 def POSproc(theframe: NDArray, xloc, yloc):
 
@@ -79,14 +87,14 @@ def main(args):
 
     # set up the output files
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    #out_filtframes = cv2.VideoWriter("filtframes.mp4", fourcc, fps, (frame_width, frame_height))
-    #out_meanframes = cv2.VideoWriter("meanframes.mp4", fourcc, fps, (frame_width, frame_height))
-    #out_grframes = cv2.VideoWriter("GRframes.mp4", fourcc, fps, (frame_width, frame_height))
-    #out_gbframes = cv2.VideoWriter("GBframes.mp4", fourcc, fps, (frame_width, frame_height))
+    # out_filtframes = cv2.VideoWriter("filtframes.mp4", fourcc, fps, (frame_width, frame_height))
+    # out_meanframes = cv2.VideoWriter("meanframes.mp4", fourcc, fps, (frame_width, frame_height))
+    # out_grframes = cv2.VideoWriter("GRframes.mp4", fourcc, fps, (frame_width, frame_height))
+    # out_gbframes = cv2.VideoWriter("GBframes.mp4", fourcc, fps, (frame_width, frame_height))
     out_grgbframes = cv2.VideoWriter("GRGBframes.mp4", fourcc, fps, (frame_width, frame_height))
-    #out_hemoframes = cv2.VideoWriter("hemoframes.mp4", fourcc, fps, (frame_width, frame_height))
-    #out_normframes = cv2.VideoWriter("normframes.mp4", fourcc, fps, (frame_width, frame_height))
-    #out_colorframes = cv2.VideoWriter("colorframes.mp4", fourcc, fps, (frame_width, frame_height))
+    # out_hemoframes = cv2.VideoWriter("hemoframes.mp4", fourcc, fps, (frame_width, frame_height))
+    # out_normframes = cv2.VideoWriter("normframes.mp4", fourcc, fps, (frame_width, frame_height))
+    # out_colorframes = cv2.VideoWriter("colorframes.mp4", fourcc, fps, (frame_width, frame_height))
 
     # now make a buffer
     windowsize = 48
@@ -102,6 +110,7 @@ def main(args):
 
     # 1. Open the video file using OpenCV
     cap = cv2.VideoCapture(args.infilename)
+    rawframes = []
     filtframes = []
     normframes = []
     grframes = []
@@ -118,44 +127,48 @@ def main(args):
 
         # 2. Convert frame to r, g and b
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        filtframe = gaussian_filter(
+        print(f"{rgb_frame.shape=}")
+        rawframes.append(np.transpose(rgb_frame[::-1, :], axes=(1, 0, 2)))
+        print(f"{rawframes[-1].shape=}")
+        """filtframe = gaussian_filter(
             rgb_frame, axes=(0, 1), sigma=7.5
         )
         rawframe_buffer[:, :, :, framenumber % windowsize] = filtframe
         filtframes.append(rawframe_buffer[:, :, :, framenumber % windowsize])
-        #out_filtframes.write(cv2.cvtColor(filtframes[-1].astype(np.uint8), cv2.COLOR_RGB2BGR))
+        # out_filtframes.write(cv2.cvtColor(filtframes[-1].astype(np.uint8), cv2.COLOR_RGB2BGR))
         if framenumber < windowsize:
             meanframe = np.mean(rawframe_buffer[:, :, :, : framenumber + 1], axis=3)
         else:
-            meanframe = np.mean(rawframe_buffer[:, :, :, :], axis=3)
+            meanframe = np.mean(rawframe_buffer[:, :, :, :], axis=3)"""
         print(f"{framenumber=}")
-        #showminmax(meanframe, "meanframe")
+        """# showminmax(meanframe, "meanframe")
         # out_meanframes.write(cv2.cvtColor(meanframe.astype(np.uint8), cv2.COLOR_RGB2BGR))
         LOWERTHRESH = 0.2
         UPPERTHRESH = 1.0 / LOWERTHRESH
         normframe_buffer[:, :, :, framenumber % windowsize] = np.nan_to_num(rawframe_buffer[:, :, :, framenumber % windowsize] / meanframe)
-        #normframe_buffer[:, :, :, framenumber % windowsize] = np.where(
+        # normframe_buffer[:, :, :, framenumber % windowsize] = np.where(
         #   normframe_buffer[:, :, :, framenumber % windowsize] > LOWERTHRESH,
         #    normframe_buffer[:, :, :, framenumber % windowsize],
         #    0.0,
-        #)
+        # )
         normframes.append(normframe_buffer[:, :, :, framenumber % windowsize])
-        #showminmax(normframes[-1], "normframe")
+        # showminmax(normframes[-1], "normframe")
         grframes.append(np.nan_to_num(normframes[-1][:, :, 1] / normframes[-1][:, :, 0]))
-        #showminmax(grframes[-1], "GR")
-        #out_grframes.write(
+        # showminmax(grframes[-1], "GR")
+        # out_grframes.write(
         #    cv2.cvtColor((128.0 * grframes[-1]).astype(np.uint8), cv2.COLOR_RGB2BGR)
-        #)
+        # )
         gbframes.append(np.nan_to_num(normframes[-1][:, :, 1] / normframes[-1][:, :, 2]))
-        #showminmax(gbframes[-1], "GB")
-        #out_gbframes.write(
+        # showminmax(gbframes[-1], "GB")
+        # out_gbframes.write(
         #    cv2.cvtColor((128.0 * gbframes[-1]).astype(np.uint8), cv2.COLOR_RGB2BGR)
-        #)
+        # )
         grgbframes.append(np.transpose((grframes[-1] + gbframes[-1])[::-1,:]))
-        #showminmax(grgbframes[-1], "GRGB")
+        # showminmax(grgbframes[-1], "GRGB")
         out_grgbframes.write(
             cv2.cvtColor((64.0 * grgbframes[-1]).astype(np.uint8), cv2.COLOR_RGB2BGR)
-        )
+        )"""
+
         """
         out_normframes.write(
             cv2.cvtColor((192.0 * normframes[-1]).astype(np.uint8), cv2.COLOR_RGB2BGR)
@@ -174,10 +187,11 @@ def main(args):
         )
         """
         # cv2.imshow("normframe", cv2.cvtColor((255.0 * normframe_buffer[:, :, :, framenumber % windowsize]).astype(np.uint8), cv2.COLOR_RGB2BGR))
-        cv2.imshow(
-            "normframe",
-            cv2.cvtColor((64.0 * normframes[-1]).astype(np.uint8), cv2.COLOR_RGB2BGR),
-        )
+        if args.showframes:
+            cv2.imshow(
+                "rawframe",
+                cv2.cvtColor((rawframes[-1]).astype(np.uint8), cv2.COLOR_RGB2BGR),
+            )
         cv2.waitKey(1)
         """
         ypos = int(np.round((regionpos[0, framenumber]), 0))
@@ -194,21 +208,22 @@ def main(args):
         #    break
 
     cap.release()
-    #out_normframes.release()
-    #out_colorframes.release()
-    #out_hemoframes.release()
-    #ut_grframes.release()
-    #out_gbframes.release()
-    out_grgbframes.release()
+    # out_normframes.release()
+    # out_colorframes.release()
+    # out_hemoframes.release()
+    # ut_grframes.release()
+    # out_gbframes.release()
+    # out_grgbframes.release()
     cv2.destroyAllWindows()
 
     # 3. Stack frames into a 3D numpy array (Height, Width, time)
     # Shape will be (NHeight, Width, Number of frames)
-    init_array = np.stack(grgbframes, axis=2)
+    init_array = np.stack(rawframes, axis=3)
     initshape = init_array.shape
     print(f"{init_array.shape=}")
-    data_array = init_array.reshape(initshape[0], 1, initshape[1], initshape[2])
-    data_array_mean = np.mean(data_array, axis=2)
+    #data_array = init_array.reshape(initshape[0], 1, initshape[1], initshape[2])
+    data_array = init_array
+    data_array_mean = np.mean(data_array, axis=3)
     print(f"{data_array.shape=}")
 
     # 4. Create a NIfTI image using NiBabel
