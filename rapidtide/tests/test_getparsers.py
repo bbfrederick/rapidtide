@@ -24,6 +24,7 @@ from rapidtide.workflows.atlasaverage import _get_parser as atlasaverage_getpars
 from rapidtide.workflows.atlastool import _get_parser as atlastool_getparser
 from rapidtide.workflows.calctexticc import _get_parser as calctexticc_getparser
 from rapidtide.workflows.ccorrica import _get_parser as ccorrica_getparser
+from rapidtide.workflows.delayflow import _get_parser as delayflow_getparser
 from rapidtide.workflows.delayvar import _get_parser as delayvar_getparser
 from rapidtide.workflows.diffrois import _get_parser as diffrois_getparser
 from rapidtide.workflows.endtidalproc import _get_parser as endtidalproc_getparser
@@ -87,6 +88,7 @@ def test_parsers(debug=False):
         atlastool_getparser,
         calctexticc_getparser,
         ccorrica_getparser,
+        delayflow_getparser,
         delayvar_getparser,
         diffrois_getparser,
         endtidalproc_getparser,

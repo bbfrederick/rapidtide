@@ -117,6 +117,7 @@ Contents
    usage_spatialmi.rst
 
    usage_localflow.rst
+   usage_delayflow.rst
    usage_synthASL.rst
 
    legacy.rst
