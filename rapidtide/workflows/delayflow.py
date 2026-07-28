@@ -84,7 +84,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.ndimage import correlate, map_coordinates
+from scipy.ndimage import correlate, distance_transform_edt, map_coordinates
 from tqdm import tqdm
 
 import rapidtide.filter as tide_filt
@@ -910,12 +910,83 @@ def tracestreamlines(
     return thestreamlines
 
 
+def samplealongstreamlines(
+    thestreamlines: List[NDArray],
+    thevolumes: Dict[str, NDArray],
+    themask: Optional[NDArray] = None,
+    nearestneighbor: Optional[List[str]] = None,
+) -> Dict[str, List[NDArray]]:
+    """
+    Sample scalar volumes at every vertex of every streamline.
+
+    Tractography viewers colour streamlines by local orientation by default, which
+    is the right convention for diffusion tractography, where orientation really is
+    all you have.  Here it throws away the one thing this method gives you that dMRI
+    cannot - the SIGN of the direction - so an artery and the vein running
+    antiparallel beside it render identically.  Attaching per vertex scalars lets
+    you colour by arrival time instead, which makes propagation visible in a static
+    rendering and disambiguates upstream from downstream.
+
+    Pass themask to extend each volume to its nearest in mask value before sampling.
+    This matters more than it sounds like it should.  Streamlines terminate AT the
+    mask boundary, and the output volumes are zero outside the mask, so without the
+    extension the trilinear interpolation blends real values with those zeros over
+    the last vertex or two of every single streamline.  Colouring by arrival time
+    would then paint the tip of each streamline as the EARLIEST arriving point in
+    the dataset, at exactly the location where it is in fact the latest.
+
+    Parameters
+    ----------
+    thestreamlines : list of NDArray
+        The streamlines, in voxel coordinates.
+    thevolumes : dict
+        A mapping from scalar name to 3D volume.  Names are truncated to 20
+        characters, which is the trk format limit.
+    themask : NDArray, optional
+        The analysis mask.  If supplied, each volume is extended outside the mask by
+        nearest in mask value before sampling.
+    nearestneighbor : list of str, optional
+        Names that should be sampled with nearest neighbor rather than linear
+        interpolation.  Use this for anything categorical - interpolating integer
+        territory labels would manufacture meaningless intermediate values.
+
+    Returns
+    -------
+    dict
+        A mapping from scalar name to a list of (npoints, 1) arrays, one per
+        streamline, suitable for handing to nibabel as data_per_point.
+    """
+    if nearestneighbor is None:
+        nearestneighbor = []
+
+    # one distance transform gives the nearest in mask voxel for the whole volume,
+    # which we then reuse to extend every scalar
+    theextensionindices = None
+    if themask is not None:
+        theextensionindices = tuple(
+            distance_transform_edt(themask == 0, return_indices=True, return_distances=False)
+        )
+
+    thedata: Dict[str, List[NDArray]] = {}
+    for thename, thevolume in thevolumes.items():
+        theorder = 0 if thename in nearestneighbor else 1
+        if theextensionindices is not None:
+            thevolume = thevolume[theextensionindices]
+        thesamples = []
+        for thestreamline in thestreamlines:
+            thevalues = map_coordinates(thevolume, thestreamline.T, order=theorder, mode="nearest")
+            thesamples.append(thevalues.astype(np.float32).reshape(-1, 1))
+        thedata[thename[:20]] = thesamples
+    return thedata
+
+
 def savestreamlines(
     thestreamlines: List[NDArray],
     theaffine: NDArray,
     thedims: Tuple[int, int, int],
     voxdims: Tuple[float, float, float],
     thefilename: str,
+    datapervertex: Optional[Dict[str, List[NDArray]]] = None,
     debug: bool = False,
 ) -> bool:
     """
@@ -933,6 +1004,10 @@ def savestreamlines(
         The voxel dimensions in mm.
     thefilename : str
         The output filename.
+    datapervertex : dict, optional
+        Per vertex scalars, as returned by samplealongstreamlines.  These become
+        trk scalars, and are what viewers use to colour the streamlines by
+        something more informative than local orientation.
     debug : bool, optional
         Enable debug output.
 
@@ -951,7 +1026,11 @@ def savestreamlines(
             Field.DIMENSIONS: tuple(int(thedim) for thedim in thedims),
             Field.VOXEL_ORDER: "".join(nib.aff2axcodes(theaffine)),
         }
-        thetractogram = Tractogram(thestreamlines, affine_to_rasmm=theaffine)
+        thetractogram = Tractogram(
+            thestreamlines,
+            data_per_point=(datapervertex if datapervertex else None),
+            affine_to_rasmm=theaffine,
+        )
         nib.streamlines.save(thetractogram, thefilename, header=theheader)
         return True
     except Exception as thexception:
@@ -1303,12 +1382,31 @@ def delayflow(args: argparse.Namespace) -> None:
         )
         print(f"kept {len(thestreamlines)} streamlines")
         if len(thestreamlines) > 0:
+            # Attach per vertex scalars so that viewers can colour by something more
+            # useful than local orientation.  Colouring by arrivaltime is the one to
+            # reach for first: it renders the propagation of the wavefront directly,
+            # and unlike orientation colouring it distinguishes a vessel from its
+            # antiparallel neighbor.
+            print("sampling scalars along streamlines")
+            datapervertex = samplealongstreamlines(
+                thestreamlines,
+                {
+                    "arrivaltime": smoothedtau,
+                    "speed": speed,
+                    "logflowaccum": logaccumulation,
+                    "gradmag": gradmag,
+                    "territory": territories.astype(np.float64),
+                },
+                themask=themask,
+                nearestneighbor=["territory"],
+            )
             savestreamlines(
                 thestreamlines,
                 delay_img.affine,
                 (xsize, ysize, numslices),
                 voxdims,
                 f"{args.outputroot}_desc-flow_streamlines.trk",
+                datapervertex=datapervertex,
                 debug=args.debug,
             )
             # a density map is a useful sanity check even if the trk will not load

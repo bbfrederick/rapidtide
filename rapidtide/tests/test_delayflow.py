@@ -117,6 +117,57 @@ def test_estimategradient(debug=False):
     assert np.all(fitvalid[theinterior] > 0), "interior fits flagged invalid"
 
 
+def test_samplealongstreamlines(debug=False):
+    """Sampling must not blend in the zeros outside the mask, and must not
+    interpolate categorical labels."""
+    theshape = (20, 10, 10)
+    themask = np.zeros(theshape, dtype=np.uint16)
+    themask[2:18, 2:8, 2:8] = 1
+
+    # a ramp that exists only inside the mask, zero outside
+    thegrids = np.indices(theshape).astype(float)
+    theramp = thegrids[0] * themask
+    thelabels = np.where(thegrids[0] > 10, 7.0, 3.0) * themask
+
+    # A streamline running past the last in mask voxel centre (x=17) and out to
+    # x=17.5.  It has to straddle the boundary like this to exercise the bug at all
+    # - sampled exactly at 17.0 the interpolation never touches the outside zeros,
+    # and naive and extended sampling agree.
+    thestreamline = np.stack(
+        [np.linspace(3.0, 17.5, 30), np.full(30, 5.0), np.full(30, 5.0)], axis=-1
+    )
+
+    # without the mask, the tail of the streamline gets dragged toward zero
+    thenaive = df.samplealongstreamlines([thestreamline], {"ramp": theramp})
+    thefixed = df.samplealongstreamlines([thestreamline], {"ramp": theramp}, themask=themask)
+
+    naivevalues = thenaive["ramp"][0].ravel()
+    fixedvalues = thefixed["ramp"][0].ravel()
+    if debug:
+        print(f"naive tail: {naivevalues[-3:]}, extended tail: {fixedvalues[-3:]}")
+
+    # the naive version must actually turn back down at the edge, otherwise this
+    # test is not testing anything
+    assert np.min(np.diff(naivevalues)) < 0.0, "the test streamline does not reach the boundary"
+
+    # the extended version must not turn back down (it plateaus once it leaves the
+    # mask, since every outside point maps to the same nearest in mask voxel)
+    assert np.all(np.diff(fixedvalues) >= -1.0e-5), "mask extended sampling is not monotonic"
+    assert fixedvalues[-1] > naivevalues[-1], "mask extension did not repair the boundary dropoff"
+
+    # categorical data must not be interpolated
+    thesampled = df.samplealongstreamlines(
+        [thestreamline],
+        {"labels": thelabels},
+        themask=themask,
+        nearestneighbor=["labels"],
+    )["labels"][0].ravel()
+    assert set(np.unique(thesampled)).issubset({3.0, 7.0}), (
+        f"nearest neighbor sampling produced intermediate label values: "
+        f"{np.unique(thesampled)}"
+    )
+
+
 def test_labelterritories(debug=False):
     """Two separated sources should give two territories."""
     theshape = (20, 8, 8)
@@ -151,6 +202,25 @@ def delayflow_integration(debug=False):
         # the CBV proxy and mask should have been autodetected from the delay map name
         assert args.cbvfile == thenames["maxcorrsq"], "did not autodetect the CBV proxy"
         assert args.maskfile == thenames["corrfit"], "did not autodetect the mask"
+
+        # the streamlines should carry per vertex scalars, and arrival time must
+        # increase along them - that is the whole point of attaching it
+        thetrk = f"{outputroot}_desc-flow_streamlines.trk"
+        assert os.path.exists(thetrk), "streamline file not created"
+        theloaded = nib.streamlines.load(thetrk)
+        thepervertex = theloaded.tractogram.data_per_point
+        for thename in ["arrivaltime", "speed", "territory"]:
+            assert thename in thepervertex, f"{thename} missing from the trk scalars"
+        thesteps = np.concatenate(
+            [np.diff(np.asarray(a).ravel()) for a in thepervertex["arrivaltime"]]
+        )
+        thefraction = np.mean(thesteps > 0)
+        if debug:
+            print(f"fraction of streamline steps increasing in tau: {thefraction}")
+        assert thefraction > 0.95, (
+            f"only {100.0 * thefraction:.1f}% of streamline steps increase in arrival "
+            f"time - streamlines should run downstream"
+        )
 
         for thedesc, thesuffix in [
             ("flowfit", "mask"),
@@ -228,6 +298,7 @@ def delayflow_speedceiling(debug=False):
 def test_delayflow(debug=False):
     test_priorityflood(debug=debug)
     test_estimategradient(debug=debug)
+    test_samplealongstreamlines(debug=debug)
     test_labelterritories(debug=debug)
     delayflow_integration(debug=debug)
     delayflow_speedceiling(debug=debug)
