@@ -910,6 +910,29 @@ def tracestreamlines(
     return thestreamlines
 
 
+def maskextensionindices(themask: NDArray) -> Tuple[NDArray, ...]:
+    """
+    Build an index array that maps every voxel to its nearest in mask voxel.
+
+    Anything that interpolates or differentiates near the edge of a masked volume
+    needs an explicit story about what lies outside, because the default answer -
+    zero - is always wrong and never raises an error.  Indexing a volume with the
+    result of this function extends it outside the mask by nearest in mask value,
+    which is the right story for both interpolation and differentiation.
+
+    Parameters
+    ----------
+    themask : NDArray
+        The 3D mask of valid voxels.
+
+    Returns
+    -------
+    tuple of NDArray
+        An index tuple suitable for fancy indexing a volume of the same shape.
+    """
+    return tuple(distance_transform_edt(themask == 0, return_indices=True, return_distances=False))
+
+
 def samplealongstreamlines(
     thestreamlines: List[NDArray],
     thevolumes: Dict[str, NDArray],
@@ -963,9 +986,7 @@ def samplealongstreamlines(
     # which we then reuse to extend every scalar
     theextensionindices = None
     if themask is not None:
-        theextensionindices = tuple(
-            distance_transform_edt(themask == 0, return_indices=True, return_distances=False)
-        )
+        theextensionindices = maskextensionindices(themask)
 
     thedata: Dict[str, List[NDArray]] = {}
     for thename, thevolume in thevolumes.items():

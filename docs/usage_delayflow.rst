@@ -91,6 +91,29 @@ ceiling and therefore actually measured rather than bounded),
 ``OUTPUTROOT_desc-flow_streamlines.trk``, and
 ``OUTPUTROOT_desc-runoptions_info.json``.
 
+Viewing the streamlines:
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+In FSLeyes, **you must set the display space to world**, or the streamlines will
+appear offset from the NIfTI maps::
+
+    fsleyes -ds world -s 3d OUTPUTROOT_desc-flow_streamlines.trk OUTPUTROOT_desc-maxtime_map.nii.gz
+
+FSLeyes defaults to displaying NIfTI overlays in the *scaled voxel* space of the
+first image loaded, but tractograms are not NIfTI overlays and are always drawn
+in world (RAS mm) coordinates.  The two spaces differ by the affine's
+translation, so the streamlines appear shifted by the sform origin - same size,
+same orientation, pure offset in x, y and z.  ``-ds world`` puts everything in
+the same space.  The equivalent GUI control is the display space dropdown in the
+view settings panel.
+
+The streamlines carry per vertex scalars (``arrivaltime``, ``speed``,
+``logflowaccum``, ``gradmag``, ``territory``), which appear in the FSLeyes
+tractogram colouring options.  Colour by ``arrivaltime`` rather than the default
+orientation colouring: orientation is the right convention for diffusion
+tractography, where orientation is all you have, but here it discards the sign of
+the direction, so a vessel and its antiparallel neighbor render identically.
+
 Usage:
 ^^^^^^
 

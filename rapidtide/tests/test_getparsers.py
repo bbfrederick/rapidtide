@@ -24,6 +24,7 @@ from rapidtide.workflows.atlasaverage import _get_parser as atlasaverage_getpars
 from rapidtide.workflows.atlastool import _get_parser as atlastool_getparser
 from rapidtide.workflows.calctexticc import _get_parser as calctexticc_getparser
 from rapidtide.workflows.ccorrica import _get_parser as ccorrica_getparser
+from rapidtide.workflows.corrflow import _get_parser as corrflow_getparser
 from rapidtide.workflows.delayflow import _get_parser as delayflow_getparser
 from rapidtide.workflows.delayvar import _get_parser as delayvar_getparser
 from rapidtide.workflows.diffrois import _get_parser as diffrois_getparser
@@ -77,6 +78,7 @@ from rapidtide.workflows.spectrogram import _get_parser as spectrogram_getparser
 from rapidtide.workflows.synthASL import _get_parser as synthASL_getparser
 from rapidtide.workflows.tcfrom2col import _get_parser as tcfrom2col_getparser
 from rapidtide.workflows.tcfrom3col import _get_parser as tcfrom3col_getparser
+from rapidtide.workflows.unwrapdelay import _get_parser as unwrapdelay_getparser
 from rapidtide.workflows.variabilityizer import _get_parser as variabilityizer_getparser
 
 
@@ -88,6 +90,7 @@ def test_parsers(debug=False):
         atlastool_getparser,
         calctexticc_getparser,
         ccorrica_getparser,
+        corrflow_getparser,
         delayflow_getparser,
         delayvar_getparser,
         diffrois_getparser,
@@ -135,6 +138,7 @@ def test_parsers(debug=False):
         synthASL_getparser,
         tcfrom2col_getparser,
         tcfrom3col_getparser,
+        unwrapdelay_getparser,
         variabilityizer_getparser,
     ]
     try:
