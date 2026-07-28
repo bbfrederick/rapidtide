@@ -309,6 +309,8 @@ def dumparraytonifti(thearray: NDArray, filename: str, nifti2: bool = False) -> 
         The output filename (without extension). The function will append
         '.nii' or '.nii.gz' extension based on the nibabel library's
         default behavior.
+    nifti2 : bool, optional
+        If True, write a NIFTI2 file rather than a NIFTI1 file. Default is False.
 
     Returns
     -------
@@ -352,13 +354,27 @@ def savetonifti(
     theheader : nifti header
         A valid nifti header
     thename : str
-        The name of the nifti file to save
+        The name of the nifti file to save.  The extension is chosen by the function,
+        so do not supply one.
+    nifti2 : bool, optional
+        If True, write a NIFTI2 file.  A NIFTI2 file is also written when the header
+        magic is already "n+2".  Default is False.
     debug : bool, optional
         Enable debug output. Default is False
 
     Returns
     -------
     None
+
+    Raises
+    ------
+    TypeError
+        If the dtype of thearray has no corresponding nifti datatype code.
+
+    Notes
+    -----
+    The datatype and bitpix fields of theheader are overwritten in place to match the
+    dtype of thearray, so the header you pass in is modified as a side effect.
     """
     outputaffine = theheader.get_best_affine()
     qaffine, qcode = theheader.get_qform(coded=True)
@@ -432,9 +448,39 @@ def savetonifti(
     output_nifti = None
 
 
-def makeMNI(res, dtype=float, timepoints=1):
+def makeMNI(
+    res: float, dtype: Any = float, timepoints: int = 1
+) -> Tuple[NDArray, nib.Nifti1Header, List[List[float]]]:
     """
-    Create an MNI152 file
+    Create an empty data array and header on the MNI152 grid.
+
+    The data array is zero filled - this makes the grid and the header to put data
+    on, it does not read the MNI152 template itself.
+
+    Parameters
+    ----------
+    res : float
+        The isotropic voxel size, in mm.  Must be one of 0.5, 1, or 2.
+    dtype : data-type, optional
+        The numpy dtype of the returned data array.  Default is float.
+    timepoints : int, optional
+        The number of volumes in the returned array.  Default is 1.
+
+    Returns
+    -------
+    data : NDArray
+        A zero filled 4D array of shape (x, y, z, timepoints) on the MNI152 grid at
+        the requested resolution.
+    hdr : nibabel.Nifti1Header
+        A header with the qform and sform set to the MNI152 affine with code 4
+        (MNI152 space), and units of mm and seconds.
+    affine : list of list of float
+        The 4x4 voxel to MNI mm affine, as nested lists.
+
+    Raises
+    ------
+    ValueError
+        If res is not 0.5, 1, or 2.
     """
     # first check dimensions
     if res == 0.5:
@@ -470,7 +516,7 @@ def makeMNI(res, dtype=float, timepoints=1):
     return data, hdr, affine
 
 
-def niftifromarray(data: NDArray) -> Any:
+def niftifromarray(data: NDArray) -> nib.Nifti1Image:
     """
     Create a NIFTI image object from a numpy array with identity affine.
 
@@ -514,7 +560,7 @@ def niftifromarray(data: NDArray) -> Any:
     return nib.Nifti1Image(data, affine=np.eye(4))
 
 
-def niftihdrfromarray(data: NDArray) -> Any:
+def niftihdrfromarray(data: NDArray) -> nib.Nifti1Header:
     """
     Create a NIFTI header from a numpy array with identity affine.
 
@@ -2026,14 +2072,20 @@ def readmotion(filename: str, tr: float = 1.0, colspec: Optional[str] = None) ->
     ----------
     filename : str
         The name of the file in question.
-    colspec: str, optional
-        The column numbers from the input file to use for the 6 motion regressors
+    tr : float, optional
+        The repetition time, in seconds.  This is not used to read the data - it is
+        simply recorded in the returned dictionary under the key "tr".  Default is 1.0.
+    colspec : str, optional
+        The column numbers from the input file to use for the 6 motion regressors.
+        Only meaningful for .tsv and other text formats; .par files have a fixed
+        column order.  Default is None, meaning use the standard order.
 
     Returns
     -------
-    motiondict: dict
-        All the timecourses in the file, keyed by name
-
+    motiondict : dict
+        All the timecourses in the file, keyed by name.  Contains the six regressors
+        "xtrans", "ytrans", "ztrans", "xrot", "yrot", "zrot", the per axis extrema
+        "maxtrans", "mintrans", "maxrot", "minrot", and "tr".
     """
     # read in the motion timecourses
     print("reading motion timecourses...")
@@ -2556,7 +2608,29 @@ def readcsv(inputfilename: str, debug: bool = False) -> Dict[str, NDArray]:
     return timeseriesdict
 
 
-def readfslmatEVlabels(fsffilename: str, debug: bool = False) -> [str]:
+def readfslmatEVlabels(fsffilename: str, debug: bool = False) -> List[str]:
+    """
+    Read the EV names for an FSL design.mat file out of the corresponding .fsf file.
+
+    The .mat file itself carries no column names, so we recover them from the design
+    file that generated it.  Any EV with its temporal derivative turned on
+    contributes a second column, named by appending "_deriv" to the EV name, so that
+    the returned list lines up one to one with the columns of the .mat file.
+
+    Parameters
+    ----------
+    fsffilename : str
+        The name of the .fsf design file, including extension.
+    debug : bool, optional
+        If True, print the EVs found as they are parsed.  Default is False.
+
+    Returns
+    -------
+    list of str
+        The EV names, in column order.  Returns an empty list, after printing a
+        warning, if the number of names recovered does not match the number of real
+        EVs declared in the .fsf file.
+    """
     # read the file in
     with open(fsffilename, "r") as thefile:
         lines = thefile.readlines()
@@ -2659,7 +2733,7 @@ def readfslmat(inputfilename: str, debug: bool = False) -> Dict[str, NDArray]:
 
     # Read the data in with no header
     # df = pd.read_csv(inputfilename + ".mat", delim_whitespace=True, header=None, skiprows=5)
-    df = pd.read_csv(inputfilename + ".mat", sep="\s+", header=None, skiprows=5)
+    df = pd.read_csv(inputfilename + ".mat", sep=r"\s+", header=None, skiprows=5)
 
     if debug:
         print(df)
@@ -3036,11 +3110,12 @@ def readvectorsfromtextfile(
     Parameters
     ----------
     fullfilespec : str
-        Path to the input file. May include a column specification (e.g., ``"file.tsv[0:5]"``).
-    colspec : str, optional
-        Column specification for selecting specific columns. For TSV/CSV files, this can be a
-        comma-separated list of column names or integer indices. For BIDS-style TSV files, it
-        should be a comma-separated list of column names.
+        Path to the input file, with an optional column specification appended
+        (e.g., ``"file.tsv[0:5]"``).  The column specification is not a separate
+        argument - it is parsed off the end of this string by ``parsefilespec``.  For
+        TSV/CSV files it can be a comma separated list of column names or integer
+        indices; for BIDS-style TSV files it should be a comma separated list of
+        column names.
     onecol : bool, optional
         If True, returns only the first column of data. Default is False.
     debug : bool, optional
@@ -3606,44 +3681,29 @@ def parsefilespec(filespec: str, debug: bool = False) -> Tuple[str, Optional[str
 
 def unique(list1: List[Any]) -> List[Any]:
     """
-    Convert a column specification string to a list of column indices.
+    Return the elements of a list, deduplicated, in order of first appearance.
 
-    This function parses a column specification string and converts it into a list of
-    zero-based column indices. The specification can include ranges (e.g., "0-5") and
-    individual column numbers (e.g., "7") separated by commas.
+    Unlike ``set()`` this preserves order and does not require the elements to be
+    hashable, which is the reason it exists.  It is O(n**2), so keep the lists short.
 
     Parameters
     ----------
-    colspec : str or None
-        Column specification string in format like "0-5,7,10-12" or predefined macro.
-        If None, returns None.
-    debug : bool, optional
-        Enable debug output. Default is False
+    list1 : list
+        The list to deduplicate.  Elements need only support equality comparison.
 
     Returns
     -------
-    list of int or None
-        List of column indices corresponding to the specification, or None if input is None.
-        Returns empty list if specification is empty or invalid.
-
-    Notes
-    -----
-    - Column indices are zero-based
-    - Ranges are inclusive on both ends
-    - Individual columns can be specified as single numbers
-    - Multiple specifications can be combined with commas
-    - Invalid ranges or columns will be skipped
+    list
+        A new list containing the first occurrence of each distinct element, in the
+        order those first occurrences appeared.  The input list is not modified.
 
     Examples
     --------
-    >>> colspectolist("0-2,5,7-9")
-    [0, 1, 2, 5, 7, 8, 9]
+    >>> unique([3, 1, 3, 2, 1])
+    [3, 1, 2]
 
-    >>> colspectolist("3,1-4,6")
-    [3, 1, 2, 3, 4, 6]
-
-    >>> colspectolist(None)
-    None
+    >>> unique(["b", "a", "b"])
+    ['b', 'a']
     """
     # initialize a null list
     unique_list = []
@@ -3713,46 +3773,43 @@ def colspectolist(colspec: Optional[str], debug: bool = False) -> Optional[List[
     collist = []
     theranges = colspec.split(",")
 
-    def safeint(s):
+    def safeint(s: Any) -> Optional[int]:
         """
-        Convert a value to integer safely, handling various input types.
+        Convert a single value to an integer, returning None instead of raising.
 
-        This function attempts to convert the input value to an integer. It handles
-        strings, floats, and other numeric types gracefully, with special handling
-        for string representations that may contain commas or ranges.
+        This handles exactly one value.  Splitting the comma separated ranges of a
+        column specification is the caller's job - by the time a value reaches here
+        it is expected to be a bare integer.
 
         Parameters
         ----------
-        value : str, int, float
-            The value to convert to integer. If string, may contain comma-separated
-            values or range notation (e.g., "2-5", "1,3,5").
+        s : str, int, or float
+            The value to convert.  A float is truncated toward zero.
 
         Returns
         -------
-        int or list of int
-            Integer value or list of integers if input contains multiple values
-            or ranges. Returns single integer for simple numeric inputs.
+        int or None
+            The integer value, or None if the value is not a legal integer.  A
+            failure also prints a message, since this is used while parsing a column
+            specification the user typed.
 
         Notes
         -----
-        - For string inputs containing commas, values are split and converted
-        - For string inputs containing hyphens, ranges are expanded into individual integers
-        - Non-numeric strings will raise ValueError
-        - Float inputs are truncated to integers
+        This returns None rather than exiting, despite what the failure message says.
+        Every caller must check for None and bail out, which is what colspectolist
+        does - otherwise the None flows into an arithmetic comparison and raises
+        TypeError somewhere much less informative.
 
         Examples
         --------
         >>> safeint("42")
         42
 
-        >>> safeint("2,7-13,17-20")
-        [2, 7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 20]
-
         >>> safeint(3.14)
         3
 
-        >>> safeint("10-15")
-        [10, 11, 12, 13, 14, 15]
+        >>> safeint("2,7-13")     # not a bare integer - caller should have split it
+        COLSPECTOLIST: 2,7-13 is not a legal integer - exiting
         """
         try:
             int(s)
@@ -3792,10 +3849,15 @@ def colspectolist(colspec: Optional[str], debug: bool = False) -> Optional[List[
             print("processing range", thisrange)
         theendpoints = thisrange.split("-")
         if len(theendpoints) == 1:
-            collist.append(safeint(theendpoints[0]))
+            thecolumn = safeint(theendpoints[0])
+            if thecolumn is None:
+                return None
+            collist.append(thecolumn)
         elif len(theendpoints) == 2:
             start = safeint(theendpoints[0])
             end = safeint(theendpoints[1])
+            if start is None or end is None:
+                return None
             if start < 0:
                 print("COLSPECTOLIST:", start, "must be greater than zero")
                 return None
@@ -3825,6 +3887,12 @@ def processnamespec(
     ----------
     maskspec : str
         Input file specification string containing filename and optional column specification
+    spectext1 : str
+        Text printed before the parsed name in the debug message, used to say what
+        the file is (e.g. "Using column").  Only used when debug is True.
+    spectext2 : str
+        Text printed after the parsed column list in the debug message, used to
+        finish the sentence (e.g. "as the mask").  Only used when debug is True.
     debug : bool, optional
         Enable debug output. Default is False
 
@@ -3860,55 +3928,39 @@ def processnamespec(
 
 def readcolfromtextfile(inputfilespec: str) -> NDArray:
     """
-    Read columns from a text file and return as numpy array.
+    Read exactly one column out of a text file, given a file:column specification.
 
-    This function reads data from a text file, optionally skipping header lines
-    and specifying which columns to read. It supports various column specification
-    formats and allows for debugging output.
+    This is the "I want a single timecourse" wrapper around ``readvecs``.  The column
+    is not a separate argument - it is appended to the filename, and split back off
+    by ``parsefilespec``.  Selecting more than one column is an error, since the
+    caller has asked for a single vector.
 
     Parameters
     ----------
-    inputfilename : str
-        Path to the input text file to read.
-    colspec : str, optional
-        Column specification string. Can be:
-        - None: read all columns
-        - Comma-separated column numbers (e.g., "1,3,5")
-        - Column ranges (e.g., "1-3,5-7")
-        - Single column number (e.g., "3")
-    numskip : int, default: 0
-        Number of header lines to skip before reading data.
-    debug : bool, default: False
-        If True, print debug information during execution.
-    thedtype : type, default: float
-        Data type to convert the read data to.
+    inputfilespec : str
+        The input file name with a column specification appended after a colon, for
+        example ``"data.txt:3"`` or ``"data.tsv:signal"``.  A bare filename is legal
+        only if the file has a single column.
 
     Returns
     -------
     NDArray
-        Numpy array containing the read data. Shape depends on the number of
-        columns specified and the number of rows in the input file.
+        A 1D array holding the selected column.
 
     Notes
     -----
-    - The function uses numpy's genfromtxt internally for reading the file
-    - Column indexing starts from 1 (not 0)
-    - If colspec is not provided, all columns are read
-    - The function handles various text file formats including space and comma delimited data
+    This calls ``sys.exit()`` rather than raising if the file specification is badly
+    formed or if the specification selects more than one column.  That makes it
+    unsuitable for use in a library context - it is meant to be called while
+    processing command line arguments.
 
     Examples
     --------
-    >>> # Read all columns from a file
-    >>> data = readvecs('data.txt')
+    >>> # Read the fourth column of a whitespace delimited file
+    >>> data = readcolfromtextfile('data.txt:3')
 
-    >>> # Read only columns 1, 3, and 5
-    >>> data = readvecs('data.txt', colspec='1,3,5')
-
-    >>> # Read columns 2 through 4
-    >>> data = readvecs('data.txt', colspec='2-4')
-
-    >>> # Skip first 5 lines and read columns 1 and 3
-    >>> data = readvecs('data.txt', colspec='1,3', numskip=5)
+    >>> # Read a named column of a BIDS style tsv
+    >>> data = readcolfromtextfile('sub-01_physio.tsv:cardiac')
     """
     inputfilename, colspec = parsefilespec(inputfilespec)
     if inputfilename is None:
@@ -4006,44 +4058,40 @@ def readvecs(
 
 def readvec(inputfilename: str, numskip: int = 0) -> NDArray:
     """
-    Read a timecourse from a text or BIDS TSV file.
+    Read a single column timecourse from a plain text file, one value per line.
 
-    This function reads numerical data from a text file and returns it as a numpy array.
-    It can handle both plain text files and BIDS TSV files, with optional column selection
-    and debugging output.
+    This is the simplest possible reader: it does no column selection, no delimiter
+    sniffing, and no BIDS sidecar handling.  Every non-empty line after the skipped
+    header must parse as a single float.  Use ``readvecs`` for multicolumn files and
+    ``readvectorsfromtextfile`` for anything BIDS aware.
 
     Parameters
     ----------
     inputfilename : str
-        Path to the input file
-    colnum : int, optional
-        Column number to read (0-indexed). If None, reads all columns.
-    colname : str, optional
-        Column name to read. If None, reads all columns.
-    debug : bool, optional
-        If True, enables debug output. Default is False.
+        Path to the input file.
+    numskip : int, optional
+        Number of leading lines to skip before reading data.  Default is 0.
 
     Returns
     -------
-    tuple
-        A tuple containing:
-        - NDArray: The read timecourse data
-        - float, optional: Minimum value in the data
-        - float, optional: Maximum value in the data
+    NDArray
+        A 1D float array of the values read.
+
+    Raises
+    ------
+    ValueError
+        If any line that survives the length check does not parse as a float.
 
     Notes
     -----
-    - The function handles both text files and BIDS TSV files
-    - Empty lines are skipped during reading
-    - Data is converted to float64 type
-    - If both colnum and colname are provided, colnum takes precedence
-    - The function returns the minimum and maximum values only when the data is read successfully
+    Lines of length 1 or less are skipped, which is how blank lines are ignored.  Note
+    that this also silently drops any legitimate single character line, so a file
+    whose last value is a bare digit with no trailing newline will lose that value.
 
     Examples
     --------
-    >>> data, min_val, max_val = readtc('timecourse.txt')
-    >>> data, min_val, max_val = readtc('bids_file.tsv', colnum=2)
-    >>> data, min_val, max_val = readtc('data.txt', colname='signal', debug=True)
+    >>> data = readvec('timecourse.txt')
+    >>> data = readvec('timecourse_with_header.txt', numskip=1)
     """
     inputvec = []
     with open(inputfilename, "r") as thefile:
@@ -4138,45 +4186,25 @@ def readtc(
 
 def readlabels(inputfilename: str) -> List[str]:
     """
-    Write all the key value pairs from a dictionary to a text file.
+    Read a list of labels from a text file, one label per line.
+
+    Trailing whitespace, including the newline, is stripped from each line.  Blank
+    lines are NOT skipped - they come back as empty strings - so that the labels stay
+    aligned with the rows or columns they name.
 
     Parameters
     ----------
-    thedict : dict
-        A dictionary containing key-value pairs to be written to file.
-    outputfile : str
-        The name of the output file where dictionary contents will be saved.
-    lineend : {'mac', 'win', 'linux'}, optional
-        Line ending style to use. Default is 'linux'.
-        - 'mac': Uses carriage return ('\r')
-        - 'win': Uses carriage return + line feed ('\r\n')
-        - 'linux': Uses line feed ('\n')
-    machinereadable : bool, optional
-        If True, outputs in a machine-readable format (default is False).
-        When False, outputs in a human-readable format with key-value pairs on separate lines.
+    inputfilename : str
+        The name of the text file to read.
 
     Returns
     -------
-    None
-        This function does not return any value.
-
-    Notes
-    -----
-    - The function will overwrite the output file if it already exists.
-    - Keys and values are converted to strings before writing.
-    - If `machinereadable` is True, the output format may differ from the default human-readable format.
+    list of str
+        The labels, in file order, one per line of the input file.
 
     Examples
     --------
-    >>> my_dict = {'name': 'John', 'age': 30, 'city': 'New York'}
-    >>> writedict(my_dict, 'output.txt')
-    # Writes dictionary to output.txt in human-readable format
-
-    >>> writedict(my_dict, 'output.txt', lineend='win')
-    # Writes dictionary with Windows-style line endings
-
-    >>> writedict(my_dict, 'output.txt', machinereadable=True)
-    # Writes dictionary in machine-readable format
+    >>> thelabels = readlabels('atlas_regions.txt')
     """
     inputvec = []
     with open(inputfilename, "r") as thefile:
@@ -4304,7 +4332,7 @@ def readdict(inputfilename: str) -> Dict[str, Any]:
 
 
 def writevec(thevec: NDArray, outputfile: str, lineend: str = "") -> None:
-    """
+    r"""
     Write a vector to a text file, one value per line.
 
     Parameters
@@ -4313,11 +4341,12 @@ def writevec(thevec: NDArray, outputfile: str, lineend: str = "") -> None:
         The array to write. Must be a 1D array-like object.
     outputfile : str
         The name of the output file to write to.
-    lineend : {'mac', 'win', 'linux'}, optional
-        Line ending style to use. Default is 'linux'.
+    lineend : {'', 'mac', 'win', 'linux'}, optional
+        Line ending style to use. Default is '', the system default.
         - 'mac': Use Mac line endings (\r)
         - 'win': Use Windows line endings (\r\n)
         - 'linux': Use Linux line endings (\n)
+        - '': Use '\n' with the file opened in text mode, so Python translates it
 
     Returns
     -------
@@ -4369,7 +4398,7 @@ def writevectorstotextfile(
     lineend: str = "",
     debug: bool = False,
 ) -> None:
-    """
+    r"""
     Write vectors to a text file in various formats.
 
     This function writes data vectors to a text file, supporting multiple output formats
@@ -4473,7 +4502,7 @@ def writenpvecs(
     altmethod: bool = True,
     lineend: str = "",
 ) -> None:
-    """
+    r"""
     Write out a two dimensional numpy array to a text file.
 
     This function writes a numpy array to a text file, with options for
@@ -4498,7 +4527,7 @@ def writenpvecs(
         use a nested loop approach. Default is True.
     lineend : str, optional
         Line ending style to use. Options are 'mac' (\r), 'win' (\r\n),
-        'linux' (\n), or empty string (uses system default). Default is 'linux'.
+        'linux' (\n), or empty string (uses system default). Default is ''.
 
     Returns
     -------

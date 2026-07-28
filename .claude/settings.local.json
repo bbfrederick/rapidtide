@@ -14,7 +14,8 @@
       "Bash(rapidtide:*)",
       "Bash(black --check:*)",
       "Bash(/Users/frederic/miniforge3/envs/mic/bin/python *)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(awk -F: '$1>2021 && $1<2160')"
     ]
   }
 }
