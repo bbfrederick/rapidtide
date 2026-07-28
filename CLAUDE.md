@@ -149,6 +149,13 @@ showxcorrx <file1> <file2>
 ### Code Style (NON-NEGOTIABLE)
 - Write code that is clean and modular
 - Prefer shorter functions/methods over longer ones
+- **Every routine must have a numpydoc-style docstring** (Parameters, Returns, and any other
+  relevant sections). When you modify a routine, re-read its docstring and verify it still matches
+  the code — parameter names, types, defaults, return values, and raised exceptions. Fix any
+  drift as part of the same change; a stale docstring is a bug.
+- **Every function must have type annotations** for all arguments and for the return value
+  (use `-> None` when nothing is returned). Applies to new code and to any existing function
+  you touch.
 
 ### Python Version
 - **Minimum**: Python 3.10
@@ -196,7 +203,8 @@ See the contributing guide at http://rapidtide.readthedocs.io/en/latest/contribu
 
 Key points:
 - Use Black formatter with 99-character line length
-- Follow NumPy docstring format
+- Follow NumPy docstring format — see the mandatory docstring and type-annotation rules under
+  [Code Style (NON-NEGOTIABLE)](#code-style-non-negotiable)
 - Keep changes focused on specific issues/features
 
 ## Known Gotchas
