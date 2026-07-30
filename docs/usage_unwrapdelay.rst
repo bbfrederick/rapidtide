@@ -73,6 +73,75 @@ similarity function so the sidelobe outranks the main lobe - it recovers about
 97% of injected errors even when they are placed in the lowest ``maxcorrsq``
 quartile, where real errors actually live.
 
+Error propagation, and what fixed it:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Region growing propagates its own mistakes - a voxel assigned a wrapped value
+drags its correct neighbors to match - so the method creates new wrapped voxels
+while fixing old ones.  Scoring only the errors present in the input hides this
+and flatters any aggressive method.
+
+Measured on HCP data with a strong measured sidelobe (13.2 s, amplitude 0.25),
+using an alias-specific detector (a voxel is wrapped if it sits one sidelobe
+period from its local median, which does not penalise genuine smooth long delays):
+
+=================================  =======  =======  ==========  ===========
+variant                            fixed    left     new wrap    net total
+=================================  =======  =======  ==========  ===========
+raw peak picking                   -        -        -           9591
+rapidtide despeckle                7578     2013     651         2664
+unwrap, single neighbor predict    8712     879      1696        2575
+**unwrap, consensus predict**      **8858** **733**  **952**     **1685**
+=================================  =======  =======  ==========  ===========
+
+Predicting from the median over every already assigned neighbor, rather than from
+whichever single neighbor popped off the heap, cut new wraps by 44% and moved the
+method from a tie with despeckling to 37% fewer residual wrapped voxels.  It also
+raised cross-stream consistency from 98.93% to 99.37%.
+
+``--minconfidence`` was tried for the same purpose and does not work: net totals
+of 1685, 2449, 1982, 1706, 1685 for floors of 0.0, 0.25, 0.5, 0.75, 0.9.  Every
+nonzero setting is neutral or worse, because excluding sources shrinks the
+consensus and makes the median less robust.  It defaults to off and is retained
+only to document the negative result.
+
+Multiple passes:
+^^^^^^^^^^^^^^^^
+
+Simply rerunning the region grow does nothing - it is deterministic and takes no
+delay map as input, so a literal second pass is a verified no-op.  Iteration only
+means something as feedback: smooth the current solution, then re-snap every voxel
+to whichever candidate lies nearest that smoothed field.  That is iterated
+conditional modes on a smoothness regularised labelling problem, controlled by
+``--numpasses`` (default 3).
+
+=================  ==========  ==================
+passes             wrapped     non-alias jumps
+=================  ==========  ==================
+raw                9591        27052
+1 (region grow)    1685        24949
+2                  1463        24914
+3                  1272        24941
+5                  1184        25013
+9                  1129        25013
+21                 1000        25227
+=================  ==========  ==================
+
+Returns diminish sharply after two or three passes, and the count of large
+*non*-periodic jumps starts creeping up - the signature of a smoothness prior
+beginning to invent structure rather than repair it.  Three is a reasonable
+stopping point; running to convergence trades a little more wrap reduction against
+slowly accumulating damage elsewhere.
+
+A caveat on all the despeckling comparisons here:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+rapidtide has a ``--despeckle-patch-detection`` option that detects large connected
+patches of shifted delay and flags them for refitting - which is exactly the
+failure mode this program was written to address.  It was **not enabled** in any of
+the runs compared above.  A fair head to head needs that option turned on, and it
+has not been done.
+
 On the choice of prior:
 ^^^^^^^^^^^^^^^^^^^^^^^
 

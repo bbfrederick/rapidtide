@@ -93,6 +93,31 @@ v = grad(tau)/|grad(tau)|**2, so::
 
 and the predicted delay change over a step d is simply d . grad(tau).
 
+What actually reduced the error rate
+------------------------------------
+Plain region growing propagates its own mistakes: a voxel that has been assigned a
+wrapped value will drag its correct neighbors to match, so the method creates new
+wrapped voxels even as it fixes old ones.  On HCP data with a strong sidelobe
+(13.2 s, amplitude 0.25) the original single neighbor version fixed 8712 of 9591
+wrapped voxels but created 1696 new ones, netting 2575 - statistically a tie with
+rapidtide's own despeckling at 2664.
+
+Two guards were tried.  Only one worked:
+
+- CONSENSUS PREDICTION (kept, always on).  Predict from the median over EVERY
+  already assigned neighbor rather than from the single neighbor that happened to
+  pop off the heap.  New wraps fell 1696 -> 952 and the net went 2575 -> 1685,
+  which is 37% better than despeckling rather than tied with it.  A single wrapped
+  neighbor can no longer carry a voxel on its own.
+
+- CONFIDENCE FLOOR (--minconfidence, kept but defaults to off).  Refusing to let
+  low confidence voxels predict for their neighbors sounded right and does
+  nothing useful: net totals of 1685, 2449, 1982, 1706, 1685 for floors of 0.0,
+  0.25, 0.5, 0.75, 0.9.  Every nonzero setting is neutral or worse, because
+  excluding sources shrinks the consensus and makes the median LESS robust, which
+  is the opposite of the intent.  The option is retained only so that this does
+  not get re-derived.
+
 The algorithm
 -------------
 Quality guided region growing, the standard unwrapping approach.  Each voxel
@@ -114,6 +139,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.ndimage import median_filter
 from tqdm import tqdm
 
 import rapidtide.io as tide_io
@@ -124,6 +150,8 @@ from rapidtide.workflows.delayflow import makeoutputheader, neighboroffsets
 DEFAULT_MAXCANDIDATES = 6
 DEFAULT_MAXDELTATAU = 3.0
 DEFAULT_MINSPEED = 0.5
+DEFAULT_MINCONFIDENCE = 0.0
+DEFAULT_NUMPASSES = 3
 DEFAULT_FITRADIUS = 6.0
 
 
@@ -184,6 +212,37 @@ def _get_parser() -> argparse.ArgumentParser:
             f"Default is {DEFAULT_MAXCANDIDATES}."
         ),
         default=DEFAULT_MAXCANDIDATES,
+    )
+    parser.add_argument(
+        "--numpasses",
+        dest="numpasses",
+        type=int,
+        metavar="N",
+        help=(
+            f"Number of passes.  Pass 1 is the region grow; later passes re-snap every "
+            f"voxel to the candidate nearest a smoothed version of the current "
+            f"solution.  Note that simply rerunning the region grow does nothing - it "
+            f"is deterministic and takes no delay map as input - so iteration only "
+            f"means anything in this feedback form.  Returns diminish sharply and the "
+            f"smoothness prior slowly starts inventing structure, so more is not "
+            f"better.  Default is {DEFAULT_NUMPASSES}."
+        ),
+        default=DEFAULT_NUMPASSES,
+    )
+    parser.add_argument(
+        "--minconfidence",
+        dest="minconfidence",
+        type=float,
+        metavar="QUANTILE",
+        help=(
+            f"Confidence floor, as a quantile (0-1) of the per voxel peak ambiguity "
+            f"gap.  Voxels below it are still assigned, but are not trusted to predict "
+            f"for their neighbors.  Region growing otherwise propagates its own "
+            f"mistakes - a voxel assigned a wrapped value drags its correct neighbors "
+            f"along - which is where newly wrapped voxels come from.  Default is "
+            f"{DEFAULT_MINCONFIDENCE} (off)."
+        ),
+        default=DEFAULT_MINCONFIDENCE,
     )
     parser.add_argument(
         "--maxdeltatau",
@@ -294,6 +353,73 @@ def findcandidatepeaks(
     return candidatelags, candidateamps
 
 
+def icmrefine(
+    tau: NDArray,
+    candidatelags: NDArray,
+    themask: NDArray,
+    numpasses: int = DEFAULT_NUMPASSES,
+    kernelsize: int = 3,
+) -> Tuple[NDArray, int]:
+    """
+    Iteratively re-snap every voxel to the candidate nearest a smoothed solution.
+
+    The region growing pass is deterministic and takes no delay map as input, so
+    simply running it twice changes nothing.  Useful iteration means feeding the
+    solution back as the prior: smooth the current delay map, then reassign every
+    voxel to whichever of its candidates lies closest to that smoothed field.  This
+    is iterated conditional modes on a smoothness regularised labelling problem,
+    and it converges because the label set is finite.
+
+    It helps, with sharply diminishing returns.  On HCP data the wrapped voxel
+    count runs 1685, 1463, 1354, 1272 over the first three iterations and then
+    creeps down to 1000 by iteration 20 - but the count of large NON periodic jumps
+    rises slowly over the same span (24949 to 25227), which is the signature of the
+    smoothness prior starting to invent structure rather than repair it.  Most of
+    the benefit is in the first two or three passes, which is why that is the
+    default; running to convergence trades a little more wrap reduction against
+    slowly accumulating damage elsewhere.
+
+    Parameters
+    ----------
+    tau : NDArray
+        The current delay map.
+    candidatelags : NDArray
+        Candidate delays, as returned by findcandidatepeaks.
+    themask : NDArray
+        The 3D mask of valid voxels.
+    numpasses : int, optional
+        Number of refinement iterations.  1 means the region grow only.
+    kernelsize : int, optional
+        Size of the median filter used to form the smoothed prior.
+
+    Returns
+    -------
+    tau : NDArray
+        The refined delay map.
+    thetotalchanged : int
+        How many voxel assignments changed across all iterations.
+    """
+    thetotalchanged = 0
+    for thepass in range(max(numpasses - 1, 0)):
+        thesmoothed = median_filter(
+            np.where(themask > 0, tau, 0.0), size=kernelsize, mode="nearest"
+        )
+        thedistances = np.where(
+            np.isfinite(candidatelags), np.abs(candidatelags - thesmoothed[..., None]), np.inf
+        )
+        thebest = np.argmin(thedistances, axis=-1)
+        thenew = np.take_along_axis(np.nan_to_num(candidatelags), thebest[..., None], axis=-1)[
+            ..., 0
+        ]
+        thenew = np.where(themask > 0, thenew, 0.0)
+        thenumchanged = int(np.sum((themask > 0) & (np.abs(thenew - tau) > 1.0e-6)))
+        tau = thenew
+        thetotalchanged += thenumchanged
+        if thenumchanged == 0:
+            break
+    return tau, thetotalchanged
+
+
 def unwrapdelaymap(
     candidatelags: NDArray,
     candidateamps: NDArray,
@@ -302,6 +428,7 @@ def unwrapdelaymap(
     voxdims: Tuple[float, float, float],
     maxdeltatau: float = DEFAULT_MAXDELTATAU,
     minspeed: float = DEFAULT_MINSPEED,
+    minconfidence: float = DEFAULT_MINCONFIDENCE,
     showprogressbar: bool = True,
 ) -> Tuple[NDArray, NDArray, NDArray]:
     """
@@ -329,6 +456,12 @@ def unwrapdelaymap(
     minspeed : float, optional
         Floor on |v| when forming grad(tau) = v/|v|**2, to keep near stationary
         voxels from predicting an enormous delay change.
+    minconfidence : float, optional
+        Confidence floor, expressed as a quantile of the confidence distribution
+        over the mask.  Voxels below it are still assigned, but are not trusted as
+        prediction sources for their neighbors.  This exists because plain region
+        growing propagates its own mistakes: a voxel that was assigned a wrapped
+        value will happily drag its correct neighbors to match.  0.0 disables it.
     showprogressbar : bool, optional
         Show a progress bar.
 
@@ -371,6 +504,15 @@ def unwrapdelaymap(
     theconfidence = np.where(np.isnan(thesecond), thebest, thebest - thesecond)
     theconfidence = np.nan_to_num(theconfidence, nan=-np.inf)
 
+    # confidence floor: below this a voxel may be assigned, but is not trusted to
+    # predict for anyone else
+    if minconfidence > 0.0:
+        thefinite = theconfidence[paddedmask & np.isfinite(theconfidence)]
+        thefloor = float(np.quantile(thefinite, minconfidence)) if len(thefinite) else -np.inf
+    else:
+        thefloor = -np.inf
+    istrusted = theconfidence >= thefloor
+
     # displacement to each neighbor, in mm
     thedisplacements = []
     for di in (-1, 0, 1):
@@ -409,11 +551,26 @@ def unwrapdelaymap(
                     neighborindex = int(thisindex + theoffset)
                     if not paddedmask[neighborindex] or assigned[neighborindex]:
                         continue
-                    # predict using the average gradient over the step
-                    themidgrad = 0.5 * (paddedgrad[thisindex] + paddedgrad[neighborindex])
-                    thedelta = float(np.dot(thedisplacement, themidgrad))
-                    thedelta = float(np.clip(thedelta, -maxdeltatau, maxdeltatau))
-                    theprediction = tau[thisindex] + thedelta
+
+                    # Predict by consensus over EVERY already assigned neighbor of
+                    # the target, not just the one that happened to pop.  A single
+                    # wrapped neighbor can otherwise drag a correct voxel with it,
+                    # which is where the newly wrapped voxels come from.  Trusted
+                    # neighbors are used alone if any exist.
+                    thesources = neighborindex - offsets
+                    theusable = assigned[thesources]
+                    thepreferred = theusable & istrusted[thesources]
+                    if np.any(thepreferred):
+                        theusable = thepreferred
+                    if not np.any(theusable):
+                        continue
+                    themidgrads = 0.5 * (paddedgrad[thesources] + paddedgrad[neighborindex])
+                    thedeltas = np.clip(
+                        np.sum(-thedisplacements * themidgrads, axis=1),
+                        -maxdeltatau,
+                        maxdeltatau,
+                    )
+                    theprediction = float(np.median((tau[thesources] + thedeltas)[theusable]))
 
                     thecandidates = paddedlags[neighborindex]
                     thevalid = np.isfinite(thecandidates)
@@ -514,8 +671,16 @@ def unwrapdelay(args: argparse.Namespace) -> None:
         themask,
         voxdims,
         maxdeltatau=(args.maxdeltatau if args.prior == "flow" else 0.0),
+        minconfidence=args.minconfidence,
         showprogressbar=args.showprogressbar,
     )
+    if args.numpasses > 1:
+        tau, thenumrefined = icmrefine(tau, candidatelags, themask, numpasses=args.numpasses)
+        print(f"  {args.numpasses - 1} refinement passes changed {thenumrefined} assignments")
+        thechanged = np.uint16(
+            (themask > 0) & (np.abs(tau - np.nan_to_num(candidatelags[..., 0])) > 1.0e-6)
+        )
+
     thenumchanged = int(np.sum(thechanged))
     print(
         f"  reassigned {thenumchanged} voxels "
