@@ -149,7 +149,7 @@ jobs:
       - run:  # will overwrite rapidtide installation each time
           name: Install rapidtide
           command:  |
-            uv pip install .[tf,test,doc]
+            uv pip install .[test,doc]
       - save_cache:  # environment cache tied to requirements
           key: deps2-313-{{ checksum "pyproject.toml" }}{{ checksum ".circleci/config.yml" }}
           paths:
@@ -544,12 +544,6 @@ workflows:
       - test_py311:
           requires:
             - build_py311
-      #- test_py311_with_coverage:
-      #    requires:
-      #      - build_py311
-      #- test_py311_slow:
-      #    requires:
-      #      - build_py311
       - build_py312
       - test_py312:
           requires:

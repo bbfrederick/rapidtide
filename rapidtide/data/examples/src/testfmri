@@ -45,7 +45,17 @@ rapidtide \
     sub-RAPIDTIDETEST.nii.gz \
     ../dst/sub-RAPIDTIDETEST \
     --searchrange -5 20 \
-    --spatialfilt 4 \
+    --spatialfilt 2 \
     --nprocs -1 \
-    --outputlevel max \
-    --robustdelayfit
+    --outputlevel min \
+    --savecorrout
+ 
+rapidtide \
+    sub-RAPIDTIDETEST.nii.gz \
+    ../dst/sub-RAPIDTIDETEST_ud \
+    --searchrange -5 20 \
+    --spatialfilt 2 \
+    --nprocs -1 \
+    --outputlevel min \
+    --unwrapdelay \
+    --savecorrout
