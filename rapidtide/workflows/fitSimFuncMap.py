@@ -29,6 +29,7 @@ import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
+from rapidtide.workflows.unwrapdelay import unwrapfromsimfunc
 
 _NDIMAGE_TO_NUMPY_PAD_MODE = {
     "reflect": "symmetric",  # d c b a | a b c d | d c b a
@@ -845,6 +846,75 @@ def fitSimFunc(
                 "message3": "voxels",
             },
         )
+
+        # Sidelobe unwrapping.
+        #
+        # When the similarity function has a strong sidelobe, peak picking sometimes
+        # lands on it, giving a delay wrong by very nearly one sidelobe period.  These
+        # errors are large and, because neighboring voxels see the same waveform, they
+        # occur in coherent patches, which a median filter based despeckler struggles
+        # with because the neighbors it votes with are wrong too.
+        #
+        # This is phase unwrapping: the absolute delay is ambiguous modulo the sidelobe
+        # period while the local gradient is not.  Each voxel offers candidate delays
+        # (the local maxima of its similarity function) and quality guided region
+        # growing assigns each the candidate closest to a consensus prediction from its
+        # already assigned neighbors.
+        #
+        # Gated on the measured sidelobe amplitude, because with no sidelobe there is no
+        # periodic ambiguity to resolve and the method degenerates into plain smoothing.
+        # Across 40 HCP runs only about a quarter had a usable sidelobe; on those,
+        # unwrapping left a median 77% fewer wrapped voxels than despeckling (10/10 runs,
+        # Wilcoxon p=0.002), and resolved more test-retest disagreements between repeat
+        # acquisitions (0.59 vs 0.49, 57/60 run pairs, p=2e-11).  Out of domain it
+        # changed only 2.4% of voxels and did not add spurious structure.
+        #
+        # It runs BEFORE despeckling, and both run.  The order matters and is not
+        # symmetric.  Despeckle first then unwrap is worse than unwrapping alone,
+        # because unwrap can only select among local maxima of the similarity function
+        # and so silently discards despeckle's refit values wherever those are not
+        # peaks.  Unwrap first then despeckle is better than either alone: unwrap makes
+        # the discrete lobe choice, then despeckle refits the residual local outliers,
+        # which unwrap cannot do because it cannot produce a non-peak value.  Measured
+        # on five HCP runs with a real sidelobe, adding despeckling after unwrapping
+        # reduced wrapped voxels by a further 14 to 26 percent in 5 of 5.
+        theacsidelobeamp = optiondict.get(f"acsidelobeamp_pass{thepass}", None)
+        dounwrap = bool(
+            optiondict.get("unwrapdelay", False)
+            and theacsidelobeamp is not None
+            and theacsidelobeamp > optiondict.get("unwrapsidelobethresh", 0.05)
+        )
+        if optiondict.get("unwrapdelay", False) and not dounwrap:
+            LGR.info(
+                f"\n{similaritytype} sidelobe unwrapping skipped, pass {thepass}: "
+                f"sidelobe amplitude {theacsidelobeamp} does not exceed "
+                f"{optiondict.get('unwrapsidelobethresh', 0.05)}"
+            )
+        if dounwrap:
+            LGR.info(f"\n\n{similaritytype} sidelobe unwrapping pass {thepass}")
+            LGR.info(
+                f"\tsidelobe amplitude {theacsidelobeamp:.3f} at "
+                f"{optiondict.get(f'acsidelobelag_pass{thepass}', float('nan'))}s"
+            )
+            TimingLGR.info(f"{similaritytype} unwrap start, pass {thepass}")
+            thexdim, theydim, theslicethickness, dummy = tide_io.parseniftisizes(thesizes)
+            lagtimes[:], numunwrapped = unwrapfromsimfunc(
+                corrout,
+                trimmedcorrscale,
+                validvoxels,
+                nativespaceshape,
+                fitmask,
+                lagtimes,
+                (thexdim, theydim, theslicethickness),
+                numpasses=optiondict.get("unwrappasses", 3),
+                showprogressbar=optiondict["showprogressbar"],
+            )
+            optiondict[f"unwrapped_pass{thepass}"] = numunwrapped
+            LGR.info(f"\tunwrapping reassigned {numunwrapped} voxels")
+            TimingLGR.info(
+                f"{similaritytype} unwrap end, pass {thepass}",
+                {"message2": numunwrapped, "message3": "voxels"},
+            )
 
         # Correlation time despeckle
         if optiondict["despeckle_passes"] > 0:

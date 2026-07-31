@@ -597,6 +597,95 @@ def unwrapdelaymap(
     )
 
 
+def unwrapfromsimfunc(
+    corrout: NDArray,
+    lagaxis: NDArray,
+    validvoxels: Any,
+    nativespaceshape: Any,
+    fitmask: NDArray,
+    lagtimes: NDArray,
+    voxdims: Tuple[float, float, float],
+    maxcandidates: int = DEFAULT_MAXCANDIDATES,
+    numpasses: int = DEFAULT_NUMPASSES,
+    showprogressbar: bool = True,
+) -> Tuple[NDArray, int]:
+    """
+    Run the unwrap on rapidtide's internal flat arrays, for in-pipeline use.
+
+    This is the adapter that lets fitSimFuncMap call the unwrapper without
+    materialising the whole similarity function as a 4D volume.  findcandidatepeaks
+    operates along the last axis and is otherwise shape agnostic, so it runs
+    directly on the (numvalidspatiallocs, numlags) array; only the much smaller
+    candidate arrays (numvalidspatiallocs, maxcandidates) are expanded to native
+    space.  For a typical HCP run that is 21 MB rather than 450 MB.
+
+    Parameters
+    ----------
+    corrout : NDArray
+        The similarity function, shape (numvalidspatiallocs, numlags).
+    lagaxis : NDArray
+        The lag values, in seconds (rapidtide's trimmedcorrscale).
+    validvoxels : array-like
+        Indices of the valid voxels within the flattened native space.
+    nativespaceshape : tuple
+        The 3D shape of the volume.
+    fitmask : NDArray
+        Fit success mask, indexed like lagtimes.
+    lagtimes : NDArray
+        The current delay estimates, indexed over valid voxels.
+    voxdims : tuple of float
+        The voxel dimensions in mm.
+    maxcandidates : int, optional
+        Maximum candidate peaks per voxel.
+    numpasses : int, optional
+        Region grow plus this many minus one ICM refinement passes.
+    showprogressbar : bool, optional
+        Show a progress bar.
+
+    Returns
+    -------
+    newlagtimes : NDArray
+        The unwrapped delay estimates, indexed like lagtimes.
+    numchanged : int
+        How many voxels were reassigned by more than half a second.
+    """
+    nativespaceshape = tuple(int(thedim) for thedim in nativespaceshape)
+    numspatiallocs = int(np.prod(nativespaceshape))
+
+    thecandidatelags, thecandidateamps = findcandidatepeaks(corrout, lagaxis, maxcandidates)
+    thenumcandidates = thecandidatelags.shape[-1]
+
+    fulllags = np.full((numspatiallocs, thenumcandidates), np.nan, dtype=np.float64)
+    fullamps = np.full((numspatiallocs, thenumcandidates), np.nan, dtype=np.float64)
+    fulllags[validvoxels, :] = thecandidatelags
+    fullamps[validvoxels, :] = thecandidateamps
+    fulllags = fulllags.reshape(nativespaceshape + (thenumcandidates,))
+    fullamps = fullamps.reshape(nativespaceshape + (thenumcandidates,))
+
+    themask = np.zeros(numspatiallocs, dtype=np.uint16)
+    themask[validvoxels] = np.uint16(np.asarray(fitmask) > 0)
+    themask = themask.reshape(nativespaceshape)
+
+    tau = unwrapdelaymap(
+        fulllags,
+        fullamps,
+        None,
+        themask,
+        voxdims,
+        maxdeltatau=0.0,
+        showprogressbar=showprogressbar,
+    )[0]
+    if numpasses > 1:
+        tau = icmrefine(tau, fulllags, themask, numpasses=numpasses)[0]
+
+    newlagtimes = np.array(lagtimes, dtype=lagtimes.dtype, copy=True)
+    theunwrapped = tau.reshape(numspatiallocs)[validvoxels]
+    thevalid = np.asarray(fitmask) > 0
+    newlagtimes[thevalid] = theunwrapped[thevalid]
+    numchanged = int(np.sum(np.abs(newlagtimes - lagtimes) > 0.5))
+    return newlagtimes, numchanged
+
+
 def unwrapdelay(args: argparse.Namespace) -> None:
     """
     Unwrap a rapidtide delay map against the corrflow velocity field.

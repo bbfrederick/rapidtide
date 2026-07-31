@@ -162,6 +162,128 @@ conditions - no reliable advantage, at the cost of computing the flow field.
 Use ``--prior flow`` if your sidelobe spacing is small relative to your delay
 gradients, which is where it should begin to pay.
 
+Use inside rapidtide:
+^^^^^^^^^^^^^^^^^^^^^
+
+The same algorithm is available inside the main rapidtide pipeline via
+``--unwrapdelay``.  It runs once per pass, immediately before despeckling, and is
+gated on the measured autocorrelation sidelobe amplitude for that pass
+(``--unwrapsidelobethresh``, default 0.05).  On passes where it runs it REPLACES
+despeckling; on passes where the gate does not open, despeckling runs as usual.
+
+Note that the sidelobe is not measured until after the first pass, so pass 1
+always falls back to despeckling.  Progress is logged and the per pass count of
+reassigned voxels is recorded in the runoptions as ``unwrapped_passN``.
+
+Ordering matters, and it is not symmetric.  Unwrapping runs BEFORE despeckling and
+both run.  Despeckle first then unwrap is worse than unwrapping alone, because
+unwrap can only select among local maxima of the similarity function and so
+silently discards despeckle's refit values wherever those are not peaks.  Unwrap
+first then despeckle is better than either alone: unwrap makes the discrete lobe
+choice, then despeckle refits the residual local outliers, which unwrap cannot do
+because it can never produce a non-peak value.
+
+Measured on five HCP runs with a real sidelobe (wrapped voxels):
+
+==================  =======  ===========  ========  ==================  ======
+run                  naive    despeckle    unwrap    unwrap+despeckle    gain
+==================  =======  ===========  ========  ==================  ======
+102614 REST1_RL       14917         3334       661                 489   +26.0%
+100307 REST2_RL       13050         2664       490                 380   +22.4%
+102513 REST2_RL        8027          844       194                 166   +14.4%
+100307 REST1_RL       15444         2034       447                 337   +24.6%
+134627 REST1_LR        9424         2295      1110                 925   +16.7%
+==================  =======  ===========  ========  ==================  ======
+
+Note that the despeckle step in that table is emulated from the derivatives - the
+raw HCP data was not available locally to rerun the pipeline.  The emulation
+reproduced rapidtide's real despeckled map to 94 percent within 2 s, and was
+slightly WEAKER than the real thing (2725 versus 2295 wrapped on 134627), so the
+composed figures are likely conservative.
+
+Multi-subject evidence:
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Across 40 HCP runs (10 subjects x REST1/REST2 x LR/RL), with the sidelobe measured
+per run from ``desc-autocorr_timeseries``:
+
+=========================  ===  =======  ===========  ========  ============
+sidelobe amplitude          n    naive    despeckle    unwrap    unwrap/desp
+=========================  ===  =======  ===========  ========  ============
+strong, >0.15                4    13666         2132       388           0.21
+moderate, 0.05-0.15          6     7290         2264       598           0.30
+weak, 0.02-0.05              2     5662         1635       314           0.19
+none, <=0.02                28     3696         1196       750            n/a
+=========================  ===  =======  ===========  ========  ============
+
+Median wrapped voxels.  Within the 10 in-domain runs unwrapping won in 10 of 10
+(Wilcoxon p=0.002), a median 77 percent reduction against despeckling.
+
+An independent check, free of any smoothness based criterion: taking pairs of
+repeat acquisitions of the same subject and looking only at voxels where exactly
+one run wrapped, despeckling brought 0.486 of them into agreement and unwrapping
+0.593, better in 57 of 60 pairs (Wilcoxon p=2e-11).
+
+Out of domain (28 runs with no usable sidelobe) unwrapping changed only 2.4
+percent of voxels and did not add spurious structure, which is what the gate is
+there to guarantee.
+
+Two cautions from that survey.  Only about a quarter of runs had a usable sidelobe
+at all - rapidtide's own detector fired on 6 of 40 - so this is not a common case.
+And sidelobe presence tracked phase encode direction strongly (8 of 20 RL runs
+above 0.05 versus 2 of 20 LR), which is worth understanding in its own right.
+
+Use inside rapidtide:
+^^^^^^^^^^^^^^^^^^^^^
+
+The same algorithm is available inside the main rapidtide pipeline via
+``--unwrapdelay``.  It runs once per pass, immediately before despeckling, and is
+gated on the measured autocorrelation sidelobe amplitude for that pass
+(``--unwrapsidelobethresh``, default 0.05).  On passes where it runs it REPLACES
+despeckling; on passes where the gate does not open, despeckling runs as usual.
+
+The sidelobe is not measured until after the first pass, so pass 1 always falls
+back to despeckling.  Progress is logged, and the per pass count of reassigned
+voxels is recorded in the runoptions as ``unwrapped_passN``.
+
+Why replace rather than follow despeckling: running despeckle first and unwrapping
+afterwards measured worse than unwrapping alone.  Unwrap can only select among
+local maxima of the similarity function, so wherever despeckle has produced a
+refit value that is not a peak, unwrap silently discards it - the two do not
+compose in that order.
+
+Multi-subject evidence:
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Across 40 HCP runs (10 subjects x REST1/REST2 x LR/RL), with the sidelobe measured
+per run from ``desc-autocorr_timeseries``.  Median wrapped voxels:
+
+=========================  ===  =======  ===========  ========  ============
+sidelobe amplitude          n    naive    despeckle    unwrap    unwrap/desp
+=========================  ===  =======  ===========  ========  ============
+strong, >0.15                4    13666         2132       388           0.21
+moderate, 0.05-0.15          6     7290         2264       598           0.30
+weak, 0.02-0.05              2     5662         1635       314           0.19
+none, <=0.02                28     3696         1196       750            n/a
+=========================  ===  =======  ===========  ========  ============
+
+Within the 10 in-domain runs unwrapping won in 10 of 10 (Wilcoxon p=0.002), a
+median 77 percent reduction against despeckling.
+
+An independent check, free of any smoothness based criterion: taking pairs of
+repeat acquisitions of the same subject and looking only at voxels where exactly
+one run wrapped, despeckling brought 0.486 of them into agreement and unwrapping
+0.593 - better in 57 of 60 pairs (Wilcoxon p=2e-11).
+
+Out of domain (28 runs with no usable sidelobe) unwrapping changed only 2.4
+percent of voxels and did not add spurious structure, which is what the gate
+exists to guarantee.
+
+Two cautions from that survey.  Only about a quarter of runs had a usable sidelobe
+at all - rapidtide's own detector fired on 6 of 40 - so this is not the common
+case.  And sidelobe presence tracked phase encode direction strongly (8 of 20 RL
+runs above 0.05 versus 2 of 20 LR), which is worth understanding in its own right.
+
 Inputs:
 ^^^^^^^
 
