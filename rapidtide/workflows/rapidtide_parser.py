@@ -967,6 +967,22 @@ def _get_parser() -> Any:
         default=DEFAULT_UNWRAPSIDELOBETHRESH,
     )
     corr_fit.add_argument(
+        "--nounwraplatch",
+        dest="unwraplatch",
+        action="store_false",
+        help=(
+            "Re-evaluate the sidelobe gate independently on every pass.  By default "
+            "unwrapping latches on: once it has fired, it stays on for the remaining "
+            "passes.  The latch exists because the measured sidelobe amplitude is not "
+            "stable from pass to pass, and a gate that opens early then closes leaves "
+            "the final map unwrapped while its regressor has already been perturbed - "
+            "on 40 HCP runs, both runs where the gate closed after pass 1 came out "
+            "worse than not unwrapping at all, while all four that unwrapped on every "
+            "pass improved.  Use this only to reproduce that behaviour."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
         "--unwrappasses",
         dest="unwrappasses",
         action="store",

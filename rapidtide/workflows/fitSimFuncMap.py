@@ -879,11 +879,27 @@ def fitSimFunc(
         # on five HCP runs with a real sidelobe, adding despeckling after unwrapping
         # reduced wrapped voxels by a further 14 to 26 percent in 5 of 5.
         theacsidelobeamp = optiondict.get(f"acsidelobeamp_pass{thepass}", None)
-        dounwrap = bool(
-            optiondict.get("unwrapdelay", False)
-            and theacsidelobeamp is not None
+        theabovethresh = bool(
+            theacsidelobeamp is not None
             and theacsidelobeamp > optiondict.get("unwrapsidelobethresh", 0.05)
         )
+
+        # Latch.  The sidelobe amplitude estimate is not stable from pass to pass -
+        # it has been observed to go from 0.110 on pass 1 to None on passes 2 and 3
+        # of the same data.  Without a latch the gate then opens on an early pass and
+        # closes later, which is the worst of both worlds: unwrapping perturbs the
+        # delays, that feeds the refinement and changes the regressor, and then the
+        # final map is a naive fit plus despeckle built on a disturbed regressor that
+        # never itself got unwrapped.  Measured on 40 HCP runs, every run that
+        # unwrapped on all three passes improved, and both runs that unwrapped only on
+        # pass 1 got WORSE - the split was on pass coverage, not on amplitude.  So once
+        # unwrapping has fired, keep it on for the remaining passes.
+        thelatched = bool(
+            optiondict.get("unwraplatch", True) and optiondict.get("unwraplatched", False)
+        )
+        dounwrap = bool(optiondict.get("unwrapdelay", False) and (theabovethresh or thelatched))
+        if dounwrap:
+            optiondict["unwraplatched"] = True
         if optiondict.get("unwrapdelay", False) and not dounwrap:
             LGR.info(
                 f"\n{similaritytype} sidelobe unwrapping skipped, pass {thepass}: "
@@ -892,10 +908,16 @@ def fitSimFunc(
             )
         if dounwrap:
             LGR.info(f"\n\n{similaritytype} sidelobe unwrapping pass {thepass}")
-            LGR.info(
-                f"\tsidelobe amplitude {theacsidelobeamp:.3f} at "
-                f"{optiondict.get(f'acsidelobelag_pass{thepass}', float('nan'))}s"
-            )
+            if theabovethresh:
+                LGR.info(
+                    f"\tsidelobe amplitude {theacsidelobeamp:.3f} at "
+                    f"{optiondict.get(f'acsidelobelag_pass{thepass}', float('nan'))}s"
+                )
+            else:
+                LGR.info(
+                    f"\tsidelobe amplitude is {theacsidelobeamp} on this pass, but "
+                    f"unwrapping is latched on from an earlier pass"
+                )
             TimingLGR.info(f"{similaritytype} unwrap start, pass {thepass}")
             thexdim, theydim, theslicethickness, dummy = tide_io.parseniftisizes(thesizes)
             lagtimes[:], numunwrapped = unwrapfromsimfunc(
