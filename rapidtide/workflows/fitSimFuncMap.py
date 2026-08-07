@@ -879,9 +879,15 @@ def fitSimFunc(
         # on five HCP runs with a real sidelobe, adding despeckling after unwrapping
         # reduced wrapped voxels by a further 14 to 26 percent in 5 of 5.
         theacsidelobeamp = optiondict.get(f"acsidelobeamp_pass{thepass}", None)
+        # A negative threshold means "unwrap on every pass regardless of the measured
+        # sidelobe".  This exists because the gate cannot otherwise be opened on runs
+        # where acsidelobeamp is None, and those are exactly the runs needed to
+        # calibrate a better gate - without it, a validation run and its control come
+        # out identical and the experiment yields nothing.
+        thethreshold = optiondict.get("unwrapsidelobethresh", 0.05)
         theabovethresh = bool(
-            theacsidelobeamp is not None
-            and theacsidelobeamp > optiondict.get("unwrapsidelobethresh", 0.05)
+            thethreshold < 0.0
+            or (theacsidelobeamp is not None and theacsidelobeamp > thethreshold)
         )
 
         # Latch.  The sidelobe amplitude estimate is not stable from pass to pass -

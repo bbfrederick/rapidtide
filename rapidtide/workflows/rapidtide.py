@@ -2941,6 +2941,24 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # Post refinement step 1 - regression fitting, either to remove moving signal, or to calculate delayed CVR
     # write out the current version of the run options
     optiondict["currentstage"] = "presLFOfit"
+
+    # Say so loudly if unwrapping was asked for and never actually ran.  A silent
+    # no-op here is expensive: it produces a run that looks like it used the option,
+    # records the option in the runoptions, and is bit-identical to a run without it.
+    # A whole calibration batch was lost to exactly that.
+    if optiondict.get("unwrapdelay", False):
+        thefired = [k for k in optiondict if k.startswith("unwrapped_pass")]
+        if not thefired:
+            LGR.warning(
+                "\n*** --unwrapdelay was requested but unwrapping NEVER RAN on any pass. "
+                "This output is identical to a run without the option.  The gate needs "
+                "acsidelobeamp above --unwrapsidelobethresh on at least one pass; a "
+                "NEGATIVE threshold forces it on regardless.  If you passed a negative "
+                "threshold and still see this, the rapidtide being run predates that "
+                "behaviour. ***"
+            )
+            optiondict["unwrapdelay_neverran"] = True
+
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
         if optiondict["sLFOfiltmask"]:

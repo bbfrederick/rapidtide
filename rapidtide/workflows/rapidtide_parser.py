@@ -962,6 +962,9 @@ def _get_parser() -> Any:
         metavar="AMPLITUDE",
         help=(
             f"Only unwrap on passes where the measured sidelobe amplitude exceeds this. "
+            f"Set NEGATIVE to unwrap unconditionally, ignoring the sidelobe measurement "
+            f"entirely - needed to exercise unwrapping on runs where acsidelobeamp is "
+            f"None, which is the regime where a better gate has to be calibrated.  "
             f"Default is {DEFAULT_UNWRAPSIDELOBETHRESH}."
         ),
         default=DEFAULT_UNWRAPSIDELOBETHRESH,
