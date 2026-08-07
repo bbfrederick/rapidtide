@@ -914,15 +914,25 @@ def fitSimFunc(
             )
         if dounwrap:
             LGR.info(f"\n\n{similaritytype} sidelobe unwrapping pass {thepass}")
-            if theabovethresh:
+            # Report WHY it is running.  Note that theacsidelobeamp can be None even
+            # when unwrapping proceeds - a negative threshold forces it on regardless,
+            # and the latch keeps it on after the estimate has gone away - so nothing
+            # here may assume the amplitude is a number.
+            thelag = optiondict.get(f"acsidelobelag_pass{thepass}", None)
+            if theacsidelobeamp is not None:
                 LGR.info(
-                    f"\tsidelobe amplitude {theacsidelobeamp:.3f} at "
-                    f"{optiondict.get(f'acsidelobelag_pass{thepass}', float('nan'))}s"
+                    f"\tsidelobe amplitude {theacsidelobeamp:.3f}"
+                    + (f" at {thelag:.3f}s" if thelag is not None else "")
+                )
+            elif thethreshold < 0.0:
+                LGR.info(
+                    "\tno sidelobe amplitude available for this pass; unwrapping is "
+                    "forced on by a negative --unwrapsidelobethresh"
                 )
             else:
                 LGR.info(
-                    f"\tsidelobe amplitude is {theacsidelobeamp} on this pass, but "
-                    f"unwrapping is latched on from an earlier pass"
+                    "\tno sidelobe amplitude available for this pass; unwrapping is "
+                    "latched on from an earlier pass"
                 )
             TimingLGR.info(f"{similaritytype} unwrap start, pass {thepass}")
             thexdim, theydim, theslicethickness, dummy = tide_io.parseniftisizes(thesizes)
