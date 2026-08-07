@@ -29,7 +29,9 @@ import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
-from rapidtide.workflows.unwrapdelay import unwrapfromsimfunc
+from rapidtide.workflows.resolvedelays import resolvefromsimfunc
+
+DEFAULT_RESOLVESIDELOBETHRESH = -1.0
 
 _NDIMAGE_TO_NUMPY_PAD_MODE = {
     "reflect": "symmetric",  # d c b a | a b c d | d c b a
@@ -861,13 +863,30 @@ def fitSimFunc(
         # growing assigns each the candidate closest to a consensus prediction from its
         # already assigned neighbors.
         #
-        # Gated on the measured sidelobe amplitude, because with no sidelobe there is no
-        # periodic ambiguity to resolve and the method degenerates into plain smoothing.
-        # Across 40 HCP runs only about a quarter had a usable sidelobe; on those,
-        # unwrapping left a median 77% fewer wrapped voxels than despeckling (10/10 runs,
-        # Wilcoxon p=0.002), and resolved more test-retest disagreements between repeat
-        # acquisitions (0.59 vs 0.49, 57/60 run pairs, p=2e-11).  Out of domain it
-        # changed only 2.4% of voxels and did not add spurious structure.
+        # NOT GATED BY DEFAULT, and the reason is worth recording because the opposite
+        # was assumed for a long time.
+        #
+        # The original design gated on the measured sidelobe amplitude, on the argument
+        # that with no sidelobe there is no periodic ambiguity to resolve and the method
+        # degenerates into plain smoothing.  A calibration of 16 HCP runs paired with
+        # controls, deliberately spanning the ambiguity range including its bottom
+        # quartile, refuted that: unwrapping improved the delay map in 16 of 16 runs
+        # (median 57% fewer outlier voxels, Wilcoxon p=3e-5), including all four runs
+        # with the LOWEST measurable ambiguity and no sidelobe at all, where the median
+        # gain was still 44%.  Large non-periodic discontinuities fell in every run too
+        # (median -19%), so the gain is not smoothing away real structure.
+        #
+        # The mechanism is also not what the name suggests.  Across those runs the median
+        # change was 1.3 s and only 36% of changes were positive - two sided and small,
+        # not the one sided ~one period shift that a genuine sidelobe wrap produces.
+        # Only the two runs with a real measured sidelobe showed the periodic signature.
+        # So this is a general delay map repair that handles sidelobe wrapping as one
+        # special case, and gating it to fire only in that special case was suppressing
+        # most of its value.
+        #
+        # Gating is therefore off by default (resolvesidelobethresh negative).  Setting a
+        # positive threshold restores the old behaviour, which is retained only so the
+        # earlier results can be reproduced.
         #
         # It runs BEFORE despeckling, and both run.  The order matters and is not
         # symmetric.  Despeckle first then unwrap is worse than unwrapping alone,
@@ -879,12 +898,9 @@ def fitSimFunc(
         # on five HCP runs with a real sidelobe, adding despeckling after unwrapping
         # reduced wrapped voxels by a further 14 to 26 percent in 5 of 5.
         theacsidelobeamp = optiondict.get(f"acsidelobeamp_pass{thepass}", None)
-        # A negative threshold means "unwrap on every pass regardless of the measured
-        # sidelobe".  This exists because the gate cannot otherwise be opened on runs
-        # where acsidelobeamp is None, and those are exactly the runs needed to
-        # calibrate a better gate - without it, a validation run and its control come
-        # out identical and the experiment yields nothing.
-        thethreshold = optiondict.get("unwrapsidelobethresh", 0.05)
+        # A negative threshold - the default - means "unwrap on every pass regardless of
+        # the measured sidelobe".
+        thethreshold = optiondict.get("resolvesidelobethresh", DEFAULT_RESOLVESIDELOBETHRESH)
         theabovethresh = bool(
             thethreshold < 0.0
             or (theacsidelobeamp is not None and theacsidelobeamp > thethreshold)
@@ -901,19 +917,19 @@ def fitSimFunc(
         # pass 1 got WORSE - the split was on pass coverage, not on amplitude.  So once
         # unwrapping has fired, keep it on for the remaining passes.
         thelatched = bool(
-            optiondict.get("unwraplatch", True) and optiondict.get("unwraplatched", False)
+            optiondict.get("resolvelatch", True) and optiondict.get("resolvelatched", False)
         )
-        dounwrap = bool(optiondict.get("unwrapdelay", False) and (theabovethresh or thelatched))
+        dounwrap = bool(optiondict.get("resolvedelays", False) and (theabovethresh or thelatched))
         if dounwrap:
-            optiondict["unwraplatched"] = True
-        if optiondict.get("unwrapdelay", False) and not dounwrap:
+            optiondict["resolvelatched"] = True
+        if optiondict.get("resolvedelays", False) and not dounwrap:
             LGR.info(
-                f"\n{similaritytype} sidelobe unwrapping skipped, pass {thepass}: "
-                f"sidelobe amplitude {theacsidelobeamp} does not exceed "
-                f"{optiondict.get('unwrapsidelobethresh', 0.05)}"
+                f"\n{similaritytype} delay resolution skipped, pass {thepass}: "
+                f"sidelobe amplitude {theacsidelobeamp} does not exceed the "
+                f"explicitly requested threshold {thethreshold}"
             )
         if dounwrap:
-            LGR.info(f"\n\n{similaritytype} sidelobe unwrapping pass {thepass}")
+            LGR.info(f"\n\n{similaritytype} delay resolution pass {thepass}")
             # Report WHY it is running.  Note that theacsidelobeamp can be None even
             # when unwrapping proceeds - a negative threshold forces it on regardless,
             # and the latch keeps it on after the estimate has gone away - so nothing
@@ -926,17 +942,17 @@ def fitSimFunc(
                 )
             elif thethreshold < 0.0:
                 LGR.info(
-                    "\tno sidelobe amplitude available for this pass; unwrapping is "
-                    "forced on by a negative --unwrapsidelobethresh"
+                    "\tno sidelobe amplitude measured for this pass; resolving anyway "
+                    "(sidelobe gating is off by default)"
                 )
             else:
                 LGR.info(
-                    "\tno sidelobe amplitude available for this pass; unwrapping is "
-                    "latched on from an earlier pass"
+                    "\tno sidelobe amplitude measured for this pass; resolving because "
+                    "it is latched on from an earlier pass"
                 )
-            TimingLGR.info(f"{similaritytype} unwrap start, pass {thepass}")
+            TimingLGR.info(f"{similaritytype} delay resolution start, pass {thepass}")
             thexdim, theydim, theslicethickness, dummy = tide_io.parseniftisizes(thesizes)
-            lagtimes[:], numunwrapped = unwrapfromsimfunc(
+            lagtimes[:], numunwrapped = resolvefromsimfunc(
                 corrout,
                 trimmedcorrscale,
                 validvoxels,
@@ -944,13 +960,13 @@ def fitSimFunc(
                 fitmask,
                 lagtimes,
                 (thexdim, theydim, theslicethickness),
-                numpasses=optiondict.get("unwrappasses", 3),
+                numpasses=optiondict.get("resolvepasses", 3),
                 showprogressbar=optiondict["showprogressbar"],
             )
-            optiondict[f"unwrapped_pass{thepass}"] = numunwrapped
-            LGR.info(f"\tunwrapping reassigned {numunwrapped} voxels")
+            optiondict[f"resolved_pass{thepass}"] = numunwrapped
+            LGR.info(f"\tresolution reassigned {numunwrapped} voxels")
             TimingLGR.info(
-                f"{similaritytype} unwrap end, pass {thepass}",
+                f"{similaritytype} delay resolution end, pass {thepass}",
                 {"message2": numunwrapped, "message3": "voxels"},
             )
 

@@ -1,4 +1,4 @@
-unwrapdelay
+resolvedelays
 -----------
 
 Description:
@@ -53,7 +53,7 @@ repicking error is not magnitude but spatial behaviour - real delay varies
 smoothly from surrounding tissue, an error jumps.  The smoothness prior used here
 cannot tell the difference at a discontinuity, so on a patient with focal delay
 pathology this program may erase the finding of interest.  Inspect the
-``unwrapchanged`` mask before trusting the output.
+``resolvechanged`` mask before trusting the output.
 
 Measured performance:
 ^^^^^^^^^^^^^^^^^^^^^
@@ -65,7 +65,7 @@ On the test dataset, processed without ``--despecklepasses`` and without
 method                                               sidelobe errors
 ===================================================  ====================
 rapidtide raw peak picking                           380 (1.45%)
-unwrapdelay                                          89 (0.34%)
+resolvedelays                                          89 (0.34%)
 ===================================================  ====================
 
 a 77% reduction, in under a second.  Under controlled injection - corrupting the
@@ -162,18 +162,50 @@ conditions - no reliable advantage, at the cost of computing the flow field.
 Use ``--prior flow`` if your sidelobe spacing is small relative to your delay
 gradients, which is where it should begin to pay.
 
+What it actually does:
+^^^^^^^^^^^^^^^^^^^^^^
+
+The name describes a special case.  A 16 run paired calibration on HCP data, each
+run processed with and without unwrapping and spanning the ambiguity range into
+its bottom quartile, improved the delay map in **16 of 16 runs** (median 57 percent
+fewer outlier voxels, Wilcoxon p=3e-5):
+
+==========  ===  ==================  ============  ========  ==================
+band         n    ambiguity           median gain   better    non-alias jumps
+==========  ===  ==================  ============  ========  ==================
+A            4   0.0152-0.0160        +43.7%        4/4       -13.4%
+B            4   0.0301-0.0302        +59.3%        4/4       -22.5%
+C            4   0.0455-0.0462        +57.8%        4/4       -21.9%
+D            4   0.0652-0.0664        +73.5%        4/4       -21.4%
+==========  ===  ==================  ============  ========  ==================
+
+Band A was chosen to be the negative control - bottom quartile of the ambiguity
+distribution, no measurable sidelobe - and still gained 44 percent.  Non-periodic
+discontinuities fell in every run, so the gain is not smoothing.
+
+The mechanism is not periodic unwrapping on most runs.  Median change was 1.3 s
+with only 36 percent of changes positive, i.e. two sided and small.  A genuine
+sidelobe wrap is one sided at close to one full period, which is what the two
+runs with a measurable sidelobe showed (15-21 percent positive, ~6 s median).
+Elsewhere the method is repairing ordinary delay fitting errors by picking a
+better candidate peak.
+
+Consequently there is **no sidelobe gate by default**.  The benefit does scale
+with ambiguity (Spearman +0.568, p=0.022), so the ambiguity measure predicts how
+much you gain, not whether you gain.
+
 Use inside rapidtide:
 ^^^^^^^^^^^^^^^^^^^^^
 
 The same algorithm is available inside the main rapidtide pipeline via
-``--unwrapdelay``.  It runs once per pass, immediately before despeckling, and is
-gated on the measured autocorrelation sidelobe amplitude for that pass
-(``--unwrapsidelobethresh``, default 0.05).  On passes where it runs it REPLACES
-despeckling; on passes where the gate does not open, despeckling runs as usual.
+``--resolvedelays``.  It runs once per pass, immediately before despeckling, and is
+ungated by default (``--resolvesidelobethresh`` is negative), so it runs on every
+pass.  Setting a positive threshold restores the old sidelobe gating, retained
+only to reproduce earlier results.
 
 Note that the sidelobe is not measured until after the first pass, so pass 1
 always falls back to despeckling.  Progress is logged and the per pass count of
-reassigned voxels is recorded in the runoptions as ``unwrapped_passN``.
+reassigned voxels is recorded in the runoptions as ``resolved_passN``.
 
 Ordering matters, and it is not symmetric.  Unwrapping runs BEFORE despeckling and
 both run.  Despeckle first then unwrap is worse than unwrapping alone, because
@@ -237,14 +269,14 @@ Use inside rapidtide:
 ^^^^^^^^^^^^^^^^^^^^^
 
 The same algorithm is available inside the main rapidtide pipeline via
-``--unwrapdelay``.  It runs once per pass, immediately before despeckling, and is
-gated on the measured autocorrelation sidelobe amplitude for that pass
-(``--unwrapsidelobethresh``, default 0.05).  On passes where it runs it REPLACES
-despeckling; on passes where the gate does not open, despeckling runs as usual.
+``--resolvedelays``.  It runs once per pass, immediately before despeckling, and is
+ungated by default (``--resolvesidelobethresh`` is negative), so it runs on every
+pass.  Setting a positive threshold restores the old sidelobe gating, retained
+only to reproduce earlier results.
 
 The sidelobe is not measured until after the first pass, so pass 1 always falls
 back to despeckling.  Progress is logged, and the per pass count of reassigned
-voxels is recorded in the runoptions as ``unwrapped_passN``.
+voxels is recorded in the runoptions as ``resolved_passN``.
 
 Why replace rather than follow despeckling: running despeckle first and unwrapping
 afterwards measured worse than unwrapping alone.  Unwrap can only select among
@@ -293,22 +325,22 @@ The similarity function, ``XXX_desc-corrout_info.nii.gz``.  The mask defaults to
 Outputs:
 ^^^^^^^^
 
-    **maxtimeunwrapped**: the corrected delay map.
+    **maxtimeresolved**: the corrected delay map.
 
     **maxtimenaive**: what naive peak picking would have given, for comparison.
 
-    **unwrapchanged**: mask of voxels assigned something other than their
+    **resolvechanged**: mask of voxels assigned something other than their
     strongest peak.
 
-    **unwrapconfidence**: the ambiguity gap between the best and second best
+    **resolveconfidence**: the ambiguity gap between the best and second best
     peak, which is what orders the region growing.
 
 Usage:
 ^^^^^^
 
 .. argparse::
-   :ref: rapidtide.workflows.unwrapdelay._get_parser
-   :prog: unwrapdelay
+   :ref: rapidtide.workflows.resolvedelays._get_parser
+   :prog: resolvedelays
    :func: _get_parser
 
    Debugging options : @skip

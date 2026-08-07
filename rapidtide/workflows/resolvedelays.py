@@ -30,17 +30,47 @@ waveform they tend to fail together, in coherent patches rather than as isolated
 speckles - which is exactly what a median filter based despeckler cannot repair,
 since the neighbors it would vote with are wrong too.
 
+What this actually turned out to be
+-----------------------------------
+The name describes a special case, not the general behaviour, and that is worth
+stating up front because the whole design was originally built around the special
+case.
+
+A 16 run paired calibration on HCP data - each run processed with and without
+unwrapping, deliberately spanning the ambiguity range down into its bottom
+quartile - improved the delay map in 16 of 16 runs (median 57 percent fewer
+outlier voxels, Wilcoxon p=3e-5).  That includes all four runs with the LOWEST
+measurable ambiguity and no detectable sidelobe at all, where the median gain was
+still 44 percent.  Large non-periodic discontinuities fell in every run (median
+-19 percent), so this is not smoothing away real structure.
+
+The mechanism is not periodic unwrapping on most runs.  The median change was
+1.3 s and only 36 percent of changes were positive - two sided and small.  A
+genuine sidelobe wrap is one sided and moves delays by close to one full period;
+on the two calibration runs that did have a measurable sidelobe, that is exactly
+what was seen (15 to 21 percent positive, 5.9 to 6.3 s median).  Everywhere else
+the method is repairing ordinary delay fitting errors by choosing a better
+candidate peak, and doing it substantially better than despeckling.
+
+So: this is a general delay map repair that handles sidelobe wrapping as one
+special case.  It used to be gated on the measured sidelobe amplitude, which
+suppressed most of its value; that gate is now off by default.  The sections
+below on sidelobes remain accurate for the special case, but do not mistake them
+for the general story.
+
 Two things to check before believing anything this program tells you
 --------------------------------------------------------------------
-1) MEASURE YOUR SIDELOBE.  It is a property of the LFO spectrum of the particular
-   acquisition, not a constant.  rapidtide writes its estimate to
+1) MEASURE YOUR SIDELOBE, if you are reasoning about the periodic special case.
+   It is a property of the LFO spectrum of the particular acquisition, not a
+   constant.  rapidtide writes its estimate to
    XXX_autocorr_sidelobetime_passN.txt, and leaves it None when it cannot find
    one; the autocorrelation itself is saved as XXX_desc-autocorr_timeseries.  If
    the sidelobe amplitude is negligible there is no periodic ambiguity to
    resolve, and any large delay changes are being driven by something else -
    usually noise repicking the peak more or less at random within the search
-   range.  This program will still happily "repair" those, but what it is then
-   doing is smoothing, not unwrapping.
+   range.  Repairing those turns out to be worth doing anyway (see above), but it
+   is candidate reselection under a spatial prior, not unwrapping, and it should
+   not be described as the latter.
 
    The signature is diagnostic and is reported at the end of a run.  A genuine
    periodic alias produces delay changes that are NARROW and ONE SIDED, centred
@@ -158,7 +188,7 @@ DEFAULT_FITRADIUS = 6.0
 
 def _get_parser() -> argparse.ArgumentParser:
     """
-    Create and configure the argument parser for the unwrapdelay command line tool.
+    Create and configure the argument parser for the resolvedelays command line tool.
 
     Returns
     -------
@@ -166,7 +196,7 @@ def _get_parser() -> argparse.ArgumentParser:
         Configured argument parser with all required and optional arguments.
     """
     parser = argparse.ArgumentParser(
-        prog="unwrapdelay",
+        prog="resolvedelays",
         description=(
             "Resolve sidelobe ambiguity in a rapidtide delay map by unwrapping it "
             "against the optical flow velocity field from corrflow."
@@ -421,7 +451,7 @@ def icmrefine(
     return tau, thetotalchanged
 
 
-def unwrapdelaymap(
+def resolvedelaymap(
     candidatelags: NDArray,
     candidateamps: NDArray,
     velocity: Optional[NDArray],
@@ -660,7 +690,7 @@ def ambiguousfraction(
     return float(theambiguous[themask].mean())
 
 
-def unwrapfromsimfunc(
+def resolvefromsimfunc(
     corrout: NDArray,
     lagaxis: NDArray,
     validvoxels: Any,
@@ -729,7 +759,7 @@ def unwrapfromsimfunc(
     themask[validvoxels] = np.uint16(np.asarray(fitmask) > 0)
     themask = themask.reshape(nativespaceshape)
 
-    tau = unwrapdelaymap(
+    tau = resolvedelaymap(
         fulllags,
         fullamps,
         None,
@@ -749,7 +779,7 @@ def unwrapfromsimfunc(
     return newlagtimes, numchanged
 
 
-def unwrapdelay(args: argparse.Namespace) -> None:
+def resolvedelays(args: argparse.Namespace) -> None:
     """
     Unwrap a rapidtide delay map against the corrflow velocity field.
 
@@ -816,7 +846,7 @@ def unwrapdelay(args: argparse.Namespace) -> None:
     )
 
     print("unwrapping")
-    tau, thechanged, theconfidence = unwrapdelaymap(
+    tau, thechanged, theconfidence = resolvedelaymap(
         candidatelags,
         candidateamps,
         velocity,
@@ -869,19 +899,19 @@ def unwrapdelay(args: argparse.Namespace) -> None:
     tide_io.savetonifti(
         tau.astype(np.float32),
         output_hdr,
-        f"{args.outputroot}_desc-maxtimeunwrapped_map",
+        f"{args.outputroot}_desc-maxtimeresolved_map",
         debug=args.debug,
     )
     tide_io.savetonifti(
         np.uint16(candidatelags[..., 0] * 0 + thechanged),
         output_hdr,
-        f"{args.outputroot}_desc-unwrapchanged_mask",
+        f"{args.outputroot}_desc-resolvechanged_mask",
         debug=args.debug,
     )
     tide_io.savetonifti(
         theconfidence.astype(np.float32),
         output_hdr,
-        f"{args.outputroot}_desc-unwrapconfidence_map",
+        f"{args.outputroot}_desc-resolveconfidence_map",
         debug=args.debug,
     )
     tide_io.savetonifti(
@@ -899,7 +929,7 @@ def main() -> None:
     except SystemExit:
         _get_parser().print_help()
         raise
-    unwrapdelay(args)
+    resolvedelays(args)
 
 
 if __name__ == "__main__":

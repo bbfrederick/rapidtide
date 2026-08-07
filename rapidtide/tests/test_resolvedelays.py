@@ -18,7 +18,7 @@
 #
 import numpy as np
 
-import rapidtide.workflows.unwrapdelay as uw
+import rapidtide.workflows.resolvedelays as uw
 
 SIDELOBE = 12.0
 
@@ -70,7 +70,7 @@ def test_unwrap_recovers_injected_sidelobe_errors(debug=False):
     assert naive.sum() > 10, "the injection did not actually break naive peak picking"
 
     # flow free smoothness prior is enough here, as on real data
-    got, changed, conf = uw.unwrapdelaymap(cl2, ca2, None, mask, vox, showprogressbar=False)
+    got, changed, conf = uw.resolvedelaymap(cl2, ca2, None, mask, vox, showprogressbar=False)
     bad = np.abs(got - tau) > 2.0
     if debug:
         print(f"naive bad {naive.sum()}, unwrapped bad {bad.sum()}")
@@ -91,16 +91,16 @@ def test_unwrap_with_flow_prior(debug=False):
     # true velocity: flow along +x at the known speed
     vel = np.zeros(mask.shape + (3,))
     vel[..., 0] = 6.0
-    got, changed, conf = uw.unwrapdelaymap(cl, ca, vel, mask, vox, showprogressbar=False)
+    got, changed, conf = uw.resolvedelaymap(cl, ca, vel, mask, vox, showprogressbar=False)
     bad = (np.abs(got - tau) > 2.0).sum()
     assert bad < 0.1 * corrupt.sum(), f"{bad} voxels still wrong after flow guided unwrap"
 
 
-def test_unwrapdelay(debug=False):
+def test_resolvedelays(debug=False):
     test_findcandidatepeaks(debug=debug)
     test_unwrap_recovers_injected_sidelobe_errors(debug=debug)
     test_unwrap_with_flow_prior(debug=debug)
 
 
 if __name__ == "__main__":
-    test_unwrapdelay(debug=True)
+    test_resolvedelays(debug=True)

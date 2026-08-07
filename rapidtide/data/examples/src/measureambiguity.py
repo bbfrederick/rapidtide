@@ -24,7 +24,7 @@ WHAT IT NEEDS
         XXX_desc-corrfit_mask.nii.gz
         XXX_desc-runoptions_info.json    (for despeckle_thresh; optional)
         XXX_desc-autocorr_timeseries.*   (optional, for comparison only)
-    It does NOT need --unwrapdelay.  The measurement is made on the similarity
+    It does NOT need --resolvedelays.  The measurement is made on the similarity
     function before any repair, so it is identical either way.
 
     Dependencies: numpy and nibabel only.  rapidtide itself is not imported.
@@ -186,7 +186,7 @@ def main():
     theparser = argparse.ArgumentParser(
         description="Measure per-voxel delay ambiguity in rapidtide output.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Needs only corrout, corrfit_mask and runoptions.  --unwrapdelay NOT required.",
+        epilog="Needs only corrout, corrfit_mask and runoptions.  --resolvedelays NOT required.",
     )
     theparser.add_argument("searchdirs", nargs="+", help="Directories to search recursively.")
     theparser.add_argument("-o", "--output", default="ambiguity.tsv", help="Output TSV.")

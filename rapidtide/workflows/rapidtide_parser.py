@@ -52,8 +52,8 @@ DEFAULT_LAGMIN = -30.0
 DEFAULT_LAGMAX = 30.0
 DEFAULT_SIGMAMAX = 1000.0
 DEFAULT_SIGMAMIN = 0.0
-DEFAULT_UNWRAPSIDELOBETHRESH = 0.05
-DEFAULT_UNWRAPPASSES = 3
+DEFAULT_RESOLVESIDELOBETHRESH = -1.0
+DEFAULT_RESOLVEPASSES = 3
 DEFAULT_DESPECKLE_PASSES = 4
 DEFAULT_DESPECKLE_THRESH = 5.0
 DEFAULT_DESPECKLE_KERNEL = 3
@@ -935,15 +935,16 @@ def _get_parser() -> Any:
         default=DEFAULT_PEAKFIT_TYPE,
     )
     corr_fit.add_argument(
-        "--unwrapdelay",
-        dest="unwrapdelay",
+        "--resolvedelays",
+        dest="resolvedelays",
         action="store_true",
         help=(
             "Resolve sidelobe ambiguity in the delay map by phase unwrapping, on any "
             "pass where the measured autocorrelation sidelobe amplitude exceeds "
-            f"--unwrapsidelobethresh (default {DEFAULT_UNWRAPSIDELOBETHRESH}).  It runs "
-            "BEFORE despeckling, which still runs afterwards - the two compose in that "
-            "order but not the reverse.  Where a sidelobe happens to "
+            "--resolvesidelobethresh, which by default imposes no restriction so "
+            "unwrapping runs on every pass.  It runs BEFORE despeckling, which still "
+            "runs afterwards - the two compose in that order but not the reverse.  "
+            "Where a sidelobe happens to "
             "exceed the main lobe, peak picking lands on it and the delay is wrong by "
             "nearly one full period; because neighboring voxels see the same waveform "
             "these errors come in coherent patches, which median filter despeckling "
@@ -955,23 +956,26 @@ def _get_parser() -> Any:
         default=False,
     )
     corr_fit.add_argument(
-        "--unwrapsidelobethresh",
-        dest="unwrapsidelobethresh",
+        "--resolvesidelobethresh",
+        dest="resolvesidelobethresh",
         action="store",
         type=lambda x: pf.is_float(parser, x),
         metavar="AMPLITUDE",
         help=(
-            f"Only unwrap on passes where the measured sidelobe amplitude exceeds this. "
-            f"Set NEGATIVE to unwrap unconditionally, ignoring the sidelobe measurement "
-            f"entirely - needed to exercise unwrapping on runs where acsidelobeamp is "
-            f"None, which is the regime where a better gate has to be calibrated.  "
-            f"Default is {DEFAULT_UNWRAPSIDELOBETHRESH}."
+            f"Restrict unwrapping to passes where the measured sidelobe amplitude "
+            f"exceeds this.  NEGATIVE (the default, {DEFAULT_RESOLVESIDELOBETHRESH}) "
+            f"means no restriction - unwrap on every pass.  Gating used to be on by "
+            f"default, on the assumption that unwrapping only helps where a sidelobe "
+            f"creates periodic ambiguity.  A 16 run paired calibration refuted that: "
+            f"the delay map improved in 16 of 16 runs including the four with the "
+            f"lowest ambiguity and no measurable sidelobe.  This option is retained "
+            f"only to reproduce the earlier gated behaviour."
         ),
-        default=DEFAULT_UNWRAPSIDELOBETHRESH,
+        default=DEFAULT_RESOLVESIDELOBETHRESH,
     )
     corr_fit.add_argument(
-        "--nounwraplatch",
-        dest="unwraplatch",
+        "--noresolvelatch",
+        dest="resolvelatch",
         action="store_false",
         help=(
             "Re-evaluate the sidelobe gate independently on every pass.  By default "
@@ -986,8 +990,8 @@ def _get_parser() -> Any:
         default=True,
     )
     corr_fit.add_argument(
-        "--unwrappasses",
-        dest="unwrappasses",
+        "--resolvepasses",
+        dest="resolvepasses",
         action="store",
         type=lambda x: pf.is_int(parser, x, minval=1),
         metavar="PASSES",
@@ -995,9 +999,9 @@ def _get_parser() -> Any:
             f"Number of unwrapping passes.  Pass 1 is the region grow; later passes "
             f"re-snap each voxel to the candidate nearest a smoothed version of the "
             f"current solution.  Returns diminish sharply after two or three.  Default "
-            f"is {DEFAULT_UNWRAPPASSES}."
+            f"is {DEFAULT_RESOLVEPASSES}."
         ),
-        default=DEFAULT_UNWRAPPASSES,
+        default=DEFAULT_RESOLVEPASSES,
     )
     corr_fit.add_argument(
         "--despecklepasses",

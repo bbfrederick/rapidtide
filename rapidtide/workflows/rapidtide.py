@@ -2946,18 +2946,18 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # no-op here is expensive: it produces a run that looks like it used the option,
     # records the option in the runoptions, and is bit-identical to a run without it.
     # A whole calibration batch was lost to exactly that.
-    if optiondict.get("unwrapdelay", False):
-        thefired = [k for k in optiondict if k.startswith("unwrapped_pass")]
+    if optiondict.get("resolvedelays", False):
+        thefired = [k for k in optiondict if k.startswith("resolved_pass")]
         if not thefired:
             LGR.warning(
-                "\n*** --unwrapdelay was requested but unwrapping NEVER RAN on any pass. "
+                "\n*** --resolvedelays was requested but unwrapping NEVER RAN on any pass. "
                 "This output is identical to a run without the option.  The gate needs "
-                "acsidelobeamp above --unwrapsidelobethresh on at least one pass; a "
-                "NEGATIVE threshold forces it on regardless.  If you passed a negative "
-                "threshold and still see this, the rapidtide being run predates that "
-                "behaviour. ***"
+                "acsidelobeamp above --resolvesidelobethresh on at least one pass; a "
+                "NEGATIVE threshold (the default) imposes no gate at all.  If you did not "
+                "set a positive threshold and still see this, the rapidtide being run "
+                "predates the ungated default. ***"
             )
-            optiondict["unwrapdelay_neverran"] = True
+            optiondict["resolvedelays_neverran"] = True
 
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:

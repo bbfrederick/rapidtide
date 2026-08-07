@@ -61,6 +61,7 @@ from rapidtide.workflows.rankimage import _get_parser as rankimage_getparser
 from rapidtide.workflows.rapidtide2std import _get_parser as rapidtide2std_getparser
 from rapidtide.workflows.resamplenifti import _get_parser as resamplenifti_getparser
 from rapidtide.workflows.resampletc import _get_parser as resampletc_getparser
+from rapidtide.workflows.resolvedelays import _get_parser as resolvedelays_getparser
 from rapidtide.workflows.retrolagtcs import _get_parser as retrolagtcs_getparser
 from rapidtide.workflows.retroregress import _get_parser as retroregress_getparser
 from rapidtide.workflows.roisummarize import _get_parser as roisummarize_getparser
@@ -78,7 +79,6 @@ from rapidtide.workflows.spectrogram import _get_parser as spectrogram_getparser
 from rapidtide.workflows.synthASL import _get_parser as synthASL_getparser
 from rapidtide.workflows.tcfrom2col import _get_parser as tcfrom2col_getparser
 from rapidtide.workflows.tcfrom3col import _get_parser as tcfrom3col_getparser
-from rapidtide.workflows.unwrapdelay import _get_parser as unwrapdelay_getparser
 from rapidtide.workflows.variabilityizer import _get_parser as variabilityizer_getparser
 
 
@@ -121,6 +121,7 @@ def test_parsers(debug=False):
         rapidtide2std_getparser,
         resamplenifti_getparser,
         resampletc_getparser,
+        resolvedelays_getparser,
         retrolagtcs_getparser,
         retroregress_getparser,
         roisummarize_getparser,
@@ -138,7 +139,6 @@ def test_parsers(debug=False):
         synthASL_getparser,
         tcfrom2col_getparser,
         tcfrom3col_getparser,
-        unwrapdelay_getparser,
         variabilityizer_getparser,
     ]
     try:
