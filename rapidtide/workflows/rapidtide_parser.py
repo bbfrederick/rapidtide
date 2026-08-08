@@ -1032,6 +1032,21 @@ def _get_parser() -> Any:
         default=DEFAULT_DESPECKLE_THRESH,
     )
     corr_fit.add_argument(
+        "--noautodespecklethresh",
+        dest="autodespecklethresh",
+        action="store_false",
+        help=(
+            "By default, if a sidelobe is found in the autocorrelation of the probe "
+            "regressor, despeckle_thresh is raised to at least half the sidelobe time, "
+            "so a sidelobe-width delay difference is not treated as a speckle.  This "
+            "means the effective despeckle threshold varies from run to run, and can "
+            "even differ between two runs of the same dataset.  Use this flag to hold "
+            "despeckle_thresh at the requested value, which is what you want when the "
+            "threshold must stay comparable across runs."
+        ),
+        default=True,
+    )
+    corr_fit.add_argument(
         "--baselinecutoff",
         dest="baselinecutoff",
         action="store",

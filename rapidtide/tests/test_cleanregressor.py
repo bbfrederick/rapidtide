@@ -174,6 +174,99 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
             )
 
 
+def _runwithsidelobe(autodespecklethresh, local=False, debug=False):
+    """Run cleanregressor on a strongly periodic regressor, which puts a sidelobe in its
+    autocorrelation at the driving period, and report the despeckle_thresh that comes back.
+
+    A periodic driver rather than a delayed echo, because the autocorrelation of
+    lfo-filtered noise already has its first sidelobe near 9 s from the passband alone -
+    that is below 2 * 5.0, so the threshold raise would be a no-op and the test would
+    not discriminate no matter where the echo was put."""
+    outputname = os.path.join(get_test_temp_path(local), "autodespecklethreshtest")
+    fmrifreq = 1.0
+    oversampfreq = 2.0
+    theprefilter = tide_filt.NoncausalFilter("lfo")
+    lagmin, lagmax = -30, 30
+    detrendorder, windowfunc = 3, "hamming"
+    # the period has to be long enough that period / 2 clears the requested
+    # despeckle_thresh of 5.0 s, or the raise would be a no-op and prove nothing
+    tclen, theperiod = 500, 20.0
+
+    theCorrelator = tide_simFuncClasses.Correlator(
+        Fs=oversampfreq, ncprefilter=theprefilter, detrendorder=1, windowfunc=windowfunc
+    )
+    theFitter = tide_simFuncClasses.SimilarityFunctionFitter(
+        lagmod=1000.0, lagmin=lagmin, lagmax=lagmax, enforcethresh=False, zerooutbadfit=False
+    )
+
+    rng = np.random.default_rng(seed=1234)
+    thetimeaxis = np.arange(tclen) / fmrifreq
+    resampnonosref_y = theprefilter.apply(
+        fmrifreq,
+        np.sin(2.0 * np.pi * thetimeaxis / theperiod)
+        + rng.normal(loc=0.0, scale=0.25, size=tclen),
+    )
+    resampref_y = tide_resample.upsample(resampnonosref_y, fmrifreq, oversampfreq)
+    theCorrelator.setreftc(resampnonosref_y)
+    referencetc = tide_math.corrnormalize(
+        resampref_y, detrendorder=detrendorder, windowfunc=windowfunc
+    )
+
+    thereturn = tide_cleanregressor.cleanregressor(
+        outputname,
+        1,
+        referencetc,
+        resampref_y,
+        resampnonosref_y,
+        fmrifreq,
+        oversampfreq,
+        0,
+        tclen * 2,
+        int((lagmin * oversampfreq) - 0.5),
+        int((lagmax * oversampfreq) + 0.5),
+        theFitter,
+        theCorrelator,
+        lagmin,
+        lagmax,
+        LGR=None,
+        check_autocorrelation=True,
+        fix_autocorrelation=True,
+        despeckle_thresh=5.0,
+        autodespecklethresh=autodespecklethresh,
+        lthreshval=0.0,
+        fixdelay=False,
+        detrendorder=detrendorder,
+        windowfunc=windowfunc,
+        respdelete=False,
+        displayplots=False,
+        debug=debug,
+        rt_floattype=np.float64,
+    )
+    despeckle_thresh, sidelobeamp, sidelobetime = thereturn[3], thereturn[4], thereturn[5]
+    return despeckle_thresh, sidelobeamp, sidelobetime
+
+
+def test_autodespecklethresh(local=False, debug=False):
+    """--noautodespecklethresh must hold despeckle_thresh at the requested value even
+    when a sidelobe is found.  Without it the threshold is raised to sidelobetime / 2,
+    which makes the effective threshold vary from run to run."""
+    onthresh, onamp, ontime = _runwithsidelobe(True, local=local, debug=debug)
+    offthresh, offamp, offtime = _runwithsidelobe(False, local=local, debug=debug)
+
+    # the test is only meaningful if the sidelobe was actually detected, and only
+    # discriminating if the raise would have moved the threshold
+    assert ontime is not None, "no sidelobe detected - the test regressor is not exercising the path"
+    assert ontime / 2.0 > 5.0, f"sidelobe at {ontime} s would not have raised the threshold"
+
+    # detection itself must be untouched: the flag governs the response, not the detector
+    assert ontime == offtime
+    assert onamp == offamp
+
+    assert onthresh == np.max([5.0, ontime / 2.0])
+    assert offthresh == 5.0
+
+
 if __name__ == "__main__":
     mpl.use("TkAgg")
     test_cleanregressor(debug=True, local=True, displayplots=True)
+    test_autodespecklethresh(local=True, debug=True)

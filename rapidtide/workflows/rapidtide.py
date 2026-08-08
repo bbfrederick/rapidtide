@@ -2298,6 +2298,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             check_autocorrelation=optiondict["check_autocorrelation"],
             fix_autocorrelation=optiondict["fix_autocorrelation"],
             despeckle_thresh=optiondict["despeckle_thresh"],
+            autodespecklethresh=optiondict["autodespecklethresh"],
             lthreshval=optiondict["lthreshval"],
             fixdelay=optiondict["fixdelay"],
             detrendorder=optiondict["detrendorder"],
