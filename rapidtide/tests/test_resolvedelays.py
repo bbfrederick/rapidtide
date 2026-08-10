@@ -96,10 +96,42 @@ def test_unwrap_with_flow_prior(debug=False):
     assert bad < 0.1 * corrupt.sum(), f"{bad} voxels still wrong after flow guided unwrap"
 
 
+def test_icmrefine_ignores_voxels_outside_the_mask(debug=False):
+    """icmrefine forms its prior by median filtering the current solution.  Every voxel
+    of this small mask is a surface voxel, so if the filter sees zeros outside the mask
+    the prior collapses toward zero and each voxel re-snaps to the WRONG candidate.
+
+    The delay here is uniform, so a smoothness prior has nothing to fix and the correct
+    answer is to change nothing at all."""
+    theshape = (7, 7, 7)
+    thetruth, thedecoy = 8.0, 2.0
+
+    themask = np.zeros(theshape, dtype=bool)
+    themask[2:4, 2:4, 2:4] = True  # a 2x2x2 block, 8 voxels in a 27 voxel neighbourhood
+
+    thetau = np.where(themask, thetruth, 0.0)
+    thecandidates = np.zeros(theshape + (2,), dtype=float)
+    thecandidates[..., 0] = thetruth
+    thecandidates[..., 1] = thedecoy
+
+    theresult, thenumchanged = uw.icmrefine(thetau, thecandidates, themask, numpasses=3)
+
+    if debug:
+        print(f"{theresult[themask]=}, {thenumchanged=}")
+    # zero filling drags the prior to 0.0, which is nearer the decoy at 2.0 than the
+    # truth at 8.0, so every voxel would flip
+    assert np.allclose(theresult[themask], thetruth), (
+        f"boundary voxels re-snapped to {np.unique(theresult[themask])} instead of "
+        f"{thetruth}; the prior is seeing outside the mask"
+    )
+    assert thenumchanged == 0, f"{thenumchanged} assignments changed on a uniform field"
+
+
 def test_resolvedelays(debug=False):
     test_findcandidatepeaks(debug=debug)
     test_unwrap_recovers_injected_sidelobe_errors(debug=debug)
     test_unwrap_with_flow_prior(debug=debug)
+    test_icmrefine_ignores_voxels_outside_the_mask(debug=debug)
 
 
 if __name__ == "__main__":
