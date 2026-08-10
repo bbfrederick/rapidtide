@@ -3,6 +3,7 @@
 ## Version 3.1.12 (7/23/26)
 * (rapidtide) Added ``--resolvedelays``, a new procedure analagous to phase unwrapping that is performed before despeckling to improve delay maps.  Tested fairly extensively on real data - it resolves more voxels than despeckling, but different voxels, so it is a win to do both.
 * (rapidtide) Removed ``--robustdelay``.  Resolve delays makes it redundant.
+* (rapidtide) Removed ``--despeckle-patch-detection``.  It had a critical bug, and resolve delays mostly made it redundant.
 * (slopefit) Added program to find polynomial mapping between two 4D NIFTI files.
 * (aparc2dseg) Added a new program to make gray, white, CSF maps from aparc+aseg maps.
 * (filtnifti) Added option to do spatial as well as temporal filtering.
