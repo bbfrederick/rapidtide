@@ -185,6 +185,12 @@ DEFAULT_NUMPASSES = 3
 DEFAULT_AMBIGRATIO = 0.8
 DEFAULT_FITRADIUS = 6.0
 
+# How big a delay change counts as a reassignment.  Resolution re-snaps every voxel to a
+# candidate peak, so almost all of them move by a hair even when nothing was decided
+# differently; only changes above this are real.  Both the reported reassignment count
+# and the resolvechanged audit mask use this, so that they cannot disagree.
+RESOLVEDCHANGEDTHRESH = 0.5
+
 
 def _get_parser() -> argparse.ArgumentParser:
     """
@@ -775,7 +781,7 @@ def resolvefromsimfunc(
     theunwrapped = tau.reshape(numspatiallocs)[validvoxels]
     thevalid = np.asarray(fitmask) > 0
     newlagtimes[thevalid] = theunwrapped[thevalid]
-    numchanged = int(np.sum(np.abs(newlagtimes - lagtimes) > 0.5))
+    numchanged = int(np.sum(np.abs(newlagtimes - lagtimes) > RESOLVEDCHANGEDTHRESH))
     return newlagtimes, numchanged
 
 

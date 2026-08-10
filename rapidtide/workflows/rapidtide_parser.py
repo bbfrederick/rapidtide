@@ -1004,6 +1004,22 @@ def _get_parser() -> Any:
         default=DEFAULT_RESOLVEPASSES,
     )
     corr_fit.add_argument(
+        "--saveresolvemaps",
+        dest="saveresolvemaps",
+        action="store_true",
+        help=(
+            "Save an audit trail of what delay resolution changed in the final pass: "
+            "the delay map as it stood going in (maxtimepreresolve), the change applied "
+            "(resolveshift), and the voxels affected (resolvechanged).  Delay resolution "
+            "uses a spatial smoothness prior, which cannot distinguish a genuinely long "
+            "delay that varies smoothly from its surroundings from a fitting error, so "
+            "on populations with vascular pathology it is worth being able to see what "
+            "was rewritten.  Unlike the other save options this one is honoured at every "
+            "output level.  Ignored without --resolvedelays.  Default is False."
+        ),
+        default=False,
+    )
+    corr_fit.add_argument(
         "--despecklepasses",
         dest="despeckle_passes",
         action=pf.IndicateSpecifiedAction,
@@ -2741,6 +2757,11 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
         args["savecorrtimes"] = True
         args["savelagregressors"] = True
         args["savedespecklemasks"] = True
+        # note that saveresolvemaps is deliberately absent from the other output levels:
+        # asking for the resolution audit trail has to work even at --outputlevel min,
+        # since that is what large cohort runs use and is exactly where the question of
+        # what resolution rewrote is most worth being able to answer
+        args["saveresolvemaps"] = True
         args["saveminimumsLFOfiltfiles"] = True
         args["savenormalsLFOfiltfiles"] = True
         args["savemovingsignal"] = True

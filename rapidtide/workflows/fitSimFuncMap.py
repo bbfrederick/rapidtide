@@ -29,7 +29,7 @@ import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
-from rapidtide.workflows.resolvedelays import resolvefromsimfunc
+from rapidtide.workflows.resolvedelays import RESOLVEDCHANGEDTHRESH, resolvefromsimfunc
 
 DEFAULT_RESOLVESIDELOBETHRESH = -1.0
 
@@ -952,6 +952,9 @@ def fitSimFunc(
                 )
             TimingLGR.info(f"{similaritytype} delay resolution start, pass {thepass}")
             thexdim, theydim, theslicethickness, dummy = tide_io.parseniftisizes(thesizes)
+            thepreresolvelags = (
+                lagtimes.copy() if optiondict.get("saveresolvemaps", False) else None
+            )
             lagtimes[:], numunwrapped = resolvefromsimfunc(
                 corrout,
                 trimmedcorrscale,
@@ -965,6 +968,73 @@ def fitSimFunc(
             )
             optiondict[f"resolved_pass{thepass}"] = numunwrapped
             LGR.info(f"\tresolution reassigned {numunwrapped} voxels")
+
+            # Audit trail.  Delay resolution can move a voxel to a different peak of the
+            # similarity function, which is the point, but it is a smoothness prior and
+            # a smoothness prior cannot tell a genuinely long delay that varies smoothly
+            # from its surroundings apart from a fitting error.  Saving what it changed
+            # makes that inspectable instead of invisible.
+            #
+            # What this is NOT: resolution runs on every pass and the result feeds the
+            # next pass's refinement, so the map going into the final pass has already
+            # been resolved.  These outputs therefore show what the FINAL pass did, not
+            # the cumulative effect of resolution versus not resolving at all.  Nothing
+            # computed inside a single run can show the latter - that needs a paired run
+            # without --resolvedelays.  Per-pass reassignment counts are in runoptions as
+            # resolved_passN.
+            if thepreresolvelags is not None and thepass == optiondict["passes"]:
+                if theinputdata.filetype != "text":
+                    if theinputdata.filetype == "cifti":
+                        timeindex = theheader["dim"][0] - 1
+                        spaceindex = theheader["dim"][0]
+                        theheader["dim"][timeindex] = 1
+                        theheader["dim"][spaceindex] = numspatiallocs
+                    else:
+                        theheader["dim"][0] = 3
+                        theheader["dim"][4] = 1
+                        theheader["pixdim"][4] = 1.0
+                theshift = lagtimes - thepreresolvelags
+                resolvelist = [
+                    (
+                        thepreresolvelags,
+                        "maxtimepreresolve",
+                        "map",
+                        "second",
+                        "Lag time in seconds as it stood immediately before delay "
+                        "resolution in the final pass",
+                    ),
+                    (
+                        theshift,
+                        "resolveshift",
+                        "map",
+                        "second",
+                        "Change in lag time applied by delay resolution in the final "
+                        "pass, in seconds",
+                    ),
+                    (
+                        np.where(np.abs(theshift) > RESOLVEDCHANGEDTHRESH, 1, 0).astype(
+                            np.int32
+                        ),
+                        "resolvechanged",
+                        "mask",
+                        None,
+                        f"Voxels whose delay was changed by more than "
+                        f"{RESOLVEDCHANGEDTHRESH} seconds by delay resolution in the "
+                        f"final pass",
+                    ),
+                ]
+                tide_io.savemaplist(
+                    outputname,
+                    resolvelist,
+                    validvoxels,
+                    nativespaceshape,
+                    theheader,
+                    bidsbasedict,
+                    filetype=theinputdata.filetype,
+                    rt_floattype=rt_floattype,
+                    cifti_hdr=theinputdata.cifti_hdr,
+                )
+
             TimingLGR.info(
                 f"{similaritytype} delay resolution end, pass {thepass}",
                 {"message2": numunwrapped, "message3": "voxels"},
