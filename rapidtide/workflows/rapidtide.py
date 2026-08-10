@@ -2943,20 +2943,21 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # write out the current version of the run options
     optiondict["currentstage"] = "presLFOfit"
 
-    # Say so loudly if unwrapping was asked for and never actually ran.  A silent
-    # no-op here is expensive: it produces a run that looks like it used the option,
-    # records the option in the runoptions, and is bit-identical to a run without it.
-    # A whole calibration batch was lost to exactly that.
+    # Say so loudly if resolution was asked for and never actually ran.  Nothing gates
+    # it any more, so this should be unreachable - which is exactly why it is worth
+    # keeping.  A silent no-op here is expensive: it produces a run that looks like it
+    # used the option, records the option in the runoptions, and is bit-identical to a
+    # run without it.  A whole calibration batch was lost to that once, when the option
+    # parsed and was recorded by a build that could not act on it.
     if optiondict.get("resolvedelays", False):
         thefired = [k for k in optiondict if k.startswith("resolved_pass")]
         if not thefired:
             LGR.warning(
-                "\n*** --resolvedelays was requested but unwrapping NEVER RAN on any pass. "
-                "This output is identical to a run without the option.  The gate needs "
-                "acsidelobeamp above --resolvesidelobethresh on at least one pass; a "
-                "NEGATIVE threshold (the default) imposes no gate at all.  If you did not "
-                "set a positive threshold and still see this, the rapidtide being run "
-                "predates the ungated default. ***"
+                "\n*** --resolvedelays was requested but resolution NEVER RAN on any "
+                "pass.  This output is identical to a run without the option.  Nothing "
+                "gates resolution, so this should not be possible - the most likely "
+                "cause is that the rapidtide actually being run is older than the "
+                "option it accepted. ***"
             )
             optiondict["resolvedelays_neverran"] = True
 

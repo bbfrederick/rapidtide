@@ -52,7 +52,6 @@ DEFAULT_LAGMIN = -30.0
 DEFAULT_LAGMAX = 30.0
 DEFAULT_SIGMAMAX = 1000.0
 DEFAULT_SIGMAMIN = 0.0
-DEFAULT_RESOLVESIDELOBETHRESH = -1.0
 DEFAULT_RESOLVEPASSES = 3
 DEFAULT_DESPECKLE_PASSES = 4
 DEFAULT_DESPECKLE_THRESH = 5.0
@@ -939,55 +938,21 @@ def _get_parser() -> Any:
         dest="resolvedelays",
         action="store_true",
         help=(
-            "Resolve sidelobe ambiguity in the delay map by phase unwrapping, on any "
-            "pass where the measured autocorrelation sidelobe amplitude exceeds "
-            "--resolvesidelobethresh, which by default imposes no restriction so "
-            "unwrapping runs on every pass.  It runs BEFORE despeckling, which still "
-            "runs afterwards - the two compose in that order but not the reverse.  "
-            "Where a sidelobe happens to "
-            "exceed the main lobe, peak picking lands on it and the delay is wrong by "
-            "nearly one full period; because neighboring voxels see the same waveform "
-            "these errors come in coherent patches, which median filter despeckling "
-            "handles poorly.  On the roughly one quarter of HCP runs with a usable "
-            "sidelobe this left a median 77 percent fewer wrapped voxels than "
-            "despeckling.  Gated because with no sidelobe there is no ambiguity to "
-            "resolve and the method degenerates into smoothing."
+            "Repair the delay map by reassigning each voxel to whichever local maximum "
+            "of its similarity function best agrees with its neighbors.  Runs on every "
+            "pass, BEFORE despeckling, which still runs afterwards - the two compose in "
+            "that order but not the reverse.  It fixes sidelobe wrapping, where a "
+            "sidelobe exceeds the main lobe, peak picking lands on it, and the delay is "
+            "wrong by nearly a full period in coherent patches that median filter "
+            "despeckling handles poorly - but it is not limited to that case.  Measured "
+            "against paired controls it reduced outlier voxels by a median 78 percent "
+            "over 16 HCP runs and 83 percent over 26 UK Biobank runs, beating "
+            "despeckling alone in 41 of those 42 runs.  Note that it uses a spatial "
+            "smoothness prior, which cannot distinguish a genuinely long delay that "
+            "varies smoothly from its surroundings from a fitting error; see "
+            "--saveresolvemaps if you need to audit what it changed."
         ),
         default=False,
-    )
-    corr_fit.add_argument(
-        "--resolvesidelobethresh",
-        dest="resolvesidelobethresh",
-        action="store",
-        type=lambda x: pf.is_float(parser, x),
-        metavar="AMPLITUDE",
-        help=(
-            f"Restrict unwrapping to passes where the measured sidelobe amplitude "
-            f"exceeds this.  NEGATIVE (the default, {DEFAULT_RESOLVESIDELOBETHRESH}) "
-            f"means no restriction - unwrap on every pass.  Gating used to be on by "
-            f"default, on the assumption that unwrapping only helps where a sidelobe "
-            f"creates periodic ambiguity.  A 16 run paired calibration refuted that: "
-            f"the delay map improved in 16 of 16 runs including the four with the "
-            f"lowest ambiguity and no measurable sidelobe.  This option is retained "
-            f"only to reproduce the earlier gated behaviour."
-        ),
-        default=DEFAULT_RESOLVESIDELOBETHRESH,
-    )
-    corr_fit.add_argument(
-        "--noresolvelatch",
-        dest="resolvelatch",
-        action="store_false",
-        help=(
-            "Re-evaluate the sidelobe gate independently on every pass.  By default "
-            "unwrapping latches on: once it has fired, it stays on for the remaining "
-            "passes.  The latch exists because the measured sidelobe amplitude is not "
-            "stable from pass to pass, and a gate that opens early then closes leaves "
-            "the final map unwrapped while its regressor has already been perturbed - "
-            "on 40 HCP runs, both runs where the gate closed after pass 1 came out "
-            "worse than not unwrapping at all, while all four that unwrapped on every "
-            "pass improved.  Use this only to reproduce that behaviour."
-        ),
-        default=True,
     )
     corr_fit.add_argument(
         "--resolvepasses",

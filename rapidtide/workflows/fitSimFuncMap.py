@@ -31,8 +31,6 @@ import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
 from rapidtide.workflows.resolvedelays import RESOLVEDCHANGEDTHRESH, resolvefromsimfunc
 
-DEFAULT_RESOLVESIDELOBETHRESH = -1.0
-
 _NDIMAGE_TO_NUMPY_PAD_MODE = {
     "reflect": "symmetric",  # d c b a | a b c d | d c b a
     "nearest": "edge",  # a a a a | a b c d | d d d d
@@ -863,18 +861,18 @@ def fitSimFunc(
         # growing assigns each the candidate closest to a consensus prediction from its
         # already assigned neighbors.
         #
-        # NOT GATED BY DEFAULT, and the reason is worth recording because the opposite
-        # was assumed for a long time.
+        # UNCONDITIONAL when requested, and the reason is worth recording because the
+        # opposite was assumed for a long time.
         #
         # The original design gated on the measured sidelobe amplitude, on the argument
         # that with no sidelobe there is no periodic ambiguity to resolve and the method
         # degenerates into plain smoothing.  A calibration of 16 HCP runs paired with
         # controls, deliberately spanning the ambiguity range including its bottom
-        # quartile, refuted that: unwrapping improved the delay map in 16 of 16 runs
-        # (median 57% fewer outlier voxels, Wilcoxon p=3e-5), including all four runs
-        # with the LOWEST measurable ambiguity and no sidelobe at all, where the median
-        # gain was still 44%.  Large non-periodic discontinuities fell in every run too
-        # (median -19%), so the gain is not smoothing away real structure.
+        # quartile, refuted that: resolution improved the delay map in 16 of 16 runs,
+        # including all four runs with the LOWEST measurable ambiguity and no sidelobe
+        # at all.  A later 26 run UK Biobank calibration agreed, 26 of 26.  Large
+        # non-periodic discontinuities fell in every run too, so the gain is not
+        # smoothing away real structure.
         #
         # The mechanism is also not what the name suggests.  Across those runs the median
         # change was 1.3 s and only 36% of changes were positive - two sided and small,
@@ -882,74 +880,34 @@ def fitSimFunc(
         # Only the two runs with a real measured sidelobe showed the periodic signature.
         # So this is a general delay map repair that handles sidelobe wrapping as one
         # special case, and gating it to fire only in that special case was suppressing
-        # most of its value.
-        #
-        # Gating is therefore off by default (resolvesidelobethresh negative).  Setting a
-        # positive threshold restores the old behaviour, which is retained only so the
-        # earlier results can be reproduced.
+        # most of its value.  The gate, and the latch that existed to stop the gate
+        # closing again mid-run, are both gone.
         #
         # It runs BEFORE despeckling, and both run.  The order matters and is not
-        # symmetric.  Despeckle first then unwrap is worse than unwrapping alone,
-        # because unwrap can only select among local maxima of the similarity function
-        # and so silently discards despeckle's refit values wherever those are not
-        # peaks.  Unwrap first then despeckle is better than either alone: unwrap makes
-        # the discrete lobe choice, then despeckle refits the residual local outliers,
-        # which unwrap cannot do because it cannot produce a non-peak value.  Measured
-        # on five HCP runs with a real sidelobe, adding despeckling after unwrapping
-        # reduced wrapped voxels by a further 14 to 26 percent in 5 of 5.
-        theacsidelobeamp = optiondict.get(f"acsidelobeamp_pass{thepass}", None)
-        # A negative threshold - the default - means "unwrap on every pass regardless of
-        # the measured sidelobe".
-        thethreshold = optiondict.get("resolvesidelobethresh", DEFAULT_RESOLVESIDELOBETHRESH)
-        theabovethresh = bool(
-            thethreshold < 0.0
-            or (theacsidelobeamp is not None and theacsidelobeamp > thethreshold)
-        )
-
-        # Latch.  The sidelobe amplitude estimate is not stable from pass to pass -
-        # it has been observed to go from 0.110 on pass 1 to None on passes 2 and 3
-        # of the same data.  Without a latch the gate then opens on an early pass and
-        # closes later, which is the worst of both worlds: unwrapping perturbs the
-        # delays, that feeds the refinement and changes the regressor, and then the
-        # final map is a naive fit plus despeckle built on a disturbed regressor that
-        # never itself got unwrapped.  Measured on 40 HCP runs, every run that
-        # unwrapped on all three passes improved, and both runs that unwrapped only on
-        # pass 1 got WORSE - the split was on pass coverage, not on amplitude.  So once
-        # unwrapping has fired, keep it on for the remaining passes.
-        thelatched = bool(
-            optiondict.get("resolvelatch", True) and optiondict.get("resolvelatched", False)
-        )
-        dounwrap = bool(optiondict.get("resolvedelays", False) and (theabovethresh or thelatched))
-        if dounwrap:
-            optiondict["resolvelatched"] = True
-        if optiondict.get("resolvedelays", False) and not dounwrap:
-            LGR.info(
-                f"\n{similaritytype} delay resolution skipped, pass {thepass}: "
-                f"sidelobe amplitude {theacsidelobeamp} does not exceed the "
-                f"explicitly requested threshold {thethreshold}"
-            )
+        # symmetric.  Despeckle first then resolve is worse than resolving alone,
+        # because resolution can only select among local maxima of the similarity
+        # function and so silently discards despeckle's refit values wherever those are
+        # not peaks.  Resolve first then despeckle is better than either alone:
+        # resolution makes the discrete lobe choice, then despeckle refits the residual
+        # local outliers, which resolution cannot do because it cannot produce a
+        # non-peak value.  Measured on paired arms, despeckling on top of resolution
+        # removed a further 34% of outlier voxels in 16 of 16 HCP runs and 18% in 26 of
+        # 26 UK Biobank runs.
+        dounwrap = bool(optiondict.get("resolvedelays", False))
         if dounwrap:
             LGR.info(f"\n\n{similaritytype} delay resolution pass {thepass}")
-            # Report WHY it is running.  Note that theacsidelobeamp can be None even
-            # when unwrapping proceeds - a negative threshold forces it on regardless,
-            # and the latch keeps it on after the estimate has gone away - so nothing
-            # here may assume the amplitude is a number.
+            # Log the sidelobe measurement if there is one.  It no longer decides
+            # anything, but it is the natural thing to want alongside the reassignment
+            # count, and it is frequently absent - nothing here may assume it is a number.
+            theacsidelobeamp = optiondict.get(f"acsidelobeamp_pass{thepass}", None)
             thelag = optiondict.get(f"acsidelobelag_pass{thepass}", None)
             if theacsidelobeamp is not None:
                 LGR.info(
                     f"\tsidelobe amplitude {theacsidelobeamp:.3f}"
                     + (f" at {thelag:.3f}s" if thelag is not None else "")
                 )
-            elif thethreshold < 0.0:
-                LGR.info(
-                    "\tno sidelobe amplitude measured for this pass; resolving anyway "
-                    "(sidelobe gating is off by default)"
-                )
             else:
-                LGR.info(
-                    "\tno sidelobe amplitude measured for this pass; resolving because "
-                    "it is latched on from an earlier pass"
-                )
+                LGR.info("\tno sidelobe amplitude measured for this pass")
             TimingLGR.info(f"{similaritytype} delay resolution start, pass {thepass}")
             thexdim, theydim, theslicethickness, dummy = tide_io.parseniftisizes(thesizes)
             thepreresolvelags = (
