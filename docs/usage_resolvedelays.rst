@@ -198,14 +198,14 @@ Use inside rapidtide:
 ^^^^^^^^^^^^^^^^^^^^^
 
 The same algorithm is available inside the main rapidtide pipeline via
-``--resolvedelays``.  It runs once per pass, immediately before despeckling, and is
-ungated by default (``--resolvesidelobethresh`` is negative), so it runs on every
-pass.  Setting a positive threshold restores the old sidelobe gating, retained
-only to reproduce earlier results.
+``--resolvedelays``.  It runs once per pass, on every pass, immediately before
+despeckling.  It is not gated on anything: gating on the measured sidelobe
+amplitude was the original design, and paired calibrations on 16 HCP and 26 UK
+Biobank runs refuted the assumption behind it, so the gate was removed.
 
-Note that the sidelobe is not measured until after the first pass, so pass 1
-always falls back to despeckling.  Progress is logged and the per pass count of
-reassigned voxels is recorded in the runoptions as ``resolved_passN``.
+Progress is logged and the per pass count of reassigned voxels is recorded in the
+runoptions as ``resolved_passN``.  Use ``--saveresolvemaps`` to write out what the
+final pass changed: the map going in, the shift applied, and the voxels affected.
 
 Ordering matters, and it is not symmetric.  Unwrapping runs BEFORE despeckling and
 both run.  Despeckle first then unwrap is worse than unwrapping alone, because
@@ -269,14 +269,14 @@ Use inside rapidtide:
 ^^^^^^^^^^^^^^^^^^^^^
 
 The same algorithm is available inside the main rapidtide pipeline via
-``--resolvedelays``.  It runs once per pass, immediately before despeckling, and is
-ungated by default (``--resolvesidelobethresh`` is negative), so it runs on every
-pass.  Setting a positive threshold restores the old sidelobe gating, retained
-only to reproduce earlier results.
+``--resolvedelays``.  It runs once per pass, on every pass, immediately before
+despeckling.  It is not gated on anything: gating on the measured sidelobe
+amplitude was the original design, and paired calibrations on 16 HCP and 26 UK
+Biobank runs refuted the assumption behind it, so the gate was removed.
 
-The sidelobe is not measured until after the first pass, so pass 1 always falls
-back to despeckling.  Progress is logged, and the per pass count of reassigned
-voxels is recorded in the runoptions as ``resolved_passN``.
+Progress is logged, and the per pass count of reassigned voxels is recorded in the
+runoptions as ``resolved_passN``.  Use ``--saveresolvemaps`` to write out what the
+final pass changed: the map going in, the shift applied, and the voxels affected.
 
 Why replace rather than follow despeckling: running despeckle first and unwrapping
 afterwards measured worse than unwrapping alone.  Unwrap can only select among

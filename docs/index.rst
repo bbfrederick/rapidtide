@@ -134,6 +134,7 @@ Contents
    :caption: Digging deeper:
 
    theoryofoperation.rst
+   resolvedelaytheory.rst
 
 
 .. toctree::
