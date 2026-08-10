@@ -58,8 +58,8 @@ pathology this program may erase the finding of interest.  Inspect the
 Measured performance:
 ^^^^^^^^^^^^^^^^^^^^^
 
-On the test dataset, processed without ``--despecklepasses`` and without
-``--robustdelayfit``, scored against the despeckled run:
+On the test dataset, processed without ``--despecklepasses``, scored against the
+despeckled run:
 
 ===================================================  ====================
 method                                               sidelobe errors
