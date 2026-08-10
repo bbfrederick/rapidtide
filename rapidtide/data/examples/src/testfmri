@@ -57,5 +57,5 @@ rapidtide \
     --spatialfilt 2 \
     --nprocs -1 \
     --outputlevel min \
-    --unwrapdelay \
+    --resolvedelays \
     --savecorrout
