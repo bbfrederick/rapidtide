@@ -133,14 +133,26 @@ beginning to invent structure rather than repair it.  Three is a reasonable
 stopping point; running to convergence trades a little more wrap reduction against
 slowly accumulating damage elsewhere.
 
-A caveat on all the despeckling comparisons here:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A note on ``--despeckle-patch-detection``:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-rapidtide has a ``--despeckle-patch-detection`` option that detects large connected
-patches of shifted delay and flags them for refitting - which is exactly the
-failure mode this program was written to address.  It was **not enabled** in any of
-the runs compared above.  A fair head to head needs that option turned on, and it
-has not been done.
+rapidtide used to carry a ``--despeckle-patch-detection`` option aimed at the same
+failure mode as this program: large connected patches of shifted delay that a small
+median filter cannot see.  It was off by default and was never enabled in any of
+the comparisons here.  It has since been removed.
+
+Its detection stage was sound - it flagged 2 to 4 percent of the mask, in
+components of a plausible size.  What killed it was the constrained flood fill that
+grew each confirmed patch inward.  The growth tolerance collapsed to half the
+despeckle threshold, about 2.5 s, which is comparable to the entire interquartile
+spread of delays in a typical brain, and growth never re-checked that a recruited
+voxel was still an outlier.  Measured on 34 runs across two cohorts, the fill
+expanded detection by 16 to 27 times, ending at 41 to 70 percent of the mask.
+Enabling the option would have refit most of the brain with the fit window pinned
+to +/-2.5 s around a patch exterior median.
+
+Separately, delay resolution had already removed 42 percent of what the detector
+flagged, so the residual it was aimed at had shrunk considerably.
 
 On the choice of prior:
 ^^^^^^^^^^^^^^^^^^^^^^^
