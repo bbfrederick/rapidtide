@@ -1842,7 +1842,7 @@ def _get_parser() -> Any:
         type=lambda x: pf.is_int(parser, x, minval=3),
         metavar="SIZE",
         help=(
-            f"Size of the despeckle kernel in each dimeension.  Default is {DEFAULT_DESPECKLE_KERNEL}."
+            f"Size of the despeckle kernel in each dimension.  Default is {DEFAULT_DESPECKLE_KERNEL}."
         ),
         default=DEFAULT_DESPECKLE_KERNEL,
     )
