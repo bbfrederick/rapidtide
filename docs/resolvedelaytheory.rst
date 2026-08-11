@@ -144,6 +144,15 @@ trades a little more repair against slowly accumulating damage.
    obvious implementation — drags surface voxels toward tau = 0.  On a UK Biobank
    run that moved 1069 assignments by more than half a second, 94% of them within
    one voxel of the mask surface, roughly halving the delay assigned there.
+
+   That is 0.74% of the mask, which looks negligible and is not.  Rerunning the
+   full 26 subject calibration before and after the fix cut outlier voxels by 7.7%
+   in the resolve-only arm (25 of 26 runs) and 3.8% with despeckling as well (24 of
+   26), against a run-to-run noise floor of 0.04–0.07% measured on the two arms
+   that never touch this code.  The affected voxels sit at the brain surface with
+   their delays halved, which is exactly what a tail statistic counts — so a small
+   voxel count moved the headline metric by two orders of magnitude more.
+
    Anything that filters or interpolates near a mask edge needs an explicit story
    about what lies outside; the default answer, zero, is always wrong and never
    raises an error.
@@ -178,10 +187,10 @@ runs, split by connected-component size, and tracked into paired resolved runs:
      - 1.30x
      - 0.545
    * - UK Biobank
-     - 0.833
-     - 0.831
-     - 1.03x
-     - 0.200
+     - 0.817
+     - 0.854
+     - 1.04x
+     - 0.226
 
 In young healthy subjects resolution is modestly biased toward removing scattered
 errors over coherent structure.  In an older cohort that selectivity is gone
@@ -270,9 +279,9 @@ flow-guided prior.  See :doc:`usage_resolvedelays`.
 What it costs
 -------------
 
-Resolution takes about 28 s on a 145 000 voxel UK Biobank run, roughly 7% of
+Resolution takes about 29 s on a 145 000 voxel UK Biobank run, roughly 7% of
 runtime.  It **reduces total runtime** — adding it took the median run from 8.0 to
-6.8 minutes, because despeckling then has far less to do (135 s to 45 s).
+7.0 minutes, because despeckling then has far less to do (135 s to 43 s).
 
 The region grow is a sequential flood fill: each voxel's assignment depends on
 neighbours assigned earlier in the same loop.  That dependency is the algorithm,
@@ -302,13 +311,13 @@ and only the repair differs:
      - 44193 (-78%)
      - 29064 (-85%)
    * - UK Biobank (26 runs)
-     - 909316
-     - 326748 (-64%)
-     - 150862 (-83%)
-     - 122574 (-87%)
+     - 909347
+     - 326891 (-64%)
+     - 144518 (-84%)
+     - 115687 (-87%)
 
-Resolution alone beat despeckling alone in 41 of those 42 runs.  Adding
-despeckling on top of resolution helped in 42 of 42 (median -34% in HCP, -18% in
+Resolution alone beat despeckling alone in 40 of those 42 runs.  Adding
+despeckling on top of resolution helped in 42 of 42 (median -34% in HCP, -15% in
 UK Biobank), which is why both run rather than one replacing the other.  Counts of
 large adjacent-voxel jumps fall monotonically across the same four conditions, so
 the improvement is not a smoother erasing real gradients.

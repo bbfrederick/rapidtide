@@ -141,18 +141,33 @@ failure mode as this program: large connected patches of shifted delay that a sm
 median filter cannot see.  It was off by default and was never enabled in any of
 the comparisons here.  It has since been removed.
 
-Its detection stage was sound - it flagged 2 to 4 percent of the mask, in
-components of a plausible size.  What killed it was the constrained flood fill that
-grew each confirmed patch inward.  The growth tolerance collapsed to half the
-despeckle threshold, about 2.5 s, which is comparable to the entire interquartile
-spread of delays in a typical brain, and growth never re-checked that a recruited
-voxel was still an outlier.  Measured on 34 runs across two cohorts, the fill
-expanded detection by 16 to 27 times, ending at 41 to 70 percent of the mask.
-Enabling the option would have refit most of the brain with the fit window pinned
-to +/-2.5 s around a patch exterior median.
+What killed it was the constrained flood fill that grew each confirmed patch
+inward.  The growth tolerance collapsed to half the despeckle threshold, about
+2.5 s, which is comparable to the entire interquartile spread of delays in a
+typical brain, and growth never re-checked that a recruited voxel was still an
+outlier - it only asked whether the voxel resembled the patch median.  Any patch
+whose interior median happened to sit near the bulk of the delay distribution
+therefore flooded most of the brain.
 
-Separately, delay resolution had already removed 42 percent of what the detector
-flagged, so the residual it was aimed at had shrunk considerably.
+Measured on the 26 run UK Biobank calibration set, at the shipped defaults
+(threshold 5 s, reference kernel 9, minimum size 10, consistency 0.5):
+
+========================  ==============  ==============  ==================
+arm                       detected        after the fill  ended above 50%
+========================  ==============  ==============  ==================
+despeckle alone           15.8% of mask   33.2% of mask   8 of 26 runs
+resolution alone           5.6% of mask   62.7% of mask   18 of 26 runs
+resolution + despeckle     5.1% of mask   80.2% of mask   17 of 26 runs
+========================  ==============  ==============  ==================
+
+Medians, and the run to run spread is enormous - the expansion factor ranges from
+0.00 to 51.7.  Enabling the option would sometimes have done nothing and sometimes
+have refit four fifths of the brain with the fit window pinned to +/-2.5 s around a
+patch exterior median.
+
+Note also that resolution had already removed 61% of what the detector flags
+(519944 voxels down to 200596 across the set), so the residual the option was aimed
+at had shrunk substantially before the flood fill was even considered.
 
 On the choice of prior:
 ^^^^^^^^^^^^^^^^^^^^^^^
