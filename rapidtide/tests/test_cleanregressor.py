@@ -255,7 +255,9 @@ def test_autodespecklethresh(local=False, debug=False):
 
     # the test is only meaningful if the sidelobe was actually detected, and only
     # discriminating if the raise would have moved the threshold
-    assert ontime is not None, "no sidelobe detected - the test regressor is not exercising the path"
+    assert (
+        ontime is not None
+    ), "no sidelobe detected - the test regressor is not exercising the path"
     assert ontime / 2.0 > 5.0, f"sidelobe at {ontime} s would not have raised the threshold"
 
     # detection itself must be untouched: the flag governs the response, not the detector
