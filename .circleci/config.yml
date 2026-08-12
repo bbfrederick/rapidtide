@@ -49,6 +49,18 @@ commands:
             uv pip install --upgrade pytest
             uv pip install --upgrade numba
             uv pip install ".[<< parameters.extras >>]"
+            # PyPI's default linux torch wheel is the CUDA build, so it drags in
+            # triton.  These runners have no GPU and rapidtide never calls
+            # torch.compile, so triton is unused here - but it is not harmless.
+            # pytest imports every selected module at collection time, and
+            # test_dlfilter.py imports tensorflow at module scope, so TF's native
+            # stack is resident in the process before any test runs.  Building an
+            # optimizer (torch.optim.Adam.__init__ -> torch._compile -> import
+            # torch._dynamo -> has_triton_package()) then imports triton into that
+            # process and segfaults it - exit 139, killing the whole shard.  The
+            # probe is a try/except ImportError, which a segfault sails straight
+            # past.  With triton absent the probe returns False and moves on.
+            uv pip uninstall triton || true
 
   run_split_pytests:
     parameters:
