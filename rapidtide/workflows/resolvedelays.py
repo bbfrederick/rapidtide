@@ -186,7 +186,6 @@ DEFAULT_MAXDELTATAU = 3.0
 DEFAULT_MINSPEED = 0.5
 DEFAULT_MINCONFIDENCE = 0.0
 DEFAULT_NUMPASSES = 3
-DEFAULT_AMBIGRATIO = 0.8
 DEFAULT_FITRADIUS = 6.0
 
 # How big a delay change counts as a reassignment.  Resolution re-snaps every voxel to a
@@ -530,8 +529,9 @@ def resolvedelaymap(
     offsets, distances = neighboroffsets(paddedshape, voxdims)
 
     def pad(thearray, fill=0.0):
-        if thearray.ndim == 3:
-            return np.pad(thearray, 1, mode="constant", constant_values=fill).reshape(-1)
+        # every caller passes a 4D per-voxel vector field - the candidate lags, the
+        # candidate amplitudes, or grad(tau) - so only the spatial axes are padded and
+        # the trailing axis is left alone.  The 3D mask is padded inline below instead.
         return np.pad(
             thearray, ((1, 1), (1, 1), (1, 1), (0, 0)), mode="constant", constant_values=fill
         ).reshape(-1, thearray.shape[-1])
@@ -608,13 +608,16 @@ def resolvedelaymap(
                     # wrapped neighbor can otherwise drag a correct voxel with it,
                     # which is where the newly wrapped voxels come from.  Trusted
                     # neighbors are used alone if any exist.
+                    #
+                    # theusable always holds at least one source: the offsets are
+                    # symmetric, so thisindex - which was assigned before it was
+                    # pushed onto the heap - is itself a member of thesources.  There
+                    # is therefore no empty consensus to guard against here.
                     thesources = neighborindex - offsets
                     theusable = assigned[thesources]
                     thepreferred = theusable & istrusted[thesources]
                     if np.any(thepreferred):
                         theusable = thepreferred
-                    if not np.any(theusable):
-                        continue
                     themidgrads = 0.5 * (paddedgrad[thesources] + paddedgrad[neighborindex])
                     thedeltas = np.clip(
                         np.sum(-thedisplacements * themidgrads, axis=1),
@@ -646,68 +649,6 @@ def resolvedelaymap(
         np.uint16(unpad(thechanged)) * np.uint16(themask > 0),
         unpad(np.where(np.isfinite(theconfidence), theconfidence, 0.0)),
     )
-
-
-def ambiguousfraction(
-    corrout: NDArray,
-    lagaxis: NDArray,
-    fitmask: NDArray,
-    separation: float,
-    ratio: float = DEFAULT_AMBIGRATIO,
-    maxcandidates: int = DEFAULT_MAXCANDIDATES,
-) -> float:
-    """
-    Fraction of voxels facing a genuine choice between two similarity function peaks.
-
-    This is the quantity unwrapping actually acts on, and it is not the same thing
-    as the autocorrelation sidelobe amplitude.  The sidelobe is a property of the
-    REGRESSOR; wrapping is a property of INDIVIDUAL VOXELS.  Measured on HCP data,
-    runs where rapidtide reports no sidelobe at all still had 4-5 percent of voxels
-    with a near-tied competing peak at a period-like separation - roughly half the
-    rate of the strong-sidelobe runs, but nowhere near zero, and unwrapping fixed
-    thousands of voxels on exactly those runs.  Gating on the regressor statistic
-    therefore asks the wrong question.
-
-    A voxel counts as ambiguous when its second strongest peak is within `ratio` of
-    the strongest and lies more than `separation` seconds away.  The separation
-    requirement is what distinguishes a real alternative from a shoulder of the same
-    peak; passing rapidtide's own despeckle_thresh keeps this from introducing a new
-    tuned constant.
-
-    Parameters
-    ----------
-    corrout : NDArray
-        The similarity function, with lag along the last axis.  Works on either the
-        4D volume or rapidtide's (numvalidspatiallocs, numlags) layout.
-    lagaxis : NDArray
-        The lag values, in seconds.
-    fitmask : NDArray
-        Mask of voxels to consider, matching corrout's leading axes.
-    separation : float
-        Minimum lag separation, in seconds, for a competing peak to count.
-    ratio : float, optional
-        Minimum second/first amplitude ratio for a competing peak to count.
-    maxcandidates : int, optional
-        Number of candidate peaks to examine.
-
-    Returns
-    -------
-    float
-        The fraction of masked voxels that are ambiguous, 0.0 to 1.0.
-    """
-    thecandidatelags, thecandidateamps = findcandidatepeaks(corrout, lagaxis, maxcandidates)
-    if thecandidatelags.shape[-1] < 2:
-        return 0.0
-    thebest = thecandidateamps[..., 0]
-    thesecond = thecandidateamps[..., 1]
-    themask = np.asarray(fitmask) > 0
-    if not themask.any():
-        return 0.0
-    theusable = themask & np.isfinite(thesecond) & (thebest > 0)
-    theratio = np.where(theusable, thesecond / np.maximum(thebest, 1.0e-9), 0.0)
-    thegap = np.abs(thecandidatelags[..., 1] - thecandidatelags[..., 0])
-    theambiguous = theusable & (theratio > ratio) & (thegap > separation)
-    return float(theambiguous[themask].mean())
 
 
 def resolvefromsimfunc(
