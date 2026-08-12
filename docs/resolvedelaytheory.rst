@@ -145,13 +145,30 @@ trades a little more repair against slowly accumulating damage.
    run that moved 1069 assignments by more than half a second, 94% of them within
    one voxel of the mask surface, roughly halving the delay assigned there.
 
-   That is 0.74% of the mask, which looks negligible and is not.  Rerunning the
-   full 26 subject calibration before and after the fix cut outlier voxels by 7.7%
-   in the resolve-only arm (25 of 26 runs) and 3.8% with despeckling as well (24 of
-   26), against a run-to-run noise floor of 0.04–0.07% measured on the two arms
-   that never touch this code.  The affected voxels sit at the brain surface with
-   their delays halved, which is exactly what a tail statistic counts — so a small
-   voxel count moved the headline metric by two orders of magnitude more.
+   That is 0.74% of the mask, which looks negligible and is not.  Both calibration
+   sets were rerun before and after the fix, with the arms that never reach this
+   code — naive and despeckle-alone — reproducing to within 0.01–0.05% and serving
+   as the noise floor:
+
+   ==================  ==================  ====================  ==============
+   cohort              resolve alone       resolve + despeckle   noise floor
+   ==================  ==================  ====================  ==============
+   HCP (16 runs)       -3.7%, 14 of 16     -0.3%, 10 of 16       0.04-0.09%
+   UK Biobank (26)     -7.7%, 25 of 26     -3.8%, 24 of 26       0.04-0.07%
+   ==================  ==================  ====================  ==============
+
+   The affected voxels sit at the brain surface with their delays halved, which is
+   exactly what a tail statistic counts, so a small voxel count moved the headline
+   metric by orders of magnitude more.
+
+   The cohort difference is worth understanding, because it shows how a defect can
+   hide.  In HCP the fix is significant for resolution alone (p=0.0008) but not
+   once despeckling also runs (p=0.38) — despeckling was already repairing the
+   damage, since in that cohort the displaced voxels land within its +/-
+   despeckle_thresh/2 refit window.  In UK Biobank, with a wider search range and
+   longer delays, the same voxels move about 3.4 s, beyond what that window can
+   recover, so the damage survives into the final map.  A bug masked by a later
+   repair stage in one population is not a bug that has gone away.
 
    Anything that filters or interpolates near a mask edge needs an explicit story
    about what lies outside; the default answer, zero, is always wrong and never
@@ -182,10 +199,10 @@ runs, split by connected-component size, and tracked into paired resolved runs:
      - selectivity
      - coherent surviving
    * - HCP young adult
-     - 0.446
-     - 0.610
-     - 1.30x
-     - 0.545
+     - 0.433
+     - 0.594
+     - 1.31x
+     - 0.557
    * - UK Biobank
      - 0.817
      - 0.854
@@ -306,10 +323,10 @@ and only the repair differs:
      - resolve
      - both
    * - HCP (16 runs)
-     - 198397
-     - 70424 (-65%)
-     - 44193 (-78%)
-     - 29064 (-85%)
+     - 198955
+     - 70655 (-64%)
+     - 42491 (-79%)
+     - 28893 (-86%)
    * - UK Biobank (26 runs)
      - 909347
      - 326891 (-64%)
@@ -317,7 +334,7 @@ and only the repair differs:
      - 115687 (-87%)
 
 Resolution alone beat despeckling alone in 40 of those 42 runs.  Adding
-despeckling on top of resolution helped in 42 of 42 (median -34% in HCP, -15% in
+despeckling on top of resolution helped in 42 of 42 (median -32% in HCP, -15% in
 UK Biobank), which is why both run rather than one replacing the other.  Counts of
 large adjacent-voxel jumps fall monotonically across the same four conditions, so
 the improvement is not a smoother erasing real gradients.
