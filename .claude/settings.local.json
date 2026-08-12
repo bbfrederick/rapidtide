@@ -20,7 +20,9 @@
       "Bash(npm view *)",
       "Bash(echo \"EXIT: $?\")",
       "Bash(git diff *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(/Users/frederic/miniforge3/envs/oldrt/bin/python -c \"import rapidtide.simFuncClasses, pytest; print\\('deps OK'\\)\")",
+      "Bash(echo \"standalone __main__ exit: $?\")"
     ]
   }
 }

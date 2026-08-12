@@ -351,6 +351,58 @@ def _makecorrout(
     return thecorrout, thecorrscale, thebadvoxels
 
 
+def _makewalledinvolume() -> Tuple[Tuple[int, int, int], NDArray, NDArray, NDArray, int]:
+    """Build a good voxel walled in by a solid block of failed fits.
+
+    Driving voxels out of the fit mask has to be done with a lever that does not
+    depend on how a fit converges, or the fixture stops reproducing across scipy
+    and numpy versions.  The lever used here is the fitter's lag range check,
+    ``lagmin > maxlag``, which is a plain comparison against the fitted peak
+    location: the wall voxels have a clean, fully sampled Gaussian at -15 s while
+    the fitter's lagmin is -10 s, a 5 s margin on a quantity that is recovered to
+    better than the 0.25 s sample spacing.  The failure sets FML_FITLAGLOW, which
+    counts as a fit failure and so zeroes the mask, and clamps the reported lag to
+    lagmin, which is the -10 s the wall then holds.
+
+    (An earlier version drove the mask with the width ceiling instead.  That reads
+    the fitted sigma of a heavily truncated Gaussian, which is poorly conditioned,
+    and it did not reproduce on CI.)
+
+    Returns
+    -------
+    theshape : tuple of int
+        Native space shape of the volume.
+    thecorrout : NDArray
+        Similarity functions, shape (numvoxels, numlags).
+    thecorrscale : NDArray
+        The lag axis, in seconds.
+    theoutofmask : NDArray
+        Boolean volume, True where the fit is expected to fail.
+    thecentreindex : int
+        Flat index of the single in mask voxel inside the wall.
+    """
+    theshape = (10, 10, 10)
+    thenumvoxels = int(np.prod(theshape))
+    thecorrscale = np.linspace(-20.0, 20.0, 161)
+
+    theoutofmask = np.zeros(theshape, dtype=bool)
+    theoutofmask[3:8, 3:8, 3:8] = True
+    thecentre = (5, 5, 5)
+    theoutofmask[thecentre] = False
+    thecentreindex = int(np.ravel_multi_index(thecentre, theshape))
+
+    thecorrout = np.zeros((thenumvoxels, len(thecorrscale)))
+    thecorrout[:, :] = _gaussian(thecorrscale, 0.75, 0.0, 2.0)
+    thecorrout[theoutofmask.reshape(-1), :] = _gaussian(thecorrscale, 0.75, -15.0, 2.0)
+    # the walled in voxel has a subsidiary peak at -9, inside the range a refit
+    # targeted on the wall's -10 would search, so a wrong despeckle decision here
+    # produces a visibly moved delay rather than a silent no op
+    thecorrout[thecentreindex, :] = _gaussian(thecorrscale, 0.75, 0.0, 2.0) + _gaussian(
+        thecorrscale, 0.5, -9.0, 1.5
+    )
+    return theshape, thecorrout, thecorrscale, theoutofmask, thecentreindex
+
+
 def _makeoptiondict(**theoverrides: Any) -> dict:
     """A minimal but complete optiondict for fitSimFunc.
 
@@ -401,7 +453,6 @@ def _makefitargs(
     theshape: Tuple[int, int, int],
     theoutputdir: str,
     debug: bool = False,
-    absmaxsigma: float = 1000.0,
 ) -> dict:
     """Assemble the full fitSimFunc argument set for a synthetic volume.
 
@@ -419,10 +470,6 @@ def _makefitargs(
         Directory the run may write its runoptions json into.
     debug : bool, optional
         Echo logger traffic to stdout.
-    absmaxsigma : float, optional
-        Fitter width ceiling.  Lowering it below a voxel's true peak width is the
-        lever the masking test uses to drive chosen voxels out of the fit mask
-        while keeping their lag under control.
 
     Returns
     -------
@@ -437,7 +484,7 @@ def _makefitargs(
         corrtimeaxis=thecorrscale,
         lagmin=theoptiondict["lagmin"],
         lagmax=theoptiondict["lagmax"],
-        absmaxsigma=absmaxsigma,
+        absmaxsigma=1000.0,
         absminsigma=0.25,
         bipolar=theoptiondict["bipolar"],
         peakfittype="gauss",
@@ -730,53 +777,43 @@ def test_fitsimfunc_despeckling_ignores_out_of_mask_neighbours(debug: bool = Fal
     a perfectly good voxel onto a sidelobe.  The fit mask is what prevents that, so
     plant exactly that geometry and require the good voxel to survive untouched.
     """
-    theshape = (10, 10, 10)
-    thenumvoxels = int(np.prod(theshape))
-    thecorrscale = np.linspace(-15.0, 15.0, 121)
+    theshape, thecorrout, thecorrscale, theoutofmask, thecentreindex = _makewalledinvolume()
 
-    # a wide peak trips the fitter's width ceiling, so these come back out of mask
-    # with their lag preserved at -12
-    theoutofmask = np.zeros(theshape, dtype=bool)
-    theoutofmask[3:8, 3:8, 3:8] = True
-    thecentre = (5, 5, 5)
-    theoutofmask[thecentre] = False
-    thecentreindex = int(np.ravel_multi_index(thecentre, theshape))
-
-    thecorrout = np.zeros((thenumvoxels, len(thecorrscale)))
-    thecorrout[:, :] = _gaussian(thecorrscale, 0.75, 0.0, 2.0)
-    thecorrout[theoutofmask.reshape(-1), :] = _gaussian(thecorrscale, 0.75, -12.0, 6.0)
-    # the lone in mask voxel has a subsidiary peak at -12, so if it is wrongly
-    # flagged with -12 as its target the refit will find it and the delay will move
-    thecorrout[thecentreindex, :] = _gaussian(thecorrscale, 0.75, 0.0, 2.0) + _gaussian(
-        thecorrscale, 0.5, -12.0, 1.5
+    # First establish that the fixture really does come out with the planted
+    # geometry, with despeckling off so nothing can perturb the fit mask.  If this
+    # arm ever fails the fixture is broken, not the code under test.
+    theoptiondict = _makeoptiondict(
+        despeckle_passes=0, corrmasksize=int(np.prod(theshape)), lagmin=-10.0, lagmax=10.0
     )
-
-    theoptiondict = _makeoptiondict(despeckle_passes=4, corrmasksize=thenumvoxels)
     with tempfile.TemporaryDirectory() as thedir:
         theargs = _makefitargs(
-            theoptiondict,
-            thecorrout,
-            thecorrscale,
-            theshape,
-            thedir,
-            debug=debug,
-            absmaxsigma=5.0,
+            theoptiondict, thecorrout.copy(), thecorrscale, theshape, thedir, debug=debug
         )
         fitSimFunc(**theargs)
 
-    thefitmask = theargs["fitmask"]
+    if debug:
+        print(f"out of mask voxels: {int((theargs['fitmask'] == 0).sum())}")
+    assert np.array_equal(theargs["fitmask"].reshape(theshape) == 0, theoutofmask)
+    assert theargs["fitmask"][thecentreindex] == 1
+    assert np.isclose(theargs["lagtimes"][thecentreindex], 0.0, atol=0.1)
+
+    # Now the behaviour: with despeckling on, the walled in voxel must survive.
+    theoptiondict = _makeoptiondict(
+        despeckle_passes=4, corrmasksize=int(np.prod(theshape)), lagmin=-10.0, lagmax=10.0
+    )
+    with tempfile.TemporaryDirectory() as thedir:
+        theargs = _makefitargs(
+            theoptiondict, thecorrout.copy(), thecorrscale, theshape, thedir, debug=debug
+        )
+        fitSimFunc(**theargs)
+
     thelagtimes = theargs["lagtimes"]
     if debug:
-        print(f"out of mask voxels: {int((thefitmask == 0).sum())}")
-        print(
-            f"centre voxel: fitmask {thefitmask[thecentreindex]}, lag {thelagtimes[thecentreindex]}"
-        )
+        print(f"centre voxel lag after despeckling: {thelagtimes[thecentreindex]}")
 
-    # the geometry has to have come out as intended or the test proves nothing
-    assert np.array_equal(thefitmask.reshape(theshape) == 0, theoutofmask)
-    assert thefitmask[thecentreindex] == 1
-
-    # the good voxel, walled in by failed fits, keeps its delay
+    # Counting the out of mask wall would put the median at -10, which is 10 s from
+    # this voxel and so over the 5 s threshold; the refit would then find the
+    # subsidiary peak at -9 and the delay would move there.
     assert np.isclose(
         thelagtimes[thecentreindex], 0.0, atol=0.1
     ), "an out of mask neighbourhood dragged an in mask voxel off its peak"
