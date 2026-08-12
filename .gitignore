@@ -188,3 +188,6 @@ default.profraw
 docs/practicalities.rst
 
 standalone/
+
+# written by CI (.circleci/config.yml) to key the environment cache
+.python-id
