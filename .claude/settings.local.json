@@ -15,7 +15,12 @@
       "Bash(black --check:*)",
       "Bash(/Users/frederic/miniforge3/envs/mic/bin/python *)",
       "Bash(echo \"exit: $?\")",
-      "Bash(awk -F: '$1>2021 && $1<2160')"
+      "Bash(awk -F: '$1>2021 && $1<2160')",
+      "Bash(claude --version)",
+      "Bash(npm view *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(git diff *)",
+      "Bash(git stash *)"
     ]
   }
 }

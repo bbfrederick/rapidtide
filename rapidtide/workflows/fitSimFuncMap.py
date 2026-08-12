@@ -16,14 +16,12 @@
 #   limitations under the License.
 #
 #
-from collections import deque
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy import ndimage
 
-import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
@@ -263,13 +261,9 @@ def recorddelaymetrics(
         thelagmin = optiondict.get("lagmin", None)
         thelagmax = optiondict.get("lagmax", None)
         if thelagmin is not None and thelagmax is not None and corrscale is not None:
-            thestep = (
-                float(corrscale[1] - corrscale[0]) if len(corrscale) > 1 else 0.0
-            )
+            thestep = float(corrscale[1] - corrscale[0]) if len(corrscale) > 1 else 0.0
             optiondict["delayrailedfrac" + thesuffix] = float(
-                np.mean(
-                    (thevalues <= thelagmin + thestep) | (thevalues >= thelagmax - thestep)
-                )
+                np.mean((thevalues <= thelagmin + thestep) | (thevalues >= thelagmax - thestep))
             )
 
         thelongcut = float(theq[2] + METRICLONGIQRMULT * theiqr)
@@ -284,9 +278,7 @@ def recorddelaymetrics(
             thecoherent = thelong & np.isin(
                 thelabels, np.nonzero(thesizes >= METRICMINCOMPONENT)[0]
             )
-            optiondict["delaylongcoherent" + thesuffix] = float(
-                thecoherent.sum() / thenumlong
-            )
+            optiondict["delaylongcoherent" + thesuffix] = float(thecoherent.sum() / thenumlong)
             optiondict["delaylonglargest" + thesuffix] = int(thesizes.max())
             optiondict["delaylongdev" + thesuffix] = float(np.median(thedeviation[thelong]))
         else:
@@ -307,9 +299,7 @@ def recorddelaymetrics(
         optiondict["resolveshiftmedian" + thesuffix] = float(
             np.median(np.abs(theshift[thechanged]))
         )
-        optiondict["resolveshiftposfrac" + thesuffix] = float(
-            np.mean(theshift[thechanged] > 0.0)
-        )
+        optiondict["resolveshiftposfrac" + thesuffix] = float(np.mean(theshift[thechanged] > 0.0))
 
         # long-delay classes defined on the map going IN, then tracked through
         thebeforevals = thebefore[themask]
@@ -341,10 +331,7 @@ def recorddelaymetrics(
             if np.any(thechangedflat):
                 theidx = np.nonzero(thechangedflat)[0]
                 theold = np.array(
-                    [
-                        np.interp(preresolvelags[i], corrscale, corrout[i, :])
-                        for i in theidx
-                    ]
+                    [np.interp(preresolvelags[i], corrscale, corrout[i, :]) for i in theidx]
                 )
                 thenew = np.array(
                     [np.interp(lagtimes[i], corrscale, corrout[i, :]) for i in theidx]
@@ -778,9 +765,7 @@ def fitSimFunc(
                         "pass, in seconds",
                     ),
                     (
-                        np.where(np.abs(theshift) > RESOLVEDCHANGEDTHRESH, 1, 0).astype(
-                            np.int32
-                        ),
+                        np.where(np.abs(theshift) > RESOLVEDCHANGEDTHRESH, 1, 0).astype(np.int32),
                         "resolvechanged",
                         "mask",
                         None,
@@ -839,100 +824,98 @@ def fitSimFunc(
                     -1000000.0,
                 )[validvoxels]
 
-                if len(initlags) > 0:
-                    numdespeckled = len(np.where(initlags != -1000000.0)[0])
-                    # convergence guard: stop once the flagged count stops falling
-                    if lastnumdespeckled > numdespeckled > 0:
-                        lastnumdespeckled = numdespeckled
-                        tide_util.disablemkl(
-                            optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"]
-                        )
-                        voxelsprocessed_thispass = tide_simfuncfit.fitcorr(
-                            trimmedcorrscale,
-                            theFitter,
-                            corrout,
-                            fitmask,
-                            failreason,
-                            lagtimes,
-                            lagstrengths,
-                            lagsigma,
-                            gaussout,
-                            windowout,
-                            R2,
-                            despeckling=True,
-                            nprocs=optiondict["nprocs_fitcorr"],
-                            alwaysmultiproc=optiondict["alwaysmultiproc"],
-                            fixdelay=optiondict["fixdelay"],
-                            initialdelayvalue=theinitialdelay,
-                            showprogressbar=optiondict["showprogressbar"],
-                            chunksize=optiondict["mp_chunksize"],
-                            despeckle_thresh=optiondict["despeckle_thresh"],
-                            initiallags=initlags,
-                            rt_floattype=rt_floattype,
-                        )
-                        tide_util.enablemkl(
-                            optiondict["mklthreads"], debug=optiondict["threaddebug"]
-                        )
-                        # restore full lag range (THANK YOU to Suchita Ganesan for finding and fixing this!!!)
-                        theFitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
+                numdespeckled = len(np.where(initlags != -1000000.0)[0])
+                # Convergence guard: stop once the flagged count stops falling.
+                # This also covers an empty initlags, which can only happen if there
+                # are no valid voxels at all: that gives numdespeckled 0, which fails
+                # this test and terminates despeckling by the same path.
+                if lastnumdespeckled > numdespeckled > 0:
+                    lastnumdespeckled = numdespeckled
+                    tide_util.disablemkl(
+                        optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"]
+                    )
+                    voxelsprocessed_thispass = tide_simfuncfit.fitcorr(
+                        trimmedcorrscale,
+                        theFitter,
+                        corrout,
+                        fitmask,
+                        failreason,
+                        lagtimes,
+                        lagstrengths,
+                        lagsigma,
+                        gaussout,
+                        windowout,
+                        R2,
+                        despeckling=True,
+                        nprocs=optiondict["nprocs_fitcorr"],
+                        alwaysmultiproc=optiondict["alwaysmultiproc"],
+                        fixdelay=optiondict["fixdelay"],
+                        initialdelayvalue=theinitialdelay,
+                        showprogressbar=optiondict["showprogressbar"],
+                        chunksize=optiondict["mp_chunksize"],
+                        despeckle_thresh=optiondict["despeckle_thresh"],
+                        initiallags=initlags,
+                        rt_floattype=rt_floattype,
+                    )
+                    tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
+                    # restore full lag range (THANK YOU to Suchita Ganesan for finding and fixing this!!!)
+                    theFitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
 
-                        voxelsprocessed_fc_ds += voxelsprocessed_thispass
-                        optiondict[
-                            "despecklemasksize_pass" + str(thepass) + "_d" + str(despecklepass + 1)
-                        ] = voxelsprocessed_thispass
-                        optiondict[
-                            "despecklemaskpct_pass" + str(thepass) + "_d" + str(despecklepass + 1)
-                        ] = (100.0 * voxelsprocessed_thispass / optiondict["corrmasksize"])
-                        if optiondict["savedespecklemasks"]:
-                            despecklesavemask = np.where(initlags != -1000000.0, 1, 0)
-                            despeckleinitlags = np.where(initlags != -1000000.0, initlags, 0)
-                            if thepass == optiondict["passes"]:
-                                if theinputdata.filetype != "text":
-                                    if theinputdata.filetype == "cifti":
-                                        timeindex = theheader["dim"][0] - 1
-                                        spaceindex = theheader["dim"][0]
-                                        theheader["dim"][timeindex] = 1
-                                        theheader["dim"][spaceindex] = numspatiallocs
-                                    else:
-                                        theheader["dim"][0] = 3
-                                        theheader["dim"][4] = 1
-                                        theheader["pixdim"][4] = 1.0
-                                masklist = [
-                                    (
-                                        despecklesavemask,
-                                        f"despeckle_p{thepass}_d{despecklepass + 1}",
-                                        "mask",
-                                        None,
-                                        "Voxels that underwent despeckling",
-                                    ),
-                                    (
-                                        despeckleinitlags,
-                                        f"despeckleinitlags_p{thepass}_d{despecklepass + 1}",
-                                        "map",
-                                        None,
-                                        "Target lags for voxels that underwent despeckling",
-                                    ),
-                                    (
-                                        medianlags[validvoxels],
-                                        f"despecklemedianlags_p{thepass}_d{despecklepass + 1}",
-                                        "map",
-                                        None,
-                                        "Median filter targets for despeckling",
-                                    ),
-                                ]
-                                tide_io.savemaplist(
-                                    outputname,
-                                    masklist,
-                                    validvoxels,
-                                    nativespaceshape,
-                                    theheader,
-                                    bidsbasedict,
-                                    filetype=theinputdata.filetype,
-                                    rt_floattype=rt_floattype,
-                                    cifti_hdr=theinputdata.cifti_hdr,
-                                )
-                    else:
-                        despecklingdone = True
+                    voxelsprocessed_fc_ds += voxelsprocessed_thispass
+                    optiondict[
+                        "despecklemasksize_pass" + str(thepass) + "_d" + str(despecklepass + 1)
+                    ] = voxelsprocessed_thispass
+                    optiondict[
+                        "despecklemaskpct_pass" + str(thepass) + "_d" + str(despecklepass + 1)
+                    ] = (100.0 * voxelsprocessed_thispass / optiondict["corrmasksize"])
+                    if optiondict["savedespecklemasks"]:
+                        despecklesavemask = np.where(initlags != -1000000.0, 1, 0)
+                        despeckleinitlags = np.where(initlags != -1000000.0, initlags, 0)
+                        if thepass == optiondict["passes"]:
+                            if theinputdata.filetype != "text":
+                                if theinputdata.filetype == "cifti":
+                                    timeindex = theheader["dim"][0] - 1
+                                    spaceindex = theheader["dim"][0]
+                                    theheader["dim"][timeindex] = 1
+                                    theheader["dim"][spaceindex] = numspatiallocs
+                                else:
+                                    theheader["dim"][0] = 3
+                                    theheader["dim"][4] = 1
+                                    theheader["pixdim"][4] = 1.0
+                            masklist = [
+                                (
+                                    despecklesavemask,
+                                    f"despeckle_p{thepass}_d{despecklepass + 1}",
+                                    "mask",
+                                    None,
+                                    "Voxels that underwent despeckling",
+                                ),
+                                (
+                                    despeckleinitlags,
+                                    f"despeckleinitlags_p{thepass}_d{despecklepass + 1}",
+                                    "map",
+                                    None,
+                                    "Target lags for voxels that underwent despeckling",
+                                ),
+                                (
+                                    medianlags[validvoxels],
+                                    f"despecklemedianlags_p{thepass}_d{despecklepass + 1}",
+                                    "map",
+                                    None,
+                                    "Median filter targets for despeckling",
+                                ),
+                            ]
+                            tide_io.savemaplist(
+                                outputname,
+                                masklist,
+                                validvoxels,
+                                nativespaceshape,
+                                theheader,
+                                bidsbasedict,
+                                filetype=theinputdata.filetype,
+                                rt_floattype=rt_floattype,
+                                cifti_hdr=theinputdata.cifti_hdr,
+                            )
                 else:
                     despecklingdone = True
                 if despecklingdone:
