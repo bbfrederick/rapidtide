@@ -29,7 +29,16 @@ import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
+from rapidtide.workflows.delayflow import maskextensionindices
 from rapidtide.workflows.resolvedelays import RESOLVEDCHANGEDTHRESH, resolvefromsimfunc
+
+# Delay map quality metrics, recorded per pass in the runoptions.  The constants here
+# are the ones every comparison in the delay repair work was scored with, so that
+# numbers recorded by a run are directly comparable to the published calibrations.
+METRICJUMPTHRESH = 2.0  # seconds; an adjacent-voxel difference above this is a "jump"
+METRICMEDIANKERNEL = 5  # neighbourhood for the local median an outlier is measured against
+METRICLONGIQRMULT = 2.0  # "long" delay is above median + this many IQRs of the run itself
+METRICMINCOMPONENT = 27  # a long-delay blob this size or bigger counts as coherent
 
 _NDIMAGE_TO_NUMPY_PAD_MODE = {
     "reflect": "symmetric",  # d c b a | a b c d | d c b a
@@ -133,6 +142,222 @@ def masked_median_filter(
             result_flat[start:end] = _nanmedian_chunk(windows, mask_windows, n_kernel, start, end)
 
     return result_flat.reshape(data.shape)
+
+
+def recorddelaymetrics(
+    optiondict: dict,
+    thepass: Any,
+    lagtimes: NDArray,
+    fitmask: NDArray,
+    validvoxels: NDArray,
+    nativespaceshape: tuple,
+    numspatiallocs: int,
+    despeckle_thresh: float,
+    preresolvelags: Optional[NDArray] = None,
+    corrout: Optional[NDArray] = None,
+    corrscale: Optional[NDArray] = None,
+    LGR: Optional[Any] = None,
+) -> None:
+    """Record delay map quality metrics for this pass into optiondict.
+
+    Every optimisation decision in the delay repair work was made by recomputing
+    these numbers offline from the saved maps, which needs the maps shipped around
+    and takes minutes per cohort.  They cost a couple of seconds to compute here,
+    where the data is already in memory, and land in the runoptions where a whole
+    cohort can be tabulated by reading one small JSON per run.
+
+    Metrics recorded, all suffixed ``_pass<N>``:
+
+    map quality
+        ``delayoutliers`` / ``delayoutlierfrac``
+            voxels further than despeckle_thresh from their local median.  This is
+            the headline number the repair comparisons are scored on.
+        ``delayjumps`` / ``delayjumpfrac``
+            adjacent in-mask voxel pairs differing by more than METRICJUMPTHRESH.
+            The damage check: a smoother that flattens real gradients improves the
+            outlier count and worsens this one.
+
+    distribution
+        ``delayp5`` ... ``delayp99``, ``delayiqr``
+            where the delays actually are.  Needed to interpret everything else,
+            and free.
+        ``delayrailedfrac``
+            fraction sitting within one lag step of the search range bounds.  A
+            delay pinned at the bound and a genuinely long delay are
+            indistinguishable downstream, so it matters whether a cohort is
+            hitting the wall.
+
+    long delay structure
+        ``delaylongcut`` / ``delaylongfrac`` / ``delaylongcoherent`` /
+        ``delaylonglargest`` / ``delaylongdev``
+            how much long-delay signal there is, whether it forms connected
+            structures (plausibly real) or scattered specks (plausibly error), and
+            how far it deviates locally.  This is the cohort characterisation that
+            decides whether a smoothness prior is safe to apply.
+
+    resolution effect, only when delay resolution ran this pass
+        ``resolveshiftmedian`` / ``resolveshiftposfrac``
+            size and sidedness of the changes.  A genuine sidelobe wrap moves
+            delays in ONE direction by close to one period; noise repicking moves
+            them both ways over a broad range.  This distinguishes them without a
+            paired run.
+        ``resolveampratio``
+            median ratio of similarity at the new lag to similarity at the old one.
+            Resolution usually moves to a LOWER peak - that is expected, since the
+            wrong peak is generally the taller one - but a collapse here means
+            something else is going on.
+        ``resolvechgcoherentfrac`` / ``resolvechgscatteredfrac`` / ``resolveselectivity``
+            of the long-delay voxels going into resolution, the fraction reassigned
+            in coherent blobs versus scattered specks, and their ratio.  A
+            selectivity near 1 means resolution cannot tell real long-delay
+            structure from a fitting error.  Note this is the single-run analogue
+            of the paired-arm measurement: the map going in has already been
+            resolved on earlier passes, so it understates the cumulative effect.
+    """
+    try:
+        thesuffix = f"_pass{thepass}"
+
+        themap = np.zeros(numspatiallocs, dtype=float)
+        themap[validvoxels] = lagtimes[:]
+        themap = themap.reshape(nativespaceshape)
+        themask = np.zeros(numspatiallocs, dtype=bool)
+        themask[validvoxels] = fitmask[:].astype(bool)
+        themask = themask.reshape(nativespaceshape)
+        thenummask = int(themask.sum())
+        if thenummask < 100:
+            return
+
+        # Nearest-in-mask extension, not zero fill.  Zero filling would drag the
+        # local median of every surface voxel toward zero and inflate the outlier
+        # count there - the same trap that was found in icmrefine.
+        theindices = maskextensionindices(themask)
+        thelocalmedian = ndimage.median_filter(
+            themap[theindices].astype(np.float32), size=METRICMEDIANKERNEL, mode="nearest"
+        )
+        thedeviation = np.abs(themap - thelocalmedian)
+        thenumoutliers = int((themask & (thedeviation > despeckle_thresh)).sum())
+        optiondict["delayoutliers" + thesuffix] = thenumoutliers
+        optiondict["delayoutlierfrac" + thesuffix] = thenumoutliers / thenummask
+
+        thenumjumps = 0
+        thenumpairs = 0
+        for theaxis in range(3):
+            thediff = np.abs(np.diff(themap, axis=theaxis))
+            theboth = np.take(
+                themask, range(0, themask.shape[theaxis] - 1), axis=theaxis
+            ) & np.take(themask, range(1, themask.shape[theaxis]), axis=theaxis)
+            thenumjumps += int((thediff[theboth] > METRICJUMPTHRESH).sum())
+            thenumpairs += int(theboth.sum())
+        optiondict["delayjumps" + thesuffix] = thenumjumps
+        optiondict["delayjumpfrac" + thesuffix] = thenumjumps / max(thenumpairs, 1)
+
+        thevalues = themap[themask]
+        theq = np.percentile(thevalues, [5, 25, 50, 75, 95, 99])
+        for thename, theval in zip(
+            ("delayp5", "delayp25", "delayp50", "delayp75", "delayp95", "delayp99"), theq
+        ):
+            optiondict[thename + thesuffix] = float(theval)
+        theiqr = float(theq[3] - theq[1])
+        optiondict["delayiqr" + thesuffix] = theiqr
+
+        thelagmin = optiondict.get("lagmin", None)
+        thelagmax = optiondict.get("lagmax", None)
+        if thelagmin is not None and thelagmax is not None and corrscale is not None:
+            thestep = (
+                float(corrscale[1] - corrscale[0]) if len(corrscale) > 1 else 0.0
+            )
+            optiondict["delayrailedfrac" + thesuffix] = float(
+                np.mean(
+                    (thevalues <= thelagmin + thestep) | (thevalues >= thelagmax - thestep)
+                )
+            )
+
+        thelongcut = float(theq[2] + METRICLONGIQRMULT * theiqr)
+        thelong = themask & (themap > thelongcut)
+        thenumlong = int(thelong.sum())
+        optiondict["delaylongcut" + thesuffix] = thelongcut
+        optiondict["delaylongfrac" + thesuffix] = thenumlong / thenummask
+        if thenumlong > 0:
+            thelabels, dummy = ndimage.label(thelong)
+            thesizes = np.bincount(thelabels.ravel())
+            thesizes[0] = 0
+            thecoherent = thelong & np.isin(
+                thelabels, np.nonzero(thesizes >= METRICMINCOMPONENT)[0]
+            )
+            optiondict["delaylongcoherent" + thesuffix] = float(
+                thecoherent.sum() / thenumlong
+            )
+            optiondict["delaylonglargest" + thesuffix] = int(thesizes.max())
+            optiondict["delaylongdev" + thesuffix] = float(np.median(thedeviation[thelong]))
+        else:
+            optiondict["delaylongcoherent" + thesuffix] = 0.0
+            optiondict["delaylonglargest" + thesuffix] = 0
+            optiondict["delaylongdev" + thesuffix] = 0.0
+
+        if preresolvelags is None:
+            return
+
+        thebefore = np.zeros(numspatiallocs, dtype=float)
+        thebefore[validvoxels] = preresolvelags[:]
+        thebefore = thebefore.reshape(nativespaceshape)
+        theshift = themap - thebefore
+        thechanged = themask & (np.abs(theshift) > RESOLVEDCHANGEDTHRESH)
+        if not np.any(thechanged):
+            return
+        optiondict["resolveshiftmedian" + thesuffix] = float(
+            np.median(np.abs(theshift[thechanged]))
+        )
+        optiondict["resolveshiftposfrac" + thesuffix] = float(
+            np.mean(theshift[thechanged] > 0.0)
+        )
+
+        # long-delay classes defined on the map going IN, then tracked through
+        thebeforevals = thebefore[themask]
+        thebq = np.percentile(thebeforevals, [25, 50, 75])
+        thebeforecut = thebq[1] + METRICLONGIQRMULT * (thebq[2] - thebq[0])
+        thebeforelong = themask & (thebefore > thebeforecut)
+        if np.any(thebeforelong):
+            thelabels, dummy = ndimage.label(thebeforelong)
+            thesizes = np.bincount(thelabels.ravel())
+            thesizes[0] = 0
+            thecoh = thebeforelong & np.isin(
+                thelabels, np.nonzero(thesizes >= METRICMINCOMPONENT)[0]
+            )
+            thescat = thebeforelong & ~thecoh
+            thecohfrac = float(thechanged[thecoh].mean()) if np.any(thecoh) else np.nan
+            thescatfrac = float(thechanged[thescat].mean()) if np.any(thescat) else np.nan
+            optiondict["resolvechgcoherentfrac" + thesuffix] = thecohfrac
+            optiondict["resolvechgscatteredfrac" + thesuffix] = thescatfrac
+            # always recorded, None when the ratio is undefined, so that a tabulation
+            # can tell "no coherent long delay to judge" apart from "key missing"
+            if thecohfrac and np.isfinite(thecohfrac) and np.isfinite(thescatfrac):
+                optiondict["resolveselectivity" + thesuffix] = thescatfrac / thecohfrac
+            else:
+                optiondict["resolveselectivity" + thesuffix] = None
+
+        # similarity amplitude at the new lag versus the old one, for changed voxels
+        if corrout is not None and corrscale is not None and len(corrscale) > 1:
+            thechangedflat = thechanged.reshape(-1)[validvoxels]
+            if np.any(thechangedflat):
+                theidx = np.nonzero(thechangedflat)[0]
+                theold = np.array(
+                    [
+                        np.interp(preresolvelags[i], corrscale, corrout[i, :])
+                        for i in theidx
+                    ]
+                )
+                thenew = np.array(
+                    [np.interp(lagtimes[i], corrscale, corrout[i, :]) for i in theidx]
+                )
+                thevalid = np.abs(theold) > 1.0e-9
+                if np.any(thevalid):
+                    optiondict["resolveampratio" + thesuffix] = float(
+                        np.median(thenew[thevalid] / theold[thevalid])
+                    )
+    except Exception as thereason:
+        # instrumentation must never take down a run that is otherwise fine
+        if LGR is not None:
+            LGR.warning(f"\n*** delay metrics for pass {thepass} FAILED: {thereason} ***")
 
 
 def fitSimFunc(
@@ -475,6 +700,7 @@ def fitSimFunc(
         # non-peak value.  Measured on paired arms, despeckling on top of resolution
         # removed a further 34% of outlier voxels in 16 of 16 HCP runs and 18% in 26 of
         # 26 UK Biobank runs.
+        thepreresolvelags = None
         dounwrap = bool(optiondict.get("resolvedelays", False))
         if dounwrap:
             LGR.info(f"\n\n{similaritytype} delay resolution pass {thepass}")
@@ -492,9 +718,9 @@ def fitSimFunc(
                 LGR.info("\tno sidelobe amplitude measured for this pass")
             TimingLGR.info(f"{similaritytype} delay resolution start, pass {thepass}")
             thexdim, theydim, theslicethickness, dummy = tide_io.parseniftisizes(thesizes)
-            thepreresolvelags = (
-                lagtimes.copy() if optiondict.get("saveresolvemaps", False) else None
-            )
+            # captured unconditionally now: the metrics recorded at the end of the
+            # pass need it, not just --saveresolvemaps.  It is a 1-D copy.
+            thepreresolvelags = lagtimes.copy()
             lagtimes[:], numunwrapped = resolvefromsimfunc(
                 corrout,
                 trimmedcorrscale,
@@ -522,7 +748,7 @@ def fitSimFunc(
             # computed inside a single run can show the latter - that needs a paired run
             # without --resolvedelays.  Per-pass reassignment counts are in runoptions as
             # resolved_passN.
-            if thepreresolvelags is not None and thepass == optiondict["passes"]:
+            if optiondict.get("saveresolvemaps", False) and thepass == optiondict["passes"]:
                 if theinputdata.filetype != "text":
                     if theinputdata.filetype == "cifti":
                         timeindex = theheader["dim"][0] - 1
@@ -766,5 +992,21 @@ def fitSimFunc(
             )
         else:
             internaldespeckleincludemask = None
+
+        # End of pass.  Record what the delay map looks like now, after both repairs.
+        recorddelaymetrics(
+            optiondict,
+            thepass,
+            lagtimes,
+            fitmask,
+            validvoxels,
+            nativespaceshape,
+            numspatiallocs,
+            optiondict["despeckle_thresh"],
+            preresolvelags=thepreresolvelags,
+            corrout=corrout,
+            corrscale=trimmedcorrscale,
+            LGR=LGR,
+        )
 
     return internaldespeckleincludemask
