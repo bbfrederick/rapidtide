@@ -1,9 +1,10 @@
 # Release history
 
-## Version 3.1.12 (7/23/26)
+## Version 3.2.0 (8/12/26)
 * (rapidtide) Added ``--resolvedelays``, a new procedure analagous to phase unwrapping that is performed before despeckling to improve delay maps.  Tested fairly extensively on real data - it resolves more voxels than despeckling, but different voxels, so it is a win to do both.
 * (rapidtide) Removed ``--robustdelay``.  Resolve delays makes it redundant.
-* (rapidtide) Removed ``--despeckle-patch-detection``.  It had a critical bug, and resolve delays mostly made it redundant.
+* (rapidtide) Removed ``--despeckle-patch-detection``.  It had a critical bug, and resolve delays mostly made it redundant anyway.
+* (rapidtide) Save a lot more information on image statistics during each pass to the runoptions file.  The goal is to make it easier to implement improvements with rigorous testing.
 * (slopefit) Added program to find polynomial mapping between two 4D NIFTI files.
 * (aparc2dseg) Added a new program to make gray, white, CSF maps from aparc+aseg maps.
 * (filtnifti) Added option to do spatial as well as temporal filtering.
@@ -11,7 +12,7 @@
 * (io) readfslmat now reads column names out of the companion .fsf file, if present.
 * (io) Added a flag to savetonifti to specify NIFTI2 output.
 * (miscmath) Fixed a typing error for some normalization functions.
-* (package) Fixed a version incompatibility that broke circleci testing.
+* (package) Fixed some old (and new!) bugs that broke circleci testing.
 * (package) Accepted several dependabot PRs.
 
 ## Version 3.1.11 (5/18/26)
