@@ -20,13 +20,15 @@ rapidtide/experimental/model_*
 
 # any generated test data
 rapidtide/data/examples/dst/*
-rapidtide/tests/tmp/[0123456789abcdefghijklmnopqrstuvwxyz]*
+#rapidtide/tests/tmp/[0123456789abcdefghijklmnopqrstuvwxyz]*
+rapidtide/tests/tmp/*
 rapidtide/tests/*.jpg
 rapidtide/tests/*.json
 rapidtide/tests/*.tsv.gz
 rapidtide/tests/*.nii.gz
 #rapidtide/tests/testdata/*
 rapidtide/tests/.coveragerc.*
+tmp
 
 # some local test data
 rapidtide/data/examples/src/scratch
