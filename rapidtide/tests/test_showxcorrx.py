@@ -157,7 +157,15 @@ def _make_default_args(tmpdir, signal1=None, signal2=None, **overrides):
 
 @contextmanager
 def _showxcorrx_run(**overrides):
-    """Build args in a temporary directory, execute showxcorrx, and yield context."""
+    """Build args in a temporary directory, execute showxcorrx, and yield context.
+
+    The run happens with the temporary directory as the working directory.  That is
+    not cosmetic: with --debug, showxcorrx sets dumpfiltered and writes
+    filtereddata1.txt, filtereddata2.txt, correlator_filtereddata*.txt and
+    MI_filtereddata*.txt using bare relative names, so they land wherever pytest
+    happened to be invoked from and are left behind.  Running from the temporary
+    directory means they are cleaned up with it.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         run_overrides = dict(overrides)
         for key in ("resoutputfile", "corroutputfile", "outputfile"):
@@ -165,7 +173,12 @@ def _showxcorrx_run(**overrides):
             if isinstance(outpath, str) and not os.path.isabs(outpath):
                 run_overrides[key] = os.path.join(tmpdir, outpath)
         args = _make_default_args(tmpdir, **run_overrides)
-        showxcorrx(args)
+        theolddirectory = os.getcwd()
+        try:
+            os.chdir(tmpdir)
+            showxcorrx(args)
+        finally:
+            os.chdir(theolddirectory)
         yield tmpdir, args
 
 
@@ -957,19 +970,20 @@ def showxcorrx_verbose_and_debug_reporting(debug=False):
 
 
 def showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses(debug=False):
-    """The filtered timecourses can be dumped for inspection.  They are written into
-    the working directory, so run this from a temporary one."""
+    """--debug turns on dumpfiltered, which writes the preprocessed timecourses out
+    for inspection.  They are written with bare relative names, so the harness runs
+    from a temporary directory and they go away with it."""
     if debug:
         print("showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses")
 
-    theolddirectory = os.getcwd()
-    with tempfile.TemporaryDirectory() as tmpdir:
-        try:
-            os.chdir(tmpdir)
-            theargs = _make_default_args(tmpdir, debug=True)
-            showxcorrx(theargs)
-        finally:
-            os.chdir(theolddirectory)
+    with _showxcorrx_run(debug=True) as (tmpdir, args):
+        thedumped = sorted(thename for thename in os.listdir(tmpdir) if "filtereddata" in thename)
+
+    if debug:
+        print(f"  dumped {thedumped}")
+    assert "filtereddata1.txt" in thedumped
+    assert "filtereddata2.txt" in thedumped
+    assert "correlator_filtereddata1.txt" in thedumped
 
 
 def showxcorrx_does_not_hardcode_a_backend(debug=False):
