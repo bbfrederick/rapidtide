@@ -41,6 +41,7 @@ dependencies = [
   'torch<2.13.0',
   'tqdm',
   'versioneer',
+  'colour-science',
 ]
 dynamic = ["version"]
 authors = [
