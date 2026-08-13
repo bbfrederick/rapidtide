@@ -16,6 +16,7 @@
 #   limitations under the License.
 #
 #
+import ast
 import bisect
 import logging
 import os
@@ -260,30 +261,57 @@ def enablemkl(numthreads: int, debug: bool = False) -> None:
 
 
 def configurepyfftw(threads: int = 1, debug: bool = False) -> Optional[str]:
+    """
+    Configure pyfftw's threading and planner, and load any cached FFTW wisdom.
+
+    FFTW wisdom is the set of measured plans FFTW has built for transform sizes it has
+    seen before.  Caching it across runs means the planner does not have to rediscover
+    them, which matters most with the more expensive planner efforts.
+
+    Parameters
+    ----------
+    threads : int, optional
+        Number of threads for pyfftw to use.  Values below 1 mean "leave it alone
+        unless PYFFTW_NUM_THREADS says otherwise".  Default is 1.
+    debug : bool, optional
+        Print the wisdom that was loaded.  Default is False.
+
+    Returns
+    -------
+    str
+        The path the wisdom was loaded from, which is also where savewisdom should
+        write it back.  The two functions are only ever used as a pair.
+    """
     if threads < 1:
-        if os.environ.get("PYFFTW_NUM_THREADS") is not None:
-            pyfftw.config.NUM_THREADS = os.environ.get("PYFFTW_NUM_THREADS")
+        theenvthreads = os.environ.get("PYFFTW_NUM_THREADS")
+        if theenvthreads is not None:
+            # the environment hands this over as a string; NUM_THREADS is a count
+            pyfftw.config.NUM_THREADS = int(theenvthreads)
     else:
         pyfftw.config.NUM_THREADS = threads
 
     if os.environ.get("PYFFTW_PLANNER_EFFORT") is None:
         pyfftw.config.PLANNER_EFFORT = "FFTW_ESTIMATE"
 
-    # check for wisdom file, load it if it exist
+    # check for wisdom file, load it if it exists.  expanduser rather than
+    # environ["HOME"], which is None on a stripped environment and turns the join into
+    # a TypeError before anything has a chance to report a useful problem.
     wisdomfilename = os.path.join(
-        os.environ.get("HOME"),
+        os.path.expanduser("~"),
         ".config",
         f"rapidtide_wisdom_{pyfftw.config.PLANNER_EFFORT}.txt",
     )
     if os.path.isfile(wisdomfilename):
-        # load the wisdom
-        # You need to parse the string
-        # For simple cases, eval() can work but is generally not recommended for untrusted input.
-        # For more complex cases, manual parsing or using a library like ast.literal_eval is safer.
+        # The wisdom is a tuple of bytestrings written out with str().  literal_eval
+        # reads exactly that back and nothing else - eval() here would execute whatever
+        # happened to be sitting in the file.
         with open(wisdomfilename, "r") as file:
             loaded_string = file.read()
-            # Example using eval (use with caution)
-            thewisdom = eval(loaded_string)
+            try:
+                thewisdom = ast.literal_eval(loaded_string)
+            except (ValueError, SyntaxError) as thereason:
+                print(f"could not parse pyfftw wisdom from {wisdomfilename}: {thereason}")
+                return wisdomfilename
             if debug:
                 print("----------------------Loaded wisdom---------------------------------")
                 print(thewisdom)
@@ -294,6 +322,21 @@ def configurepyfftw(threads: int = 1, debug: bool = False) -> Optional[str]:
 
 
 def savewisdom(wisdomfilename: str, debug: bool = False) -> None:
+    """
+    Write pyfftw's accumulated FFTW wisdom out for the next run to pick up.
+
+    Parameters
+    ----------
+    wisdomfilename : str or None
+        Where to write, as returned by configurepyfftw.  None means pyfftw was never
+        configured, in which case there is nothing to save and this does nothing.
+    debug : bool, optional
+        Print the wisdom being saved.  Default is False.
+
+    Returns
+    -------
+    None
+    """
     if wisdomfilename is not None:
         thewisdom = pyfftw.export_wisdom()
         makeadir(os.path.split(wisdomfilename)[0])
@@ -1143,6 +1186,10 @@ def version() -> tuple[str, str, str, bool | str]:
         iscontainer = True
 
     if iscontainer:
+        # bound up front: every path below has to leave a value here, and a container
+        # that sets RUNNING_IN_CONTAINER without setting GITDIRECTVERSION used to fall
+        # through every branch and raise UnboundLocalError on the return
+        isdirty = "UNKNOWN"
         try:
             theversion = os.environ["GITVERSION"]
             if theversion.find("+") < 0:
@@ -1152,7 +1199,9 @@ def version() -> tuple[str, str, str, bool | str]:
         try:
             thedirectversion = os.environ["GITDIRECTVERSION"]
             directversionparts = thedirectversion.split("-")
-            if len(directversionparts) == 3:
+            # three OR MORE parts: `git describe --dirty` appends a fourth "dirty"
+            # field, which used to fall through to a bare pass and leave isdirty unset
+            if len(directversionparts) >= 3:
                 thedirectversion = (
                     directversionparts[0]
                     + "."
@@ -1164,11 +1213,9 @@ def version() -> tuple[str, str, str, bool | str]:
             elif len(directversionparts) == 2:
                 thedirectversion = directversionparts[0] + "." + directversionparts[1]
                 isdirty = True
-            elif len(directversionparts) == 1:
+            else:
                 thedirectversion = directversionparts[0]
                 isdirty = False
-            else:
-                pass
         except KeyError:
             thedirectversion = "UNKNOWN"
         try:
@@ -1769,7 +1816,14 @@ def comparemap(
 
     # at this point, map2valid and map1valid are the same dimensions
     diff = map2valid - map1valid
-    reldiff = np.where(map1valid != 0.0, diff / map1valid, 0.0)
+    # np.where evaluates both arms, so the plain division ran everywhere and warned
+    # about the zeros it was about to discard.  np.divide with a where mask skips them.
+    reldiff = np.divide(
+        diff,
+        map1valid,
+        out=np.zeros_like(np.asarray(diff, dtype=np.float64)),
+        where=(map1valid != 0.0),
+    )
     maxdiff = np.max(diff)
     mindiff = np.min(diff)
     meandiff = np.mean(diff)

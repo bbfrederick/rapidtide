@@ -307,9 +307,8 @@ def sigFromDistributionData(
         pcts_fit = getfracvalsfromfit(histfit, thepercentiles)
         return pcts_data, pcts_fit, histfit
     else:
-        pcts_fit = []
-        for i in len(pcts_data):
-            pcts_fit.append(None)
+        # one None per requested percentile, standing in for the fit that was not done
+        pcts_fit = [None] * len(pcts_data)
         return pcts_data, pcts_fit, None
 
 
@@ -961,10 +960,12 @@ def makehistogram(
     if histlen is None and binsize is None:
         thebins = 10
     elif binsize is not None:
+        # np.linspace counts bin EDGES and needs an integer; the division here is a
+        # float, which used to make this whole branch raise TypeError on every call
         thebins = np.linspace(
             therange[0],
             therange[1],
-            (therange[1] - therange[0]) / binsize + 1,
+            int(round((therange[1] - therange[0]) / binsize)) + 1,
             endpoint=True,
         )
     else:
@@ -1429,12 +1430,18 @@ def summarizevoxels(thevoxels: NDArray, method: str = "mean") -> float:
         numtimepoints = 1
 
     if method == "CoV":
-        if numtimepoints > 1:
-            regionsummary = 100.0 * np.nan_to_num(
-                np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
-            )
-        else:
-            regionsummary = 100.0 * np.nan_to_num(np.std(thevoxels) / np.mean(thevoxels))
+        # A region whose mean is zero has no defined coefficient of variation, so the
+        # division is scrubbed to zero along with the 0/0 case.  Note the scrubbing has
+        # to happen AFTER the scaling: nan_to_num maps an infinity to the largest
+        # representable float, which the 100.0 multiplier promptly overflows straight
+        # back to infinity - and an infinity here ends up in the runoptions JSON, where
+        # it is not legal.
+        with np.errstate(divide="ignore", invalid="ignore"):
+            if numtimepoints > 1:
+                theratio = np.std(thevoxels, axis=0) / np.mean(thevoxels, axis=0)
+            else:
+                theratio = np.std(thevoxels) / np.mean(thevoxels)
+        regionsummary = np.nan_to_num(100.0 * theratio, nan=0.0, posinf=0.0, neginf=0.0)
     else:
         if method == "mean":
             themethod = np.mean
