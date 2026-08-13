@@ -26,7 +26,8 @@
       "Bash(echo \"standalone \\(debug=True\\) exit: $?\")",
       "Bash(echo \"standalone exit: $?\")",
       "Bash(PYTHONPATH=/Users/frederic/code/rapidtide /Users/frederic/miniforge3/envs/mic/bin/python rapidtide/tests/test_atlastool.py)",
-      "Bash(echo \"standalone with repo on PYTHONPATH: exit $?\")"
+      "Bash(echo \"standalone with repo on PYTHONPATH: exit $?\")",
+      "Bash(PYTHONPATH=/Users/frederic/code/rapidtide /Users/frederic/miniforge3/envs/mic/bin/python rapidtide/tests/test_slopefit.py)"
     ]
   }
 }

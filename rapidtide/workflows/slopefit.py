@@ -126,38 +126,35 @@ def slopefit(
 
     Parameters
     ----------
-    datafile : Any
-        Path to the input NIfTI file containing the time series data.
-    datamask : Any
-        Path to the NIfTI file containing the data mask. Can be 3D or 4D.
-    templatefile : Any
-        Path to the NIfTI file containing the template (e.g., a regressor) for fitting.
-    templatemask : Any
-        Path to the NIfTI file containing the mask for the template.
+    inputfile1 : Any
+        Path to the 4D NIfTI file supplying the explanatory variable: the voxel
+        timecourses that are raised to each power to build the polynomial.
+    inputfile2 : Any
+        Path to the 4D NIfTI file supplying the dependent variable, fit voxel by voxel
+        against inputfile1.  Must match inputfile1 in both space and time.
     outputroot : Any
-        Root name for output files (e.g., 'output' will produce 'output_fit.nii.gz').
+        Root name for the output files.
     maskfile : Any, optional
-        Path to the NIfTI file containing region labels. If provided, fitting is
-        performed separately for each region. Default is None.
+        Path to a 3D NIfTI mask restricting which voxels are fit.  Voxels above 0.9
+        are included.  If None, every voxel is fit.  Default is None.
     order : int, optional
-        Order of the polynomial to fit. Must be >= 1. Default is 1 (linear fit).
+        Order of the polynomial to fit.  Must be >= 1.  Default is 1 (linear fit).
+    debug : bool, optional
+        Print shapes and per voxel fit results.  Default is False.
 
     Returns
     -------
     None
-        Function writes multiple output files:
-        - Fitted time series (NIfTI format)
-        - Residuals (NIfTI format)
-        - R² values (text file)
-        - Polynomial coefficients (text files)
+        Function writes two NIfTI files:
+        - ``<outputroot>_coffs``: the order + 1 polynomial coefficients per voxel
+        - ``<outputroot>_r2vals``: the R squared of each voxel's fit
 
     Notes
     -----
-    - The function assumes that all input files are in NIfTI format.
-    - If `datamask` is 4D, it is treated as a time-varying mask.
-    - If `maskfile` is provided, fitting is performed only within the specified voxels.
-    - The function uses `tide_io` for reading/writing NIfTI files and `tide_fit.mlregress`
-      for polynomial regression.
+    - All input files must be in NIfTI format.
+    - Voxels outside the mask are left as zero in both outputs.
+    - Fitting uses `tide_fit.mlregress`, with a constant term plus inputfile1 raised
+      to each power from 1 to `order`.
     """
     # check the order
     if order < 1:
@@ -205,17 +202,17 @@ def slopefit(
     print("checking dimensions")
     if not tide_io.checkspacedimmatch(inputfile1dims, inputfile2dims):
         print("input file spatial dimensions do not match")
-        exit()
+        sys.exit()
     if not tide_io.checktimematch(inputfile1dims, inputfile2dims):
         print("input mask time dimension does not match")
-        exit()
+        sys.exit()
     if maskfile is not None:
         if not tide_io.checkspacedimmatch(inputfile1dims, maskfiledims):
             print("Mask spatial dimensions do not match images")
-            exit()
+            sys.exit()
         if not maskfiledims[4] == 1:
             print("mask file time dimension is not equal to 1")
-            exit()
+            sys.exit()
 
     # allocating arrays
     print("allocating arrays")
@@ -240,32 +237,38 @@ def slopefit(
     polycoffs = np.zeros((numspatiallocs, order + 1), dtype="float")
     r2vals = np.zeros((numspatiallocs), dtype="float")
 
-    # cycle over all voxels
-    voxelstofit = np.where(rs_maskfile_bin > 0.0)
+    # cycle over the voxels in the mask.  np.where hands back a tuple of index arrays,
+    # so take the first element: passing the tuple itself to range() made this loop
+    # raise TypeError before it ever ran.
+    voxelstofit = np.where(rs_maskfile_bin > 0.0)[0]
     print("now cycling over all voxels")
     for thevoxel in tqdm(
-        range(voxelstofit),
+        voxelstofit,
         desc="Voxel",
         unit="voxels",
     ):
-        # get the appropriate mask
-        if rs_maskfile_bin[thevoxel] > 0.0:
-            evlist = [np.ones((timepoints), dtype=np.float32)]
-            for i in range(1, order + 1):
-                evlist.append((rs_inputfile1[thevoxel, :]) ** i)
-                if debug:
-                    print(f"{evlist[-1].shape=}")
+        # The polynomial evs: inputfile1 raised to each power from 1 to order.  There is
+        # deliberately NO explicit constant ev - mlregress fits its own intercept and
+        # returns it first, so adding a column of ones made it return order + 2
+        # coefficients whose second entry was the collinear (and therefore zero) weight
+        # of that column.  polycoffs is only order + 1 wide, so the real highest-order
+        # term was then dropped on the floor and every slope came back as zero.
+        evlist = []
+        for i in range(1, order + 1):
+            evlist.append((rs_inputfile1[thevoxel, :]) ** i)
             if debug:
-                print(f"{len(evlist)=}")
-            thefit, R2 = tide_fit.mlregress(
-                evlist,
-                rs_inputfile2[thevoxel, :],
-            )
-            if debug:
-                print(f"{thefit=}, {R2=}")
-            for i in range(order + 1):
-                polycoffs[thevoxel, i] = thefit[0, i]
-            r2vals[thevoxel] = R2
+                print(f"{evlist[-1].shape=}")
+        if debug:
+            print(f"{len(evlist)=}")
+        thefit, R2 = tide_fit.mlregress(
+            evlist,
+            rs_inputfile2[thevoxel, :],
+        )
+        if debug:
+            print(f"{thefit=}, {R2=}")
+        for i in range(order + 1):
+            polycoffs[thevoxel, i] = thefit[0, i]
+        r2vals[thevoxel] = R2
 
     print("writing nifti files")
     theheader = copy.copy(inputfile1_hdr)
@@ -298,20 +301,18 @@ def main(args: Any) -> None:
         Namespace object containing all required arguments for the polynomial fitting
         operation. Expected attributes include:
 
-        - datafile : str
-            Path to the input data file to be fitted
-        - datamask : str
-            Path to the data mask file for region of interest specification
-        - templatefile : str
-            Path to the template file for reference
-        - templatemask : str
-            Path to the template mask file for reference region specification
+        - inputfile1 : str
+            Path to the NIfTI file supplying the explanatory variable
+        - inputfile2 : str
+            Path to the NIfTI file supplying the dependent variable
         - outputroot : str
             Root path for output files
         - maskfile : str, optional
-            Path to region atlas file for anatomical labeling
+            Path to a 3D mask restricting which voxels are fit
         - order : int, optional
-            Order of the polynomial to fit (default is typically 1)
+            Order of the polynomial to fit (default is 1)
+        - debug : bool
+            Print diagnostic information
 
     Returns
     -------
