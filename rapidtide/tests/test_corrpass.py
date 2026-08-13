@@ -741,6 +741,53 @@ def correlationpass_gpu_reference_mismatch_reaches_the_cpu_path(debug=False):
             _rungpupass(theinputs, _makecorrelator(theinputs["Fs"]))
 
 
+def test_gpu_entrypoint_on_a_machine_with_no_gpu(nogpu):
+    """The CPU-only case, driven through the real device resolution code.
+
+    The sub-tests above reach this path by mocking _resolve_torch_device, which means
+    they would keep passing if that routine stopped raising RuntimeError and the
+    fallback in correlationpass_gpu stopped catching it.  Here nothing in rapidtide is
+    mocked - the nogpu fixture patches torch itself, so resolution genuinely fails and
+    the fallback has to handle it.
+    """
+    torch = pytest.importorskip("torch")
+
+    # the fixture has to actually take the hardware away, or this proves nothing
+    assert not torch.cuda.is_available()
+    assert not torch.backends.mps.is_available()
+
+    theinputs = _makegpuinputs()
+
+    thecpucorrout = np.zeros(
+        (theinputs["numvoxels"], theinputs["numcorrpoints"]), dtype=np.float64
+    )
+    thecpumeanval = np.zeros(theinputs["numvoxels"], dtype=np.float64)
+    thecpuvoxels, dummy, dummy2 = tide_calcsimfunc.correlationpass_cpu(
+        theinputs["fmridata"],
+        theinputs["referencetc"],
+        _makecorrelator(theinputs["Fs"]),
+        theinputs["fmri_x"],
+        theinputs["os_fmri_x"],
+        theinputs["lagmininpts"],
+        theinputs["lagmaxinpts"],
+        thecpucorrout,
+        thecpumeanval,
+        showprogressbar=False,
+    )
+
+    thevoxels, dummy3, dummy4, thecorrout, themeanval = _rungpupass(
+        theinputs, _makecorrelator(theinputs["Fs"])
+    )
+
+    assert thevoxels == thecpuvoxels
+    np.testing.assert_allclose(thecorrout, thecpucorrout, atol=1e-10)
+    np.testing.assert_allclose(themeanval, thecpumeanval, atol=1e-10)
+
+    # and with the fallback refused, the real resolution failure surfaces
+    with pytest.raises(RuntimeError, match="No supported GPU backend"):
+        _rungpupass(theinputs, _makecorrelator(theinputs["Fs"]), fallback_to_cpu=False)
+
+
 def test_calcsimfuncdevices(debug=False):
     """Entry point for the device resolution and GPU fallback tests."""
     resolve_torch_device_auto_prefers_cuda(debug=debug)

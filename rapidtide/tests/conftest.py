@@ -24,6 +24,7 @@ import os
 import shutil
 import sys
 import tempfile
+from collections.abc import Iterator
 from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -178,6 +179,53 @@ def mock_nifti_header_factory():
         return hdr
 
     return _make
+
+
+@pytest.fixture
+def nogpu(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """
+    Report every torch GPU backend as unavailable for the duration of a test.
+
+    Routines such as :func:`rapidtide.calcsimfunc.correlationpass_gpu` choose between a
+    GPU implementation and a CPU fallback by asking torch what hardware is present.  The
+    branch that runs therefore depends on the machine, so a developer with CUDA or Apple
+    MPS never executes the fallback locally while CI, which is CPU only, never executes
+    anything else.  Requesting this fixture forces the CPU-only case everywhere, letting
+    a test assert on the fallback regardless of the hardware it lands on.
+
+    Only the probes those routines actually consult are patched: ``torch.cuda``
+    (which is also how torch reports ROCm) and ``torch.backends.mps``.
+
+    If torch is not installed the fixture does nothing, because no GPU path can be taken
+    in that case either - the invariant it promises, that no GPU backend is available
+    inside the test, holds either way.  Tests that specifically need torch to be present
+    should call ``pytest.importorskip("torch")`` themselves.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Supplies the patching, and undoes it when the test ends.
+
+    Yields
+    ------
+    None
+
+    Examples
+    --------
+    >>> def test_falls_back(nogpu):
+    ...     result = correlationpass_gpu(...)   # takes the CPU path on any machine
+    """
+    try:
+        import torch
+    except ImportError:
+        yield
+        return
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    if hasattr(torch.backends, "mps"):
+        monkeypatch.setattr(torch.backends.mps, "is_available", lambda: False)
+        monkeypatch.setattr(torch.backends.mps, "is_built", lambda: False)
+    yield
 
 
 @pytest.fixture
