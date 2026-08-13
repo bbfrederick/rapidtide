@@ -342,6 +342,46 @@ def _get_parser() -> Any:
     return parser
 
 
+def partialout(thedata: NDArray, thecontrolvars: NDArray) -> NDArray:
+    """
+    Regress a set of control variables out of a timecourse.
+
+    This is applied to the TRIMMED, UNNORMALIZED data, before any filtering or
+    windowing.  Doing it there rather than to the already normalized copy matters
+    twice over: everything downstream - the correlator, the mutual informationator
+    and the Pearson correlation - then works on the partialled signal rather than
+    only some of them, and each of those normalizes its own input, so the reported
+    correlation stays a correlation instead of shrinking with the residual's
+    amplitude.
+
+    Parameters
+    ----------
+    thedata : NDArray
+        The timecourse to remove the control variables from.
+    thecontrolvars : NDArray
+        The control variables, shape (numcontrolvars, numpoints).  Each is truncated
+        to the length of thedata, which may be shorter after trimming.
+
+    Returns
+    -------
+    NDArray
+        The residual after removing every control variable.
+
+    Notes
+    -----
+    mlregress prepends the intercept to its coefficients, so the weight of
+    control variable j is at index j + 1, not j.
+    """
+    theregressors = [
+        thecontrolvars[thecontrol, : len(thedata)] for thecontrol in range(thecontrolvars.shape[0])
+    ]
+    thefit, dummy = tide_fit.mlregress(theregressors, thedata)
+    theresidual = np.array(thedata, dtype=float, copy=True)
+    for thecontrol in range(len(theregressors)):
+        theresidual = theresidual - thefit[0, thecontrol + 1] * theregressors[thecontrol]
+    return theresidual
+
+
 def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
     """
     Print thresholds with corresponding percentiles.
@@ -598,6 +638,25 @@ def showxcorrx(args: Any) -> None:
         trimdata1 = trimdata1[0:minlen]
         trimdata2 = trimdata2[0:minlen]
 
+    # Remove the control variables here, on the raw trimmed data, so that every
+    # downstream consumer sees the partialled signal - the correlator and the mutual
+    # informationator as well as the Pearson correlation.  Removing them from the
+    # normalized copy further down only reached the Pearson value, and left the
+    # residual unnormalized so the reported xcorr_R was not a correlation.
+    if args.controlvariablefile is not None:
+        controlvars = tide_io.readvecs(args.controlvariablefile)
+        thelongest = max(len(trimdata1), len(trimdata2))
+        if controlvars.shape[1] < thelongest:
+            print(
+                f"control variable file {args.controlvariablefile} has "
+                f"{controlvars.shape[1]} points, but {thelongest} are needed - exiting"
+            )
+            sys.exit()
+        if args.verbose:
+            print(f"partialling out {controlvars.shape[0]} control variable(s)")
+        trimdata1 = partialout(trimdata1, controlvars)
+        trimdata2 = partialout(trimdata2, controlvars)
+
     if args.invert:
         flipfac = -1.0
     else:
@@ -621,22 +680,6 @@ def showxcorrx(args: Any) -> None:
     if dumpfiltered:
         tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
         tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
-
-    if args.controlvariablefile is not None:
-        controlvars = tide_io.readnpvecs(args.controlvariablefile)
-        regressorvec = []
-        for j in range(0, controlvars.shape[0]):
-            regressorvec.append(
-                tide_math.corrnormalize(
-                    theprefilter.apply(args.samplerate, controlvars[j, :]),
-                    detrendorder=args.detrendorder,
-                    windowfunc=args.windowfunc,
-                )
-            )
-        if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
-            thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata1)
-        if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
-            thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
     # initialize the Correlator and MutualInformationator
     theCorrelator = tide_simFuncClasses.Correlator(

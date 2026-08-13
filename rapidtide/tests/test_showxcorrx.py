@@ -640,6 +640,215 @@ def showxcorrx_butterworth_filter(debug=False):
 # ==================== Main test function ====================
 
 
+# ==================== Partial correlation ====================
+
+
+def _make_confounded_signals(sharedseed=3, confoundseed=9, thegain=3.0):
+    """Two signals with a real shared component that a confound is masking.
+
+    The confound enters the two signals with OPPOSITE sign, so it drives the raw
+    correlation strongly negative and hides the relationship that is really there.
+    Partialling it out of BOTH signals recovers that relationship.
+
+    The opposite sign matters.  With a confound shared in the same sense, removing it
+    from either signal alone is enough to kill the spurious correlation, so a test
+    that only checks "the correlation went down" cannot tell a fix that cleans both
+    timecourses from one that cleans a single one, or from one that subtracts the
+    intercept instead of the slope.  Making the confound mask a real relationship
+    means only a fully correct implementation recovers it.
+
+    Parameters
+    ----------
+    sharedseed : int
+        Seed for the genuine shared component.
+    confoundseed : int
+        Seed for the masking confound.
+    thegain : float
+        How strongly the confound enters, relative to the shared component.
+
+    Returns
+    -------
+    theconfound, thesignal1, thesignal2 : NDArray
+        The confound and the two signals built from it.
+    """
+
+    def thebroadband(theseed):
+        therng = np.random.RandomState(theseed)
+        thetimes = np.arange(NPOINTS) / SAMPLERATE
+        theresult = np.zeros(NPOINTS)
+        for thefreq, thephase, theamp in zip(
+            np.linspace(0.01, 0.2, 30),
+            therng.uniform(0, 2 * np.pi, 30),
+            therng.uniform(0.5, 1.5, 30),
+        ):
+            theresult += theamp * np.sin(2 * np.pi * thefreq * thetimes + thephase)
+        return theresult
+
+    theshared = thebroadband(sharedseed)
+    theconfound = thebroadband(confoundseed)
+    thesignal1 = theshared + thegain * theconfound
+    thesignal2 = theshared - thegain * theconfound
+    return theconfound, thesignal1, thesignal2
+
+
+def _readsummary(tmpdir, signal1, signal2, controlvariable=None):
+    """Run showxcorrx in summary mode and return its results as a dict.
+
+    Parameters
+    ----------
+    tmpdir : str
+        Working directory.
+    signal1, signal2 : NDArray
+        The two input timecourses.
+    controlvariable : NDArray or None
+        Written out and passed as --partialcorr when not None.
+
+    Returns
+    -------
+    dict
+        The summary line, keyed by its column headings.
+    """
+    theresultfile = os.path.join(tmpdir, "res.txt")
+    thecontrolfile = None
+    if controlvariable is not None:
+        thecontrolfile = os.path.join(tmpdir, "controlvars.txt")
+        np.savetxt(thecontrolfile, controlvariable)
+    theargs = _make_default_args(
+        tmpdir,
+        signal1,
+        signal2,
+        summarymode=True,
+        labelline=True,
+        resoutputfile=theresultfile,
+        controlvariablefile=thecontrolfile,
+    )
+    showxcorrx(theargs)
+    thelines = open(theresultfile).read().strip().split("\n")
+    return dict(zip(thelines[0].split("\t"), thelines[1].split("\t")))
+
+
+def showxcorrx_partialcorr_removes_the_control_variable(debug=False):
+    """--partialcorr has to actually partial the control variable out.
+
+    Two things used to stop that happening.  The control variable file was read with
+    tide_io.readnpvecs, which does not exist, so the option raised AttributeError
+    before reading anything.  And the regression against it was computed and then
+    discarded, so even reaching it left the data untouched and the reported
+    correlation was an ordinary one.
+    """
+    if debug:
+        print("showxcorrx_partialcorr_removes_the_control_variable")
+
+    theconfound, thesignal1, thesignal2 = _make_confounded_signals()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        theplain = _readsummary(tmpdir, thesignal1, thesignal2)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thepartial = _readsummary(tmpdir, thesignal1, thesignal2, controlvariable=theconfound)
+
+    theplainr = float(theplain["pearson_R"])
+    thepartialr = float(thepartial["pearson_R"])
+    if debug:
+        print(f"  pearson_R plain {theplainr:.4f}, partial {thepartialr:.4f}")
+
+    # the confound masks the real relationship, driving the raw correlation negative
+    assert theplainr < -0.5, f"the fixture is not actually masked: {theplainr}"
+    # removing it from BOTH signals recovers the relationship underneath.  Cleaning
+    # only one of them, or subtracting the intercept rather than the slope, lands
+    # around 0.3 instead.
+    assert thepartialr > 0.9, f"the control variable was not fully removed: {thepartialr}"
+
+    # The cross correlation has to be partialled too, not just the Pearson value.  It
+    # used to be computed from the untouched trimmed data, so --partialcorr left the
+    # tool's headline number and its delay estimate alone.
+    theplainxcorr = float(theplain["xcorr_R"])
+    thepartialxcorr = float(thepartial["xcorr_R"])
+    if debug:
+        print(f"  xcorr_R plain {theplainxcorr:.4f}, partial {thepartialxcorr:.4f}")
+    assert thepartialxcorr > 0.9, f"xcorr_R was only {thepartialxcorr}"
+    # and it is still a correlation coefficient: partialling happens before the
+    # normalization, so the residual's reduced amplitude does not drag it down
+    assert thepartialxcorr > theplainxcorr
+
+    # with the masking confound gone the two signals are the same, so zero delay
+    thepartialdelay = float(thepartial["xcorr_maxdelay"])
+    assert abs(thepartialdelay) < 0.5, f"partialled delay came out at {thepartialdelay}"
+
+
+def showxcorrx_partialcorr_leaves_an_unrelated_control_alone(debug=False):
+    """Partialling out something the signals do not contain must barely move the
+    answer.  Without this a fix that simply zeroed the data would pass the test
+    above."""
+    if debug:
+        print("showxcorrx_partialcorr_leaves_an_unrelated_control_alone")
+
+    dummy, thesignal1, thesignal2 = _make_confounded_signals()
+    theunrelated = np.random.RandomState(12345).normal(size=NPOINTS)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        theplain = _readsummary(tmpdir, thesignal1, thesignal2)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thepartial = _readsummary(tmpdir, thesignal1, thesignal2, controlvariable=theunrelated)
+
+    theplainr = float(theplain["pearson_R"])
+    thepartialr = float(thepartial["pearson_R"])
+    if debug:
+        print(f"  pearson_R plain {theplainr:.4f}, unrelated control {thepartialr:.4f}")
+    assert abs(thepartialr - theplainr) < 0.1, (
+        f"an unrelated control variable changed the correlation from {theplainr} "
+        f"to {thepartialr}"
+    )
+
+
+def showxcorrx_partialcorr_accepts_several_control_variables(debug=False):
+    """The option takes the columns of a file, so more than one control variable has
+    to be handled - each with its own coefficient."""
+    if debug:
+        print("showxcorrx_partialcorr_accepts_several_control_variables")
+
+    theconfound, thesignal1, thesignal2 = _make_confounded_signals()
+    # a second masking confound, also entering with opposite signs, so BOTH controls
+    # have to be removed from BOTH signals before the relationship reappears
+    thesecondconfound = np.random.RandomState(555).normal(size=NPOINTS)
+    thesignal1 = thesignal1 + 3.0 * thesecondconfound
+    thesignal2 = thesignal2 - 3.0 * thesecondconfound
+    thecontrolvars = np.vstack((theconfound, thesecondconfound))
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        theplain = _readsummary(tmpdir, thesignal1, thesignal2)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thepartial = _readsummary(tmpdir, thesignal1, thesignal2, controlvariable=thecontrolvars.T)
+
+    theplainr = float(theplain["pearson_R"])
+    thepartialr = float(thepartial["pearson_R"])
+    if debug:
+        print(f"  pearson_R plain {theplainr:.4f}, two controls {thepartialr:.4f}")
+    assert theplainr < -0.3, f"the fixture is not actually masked: {theplainr}"
+    assert thepartialr > 0.9, f"two control variables were not both removed: {thepartialr}"
+
+
+def showxcorrx_partialcorr_rejects_a_short_control_file(debug=False):
+    """The control variables have to span the data.  A file that is too short would
+    otherwise be silently broadcast or truncated against the timecourses, which is a
+    quietly wrong answer rather than an error."""
+    if debug:
+        print("showxcorrx_partialcorr_rejects_a_short_control_file")
+
+    dummy, thesignal1, thesignal2 = _make_confounded_signals()
+    theshortcontrol = np.random.RandomState(1).normal(size=NPOINTS // 2)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            _readsummary(tmpdir, thesignal1, thesignal2, controlvariable=theshortcontrol)
+        except SystemExit:
+            theoutcome = "SystemExit"
+        else:
+            theoutcome = "accepted"
+    if debug:
+        print(f"  short control file outcome: {theoutcome}")
+    assert theoutcome == "SystemExit", "a control file shorter than the data was accepted"
+
+
 def test_showxcorrx(debug=False):
     # Parser tests
     if debug:
@@ -696,6 +905,14 @@ def test_showxcorrx(debug=False):
     showxcorrx_sigma_limits(debug=debug)
     showxcorrx_zeropadding(debug=debug)
     showxcorrx_butterworth_filter(debug=debug)
+
+    # partial correlation tests
+    if debug:
+        print("Running partial correlation tests")
+    showxcorrx_partialcorr_removes_the_control_variable(debug=debug)
+    showxcorrx_partialcorr_leaves_an_unrelated_control_alone(debug=debug)
+    showxcorrx_partialcorr_accepts_several_control_variables(debug=debug)
+    showxcorrx_partialcorr_rejects_a_short_control_file(debug=debug)
 
 
 if __name__ == "__main__":
