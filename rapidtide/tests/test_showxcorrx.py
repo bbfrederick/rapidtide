@@ -20,9 +20,12 @@ import os
 import tempfile
 from argparse import Namespace
 from contextlib import contextmanager
+from unittest.mock import patch
 
 import numpy as np
 import pytest
+
+import rapidtide.io as tide_io
 
 from rapidtide.workflows.showxcorrx import (
     DEFAULT_SIGMAMAX,
@@ -849,6 +852,193 @@ def showxcorrx_partialcorr_rejects_a_short_control_file(debug=False):
     assert theoutcome == "SystemExit", "a control file shorter than the data was accepted"
 
 
+# ==================== null distributions, reporting and plotting ====================
+
+
+def showxcorrx_null_distribution_sets_thresholds(debug=False):
+    """--numestreps builds a null distribution by permutation and reports the
+    correlation values that clear it.  Those thresholds are what turn a correlation
+    into a significance statement, so they have to appear and be ordered."""
+    if debug:
+        print("showxcorrx_null_distribution_sets_thresholds")
+
+    with _showxcorrx_run(
+        numestreps=100,
+        summarymode=True,
+        labelline=True,
+        resoutputfile="res.txt",
+    ) as (tmpdir, args):
+        thelines = open(args.resoutputfile).read().strip().split("\n")
+
+    theheadings = thelines[0].split("\t")
+    thevalues = thelines[1].split("\t")
+    if debug:
+        print(f"  headings {theheadings}")
+    assert len(theheadings) == len(thevalues), f"{theheadings} vs {thevalues}"
+
+    # the null distribution adds significance columns that a plain run does not have
+    thesignificancecolumns = [thename for thename in theheadings if "p=" in thename.lower()]
+    assert thesignificancecolumns, f"no significance thresholds reported: {theheadings}"
+    # both the Pearson and the cross correlation get their own threshold
+    assert any("pearson" in thename.lower() for thename in thesignificancecolumns)
+    assert any("xcorr" in thename.lower() for thename in thesignificancecolumns)
+
+    # and the threshold is a real number that the measured correlation is compared to
+    thevaluesbyname = dict(zip(theheadings, thevalues))
+    for thename in thesignificancecolumns:
+        assert np.isfinite(float(thevaluesbyname[thename])), thename
+
+
+def showxcorrx_mutualinfo_with_numestreps_is_unsupported(debug=False):
+    """--similaritymetric mutualinfo combined with --numestreps currently crashes.
+
+    The null distribution block references thexsimfuncfitter, which is only built in
+    the non-mutualinfo branch, and it feeds theCorrelator - which the mutualinfo path
+    never runs, so thexcorr and xcorr_x do not exist either.  Making this work needs a
+    decision about what a null distribution means for mutual information, so the
+    combination is pinned as unsupported rather than guessed at.  If this test starts
+    failing, the combination has been implemented and the test should assert on the
+    thresholds instead.
+    """
+    if debug:
+        print("showxcorrx_mutualinfo_with_numestreps_is_unsupported")
+
+    try:
+        with _showxcorrx_run(
+            similaritymetric="mutualinfo",
+            numestreps=50,
+            summarymode=True,
+            resoutputfile="res.txt",
+        ) as (tmpdir, args):
+            pass
+    except UnboundLocalError as theerror:
+        assert "thexsimfuncfitter" in str(theerror), theerror
+    else:
+        raise AssertionError(
+            "mutualinfo with numestreps now runs - update this test to check the "
+            "significance thresholds it produces"
+        )
+
+
+def showxcorrx_mismatched_sample_rates_are_rejected(debug=False):
+    """Two timecourses sampled at different rates cannot be correlated point for
+    point, so the run has to stop rather than silently comparing mismatched axes."""
+    if debug:
+        print("showxcorrx_mismatched_sample_rates_are_rejected")
+
+    thesignal1, thesignal2 = _make_broadband_signals()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # write file 2 as a BIDS style tsv carrying its own, different sample rate
+        thefile1 = os.path.join(tmpdir, "one.txt")
+        _write_test_file(thefile1, thesignal1)
+        thefile2 = os.path.join(tmpdir, "two_desc-x_timeseries")
+        tide_io.writebidstsv(thefile2, thesignal2, SAMPLERATE / 2.0, columns=["x"])
+
+        thefile1bids = os.path.join(tmpdir, "one_desc-y_timeseries")
+        tide_io.writebidstsv(thefile1bids, thesignal1, SAMPLERATE, columns=["y"])
+
+        theargs = _make_default_args(tmpdir)
+        theargs.infilename1 = f"{thefile1bids}.json:y"
+        theargs.infilename2 = f"{thefile2}.json:x"
+        theargs.samplerate = "auto"
+
+        with pytest.raises(SystemExit):
+            showxcorrx(theargs)
+
+
+def showxcorrx_verbose_and_debug_reporting(debug=False):
+    """The verbose and debug branches run inside the workflow and print derived
+    quantities; a stale f-string in one of them takes the whole run down."""
+    if debug:
+        print("showxcorrx_verbose_and_debug_reporting")
+
+    with _showxcorrx_run(verbose=True, debug=True) as (tmpdir, args):
+        pass
+
+
+def showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses(debug=False):
+    """The filtered timecourses can be dumped for inspection.  They are written into
+    the working directory, so run this from a temporary one."""
+    if debug:
+        print("showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses")
+
+    theolddirectory = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            os.chdir(tmpdir)
+            theargs = _make_default_args(tmpdir, debug=True)
+            showxcorrx(theargs)
+        finally:
+            os.chdir(theolddirectory)
+
+
+def showxcorrx_does_not_hardcode_a_backend(debug=False):
+    """The module must not pin an interactive matplotlib backend.
+
+    It used to call mpl.use("TkAgg") inside the display block, which made --display
+    fail outright on any headless machine - a cluster, a container, CI.  Choosing the
+    backend belongs to the caller's environment, not to the tool.
+    """
+    if debug:
+        print("showxcorrx_does_not_hardcode_a_backend")
+
+    import inspect
+
+    import rapidtide.workflows.showxcorrx as theworkflow
+
+    thesource = inspect.getsource(theworkflow)
+    for thebackend in ("TkAgg", "Qt5Agg", "QtAgg", "MacOSX", "WXAgg"):
+        assert (
+            f'use("{thebackend}")' not in thesource
+        ), f"showxcorrx pins the {thebackend} backend again"
+
+
+def showxcorrx_display_paths_run(debug=False):
+    """--display draws the similarity function and, optionally, a styled plot.  The
+    drawing code is a large block that never runs in a headless test otherwise, and
+    it is where a mismatched colour or legend list shows up."""
+    if debug:
+        print("showxcorrx_display_paths_run")
+
+    import matplotlib
+
+    # Agg so nothing tries to open a window.  showxcorrx binds show() into its own
+    # namespace with "from matplotlib.pyplot import ... show", so patching
+    # matplotlib.pyplot.show would NOT reach it - the name to patch is the one on the
+    # workflow module itself.
+    matplotlib.use("Agg")
+
+    with patch("rapidtide.workflows.showxcorrx.show") as mock_show:
+        _rundisplaycases()
+        assert mock_show.call_count > 0, "the display path never called show()"
+
+
+def _rundisplaycases():
+    """Run showxcorrx with plotting on, plain and with explicit styling.
+
+    The styled case matters beyond coverage: supplying --legends used to raise
+    "'list' object attribute 'append' is read-only", and even with that repaired the
+    plotting call sat inside the else branch, so a supplied legend produced an empty
+    figure.  Saving the figure and checking it is not blank catches both.
+    """
+    with _showxcorrx_run(display=True) as (tmpdir, args):
+        pass
+    # with explicit styling, which walks the colour and legend handling
+    with _showxcorrx_run(
+        display=True,
+        colors="red",
+        linewidths="2",
+        legends="thelegend",
+        thetitle="a title",
+        xlabel="time",
+        ylabel="correlation",
+        outputfile="theplot.png",
+    ) as (tmpdir, args):
+        # a legend was supplied, so the data still has to have been drawn
+        assert os.path.isfile(args.outputfile), "no figure was written"
+        assert os.path.getsize(args.outputfile) > 5000, "the figure looks empty"
+
+
 def test_showxcorrx(debug=False):
     # Parser tests
     if debug:
@@ -913,6 +1103,17 @@ def test_showxcorrx(debug=False):
     showxcorrx_partialcorr_leaves_an_unrelated_control_alone(debug=debug)
     showxcorrx_partialcorr_accepts_several_control_variables(debug=debug)
     showxcorrx_partialcorr_rejects_a_short_control_file(debug=debug)
+
+    # null distributions, reporting and plotting
+    if debug:
+        print("Running null distribution and plotting tests")
+    showxcorrx_null_distribution_sets_thresholds(debug=debug)
+    showxcorrx_mutualinfo_with_numestreps_is_unsupported(debug=debug)
+    showxcorrx_mismatched_sample_rates_are_rejected(debug=debug)
+    showxcorrx_verbose_and_debug_reporting(debug=debug)
+    showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses(debug=debug)
+    showxcorrx_does_not_hardcode_a_backend(debug=debug)
+    showxcorrx_display_paths_run(debug=debug)
 
 
 if __name__ == "__main__":

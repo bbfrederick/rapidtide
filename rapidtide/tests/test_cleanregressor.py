@@ -21,12 +21,196 @@ import os
 import matplotlib as mpl
 import numpy as np
 
+import pytest
+
+import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
 import rapidtide.miscmath as tide_math
 import rapidtide.resample as tide_resample
 import rapidtide.simFuncClasses as tide_simFuncClasses
 import rapidtide.workflows.cleanregressor as tide_cleanregressor
 from rapidtide.tests.utils import get_examples_path, get_test_temp_path, mse
+
+# ==================== _compute_acf and sharpen_regressor ====================
+
+
+def _makeechoedregressor(samplerate=10.0, numpoints=3000, echodelay=8.0, echoamp=0.7, seed=0):
+    """A broadband regressor plus a delayed copy of itself.
+
+    An echo in the regressor puts a sidelobe in its autocorrelation at the echo
+    delay, which is exactly the structure sharpen_regressor exists to remove.  The
+    plain version is returned alongside so tests can check that a regressor without
+    an echo is left alone.
+
+    Parameters
+    ----------
+    samplerate : float
+        Samples per second.
+    numpoints : int
+        Length of the regressor.
+    echodelay : float
+        Echo delay, in seconds.
+    echoamp : float
+        Echo amplitude relative to the original.
+    seed : int
+        Seed for the component phases and amplitudes.
+
+    Returns
+    -------
+    theplain, theechoed : NDArray
+        The regressor without and with the echo.
+    """
+    thetimes = np.arange(numpoints) / samplerate
+    therng = np.random.RandomState(seed)
+    theplain = np.zeros(numpoints)
+    for thefreq, thephase, theamp in zip(
+        np.linspace(0.02, 0.15, 25),
+        therng.uniform(0, 2 * np.pi, 25),
+        therng.uniform(0.5, 1.5, 25),
+    ):
+        theplain += theamp * np.sin(2 * np.pi * thefreq * thetimes + thephase)
+    theechoed = theplain + echoamp * np.roll(theplain, int(echodelay * samplerate))
+    return theplain, theechoed
+
+
+def compute_acf_tests(debug=False):
+    """The ACF is the input to every sidelobe decision, so its scaling and axis have
+    to be right.  corrnormalize already normalizes the energy, so a second division by
+    n would leave the values around 1/n and no sidelobe would ever clear a threshold.
+    """
+    if debug:
+        print("compute_acf_tests")
+
+    thesamplerate, thenumpoints = 10.0, 2000
+    theoversamptr = 1.0 / thesamplerate
+    theplain, dummy = _makeechoedregressor(thesamplerate, thenumpoints)
+
+    thelags, theacf = tide_cleanregressor._compute_acf(theplain, theoversamptr, 20.0)
+
+    # zero lag is the signal's energy, which corrnormalize has already set to 1
+    thezeroindex = int(np.argmin(np.abs(thelags)))
+    assert theacf[thezeroindex] == pytest.approx(1.0, abs=0.02), theacf[thezeroindex]
+    assert theacf[thezeroindex] == pytest.approx(theacf.max())
+
+    # an autocorrelation is symmetric about zero lag
+    np.testing.assert_allclose(theacf, theacf[::-1], atol=1e-9)
+
+    # the lag axis is in seconds and spans the requested range
+    assert thelags[thezeroindex] == pytest.approx(0.0)
+    np.testing.assert_allclose(np.diff(thelags), theoversamptr)
+    assert thelags[-1] == pytest.approx(20.0, abs=theoversamptr)
+
+    # a shorter lagmax returns a shorter function
+    theshortlags, theshortacf = tide_cleanregressor._compute_acf(theplain, theoversamptr, 5.0)
+    assert len(theshortacf) < len(theacf)
+    assert theshortlags[-1] == pytest.approx(5.0, abs=theoversamptr)
+
+
+def sharpen_regressor_finds_and_removes_sidelobes(testtemproot, debug=False):
+    """A regressor carrying an echo has a sidelobe at the echo delay.  Sharpening has
+    to shrink it - that is the entire purpose of the routine."""
+    if debug:
+        print("sharpen_regressor_finds_and_removes_sidelobes")
+
+    thesamplerate, thenumpoints, theechodelay = 10.0, 3000, 8.0
+    theoversamptr = 1.0 / thesamplerate
+    dummy, theechoed = _makeechoedregressor(thesamplerate, thenumpoints, theechodelay)
+
+    thelags, theacf = tide_cleanregressor._compute_acf(theechoed, theoversamptr, 20.0)
+    thesidelobesbefore = tide_corr.find_all_acf_sidelobes(thelags, theacf, ampthresh=0.2)
+    assert thesidelobesbefore, "the fixture has no sidelobe to remove"
+    # the sidelobe sits at the planted echo delay
+    thepositions = sorted(abs(thelag) for thelag, dummy2 in thesidelobesbefore)
+    assert thepositions[0] == pytest.approx(theechodelay, abs=0.5), thepositions
+
+    thesharpened = tide_cleanregressor.sharpen_regressor(
+        theechoed,
+        theoversamptr,
+        thesamplerate,
+        0,
+        thenumpoints - 1,
+        20.0,
+        100,
+        os.path.join(testtemproot, "sharpentest"),
+        debug=debug,
+    )
+
+    assert thesharpened.shape == theechoed.shape
+    dummy3, theacfafter = tide_cleanregressor._compute_acf(thesharpened, theoversamptr, 20.0)
+    thesidelobesafter = tide_corr.find_all_acf_sidelobes(thelags, theacfafter, ampthresh=0.2)
+
+    thebeforemax = max(abs(theamp) for dummy4, theamp in thesidelobesbefore)
+    theaftermax = max((abs(theamp) for dummy5, theamp in thesidelobesafter), default=0.0)
+    if debug:
+        print(f"  sidelobe amplitude {thebeforemax:.3f} -> {theaftermax:.3f}")
+    assert theaftermax < thebeforemax, "sharpening did not reduce the sidelobe"
+
+    # the output timecourse is written for inspection
+    assert os.path.isfile(
+        os.path.join(testtemproot, "sharpentest_desc-sharpenedregressor_timeseries.json")
+    )
+
+
+def sharpen_regressor_leaves_a_clean_regressor_alone(testtemproot, debug=False):
+    """With nothing to sharpen the input is returned untouched.  Running the
+    deconvolution anyway would distort a perfectly good regressor."""
+    if debug:
+        print("sharpen_regressor_leaves_a_clean_regressor_alone")
+
+    # 3000 points: a shorter record leaves enough residual structure in the ACF of a
+    # finite sum of sinusoids to trip the sidelobe finder on its own
+    thesamplerate, thenumpoints = 10.0, 3000
+    theoversamptr = 1.0 / thesamplerate
+    theplain, dummy = _makeechoedregressor(thesamplerate, thenumpoints)
+
+    thelags, theacf = tide_cleanregressor._compute_acf(theplain, theoversamptr, 20.0)
+    assert not tide_corr.find_all_acf_sidelobes(
+        thelags, theacf, ampthresh=0.2
+    ), "the clean fixture already has sidelobes"
+
+    theresult = tide_cleanregressor.sharpen_regressor(
+        theplain,
+        theoversamptr,
+        thesamplerate,
+        0,
+        thenumpoints - 1,
+        20.0,
+        100,
+        os.path.join(testtemproot, "sharpenclean"),
+        debug=debug,
+    )
+    np.testing.assert_array_equal(theresult, theplain)
+
+
+def sharpen_regressor_falls_back_when_wiener_does_not_help(testtemproot, debug=False):
+    """Wiener deconvolution is tried first and only kept if it cuts the sidelobe by at
+    least 20 percent; otherwise an iterative echo subtraction runs instead.  Forcing
+    the acceptance threshold to be unreachable exercises that fallback."""
+    if debug:
+        print("sharpen_regressor_falls_back_when_wiener_does_not_help")
+
+    thesamplerate, thenumpoints = 10.0, 3000
+    theoversamptr = 1.0 / thesamplerate
+    dummy, theechoed = _makeechoedregressor(thesamplerate, thenumpoints, 8.0)
+
+    # a very low amplitude threshold makes find_all_acf_sidelobes report structure
+    # that the Wiener step cannot clear, so the fallback has to take over
+    theresult = tide_cleanregressor.sharpen_regressor(
+        theechoed,
+        theoversamptr,
+        thesamplerate,
+        0,
+        thenumpoints - 1,
+        20.0,
+        100,
+        os.path.join(testtemproot, "sharpenfallback"),
+        ampthresh=0.05,
+        max_iters=2,
+        debug=debug,
+    )
+    assert theresult.shape == theechoed.shape
+    assert np.all(np.isfinite(theresult))
+    assert not np.allclose(theresult, theechoed), "the fallback changed nothing"
 
 
 def test_cleanregressor(debug=False, local=False, displayplots=False):
@@ -244,6 +428,15 @@ def _runwithsidelobe(autodespecklethresh, local=False, debug=False):
     )
     despeckle_thresh, sidelobeamp, sidelobetime = thereturn[3], thereturn[4], thereturn[5]
     return despeckle_thresh, sidelobeamp, sidelobetime
+
+
+def test_sharpenregressor(debug=False, local=False):
+    """Entry point for the ACF sharpening tests."""
+    testtemproot = get_test_temp_path(local)
+    compute_acf_tests(debug=debug)
+    sharpen_regressor_finds_and_removes_sidelobes(testtemproot, debug=debug)
+    sharpen_regressor_leaves_a_clean_regressor_alone(testtemproot, debug=debug)
+    sharpen_regressor_falls_back_when_wiener_does_not_help(testtemproot, debug=debug)
 
 
 def test_autodespecklethresh(local=False, debug=False):
