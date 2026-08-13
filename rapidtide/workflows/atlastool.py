@@ -311,7 +311,10 @@ def atlastool(args: Any) -> None:
             for label in thelabels:
                 print(label)
         if len(thelabels) != numregions:
-            raise ("label file does not match atlas")
+            raise ValueError(
+                f"label file {args.labelfile} has {len(thelabels)} labels but the atlas "
+                f"has {numregions} regions"
+            )
 
     # now we have a 4d file, regardless of what we started with
     if args.dosplit:
@@ -365,103 +368,105 @@ def atlastool(args: Any) -> None:
         # do the resampling here
         print("resampling to new resolution")
         fsldir = os.environ.get("FSLDIR")
+        # checked before anything is built from it: the identity transform below is
+        # located inside FSLDIR, so testing it later would already have crashed
+        if fsldir is None:
+            print("FSL directory not found - aborting")
+            sys.exit()
         outputdir, outputfilename = os.path.split(args.outputtemplatename)
         if args.xfm is None:
             thexfm = os.path.join(fsldir, "data", "atlases", "bin", "eye.mat")
-            alignttype = "flirt"
+            aligntype = "flirt"
         else:
             thexfm = args.xfm
             dummy, theext = os.path.splitext(thexfm)
-            if theext == "mat":
+            # splitext keeps the separator, so this is ".mat" and not "mat"
+            if theext == ".mat":
                 aligntype = "flirt"
             else:
                 aligntype = "ants"
         preroot = os.path.join(outputdir, "temppre")
         postroot = os.path.join(outputdir, "temppost")
-        if fsldir is not None:
-            for thisregion in range(numregions):
-                # first write out a temp file with the data
-                outputvoxels = templatevoxels[:, thisregion].reshape((xsize, ysize, numslices))
-                template_hdr["dim"][4] = 1
+        for thisregion in range(numregions):
+            # first write out a temp file with the data
+            outputvoxels = templatevoxels[:, thisregion].reshape((xsize, ysize, numslices))
+            template_hdr["dim"][4] = 1
 
-                if args.debug:
-                    print(f"writing out temp file {thisregion}")
-                tide_io.savetonifti(
-                    outputvoxels,
-                    template_hdr,
-                    f"{preroot}_{str(thisregion).zfill(4)}",
-                )
-            if aligntype == "flirt":
-                mergecmd = os.path.join(fsldir, "bin", "fslmerge")
-                filelist = glob(f"{preroot}_*.nii.gz")
-                if args.debug:
-                    print(filelist)
-                sortedlist = sorted(filelist)
-                if args.debug:
-                    print(sortedlist)
-                thecommand = [mergecmd, "-t", preroot] + sortedlist
-                if args.debug:
-                    print(f"executing: {' '.join(thecommand)}")
-                subprocess.call(thecommand)
-
-                flirtcmd = os.path.join(fsldir, "bin", "flirt")
-                thecommand = []
-                thecommand.append(flirtcmd)
-                thecommand.append("-in")
-                thecommand.append(preroot)
-                thecommand.append("-ref")
-                thecommand.append(args.targetfile)
-                thecommand.append("-applyxfm")
-                thecommand.append("-init")
-                thecommand.append(thexfm)
-                thecommand.append("-out")
-                thecommand.append(postroot)
-                if args.debug:
-                    thecommand.append("-v")
-                    print(f"executing: {' '.join(thecommand)}")
-                subprocess.call(thecommand)
-
-            elif aligntype == "ants":
-                for thisregion in range(numregions):
-                    print(f"aligning {thisregion}")
-                    infile = f"{preroot}_{str(thisregion).zfill(4)}.nii.gz"
-                    outfile = f"{postroot}_{str(thisregion).zfill(4)}.nii.gz"
-                    tide_exttools.antsapply(
-                        infile, args.targetfile, outfile, [thexfm], debug=args.debug
-                    )
-                mergecmd = os.path.join(fsldir, "bin", "fslmerge")
-                filelist = glob(f"{postroot}_*.nii.gz")
-                if args.debug:
-                    print(filelist)
-                sortedlist = sorted(filelist)
-                if args.debug:
-                    print(sortedlist)
-                thecommand = [mergecmd, "-t", f"{postroot}"] + sortedlist
-                if args.debug:
-                    print(f"executing: {' '.join(thecommand)}")
-                subprocess.call(thecommand)
-            else:
-                raise ("Illegal alignment type")
             if args.debug:
-                print(f"reading back aligned file")
-            (
-                template_img,
-                template_data,
+                print(f"writing out temp file {thisregion}")
+            tide_io.savetonifti(
+                outputvoxels,
                 template_hdr,
-                templatedims,
-                templatesizes,
-            ) = tide_io.readfromnifti(postroot)
-            xsize = templatedims[1]
-            ysize = templatedims[2]
-            numslices = templatedims[3]
-            numregions = templatedims[4]
-            numvoxels = int(xsize) * int(ysize) * int(numslices)
-            templatevoxels = np.around(np.reshape(template_data, (numvoxels, numregions))).astype(
-                np.uint16
+                f"{preroot}_{str(thisregion).zfill(4)}",
             )
+        if aligntype == "flirt":
+            mergecmd = os.path.join(fsldir, "bin", "fslmerge")
+            filelist = glob(f"{preroot}_*.nii.gz")
+            if args.debug:
+                print(filelist)
+            sortedlist = sorted(filelist)
+            if args.debug:
+                print(sortedlist)
+            thecommand = [mergecmd, "-t", preroot] + sortedlist
+            if args.debug:
+                print(f"executing: {' '.join(thecommand)}")
+            subprocess.call(thecommand)
+
+            flirtcmd = os.path.join(fsldir, "bin", "flirt")
+            thecommand = []
+            thecommand.append(flirtcmd)
+            thecommand.append("-in")
+            thecommand.append(preroot)
+            thecommand.append("-ref")
+            thecommand.append(args.targetfile)
+            thecommand.append("-applyxfm")
+            thecommand.append("-init")
+            thecommand.append(thexfm)
+            thecommand.append("-out")
+            thecommand.append(postroot)
+            if args.debug:
+                thecommand.append("-v")
+                print(f"executing: {' '.join(thecommand)}")
+            subprocess.call(thecommand)
+
+        elif aligntype == "ants":
+            for thisregion in range(numregions):
+                print(f"aligning {thisregion}")
+                infile = f"{preroot}_{str(thisregion).zfill(4)}.nii.gz"
+                outfile = f"{postroot}_{str(thisregion).zfill(4)}.nii.gz"
+                tide_exttools.antsapply(
+                    infile, args.targetfile, outfile, [thexfm], debug=args.debug
+                )
+            mergecmd = os.path.join(fsldir, "bin", "fslmerge")
+            filelist = glob(f"{postroot}_*.nii.gz")
+            if args.debug:
+                print(filelist)
+            sortedlist = sorted(filelist)
+            if args.debug:
+                print(sortedlist)
+            thecommand = [mergecmd, "-t", f"{postroot}"] + sortedlist
+            if args.debug:
+                print(f"executing: {' '.join(thecommand)}")
+            subprocess.call(thecommand)
         else:
-            print("FSL directory not found - aborting")
-            sys.exit()
+            raise ValueError(f"illegal alignment type {aligntype}")
+        if args.debug:
+            print(f"reading back aligned file")
+        (
+            template_img,
+            template_data,
+            template_hdr,
+            templatedims,
+            templatesizes,
+        ) = tide_io.readfromnifti(postroot)
+        xsize = templatedims[1]
+        ysize = templatedims[2]
+        numslices = templatedims[3]
+        numregions = templatedims[4]
+        numvoxels = int(xsize) * int(ysize) * int(numslices)
+        templatevoxels = np.around(np.reshape(template_data, (numvoxels, numregions))).astype(
+            np.uint16
+        )
 
     # mask data
     if args.maskfile is not None:

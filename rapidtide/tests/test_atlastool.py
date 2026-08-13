@@ -120,6 +120,31 @@ def _make_base_args(testtemproot, suffix=""):
     )
 
 
+def _outputsaves(mock_save):
+    """The savetonifti calls that produced real output.
+
+    Under --debug atlastool also dumps two masktemp volumes for inspection, so a
+    bare call count is only correct when debug is off.  Filtering them out is what
+    lets these tests be run either way - which matters, because the __main__ entry
+    point at the bottom of this file runs the whole suite with debug=True.
+
+    Parameters
+    ----------
+    mock_save : MagicMock
+        The patched tide_io.savetonifti.
+
+    Returns
+    -------
+    list
+        The non-debug calls, in call order.
+    """
+    return [
+        thecall
+        for thecall in mock_save.call_args_list
+        if not str(thecall[0][2]).endswith(("masktemp1", "masktemp2"))
+    ]
+
+
 # ==================== Tests for _get_parser ====================
 
 
@@ -244,8 +269,8 @@ def atlastool_3d_to_3d(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         # 3D output should have shape (xsize, ysize, numslices)
         assert saved_data.ndim == 3
 
@@ -266,8 +291,8 @@ def atlastool_3d_to_4d(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         # 4D output should have 4 dimensions
         assert saved_data.ndim == 4
 
@@ -290,8 +315,8 @@ def atlastool_3d_with_maxval(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         # All values should be <= maxval
         assert np.max(saved_data) <= 3
 
@@ -315,8 +340,8 @@ def atlastool_4d_to_3d(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         assert saved_data.ndim == 3
 
 
@@ -336,8 +361,8 @@ def atlastool_4d_to_4d(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         assert saved_data.ndim == 4
 
 
@@ -358,7 +383,7 @@ def atlastool_4d_with_maxval(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
+        assert len(_outputsaves(mock_save)) == 1
 
 
 # ==================== Tests for split functionality ====================
@@ -382,8 +407,8 @@ def atlastool_split_LtoR(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         # After split, number of regions should be doubled
         assert saved_data.ndim == 4
         assert saved_data.shape[3] == 4  # 2 regions * 2 hemispheres
@@ -407,8 +432,8 @@ def atlastool_split_RtoL(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         assert saved_data.shape[3] == 4
 
 
@@ -491,7 +516,14 @@ def atlastool_with_labels_no_split(testtemproot, debug=False):
 
 
 def atlastool_label_count_mismatch(testtemproot, debug=False):
-    """Test that mismatched label count raises an error."""
+    """A label file that does not match the atlas must raise a real exception.
+
+    This used to be `raise ("...")`, which raises a string and so produces
+    "TypeError: exceptions must derive from BaseException" - a message about
+    Python, telling the user nothing about their label file.  The earlier version
+    of this test caught TypeError with a note that it would notice if the behavior
+    changed, which is what happened.
+    """
     data, hdr, dims, sizes = _make_3d_atlas(xsize=6, numregions=3)
     labelfile = os.path.join(testtemproot, "bad_labels.txt")
     with open(labelfile, "w") as f:
@@ -510,11 +542,18 @@ def atlastool_label_count_mismatch(testtemproot, debug=False):
 
         try:
             atlastool(args)
-            # The code does raise("...") which creates a string, not an exception.
-            # It will actually NOT raise, since raise("string") is a TypeError in
-            # modern Python. But if the behavior changes, this test catches it.
-        except TypeError:
-            pass
+        except ValueError as theerror:
+            themessage = str(theerror)
+        except TypeError as theerror:
+            raise AssertionError(f"raised a bare string rather than an exception: {theerror}")
+        else:
+            raise AssertionError("a mismatched label file was accepted")
+
+    if debug:
+        print(f"error message: {themessage}")
+    # the message has to name both counts, or it does not help anyone
+    assert "1" in themessage and "3" in themessage
+    assert labelfile in themessage
 
 
 # ==================== Tests for mask functionality ====================
@@ -550,8 +589,8 @@ def atlastool_with_maskfile(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         # Masked-out voxels should be zero
         assert np.all(saved_data[:2, :, :] == 0)
 
@@ -638,7 +677,7 @@ def atlastool_auto_mask(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
+        assert len(_outputsaves(mock_save)) == 1
 
 
 # ==================== Tests for removeemptyregions ====================
@@ -672,8 +711,8 @@ def atlastool_remove_empty_regions(testtemproot, debug=False):
 
         atlastool(args)
 
-        mock_save.assert_called_once()
-        saved_data = mock_save.call_args[0][0]
+        assert len(_outputsaves(mock_save)) == 1
+        saved_data = _outputsaves(mock_save)[0][0][0]
         # Should have 2 regions after removing the empty one
         assert saved_data.shape == (xsize, ysize, numslices, 2)
 
@@ -726,9 +765,11 @@ def atlastool_debug_auto_mask(testtemproot, debug=False):
 def atlastool_targetfile_no_fsl(testtemproot, debug=False):
     """Test that atlastool exits when targetfile is given but FSLDIR is not set.
 
-    Note: when xfm is None, the code tries os.path.join(fsldir, ...) before
-    checking if fsldir is not None, so we must provide an xfm to reach the
-    sys.exit() path.
+    This covers the case where an xfm IS supplied.  The FSLDIR check used to sit
+    below the point where the identity transform path was built, so with xfm None
+    the run died on a TypeError before ever reaching it, and this test had to pass
+    an xfm to get here at all.  The check is hoisted now;
+    atlastool_resample_aborts_when_fsldir_is_unset covers the xfm None case.
     """
     data, hdr, dims, sizes = _make_3d_atlas(xsize=6, numregions=2)
     xfmfile = os.path.join(testtemproot, "dummy.mat")
@@ -758,6 +799,315 @@ def atlastool_targetfile_no_fsl(testtemproot, debug=False):
 
 
 # ==================== Main test function ====================
+
+
+# ==================== Tests for the --targetfile resampling block ====================
+#
+# This whole block used to be unreachable: a typo left `aligntype` unassigned when no
+# --xfm was given, and the extension test compared against "mat" when os.path.splitext
+# returns ".mat", so an explicit FLIRT transform was routed to ANTs instead.  These
+# tests pin the command lines that get built, which is the only place those mistakes
+# were ever visible - nothing downstream inspects them.
+
+
+def _make_resample_mocks(data, hdr, dims, sizes, numregions=3, emptyregions=()):
+    """Build the readfromnifti side effect for a resampling run.
+
+    atlastool reads twice when resampling: once for the input template, and once to
+    read back whatever the aligner wrote.  The second read is what sets the post
+    resample dimensions, so it has to be a self consistent 4D volume.
+
+    Parameters
+    ----------
+    data, hdr, dims, sizes : various
+        The input template as returned by the _make_*_atlas helpers.
+    numregions : int
+        Number of regions in the resampled readback.
+    emptyregions : iterable of int
+        Region indices to leave empty in the readback, simulating a region that
+        alignment resampled out of existence.
+
+    Returns
+    -------
+    list
+        The two return values for readfromnifti, in call order.
+    """
+    xsize, ysize, numslices = int(dims[1]), int(dims[2]), int(dims[3])
+    resampled = np.zeros((xsize, ysize, numslices, numregions), dtype=np.float64)
+    for theregion in range(numregions):
+        if theregion in emptyregions:
+            continue
+        resampled[theregion :: max(numregions, 1), :, :, theregion] = 1.0
+    resampleddims = np.array([4, xsize, ysize, numslices, numregions, 1, 1, 1])
+    resampledhdr = _make_mock_hdr(xsize, ysize, numslices, numregions)
+    return [
+        (MagicMock(), data, hdr, dims, sizes),
+        (MagicMock(), resampled, resampledhdr, resampleddims, sizes),
+    ]
+
+
+def atlastool_resample_debug_adds_the_verbose_flag(testtemproot, debug=False):
+    """--debug is not only chatter: it adds -v to the flirt command line, so the
+    aligner's own output ends up in the log alongside everything else."""
+    data, hdr, dims, sizes = _make_3d_atlas()
+    args = _make_base_args(testtemproot, suffix="_flirtverbose")
+    args.targetfile = os.path.join(testtemproot, "target.nii.gz")
+    args.xfm = None
+    args.debug = True
+
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlastool.subprocess.call") as mock_call,
+        patch("rapidtide.workflows.atlastool.glob") as mock_glob,
+        patch.dict(os.environ, {"FSLDIR": "/fake/fsl"}),
+    ):
+        mock_read.side_effect = _make_resample_mocks(data, hdr, dims, sizes)
+        mock_glob.return_value = ["/tmp/temppre_0000.nii.gz"]
+        atlastool(args)
+
+    theflirt = [c[0][0] for c in mock_call.call_args_list if c[0][0][0].endswith("flirt")][0]
+    if debug:
+        print(" ".join(theflirt))
+    assert "-v" in theflirt, "debug did not put flirt into verbose mode"
+
+
+def atlastool_resample_debug_runs_the_ants_path(testtemproot, debug=False):
+    """The ANTs branch has its own debug reporting, and antsapply is handed the
+    debug flag so its own commands are logged too."""
+    data, hdr, dims, sizes = _make_3d_atlas()
+    args = _make_base_args(testtemproot, suffix="_antsverbose")
+    args.targetfile = os.path.join(testtemproot, "target.nii.gz")
+    args.xfm = os.path.join(testtemproot, "mywarp.h5")
+    args.debug = True
+
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlastool.subprocess.call"),
+        patch("rapidtide.workflows.atlastool.tide_exttools.antsapply") as mock_ants,
+        patch("rapidtide.workflows.atlastool.glob") as mock_glob,
+        patch.dict(os.environ, {"FSLDIR": "/fake/fsl"}),
+    ):
+        mock_read.side_effect = _make_resample_mocks(data, hdr, dims, sizes)
+        mock_glob.return_value = ["/tmp/temppost_0000.nii.gz"]
+        atlastool(args)
+
+    if debug:
+        print(f"antsapply kwargs: {[c[1] for c in mock_ants.call_args_list]}")
+    assert mock_ants.call_count > 0
+    for thecall in mock_ants.call_args_list:
+        assert thecall[1].get("debug") is True, "the debug flag was not passed to antsapply"
+
+
+def atlastool_resample_drops_regions_emptied_by_alignment(testtemproot, debug=False):
+    """Alignment can resample a small region out of existence.  With
+    --removeemptyregions the second sweep has to notice and drop it, and the label
+    list has to shrink with it or labels and regions fall out of step.
+    """
+    data, hdr, dims, sizes = _make_3d_atlas(numregions=3)
+    thelabelfile = os.path.join(testtemproot, "resample_labels.txt")
+    with open(thelabelfile, "w") as f:
+        f.write("Alpha\nBeta\nGamma\n")
+
+    args = _make_base_args(testtemproot, suffix="_resampleempty")
+    args.targetfile = os.path.join(testtemproot, "target.nii.gz")
+    args.xfm = None
+    args.labelfile = thelabelfile
+    args.removeemptyregions = True
+    args.volumeperregion = True
+    # run this one with debug on: it is the only path that has both a label file and
+    # the resampling block, so it is where the debug reporting in both gets exercised
+    args.debug = True
+
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+        patch("rapidtide.workflows.atlastool.subprocess.call"),
+        patch("rapidtide.workflows.atlastool.glob") as mock_glob,
+        patch.dict(os.environ, {"FSLDIR": "/fake/fsl"}),
+    ):
+        # region 1 comes back from the aligner with nothing in it
+        mock_read.side_effect = _make_resample_mocks(
+            data, hdr, dims, sizes, numregions=3, emptyregions=(1,)
+        )
+        mock_glob.return_value = ["/tmp/temppre_0000.nii.gz"]
+        atlastool(args)
+
+    thesaved = _outputsaves(mock_save)[-1][0][0]
+    if debug:
+        print(f"final saved shape {thesaved.shape}")
+    # three regions in, one emptied by alignment, two out
+    assert thesaved.shape[-1] == 2, f"expected 2 surviving regions, got {thesaved.shape[-1]}"
+
+    thelabeloutput = os.path.join(testtemproot, "atlasout_resampleempty_labels.txt")
+    assert os.path.exists(thelabeloutput)
+    with open(thelabeloutput) as f:
+        thefinallabels = f.read().splitlines()
+    if debug:
+        print(f"final labels {thefinallabels}")
+    assert len(thefinallabels) == 2, "the label list did not shrink with the regions"
+
+
+def atlastool_resample_with_flirt_and_default_xfm(testtemproot, debug=False):
+    """--targetfile with no --xfm must use FSL's identity transform and run flirt.
+
+    This is the default resampling path, and before the alignttype typo was fixed it
+    raised UnboundLocalError for every single caller.
+    """
+    data, hdr, dims, sizes = _make_3d_atlas()
+    args = _make_base_args(testtemproot, suffix="_flirtdefault")
+    args.targetfile = os.path.join(testtemproot, "target.nii.gz")
+    args.xfm = None
+    args.debug = debug
+
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti") as mock_save,
+        patch("rapidtide.workflows.atlastool.subprocess.call") as mock_call,
+        patch("rapidtide.workflows.atlastool.glob") as mock_glob,
+        patch.dict(os.environ, {"FSLDIR": "/fake/fsl"}),
+    ):
+        mock_read.side_effect = _make_resample_mocks(data, hdr, dims, sizes)
+        mock_glob.return_value = ["/tmp/temppre_0001.nii.gz", "/tmp/temppre_0000.nii.gz"]
+
+        atlastool(args)
+
+    thecommands = [thecall[0][0] for thecall in mock_call.call_args_list]
+    if debug:
+        for thecommand in thecommands:
+            print(" ".join(thecommand))
+
+    assert len(thecommands) == 2, "expected an fslmerge and a flirt call"
+    themerge, theflirt = thecommands
+
+    # the merge collects the per region temp files in sorted order, not glob order
+    assert themerge[0].endswith(os.path.join("bin", "fslmerge"))
+    assert themerge[1] == "-t"
+    assert themerge[3:] == sorted(mock_glob.return_value)
+
+    # flirt applies the identity transform that ships inside FSLDIR
+    assert theflirt[0].endswith(os.path.join("bin", "flirt"))
+    assert "-applyxfm" in theflirt
+    assert args.targetfile == theflirt[theflirt.index("-ref") + 1]
+    theusedxfm = theflirt[theflirt.index("-init") + 1]
+    assert theusedxfm == os.path.join("/fake/fsl", "data", "atlases", "bin", "eye.mat")
+
+    # one temp volume written per region, then the final output
+    thesavednames = [str(thecall[0][2]) for thecall in _outputsaves(mock_save)]
+    thetempsaves = [thename for thename in thesavednames if "temppre" in thename]
+    assert len(thetempsaves) == 3, f"expected one temp volume per region, got {thetempsaves}"
+    assert args.outputtemplatename in thesavednames
+
+
+def atlastool_resample_with_flirt_and_explicit_mat(testtemproot, debug=False):
+    """A .mat transform is a FLIRT transform.
+
+    os.path.splitext returns the extension WITH its dot, so the old comparison
+    against "mat" never matched and every .mat file was handed to ANTs.
+    """
+    data, hdr, dims, sizes = _make_3d_atlas()
+    args = _make_base_args(testtemproot, suffix="_flirtmat")
+    args.targetfile = os.path.join(testtemproot, "target.nii.gz")
+    args.xfm = os.path.join(testtemproot, "mytransform.mat")
+    args.debug = debug
+
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlastool.subprocess.call") as mock_call,
+        patch("rapidtide.workflows.atlastool.tide_exttools.antsapply") as mock_ants,
+        patch("rapidtide.workflows.atlastool.glob") as mock_glob,
+        patch.dict(os.environ, {"FSLDIR": "/fake/fsl"}),
+    ):
+        mock_read.side_effect = _make_resample_mocks(data, hdr, dims, sizes)
+        mock_glob.return_value = ["/tmp/temppre_0000.nii.gz"]
+
+        atlastool(args)
+
+    thecommands = [thecall[0][0] for thecall in mock_call.call_args_list]
+    if debug:
+        print(f"ants calls {mock_ants.call_count}, commands {[c[0] for c in thecommands]}")
+
+    assert mock_ants.call_count == 0, "a .mat transform was sent to ANTs"
+    assert any(thecommand[0].endswith("flirt") for thecommand in thecommands)
+    theflirt = [c for c in thecommands if c[0].endswith("flirt")][0]
+    assert theflirt[theflirt.index("-init") + 1] == args.xfm
+
+
+def atlastool_resample_with_ants(testtemproot, debug=False):
+    """A non .mat transform goes to ANTs, one call per region, then a merge."""
+    data, hdr, dims, sizes = _make_3d_atlas()
+    numregions = 3
+    args = _make_base_args(testtemproot, suffix="_ants")
+    args.targetfile = os.path.join(testtemproot, "target.nii.gz")
+    args.xfm = os.path.join(testtemproot, "mywarp.h5")
+    args.debug = debug
+
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlastool.subprocess.call") as mock_call,
+        patch("rapidtide.workflows.atlastool.tide_exttools.antsapply") as mock_ants,
+        patch("rapidtide.workflows.atlastool.glob") as mock_glob,
+        patch.dict(os.environ, {"FSLDIR": "/fake/fsl"}),
+    ):
+        mock_read.side_effect = _make_resample_mocks(data, hdr, dims, sizes)
+        mock_glob.return_value = [f"/tmp/temppost_{i:04d}.nii.gz" for i in range(numregions)]
+
+        atlastool(args)
+
+    if debug:
+        print(f"ants calls {mock_ants.call_count}")
+        for thecall in mock_ants.call_args_list:
+            print(f"  {thecall[0]}")
+
+    # one alignment per region, each carrying the supplied warp
+    assert mock_ants.call_count == numregions
+    for thecall in mock_ants.call_args_list:
+        theinfile, thetarget, theoutfile, thexfmlist = thecall[0][:4]
+        assert thetarget == args.targetfile
+        assert thexfmlist == [args.xfm]
+        assert "temppre" in theinfile and "temppost" in theoutfile
+
+    # then a single merge of the aligned volumes, and no flirt
+    thecommands = [thecall[0][0] for thecall in mock_call.call_args_list]
+    assert len(thecommands) == 1
+    assert thecommands[0][0].endswith(os.path.join("bin", "fslmerge"))
+    assert not any(thecommand[0].endswith("flirt") for thecommand in thecommands)
+
+
+def atlastool_resample_aborts_when_fsldir_is_unset(testtemproot, debug=False):
+    """Without FSLDIR there is no aligner and no identity transform to point at, so
+    the run has to stop with its own message rather than a TypeError from trying to
+    build a path out of None."""
+    data, hdr, dims, sizes = _make_3d_atlas()
+    args = _make_base_args(testtemproot, suffix="_nofsl")
+    args.targetfile = os.path.join(testtemproot, "target.nii.gz")
+    args.xfm = None
+    args.debug = debug
+
+    theenv = {k: v for k, v in os.environ.items() if k != "FSLDIR"}
+    with (
+        patch("rapidtide.workflows.atlastool.tide_io.readfromnifti") as mock_read,
+        patch("rapidtide.workflows.atlastool.tide_io.savetonifti"),
+        patch("rapidtide.workflows.atlastool.subprocess.call") as mock_call,
+        patch.dict(os.environ, theenv, clear=True),
+    ):
+        mock_read.return_value = (MagicMock(), data, hdr, dims, sizes)
+        try:
+            atlastool(args)
+        except SystemExit:
+            thereason = "SystemExit"
+        except TypeError as theerror:
+            thereason = f"TypeError: {theerror}"
+        else:
+            thereason = "returned normally"
+
+    if debug:
+        print(f"outcome without FSLDIR: {thereason}")
+    assert thereason == "SystemExit", f"expected a clean abort, got {thereason}"
+    assert mock_call.call_count == 0, "an aligner was invoked with no FSL present"
 
 
 def test_atlastool(debug=False, local=False):
@@ -877,6 +1227,35 @@ def test_atlastool(debug=False, local=False):
     if debug:
         print("atlastool_targetfile_no_fsl(testtemproot)")
     atlastool_targetfile_no_fsl(testtemproot, debug=debug)
+
+    # --targetfile resampling tests
+    if debug:
+        print("atlastool_resample_with_flirt_and_default_xfm(testtemproot)")
+    atlastool_resample_with_flirt_and_default_xfm(testtemproot, debug=debug)
+
+    if debug:
+        print("atlastool_resample_with_flirt_and_explicit_mat(testtemproot)")
+    atlastool_resample_with_flirt_and_explicit_mat(testtemproot, debug=debug)
+
+    if debug:
+        print("atlastool_resample_with_ants(testtemproot)")
+    atlastool_resample_with_ants(testtemproot, debug=debug)
+
+    if debug:
+        print("atlastool_resample_aborts_when_fsldir_is_unset(testtemproot)")
+    atlastool_resample_aborts_when_fsldir_is_unset(testtemproot, debug=debug)
+
+    if debug:
+        print("atlastool_resample_debug_adds_the_verbose_flag(testtemproot)")
+    atlastool_resample_debug_adds_the_verbose_flag(testtemproot, debug=debug)
+
+    if debug:
+        print("atlastool_resample_debug_runs_the_ants_path(testtemproot)")
+    atlastool_resample_debug_runs_the_ants_path(testtemproot, debug=debug)
+
+    if debug:
+        print("atlastool_resample_drops_regions_emptied_by_alignment(testtemproot)")
+    atlastool_resample_drops_regions_emptied_by_alignment(testtemproot, debug=debug)
 
 
 if __name__ == "__main__":
