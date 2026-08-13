@@ -698,14 +698,47 @@ def correlationpass_gpu_falls_back_without_torch(debug=False):
 
 def correlationpass_gpu_checks_the_reference_length(debug=False):
     """The reference timecourse has to match the oversampled time axis, or the
-    correlation would be computed against a misaligned regressor."""
+    correlation would be computed against a misaligned regressor.
+
+    The check sits downstream of device resolution, so on a machine with no GPU the
+    fallback to the CPU implementation intercepts the bad input before the check is
+    ever reached.  Resolution is therefore pinned to the CPU torch device, which runs
+    the GPU code path everywhere without needing GPU hardware.
+    """
     if debug:
         print("correlationpass_gpu_checks_the_reference_length")
 
+    torch = pytest.importorskip("torch")
+
     theinputs = _makegpuinputs()
     theinputs["referencetc"] = theinputs["referencetc"][:-5]
-    with pytest.raises(ValueError, match="does not match"):
-        _rungpupass(theinputs, _makecorrelator(theinputs["Fs"]))
+    with patch.object(tide_calcsimfunc, "_resolve_torch_device", return_value=torch.device("cpu")):
+        with pytest.raises(ValueError, match="does not match"):
+            _rungpupass(theinputs, _makecorrelator(theinputs["Fs"]))
+
+
+def correlationpass_gpu_reference_mismatch_reaches_the_cpu_path(debug=False):
+    """Without a GPU the same bad input takes the fallback instead, and the CPU
+    implementation responds by calling sys.exit rather than raising.
+
+    Pinned, not fixed: the exit lives in Correlator.run in simFuncClasses and is
+    long-standing behaviour shared by every caller, so changing it is a separate
+    decision.  The consequence worth recording is that the two implementations of the
+    same entry point reject the same input in incompatible ways - one catchable, one
+    not.
+    """
+    if debug:
+        print("correlationpass_gpu_reference_mismatch_reaches_the_cpu_path")
+
+    theinputs = _makegpuinputs()
+    theinputs["referencetc"] = theinputs["referencetc"][:-5]
+    with patch.object(
+        tide_calcsimfunc,
+        "_resolve_torch_device",
+        side_effect=RuntimeError("No supported GPU backend found (CUDA/ROCm/MPS)."),
+    ):
+        with pytest.raises(SystemExit):
+            _rungpupass(theinputs, _makecorrelator(theinputs["Fs"]))
 
 
 def test_calcsimfuncdevices(debug=False):
@@ -718,3 +751,4 @@ def test_calcsimfuncdevices(debug=False):
     correlationpass_gpu_falls_back_without_a_gpu(debug=debug)
     correlationpass_gpu_falls_back_without_torch(debug=debug)
     correlationpass_gpu_checks_the_reference_length(debug=debug)
+    correlationpass_gpu_reference_mismatch_reaches_the_cpu_path(debug=debug)
