@@ -917,8 +917,25 @@ class TestVersionInContainer:
 # ========================= pyfftw configuration =========================
 
 
+@pytest.fixture
+def restorepyfftwconfig():
+    """Put pyfftw's global config back after a test has changed it.
+
+    pyfftw.config is process wide, and rapidtide.stats installs pyfftw as the backend
+    for every scipy.fft call at import time.  A test that leaves NUM_THREADS somewhere
+    other than it found it silently changes how every later test in the same pytest
+    session transforms - which is exactly the kind of order dependent behaviour that
+    only ever shows up in CI, where the whole suite runs in one process.
+    """
+    import pyfftw
+
+    thesaved = (pyfftw.config.NUM_THREADS, pyfftw.config.PLANNER_EFFORT)
+    yield
+    pyfftw.config.NUM_THREADS, pyfftw.config.PLANNER_EFFORT = thesaved
+
+
 class TestConfigurePyfftw:
-    def test_returns_a_wisdom_path_under_home(self, tmp_path):
+    def test_returns_a_wisdom_path_under_home(self, tmp_path, restorepyfftwconfig):
         theenv = {"HOME": str(tmp_path)}
         with patch.dict(os.environ, theenv, clear=True):
             thewisdomfile = tide_util.configurepyfftw(threads=2)
@@ -926,14 +943,14 @@ class TestConfigurePyfftw:
         assert thewisdomfile.endswith(".txt")
         assert ".config" in thewisdomfile
 
-    def test_thread_count_is_applied(self, tmp_path):
+    def test_thread_count_is_applied(self, tmp_path, restorepyfftwconfig):
         import pyfftw
 
         with patch.dict(os.environ, {"HOME": str(tmp_path)}, clear=True):
             tide_util.configurepyfftw(threads=3)
         assert pyfftw.config.NUM_THREADS == 3
 
-    def test_wisdom_round_trips_through_the_file(self, tmp_path):
+    def test_wisdom_round_trips_through_the_file(self, tmp_path, restorepyfftwconfig):
         """savewisdom writes what configurepyfftw reads back, so the two have to agree
         on the format.  They are only ever exercised as a pair."""
         with patch.dict(os.environ, {"HOME": str(tmp_path)}, clear=True):
@@ -947,7 +964,7 @@ class TestConfigurePyfftw:
             thesamefile = tide_util.configurepyfftw(threads=1, debug=True)
         assert thesamefile == thewisdomfile
 
-    def test_works_without_HOME_set(self):
+    def test_works_without_HOME_set(self, restorepyfftwconfig):
         """A stripped environment has no HOME.  Building the wisdom path out of None
         used to raise TypeError before anything could report a useful problem."""
         theenv = {k: v for k, v in os.environ.items() if k != "HOME"}
@@ -955,7 +972,7 @@ class TestConfigurePyfftw:
             thewisdomfile = tide_util.configurepyfftw(threads=1)
         assert isinstance(thewisdomfile, str) and thewisdomfile.endswith(".txt")
 
-    def test_thread_count_from_the_environment_is_an_integer(self, tmp_path):
+    def test_thread_count_from_the_environment_is_an_integer(self, tmp_path, restorepyfftwconfig):
         """PYFFTW_NUM_THREADS arrives as a string; NUM_THREADS is a count."""
         import pyfftw
 
@@ -965,7 +982,9 @@ class TestConfigurePyfftw:
         assert pyfftw.config.NUM_THREADS == 4
         assert isinstance(pyfftw.config.NUM_THREADS, int)
 
-    def test_unparseable_wisdom_is_reported_not_executed(self, tmp_path, capsys):
+    def test_unparseable_wisdom_is_reported_not_executed(
+        self, tmp_path, capsys, restorepyfftwconfig
+    ):
         """The wisdom file is read back from disk, so it must be parsed as data rather
         than executed.  Anything that is not a Python literal is a corrupt file, and
         has to be reported rather than run or raised."""
