@@ -148,19 +148,82 @@ def assert_output_maps_match(
 ) -> None:
     """
     Assert that selected NIFTI output maps match between two output roots.
+
+    Parameters
+    ----------
+    map_names : iterable of str
+        The map descriptors to compare, without the surrounding "_desc-" and "_map".
+    output_root_1 : str
+        Output root of the first run.
+    output_root_2 : str
+        Output root of the second run.
+    temp_root : str
+        Directory holding both runs' output.
+    absthresh : float, optional
+        Largest permitted absolute difference in any voxel.
+    msethresh : float, optional
+        Largest permitted mean squared difference.
+    spacetolerance : float, optional
+        Tolerance for the spatial geometry comparison.
+    debug : bool, optional
+        Passed through to the comparison.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If any named map differs by more than the thresholds, naming the map and
+        reporting how far apart the two versions actually are.
+
+    Notes
+    -----
+    The failure message carries the measured differences because these comparisons can
+    fail on one platform and pass on another - the two runs are separate computations
+    rather than a saved reference, so they agree to within rounding rather than
+    exactly.  Without the numbers there is no way to tell a real divergence from a
+    margin that was always thin.
     """
+    import numpy as np
+
     import rapidtide.io as tide_io
 
     for map_name in map_names:
         filename1 = os.path.join(temp_root, f"{output_root_1}_desc-{map_name}_map.nii.gz")
         filename2 = os.path.join(temp_root, f"{output_root_2}_desc-{map_name}_map.nii.gz")
-        assert tide_io.checkniftifilematch(
+        if tide_io.checkniftifilematch(
             filename1,
             filename2,
             absthresh=absthresh,
             msethresh=msethresh,
             spacetolerance=spacetolerance,
             debug=debug,
+        ):
+            continue
+
+        # the check already reported its verdict; add the magnitudes so a failure says
+        # how far off it was, not merely that it was off
+        thedetail = ""
+        try:
+            dummy, thedata1, dummy2, dummy3, dummy4 = tide_io.readfromnifti(filename1)
+            dummy5, thedata2, dummy6, dummy7, dummy8 = tide_io.readfromnifti(filename2)
+            if thedata1.shape == thedata2.shape:
+                thediff = np.abs(thedata1.astype(np.float64) - thedata2.astype(np.float64))
+                thedetail = (
+                    f" maxabsdiff={np.max(thediff):.4e} (limit {absthresh:.1e}), "
+                    f"mse={np.mean(thediff**2):.4e} (limit {msethresh:.1e}), "
+                    f"{int(np.sum(thediff > absthresh))} of {thediff.size} voxels over the "
+                    f"limit, map scale={np.max(np.abs(thedata1)):.4g}"
+                )
+            else:
+                thedetail = f" shapes differ: {thedata1.shape} vs {thedata2.shape}"
+        except Exception as thereason:
+            thedetail = f" (could not measure the difference: {thereason})"
+
+        raise AssertionError(
+            f"map '{map_name}' differs between {output_root_1} and {output_root_2}.{thedetail}"
         )
 
 
