@@ -31,6 +31,11 @@ import rapidtide.resample as tide_resample
 warnings.simplefilter(action="ignore", category=FutureWarning)
 LGR = logging.getLogger("GENERAL")
 
+# Fraction of the largest frequency bin magnitude below which phat weighting zeroes a
+# bin.  Mirrors the threshfrac default of tide_corr.gccproduct, which is what the CPU
+# correlation path uses; the two must agree or the GPU and CPU results diverge.
+PHAT_THRESHFRAC = 0.1
+
 
 def _resolve_torch_device(torch_module: Any, device: str = "auto") -> Any:
     """
@@ -515,8 +520,28 @@ def correlationpass_gpu(
 
     Notes
     -----
-    - This GPU path currently supports correlation weighting ``"None"``.
-      Other weighting modes fall back to CPU if ``fallback_to_cpu=True``.
+    - This GPU path supports correlation weightings ``"None"`` and ``"phat"``.  Other
+      weighting modes fall back to CPU if ``fallback_to_cpu=True``.
+    - Results match :func:`correlationpass_cpu` to within single precision, given the
+      two restrictions below.  The transform length, the phat bin threshold and the
+      final rescaling to the unweighted peak height are all taken from
+      :func:`rapidtide.correlate.convolve_weighted_fft`, so ``"phat"`` correlations
+      come back on the same scale here as they do on the CPU.
+    - ``"phat"`` costs two inverse transforms per batch rather than one, because the
+      scale it is normalised back to is the peak of the *unweighted* correlation and
+      there is no way to get that without computing it.  ``"None"`` still costs one.
+    - A voxel whose preprocessed timecourse is identically zero produces an all-zero
+      correlation, and the rescaling then divides zero by zero.  Both implementations
+      return NaN for such a voxel; neither special-cases it.
+    - **Restriction:** this path assumes ``theCorrelator.corrpadding == 0``, which is
+      what ``--corrtype circular`` (the default) sets.  ``--corrtype linear`` sets it
+      to -1, which makes ``fastcorrelate`` autopad and slice from a nonzero offset;
+      that is not reproduced here, so the two implementations disagree.
+    - **Restriction:** this path ignores ``theCorrelator.baselinefilter``, which
+      :class:`~rapidtide.simFuncClasses.Correlator` applies to the similarity function
+      before trimming.  It is None unless ``--baselinecutoff`` is given a nonzero
+      value (the default is 0.0, i.e. off), but when it is set the two implementations
+      disagree.
     - Timecourse resampling and preprocessing still use the existing CPU code paths
       to maintain numerical behavior with existing filters.
     """
@@ -692,7 +717,12 @@ def correlationpass_gpu(
     # FFT-based correlation with reversed reference reproduces fastcorrelate(..., weighting="None").
     ref_reversed = np.ascontiguousarray(theCorrelator.prepreftc[::-1])
     ref_t = torch.as_tensor(ref_reversed, device=torch_device, dtype=torch.float32)
-    fft_len = full_corr_len
+    # tide_corr.convolve_weighted_fft always transforms at the next power of two at or
+    # above the full correlation length.  For unweighted correlation the transform
+    # length makes no difference to the linear result, but phat rescales each frequency
+    # bin on its own, so a different length would put the weighting on a different set
+    # of bins and give a different answer.  Match the CPU length either way.
+    fft_len = int(2 ** np.ceil(np.log2(full_corr_len)))
     ref_fft = torch.fft.rfft(ref_t, n=fft_len)
 
     numvoxels = int(fmridata.shape[0])
@@ -723,15 +753,37 @@ def correlationpass_gpu(
         batch_t = torch.as_tensor(batch_np, device=torch_device, dtype=torch.float32)
         batch_fft = torch.fft.rfft(batch_t, n=fft_len, dim=-1)
         product = batch_fft * ref_fft.unsqueeze(0)
+        # The transform is run long and trimmed back, exactly as convolve_weighted_fft
+        # does with its fslice.
+        corr_full = torch.fft.irfft(product, n=fft_len, dim=-1)[:, :full_corr_len]
         if corrweighting == "phat":
-            # Match gccproduct(..., weighting='phat') thresholding behavior.
-            weighting = torch.abs(product)
-            thresh = torch.max(weighting, dim=-1, keepdim=True).values * 0.1
-            weighting = torch.maximum(weighting, thresh)
-            weighted_product = product / weighting
-        else:
-            weighted_product = product
-        corr_full = torch.fft.irfft(weighted_product, n=fft_len, dim=-1)
+            # gccproduct(..., weighting="phat") divides each bin by its own magnitude,
+            # zeroing the bins whose magnitude falls below threshfrac of the largest.
+            magnitude = torch.abs(product)
+            thresh = torch.amax(magnitude, dim=-1, keepdim=True) * PHAT_THRESHFRAC
+            keepbin = magnitude > thresh
+            # Substituting one in the bins that are about to be discarded keeps the
+            # division from producing a NaN that then has to be cleaned up: torch.where
+            # evaluates both of its branches, and MPS has no complex nan_to_num.  Note
+            # that a batch row of all zeros gives thresh == 0, which keeps no bins at
+            # all, matching gccproduct's `if thresh > 0.0` guard.
+            denominator = torch.where(keepbin, magnitude, torch.ones_like(magnitude))
+            weighted_product = torch.where(
+                keepbin,
+                product / denominator.to(product.dtype),
+                torch.zeros_like(product),
+            )
+            corr_weighted = torch.fft.irfft(weighted_product, n=fft_len, dim=-1)[:, :full_corr_len]
+            # convolve_weighted_fft finishes with `ret *= theorigmax / max(|ret|)`,
+            # putting the weighted correlation back on the same scale as the unweighted
+            # one.  Without this the peaks land in the right places but at an arbitrary,
+            # data dependent height, and every downstream threshold on correlation
+            # strength is read against the wrong scale.  Each voxel is rescaled on its
+            # own, because on the CPU each voxel is a separate call.
+            theorigmax = torch.amax(torch.abs(corr_full), dim=-1, keepdim=True)
+            corr_full = corr_weighted * (
+                theorigmax / torch.amax(torch.abs(corr_weighted), dim=-1, keepdim=True)
+            )
         if torch_device.type == "cuda":
             torch.cuda.synchronize(device=torch_device)
         elif torch_device.type == "mps":

@@ -16,9 +16,10 @@
 #   limitations under the License.
 #
 #
-import matplotlib as mpl
 import builtins
-from unittest.mock import patch
+
+import matplotlib as mpl
+from unittest.mock import MagicMock, patch
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -361,6 +362,55 @@ def test_correlationpass_gpu_matches_cpu(debug=False):
         assert np.allclose(corrout_gpu2, corrout_cpu, atol=5e-4, rtol=2e-3)
         if debug:
             print("cpu and gpu outputs match!")
+
+
+def test_correlationpass_gpu_phat_on_real_hardware(debug=False):
+    """Repeat the CPU/GPU phat comparison on whatever GPU this machine has.
+
+    The other phat parity test pins device resolution to torch's CPU device so it
+    runs everywhere, which means it never touches a real backend.  phat is the
+    default weighting for rapidtide, and it is the weighting whose arithmetic - a
+    per-bin division and two rescalings - is most exposed to a backend's fp32
+    quirks, so it is worth checking against actual hardware where there is some.
+    """
+    torch = pytest.importorskip("torch")
+    if not (
+        torch.cuda.is_available()
+        or (hasattr(torch.backends, "mps") and torch.backends.mps.is_available())
+    ):
+        pytest.skip("no GPU backend available")
+
+    theinputs = _makegpuinputs()
+    (
+        thecpuvoxels,
+        thecpuglobalmax,
+        thecpuscale,
+        thecpucorrout,
+        thecpumeanval,
+    ) = _cpucorrelationpass(theinputs, corrweighting="phat")
+
+    thegpuvoxels, thegpuglobalmax, thegpuscale, thegpucorrout, thegpumeanval = _rungpupass(
+        theinputs,
+        _makecorrelator(theinputs["Fs"], corrweighting="phat"),
+        device="auto",
+        batchsize=4,
+        fallback_to_cpu=False,
+        debug=debug,
+    )
+
+    assert thegpuvoxels == thecpuvoxels
+    assert np.array_equal(thegpuscale, thecpuscale)
+    assert np.array_equal(
+        np.asarray(thegpuglobalmax, dtype=np.int64),
+        np.asarray(thecpuglobalmax, dtype=np.int64),
+    )
+    np.testing.assert_allclose(thegpumeanval, thecpumeanval, atol=1e-10)
+    # looser than the CPU-device comparison: a real backend's fp32 FFT need not agree
+    # with the CPU's to the last bit
+    np.testing.assert_allclose(thegpucorrout, thecpucorrout, atol=5e-4, rtol=2e-3)
+    # the rescaling is the point, so check the amplitude explicitly rather than
+    # letting a relative tolerance hide a scale factor
+    assert np.max(np.abs(thegpucorrout)) == pytest.approx(np.max(np.abs(thecpucorrout)), rel=1e-3)
 
 
 if __name__ == "__main__":
@@ -799,3 +849,563 @@ def test_calcsimfuncdevices(debug=False):
     correlationpass_gpu_falls_back_without_torch(debug=debug)
     correlationpass_gpu_checks_the_reference_length(debug=debug)
     correlationpass_gpu_reference_mismatch_reaches_the_cpu_path(debug=debug)
+
+
+# ==================== single voxel worker ====================
+
+
+def _preparedcorrelator(theinputs, corrweighting="None"):
+    """Build a Correlator that has already been given its reference and limits.
+
+    Parameters
+    ----------
+    theinputs : dict
+        As returned by _makegpuinputs.
+    corrweighting : str, optional
+        Weighting to configure the Correlator with.
+
+    Returns
+    -------
+    Correlator
+        Ready to have run() called on it.
+    """
+    thecorrelator = _makecorrelator(theinputs["Fs"], corrweighting=corrweighting)
+    thecorrelator.setreftc(theinputs["referencetc"])
+    thecorrelator.setlimits(theinputs["lagmininpts"], theinputs["lagmaxinpts"])
+    return thecorrelator
+
+
+def procOneVoxelCorrelation_can_skip_the_resampling(capsys, debug=False):
+    """An oversampling factor below one means the timecourse is used as it stands.
+
+    Every other caller resamples onto the oversampled time axis first, so this branch
+    is the one taken when the data is already at the correlation sample rate and a
+    resample would only add interpolation error.
+    """
+    if debug:
+        print("procOneVoxelCorrelation_can_skip_the_resampling")
+
+    theinputs = _makegpuinputs()
+    thecorrelator = _preparedcorrelator(theinputs)
+    thetc = np.zeros(len(theinputs["os_fmri_x"]), dtype=np.float64)
+    thevoxelargs = tide_calcsimfunc._packvoxeldata(
+        3,
+        [
+            thetc,
+            thecorrelator,
+            theinputs["fmri_x"],
+            theinputs["fmridata"],
+            theinputs["os_fmri_x"],
+            [],
+            np.zeros(100, dtype=np.float64),
+        ],
+    )
+
+    thevox, themean, dummy, dummy2, dummy3, dummy4 = tide_calcsimfunc._procOneVoxelCorrelation(
+        3, thevoxelargs, oversampfactor=0, debug=True
+    )
+
+    assert thevox == 3
+    # the timecourse was copied straight across, with no interpolation applied
+    np.testing.assert_allclose(thetc, theinputs["fmridata"][3, :], atol=1e-12)
+    assert themean == pytest.approx(np.mean(theinputs["fmridata"][3, :]))
+    # debug names the two settings that decide which branch was just taken
+    theoutput = capsys.readouterr().out
+    assert "oversampfactor=0" in theoutput
+    assert "interptype=" in theoutput
+
+
+# ==================== correlationpass_cpu ====================
+
+
+def correlationpass_cpu_can_be_verbose(capsys, debug=False):
+    """The debug report names the reference length, which is the value that has to
+    agree with the data for the correlation to mean anything."""
+    if debug:
+        print("correlationpass_cpu_can_be_verbose")
+
+    theinputs = _makegpuinputs()
+    tide_calcsimfunc.correlationpass_cpu(
+        theinputs["fmridata"],
+        theinputs["referencetc"],
+        _makecorrelator(theinputs["Fs"]),
+        theinputs["fmri_x"],
+        theinputs["os_fmri_x"],
+        theinputs["lagmininpts"],
+        theinputs["lagmaxinpts"],
+        np.zeros((theinputs["numvoxels"], theinputs["numcorrpoints"]), dtype=np.float64),
+        np.zeros(theinputs["numvoxels"], dtype=np.float64),
+        showprogressbar=False,
+        debug=True,
+    )
+
+    assert f"length {len(theinputs['referencetc'])}" in capsys.readouterr().out
+
+
+def correlationpass_cpu_reports_uncollectable_garbage(debug=False):
+    """A voxelwise pass allocates heavily, so the collector result is logged.
+
+    The interesting message is the one that only appears when something could not be
+    freed, which a healthy run never produces.
+    """
+    if debug:
+        print("correlationpass_cpu_reports_uncollectable_garbage")
+
+    theinputs = _makegpuinputs()
+    thelogger = MagicMock()
+    with (
+        patch.object(tide_calcsimfunc.gc, "collect", return_value=7),
+        patch.object(tide_calcsimfunc, "LGR", thelogger),
+    ):
+        tide_calcsimfunc.correlationpass_cpu(
+            theinputs["fmridata"],
+            theinputs["referencetc"],
+            _makecorrelator(theinputs["Fs"]),
+            theinputs["fmri_x"],
+            theinputs["os_fmri_x"],
+            theinputs["lagmininpts"],
+            theinputs["lagmaxinpts"],
+            np.zeros((theinputs["numvoxels"], theinputs["numcorrpoints"]), dtype=np.float64),
+            np.zeros(theinputs["numvoxels"], dtype=np.float64),
+            showprogressbar=False,
+        )
+
+    themessages = [thecall.args[0] for thecall in thelogger.info.call_args_list]
+    assert any("unable to collect 7 objects" in m for m in themessages)
+
+
+def correlationpass_cpu_can_run_multiprocessed(debug=False):
+    """More than one process must give the same answer as one.
+
+    nprocs greater than one is what a production run uses, and it takes an entirely
+    separate path through genericmultiproc, so agreement is not automatic.
+    """
+    if debug:
+        print("correlationpass_cpu_can_run_multiprocessed")
+
+    theinputs = _makegpuinputs()
+
+    theserial = np.zeros((theinputs["numvoxels"], theinputs["numcorrpoints"]), dtype=np.float64)
+    theserialmean = np.zeros(theinputs["numvoxels"], dtype=np.float64)
+    theserialcount, dummy, theserialscale = tide_calcsimfunc.correlationpass_cpu(
+        theinputs["fmridata"],
+        theinputs["referencetc"],
+        _makecorrelator(theinputs["Fs"]),
+        theinputs["fmri_x"],
+        theinputs["os_fmri_x"],
+        theinputs["lagmininpts"],
+        theinputs["lagmaxinpts"],
+        theserial,
+        theserialmean,
+        nprocs=1,
+        showprogressbar=False,
+    )
+
+    theparallel = np.zeros((theinputs["numvoxels"], theinputs["numcorrpoints"]), dtype=np.float64)
+    theparallelmean = np.zeros(theinputs["numvoxels"], dtype=np.float64)
+    theparallelcount, dummy2, theparallelscale = tide_calcsimfunc.correlationpass_cpu(
+        theinputs["fmridata"],
+        theinputs["referencetc"],
+        _makecorrelator(theinputs["Fs"]),
+        theinputs["fmri_x"],
+        theinputs["os_fmri_x"],
+        theinputs["lagmininpts"],
+        theinputs["lagmaxinpts"],
+        theparallel,
+        theparallelmean,
+        nprocs=2,
+        showprogressbar=False,
+    )
+
+    assert theparallelcount == theserialcount == theinputs["numvoxels"]
+    np.testing.assert_allclose(theparallelscale, theserialscale, atol=1e-12)
+    np.testing.assert_allclose(theparallelmean, theserialmean, atol=1e-12)
+    np.testing.assert_allclose(theparallel, theserial, atol=1e-10)
+
+
+# ==================== correlationpass dispatch ====================
+
+
+def correlationpass_dispatches_on_usegpu(debug=False):
+    """The dispatcher is the only place batchsize picks up its default.
+
+    Left unset it inherits chunksize, so a caller that tunes chunksize for the CPU
+    silently changes the GPU batching too - worth pinning, since the two numbers mean
+    different things.
+    """
+    if debug:
+        print("correlationpass_dispatches_on_usegpu")
+
+    theinputs = _makegpuinputs()
+    thecorrout = np.zeros((theinputs["numvoxels"], theinputs["numcorrpoints"]), dtype=np.float64)
+    themeanval = np.zeros(theinputs["numvoxels"], dtype=np.float64)
+    theargs = (
+        theinputs["fmridata"],
+        theinputs["referencetc"],
+        _makecorrelator(theinputs["Fs"]),
+        theinputs["fmri_x"],
+        theinputs["os_fmri_x"],
+        theinputs["lagmininpts"],
+        theinputs["lagmaxinpts"],
+        thecorrout,
+        themeanval,
+    )
+
+    with (
+        patch.object(
+            tide_calcsimfunc, "correlationpass_gpu", return_value=(0, [], None)
+        ) as thegpu,
+        patch.object(
+            tide_calcsimfunc, "correlationpass_cpu", return_value=(0, [], None)
+        ) as thecpu,
+    ):
+        tide_calcsimfunc.correlationpass(*theargs, usegpu=True, chunksize=64)
+        assert thegpu.call_count == 1
+        assert thecpu.call_count == 0
+        # unset batchsize takes its value from chunksize
+        assert thegpu.call_args.kwargs["batchsize"] == 64
+
+        tide_calcsimfunc.correlationpass(*theargs, usegpu=True, chunksize=64, batchsize=8)
+        assert thegpu.call_args.kwargs["batchsize"] == 8
+
+        # and by default nothing goes near the GPU at all
+        tide_calcsimfunc.correlationpass(*theargs)
+        assert thegpu.call_count == 2
+        assert thecpu.call_count == 1
+        assert "batchsize" not in thecpu.call_args.kwargs
+
+
+# ==================== correlationpass_gpu, real device path ====================
+
+
+def _oncpudevice():
+    """Force device resolution to the torch CPU device.
+
+    The GPU implementation is otherwise unreachable on a machine without GPU
+    hardware, because resolution fails and the fallback hands the work to the CPU
+    implementation instead.  Pinning resolution to torch's own CPU device runs the
+    GPU code - the batching, the trimming, the weighting - everywhere.
+
+    Returns
+    -------
+    unittest.mock._patch
+        A context manager patching _resolve_torch_device.
+    """
+    import torch
+
+    return patch.object(
+        tide_calcsimfunc, "_resolve_torch_device", return_value=torch.device("cpu")
+    )
+
+
+def correlationpass_gpu_can_be_verbose(capsys, debug=False):
+    """Debug names both the reference length and the device actually chosen."""
+    if debug:
+        print("correlationpass_gpu_can_be_verbose")
+
+    pytest.importorskip("torch")
+    theinputs = _makegpuinputs()
+    with _oncpudevice():
+        _rungpupass(theinputs, _makecorrelator(theinputs["Fs"]), debug=True, fallback_to_cpu=False)
+
+    theoutput = capsys.readouterr().out
+    assert f"length {len(theinputs['referencetc'])}" in theoutput
+    assert "using device: cpu" in theoutput
+
+
+def correlationpass_gpu_checks_the_fft_really_ran_on_the_device(debug=False):
+    """A backend can advertise itself and then quietly execute FFTs somewhere else.
+
+    That would produce correct numbers at CPU speed while the run reports a GPU, so
+    the probe checks where the result actually landed rather than trusting the
+    availability flag.
+    """
+    if debug:
+        print("correlationpass_gpu_checks_the_fft_really_ran_on_the_device")
+
+    torch = pytest.importorskip("torch")
+    theinputs = _makegpuinputs()
+
+    def thedisplacedrfft(theinput, *theargs, **thekwargs):
+        """Answer a probe with a result on a different device than it was asked for."""
+        return torch.zeros(theinput.shape[-1] // 2 + 1, dtype=torch.complex64, device="meta")
+
+    # what the CPU implementation produces, for comparison
+    thecpucorrout = np.zeros(
+        (theinputs["numvoxels"], theinputs["numcorrpoints"]), dtype=np.float64
+    )
+    tide_calcsimfunc.correlationpass_cpu(
+        theinputs["fmridata"],
+        theinputs["referencetc"],
+        _makecorrelator(theinputs["Fs"]),
+        theinputs["fmri_x"],
+        theinputs["os_fmri_x"],
+        theinputs["lagmininpts"],
+        theinputs["lagmaxinpts"],
+        thecpucorrout,
+        np.zeros(theinputs["numvoxels"], dtype=np.float64),
+        showprogressbar=False,
+    )
+
+    with _oncpudevice(), patch.object(torch.fft, "rfft", thedisplacedrfft):
+        dummy, dummy2, dummy3, thecorrout, dummy4 = _rungpupass(
+            theinputs, _makecorrelator(theinputs["Fs"])
+        )
+    np.testing.assert_allclose(thecorrout, thecpucorrout, atol=1e-10)
+
+    # and with the fallback refused the misplaced execution is an error, not a shrug
+    with _oncpudevice(), patch.object(torch.fft, "rfft", thedisplacedrfft):
+        with pytest.raises(RuntimeError, match="not executing on requested device"):
+            _rungpupass(theinputs, _makecorrelator(theinputs["Fs"]), fallback_to_cpu=False)
+
+
+def correlationpass_gpu_checks_the_output_width(debug=False):
+    """corrout is written a whole batch at a time, so a width that disagrees with the
+    lag limits has to be caught before anything is written into it."""
+    if debug:
+        print("correlationpass_gpu_checks_the_output_width")
+
+    pytest.importorskip("torch")
+    theinputs = _makegpuinputs()
+    thewrongwidth = np.zeros((theinputs["numvoxels"], theinputs["numcorrpoints"] + 3))
+    with _oncpudevice():
+        with pytest.raises(ValueError, match="does not match corrout width"):
+            tide_calcsimfunc.correlationpass_gpu(
+                theinputs["fmridata"],
+                theinputs["referencetc"],
+                _makecorrelator(theinputs["Fs"]),
+                theinputs["fmri_x"],
+                theinputs["os_fmri_x"],
+                theinputs["lagmininpts"],
+                theinputs["lagmaxinpts"],
+                thewrongwidth,
+                np.zeros(theinputs["numvoxels"]),
+                showprogressbar=False,
+                fallback_to_cpu=False,
+            )
+
+
+def correlationpass_gpu_resamples_onto_the_oversampled_axis(debug=False):
+    """When the two time axes differ the data has to be interpolated first.
+
+    The equal-axis shortcut is what the other GPU tests take, so oversampling is the
+    only way to reach the resampling branch - and it is the configuration a real
+    rapidtide run uses, since oversampling is on by default.
+    """
+    if debug:
+        print("correlationpass_gpu_resamples_onto_the_oversampled_axis")
+
+    pytest.importorskip("torch")
+
+    oversampfactor = 2
+    numvoxels = 6
+    numtimepoints = 64
+    tr = 0.8
+    theinit_fmri_x = np.linspace(0.0, numtimepoints, numtimepoints, endpoint=False) * tr
+    theos_fmri_x = np.linspace(
+        0.0, numtimepoints * oversampfactor, numtimepoints * oversampfactor, endpoint=False
+    ) * (tr / oversampfactor)
+    theosFs = oversampfactor / tr
+
+    testfreq = 0.06
+    thereferencetc = np.sin(2.0 * np.pi * testfreq * theos_fmri_x)
+    thefmridata = np.zeros((numvoxels, numtimepoints), dtype=np.float64)
+    for i in range(numvoxels):
+        thefmridata[i, :] = np.sin(2.0 * np.pi * testfreq * (theinit_fmri_x - 0.2 * i))
+
+    lagmininpts = int((10.0 * theosFs) - 0.5)
+    lagmaxinpts = int((10.0 * theosFs) + 0.5)
+    numcorrpoints = lagmaxinpts + lagmininpts
+
+    thecpucorrout = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
+    thecpumeanval = np.zeros(numvoxels, dtype=np.float64)
+    tide_calcsimfunc.correlationpass_cpu(
+        thefmridata,
+        thereferencetc,
+        _makecorrelator(theosFs),
+        theinit_fmri_x,
+        theos_fmri_x,
+        lagmininpts,
+        lagmaxinpts,
+        thecpucorrout,
+        thecpumeanval,
+        oversampfactor=oversampfactor,
+        showprogressbar=False,
+    )
+
+    thegpucorrout = np.zeros((numvoxels, numcorrpoints), dtype=np.float64)
+    thegpumeanval = np.zeros(numvoxels, dtype=np.float64)
+    with _oncpudevice():
+        thecount, dummy, dummy2 = tide_calcsimfunc.correlationpass_gpu(
+            thefmridata,
+            thereferencetc,
+            _makecorrelator(theosFs),
+            theinit_fmri_x,
+            theos_fmri_x,
+            lagmininpts,
+            lagmaxinpts,
+            thegpucorrout,
+            thegpumeanval,
+            oversampfactor=oversampfactor,
+            showprogressbar=False,
+            batchsize=4,
+            fallback_to_cpu=False,
+        )
+
+    assert thecount == numvoxels
+    # the resampled means are what prove the interpolation ran on both sides
+    np.testing.assert_allclose(thegpumeanval, thecpumeanval, atol=1e-10)
+    # resolution is pinned to the torch CPU device, so this is deterministic and only
+    # has to absorb the single precision the GPU implementation works in
+    np.testing.assert_allclose(thegpucorrout, thecpucorrout, atol=1e-6, rtol=1e-5)
+
+
+def _cpucorrelationpass(theinputs, corrweighting="None"):
+    """Run the CPU implementation and hand back its outputs.
+
+    Parameters
+    ----------
+    theinputs : dict
+        As returned by _makegpuinputs.
+    corrweighting : str, optional
+        Weighting to configure the Correlator with.
+
+    Returns
+    -------
+    tuple
+        (voxelcount, globalmaxlist, corrscale, corrout, meanval)
+    """
+    thecorrout = np.zeros((theinputs["numvoxels"], theinputs["numcorrpoints"]), dtype=np.float64)
+    themeanval = np.zeros(theinputs["numvoxels"], dtype=np.float64)
+    thevoxels, theglobalmax, thecorrscale = tide_calcsimfunc.correlationpass_cpu(
+        theinputs["fmridata"],
+        theinputs["referencetc"],
+        _makecorrelator(theinputs["Fs"], corrweighting=corrweighting),
+        theinputs["fmri_x"],
+        theinputs["os_fmri_x"],
+        theinputs["lagmininpts"],
+        theinputs["lagmaxinpts"],
+        thecorrout,
+        themeanval,
+        showprogressbar=False,
+    )
+    return thevoxels, theglobalmax, thecorrscale, thecorrout, themeanval
+
+
+def correlationpass_gpu_matches_the_cpu_for_every_weighting(debug=False):
+    """The two implementations have to agree to single precision, phat included.
+
+    phat needs three things to line up with the CPU, and each of them was wrong at
+    some point: the transform runs at the next power of two above the correlation
+    length (phat rescales each frequency bin, so a different transform length puts
+    the weighting on a different set of bins); bins below a tenth of the largest
+    magnitude are zeroed rather than clamped; and the weighted correlation is then
+    rescaled so its peak matches the peak of the *unweighted* correlation.
+
+    That last step is the one that matters downstream.  Without it the peaks still
+    land in the right places, so a lag map looks fine, but the values are smaller by
+    an arbitrary data-dependent factor - and lthreshval, uthreshval, the
+    null-distribution significance thresholds and the refinement weighting all read
+    absolute correlation strength.  So this checks the actual amplitudes, not just
+    the shapes.
+
+    Several sizes are used because the transform length is rounded up to a power of
+    two: a correlation length that is already a power of two exercises different
+    padding from one that is not.
+    """
+    if debug:
+        print("correlationpass_gpu_matches_the_cpu_for_every_weighting")
+
+    pytest.importorskip("torch")
+
+    for theweighting in ["None", "phat"]:
+        for thevoxelcount, thetimepoints in [(8, 128), (12, 160), (5, 100)]:
+            theinputs = _makegpuinputs(numvoxels=thevoxelcount, numtimepoints=thetimepoints)
+            (
+                thecpuvoxels,
+                thecpuglobalmax,
+                thecpuscale,
+                thecpucorrout,
+                thecpumeanval,
+            ) = _cpucorrelationpass(theinputs, corrweighting=theweighting)
+
+            with _oncpudevice():
+                (
+                    thegpuvoxels,
+                    thegpuglobalmax,
+                    thegpuscale,
+                    thegpucorrout,
+                    thegpumeanval,
+                ) = _rungpupass(
+                    theinputs,
+                    _makecorrelator(theinputs["Fs"], corrweighting=theweighting),
+                    batchsize=4,
+                    fallback_to_cpu=False,
+                )
+
+            thecontext = f"{theweighting=} {thevoxelcount=} {thetimepoints=}"
+            assert thegpuvoxels == thecpuvoxels, thecontext
+            assert np.array_equal(thegpuscale, thecpuscale), thecontext
+            np.testing.assert_allclose(thegpumeanval, thecpumeanval, atol=1e-10)
+            assert np.array_equal(
+                np.asarray(thegpuglobalmax, dtype=np.int64),
+                np.asarray(thecpuglobalmax, dtype=np.int64),
+            ), thecontext
+
+            # the amplitudes, not just the shapes: the GPU work is done in single
+            # precision, so a few parts in ten million is as close as it can get
+            np.testing.assert_allclose(
+                thegpucorrout, thecpucorrout, atol=1e-6, rtol=1e-5, err_msg=thecontext
+            )
+
+
+def correlationpass_gpu_phat_is_not_the_same_as_unweighted(debug=False):
+    """phat has to actually do something.
+
+    Since the weighted result is rescaled back to the unweighted peak height, a phat
+    correlation now peaks near the same value an unweighted one does - which would
+    also be true if the weighting were quietly being skipped.  This separates those
+    two cases by checking the shape away from the peak.
+    """
+    if debug:
+        print("correlationpass_gpu_phat_is_not_the_same_as_unweighted")
+
+    pytest.importorskip("torch")
+    theinputs = _makegpuinputs()
+
+    with _oncpudevice():
+        dummy, dummy2, dummy3, theunweighted, dummy4 = _rungpupass(
+            theinputs,
+            _makecorrelator(theinputs["Fs"], corrweighting="None"),
+            fallback_to_cpu=False,
+        )
+        dummy5, dummy6, dummy7, thephat, dummy8 = _rungpupass(
+            theinputs,
+            _makecorrelator(theinputs["Fs"], corrweighting="phat"),
+            fallback_to_cpu=False,
+        )
+
+    # both are back on the same scale
+    assert np.max(np.abs(theunweighted)) == pytest.approx(np.max(np.abs(thephat)), rel=1e-3)
+    # but they are not the same function - phat flattens the spectrum, which sharpens
+    # the peak and changes the sidelobes
+    assert np.max(np.abs(thephat - theunweighted)) > 0.01
+
+
+def test_calcsimfuncinternals(debug=False):
+    """Entry point for the sub-tests that need no fixtures."""
+    correlationpass_cpu_reports_uncollectable_garbage(debug=debug)
+    correlationpass_cpu_can_run_multiprocessed(debug=debug)
+    correlationpass_dispatches_on_usegpu(debug=debug)
+    correlationpass_gpu_checks_the_fft_really_ran_on_the_device(debug=debug)
+    correlationpass_gpu_checks_the_output_width(debug=debug)
+    correlationpass_gpu_resamples_onto_the_oversampled_axis(debug=debug)
+    correlationpass_gpu_matches_the_cpu_for_every_weighting(debug=debug)
+    correlationpass_gpu_phat_is_not_the_same_as_unweighted(debug=debug)
+
+
+def test_calcsimfuncmessages(capsys):
+    """Entry point for the sub-tests that capture printed output."""
+    procOneVoxelCorrelation_can_skip_the_resampling(capsys)
+    correlationpass_cpu_can_be_verbose(capsys)
+    correlationpass_gpu_can_be_verbose(capsys)
