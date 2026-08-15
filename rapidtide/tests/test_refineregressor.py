@@ -1201,6 +1201,523 @@ def test_alignvoxels_partial_mask(debug=False):
 # ==================== Main test entry point ====================
 
 
+def _mockprefilter():
+    """Build a pass-through prefilter stand-in for the refinement routines.
+
+    Returns
+    -------
+    MagicMock
+        An object whose ``apply`` method returns its data argument unchanged.
+    """
+    thefilter = MagicMock()
+    thefilter.apply = MagicMock(side_effect=lambda freq, data: data)
+    return thefilter
+
+
+def _refineinputs(nvoxels=20, ntimepoints=100, seed=0, noise=0.1):
+    """Build a set of voxel timecourses sharing a common broadband signal.
+
+    Parameters
+    ----------
+    nvoxels : int, optional
+        Number of voxels.  Default is 20.
+    ntimepoints : int, optional
+        Number of timepoints.  Default is 100.
+    seed : int, optional
+        Seed for the shared signal.  Default is 0.
+    noise : float, optional
+        Standard deviation of the per-voxel noise.  Default is 0.1.
+
+    Returns
+    -------
+    tuple
+        The shared signal, the (nvoxels, ntimepoints) timecourses, the refine mask, the
+        weights, the lag strengths, and the lag times.
+    """
+    rng = np.random.RandomState(42)
+    signal = _make_broadband_signal(ntimepoints, seed=seed)
+    shiftedtcs = np.tile(signal, (nvoxels, 1)) + noise * rng.randn(nvoxels, ntimepoints)
+    refinemask = np.ones(nvoxels)
+    weights = np.ones((nvoxels, ntimepoints))
+    lagstrengths = np.ones(nvoxels) * 0.8
+    lagtimes = np.linspace(-4.0, 4.0, nvoxels)
+    return signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes
+
+
+def test_alignvoxels_debug_reporting(debug=False):
+    """Test the debug reporting path through alignvoxels and the per-voxel time shift."""
+    if debug:
+        print("alignvoxels_debug_reporting")
+    nvoxels, ntimepoints, padtrs = 6, 40, 8
+    rng = np.random.RandomState(7)
+    fmridata = rng.randn(nvoxels, ntimepoints)
+    shiftedtcs = np.zeros((nvoxels, ntimepoints))
+    weights = np.zeros((nvoxels, ntimepoints))
+    paddedshiftedtcs = np.zeros((nvoxels, ntimepoints + 2 * padtrs))
+    paddedweights = np.zeros((nvoxels, ntimepoints + 2 * padtrs))
+
+    volumetotal = alignvoxels(
+        fmridata,
+        2.0,
+        shiftedtcs,
+        weights,
+        paddedshiftedtcs,
+        paddedweights,
+        np.ones(nvoxels) * 1.5,
+        np.ones(nvoxels),
+        detrendorder=1,
+        nprocs=1,
+        showprogressbar=False,
+        padtrs=padtrs,
+        debug=True,
+    )
+    assert volumetotal == nvoxels
+    assert np.any(shiftedtcs != 0)
+
+
+def test_makerefinemask_bipolar_negative_ampthresh(debug=False):
+    """Test a percentile ampthresh in bipolar mode thresholds on absolute strength.
+
+    A negative ampthresh is interpreted as a percentile; with bipolar set, that percentile
+    is taken over the absolute value of the strengths so strong negative correlations count.
+    """
+    if debug:
+        print("makerefinemask_bipolar_negative_ampthresh")
+    shape = (4, 4, 4)
+    lagstrengths = np.zeros(shape)
+    # half the voxels strongly negative, half weakly positive
+    lagstrengths[:2, :, :] = -0.9
+    lagstrengths[2:, :, :] = 0.05
+    lagtimes = np.ones(shape) * 2.0
+    lagsigma = np.ones(shape) * 5.0
+    lagmask = np.ones(shape)
+
+    volumetotal, shiftmask, locfails, ampfails, lagfails, sigfails, numinmask = makerefinemask(
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=-0.5,
+        bipolar=True,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
+        sigmathresh=100.0,
+        debug=True,
+    )
+    assert shiftmask is not None
+    # the strongly negative voxels survive precisely because bipolar takes absolute values
+    assert np.all(shiftmask[:2, :, :] == 1)
+    assert np.all(shiftmask[2:, :, :] == 0)
+    assert volumetotal == 32
+
+
+def test_makerefinemask_no_voxels_survive(debug=False):
+    """Test the early return when no voxel passes every threshold."""
+    if debug:
+        print("makerefinemask_no_voxels_survive")
+    shape = (3, 3, 3)
+    lagstrengths = np.ones(shape) * 0.1
+    lagtimes = np.ones(shape) * 2.0
+    lagsigma = np.ones(shape) * 5.0
+    lagmask = np.ones(shape)
+
+    volumetotal, shiftmask, locfails, ampfails, lagfails, sigfails, numinmask = makerefinemask(
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.9,
+        lagminthresh=0.5,
+        lagmaxthresh=5.0,
+        sigmathresh=100.0,
+    )
+    assert volumetotal == 0
+    assert shiftmask is None
+    assert numinmask == 0
+    # every voxel failed on amplitude, none on location
+    assert locfails == 0
+    assert ampfails == 27
+
+
+def test_makerefinemask_no_voxels_survive_with_masks(debug=False):
+    """Test the empty-mask message differs when include or exclude masks are in play."""
+    if debug:
+        print("makerefinemask_no_voxels_survive_with_masks")
+    shape = (3, 3, 3)
+    lagstrengths = np.ones(shape) * 0.1
+    lagtimes = np.ones(shape) * 2.0
+    lagsigma = np.ones(shape) * 5.0
+    lagmask = np.ones(shape)
+    includemask = np.ones(shape)
+
+    volumetotal, shiftmask, locfails, ampfails, lagfails, sigfails, numinmask = makerefinemask(
+        lagstrengths,
+        lagtimes,
+        lagsigma,
+        lagmask,
+        ampthresh=0.9,
+        includemask=includemask,
+    )
+    assert volumetotal == 0
+    assert shiftmask is None
+
+
+def test_prenorm_debug_reporting(debug=False):
+    """Test the debug reporting path through prenorm."""
+    if debug:
+        print("prenorm_debug_reporting")
+    nvoxels, ntimepoints = 5, 20
+    shiftedtcs = np.ones((nvoxels, ntimepoints)) * 3.0
+    refinemask = np.ones(nvoxels)
+    lagtimes = np.linspace(-2.0, 2.0, nvoxels)
+    lagstrengths = np.linspace(0.2, 0.9, nvoxels)
+    R2vals = lagstrengths**2
+
+    prenorm(
+        shiftedtcs,
+        refinemask,
+        lagtimes,
+        5.0,
+        lagstrengths,
+        R2vals,
+        "mean",
+        "R",
+        debug=True,
+    )
+    assert np.all(np.isfinite(shiftedtcs))
+
+
+def test_prenorm_does_not_mutate_weights(debug=False):
+    """Test prenorm leaves the caller's lagstrengths and R2 arrays untouched.
+
+    The weighting array used to be the caller's own array, and the mask was applied to it
+    with an in-place multiply - so weighting by "R" zeroed the correlation strengths outside
+    the refine mask, and the refinement code reuses that array immediately afterwards.
+    """
+    if debug:
+        print("prenorm_does_not_mutate_weights")
+    nvoxels, ntimepoints = 5, 20
+    refinemask = np.array([1.0, 0.0, 1.0, 0.0, 1.0])
+    for weighting in ["R", "R2", "None"]:
+        shiftedtcs = np.ones((nvoxels, ntimepoints))
+        lagstrengths = np.linspace(0.2, 0.9, nvoxels)
+        R2vals = lagstrengths**2
+        origstrengths, origR2 = lagstrengths.copy(), R2vals.copy()
+        prenorm(
+            shiftedtcs,
+            refinemask,
+            np.zeros(nvoxels),
+            5.0,
+            lagstrengths,
+            R2vals,
+            "None",
+            weighting,
+        )
+        np.testing.assert_allclose(
+            lagstrengths, origstrengths, err_msg=f"{weighting} weighting modified lagstrengths"
+        )
+        np.testing.assert_allclose(
+            R2vals, origR2, err_msg=f"{weighting} weighting modified R2vals"
+        )
+        # the masked-out voxels are still zeroed in the timecourses themselves
+        assert np.all(shiftedtcs[1, :] == 0.0)
+        assert np.all(shiftedtcs[3, :] == 0.0)
+
+
+def test_dorefine_dispersioncalc(debug=False):
+    """Test the dispersion calculation writes its four output files."""
+    if debug:
+        print("dorefine_dispersioncalc")
+    nvoxels, ntimepoints = 24, 100
+    signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
+        nvoxels=nvoxels, ntimepoints=ntimepoints
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        outputname = os.path.join(tmpdir, "test_refine")
+        volumetotal, outputdata = dorefine(
+            shiftedtcs,
+            refinemask,
+            weights,
+            _mockprefilter(),
+            fmritr=2.0,
+            passnum=3,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="unweighted_average",
+            fmrifreq=0.5,
+            outputname=outputname,
+            dodispersioncalc=True,
+            dispersioncalc_lower=-4.0,
+            dispersioncalc_upper=4.0,
+            dispersioncalc_step=2.0,
+        )
+        assert volumetotal == nvoxels
+        for suffix in [
+            "_dispersioncalcvecs_pass3.txt",
+            "_dispersioncalcspecmag_pass3.txt",
+            "_dispersioncalcspecphase_pass3.txt",
+            "_dispersioncalcfreqs_pass3.txt",
+        ]:
+            assert os.path.exists(outputname + suffix), f"missing {suffix}"
+
+
+def test_dorefine_pcacomponents_mle(debug=False):
+    """Test a negative pcacomponents selects automatic (mle) component estimation."""
+    if debug:
+        print("dorefine_pcacomponents_mle")
+    signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
+        nvoxels=12, ntimepoints=60
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        volumetotal, outputdata = dorefine(
+            shiftedtcs,
+            refinemask,
+            weights,
+            _mockprefilter(),
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="pca",
+            fmrifreq=0.5,
+            outputname=os.path.join(tmpdir, "test_refine"),
+            pcacomponents=-1.0,
+            debug=True,
+        )
+    assert len(outputdata) == 60
+    assert np.all(np.isfinite(outputdata))
+
+
+def test_dorefine_pcacomponents_integer(debug=False):
+    """Test a pcacomponents of one or more is rounded to an integer component count."""
+    if debug:
+        print("dorefine_pcacomponents_integer")
+    signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
+        nvoxels=12, ntimepoints=60
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        volumetotal, outputdata = dorefine(
+            shiftedtcs,
+            refinemask,
+            weights,
+            _mockprefilter(),
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="pca",
+            fmrifreq=0.5,
+            outputname=os.path.join(tmpdir, "test_refine"),
+            pcacomponents=2.0,
+        )
+    assert len(outputdata) == 60
+    assert np.all(np.isfinite(outputdata))
+
+
+def test_dorefine_pcacomponents_zero_exits(debug=False):
+    """Test a pcacomponents of exactly zero is rejected rather than passed to PCA."""
+    if debug:
+        print("dorefine_pcacomponents_zero_exits")
+    signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
+        nvoxels=12, ntimepoints=60
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            dorefine(
+                shiftedtcs,
+                refinemask,
+                weights,
+                _mockprefilter(),
+                fmritr=2.0,
+                passnum=1,
+                lagstrengths=lagstrengths,
+                lagtimes=lagtimes,
+                refinetype="pca",
+                fmrifreq=0.5,
+                outputname=os.path.join(tmpdir, "test_refine"),
+                pcacomponents=0.0,
+            )
+            assert False, "Should have raised SystemExit"
+        except SystemExit:
+            pass
+
+
+def _dorefine_with_forced_correlation_sign(refinetype, sign, tmpdir, nvoxels=16, ntimepoints=80):
+    """Run dorefine with the decomposition/average correlation forced to a given sign.
+
+    ``dorefine`` negates the ICA and PCA regressors when they anticorrelate with the plain
+    average.  FastICA does not fix the sign of its components, so which branch runs is
+    otherwise up to the solver; forcing the correlation makes both reachable on demand.
+
+    Parameters
+    ----------
+    refinetype : str
+        Either "ica" or "pca".
+    sign : float
+        Sign to force the reported correlation to.
+    tmpdir : str
+        Directory for the refinement output files.
+    nvoxels : int, optional
+        Number of voxels.  Default is 16.
+    ntimepoints : int, optional
+        Number of timepoints.  Default is 80.
+
+    Returns
+    -------
+    ndarray
+        The refined regressor.
+    """
+    import rapidtide.refineRegressorFuncs as rrf
+
+    signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
+        nvoxels=nvoxels, ntimepoints=ntimepoints
+    )
+    realpearsonr = rrf.pearsonr
+    realfastica = rrf.FastICA
+
+    class _ForcedResult:
+        """Correlation result reporting a caller-chosen sign."""
+
+        def __init__(self, statistic):
+            self.statistic = statistic
+
+    def _forced(a, b):
+        return _ForcedResult(sign * abs(realpearsonr(a, b).statistic))
+
+    def _seededfastica(*args, **kwargs):
+        """Fit FastICA with a fixed seed so repeated calls give the same component."""
+        kwargs.setdefault("random_state", 0)
+        return realfastica(*args, **kwargs)
+
+    with (
+        patch.object(rrf, "pearsonr", side_effect=_forced),
+        patch.object(rrf, "FastICA", side_effect=_seededfastica),
+    ):
+        return dorefine(
+            shiftedtcs.copy(),
+            refinemask,
+            weights,
+            _mockprefilter(),
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype=refinetype,
+            fmrifreq=0.5,
+            outputname=os.path.join(tmpdir, "test_refine"),
+            pcacomponents=2.0,
+        )[1]
+
+
+def test_dorefine_ica_sign_branches(debug=False):
+    """Test both ICA sign branches, which FastICA otherwise picks between arbitrarily."""
+    if debug:
+        print("dorefine_ica_sign_branches")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        positive = _dorefine_with_forced_correlation_sign("ica", 1.0, tmpdir)
+        negative = _dorefine_with_forced_correlation_sign("ica", -1.0, tmpdir)
+    np.testing.assert_allclose(negative, -positive, atol=1e-10)
+
+
+def test_dorefine_pca_too_many_components_exits(debug=False):
+    """Test an impossible explicit component count exits rather than propagating ValueError.
+
+    Only the automatic ("mle") setting has a fallback; an explicit count that PCA cannot
+    satisfy is treated as unrecoverable.
+    """
+    if debug:
+        print("dorefine_pca_too_many_components_exits")
+    nvoxels = 8
+    signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
+        nvoxels=nvoxels, ntimepoints=60
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            dorefine(
+                shiftedtcs,
+                refinemask,
+                weights,
+                _mockprefilter(),
+                fmritr=2.0,
+                passnum=1,
+                lagstrengths=lagstrengths,
+                lagtimes=lagtimes,
+                refinetype="pca",
+                fmrifreq=0.5,
+                outputname=os.path.join(tmpdir, "test_refine"),
+                # more components than there are voxels to build them from
+                pcacomponents=float(nvoxels + 20),
+            )
+            assert False, "Should have raised SystemExit"
+        except SystemExit:
+            pass
+
+
+def test_dorefine_pca_sign_flip(debug=False):
+    """Test the pca output is sign flipped when it anticorrelates with the simple average.
+
+    ``dorefine`` correlates the PCA reconstruction against the plain average and negates the
+    result if they disagree, so the returned regressor always points the same way.
+    """
+    if debug:
+        print("dorefine_pca_sign_flip")
+    nvoxels, ntimepoints = 16, 80
+    signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
+        nvoxels=nvoxels, ntimepoints=ntimepoints
+    )
+    captured = {}
+    realpearsonr = None
+
+    import rapidtide.refineRegressorFuncs as rrf
+
+    realpearsonr = rrf.pearsonr
+
+    class _FlippedResult:
+        """Stand-in correlation result that reports the opposite sign."""
+
+        def __init__(self, statistic):
+            self.statistic = statistic
+
+    def _negpearsonr(a, b):
+        thereal = realpearsonr(a, b)
+        captured["called"] = True
+        return _FlippedResult(-abs(thereal.statistic))
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        outputname = os.path.join(tmpdir, "test_refine")
+        baseline = dorefine(
+            shiftedtcs.copy(),
+            refinemask,
+            weights,
+            _mockprefilter(),
+            fmritr=2.0,
+            passnum=1,
+            lagstrengths=lagstrengths,
+            lagtimes=lagtimes,
+            refinetype="pca",
+            fmrifreq=0.5,
+            outputname=outputname,
+            pcacomponents=2.0,
+        )[1]
+        with patch.object(rrf, "pearsonr", side_effect=_negpearsonr):
+            flipped = dorefine(
+                shiftedtcs.copy(),
+                refinemask,
+                weights,
+                _mockprefilter(),
+                fmritr=2.0,
+                passnum=1,
+                lagstrengths=lagstrengths,
+                lagtimes=lagtimes,
+                refinetype="pca",
+                fmrifreq=0.5,
+                outputname=outputname,
+                pcacomponents=2.0,
+            )[1]
+    assert captured.get("called"), "the patched correlation was never consulted"
+    np.testing.assert_allclose(flipped, -baseline, atol=1e-10)
+
+
 def test_refineRegressorFuncs(debug=False):
     test_packvoxeldata_basic(debug=debug)
     test_packvoxeldata_second_voxel(debug=debug)
@@ -1240,6 +1757,19 @@ def test_refineRegressorFuncs(debug=False):
     test_dorefine_cleanrefined(debug=debug)
     test_alignvoxels_single_proc(debug=debug)
     test_alignvoxels_partial_mask(debug=debug)
+    test_alignvoxels_debug_reporting(debug=debug)
+    test_makerefinemask_bipolar_negative_ampthresh(debug=debug)
+    test_makerefinemask_no_voxels_survive(debug=debug)
+    test_makerefinemask_no_voxels_survive_with_masks(debug=debug)
+    test_prenorm_debug_reporting(debug=debug)
+    test_prenorm_does_not_mutate_weights(debug=debug)
+    test_dorefine_dispersioncalc(debug=debug)
+    test_dorefine_pcacomponents_mle(debug=debug)
+    test_dorefine_pcacomponents_integer(debug=debug)
+    test_dorefine_pcacomponents_zero_exits(debug=debug)
+    test_dorefine_ica_sign_branches(debug=debug)
+    test_dorefine_pca_too_many_components_exits(debug=debug)
+    test_dorefine_pca_sign_flip(debug=debug)
 
 
 if __name__ == "__main__":

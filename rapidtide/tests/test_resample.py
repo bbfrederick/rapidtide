@@ -22,7 +22,13 @@ Tests for the resample module - covers all resampling and time shifting function
 
 import os
 import tempfile
+from unittest.mock import patch
 
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -1002,6 +1008,418 @@ class TestIntegration:
 
         assert warped is not None
         assert len(warped) == len(inputtc)
+
+
+class TestCongridEdgeCases:
+    """Edge cases, error handling, and reporting paths in congrid."""
+
+    def test_illegal_kernel_exits(self):
+        """An unrecognized kernel name is fatal rather than silently ignored."""
+        xaxis = np.linspace(0.0, 10.0, 101)
+        with pytest.raises(SystemExit):
+            tide_resample.congrid(xaxis, 5.0, 1.0, 2.5, kernel="notakernel", cache=False)
+
+    def test_illegal_width_exits(self):
+        """Widths outside the supported half-integral range are fatal."""
+        xaxis = np.linspace(0.0, 10.0, 101)
+        for badwidth in [1.0, 5.5, 2.3]:
+            with pytest.raises(SystemExit):
+                tide_resample.congrid(xaxis, 5.0, 1.0, badwidth, kernel="kaiser", cache=False)
+
+    def test_out_of_range_location_noncyclic(self, capsys):
+        """A location off the end of a noncyclic axis is reported."""
+        xaxis = np.linspace(0.0, 10.0, 101)
+        tide_resample.congrid(xaxis, 50.0, 1.0, 2.5, kernel="kaiser", cyclic=False, cache=False)
+        assert "not in range" in capsys.readouterr().out
+
+    def test_kernel_change_reinitializes_cache(self, capsys):
+        """Switching kernel or width discards the cached kernel values."""
+        xaxis = np.linspace(0.0, 10.0, 101)
+        tide_resample.congrid(xaxis, 5.0, 1.0, 2.5, kernel="kaiser", debug=True)
+        tide_resample.congrid(
+            xaxis, 5.0, 1.0, 3.5, kernel="gauss", debug=True, onlykeynotices=False
+        )
+        theoutput = capsys.readouterr().out
+        assert "(re)initializing congridyvals" in theoutput
+
+    def test_cyclic_wraparound_both_ends(self):
+        """A location past either end of a cyclic axis wraps around to the other end.
+
+        The offset has to exceed half a grid step for the wrap to trigger, since below that
+        the nearest grid point is still the end point itself.
+        """
+        xaxis = np.linspace(0.0, 10.0, 101)
+        xstep = xaxis[1] - xaxis[0]
+        for loc in [xaxis[-1] + 0.8 * xstep, xaxis[0] - 0.8 * xstep]:
+            vals, weights, indices = tide_resample.congrid(
+                xaxis, loc, 1.0, 2.5, kernel="kaiser", cyclic=True, cache=False
+            )
+            # indices stay inside the axis because they are taken modulo its length
+            assert np.all(indices >= 0)
+            assert np.all(indices < len(xaxis))
+
+    def test_offset_out_of_range_noncyclic_exits(self):
+        """A noncyclic location off the axis end by a partial step is unusable and exits.
+
+        The offset is taken modulo one grid step, so only a location whose distance past
+        the end has a fractional part above half a step lands outside the legal range -
+        being merely far away is not enough.
+        """
+        xaxis = np.linspace(0.0, 10.0, 101)
+        # 0.7 of a grid step past the final sample, which no wrap can bring back in range
+        with pytest.raises(SystemExit):
+            tide_resample.congrid(
+                xaxis, 10.07, 1.0, 2.5, kernel="kaiser", cyclic=False, cache=False
+            )
+
+    def test_old_kernel_debug_reporting(self, capsys):
+        """The legacy kernel path also reports its indices and weights when verbose."""
+        xaxis = np.linspace(0.0, 10.0, 101)
+        tide_resample.congrid(
+            xaxis, 5.3, 1.0, 2.0, kernel="old", cache=False, debug=True, onlykeynotices=False
+        )
+        assert "center, offset, indices, yvals" in capsys.readouterr().out
+
+    def test_gauss_and_kaiser_kernels_agree_on_total_weight(self):
+        """Both supported kernels return one weight per contributing index."""
+        xaxis = np.linspace(0.0, 10.0, 101)
+        for kernel in ["kaiser", "gauss"]:
+            vals, weights, indices = tide_resample.congrid(
+                xaxis, 5.13, 2.0, 3.0, kernel=kernel, cache=False
+            )
+            assert len(vals) == len(weights) == len(indices)
+            np.testing.assert_allclose(vals, 2.0 * weights)
+
+    def test_old_kernel_path(self):
+        """The legacy 'old' kernel bypasses the half-integral width check."""
+        xaxis = np.linspace(0.0, 10.0, 101)
+        vals, weights, indices = tide_resample.congrid(
+            xaxis, 5.0, 1.0, 1.0, kernel="old", cache=False, debug=True
+        )
+        assert len(vals) == len(weights) == len(indices)
+
+    def test_debug_reporting(self, capsys):
+        """The verbose reporting path prints the computed indices and weights."""
+        xaxis = np.linspace(0.0, 10.0, 101)
+        tide_resample.congrid(
+            xaxis, 5.27, 1.0, 2.5, kernel="kaiser", cache=False, debug=True, onlykeynotices=False
+        )
+        assert "center, offset, indices, yvals" in capsys.readouterr().out
+
+
+class TestFastResamplerEdgeCases:
+    """Reporting and failure paths in FastResampler."""
+
+    def test_constructor_debug(self, capsys):
+        """The constructor reports its axis configuration when asked."""
+        timeaxis = np.linspace(0.0, 10.0, 101)
+        data = np.sin(timeaxis)
+        tide_resample.FastResampler(timeaxis, data, debug=True)
+        assert "FastResampler __init__:" in capsys.readouterr().out
+
+    def test_yfromx_debug(self, capsys):
+        """yfromx reports the axis limits it is working between."""
+        timeaxis = np.linspace(0.0, 10.0, 101)
+        resampler = tide_resample.FastResampler(timeaxis, np.sin(timeaxis))
+        resampler.yfromx(np.linspace(1.0, 9.0, 50), debug=True)
+        assert "yfromx called with following parameters" in capsys.readouterr().out
+
+    def test_yfromx_out_of_bounds_exits(self):
+        """Requesting times beyond the padded range is fatal rather than silently wrong."""
+        timeaxis = np.linspace(0.0, 10.0, 101)
+        resampler = tide_resample.FastResampler(timeaxis, np.sin(timeaxis), padtime=1.0)
+        with pytest.raises(SystemExit):
+            resampler.yfromx(np.linspace(0.0, 1.0e6, 20))
+
+
+class TestFastResamplerFromFileErrors:
+    """Input validation in FastResamplerFromFile."""
+
+    def test_multicolumn_file_rejected(self, tmp_path):
+        """A file with more than one column is ambiguous and is rejected."""
+        filepath = str(tmp_path / "twocol")
+        samplerate, npoints = 10.0, 100
+        t = np.arange(npoints) / samplerate
+        data = np.vstack([np.sin(2 * np.pi * t), np.cos(2 * np.pi * t)])
+        tide_io.writebidstsv(
+            filepath, data, samplerate, starttime=0.0, columns=["first", "second"]
+        )
+        actual_file = filepath + ".tsv.gz"
+        if not os.path.exists(actual_file):
+            actual_file = filepath + ".tsv"
+        with pytest.raises(ValueError, match="Multiple columns"):
+            tide_resample.FastResamplerFromFile(actual_file)
+
+    def test_missing_column_names_rejected(self, tmp_path):
+        """A file the reader returns no column names for is rejected.
+
+        The reader synthesizes an index when a sidecar simply omits the column list, so this
+        guard is exercised by stubbing the reader rather than by writing a malformed file.
+        """
+        filepath = str(tmp_path / "nocols")
+        create_test_timecourse_file(filepath, length=100, samplerate=10.0)
+        actual_file = filepath + ".tsv.gz"
+        if not os.path.exists(actual_file):
+            actual_file = filepath + ".tsv"
+
+        def _nocolumns(*args, **kwargs):
+            return (10.0, 0.0, None, np.zeros((1, 100)), False, None, None)
+
+        with patch.object(tide_io, "readbidstsv", side_effect=_nocolumns):
+            with pytest.raises(ValueError, match="No column names"):
+                tide_resample.FastResamplerFromFile(actual_file)
+
+    def test_single_column_file_debug(self, tmp_path, capsys):
+        """A single column file loads, and the debug path reports what it read."""
+        filepath = str(tmp_path / "onecol")
+        create_test_timecourse_file(filepath, length=100, samplerate=10.0)
+        actual_file = filepath + ".tsv.gz"
+        if not os.path.exists(actual_file):
+            actual_file = filepath + ".tsv"
+        resampler = tide_resample.FastResamplerFromFile(actual_file, debug=True)
+        assert "FastResamplerFromFile:" in capsys.readouterr().out
+        assert resampler is not None
+
+
+class TestArbresampleEdgeCases:
+    """Method dispatch, up/downsampling, and reporting in arbresample."""
+
+    def test_invalid_method_rejected(self):
+        """An unknown interpolation method is rejected up front."""
+        data = np.sin(np.linspace(0.0, 6.0, 100))
+        with pytest.raises(ValueError, match="invalid interpolation method"):
+            tide_resample.arbresample(data, 10.0, 5.0, method="notamethod")
+
+    def test_downsample_reports_stages(self, capsys):
+        """Downsampling reports each stage when run verbosely."""
+        # long enough that the antialiasing filter's padding fits inside the data
+        data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
+        result = tide_resample.arbresample(data, 20.0, 5.0, debug=True)
+        theoutput = capsys.readouterr().out
+        assert "arbresample - initial points:" in theoutput
+        assert len(result) > 0
+
+    def test_upsample_reports_stages(self, capsys):
+        """Upsampling reports its point counts when run verbosely."""
+        data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
+        result = tide_resample.arbresample(data, 5.0, 20.0, debug=True)
+        assert "arbresample" in capsys.readouterr().out
+        assert len(result) > 0
+
+    def test_decimate_method(self):
+        """The decimate path produces a shorter output at the requested ratio."""
+        data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
+        result = tide_resample.arbresample(data, 20.0, 5.0, decimate=True)
+        assert len(result) < len(data)
+
+    def test_decimate_upsample_only(self, capsys):
+        """With decimate set and a higher target frequency, only upsampling happens."""
+        data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
+        result = tide_resample.arbresample(data, 5.0, 20.0, decimate=True, debug=True)
+        assert len(result) > len(data)
+        assert "arbresample - upsampled points:" in capsys.readouterr().out
+
+    def test_decimate_same_frequency_passes_through(self, capsys):
+        """Resampling to the same frequency returns the input untouched."""
+        data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
+        result = tide_resample.arbresample(data, 10.0, 10.0, decimate=True, debug=True)
+        assert result is data
+        assert "arbresample - final points:" in capsys.readouterr().out
+
+    def test_decimate_downsample_with_antialias(self, capsys):
+        """The antialiased decimation path reports its intermediate frequency."""
+        data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
+        result = tide_resample.arbresample(
+            data, 20.0, 6.0, decimate=True, antialias=True, debug=True
+        )
+        theoutput = capsys.readouterr().out
+        assert "Hz, then decimating by," in theoutput
+        assert "arbresample - downsampled points:" in theoutput
+        assert len(result) < len(data)
+
+    def test_decimate_downsample_without_antialias(self):
+        """The interpolation based decimation path also shortens the data."""
+        data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
+        result = tide_resample.arbresample(data, 20.0, 6.0, decimate=True, antialias=False)
+        assert len(result) < len(data)
+
+
+class TestUpsampleErrors:
+    """Argument validation and reporting in upsample."""
+
+    def test_target_frequency_must_be_higher(self):
+        """Upsampling to a lower frequency is a usage error."""
+        data = np.sin(np.linspace(0.0, 6.0, 100))
+        with pytest.raises(SystemExit):
+            tide_resample.upsample(data, 10.0, 5.0)
+
+    def test_equal_frequency_rejected(self):
+        """Upsampling to the same frequency is also rejected."""
+        data = np.sin(np.linspace(0.0, 6.0, 100))
+        with pytest.raises(SystemExit):
+            tide_resample.upsample(data, 10.0, 10.0)
+
+    def test_debug_reports_timing(self, capsys):
+        """The verbose path reports how long the resampling took."""
+        data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
+        tide_resample.upsample(data, 10.0, 20.0, debug=True)
+        assert "upsampling took" in capsys.readouterr().out
+
+
+class TestDotwostepresampleErrors:
+    """Argument validation and reporting in dotwostepresample."""
+
+    def test_intermediate_frequency_must_be_higher(self):
+        """The intermediate frequency has to exceed the final one."""
+        orig_x = np.linspace(0.0, 10.0, 100)
+        orig_y = np.sin(orig_x)
+        with pytest.raises(SystemExit):
+            tide_resample.dotwostepresample(orig_x, orig_y, 5.0, 10.0)
+
+    def test_debug_reports_timing(self, capsys):
+        """The verbose path reports the antialiasing and downsampling times."""
+        orig_x = np.linspace(0.0, 100.0, 2000)
+        orig_y = np.sin(2 * np.pi * 0.05 * orig_x)
+        tide_resample.dotwostepresample(orig_x, orig_y, 50.0, 20.0, debug=True)
+        theoutput = capsys.readouterr().out
+        assert "downsampling took" in theoutput
+
+
+class TestCalcsliceoffsetRegularUp:
+    """Slice timing for ascending acquisition order (sotype 1)."""
+
+    def test_regular_up_ramps_with_slice_number(self):
+        """Ascending order gives each slice a time proportional to its index.
+
+        This branch tested ``type == 1`` - the Python builtin - instead of ``sotype == 1``,
+        so it never fired and ascending order silently returned no correction at all.
+        """
+        numslices, tr = 8, 2.0
+        offsets = [
+            tide_resample.calcsliceoffset(1, slicenum, numslices, tr)
+            for slicenum in range(numslices)
+        ]
+        expected = [slicenum * (tr / numslices) for slicenum in range(numslices)]
+        np.testing.assert_allclose(offsets, expected)
+        # and it must differ from "no correction at all"
+        assert any(offset != 0.0 for offset in offsets)
+
+    def test_regular_up_matches_documented_example(self):
+        """The value quoted in the docstring is the value produced."""
+        assert tide_resample.calcsliceoffset(1, 5, 32, 2.0) == pytest.approx(0.3125)
+
+    def test_regular_up_is_the_mirror_of_regular_down(self):
+        """Ascending and descending order are reverses of one another."""
+        numslices, tr = 8, 2.0
+        up = [tide_resample.calcsliceoffset(1, s, numslices, tr) for s in range(numslices)]
+        down = [tide_resample.calcsliceoffset(2, s, numslices, tr) for s in range(numslices)]
+        np.testing.assert_allclose(up, down[::-1])
+
+    def test_multiband_interleaved_odd_shots(self):
+        """The odd-shot-count branch of Siemens multiband ordering is reachable."""
+        numslices, tr, multiband = 15, 3.0, 3
+        offsets = [
+            tide_resample.calcsliceoffset(7, s, numslices, tr, multiband) for s in range(numslices)
+        ]
+        assert len(offsets) == numslices
+        assert all(0.0 <= offset < tr for offset in offsets)
+
+    def test_multiband_interleaved_even_shots(self):
+        """The even-shot-count branch of Siemens multiband ordering is reachable."""
+        numslices, tr, multiband = 16, 3.0, 2
+        offsets = [
+            tide_resample.calcsliceoffset(7, s, numslices, tr, multiband) for s in range(numslices)
+        ]
+        assert len(offsets) == numslices
+        assert all(np.isfinite(offset) for offset in offsets)
+
+    def test_siemens_interleaved_odd_slicecount(self):
+        """Siemens interleaved ordering with an odd slice count uses its own formula."""
+        numslices, tr = 15, 3.0
+        offsets = [tide_resample.calcsliceoffset(6, s, numslices, tr) for s in range(numslices)]
+        assert len(offsets) == numslices
+        # odd slice counts start with the even-numbered slices, so slice 1 comes late
+        assert offsets[1] > offsets[0]
+        assert all(np.isfinite(offset) for offset in offsets)
+
+
+class TestResampleReportingPaths:
+    """Verbose reporting paths in the remaining resample routines."""
+
+    def test_doresample_debug(self, capsys):
+        """doresample reports its padding when run verbosely."""
+        orig_x = np.linspace(0.0, 10.0, 100)
+        orig_y = np.sin(orig_x)
+        new_x = np.linspace(1.0, 9.0, 50)
+        result = tide_resample.doresample(orig_x, orig_y, new_x, debug=True)
+        assert len(result) == 50
+        assert "padlen=" in capsys.readouterr().out
+
+    def test_timeshift_debug(self, capsys):
+        """timeshift reports its padded length when run verbosely."""
+        data = np.sin(np.linspace(0.0, 6.0, 64))
+        shifted, weights, paddedshifted, paddedweights = tide_resample.timeshift(
+            data, 3.0, 10, debug=True
+        )
+        assert len(shifted) == len(data)
+        assert "timesshift:" in capsys.readouterr().out
+
+    def test_timeshift_odd_length_input(self):
+        """An odd number of points still round trips through the FFT based shifter."""
+        data = np.sin(np.linspace(0.0, 6.0, 65))
+        shifted, weights, paddedshifted, paddedweights = tide_resample.timeshift(data, 2.0, 8)
+        assert len(shifted) == len(data)
+        assert np.all(np.isfinite(shifted))
+
+    def test_timeshift_phase_vector_overshoot_is_trimmed(self):
+        """A padded length where the phase ramp overshoots by one sample is trimmed.
+
+        The phase modulation vector is built with ``np.arange``, which for some lengths
+        emits one extra sample because of floating point rounding; 59 points padded by one
+        TR on each side gives such a length (61).
+        """
+        thelen, padtrs = 59, 1
+        fftlen = thelen + 2 * padtrs
+        # confirm this length really is one of the overshooting cases
+        assert len(np.arange(0.0, 2.0 * np.pi, 2.0 * np.pi / float(fftlen))) > fftlen
+        data = np.sin(np.linspace(0.0, 6.0, thelen))
+        shifted, weights, paddedshifted, paddedweights = tide_resample.timeshift(data, 2.0, padtrs)
+        assert len(shifted) == thelen
+        assert np.all(np.isfinite(shifted))
+
+    def test_fastresampler_init_plot(self):
+        """The constructor's diagnostic plot path runs under a headless backend."""
+        timeaxis = np.linspace(0.0, 10.0, 101)
+        resampler = tide_resample.FastResampler(timeaxis, np.sin(timeaxis), doplot=True)
+        assert resampler.hires_y is not None
+        plt.close("all")
+
+    def test_fastresampler_yfromx_plot(self):
+        """The yfromx diagnostic plot path runs under a headless backend."""
+        timeaxis = np.linspace(0.0, 10.0, 101)
+        resampler = tide_resample.FastResampler(timeaxis, np.sin(timeaxis))
+        out = resampler.yfromx(np.linspace(1.0, 9.0, 50), doplot=True)
+        assert len(out) == 50
+        plt.close("all")
+
+    def test_timeshift_plot(self):
+        """The timeshift diagnostic plot path runs under a headless backend."""
+        data = np.sin(np.linspace(0.0, 6.0, 64))
+        shifted, weights, paddedshifted, paddedweights = tide_resample.timeshift(
+            data, 3.0, 10, doplot=True
+        )
+        assert len(shifted) == len(data)
+        plt.close("all")
+
+    def test_timewarp_debug(self, capsys):
+        """timewarp reports the mean delay it removed and the peak deviation."""
+        orig_x = np.linspace(0.0, 10.0, 100)
+        orig_y = np.sin(orig_x)
+        timeoffset = np.linspace(0.2, 0.4, 100)
+        warped = tide_resample.timewarp(orig_x, orig_y, timeoffset, debug=True)
+        theoutput = capsys.readouterr().out
+        assert len(warped) == len(orig_y)
+        assert "maximum deviation in samples:" in theoutput
 
 
 if __name__ == "__main__":

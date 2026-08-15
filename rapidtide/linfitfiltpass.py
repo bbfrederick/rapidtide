@@ -131,6 +131,45 @@ def _procOneRegressionFitItem(
         )
 
 
+def _storetimepointcoeffs(
+    fitcoeff: NDArray,
+    fitNorm: NDArray,
+    timepoint: int,
+    thecoeff: float | NDArray,
+    thenorm: float | NDArray,
+) -> None:
+    """
+    Store the fit coefficients for one timepoint, handling 1D and 2D coefficient arrays.
+
+    When processing by timepoint, multi-regressor coefficient arrays are laid out with the
+    regressor along the first axis, so a 2D array is indexed by column rather than by row.
+
+    Parameters
+    ----------
+    fitcoeff : NDArray
+        Array to store the fit coefficients in.  May be 1D or 2D.
+    fitNorm : NDArray
+        Array to store the normalized fit coefficients in.  Same shape as ``fitcoeff``.
+    timepoint : int
+        Index of the timepoint being stored.
+    thecoeff : float or NDArray
+        Fit coefficient(s) for this timepoint.
+    thenorm : float or NDArray
+        Normalized fit coefficient(s) for this timepoint.
+
+    Returns
+    -------
+    None
+        Both arrays are modified in place.
+    """
+    if fitcoeff.ndim > 1:
+        fitcoeff[:, timepoint] = thecoeff
+        fitNorm[:, timepoint] = thenorm
+    else:
+        fitcoeff[timepoint] = thecoeff
+        fitNorm[timepoint] = thenorm
+
+
 def linfitfiltpass(
     numprocitems: int,
     fmri_data: NDArray,
@@ -446,38 +485,21 @@ def linfitfiltpass(
                             rt_floattype=rt_floattype,
                         )
                     elif coefficientsonly:
-                        if not constantevs:
-                            (
-                                dummy,
-                                meanvalue[vox],
-                                rvalue[vox],
-                                r2value[vox],
-                                fitcoeff[vox],
-                                fitNorm[vox],
-                                dummy,
-                                dummy,
-                            ) = _procOneRegressionFitItem(
-                                vox,
-                                theevs[vox, :],
-                                thedata,
-                                rt_floattype=rt_floattype,
-                            )
-                        else:
-                            (
-                                dummy,
-                                meanvalue[vox],
-                                rvalue[vox],
-                                r2value[vox],
-                                fitcoeff[vox],
-                                fitNorm[vox],
-                                dummy,
-                                dummy,
-                            ) = _procOneRegressionFitItem(
-                                vox,
-                                theevs,
-                                thedata,
-                                rt_floattype=rt_floattype,
-                            )
+                        (
+                            dummy,
+                            meanvalue[vox],
+                            rvalue[vox],
+                            r2value[vox],
+                            fitcoeff[vox],
+                            fitNorm[vox],
+                            dummy,
+                            dummy,
+                        ) = _procOneRegressionFitItem(
+                            vox,
+                            theevs if constantevs else theevs[vox, :],
+                            thedata,
+                            rt_floattype=rt_floattype,
+                        )
                     else:
                         (
                             dummy,
@@ -490,7 +512,7 @@ def linfitfiltpass(
                             filtereddata[vox, :],
                         ) = _procOneRegressionFitItem(
                             vox,
-                            theevs[vox, :],
+                            theevs if constantevs else theevs[vox, :],
                             thedata,
                             rt_floattype=rt_floattype,
                         )
@@ -521,54 +543,39 @@ def linfitfiltpass(
                             rt_floattype=rt_floattype,
                         )
                     elif coefficientsonly:
-                        if not constantevs:
-                            (
-                                dummy,
-                                meanvalue[timepoint],
-                                rvalue[timepoint],
-                                r2value[timepoint],
-                                fitcoeff[timepoint],
-                                fitNorm[timepoint],
-                                dummy,
-                                dummy,
-                            ) = _procOneRegressionFitItem(
-                                timepoint,
-                                theevs[:, timepoint],
-                                thedata,
-                                rt_floattype=rt_floattype,
-                            )
-                        else:
-                            (
-                                dummy,
-                                meanvalue[timepoint],
-                                rvalue[timepoint],
-                                r2value[timepoint],
-                                fitcoeff[timepoint],
-                                fitNorm[timepoint],
-                                dummy,
-                                dummy,
-                            ) = _procOneRegressionFitItem(
-                                timepoint,
-                                theevs,
-                                thedata,
-                                rt_floattype=rt_floattype,
-                            )
+                        (
+                            dummy,
+                            meanvalue[timepoint],
+                            rvalue[timepoint],
+                            r2value[timepoint],
+                            thecoeff,
+                            thenorm,
+                            dummy,
+                            dummy,
+                        ) = _procOneRegressionFitItem(
+                            timepoint,
+                            theevs if constantevs else theevs[:, timepoint],
+                            thedata,
+                            rt_floattype=rt_floattype,
+                        )
+                        _storetimepointcoeffs(fitcoeff, fitNorm, timepoint, thecoeff, thenorm)
                     else:
                         (
                             dummy,
                             meanvalue[timepoint],
                             rvalue[timepoint],
                             r2value[timepoint],
-                            fitcoeff[timepoint],
-                            fitNorm[timepoint],
+                            thecoeff,
+                            thenorm,
                             datatoremove[:, timepoint],
                             filtereddata[:, timepoint],
                         ) = _procOneRegressionFitItem(
                             timepoint,
-                            theevs[:, timepoint],
+                            theevs if constantevs else theevs[:, timepoint],
                             thedata,
                             rt_floattype=rt_floattype,
                         )
+                        _storetimepointcoeffs(fitcoeff, fitNorm, timepoint, thecoeff, thenorm)
 
                     itemstotal += 1
         if showprogressbar:
@@ -729,10 +736,12 @@ def confoundregress(
     ...     regressors, labels, data, tr, nprocs=4
     ... )
     """
+    # copy rather than slice a view - the normalization and filtering below write through
+    # to the caller's array otherwise
     if tcend == -1:
-        theregressors = theregressors[:, tcstart:]
+        theregressors = theregressors[:, tcstart:].copy()
     else:
-        theregressors = theregressors[:, tcstart:tcend]
+        theregressors = theregressors[:, tcstart:tcend].copy()
     if (tclp is not None) or (tchp is not None):
         mothpfilt = tide_filt.NoncausalFilter(filtertype="arb", transferfunc="trapezoidal")
         if tclp is None:

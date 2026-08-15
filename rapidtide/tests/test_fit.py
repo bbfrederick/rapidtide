@@ -16,6 +16,13 @@
 #   limitations under the License.
 #
 #
+from unittest.mock import patch
+
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -1554,6 +1561,543 @@ class TestRefinePeakQuadEdgeCases:
         peakloc, peakval, peakwidth, ismax, badfit = refinepeak_quad(x, y, min_idx)
         assert ismax is False
         assert np.isclose(peakloc, 0.0, atol=0.2)
+
+
+# ========================= Pure-Python bodies of the jitted routines =========================
+#
+# Several routines here are numba compiled, so exercising them through the compiled entry
+# point never runs the Python bytecode.  Calling the ``py_func`` attribute runs the same
+# source as ordinary Python, which is what these tests do.
+
+
+def _broadbandsignal(npts, seed=0):
+    """Build a broadband low frequency signal suitable for regression tests.
+
+    Parameters
+    ----------
+    npts : int
+        Number of points.
+    seed : int, optional
+        Random seed.  Default is 0.
+
+    Returns
+    -------
+    ndarray
+        The generated signal.
+    """
+    rng = np.random.RandomState(seed)
+    t = np.arange(npts, dtype=float)
+    thesignal = np.zeros(npts, dtype=float)
+    for _ in range(30):
+        freq = rng.uniform(0.01, 0.2)
+        phase = rng.uniform(0.0, 2.0 * np.pi)
+        thesignal += np.sin(2.0 * np.pi * freq * t + phase)
+    return thesignal
+
+
+class TestTrendgenPython:
+    """The Python body of the jitted trend generator.
+
+    Coefficients are in numpy polyfit order (highest power first), and ``demean=True``
+    *adds* the constant term rather than removing it.
+    """
+
+    def test_zeroth_order_includes_the_constant(self):
+        thetrendgen = _unwrap_jit(tide_fit.trendgen)
+        xvals = np.linspace(0.0, 10.0, 51)
+        result = thetrendgen(xvals, np.array([3.0]), True)
+        np.testing.assert_allclose(result, np.full_like(xvals, 3.0), atol=1e-12)
+
+    def test_zeroth_order_excluding_the_constant_is_flat_zero(self):
+        thetrendgen = _unwrap_jit(tide_fit.trendgen)
+        xvals = np.linspace(0.0, 10.0, 51)
+        result = thetrendgen(xvals, np.array([3.0]), False)
+        np.testing.assert_allclose(result, np.zeros_like(xvals), atol=1e-12)
+
+    def test_first_order_without_constant(self):
+        thetrendgen = _unwrap_jit(tide_fit.trendgen)
+        xvals = np.linspace(0.0, 10.0, 51)
+        # [slope, constant]; with demean False only the slope term contributes
+        result = thetrendgen(xvals, np.array([1.0, 2.0]), False)
+        np.testing.assert_allclose(result, 1.0 * xvals, atol=1e-10)
+
+    def test_first_order_with_constant(self):
+        thetrendgen = _unwrap_jit(tide_fit.trendgen)
+        xvals = np.linspace(0.0, 10.0, 51)
+        result = thetrendgen(xvals, np.array([1.0, 2.0]), True)
+        np.testing.assert_allclose(result, 1.0 * xvals + 2.0, atol=1e-10)
+
+    def test_second_order_matches_the_documented_example(self):
+        thetrendgen = _unwrap_jit(tide_fit.trendgen)
+        xvals = np.linspace(0.0, 1.0, 5)
+        coeffs = np.array([1.0, 0.0, 1.0])  # x^2 + 1
+        np.testing.assert_allclose(thetrendgen(xvals, coeffs, True), xvals**2 + 1.0, atol=1e-10)
+        np.testing.assert_allclose(thetrendgen(xvals, coeffs, False), xvals**2, atol=1e-10)
+
+
+class TestRefinePeakQuadPython:
+    """The Python body of the jitted quadratic peak refiner."""
+
+    def test_refines_a_parabolic_maximum(self):
+        therefiner = _unwrap_jit(tide_fit.refinepeak_quad)
+        x = np.linspace(-5.0, 5.0, 101)
+        # a parabola peaking between two samples
+        y = -((x - 0.23) ** 2) + 4.0
+        peakindex = int(np.argmax(y))
+        peakloc, peakval, peakwidth, ismax, badfit = therefiner(x, y, peakindex)
+        assert ismax
+        assert not badfit
+        assert peakloc == pytest.approx(0.23, abs=0.05)
+        assert peakval == pytest.approx(4.0, abs=0.05)
+
+    def test_identifies_a_minimum(self):
+        therefiner = _unwrap_jit(tide_fit.refinepeak_quad)
+        x = np.linspace(-5.0, 5.0, 101)
+        y = (x - 0.1) ** 2
+        troughindex = int(np.argmin(y))
+        peakloc, peakval, peakwidth, ismax, badfit = therefiner(x, y, troughindex)
+        assert not ismax
+
+
+class TestLinfitfiltPython:
+    """The Python body of the jitted single-regressor linear filter."""
+
+    def test_removes_a_scaled_regressor(self):
+        thefilt = _unwrap_jit(tide_fit.linfitfilt)
+        npts = 200
+        theev = _broadbandsignal(npts, seed=1)
+        thedata = 3.0 * theev + 10.0
+        filtered, datatoremove, R2, retcoffs, theintercept = thefilt(thedata, theev)
+        assert R2 == pytest.approx(1.0, abs=1e-8)
+        assert retcoffs[0] == pytest.approx(3.0, abs=1e-8)
+        assert theintercept == pytest.approx(10.0, abs=1e-8)
+        # the residual is flat once the regressor is taken out
+        assert np.std(filtered) < 1e-8 * np.std(thedata)
+
+    def test_debug_path(self, capsys):
+        thefilt = _unwrap_jit(tide_fit.linfitfilt)
+        npts = 100
+        theev = _broadbandsignal(npts, seed=2)
+        thefilt(2.0 * theev + 1.0, theev, debug=True)
+        assert len(capsys.readouterr().out) > 0
+
+
+class TestExpandedLinfitfiltPython:
+    """The Python body of the jitted polynomial-expansion linear filter."""
+
+    def test_single_component_matches_plain_fit(self):
+        thefilt = _unwrap_jit(tide_fit.expandedlinfitfilt)
+        npts = 200
+        theev = _broadbandsignal(npts, seed=3)
+        thedata = 2.0 * theev + 5.0
+        filtered, thenewevs, datatoremove, R2, coffs = thefilt(thedata, theev, ncomps=1)
+        assert R2 == pytest.approx(1.0, abs=1e-8)
+
+    def test_multiple_components(self):
+        thefilt = _unwrap_jit(tide_fit.expandedlinfitfilt)
+        npts = 200
+        theev = _broadbandsignal(npts, seed=4)
+        theev = theev / np.max(np.fabs(theev))
+        thedata = 2.0 * theev + 0.5 * theev**2
+        filtered, thenewevs, datatoremove, R2, coffs = thefilt(
+            thedata, theev, ncomps=2, debug=True
+        )
+        # the quadratic term is in the expansion, so the fit is essentially exact
+        assert R2 > 0.999
+
+    def test_two_dimensional_regressors(self):
+        """Multiple regressors are each expanded into their own power columns."""
+        thefilt = _unwrap_jit(tide_fit.expandedlinfitfilt)
+        npts = 200
+        ev1 = _broadbandsignal(npts, seed=18)
+        ev2 = _broadbandsignal(npts, seed=19)
+        ev1 = ev1 / np.max(np.fabs(ev1))
+        ev2 = ev2 / np.max(np.fabs(ev2))
+        theevs = np.vstack([ev1, ev2]).T
+        thedata = 2.0 * ev1 - 3.0 * ev2 + 0.4 * ev1**2
+        filtered, thenewevs, datatoremove, R2, coffs = thefilt(
+            thedata, theevs, ncomps=2, debug=True
+        )
+        assert thenewevs.shape[1] == theevs.shape[1] * 2
+        assert R2 > 0.99
+
+
+class TestDerivativeLinfitfiltPython:
+    """The Python body of the jitted derivative-expansion linear filter."""
+
+    def test_zero_derivatives(self):
+        thefilt = _unwrap_jit(tide_fit.derivativelinfitfilt)
+        npts = 200
+        theev = _broadbandsignal(npts, seed=5)
+        thedata = 4.0 * theev - 2.0
+        filtered, thenewevs, datatoremove, R2, coffs = thefilt(thedata, theev, nderivs=0)
+        assert R2 == pytest.approx(1.0, abs=1e-8)
+
+    def test_one_derivative(self):
+        thefilt = _unwrap_jit(tide_fit.derivativelinfitfilt)
+        npts = 200
+        theev = _broadbandsignal(npts, seed=6)
+        thedata = 4.0 * theev + 1.5 * np.gradient(theev)
+        filtered, thenewevs, datatoremove, R2, coffs = thefilt(
+            thedata, theev, nderivs=1, debug=True
+        )
+        # the derivative is one of the regressors, so this is recoverable exactly
+        assert R2 > 0.999
+
+    def test_two_dimensional_regressors(self):
+        """Multiple regressors are each expanded into their own derivative columns."""
+        thefilt = _unwrap_jit(tide_fit.derivativelinfitfilt)
+        npts = 200
+        ev1 = _broadbandsignal(npts, seed=16)
+        ev2 = _broadbandsignal(npts, seed=17)
+        theevs = np.vstack([ev1, ev2]).T
+        thedata = 2.0 * ev1 - 3.0 * ev2 + 0.5 * np.gradient(ev1)
+        filtered, thenewevs, datatoremove, R2, coffs = thefilt(
+            thedata, theevs, nderivs=1, debug=True
+        )
+        assert thenewevs.shape[0] == npts
+        assert thenewevs.shape[1] == theevs.shape[1] * 2
+        assert R2 > 0.99
+
+
+class TestConfoundregressPython:
+    """The Python body of the jitted confound regression helper in fit."""
+
+    def test_removes_confounds_from_every_row(self):
+        theregress = _unwrap_jit(tide_fit.confoundregress)
+        npts, nvox = 120, 5
+        rng = np.random.RandomState(7)
+        regressors = np.vstack([_broadbandsignal(npts, seed=8), _broadbandsignal(npts, seed=9)])
+        data = np.zeros((nvox, npts))
+        for vox in range(nvox):
+            data[vox, :] = (vox + 1) * regressors[0] - 2.0 * regressors[1]
+        # regressors are indexed by row, so they stay (nregressors, ntimepoints)
+        filtereddata, r2values = theregress(data, regressors, showprogressbar=False)
+        assert filtereddata.shape == data.shape
+        assert np.all(r2values > 0.999)
+
+    def test_debug_path(self, capsys):
+        theregress = _unwrap_jit(tide_fit.confoundregress)
+        npts = 80
+        regressors = np.vstack([_broadbandsignal(npts, seed=20)])
+        data = np.tile(2.0 * regressors[0], (2, 1))
+        theregress(data, regressors, debug=True, showprogressbar=False)
+        assert "fit shape:" in capsys.readouterr().out
+
+
+# ========================= Reporting and plotting paths =========================
+
+
+class TestFitPlottingPaths:
+    """Diagnostic plot paths, run under a headless backend."""
+
+    def test_getpeaks_displayplots(self):
+        x = np.linspace(0.0, 20.0, 400)
+        y = np.sin(x) * np.exp(-x / 20.0)
+        peaks = tide_fit.getpeaks(x, y, displayplots=True)
+        assert isinstance(peaks, list)
+        plt.close("all")
+
+    def test_ocscreetest_displayplots(self):
+        rng = np.random.RandomState(11)
+        eigenvals = np.sort(rng.uniform(0.1, 10.0, 20))[::-1]
+        result = tide_fit.ocscreetest(eigenvals, displayplots=True, debug=True)
+        assert result is not None
+        plt.close("all")
+
+    def test_afscreetest_displayplots(self):
+        rng = np.random.RandomState(12)
+        eigenvals = np.sort(rng.uniform(0.1, 10.0, 20))[::-1]
+        result = tide_fit.afscreetest(eigenvals, displayplots=True)
+        assert result is not None
+        plt.close("all")
+
+    def test_phaseanalysis_displayplots(self, tmp_path, monkeypatch):
+        """The plot path also writes a hardcoded jpg into the working directory.
+
+        ``phaseanalysis`` saves "phaseanalysistest.jpg" to the cwd whenever plotting is on,
+        so run from a temporary directory to keep the artifact out of the source tree.
+        """
+        monkeypatch.chdir(tmp_path)
+        npts = 200
+        t = np.linspace(0.0, 10.0, npts)
+        firstharmonic = np.sin(2.0 * np.pi * t)
+        instantaneous_phase, amplitude_envelope, filtered = tide_fit.phaseanalysis(
+            firstharmonic, displayplots=True
+        )
+        assert len(instantaneous_phase) == npts
+        plt.close("all")
+
+
+class TestDetrendEdgeCases:
+    """Fallback behaviour in detrend."""
+
+    def test_rank_deficient_fit_falls_back_to_zero(self):
+        """A fit numpy cannot condition returns zero coefficients rather than raising."""
+        # a single point cannot support a high order polynomial fit
+        thedata = np.array([5.0])
+        result = tide_fit.detrend(thedata, order=1, demean=False)
+        assert np.all(np.isfinite(result))
+
+    def test_demean_removes_the_mean(self):
+        thedata = _broadbandsignal(100, seed=13) + 25.0
+        result = tide_fit.detrend(thedata, order=0, demean=True)
+        assert abs(np.mean(result)) < 1e-10
+
+
+class TestPrewhitenFailurePaths:
+    """Model selection failures in the AR prewhitening helpers."""
+
+    def test_all_orders_failing_raises(self):
+        """If no AR order can be fit, prewhiten reports that rather than returning junk."""
+        with patch("rapidtide.fit.sm.tsa.ARIMA", side_effect=ValueError("no fit for you")):
+            with pytest.raises(RuntimeError, match="Failed to fit any AR model"):
+                tide_fit.prewhiten(_broadbandsignal(200, seed=14))
+
+    def test_some_orders_failing_still_succeeds(self):
+        """An order that cannot be fit is skipped and the search continues."""
+        import statsmodels.api as sm
+
+        realarima = sm.tsa.ARIMA
+        calls = {"n": 0}
+
+        def _failsfirst(*args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise ValueError("first order unavailable")
+            return realarima(*args, **kwargs)
+
+        with patch("rapidtide.fit.sm.tsa.ARIMA", side_effect=_failsfirst):
+            result = tide_fit.prewhiten(_broadbandsignal(200, seed=15))
+        assert calls["n"] > 1, "only one order was attempted"
+        assert result is not None
+
+
+# ========================= Peak fitting reporting and failure paths =========================
+
+
+def _corrfunc(center=0.0, sigma=2.0, amp=0.8, npts=1001, span=30.0):
+    """Build a Gaussian similarity function on a symmetric lag axis.
+
+    Parameters
+    ----------
+    center : float, optional
+        Peak location in seconds.  Default is 0.0.
+    sigma : float, optional
+        Peak width in seconds.  Default is 2.0.
+    amp : float, optional
+        Peak amplitude.  Default is 0.8.
+    npts : int, optional
+        Number of points.  Default is 1001.
+    span : float, optional
+        Half width of the lag axis in seconds.  Default is 30.0.
+
+    Returns
+    -------
+    tuple of (ndarray, ndarray)
+        The similarity function and its lag axis.
+    """
+    t = np.linspace(-span, span, npts)
+    return amp * np.exp(-0.5 * ((t - center) / sigma) ** 2), t
+
+
+class TestSimfuncpeakfitReporting:
+    """Verbose and plotting paths through simfuncpeakfit."""
+
+    def test_debug_reporting_runs(self, capsys):
+        """The debug path narrates each stage of the fit."""
+        corr, t = _corrfunc()
+        result = tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", debug=True)
+        theoutput = capsys.readouterr().out
+        assert "baseline, baselinedev:" in theoutput
+        assert "initial peakstart, peakend:" in theoutput
+        assert result[1] == pytest.approx(0.0, abs=0.2)
+
+    def test_displayplots_runs(self):
+        """The diagnostic plot path runs under a headless backend."""
+        corr, t = _corrfunc()
+        tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", displayplots=True)
+        plt.close("all")
+
+    def test_missing_time_axis_exits(self, capsys):
+        """A similarity function with no lag axis cannot be fit."""
+        corr, t = _corrfunc()
+        with pytest.raises(SystemExit):
+            tide_fit.simfuncpeakfit(corr, None, peakfittype="gauss")
+        assert "Correlation time axis is not defined" in capsys.readouterr().out
+
+    def test_bipolar_negative_peak_is_flipped(self):
+        """In bipolar mode a strong negative trough is fit as a peak."""
+        corr, t = _corrfunc(center=3.0, sigma=2.0, amp=0.9)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            -corr, t, peakfittype="gauss", bipolar=True, debug=True
+        )
+        # the fitted location tracks the trough, and the amplitude comes back negative
+        assert maxlag == pytest.approx(3.0, abs=0.5)
+        assert maxval < 0.0
+
+    def test_amplitude_below_threshold_flagged(self):
+        """A peak below the lower amplitude threshold sets a failure bit.
+
+        The mask stays set - the amplitude check records why the fit is suspect rather than
+        discarding it outright.
+        """
+        corr, t = _corrfunc(amp=0.02, sigma=2.0)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", lthreshval=0.5, enforcethresh=True, debug=True
+        )
+        assert failreason != 0, "expected an amplitude failure bit"
+
+    def test_width_above_absmaxsigma_flagged(self):
+        """An implausibly broad peak is rejected on width."""
+        corr, t = _corrfunc(sigma=12.0, amp=0.8)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", absmaxsigma=1.0, debug=True
+        )
+        assert maskval == 0
+        assert failreason != 0
+
+    def test_width_below_absminsigma_flagged(self):
+        """An implausibly narrow peak is rejected on width."""
+        corr, t = _corrfunc(sigma=0.06, amp=0.8, npts=4001)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", absminsigma=2.0, debug=True
+        )
+        assert maskval == 0
+        assert failreason != 0
+
+    def test_flat_similarity_function(self):
+        """A featureless input runs to completion with finite outputs.
+
+        A flat function currently raises no failure flag; this pins that behaviour so a
+        future change that starts rejecting it is a visible decision rather than a surprise.
+        """
+        t = np.linspace(-30.0, 30.0, 1001)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            np.zeros_like(t), t, peakfittype="gauss", debug=True
+        )
+        assert np.isfinite(maxlag)
+        assert np.isfinite(maxval)
+
+    def test_quad_peakfittype(self):
+        """The quadratic fit type is a supported alternative to the Gaussian."""
+        corr, t = _corrfunc(center=1.5, sigma=3.0, amp=0.8)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="quad", debug=True
+        )
+        assert np.isfinite(maxlag)
+
+    def test_none_peakfittype(self):
+        """The 'None' fit type reports the raw maximum without refining it."""
+        corr, t = _corrfunc(center=2.0, sigma=3.0, amp=0.8)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="None"
+        )
+        assert maxlag == pytest.approx(2.0, abs=0.5)
+
+    def test_zerooutbadfit_false_keeps_values(self):
+        """With zerooutbadfit off, a rejected fit still reports its parameters."""
+        corr, t = _corrfunc(center=25.0, sigma=2.0, amp=0.7)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
+            corr, t, peakfittype="gauss", lagmin=-5.0, lagmax=5.0, zerooutbadfit=False
+        )
+        assert maskval == 0
+        assert failreason != 0
+
+    def test_mutualinfo_functype(self):
+        """The mutual information function type uses its own baseline handling."""
+        corr, t = _corrfunc(center=0.0, sigma=3.0, amp=0.8)
+        result = tide_fit.simfuncpeakfit(
+            corr + 0.5, t, functype="mutualinfo", peakfittype="gauss", debug=True
+        )
+        assert np.isfinite(result[1])
+
+
+class TestFindmaxlagGaussReporting:
+    """Verbose, plotting, and failure paths through findmaxlag_gauss."""
+
+    def _broadbandpair(self, npts=400, delay=5, seed=3):
+        """Build a pair of broadband signals offset by a known delay."""
+        rng = np.random.RandomState(seed)
+        t = np.arange(npts, dtype=float)
+        sig1 = np.zeros(npts)
+        for _ in range(30):
+            freq = rng.uniform(0.01, 0.2)
+            phase = rng.uniform(0.0, 2.0 * np.pi)
+            sig1 += np.sin(2.0 * np.pi * freq * t + phase)
+        return sig1
+
+    def test_invalid_searchfrac_rejected(self):
+        """A search fraction outside the open unit interval is a usage error."""
+        corr, t = _corrfunc()
+        for badfrac in [0.0, 1.0, -0.5, 2.0]:
+            with pytest.raises(ValueError, match="searchfrac"):
+                tide_fit.findmaxlag_gauss(t, corr, -20.0, 20.0, 5.0, searchfrac=badfrac)
+
+    def test_debug_reporting_runs(self, capsys):
+        """The debug path reports the fit parameters it settled on."""
+        corr, t = _corrfunc(center=2.0, sigma=3.0, amp=0.7)
+        result = tide_fit.findmaxlag_gauss(t, corr, -20.0, 20.0, 5.0, debug=True)
+        assert len(capsys.readouterr().out) > 0
+        assert np.isfinite(result[1])
+
+    def test_displayplots_runs(self):
+        """The diagnostic plot path runs under a headless backend."""
+        corr, t = _corrfunc(center=1.0, sigma=3.0, amp=0.7)
+        tide_fit.findmaxlag_gauss(t, corr, -20.0, 20.0, 5.0, displayplots=True)
+        plt.close("all")
+
+    def test_displayplots_while_refining(self):
+        """The refinement branch has its own diagnostic plot."""
+        corr, t = _corrfunc(center=1.0, sigma=3.0, amp=0.7)
+        tide_fit.findmaxlag_gauss(
+            t, corr, -20.0, 20.0, 5.0, refine=True, displayplots=True, debug=True
+        )
+        plt.close("all")
+
+    def test_peak_outside_lag_range_flagged(self):
+        """A peak beyond the permitted lag window is flagged rather than accepted."""
+        corr, t = _corrfunc(center=25.0, sigma=2.0, amp=0.7)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.findmaxlag_gauss(t, corr, -5.0, 5.0, 5.0)
+        )
+        assert maskval == 0
+        assert failreason != 0
+
+    def test_flat_input_flagged(self):
+        """A featureless similarity function produces a flagged failure."""
+        t = np.linspace(-30.0, 30.0, 1001)
+        maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = (
+            tide_fit.findmaxlag_gauss(t, np.zeros_like(t), -20.0, 20.0, 5.0)
+        )
+        assert maskval == 0
+
+    def test_absmaxsigma_rejects_broad_peak_when_refining(self):
+        """A peak wider than the permitted maximum is rejected during refinement.
+
+        The width limits are applied as part of the refinement step, so they have no effect
+        with the default ``refine=False``.
+        """
+        corr, t = _corrfunc(sigma=12.0, amp=0.8)
+        unrefined = tide_fit.findmaxlag_gauss(
+            t, corr, -20.0, 20.0, 5.0, absmaxsigma=1.0, refine=False
+        )
+        assert unrefined[4] == 1, "width limits should not apply without refinement"
+        refined = tide_fit.findmaxlag_gauss(
+            t, corr, -20.0, 20.0, 5.0, absmaxsigma=1.0, refine=True
+        )
+        assert refined[4] == 0
+        assert refined[5] != 0
+
+    def test_refine_and_zerooutbadfit_variants(self):
+        """The refinement and zero-out options both run to completion."""
+        corr, t = _corrfunc(center=1.0, sigma=3.0, amp=0.7)
+        for refine in [True, False]:
+            for zeroout in [True, False]:
+                result = tide_fit.findmaxlag_gauss(
+                    t, corr, -20.0, 20.0, 5.0, refine=refine, zerooutbadfit=zeroout
+                )
+                assert len(result) == 8
 
 
 # ========================= Run the tests =========================

@@ -1121,7 +1121,7 @@ def calcsliceoffset(
         slicetime = 0.0
 
     # Regular up
-    if type == 1:
+    if sotype == 1:
         slicetime = slicenum * (tr / numslices)
 
     # Regular down

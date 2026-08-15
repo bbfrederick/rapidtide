@@ -635,7 +635,7 @@ def trendgen(
     >>> trendgen(x, coeffs, demean=True)
     array([1.    , 1.0625, 1.25  , 1.5625, 2.    ])
     >>> trendgen(x, coeffs, demean=False)
-    array([-0.    , -0.0625, -0.25  , -0.5625, -1.    ])
+    array([0.    , 0.0625, 0.25  , 0.5625, 1.    ])
     """
     theshape = thefitcoffs.shape
     order = theshape[0] - 1
@@ -2598,7 +2598,8 @@ def calcexpandedregressors(
     return outputregressors, outlabels
 
 
-@conditionaljit()
+# NOTE: not jittable - these route through mlregress, which uses sklearn's
+# LinearRegression and so cannot be compiled in nopython mode.
 def derivativelinfitfilt(
     thedata: NDArray, theevs: NDArray, nderivs: int = 1, debug: bool = False
 ) -> Tuple[NDArray, NDArray, NDArray, float, NDArray]:
@@ -2661,12 +2662,13 @@ def derivativelinfitfilt(
     else:
         if theevs.ndim > 1:
             thenewevs = np.zeros((theevs.shape[0], theevs.shape[1] * (nderivs + 1)), dtype=float)
-            for ev in range(0, theevs.shape[1] - 1):
-                thenewevs[:, nderivs * ev] = theevs[:, ev] * 1.0
+            # each regressor occupies a contiguous block of nderivs + 1 columns: the
+            # regressor itself followed by each successive derivative of it
+            for ev in range(0, theevs.shape[1]):
+                blockstart = (nderivs + 1) * ev
+                thenewevs[:, blockstart] = theevs[:, ev] * 1.0
                 for i in range(1, nderivs + 1):
-                    thenewevs[:, nderivs * (ev - 1) + i] = np.gradient(
-                        thenewevs[:, nderivs * (ev - 1) + i - 1]
-                    )
+                    thenewevs[:, blockstart + i] = np.gradient(thenewevs[:, blockstart + i - 1])
         else:
             thenewevs = np.zeros((theevs.shape[0], nderivs + 1), dtype=float)
             thenewevs[:, 0] = theevs * 1.0
@@ -2682,7 +2684,8 @@ def derivativelinfitfilt(
     return filtered, thenewevs, datatoremove, R, coffs
 
 
-@conditionaljit()
+# NOTE: not jittable - these route through mlregress, which uses sklearn's
+# LinearRegression and so cannot be compiled in nopython mode.
 def expandedlinfitfilt(
     thedata: NDArray, theevs: NDArray, ncomps: int = 1, debug: bool = False
 ) -> Tuple[NDArray, NDArray, NDArray, float, NDArray]:
@@ -2744,12 +2747,13 @@ def expandedlinfitfilt(
     else:
         if theevs.ndim > 1:
             thenewevs = np.zeros((theevs.shape[0], theevs.shape[1] * ncomps), dtype=float)
-            for ev in range(1, theevs.shape[1]):
-                thenewevs[:, ncomps * (ev - 1)] = theevs[:, ev - 1] * 1.0
+            # each regressor occupies a contiguous block of ncomps columns: the regressor
+            # itself followed by each successive power of it
+            for ev in range(0, theevs.shape[1]):
+                blockstart = ncomps * ev
+                thenewevs[:, blockstart] = theevs[:, ev] * 1.0
                 for i in range(1, ncomps):
-                    thenewevs[:, ncomps * (ev - 1) + i] = (
-                        thenewevs[:, ncomps * (ev - 1) + i - 1] * theevs[:, ev - 1]
-                    )
+                    thenewevs[:, blockstart + i] = thenewevs[:, blockstart + i - 1] * theevs[:, ev]
         else:
             thenewevs = np.zeros((theevs.shape[0], ncomps), dtype=float)
             thenewevs[:, 0] = theevs * 1.0
@@ -2765,7 +2769,8 @@ def expandedlinfitfilt(
     return filtered, thenewevs, datatoremove, R, coffs
 
 
-@conditionaljit()
+# NOTE: not jittable - these route through mlregress, which uses sklearn's
+# LinearRegression and so cannot be compiled in nopython mode.
 def linfitfilt(
     thedata: NDArray, theevs: NDArray, debug: bool = False
 ) -> Tuple[NDArray, NDArray, float, NDArray, float]:
@@ -2829,12 +2834,14 @@ def linfitfilt(
         print(f"{R2=}")
         print(f"{retcoffs.shape=}")
     datatoremove = np.zeros_like(thedata)
+    # the intercept is the leading fit coefficient regardless of how many regressors
+    # there are, so bind it before branching - the single regressor path returns it too
+    theintercept = thefit[0, 0]
 
     if theevs.ndim > 1:
         for ev in range(1, thefit.shape[1]):
             if debug:
                 print(f"{ev=}")
-            theintercept = thefit[0, 0]
             retcoffs[ev - 1] = thefit[0, ev]
             datatoremove += thefit[0, ev] * theevs[:, ev - 1]
             if debug:
@@ -2850,7 +2857,8 @@ def linfitfilt(
     return filtered, datatoremove, R2, retcoffs, theintercept
 
 
-@conditionaljit()
+# NOTE: not jittable - these route through mlregress, which uses sklearn's
+# LinearRegression and so cannot be compiled in nopython mode.
 def confoundregress(
     data: NDArray,
     regressors: NDArray,

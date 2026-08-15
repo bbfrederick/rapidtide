@@ -645,7 +645,9 @@ def prenorm(
         thisweight = R2vals
     else:
         thisweight = np.where(lagstrengths > 0.0, 1.0, -1.0)
-    thisweight *= refinemask
+    # multiply out of place - "R" and "R2" alias the caller's arrays, and an in-place
+    # multiply would zero their values outside the refine mask
+    thisweight = thisweight * refinemask
 
     if debug:
         print(f"{thedivisor.shape=}")
