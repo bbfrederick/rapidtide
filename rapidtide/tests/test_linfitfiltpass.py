@@ -708,6 +708,64 @@ def test_linfitfiltpass_alwaysmultiproc(debug=False):
     assert np.all(r2value > 0.99)
 
 
+def test_linfitfiltpass_debug_with_optional_arrays_absent(debug=False):
+    """Test the debug report copes with the output arrays that are legitimately None.
+
+    ``confoundregress`` and ``coefficientsonly`` modes leave several of the output arrays
+    unallocated, but the end of run debug report used to dereference all of them
+    unconditionally - so passing debug=True crashed, which is how ``retroregress --debug``
+    came to be unusable.
+    """
+    if debug:
+        print("linfitfiltpass_debug_with_optional_arrays_absent")
+    nvox, tpts = 4, 20
+    theev, thedata = _fitdata(nvox=nvox, tpts=tpts)
+
+    # confoundregress: only r2value and filtereddata are populated
+    items = tide_linfitfiltpass.linfitfiltpass(
+        nvox,
+        thedata,
+        None,
+        theev,
+        None,
+        None,
+        np.zeros(nvox),
+        None,
+        None,
+        None,
+        np.zeros((nvox, tpts)),
+        nprocs=1,
+        constantevs=True,
+        confoundregress=True,
+        showprogressbar=False,
+        verbose=False,
+        debug=True,
+    )
+    assert items == nvox
+
+    # coefficientsonly: datatoremove stays None
+    items = tide_linfitfiltpass.linfitfiltpass(
+        nvox,
+        thedata,
+        None,
+        theev,
+        np.zeros(nvox),
+        np.zeros(nvox),
+        np.zeros(nvox),
+        np.zeros(nvox),
+        np.zeros(nvox),
+        None,
+        np.zeros((nvox, tpts)),
+        nprocs=1,
+        constantevs=True,
+        coefficientsonly=True,
+        showprogressbar=False,
+        verbose=False,
+        debug=True,
+    )
+    assert items == nvox
+
+
 def test_linfitfiltpass_debug_and_progressbar(debug=False):
     """Test the debug reporting and progress bar paths run without error."""
     if debug:
@@ -963,6 +1021,7 @@ if __name__ == "__main__":
     test_linfitfiltpass_multiproc_matches_singleproc(debug=True)
     test_linfitfiltpass_multiproc_2d_coefficients(debug=True)
     test_linfitfiltpass_alwaysmultiproc(debug=True)
+    test_linfitfiltpass_debug_with_optional_arrays_absent(debug=True)
     test_linfitfiltpass_debug_and_progressbar(debug=True)
     test_makevoxelspecificderivs_zero_derivatives(debug=True)
     test_makevoxelspecificderivs_first_derivative(debug=True)

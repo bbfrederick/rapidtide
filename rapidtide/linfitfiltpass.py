@@ -582,9 +582,20 @@ def linfitfiltpass(
             print()
     if debug:
         print("At end of linfitfiltpass:")
-        print(f"\t{datatoremove.shape=}, {np.min(datatoremove)=}, {np.max(datatoremove)=}")
-        print(f"\t{filtereddata.shape=}, {np.min(filtereddata)=}, {np.max(filtereddata)=}")
-        print(f"\t{fitcoeff.shape=}, {np.min(fitcoeff)=}, {np.max(fitcoeff)=}")
+        # the output arrays are optional - confoundregress and coefficientsonly modes
+        # legitimately leave some of them as None, so report only what exists
+        for thename, thearray in [
+            ("datatoremove", datatoremove),
+            ("filtereddata", filtereddata),
+            ("fitcoeff", fitcoeff),
+        ]:
+            if thearray is None:
+                print(f"\t{thename} is None")
+            else:
+                print(
+                    f"\t{thename}.shape={thearray.shape}, "
+                    f"min={np.min(thearray)}, max={np.max(thearray)}"
+                )
     return itemstotal
 
 
