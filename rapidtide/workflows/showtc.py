@@ -477,7 +477,7 @@ def showtc(args: Namespace) -> None:
             else:
                 if args.debug:
                     print(f"args.thestarttime is {args.thestarttime}")
-                    thestarttime = args.thestarttime
+                thestarttime = args.thestarttime
             thisstartoffset = thestarttime
         else:
             # print(f"thisstartoffset is {thisstartoffset}")

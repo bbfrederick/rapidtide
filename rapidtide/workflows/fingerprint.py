@@ -20,6 +20,7 @@ import argparse
 import copy
 import os
 import sys
+from typing import Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -31,7 +32,18 @@ import rapidtide.util as tide_util
 import rapidtide.workflows.parser_funcs as pf
 
 
-def _get_parser():
+def _get_parser() -> argparse.ArgumentParser:
+    """
+    Create and configure the argument parser for the fingerprint command line tool.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured argument parser for the fingerprint tool.  Path valued arguments are expanded
+        to absolute paths by a custom action; an empty path string becomes the literal
+        "__EMPTY__".
+    """
+
     class FullPaths(argparse.Action):
         """Expand user- and relative-paths"""
 
@@ -185,20 +197,78 @@ def _get_parser():
 
 
 def fingerprint(
-    themapname,
-    whichtemplate,
-    whichatlas,
-    outputroot,
-    fitorder,
-    includespec=None,
-    excludespec=None,
-    extramaskname=None,
-    intercept=True,
-    limittomask=False,
-    entropybins=101,
-    entropyrange=None,
-    debug=False,
-):
+    themapname: str,
+    whichtemplate: str,
+    whichatlas: str,
+    outputroot: str,
+    fitorder: int,
+    includespec: Optional[str] = None,
+    excludespec: Optional[str] = None,
+    extramaskname: Optional[str] = None,
+    intercept: bool = True,
+    limittomask: bool = False,
+    entropybins: int = 101,
+    entropyrange: Optional[Sequence[float]] = None,
+    debug: bool = False,
+) -> None:
+    """
+    Fit a map to a canonical template, region by region, and write out fit and statistical metrics.
+
+    The input map is decomposed by vascular territory (as defined by an atlas), each territory is
+    fit to a polynomial function of the template, and a large set of descriptive statistics is
+    calculated both for the raw map and for the post-fit residuals.
+
+    Parameters
+    ----------
+    themapname : str
+        Path to the map to decompose.  Must be in MNI152NLin6Asym coordinates at 2mm resolution
+        (unless a custom atlas in another space is supplied).  May be 3D or 4D.
+    whichtemplate : str
+        Which canonical template to fit.  One of "lag", "strength", "sigma", or "constant".
+        "constant" fits a template that is 1.0 everywhere the atlas is defined.
+    whichatlas : str
+        Which atlas to use to define the territories.  One of "ASPECTS", "ATT", "JHU1", or
+        "JHU2", or "USER_<path>" to use the custom atlas NIFTI file at <path> (which must be
+        accompanied by a matching .txt file listing the region names, one per line).
+    outputroot : str
+        Root name for all output files.  A descriptive suffix encoding the template, atlas, and
+        fit order is appended to this before any files are written.
+    fitorder : int
+        Order of the polynomial fit to the template.  0 fits a constant (the regional mean).
+    includespec : str, optional
+        Mask specification ("MASK[:VALSPEC]") selecting voxels to include in the fit.
+        Default is None (include everything).
+    excludespec : str, optional
+        Mask specification ("MASK[:VALSPEC]") selecting voxels to exclude from the fit.
+        Default is None (exclude nothing).
+    extramaskname : str, optional
+        Path to an additional mask file.  Voxels that are zero in this mask are excluded.
+        Default is None.
+    intercept : bool, optional
+        If True, include a zeroth order (constant) term in the fit.  Default is True.
+    limittomask : bool, optional
+        If True, zero the saved fit and fit difference maps outside the mask.  Default is False.
+    entropybins : int, optional
+        Number of bins in the histogram used for the entropy calculation.  Default is 101.
+    entropyrange : sequence of float, optional
+        Two element (lower, upper) limit of the range of the entropy histogram.  Default is None,
+        which uses the data minimum and maximum.
+    debug : bool, optional
+        If True, print additional debugging information.  Default is False.
+
+    Returns
+    -------
+    None
+        All results are written to files named with the ``outputroot`` prefix - a mask map, the
+        fit and fit difference maps, the R2 and coefficient maps (both NIFTI and tsv), per map
+        fit tables, and one tsv per descriptive statistic.
+
+    Notes
+    -----
+    ``tide_fit.territorydecomp`` always returns ``fitorder + 1`` coefficients per region, with the
+    intercept prepended.  When ``intercept`` is False that leading coefficient is identically zero
+    and is omitted from the output tables.
+    """
     # read the data
     referencedir = tide_util.findreferencedir()
     if debug:
@@ -259,7 +329,7 @@ def fingerprint(
     # read the template
     if thetemplatename is not None:
         if debug:
-            print(f"reading atlas file {theatlasname}")
+            print(f"reading template file {thetemplatename}")
         (
             thetemplate,
             thetemplate_data,
@@ -316,7 +386,9 @@ def fingerprint(
         extramask=extramaskname,
     )
 
-    theflatmask = np.ones_like(themap_data.reshape((numspatiallocs)))
+    # the mask is purely spatial, so size it from the spatial extent rather than by reshaping
+    # the map itself, which fails outright when the map is 4D
+    theflatmask = np.ones(numspatiallocs, dtype=themap_data.dtype)
     if includemask is not None:
         theflatmask = theflatmask * includemask.reshape((numspatiallocs))
     if excludemask is not None:
@@ -365,17 +437,13 @@ def fingerprint(
     newcols.columns = atlaslabelsinput["Region"]
     newcols.to_csv(f"{outputroot}_allR2s.tsv", index=False, sep="\t")
 
-    # save the fits as tsv
-    if intercept:
-        endpoint = fitorder + 1
-        offset = 0
-    else:
-        endpoint = fitorder
-        offset = 1
-    for i in range(0, endpoint):
+    # save the fits as tsv.  coff_array[i] always holds the order i coefficient - index 0 is
+    # the intercept, which is identically zero (and so is not written out) when intercept is False.
+    startorder = 0 if intercept else 1
+    for i in range(startorder, fitorder + 1):
         newcols = pd.DataFrame(np.transpose(coff_array[i, :, :]))
         newcols.columns = atlaslabelsinput["Region"]
-        newcols.to_csv(f"{outputroot}_fit_O{str(i + offset)}.tsv", index=False, sep="\t")
+        newcols.to_csv(f"{outputroot}_fit_O{str(i)}.tsv", index=False, sep="\t")
 
     # save the fit data as nifti
     if limittomask:
@@ -399,14 +467,16 @@ def fingerprint(
 
     # save the Rs as nifti
     thehdr = copy.deepcopy(themap_hdr)
-    print(f"shape of R2_array: {R2_array.shape}")
-    print(f"thehdr before: {thehdr['dim']}")
+    if debug:
+        print(f"shape of R2_array: {R2_array.shape}")
+        print(f"thehdr before: {thehdr['dim']}")
     thehdr["dim"][0] = 2
     thehdr["dim"][1] = R2_array.shape[0]
     thehdr["dim"][2] = R2_array.shape[1]
     thehdr["dim"][3] = 1
     thehdr["dim"][4] = 1
-    print(f"thehdr after: {thehdr['dim']}")
+    if debug:
+        print(f"thehdr after: {thehdr['dim']}")
     thehdr["pixdim"][0] = 1.0
     thehdr["pixdim"][1] = 1.0
     thehdr["pixdim"][2] = 1.0
@@ -416,14 +486,16 @@ def fingerprint(
 
     # save the fit coefficients as nifti
     thehdr = copy.deepcopy(themap_hdr)
-    print(f"shape of coff_array: {coff_array.shape}")
-    print(f"thehdr before: {thehdr['dim']}")
+    if debug:
+        print(f"shape of coff_array: {coff_array.shape}")
+        print(f"thehdr before: {thehdr['dim']}")
     thehdr["dim"][0] = 3
     thehdr["dim"][1] = coff_array.shape[0]
     thehdr["dim"][2] = coff_array.shape[1]
     thehdr["dim"][3] = coff_array.shape[2]
     thehdr["dim"][4] = 1
-    print(f"thehdr after: {thehdr['dim']}")
+    if debug:
+        print(f"thehdr after: {thehdr['dim']}")
     thehdr["pixdim"][0] = 1.0
     thehdr["pixdim"][1] = 1.0
     thehdr["pixdim"][2] = 1.0
@@ -511,15 +583,8 @@ def fingerprint(
         residual_kurtosis_array[:, whichmap] = theresidualkurtoses[whichmap]
         residual_entropy_array[:, whichmap] = theresidualentropies[whichmap]
 
-        newcols = pd.DataFrame(thecoffs[whichmap, :, :])
-        columnnames = []
-        if intercept:
-            startpt = 0
-        else:
-            startpt = 1
-        for i in range(startpt, fitorder + 1):
-            columnnames += str(i)
-        newcols.columns = columnnames
+        newcols = pd.DataFrame(thecoffs[whichmap, :, startorder:])
+        newcols.columns = [str(i) for i in range(startorder, fitorder + 1)]
         atlaslabels["R2"] = theR2s[whichmap]
         atlaslabels = pd.concat([atlaslabels, newcols], axis=1)
         atlaslabels.to_csv(f"{outputroot}_{str(whichmap).zfill(4)}_fits.tsv", sep="\t")
@@ -550,7 +615,25 @@ def fingerprint(
         newcols.to_csv(f"{outputroot}_all{thestat}.tsv", index=False, sep="\t")
 
 
-def entrypoint():
+def entrypoint() -> None:
+    """
+    Parse the command line and run the fingerprint workflow.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    SystemExit
+        If the command line arguments are missing or invalid.  The help text is printed first.
+
+    Notes
+    -----
+    A custom atlas supplied with ``--customatlas`` overrides ``--atlas``.  Selecting the
+    "constant" template forces the fit order to 0 and re-enables the intercept, since a constant
+    template has no higher order terms to fit.
+    """
     # get the command line parameters
     try:
         args = _get_parser().parse_args()
