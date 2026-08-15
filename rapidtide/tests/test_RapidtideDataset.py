@@ -1996,26 +1996,23 @@ class TestStandardSpaceDatasets:
         assert "does not exist!" in theoutput
         assert "there is not an atlas" in theoutput
 
-    def test_mni152_3mm_brain_mask_is_missing(self, tmp_path, fake_fsldir):
-        """The 3mm geometric mask points at a filename that is not shipped.
+    def test_mni152_3mm_brain_mask_comes_from_the_reference_dir(self, tmp_path, fake_fsldir):
+        """A 3mm MNI dataset gets its geometric mask from the shipped reference file.
 
-        Pinned, not fixed.  _loadgeommask builds the 3mm name as
-        ``MNI152_T1_3mm_brain_mask_bin.nii.gz``, but what the reference directory
-        actually contains is ``MNI152_T1_3mm_brain_mask.nii.gz`` - no ``_bin``.  So a
-        3mm MNI dataset silently gets no geometric mask, while the 2mm one, which
-        takes its mask from FSL under a different name, gets one.
+        Unlike the 2mm case, which takes its mask from FSL, the 3mm mask is the
+        ``MNI152_T1_3mm_brain_mask.nii.gz`` that ships in the reference directory, so
+        it loads whether or not FSL is installed.
         """
         thefileroot = _makestandardspacedataset(tmp_path, "mni3mask_", (61, 73, 61), 3.0)
 
         thesubject = RapidtideDataset("mni3", thefileroot, init_LUT=False, verbose=2)
 
-        assert "geommask" not in thesubject.getoverlays()
-        assert thesubject.geommaskname.endswith("MNI152_T1_3mm_brain_mask_bin.nii.gz")
-        assert not os.path.isfile(thesubject.geommaskname)
-        # while the file that does exist is the one without the suffix
-        assert os.path.isfile(
-            os.path.join(thesubject.referencedir, "MNI152_T1_3mm_brain_mask.nii.gz")
+        assert "geommask" in thesubject.getoverlays()
+        assert thesubject.geommaskname == os.path.join(
+            thesubject.referencedir, "MNI152_T1_3mm_brain_mask.nii.gz"
         )
+        assert os.path.isfile(thesubject.geommaskname)
+        assert thesubject.overlays["geommask"].filename == thesubject.geommaskname
 
     def test_asymmetric_template_is_looked_for_at_two_resolutions(self, tmp_path, fake_fsldir):
         """A standard-space file on any other grid is taken to be MNI152NLin2009cAsym,
