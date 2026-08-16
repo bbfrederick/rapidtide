@@ -13,7 +13,7 @@
 * (io) readfslmat now reads column names out of the companion .fsf file, if present.
 * (io) Added a flag to savetonifti to specify NIFTI2 output.
 * (miscmath) Fixed a typing error for some normalization functions.
-* (package) Improved test coverage.
+* (package) Significantly improved test coverage.
 * (package) Fixed some old (and new!) bugs that broke circleci testing.
 * (package) Accepted several dependabot PRs.
 
