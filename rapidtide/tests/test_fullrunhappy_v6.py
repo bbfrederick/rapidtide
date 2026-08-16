@@ -112,6 +112,8 @@ def test_fullrunhappy_v6_respirationfile(debug=False, local=False, displayplots=
         os.path.join(testtemproot, "happyout6resp"),
         "--mklthreads",
         "-1",
+        "--projmask",
+        os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
         "--respirationfile",
         respirationfile,
     ]

@@ -30,7 +30,11 @@ import os
 import matplotlib as mpl
 import pytest
 
-from rapidtide.tests.utils import get_example_and_temp_roots, run_rapidtide, run_retroregress
+from rapidtide.tests.utils import (
+    get_example_and_temp_roots,
+    run_rapidtide,
+    run_retroregress,
+)
 
 pytestmark = pytest.mark.slow
 
@@ -74,7 +78,7 @@ def _rapidtidedataset(exampleroot, testtemproot):
             "--passes",
             "1",
             "--brainmask",
-            os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz"),
+            os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),
         ]
     )
     return fmrifile, theroot
