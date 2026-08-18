@@ -64,7 +64,7 @@ def _rapidtidedataset(exampleroot, testtemproot):
     root, so the two tests in this file share one run when both are collected while each
     still works on its own.
     """
-    fmrifile = os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz")
+    fmrifile = os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz")
     theroot = os.path.join(testtemproot, "sub-RETROREGRESSTEST")
     # the runoptions file is written last, so its presence means the run finished
     if os.path.isfile(f"{theroot}_desc-runoptions_info.json"):
@@ -77,8 +77,10 @@ def _rapidtidedataset(exampleroot, testtemproot):
             "-1",
             "--passes",
             "1",
+            "--numnull",
+            "100",
             "--brainmask",
-            os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),
+            os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
         ]
     )
     return fmrifile, theroot

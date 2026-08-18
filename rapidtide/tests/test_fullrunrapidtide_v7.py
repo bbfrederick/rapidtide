@@ -37,25 +37,27 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
 
     # test anatomic masks
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST_seg"),
+        "--numnull",
+        "100",
         "--nprocs",
         "-1",
         "--passes",
         "3",
         "--brainmask",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_brainmask.nii.gz"),
         "--graymattermask",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_GRAY"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_synthseg.nii.gz:SSEG_GRAY"),
         "--whitemattermask",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_WHITE"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_synthseg.nii.gz:SSEG_WHITE"),
         "--csfmask",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_synthseg.nii.gz:SSEG_CSF"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_synthseg.nii.gz:SSEG_CSF"),
     ]
     run_rapidtide(inputargs)
 
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST_seg"),
         "--alternateoutput",
         os.path.join(testtemproot, "segtest"),
@@ -67,7 +69,7 @@ def test_fullrunrapidtide_v7(debug=False, local=False, displayplots=False):
     run_retroregress(inputargs)
 
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST_seg"),
         "--alternateoutput",
         os.path.join(testtemproot, "regressoronly"),

@@ -35,6 +35,8 @@ def test_fullrunrapidtide_v8(debug=False, local=False, displayplots=False):
     inputargs = [
         os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST8"),
+        "--numnull",
+        "100",
         "--spatialfilt",
         "2",
         "--simcalcrange",

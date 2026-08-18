@@ -15,6 +15,10 @@ COPYFILE_DISABLE=1 tar --no-mac-metadata -cvzf ../testdatabundle.tgz \
     sub-HAPPYTEST_mask.nii.gz \
     sub-HAPPYTEST_mcf.par \
     sub-HAPPYTEST_smallmask.nii.gz \
+    sub-HAPPYTESTSMALL.json \
+    sub-HAPPYTESTSMALL.nii.gz \
+    sub-HAPPYTESTSMALL_mask.nii.gz \
+    sub-HAPPYTESTSMALL_smallmask.nii.gz \
     sub-NIRSRAPIDTIDETEST.txt \
     sub-NIRSRAPIDTIDETEST_mask.txt \
     sub-RAPIDTIDETEST.nii.gz \
@@ -27,6 +31,13 @@ COPYFILE_DISABLE=1 tar --no-mac-metadata -cvzf ../testdatabundle.tgz \
     sub-RAPIDTIDETEST_nullmask.nii.gz \
     sub-RAPIDTIDETEST_restrictedmask.nii.gz \
     sub-RAPIDTIDETEST_synthseg.nii.gz \
+    sub-RAPIDTIDETESTSMALL.nii.gz \
+    sub-RAPIDTIDETESTSMALL_brainmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL_cerebellarmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL_mean.nii.gz \
+    sub-RAPIDTIDETESTSMALL_nullmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL_synthseg.nii.gz \
     timecourse1.txt \
     timecourse2.txt \
     tmask.txt \

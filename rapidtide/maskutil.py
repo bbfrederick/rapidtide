@@ -500,7 +500,11 @@ def getregionsignal(
     -----
     - The function applies `includemask` and `excludemask` sequentially to define
       which voxels are used in signal computation.
-    - For "pca" method, PCA is applied to the transposed scaled voxel data.
+    - For "pca" method, PCA is fitted to the selected voxels after each has been
+      scaled by its own mean and variance, and the global signal is the mean over
+      voxels of the reconstruction.  The masks apply to this method exactly as they
+      do to the others: only the selected voxels contribute, and every per voxel
+      quantity is indexed in that selected space.
     - If filtering is applied, the signal is filtered in-place using the provided filter.
 
     Examples
@@ -545,8 +549,13 @@ def getregionsignal(
             print("Meanscale method")
             print(f"getregionsignal: {globalmean.shape=}")
     elif signalgenmethod == "pca":
-        themean = np.mean(indata, axis=1)
-        thevar = np.var(indata, axis=1)
+        # these have to be computed over the selected voxels rather than over all of
+        # indata, because every index below - the loop counter and the broadcast against
+        # cleanedvoxels alike - is a position in selectedvoxels.  Taking them from indata
+        # silently pairs each selected voxel with whatever sits at that position in the
+        # full array, and raises outright once the mask excludes anything at all.
+        themean = np.mean(selectedvoxels, axis=1)
+        thevar = np.var(selectedvoxels, axis=1)
         scaledvoxels = np.zeros_like(selectedvoxels)
         for vox in range(0, selectedvoxels.shape[0]):
             scaledvoxels[vox, :] = selectedvoxels[vox, :] - themean[vox]

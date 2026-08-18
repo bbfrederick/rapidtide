@@ -33,8 +33,12 @@ def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
 
     # run rapidtide
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST1"),
+        "--brainmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
+        "--numnull",
+        "100",
         "--spatialfilt",
         "2",
         "--simcalcrange",
@@ -54,8 +58,12 @@ def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
 
     # test fixval
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST1_fixval"),
+        "--brainmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
+        "--numnull",
+        "100",
         "--spatialfilt",
         "2",
         "--simcalcrange",
@@ -76,8 +84,12 @@ def test_fullrunrapidtide_v1(debug=False, local=False, displayplots=False):
 
     # test fixmap
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST1_fixmap"),
+        "--brainmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
+        "--numnull",
+        "100",
         "--spatialfilt",
         "2",
         "--simcalcrange",

@@ -1,6 +1,36 @@
 #!/bin/bash
+#
+# Fetch the test data bundle and unpack it into the example source directory.
+#
+# The bundle is a binary blob committed to the repository rather than a build
+# product, so a commit that adds or changes test data only becomes visible to CI
+# once it is present at the ref this script fetches from.  Fetching solely from
+# main means a feature branch always receives main's bundle, which makes any data
+# change untestable until after it merges - exactly backwards.  Trying the branch
+# under test first and falling back to main removes that ordering constraint and
+# changes nothing for builds that touch no data.
+
+set -o pipefail
 
 installdir=/tmp/src/rapidtide/rapidtide/data/examples/src/
+bundlepath=rapidtide/data/examples/testdatabundle.tgz
+bundleremote=https://github.com/bbfrederick/rapidtide/raw
 
-cd ${installdir}
-wget  https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/testdatabundle.tgz -O - | tar -xvz
+cd "${installdir}" || exit 1
+
+for theref in "${CIRCLE_BRANCH}" main; do
+    if [ -z "${theref}" ]; then
+        continue
+    fi
+    echo "fetching the test data bundle from ${theref}"
+    if wget -q "${bundleremote}/${theref}/${bundlepath}" -O testdatabundle.tgz &&
+        tar -xvzf testdatabundle.tgz; then
+        rm -f testdatabundle.tgz
+        echo "installed the test data bundle from ${theref}"
+        exit 0
+    fi
+    rm -f testdatabundle.tgz
+done
+
+echo "could not install the test data bundle" >&2
+exit 1

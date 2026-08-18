@@ -37,8 +37,16 @@ def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
 
     # run rapidtide
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
+        # deliberately --corrmask rather than --brainmask: this is the one run whose
+        # dataset reaches retroregress without a brain mask in it, which is the only way
+        # the "no brain mask" branch there is ever taken.  --corrmask pins the voxels
+        # being fitted just as well, and leaves the brain mask unset.
+        "--corrmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
+        "--numnull",
+        "100",
         "--spatialfilt",
         "2",
         "--simcalcrange",
@@ -60,7 +68,7 @@ def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
     run_rapidtide(inputargs)
 
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
         os.path.join(testtemproot, "2deriv"),
@@ -75,7 +83,7 @@ def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
     run_retroregress(inputargs)
 
     # inputargs = [
-    # os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+    # os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
     # os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
     # "--alternateoutput",
     # os.path.join(testtemproot, "1deriv_refined_corrected"),
@@ -91,7 +99,7 @@ def test_fullrunrapidtide_v6(debug=False, local=False, displayplots=False):
     # rapidtide_retroregress.retroregress(rapidtide_retroregress.process_args(inputargs=inputargs))
 
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST6"),
         "--alternateoutput",
         os.path.join(testtemproot, "concordance"),

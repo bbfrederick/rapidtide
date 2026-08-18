@@ -1,0 +1,210 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#   Copyright 2016-2026 Blaise Frederick
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+"""
+Derive the small test datasets from the full ones.
+
+The slow test shard is dominated by full rapidtide and happy runs, and a large part
+of the cost of each is proportional not to the number of voxels actually analyzed
+but to the size of the grid those voxels sit in: spatial smoothing, the moves in and
+out of shared memory, and writing the output maps all traverse the whole volume.
+Restricting analysis with ``--corrmask`` leaves every one of those untouched, which
+is why masking alone stops helping well before the run gets cheap.  Cropping the
+grid is what reaches them.
+
+Both crops are chosen to lose no voxel that any test actually analyzes:
+
+- the rapidtide box is the bounding box of ``sub-RAPIDTIDETEST_restrictedmask``
+  (exactly [24:40, 16:32, 9:24]) with four voxels of padding on each side, which also
+  keeps 23 of the 28 synthseg labels so the tissue mask options still have something
+  to work with;
+- the happy crop is in plane only and covers the whole of ``sub-HAPPYTEST_mask``, so
+  every one of its 38264 voxels survives.  All 64 slices are kept deliberately: slice
+  times come from the sidecar JSON and the cardiac hypersampling is built on the slice
+  axis, so dropping slices would change what happy is doing rather than just how much
+  of it there is.
+
+Run this from the databundle directory, then run ``bundledata`` to repack.
+
+Note that a cropped rapidtide dataset must always be used with an explicit
+``--brainmask``.  rapidtide's automatic mask thresholds against the whole volume mean,
+and cropping to a box inside the brain raises that mean enough that the automatic mask
+collapses to a few hundred voxels - the run still succeeds, it just stops testing
+anything.  happy is not affected; its automatic mask lands in the right place either way.
+"""
+
+import os
+
+import nibabel as nb
+import numpy as np
+
+# the rapidtide box, padded around the restrictedmask bounding box of [24:40, 16:32, 9:24]
+RAPIDTIDEBOX = (slice(20, 44), slice(12, 36), slice(6, 27))
+
+# the happy crop, in plane only - every slice is kept
+HAPPYBOX = (slice(18, 44), slice(6, 50), slice(None))
+
+RAPIDTIDEFILES = [
+    "sub-RAPIDTIDETEST.nii.gz",
+    "sub-RAPIDTIDETEST_brainmask.nii.gz",
+    "sub-RAPIDTIDETEST_restrictedmask.nii.gz",
+    "sub-RAPIDTIDETEST_cerebellarmask.nii.gz",
+    "sub-RAPIDTIDETEST_nullmask.nii.gz",
+    "sub-RAPIDTIDETEST_mean.nii.gz",
+    "sub-RAPIDTIDETEST_synthseg.nii.gz",
+]
+
+HAPPYFILES = [
+    "sub-HAPPYTEST.nii.gz",
+    "sub-HAPPYTEST_mask.nii.gz",
+    "sub-HAPPYTEST_smallmask.nii.gz",
+]
+
+
+def croppedaffine(theaffine: np.ndarray, thebox: tuple[slice, ...]) -> np.ndarray:
+    """
+    Return the affine of a cropped volume, so it stays where it was in world space.
+
+    Cropping moves the voxel that sits at index (0, 0, 0), so leaving the affine alone
+    would silently translate the data.  Every derived file has to be shifted by the same
+    amount or the masks stop lining up with the fmri data they mask.
+
+    Parameters
+    ----------
+    theaffine : np.ndarray
+        The 4x4 affine of the uncropped volume.
+    thebox : tuple of slice
+        The three spatial slices defining the crop.  A slice with ``start`` of None is
+        treated as starting at zero.
+
+    Returns
+    -------
+    np.ndarray
+        The 4x4 affine of the cropped volume.
+    """
+    theorigin = np.array([thebox[0].start or 0, thebox[1].start or 0, thebox[2].start or 0, 1])
+    thenewaffine = theaffine.copy()
+    thenewaffine[:, 3] = theaffine @ theorigin
+    return thenewaffine
+
+
+def cropfile(thesource: str, thedest: str, thebox: tuple[slice, ...]) -> tuple[int, ...]:
+    """
+    Write a spatially cropped copy of a NIFTI file.
+
+    The on disk data type is preserved rather than promoted, because the 4D files are
+    int16 and turning them into float32 would undo most of the size saving the crop
+    exists to produce.
+
+    Parameters
+    ----------
+    thesource : str
+        Path of the file to crop.
+    thedest : str
+        Path to write the cropped file to.
+    thebox : tuple of slice
+        The three spatial slices defining the crop.  4D files are cropped spatially and
+        keep every timepoint.
+
+    Returns
+    -------
+    tuple of int
+        The shape of the cropped volume.
+    """
+    theimage = nb.load(thesource)
+    thedtype = theimage.get_data_dtype()
+    thedata = np.asanyarray(theimage.dataobj)[thebox]
+    theoutput = nb.Nifti1Image(
+        thedata.astype(thedtype), croppedaffine(theimage.affine, thebox), theimage.header
+    )
+    theoutput.header.set_data_dtype(thedtype)
+    # the crop leaves voxel sizes and TR alone, but the header carries its own copy of
+    # the affine, so hand the new one back to it explicitly
+    theoutput.header.set_sform(theoutput.affine, code=int(theimage.header["sform_code"]))
+    theoutput.header.set_qform(theoutput.affine, code=int(theimage.header["qform_code"]))
+    nb.save(theoutput, thedest)
+    return thedata.shape
+
+
+def smallname(thename: str) -> str:
+    """
+    Return the small dataset name matching a full dataset name.
+
+    Parameters
+    ----------
+    thename : str
+        A file name starting with the subject label, such as
+        ``sub-RAPIDTIDETEST_brainmask.nii.gz``.
+
+    Returns
+    -------
+    str
+        The same name with SMALL appended to the subject label, such as
+        ``sub-RAPIDTIDETESTSMALL_brainmask.nii.gz``.
+    """
+    thelabel, thedot, theremainder = thename.partition(".")
+    thesubject, theunderscore, thesuffix = thelabel.partition("_")
+    return f"{thesubject}SMALL{theunderscore}{thesuffix}{thedot}{theremainder}"
+
+
+def maskvoxels(thepath: str) -> int:
+    """
+    Count the voxels above zero in a mask file.
+
+    Parameters
+    ----------
+    thepath : str
+        Path of the mask file.
+
+    Returns
+    -------
+    int
+        The number of voxels above zero.
+    """
+    return int((np.asanyarray(nb.load(thepath).dataobj) > 0).sum())
+
+
+def main() -> None:
+    """
+    Derive every small dataset from its full counterpart and report what changed.
+
+    Returns
+    -------
+    None
+    """
+    for thefiles, thebox in ((RAPIDTIDEFILES, RAPIDTIDEBOX), (HAPPYFILES, HAPPYBOX)):
+        for thefile in thefiles:
+            if not os.path.isfile(thefile):
+                print(f"{thefile} is not here - run this from the databundle directory")
+                continue
+            thedest = smallname(thefile)
+            theshape = cropfile(thefile, thedest, thebox)
+            thereport = f"{thefile} -> {thedest} {theshape}"
+            if "mask" in thefile:
+                thereport += f" ({maskvoxels(thefile)} -> {maskvoxels(thedest)} voxels)"
+            print(thereport)
+
+    # happy reads its slice times from a sidecar, and the crop keeps every slice, so the
+    # small dataset can carry an unmodified copy
+    with open("sub-HAPPYTEST.json", "rb") as thesource:
+        with open("sub-HAPPYTESTSMALL.json", "wb") as thedestination:
+            thedestination.write(thesource.read())
+    print("sub-HAPPYTEST.json -> sub-HAPPYTESTSMALL.json (slice times unchanged)")
+
+
+if __name__ == "__main__":
+    main()

@@ -292,6 +292,53 @@ def saveregionaltimeseries_tests(debug=False):
     assert np.array_equal(out_mask, fake_mask)
 
 
+def getregionsignal_masked_pca_tests(debug=False):
+    """The pca method has to honor its masks the same way the other methods do.
+
+    Everything the pca branch indexes - the loop counter, and the per voxel variance it
+    broadcasts the reconstruction against - is a position in the selected subset, but the
+    mean and variance were taken over the whole input array.  While the masks selected
+    every voxel the two index spaces coincided and nothing looked wrong; the moment a mask
+    excluded anything, each selected voxel was paired with whatever happened to sit at that
+    position in the full array, and the broadcast at the end raised.  Passing the selected
+    voxels in directly is the reference: masking inside the call has to give the same
+    answer as filtering the rows beforehand.
+    """
+    if debug:
+        print("getregionsignal_masked_pca_tests")
+
+    indata = np.array(
+        [
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 3.0, 4.0, 5.0],
+            [10.0, 10.0, 10.0, 10.0],
+            [0.0, 1.0, 0.0, 1.0],
+        ]
+    )
+    includemask = np.array([1, 1, 0, 1], dtype=np.uint16)
+    excludemask = np.array([0, 0, 0, 1], dtype=np.uint16)
+
+    with patch("rapidtide.maskutil.PCA", DummyPCA):
+        themasked, thefinalmask = tide_maskutil.getregionsignal(
+            indata,
+            includemask=includemask,
+            excludemask=excludemask,
+            signalgenmethod="pca",
+        )
+        thereference, dummy = tide_maskutil.getregionsignal(
+            indata[np.where(includemask * (1 - excludemask) > 0)],
+            signalgenmethod="pca",
+        )
+
+    assert themasked.shape == (4,)
+    assert np.all(np.isfinite(themasked))
+    assert np.array_equal(thefinalmask, np.array([1, 1, 0, 0], dtype=np.uint16))
+    assert np.allclose(themasked, thereference), (
+        "masking inside the pca call does not match preselecting the same voxels: "
+        f"{themasked} vs {thereference}"
+    )
+
+
 def test_maskutil(debug=False, displayplots=False):
     np.random.seed(12345)
     resampmask_and_makeepimask_tests(debug=debug)
@@ -299,6 +346,7 @@ def test_maskutil(debug=False, displayplots=False):
     readamask_tests(debug=debug)
     getmaskset_tests(debug=debug)
     getregionsignal_tests(debug=debug)
+    getregionsignal_masked_pca_tests(debug=debug)
     saveregionaltimeseries_tests(debug=debug)
 
 

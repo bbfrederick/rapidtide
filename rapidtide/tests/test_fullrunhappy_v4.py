@@ -40,13 +40,13 @@ def test_fullrunhappy_v4(debug=False, local=False, displayplots=False):
 
     # run happy
     inputargs = [
-        os.path.join(exampleroot, "sub-HAPPYTEST.nii.gz"),
-        os.path.join(exampleroot, "sub-HAPPYTEST.json"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL.json"),
         os.path.join(testtemproot, "happyout4"),
         "--estweights",
-        os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL_smallmask.nii.gz"),
         "--projmask",
-        os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL_smallmask.nii.gz"),
         "--mklthreads",
         "-1",
         "--useoldvesselmethod",

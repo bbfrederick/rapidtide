@@ -13,6 +13,9 @@
 * (io) readfslmat now reads column names out of the companion .fsf file, if present.
 * (io) Added a flag to savetonifti to specify NIFTI2 output.
 * (miscmath) Fixed a typing error for some normalization functions.
+* (package) Added cropped SMALL versions of the rapidtide and happy test datasets and moved most of the slow workflow tests onto them, roughly halving the runtime of the slow test shard with no loss of coverage.  Masking alone could not do this - spatial smoothing, the moves in and out of shared memory, and writing the output maps all scale with the size of the grid rather than with the number of voxels being analyzed.
+* (package) ``installtestdata`` now fetches the test data bundle from the branch under test, falling back to main, so a commit that changes test data can be exercised in CI before it is merged.
+* (maskutil) Fixed a bug in the ``pca`` global signal method.  Per voxel means and variances were computed over the whole input array but indexed by position in the masked subset, so any mask that excluded voxels either silently paired each voxel with the wrong statistics or raised a broadcasting error.
 * (package) Significantly improved test coverage.
 * (package) Fixed some old (and new!) bugs that broke circleci testing.
 * (package) Accepted several dependabot PRs.

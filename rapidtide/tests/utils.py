@@ -120,6 +120,25 @@ def run_happy(inputargs: list[str]) -> None:
 def run_rapidtide(inputargs: list[str]) -> None:
     """
     Run rapidtide workflow from CLI-style argument list.
+
+    Parameters
+    ----------
+    inputargs : list of str
+        The command line arguments, exactly as they would be typed, starting with the
+        input file and the output root.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    A run against one of the SMALL datasets must always pass an explicit ``--brainmask``.
+    Those datasets are cropped to a box inside the head, and rapidtide's automatic brain
+    mask thresholds against the mean of the whole volume - with the surrounding air gone
+    that mean is far higher, and the automatic mask collapses to a few hundred voxels.
+    The run still succeeds and the test still passes; it just stops exercising anything.
+    Confirm the voxel count in the run log rather than trusting the exit status.
     """
     import rapidtide.workflows.rapidtide as rapidtide_workflow
     import rapidtide.workflows.rapidtide_parser as rapidtide_parser

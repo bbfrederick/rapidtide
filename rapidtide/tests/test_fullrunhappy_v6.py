@@ -23,11 +23,12 @@ paths, the deep learning filter and the aliased correlation.  This one covers th
 remaining option gated feature blocks: global mean signal filtering, Wright's vessel
 mask, and reading a respiration waveform from a file.
 
-Deliberately not covered: ``--estimateflow``.  Measured against this dataset it adds
-about 18 minutes to a roughly 2 minute run, in exchange for around a dozen lines - by
-far the worst ratio of any option here.  If the optical flow code needs test coverage
-it wants a small synthetic fixture aimed at ``calc_3d_optical_flow`` directly, not a
-full happy run.
+Deliberately not covered: ``--estimateflow``.  Measured against the full size dataset
+it added about 18 minutes to a roughly 2 minute run, in exchange for around a dozen
+lines - by far the worst ratio of any option here.  Both halves of that ratio shrink
+with the cropped dataset this test now uses, but not the ratio itself, so the
+conclusion is unchanged: if the optical flow code needs test coverage it wants a small
+synthetic fixture aimed at ``calc_3d_optical_flow`` directly, not a full happy run.
 """
 
 import os
@@ -87,8 +88,8 @@ def test_fullrunhappy_v6(debug=False, local=False, displayplots=False):
     exampleroot, testtemproot = get_example_and_temp_roots(local)
 
     inputargs = [
-        os.path.join(exampleroot, "sub-HAPPYTEST.nii.gz"),
-        os.path.join(exampleroot, "sub-HAPPYTEST.json"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL.json"),
         os.path.join(testtemproot, "happyout6"),
         "--mklthreads",
         "-1",
@@ -107,13 +108,13 @@ def test_fullrunhappy_v6_respirationfile(debug=False, local=False, displayplots=
         os.path.join(testtemproot, "happyout6_respiration"),
     )
     inputargs = [
-        os.path.join(exampleroot, "sub-HAPPYTEST.nii.gz"),
-        os.path.join(exampleroot, "sub-HAPPYTEST.json"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL.json"),
         os.path.join(testtemproot, "happyout6resp"),
         "--mklthreads",
         "-1",
         "--projmask",
-        os.path.join(exampleroot, "sub-HAPPYTEST_smallmask.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL_smallmask.nii.gz"),
         "--respirationfile",
         respirationfile,
     ]
