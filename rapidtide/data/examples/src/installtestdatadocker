@@ -1,3 +1,10 @@
 #!/bin/bash
+#
+# Fetch the test data bundles inside a container build, where there is no branch to
+# consult - see installtestdata for why there are two of them.
 
-curl -L https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/testdatabundle.tgz | tar -xz
+set -o pipefail
+
+for thebundle in testdatabundle.tgz testdatabundlesmall.tgz; do
+    curl -L "https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/${thebundle}" | tar -xz || exit 1
+done

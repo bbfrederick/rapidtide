@@ -1,6 +1,44 @@
 #!/bin/bash
+#
+# Fetch the test data bundles and unpack them into the example source directory.
+#
+# There are two bundles - the full size data and the cropped SMALL datasets - because
+# GitHub refuses any single file over 100MB and the full size data alone is already
+# close to that.  They unpack into the same directory, so the split matters only here.
+#
+# The ref is resolved per bundle, trying the branch under test before main.  The bundles
+# are binary blobs committed to the repository rather than build products, so a commit
+# that adds or changes test data only becomes visible to CI once it is present at the ref
+# this script fetches from.  Fetching solely from main means a feature branch always
+# receives main's data, which makes any data change untestable until after it merges -
+# exactly backwards.  Resolving per bundle rather than once also covers the case where a
+# bundle exists on the branch but not yet on main.
+
+set -o pipefail
 
 installdir=/tmp/src/rapidtide/rapidtide/data/examples/src/
+bundleremote=https://github.com/bbfrederick/rapidtide/raw
+bundledir=rapidtide/data/examples
 
-cd ${installdir}
-wget  https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/testdatabundle.tgz -O - | tar -xvz
+fetchbundle() {
+    thebundle="$1"
+    for theref in "${CIRCLE_BRANCH}" main; do
+        if [ -z "${theref}" ]; then
+            continue
+        fi
+        echo "fetching ${thebundle} from ${theref}"
+        if wget -q "${bundleremote}/${theref}/${bundledir}/${thebundle}" -O "${thebundle}" &&
+            tar -xvzf "${thebundle}"; then
+            rm -f "${thebundle}"
+            echo "installed ${thebundle} from ${theref}"
+            return 0
+        fi
+        rm -f "${thebundle}"
+    done
+    echo "could not install ${thebundle}" >&2
+    return 1
+}
+
+cd "${installdir}" || exit 1
+fetchbundle testdatabundle.tgz || exit 1
+fetchbundle testdatabundlesmall.tgz || exit 1

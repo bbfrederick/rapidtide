@@ -120,6 +120,25 @@ def run_happy(inputargs: list[str]) -> None:
 def run_rapidtide(inputargs: list[str]) -> None:
     """
     Run rapidtide workflow from CLI-style argument list.
+
+    Parameters
+    ----------
+    inputargs : list of str
+        The command line arguments, exactly as they would be typed, starting with the
+        input file and the output root.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    A run against one of the SMALL datasets must always pass an explicit ``--brainmask``.
+    Those datasets are cropped to a box inside the head, and rapidtide's automatic brain
+    mask thresholds against the mean of the whole volume - with the surrounding air gone
+    that mean is far higher, and the automatic mask collapses to a few hundred voxels.
+    The run still succeeds and the test still passes; it just stops exercising anything.
+    Confirm the voxel count in the run log rather than trusting the exit status.
     """
     import rapidtide.workflows.rapidtide as rapidtide_workflow
     import rapidtide.workflows.rapidtide_parser as rapidtide_parser
@@ -141,26 +160,109 @@ def assert_output_maps_match(
     output_root_1: str,
     output_root_2: str,
     temp_root: str,
-    absthresh: float = 1e-10,
-    msethresh: float = 1e-12,
+    rtol: float = 1e-6,
+    atol: float = 1e-10,
     spacetolerance: float = 1e-3,
     debug: bool = False,
 ) -> None:
     """
     Assert that selected NIFTI output maps match between two output roots.
+
+    Parameters
+    ----------
+    map_names : iterable of str
+        The map descriptors to compare, without the surrounding "_desc-" and "_map".
+    output_root_1 : str
+        Output root of the first run.
+    output_root_2 : str
+        Output root of the second run.
+    temp_root : str
+        Directory holding both runs' output.
+    rtol : float, optional
+        Largest permitted difference in any voxel, as a fraction of that voxel's value.
+        The default allows roughly eight float32 units in the last place.
+    atol : float, optional
+        Absolute floor added to the tolerance, which is what governs voxels at or near
+        zero where a relative comparison means nothing.
+    spacetolerance : float, optional
+        Tolerance for the spatial geometry comparison.
+    debug : bool, optional
+        Print the measured differences for every map, not just failing ones.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If any named map differs by more than the tolerance, naming the map and
+        reporting how far apart the two versions actually are.
+
+    Notes
+    -----
+    The tolerance is relative because these maps are stored as float32 and the two
+    output roots come from separate computations rather than one being a saved
+    reference.  Two such runs agree to within rounding, not exactly, and the smallest
+    difference float32 can even express is about 1.2e-7 of the value being stored - so
+    an absolute limit tighter than that is really a demand for bit-identical output,
+    which does not survive a change of platform.  It also cannot be met uniformly by
+    maps like regressderivratios, whose values span from well under one to over 1e5.
+
+    The mean squared error is reported but deliberately not used as a pass/fail gate.
+    It is an absolute quantity, so on a map spanning five orders of magnitude a single
+    legitimate last-place difference at the largest voxel produces an mse of around
+    5e-10 - which would fail any fixed limit tight enough to be worth having, for the
+    same reason the absolute per-voxel limit did.  The per-voxel tolerance already
+    covers everything the mse would have caught and more: mse dilutes a few badly wrong
+    voxels across the whole volume, whereas the per-voxel check sees each of them.
     """
+    import numpy as np
+
     import rapidtide.io as tide_io
 
     for map_name in map_names:
         filename1 = os.path.join(temp_root, f"{output_root_1}_desc-{map_name}_map.nii.gz")
         filename2 = os.path.join(temp_root, f"{output_root_2}_desc-{map_name}_map.nii.gz")
-        assert tide_io.checkniftifilematch(
-            filename1,
-            filename2,
-            absthresh=absthresh,
-            msethresh=msethresh,
-            spacetolerance=spacetolerance,
-            debug=debug,
+
+        dummy, thedata1, theheader1, thedims1, dummy2 = tide_io.readfromnifti(filename1)
+        dummy3, thedata2, theheader2, thedims2, dummy4 = tide_io.readfromnifti(filename2)
+
+        assert tide_io.checkspacematch(
+            theheader1, theheader2, tolerance=spacetolerance
+        ), f"map '{map_name}': spatial geometry differs between the two runs"
+        assert tide_io.checktimematch(
+            thedims1, thedims2
+        ), f"map '{map_name}': time dimensions differ between the two runs"
+
+        thefirst = thedata1.astype(np.float64)
+        thesecond = thedata2.astype(np.float64)
+        thediff = np.abs(thefirst - thesecond)
+        theallowed = atol + rtol * np.abs(thesecond)
+        thebad = thediff > theallowed
+        themse = float(np.mean(thediff**2))
+
+        if debug:
+            print(
+                f"{map_name}: maxabsdiff={np.max(thediff):.4e} mse={themse:.4e} "
+                f"scale={np.max(np.abs(thefirst)):.4g} failing={int(np.sum(thebad))}"
+            )
+
+        if not np.any(thebad):
+            continue
+
+        # report the worst offender in the terms the tolerance is expressed in, so the
+        # number in the message can be compared against rtol directly
+        theworst = int(np.argmax(thediff - theallowed))
+        thescale = abs(thesecond.flat[theworst])
+        therelative = thediff.flat[theworst] / thescale if thescale > 0.0 else float("inf")
+        raise AssertionError(
+            f"map '{map_name}' differs between {output_root_1} and {output_root_2}. "
+            f"maxabsdiff={np.max(thediff):.4e}, mse={themse:.4e}, "
+            f"{int(np.sum(thebad))} of {thediff.size} voxels outside "
+            f"rtol={rtol:.1e}/atol={atol:.1e}; worst voxel differs by "
+            f"{therelative:.3e} of its value {thescale:.4g}, "
+            f"map scale={np.max(np.abs(thefirst)):.4g}"
         )
 
 

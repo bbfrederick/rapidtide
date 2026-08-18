@@ -311,6 +311,7 @@ def cleanregressor(
     check_autocorrelation: bool = True,
     fix_autocorrelation: bool = True,
     despeckle_thresh: float = 5.0,
+    autodespecklethresh: bool = True,
     lthreshval: float = 0.0,
     fixdelay: bool = False,
     detrendorder: int = 3,
@@ -378,6 +379,12 @@ def cleanregressor(
         If True, attempt to fix detected autocorrelation issues. Default is True.
     despeckle_thresh : float, optional
         Threshold for despeckling autocorrelation data. Default is 5.0.
+    autodespecklethresh : bool, optional
+        If True, and a sidelobe is found, raise despeckle_thresh to at least half the
+        sidelobe time so that despeckling does not treat a sidelobe-width delay
+        difference as a speckle.  Set False to hold despeckle_thresh at the value the
+        user asked for, which is what you want when despeckle_thresh has to stay
+        comparable across runs or across arms of a paired comparison.  Default is True.
     lthreshval : float, optional
         Low threshold value for fitting. Default is 0.0.
     fixdelay : bool, optional
@@ -561,7 +568,13 @@ def cleanregressor(
         absmaxsigma = acwidth * 10.0
         passsuffix = "_pass" + str(thepass)
         if sidelobetime is not None:
-            despeckle_thresh = np.max([despeckle_thresh, sidelobetime / 2.0])
+            if autodespecklethresh:
+                despeckle_thresh = np.max([despeckle_thresh, sidelobetime / 2.0])
+            elif LGR is not None:
+                LGR.info(
+                    f"\tleaving despeckle_thresh at {despeckle_thresh} seconds rather than "
+                    f"raising it to {sidelobetime / 2.0} (autodespecklethresh is off)"
+                )
             if LGR is not None:
                 LGR.warning(
                     f"\n\nWARNING: check_autocorrelation found bad sidelobe at {sidelobetime} "

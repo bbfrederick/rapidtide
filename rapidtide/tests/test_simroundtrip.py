@@ -35,12 +35,16 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
 
     # run initial rapidtide
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETESTSIM"),
+        "--brainmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
+        "--numnull",
+        "100",
         "--corrmask",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
         "--globalmeaninclude",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_brainmask.nii.gz"),
         "--spatialfilt",
         "2",
         "--simcalcrange",
@@ -85,6 +89,10 @@ def test_simroundtrip(debug=False, local=False, displayplots=False):
     inputargs = [
         os.path.join(testtemproot, "simulatedfmri_vn05.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETESTSIMRERUN"),
+        "--brainmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
+        "--numnull",
+        "100",
         "--spatialfilt",
         "2",
         "--simcalcrange",

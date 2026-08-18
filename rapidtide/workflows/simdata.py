@@ -96,7 +96,9 @@ def _get_parser() -> Any:
             action="store",
             type=lambda x: pf.is_valid_file(parser, x),
             metavar="FILE",
-            help=(f"3D NIFTI file with the {band} amplitude in percent of mean at every point"),
+            help=(
+                f"3D NIFTI file with the {band} amplitude in fraction of the mean voxel value at every point"
+            ),
             default=None,
         )
         strengthopts.add_argument(

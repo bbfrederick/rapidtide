@@ -16,19 +16,27 @@
 #   limitations under the License.
 #
 #
-from collections import deque
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy import ndimage
 
-import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.peakeval as tide_peakeval
 import rapidtide.resample as tide_resample
 import rapidtide.simfuncfit as tide_simfuncfit
 import rapidtide.util as tide_util
+from rapidtide.workflows.delayflow import maskextensionindices
+from rapidtide.workflows.resolvedelays import RESOLVEDCHANGEDTHRESH, resolvefromsimfunc
+
+# Delay map quality metrics, recorded per pass in the runoptions.  The constants here
+# are the ones every comparison in the delay repair work was scored with, so that
+# numbers recorded by a run are directly comparable to the published calibrations.
+METRICJUMPTHRESH = 2.0  # seconds; an adjacent-voxel difference above this is a "jump"
+METRICMEDIANKERNEL = 5  # neighbourhood for the local median an outlier is measured against
+METRICLONGIQRMULT = 2.0  # "long" delay is above median + this many IQRs of the run itself
+METRICMINCOMPONENT = 27  # a long-delay blob this size or bigger counts as coherent
 
 _NDIMAGE_TO_NUMPY_PAD_MODE = {
     "reflect": "symmetric",  # d c b a | a b c d | d c b a
@@ -134,422 +142,209 @@ def masked_median_filter(
     return result_flat.reshape(data.shape)
 
 
-def _detect_shifted_patches(
-    lagmap_3d: NDArray,
-    validmask_3d: NDArray[np.bool_],
-    despeckle_thresh: float,
-    reference_kernel: int = 9,
-    min_patch_size: int = 10,
-    consistency_ratio: float = 0.5,
-    use_confidence: bool = False,
-    confidence_weight: float = 0.5,
-    R2_3d: Optional[NDArray] = None,
-    lagstrengths_3d: Optional[NDArray] = None,
-) -> tuple[NDArray[np.bool_], NDArray]:
-    """Detect connected patches of shifted delay values.
-
-    After initial median-filter despeckling removes isolated speckles, large
-    patches of wrong-peak selections survive because they fool the small
-    median filter.  This function detects them by comparing each voxel to a
-    heavily smoothed reference computed with a much larger kernel, then
-    validating connected components against their exterior boundary.
-
-    For each candidate component the function checks:
-      1. The median lag inside the patch differs from the one-voxel exterior
-         ring by more than ``despeckle_thresh`` (boundary validation).
-      2. The standard deviation of lags inside the patch is small relative to
-         that offset (consistency check — anomalous patches chose the same
-         wrong peak so they are internally uniform).
-    Confirmed patches are then grown inward via a constrained flood-fill to
-    recover interior voxels that were missed because the smooth reference was
-    biased by the patch itself.
-
-    Parameters
-    ----------
-    lagmap_3d : NDArray
-        Lag map in native 3D space.
-    validmask_3d : NDArray[np.bool_]
-        Boolean mask of valid (fitted) voxels, same shape as lagmap_3d.
-    despeckle_thresh : float
-        Deviation threshold for flagging voxels.
-    reference_kernel : int, optional
-        Size of the median filter kernel used to build the large-scale
-        reference.  Must be odd.  Default is 9.
-    min_patch_size : int, optional
-        Minimum number of connected voxels to be considered a patch.
-        Smaller clusters are ignored. Default is 10.
-    consistency_ratio : float, optional
-        Maximum ratio of (std inside patch) / (offset from exterior) for a
-        patch to be confirmed as anomalous.  Lower values require more
-        internal consistency.  Default is 0.5.
-    use_confidence : bool, optional
-        If True, modulate the detection threshold using fit quality metrics
-        (R², peak strength).  Regions with poor fit quality are flagged at a
-        lower spatial threshold.  Default is False.
-    confidence_weight : float, optional
-        Weight [0..1] for the confidence modulation.  Only used when
-        ``use_confidence`` is True.  Default is 0.5.
-    R2_3d : NDArray or None, optional
-        R² map in native 3D space.  Used when ``use_confidence`` is True.
-    lagstrengths_3d : NDArray or None, optional
-        Peak strength map.  Used as secondary confidence metric when provided
-        and ``use_confidence`` is True.
-
-    Returns
-    -------
-    patch_mask : NDArray[np.bool_]
-        Boolean mask (same shape as lagmap_3d) where True marks voxels
-        belonging to a confirmed anomalous patch, including interior voxels
-        recovered by the flood-fill step.
-    reference : NDArray
-        Reference lag map.  For detected anomalous patch voxels this holds
-        the exterior-ring median (a better initial-lag estimate for refitting);
-        for all other voxels it holds the large-kernel smoothed reference.
-    """
-    # Build reference with large median filter.
-    reference = masked_median_filter(
-        np.where(validmask_3d, lagmap_3d, 0.0),
-        size=reference_kernel,
-        mode="reflect",
-        mask=validmask_3d,
-    )
-
-    # Global confidence baseline (used only when use_confidence=True).
-    global_mean_R2 = 0.0
-    global_mean_strength = 0.0
-    if use_confidence:
-        if R2_3d is not None:
-            valid_R2 = R2_3d[validmask_3d]
-            global_mean_R2 = float(np.mean(valid_R2)) if valid_R2.size > 0 else 0.0
-        if lagstrengths_3d is not None:
-            valid_str = np.abs(lagstrengths_3d[validmask_3d])
-            global_mean_strength = float(np.mean(valid_str)) if valid_str.size > 0 else 0.0
-
-    # Initial candidates: voxels that deviate from the smooth reference.
-    deviation = np.abs(lagmap_3d - reference)
-    outlier_mask = validmask_3d & (deviation > despeckle_thresh)
-
-    structure = ndimage.generate_binary_structure(lagmap_3d.ndim, lagmap_3d.ndim)
-    labels, n_patches = ndimage.label(outlier_mask, structure=structure)
-
-    if n_patches == 0:
-        return np.zeros_like(validmask_3d, dtype=bool), reference
-
-    confirmed_patch_mask = np.zeros_like(validmask_3d, dtype=bool)
-    # ext_reference will hold the exterior-ring median for confirmed patches.
-    ext_reference = reference.copy()
-
-    for region_id in range(1, n_patches + 1):
-        region_mask = labels == region_id
-        region_valid = region_mask & validmask_3d
-        if int(np.sum(region_valid)) < min_patch_size:
-            continue
-
-        # One-voxel exterior ring.
-        dilated = ndimage.binary_dilation(region_mask, structure=structure)
-        exterior_ring = dilated & ~region_mask & validmask_3d
-        if not np.any(exterior_ring):
-            continue
-
-        interior_lags = lagmap_3d[region_valid]
-        exterior_lags = lagmap_3d[exterior_ring]
-        interior_median = float(np.median(interior_lags))
-        exterior_median = float(np.median(exterior_lags))
-        interior_std = float(np.std(interior_lags))
-        offset = abs(interior_median - exterior_median)
-
-        # Optionally modulate detection threshold by fit quality.
-        effective_thresh = despeckle_thresh
-        if use_confidence:
-            conf_components = []
-            if R2_3d is not None and global_mean_R2 > 0.0:
-                patch_R2 = float(np.mean(R2_3d[region_valid]))
-                conf_components.append(float(np.clip(patch_R2 / global_mean_R2, 0.0, 2.0)))
-            if lagstrengths_3d is not None and global_mean_strength > 0.0:
-                patch_str = float(np.mean(np.abs(lagstrengths_3d[region_valid])))
-                conf_components.append(float(np.clip(patch_str / global_mean_strength, 0.0, 2.0)))
-            if conf_components:
-                norm_conf = float(np.mean(conf_components))
-                # Low confidence → lower threshold (more suspicious).
-                effective_thresh = despeckle_thresh * max(
-                    0.25, 1.0 - confidence_weight * (1.0 - norm_conf)
-                )
-
-        # Boundary validation and consistency check.
-        if offset <= effective_thresh:
-            continue
-        if interior_std >= consistency_ratio * offset:
-            continue
-
-        # Confirmed anomalous patch.  Grow inward to recover interior voxels
-        # that the smooth reference missed (it was biased by the patch).
-        lag_tolerance = max(2.0 * interior_std, 0.5 * despeckle_thresh)
-        grown = region_valid.copy()
-        for _ in range(50):
-            new_dilated = ndimage.binary_dilation(grown, structure=structure)
-            candidates = new_dilated & ~grown & validmask_3d
-            new_voxels = candidates & (np.abs(lagmap_3d - interior_median) <= lag_tolerance)
-            if not np.any(new_voxels):
-                break
-            grown |= new_voxels
-
-        confirmed_patch_mask |= grown
-        ext_reference[grown] = exterior_median
-
-    return confirmed_patch_mask, ext_reference
-
-
-def _anchor_based_region_growing(
-    lagmap_3d: NDArray,
-    validmask_3d: NDArray[np.bool_],
-    corrout: NDArray[np.floating[Any]],
+def recorddelaymetrics(
+    optiondict: dict,
+    thepass: Any,
+    lagtimes: NDArray,
+    fitmask: NDArray,
     validvoxels: NDArray,
-    numspatiallocs: int,
     nativespaceshape: tuple,
-    trimmedcorrscale: NDArray[np.floating[Any]],
-    R2_3d: NDArray,
-    fitmask_3d: NDArray,
-    dominance_threshold: float = 1.5,
-    search_width: float = 5.0,
-    min_peak_fraction: float = 0.2,
-    bipolar: bool = False,
-    debug: bool = False,
-) -> Tuple[NDArray[np.bool_], NDArray, int, int]:
-    """Anchor-based region growing for robust delay estimation.
+    numspatiallocs: int,
+    despeckle_thresh: float,
+    preresolvelags: Optional[NDArray] = None,
+    corrout: Optional[NDArray] = None,
+    corrscale: Optional[NDArray] = None,
+    LGR: Optional[Any] = None,
+) -> None:
+    """Record delay map quality metrics for this pass into optiondict.
 
-    Identifies high-confidence "anchor" voxels where the correlation peak is
-    unambiguous (strongly dominant over all other peaks), then propagates lag
-    assignments outward via breadth-first search (BFS).  At each frontier voxel
-    the peak closest to the spatially extrapolated expected lag is chosen, even if
-    it is not the tallest peak.  This allows the algorithm to penetrate artifact
-    patches whose true-lag peak has been eroded below a sidelobe, while stalling
-    naturally at genuine vascular territory boundaries where no peak exists
-    near the extrapolated lag.
+    Every optimisation decision in the delay repair work was made by recomputing
+    these numbers offline from the saved maps, which needs the maps shipped around
+    and takes minutes per cohort.  They cost a couple of seconds to compute here,
+    where the data is already in memory, and land in the runoptions where a whole
+    cohort can be tabulated by reading one small JSON per run.
 
-    Parameters
-    ----------
-    lagmap_3d : NDArray
-        Current lag map in native 3D space.
-    validmask_3d : NDArray[np.bool_]
-        Boolean mask of valid (fitted) voxels.
-    corrout : NDArray
-        Per-voxel correlation functions, shape (numvalidspatiallocs, n_lags).
-    validvoxels : NDArray
-        Flat 3D indices of valid voxels (length numvalidspatiallocs).
-    numspatiallocs : int
-        Total number of 3D voxels (product of nativespaceshape).
-    nativespaceshape : tuple
-        Shape of the 3D volume.
-    trimmedcorrscale : NDArray
-        Lag axis corresponding to corrout columns.
-    R2_3d : NDArray
-        R² map in native 3D space.
-    fitmask_3d : NDArray
-        Fit-success mask in native 3D space (nonzero = successful fit).
-    dominance_threshold : float, optional
-        Minimum ratio C_max/C_second for a voxel to qualify as an anchor.
-        Default is 1.5.
-    search_width : float, optional
-        Full width (seconds) of the search window around tau_expected when
-        looking for the true-lag peak in a frontier voxel's correlation
-        function.  Should be less than acsidelobelag to avoid accepting a
-        sidelobe.  Default is 5.0.
-    min_peak_fraction : float, optional
-        A candidate peak must have absolute height >= min_peak_fraction * max
-        peak height in that voxel's corrout to be considered.  Filters out
-        noise bumps that could be selected when tau_expected falls between two
-        genuine territory lags.  Default is 0.2.
-    bipolar : bool, optional
-        If True, detect both positive and negative peaks.  Default is False.
-    debug : bool, optional
-        If True, print diagnostic counts.  Default is False.
+    Metrics recorded, all suffixed ``_pass<N>``:
 
-    Returns
-    -------
-    refit_mask_3d : NDArray[np.bool_]
-        Boolean mask of voxels whose assigned lag differs from current fitted
-        lag by more than 0.1 s and should be refitted.
-    target_lags_3d : NDArray
-        Target lag for each voxel (only meaningful where refit_mask_3d is True).
-    n_uncertain : int
-        Number of voxels left unchanged because no good peak was found and the
-        current fit was also of low quality.
-    n_unprocessed : int
-        Number of valid voxels that region growing never reached (isolated from
-        all anchors).
+    map quality
+        ``delayoutliers`` / ``delayoutlierfrac``
+            voxels further than despeckle_thresh from their local median.  This is
+            the headline number the repair comparisons are scored on.
+        ``delayjumps`` / ``delayjumpfrac``
+            adjacent in-mask voxel pairs differing by more than METRICJUMPTHRESH.
+            The damage check: a smoother that flattens real gradients improves the
+            outlier count and worsens this one.
+
+    distribution
+        ``delayp5`` ... ``delayp99``, ``delayiqr``
+            where the delays actually are.  Needed to interpret everything else,
+            and free.
+        ``delayrailedfrac``
+            fraction sitting within one lag step of the search range bounds.  A
+            delay pinned at the bound and a genuinely long delay are
+            indistinguishable downstream, so it matters whether a cohort is
+            hitting the wall.
+
+    long delay structure
+        ``delaylongcut`` / ``delaylongfrac`` / ``delaylongcoherent`` /
+        ``delaylonglargest`` / ``delaylongdev``
+            how much long-delay signal there is, whether it forms connected
+            structures (plausibly real) or scattered specks (plausibly error), and
+            how far it deviates locally.  This is the cohort characterisation that
+            decides whether a smoothness prior is safe to apply.
+
+    resolution effect, only when delay resolution ran this pass
+        ``resolveshiftmedian`` / ``resolveshiftposfrac``
+            size and sidedness of the changes.  A genuine sidelobe wrap moves
+            delays in ONE direction by close to one period; noise repicking moves
+            them both ways over a broad range.  This distinguishes them without a
+            paired run.
+        ``resolveampratio``
+            median ratio of similarity at the new lag to similarity at the old one.
+            Resolution usually moves to a LOWER peak - that is expected, since the
+            wrong peak is generally the taller one - but a collapse here means
+            something else is going on.
+        ``resolvechgcoherentfrac`` / ``resolvechgscatteredfrac`` / ``resolveselectivity``
+            of the long-delay voxels going into resolution, the fraction reassigned
+            in coherent blobs versus scattered specks, and their ratio.  A
+            selectivity near 1 means resolution cannot tell real long-delay
+            structure from a fitting error.  Note this is the single-run analogue
+            of the paired-arm measurement: the map going in has already been
+            resolved on earlier passes, so it understates the cumulative effect.
     """
-    numvalidspatiallocs = len(validvoxels)
-    shape = nativespaceshape
+    try:
+        thesuffix = f"_pass{thepass}"
 
-    # Build reverse lookup: flat 3D index -> valid voxel index (-1 if invalid).
-    valid_vox_lookup = np.full(numspatiallocs, -1, dtype=np.int32)
-    valid_vox_lookup[validvoxels] = np.arange(numvalidspatiallocs, dtype=np.int32)
+        themap = np.zeros(numspatiallocs, dtype=float)
+        themap[validvoxels] = lagtimes[:]
+        themap = themap.reshape(nativespaceshape)
+        themask = np.zeros(numspatiallocs, dtype=bool)
+        themask[validvoxels] = fitmask[:].astype(bool)
+        themask = themask.reshape(nativespaceshape)
+        thenummask = int(themask.sum())
+        if thenummask < 100:
+            return
 
-    # Precompute peaks and per-voxel max |corrout| (single pass).
-    all_peaks: list[list] = []
-    dominance_valid = np.zeros(numvalidspatiallocs, dtype=np.float32)
-    max_corrout_valid = np.max(np.abs(corrout), axis=1)  # shape: (numvalidspatiallocs,)
-    for i in range(numvalidspatiallocs):
-        peaks = tide_fit.getpeaks(trimmedcorrscale, corrout[i, :], bipolar=bipolar)
-        all_peaks.append(peaks)
-        if len(peaks) == 0:
-            dominance_valid[i] = 0.0
-        elif len(peaks) == 1:
-            dominance_valid[i] = np.inf
-        else:
-            peaks_by_strength = sorted(peaks, key=lambda p: abs(p[1]), reverse=True)
-            second = abs(peaks_by_strength[1][1])
-            dominance_valid[i] = (
-                abs(peaks_by_strength[0][1]) / second if second > 1e-10 else np.inf
+        # Nearest-in-mask extension, not zero fill.  Zero filling would drag the
+        # local median of every surface voxel toward zero and inflate the outlier
+        # count there - the same trap that was found in icmrefine.
+        theindices = maskextensionindices(themask)
+        thelocalmedian = ndimage.median_filter(
+            themap[theindices].astype(np.float32), size=METRICMEDIANKERNEL, mode="nearest"
+        )
+        thedeviation = np.abs(themap - thelocalmedian)
+        thenumoutliers = int((themask & (thedeviation > despeckle_thresh)).sum())
+        optiondict["delayoutliers" + thesuffix] = thenumoutliers
+        optiondict["delayoutlierfrac" + thesuffix] = thenumoutliers / thenummask
+
+        thenumjumps = 0
+        thenumpairs = 0
+        for theaxis in range(3):
+            thediff = np.abs(np.diff(themap, axis=theaxis))
+            theboth = np.take(
+                themask, range(0, themask.shape[theaxis] - 1), axis=theaxis
+            ) & np.take(themask, range(1, themask.shape[theaxis]), axis=theaxis)
+            thenumjumps += int((thediff[theboth] > METRICJUMPTHRESH).sum())
+            thenumpairs += int(theboth.sum())
+        optiondict["delayjumps" + thesuffix] = thenumjumps
+        optiondict["delayjumpfrac" + thesuffix] = thenumjumps / max(thenumpairs, 1)
+
+        thevalues = themap[themask]
+        theq = np.percentile(thevalues, [5, 25, 50, 75, 95, 99])
+        for thename, theval in zip(
+            ("delayp5", "delayp25", "delayp50", "delayp75", "delayp95", "delayp99"), theq
+        ):
+            optiondict[thename + thesuffix] = float(theval)
+        theiqr = float(theq[3] - theq[1])
+        optiondict["delayiqr" + thesuffix] = theiqr
+
+        thelagmin = optiondict.get("lagmin", None)
+        thelagmax = optiondict.get("lagmax", None)
+        if thelagmin is not None and thelagmax is not None and corrscale is not None:
+            thestep = float(corrscale[1] - corrscale[0]) if len(corrscale) > 1 else 0.0
+            optiondict["delayrailedfrac" + thesuffix] = float(
+                np.mean((thevalues <= thelagmin + thestep) | (thevalues >= thelagmax - thestep))
             )
 
-    # Map dominance into 3D space.
-    dominance_3d = np.zeros(shape, dtype=np.float32)
-    dominance_3d.reshape(-1)[validvoxels] = dominance_valid
-
-    # Identify anchor voxels: high dominance + high R² + clean fit.
-    valid_r2 = R2_3d[validmask_3d]
-    r2_thresh = float(np.percentile(valid_r2[valid_r2 > 0], 70)) if np.any(valid_r2 > 0) else 0.0
-    anchor_3d = (
-        validmask_3d
-        & (dominance_3d >= dominance_threshold)
-        & (R2_3d >= r2_thresh)
-        & (fitmask_3d > 0)
-    )
-    n_anchors = int(anchor_3d.sum())
-    if debug:
-        print(f"  _anchor_based_region_growing: {n_anchors} anchors (R²≥{r2_thresh:.3f})")
-
-    if n_anchors == 0:
-        n_unprocessed = int(validmask_3d.sum())
-        return np.zeros(shape, dtype=bool), lagmap_3d.copy(), 0, n_unprocessed
-
-    # Initialise assigned-lag map; anchors are pre-assigned their current lags.
-    _UNASSIGNED = -1.0e9
-    assigned_3d = np.full(shape, _UNASSIGNED, dtype=np.float64)
-    assigned_3d[anchor_3d] = lagmap_3d[anchor_3d]
-    processed_3d = anchor_3d.copy()
-
-    # Face-adjacent 3D offsets (6-connectivity).
-    face_offsets = [
-        (1, 0, 0),
-        (-1, 0, 0),
-        (0, 1, 0),
-        (0, -1, 0),
-        (0, 0, 1),
-        (0, 0, -1),
-    ]
-
-    # Seed BFS queue with all valid unprocessed neighbors of anchors.
-    in_queue = np.zeros(shape, dtype=bool)
-    queue: deque[tuple[int, int, int]] = deque()
-    anchor_coords = np.argwhere(anchor_3d)
-    for ax, ay, az in anchor_coords:
-        for dx, dy, dz in face_offsets:
-            nx, ny, nz = ax + dx, ay + dy, az + dz
-            if 0 <= nx < shape[0] and 0 <= ny < shape[1] and 0 <= nz < shape[2]:
-                if (
-                    validmask_3d[nx, ny, nz]
-                    and not processed_3d[nx, ny, nz]
-                    and not in_queue[nx, ny, nz]
-                ):
-                    queue.append((nx, ny, nz))
-                    in_queue[nx, ny, nz] = True
-
-    half_window = search_width / 2.0
-    n_uncertain = 0
-    n_territory = 0
-
-    while queue:
-        x, y, z = queue.popleft()
-
-        # Another path may have already processed this voxel.
-        if processed_3d[x, y, z]:
-            continue
-
-        # tau_expected = median lag of all already-processed face-adjacent neighbors.
-        neighbor_lags = []
-        for dx, dy, dz in face_offsets:
-            nx, ny, nz = x + dx, y + dy, z + dz
-            if 0 <= nx < shape[0] and 0 <= ny < shape[1] and 0 <= nz < shape[2]:
-                if processed_3d[nx, ny, nz]:
-                    neighbor_lags.append(assigned_3d[nx, ny, nz])
-
-        if not neighbor_lags:
-            # No processed neighbor yet; re-queue for later (can happen if the
-            # seeding voxel's anchor neighbor was processed after this was enqueued
-            # via a different path — rare but possible in concurrent BFS seeding).
-            queue.append((x, y, z))
-            continue
-
-        tau_expected = float(np.median(neighbor_lags))
-
-        # Look up precomputed peaks for this voxel.
-        flat_idx = int(np.ravel_multi_index((x, y, z), shape))
-        valid_idx = valid_vox_lookup[flat_idx]
-        peaks = all_peaks[valid_idx]
-        min_height = min_peak_fraction * max_corrout_valid[valid_idx]
-
-        nearby = [
-            p for p in peaks if abs(p[0] - tau_expected) <= half_window and abs(p[1]) >= min_height
-        ]
-
-        if nearby:
-            # Choose the peak closest to tau_expected regardless of height.
-            best = min(nearby, key=lambda p: abs(p[0] - tau_expected))
-            assigned_3d[x, y, z] = best[0]
+        thelongcut = float(theq[2] + METRICLONGIQRMULT * theiqr)
+        thelong = themask & (themap > thelongcut)
+        thenumlong = int(thelong.sum())
+        optiondict["delaylongcut" + thesuffix] = thelongcut
+        optiondict["delaylongfrac" + thesuffix] = thenumlong / thenummask
+        if thenumlong > 0:
+            thelabels, dummy = ndimage.label(thelong)
+            thesizes = np.bincount(thelabels.ravel())
+            thesizes[0] = 0
+            thecoherent = thelong & np.isin(
+                thelabels, np.nonzero(thesizes >= METRICMINCOMPONENT)[0]
+            )
+            optiondict["delaylongcoherent" + thesuffix] = float(thecoherent.sum() / thenumlong)
+            optiondict["delaylonglargest" + thesuffix] = int(thesizes.max())
+            optiondict["delaylongdev" + thesuffix] = float(np.median(thedeviation[thelong]))
         else:
-            # No peak near tau_expected.
-            dom = float(dominance_3d[x, y, z])
-            r2 = float(R2_3d[x, y, z])
-            if dom >= dominance_threshold and r2 >= r2_thresh and fitmask_3d[x, y, z] > 0:
-                # Territory boundary: high-quality fit at a genuinely different lag.
-                # Accept current lag and seed the adjacent territory from here.
-                assigned_3d[x, y, z] = lagmap_3d[x, y, z]
-                n_territory += 1
+            optiondict["delaylongcoherent" + thesuffix] = 0.0
+            optiondict["delaylonglargest" + thesuffix] = 0
+            optiondict["delaylongdev" + thesuffix] = 0.0
+
+        if preresolvelags is None:
+            return
+
+        thebefore = np.zeros(numspatiallocs, dtype=float)
+        thebefore[validvoxels] = preresolvelags[:]
+        thebefore = thebefore.reshape(nativespaceshape)
+        theshift = themap - thebefore
+        thechanged = themask & (np.abs(theshift) > RESOLVEDCHANGEDTHRESH)
+        if not np.any(thechanged):
+            return
+        optiondict["resolveshiftmedian" + thesuffix] = float(
+            np.median(np.abs(theshift[thechanged]))
+        )
+        optiondict["resolveshiftposfrac" + thesuffix] = float(np.mean(theshift[thechanged] > 0.0))
+
+        # long-delay classes defined on the map going IN, then tracked through
+        thebeforevals = thebefore[themask]
+        thebq = np.percentile(thebeforevals, [25, 50, 75])
+        thebeforecut = thebq[1] + METRICLONGIQRMULT * (thebq[2] - thebq[0])
+        thebeforelong = themask & (thebefore > thebeforecut)
+        if np.any(thebeforelong):
+            thelabels, dummy = ndimage.label(thebeforelong)
+            thesizes = np.bincount(thelabels.ravel())
+            thesizes[0] = 0
+            thecoh = thebeforelong & np.isin(
+                thelabels, np.nonzero(thesizes >= METRICMINCOMPONENT)[0]
+            )
+            thescat = thebeforelong & ~thecoh
+            thecohfrac = float(thechanged[thecoh].mean()) if np.any(thecoh) else np.nan
+            thescatfrac = float(thechanged[thescat].mean()) if np.any(thescat) else np.nan
+            optiondict["resolvechgcoherentfrac" + thesuffix] = thecohfrac
+            optiondict["resolvechgscatteredfrac" + thesuffix] = thescatfrac
+            # always recorded, None when the ratio is undefined, so that a tabulation
+            # can tell "no coherent long delay to judge" apart from "key missing"
+            if thecohfrac and np.isfinite(thecohfrac) and np.isfinite(thescatfrac):
+                optiondict["resolveselectivity" + thesuffix] = thescatfrac / thecohfrac
             else:
-                # Uncertain: poor fit and no nearby peak — leave lag unchanged.
-                assigned_3d[x, y, z] = lagmap_3d[x, y, z]
-                n_uncertain += 1
+                optiondict["resolveselectivity" + thesuffix] = None
 
-        processed_3d[x, y, z] = True
-
-        # Enqueue newly reachable unprocessed valid neighbors.
-        for dx, dy, dz in face_offsets:
-            nx, ny, nz = x + dx, y + dy, z + dz
-            if 0 <= nx < shape[0] and 0 <= ny < shape[1] and 0 <= nz < shape[2]:
-                if (
-                    validmask_3d[nx, ny, nz]
-                    and not processed_3d[nx, ny, nz]
-                    and not in_queue[nx, ny, nz]
-                ):
-                    queue.append((nx, ny, nz))
-                    in_queue[nx, ny, nz] = True
-
-    n_unprocessed = int(np.sum(validmask_3d & ~processed_3d))
-    if debug:
-        n_corrected = int(
-            np.sum(processed_3d & validmask_3d & (np.abs(assigned_3d - lagmap_3d) > 0.1))
-        )
-        print(
-            f"  region growing complete: {n_corrected} reassigned, "
-            f"{n_territory} territory boundaries, {n_uncertain} uncertain, "
-            f"{n_unprocessed} unprocessed"
-        )
-
-    # Leave unprocessed voxels at their current lag.
-    unprocessed_mask = validmask_3d & ~processed_3d
-    assigned_3d[unprocessed_mask] = lagmap_3d[unprocessed_mask]
-
-    # Refit mask: assigned lag differs from current fitted lag by more than
-    # twice the lag axis step (handles discrete quantization of getpeaks output).
-    lag_step = (
-        float(trimmedcorrscale[1] - trimmedcorrscale[0]) if len(trimmedcorrscale) > 1 else 0.1
-    )
-    refit_tol = max(0.5, 2.0 * lag_step)
-    refit_mask_3d = validmask_3d & (np.abs(assigned_3d - lagmap_3d) > refit_tol)
-
-    return refit_mask_3d, assigned_3d, n_uncertain, n_unprocessed
+        # similarity amplitude at the new lag versus the old one, for changed voxels
+        if corrout is not None and corrscale is not None and len(corrscale) > 1:
+            thechangedflat = thechanged.reshape(-1)[validvoxels]
+            if np.any(thechangedflat):
+                theidx = np.nonzero(thechangedflat)[0]
+                theold = np.array(
+                    [np.interp(preresolvelags[i], corrscale, corrout[i, :]) for i in theidx]
+                )
+                thenew = np.array(
+                    [np.interp(lagtimes[i], corrscale, corrout[i, :]) for i in theidx]
+                )
+                thevalid = np.abs(theold) > 1.0e-9
+                if np.any(thevalid):
+                    optiondict["resolveampratio" + thesuffix] = float(
+                        np.median(thenew[thevalid] / theold[thevalid])
+                    )
+    except Exception as thereason:
+        # instrumentation must never take down a run that is otherwise fine
+        if LGR is not None:
+            LGR.warning(f"\n*** delay metrics for pass {thepass} FAILED: {thereason} ***")
 
 
 def fitSimFunc(
@@ -846,6 +641,156 @@ def fitSimFunc(
             },
         )
 
+        # Sidelobe unwrapping.
+        #
+        # When the similarity function has a strong sidelobe, peak picking sometimes
+        # lands on it, giving a delay wrong by very nearly one sidelobe period.  These
+        # errors are large and, because neighboring voxels see the same waveform, they
+        # occur in coherent patches, which a median filter based despeckler struggles
+        # with because the neighbors it votes with are wrong too.
+        #
+        # This is phase unwrapping: the absolute delay is ambiguous modulo the sidelobe
+        # period while the local gradient is not.  Each voxel offers candidate delays
+        # (the local maxima of its similarity function) and quality guided region
+        # growing assigns each the candidate closest to a consensus prediction from its
+        # already assigned neighbors.
+        #
+        # UNCONDITIONAL when requested, and the reason is worth recording because the
+        # opposite was assumed for a long time.
+        #
+        # The original design gated on the measured sidelobe amplitude, on the argument
+        # that with no sidelobe there is no periodic ambiguity to resolve and the method
+        # degenerates into plain smoothing.  A calibration of 16 HCP runs paired with
+        # controls, deliberately spanning the ambiguity range including its bottom
+        # quartile, refuted that: resolution improved the delay map in 16 of 16 runs,
+        # including all four runs with the LOWEST measurable ambiguity and no sidelobe
+        # at all.  A later 26 run UK Biobank calibration agreed, 26 of 26.  Large
+        # non-periodic discontinuities fell in every run too, so the gain is not
+        # smoothing away real structure.
+        #
+        # The mechanism is also not what the name suggests.  Across those runs the median
+        # change was 1.3 s and only 36% of changes were positive - two sided and small,
+        # not the one sided ~one period shift that a genuine sidelobe wrap produces.
+        # Only the two runs with a real measured sidelobe showed the periodic signature.
+        # So this is a general delay map repair that handles sidelobe wrapping as one
+        # special case, and gating it to fire only in that special case was suppressing
+        # most of its value.  The gate, and the latch that existed to stop the gate
+        # closing again mid-run, are both gone.
+        #
+        # It runs BEFORE despeckling, and both run.  The order matters and is not
+        # symmetric.  Despeckle first then resolve is worse than resolving alone,
+        # because resolution can only select among local maxima of the similarity
+        # function and so silently discards despeckle's refit values wherever those are
+        # not peaks.  Resolve first then despeckle is better than either alone:
+        # resolution makes the discrete lobe choice, then despeckle refits the residual
+        # local outliers, which resolution cannot do because it cannot produce a
+        # non-peak value.  Measured on paired arms, despeckling on top of resolution
+        # removed a further 34% of outlier voxels in 16 of 16 HCP runs and 18% in 26 of
+        # 26 UK Biobank runs.
+        thepreresolvelags = None
+        dounwrap = bool(optiondict.get("resolvedelays", False))
+        if dounwrap:
+            LGR.info(f"\n\n{similaritytype} delay resolution pass {thepass}")
+            # Log the sidelobe measurement if there is one.  It no longer decides
+            # anything, but it is the natural thing to want alongside the reassignment
+            # count, and it is frequently absent - nothing here may assume it is a number.
+            theacsidelobeamp = optiondict.get(f"acsidelobeamp_pass{thepass}", None)
+            thelag = optiondict.get(f"acsidelobelag_pass{thepass}", None)
+            if theacsidelobeamp is not None:
+                LGR.info(
+                    f"\tsidelobe amplitude {theacsidelobeamp:.3f}"
+                    + (f" at {thelag:.3f}s" if thelag is not None else "")
+                )
+            else:
+                LGR.info("\tno sidelobe amplitude measured for this pass")
+            TimingLGR.info(f"{similaritytype} delay resolution start, pass {thepass}")
+            thexdim, theydim, theslicethickness, dummy = tide_io.parseniftisizes(thesizes)
+            # captured unconditionally now: the metrics recorded at the end of the
+            # pass need it, not just --saveresolvemaps.  It is a 1-D copy.
+            thepreresolvelags = lagtimes.copy()
+            lagtimes[:], numunwrapped = resolvefromsimfunc(
+                corrout,
+                trimmedcorrscale,
+                validvoxels,
+                nativespaceshape,
+                fitmask,
+                lagtimes,
+                (thexdim, theydim, theslicethickness),
+                numpasses=optiondict.get("resolvepasses", 3),
+                showprogressbar=optiondict["showprogressbar"],
+            )
+            optiondict[f"resolved_pass{thepass}"] = numunwrapped
+            LGR.info(f"\tresolution reassigned {numunwrapped} voxels")
+
+            # Audit trail.  Delay resolution can move a voxel to a different peak of the
+            # similarity function, which is the point, but it is a smoothness prior and
+            # a smoothness prior cannot tell a genuinely long delay that varies smoothly
+            # from its surroundings apart from a fitting error.  Saving what it changed
+            # makes that inspectable instead of invisible.
+            #
+            # What this is NOT: resolution runs on every pass and the result feeds the
+            # next pass's refinement, so the map going into the final pass has already
+            # been resolved.  These outputs therefore show what the FINAL pass did, not
+            # the cumulative effect of resolution versus not resolving at all.  Nothing
+            # computed inside a single run can show the latter - that needs a paired run
+            # without --resolvedelays.  Per-pass reassignment counts are in runoptions as
+            # resolved_passN.
+            if optiondict.get("saveresolvemaps", False) and thepass == optiondict["passes"]:
+                if theinputdata.filetype != "text":
+                    if theinputdata.filetype == "cifti":
+                        timeindex = theheader["dim"][0] - 1
+                        spaceindex = theheader["dim"][0]
+                        theheader["dim"][timeindex] = 1
+                        theheader["dim"][spaceindex] = numspatiallocs
+                    else:
+                        theheader["dim"][0] = 3
+                        theheader["dim"][4] = 1
+                        theheader["pixdim"][4] = 1.0
+                theshift = lagtimes - thepreresolvelags
+                resolvelist = [
+                    (
+                        thepreresolvelags,
+                        "maxtimepreresolve",
+                        "map",
+                        "second",
+                        "Lag time in seconds as it stood immediately before delay "
+                        "resolution in the final pass",
+                    ),
+                    (
+                        theshift,
+                        "resolveshift",
+                        "map",
+                        "second",
+                        "Change in lag time applied by delay resolution in the final "
+                        "pass, in seconds",
+                    ),
+                    (
+                        np.where(np.abs(theshift) > RESOLVEDCHANGEDTHRESH, 1, 0).astype(np.int32),
+                        "resolvechanged",
+                        "mask",
+                        None,
+                        f"Voxels whose delay was changed by more than "
+                        f"{RESOLVEDCHANGEDTHRESH} seconds by delay resolution in the "
+                        f"final pass",
+                    ),
+                ]
+                tide_io.savemaplist(
+                    outputname,
+                    resolvelist,
+                    validvoxels,
+                    nativespaceshape,
+                    theheader,
+                    bidsbasedict,
+                    filetype=theinputdata.filetype,
+                    rt_floattype=rt_floattype,
+                    cifti_hdr=theinputdata.cifti_hdr,
+                )
+
+            TimingLGR.info(
+                f"{similaritytype} delay resolution end, pass {thepass}",
+                {"message2": numunwrapped, "message3": "voxels"},
+            )
+
         # Correlation time despeckle
         if optiondict["despeckle_passes"] > 0:
             LGR.info(f"\n\n{similaritytype} despeckling pass {thepass}")
@@ -856,9 +801,6 @@ def fitSimFunc(
             voxelsprocessed_fc_ds = 0
             despecklingdone = False
             lastnumdespeckled = 1000000
-            use_patch_detection = optiondict["despeckle_patch_detection"]
-            patch_refkernel = optiondict["despeckle_patch_refkernel"]
-            patch_minsize = optiondict["despeckle_patch_minsize"]
             for despecklepass in range(optiondict["despeckle_passes"]):
                 kernel_size = optiondict["despeckle_kernel_size"]
                 LGR.info(
@@ -882,145 +824,98 @@ def fitSimFunc(
                     -1000000.0,
                 )[validvoxels]
 
-                # On later passes, detect large connected patches that survive
-                # median filtering and add them to the refit candidates
-                patches_added = 0
-                if use_patch_detection and despecklepass >= 2:
-                    lagmap_3d = outmaparray.reshape(nativespaceshape)
-                    validmask_3d = np.zeros(nativespaceshape, dtype=bool)
-                    validmask_3d.reshape(-1)[validvoxels] = fitmask[:].astype(bool)
-                    use_conf = optiondict["despeckle_patch_use_confidence"]
-                    R2_3d_ds = lagstrengths_3d_ds = None
-                    if use_conf:
-                        R2_3d_ds = np.zeros(nativespaceshape)
-                        R2_3d_ds.reshape(-1)[validvoxels] = R2[:]
-                        lagstrengths_3d_ds = np.zeros(nativespaceshape)
-                        lagstrengths_3d_ds.reshape(-1)[validvoxels] = lagstrengths[:]
-                    patch_mask_3d, reference_3d = _detect_shifted_patches(
-                        lagmap_3d,
-                        validmask_3d,
-                        optiondict["despeckle_thresh"],
-                        reference_kernel=patch_refkernel,
-                        min_patch_size=patch_minsize,
-                        consistency_ratio=optiondict["despeckle_patch_consistency_ratio"],
-                        use_confidence=use_conf,
-                        confidence_weight=optiondict["despeckle_patch_confidence_weight"],
-                        R2_3d=R2_3d_ds,
-                        lagstrengths_3d=lagstrengths_3d_ds,
+                numdespeckled = len(np.where(initlags != -1000000.0)[0])
+                # Convergence guard: stop once the flagged count stops falling.
+                # This also covers an empty initlags, which can only happen if there
+                # are no valid voxels at all: that gives numdespeckled 0, which fails
+                # this test and terminates despeckling by the same path.
+                if lastnumdespeckled > numdespeckled > 0:
+                    lastnumdespeckled = numdespeckled
+                    tide_util.disablemkl(
+                        optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"]
                     )
-                    n_patch_voxels = int(patch_mask_3d.sum())
-                    if n_patch_voxels > 0:
-                        patch_mask_flat = patch_mask_3d.reshape(numspatiallocs)
-                        reference_flat = reference_3d.reshape(numspatiallocs)
-                        # Add patch voxels as refit candidates (if not already flagged)
-                        for i, vox in enumerate(validvoxels):
-                            if patch_mask_flat[vox] and initlags[i] == -1000000.0:
-                                initlags[i] = reference_flat[vox]
-                                patches_added += 1
-                        LGR.info(
-                            f"\tPatch detection found {n_patch_voxels} voxels in "
-                            f"large patches, {patches_added} new candidates added"
-                        )
-                    else:
-                        LGR.info("\tPatch detection found no large patches")
+                    voxelsprocessed_thispass = tide_simfuncfit.fitcorr(
+                        trimmedcorrscale,
+                        theFitter,
+                        corrout,
+                        fitmask,
+                        failreason,
+                        lagtimes,
+                        lagstrengths,
+                        lagsigma,
+                        gaussout,
+                        windowout,
+                        R2,
+                        despeckling=True,
+                        nprocs=optiondict["nprocs_fitcorr"],
+                        alwaysmultiproc=optiondict["alwaysmultiproc"],
+                        fixdelay=optiondict["fixdelay"],
+                        initialdelayvalue=theinitialdelay,
+                        showprogressbar=optiondict["showprogressbar"],
+                        chunksize=optiondict["mp_chunksize"],
+                        despeckle_thresh=optiondict["despeckle_thresh"],
+                        initiallags=initlags,
+                        rt_floattype=rt_floattype,
+                    )
+                    tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
+                    # restore full lag range (THANK YOU to Suchita Ganesan for finding and fixing this!!!)
+                    theFitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
 
-                if len(initlags) > 0:
-                    numdespeckled = len(np.where(initlags != -1000000.0)[0])
-                    # Bypass convergence guard when patch detection added new
-                    # candidates, since the count may increase on that pass
-                    if (patches_added > 0 and numdespeckled > 0) or (
-                        lastnumdespeckled > numdespeckled > 0
-                    ):
-                        lastnumdespeckled = numdespeckled
-                        tide_util.disablemkl(
-                            optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"]
-                        )
-                        voxelsprocessed_thispass = tide_simfuncfit.fitcorr(
-                            trimmedcorrscale,
-                            theFitter,
-                            corrout,
-                            fitmask,
-                            failreason,
-                            lagtimes,
-                            lagstrengths,
-                            lagsigma,
-                            gaussout,
-                            windowout,
-                            R2,
-                            despeckling=True,
-                            nprocs=optiondict["nprocs_fitcorr"],
-                            alwaysmultiproc=optiondict["alwaysmultiproc"],
-                            fixdelay=optiondict["fixdelay"],
-                            initialdelayvalue=theinitialdelay,
-                            showprogressbar=optiondict["showprogressbar"],
-                            chunksize=optiondict["mp_chunksize"],
-                            despeckle_thresh=optiondict["despeckle_thresh"],
-                            initiallags=initlags,
-                            rt_floattype=rt_floattype,
-                        )
-                        tide_util.enablemkl(
-                            optiondict["mklthreads"], debug=optiondict["threaddebug"]
-                        )
-                        # restore full lag range (THANK YOU to Suchita Ganesan for finding and fixing this!!!)
-                        theFitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
-
-                        voxelsprocessed_fc_ds += voxelsprocessed_thispass
-                        optiondict[
-                            "despecklemasksize_pass" + str(thepass) + "_d" + str(despecklepass + 1)
-                        ] = voxelsprocessed_thispass
-                        optiondict[
-                            "despecklemaskpct_pass" + str(thepass) + "_d" + str(despecklepass + 1)
-                        ] = (100.0 * voxelsprocessed_thispass / optiondict["corrmasksize"])
-                        if optiondict["savedespecklemasks"]:
-                            despecklesavemask = np.where(initlags != -1000000.0, 1, 0)
-                            despeckleinitlags = np.where(initlags != -1000000.0, initlags, 0)
-                            if thepass == optiondict["passes"]:
-                                if theinputdata.filetype != "text":
-                                    if theinputdata.filetype == "cifti":
-                                        timeindex = theheader["dim"][0] - 1
-                                        spaceindex = theheader["dim"][0]
-                                        theheader["dim"][timeindex] = 1
-                                        theheader["dim"][spaceindex] = numspatiallocs
-                                    else:
-                                        theheader["dim"][0] = 3
-                                        theheader["dim"][4] = 1
-                                        theheader["pixdim"][4] = 1.0
-                                masklist = [
-                                    (
-                                        despecklesavemask,
-                                        f"despeckle_p{thepass}_d{despecklepass + 1}",
-                                        "mask",
-                                        None,
-                                        "Voxels that underwent despeckling",
-                                    ),
-                                    (
-                                        despeckleinitlags,
-                                        f"despeckleinitlags_p{thepass}_d{despecklepass + 1}",
-                                        "map",
-                                        None,
-                                        "Target lags for voxels that underwent despeckling",
-                                    ),
-                                    (
-                                        medianlags[validvoxels],
-                                        f"despecklemedianlags_p{thepass}_d{despecklepass + 1}",
-                                        "map",
-                                        None,
-                                        "Median filter targets for despeckling",
-                                    ),
-                                ]
-                                tide_io.savemaplist(
-                                    outputname,
-                                    masklist,
-                                    validvoxels,
-                                    nativespaceshape,
-                                    theheader,
-                                    bidsbasedict,
-                                    filetype=theinputdata.filetype,
-                                    rt_floattype=rt_floattype,
-                                    cifti_hdr=theinputdata.cifti_hdr,
-                                )
-                    else:
-                        despecklingdone = True
+                    voxelsprocessed_fc_ds += voxelsprocessed_thispass
+                    optiondict[
+                        "despecklemasksize_pass" + str(thepass) + "_d" + str(despecklepass + 1)
+                    ] = voxelsprocessed_thispass
+                    optiondict[
+                        "despecklemaskpct_pass" + str(thepass) + "_d" + str(despecklepass + 1)
+                    ] = (100.0 * voxelsprocessed_thispass / optiondict["corrmasksize"])
+                    if optiondict["savedespecklemasks"]:
+                        despecklesavemask = np.where(initlags != -1000000.0, 1, 0)
+                        despeckleinitlags = np.where(initlags != -1000000.0, initlags, 0)
+                        if thepass == optiondict["passes"]:
+                            if theinputdata.filetype != "text":
+                                if theinputdata.filetype == "cifti":
+                                    timeindex = theheader["dim"][0] - 1
+                                    spaceindex = theheader["dim"][0]
+                                    theheader["dim"][timeindex] = 1
+                                    theheader["dim"][spaceindex] = numspatiallocs
+                                else:
+                                    theheader["dim"][0] = 3
+                                    theheader["dim"][4] = 1
+                                    theheader["pixdim"][4] = 1.0
+                            masklist = [
+                                (
+                                    despecklesavemask,
+                                    f"despeckle_p{thepass}_d{despecklepass + 1}",
+                                    "mask",
+                                    None,
+                                    "Voxels that underwent despeckling",
+                                ),
+                                (
+                                    despeckleinitlags,
+                                    f"despeckleinitlags_p{thepass}_d{despecklepass + 1}",
+                                    "map",
+                                    None,
+                                    "Target lags for voxels that underwent despeckling",
+                                ),
+                                (
+                                    medianlags[validvoxels],
+                                    f"despecklemedianlags_p{thepass}_d{despecklepass + 1}",
+                                    "map",
+                                    None,
+                                    "Median filter targets for despeckling",
+                                ),
+                            ]
+                            tide_io.savemaplist(
+                                outputname,
+                                masklist,
+                                validvoxels,
+                                nativespaceshape,
+                                theheader,
+                                bidsbasedict,
+                                filetype=theinputdata.filetype,
+                                rt_floattype=rt_floattype,
+                                cifti_hdr=theinputdata.cifti_hdr,
+                            )
                 else:
                     despecklingdone = True
                 if despecklingdone:
@@ -1081,131 +976,20 @@ def fitSimFunc(
         else:
             internaldespeckleincludemask = None
 
-        # Robust delay estimation via anchor-based region growing.
-        # This post-pass selects correlation peaks by spatial consistency rather
-        # than peak height, allowing it to correct artifact patches even where
-        # the true-lag peak has been eroded below the sidelobe peak.  Territory
-        # boundaries (true vascular discontinuities) are preserved naturally.
-        # Disabled by default; enable with --robustdelay.
-        if optiondict["robustdelay"]:
-            LGR.info(f"\n\nRobust delay estimation (anchor-based region growing), pass {thepass}")
-            TimingLGR.info(f"Robust delay estimation start, pass {thepass}")
-
-            outmaparray *= 0.0
-            outmaparray[validvoxels] = lagtimes[:]
-            lagmap_3d_rd = outmaparray.reshape(nativespaceshape)
-
-            validmask_3d_rd = np.zeros(nativespaceshape, dtype=bool)
-            validmask_3d_rd.reshape(-1)[validvoxels] = fitmask[:].astype(bool)
-
-            R2_3d_rd = np.zeros(nativespaceshape)
-            R2_3d_rd.reshape(-1)[validvoxels] = R2[:]
-
-            fitmask_3d_rd = np.zeros(nativespaceshape, dtype=np.uint16)
-            fitmask_3d_rd.reshape(-1)[validvoxels] = fitmask[:]
-
-            passsuffix = "_pass" + str(thepass)
-            acsidelobelag = optiondict["acsidelobelag" + passsuffix]
-
-            refit_mask_3d, target_lags_3d, n_uncertain, n_unprocessed = (
-                _anchor_based_region_growing(
-                    lagmap_3d_rd,
-                    validmask_3d_rd,
-                    corrout,
-                    validvoxels,
-                    numspatiallocs,
-                    nativespaceshape,
-                    trimmedcorrscale,
-                    R2_3d_rd,
-                    fitmask_3d_rd,
-                    dominance_threshold=optiondict["robustdelay_dominance_threshold"],
-                    search_width=optiondict["robustdelay_search_width"],
-                    min_peak_fraction=optiondict["robustdelay_min_peak_fraction"],
-                    bipolar=optiondict["bipolar"],
-                    debug=optiondict["debug"],
-                )
-            )
-
-            n_refit = int(refit_mask_3d.sum())
-            LGR.info(
-                f"\tRobust delay: {n_refit} voxels reassigned, "
-                f"{n_uncertain} uncertain, {n_unprocessed} unreachable"
-            )
-
-            if n_refit > 0:
-                refit_mask_flat = refit_mask_3d.reshape(numspatiallocs)
-                target_lags_flat = target_lags_3d.reshape(numspatiallocs)
-                initlags_rd = np.full(numvalidspatiallocs, -1000000.0)
-                for i, vox in enumerate(validvoxels):
-                    if refit_mask_flat[vox]:
-                        initlags_rd[i] = target_lags_flat[vox]
-
-                tide_util.disablemkl(optiondict["nprocs_fitcorr"], debug=optiondict["threaddebug"])
-                voxelsprocessed_rd = tide_simfuncfit.fitcorr(
-                    trimmedcorrscale,
-                    theFitter,
-                    corrout,
-                    fitmask,
-                    failreason,
-                    lagtimes,
-                    lagstrengths,
-                    lagsigma,
-                    gaussout,
-                    windowout,
-                    R2,
-                    despeckling=True,
-                    nprocs=optiondict["nprocs_fitcorr"],
-                    alwaysmultiproc=optiondict["alwaysmultiproc"],
-                    fixdelay=optiondict["fixdelay"],
-                    initialdelayvalue=theinitialdelay,
-                    showprogressbar=optiondict["showprogressbar"],
-                    chunksize=optiondict["mp_chunksize"],
-                    despeckle_thresh=optiondict["despeckle_thresh"],
-                    initiallags=initlags_rd,
-                    rt_floattype=rt_floattype,
-                )
-                tide_util.enablemkl(optiondict["mklthreads"], debug=optiondict["threaddebug"])
-                LGR.info(f"\tRobust delay refitted {voxelsprocessed_rd} voxels")
-                theFitter.setrange(optiondict["lagmin"], optiondict["lagmax"])
-
-                if optiondict["savedespecklemasks"] and thepass == optiondict["passes"]:
-                    if theinputdata.filetype != "text":
-                        if theinputdata.filetype == "cifti":
-                            timeindex = theheader["dim"][0] - 1
-                            spaceindex = theheader["dim"][0]
-                            theheader["dim"][timeindex] = 1
-                            theheader["dim"][spaceindex] = numspatiallocs
-                        else:
-                            theheader["dim"][0] = 3
-                            theheader["dim"][4] = 1
-                            theheader["pixdim"][4] = 1.0
-                    masklist = [
-                        (
-                            refit_mask_flat[validvoxels].astype(np.int32),
-                            f"robustdelay_reassigned_p{thepass}",
-                            "mask",
-                            None,
-                            f"Voxels reassigned by robust delay estimation, pass {thepass}",
-                        ),
-                    ]
-                    tide_io.savemaplist(
-                        outputname,
-                        masklist,
-                        validvoxels,
-                        nativespaceshape,
-                        theheader,
-                        bidsbasedict,
-                        filetype=theinputdata.filetype,
-                        rt_floattype=rt_floattype,
-                        cifti_hdr=theinputdata.cifti_hdr,
-                    )
-
-            TimingLGR.info(
-                f"Robust delay estimation end, pass {thepass}",
-                {
-                    "message2": n_refit,
-                    "message3": "voxels reassigned",
-                },
-            )
+        # End of pass.  Record what the delay map looks like now, after both repairs.
+        recorddelaymetrics(
+            optiondict,
+            thepass,
+            lagtimes,
+            fitmask,
+            validvoxels,
+            nativespaceshape,
+            numspatiallocs,
+            optiondict["despeckle_thresh"],
+            preresolvelags=thepreresolvelags,
+            corrout=corrout,
+            corrscale=trimmedcorrscale,
+            LGR=LGR,
+        )
 
     return internaldespeckleincludemask

@@ -36,10 +36,12 @@ def test_fullrunrapidtide_v3(debug=False, local=False, displayplots=False):
 
     # run rapidtide
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST3"),
+        "--brainmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
         "--corrmask",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz:1"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz:1"),
         "--maxpasses",
         "2",
         "--numnull",
@@ -77,7 +79,7 @@ def test_fullrunrapidtide_v3(debug=False, local=False, displayplots=False):
     run_rapidtide(inputargs)
 
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST3"),
         "--alternateoutput",
         os.path.join(testtemproot, "onlyregressors"),

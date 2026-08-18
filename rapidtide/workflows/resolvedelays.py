@@ -30,17 +30,47 @@ waveform they tend to fail together, in coherent patches rather than as isolated
 speckles - which is exactly what a median filter based despeckler cannot repair,
 since the neighbors it would vote with are wrong too.
 
+What this actually turned out to be
+-----------------------------------
+The name describes a special case, not the general behaviour, and that is worth
+stating up front because the whole design was originally built around the special
+case.
+
+A 16 run paired calibration on HCP data - each run processed with and without
+unwrapping, deliberately spanning the ambiguity range down into its bottom
+quartile - improved the delay map in 16 of 16 runs (median 57 percent fewer
+outlier voxels, Wilcoxon p=3e-5).  That includes all four runs with the LOWEST
+measurable ambiguity and no detectable sidelobe at all, where the median gain was
+still 44 percent.  Large non-periodic discontinuities fell in every run (median
+-19 percent), so this is not smoothing away real structure.
+
+The mechanism is not periodic unwrapping on most runs.  The median change was
+1.3 s and only 36 percent of changes were positive - two sided and small.  A
+genuine sidelobe wrap is one sided and moves delays by close to one full period;
+on the two calibration runs that did have a measurable sidelobe, that is exactly
+what was seen (15 to 21 percent positive, 5.9 to 6.3 s median).  Everywhere else
+the method is repairing ordinary delay fitting errors by choosing a better
+candidate peak, and doing it substantially better than despeckling.
+
+So: this is a general delay map repair that handles sidelobe wrapping as one
+special case.  It used to be gated on the measured sidelobe amplitude, which
+suppressed most of its value; that gate is now off by default.  The sections
+below on sidelobes remain accurate for the special case, but do not mistake them
+for the general story.
+
 Two things to check before believing anything this program tells you
 --------------------------------------------------------------------
-1) MEASURE YOUR SIDELOBE.  It is a property of the LFO spectrum of the particular
-   acquisition, not a constant.  rapidtide writes its estimate to
+1) MEASURE YOUR SIDELOBE, if you are reasoning about the periodic special case.
+   It is a property of the LFO spectrum of the particular acquisition, not a
+   constant.  rapidtide writes its estimate to
    XXX_autocorr_sidelobetime_passN.txt, and leaves it None when it cannot find
    one; the autocorrelation itself is saved as XXX_desc-autocorr_timeseries.  If
    the sidelobe amplitude is negligible there is no periodic ambiguity to
    resolve, and any large delay changes are being driven by something else -
    usually noise repicking the peak more or less at random within the search
-   range.  This program will still happily "repair" those, but what it is then
-   doing is smoothing, not unwrapping.
+   range.  Repairing those turns out to be worth doing anyway (see above), but it
+   is candidate reselection under a spatial prior, not unwrapping, and it should
+   not be described as the latter.
 
    The signature is diagnostic and is reported at the end of a run.  A genuine
    periodic alias produces delay changes that are NARROW and ONE SIDED, centred
@@ -145,7 +175,11 @@ from tqdm import tqdm
 import rapidtide.io as tide_io
 import rapidtide.workflows.parser_funcs as pf
 from rapidtide.workflows.corrflow import computeopticalflow, getlagaxis, oversamplelagaxis
-from rapidtide.workflows.delayflow import makeoutputheader, neighboroffsets
+from rapidtide.workflows.delayflow import (
+    makeoutputheader,
+    maskextensionindices,
+    neighboroffsets,
+)
 
 DEFAULT_MAXCANDIDATES = 6
 DEFAULT_MAXDELTATAU = 3.0
@@ -154,10 +188,16 @@ DEFAULT_MINCONFIDENCE = 0.0
 DEFAULT_NUMPASSES = 3
 DEFAULT_FITRADIUS = 6.0
 
+# How big a delay change counts as a reassignment.  Resolution re-snaps every voxel to a
+# candidate peak, so almost all of them move by a hair even when nothing was decided
+# differently; only changes above this are real.  Both the reported reassignment count
+# and the resolvechanged audit mask use this, so that they cannot disagree.
+RESOLVEDCHANGEDTHRESH = 0.5
+
 
 def _get_parser() -> argparse.ArgumentParser:
     """
-    Create and configure the argument parser for the unwrapdelay command line tool.
+    Create and configure the argument parser for the resolvedelays command line tool.
 
     Returns
     -------
@@ -165,7 +205,7 @@ def _get_parser() -> argparse.ArgumentParser:
         Configured argument parser with all required and optional arguments.
     """
     parser = argparse.ArgumentParser(
-        prog="unwrapdelay",
+        prog="resolvedelays",
         description=(
             "Resolve sidelobe ambiguity in a rapidtide delay map by unwrapping it "
             "against the optical flow velocity field from corrflow."
@@ -399,11 +439,21 @@ def icmrefine(
     thetotalchanged : int
         How many voxel assignments changed across all iterations.
     """
+    # The prior is a median filtered copy of the current solution, so it needs an
+    # explicit story about what lies outside the mask.  Zero filling is not one:
+    # mode="nearest" handles the edge of the ARRAY but says nothing about the edge of
+    # the MASK, so a surface voxel would take its median over a neighbourhood padded
+    # with zeros and be dragged toward tau = 0.  Measured on a UKBB run, that moved
+    # 1069 assignments by more than half a second, 94 percent of them within one voxel
+    # of the mask surface, and it roughly halved the delay assigned there (median
+    # |tau| 3.67 s zero filled against 7.06 s extended).  Extending each outside voxel
+    # with its nearest in mask value makes the filter see plausible tissue instead.
+    # The mask does not change between passes, so build the index once.
+    theindices = maskextensionindices(themask > 0)
+
     thetotalchanged = 0
     for thepass in range(max(numpasses - 1, 0)):
-        thesmoothed = median_filter(
-            np.where(themask > 0, tau, 0.0), size=kernelsize, mode="nearest"
-        )
+        thesmoothed = median_filter(tau[theindices], size=kernelsize, mode="nearest")
         thedistances = np.where(
             np.isfinite(candidatelags), np.abs(candidatelags - thesmoothed[..., None]), np.inf
         )
@@ -420,7 +470,7 @@ def icmrefine(
     return tau, thetotalchanged
 
 
-def unwrapdelaymap(
+def resolvedelaymap(
     candidatelags: NDArray,
     candidateamps: NDArray,
     velocity: Optional[NDArray],
@@ -479,8 +529,9 @@ def unwrapdelaymap(
     offsets, distances = neighboroffsets(paddedshape, voxdims)
 
     def pad(thearray, fill=0.0):
-        if thearray.ndim == 3:
-            return np.pad(thearray, 1, mode="constant", constant_values=fill).reshape(-1)
+        # every caller passes a 4D per-voxel vector field - the candidate lags, the
+        # candidate amplitudes, or grad(tau) - so only the spatial axes are padded and
+        # the trailing axis is left alone.  The 3D mask is padded inline below instead.
         return np.pad(
             thearray, ((1, 1), (1, 1), (1, 1), (0, 0)), mode="constant", constant_values=fill
         ).reshape(-1, thearray.shape[-1])
@@ -557,13 +608,16 @@ def unwrapdelaymap(
                     # wrapped neighbor can otherwise drag a correct voxel with it,
                     # which is where the newly wrapped voxels come from.  Trusted
                     # neighbors are used alone if any exist.
+                    #
+                    # theusable always holds at least one source: the offsets are
+                    # symmetric, so thisindex - which was assigned before it was
+                    # pushed onto the heap - is itself a member of thesources.  There
+                    # is therefore no empty consensus to guard against here.
                     thesources = neighborindex - offsets
                     theusable = assigned[thesources]
                     thepreferred = theusable & istrusted[thesources]
                     if np.any(thepreferred):
                         theusable = thepreferred
-                    if not np.any(theusable):
-                        continue
                     themidgrads = 0.5 * (paddedgrad[thesources] + paddedgrad[neighborindex])
                     thedeltas = np.clip(
                         np.sum(-thedisplacements * themidgrads, axis=1),
@@ -597,7 +651,96 @@ def unwrapdelaymap(
     )
 
 
-def unwrapdelay(args: argparse.Namespace) -> None:
+def resolvefromsimfunc(
+    corrout: NDArray,
+    lagaxis: NDArray,
+    validvoxels: Any,
+    nativespaceshape: Any,
+    fitmask: NDArray,
+    lagtimes: NDArray,
+    voxdims: Tuple[float, float, float],
+    maxcandidates: int = DEFAULT_MAXCANDIDATES,
+    numpasses: int = DEFAULT_NUMPASSES,
+    showprogressbar: bool = True,
+) -> Tuple[NDArray, int]:
+    """
+    Run the unwrap on rapidtide's internal flat arrays, for in-pipeline use.
+
+    This is the adapter that lets fitSimFuncMap call the unwrapper without
+    materialising the whole similarity function as a 4D volume.  findcandidatepeaks
+    operates along the last axis and is otherwise shape agnostic, so it runs
+    directly on the (numvalidspatiallocs, numlags) array; only the much smaller
+    candidate arrays (numvalidspatiallocs, maxcandidates) are expanded to native
+    space.  For a typical HCP run that is 21 MB rather than 450 MB.
+
+    Parameters
+    ----------
+    corrout : NDArray
+        The similarity function, shape (numvalidspatiallocs, numlags).
+    lagaxis : NDArray
+        The lag values, in seconds (rapidtide's trimmedcorrscale).
+    validvoxels : array-like
+        Indices of the valid voxels within the flattened native space.
+    nativespaceshape : tuple
+        The 3D shape of the volume.
+    fitmask : NDArray
+        Fit success mask, indexed like lagtimes.
+    lagtimes : NDArray
+        The current delay estimates, indexed over valid voxels.
+    voxdims : tuple of float
+        The voxel dimensions in mm.
+    maxcandidates : int, optional
+        Maximum candidate peaks per voxel.
+    numpasses : int, optional
+        Region grow plus this many minus one ICM refinement passes.
+    showprogressbar : bool, optional
+        Show a progress bar.
+
+    Returns
+    -------
+    newlagtimes : NDArray
+        The unwrapped delay estimates, indexed like lagtimes.
+    numchanged : int
+        How many voxels were reassigned by more than half a second.
+    """
+    nativespaceshape = tuple(int(thedim) for thedim in nativespaceshape)
+    numspatiallocs = int(np.prod(nativespaceshape))
+
+    thecandidatelags, thecandidateamps = findcandidatepeaks(corrout, lagaxis, maxcandidates)
+    thenumcandidates = thecandidatelags.shape[-1]
+
+    fulllags = np.full((numspatiallocs, thenumcandidates), np.nan, dtype=np.float64)
+    fullamps = np.full((numspatiallocs, thenumcandidates), np.nan, dtype=np.float64)
+    fulllags[validvoxels, :] = thecandidatelags
+    fullamps[validvoxels, :] = thecandidateamps
+    fulllags = fulllags.reshape(nativespaceshape + (thenumcandidates,))
+    fullamps = fullamps.reshape(nativespaceshape + (thenumcandidates,))
+
+    themask = np.zeros(numspatiallocs, dtype=np.uint16)
+    themask[validvoxels] = np.uint16(np.asarray(fitmask) > 0)
+    themask = themask.reshape(nativespaceshape)
+
+    tau = resolvedelaymap(
+        fulllags,
+        fullamps,
+        None,
+        themask,
+        voxdims,
+        maxdeltatau=0.0,
+        showprogressbar=showprogressbar,
+    )[0]
+    if numpasses > 1:
+        tau = icmrefine(tau, fulllags, themask, numpasses=numpasses)[0]
+
+    newlagtimes = np.array(lagtimes, dtype=lagtimes.dtype, copy=True)
+    theunwrapped = tau.reshape(numspatiallocs)[validvoxels]
+    thevalid = np.asarray(fitmask) > 0
+    newlagtimes[thevalid] = theunwrapped[thevalid]
+    numchanged = int(np.sum(np.abs(newlagtimes - lagtimes) > RESOLVEDCHANGEDTHRESH))
+    return newlagtimes, numchanged
+
+
+def resolvedelays(args: argparse.Namespace) -> None:
     """
     Unwrap a rapidtide delay map against the corrflow velocity field.
 
@@ -664,7 +807,7 @@ def unwrapdelay(args: argparse.Namespace) -> None:
     )
 
     print("unwrapping")
-    tau, thechanged, theconfidence = unwrapdelaymap(
+    tau, thechanged, theconfidence = resolvedelaymap(
         candidatelags,
         candidateamps,
         velocity,
@@ -717,19 +860,19 @@ def unwrapdelay(args: argparse.Namespace) -> None:
     tide_io.savetonifti(
         tau.astype(np.float32),
         output_hdr,
-        f"{args.outputroot}_desc-maxtimeunwrapped_map",
+        f"{args.outputroot}_desc-maxtimeresolved_map",
         debug=args.debug,
     )
     tide_io.savetonifti(
         np.uint16(candidatelags[..., 0] * 0 + thechanged),
         output_hdr,
-        f"{args.outputroot}_desc-unwrapchanged_mask",
+        f"{args.outputroot}_desc-resolvechanged_mask",
         debug=args.debug,
     )
     tide_io.savetonifti(
         theconfidence.astype(np.float32),
         output_hdr,
-        f"{args.outputroot}_desc-unwrapconfidence_map",
+        f"{args.outputroot}_desc-resolveconfidence_map",
         debug=args.debug,
     )
     tide_io.savetonifti(
@@ -747,7 +890,7 @@ def main() -> None:
     except SystemExit:
         _get_parser().print_help()
         raise
-    unwrapdelay(args)
+    resolvedelays(args)
 
 
 if __name__ == "__main__":

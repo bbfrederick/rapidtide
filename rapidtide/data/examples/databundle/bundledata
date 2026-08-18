@@ -1,6 +1,14 @@
 #!/bin/bash
+#
+# Build the test data bundles.
+#
+# There are two of them because GitHub refuses any single file over 100MB, and the
+# full size data alone is already close to that.  Keeping the cropped SMALL datasets
+# in a second tarball leaves both with room to grow; putting everything in one file
+# does not.  The two are fetched together by installtestdata and unpack into the same
+# directory, so the split is invisible to anything downstream.
 
-rm ../testdatabundle.tgz
+rm -f ../testdatabundle.tgz ../testdatabundlesmall.tgz
 
 xattr -dr com.apple.quarantine ./*.par ./*.json ./*.gz ./*.txt
 
@@ -35,3 +43,16 @@ COPYFILE_DISABLE=1 tar --no-mac-metadata -cvzf ../testdatabundle.tgz \
     tmask_seg1.txt \
     tmask_seg2.txt \
     tmask_seg3.txt
+
+COPYFILE_DISABLE=1 tar --no-mac-metadata -cvzf ../testdatabundlesmall.tgz \
+    sub-HAPPYTESTSMALL.json \
+    sub-HAPPYTESTSMALL.nii.gz \
+    sub-HAPPYTESTSMALL_mask.nii.gz \
+    sub-HAPPYTESTSMALL_smallmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL.nii.gz \
+    sub-RAPIDTIDETESTSMALL_brainmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL_cerebellarmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL_mean.nii.gz \
+    sub-RAPIDTIDETESTSMALL_nullmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz \
+    sub-RAPIDTIDETESTSMALL_synthseg.nii.gz

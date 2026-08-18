@@ -65,7 +65,7 @@ Individual programs
    usage_localflow.rst
    usage_delayflow.rst
    usage_corrflow.rst
-   usage_unwrapdelay.rst
+   usage_resolvedelays.rst
    usage_synthASL.rst
    
    legacy.rst

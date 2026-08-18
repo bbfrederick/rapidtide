@@ -1868,7 +1868,7 @@ class RapidtideDataset:
                     return False
             elif self.xsize == 3.0 and self.ysize == 3.0 and self.zsize == 3.0:
                 self.geommaskname = os.path.join(
-                    self.referencedir, "MNI152_T1_3mm_brain_mask_bin.nii.gz"
+                    self.referencedir, "MNI152_T1_3mm_brain_mask.nii.gz"
                 )
             if os.path.isfile(self.geommaskname):
                 thepath, thebase = os.path.split(self.geommaskname)

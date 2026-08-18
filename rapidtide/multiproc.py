@@ -329,7 +329,8 @@ def run_multithread(
     Notes
     -----
     - The function uses `threading.Queue` for inter-thread communication.
-    - If `maskarray` is provided, only indices where `maskarray[d] > 0` are processed.
+    - If `maskarray` is provided, only indices where `maskarray[d] > 0.5` are processed,
+      matching the threshold :func:`run_multiproc` uses.
     - The `consumerfunc` is expected to read from `inQ` and write to `outQ` until
       a `None` is received on `inQ`, signaling the end of processing.
 
@@ -367,7 +368,7 @@ def run_multithread(
     for d in range(inputshape[indexaxis]):
         if maskarray is None:
             data_in.append(d)
-        elif maskarray[d] > 0:
+        elif maskarray[d] > 0.5:
             data_in.append(d)
     if verbose:
         print("processing", len(data_in), procunit + " with", n_workers, "threads")

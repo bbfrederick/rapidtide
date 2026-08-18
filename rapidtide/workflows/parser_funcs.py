@@ -395,7 +395,11 @@ def is_float(
     if arg != "auto":
         try:
             arg = float(arg)
-        except parser.error:
+        except ValueError:
+            # float() raises ValueError, not parser.error - parser.error is a bound
+            # method, and naming it here made Python raise "catching classes that do
+            # not inherit from BaseException" instead of reporting the real problem,
+            # so this message was unreachable
             parser.error('Value {0} is not a float or "auto"'.format(arg))
         if minval is not None and arg < minval:
             parser.error("Value {0} is smaller than {1}".format(arg, minval))
@@ -519,7 +523,9 @@ def is_int(
     if arg != "auto":
         try:
             arg = int(arg)
-        except parser.error:
+        except ValueError:
+            # see the note in is_float: this used to name a bound method as the
+            # exception class, so the message below could never be reached
             parser.error('Value {0} is not an int or "auto"'.format(arg))
         if minval is not None and arg < minval:
             parser.error("Value {0} is smaller than {1}".format(arg, minval))

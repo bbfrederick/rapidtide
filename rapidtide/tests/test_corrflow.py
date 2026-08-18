@@ -301,13 +301,408 @@ def corrflow_solvers(debug=False):
             ), f"{thesolver} speed {thespeed} is not close to {truespeed}"
 
 
+def test_oversamplelagaxis_passthrough(debug=False):
+    """A factor of one or less leaves the movie and its lag axis untouched."""
+    if debug:
+        print("oversamplelagaxis_passthrough")
+    thelags = np.linspace(-2.0, 8.0, 26)
+    corr = np.random.RandomState(1).randn(3, 3, 3, 26)
+    for thefactor in [1, 0, -2]:
+        outcorr, outlags = cf.oversamplelagaxis(corr, thelags, thefactor)
+        assert outcorr is corr, f"factor {thefactor} should not copy the data"
+        assert outlags is thelags
+
+
+def test_oversamplelagaxis_interpolates(debug=False):
+    """Oversampling refines the lag axis without moving the correlation peak.
+
+    The interpolation is meant to recover the underlying continuous function, so a peak
+    at a known lag must stay where it was rather than drift.
+    """
+    if debug:
+        print("oversamplelagaxis_interpolates")
+    thelags = np.linspace(-2.0, 8.0, 26)
+    truetau = 3.17
+    corr = _correlationwaveform(
+        thelags[np.newaxis, np.newaxis, np.newaxis, :] - truetau
+    ) * np.ones((4, 4, 4, 1))
+
+    thefactor = 4
+    outcorr, outlags = cf.oversamplelagaxis(corr, thelags, thefactor)
+    assert len(outlags) == (len(thelags) - 1) * thefactor + 1
+    assert outcorr.shape == corr.shape[:3] + (len(outlags),)
+    # the endpoints are preserved exactly
+    assert np.isclose(outlags[0], thelags[0])
+    assert np.isclose(outlags[-1], thelags[-1])
+    # and the finer axis puts the peak closer to the truth than the original did
+    themask = np.ones((4, 4, 4), dtype=np.uint16)
+    coarseerror = np.abs(cf.peaklag(corr, thelags, themask) - truetau).max()
+    fineerror = np.abs(cf.peaklag(outcorr, outlags, themask) - truetau).max()
+    if debug:
+        print(f"coarse error {coarseerror}, fine error {fineerror}")
+    assert fineerror <= coarseerror + 1.0e-9
+
+
+def test_opticalflow_without_correlation_weighting(debug=False):
+    """The unweighted structure tensor path still recovers the known field."""
+    if debug:
+        print("opticalflow_without_correlation_weighting")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        corrdata = nib.load(thenames["corrout"]).get_fdata()
+        velocity = cf.computeopticalflow(
+            corrdata,
+            themask,
+            (2.0, 2.0, 2.0),
+            thelags,
+            weightbycorr=False,
+            showprogressbar=False,
+        )[0]
+        thespeed = np.median(np.linalg.norm(velocity, axis=-1)[themask > 0])
+        if debug:
+            print(f"unweighted median speed {thespeed} (true {truespeed})")
+        assert np.abs(thespeed - truespeed) / truespeed < 0.3
+
+
+def test_opticalflow_empty_mask(debug=False):
+    """An empty mask produces empty output rather than failing."""
+    if debug:
+        print("opticalflow_empty_mask")
+    theshape = (10, 10, 10)
+    thelags = np.linspace(-2.0, 8.0, 12)
+    corrdata = np.zeros(theshape + (12,))
+    themask = np.zeros(theshape, dtype=np.uint16)
+    velocity, rank, residual, cbv = cf.computeopticalflow(
+        corrdata, themask, (2.0, 2.0, 2.0), thelags, showprogressbar=False, debug=True
+    )
+    assert velocity.shape == theshape + (3,)
+    assert np.all(velocity == 0.0)
+    assert np.all(rank == 0)
+
+
+# ==================== corrflow() option and validation tests ====================
+
+
+def test_corrflow_rejects_too_few_lags(debug=False):
+    """A movie with too few lag samples cannot support a flow estimate."""
+    if debug:
+        print("corrflow_rejects_too_few_lags")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        theimg = nib.Nifti1Image(np.zeros((8, 8, 8, 4), dtype=np.float32), np.eye(4))
+        theimg.header["pixdim"][4] = 0.4
+        theimg.header["toffset"] = -2.0
+        thepath = os.path.join(tmpdir, "sub-01_desc-corrout_info.nii.gz")
+        nib.save(theimg, thepath)
+        args = _baseargs(thepath, os.path.join(tmpdir, "out"))
+        try:
+            cf.corrflow(args)
+            assert False, "should have raised on a movie with too few lags"
+        except ValueError as thedetail:
+            assert "lag samples" in str(thedetail)
+
+
+def test_corrflow_rejects_mismatched_mask(debug=False):
+    """A mask that does not match the movie geometry is rejected."""
+    if debug:
+        print("corrflow_rejects_mismatched_mask")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        badmask = nib.Nifti1Image(np.ones((5, 5, 5), dtype=np.uint16), np.eye(4))
+        badmaskpath = os.path.join(tmpdir, "badmask.nii.gz")
+        nib.save(badmask, badmaskpath)
+        args = _baseargs(thenames["corrout"], os.path.join(tmpdir, "out"))
+        args.maskfile = badmaskpath
+        try:
+            cf.corrflow(args)
+            assert False, "should have raised on a mismatched mask"
+        except ValueError as thedetail:
+            assert "mask dimensions" in str(thedetail)
+
+
+def test_corrflow_rejects_tiny_mask(debug=False):
+    """A CBV threshold that leaves almost nothing behind is rejected."""
+    if debug:
+        print("corrflow_rejects_tiny_mask")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        args = _baseargs(thenames["corrout"], os.path.join(tmpdir, "out"))
+        # nothing can survive a threshold above the normalized CBV maximum
+        args.cbvthresh = 10.0
+        try:
+            cf.corrflow(args)
+            assert False, "should have raised on a nearly empty mask"
+        except ValueError as thedetail:
+            assert "fewer than 100 valid voxels" in str(thedetail)
+
+
+def test_corrflow_autodiscovers_mask(debug=False):
+    """A companion corrfit mask next to the movie is picked up automatically."""
+    if debug:
+        print("corrflow_autodiscovers_mask")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        outputroot = os.path.join(tmpdir, "automask")
+        args = _baseargs(thenames["corrout"], outputroot)
+        assert args.maskfile is None
+        cf.corrflow(args)
+        derived = nib.load(f"{outputroot}_desc-flowfit_mask.nii.gz").get_fdata()
+        # the discovered mask bounds the analysis mask
+        assert np.all(derived[themask == 0] == 0)
+
+
+def test_corrflow_derives_mask_when_none_given(debug=False):
+    """With no mask file to find, the mask comes from the nonzero correlation functions."""
+    if debug:
+        print("corrflow_derives_mask_when_none_given")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        # remove the companion mask so autodiscovery finds nothing
+        os.remove(thenames["mask"])
+        outputroot = os.path.join(tmpdir, "nomask")
+        args = _baseargs(thenames["corrout"], outputroot)
+        args.maskfile = None
+        cf.corrflow(args)
+        themaskpath = f"{outputroot}_desc-flowfit_mask.nii.gz"
+        assert os.path.isfile(themaskpath)
+        derived = nib.load(themaskpath).get_fdata()
+        assert np.sum(derived) >= 100
+
+
+def test_corrflow_maxspeed_clipping(debug=False):
+    """A low speed ceiling clips the velocity field to that magnitude."""
+    if debug:
+        print("corrflow_maxspeed_clipping")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        outputroot = os.path.join(tmpdir, "clipped")
+        args = _baseargs(thenames["corrout"], outputroot)
+        args.maskfile = thenames["mask"]
+        # well below the true speed, so the clip has to engage
+        args.maxspeed = 1.0
+        cf.corrflow(args)
+        thespeedpath = f"{outputroot}_desc-speed_map.nii.gz"
+        assert os.path.isfile(thespeedpath)
+        thespeed = nib.load(thespeedpath).get_fdata()
+        assert np.max(thespeed) <= 1.0 + 1.0e-5, f"speed reached {np.max(thespeed)}"
+
+
+def test_corrflow_with_lag_oversampling(debug=False):
+    """Running with lag oversampling produces the same outputs on a finer axis."""
+    if debug:
+        print("corrflow_with_lag_oversampling")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        outputroot = os.path.join(tmpdir, "oversamp")
+        args = _baseargs(thenames["corrout"], outputroot)
+        args.maskfile = thenames["mask"]
+        args.lagoversamp = 2
+        cf.corrflow(args)
+        assert os.path.isfile(f"{outputroot}_desc-speed_map.nii.gz")
+
+
+def test_corrflow_explicit_delayfile(debug=False):
+    """An explicit ordering field is read instead of being derived from the movie."""
+    if debug:
+        print("corrflow_explicit_delayfile")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        corrimg = nib.load(thenames["corrout"])
+        # a simple ramp, distinguishable from anything the movie would produce
+        thedelay = np.zeros(themask.shape, dtype=np.float32)
+        thedelay[:] = np.arange(themask.shape[0], dtype=np.float32)[:, None, None]
+        delaypath = os.path.join(tmpdir, "sub-01_desc-maxtime_map.nii.gz")
+        nib.save(nib.Nifti1Image(thedelay, corrimg.affine), delaypath)
+
+        outputroot = os.path.join(tmpdir, "withdelay")
+        args = _baseargs(thenames["corrout"], outputroot)
+        args.maskfile = thenames["mask"]
+        args.delayfile = delaypath
+        cf.corrflow(args)
+        thefieldpath = f"{outputroot}_desc-orderingfield_map.nii.gz"
+        assert os.path.isfile(thefieldpath)
+        thefield = nib.load(thefieldpath).get_fdata()
+        # inside the mask the saved field is the ramp we handed in
+        np.testing.assert_allclose(
+            thefield[themask > 0], thedelay[themask > 0], rtol=1e-5, atol=1e-5
+        )
+
+
+def test_corrflow_rejects_mismatched_delayfile(debug=False):
+    """A delay map that does not match the movie geometry is rejected."""
+    if debug:
+        print("corrflow_rejects_mismatched_delayfile")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        baddelay = nib.Nifti1Image(np.zeros((5, 5, 5), dtype=np.float32), np.eye(4))
+        baddelaypath = os.path.join(tmpdir, "baddelay.nii.gz")
+        nib.save(baddelay, baddelaypath)
+        args = _baseargs(thenames["corrout"], os.path.join(tmpdir, "out"))
+        args.maskfile = thenames["mask"]
+        args.delayfile = baddelaypath
+        try:
+            cf.corrflow(args)
+            assert False, "should have raised on a mismatched delay map"
+        except ValueError as thedetail:
+            assert "delay map dimensions" in str(thedetail)
+
+
+def test_corrflow_autodiscovers_delayfile(debug=False):
+    """A companion maxtime map next to the movie is picked up automatically."""
+    if debug:
+        print("corrflow_autodiscovers_delayfile")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        corrimg = nib.load(thenames["corrout"])
+        thedelay = np.zeros(themask.shape, dtype=np.float32)
+        thedelay[:] = np.arange(themask.shape[0], dtype=np.float32)[:, None, None]
+        # the root is the corrout name with the _desc-corrout_info suffix stripped
+        nib.save(
+            nib.Nifti1Image(thedelay, corrimg.affine),
+            os.path.join(tmpdir, "sub-01_desc-maxtime_map.nii.gz"),
+        )
+        outputroot = os.path.join(tmpdir, "auto")
+        args = _baseargs(thenames["corrout"], outputroot)
+        args.maskfile = thenames["mask"]
+        assert args.delayfile is None
+        cf.corrflow(args)
+        thefield = nib.load(f"{outputroot}_desc-orderingfield_map.nii.gz").get_fdata()
+        np.testing.assert_allclose(
+            thefield[themask > 0], thedelay[themask > 0], rtol=1e-5, atol=1e-5
+        )
+
+
+def test_corrflow_nonstandard_filename_root(debug=False):
+    """A movie whose name lacks the corrout suffix still resolves a usable root."""
+    if debug:
+        print("corrflow_nonstandard_filename_root")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        oddname = os.path.join(tmpdir, "justamovie.nii.gz")
+        os.rename(thenames["corrout"], oddname)
+        outputroot = os.path.join(tmpdir, "oddroot")
+        args = _baseargs(oddname, outputroot)
+        args.maskfile = thenames["mask"]
+        cf.corrflow(args)
+        assert os.path.isfile(f"{outputroot}_desc-speed_map.nii.gz")
+
+
+# ==================== main() tests ====================
+
+
+def test_corrflow_without_depression_filling(debug=False):
+    """With filling disabled the ordering field is used directly for the topology steps."""
+    if debug:
+        print("corrflow_without_depression_filling")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        outputroot = os.path.join(tmpdir, "nofill")
+        args = _baseargs(thenames["corrout"], outputroot)
+        args.maskfile = thenames["mask"]
+        args.dofill = False
+        cf.corrflow(args)
+        assert os.path.isfile(f"{outputroot}_desc-orderingfield_map.nii.gz")
+        assert os.path.isfile(f"{outputroot}_desc-flowaccum_map.nii.gz")
+
+
+def test_opticalflow_planar_wave_is_rank_one(debug=False):
+    """A single planar wavefront leaves the higher rank classes empty.
+
+    The tls solver loops over rank classes 1, 2 and 3 and skips any that no voxel falls
+    into; a purely planar wave is rank one everywhere, so the other two are empty.  This
+    runs under tls specifically, since the default ols solver takes a different path.
+    """
+    if debug:
+        print("opticalflow_planar_wave_is_rank_one")
+    theshape = (14, 14, 14)
+    voxdim = 2.0
+    numlags = 24
+    thelags = -2.0 + np.arange(numlags) * 0.4
+    truespeed = 5.0
+    # tau depends on x only, so the spatial gradient points along one axis everywhere
+    thex = np.arange(theshape[0])[:, None, None] * voxdim
+    tau = np.broadcast_to(thex, theshape) / truespeed
+    corr = _correlationwaveform(thelags[None, None, None, :] - tau[..., None])
+    # mask only the interior, so no voxel sees an edge and every one is rank one
+    themask = np.zeros(theshape, dtype=np.uint16)
+    themask[3:-3, 3:-3, 3:-3] = 1
+
+    velocity, therank, thecoherence, theresidual = cf.computeopticalflow(
+        corr, themask, (voxdim, voxdim, voxdim), thelags, solver="tls", showprogressbar=False
+    )
+    thevalid = themask > 0
+    assert np.all(therank[thevalid] == 1), "a planar wave should be rank one throughout"
+    if debug:
+        print(f"planar median speed {np.median(np.linalg.norm(velocity, axis=-1)[thevalid])}")
+
+
+def test_main_runs_a_full_analysis(debug=False):
+    """The entrypoint parses a real command line and runs the analysis."""
+    if debug:
+        print("main_runs_a_full_analysis")
+    import sys
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
+        outputroot = os.path.join(tmpdir, "viamain")
+        oldargv = sys.argv
+        sys.argv = [
+            "corrflow",
+            thenames["corrout"],
+            outputroot,
+            "--maskfile",
+            thenames["mask"],
+            "--noprogressbar",
+        ]
+        try:
+            cf.main()
+        finally:
+            sys.argv = oldargv
+        assert os.path.isfile(f"{outputroot}_desc-speed_map.nii.gz")
+
+
+def test_main_missing_args(debug=False):
+    """The entrypoint prints help and re-raises when the command line is unusable."""
+    if debug:
+        print("main_missing_args")
+    import sys
+
+    oldargv = sys.argv
+    sys.argv = ["corrflow"]
+    try:
+        cf.main()
+        assert False, "should have raised SystemExit"
+    except SystemExit:
+        pass
+    finally:
+        sys.argv = oldargv
+
+
 def test_corrflow(debug=False):
     test_getlagaxis(debug=debug)
     test_peaklag(debug=debug)
+    test_oversamplelagaxis_passthrough(debug=debug)
+    test_oversamplelagaxis_interpolates(debug=debug)
     test_opticalflow_recovers_known_field(debug=debug)
+    test_opticalflow_without_correlation_weighting(debug=debug)
+    test_opticalflow_empty_mask(debug=debug)
     test_lowered_eigenvalue_threshold_is_worse(debug=debug)
     corrflow_integration(debug=debug)
     corrflow_solvers(debug=debug)
+    test_corrflow_rejects_too_few_lags(debug=debug)
+    test_corrflow_rejects_mismatched_mask(debug=debug)
+    test_corrflow_rejects_tiny_mask(debug=debug)
+    test_corrflow_autodiscovers_mask(debug=debug)
+    test_corrflow_derives_mask_when_none_given(debug=debug)
+    test_corrflow_without_depression_filling(debug=debug)
+    test_opticalflow_planar_wave_is_rank_one(debug=debug)
+    test_corrflow_maxspeed_clipping(debug=debug)
+    test_corrflow_with_lag_oversampling(debug=debug)
+    test_corrflow_explicit_delayfile(debug=debug)
+    test_corrflow_rejects_mismatched_delayfile(debug=debug)
+    test_corrflow_autodiscovers_delayfile(debug=debug)
+    test_corrflow_nonstandard_filename_root(debug=debug)
+    test_main_runs_a_full_analysis(debug=debug)
+    test_main_missing_args(debug=debug)
 
 
 if __name__ == "__main__":

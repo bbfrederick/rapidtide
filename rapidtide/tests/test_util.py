@@ -722,6 +722,28 @@ class TestTimingHelpers:
 # ========================= comparemap extra branches =========================
 
 
+class TestComparemapNumerics:
+    def test_zero_denominators_do_not_warn(self, recwarn):
+        """The relative difference skips voxels whose reference value is zero.  It used
+        to compute the division for every voxel and then throw the bad ones away, which
+        is correct but fills the log with divide-by-zero warnings from a routine that
+        runs over every map of every comparison."""
+        themap1 = np.array([0.0, 1.0, 2.0, 0.0, 4.0])
+        themap2 = themap1 + 1.0
+        theresult = tide_util.comparemap(themap1, themap2)
+
+        assert not [
+            thewarning for thewarning in recwarn if issubclass(thewarning.category, RuntimeWarning)
+        ], "comparemap warned about the zeros it was discarding"
+
+        # and the answer is unchanged: zero-reference voxels contribute 0 relative diff
+        mindiff, maxdiff, meandiff, mse, minrel, maxrel, meanrel, relmse = theresult
+        assert np.isclose(meandiff, 1.0)
+        assert np.all(np.isfinite(theresult))
+        # 1/1, 1/2 and 1/4 for the nonzero references, 0 for the two zeros
+        np.testing.assert_allclose(meanrel, (1.0 + 0.5 + 0.25) / 5.0)
+
+
 class TestComparemapBranches:
     def test_shape_mismatch_exits(self):
         with pytest.raises(SystemExit):
@@ -778,11 +800,515 @@ class TestCompareRunHelpers:
         assert isinstance(out, dict)
 
 
+# ========================= version, container branch =========================
+
+
+class TestVersionInContainer:
+    """The container branch reads everything from environment variables.
+
+    It used to be impossible to reach any of this from a test, because a container
+    that set RUNNING_IN_CONTAINER without also setting GITDIRECTVERSION fell through
+    every branch and raised UnboundLocalError on the return.
+    """
+
+    def test_no_git_variables_at_all(self):
+        with patch.dict(os.environ, {"RUNNING_IN_CONTAINER": "1"}, clear=True):
+            theversion, thesha, thedate, isdirty = tide_util.version()
+        assert (theversion, thesha, thedate, isdirty) == (
+            "UNKNOWN",
+            "UNKNOWN",
+            "UNKNOWN",
+            "UNKNOWN",
+        )
+
+    def test_gitversion_without_a_direct_version(self):
+        theenv = {"RUNNING_IN_CONTAINER": "1", "GITVERSION": "2.9.0"}
+        with patch.dict(os.environ, theenv, clear=True):
+            theversion, thesha, thedate, isdirty = tide_util.version()
+        assert theversion == "2.9.0"
+        # nothing said whether the tree was dirty, so that must not be guessed
+        assert isdirty == "UNKNOWN"
+
+    def test_a_clean_tag_is_not_dirty(self):
+        theenv = {
+            "RUNNING_IN_CONTAINER": "1",
+            "GITVERSION": "2.9.0",
+            "GITDIRECTVERSION": "v2.9.0",
+            "GITSHA": "abc1234",
+            "GITDATE": "2026-01-01",
+        }
+        with patch.dict(os.environ, theenv, clear=True):
+            theversion, thesha, thedate, isdirty = tide_util.version()
+        assert theversion == "v2.9.0"
+        assert thesha == "abc1234"
+        assert thedate == "2026-01-01"
+        assert isdirty is False
+
+    def test_commits_past_the_tag_are_dirty(self):
+        for thedirect, theexpected in (
+            ("v2.9.0-3", "v2.9.0.3"),
+            ("v2.9.0-3-gabc1234", "v2.9.0.3+gabc1234"),
+        ):
+            theenv = {
+                "RUNNING_IN_CONTAINER": "1",
+                "GITVERSION": "2.9.0",
+                "GITDIRECTVERSION": thedirect,
+            }
+            with patch.dict(os.environ, theenv, clear=True):
+                theversion, dummy, dummy2, isdirty = tide_util.version()
+            assert theversion == theexpected, f"{thedirect} became {theversion}"
+            assert isdirty is True
+
+    def test_a_describe_dirty_suffix_is_handled(self):
+        """`git describe --dirty` appends a fourth field.  That used to fall through
+        to a bare pass, leaving isdirty unset and crashing on the return."""
+        theenv = {
+            "RUNNING_IN_CONTAINER": "1",
+            "GITVERSION": "2.9.0",
+            "GITDIRECTVERSION": "v2.9.0-3-gabc1234-dirty",
+        }
+        with patch.dict(os.environ, theenv, clear=True):
+            theversion, dummy, dummy2, isdirty = tide_util.version()
+        assert theversion == "v2.9.0.3+gabc1234"
+        assert isdirty is True
+
+    def test_the_direct_version_wins_over_gitversion(self):
+        theenv = {
+            "RUNNING_IN_CONTAINER": "1",
+            "GITVERSION": "9.9.9",
+            "GITDIRECTVERSION": "v2.9.0",
+        }
+        with patch.dict(os.environ, theenv, clear=True):
+            theversion = tide_util.version()[0]
+        assert theversion == "v2.9.0", "GITDIRECTVERSION did not take precedence"
+
+    def test_versioneer_failure_falls_back_to_unknown(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with patch("rapidtide.util.tide_versioneer.get_versions", side_effect=RuntimeError):
+                assert tide_util.version() == ("UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN")
+
+    def test_missing_versioneer_fields_become_unknown(self):
+        thefields = {"version": None, "full-revisionid": None, "date": None, "dirty": None}
+        with patch.dict(os.environ, {}, clear=True):
+            with patch("rapidtide.util.tide_versioneer.get_versions", return_value=thefields):
+                assert tide_util.version() == ("UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN")
+
+    def test_a_zero_distance_local_version_is_trimmed(self):
+        """versioneer appends +0.gSHA.dirty when the tag is exactly at HEAD; the
+        leading zero means no commits past the tag, so the suffix is dropped."""
+        thefields = {
+            "version": "2.9.0+0.gabc1234.dirty",
+            "full-revisionid": "abc1234",
+            "date": "2026-01-01",
+            "dirty": False,
+        }
+        with patch.dict(os.environ, {}, clear=True):
+            with patch("rapidtide.util.tide_versioneer.get_versions", return_value=thefields):
+                theversion = tide_util.version()[0]
+        assert theversion == "2.9.0"
+
+        # a nonzero distance keeps the whole thing, since it is a real dev version
+        thefields["version"] = "2.9.0+3.gabc1234.dirty"
+        with patch.dict(os.environ, {}, clear=True):
+            with patch("rapidtide.util.tide_versioneer.get_versions", return_value=thefields):
+                assert tide_util.version()[0] == "2.9.0+3.gabc1234.dirty"
+
+
+# ========================= pyfftw configuration =========================
+
+
+@pytest.fixture
+def restorepyfftwconfig():
+    """Put pyfftw's global config back after a test has changed it.
+
+    pyfftw.config is process wide, and rapidtide.stats installs pyfftw as the backend
+    for every scipy.fft call at import time.  A test that leaves NUM_THREADS somewhere
+    other than it found it silently changes how every later test in the same pytest
+    session transforms - which is exactly the kind of order dependent behaviour that
+    only ever shows up in CI, where the whole suite runs in one process.
+    """
+    import pyfftw
+
+    thesaved = (pyfftw.config.NUM_THREADS, pyfftw.config.PLANNER_EFFORT)
+    yield
+    pyfftw.config.NUM_THREADS, pyfftw.config.PLANNER_EFFORT = thesaved
+
+
+class TestConfigurePyfftw:
+    def test_returns_a_wisdom_path_under_home(self, tmp_path, restorepyfftwconfig):
+        theenv = {"HOME": str(tmp_path)}
+        with patch.dict(os.environ, theenv, clear=True):
+            thewisdomfile = tide_util.configurepyfftw(threads=2)
+        assert str(tmp_path) in thewisdomfile
+        assert thewisdomfile.endswith(".txt")
+        assert ".config" in thewisdomfile
+
+    def test_thread_count_is_applied(self, tmp_path, restorepyfftwconfig):
+        import pyfftw
+
+        with patch.dict(os.environ, {"HOME": str(tmp_path)}, clear=True):
+            tide_util.configurepyfftw(threads=3)
+        assert pyfftw.config.NUM_THREADS == 3
+
+    def test_wisdom_round_trips_through_the_file(self, tmp_path, restorepyfftwconfig):
+        """savewisdom writes what configurepyfftw reads back, so the two have to agree
+        on the format.  They are only ever exercised as a pair."""
+        with patch.dict(os.environ, {"HOME": str(tmp_path)}, clear=True):
+            thewisdomfile = tide_util.configurepyfftw(threads=1)
+            assert not os.path.isfile(thewisdomfile), "no wisdom should exist yet"
+
+            tide_util.savewisdom(thewisdomfile, debug=True)
+            assert os.path.isfile(thewisdomfile), "savewisdom wrote nothing"
+
+            # second call finds the file and loads it rather than starting fresh
+            thesamefile = tide_util.configurepyfftw(threads=1, debug=True)
+        assert thesamefile == thewisdomfile
+
+    def test_works_without_HOME_set(self, restorepyfftwconfig):
+        """A stripped environment has no HOME.  Building the wisdom path out of None
+        used to raise TypeError before anything could report a useful problem."""
+        theenv = {k: v for k, v in os.environ.items() if k != "HOME"}
+        with patch.dict(os.environ, theenv, clear=True):
+            thewisdomfile = tide_util.configurepyfftw(threads=1)
+        assert isinstance(thewisdomfile, str) and thewisdomfile.endswith(".txt")
+
+    def test_thread_count_from_the_environment_is_an_integer(self, tmp_path, restorepyfftwconfig):
+        """PYFFTW_NUM_THREADS arrives as a string; NUM_THREADS is a count."""
+        import pyfftw
+
+        theenv = {"HOME": str(tmp_path), "PYFFTW_NUM_THREADS": "4"}
+        with patch.dict(os.environ, theenv, clear=True):
+            tide_util.configurepyfftw(threads=0)
+        assert pyfftw.config.NUM_THREADS == 4
+        assert isinstance(pyfftw.config.NUM_THREADS, int)
+
+    def test_unparseable_wisdom_is_reported_not_executed(
+        self, tmp_path, capsys, restorepyfftwconfig
+    ):
+        """The wisdom file is read back from disk, so it must be parsed as data rather
+        than executed.  Anything that is not a Python literal is a corrupt file, and
+        has to be reported rather than run or raised."""
+        thewisdomdir = tmp_path / ".config"
+        thewisdomdir.mkdir()
+        with patch.dict(os.environ, {"HOME": str(tmp_path)}, clear=True):
+            thewisdomfile = tide_util.configurepyfftw(threads=1)
+            with open(thewisdomfile, "w") as thefile:
+                thefile.write("__import__('os').environ['PWNED'] = '1'")
+            theresult = tide_util.configurepyfftw(threads=1)
+
+        assert theresult == thewisdomfile
+        assert "PWNED" not in os.environ, "the wisdom file was executed"
+        assert "could not parse" in capsys.readouterr().out
+
+    def test_savewisdom_ignores_a_none_path(self):
+        # nothing to write to, and it must not raise trying
+        assert tide_util.savewisdom(None) is None
+
+
+# ========================= comparing whole runs =========================
+
+
+def _make_comparerun_mocks(mapshape=(2, 2, 1), offset=0.5):
+    """Build readfromnifti/isfile mocks where every map exists and differs by offset.
+
+    Parameters
+    ----------
+    mapshape : tuple of int
+        Shape of the mask and of each map.
+    offset : float
+        Constant added to the second run's maps, so the differences are known.
+
+    Returns
+    -------
+    thereader : callable
+        Stands in for tide_io.readfromnifti.
+    """
+    themaskdata = np.ones(mapshape, dtype=float)
+    thehdr = {"dim": [3, mapshape[0], mapshape[1], mapshape[2], 1]}
+
+    def thereader(thename, **thekwargs):
+        thedata = np.ones(mapshape, dtype=float)
+        # run2 filenames carry the second root, so key off that
+        if "run2" in thename or "happy2" in thename:
+            thedata = thedata + offset
+        if "mask" in thename:
+            return None, themaskdata, thehdr, None, None
+        return None, thedata, thehdr, None, None
+
+    return thereader
+
+
+class TestCompareRapidtideRunsFull:
+    def test_every_map_is_compared_when_present(self):
+        """With all the maps present the comparison loop runs to completion and the
+        differences it reports are the ones that were planted."""
+        thereader = _make_comparerun_mocks(offset=0.5)
+        with (
+            patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=True),
+            patch("rapidtide.util.os.path.isfile", return_value=True),
+            patch(
+                "rapidtide.util.tide_io.readvectorsfromtextfile",
+                side_effect=FileNotFoundError,
+            ),
+        ):
+            theresults = tide_util.comparerapidtideruns("run1", "run2", debug=False)
+
+        assert "maxtime" in theresults, "the map loop did not produce any results"
+        assert "maxcorr" in theresults
+        for thekey in ("mindiff", "maxdiff", "meandiff", "mse", "relmse"):
+            assert thekey in theresults["maxtime"]
+        # every voxel differs by exactly the planted offset
+        assert np.isclose(theresults["maxtime"]["meandiff"], 0.5)
+        assert np.isclose(theresults["maxtime"]["mindiff"], 0.5)
+        assert np.isclose(theresults["maxtime"]["mse"], 0.25)
+        # the maps are all ones, so a 0.5 absolute difference is also a 0.5 relative one
+        assert np.isclose(theresults["maxtime"]["relmeandiff"], 0.5)
+        assert np.isclose(theresults["maxtime"]["relmse"], 0.25)
+
+    def test_timecourses_are_compared_when_readable(self):
+        thereader = _make_comparerun_mocks()
+        thetc1 = np.arange(10, dtype=float)
+        thetc2 = thetc1 + 1.0
+
+        thecalls = {"n": 0}
+
+        def thetcreader(thespec, **thekwargs):
+            thecalls["n"] += 1
+            thewhich = thetc2 if "run2" in thespec else thetc1
+            return None, None, None, thewhich, None, None
+
+        with (
+            patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=True),
+            patch("rapidtide.util.os.path.isfile", return_value=True),
+            patch("rapidtide.util.tide_io.readvectorsfromtextfile", side_effect=thetcreader),
+        ):
+            theresults = tide_util.comparerapidtideruns("run1", "run2", debug=False)
+
+        # the json:column spec is rewritten into a flat key
+        thetckeys = [thekey for thekey in theresults if "movingregressor" in thekey]
+        assert thetckeys, f"no timecourse results, keys were {sorted(theresults)}"
+        assert all(":" not in thekey for thekey in thetckeys), "the column spec was not rewritten"
+        assert np.isclose(theresults[thetckeys[0]]["meandiff"], 1.0)
+
+    def test_mismatched_timecourse_lengths_are_skipped(self):
+        thereader = _make_comparerun_mocks()
+
+        def thetcreader(thespec, **thekwargs):
+            thelength = 10 if "run1" in thespec else 11
+            return None, None, None, np.zeros(thelength), None, None
+
+        with (
+            patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=True),
+            patch("rapidtide.util.os.path.isfile", return_value=True),
+            patch("rapidtide.util.tide_io.readvectorsfromtextfile", side_effect=thetcreader),
+        ):
+            theresults = tide_util.comparerapidtideruns("run1", "run2", debug=False)
+
+        assert not [thekey for thekey in theresults if "movingregressor" in thekey]
+
+    def test_mismatched_map_dimensions_abort(self):
+        thereader = _make_comparerun_mocks()
+        with (
+            patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=False),
+            patch("rapidtide.util.os.path.isfile", return_value=True),
+        ):
+            with pytest.raises(SystemExit):
+                tide_util.comparerapidtideruns("run1", "run2")
+
+
+def _make_bidstsv_mock(offset=0.25, length=20):
+    """Stand in for tide_io.readbidstsv, which comparehappyruns uses for timecourses.
+
+    Note comparehappyruns calls this with no error handling at all, unlike its
+    rapidtide counterpart which catches FileNotFoundError - so a missing timecourse
+    file propagates out of the whole comparison.
+
+    Parameters
+    ----------
+    offset : float
+        Constant added to the second run's timecourses.
+    length : int
+        Number of samples in each timecourse.
+
+    Returns
+    -------
+    callable
+        Suitable as a side_effect for readbidstsv.
+    """
+
+    def thereader(thefilename, thecolumn, **thekwargs):
+        thedata = np.arange(length, dtype=float)
+        if "happy2" in thefilename:
+            thedata = thedata + offset
+        # samplerate, starttime, columns, data, compressed, columnsource, extra
+        return 1.0, 0.0, [thecolumn], thedata, False, None, None
+
+    return thereader
+
+
+class TestCompareHappyRunsFull:
+    def test_every_map_and_timecourse_is_compared_when_present(self):
+        thereader = _make_comparerun_mocks(offset=0.25)
+        with (
+            patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=True),
+            patch("rapidtide.util.os.path.isfile", return_value=True),
+            patch("rapidtide.util.tide_io.readbidstsv", side_effect=_make_bidstsv_mock(0.25)),
+        ):
+            theresults = tide_util.comparehappyruns("happy1", "happy2", debug=False)
+
+        assert theresults, "the happy map loop produced nothing"
+        # the maps
+        assert "app_info" in theresults or "vessels_mask" in theresults
+        thefirstmap = theresults.get("app_info", theresults.get("vessels_mask"))
+        assert np.isclose(thefirstmap["meandiff"], 0.25)
+        assert np.isclose(thefirstmap["mse"], 0.0625)
+        # and the timecourses
+        assert "pleth" in theresults, f"no timecourse results, keys were {sorted(theresults)}"
+        assert np.isclose(theresults["pleth"]["meandiff"], 0.25)
+
+    def test_mismatched_sample_rates_abort(self):
+        """Unlike the map loop, a timecourse mismatch here is fatal rather than skipped.
+
+        The mismatch is in the sample rate rather than the length on purpose: equal
+        length arrays get past comparemap's own shape check, so reaching SystemExit
+        proves this function did the rejecting rather than borrowing comparemap's.
+        """
+        thereader = _make_comparerun_mocks()
+
+        def thetcreader(thefilename, thecolumn, **thekwargs):
+            thesamplerate = 1.0 if "happy1" in thefilename else 2.0
+            return thesamplerate, 0.0, [thecolumn], np.zeros(20), False, None, None
+
+        with (
+            patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=True),
+            patch("rapidtide.util.os.path.isfile", return_value=True),
+            patch("rapidtide.util.tide_io.readbidstsv", side_effect=thetcreader),
+        ):
+            with pytest.raises(SystemExit):
+                tide_util.comparehappyruns("happy1", "happy2")
+
+    def test_mismatched_dimensions_abort(self):
+        thereader = _make_comparerun_mocks()
+        with (
+            patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
+            patch("rapidtide.util.tide_io.checkspacematch", return_value=False),
+            patch("rapidtide.util.os.path.isfile", return_value=True),
+        ):
+            with pytest.raises(SystemExit):
+                tide_util.comparehappyruns("happy1", "happy2")
+
+
+# ========================= library thread control =========================
+
+
+class TestLibThreadControl:
+    def test_disable_then_restore_round_trips(self):
+        """disablelibthreads pins every BLAS-ish library to one thread; enablelibthreads
+        puts back whatever findlibthreads reported.  rapidtide brackets its
+        multiprocessing sections with these, so a mismatch between what is saved and
+        what is restored leaves a run oversubscribed for everything that follows.
+        """
+        thevariables = [
+            "OMP_NUM_THREADS",
+            "OPENBLAS_NUM_THREADS",
+            "VECLIB_MAXIMUM_THREADS",
+            "NUMEXPR_NUM_THREADS",
+        ]
+        # deliberately distinct, so restoring the right value to the wrong
+        # variable shows up rather than cancelling out
+        thestartingvalues = dict(zip(thevariables, ("3", "4", "5", "6")))
+        with patch.dict(os.environ, thestartingvalues, clear=False):
+            thesaved = tide_util.findlibthreads()
+            assert list(thesaved) == ["3", "4", "5", "6"]
+
+            tide_util.disablelibthreads()
+            for thename in thevariables:
+                assert os.environ[thename] == "1", f"{thename} was not pinned"
+
+            tide_util.enablelibthreads(*thesaved, debug=True)
+            for thename, thevalue in thestartingvalues.items():
+                assert (
+                    os.environ[thename] == thevalue
+                ), f"{thename} came back as {os.environ[thename]}, expected {thevalue}"
+
+    def test_findlibthreads_defaults_when_unset(self):
+        theenv = {
+            thename: thevalue
+            for thename, thevalue in os.environ.items()
+            if thename
+            not in (
+                "OMP_NUM_THREADS",
+                "OPENBLAS_NUM_THREADS",
+                "VECLIB_MAXIMUM_THREADS",
+                "NUMEXPR_NUM_THREADS",
+            )
+        }
+        with patch.dict(os.environ, theenv, clear=True):
+            assert list(tide_util.findlibthreads()) == [1, 1, 1, 1]
+
+
+class TestMklControl:
+    def test_disablemkl_only_acts_with_multiple_procs(self):
+        """Pinning MKL to one thread is only wanted when rapidtide is about to fan out
+        across processes; with a single process MKL should keep its own threading."""
+        themkl = SimpleNamespace(set_num_threads=lambda n: thecalls.append(n))
+        thecalls = []
+        with (
+            patch("rapidtide.util.mklexists", True),
+            patch("rapidtide.util.mkl", themkl, create=True),
+        ):
+            tide_util.disablemkl(1, debug=True)
+            assert thecalls == [], "MKL was pinned for a single process run"
+            tide_util.disablemkl(4, debug=True)
+            assert thecalls == [1], "MKL was not pinned for a multiprocess run"
+
+    def test_enablemkl_restores_the_requested_count(self):
+        thecalls = []
+        themkl = SimpleNamespace(set_num_threads=lambda n: thecalls.append(n))
+        with (
+            patch("rapidtide.util.mklexists", True),
+            patch("rapidtide.util.mkl", themkl, create=True),
+        ):
+            tide_util.enablemkl(6, debug=True)
+        assert thecalls == [6]
+
+    def test_both_are_noops_without_mkl(self):
+        with patch("rapidtide.util.mklexists", False):
+            # must not raise even though rapidtide.util.mkl may not exist at all
+            tide_util.disablemkl(8, debug=True)
+            tide_util.enablemkl(8, debug=True)
+
+
 # ========================= Run the tests =========================
 
 
-def test_util(debug=False, local=False):
-    # Keep a command-line entrypoint consistent with other test_*.py files.
+def _runtests(debug=False, local=False):
+    """Command line entry point, kept consistent with the other test_*.py files.
+
+    Deliberately NOT named test_util.  Under that name pytest collected it as a test
+    and it re-ran this whole module inside the run that was already running it, which
+    doubled the wall clock of every invocation and made the module return an ExitCode
+    instead of None (PytestReturnNotNoneWarning).  The classes above are what pytest
+    should collect; this is only for `python test_util.py`.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Pass -s so print output is not captured.  Default is False.
+    local : bool, optional
+        Accepted for consistency with the other entry points; unused here.
+
+    Returns
+    -------
+    int
+        The pytest exit code.
+    """
     # Use importlib mode to avoid basename collisions with installed package tests.
     thisfile = os.path.abspath(__file__)
     reporoot = os.path.abspath(os.path.join(os.path.dirname(thisfile), "..", ".."))
@@ -795,4 +1321,4 @@ def test_util(debug=False, local=False):
 
 
 if __name__ == "__main__":
-    test_util(debug=True, local=True)
+    sys.exit(_runtests(debug=True, local=True))

@@ -17,11 +17,11 @@
 #
 #
 import rapidtide.workflows.parser_funcs as pf
-import rapidtide.workflows.unwrapdelay as theworkflow
+import rapidtide.workflows.resolvedelays as theworkflow
 
 
 def entrypoint():
-    pf.generic_init(theworkflow._get_parser, theworkflow.unwrapdelay)
+    pf.generic_init(theworkflow._get_parser, theworkflow.resolvedelays)
 
 
 if __name__ == "__main__":

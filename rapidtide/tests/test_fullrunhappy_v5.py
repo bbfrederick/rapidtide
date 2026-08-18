@@ -32,8 +32,8 @@ def test_fullrunhappy_v5(debug=False, local=False, displayplots=False):
 
     # run happy
     inputargs = [
-        os.path.join(exampleroot, "sub-HAPPYTEST.nii.gz"),
-        os.path.join(exampleroot, "sub-HAPPYTEST.json"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL.nii.gz"),
+        os.path.join(exampleroot, "sub-HAPPYTESTSMALL.json"),
         os.path.join(testtemproot, "happyout5"),
         "--motionfile",
         os.path.join(exampleroot, "sub-HAPPYTEST_mcf.par"),

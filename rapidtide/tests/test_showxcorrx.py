@@ -20,9 +20,12 @@ import os
 import tempfile
 from argparse import Namespace
 from contextlib import contextmanager
+from unittest.mock import patch
 
 import numpy as np
 import pytest
+
+import rapidtide.io as tide_io
 
 from rapidtide.workflows.showxcorrx import (
     DEFAULT_SIGMAMAX,
@@ -154,7 +157,15 @@ def _make_default_args(tmpdir, signal1=None, signal2=None, **overrides):
 
 @contextmanager
 def _showxcorrx_run(**overrides):
-    """Build args in a temporary directory, execute showxcorrx, and yield context."""
+    """Build args in a temporary directory, execute showxcorrx, and yield context.
+
+    The run happens with the temporary directory as the working directory.  That is
+    not cosmetic: with --debug, showxcorrx sets dumpfiltered and writes
+    filtereddata1.txt, filtereddata2.txt, correlator_filtereddata*.txt and
+    MI_filtereddata*.txt using bare relative names, so they land wherever pytest
+    happened to be invoked from and are left behind.  Running from the temporary
+    directory means they are cleaned up with it.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         run_overrides = dict(overrides)
         for key in ("resoutputfile", "corroutputfile", "outputfile"):
@@ -162,7 +173,12 @@ def _showxcorrx_run(**overrides):
             if isinstance(outpath, str) and not os.path.isabs(outpath):
                 run_overrides[key] = os.path.join(tmpdir, outpath)
         args = _make_default_args(tmpdir, **run_overrides)
-        showxcorrx(args)
+        theolddirectory = os.getcwd()
+        try:
+            os.chdir(tmpdir)
+            showxcorrx(args)
+        finally:
+            os.chdir(theolddirectory)
         yield tmpdir, args
 
 
@@ -640,6 +656,403 @@ def showxcorrx_butterworth_filter(debug=False):
 # ==================== Main test function ====================
 
 
+# ==================== Partial correlation ====================
+
+
+def _make_confounded_signals(sharedseed=3, confoundseed=9, thegain=3.0):
+    """Two signals with a real shared component that a confound is masking.
+
+    The confound enters the two signals with OPPOSITE sign, so it drives the raw
+    correlation strongly negative and hides the relationship that is really there.
+    Partialling it out of BOTH signals recovers that relationship.
+
+    The opposite sign matters.  With a confound shared in the same sense, removing it
+    from either signal alone is enough to kill the spurious correlation, so a test
+    that only checks "the correlation went down" cannot tell a fix that cleans both
+    timecourses from one that cleans a single one, or from one that subtracts the
+    intercept instead of the slope.  Making the confound mask a real relationship
+    means only a fully correct implementation recovers it.
+
+    Parameters
+    ----------
+    sharedseed : int
+        Seed for the genuine shared component.
+    confoundseed : int
+        Seed for the masking confound.
+    thegain : float
+        How strongly the confound enters, relative to the shared component.
+
+    Returns
+    -------
+    theconfound, thesignal1, thesignal2 : NDArray
+        The confound and the two signals built from it.
+    """
+
+    def thebroadband(theseed):
+        therng = np.random.RandomState(theseed)
+        thetimes = np.arange(NPOINTS) / SAMPLERATE
+        theresult = np.zeros(NPOINTS)
+        for thefreq, thephase, theamp in zip(
+            np.linspace(0.01, 0.2, 30),
+            therng.uniform(0, 2 * np.pi, 30),
+            therng.uniform(0.5, 1.5, 30),
+        ):
+            theresult += theamp * np.sin(2 * np.pi * thefreq * thetimes + thephase)
+        return theresult
+
+    theshared = thebroadband(sharedseed)
+    theconfound = thebroadband(confoundseed)
+    thesignal1 = theshared + thegain * theconfound
+    thesignal2 = theshared - thegain * theconfound
+    return theconfound, thesignal1, thesignal2
+
+
+def _readsummary(tmpdir, signal1, signal2, controlvariable=None):
+    """Run showxcorrx in summary mode and return its results as a dict.
+
+    Parameters
+    ----------
+    tmpdir : str
+        Working directory.
+    signal1, signal2 : NDArray
+        The two input timecourses.
+    controlvariable : NDArray or None
+        Written out and passed as --partialcorr when not None.
+
+    Returns
+    -------
+    dict
+        The summary line, keyed by its column headings.
+    """
+    theresultfile = os.path.join(tmpdir, "res.txt")
+    thecontrolfile = None
+    if controlvariable is not None:
+        thecontrolfile = os.path.join(tmpdir, "controlvars.txt")
+        np.savetxt(thecontrolfile, controlvariable)
+    theargs = _make_default_args(
+        tmpdir,
+        signal1,
+        signal2,
+        summarymode=True,
+        labelline=True,
+        resoutputfile=theresultfile,
+        controlvariablefile=thecontrolfile,
+    )
+    showxcorrx(theargs)
+    thelines = open(theresultfile).read().strip().split("\n")
+    return dict(zip(thelines[0].split("\t"), thelines[1].split("\t")))
+
+
+def showxcorrx_partialcorr_removes_the_control_variable(debug=False):
+    """--partialcorr has to actually partial the control variable out.
+
+    Two things used to stop that happening.  The control variable file was read with
+    tide_io.readnpvecs, which does not exist, so the option raised AttributeError
+    before reading anything.  And the regression against it was computed and then
+    discarded, so even reaching it left the data untouched and the reported
+    correlation was an ordinary one.
+    """
+    if debug:
+        print("showxcorrx_partialcorr_removes_the_control_variable")
+
+    theconfound, thesignal1, thesignal2 = _make_confounded_signals()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        theplain = _readsummary(tmpdir, thesignal1, thesignal2)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thepartial = _readsummary(tmpdir, thesignal1, thesignal2, controlvariable=theconfound)
+
+    theplainr = float(theplain["pearson_R"])
+    thepartialr = float(thepartial["pearson_R"])
+    if debug:
+        print(f"  pearson_R plain {theplainr:.4f}, partial {thepartialr:.4f}")
+
+    # the confound masks the real relationship, driving the raw correlation negative
+    assert theplainr < -0.5, f"the fixture is not actually masked: {theplainr}"
+    # removing it from BOTH signals recovers the relationship underneath.  Cleaning
+    # only one of them, or subtracting the intercept rather than the slope, lands
+    # around 0.3 instead.
+    assert thepartialr > 0.9, f"the control variable was not fully removed: {thepartialr}"
+
+    # The cross correlation has to be partialled too, not just the Pearson value.  It
+    # used to be computed from the untouched trimmed data, so --partialcorr left the
+    # tool's headline number and its delay estimate alone.
+    theplainxcorr = float(theplain["xcorr_R"])
+    thepartialxcorr = float(thepartial["xcorr_R"])
+    if debug:
+        print(f"  xcorr_R plain {theplainxcorr:.4f}, partial {thepartialxcorr:.4f}")
+    assert thepartialxcorr > 0.9, f"xcorr_R was only {thepartialxcorr}"
+    # and it is still a correlation coefficient: partialling happens before the
+    # normalization, so the residual's reduced amplitude does not drag it down
+    assert thepartialxcorr > theplainxcorr
+
+    # with the masking confound gone the two signals are the same, so zero delay
+    thepartialdelay = float(thepartial["xcorr_maxdelay"])
+    assert abs(thepartialdelay) < 0.5, f"partialled delay came out at {thepartialdelay}"
+
+
+def showxcorrx_partialcorr_leaves_an_unrelated_control_alone(debug=False):
+    """Partialling out something the signals do not contain must barely move the
+    answer.  Without this a fix that simply zeroed the data would pass the test
+    above."""
+    if debug:
+        print("showxcorrx_partialcorr_leaves_an_unrelated_control_alone")
+
+    dummy, thesignal1, thesignal2 = _make_confounded_signals()
+    theunrelated = np.random.RandomState(12345).normal(size=NPOINTS)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        theplain = _readsummary(tmpdir, thesignal1, thesignal2)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thepartial = _readsummary(tmpdir, thesignal1, thesignal2, controlvariable=theunrelated)
+
+    theplainr = float(theplain["pearson_R"])
+    thepartialr = float(thepartial["pearson_R"])
+    if debug:
+        print(f"  pearson_R plain {theplainr:.4f}, unrelated control {thepartialr:.4f}")
+    assert abs(thepartialr - theplainr) < 0.1, (
+        f"an unrelated control variable changed the correlation from {theplainr} "
+        f"to {thepartialr}"
+    )
+
+
+def showxcorrx_partialcorr_accepts_several_control_variables(debug=False):
+    """The option takes the columns of a file, so more than one control variable has
+    to be handled - each with its own coefficient."""
+    if debug:
+        print("showxcorrx_partialcorr_accepts_several_control_variables")
+
+    theconfound, thesignal1, thesignal2 = _make_confounded_signals()
+    # a second masking confound, also entering with opposite signs, so BOTH controls
+    # have to be removed from BOTH signals before the relationship reappears
+    thesecondconfound = np.random.RandomState(555).normal(size=NPOINTS)
+    thesignal1 = thesignal1 + 3.0 * thesecondconfound
+    thesignal2 = thesignal2 - 3.0 * thesecondconfound
+    thecontrolvars = np.vstack((theconfound, thesecondconfound))
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        theplain = _readsummary(tmpdir, thesignal1, thesignal2)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        thepartial = _readsummary(tmpdir, thesignal1, thesignal2, controlvariable=thecontrolvars.T)
+
+    theplainr = float(theplain["pearson_R"])
+    thepartialr = float(thepartial["pearson_R"])
+    if debug:
+        print(f"  pearson_R plain {theplainr:.4f}, two controls {thepartialr:.4f}")
+    assert theplainr < -0.3, f"the fixture is not actually masked: {theplainr}"
+    assert thepartialr > 0.9, f"two control variables were not both removed: {thepartialr}"
+
+
+def showxcorrx_partialcorr_rejects_a_short_control_file(debug=False):
+    """The control variables have to span the data.  A file that is too short would
+    otherwise be silently broadcast or truncated against the timecourses, which is a
+    quietly wrong answer rather than an error."""
+    if debug:
+        print("showxcorrx_partialcorr_rejects_a_short_control_file")
+
+    dummy, thesignal1, thesignal2 = _make_confounded_signals()
+    theshortcontrol = np.random.RandomState(1).normal(size=NPOINTS // 2)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            _readsummary(tmpdir, thesignal1, thesignal2, controlvariable=theshortcontrol)
+        except SystemExit:
+            theoutcome = "SystemExit"
+        else:
+            theoutcome = "accepted"
+    if debug:
+        print(f"  short control file outcome: {theoutcome}")
+    assert theoutcome == "SystemExit", "a control file shorter than the data was accepted"
+
+
+# ==================== null distributions, reporting and plotting ====================
+
+
+def showxcorrx_null_distribution_sets_thresholds(debug=False):
+    """--numestreps builds a null distribution by permutation and reports the
+    correlation values that clear it.  Those thresholds are what turn a correlation
+    into a significance statement, so they have to appear and be ordered."""
+    if debug:
+        print("showxcorrx_null_distribution_sets_thresholds")
+
+    with _showxcorrx_run(
+        numestreps=100,
+        summarymode=True,
+        labelline=True,
+        resoutputfile="res.txt",
+    ) as (tmpdir, args):
+        thelines = open(args.resoutputfile).read().strip().split("\n")
+
+    theheadings = thelines[0].split("\t")
+    thevalues = thelines[1].split("\t")
+    if debug:
+        print(f"  headings {theheadings}")
+    assert len(theheadings) == len(thevalues), f"{theheadings} vs {thevalues}"
+
+    # the null distribution adds significance columns that a plain run does not have
+    thesignificancecolumns = [thename for thename in theheadings if "p=" in thename.lower()]
+    assert thesignificancecolumns, f"no significance thresholds reported: {theheadings}"
+    # both the Pearson and the cross correlation get their own threshold
+    assert any("pearson" in thename.lower() for thename in thesignificancecolumns)
+    assert any("xcorr" in thename.lower() for thename in thesignificancecolumns)
+
+    # and the threshold is a real number that the measured correlation is compared to
+    thevaluesbyname = dict(zip(theheadings, thevalues))
+    for thename in thesignificancecolumns:
+        assert np.isfinite(float(thevaluesbyname[thename])), thename
+
+
+def showxcorrx_mutualinfo_with_numestreps_is_unsupported(debug=False):
+    """--similaritymetric mutualinfo combined with --numestreps currently crashes.
+
+    The null distribution block references thexsimfuncfitter, which is only built in
+    the non-mutualinfo branch, and it feeds theCorrelator - which the mutualinfo path
+    never runs, so thexcorr and xcorr_x do not exist either.  Making this work needs a
+    decision about what a null distribution means for mutual information, so the
+    combination is pinned as unsupported rather than guessed at.  If this test starts
+    failing, the combination has been implemented and the test should assert on the
+    thresholds instead.
+    """
+    if debug:
+        print("showxcorrx_mutualinfo_with_numestreps_is_unsupported")
+
+    try:
+        with _showxcorrx_run(
+            similaritymetric="mutualinfo",
+            numestreps=50,
+            summarymode=True,
+            resoutputfile="res.txt",
+        ) as (tmpdir, args):
+            pass
+    except UnboundLocalError as theerror:
+        assert "thexsimfuncfitter" in str(theerror), theerror
+    else:
+        raise AssertionError(
+            "mutualinfo with numestreps now runs - update this test to check the "
+            "significance thresholds it produces"
+        )
+
+
+def showxcorrx_mismatched_sample_rates_are_rejected(debug=False):
+    """Two timecourses sampled at different rates cannot be correlated point for
+    point, so the run has to stop rather than silently comparing mismatched axes."""
+    if debug:
+        print("showxcorrx_mismatched_sample_rates_are_rejected")
+
+    thesignal1, thesignal2 = _make_broadband_signals()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # write file 2 as a BIDS style tsv carrying its own, different sample rate
+        thefile1 = os.path.join(tmpdir, "one.txt")
+        _write_test_file(thefile1, thesignal1)
+        thefile2 = os.path.join(tmpdir, "two_desc-x_timeseries")
+        tide_io.writebidstsv(thefile2, thesignal2, SAMPLERATE / 2.0, columns=["x"])
+
+        thefile1bids = os.path.join(tmpdir, "one_desc-y_timeseries")
+        tide_io.writebidstsv(thefile1bids, thesignal1, SAMPLERATE, columns=["y"])
+
+        theargs = _make_default_args(tmpdir)
+        theargs.infilename1 = f"{thefile1bids}.json:y"
+        theargs.infilename2 = f"{thefile2}.json:x"
+        theargs.samplerate = "auto"
+
+        with pytest.raises(SystemExit):
+            showxcorrx(theargs)
+
+
+def showxcorrx_verbose_and_debug_reporting(debug=False):
+    """The verbose and debug branches run inside the workflow and print derived
+    quantities; a stale f-string in one of them takes the whole run down."""
+    if debug:
+        print("showxcorrx_verbose_and_debug_reporting")
+
+    with _showxcorrx_run(verbose=True, debug=True) as (tmpdir, args):
+        pass
+
+
+def showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses(debug=False):
+    """--debug turns on dumpfiltered, which writes the preprocessed timecourses out
+    for inspection.  They are written with bare relative names, so the harness runs
+    from a temporary directory and they go away with it."""
+    if debug:
+        print("showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses")
+
+    with _showxcorrx_run(debug=True) as (tmpdir, args):
+        thedumped = sorted(thename for thename in os.listdir(tmpdir) if "filtereddata" in thename)
+
+    if debug:
+        print(f"  dumped {thedumped}")
+    assert "filtereddata1.txt" in thedumped
+    assert "filtereddata2.txt" in thedumped
+    assert "correlator_filtereddata1.txt" in thedumped
+
+
+def showxcorrx_does_not_hardcode_a_backend(debug=False):
+    """The module must not pin an interactive matplotlib backend.
+
+    It used to call mpl.use("TkAgg") inside the display block, which made --display
+    fail outright on any headless machine - a cluster, a container, CI.  Choosing the
+    backend belongs to the caller's environment, not to the tool.
+    """
+    if debug:
+        print("showxcorrx_does_not_hardcode_a_backend")
+
+    import inspect
+
+    import rapidtide.workflows.showxcorrx as theworkflow
+
+    thesource = inspect.getsource(theworkflow)
+    for thebackend in ("TkAgg", "Qt5Agg", "QtAgg", "MacOSX", "WXAgg"):
+        assert (
+            f'use("{thebackend}")' not in thesource
+        ), f"showxcorrx pins the {thebackend} backend again"
+
+
+def showxcorrx_display_paths_run(debug=False):
+    """--display draws the similarity function and, optionally, a styled plot.  The
+    drawing code is a large block that never runs in a headless test otherwise, and
+    it is where a mismatched colour or legend list shows up."""
+    if debug:
+        print("showxcorrx_display_paths_run")
+
+    import matplotlib
+
+    # Agg so nothing tries to open a window.  showxcorrx binds show() into its own
+    # namespace with "from matplotlib.pyplot import ... show", so patching
+    # matplotlib.pyplot.show would NOT reach it - the name to patch is the one on the
+    # workflow module itself.
+    matplotlib.use("Agg")
+
+    with patch("rapidtide.workflows.showxcorrx.show") as mock_show:
+        _rundisplaycases()
+        assert mock_show.call_count > 0, "the display path never called show()"
+
+
+def _rundisplaycases():
+    """Run showxcorrx with plotting on, plain and with explicit styling.
+
+    The styled case matters beyond coverage: supplying --legends used to raise
+    "'list' object attribute 'append' is read-only", and even with that repaired the
+    plotting call sat inside the else branch, so a supplied legend produced an empty
+    figure.  Saving the figure and checking it is not blank catches both.
+    """
+    with _showxcorrx_run(display=True) as (tmpdir, args):
+        pass
+    # with explicit styling, which walks the colour and legend handling
+    with _showxcorrx_run(
+        display=True,
+        colors="red",
+        linewidths="2",
+        legends="thelegend",
+        thetitle="a title",
+        xlabel="time",
+        ylabel="correlation",
+        outputfile="theplot.png",
+    ) as (tmpdir, args):
+        # a legend was supplied, so the data still has to have been drawn
+        assert os.path.isfile(args.outputfile), "no figure was written"
+        assert os.path.getsize(args.outputfile) > 5000, "the figure looks empty"
+
+
 def test_showxcorrx(debug=False):
     # Parser tests
     if debug:
@@ -696,6 +1109,25 @@ def test_showxcorrx(debug=False):
     showxcorrx_sigma_limits(debug=debug)
     showxcorrx_zeropadding(debug=debug)
     showxcorrx_butterworth_filter(debug=debug)
+
+    # partial correlation tests
+    if debug:
+        print("Running partial correlation tests")
+    showxcorrx_partialcorr_removes_the_control_variable(debug=debug)
+    showxcorrx_partialcorr_leaves_an_unrelated_control_alone(debug=debug)
+    showxcorrx_partialcorr_accepts_several_control_variables(debug=debug)
+    showxcorrx_partialcorr_rejects_a_short_control_file(debug=debug)
+
+    # null distributions, reporting and plotting
+    if debug:
+        print("Running null distribution and plotting tests")
+    showxcorrx_null_distribution_sets_thresholds(debug=debug)
+    showxcorrx_mutualinfo_with_numestreps_is_unsupported(debug=debug)
+    showxcorrx_mismatched_sample_rates_are_rejected(debug=debug)
+    showxcorrx_verbose_and_debug_reporting(debug=debug)
+    showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses(debug=debug)
+    showxcorrx_does_not_hardcode_a_backend(debug=debug)
+    showxcorrx_display_paths_run(debug=debug)
 
 
 if __name__ == "__main__":

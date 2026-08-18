@@ -2132,6 +2132,12 @@ def readindata(
     )
     # allocate target arrays
     LGR.info("allocating arrays")
+    # readskip is documented as "None means skip nothing", and the class that calls
+    # this defaults it to None.  The slice below tolerates None, but the read loop
+    # does range(readskip, readskip + s), which raises TypeError - so this whole path
+    # could not run with its own defaults.  readlim already has the equivalent guard.
+    if readskip is None:
+        readskip = 0
     s = len(matchedfilelist[readskip:])
     if readlim is not None:
         if s > readlim:

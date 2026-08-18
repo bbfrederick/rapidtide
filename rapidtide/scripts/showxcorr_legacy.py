@@ -31,6 +31,7 @@ import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
 import rapidtide.miscmath as tide_math
 import rapidtide.stats as tide_stats
+from rapidtide.workflows.showxcorrx import partialout
 
 
 def getNullDistributionData(
@@ -310,6 +311,24 @@ def main():
         trimdata1 = trimdata1[0:minlen]
         trimdata2 = trimdata2[0:minlen]
 
+    # Remove the control variables from the raw trimmed data, before it is filtered
+    # and normalized.  Doing it afterwards left the residual unnormalized, so the
+    # xcorr_R reported for a partial run shrank with the residual's amplitude instead
+    # of remaining a correlation coefficient.
+    if dopartial:
+        controlvars = tide_io.readvecs(controlvariablefile)
+        thelongest = np.max([len(trimdata1), len(trimdata2)])
+        if controlvars.shape[1] < thelongest:
+            print(
+                f"control variable file {controlvariablefile} has "
+                f"{controlvars.shape[1]} points, but {thelongest} are needed - exiting"
+            )
+            sys.exit()
+        if verbose:
+            print(f"partialling out {controlvars.shape[0]} control variable(s)")
+        trimdata1 = partialout(trimdata1, controlvars)
+        trimdata2 = partialout(trimdata2, controlvars)
+
     # band limit the regressor if that is needed
     if theprefilter.gettype() != "None":
         if verbose:
@@ -329,22 +348,6 @@ def main():
     if dumpfiltered:
         tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
         tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
-
-    if dopartial:
-        controlvars = tide_io.readvecs(controlvariablefile)
-        regressorvec = []
-        for j in range(0, controlvars.shape[0]):
-            regressorvec.append(
-                tide_math.corrnormalize(
-                    theprefilter.apply(Fs, controlvars[j, :]),
-                    windowfunc=windowfunc,
-                    detrendorder=detrendorder,
-                )
-            )
-        if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
-            thefit, filtereddata1 = tide_fit.mlregress(regressorvec, filtereddata1)
-        if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
-            thefit, filtereddata2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
     if gccphat:
         thexcorr = tide_corr.fastcorrelate(
@@ -521,7 +524,10 @@ def main():
                 print(thelabel, thepxcorr.statistic, thepxcorr.pvalue, R, -maxdelay)
             else:
                 if labelline:
-                    print("pearson_r\tpearson_p\txcorr_R\txcorr_t\txcorr_maxdelay")
+                    # four names for the four values printed below.  There used to be
+                    # an extra "xcorr_t" here that nothing ever emitted, which pushed
+                    # the heading off every column after xcorr_R.
+                    print("pearson_r\tpearson_p\txcorr_R\txcorr_maxdelay")
                 print(thepxcorr.statistic, "\t", thepxcorr.pvalue, "\t", R, "\t", -maxdelay)
 
     if displayplots:

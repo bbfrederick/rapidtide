@@ -32,24 +32,28 @@ def test_fullrunrapidtide_v2(debug=False, local=False, displayplots=False):
 
     # run rapidtide
     inputargs = [
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
         os.path.join(testtemproot, "sub-RAPIDTIDETEST2"),
+        # the brain mask has to stay wider than the correlation mask here, because what
+        # this test exercises is include masks that reach beyond the voxels being fitted
+        "--brainmask",
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_brainmask.nii.gz"),
         "--tincludemask",
         os.path.join(exampleroot, "tmask3.txt"),
         "--corrmask",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_restrictedmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_restrictedmask.nii.gz"),
         "--globalmeaninclude",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_brainmask.nii.gz"),
         "--globalmeanexclude",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_nullmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_nullmask.nii.gz"),
         "--refineinclude",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_brainmask.nii.gz"),
         "--refineexclude",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_nullmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_nullmask.nii.gz"),
         "--offsetinclude",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_brainmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_brainmask.nii.gz"),
         "--offsetexclude",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST_nullmask.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL_nullmask.nii.gz"),
         "--spatialfilt",
         "-1",
         "--savelags",
@@ -81,7 +85,7 @@ def test_fullrunrapidtide_v2(debug=False, local=False, displayplots=False):
         "--motionfile",
         os.path.join(exampleroot, "fakemotion.par"),
         "--denoisesourcefile",
-        os.path.join(exampleroot, "sub-RAPIDTIDETEST.nii.gz"),
+        os.path.join(exampleroot, "sub-RAPIDTIDETESTSMALL.nii.gz"),
     ]
     if debug:
         print(inputargs)

@@ -2094,11 +2094,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         LGR.info(f"Preparation pass: correlationpass processed {voxelsprocessed_pp} voxels")
 
         # Step 3: fit the similarity function (despeckling disabled for this pass)
-        # Pre-populate per-pass keys that fitSimFunc (robustdelay path) reads via
-        # "_pass" + str(thepass).  cleanregressor is not called for the prep pass,
-        # so we seed them with None (= no sidelobe detected).
-        optiondict["acsidelobeamp_passpreppass"] = None
-        optiondict["acsidelobelag_passpreppass"] = None
         saved_despeckle_passes = optiondict["despeckle_passes"]
         optiondict["despeckle_passes"] = 0
         tide_fitSimFuncMap.fitSimFunc(
@@ -2298,6 +2293,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             check_autocorrelation=optiondict["check_autocorrelation"],
             fix_autocorrelation=optiondict["fix_autocorrelation"],
             despeckle_thresh=optiondict["despeckle_thresh"],
+            autodespecklethresh=optiondict["autodespecklethresh"],
             lthreshval=optiondict["lthreshval"],
             fixdelay=optiondict["fixdelay"],
             detrendorder=optiondict["detrendorder"],
@@ -2941,6 +2937,25 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     # Post refinement step 1 - regression fitting, either to remove moving signal, or to calculate delayed CVR
     # write out the current version of the run options
     optiondict["currentstage"] = "presLFOfit"
+
+    # Say so loudly if resolution was asked for and never actually ran.  Nothing gates
+    # it any more, so this should be unreachable - which is exactly why it is worth
+    # keeping.  A silent no-op here is expensive: it produces a run that looks like it
+    # used the option, records the option in the runoptions, and is bit-identical to a
+    # run without it.  A whole calibration batch was lost to that once, when the option
+    # parsed and was recorded by a build that could not act on it.
+    if optiondict.get("resolvedelays", False):
+        thefired = [k for k in optiondict if k.startswith("resolved_pass")]
+        if not thefired:
+            LGR.warning(
+                "\n*** --resolvedelays was requested but resolution NEVER RAN on any "
+                "pass.  This output is identical to a run without the option.  Nothing "
+                "gates resolution, so this should not be possible - the most likely "
+                "cause is that the rapidtide actually being run is older than the "
+                "option it accepted. ***"
+            )
+            optiondict["resolvedelays_neverran"] = True
+
     tide_io.writedicttojson(optiondict, f"{outputname}_desc-runoptions_info.json")
     if optiondict["dolinfitfilt"] or optiondict["docvrmap"] or optiondict["refinedelay"]:
         if optiondict["sLFOfiltmask"]:

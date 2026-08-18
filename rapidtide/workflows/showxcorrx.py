@@ -18,14 +18,13 @@
 #
 import argparse
 import sys
-from argparse import Namespace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import matplotlib.cm as cm
 import numpy as np
 import scipy as sp
+from matplotlib.pyplot import figure, plot, savefig, show
 from numpy.typing import NDArray
-from scipy.signal import correlate
 from scipy.stats import pearsonr
 
 import rapidtide.calcnullsimfunc as tide_nullsimfunc
@@ -342,6 +341,46 @@ def _get_parser() -> Any:
     return parser
 
 
+def partialout(thedata: NDArray, thecontrolvars: NDArray) -> NDArray:
+    """
+    Regress a set of control variables out of a timecourse.
+
+    This is applied to the TRIMMED, UNNORMALIZED data, before any filtering or
+    windowing.  Doing it there rather than to the already normalized copy matters
+    twice over: everything downstream - the correlator, the mutual informationator
+    and the Pearson correlation - then works on the partialled signal rather than
+    only some of them, and each of those normalizes its own input, so the reported
+    correlation stays a correlation instead of shrinking with the residual's
+    amplitude.
+
+    Parameters
+    ----------
+    thedata : NDArray
+        The timecourse to remove the control variables from.
+    thecontrolvars : NDArray
+        The control variables, shape (numcontrolvars, numpoints).  Each is truncated
+        to the length of thedata, which may be shorter after trimming.
+
+    Returns
+    -------
+    NDArray
+        The residual after removing every control variable.
+
+    Notes
+    -----
+    mlregress prepends the intercept to its coefficients, so the weight of
+    control variable j is at index j + 1, not j.
+    """
+    theregressors = [
+        thecontrolvars[thecontrol, : len(thedata)] for thecontrol in range(thecontrolvars.shape[0])
+    ]
+    thefit, dummy = tide_fit.mlregress(theregressors, thedata)
+    theresidual = np.array(thedata, dtype=float, copy=True)
+    for thecontrol in range(len(theregressors)):
+        theresidual = theresidual - thefit[0, thecontrol + 1] * theregressors[thecontrol]
+    return theresidual
+
+
 def printthresholds(pcts: Any, thepercentiles: Any, labeltext: Any) -> None:
     """
     Print thresholds with corresponding percentiles.
@@ -513,12 +552,6 @@ def showxcorrx(args: Any) -> None:
     args = pf.postprocesssearchrangeopts(args)
     args = pf.postprocesstimerangeopts(args)
 
-    if args.display:
-        import matplotlib as mpl
-
-        mpl.use("TkAgg")
-        import matplotlib.pyplot as plt
-
     # get the filenames and read in the data
     infilename1, colspec1 = tide_io.parsefilespec(args.infilename1)
     infilename2, colspec2 = tide_io.parsefilespec(args.infilename2)
@@ -598,6 +631,25 @@ def showxcorrx(args: Any) -> None:
         trimdata1 = trimdata1[0:minlen]
         trimdata2 = trimdata2[0:minlen]
 
+    # Remove the control variables here, on the raw trimmed data, so that every
+    # downstream consumer sees the partialled signal - the correlator and the mutual
+    # informationator as well as the Pearson correlation.  Removing them from the
+    # normalized copy further down only reached the Pearson value, and left the
+    # residual unnormalized so the reported xcorr_R was not a correlation.
+    if args.controlvariablefile is not None:
+        controlvars = tide_io.readvecs(args.controlvariablefile)
+        thelongest = max(len(trimdata1), len(trimdata2))
+        if controlvars.shape[1] < thelongest:
+            print(
+                f"control variable file {args.controlvariablefile} has "
+                f"{controlvars.shape[1]} points, but {thelongest} are needed - exiting"
+            )
+            sys.exit()
+        if args.verbose:
+            print(f"partialling out {controlvars.shape[0]} control variable(s)")
+        trimdata1 = partialout(trimdata1, controlvars)
+        trimdata2 = partialout(trimdata2, controlvars)
+
     if args.invert:
         flipfac = -1.0
     else:
@@ -621,22 +673,6 @@ def showxcorrx(args: Any) -> None:
     if dumpfiltered:
         tide_io.writenpvecs(filtereddata1, "filtereddata1.txt")
         tide_io.writenpvecs(filtereddata2, "filtereddata2.txt")
-
-    if args.controlvariablefile is not None:
-        controlvars = tide_io.readnpvecs(args.controlvariablefile)
-        regressorvec = []
-        for j in range(0, controlvars.shape[0]):
-            regressorvec.append(
-                tide_math.corrnormalize(
-                    theprefilter.apply(args.samplerate, controlvars[j, :]),
-                    detrendorder=args.detrendorder,
-                    windowfunc=args.windowfunc,
-                )
-            )
-        if (np.max(filtereddata1) - np.min(filtereddata1)) > 0.0:
-            thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata1)
-        if (np.max(filtereddata2) - np.min(filtereddata2)) > 0.0:
-            thefit, R2 = tide_fit.mlregress(regressorvec, filtereddata2)
 
     # initialize the Correlator and MutualInformationator
     theCorrelator = tide_simFuncClasses.Correlator(
@@ -678,8 +714,8 @@ def showxcorrx(args: Any) -> None:
         # do the correlation
         thexcorr, xcorr_x, globalmax = theCorrelator.run(trimdata1, trim=False)
         if args.display and args.debug:
-            plt.plot(xcorr_x, thexcorr)
-            plt.show()
+            plot(xcorr_x, thexcorr)
+            show()
         print("Correlator lengths (x, y):", len(xcorr_x), len(thexcorr))
         if dumpfiltered:
             tide_io.writenpvecs(theCorrelator.preptesttc, "correlator_filtereddata1.txt")
@@ -691,8 +727,8 @@ def showxcorrx(args: Any) -> None:
         )
         thexcorr_trim, xcorr_x_trim, dummy = theCorrelator.getfunction(trim=True)
         if args.display and args.debug:
-            plt.plot(xcorr_x_trim, thexcorr_trim)
-            plt.show()
+            plot(xcorr_x_trim, thexcorr_trim)
+            show()
         print("trimmed Correlator lengths (x, y):", len(xcorr_x_trim), len(thexcorr_trim))
 
     if args.cepstral:
@@ -1049,30 +1085,37 @@ def showxcorrx(args: Any) -> None:
         sys.exit()
 
     if args.display:
-        fig = plt.figure()
+        fig = figure()
         ax = fig.add_subplot(111)
-        thelegend = []
+        # Choose the legend text, then plot.  These used to be entangled: the legend
+        # was set with `thelegend.append = args.legends`, which assigns to the list's
+        # append METHOD rather than calling it and raises "attribute is read-only",
+        # and the ax.plot calls lived inside the else, so supplying --legends skipped
+        # the plotting entirely and produced an empty figure.
         if args.legends is not None:
-            thelegend.append = args.legends
+            # comma separated, matching --colors and --linewidths
+            thelegend = args.legends.split(",")
+        elif args.similaritymetric == "mutualinfo":
+            thelegend = ["Mutual Information"]
         else:
-            if args.similaritymetric == "mutualinfo":
-                thelegend.append("Mutual Information")
-                ax.plot(
-                    MI_x_trim,
-                    theMI_trim,
-                    color=colorlist[0],
-                    label=thelegend[0],
-                    linewidth=thelinewidth[0],
-                )
-            else:
-                thelegend.append("Cross correlation")
-                ax.plot(
-                    xcorr_x_trim,
-                    thexcorr_trim,
-                    color=colorlist[0],
-                    label=thelegend[0],
-                    linewidth=thelinewidth[0],
-                )
+            thelegend = ["Cross correlation"]
+
+        if args.similaritymetric == "mutualinfo":
+            ax.plot(
+                MI_x_trim,
+                theMI_trim,
+                color=colorlist[0],
+                label=thelegend[0],
+                linewidth=thelinewidth[0],
+            )
+        else:
+            ax.plot(
+                xcorr_x_trim,
+                thexcorr_trim,
+                color=colorlist[0],
+                label=thelegend[0],
+                linewidth=thelinewidth[0],
+            )
         if args.dolegend:
             ax.legend(thelegend, fontsize=thelegendfontsize, loc=args.legendloc)
         if args.thetitle is not None:
@@ -1086,24 +1129,24 @@ def showxcorrx(args: Any) -> None:
             ax.set_ylabel(args.ylabel, fontsize=theylabelfontsize, fontweight="bold")
             ax.tick_params(axis="y", labelsize=theylabelfontsize, which="both")
         if args.outputfile is not None:
-            plt.savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
+            savefig(args.outputfile, bbox_inches="tight", dpi=args.saveres)
         else:
-            plt.show()
+            show()
 
     if args.display and args.calccoherence:
-        fig = plt.figure()
+        fig = figure()
         ax = fig.add_subplot(111)
         ax.plot(fC, np.sqrt(np.abs(Cxy)) / np.max(np.sqrt(np.abs(Cxy))), "b")
         ax.set_title("Coherence")
 
     if args.display and args.calccsd:
-        fig = plt.figure()
+        fig = figure()
         ax = fig.add_subplot(111)
         ax.plot(fP, np.sqrt(np.abs(Pxy)) / np.max(np.sqrt(np.abs(Pxy))), "g")
         ax.set_title("Cross-spectral density")
 
     if args.display and (args.calccoherence or args.calccsd):
-        plt.show()
+        show()
 
     if args.similaritymetric == "correlation" and args.corroutputfile is not None:
         tide_io.writenpvecs(np.stack((xcorr_x, thexcorr), axis=0), args.corroutputfile)

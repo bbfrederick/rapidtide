@@ -306,9 +306,7 @@ def dumparraytonifti(thearray: NDArray, filename: str, nifti2: bool = False) -> 
         The data array to save. Can be 2D, 3D, or 4D array representing
         medical imaging data or other volumetric data.
     filename : str
-        The output filename (without extension). The function will append
-        '.nii' or '.nii.gz' extension based on the nibabel library's
-        default behavior.
+        The output filename, without extension.  The function appends '.nii.gz'.
     nifti2 : bool, optional
         If True, write a NIFTI2 file rather than a NIFTI1 file. Default is False.
 
@@ -331,7 +329,7 @@ def dumparraytonifti(thearray: NDArray, filename: str, nifti2: bool = False) -> 
     >>> import numpy as np
     >>> data = np.random.rand(64, 64, 64)
     >>> dumparraytonifti(data, 'my_data')
-    >>> # Creates 'my_data.nii' file with identity affine transform
+    >>> # Creates 'my_data.nii.gz' with an identity affine transform
     """
     outputaffine = np.zeros((4, 4), dtype=float)
     for i in range(4):
@@ -357,8 +355,9 @@ def savetonifti(
         The name of the nifti file to save.  The extension is chosen by the function,
         so do not supply one.
     nifti2 : bool, optional
-        If True, write a NIFTI2 file.  A NIFTI2 file is also written when the header
-        magic is already "n+2".  Default is False.
+        If True, write a NIFTI2 file.  A NIFTI2 file is also written when theheader is
+        already a NIFTI2 header, so reading a NIFTI2 file, modifying it and writing it
+        back out preserves the format without having to set this.  Default is False.
     debug : bool, optional
         Enable debug output. Default is False
 
@@ -375,6 +374,9 @@ def savetonifti(
     -----
     The datatype and bitpix fields of theheader are overwritten in place to match the
     dtype of thearray, so the header you pass in is modified as a side effect.
+
+    The output is always gzipped, so the file written is ``thename + ".nii.gz"``,
+    whichever nifti version it ends up being.
     """
     outputaffine = theheader.get_best_affine()
     qaffine, qcode = theheader.get_qform(coded=True)
@@ -432,15 +434,16 @@ def savetonifti(
         targetdatatype = theheader["datatype"]
         print(f"\ttargetdatatype={targetdatatype}")
 
-    if theheader["magic"] == "n+2" or nifti2:
+    # nibabel keeps the magic string as a bytes array - array(b'n+2', dtype='|S4') - so
+    # it has to be compared against bytes.  Comparing against the str "n+2" is always
+    # False, which used to downgrade every NIFTI2 header to NIFTI1 without saying so.
+    # b"ni2" is the same format in its two file (.hdr/.img) flavour.
+    themagic = np.asarray(theheader["magic"]).item()
+    if themagic in (b"n+2", b"ni2") or nifti2:
         output_nifti = nib.Nifti2Image(thearray.astype(thedtype), outputaffine, header=theheader)
-        if nifti2:
-            suffix = ".nii.gz"
-        else:
-            suffix = ".nii"
     else:
         output_nifti = nib.Nifti1Image(thearray.astype(thedtype), outputaffine, header=theheader)
-        suffix = ".nii.gz"
+    suffix = ".nii.gz"
     output_nifti.set_qform(qaffine, code=int(qcode))
     output_nifti.set_sform(saffine, code=int(scode))
 
@@ -3585,7 +3588,7 @@ def readcolfrombidstsv(
                 print("no column named", columnname, "in", inputfilename)
                 return None, None, None
         # we can only get here if columnname is undefined
-        if not (0 < columnnum < len(columns)):
+        if not (0 <= columnnum < len(columns)):
             print(
                 "specified column number",
                 columnnum,

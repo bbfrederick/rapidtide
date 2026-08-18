@@ -41,6 +41,7 @@ dependencies = [
   'torch<2.13.0',
   'tqdm',
   'versioneer',
+  'colour-science',
 ]
 dynamic = ["version"]
 authors = [
@@ -136,6 +137,7 @@ rapidtide = 'rapidtide.scripts.rapidtide:entrypoint'
 rapidtide2std = 'rapidtide.scripts.rapidtide2std:entrypoint'
 resamplenifti = 'rapidtide.scripts.resamplenifti:entrypoint'
 resampletc = 'rapidtide.scripts.resampletc:entrypoint'
+resolvedelays = 'rapidtide.scripts.resolvedelays:entrypoint'
 retroregress = 'rapidtide.scripts.retroregress:entrypoint'
 retrolagtcs = 'rapidtide.scripts.retrolagtcs:entrypoint'
 roisummarize = 'rapidtide.scripts.roisummarize:entrypoint'
@@ -161,7 +163,6 @@ temporaldecomp = 'rapidtide.scripts.temporaldecomp:entrypoint'
 #threeD = 'rapidtide.scripts.threeD:entrypoint'
 tidepool = 'rapidtide.scripts.tidepool:entrypoint'
 tp2rt = 'rapidtide.scripts.tp2rt:entrypoint'
-unwrapdelay = 'rapidtide.scripts.unwrapdelay:entrypoint'
 #variabilityizer = 'rapidtide.scripts.variabilityizer:entrypoint'
 
 [tool.setuptools]
