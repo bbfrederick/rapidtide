@@ -1,4 +1,12 @@
 #!/bin/bash
+#
+# Fetch the test data bundles into the current directory - see installtestdata for why
+# there are two of them.
 
-mkdir ../dst
-wget  https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/testdatabundle.tgz -O - | tar -xvz
+set -o pipefail
+
+mkdir -p ../dst
+
+for thebundle in testdatabundle.tgz testdatabundlesmall.tgz; do
+    wget -q "https://github.com/bbfrederick/rapidtide/raw/main/rapidtide/data/examples/${thebundle}" -O - | tar -xvz || exit 1
+done
