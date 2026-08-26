@@ -193,14 +193,15 @@ Suggested pre-push workflow:
 Python version compatibility
 ============================
 Since I depend on a number of
-packages that have dropped Python 2.x support, as of rapidtide 2.0, so did rapidtide. And given that I use fairly
-modern constructs, I don't support anything prior to Python 3.9.  The current UPPER limit is 3.12, because
-tensorflow (needed for happy) does not yet support 3.13 or later.  In 2025, I don't imagine
-anybody is running rapidtide on a system that can't upgrade to a modern Python, but if you are,
-as of version 1.9.0 the package is also available in a docker
-container (fredericklab/rapidtide), which has everything nicely installed in
-a fully configured Python 3 environment, so there\'s really no need for me continue 2.x
-support.  So now it's f-strings all the way, kids!
+packages that have dropped Python 2.x support, as of rapidtide 2.0,
+so did rapidtide. And given that I use fairly modern constructs,
+I don't support anything prior to Python 3.10.  The current UPPER
+limit is 3.14.  In 2026, I don't imagine anybody is running rapidtide
+on a system that can't upgrade to a modern Python, but if you are,
+as of version 1.9.0 the package is also available in a docker container
+(fredericklab/rapidtide), which has everything nicely installed in a
+fully configured Python 3 environment, so there\'s really no need
+for me continue 2.x support.  So now it's f-strings all the way, kids!
 
 Ok, I\'m sold. What\'s in here?
 ===============================
