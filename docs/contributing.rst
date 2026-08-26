@@ -63,5 +63,5 @@ I periodically get embarrassed and upgrade things to a somewhat more modern
 coding style.  I even put in some classes - that's what the cool kids do, right?
 But the pace of that effort has to be balanced with the fact that when I make
 major architectural changes, I tend to break things.  So be patient with me,
-and keep in mind that you get what you pay for, and this cost you nothing!
+and keep in mind that you get what you pay for, and this costs you nothing!
 Function before form.
