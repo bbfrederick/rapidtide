@@ -1,7 +1,7 @@
 # Release history
 
 ## Version 3.2.0 (8/18/26)
-* (rapidtide) Added ``--resolvedelays``, a new procedure analagous to phase unwrapping that is performed before despeckling to improve delay maps.  Tested fairly extensively on real data - it resolves more voxels than despeckling, but different voxels, so it is a win to do both.
+* (rapidtide) Added ``--resolvedelays``, a new procedure analogous to phase unwrapping that is performed before despeckling to improve delay maps.  Tested fairly extensively on real data - it resolves more voxels than despeckling, but different voxels, so it is a win to do both.
 * (rapidtide) Removed ``--robustdelay``.  Resolve delays makes it redundant.
 * (rapidtide) Removed ``--despeckle-patch-detection``.  It had a critical bug, and resolve delays mostly made it redundant anyway.
 * (rapidtide) Save a lot more information on image statistics during each pass to the runoptions file.  The goal is to make it easier to implement improvements with rigorous testing.
