@@ -182,6 +182,10 @@ jobs:
     resource_class: medium
     steps:
       - checkout
+          post:
+            - run:
+                name: Verify checkout
+                command: git log --oneline -1
       - persist_to_workspace:
           root: /tmp
           paths:
