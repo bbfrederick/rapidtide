@@ -1,0 +1,7 @@
+#!/bin/bash
+
+atlasaverage \
+    --numpercentiles 2 \
+    --regionlabelfile JHU-ArterialTerritoriesNoVent-LVL1_regions.txt \
+    --extramask HCP1200v2_mask_2mm.nii.gz \
+    HCP1200v2_maxtime_2mm.nii.gz JHU-ArterialTerritoriesNoVent-LVL1_space-MNI152NLin6Asym_2mm.nii.gz JHU_by2

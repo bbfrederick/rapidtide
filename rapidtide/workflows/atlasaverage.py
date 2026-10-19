@@ -622,7 +622,7 @@ def atlasaverage(args: Any) -> None:
         thevals = []
         thepercentiles = []
         theregsizes = []
-        thefracs = np.linspace(0.0, 1.0, args.numpercentiles + 2, endpoint=True).tolist()
+        thefracs = np.linspace(0.0, 1.0, args.numpercentiles + 1, endpoint=True).tolist()
         numsubregions = len(thefracs) - 1
         segmentedatlasvoxels = np.zeros_like(inputvoxels)
         if args.debug:

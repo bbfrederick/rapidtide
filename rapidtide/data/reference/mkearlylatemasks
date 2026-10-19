@@ -1,0 +1,72 @@
+#!/bin/bash
+
+atlastool JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm.nii.gz JHU_L1_seg --4d
+fslsplit JHU_L1_seg -t
+
+rm JHU_L1_seg.nii.gz
+
+fslmaths \
+    vol0000.nii.gz -add \
+    vol0002.nii.gz -add \
+    vol0004.nii.gz -add \
+    vol0006.nii.gz -add \
+    vol0008.nii.gz -add \
+    vol0010.nii.gz -add \
+    vol0012.nii.gz -add \
+    vol0014.nii.gz -add \
+    vol0016.nii.gz -add \
+    vol0018.nii.gz -add \
+    vol0020.nii.gz -add \
+    vol0022.nii.gz -add \
+    vol0024.nii.gz -add \
+    vol0026.nii.gz -add \
+    vol0028.nii.gz -add \
+    vol0030.nii.gz -add \
+    vol0032.nii.gz -add \
+    vol0034.nii.gz -add \
+    vol0036.nii.gz -add \
+    vol0038.nii.gz -add \
+    vol0040.nii.gz -add \
+    vol0042.nii.gz -add \
+    vol0044.nii.gz -add \
+    vol0046.nii.gz -add \
+    vol0048.nii.gz -add \
+    vol0050.nii.gz -add \
+    vol0052.nii.gz -add \
+    vol0054.nii.gz -add \
+    vol0056.nii.gz -add \
+    vol0058.nii.gz JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm_early.nii.gz
+
+fslmaths \
+    vol0001.nii.gz -add \
+    vol0003.nii.gz -add \
+    vol0005.nii.gz -add \
+    vol0007.nii.gz -add \
+    vol0009.nii.gz -add \
+    vol0011.nii.gz -add \
+    vol0013.nii.gz -add \
+    vol0015.nii.gz -add \
+    vol0017.nii.gz -add \
+    vol0019.nii.gz -add \
+    vol0021.nii.gz -add \
+    vol0023.nii.gz -add \
+    vol0025.nii.gz -add \
+    vol0027.nii.gz -add \
+    vol0029.nii.gz -add \
+    vol0031.nii.gz -add \
+    vol0033.nii.gz -add \
+    vol0035.nii.gz -add \
+    vol0037.nii.gz -add \
+    vol0039.nii.gz -add \
+    vol0041.nii.gz -add \
+    vol0043.nii.gz -add \
+    vol0045.nii.gz -add \
+    vol0047.nii.gz -add \
+    vol0049.nii.gz -add \
+    vol0051.nii.gz -add \
+    vol0053.nii.gz -add \
+    vol0055.nii.gz -add \
+    vol0057.nii.gz -add \
+    vol0059.nii.gz JHU-ArterialTerritoriesNoVent-LVL1-seg2_space-MNI152NLin6Asym_2mm_late.nii.gz
+
+rm vol0*nii.gz
