@@ -29,8 +29,6 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from rapidtide.tests.utils import mse
-
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
 def readfromnifti(
@@ -890,7 +888,18 @@ def savemaplist(
             savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
             if savejson:
                 writedicttojson(bidsdict, savename + ".json")
-            if filetype == "nifti":
+            if filetype == "zarr":
+                from rapidtide.zarrio import save_map
+
+                axis = "time" if maptype == "bold" else "sample"
+                if mapsuffix in ("corrout", "gaussout", "corrfitwindow"):
+                    axis = "lag"
+                elif "coherence" in mapsuffix:
+                    axis = "frequency"
+                save_map(
+                    savename + ".zarr", outmaparray.reshape(destshape), theheader, bidsdict, axis
+                )
+            elif filetype == "nifti":
                 savetonifti(outmaparray.reshape(destshape), theheader, savename)
             else:
                 isseries = len(outmaparray.shape) != 1
@@ -1816,7 +1825,7 @@ def checkdatamatch(
 
     Notes
     -----
-    The function uses numpy's `mse` function for mean squared error calculation
+    The function uses ``np.mean(np.square(data2 - data1))`` for mean squared error
     and `np.max(np.fabs(data1 - data2))` for maximum absolute difference.
 
     Examples
@@ -1830,7 +1839,7 @@ def checkdatamatch(
     >>> checkdatamatch(data1, data2, absthresh=1e-15)
     (True, False)
     """
-    msediff = mse(data1, data2)
+    msediff = np.mean(np.square(data2 - data1))
     absdiff = np.max(np.fabs(data1 - data2))
     if debug:
         print(f"msediff {msediff}, absdiff {absdiff}")

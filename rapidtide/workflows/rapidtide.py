@@ -460,6 +460,19 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     nativespaceshape = theinputdata.nativespaceshape
     fmritr = theinputdata.timestep
     optiondict["filetype"] = theinputdata.filetype
+    if theinputdata.filetype == "zarr":
+        optiondict["dataiszeromean"] = True
+        optiondict["source_start_time"] = theinputdata.toffset
+        optiondict["source_timestamps"] = theinputdata.timestamps.tolist()
+        bidsbasedict.update(
+            {
+                "InputFormat": "blood_zarr",
+                "SpatialUnits": "pixels",
+                "SourceSamplingInterval": fmritr,
+                "SourceStartTime": theinputdata.toffset,
+                "SourceShape": [ysize, xsize, timepoints],
+            }
+        )
 
     # check to see if we need to adjust the oversample factor
     if optiondict["oversampfactor"] < 0:
@@ -619,6 +632,11 @@ def rapidtide_main(argparsingfunc: Any) -> None:
             internalinitregressorexcludemask *= internalinvbrainmask
         else:
             internalinitregressorexcludemask = internalinvbrainmask
+    if theinputdata.spatial_valid_mask is not None:
+        if internalinitregressorincludemask is None:
+            internalinitregressorincludemask = theinputdata.spatial_valid_mask.astype(np.uint16)
+        else:
+            internalinitregressorincludemask *= theinputdata.spatial_valid_mask
 
     internalrefineincludemask, internalrefineexcludemask, dummy = tide_mask.getmaskset(
         "refine",
@@ -682,6 +700,16 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 datarange.reshape((numspatiallocs)),
                 f"{outputname}_motionr2.txt",
             )
+        elif theinputdata.filetype == "zarr":
+            tide_io.savemaplist(
+                outputname,
+                [(datarange, "datarange", "map", None, "Temporal data range")],
+                None,
+                nativespaceshape,
+                theinputdata.copyheader(numtimepoints=1),
+                bidsbasedict,
+                filetype="zarr",
+            )
         else:
             savename = f"{outputname}_desc-datarange"
             tide_io.savetonifti(
@@ -709,6 +737,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 )
         if internalbrainmask is not None:
             corrmask = internalbrainmask
+    if theinputdata.spatial_valid_mask is not None:
+        corrmask *= theinputdata.spatial_valid_mask
+        corrmask *= np.any(fmri_data != 0, axis=1)
     if tide_stats.getmasksize(corrmask) == 0:
         raise ValueError("ERROR: there are no voxels in the correlation mask - exiting")
 
@@ -740,10 +771,22 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         corrmask *= 0
         corrmask += 1
         threshval = -10000000.0
+        if theinputdata.spatial_valid_mask is not None:
+            corrmask *= theinputdata.spatial_valid_mask
     if theinputdata.filetype == "nifti":
         theheader = theinputdata.copyheader(numtimepoints=1)
         savename = f"{outputname}_desc-processed_mask"
         tide_io.savetonifti(corrmask.reshape(xsize, ysize, numslices), theheader, savename)
+    elif theinputdata.filetype == "zarr":
+        tide_io.savemaplist(
+            outputname,
+            [(corrmask, "processed", "mask", None, "Pixels used for analysis")],
+            None,
+            nativespaceshape,
+            theinputdata.copyheader(numtimepoints=1),
+            bidsbasedict,
+            filetype="zarr",
+        )
 
     LGR.verbose(f"image threshval = {threshval:.2f}")
     validvoxels = np.where(corrmask > 0)[0]
@@ -972,7 +1015,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         theinputdata.byvoxel(),
         axis=1,
     )
-    covvalue = np.where(meanvalue > 0.0, stddevvalue / meanvalue, 0.0)
+    covvalue = np.divide(
+        stddevvalue, meanvalue, out=np.zeros_like(stddevvalue), where=meanvalue > 0.0
+    )
     covvalue *= corrmask
 
     if optiondict["territorymapname"] is not None:
@@ -1036,6 +1081,8 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     meanfreq = 1.0 / fmritr
     meanperiod = 1.0 * fmritr
     meanstarttime = 0.0
+    if theinputdata.filetype == "zarr":
+        meanstarttime = -(theinputdata.toffset + validstart * fmritr)
     meanvec, meanmask = tide_mask.saveregionaltimeseries(
         "initial regressor",
         "startregressormask",
@@ -1235,6 +1282,8 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     fmrifreq = 1.0 / fmritr
     optiondict["fmrifreq"] = fmrifreq
     skiptime = fmritr * (optiondict["preprocskip"])
+    if theinputdata.filetype == "zarr":
+        skiptime += theinputdata.toffset + validstart * fmritr
     LGR.debug(f"first fMRI point is at {skiptime} seconds relative to time origin")
     initial_fmri_x = (
         np.linspace(0.0, validtimepoints * fmritr, num=validtimepoints, endpoint=False) + skiptime
@@ -3899,14 +3948,21 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 # save a pseudofile if we're going to
                 if optiondict["makepseudofile"]:
                     print("reading mean image")
-                    meanfile = f"{outputname}_desc-mean_map.nii.gz"
-                    (
-                        mean_input,
-                        mean,
-                        mean_header,
-                        mean_dims,
-                        mean_sizes,
-                    ) = tide_io.readfromnifti(meanfile)
+                    if theinputdata.filetype == "zarr":
+                        import zarr
+
+                        meanstore = zarr.open_group(f"{outputname}_desc-mean_map.zarr", mode="r")
+                        mean = meanstore["data"][:].T[..., None]
+                        mean_header = theinputdata.copyheader(numtimepoints=1)
+                    else:
+                        meanfile = f"{outputname}_desc-mean_map.nii.gz"
+                        (
+                            mean_input,
+                            mean,
+                            mean_header,
+                            mean_dims,
+                            mean_sizes,
+                        ) = tide_io.readfromnifti(meanfile)
                     if not tide_io.checkspacematch(theheader, mean_header):
                         raise ValueError("mean dimensions do not match fmri dimensions")
                     if optiondict["debug"]:

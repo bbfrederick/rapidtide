@@ -33,6 +33,12 @@ features which make it pretty good at this particular task.  A few highlights:
 Inputs:
 ^^^^^^^
 
+Blood-sensitive video data can be supplied directly as a Zarr directory created
+by ``videotoblood``. The converter regularizes timing and interpolates missing
+frames before RGB projection. Rapidtide preserves the 2D pixel geometry, uses
+the stored sampling interval, and writes spatial results as Zarr arrays. See
+:doc:`usage_videotoblood` for conversion, timing, validity masks, and output details.
+
 At a minimum, rapidtide needs a data file to work on (space by time), which is generally thought to be a BOLD fMRI
 data file.  This can be Nifti1 or Nifti2 (for fMRI data, in which case it is time by up to 3 spatial dimensions) or
 a whitespace separated text file (for NIRS data, each column is a time course, each row a separate channel); I can

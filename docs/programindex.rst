@@ -50,6 +50,7 @@ Individual programs
    usage_pairwisemergenifti.rst
    usage_physiofreq.rst
    usage_plethquality.rst
+   usage_videotoblood.rst
 
    usage_rankimage.rst
    usage_runqualitycheck.rst

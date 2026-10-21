@@ -62,6 +62,10 @@ authors = [
 'Changelog' = 'https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md'
 
 [project.optional-dependencies]
+video = [
+  'av>=14',
+  'zarr>=3.0,<4',
+]
 tf = [
   'tensorflow >= 2.18.0',
   'tf-keras >= 2.18.0',
@@ -90,7 +94,7 @@ doc = [
 # Aliases
 docs = ['rapidtide[doc]']
 tests = ['rapidtide[test]']
-all = ['rapidtide[doc,test]']
+all = ['rapidtide[doc,test,video]']
 
 [project.scripts]
 adjustoffset = 'rapidtide.scripts.adjustoffset:entrypoint'
@@ -163,6 +167,7 @@ temporaldecomp = 'rapidtide.scripts.temporaldecomp:entrypoint'
 #threeD = 'rapidtide.scripts.threeD:entrypoint'
 tidepool = 'rapidtide.scripts.tidepool:entrypoint'
 tp2rt = 'rapidtide.scripts.tp2rt:entrypoint'
+videotoblood = 'rapidtide.scripts.videotoblood:entrypoint'
 #variabilityizer = 'rapidtide.scripts.variabilityizer:entrypoint'
 
 [tool.setuptools]
