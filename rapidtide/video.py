@@ -5,6 +5,7 @@ Frames are linearly interpolated onto a regular grid before projection. No
 bandpass filtering, detrending, or spatial averaging is performed.
 """
 
+from fractions import Fraction
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -204,6 +205,145 @@ def _regular_frames(filename: str, source_times: NDArray, target_times: NDArray)
         raise ValueError("Video frame count changed between decoding passes")
 
 
+def _display_limit(blood, percentile: float = 99.5, pixels: int = 65536) -> float:
+    """Find a fixed symmetric display range for a whole blood recording.
+
+    Parameters
+    ----------
+    blood : zarr.Array
+        Blood signal with axes (y, x, time). Read one temporal chunk at a time.
+    percentile : float, optional
+        Percentile of absolute finite values that maps to full scale. Default 99.5.
+    pixels : int, optional
+        Approximate number of pixels per frame used for the estimate; larger
+        frames are spatially subsampled, smaller ones are used in full. Default 65536.
+
+    Returns
+    -------
+    float
+        Positive display limit; 1.0 if the recording contains no nonzero finite values.
+    """
+    stride = max(1, int(np.sqrt(blood.shape[0] * blood.shape[1] / pixels)))
+    step = blood.chunks[2]
+    samples = [
+        np.abs(blood[::stride, ::stride, start : start + step]).ravel()
+        for start in range(0, blood.shape[2], step)
+    ]
+    values = np.concatenate(samples)
+    values = values[np.isfinite(values)]
+    limit = float(np.percentile(values, percentile)) if values.size else 0.0
+    return limit if limit > 0 else 1.0
+
+
+def _gray_frame(frame: NDArray, limit: float) -> NDArray:
+    """Map one blood frame to 8-bit gray, padded to even dimensions for H.264.
+
+    Parameters
+    ----------
+    frame : ndarray
+        Blood frame with shape (height, width); invalid pixels are NaN.
+    limit : float
+        Signal magnitude mapped to full white (+limit) or near black (-limit).
+
+    Returns
+    -------
+    ndarray
+        uint8 image with even height and width. Zero signal is 128, the
+        signal range maps to 1-255, and NaN (invalid) or padded pixels are 0.
+    """
+    height, width = frame.shape
+    gray = np.zeros((height + height % 2, width + width % 2), dtype=np.uint8)
+    scaled = np.clip(np.rint(128.0 + 127.0 * frame / limit), 1, 255)
+    gray[:height, :width] = np.where(np.isfinite(frame), scaled, 0)
+    return gray
+
+
+def write_blood_video(
+    zarrfilename: str,
+    videofilename: str,
+    limit: float | None = None,
+    showprogress: bool = True,
+) -> tuple[Path, float]:
+    """Write the blood signal in a videotoblood Zarr store as a monochrome video.
+
+    This is intended for visual debugging and data validation only. The video is
+    8-bit H.264 (lossy), so quantitative analysis should use the Zarr store.
+
+    Parameters
+    ----------
+    zarrfilename : str
+        Completed videotoblood Zarr store.
+    videofilename : str
+        New output video file; the container is chosen from the extension
+        (e.g. .mp4, .mkv, .mov). Existing files are never replaced.
+    limit : float, optional
+        Signal magnitude mapped to full scale. Defaults to the 99.5th percentile
+        of absolute finite values over the whole recording, so the gray mapping
+        is fixed across frames.
+    showprogress : bool, optional
+        Display a progress bar while encoding. Default True.
+
+    Returns
+    -------
+    pathlib.Path
+        Completed video file.
+    float
+        Display limit used. Gray level 128 is zero signal, 255 is +limit,
+        1 is -limit, and 0 marks invalid pixels.
+
+    Raises
+    ------
+    FileExistsError
+        If ``videofilename`` already exists.
+    ValueError
+        If ``limit`` is not finite and positive.
+    """
+    import av
+
+    from rapidtide.zarrio import open_blood_zarr
+
+    output = Path(videofilename).absolute()
+    if output.exists():
+        raise FileExistsError(f"Output already exists: {output}")
+    group, times, _, step = open_blood_zarr(str(zarrfilename))
+    blood = group["blood"]
+    if limit is None:
+        limit = _display_limit(blood)
+    elif not np.isfinite(limit) or limit <= 0:
+        raise ValueError("Display limit must be finite and positive")
+    rate = Fraction(1.0 / step).limit_denominator(1001000)
+    chunk = blood.chunks[2]
+    try:
+        with av.open(str(output), "w") as container:
+            container.metadata["comment"] = (
+                f"rapidtide videotoblood {group.attrs.get('method')} signal: gray 128 = 0, "
+                f"255 = +{limit:.6g}, 1 = -{limit:.6g}, 0 = invalid"
+            )
+            stream = container.add_stream("libx264", rate=rate)
+            stream.height = blood.shape[0] + blood.shape[0] % 2
+            stream.width = blood.shape[1] + blood.shape[1] % 2
+            stream.pix_fmt = "yuv420p"
+            stream.options = {"crf": "12"}
+            with tqdm(total=len(times), desc="Blood video", disable=not showprogress) as bar:
+                for start in range(0, len(times), chunk):
+                    frames = blood[..., start : start + chunk]
+                    for offset in range(frames.shape[-1]):
+                        image = av.VideoFrame.from_ndarray(
+                            _gray_frame(frames[..., offset], limit), format="gray"
+                        )
+                        image.pts = start + offset
+                        image.time_base = 1 / rate
+                        for packet in stream.encode(image):
+                            container.mux(packet)
+                        bar.update()
+            for packet in stream.encode():
+                container.mux(packet)
+    except BaseException:
+        output.unlink(missing_ok=True)
+        raise
+    return output, limit
+
+
 def video_to_blood(
     infilename: str,
     outfilename: str,
@@ -212,6 +352,7 @@ def video_to_blood(
     framerate: float | None = None,
     showprogress: bool = True,
     commandline: str | None = None,
+    bloodvideo: str | None = None,
 ) -> Path:
     """Regularize video sampling and convert RGB to a local blood-signal Zarr group.
 
@@ -232,6 +373,10 @@ def video_to_blood(
         Display a progress bar for each pass.
     commandline : str, optional
         Command invocation recorded as provenance.
+    bloodvideo : str, optional
+        If given, also write the blood signal as a monochrome 8-bit video to
+        this new file after the Zarr store is complete (see
+        :func:`write_blood_video`). For debugging and validation only.
 
     Returns
     -------
@@ -254,6 +399,8 @@ def video_to_blood(
     output = Path(outfilename).absolute()
     if output.exists():
         raise FileExistsError(f"Output already exists: {output}")
+    if bloodvideo is not None and Path(bloodvideo).exists():
+        raise FileExistsError(f"Output already exists: {Path(bloodvideo).absolute()}")
     if not Path(infilename).is_file():
         raise FileNotFoundError(f"Video not found: {infilename}")
     try:
@@ -345,4 +492,6 @@ def video_to_blood(
         if output.exists():
             raise FileExistsError(f"Output already exists: {output}")
         storepath.rename(output)
+    if bloodvideo is not None:
+        write_blood_video(output, bloodvideo, showprogress=showprogress)
     return output

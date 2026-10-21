@@ -42,6 +42,17 @@ def _get_parser() -> argparse.ArgumentParser:
         type=float,
         help="Output rate in Hz for linear frame interpolation (default: nominal video rate)",
     )
+    parser.add_argument(
+        "--bloodvideo",
+        type=str,
+        metavar="VIDEOFILE",
+        default=None,
+        help=(
+            "Also write the blood signal as a monochrome 8-bit H.264 video (e.g. blood.mp4) "
+            "for debugging and validation. Gray 128 is zero signal, invalid pixels are black, "
+            "and the gray scale is fixed over the recording (default: off)"
+        ),
+    )
     parser.add_argument("--noprogressbar", action="store_true", help="Disable progress bars")
     pf.addversionopts(parser)
     return parser
@@ -58,7 +69,10 @@ def main(args: argparse.Namespace) -> None:
             framerate=args.framerate,
             showprogress=not args.noprogressbar,
             commandline=getattr(args, "commandline", None),
+            bloodvideo=args.bloodvideo,
         )
     except (ImportError, OSError, ValueError) as exc:
         raise SystemExit(f"videotoblood: {exc}") from exc
     print(f"Saved {args.method.upper()} blood signals to {output}")
+    if args.bloodvideo is not None:
+        print(f"Saved monochrome blood video to {args.bloodvideo}")

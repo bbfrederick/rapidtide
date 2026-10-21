@@ -129,6 +129,23 @@ schema ``rapidtide.analysis_map`` and records pixel units and input provenance.
 The analysis still loads input signals and working arrays into RAM; supporting
 Zarr input does not make the full Rapidtide workflow operate out of core.
 
+Monochrome blood video (debugging)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``--bloodvideo blood.mp4`` additionally writes the projected blood signal as a
+monochrome 8-bit H.264 video, after the Zarr store is complete. This is for
+visual inspection and data validation only; downstream analysis should always
+use the Zarr store. The gray mapping is fixed for the whole recording: gray 128
+is zero signal, and the 99.5th percentile of absolute finite signal maps to 255
+(positive) or 1 (negative); larger values are clipped. Invalid pixels are black
+(0), and an odd height or width is padded with one black row or column. The
+display limit is recorded in the video's ``comment`` metadata. A video can also
+be made from an existing store::
+
+    from rapidtide.video import write_blood_video
+
+    write_blood_video('blood.zarr', 'blood.mp4')
+
 For example, read the output with::
 
     import zarr

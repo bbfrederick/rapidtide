@@ -295,6 +295,54 @@ def test_missing_frames_regularized_before_projection(tmp_path, monkeypatch, met
     np.testing.assert_array_equal(group["source_timestamps"][:], source_times)
 
 
+def test_gray_frame_mapping():
+    from rapidtide.video import _gray_frame
+
+    frame = np.array([[0.0, 2.0, -2.0], [5.0, -5.0, np.nan], [1.0, -1.0, 0.5]])
+    gray = _gray_frame(frame, 2.0)
+    assert gray.dtype == np.uint8
+    assert gray.shape == (4, 4)
+    np.testing.assert_array_equal(gray[:3, :3], [[128, 255, 1], [255, 1, 0], [192, 64, 160]])
+    assert not gray[3].any() and not gray[:, 3].any()
+
+
+def test_blood_video(tmp_path):
+    av = pytest.importorskip("av")
+    zarr = pytest.importorskip("zarr")
+    from rapidtide.video import write_blood_video
+
+    rgb = np.rint(_rgb_series()[:35]).astype(np.uint8)
+    rgb[:, 0, 0] = 0
+    source, output, movie = tmp_path / "rgb.mkv", tmp_path / "blood.zarr", tmp_path / "blood.mp4"
+    _write_video(source, rgb)
+    video_to_blood(source, output, chunks=(1, 2, 8), showprogress=False, bloodvideo=str(movie))
+    blood = zarr.open_group(str(output), mode="r")["blood"][:]
+    with av.open(str(movie)) as container:
+        stream = container.streams.video[0]
+        assert (stream.height, stream.width) == (2, 4)
+        assert stream.average_rate == 30
+        assert "gray 128 = 0" in container.metadata["comment"]
+        frames = np.stack([f.to_ndarray(format="gray") for f in container.decode(video=0)])
+    assert frames.shape == (blood.shape[-1], 2, 4)
+    assert (frames[:, 0, 0] < 8).all()
+    valid = frames[:, 1, 2].astype(float)
+    assert np.corrcoef(valid, blood[1, 2])[0, 1] > 0.95
+    with pytest.raises(FileExistsError):
+        write_blood_video(output, movie)
+    with pytest.raises(ValueError, match="limit"):
+        write_blood_video(output, tmp_path / "other.mp4", limit=0)
+    assert not (tmp_path / "other.mp4").exists()
+
+
+def test_blood_video_exists_fails_early(tmp_path):
+    source, output, movie = tmp_path / "rgb.mkv", tmp_path / "blood.zarr", tmp_path / "blood.mp4"
+    source.touch()
+    movie.touch()
+    with pytest.raises(FileExistsError):
+        video_to_blood(source, output, bloodvideo=str(movie))
+    assert not output.exists()
+
+
 def test_cli(tmp_path, capsys):
     from rapidtide.workflows import parser_funcs as pf
     from rapidtide.workflows import videotoblood as workflow
