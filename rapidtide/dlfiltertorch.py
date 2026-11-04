@@ -754,7 +754,9 @@ class DeepLearningFilter:
 
         # Load the model as a dict
         checkpoint = torch.load(
-            os.path.join(self.modelpath, modelname, "model.pth"), map_location=self.device
+            os.path.join(self.modelpath, modelname, "model.pth"),
+            map_location=self.device,
+            weights_only=True,
         )
 
         # Reconstruct the model architecture (must be done by subclass)
