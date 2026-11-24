@@ -26,6 +26,7 @@ from tqdm import tqdm
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
+import rapidtide.zarrio as tide_zarrio
 
 
 class dataVolume:
@@ -251,6 +252,8 @@ class VoxelData:
     validvoxels = None
     cifti_hdr = None
     filetype = None
+    spatial_valid_mask = None
+    timestamps = None
     fixNaN = True
     resident = False
 
@@ -299,6 +302,10 @@ class VoxelData:
 
         self.filename = filename
         self.fixNaN = fixNaN
+        self.filetype = None
+        self.validvoxels = None
+        self.spatial_valid_mask = None
+        self.timestamps = None
         self.readdata(timestep, validstart, validend)
 
     def readdata(self, timestep: float, validstart: int | None, validend: int | None) -> None:
@@ -350,6 +357,13 @@ class VoxelData:
         # load the data
         self.load()
 
+        if self.filetype == "zarr":
+            if timestep > 0 and not np.isclose(timestep, self.timestep, rtol=1e-5):
+                raise ValueError(
+                    "Sampling override disagrees with Blood Zarr timestamps; reconvert the video"
+                )
+            self.setvalidtimes(validstart, validend)
+            return
         if tide_io.checkiftext(self.filename):
             self.filetype = "text"
             self.nim_hdr = None
@@ -467,6 +481,8 @@ class VoxelData:
             return None
         else:
             thisheader = copy.deepcopy(self.nim_hdr)
+            if self.filetype == "zarr" and toffset is None:
+                thisheader["toffset"] = self.toffset + self.validstart * self.timestep
             if self.filetype == "cifti":
                 timeindex = thisheader["dim"][0] - 1
                 spaceindex = thisheader["dim"][0]
@@ -611,7 +627,9 @@ class VoxelData:
             print("reloading non-resident data")
         else:
             print(f"loading data from {self.filename}")
-        if tide_io.checkiftext(self.filename):
+        if tide_zarrio.is_zarr(self.filename):
+            self._load_blood_zarr()
+        elif tide_io.checkiftext(self.filename):
             self.nim_data = tide_io.readvecs(self.filename)
             self.nim = None
         else:
@@ -631,12 +649,44 @@ class VoxelData:
                 self.nim, self.nim_data, self.nim_hdr, self.thedims, self.thesizes = (
                     tide_io.readfromnifti(self.filename)
                 )
-        if self.fixNaN:
+        if self.fixNaN and self.filetype != "zarr":
             nan_count = np.sum(np.isnan(self.nim_data))
             if nan_count > 0:
                 print(f"VoxelData.load: dataset has {nan_count} NaNs before fixing them.")
                 self.nim_data = np.nan_to_num(self.nim_data)
         self.resident = True
+
+    def _load_blood_zarr(self) -> None:
+        """Adapt the pixel grid to a single analysis plane, retaining its timing and mask."""
+        group, self.timestamps, mask, self.timestep = tide_zarrio.open_blood_zarr(self.filename)
+        self.filetype = "zarr"
+        self.zarr_metadata = dict(group.attrs)
+        self.toffset = float(self.timestamps[0])
+        height, width, self.timepoints = group["blood"].shape
+        self.xsize, self.ysize, self.numslices = width, height, 1
+        self.xdim = self.ydim = self.slicethickness = 1.0
+        self.dimensions = 4
+        self.numspatiallocs = self.numslicelocs = width * height
+        self.nativespaceshape = (width, height, 1)
+        self.nim_hdr = tide_zarrio.blood_header(group["blood"].shape, self.timestep, self.toffset)
+        self.nim_affine = None
+        self.nim = None
+        self.thedims = self.nim_hdr["dim"].copy()
+        self.thesizes = self.nim_hdr["pixdim"].copy()
+        self.theshape = (width, height, 1, self.timepoints)
+        # Load spatial chunks directly into analysis order, avoiding a full-sized
+        # transposed copy. Invalid or nonfinite time courses remain excluded.
+        self.nim_data = np.empty(self.theshape, dtype=np.float32)
+        for start in range(0, height, group["blood"].chunks[0]):
+            stop = min(height, start + group["blood"].chunks[0])
+            block = group["blood"][start:stop, :, :]
+            finite = np.all(np.isfinite(block), axis=-1)
+            mask[start:stop] &= finite
+            block[~mask[start:stop], :] = 0
+            self.nim_data[:, start:stop, 0, :] = np.swapaxes(block, 0, 1)
+        self.spatial_valid_mask = mask.T.reshape(-1)
+        if not self.spatial_valid_mask.any():
+            raise ValueError("Blood Zarr contains no finite valid time courses")
 
     def reload(self) -> None:
         """
@@ -697,7 +747,7 @@ class VoxelData:
         else:
             self.validend = validend
         self.realtimepoints = self.validend - self.validstart + 1
-        if self.filetype == "nifti":
+        if self.filetype in ("nifti", "zarr"):
             self.nativefmrishape = (self.xsize, self.ysize, self.numslices, self.realtimepoints)
         elif self.filetype == "cifti":
             self.nativefmrishape = (1, 1, 1, self.realtimepoints, self.numspatiallocs)
@@ -796,7 +846,7 @@ class VoxelData:
         """
         if not self.resident:
             self.load()
-        if self.filetype == "nifti":
+        if self.filetype in ("nifti", "zarr"):
             if self.dimensions == 4 or self.filetype == "cifti" or self.filetype == "text":
                 return self.nim_data[:, :, :, self.validstart : self.validend + 1]
             else:
@@ -979,8 +1029,10 @@ class VoxelData:
         2.0
         """
         # do spatial filtering if requested
-        if self.filetype == "cifti" or self.filetype == "text":
+        if self.filetype in ("cifti", "text"):
             gausssigma = 0.0
+        if self.filetype == "zarr" and gausssigma < 0:
+            gausssigma = 0.0  # MRI's automatic mm-based smoothing is inappropriate for pixels.
         if gausssigma < 0.0:
             # set gausssigma automatically
             gausssigma = np.mean([self.xdim, self.ydim, self.slicethickness]) / 2.0

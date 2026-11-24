@@ -52,6 +52,7 @@ authors = [
     {name = 'Yaroslav O. Halchenko'},
     {name = 'Derek Monroe'},
     {name = 'Suchita Ganesan, M.S.'},
+    {name = 'Ranas Mukminov'},
 ]
 
 [project.urls]
@@ -62,6 +63,15 @@ authors = [
 'Changelog' = 'https://github.com/bbfrederick/rapidtide/blob/main/CHANGELOG.md'
 
 [project.optional-dependencies]
+video = [
+  'av>=14',
+  'zarr>=3.0,<4',
+  'tifffile>=2024.9.20',
+]
+skinmask = [
+  'rapidtide[video]',
+  'mediapipe>=0.10.14',
+]
 tf = [
   'tensorflow >= 2.18.0',
   'tf-keras >= 2.18.0',
@@ -90,7 +100,7 @@ doc = [
 # Aliases
 docs = ['rapidtide[doc]']
 tests = ['rapidtide[test]']
-all = ['rapidtide[doc,test]']
+all = ['rapidtide[doc,test,video,skinmask]']
 
 [project.scripts]
 adjustoffset = 'rapidtide.scripts.adjustoffset:entrypoint'
@@ -143,6 +153,7 @@ roisummarize = 'rapidtide.scripts.roisummarize:entrypoint'
 runqualitycheck = 'rapidtide.scripts.runqualitycheck:entrypoint'
 showarbcorr = 'rapidtide.scripts.showarbcorr:entrypoint'
 showhist = 'rapidtide.scripts.showhist:entrypoint'
+showrapidtide = 'rapidtide.scripts.showrapidtide:entrypoint'
 showstxcorr = 'rapidtide.scripts.showstxcorr:entrypoint'
 showtc = 'rapidtide.scripts.showtc:entrypoint'
 showxcorr_legacy = 'rapidtide.scripts.showxcorr_legacy:main'
@@ -162,6 +173,7 @@ temporaldecomp = 'rapidtide.scripts.temporaldecomp:entrypoint'
 #threeD = 'rapidtide.scripts.threeD:entrypoint'
 tidepool = 'rapidtide.scripts.tidepool:entrypoint'
 tp2rt = 'rapidtide.scripts.tp2rt:entrypoint'
+videotoblood = 'rapidtide.scripts.videotoblood:entrypoint'
 #variabilityizer = 'rapidtide.scripts.variabilityizer:entrypoint'
 
 [tool.setuptools]
@@ -221,4 +233,4 @@ parentdir_prefix = 'rapidtide-'
 skip = '.git*,versioneer.py,*.css,exportlist.txt,data,*.bib'
 check-hidden = true
 ignore-regex = '\bsubjeT\b'
-ignore-words-list = 'TE,thex,normall,Reson,fo,trough,Trough,mapp,varn,ttest'
+ignore-words-list = 'TE,thex,normall,Reson,fo,trough,Trough,mapp,varn,ttest,theread'

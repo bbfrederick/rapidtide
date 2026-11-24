@@ -29,7 +29,6 @@ import rapidtide.refineRegressorFuncs as tide_refineRegressorFuncs
 import rapidtide.resample as tide_resample
 import rapidtide.stats as tide_stats
 import rapidtide.util as tide_util
-from rapidtide.tests.utils import mse
 
 """
 A class to implement regressor refinement
@@ -821,7 +820,7 @@ class RegressorRefiner:
             )
 
         # check for convergence
-        regressormse = mse(normoutputdata, previousnormoutputdata)
+        regressormse = np.mean(np.square(previousnormoutputdata - normoutputdata))
         outputdict["regressormse_pass" + str(thepass).zfill(2)] = regressormse
         self.LGR.info(f"regressor difference at end of pass {thepass:d} is {regressormse:.6f}")
         if self.convergencethresh is not None:

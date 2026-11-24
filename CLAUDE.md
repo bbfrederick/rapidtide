@@ -15,9 +15,9 @@ Rapidtide is a Python package for modeling, characterizing, visualizing, and rem
 
 ```
 rapidtide/
-├── scripts/          # Command-line entry points (~61 utilities)
+├── scripts/          # Command-line entry points
 ├── workflows/        # Main processing pipelines (rapidtide, happy, and various utilities)
-├── tests/            # Pytest test suite (~116 test files)
+├── tests/            # Pytest test suite
 ├── candidatetests/   # Work-in-progress tests (not run in CI)
 ├── data/             # Reference data, models, and examples
 └── [modules]         # Core processing modules (see below)
@@ -215,18 +215,16 @@ Key points:
 - **`candidatetests/`**: These tests are not run in CI and may be incomplete or broken. Do not
   rely on them passing.
 
-## VERIFICATION PROTOCOL (execute before returning control)
-- Re-read the full original task specification.
-- For each stated requirement: test it, confirm it works, and state the evidence.  Do not self-report "done" without executing the actual check.
-- For each implicit quality bar (error handling, edge cases, formatting): apply the same standard.
-- If something fails: fix and re-verify from scratch. Do not patch and assume.
-- After 3 full fix-verify cycles with a persistent failure, stop and report the specific blocker with your diagnosis. Do not return broken work and do not loop silently.
-- Only return control when every requirement has verified evidence of passing, or you've explicitly flagged what you couldn't solve and why.
+## Before returning control
+- For each stated requirement, state the check you ran and its result; don't report "done" on a check you didn't run.
+- Hold error handling, edge cases, and formatting to the same bar.
+- After 3 fix-verify cycles on the same persistent failure, stop and report the blocker with your diagnosis instead of looping.
+- Anything you couldn't solve, name it and say why.
 
 
 ## Model Delegation for Coding Tasks
 
-For coding tasks, use your judgement to delegate work to a subagent running an appropriately lower-power model when the task doesn't need the full capability of the current model. For example: if you are Fable, delegate suitable tasks to Opus or Sonnet subagents; if you are Opus, delegate suitable tasks to Sonnet.
+When a coding task is worth handing to a subagent, run it on the cheapest model tier that fits rather than the session model: from Fable, use Opus or Sonnet; from Opus, use Sonnet. Work you can finish directly in this session stays here.
    
 Model tiers for ANY delegated work - Agent-tool calls and Workflow-script `agent()` calls alike. Set the `model` parameter explicitly on every call; never omit it (omission silently inherits the session model):
 - `haiku` - mechanical bulk work: renames, boilerplate, format conversion, log triage
@@ -239,6 +237,6 @@ When unsure between tiers, pick the cheaper and escalate on failure.
    
 ## Dynamic workflows (Workflow tool)
 
-Applies to ALL sessions, any model. Dynamic workflows do not need to be avoided - reach for the Workflow tool when a task has 3+ independent parallelizable subtasks or would benefit from a pipeline/judge panel. Standing rule on opt-in: if ultracode is NOT on for the session (no "ultracode" keyword, toggle, or an orchestration request in my own words), check with me first - propose the workflow in one or two sentences with the rough shape and cost, and wait for my reply; my "yes" is the opt-in. If ultracode IS on, invoke directly.
+Applies to all sessions, any model. Use the Workflow tool when a task has 3+ independent parallelizable subtasks or would benefit from a pipeline/judge panel. Standing rule on opt-in: if ultracode is NOT on for the session (no "ultracode" keyword, toggle, or an orchestration request in my own words), check with me first - propose the workflow in one or two sentences with the rough shape and cost, and wait for my reply; my "yes" is the opt-in. If ultracode IS on, invoke directly.
 
-**Agent models inside workflow scripts:** every `agent()` call MUST set the `model` parameter explicitly, chosen per "Delegating to sub-agents" above - with one tightening: NEVER use `fable` agents in a dynamic workflow, not even with approval. Only `haiku`, `sonnet`, or `opus`. If a Fable review is warranted, it happens AFTER the workflow completes, as a standalone Agent-tool call (ask first, per above) - never as a workflow stage.
+**Agent models inside workflow scripts:** every `agent()` call MUST set the `model` parameter explicitly, chosen per "Model Delegation for Coding Tasks" above - with one tightening: NEVER use `fable` agents in a dynamic workflow, not even with approval. Only `haiku`, `sonnet`, or `opus`. If a Fable review is warranted, it happens AFTER the workflow completes, as a standalone Agent-tool call (ask first, per above) - never as a workflow stage.

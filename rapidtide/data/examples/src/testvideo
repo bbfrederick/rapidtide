@@ -1,0 +1,38 @@
+#!/bin/bash
+
+videotoblood \
+    trimmed_full.mov \
+    ../dst/full_skin.zarr \
+    --method grgb \
+    --skinmask \
+    --lpf 5.0 \
+    --downsamp 4 \
+    --bloodvideo ../dst/full_skin.mov
+
+rapidtide \
+    ../dst/full_skin.zarr \
+    ../dst/full_cardiac_rapidtide \
+    --filterband cardiac \
+    --searchrange -2 2 \
+    --lagminthresh 0 \
+    --padseconds 3 \
+    --nprocs -1 \
+    --spcalculation \
+    --nodenoise
+
+rapidtide \
+    ../dst/full_skin.zarr \
+    ../dst/full_lfo_rapidtide \
+    --filterband lfo \
+    --searchrange -10 10 \
+    --lagminthresh 0 \
+    --padseconds 3 \
+    --nprocs -1 \
+    --spcalculation \
+    --nodenoise
+
+showrapidtide ../dst/full_cardiac_rapidtide --mincorr 0 --maxcorr 1.0
+showrapidtide ../dst/full_lfo_rapidtide --mincorr 0 --maxcorr 1.0 --videolagrange -10 10
+
+open ../dst/full_cardiac_rapidtide_figures/corrout-lag-sweep.mp4 &
+open ../dst/full_lfo_rapidtide_figures/corrout-lag-sweep.mp4 &

@@ -28,6 +28,7 @@ import numpy as np
 
 import rapidtide.io as tide_io
 import rapidtide.util as tide_util
+import rapidtide.zarrio as tide_zarrio
 import rapidtide.workflows.parser_funcs as pf
 
 
@@ -154,8 +155,8 @@ def _get_parser() -> Any:
     # Required arguments
     parser.add_argument(
         "in_file",
-        type=lambda x: pf.is_valid_file(parser, x),
-        help="The input data file (BOLD fMRI file or NIRS text file).",
+        type=lambda x: x if tide_zarrio.is_zarr(x) else pf.is_valid_file(parser, x),
+        help="Input BOLD fMRI, NIRS text, or videotoblood Zarr dataset.",
     )
     parser.add_argument(
         "outputname",
@@ -2227,7 +2228,14 @@ def process_args(inputargs: Optional[Any] = None) -> Tuple[Any, object]:
             "Either --datatstep or --datafreq must be provided if data file is a text file."
         )
 
-    if args["realtr"] != "auto":
+    if tide_zarrio.is_zarr(args["in_file"]):
+        group, timestamps, mask, fmri_tr = tide_zarrio.open_blood_zarr(args["in_file"])
+        if args["realtr"] != "auto" and not np.isclose(float(args["realtr"]), fmri_tr, rtol=1e-5):
+            raise ValueError(
+                "Sampling override disagrees with Blood Zarr timestamps; reconvert the video"
+            )
+        args["dataiszeromean"] = True
+    elif args["realtr"] != "auto":
         fmri_tr = float(args["realtr"])
     else:
         if tide_io.checkifcifti(args["in_file"]):

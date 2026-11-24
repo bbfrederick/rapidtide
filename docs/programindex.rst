@@ -20,6 +20,7 @@ Individual programs
    usage_showtc.rst
    usage_showxy.rst
    usage_showhist.rst
+   usage_showrapidtide.rst
    usage_spectrogram.rst
 
    usage_linfitfilt.rst
@@ -50,6 +51,7 @@ Individual programs
    usage_pairwisemergenifti.rst
    usage_physiofreq.rst
    usage_plethquality.rst
+   usage_videotoblood.rst
 
    usage_rankimage.rst
    usage_runqualitycheck.rst
