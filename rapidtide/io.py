@@ -775,7 +775,7 @@ def savemaplist(
     """
     Save a list of data maps to files with appropriate BIDS metadata.
 
-    This function saves a list of data maps to output files (NIfTI, CIFTI, or text)
+    This function saves a list of data maps to output files (NIfTI, CIFTI, TIFF, or text)
     using the specified file type and includes BIDS-compliant metadata in JSON sidecars.
     It supports mapping data into a destination array, handling valid voxels, and
     writing out the final files with appropriate naming and headers.
@@ -796,7 +796,8 @@ def savemaplist(
     bidsbasedict : dict
         Base BIDS metadata to include in JSON sidecars.
     filetype : str, optional
-        Output file type ('nifti', 'cifti', or 'text'). Default is 'nifti'.
+        Output file type ('nifti', 'cifti', 'text', or 'tiff'). Default is 'nifti'.
+        Video input type 'zarr' also writes float32 TIFF maps and stacks.
     rt_floattype : str, optional
         Data type for output arrays. Default is 'float64'.
     cifti_hdr : cifti header or None, optional
@@ -886,19 +887,21 @@ def savemaplist(
             )
         else:
             savename = f"{outputname}_desc-{mapsuffix}_{maptype}"
-            if savejson:
+            if savejson and filetype not in ("zarr", "tiff"):
                 writedicttojson(bidsdict, savename + ".json")
-            if filetype == "zarr":
-                from rapidtide.zarrio import save_map
+            if filetype in ("zarr", "tiff"):
+                from rapidtide.tiffio import save_map
 
                 axis = "time" if maptype == "bold" else "sample"
                 if mapsuffix in ("corrout", "gaussout", "corrfitwindow"):
                     axis = "lag"
                 elif "coherence" in mapsuffix:
                     axis = "frequency"
-                save_map(
-                    savename + ".zarr", outmaparray.reshape(destshape), theheader, bidsdict, axis
+                tiffmetadata = save_map(
+                    savename + ".tif", outmaparray.reshape(destshape), theheader, bidsdict, axis
                 )
+                if savejson:
+                    writedicttojson(tiffmetadata, savename + ".json")
             elif filetype == "nifti":
                 savetonifti(outmaparray.reshape(destshape), theheader, savename)
             else:

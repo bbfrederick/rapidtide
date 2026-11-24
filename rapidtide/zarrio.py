@@ -1,4 +1,4 @@
-"""Blood Zarr input validation and geometry-preserving analysis output.
+"""Blood Zarr input validation and legacy analysis Zarr I/O.
 
 Zarr uses image order (y, x, time); the existing analysis uses (x, y, z, time).
 The singleton z plane below is an internal adapter, not a spatial resampling.

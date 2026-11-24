@@ -7,7 +7,13 @@ import textwrap
 import numpy as np
 import pytest
 
-from rapidtide.video import RGBBloodProjector, _timing, _video_frames, video_to_blood
+from rapidtide.video import (
+    RGBBloodProjector,
+    _spatial_frame,
+    _timing,
+    _video_frames,
+    video_to_blood,
+)
 
 
 def _rgb_series():
@@ -162,6 +168,113 @@ def test_timing():
             _timing(np.array(times))
 
 
+def _spatial_reference(frame, downsamp, lpf):
+    """Independent plane filtering and explicit per-block means."""
+    from scipy.ndimage import gaussian_filter
+
+    frame = frame.astype(np.float64)
+    if lpf:
+        frame = np.stack(
+            [gaussian_filter(frame[..., c], sigma=lpf, mode="reflect") for c in range(3)],
+            axis=-1,
+        )
+    height, width = frame.shape[0] // downsamp, frame.shape[1] // downsamp
+    ystart = (frame.shape[0] - height * downsamp) // 2
+    xstart = (frame.shape[1] - width * downsamp) // 2
+    result = np.empty((height, width, 3))
+    for y, x in np.ndindex(height, width):
+        result[y, x] = frame[
+            ystart + y * downsamp : ystart + (y + 1) * downsamp,
+            xstart + x * downsamp : xstart + (x + 1) * downsamp,
+        ].mean(axis=(0, 1))
+    return result
+
+
+@pytest.mark.parametrize(
+    "shape,factor,start,retained",
+    [
+        ((8, 12), 4, (0, 0), (8, 12)),  # No cropping.
+        ((5, 7), 2, (0, 0), (4, 6)),  # One pixel, high side only.
+        ((10, 14), 4, (1, 1), (8, 12)),  # Even remainders, both sides equal.
+        ((11, 14), 4, (1, 1), (8, 12)),  # Odd/even remainders on different axes.
+        ((7, 9), 4, (1, 0), (4, 8)),  # Unequal remainders on the two axes.
+    ],
+)
+def test_spatial_frame_block_means_and_truncation(shape, factor, start, retained):
+    frame = np.arange(shape[0] * shape[1] * 3, dtype=np.uint16).reshape(*shape, 3)
+    original = frame.copy()
+    result = _spatial_frame(frame, downsamp=factor)
+    assert result.shape == (retained[0] // factor, retained[1] // factor, 3)
+    assert result.dtype == np.float64
+    np.testing.assert_array_equal(result, _spatial_reference(frame, factor, 0))
+    np.testing.assert_array_equal(
+        result[0, 0],
+        frame[start[0] : start[0] + factor, start[1] : start[1] + factor].mean(axis=(0, 1)),
+    )
+    cropped_out = np.ones(shape, dtype=bool)
+    cropped_out[start[0] : start[0] + retained[0], start[1] : start[1] + retained[1]] = False
+    changed_edges = frame.copy()
+    changed_edges[cropped_out] = 60000
+    np.testing.assert_array_equal(_spatial_frame(changed_edges, downsamp=factor), result)
+    np.testing.assert_array_equal(frame, original)
+    np.testing.assert_array_equal(_spatial_frame(frame), frame)
+
+
+@pytest.mark.parametrize("edge", [(0, 0), (-1, -1)])
+def test_spatial_frame_gaussian_before_crop_and_average(edge):
+    """An edge impulse must spread before cropping, without mixing RGB planes."""
+    frame = np.zeros((7, 11, 3), dtype=np.uint16)
+    frame[edge[0], edge[1], 0] = 1000  # Discarded by centered cropping, after filtering.
+    frame[..., 1] = 100
+    result = _spatial_frame(frame, downsamp=4, lpf=0.8)
+    np.testing.assert_allclose(result, _spatial_reference(frame, 4, 0.8))
+    assert result[..., 0].max() > 0
+    assert np.any(result[..., 0] != np.floor(result[..., 0]))
+    np.testing.assert_allclose(result[..., 1], 100)
+    np.testing.assert_array_equal(result[..., 2], 0)
+    np.testing.assert_allclose(_spatial_frame(frame, lpf=0.8), _spatial_reference(frame, 1, 0.8))
+
+
+@pytest.mark.parametrize("downsamp", [0, -1, 1.5, 2.0, True, np.nan, np.inf])
+def test_bad_downsamp(downsamp):
+    with pytest.raises(ValueError, match="downsamp"):
+        video_to_blood("missing.mp4", "blood.zarr", downsamp=downsamp)
+
+
+@pytest.mark.parametrize("lpf", [-1, np.nan, np.inf])
+def test_bad_lpf(lpf):
+    with pytest.raises(ValueError, match="lpf"):
+        video_to_blood("missing.mp4", "blood.zarr", lpf=lpf)
+
+
+def test_oversized_downsamp_fails_early(tmp_path, monkeypatch):
+    pytest.importorskip("av")
+    pytest.importorskip("zarr")
+    import rapidtide.video as video
+
+    source, output = tmp_path / "rgb.mp4", tmp_path / "blood.zarr"
+    source.touch()
+    monkeypatch.setattr(video, "_video_frames", lambda *args: iter([(np.ones((2, 3, 3)), 0)]))
+    with pytest.raises(ValueError, match="either input frame dimension"):
+        video_to_blood(source, output, downsamp=3, showprogress=False)
+    assert list(tmp_path.iterdir()) == [source]
+
+
+def test_spatial_preprocessing_rejects_hidden_dimension_changes(tmp_path, monkeypatch):
+    """Cropping must not hide source-size changes that produce equal output sizes."""
+    pytest.importorskip("av")
+    pytest.importorskip("zarr")
+    import rapidtide.video as video
+
+    source, output = tmp_path / "rgb.mp4", tmp_path / "blood.zarr"
+    source.touch()
+    frames = [(np.ones((4, 6, 3)), 0), (np.ones((5, 7, 3)), 0.1)]
+    monkeypatch.setattr(video, "_video_frames", lambda *args: iter(frames))
+    with pytest.raises(ValueError, match="dimensions changed"):
+        video_to_blood(source, output, downsamp=2, framerate=10, showprogress=False)
+    assert list(tmp_path.iterdir()) == [source]
+
+
 def _write_video(filename, rgb):
     """Lossless RGB FFV1 fixture; no RGB/YUV conversion in the encoder."""
     av = pytest.importorskip("av")
@@ -177,6 +290,72 @@ def _write_video(filename, rgb):
                 container.mux(packet)
         for packet in stream.encode():
             container.mux(packet)
+
+
+@pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
+@pytest.mark.parametrize("downsamp,lpf", [(1, 0), (1, 0.8), (2, 0), (2, 0.8), (3, 0), (4, 0.8)])
+def test_spatial_preprocessing_zarr_roundtrip(tmp_path, method, downsamp, lpf):
+    """Validate spatial RGB preprocessing against direct blood formulas after decoding."""
+    av = pytest.importorskip("av")
+    zarr = pytest.importorskip("zarr")
+    from rapidtide.zarrio import open_blood_zarr
+
+    rng = np.random.default_rng(834)
+    rgb = rng.integers(40, 200, size=(18, 5, 7, 3), dtype=np.uint8)
+    source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
+    _write_video(source, rgb)
+    decoded = list(_video_frames(source))
+    source_times = [time for _, time in decoded]
+    expected_rgb = np.stack([_spatial_reference(frame, downsamp, lpf) for frame, _ in decoded])
+    movie = tmp_path / "blood.mp4" if (method, downsamp, lpf) == ("grgb", 2, 0.8) else None
+    video_to_blood(
+        source,
+        output,
+        method=method,
+        downsamp=downsamp,
+        lpf=lpf,
+        showprogress=False,
+        bloodvideo=movie,
+    )
+    group, times, mask, step = open_blood_zarr(str(output))
+    result = group["blood"][:]
+    assert result.shape == (5 // downsamp, 7 // downsamp, len(times))
+    assert result.dtype == np.float32
+    assert mask.all()
+    assert step == pytest.approx(1 / 30)
+    np.testing.assert_array_equal(group["source_timestamps"][:], source_times)
+    for y, x in np.ndindex(result.shape[:2]):
+        interpolated = np.column_stack(
+            [np.interp(times, source_times, expected_rgb[:, y, x, c]) for c in range(3)]
+        )
+        np.testing.assert_allclose(
+            result[y, x], _teleplethy_reference(interpolated, method), rtol=3e-6, atol=3e-6
+        )
+    preprocessing = group.attrs["spatial_preprocessing"]
+    assert preprocessing["source_shape"] == [5, 7]
+    assert preprocessing["cropped_source_shape"] == [5 - 5 % downsamp, 7 - 7 % downsamp]
+    assert preprocessing["crop_low_side_source_pixels"] == [
+        (5 % downsamp) // 2,
+        (7 % downsamp) // 2,
+    ]
+    assert preprocessing["crop_high_side_source_pixels"] == [
+        5 % downsamp - (5 % downsamp) // 2,
+        7 % downsamp - (7 % downsamp) // 2,
+    ]
+    assert preprocessing["gaussian_sigma_source_pixels"] == lpf
+    assert preprocessing["gaussian_mode"] == "reflect"
+    assert preprocessing["downsample_factor"] == downsamp
+    assert preprocessing["downsample_method"] == "block_mean"
+    assert preprocessing["output_pixel_size_source_pixels"] == [downsamp, downsamp]
+    assert (
+        preprocessing["output_pixel_origin_source_pixels"]
+        == {1: [0, 0], 2: [0.5, 0.5], 3: [2, 1], 4: [1.5, 2.5]}[downsamp]
+    )
+    assert preprocessing["order"] == ["gaussian_lowpass", "crop", "block_mean"]
+    if movie is not None:
+        with av.open(str(movie)) as container:
+            assert (container.streams.video[0].height, container.streams.video[0].width) == (2, 4)
+            assert len(list(container.decode(video=0))) == len(times)
 
 
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
@@ -216,8 +395,10 @@ def test_video_zarr_roundtrip(tmp_path, method):
     assert group.attrs["temporal_filter"] is None
     assert group.attrs["axes"] == ["y", "x", "time"]
     assert group.attrs["timestamp_source"] == "regular_grid_from_presentation"
-    with pytest.raises(FileExistsError):
-        video_to_blood(source, output)
+    (output / "obsolete.txt").write_text("old output")
+    video_to_blood(source, output, method=method, showprogress=False)
+    assert not (output / "obsolete.txt").exists()
+    np.testing.assert_allclose(zarr.open_group(str(output), mode="r")["blood"][:], blood)
 
 
 def test_framerate_override(tmp_path):
@@ -233,13 +414,17 @@ def test_framerate_override(tmp_path):
     assert group.attrs["sampling_interval_seconds"] == pytest.approx(0.05)
 
 
-def test_failure_cleanup(tmp_path, monkeypatch):
+@pytest.mark.parametrize("existing", [False, True])
+def test_failure_cleanup(tmp_path, monkeypatch, existing):
     pytest.importorskip("zarr")
     pytest.importorskip("av")
     import rapidtide.video as video
 
     source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
     source.touch()
+    if existing:
+        output.mkdir()
+        (output / "previous.txt").write_text("previous output")
     frames = _rgb_series()[:9]
     passes = []
 
@@ -251,8 +436,12 @@ def test_failure_cleanup(tmp_path, monkeypatch):
     monkeypatch.setattr(video, "_video_frames", changing_video)
     with pytest.raises(ValueError, match="frame count changed"):
         video_to_blood(source, output, framerate=30, showprogress=False)
-    assert not output.exists()
-    assert list(tmp_path.iterdir()) == [source]
+    if existing:
+        assert (output / "previous.txt").read_text() == "previous output"
+        assert set(tmp_path.iterdir()) == {source, output}
+    else:
+        assert not output.exists()
+        assert list(tmp_path.iterdir()) == [source]
 
 
 @pytest.mark.parametrize("chunks", [(0, 1, 1), (1, -1, 1), (1, 1), (1, 1, 1.5)])
@@ -327,20 +516,67 @@ def test_blood_video(tmp_path):
     assert (frames[:, 0, 0] < 8).all()
     valid = frames[:, 1, 2].astype(float)
     assert np.corrcoef(valid, blood[1, 2])[0, 1] > 0.95
-    with pytest.raises(FileExistsError):
-        write_blood_video(output, movie)
+    movie.write_bytes(b"obsolete movie")
+    write_blood_video(output, movie, showprogress=False)
+    with av.open(str(movie)) as container:
+        assert len(list(container.decode(video=0))) == blood.shape[-1]
     with pytest.raises(ValueError, match="limit"):
         write_blood_video(output, tmp_path / "other.mp4", limit=0)
     assert not (tmp_path / "other.mp4").exists()
 
 
-def test_blood_video_exists_fails_early(tmp_path):
+def test_existing_outputs_are_replaced(tmp_path):
+    av = pytest.importorskip("av")
+    zarr = pytest.importorskip("zarr")
     source, output, movie = tmp_path / "rgb.mkv", tmp_path / "blood.zarr", tmp_path / "blood.mp4"
-    source.touch()
-    movie.touch()
-    with pytest.raises(FileExistsError):
-        video_to_blood(source, output, bloodvideo=str(movie))
-    assert not output.exists()
+    _write_video(source, np.rint(_rgb_series()[:35]).astype(np.uint8))
+    video_to_blood(source, output, bloodvideo=str(movie), showprogress=False)
+    (output / "obsolete.txt").write_text("old output")
+    # Change recording length and projection to detect stale chunks or metadata.
+    _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
+    video_to_blood(source, output, method="chrom", bloodvideo=str(movie), showprogress=False)
+    group = zarr.open_group(str(output), mode="r")
+    assert group.attrs["method"] == "chrom"
+    assert not (output / "obsolete.txt").exists()
+    with av.open(str(movie)) as container:
+        assert len(list(container.decode(video=0))) == group["blood"].shape[-1] < 35
+
+
+def test_blood_video_failure_preserves_existing(tmp_path, monkeypatch):
+    av = pytest.importorskip("av")
+    pytest.importorskip("zarr")
+    from rapidtide.video import write_blood_video
+
+    source, output, movie = tmp_path / "rgb.mkv", tmp_path / "blood.zarr", tmp_path / "blood.mp4"
+    _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
+    video_to_blood(source, output, showprogress=False)
+    movie.write_bytes(b"previous movie")
+
+    def failed_open(*args, **kwargs):
+        raise OSError("encoding failed")
+
+    monkeypatch.setattr(av, "open", failed_open)
+    with pytest.raises(OSError, match="encoding failed"):
+        write_blood_video(output, movie, showprogress=False)
+    assert movie.read_bytes() == b"previous movie"
+    assert set(tmp_path.iterdir()) == {source, output, movie}
+
+
+@pytest.mark.parametrize("collision", ["input_store", "input_movie", "store_movie", "nested"])
+def test_output_paths_must_not_overlap(tmp_path, collision):
+    source, output, movie = tmp_path / "rgb.mkv", tmp_path / "blood.zarr", tmp_path / "blood.mp4"
+    source.write_bytes(b"input")
+    if collision == "input_store":
+        output = source
+    elif collision == "input_movie":
+        movie = source
+    elif collision == "store_movie":
+        movie = output
+    else:
+        movie = output / "blood.mp4"
+    with pytest.raises(ValueError, match="output"):
+        video_to_blood(source, output, bloodvideo=str(movie), showprogress=False)
+    assert source.read_bytes() == b"input"
 
 
 def test_cli(tmp_path, capsys):
@@ -361,6 +597,222 @@ def test_cli(tmp_path, capsys):
         workflow._get_parser().parse_args([str(source), "other.zarr", "--chunks", "0", "1", "1"])
 
 
+def test_cli_spatial_options(tmp_path, capsys):
+    from rapidtide.workflows import parser_funcs as pf
+    from rapidtide.workflows import videotoblood as workflow
+
+    zarr = pytest.importorskip("zarr")
+    source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
+    _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
+    pf.generic_init(
+        workflow._get_parser,
+        workflow.main,
+        [str(source), str(output), "--downsamp", "2", "--lpf", "0.8", "--noprogressbar"],
+    )
+    assert zarr.open_group(str(output), mode="r")["blood"].shape[:2] == (1, 1)
+    assert "Saved GRGB" in capsys.readouterr().out
+    for option, value in [
+        ("--downsamp", "0"),
+        ("--downsamp", "1.5"),
+        ("--lpf", "-1"),
+        ("--lpf", "nan"),
+        ("--lpf", "inf"),
+    ]:
+        with pytest.raises(SystemExit):
+            workflow._get_parser().parse_args([str(source), "other.zarr", option, value])
+
+
+def _fake_skin_segmenter(monkeypatch, mask_function, model_path):
+    import rapidtide.skinmask as skinmask
+
+    passes = []
+    metadata = {
+        "backend": "test_multiclass",
+        "included_classes": ["face-skin", "body-skin"],
+        "landmark_refinement": False,
+    }
+    monkeypatch.setattr(skinmask, "prepare_skin_model", lambda filename: (model_path, metadata))
+
+    class Segmenter:
+        def __enter__(self):
+            self.times = []
+            passes.append(self)
+            self.closed = False
+            return self
+
+        def __init__(self, model):
+            assert model == model_path
+
+        def __exit__(self, *args):
+            self.closed = True
+
+        def mask(self, rgb, timestamp):
+            self.times.append(timestamp)
+            return mask_function(rgb, timestamp)
+
+    monkeypatch.setattr(skinmask, "SkinSegmenter", Segmenter)
+    return passes
+
+
+@pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
+@pytest.mark.parametrize("downsamp,lpf", [(1, 0), (1, 0.8), (2, 0), (2, 0.8)])
+def test_skinmask_after_filter_before_downsampling(tmp_path, monkeypatch, method, downsamp, lpf):
+    zarr = pytest.importorskip("zarr")
+    source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
+    rng = np.random.default_rng(293)
+    _write_video(source, rng.integers(40, 200, size=(18, 5, 7, 3), dtype=np.uint8))
+    decoded = list(_video_frames(source))
+    selected = np.zeros((5, 7), dtype=bool)
+    selected[1:4, 1:3] = True  # body skin
+    selected[:3, 4:6] = True  # face skin
+    original_frames = {time: rgb for rgb, time in decoded}
+
+    def infer_mask(rgb, timestamp):
+        np.testing.assert_array_equal(rgb, original_frames[timestamp])
+        assert rgb.dtype == original_frames[timestamp].dtype
+        return selected
+
+    passes = _fake_skin_segmenter(monkeypatch, infer_mask, tmp_path / "model.tflite")
+    video_to_blood(
+        source,
+        output,
+        method=method,
+        skinmask=True,
+        downsamp=downsamp,
+        lpf=lpf,
+        showprogress=False,
+    )
+    group = zarr.open_group(str(output), mode="r")
+    times, valid, blood = group["timestamps"][:], group["valid_mask"][:], group["blood"][:]
+    expected_frames = np.stack(
+        [
+            _spatial_reference(
+                np.where(selected[..., None], _spatial_reference(rgb, 1, lpf), 0), downsamp, 0
+            )
+            for rgb, _ in decoded
+        ]
+    )
+    source_times = [time for _, time in decoded]
+    for y, x in np.ndindex(blood.shape[:2]):
+        rgb = np.column_stack(
+            [np.interp(times, source_times, expected_frames[:, y, x, c]) for c in range(3)]
+        )
+        if not rgb.any():
+            assert not valid[y, x]
+            assert np.isnan(blood[y, x]).all()
+        else:
+            assert valid[y, x]
+            np.testing.assert_allclose(
+                blood[y, x], _teleplethy_reference(rgb, method), rtol=3e-6, atol=3e-6
+            )
+    assert len(passes) == 2 and all(p.closed for p in passes)
+    assert passes[0].times == passes[1].times == source_times
+    assert group.attrs["skin_masking"]["included_classes"] == ["face-skin", "body-skin"]
+    assert group.attrs["skin_masking"]["landmark_refinement"] is False
+    assert group.attrs["spatial_preprocessing"]["order"] == [
+        "skin_mask_inference",
+        "gaussian_lowpass",
+        "skin_mask",
+        "crop",
+        "block_mean",
+    ]
+
+
+@pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
+def test_skinmask_before_missing_frame_interpolation(tmp_path, monkeypatch, method):
+    pytest.importorskip("av")
+    zarr = pytest.importorskip("zarr")
+    import rapidtide.video as video
+
+    source, output = tmp_path / "rgb.mp4", tmp_path / "blood.zarr"
+    source.touch()
+    source_times = np.array([4.0, 4.1, 4.3, 4.5, 4.6])
+    frames = _rgb_series()[[0, 3, 9, 15, 18]]
+    monkeypatch.setattr(video, "_video_frames", lambda *args: iter(zip(frames, source_times)))
+
+    def selected(rgb, timestamp):
+        mask = np.ones((2, 3), dtype=bool)
+        mask[0, 0] = timestamp < 4.2
+        mask[0, 1] = timestamp > 4.2
+        return mask
+
+    _fake_skin_segmenter(monkeypatch, selected, tmp_path / "model.tflite")
+    video_to_blood(
+        source, output, skinmask=True, method=method, lpf=0.8, framerate=10, showprogress=False
+    )
+    group = zarr.open_group(str(output), mode="r")
+    times = group["timestamps"][:]
+    preprocessed = np.stack(
+        [
+            np.where(selected(rgb, timestamp)[..., None], _spatial_reference(rgb, 1, 0.8), 0)
+            for rgb, timestamp in zip(frames, source_times)
+        ]
+    )
+    for y, x in np.ndindex(2, 3):
+        expected = np.column_stack(
+            [np.interp(times, source_times, preprocessed[:, y, x, c]) for c in range(3)]
+        )
+        if method == "grgb" and np.any(expected == 0):
+            assert not group["valid_mask"][y, x]
+            assert np.isnan(group["blood"][y, x]).all()
+        else:
+            np.testing.assert_allclose(
+                group["blood"][y, x], _teleplethy_reference(expected, method), rtol=3e-6, atol=3e-6
+            )
+
+
+def test_skinmask_is_optional(tmp_path, monkeypatch):
+    import rapidtide.skinmask as skinmask
+
+    source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
+    _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
+
+    def unexpected_model(*args):
+        raise AssertionError("MediaPipe must not load without --skinmask")
+
+    monkeypatch.setattr(skinmask, "prepare_skin_model", unexpected_model)
+    video_to_blood(source, output, showprogress=False)
+    with pytest.raises(ValueError, match="requires skinmask=True"):
+        video_to_blood(source, tmp_path / "other.zarr", skinmask_model="local.tflite")
+
+
+def test_empty_skin_mask_does_not_fall_back(tmp_path, monkeypatch):
+    source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
+    _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
+    passes = _fake_skin_segmenter(
+        monkeypatch, lambda *args: np.zeros((2, 3), dtype=bool), tmp_path / "model.tflite"
+    )
+    with pytest.raises(ValueError, match="after skin masking"):
+        video_to_blood(source, output, skinmask=True, showprogress=False)
+    assert not output.exists()
+    assert len(passes) == 1 and passes[0].closed
+
+
+def test_cli_skinmask(tmp_path, monkeypatch):
+    from rapidtide.workflows import parser_funcs as pf
+    from rapidtide.workflows import videotoblood as workflow
+
+    zarr = pytest.importorskip("zarr")
+    source, output, model = (
+        tmp_path / "rgb.mkv",
+        tmp_path / "blood.zarr",
+        tmp_path / "model.tflite",
+    )
+    model.touch()
+    _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
+    mask = np.array([[False, True, True], [False, True, True]])
+    passes = _fake_skin_segmenter(monkeypatch, lambda *args: mask, model)
+    pf.generic_init(
+        workflow._get_parser,
+        workflow.main,
+        [str(source), str(output), "--skinmask", "--skinmaskmodel", str(model), "--noprogressbar"],
+    )
+    group = zarr.open_group(str(output), mode="r")
+    np.testing.assert_array_equal(group["valid_mask"][:], mask)
+    assert np.isnan(group["blood"][0, 0]).all()
+    assert len(passes) == 2
+
+
 @pytest.mark.parametrize("program", ["videotoblood", "rapidtide"])
 def test_cli_without_installed_tests(program):
     """Start without test helpers or a package-level version (namespace installs)."""
@@ -371,6 +823,7 @@ def test_cli_without_installed_tests(program):
         # Simulate a runtime installation that does not include the test package.
         sys.modules['rapidtide.tests'] = None
         sys.modules['rapidtide.tests.utils'] = None
+        sys.modules['mediapipe'] = None
         import rapidtide
         # Some installed layouts expose a namespace package with no __version__.
         if hasattr(rapidtide, '__version__'):
@@ -395,3 +848,21 @@ def test_cli_without_installed_tests(program):
     )
     assert result.returncode == 0, result.stderr
     assert f"usage: {program}" in result.stdout
+
+
+@pytest.mark.parametrize("downsamp", [1, 2])
+def test_skinmask_filter_boundary_order(downsamp):
+    """Filter uses the complete RGB image, then masks before block averaging."""
+    rgb = np.full((5, 7, 3), [200, 120, 80], dtype=np.uint16)
+    rgb[2, 2] = [20, 40, 60]
+    selected = np.zeros((5, 7), dtype=bool)
+    selected[2, 2] = True
+    filtered = _spatial_reference(rgb, 1, 0.8)
+    expected = _spatial_reference(np.where(selected[..., None], filtered, 0), downsamp, 0)
+    result = _spatial_frame(rgb, downsamp=downsamp, lpf=0.8, skin_mask=selected)
+    np.testing.assert_allclose(result, expected)
+    old_order = _spatial_reference(np.where(selected[..., None], rgb, 0), downsamp, 0.8)
+    assert not np.allclose(result, old_order)
+    if downsamp == 1:
+        assert not result[~selected].any()
+        np.testing.assert_allclose(result[selected], filtered[selected])

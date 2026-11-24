@@ -467,6 +467,7 @@ def rapidtide_main(argparsingfunc: Any) -> None:
         bidsbasedict.update(
             {
                 "InputFormat": "blood_zarr",
+                "OutputFormat": "float32_tiff",
                 "SpatialUnits": "pixels",
                 "SourceSamplingInterval": fmritr,
                 "SourceStartTime": theinputdata.toffset,
@@ -3949,10 +3950,9 @@ def rapidtide_main(argparsingfunc: Any) -> None:
                 if optiondict["makepseudofile"]:
                     print("reading mean image")
                     if theinputdata.filetype == "zarr":
-                        import zarr
-
-                        meanstore = zarr.open_group(f"{outputname}_desc-mean_map.zarr", mode="r")
-                        mean = meanstore["data"][:].T[..., None]
+                        # The mean map is written later; use the full-space mean
+                        # already in memory rather than rereading a stale output.
+                        mean = meanvalue.reshape(nativespaceshape)
                         mean_header = theinputdata.copyheader(numtimepoints=1)
                     else:
                         meanfile = f"{outputname}_desc-mean_map.nii.gz"

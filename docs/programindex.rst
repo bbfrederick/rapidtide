@@ -20,6 +20,7 @@ Individual programs
    usage_showtc.rst
    usage_showxy.rst
    usage_showhist.rst
+   usage_showrapidtide.rst
    usage_spectrogram.rst
 
    usage_linfitfilt.rst

@@ -5,6 +5,7 @@ import pytest
 
 import rapidtide.io as tide_io
 from rapidtide.voxelData import VoxelData
+from rapidtide.tiffio import open_map
 from rapidtide.zarrio import is_zarr, open_blood_zarr
 
 zarr = pytest.importorskip("zarr")
@@ -74,7 +75,7 @@ def test_result_geometry(blood_store, tmp_path):
         {},
         filetype="zarr",
     )
-    result = zarr.open_group(str(tmp_path / "result_desc-test_map.zarr"), mode="r")
+    result = open_map(tmp_path / "result_desc-test_map.tif")
     np.testing.assert_array_equal(result["data"][:], native_map)
     assert result.attrs["axes"] == ["y", "x"]
     tide_io.savemaplist(
@@ -86,7 +87,7 @@ def test_result_geometry(blood_store, tmp_path):
         {},
         filetype="zarr",
     )
-    result = zarr.open_group(str(tmp_path / "result_desc-test_bold.zarr"), mode="r")
+    result = open_map(tmp_path / "result_desc-test_bold.tif")
     np.testing.assert_array_equal(result["data"][2, 4], native[2, 4, 5:25])
     np.testing.assert_array_equal(result["timestamps"][:], times[5:25])
 
@@ -179,16 +180,24 @@ def test_full_blood_workflow(blood_store, tmp_path, monkeypatch, refinement):
     ]
     if not refinement:
         args += ["--norefinedelay", "--norefineoffset"]
+    else:
+        args += ["--makepseudofile"]
     options, prefilter = process_args(args)
     rapidtide_main((options, prefilter))
-    processed = zarr.open_group(output + "_desc-processed_mask.zarr", mode="r")
+    processed = open_map(output + "_desc-processed_mask.tif")
     np.testing.assert_array_equal(processed["data"][:], mask)
-    initial = zarr.open_group(output + "_desc-initregressor_mask.zarr", mode="r")
+    initial = open_map(output + "_desc-initregressor_mask.tif")
     assert not initial["data"][0, 0]
-    lags = zarr.open_group(output + "_desc-maxtime_map.zarr", mode="r")
+    lags = open_map(output + "_desc-maxtime_map.tif")
     assert lags["data"].shape == (3, 5)
     assert np.isfinite(lags["data"][:]).all()
     assert lags["data"][2, 4] - lags["data"][0, 1] == pytest.approx(1.3, abs=0.3)
-    cleaned = zarr.open_group(output + "_desc-lfofilterCleaned_bold.zarr", mode="r")
+    cleaned = open_map(output + "_desc-lfofilterCleaned_bold.tif")
     assert cleaned["data"].shape == (3, 5, len(times))
     np.testing.assert_allclose(cleaned["timestamps"][:], times)
+    assert cleaned["data"].dtype == np.float32
+    corrout = open_map(output + "_desc-corrout_info.tif")
+    assert corrout.attrs["axes"] == ["y", "x", "lag"]
+    assert corrout["data"].dtype == np.float32
+    assert np.all(np.diff(corrout["lag"]) > 0)
+    assert not list(tmp_path.glob("analysis*.zarr"))

@@ -2,7 +2,9 @@
 
 Statistics are computed independently at every pixel over the entire recording.
 Frames are linearly interpolated onto a regular grid before projection. No
-bandpass filtering, detrending, or spatial averaging is performed.
+temporal bandpass filtering or detrending is performed. Optional spatial
+skin-mask inference, Gaussian filtering, mask application, and block averaging
+precede temporal interpolation.
 """
 
 from fractions import Fraction
@@ -11,6 +13,7 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.ndimage import gaussian_filter
 from tqdm import tqdm
 
 import rapidtide._version as tide_versioneer
@@ -177,14 +180,62 @@ def _regular_times(filename: str, source_times: NDArray, framerate: float | None
     return source_times[0] + np.arange(count, dtype=np.float64) / framerate
 
 
-def _regular_frames(filename: str, source_times: NDArray, target_times: NDArray):
+def _spatial_frame(
+    rgb: NDArray, downsamp: int = 1, lpf: float = 0.0, skin_mask: NDArray | None = None
+) -> NDArray:
+    """Filter RGB planes, apply a precomputed skin mask, crop, and average blocks.
+
+    Gaussian sigma is in source pixels, with reflected boundary conditions.
+    Float64 filtering and averaging preserve fractional channel intensities.
+    """
+    height, width = rgb.shape[:2]
+    ystart, xstart = (height % downsamp) // 2, (width % downsamp) // 2
+    height -= height % downsamp
+    width -= width % downsamp
+    if min(height, width) < 1:
+        raise ValueError("downsamp must not exceed either input frame dimension")
+    if lpf > 0:
+        rgb = gaussian_filter(np.asarray(rgb, dtype=np.float64), sigma=(lpf, lpf, 0.0))
+    if skin_mask is not None:
+        if skin_mask.shape != rgb.shape[:2]:
+            raise ValueError("Skin mask must match the source frame dimensions")
+        rgb = np.where(skin_mask[..., None], rgb, 0)
+    if downsamp > 1:
+        rgb = rgb[ystart : ystart + height, xstart : xstart + width].reshape(
+            height // downsamp, downsamp, width // downsamp, downsamp, 3
+        )
+        rgb = rgb.mean(axis=(1, 3), dtype=np.float64)
+    return rgb
+
+
+def _regular_frames(
+    filename: str,
+    source_times: NDArray,
+    target_times: NDArray,
+    downsamp: int = 1,
+    lpf: float = 0.0,
+    source_shape: tuple | None = None,
+    skinmask_model: str | Path | None = None,
+):
     """Stream linear RGB interpolation using only the two neighboring source frames."""
     previous = None
     output_index = 0
     count = 0
-    for rgb, timestamp in _video_frames(filename):
+    frames = _video_frames(filename)
+    if skinmask_model is not None:
+        from rapidtide.skinmask import skin_segmented_frames
+
+        frames = skin_segmented_frames(frames, skinmask_model)
+    else:
+        frames = ((rgb, timestamp, None) for rgb, timestamp in frames)
+    for rgb, timestamp, skin_mask in frames:
         if count >= len(source_times) or timestamp != source_times[count]:
             raise ValueError("Video timestamps or frame count changed between decoding passes")
+        if source_shape is None:
+            source_shape = rgb.shape
+        if rgb.shape != source_shape:
+            raise ValueError("Video frame dimensions changed during decoding")
+        rgb = _spatial_frame(rgb, downsamp=downsamp, lpf=lpf, skin_mask=skin_mask)
         if previous is not None:
             if rgb.shape != previous.shape:
                 raise ValueError("Video frame dimensions changed during decoding")
@@ -274,8 +325,8 @@ def write_blood_video(
     zarrfilename : str
         Completed videotoblood Zarr store.
     videofilename : str
-        New output video file; the container is chosen from the extension
-        (e.g. .mp4, .mkv, .mov). Existing files are never replaced.
+        Output video file; the container is chosen from the extension
+        (e.g. .mp4, .mkv, .mov). Existing files are replaced after encoding.
     limit : float, optional
         Signal magnitude mapped to full scale. Defaults to the 99.5th percentile
         of absolute finite values over the whole recording, so the gray mapping
@@ -293,8 +344,6 @@ def write_blood_video(
 
     Raises
     ------
-    FileExistsError
-        If ``videofilename`` already exists.
     ValueError
         If ``limit`` is not finite and positive.
     """
@@ -303,8 +352,9 @@ def write_blood_video(
     from rapidtide.zarrio import open_blood_zarr
 
     output = Path(videofilename).absolute()
-    if output.exists():
-        raise FileExistsError(f"Output already exists: {output}")
+    store = Path(zarrfilename).resolve()
+    if output.resolve() == store or store in output.resolve().parents:
+        raise ValueError("Blood video output must be outside the input Zarr store")
     group, times, _, step = open_blood_zarr(str(zarrfilename))
     blood = group["blood"]
     if limit is None:
@@ -313,8 +363,9 @@ def write_blood_video(
         raise ValueError("Display limit must be finite and positive")
     rate = Fraction(1.0 / step).limit_denominator(1001000)
     chunk = blood.chunks[2]
-    try:
-        with av.open(str(output), "w") as container:
+    with TemporaryDirectory(prefix=".blood-video-", dir=output.parent) as temporary:
+        videopath = Path(temporary) / f"blood{output.suffix}"
+        with av.open(str(videopath), "w") as container:
             container.metadata["comment"] = (
                 f"rapidtide videotoblood {group.attrs.get('method')} signal: gray 128 = 0, "
                 f"255 = +{limit:.6g}, 1 = -{limit:.6g}, 0 = invalid"
@@ -338,9 +389,7 @@ def write_blood_video(
                         bar.update()
             for packet in stream.encode():
                 container.mux(packet)
-    except BaseException:
-        output.unlink(missing_ok=True)
-        raise
+        videopath.replace(output)
     return output, limit
 
 
@@ -353,13 +402,17 @@ def video_to_blood(
     showprogress: bool = True,
     commandline: str | None = None,
     bloodvideo: str | None = None,
+    downsamp: int = 1,
+    lpf: float = 0.0,
+    skinmask: bool = False,
+    skinmask_model: str | None = None,
 ) -> Path:
     """Regularize video sampling and convert RGB to a local blood-signal Zarr group.
 
     Parameters
     ----------
     infilename, outfilename : str
-        Input video and new output Zarr directory. Existing output is never replaced.
+        Input video and output Zarr directory. Existing output is replaced on success.
     method : {'grgb', 'pos', 'chrom'}, optional
         Projection method, default 'grgb'. Statistics are independent per pixel.
     chunks : tuple of int, optional
@@ -375,8 +428,24 @@ def video_to_blood(
         Command invocation recorded as provenance.
     bloodvideo : str, optional
         If given, also write the blood signal as a monochrome 8-bit video to
-        this new file after the Zarr store is complete (see
+        this file, replacing any existing video after encoding (see
         :func:`write_blood_video`). For debugging and validation only.
+    downsamp : int, optional
+        Average nonoverlapping N×N RGB blocks before temporal interpolation or
+        projection. Crop equally from each end to make each dimension divisible
+        by N, removing an extra pixel on the high side for an odd remainder.
+        Default 1 retains the source dimensions.
+    lpf : float, optional
+        Spatial Gaussian sigma in source pixels, applied independently to RGB
+        channels before cropping and block averaging. Default 0 disables filtering.
+    skinmask : bool, optional
+        Infer face-skin/body-skin masks on original RGB before preprocessing.
+        Apply masks after Gaussian filtering, before cropping and block means,
+        temporal interpolation, and statistics; non-skin RGB is set to zero.
+        Default False. Requires the optional skinmask dependencies.
+    skinmask_model : str, optional
+        Local multiclass segmentation model for offline use with ``skinmask``.
+        Otherwise Google's versioned model is downloaded to the user cache.
 
     Returns
     -------
@@ -389,18 +458,36 @@ def video_to_blood(
     Sampling is regularized before estimating whole-recording statistics. The
     original timestamps are retained as provenance. No temporal bandpass filter
     is applied. Image row/column orientation is retained.
-    An incomplete conversion is removed automatically on failure.
+    An incomplete conversion is removed automatically on failure. Existing
+    outputs are retained until their replacements are complete.
     """
     if len(chunks) != 3 or any(int(c) != c or c < 1 for c in chunks):
         raise ValueError("chunks must contain three positive integers (y, x, time)")
     if framerate is not None and (not np.isfinite(framerate) or framerate <= 0):
         raise ValueError("framerate must be finite and positive")
+    if (
+        isinstance(downsamp, (bool, np.bool_))
+        or not isinstance(downsamp, (int, np.integer))
+        or downsamp < 1
+    ):
+        raise ValueError("downsamp must be a positive integer")
+    if not np.isfinite(lpf) or lpf < 0:
+        raise ValueError("lpf must be finite and nonnegative")
+    if skinmask_model is not None and not skinmask:
+        raise ValueError("skinmask_model requires skinmask=True (--skinmask)")
+    downsamp, lpf = int(downsamp), float(lpf)
     projector = RGBBloodProjector(method)
     output = Path(outfilename).absolute()
-    if output.exists():
-        raise FileExistsError(f"Output already exists: {output}")
-    if bloodvideo is not None and Path(bloodvideo).exists():
-        raise FileExistsError(f"Output already exists: {Path(bloodvideo).absolute()}")
+    source = Path(infilename).resolve()
+    destination = output.resolve()
+    if source == destination or destination in source.parents:
+        raise ValueError("Zarr output must not replace or contain the input video")
+    if bloodvideo is not None:
+        movie = Path(bloodvideo).resolve()
+        if movie == source:
+            raise ValueError("Blood video output must not replace the input video")
+        if movie == destination or destination in movie.parents or movie in destination.parents:
+            raise ValueError("Zarr and blood video outputs must be separate paths")
     if not Path(infilename).is_file():
         raise FileNotFoundError(f"Video not found: {infilename}")
     try:
@@ -409,18 +496,29 @@ def video_to_blood(
     except ImportError as exc:
         raise ImportError("Video conversion requires pip install 'rapidtide[video]'") from exc
 
-    source_times = np.asarray(
-        [
-            time
-            for _, time in tqdm(
-                _video_frames(infilename), desc="Frame timing", disable=not showprogress
-            )
-        ],
-        dtype=np.float64,
-    )
-    timestamps = _regular_times(infilename, source_times, framerate)
+    source_times = []
+    source_shape = None
     for rgb, timestamp in tqdm(
-        _regular_frames(infilename, source_times, timestamps),
+        _video_frames(infilename), desc="Frame timing", disable=not showprogress
+    ):
+        if source_shape is None:
+            source_shape = rgb.shape
+            if downsamp > min(source_shape[:2]):
+                raise ValueError("downsamp must not exceed either input frame dimension")
+        if rgb.shape != source_shape:
+            raise ValueError("Video frame dimensions changed during decoding")
+        source_times.append(timestamp)
+    source_times = np.asarray(source_times, dtype=np.float64)
+    timestamps = _regular_times(infilename, source_times, framerate)
+    skinmask_info = None
+    if skinmask:
+        from rapidtide.skinmask import prepare_skin_model
+
+        skinmask_model, skinmask_info = prepare_skin_model(skinmask_model)
+    for rgb, timestamp in tqdm(
+        _regular_frames(
+            infilename, source_times, timestamps, downsamp, lpf, source_shape, skinmask_model
+        ),
         total=len(timestamps),
         desc="RGB statistics",
         disable=not showprogress,
@@ -429,7 +527,8 @@ def video_to_blood(
     projector.finalize()
     timing = _timing(timestamps)
     if not np.any(projector.valid):
-        raise ValueError("No pixels have a valid blood projection for this method")
+        suffix = " after skin masking" if skinmask else ""
+        raise ValueError(f"No pixels have a valid blood projection for this method{suffix}")
     shape = projector.mean.shape[:2] + (projector.count,)
     chunks = tuple(min(int(c), s) for c, s in zip(chunks, shape))
     with TemporaryDirectory(prefix=".video-to-blood-", dir=output.parent) as temporary:
@@ -456,6 +555,27 @@ def video_to_blood(
                 "units": "relative RGB projection (not calibrated blood volume)",
                 "axes": ["y", "x", "time"],
                 "spatial_units": "pixels",
+                "skin_masking": skinmask_info,
+                "spatial_preprocessing": {
+                    "gaussian_sigma_source_pixels": lpf,
+                    "gaussian_mode": "reflect",
+                    "downsample_factor": downsamp,
+                    "downsample_method": "block_mean",
+                    "source_shape": list(source_shape[:2]),
+                    "cropped_source_shape": [s - s % downsamp for s in source_shape[:2]],
+                    "crop_low_side_source_pixels": [(s % downsamp) // 2 for s in source_shape[:2]],
+                    "crop_high_side_source_pixels": [
+                        s % downsamp - (s % downsamp) // 2 for s in source_shape[:2]
+                    ],
+                    "output_pixel_size_source_pixels": [downsamp, downsamp],
+                    "output_pixel_origin_source_pixels": [
+                        (s % downsamp) // 2 + (downsamp - 1) / 2.0 for s in source_shape[:2]
+                    ],
+                    "order": (["skin_mask_inference"] if skinmask else [])
+                    + ["gaussian_lowpass"]
+                    + (["skin_mask"] if skinmask else [])
+                    + ["crop", "block_mean"],
+                },
                 "rgb_decode_format": "rgb48le",
                 "timestamp_source": "regular_grid_from_presentation",
                 "requested_framerate_hz": framerate,
@@ -474,7 +594,9 @@ def video_to_blood(
         buffer = np.empty(shape[:2] + (chunks[2],), dtype=np.float32)
         count = 0
         for rgb, timestamp in tqdm(
-            _regular_frames(infilename, source_times, timestamps),
+            _regular_frames(
+                infilename, source_times, timestamps, downsamp, lpf, source_shape, skinmask_model
+            ),
             total=projector.count,
             desc="Blood conversion",
             disable=not showprogress,
@@ -488,10 +610,18 @@ def video_to_blood(
                 blood[..., count - slot - 1 : count] = buffer[..., : slot + 1]
         if count != projector.count:
             raise ValueError("Video frame count changed between decoding passes")
-        # Publish only a complete store, and refuse to replace existing output.
-        if output.exists():
-            raise FileExistsError(f"Output already exists: {output}")
-        storepath.rename(output)
+        # Keep the previous store until the new store is complete, with rollback
+        # if publishing fails. TemporaryDirectory removes the old store on success.
+        if output.is_dir() and not output.is_symlink():
+            previous = Path(temporary) / "previous.zarr"
+            output.rename(previous)
+            try:
+                storepath.replace(output)
+            except BaseException:
+                previous.rename(output)
+                raise
+        else:
+            storepath.replace(output)
     if bloodvideo is not None:
         write_blood_video(output, bloodvideo, showprogress=showprogress)
     return output

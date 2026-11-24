@@ -13,14 +13,22 @@ Install the optional video dependencies (PyAV and Zarr)::
 
     pip install -e '.[video]'
 
+For optional MediaPipe skin masking, install the skinmask extra (which also
+includes the video dependencies)::
+
+    pip install -e '.[skinmask]'
+
 Run the standalone command::
 
     videotoblood recording.mp4 blood.zarr --method grgb
     videotoblood recording.mp4 blood_pos.zarr --method pos --chunks 64 64 16
     videotoblood recording.mp4 blood_30hz.zarr --framerate 30
+    videotoblood recording.mp4 blood_small.zarr --lpf 1.5 --downsamp 4
+    videotoblood recording.mp4 blood_skin.zarr --skinmask --lpf 2 --downsamp 3
     rapidtide blood.zarr analysis
 
-The output directory must not already exist. The first video stream is decoded
+Existing output Zarr stores and optional blood videos are overwritten. Each
+previous output is retained until its replacement is complete. The first video stream is decoded
 three times: to establish frame timing, to estimate whole-recording statistics
 on the regularized RGB sequence, and to write the projected signals. Only the
 timestamp vectors scale with recording duration; image memory scales with frame
@@ -71,13 +79,72 @@ pixel over all regularly sampled frames. Float64 running means and centered
 covariances are used internally; output samples are float32. Values are relative RGB
 projections, not calibrated blood volume or oxygenation measurements.
 
-There is no temporal bandpass, moving mean, detrending, spatial smoothing,
-motion correction, or skin segmentation. Temporal interpolation can affect
+There is no temporal bandpass, moving mean, detrending, automatic spatial smoothing,
+or motion correction. Skin segmentation is optional and requires ``--skinmask``.
+Temporal interpolation can affect
 high-frequency content, especially across long gaps; band selection remains
 the responsibility of downstream analysis. Inputs should already have the
 spatial alignment needed for pixelwise analysis. Decoding uses 16-bit RGB to
 retain up to 16-bit channel precision;
 it cannot recover precision or remove artifacts lost during source encoding.
+
+Spatial preprocessing
+^^^^^^^^^^^^^^^^^^^^^
+
+``--skinmask`` runs Google's MediaPipe multiclass selfie segmenter on each
+original RGB frame. It retains the union of the winning ``face-skin`` and
+``body-skin`` categories and sets all other pixels to RGB zero. This is the
+unrefined segmentation: there are no eye, glasses, mouth, beard, skin-color,
+or seed-region exclusions. The processing order is **skin-mask inference on
+original RGB, Gaussian filtering, skin-mask application, centered cropping,
+block averaging, temporal interpolation, whole-recording statistics, then blood
+extraction**. Filtering uses the complete original RGB frame. The previously
+calculated mask then zeros non-skin pixels at source resolution, before cropping
+and block averaging. With no Gaussian filter, the mask is applied directly to
+the original RGB frame.
+
+The 16-bit decoded RGB values are retained for blood extraction. MediaPipe uses
+an 8-bit copy solely for inference. A fresh video-mode segmenter starts at the
+beginning of each of the two RGB processing passes. No model is loaded or
+downloaded when this flag is absent. All inference runs locally.
+
+On first use, the approximately 16 MB versioned model is downloaded from Google
+and verified with SHA-256. It is cached in
+``$XDG_CACHE_HOME/rapidtide/models/`` or ``~/.cache/rapidtide/models/``. For offline
+use, supply a compatible local model with ``--skinmaskmodel FILE`` together
+with ``--skinmask``. Missing dependencies, invalid models, or download errors
+fail conversion instead of silently disabling masking.
+
+Masking zeros RGB samples before the existing projection calculations; it does
+not change their validity rules. Fully masked pixels have undefined blood
+projections: their Zarr blood values are NaN, their ``valid_mask`` is false, and
+they appear black in ``--bloodvideo`` output. A pixel that changes skin/non-skin
+classification can also fail the existing GRGB denominator checks. POS/CHROM
+continue to use their original mean and variance checks. No temporal signal
+quality or cardiac-power threshold is used to select skin.
+
+``--lpf SIGMA`` optionally applies a 2D Gaussian lowpass filter independently to
+each R, G, and B plane. Sigma is measured in original-frame pixels, boundaries
+are reflected, and channels are never mixed. Zero (the default) disables it;
+negative or nonfinite values are rejected.
+
+``--downsamp N`` averages each nonoverlapping N×N RGB block into one output
+pixel. N must be a positive integer (default 1). Cropping is centered in each
+dimension: for remainder ``r = dimension % N``, remove ``r // 2`` pixels from
+the low side and ``r - r // 2`` from the high side. Odd remainders therefore
+remove one extra pixel from the high side. The retained height and width are
+``H - H % N`` and ``W - W % N``; output dimensions are ``H // N`` by ``W // N``.
+N cannot exceed either input dimension. For example, a 723×1282 frame with
+``--downsamp 4`` loses one top row, two bottom rows, and one column from each
+side, producing a 180×320 frame from the centered 720×1280 region.
+
+When both spatial-filter/downsampling options are given, Gaussian filtering
+runs on the full RGB frame after optional skin-mask inference. Mask application
+then precedes cropping and block averaging. Both use float64 arithmetic to
+retain fractional RGB intensities. This preprocessing precedes temporal
+interpolation, whole-recording statistics, mean normalization, and projection,
+and is identical in both processing passes. Blood-video output uses the same
+reduced geometry (with the existing even-dimension padding for video encoding).
 
 Output layout
 ^^^^^^^^^^^^^
@@ -106,6 +173,16 @@ temporal bandpass filtering. ``uniform_sampling`` is true and
 ``sampling_interval_seconds`` records the output step. ``resampled`` is true,
 and ``interpolation`` records ``linear_rgb_before_projection``. The requested
 output rate, source-frame count, and maximum source-frame gap are also recorded.
+``spatial_preprocessing`` records the Gaussian sigma and boundary mode,
+downsampling factor and method, original and cropped dimensions, operation
+order, pixels removed from each side, and output pixel sizes and centers in
+source-pixel coordinates (including the crop offset).
+``skin_masking`` is null when disabled; when enabled, it records the model path,
+checksum, MediaPipe version, included class names, absence of landmark refinement,
+and masking order. ``calculated_before``, ``applied_after``, and ``applied_before``
+distinguish inference from application. The spatial preprocessing order records
+``skin_mask_inference``, ``gaussian_lowpass``, ``skin_mask``, ``crop``, and
+``block_mean`` when skin masking is enabled.
 
 Analysis in Rapidtide
 ^^^^^^^^^^^^^^^^^^^^^
@@ -121,11 +198,27 @@ reference estimation, including with ``--nothresh``. Nonfinite time courses are
 also excluded. MRI's default spatial smoothing is disabled for this input;
 an explicit positive ``--spatialfilt`` is interpreted in pixels.
 
-Analysis maps are Zarr groups with a ``data`` array in the original ``(y, x)``
-pixel geometry. Time-series outputs use ``(y, x, time)`` with a ``timestamps``
-array that includes the source start time and any ``--timerange`` trimming.
-Correlation-function outputs identify their final axis as lag. Each store has
-schema ``rapidtide.analysis_map`` and records pixel units and input provenance.
+Rapidtide writes video analysis maps and masks as single-page **float32 TIFF**
+files (``_desc-*_map.tif`` and ``_desc-*_mask.tif``). Sequences, including cleaned
+blood signals and correlation functions, are multi-page float32 TIFF stacks
+(``_desc-*_bold.tif``, ``_desc-corrout_info.tif``). Each page is one grayscale
+image in the original ``(y, x)`` pixel geometry; the file array order is
+``(sample, y, x)``. No display scaling or integer quantization is applied.
+DEFLATE compression is lossless. BigTIFF is selected automatically when the
+uncompressed size plus metadata allowance approaches the classic TIFF 4 GiB limit.
+
+JSON metadata is embedded in the first page and included in the ordinary JSON
+sidecar. It records logical ``(y, x[, time/lag/frequency/sample])`` axes, exact
+sample coordinates and units, sampling interval, start coordinate, geometry,
+and input provenance. Time coordinates include the source start time and any
+``--timerange`` trimming. TIFF storage axes are ``YX`` for maps, ``TYX`` for time
+series, and ``QYX`` for other sequences, so lag or frequency is not mislabeled as
+time. Masks and label maps are also float32. Undefined floating-point values
+are retained. ``rapidtide.tiffio.open_map`` presents native ``(y, x[, sample])``
+arrays with page-wise sequence reads. ``showrapidtide`` reads the TIFF outputs;
+it can still display legacy Zarr results, preferring TIFF if both exist.
+The ``videotoblood`` input store remains Zarr.
+
 The analysis still loads input signals and working arrays into RAM; supporting
 Zarr input does not make the full Rapidtide workflow operate out of core.
 

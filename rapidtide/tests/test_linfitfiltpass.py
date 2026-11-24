@@ -21,6 +21,7 @@ from unittest.mock import patch
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 import rapidtide.linfitfiltpass as tide_linfitfiltpass
 from rapidtide.tests.utils import mse
@@ -285,6 +286,45 @@ def test_procOneRegressionFitItem_negative_coefficient(debug=False):
     # r is the signed square root of R2, so a negative slope gives a negative r
     assert abs(result[2] + 1.0) < 1e-10
     assert abs(result[3] - 1.0) < 1e-10
+
+
+@pytest.mark.parametrize("multivariate", [False, True])
+@pytest.mark.parametrize("sign", [-1.0, 1.0])
+def test_procOneRegressionFitItem_weak_float32_correlation(multivariate, sign):
+    """Weak correlations must survive float32 storage without negative R-squared."""
+    phase = np.arange(939, dtype=np.float64) * (2.0 * np.pi / 939)
+    ev = np.sin(phase).astype(np.float32)
+    data = (3.0 + np.cos(phase) + sign * 1e-4 * ev).astype(np.float32)
+    evs = np.column_stack((ev, np.sin(2.0 * phase))) if multivariate else ev
+    evs = evs.astype(np.float32)
+    reference_r = np.corrcoef(ev.astype(np.float64), data.astype(np.float64))[0, 1]
+    original_evs, original_data = evs.copy(), data.copy()
+
+    with np.errstate(invalid="raise"):
+        result = tide_linfitfiltpass._procOneRegressionFitItem(
+            0, evs, data, rt_floattype=np.float32
+        )
+
+    np.testing.assert_allclose(result[2], reference_r, rtol=1e-5, atol=1e-10)
+    np.testing.assert_allclose(result[3], reference_r**2, rtol=1e-5, atol=1e-14)
+    assert result[6].dtype == np.float32
+    assert result[7].dtype == np.float32
+    np.testing.assert_array_equal(evs, original_evs)
+    np.testing.assert_array_equal(data, original_data)
+
+
+@pytest.mark.parametrize("multivariate", [False, True])
+def test_procOneRegressionFitItem_negative_roundoff(multivariate):
+    """Roundoff below zero must not produce an invalid correlation square root."""
+    ev = np.linspace(-1.0, 1.0, 20)
+    evs = np.column_stack((ev, ev**2)) if multivariate else ev
+    coeffs = np.array([[3.0, 1e-10, 0.0]]) if multivariate else np.array([[3.0, 1e-10]])
+    with patch("rapidtide.linfitfiltpass.tide_fit.mlregress", return_value=(coeffs, -1e-16)):
+        with np.errstate(invalid="raise"):
+            result = tide_linfitfiltpass._procOneRegressionFitItem(0, evs, 3.0 + ev)
+    assert result[2] == 0.0
+    assert result[3] == 0.0
+    assert np.atleast_1d(result[4]).ravel()[0] == 1e-10
 
 
 def test_procOneRegressionFitItem_multivariate(debug=False):

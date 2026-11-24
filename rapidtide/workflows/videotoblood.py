@@ -1,6 +1,7 @@
 """Command-line workflow for offline video-to-blood conversion."""
 
 import argparse
+import math
 
 import rapidtide.workflows.parser_funcs as pf
 from rapidtide.video import video_to_blood
@@ -10,6 +11,13 @@ def _positive_int(value: str) -> int:
     number = int(value)
     if number <= 0:
         raise argparse.ArgumentTypeError("must be a positive integer")
+    return number
+
+
+def _nonnegative_float(value: str) -> float:
+    number = float(value)
+    if not math.isfinite(number) or number < 0:
+        raise argparse.ArgumentTypeError("must be finite and nonnegative")
     return number
 
 
@@ -25,9 +33,34 @@ def _get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "infilename", type=lambda x: pf.is_valid_file(parser, x), help="Input video"
     )
-    parser.add_argument("outfilename", help="New output Zarr directory (must not exist)")
+    parser.add_argument("outfilename", help="Output Zarr directory (overwritten if it exists)")
     parser.add_argument(
         "--method", type=str.lower, choices=("grgb", "pos", "chrom"), default="grgb"
+    )
+    parser.add_argument(
+        "--skinmask",
+        action="store_true",
+        help="Infer skin on original RGB; apply mask after --lpf and before --downsamp",
+    )
+    parser.add_argument(
+        "--skinmaskmodel",
+        metavar="FILE",
+        type=lambda x: pf.is_valid_file(parser, x),
+        help="Local multiclass model for --skinmask (default: download once to the user cache)",
+    )
+    parser.add_argument(
+        "--downsamp",
+        type=_positive_int,
+        default=1,
+        metavar="N",
+        help="Average N×N RGB blocks after --lpf and centered cropping; odd remainders favor the high side (default: 1)",
+    )
+    parser.add_argument(
+        "--lpf",
+        type=_nonnegative_float,
+        default=0.0,
+        metavar="SIGMA",
+        help="2D Gaussian sigma in source pixels for each RGB channel, before --downsamp (default: 0)",
     )
     parser.add_argument(
         "--chunks",
@@ -50,7 +83,7 @@ def _get_parser() -> argparse.ArgumentParser:
         help=(
             "Also write the blood signal as a monochrome 8-bit H.264 video (e.g. blood.mp4) "
             "for debugging and validation. Gray 128 is zero signal, invalid pixels are black, "
-            "and the gray scale is fixed over the recording (default: off)"
+            "and the gray scale is fixed over the recording. Existing video is overwritten (default: off)"
         ),
     )
     parser.add_argument("--noprogressbar", action="store_true", help="Disable progress bars")
@@ -70,6 +103,10 @@ def main(args: argparse.Namespace) -> None:
             showprogress=not args.noprogressbar,
             commandline=getattr(args, "commandline", None),
             bloodvideo=args.bloodvideo,
+            downsamp=args.downsamp,
+            lpf=args.lpf,
+            skinmask=args.skinmask,
+            skinmask_model=args.skinmaskmodel,
         )
     except (ImportError, OSError, ValueError) as exc:
         raise SystemExit(f"videotoblood: {exc}") from exc

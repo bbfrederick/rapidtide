@@ -73,6 +73,9 @@ def _procOneRegressionFitItem(
     using `tide_fit.mlregress`. If the fit fails, a zero matrix is returned.
     For univariate regressions (1D `theevs`), the function directly computes
     the fit and handles edge cases such as zero coefficients.
+    Regression fitting and scoring use float64 even when the input arrays are
+    float32, to retain weak correlations when computing R-squared. Negative
+    roundoff in R-squared is floored at zero before taking its square root.
 
     Examples
     --------
@@ -84,7 +87,14 @@ def _procOneRegressionFitItem(
     0
     """
     # NOTE: if theevs is 2D, dimension 0 is number of points, dimension 1 is number of evs
-    thefit, R2 = tide_fit.mlregress(theevs, thedata)
+    # R-squared subtracts nearly equal quantities for weak correlations. Fit and
+    # score in double precision without promoting the stored time series arrays.
+    thefit, R2 = tide_fit.mlregress(
+        np.asarray(theevs, dtype=np.float64), np.asarray(thedata, dtype=np.float64)
+    )
+    # An in-sample least-squares fit with an intercept has nonnegative R-squared,
+    # but roundoff can put it just below zero even in double precision.
+    R2 = np.maximum(R2, 0.0)
     if theevs.ndim > 1:
         if thefit is None:
             thefit = np.zeros((1, theevs.shape[1] + 1), dtype=rt_floattype)

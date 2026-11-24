@@ -102,7 +102,7 @@ showxcorrx <file1> <file2>
 
 ## Important Constraints
 
-- Never change files in `rapidtide/notforprimetime` or `rapidtide/candidatetests`.
+- Never change files in `rapidtide/candidatetests`.
 - Keep code clean and modular.
 - Prefer shorter functions/methods when practical.
 
@@ -133,7 +133,8 @@ showxcorrx <file1> <file2>
 ## Documentation and Style
 
 - Use Black formatting (99-char line length).
-- Follow NumPy docstring style where applicable.
+- Every routine must have a NumPy-style docstring (Parameters, Returns, and other relevant
+  sections); when you modify a routine, update its docstring to match the code.
 - Keep changes focused on the issue/feature requested.
 - See contribution guidance:
   `http://rapidtide.readthedocs.io/en/latest/contributing.html`.
