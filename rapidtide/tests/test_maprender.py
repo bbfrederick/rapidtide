@@ -226,8 +226,24 @@ def test_output_directory_cannot_modify_analysis_store(result_root):
         render_rapidtide(result_root, outdir=output, movie=False)
 
 
-@pytest.mark.parametrize("keyword,value", [("fps", 0), ("fps", np.nan), ("laglimit", -1)])
-def test_invalid_display_options(keyword, value):
+@pytest.mark.parametrize(
+    "keyword,value",
+    [("fps", 0), ("fps", np.nan), ("minlag", np.nan), ("maxlag", np.inf)],
+)
+def test_invalid_display_options(keyword: str, value: float) -> None:
+    """Reject invalid display options before reading any analysis outputs.
+
+    Parameters
+    ----------
+    keyword : str
+        Name of the ``render_rapidtide`` option to set.
+    value : float
+        Invalid value for that option.
+
+    Returns
+    -------
+    None
+    """
     with pytest.raises(ValueError, match=keyword):
         render_rapidtide("missing", **{keyword: value})
 
