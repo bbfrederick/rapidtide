@@ -93,7 +93,15 @@ def _figure(figsize):
 
 
 def _image(
-    ax, values, valid, imtype=None, minlag=-1.0, maxlag :float|int=1.0, input_cmap="hot", mincorr=-1.0, maxcorr=1.0
+    ax,
+    values,
+    valid,
+    imtype=None,
+    minlag=-1.0,
+    maxlag: float | int = 1.0,
+    input_cmap="hot",
+    mincorr=-1.0,
+    maxcorr=1.0,
 ):
     from matplotlib import colormaps
 
@@ -112,15 +120,19 @@ def _image(
     cmap = colormaps[input_cmap].copy()
     print(f"cmap set to {input_cmap}")
     cmap.set_bad("#bdbdbd")
-    return ax.imshow(
-        thevaluearray,
-        origin="upper",
-        interpolation="nearest",
-        aspect="equal",
-        cmap=cmap,
-        vmin=minval,
-        vmax=maxval,
-    ), minval, maxval
+    return (
+        ax.imshow(
+            thevaluearray,
+            origin="upper",
+            interpolation="nearest",
+            aspect="equal",
+            cmap=cmap,
+            vmin=minval,
+            vmax=maxval,
+        ),
+        minval,
+        maxval,
+    )
 
 
 def _geometry(ax, shape, ylabel=True):
@@ -146,7 +158,15 @@ def _map_figure(root, panels, options, minlag, maxlag, mincorr=-1.0, maxcorr=1.0
     figure.suptitle(f"{root.name}\n{' · '.join(subtitle)}", fontsize=15, y=0.975)
     for index, (ax, (title, values, valid, imtype, colormap)) in enumerate(zip(axes, panels)):
         image, minval, maxval = _image(
-            ax, values, valid, imtype=imtype, minlag=minlag, maxlag=maxlag, input_cmap=colormap, mincorr=mincorr, maxcorr=maxcorr
+            ax,
+            values,
+            valid,
+            imtype=imtype,
+            minlag=minlag,
+            maxlag=maxlag,
+            input_cmap=colormap,
+            mincorr=mincorr,
+            maxcorr=maxcorr,
         )
         ax.set_title(title, pad=10)
         _geometry(ax, values.shape, ylabel=index == 0)
@@ -193,6 +213,50 @@ def _corrout(root, shape):
     return group, lag
 
 
+def _lag_limits(
+    panels: list[tuple], minlag: float | None, maxlag: float | None
+) -> tuple[float, float]:
+    """Resolve the delay display limits, filling in any limit not given.
+
+    The default is a symmetric range covering every included finite delay,
+    rounded up to a multiple of 0.05 s (0.5 s once delays exceed 1 s), and
+    never narrower than +/-0.25 s.
+
+    Parameters
+    ----------
+    panels : list of tuple
+        Panels from ``_panels``: ``(title, values, valid, imtype, colormap)``.
+        Only panels with ``imtype == "delay"`` contribute to the default.
+    minlag : float or None
+        Requested lower delay limit in seconds, or None for the default.
+    maxlag : float or None
+        Requested upper delay limit in seconds, or None for the default.
+
+    Returns
+    -------
+    tuple of float
+        ``(minlag, maxlag)`` in seconds.
+
+    Raises
+    ------
+    ValueError
+        If the resolved limits do not satisfy ``minlag < maxlag``.
+    """
+    if minlag is None or maxlag is None:
+        largest = max(
+            np.abs(values[valid]).max()
+            for _, values, valid, imtype, _ in panels
+            if imtype == "delay"
+        )
+        step = 0.5 if largest > 1 else 0.05
+        limit = float(max(0.25, np.ceil(largest / step) * step))
+        minlag = -limit if minlag is None else float(minlag)
+        maxlag = limit if maxlag is None else float(maxlag)
+    if minlag >= maxlag:
+        raise ValueError("minlag must be less than maxlag")
+    return minlag, maxlag
+
+
 def _lag_slice(lag, bounds):
     """Select saved coordinates inclusively, allowing floating-point roundoff."""
     if bounds is None:
@@ -231,7 +295,15 @@ def _movie(
     figure = _figure((5.2, 8.4))
     ax = figure.add_axes([0.11, 0.22, 0.66, 0.68])
     image, minval, maxval = _image(
-        ax, np.zeros(mask.shape), mask, imtype=imtype, minlag=minlag, maxlag=maxlag, input_cmap=input_cmap, mincorr=mincorr, maxcorr=maxcorr
+        ax,
+        np.zeros(mask.shape),
+        mask,
+        imtype=imtype,
+        minlag=minlag,
+        maxlag=maxlag,
+        input_cmap=input_cmap,
+        mincorr=mincorr,
+        maxcorr=maxcorr,
     )
     _geometry(ax, mask.shape)
     cax = figure.add_axes([0.82, 0.22, 0.035, 0.68])
@@ -312,10 +384,11 @@ def render_rapidtide(
         represents one saved correlation lag, not one acquired video frame.
     minlag : float, optional
         Minimum display limit in seconds for all delay panels. By default,
-        calculate a shared limit covering every finite included delay.
+        the negative of a symmetric limit covering every finite included delay.
     maxlag : float, optional
         Maximum display limit in seconds for all delay panels. By default,
-        calculate a shared limit covering every finite included delay.
+        a symmetric limit covering every finite included delay. Each limit
+        may be given alone; the resolved limits must satisfy minlag < maxlag.
     movie : bool, optional
         Generate the lag sweep when corrout exists, default True.
     showprogress : bool, optional
@@ -366,14 +439,7 @@ def render_rapidtide(
     if options.get("currentstage", "done") != "done":
         raise ValueError(f"Analysis has not completed (stage: {options['currentstage']})")
     panels, processed = _panels(root)
-    if maxlag is None:
-        largest = max(np.abs(values[valid]).max() for _, values, valid, imtype, colormap in panels if (imtype == "delay"))
-        step = 0.5 if largest > 1 else 0.05
-        maxlag = float(max(0.25, np.ceil(largest / step) * step))
-    if minlag is None:
-        smallest = min(values[valid].min() for _, values, valid, imtype, colormap in panels if (imtype == "delay"))
-        step = 0.5 if largest > 1 else 0.05
-        minlag = float(min(0.25, np.floor(smallest / step) * step))
+    minlag, maxlag = _lag_limits(panels, minlag, maxlag)
     correlation = None
     if movie:
         if _map_path(root, "corrout_info") is not None:
@@ -421,9 +487,9 @@ def render_rapidtide(
                 staging,
                 fps,
                 showprogress,
-                first_index,
-                mincorr,
-                maxcorr,
+                first_index=first_index,
+                mincorr=mincorr,
+                maxcorr=maxcorr,
             )
             manifest["movie"] = {
                 "colormap": "hot",

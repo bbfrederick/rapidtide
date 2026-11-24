@@ -22,8 +22,11 @@ Artifacts
 
 By default the command writes to ``<outputroot>_figures``:
 
-* ``lag-correlation-maps.png`` and ``.pdf`` contain peak-fit delay and peak
-  correlation, plus refined delay/correlation when those maps exist.
+* ``static-maps.png`` and ``.pdf`` contain peak-fit delay and peak correlation,
+  plus each of these maps that exists: refined delay and correlation, squared
+  peak correlation, peak width, mean transit time, significance, time
+  percentile, mean, unfiltered mean, standard deviation, and coefficient of
+  variation.
 * ``corrout-lag-sweep.mp4`` sweeps through the saved ``desc-corrout_info`` lag
   coordinate, with each frame labeled in seconds. Playback is 30 frames per
   second by default, independently of acquisition sampling. Negative correlations
@@ -33,10 +36,11 @@ By default the command writes to ``<outputroot>_figures``:
   playback rate, and exact movie lag coordinates.
 
 Delay maps use **viridis** with shared symmetric limits covering all included
-finite delays. ``--minlag SECONDS`` and ``--maxlag SECONDS`` override these
-limits and saturates values
-outside the selected display range. Static correlation maps, the correlation lag-sweep movie, and its zero-lag
-preview use **hot metal** (Matplotlib ``hot``). ``--mincorr`` and ``--maxcorr``
+finite delays, never narrower than ±0.25 seconds. ``--minlag SECONDS`` and
+``--maxlag SECONDS`` override these limits, separately or together, and values
+outside the selected display range saturate. The resolved limits must satisfy
+``minlag < maxlag``. Static correlation maps, the correlation lag-sweep movie,
+and its zero-lag preview use **hot metal** (Matplotlib ``hot``). ``--mincorr`` and ``--maxcorr``
 set the correlation color limits for
 all these outputs, defaulting to **−1 and 1**, including when a static map has
 only positive values. For example, ``--mincorr 0 --maxcorr 0.6`` maps values at
@@ -57,7 +61,7 @@ Playback FPS is unchanged, so selecting fewer frames shortens the video.
 The JSON manifest records the requested bounds and exact selected coordinates.
 
 Native row/column geometry is preserved. Peak maps use ``desc-corrfit_mask``;
-refined maps and the movie use ``desc-processed_mask``. Excluded and nonfinite
+all other maps and the movie use ``desc-processed_mask``. Excluded and nonfinite
 pixels are gray. Nonfinite included map values also produce a warning.
 
 Existing generated files are overwritten after successful rendering; failed
