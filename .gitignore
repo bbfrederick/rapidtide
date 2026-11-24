@@ -193,3 +193,7 @@ standalone/
 
 # written by CI (.circleci/config.yml) to key the environment cache
 .python-id
+
+# large example videos (over GitHub 100 MB file limit)
+rapidtide/data/examples/src/legs.mov
+rapidtide/data/examples/src/teleplethy.mp4
